@@ -1,0 +1,26 @@
+title: IRS2 reference file model
+allOf:
+- $ref: core.schema.yaml
+- type: object
+  properties:
+    irs2_table:
+      title: Reference file for IRS2 correction
+      fits_hdu: IRS2
+      datatype:
+      - name: alpha_0
+        datatype: complex64
+      - name: alpha_1
+        datatype: complex64
+      - name: alpha_2
+        datatype: complex64
+      - name: alpha_3
+        datatype: complex64
+      - name: beta_0
+        datatype: complex64
+      - name: beta_1
+        datatype: complex64
+      - name: beta_2
+        datatype: complex64
+      - name: beta_3
+        datatype: complex64
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

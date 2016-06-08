@@ -1,0 +1,13 @@
+title: Straylight MRS correction data model
+allOf:
+- $ref: core.schema.yaml
+- $ref: referencefile.schema.yaml
+- type: object
+  properties:
+    data:
+      title: Straylight mask
+      fits_hdu: MASK
+      default: 0.0
+      ndim: 2
+      datatype: uint8
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

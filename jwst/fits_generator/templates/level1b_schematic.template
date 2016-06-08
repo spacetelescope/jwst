@@ -1,0 +1,302 @@
+SIMPLE  = T        data conform to FITS standard
+BITPIX  = 0        bits per data value
+NAXIS   = 0        number of data array dimensions 
+EXTEND  = T        file may contain standard extensions
+NEXTEND            number of standard extensions
+                                                                    
+TELESCOP= 'JWST'   telescope used to acquire data
+INSTRUME           identifier for instrument used to acquire data
+RADESYS = 'ICRS'   reference frame of equatorial or ecliptic coordinates
+                                                                    
+DATE    =          [yyyy-mm-ddThh:mm:ss.ssssss] UTC date of file
+ORIGIN  = 'STScI'  institution responsible for creating FITS file
+FILENAME           name of file
+FILETYPE           type of data found in file
+DPSW_VER           data processing software version number
+
+/ Observation identifiers
+DATE-OBS           [yyyy-mm-ddThh:mm:ss.ssssss] UTC date of end of exposure
+OBS_ID             full programmatic observation ID for exposure
+PROGRAM            program id 
+OBSERVTN           observation id
+VISIT              visit id
+SEQGROUP           sequence group id
+PARASEQN           parallel sequence id
+ACTIVITY           activity id
+EXPOSURE           exposure request number within a single activity
+
+/ Exposure parameters
+DETECTOR           name of detector used to acquire data
+NINT               number of integrations within exposure
+NGROUP             number of groups within integration
+ZEROFRAM           T if a zero frame was read separately
+READPATT           readout pattern
+DATAPROB           T if science telemetry indicated any problems with the data
+
+/ Program information
+TITLE              proposal title
+PI_NAME            name of principal investigator (last, first, mi)
+CATEGORY           program category
+SUBCAT             program sub-category
+SCICAT             science category assigned during the TAC process
+CONT_ID            continuation of the specified previous program
+
+/ Observation information
+TEMPLATE           proposal instruction template used to specify observation
+OBSTYPE            observation type - imaging or spectroscopic
+OBSMODE            observation mode
+
+/ Visit information
+VISITYPE           type of visit (prime or parallel) 
+EXPCOUNT           count of the exposures in visit
+NEXPOSUR           total number of exposures in visit
+INTARGET           T if at least one exposure in visit is internally targeted
+EXTARGET           T if at least one exposure in visit is externally targeted
+TARGOOPP           visit scheduled as target of opportunity (T/F)
+
+/ Target information
+TARGNAME           proposer's name for the target
+STDTRGNM           standard astronomical catalog name for the target
+TARGTYPE           fixed target, moving target, or generic target
+TARG_RA            target RA computed at time of exposure
+TARRAUNC           target Dec computed at time of exposure
+TARG_DEC           target RA uncertainty computed at time of exposure
+TARDCUNC           target Dec uncertainty computed at time of exposure
+
+/ Exposure times
+EXPSTART           [Modified Julian Date] UTC exposure start time 
+EXPMID             [Modified Julian Date] UTC exposure mid time
+EXPEND             [Modified Julian Date] UTC exposure end time
+
+/ Exposure parameters
+NSAMPLE            number of A/D samples per pixel
+NFRAME             number of frames in group
+GROUPGAP           number of frames dropped between groups
+TSAMPLE            delta time between samples in microseconds
+NRESET             number of resets in readout pattern
+NRSTINT            number of extra resets between integrations
+SRSTSTRT           number of extra resets at start of exposure
+TFRAME             [seconds] time between frames
+TGROUP             [seconds] time between group
+INTGRTIM           [seconds] integration time per group
+INTTIME            [seconds] integration time
+EXPTIME            [seconds] effective exposure time
+CHRGTIME           [seconds] charge accumulation time
+DURATION           [seconds] total duration of exposure
+
+/ subarray parameters
+SUBARRAY           subarray used
+SUBXSTRT           starting pixel number in the SIAS x direction
+SUBXSIZE           number of pixels in the SIAS x direction
+SUBYSTRT           starting pixel number in the SIAS y direction
+SUBYSIZE           number of pixels in the SIAS y direction
+LIGHTCOL           number of light sensitive columns
+
+/ NIRCam configuration (NIRCam only)
+MODULE             NIRCam module: A or B
+CHANNEL            NIRCam channel: long or short
+PUPIL              name of the pupil element used
+FILTER             name of the filter element used
+PILIN              pupil imaging lens in optical path: T/F
+
+/ target acquisition parameters (NIRCam coronagraph imaging only)
+CORONMSK           coronagraph mask used 
+TACQNAME           target acquisition file name
+
+/ MIRI configuration (MIRI only)
+FILTER             name of the filter element used
+GRATNG14           grating position for IFU 1 and 4 channels
+GRATNG23           grating position for IFU 2 and 3 channels
+FLTSUITE           type of flat field to be used: all, one, principal
+CCCSTATE           contamination control cover state: open, closed, locked
+
+/ MIRI exposure parameter (MIRI only)
+OBJ_TYPE           object type: FAINT, BRIGHT
+
+/ MIRI target acquisition parameters (MIRI coronagraph imaging only)
+CORONMSK           coronagraph mask used
+TACQNAME           target acquisition file name
+
+/ NIRSpec configuration (NIRSpec only)
+FILTER             name of the filter element used
+GRATING            name of the grating element used
+APERTURE           slit aperture used
+
+/ NIRSpec MSA supporting files (NIRSpec MSA only)
+TACQ1IMG           name of MSA first target acquisition image file
+TACQ2IMG           name of MSA second target acquisition image file
+REFIMAGE           name of MSA target acquisition reference image file
+CONFIMAG           name of MSA target acquisition confirmation image file
+MSACONFG           name of MSA configuration file
+REFSTRFL           name of MSA reference star file
+
+/ TFI configuration (TFI only)
+FILTER             filter used in exposure
+CENTWAVE           [microns] tuned central wavelength
+MONOIMAG           monochromatic image (T/F)
+PUPIL              pupil used in exposure
+WAVRANGE           wavelength range requested in the exposure specification
+FLTSUITE           internal flat suite (PFLAT, LFLAT)
+CORONPOS           occulting spot number 
+FOCUSPOS           focus position for TFI
+
+/ FGS configuration (FGS only)
+FOCUSPOS           focus position for guider
+
+/ lamp configuration
+LAMP               internal lamp state
+
+/ guide star information
+GDSTARID           guide star identifier
+SELORDER           guide star selection order
+PCS_MODE           Pointing Control System mode
+GSCENTX            guide star centroid x position in ideal coordinate frame
+GSCENTY            guide star centroid y position in ideal coordinate frame
+JITTERMS           [arcsec] RMS jitter over the exposure
+GS_RA              guide star right ascension
+GS_DEC             guide star declination
+GSRA_UNC           guide star right ascension uncertainty
+GSDECUNC           guide star declination uncertainty
+GS_MAG             guide star magnitude in FGS detector
+GSMAGUNC           guide star magnitude uncertainty
+
+/ NIRCam WFS&C engineering keywords (NIRCam WFS&C only)
+FASTEP1            requested focus actuator 1 starting steps
+FAUNIT1            requested focus actuator 1 starting units
+FAPHASE1           requested focus actuator 1 starting phase
+FA1VALUE           requested focus actuator 1 position value
+FASTEP2            requested focus actuator 2 starting steps
+FAUNIT2            requested focus actuator 2 starting units
+FAPHASE2           requested focus actuator 2 starting phase
+FA2VALUE           requested focus actuator 2 position value
+FASTEP3            requested focus actuator 3 starting steps 
+FAUNIT3            requested focus actuator 3 starting units 
+FAPHASE3           requested focus actuator 3 starting phase
+FA3VALUE           requested focus actuator 3 position value
+
+/ NIRSpec WFS&C engineering keywords (NIRSpec WFS&C only)
+RMA_POS            Refocus Mechanism Assembly hall-position sensor value
+FCSRLPOS	      Refocus Mechanism Assembly relative position
+
+/ TFI WFS&C engineering keywords (TFI WFS&C only)
+FOCUSPOS           requested FGS focus position
+
+/ JWST ephemeris information
+EPH_TIME           [sec] UTC time from ephemeris start time
+JWST_X             [km] X spatial coordinate of JWST 
+JWST_Y             [km] Y spatial coordinate of JWST
+JWST_Z             [km] Z spatial coordinate of JWST
+JWST_DX            [km/sec] X component of JWST velocity vector
+JWST_DY            [km/sec] Y component of JWST velocity vector
+JWST_DZ            [km/sec] Z component of JWST velocity vector
+
+/ Spacecraft pointing information
+PA_V3              [deg] position angle of V3-axis of JWST
+RA_V1              [deg] RA of telescope V1 axis
+DEC_V1             [deg] Dec of telescope V1 axis
+
+/ NIRCam dither pattern (NIRCam only)
+PATTTYPE          primary dither pattern type
+PATT_NUM          position number within primary dither pattern
+NUMDTHPT          total number of points in primary dither pattern
+PATTSIZE          [arcsec] primary dither pattern size 
+SUBPXTYP          subpixel dithering pattern type
+SUBPXNUM          subpixel sampling pattern number
+SUBPXPNS          total number of points in subpixel dither pattern
+XOFFSET           [arcsec] x offset from pattern starting position 
+YOFFSET           [arcsec] y offset from pattern starting position 
+
+/ MIRI imaging dither pattern (MIRI imaging only)
+PATTTYPE          primary dither pattern type
+PATT_NUM          position number within primary dither pattern
+PATTSTRT          starting point in the dither pattern
+NUMDTHPT          total number of points in primary dither pattern
+PATTSIZE          primary dither pattern size
+SUBPIXEL          subpixel sampling performed (T/F)
+SUBPXNUM          subpixel sampling pattern number
+XOFFSET           [arcsec] x offset from pattern starting position 
+YOFFSET           [arcsec] y offset from pattern starting position 
+
+/ MIRI LRS dither pattern (MIRI LRS only)
+PATTTYPE          dither pattern type
+PATT_NUM          position number within dither pattern
+NUMDTHPT          total number of points in dither pattern
+SPEC_NUM          position number within spectral steps
+SPECNSTP          total number of steps in the spectral direction
+SPECSTEP          [arcsec] distance between steps in the spectral direction 
+SPCOFFST          [arcsec] spectral offset from pattern starting position 
+SPAT_NUM          position number within spatial steps
+SPATNSTP          total number of steps in the spatial direction
+SPATSTEP          [arcsec] distance between steps in the spatial direction 
+SPTOFFST          [arcsec] spatial offset from pattern starting position 
+
+/ NIRSpec FSS dither pattern (NIRSpec FSS only)
+PATT_NUM          position number within primary pattern
+NUMDTHPT          total number of points in primary dither pattern
+PATTSIZE          [arcsec] primary dither pattern size 
+SUBPXPAT          subpixel dither pattern
+SUBPXNUM          subpixel sampling pattern number
+SUBPXPNS          total number of points in subpixel dither pattern
+XOFFSET           [arcsec] x offset from pattern starting position 
+YOFFSET           [arcsec] y offset from pattern starting position 
+
+/ NIRSpec IFU dither pattern (NIRSpec IFU only)
+PATT_NUM          position number within dither pattern
+NUMDTHPT          total number of points in dither pattern
+SLIT_OFF          number of slitlet offsets in the spectral direction
+SUBPXTYP          type of sub-pixel offset
+SPEC_OFF          [arcsec] spectral offset from IFU aperture center 
+SPAT_OFF          [arcsec] spatial offset from IFU aperture center 
+
+/ Time related keywords
+
+BARTDELT          [sec] calculated Barycentric time correction from UTC
+BSTRTIME          [days] Solar System Barycentric exposure start time in MJD
+BENDTIME          [days] Solar System Barycentric exposure end time in MJD
+BMIDTIME          [days] Solar System Barycentric exposure mid time in MJD
+HELIDELT          [days] calculated Heliocentric time correction from UTC
+HSTRTIME          [days] Heliocentric exposure start time in MJD
+HENDTIME          [days] Heliocentric exposure end time in MJD
+HMIDTIME          [days] Heliocentric exposure mid time in MJD
+
+END
+
+
+XTENSION           FITS extension type
+BITPIX             bits per data value
+NAXIS              number of data array dimensions
+NAXIS1             length of first data axis (#columns)
+NAXIS2             length of second data axis (#rows)
+NAXIS3             length of third data axis (#groups/integration)
+NAXIS4             length of fourth data axis (#integrations)
+PCOUNT = 0         number of parameter bytes following data table
+GCOUNT = 1         number of groups
+EXTNAME            extension name
+BSCALE = 1.0       scale factor for array value to physical value
+BZERO  = 32768     physical value for an array value of zero
+BUNIT  = 'DN'      physical units of the data array values
+
+/ Aperture pointing information
+APERNAME           mnemonic for PDB science aperture used
+PA_APER            [deg] position angle of aperture used with target
+
+/ WCS parameters
+WCSAXES=2          number of World Coordinate System axes
+CRPIX1             x-coordinate of the reference pixel
+CRPIX2             y-coordinate of the reference pixel
+CRVAL1             first axis value at the reference pixel
+CRVAL2             second axis value at the reference pixel
+CTYPE1='RA---TAN'  first axis coordinate type
+CTYPE2='DEC--TAN'  second axis coordinate type
+CD1_1              partial of first axis coordinate with respect to X
+CD1_2              partial of first axis coordinate with respect to Y
+CD2_1              partial of second axis coordinate with respect to X
+CD2_2              partial of second axis coordinate with respect to Y
+
+/ Velocity aberration correction
+DVA_RA            [radians] velocity aberration correction RA offset
+DVA_DEC           [radians] velocity aberration correction Dec offset
+VA_SCALE          velocity aberration scale factor
+
+END
+

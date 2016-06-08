@@ -1,0 +1,694 @@
+# Mathematica nb from Alex & Laurent
+
+from __future__ import absolute_import, division
+
+import numpy as np
+import scipy.special
+import numpy.linalg as linalg
+from scipy.misc import comb
+import logging
+
+log = logging.getLogger(__name__) 
+log.setLevel(logging.DEBUG)  
+
+def flip( holearray ):   
+    """
+    Short Summary
+    -------------
+    Change sign of 2nd coordinate of hloes
+
+    Parameters
+    ----------
+    holearray: 2D float array   
+        coordinates of holes
+
+    Return
+    ------
+    fliparray: 2D float array   
+        flipped coordinates of holes
+    """
+    
+    fliparray = holearray.copy()
+    fliparray[:,1] = -1*holearray[:,1]
+
+    return fliparray
+
+def rotatevectors( vectors, thetarad ):
+    """
+    Short Summary
+    -------------
+    Rotate vectors by specified angle
+
+    Parameters
+    ----------
+    vectors: 2D float array
+        list of vectors - e.g. nrm hole centers; positive x decreases under
+        slight rotation, and positive y increases under slight rotation
+
+    thetarad: float
+        rotation angle
+
+    Returns
+    -------
+    rot_vectors: 2D float array
+        rotated vectors
+    """
+    c, s = (np.cos(thetarad), np.sin(thetarad))
+    ctrs_rotated = []
+    for vector in vectors:
+        ctrs_rotated.append([c*vector[0] - s*vector[1], 
+                             s*vector[0] + c*vector[1]])
+
+    rot_vectors = np.array(ctrs_rotated) 
+
+    return rot_vectors
+
+
+def mas2rad( mas ):
+    """
+    Short Summary
+    -------------
+    Convert angle in milli arc-sec to radians
+
+    Parameters
+    ----------
+    mas: float
+        angle in milli arc-sec 
+
+    Returns
+    -------
+    rad: float
+        angle in radians
+    """
+
+    rad = mas*(10**(-3)) / (3600*180/np.pi)
+    return rad
+
+
+def rad2mas( rad ):
+    """ 
+    Short Summary
+    -------------
+    Convert input angle in radians to milli arc sec
+
+    Parameters
+    ----------
+    rad: float
+        input angle in radians
+
+    Returns
+    -------
+    mas: float
+        input angle in milli arc sec
+    """
+
+    mas = rad * (3600*180/np.pi) * 10**3
+
+    return mas
+
+
+def replacenan( array ):
+    """ 
+    Short Summary
+    -------------
+    Replace singularities encountered in the analytical hexagon Fourier
+    transform with the analytically derived limits.
+
+    Parameters
+    ----------
+    array: 2D float array
+        input array
+
+    Returns
+    -------
+    array: 2D float array
+        input array with NaNs replaced with analytically derived limits
+    """
+
+    nanpos = np.where(np.isnan(array))
+    array[ nanpos ] = np.pi/4
+
+    return array
+
+
+def primarybeam( kx, ky ):
+    """ 
+    Short Summary
+    -------------
+    Calculate the envelope intensity for circular holes & monochromatic light
+
+    Parameters
+    ----------
+    kx, ky: float, float
+        x-component and y-component of image plane (spatial frequency) vector
+
+    Return
+    ------
+    env_int: 2D float array
+        envelope intensity for circular holes & monochromatic light
+    """
+
+    R = (primarybeam.d/primarybeam.lam) * primarybeam.pitch *  \
+        np.sqrt((kx-primarybeam.offx)*(kx-primarybeam.offx) + \
+        (ky-primarybeam.offy)*(ky-primarybeam.offy))
+    pb = replacenan( scipy.special.jv(1, np.pi*R) / (2.0*R) )
+    env_int = pb * pb.conj()
+
+    return env_int
+
+
+def hexpb():
+    """ 
+    Short Summary
+    -------------
+    Calculate the primary beam for hexagonal holes.
+
+    Parameters
+    ----------
+    None
+
+    Returns
+    -------
+    pb * pb.conj(): 2D float array
+        primary beam for hexagonal holes    
+    """
+    from . import hexee
+    pb = hexee.hex_eeAG(s=hexpb.size, c=(hexpb.offx, hexpb.offy), \
+                  d=hexpb.d, lam=hexpb.lam, pitch=hexpb.pitch)
+
+    return pb * pb.conj()
+
+
+def ffc( kx, ky ):
+    """ 
+    Short Summary
+    -------------
+    Calculate cosine terms of analytic model.    
+
+    Parameters
+    ----------
+    kx, ky: float, float
+        x-component and y-component of image plane (spatial frequency) vector
+    
+    Returns
+    -------
+    cos_array: 2D float array
+        cosine terms of analytic model    
+    """
+
+    cos_array = 2*np.cos( 2*np.pi*ffc.pitch*
+                          ((kx - ffc.offx)*(ffc.ri[0] - ffc.rj[0]) +
+                           (ky - ffc.offy)*(ffc.ri[1] - ffc.rj[1]))/ffc.lam )
+    
+    return cos_array
+
+
+def ffs( kx, ky ):
+    """ 
+    Short Summary
+    -------------
+    Calculate sine terms of analytic model.    
+
+    Parameters
+    ----------
+    kx, ky: float, float
+        x-component and y-component of image plane (spatial frequency) vector
+
+    Returns
+    -------
+    sin_array: 2D float array
+        sine terms of analytic model    
+    """
+
+    sin_array = -2*np.sin(2*np.pi*ffs.pitch*
+                          ((kx - ffs.offx)*(ffs.ri[0] - ffs.rj[0]) +
+                           (ky - ffs.offy)*(ffs.ri[1] - ffs.rj[1]))/ffs.lam)
+    
+    return sin_array
+
+
+def model_array( ctrs, lam, oversample, pitch, fov, d,
+                 centering='PIXELCENTERED', shape='circ' ):
+    """ 
+    Short Summary
+    -------------
+    Create a model using the specified wavelength.
+
+    Parameters
+    ----------
+    ctrs: 2D float array
+        centers of holes 
+  
+    lam: float
+        wavelength in the bandpass for this particular model
+    
+    oversample: integer
+        oversampling factor
+    
+    pitch: float
+        sampling pitch in radians in image plane
+    
+    fov: integer
+        number of detector pixels on a side.
+    
+    d: float
+        hole diameter for 'circ'; flat to flat distance for 'hex   
+
+    centering: string
+        subpixel centering; for now only option is PIXELCENTERED, which means
+        putting the brightest detector pixel at the center of the trimmed data
+        frame or simulated image.
+
+    shape: string
+        shape of hole; possible values are 'circ', 'hex', and 'fringe'
+
+    Returns
+    -------
+    if 'shape' == 'circ', returns the primary beam (2D float array)
+        for circular holes.
+    if 'shape' == 'hex', returns the primary beam (2D float array)
+        for hexagonal holes.
+
+    ffmodel: list of 3 2D float arrays
+        model array
+    """
+    
+    if centering =='PIXELCORNER':
+        off = np.array([0.0, 0.0])
+    elif centering =='PIXELCENTERED':
+        off = np.array([0.5, 0.5])
+    else:
+        off = centering
+
+    log.debug('------------------')
+    log.debug('Model Parameters:')
+    log.debug('------------------')
+    log.debug('pitch:%s fov:%s oversampling:%s ', pitch, fov, oversample ) 
+    log.debug('centers:%s',ctrs ) 
+    log.debug('wavelength:%s  centering:%s off:%s ', lam, centering, off )
+    log.debug('shape:%s d:%s ', shape, d ) 
+
+    #### dg - should I make some of the next blocks new/separate functions ?
+    # primary beam parameters:
+    primarybeam.shape=shape
+    primarybeam.lam = lam
+    primarybeam.size = (oversample * fov, oversample * fov)
+    primarybeam.offx = oversample*fov/2.0 - off[0] # in pixels
+    primarybeam.offy = oversample*fov/2.0 - off[1]
+    primarybeam.pitch = pitch/float(oversample)
+    primarybeam.d = d
+
+    hexpb.shape=shape
+    hexpb.lam = lam
+    hexpb.size = (oversample * fov, oversample * fov)
+    hexpb.offx = oversample*fov/2.0 - off[0] # in pixels
+    hexpb.offy = oversample*fov/2.0 - off[1]
+    hexpb.pitch = pitch/float(oversample)
+    hexpb.d = d
+
+    # model fringe matrix parameters:
+    ffc.N = len(ctrs) # number of holes
+    ffc.lam = lam
+    ffc.over = oversample
+    ffc.pitch = pitch / float(oversample)
+    ffc.size = (oversample * fov, oversample * fov)
+    ffc.offx = oversample*fov / 2.0 - off[0]
+    ffc.offy = oversample*fov / 2.0 - off[1]
+
+    ffs.N = len(ctrs) # number of holes
+    ffs.lam = lam
+    ffs.over = oversample
+    ffs.pitch = pitch / float(oversample)
+    ffs.size = (oversample * fov, oversample * fov)
+    ffs.offx = oversample*fov / 2.0 - off[0]
+    ffs.offy = oversample*fov / 2.0 - off[1]
+    
+    alist = []
+    for i in range(ffc.N - 1):
+        for j in range(ffc.N - 1):
+            if j + i + 1 < ffc.N:
+                alist = np.append(alist, i)
+                alist = np.append(alist, j + i + 1)
+    alist = alist.reshape(len(alist)//2, 2)
+
+    ffmodel = []
+    ffmodel.append(ffc.N * np.ones(ffc.size))
+    for q,r in enumerate(alist):
+        # r[0] and r[1] are holes i and j, x-coord: 0, y-coord: 1
+        ffc.ri = ctrs[r[0]]
+        ffc.rj = ctrs[r[1]]
+        ffs.ri = ctrs[r[0]]
+        ffs.rj = ctrs[r[1]]
+        ffmodel.append( np.fromfunction(ffc, ffc.size) )
+        ffmodel.append( np.fromfunction(ffs, ffs.size) )
+
+    if shape=='circ': # if unspecified (default), or specified as 'circ'
+        return np.fromfunction(primarybeam,ffc.size), ffmodel
+    elif shape=='hex':
+        return hexpb(), ffmodel
+    else:
+        log.critical('Must provide a valid hole shape. Current supported shapes \
+        are circ and hex.') 
+        return None 
+
+
+def matrix_operations( img, model, flux=None ):
+    """
+    Short Summary
+    -------------
+    Use least squares matrix operations to solve A x = b, where A is the model,
+    b is the data (img), and x is the coefficient vector we are solving for.
+    In 2-D, data x = inv(At.A).(At.b) 
+    If a flux is given, use it to normalize the data.
+
+    Parameters
+    ----------
+    img: 2D float array
+        input data
+
+    model: 2D float array
+        analytic model 
+   
+    flux: float
+        normalization factor
+
+    Returns
+    -------
+    x: 1D float array
+        solution to fit
+
+    res: 2D float array
+        residuals in fit
+
+    cond: float
+        condition number of the inverse of the product of model and its
+        transpose
+    """
+
+    flatimg = img.reshape(np.shape(img)[0] * np.shape(img)[1])
+    nanlist = np.where(np.isnan(flatimg))
+    flatimg = np.delete(flatimg, nanlist)
+
+    if flux is not None:
+        flatimg = flux * flatimg / flatimg.sum()
+
+    # A
+    flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1],
+                                  np.shape(model)[2])
+
+    flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
+
+    log.debug('Matrix_opers - flat model dimensions: %s', np.shape(flatmodel))
+    log.debug('Matrix_opers - flat image dimensions: %s', np.shape(flatimg))
+
+    for fringe in range(np.shape(model)[2]):
+        flatmodel[:,fringe] = np.delete(flatmodel_nan[:,fringe], nanlist)
+
+    # At (A transpose)
+    flatmodeltransp = flatmodel.transpose()
+    # At.A (makes square matrix)
+    modelproduct = np.dot(flatmodeltransp, flatmodel)
+    # At.b
+    data_vector = np.dot(flatmodeltransp, flatimg)
+    # inv(At.A)
+    inverse = linalg.inv(modelproduct)
+    cond = np.linalg.cond(inverse)
+
+    x = np.dot(inverse, data_vector)
+    res = np.dot(flatmodel, x) - flatimg
+    naninsert = nanlist[0] - np.arange(len(nanlist[0]))
+    res = np.insert(res, naninsert, np.nan)
+    res = res.reshape(img.shape[0], img.shape[1])
+
+    log.debug('------------------')
+    log.debug('Matrix Operations:')
+    log.debug('------------------')
+    log.debug('model flux:%s data flux:%s flat model dimensions:%s ', flux,
+              flatimg.sum(), np.shape(flatmodel) ) 
+    log.debug('flat image dimensions:%s model transpose dimensions:%s ',
+              np.shape(flatimg), np.shape(flatmodeltransp) ) 
+    log.debug('transpose * image data dimensions:%s flatimg * transpose \
+    dimensions:%s ', np.shape(data_vector), np.shape(inverse) ) 
+  
+    return x, res, cond
+
+
+def multiplyenv( env, fringeterms ):
+    """
+    Short Summary
+    -------------
+    Multiply the envelope by each fringe 'image'.
+
+    Parameters
+    ----------
+    env: 2D float array
+        envelope
+
+    fringeterms: list of 3 2D float arrays
+        model
+
+    Returns
+    -------
+    full: 3D float array
+        envelope multiplied by each fringe 'image'
+    """
+    # The envelope is size (fov, fov). This multiplies the envelope by each
+    #    of the 43 slices in the fringe model
+    full = np.ones((np.shape(fringeterms)[1], np.shape(fringeterms)[2],
+                    np.shape(fringeterms)[0]+1))
+
+    # multply primary beam by all 43 fringe terms incl "Nholes" term:
+    for i in range(len(fringeterms)): 
+        full[:,:,i] = env * fringeterms[i]
+
+    log.debug('Total number of fringe terms: %s',len(fringeterms)-1 )
+
+    return full  # Last slice of full is the DC term, still unity-filled here.
+
+
+def tan2visibilities( coeffs ):
+    """
+    Long Summary
+    ------------
+    Technically the fit measures phase AND amplitude, so to retrieve the
+    phase we need to consider both sin and cos terms. Consider one fringe:
+    A { cos(kx)cos(dphi) + sin(kx)sin(dphi) } = 
+    A(a cos(kx) + b sin(kx)), where a = cos(dphi) and b = sin(dphi)
+    and A is the fringe amplitude, therefore coupling a and b.
+    In practice we measure A*a and A*b from the coefficients, so:
+    Ab/Aa = b/a = tan(dphi)
+    call a' = A*a and b' = A*b (we actually measure a', b')
+    (A*sin(dphi))^2 + (A*cos(dphi)^2) = A^2 = a'^2 + b'^2
+    
+    Short Summary
+    -------------
+    From the solution to the fit, calculate the fringe amplitude and phase.
+
+    Parameters
+    ----------
+    coeffs: 1D float array
+
+    Returns
+    -------
+    amp, delta: 1D float array, 1D float array   
+        fringe amplitude & phase
+    """
+
+    # coefficients of sine terms mulitiplied by 2*pi
+    delta = np.zeros((len(coeffs) -1)//2)
+    amp = np.zeros((len(coeffs) -1)//2)
+    for q in range((len(coeffs) - 1)//2):
+        delta[q] = (np.arctan2(coeffs[2*q+2], coeffs[2*q+1]))
+        amp[q] = np.sqrt(coeffs[2*q+2]**2 + coeffs[2*q+1]**2)
+
+    log.debug('tan2visibilities: shape coeffs:%s shape delta:%s ',
+              np.shape(coeffs), np.shape(delta) ) 
+
+    return amp, delta
+
+
+def populate_antisymmphasearray( deltaps, N=7 ):
+    """
+    Short Summary
+    -------------
+    Populate the antisymmetric fringe phase array:
+  
+    fringephasearray[0,q+1:] = coeffs[0:6]
+    fringephasearray[1,q+2:] = coeffs[6:11]
+    fringephasearray[2,q+3:] = coeffs[11:15]
+    fringephasearray[3,q+4:] = coeffs[15:18]
+    fringephasearray[4,q+5:] = coeffs[18:20]
+    fringephasearray[5,q+6:] = coeffs[20:]
+
+    Parameters
+    ----------
+    deltaps: 1D float array
+        pistons between each pair of holes
+
+    N: integer
+        number of holes
+        
+    Returns
+    -------
+    arr: 2D float array
+        fringe phases between each pair of holes
+    """
+
+    arr = np.zeros((N,N)) # fringe phase array
+    step = 0
+    n = N-1
+    for h in range(n):
+        arr[ h, h+1: ] = deltaps[ step:step+n ]
+        step += n
+        n -= 1
+
+    arr -= arr.T
+
+    return arr
+
+
+def populate_symmamparray( amps, N=7 ):
+    """
+    Short Summary
+    -------------
+    Populate the symmetric fringe amplitude array
+
+    Parameters
+    ----------
+    amps: 1D float array
+         ?? fringe visibility between each pair of holes
+
+    N: integer
+        number of holes
+
+    Returns
+    -------
+    arr: 2D float array
+        fringe amplitude array
+
+    """
+    arr = np.zeros((N,N))
+    step = 0
+    n = N-1
+    
+    for h in range(n):
+        arr[ h,h+1: ] = amps[ step:step+n ]
+        step += n
+        n -= 1
+
+    arr += arr.T
+
+    return arr
+
+
+def redundant_cps( deltaps, N=7 ):
+    """
+    Short Summary
+    -------------
+    Calculate closure phases for each set of 3 holes
+
+    Parameters
+    ----------
+    deltaps: 1D float array
+        pistons between each pair of holes
+
+    N: integer
+        number of holes
+
+    Returns
+    -------
+    cps: 1D float array
+        closure phases     
+    """
+    arr = populate_antisymmphasearray( deltaps, N=N ) # fringe phase array
+    cps = np.zeros(int(comb( N,3 )))
+    nn = 0
+
+    for kk in range(N-2):
+        for ii in range(N-kk-2):
+            for jj in range(N-kk-ii-2):
+                cps[ nn+jj ] = arr[ kk, ii+kk+1 ] \
+                       + arr[ ii+kk+1, jj+ii+kk+2 ] \
+                       + arr[ jj+ii+kk+2, kk ]
+
+            nn += jj + 1
+
+    return cps
+
+
+def closurephase( deltap, N=7 ):
+    """ 
+    Short Summary
+    -------------
+    Calculate closure phases between each pair of holes
+
+    Parameters
+    ----------
+    deltap: 1D float array
+        pistons between each pair of holes
+
+    N: integer
+        number of holes in the mask; 7 and 10 holes available (JWST & GPI))
+
+    Returns
+    -------
+    cps: 1D float array
+        closure phases
+    """
+
+    # p is a triangular matrix set up to calculate closure phases
+    if N == 7:
+        p = np.array( [ deltap[:6], deltap[6:11], deltap[11:15], \
+                deltap[15:18], deltap[18:20], deltap[20:] ] )
+    elif N == 10:
+        p = np.array( [ deltap[:9], deltap[9:17], deltap[17:24], \
+                deltap[24:30], deltap[30:35], deltap[35:39], \
+                deltap[39:42], deltap[42:44], deltap[44:] ] )
+    else:
+        log.critical('invalid hole number: %s', N ) 
+
+    # calculates closure phases for general N-hole mask (with p-array set
+    #     up properly above)
+    cps = np.zeros((N - 1)*(N - 2)//2)
+    for l1 in range(N - 2):
+        for l2 in range(N - 2 - l1):
+            cps[int(l1*((N + (N-3) -l1) / 2.0)) + l2] = \
+                p[l1][0] + p[l1+1][l2] - p[l1][l2+1]
+
+    return cps
+
+
+def return_CAs( amps, N=7 ):
+    """ 
+    Short Summary
+    -------------
+    Calculate closure amplitudes
+
+    Parameters
+    ----------
+    amps: 1D float array
+         fringe amplitudes
+
+    N: integer
+        number of holes
+
+    Returns
+    -------
+    CAs: 1D float array
+        closure amplitudes
+    """
+    arr = populate_symmamparray( amps, N=N ) # fringe amp array
+    nn = 0
+    CAs = np.zeros( int(comb(N,4)) )
+    for ii in range( N-3 ):
+        for jj in range( N-ii-3 ):
+            for kk in range( N-jj-ii-3 ):
+                for ll  in range( N-jj-ii-kk-3 ):
+                    CAs[ nn+ll ] = arr[ ii, jj+ii+1 ] \
+                           * arr[ ll+ii+jj+kk+3, kk+jj+ii+2 ] \
+                           / (arr[ ii, kk+ii+jj+2 ] * \
+                              arr[ jj+ii+1, ll+ii+jj+kk+3 ])
+                nn = nn+ll+1
+    return CAs
+
+

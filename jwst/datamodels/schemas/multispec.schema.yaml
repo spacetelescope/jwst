@@ -1,0 +1,23 @@
+allOf:
+- $ref: core.schema.yaml
+- type: object
+  properties:
+    spec:
+      type: array
+      title: An array of spectra
+      items:
+        type: object
+        properties:
+          spec_table:
+            title: Extracted spectral data table
+            fits_hdu: EXTRACT1D
+            datatype:
+            - name: column
+              datatype: float32
+            - name: wavelength
+              datatype: float32
+            - name: background
+              datatype: float32
+            - name: countrate
+              datatype: float32
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

@@ -1,0 +1,8 @@
+title: relative sensitivity table
+fits_hdu: RELSENS
+datatype:
+- name: wavelength
+  datatype: float64
+- name: response
+  datatype: float64
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

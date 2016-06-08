@@ -1,0 +1,9 @@
+include RELIC-INFO
+recursive-include relic *.* *.py
+recursive-include jwst *.fits
+recursive-include jwst *.inc
+recursive-include jwst *.json
+recursive-include jwst *.txt
+recursive-include jwst *.cfg
+prune relic/relic/__pycache__
+prune relic/.git

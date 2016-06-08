@@ -1,0 +1,14 @@
+title: Coronagraphic contrast curve data model
+allOf:
+- $ref: core.schema.yaml
+- type: object
+  properties:
+    contrast_table:
+      title: Contrast curve table
+      fits_hdu: CONTRAST
+      datatype:
+      - name: radius
+        datatype: float32
+      - name: sigma
+        datatype: float32
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

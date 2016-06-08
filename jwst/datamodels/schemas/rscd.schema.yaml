@@ -1,0 +1,22 @@
+title: RSCD reference file model
+allOf:
+- $ref: core.schema.yaml
+- type: object
+  properties:
+    rscd_table:
+      title: Reference file for RSCD correction
+      fits_hdu: RSCD
+      datatype:
+      - name: subarray
+        datatype: [ascii, 15]
+      - name: readpatt
+        datatype: [ascii, 12]
+      - name: tau1
+        datatype: float32
+      - name: scale1
+        datatype: float32
+      - name: tau2
+        datatype: float32
+      - name: scale2
+        datatype: float32
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

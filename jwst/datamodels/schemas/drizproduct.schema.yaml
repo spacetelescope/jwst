@@ -1,0 +1,24 @@
+allOf:
+- $ref: core.schema.yaml
+- $ref: lev3_prod.schema.yaml
+- type: object
+  properties:
+    data:
+      title: The science data
+      fits_hdu: SCI
+      default: 0.0
+      ndim: 2
+      datatype: float32
+    con:
+      title: Drizzle Context array
+      fits_hdu: CON
+      default: 0
+      datatype: int32
+    wht:
+      title: Drizzle Weight array
+      fits_hdu: WHT
+      default: 0.0
+      datatype: float32
+    relsens:
+      $ref: relsens.schema.yaml
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

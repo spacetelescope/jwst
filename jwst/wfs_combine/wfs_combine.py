@@ -1,0 +1,740 @@
+#! /usr/bin/env python
+#
+#  wfs_combine.py - combine 2 dithered PSF images
+#
+from __future__ import division
+import numpy as np
+import logging
+from jwst import datamodels
+from jwst.datamodels import dqflags
+import scipy
+from scipy.interpolate import griddata
+from scipy import signal
+
+log = logging.getLogger( __name__ )
+log.setLevel( logging.DEBUG )
+
+# The following should probably be in a ref file instead
+OFF_DELTA = 2  # for searching +/-2 around nominal offsets
+PSF_SIZE = 200 # half width of psf for 12 waves
+BLUR_SIZE = 10  # size of gaussian kernel for convolution
+N_SIZE = 2 # size of neighborhood in create_griddata_array
+
+class DataSet( object ):
+    """
+    Two dithered input wavefront sensing images to be combined
+
+    """
+
+    def __init__ ( self, infile_1, infile_2, outfile, do_refine ):
+        """
+        Short Summary
+        -------------
+        Assign models to input files.
+
+        Parameters:
+        -----------
+        infile_1: string
+            First input file
+        infile_2: string
+            Second input file
+        outfile: string
+            File for combined image
+        do_refine: boolean
+            True if refined offset calculation and application is to be made
+        """
+
+        if outfile == "":
+            log.error('No output product specified in the association table.')
+
+        try:
+            self.input_1 = models.open( infile_1 )
+            self.input_2 = models.open( infile_2 )
+        except IOError:
+            log.error('Error creating a model from at least 1 of : %s %s ',
+                      infile_1, infile_2)
+
+        self.do_refine = do_refine
+
+        if ( self.input_1.data.shape != self.input_2.data.shape ):
+            log.error('Incompatible sizes for input files')
+
+        log.info('File 1 to combine: %s ', infile_1)
+        log.info('File 2 to combine: %s ', infile_2)
+        log.info('Output file: %s ', outfile)
+        log.info('do_refine: %s ', do_refine)
+
+
+    def do_all( self ):
+        """
+        Short Summary
+        -------------
+        Execute all tasks for Wave Front Sensing Combination
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        new_model: data model object
+            combined input file data
+        """
+
+        # Input SCI arrays may have nan's so replace with 0's to prevent
+        # later annoyances (hopefully this can be removed later)
+        self.input_1.data[ np.isnan( self.input_1.data )] = 0.
+        self.input_2.data[ np.isnan( self.input_2.data )] = 0.
+
+        im_1_a = self.input_1.copy()  # Aligned image #1 (already aligned)
+        im_2_a = self.create_aligned_2()  # Aligned image #2
+
+        # Create and populate extensions for combined data
+        data_c, dq_c, err_c, wcs_1 = self.create_combined( im_1_a, im_2_a )
+
+        # Create a new model using the combined arrays...
+        new_model = models.ImageModel(data=data_c, dq=dq_c, err=err_c)
+        new_model.update(self.input_1)
+
+        return new_model
+
+
+    def create_aligned_2( self ):
+        """
+        Short Summary
+        -------------
+        Align image 2 in image 1's frame.
+
+        Long Summary
+        ------------
+        If refined offset determination is selected, do steps 1-7 else do 7 only
+        1. Create a smoothed image of the input SCI data of image #1. First
+           create an image to smooth by first setting SCI pixels with bad DQ
+           values equal to the mean of the good pixels. Then smooth this
+           'repaired' image using a gaussian kernel of size BLUR_SIZE.
+        2. Find the approximate centroid of this PSF, by taking all the pixels
+           in this smoothed image that exceed 50% of the maximum of the
+           smoothed image, and taking the mean of the coordinates of these
+           pixels.  The x- and y-mean defines the centroid location.
+        3. Set the limits of the subarrays for interpolation by taking this
+           centroid +/- PSF_SIZE and adding the BLUR_SIZE, taking the edges
+           into account.
+        4. Determine overlap of these interpolated images, and return nominally
+           aligned, interpolated images.
+        5. Around this nominal alignment, calculate refined (delta) offsets.
+        6. Add the refined delta offsets to the nominal offsets.
+        7. Do final alignment for original (not interpolated) image #2
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        model_2_a:  Data Model object
+           aligned model for input image #2
+        """
+
+        self.off_x, self.off_y = self.get_wcs_offsets()
+
+        if self.do_refine:
+            # 1. Create smoothed image of input SCI data of image #1
+            # 1a. create image to smooth by first setting bad DQ pixels equal
+            #     to mean of good pixels
+            data_1 = self.input_1.data.copy()
+            wh_bad_1 = np.where( self.input_1.dq != 0 )
+            wh_good_1 = np.where( self.input_1.dq == 0 )
+            data_1[ wh_bad_1 ] = self.input_1.data[ wh_good_1 ].mean()
+
+            # 1b. Create smoothed image by smoothing this 'repaired' image
+            s_data_1 = smooth_image( data_1, BLUR_SIZE )
+
+            # 2. Find approximate center of PSF in umsmoothed frame by taking
+            #    all pixels in smoothed image exceeding 50% of the maximum
+            #    of the smoothed image, and taking the mean of the coordinates
+            #    of these pixels. Add BLUR_SIZE to take smoothing into account
+            wh_data_hi = np.where( s_data_1 > 0.5 * s_data_1.max())
+
+            ctrd_x = wh_data_hi[1].mean() + BLUR_SIZE
+            ctrd_y = wh_data_hi[0].mean() + BLUR_SIZE
+
+            log.info('Approximate centroid of image 1 PSF has x,y : %s %s ', \
+                     round( ctrd_x), round( ctrd_y))
+
+            # 3. Set limits of the subarrays (in frames of input data)
+            #    for interpolation by taking this centroid +/- PSF_SIZE
+            #    and adding BLUR_SIZE, taking edges into account
+            xmin = round( max( 0, ctrd_x-PSF_SIZE ))
+            ymin = round( max( 0, ctrd_y-PSF_SIZE ))
+            xmax = round( min( self.input_1.data.shape[1], ctrd_x+PSF_SIZE ))
+            ymax = round( min( self.input_1.data.shape[0], ctrd_y+PSF_SIZE ))
+
+            # 3a. Set subarrays and interpolate over bad pixels
+            data_sub_1 = self.input_1.data[ ymin : ymax, xmin : xmax ]
+            dq_sub_1 = self.input_1.dq[ ymin : ymax, xmin : xmax ]
+            sci_int_1 = interp_array( data_sub_1, dq_sub_1)
+
+            data_sub_2 = self.input_2.data[ ymin : ymax, xmin : xmax ]
+            dq_sub_2 = self.input_2.dq[ ymin : ymax, xmin : xmax ]
+            sci_int_2 = interp_array( data_sub_2, dq_sub_2)
+
+            # 4. Determine overlap of these interpolated images, and
+            #    return nominally aligned, interpolated images
+            sci_nai_1, sci_nai_2 =  get_overlap( sci_int_1, sci_int_2,
+                                                 self.off_x, self.off_y )
+
+            # 5. Around this nominal alignment, get refined (delta) offsets
+            ref_del_off_x, ref_del_off_y = optimize_offs(sci_nai_1, sci_nai_2)
+
+            log.info('From the refined offsets calculation, the x,y changes in\
+                     ofsets are: %s %s ', ref_del_off_x, ref_del_off_y)
+
+            # 6. Add the refined delta offsets to the nominal offsets
+            self.off_x += ref_del_off_x
+            self.off_y += ref_del_off_y
+
+            log.info('Values for the refined offsets are, for x,y : %s %s ', \
+                     self.off_x, self.off_y)
+
+        log.info('Final values for x,y offsets:%s %s ', self.off_x, self.off_y)
+
+        # Do final alignment for original (not interpolated) image #2
+        data_2_a, dq_2_a, err_2_a = self.apply_final_offsets()
+
+        model_2_a = self.input_2.copy()  # Model for aligned image #2
+        model_2_a.data = data_2_a
+        model_2_a.dq = dq_2_a
+        model_2_a.err = err_2_a
+
+        return model_2_a
+
+
+    def apply_final_offsets( self ):
+        """
+        Short Summary
+        -------------
+        Apply final offsets, aligning each array for image #2 to #1's frame
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        data_2_a: 2D float array
+            aligned SCI array of image #2
+        dq_2_a: 2D int array
+            aligned DQ array of image #2
+        err_2_a: 2D float array
+            aligned ERR array of image #2
+        """
+
+        data_2_a = self.do_2d_shifts( self.input_2.data )
+        dq_2_a = self.do_2d_shifts( self.input_2.dq )
+        err_2_a = self.do_2d_shifts( self.input_2.err )
+
+        return data_2_a, dq_2_a, err_2_a
+
+
+    def get_wcs_offsets( self ):
+        """
+        Short Summary
+        -------------
+        Get the nominal offsets from the WCS information of each of the
+        2 input DataModel objects. From the difference in pointings (in
+        pixels) of the 2 images, round off to the nearest integers as
+        the specifications require that the pointings will differ by exact
+        integers.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        off_x: integer
+            difference (#2 -#1) in pointing in pixels in the x-direction
+        off_y: integer
+            difference (#2 -#1) in pointing in pixels in the y-direction
+        """
+
+        #crval1 = self.input_1.meta.wcs.crval
+        #crval2 = self.input_2.meta.wcs.crval
+        #crpix2_in_1 = self.input_1.meta.wcs.invert(*crval2)
+        #crpix = self.input_1.meta.wcs.crpix
+
+        crval1_model = self.input_1.meta.wcs.forward_transform['crval']
+        crval1 = crval1_model.lon.value, crval1_model.lat.value
+        crval2_model = self.input_2.meta.wcs.forward_transform['crval']
+        crval2 = crval2_model.lon.value, crval2_model.lat.value
+        # exclude the distortion as the inverse does not give sensible numbers yet
+        # but may be include it after this is fixed?
+        fits_wcs_transform = self.input_1.meta.wcs.forward_transform['crpix1' : ]
+        #crpix2_in_1 = self.input_1.meta.wcs.backward_transform(*crval2)
+        crpix2_in_1 = fits_wcs_transform.inverse(*crval2)
+        crpix = np.array((self.input_1.meta.wcs.forward_transform['crpix1'].offset.value,
+                 self.input_1.meta.wcs.forward_transform['crpix2'].offset.value), dtype=np.float)
+        off_x, off_y = crpix2_in_1 + crpix
+
+        log.info('CRVAL of Image 1 in WCS of #1 has pixel coords:%s %s',
+                 crval1[0], crval1[1])
+        log.info('CRVAL of Image 2 in WCS of #2 has pixel coords:%s %s',
+                 crval2[0], crval2[1])
+        log.info('Image 2 has these nominal offsets relative to image 1\
+                 (x,y): %s %s', off_x, off_y)
+
+        off_x = int( round( off_x )) # Offsets required to be integers
+        off_y = int( round( off_y ))
+
+        return  off_x, off_y
+
+
+    def create_combined( self, im_1_a, im_2_a ):
+        """
+        Short Summary
+        -------------
+        Create combined image from aligned input images. In the combined image:
+
+        The SCI pixel values are set by:
+        1. use pixels that are good (based on DQ) in image #1, else
+        2. for pixels that are bad in image #1, use good image #2 pixels, else
+        3. for pixels that are bad in both images, leave as default (0)
+
+        The DQ pixel values are similarly set, by:
+        1. use pixels that are good in image #1, else
+        2. for pixels that are bad in image #1, use good image #2 pixels, else
+        3. for pixels that are bad in both images, add a 'DO_NOT_USE' value to
+           the corresponding DQ value in image #1.
+       The ERR pixel values are set by:
+        1. use pixels that are good in image #1, else
+        2. for pixels that are bad in image #1, use good image #2 pixels, else
+        3. for pixels that are bad in both images, leave as default (0)
+
+        The WCS of the output model is set to the WCS of the 1st input
+
+        Parameters
+        ----------
+        im_1_a: 2D Data Model
+             aligned image from input #1
+        im_2_a: 2D Data Model
+             aligned image from input #2
+
+        Returns
+        -------
+        data_comb: 2d float array
+            combined SCI array
+        dq_comb: 2d integer array
+            combined DQ array
+        err_comb: 2d float array
+            combined ERR array
+        wcs_1: pywcs.WCS object
+            wcs information for the 1st input
+        """
+
+        sci_data_1 = im_1_a.data.copy()
+        sci_data_2 = im_2_a.data.copy()
+
+        dq_data_1 = im_1_a.dq.copy()
+        dq_data_2 = im_2_a.dq.copy()
+        err_data_1 = im_1_a.err.copy()
+        err_data_2 = im_2_a.err.copy()
+
+        wh_1_good = (dq_data_1 == 0)  # Where ALIGNED #1 pixels are good
+        wh_1_bad_2_good = (dq_data_1 != 0) & (dq_data_2 == 0)
+        wh_1_bad_2_bad = (dq_data_1 != 0) & (dq_data_2 != 0)
+
+        # Populate combined SCI, DQ and ERR arrays
+        data_comb = sci_data_1 * 0  # Pixels that are bad in both will stay 0
+        data_comb[ wh_1_good ] = sci_data_1[ wh_1_good ]
+        data_comb[ wh_1_bad_2_good ] = sci_data_2[ wh_1_bad_2_good ]
+
+        dq_comb = dq_data_1.copy()
+        dq_comb[ wh_1_bad_2_good ] = dq_data_2[ wh_1_bad_2_good ]
+        dq_comb[ wh_1_bad_2_bad ] = np.bitwise_or( dqflags.group['DO_NOT_USE'],
+                                                   dq_comb[ wh_1_bad_2_bad ])
+
+        err_comb = err_data_1.copy()
+        err_comb[ wh_1_bad_2_good ] = err_data_2[ wh_1_bad_2_good ]
+        err_comb[ wh_1_bad_2_bad ] = 0.
+
+        # Use wcs of input 1 for combination
+        wcs_1 = self.input_1.get_fits_wcs('SCI')
+
+        return data_comb, dq_comb, err_comb, wcs_1
+
+
+    def do_2d_shifts( self, a ):
+        """
+        Short Summary
+        -------------
+        Create 2d output array by shifting 2d array input by (off_x, off_y),
+        where output has same dimensions as input.
+
+        Parameters
+        ----------
+        a: 2d float array
+            input array
+
+        Returns
+        -------
+        b: 2d float array
+            shifted array of input a
+        """
+
+        ai_x, af_x = get_index_range( self.off_x, a.shape[1] )
+        ai_y, af_y = get_index_range( self.off_y, a.shape[0] )
+
+        bi_x = a.shape[1] - af_x  # For output, x-direction's initial channel
+        bf_x = a.shape[1] - ai_x  # ...and final channel
+
+        bi_y = a.shape[0] - af_y  # For output, y-direction's initial channel
+        bf_y = a.shape[0] - ai_y  # ...and final channel
+
+        b = a*0
+        b[ bi_y:bf_y, bi_x:bf_x ] = a[ ai_y:af_y, ai_x:af_x ]
+
+        return b
+
+
+def gauss_kern( size, sizey=None ):
+    """
+    Short Summary
+    -------------
+    Returns a normalized 2D gauss kernel array for convolution.
+
+    Parameters
+    ----------
+    size: int
+        size of gaussian kernel in x_dim
+    sizey: int
+        sizey of gaussian kernel in y_dim
+
+    Returns
+    -------
+    g/g.sum(): 2D float array
+        normalized 2D gauss kernel array
+
+    """
+    size = int( size )
+    if not sizey:
+        sizey = size
+    else:
+        sizey = int( sizey )
+
+    x, y = scipy.mgrid[-size:size+1, -sizey:sizey+1]
+    g = scipy.exp(-(x**2/float(size) + y**2/float(sizey)))
+
+    return g/g.sum()
+
+
+def smooth_image(im, n, ny=None) :
+    """
+    Short Summary
+    -------------
+    Smooths the image by convolving with a gaussian kernel of typical
+    size n. The optional keyword argument ny allows for a different
+    size in the y direction.  The 'valid' mode signifies that the
+    output consists only of those elements that do not rely on the
+    zero-padding (not the default).
+
+    Parameters
+    ----------
+    im: 2D array
+        1st input array
+    n: int
+        size of gaussian kernel in x-dim
+    ny: int
+        size of gaussian kernel in y-dim
+
+    Returns
+    -------
+    improc: 2D array
+        2D array containing a subset of the discrete linear
+        cross-correlation of the input image with the gaussian kernel
+
+    """
+    g = gauss_kern(n, sizey=ny)
+    improc = signal.convolve( im, g, mode='valid')
+
+    return improc
+
+
+def interp_array( sci_data, dq_data ):
+    """
+    Short Summary
+    -------------
+    For bad DQ values as given by the input DQ array, do a
+    bilinear interpolation over the corresponding SCI values and return
+    the interpolated SCI array.
+
+    Parameters
+    ----------
+    sci_data: 2D float array
+        original SCI image to interpolate over
+    dq_data: 2D int array
+        corresponding DQ image
+
+    Returns
+    -------
+    sci_data: 2D float array
+        interpolated SCI image
+    """
+
+    wh_bad_dq = np.where( dq_data != 0 )
+    num_bad_dq = len( wh_bad_dq[0] )
+
+    # Create array of locations of bad DQ pixels
+    bad_dq = np.zeros( (num_bad_dq, 2), dtype= np.int16 )
+    for ii in np.arange( num_bad_dq ):
+        bad_dq[ii] = wh_bad_dq[0][ii], wh_bad_dq[1][ii]
+
+    # Loop over bad pixels, filling in missing values with interpolated values
+    for jj in np.arange( num_bad_dq ):
+        ga = create_griddata_array( sci_data, bad_dq[jj] )
+
+        x = bad_dq[jj][1]
+        y = bad_dq[jj][0]
+
+        # Linearly interpolate using scipy's griddata to fill in missing value
+        sci_data[y, x] = griddata( ga[:,0:2],ga[:,2],[(y, x)], method='linear')
+
+        # For those interpolations just done that result in a nan (because
+        #    there may be too few pixels), check and redo with 'nearest'
+        if  np.isnan(sci_data[y, x]):
+            sci_data[y,x]=griddata(ga[:,0:2],ga[:,2],[(y, x)],method='nearest')
+
+    return sci_data
+
+
+def create_griddata_array( sci_data, pixel ):
+    """
+    Short Summary
+    -------------
+    Create interpolation array for input to scipy's griddata. This array
+    consists of the coordinates and the pixel value for each of
+    pixels neighboring the input pixel.
+
+    Parameters
+    ----------
+    sci_data: 2D float array
+        original SCI image
+
+    pixel: int, int
+        y, x coordinates of pixel to interpolate over
+
+    Returns
+    -------
+    interp_arr: int, int, float
+        pixel coords, pixel value for each pixel neighboring the input pixel
+
+    """
+    xdim = sci_data.shape[1]
+    ydim = sci_data.shape[0]
+
+    # Generate neighborhood limits
+    xmin = max( 0, pixel[1]-N_SIZE )
+    ymin = max( 0, pixel[0]-N_SIZE )
+    xmax = min( xdim-N_SIZE, pixel[1]+N_SIZE )
+    ymax = min( ydim-N_SIZE, pixel[0]+N_SIZE )
+
+    # Make a list for neighboring pixels, containing:
+    # 1. coordinates for up to (2*N_SIZE+1)^2-1 neighbors, accounting for edges
+    # 2. SCI data
+
+    interp_list = []
+    for x in range(xmin, xmax+1):
+        for y in range(ymin, ymax+1):
+            interp_list.append([ y, x, sci_data[ y, x ]])
+
+    try:  # Remove identity element (central pixel)
+        interp_list.remove([ pixel[0], pixel[1], sci_data[ pixel[0], pixel[1]]])
+    except:
+        pass
+
+    interp_arr = np.asarray( interp_list )  # griddata requires an array
+
+    return  interp_arr
+
+
+def get_index_range( offset, length ):
+
+    """
+    Short Summary
+    -------------
+    Get the initial and final indices for the given offset and array length:
+    For offset <= 0: i = 0,  f = length - abs(offset)
+    For offset > 0: i = offset,  f = length
+
+    Parameters
+    ----------
+    offset: integer
+        offset
+
+    length: integer
+        length of (1D) array
+
+    Returns
+    -------
+    i: integer
+        initial index
+    f: integer
+        final index
+    """
+
+    i = int((abs(offset) + offset)/2)
+    f = length + int((-abs(offset) + offset)/2)
+
+    return i, f
+
+
+def get_overlap( sci_int_1, sci_int_2, nom_off_x, nom_off_y ):
+    """
+    Short Summary
+    -------------
+    Apply nominal offsets (of image #2 relative to image #1) to determine
+    the overlap in interpolated images.
+
+    Long Summary
+    -------------
+    Apply nominal offsets (of image #2 relative to image #1) to determine
+    the overlap in interpolated images.  The resulting two subarrays are
+    the pixels common to both. In other words, image #2 is shifted onto
+    the frame of image #1, with the dimensions of the subarrays equal to
+    the dimensions of the overlap.
+
+    To illustrate with pseudocode for a 1D array with length 'length': for
+    a given offset 'off', the resulting initial and final indices, and
+    the elements of arrays indexed are:
+
+    for off < 0 : ix = 0 and fx = length - abs(off)
+       subarray indices: sub_1[ 0: length - abs(off) ]
+       subarray indices: sub_2[ 0: length - abs(off) ]
+
+    for off = 0 : ix = 0 ; fx = length )
+       subarray indices: sub_1[ 0: length ]
+       subarray indices: sub_2[ 0: length ]
+
+    for off > 0 : ix = off ; fx = length
+       subarray indices: sub_1[ 0: length - off ]
+       subarray indices: sub_2[ off: length ]
+
+    Parameters
+    ----------
+    sci_int_1: 2d float array
+        interpolated SCI array for image 1
+    sci_int_2: 2d float array
+        interpolated SCI array for image 2
+    nom_off_x: integer
+        nominal offset in x-direction
+    nom_off_y: integer
+        nominal offset in y-direction
+
+    Returns
+    -------
+    sub_1: 2d float array
+        overlapping subarray for interpolated image 1
+    sub_2: 2d float array
+        overlapping subarray for interpolated image 2
+    """
+
+    # From the nominal offsets, determine array indices to shift image #2
+    #     onto frame #1
+    ix, fx = get_index_range( nom_off_x, sci_int_2.shape[1] )
+    iy, fy = get_index_range( nom_off_y, sci_int_2.shape[0] )
+
+    sub_1 = sci_int_1[ :fy-iy, :fx-ix ]
+    sub_2 = sci_int_2[ iy:fy, ix:fx ]
+
+    return sub_1, sub_2
+
+
+def optimize_offs( sci_nai_1, sci_nai_2 ):
+    """
+    Short Summary
+    -------------
+    Calculate refined values for the offsets. Find the nearby integer
+    relative offsets between the nominally aligned interpolated images
+    which minimizes the square of the difference between the 2 images.
+
+    Parameters
+    ----------
+    sci_nai_1: 2d float array
+        nominally aligned, interpolated SCI array for image 1
+    sci_nai_2: 2d float array
+        nominally aligned, interpolated SCI array for image 2
+
+    Returns
+    -------
+    max_off_x: integer
+        offset in x-direction which minimizes array difference
+    max_off_y: integer
+        offset in y-direction which minimizes array difference
+
+    """
+
+    max_diff = 0.
+
+    for off_y in range( -OFF_DELTA, OFF_DELTA+1 ):
+        for off_x in range( -OFF_DELTA, OFF_DELTA+1 ):
+            this_diff = calc_cor_coef( sci_nai_1, sci_nai_2, off_x, off_y )
+
+            if ( this_diff > max_diff ):
+                max_diff = this_diff
+                max_off_x = off_x
+                max_off_y = off_y
+
+    return max_off_x, max_off_y
+
+
+def calc_cor_coef( sci_nai_1, sci_nai_2, off_x, off_y ):
+    """
+    Short Summary
+    -------------
+    Get the overlap of the 2 images (based on the offsets), and
+    calculate the correlation coefficient between 2 image subarrays.
+    (We may want something more sophisticated later)
+
+    Parameters
+    ----------
+    sci_nai_1: 2d float array
+        nominally aligned, interpolated SCI subarray for image 1
+    sci_nai_2: 2d float array
+        nominally aligned, interpolated SCI subarray for image 2
+    off_x: integer
+        offset in x-direction
+    off_y: integer
+        offset in y-direction
+
+    Returns
+    -------
+    mean_diff: float
+        mean of correlation coefficient array
+
+    """
+
+    sub_1, sub_2 = get_overlap( sci_nai_1, sci_nai_2, off_x, off_y )
+    num_pix = sub_1.shape[0] * sub_1.shape[1]  # Number of overlapping pixels
+
+    # Raise (fatal) exception if there are no overlapping pixels
+    if ( num_pix == 0):
+        log.error('Applying offsets to image #2 results in 0 overlapping pix')
+        raise RuntimeWarning('No overlapping pixels in 2 images')
+
+    # Set limits for subarrays, centered on the overlap and +/- psf half width,
+    #   taking edges into account
+    xlen = sub_1.shape[1]
+    ylen = sub_1.shape[0]
+    xcen = xlen/2+1
+    ycen = ylen/2+1
+
+    xmin = max( 0, xcen-PSF_SIZE )
+    xmax = min( xlen-1, xcen+PSF_SIZE )
+    ymin = max( 0, ycen-PSF_SIZE )
+    ymax = min( ylen-1, ycen+PSF_SIZE )
+
+    # Create subarrays using these limits, and make them
+    #   1D for numpy's correlation coefficient
+    sub_1_sub = sub_1[ ymin:ymax, xmin:xmax]
+    sub_2_sub = sub_2[ ymin:ymax, xmin:xmax]
+    sub_1_sub = np.ravel( sub_1_sub)
+    sub_2_sub = np.ravel( sub_2_sub)
+
+    cor_coef = np.corrcoef( sub_1_sub, sub_2_sub)
+
+    return cor_coef.mean()

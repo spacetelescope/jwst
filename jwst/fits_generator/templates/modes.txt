@@ -1,0 +1,253 @@
+JWST Observing Modes
+--------------------
+
+  This document lays out the mapping between the APT templates as
+observing modes, and the science data that will result from it.  It tries to
+define how we use data in the headers to determine the science data type.
+
+  These seem to be the names of the templates in the APT.  Some will not
+result in any science data.  Some will result in more than 1 kind of science
+data.  I list them for completeness.  The numbers refer to APT identifier
+numbers for the template.
+
+2: MiriImaging
+
+3: MiriMRSFlat
+
+4: MiriAnneal
+
+5: MiriDark
+
+6: MiriImagingFlat
+
+7: MiriCoron
+
+8: MiriLRS
+
+9: MiriMRS
+
+10: NircamImaging
+
+11: NircamCoron
+
+12: NircamDark
+
+13: NircamFocus
+
+14: NircamInternalFlat
+
+15: NircamWheelExercise
+
+16: NircamWheelThresholdCurrent
+
+17: NirspecFixedSlitSpectroscopy
+
+18: Nirspec
+
+19: NirspecFocus
+
+20: NirspecFocusReference
+
+21: NirspecDark
+
+22: NirspecIFUSpectroscopy
+
+23: NirspecInternalLamp
+
+24: NirspecMOS
+
+25: NirspecMSAAnneal
+
+26: NirspecMSAShortDetect
+
+27: NirspecMSAMasking
+
+28: NirspecFilterGratingWheelTest
+
+29: TfiImaging
+
+30: TfiDark
+
+31: TfiFlatSuite
+
+32: TfiFocus
+
+33: FgsFocus
+
+--------------------------------------------------------------
+MIRI Imaging
+------------
+
+Chapter 9 in the JWST Proposal Instrunctions.
+
+Choose:
+
+  Pattern details:
+
+    Pattern Type   {NONE|CYCLING|RULEAUX}
+
+    Starting Point {CYCLING pattern only, Integer from 1 to 311}
+
+    Number of Points {CYCLING pattern only, Integer from 3? to ? (can be over
+311, cycles back)}
+
+    Pattern Size {SMALL|MEDIUM|LARGE|DEFAULT}
+
+If DEFAULT selected, pattern size depends on the filter according to table
+
+Filter      Ruleaux    Cycling
+-------------------------------
+F560W       SMALL      SMALL
+F770W       SMALL      MEDIUM
+F1000W      MEDIUM     MEDIUM
+F1130W      MEDIUM     MEDIUM
+F1280W      MEDIUM     MEDIUM
+F1500W      MEDIUM     MEDIUM
+F1800W      LARGE      MEDIUM
+F2100W      LARGE      MEDIUM
+F2550W      LARGE      MEDIUM
+-------------------------------
+
+    Subpixel Sampling {YES|NO}
+
+  Object Type {BRIGHT|FAINT}
+
+  Subarray {FULL|BRIGHTSKY}
+
+  Filter(s)  {F560W|F770W|F1000W|F1130W|F1280W|F1500W|F1800W|F2100W|F2550W}
+
+  Requested Exposure Time (seconds) {Floating Point number, arbitrary}
+
+  Readout Pattern  {FAST|SLOW|FASTGRPAVG|FASTINTAVG}
+
+  Number of Groups  {Integer from 1 to ?}
+
+  Number of Integrations {Integer from 1 to ?}
+
+How do we tell it's MIRI imaging?
+---------------------------------
+
+ 1)  Detector SCA_ID should be 493 Decimal or 0x1ed
+
+ 2)  The filter should not be a coronagraphic filter {F1065C,
+                                                      F1140C,
+                                                      F1550C,
+                                                      F2300C}
+
+ 3)  SUBARRAY name should be FULL or BRIGHTSKY
+      - Coronographic target acquisition images will use the MASK1065,
+        MASK1140, MASK1550 or MASKLYOT subarrays
+
+MIRI Coronagraphic Imaging
+--------------------------
+
+Chapter 12 of the JWST Proposal Instructions
+
+Choose:
+
+  Target Acquisition Filter:  {F560W|F1000W|F1500W|FND}
+
+  Science Observations Coronagraph: {F1065C|F1140C|F1550C|F2300C}
+  
+  Readout Pattern: {FAST|SLOW|FASTGRPAVG|FASTINTAVG}
+
+  Number of Groups: {Integer from 1 to ?}
+
+  Number of Integrations: {Integer from 1 to ?}
+
+The MIRI Coronagraphic Imaging template enables the acquisition of three
+different flavors of data:
+
+  Acquisition Images
+  Science Coronographic Images
+  Calibration PSF Coronagraphic Images
+
+The coronagraphic data can be identified by the use of a subarray, one of
+{MASK1065|MASK1140|MASK1550|MASKLYOT}.  The acquisition data will use the
+regular filters {F560W|F1000W|F1500W|FND}, whereas the coronagraphic images
+themselves will use the C filters: {F1065C|F1140C|F1550C|F2300C}.  Currently
+there seems to be no way to distinguish Science coronagraphic images from
+PSF coronagraphic images, so we might like to require that the PSF images have
+something in the target name to indicate that they are a PSF reference image.
+The template treats PSF and science data equivalently, as two separate
+observations.  There are TBDs in the Proposal Instructions that address this:
+"Coronagraphic observations should have a reference star observation before or
+after the science observations.  Ther reference star observations are
+identical to science except for target and exposure time.  Should the template
+automatically ask for the reference star observation information (target name
+and exposure time per target acquisition and science filter)?"
+
+MIRI LRS Spectroscopy
+---------------------
+
+  MIRI LRS Spectroscopy uses the MIRI Imaging detector.  It is enabled by
+selecting the P750L element in the filter wheel.  P750L is sometimes called
+the LRS Prism.  Slit is 5.5" (45 pixels) long and 0.6" (~5 pixels) wide.  The
+prism transmits 5-14 microns, but is optimized for use between 5 and 10
+microns.  The 5-14 micron spectrum is dispersed over ~370 pixels, the 5-10
+micron spectrum covers 140 pixels.
+
+  Since the LRS uses a small slit, an acquisition image is necessary.
+
+  According to the MIRI Ops Concept, there appear to be two LRS observing
+modes: through the slit and slitless.  The through the slit mode is defined
+by having the optical element as 'P750L', and the subarray as FULL.  This
+mode can also be used to fudge a slitless mode using the full imaging field,
+whereby a specific target is placed in the slit in order to make a bunch of
+targets of interest give dispersed images in the MIRI imaging field.  We don't
+plan to support this mode though, and at the moment proposers don't actually
+signal their intent to do this, they just pretend they're doing a regular
+slit LRS observation.
+
+  The supported slitless mode uses the P750L optical element, and gives data
+with the SLITLESSPRISM subarray.  This subarray (X=1-64, Y=348-859 with 4 extra
+columns on the left for reference pixels) has a faster frame time and was
+designed for exoplanet observations.  There's nothing in APT as yet to support
+this, it will be bundled in with the exoplanet commanding currently in
+progress.
+
+  From the apt proposal instructions:
+
+  Choose:
+
+  Pattern Type: [DitherType] {POINT SOURCE|EXTENDED TARGET}
+
+  Point source dither pattern gives 2 exposures, one at each of two points
+along the slit.
+
+  Extended source dither pattern selects a grid of dither points:
+
+      Choose: NUMBER_OF_SPECTRAL_STEPS = Integer
+
+      SPECTRAL_STEP_OFFSET = Floating point number, offset per step in the
+      spectral direction in arcseconds.
+
+      NUMBER_OF_SPATIAL_STEPS = Integer
+
+      SPATIAL_STEP_OFFSET = Floating point number, offset per step in the
+      spatial direction in arcseconds.
+
+  Object Type: [ObjectType] {BRIGHT|FAINT}
+
+  Target Acquisition:
+
+    Acquisition Target Name [TACQ TARGET][AcqTargetID] = Character String
+
+    Target Acquisition Filter [TACQ FILTER][AcqFilter] =
+    {F560W|F1000W|F1500W|FND}
+
+    Requested Exposure Time [RequestedExposureTime] = Floating Point value(?)
+    in seconds
+
+    Readout Pattern [ReadoutPattern] = {FAST|SLOW}
+
+    Number of groups [Groups] = Integer
+
+    Number of integrations [Integrations] = Integer
+
+Choose MIRI LRS by SCA_ID = %x1ed
+                   FILTER = 'P750L'
+
+    
+MIRI MRS Spectroscopy / MIRI IFU
+--------------------------------

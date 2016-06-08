@@ -1,0 +1,12 @@
+title: Extracted count rate table
+fits_hdu: EXTRACT1D
+datatype:
+- name: column
+  datatype: float64
+- name: wavelength
+  datatype: float64
+- name: background
+  datatype: float64
+- name: countrate
+  datatype: float64
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

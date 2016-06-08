@@ -1,0 +1,20 @@
+title: Linearity correction data model
+allOf:
+- $ref: core.schema.yaml
+- $ref: referencefile.schema.yaml
+- type: object
+  properties:
+    coeffs:
+      title: Linearity coefficients
+      fits_hdu: COEFFS
+      default: 0.0
+      ndim: 3
+      datatype: float32
+    dq:
+      title: Data quality flags
+      fits_hdu: DQ
+      default: 0
+      datatype: uint32
+    dq_def:
+      $ref: dq_def.schema.yaml
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

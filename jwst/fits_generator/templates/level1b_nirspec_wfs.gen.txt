@@ -1,0 +1,56 @@
+<<file nirspec_level1b>>
+<<header primary>>
+#include "level1b.gen.inc"
+#include 'observation_identifiers.gen.inc'
+#include 'exposure_parameters.gen.inc'
+#include 'program_information.gen.inc'
+#include 'observation_information.gen.inc'
+#include 'visit_information.gen.inc'
+#include 'exposure_information.gen.inc'
+#include 'target_information.gen.inc'
+#include 'exposure_times.gen.inc'
+#include 'exposure_time_parameters.gen.inc'
+#include 'subarray_parameters.gen.inc'
+#include 'nirspec_configuration.gen.inc'
+#include 'nirspec_msa_supporting_files.gen.inc'
+#include 'lamp_configuration.gen.inc'
+#include 'guide_star_information.gen.inc'
+#include 'nirspec_wfs_engineering'gen.inc'
+#include 'jwst_ephemeris_information.gen.inc'
+#include 'spacecraft_pointing_information.gen.inc'
+#include 'aperture_pointing_information.gen.inc'
+#include 'wcs_parameters.gen.inc'
+#include 'velocity_aberration_correction.gen.inc'
+#include 'time_related.gen.inc'
+
+<<data>>
+
+<<header science>>
+#include 'level1b_sci_extension_basic.gen.inc'
+
+<<data>>
+input[0].data.reshape((input[0].header['NINT'], \
+                       input[0].header['NGROUP'], \
+                       input[0].header['NAXIS2'], \
+                       input[0].header['NAXIS1'])). \
+                       astype('uint16')
+
+<<header error>>
+EXTNAME = 'ERR'
+
+<<data>>
+np.ones((input[0].header['NINT'], \
+         input[0].header['NGROUP'], \
+         input[0].header['NAXIS2'], \
+         input[0].header['NAXIS1'])). \
+         astype('float32')
+
+<<header data_quality>>
+EXTNAME = "DQ"
+
+<<data>>
+np.zeros((input[0].header['NINT'], \
+          input[0].header['NGROUP'], \
+          input[0].header['NAXIS2'], \
+          input[0].header['NAXIS1']), dtype='int16')
+

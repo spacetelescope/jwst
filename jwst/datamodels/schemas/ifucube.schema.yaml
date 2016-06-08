@@ -1,0 +1,52 @@
+allOf:
+- $ref: core.schema.yaml
+- type: object
+  properties:
+    meta:
+      type: object
+      properties:
+        flux_extension:
+          title: EXTNAME of the extension containing flux data
+          type: string
+          fits_keyword: FLUXEXT
+        error_extension:
+          title: EXTNAME of the extension containing error data
+          type: string
+          fits_keyword: ERREXT
+        dq_extension:
+          title: EXTNAME of the extension containing data quality mask
+          type: string
+          fits_keyword: MASKEXT
+- type: object
+  properties:
+    data:
+      title: The science data
+      fits_hdu: SCI
+      default: 0.0
+      ndim: 3
+      datatype: float32
+    dq:
+      title: Data quality array
+      fits_hdu: DQ
+      default: 0
+      ndim: 3
+      datatype: uint32
+    err:
+      title: Error array
+      fits_hdu: ERR
+      default: 0.0
+      ndim: 3
+      datatype: float32
+    weightmap:
+      title: Weight map of coverage
+      fits_hdu: WMAP
+      default: 0.0
+      ndim: 3
+      datatype: float32
+    error_type:
+      title: Type of errors stored here
+      type: string
+      enum: [ERR, IERR, VAR, IVAR]
+      fits_keyword: ERRTYPE
+      fits_hdu: ERR
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

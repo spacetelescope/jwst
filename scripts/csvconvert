@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+from jwst.csv_tools.csvconvert import CSVConvertScript
+
+if __name__ == '__main__':
+    CSVConvertScript()

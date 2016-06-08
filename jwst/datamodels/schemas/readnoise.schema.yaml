@@ -1,0 +1,12 @@
+allOf:
+- $ref: core.schema.yaml
+- $ref: referencefile.schema.yaml
+- type: object
+  properties:
+    data:
+      title: Read noise
+      fits_hdu: SCI
+      default: 0.0
+      ndim: 2
+      datatype: float32
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

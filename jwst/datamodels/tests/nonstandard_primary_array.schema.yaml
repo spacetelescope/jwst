@@ -1,0 +1,20 @@
+allOf:
+- $ref: ../schemas/core.schema.yaml
+- type: object
+  title: Test schema - demonstrate infinite recursion loop
+  properties:
+    wavelength:
+      title: Wavelength at each pixel coordinate
+      fits_hdu: WAVELENGTH
+      default: 0.0
+      ndim: 2
+      units: micron
+      datatype: float32
+    alpha:
+      title: Alpha at a each pixel coordinate
+      fits_hdu: ALPHA
+      default: 0.0
+      ndim: 2
+      units: arcsec
+      datatype: float32
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

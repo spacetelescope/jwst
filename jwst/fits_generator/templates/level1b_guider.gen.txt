@@ -1,0 +1,36 @@
+<<file fgs_level1b>>
+<<header primary>>
+#include 'level1b.gen.inc'
+#include 'observation_identifiers.gen.inc'
+#include 'exposure_parameters.gen.inc'
+#include 'program_information.gen.inc'
+#include 'observation_information.gen.inc'
+#include 'visit_information.gen.inc'
+#include 'exposure_information.gen.inc'
+#include 'target_information.gen.inc'
+#include 'exposure_times.gen.inc'
+#include 'exposure_time_parameters.gen.inc'
+#include 'subarray_parameters_guider.gen.inc'
+#include 'fgs_configuration.gen.inc'
+#include 'lamp_configuration.gen.inc'
+#include 'guide_star_information.gen.inc'
+#include 'jwst_ephemeris_information.gen.inc'
+#include 'spacecraft_pointing_information.gen.inc'
+#include 'aperture_pointing_information.gen.inc'
+#include 'wcs_parameters_fgs.gen.inc'
+#include 'velocity_aberration_correction.gen.inc'
+#include 'fgs_dither_pattern.gen.inc'
+#include 'time_related.gen.inc'
+
+<<data>>
+
+<<header science>>
+#include 'level1b_sci_extension_basic.gen.inc'
+
+<<data>>
+input[0].data.reshape((input[0].header['NINT'], \
+                       input[0].header['NGROUP'], \
+                       input[0].header['NAXIS2'], \
+                       input[0].header['NAXIS1'])). \
+                       astype('uint16')
+

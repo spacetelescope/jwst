@@ -1,0 +1,1440 @@
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      date:
+        #allOf:
+        #- $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
+        #- title: Date this file was created (UTC)
+        #  fits_keyword: DATE
+        title: Date this file was created (UTC)
+        type: string
+        fits_keyword: DATE
+      origin:
+        title: Organization responsible for creating file
+        type: string
+        fits_keyword: ORIGIN
+      time_sys:
+        title: principal time system for time-related keywords
+        type: string
+        fits_keyword: TIMESYS
+      filename:
+        title: Name of the file
+        type: string
+        fits_keyword: FILENAME
+      filetype:
+        title: Type of data in the file
+        type: string
+        fits_keyword: FILETYPE
+      data_processing_software_version:
+        title: Data processing software version number
+        type: string
+        fits_keyword: SDP_VER
+      prd_software_version:
+        title: S&OC PRD version number used in data processing
+        type: string
+        fits_keyword: PRD_VER
+      calibration_software_version:
+        title: Calibration software version number
+        type: string
+        fits_keyword: CAL_VER
+      calibration_software_revision:
+        title: Calibration software revision number
+        type: string
+        fits_keyword: CAL_SVN
+      telescope:
+        title: Telescope used to acquire the data
+        type: string
+        fits_keyword: TELESCOP
+      coordinates:
+        title: Information about the coordinates in the file
+        type: object
+        properties:
+          reference_frame:
+            title: Name of the coordinate reference frame
+            type: string
+            fits_keyword: RADESYS
+            enum: [ICRS]
+      asn:
+        title: Association information
+        type: object
+        properties:
+          pool_name:
+            title: Name of the ASN pool
+            type: string
+            fits_keyword: ASNPOOL
+          table_name:
+            title: Name of the ASN table
+            type: string
+            fits_keyword: ASNTABLE
+      program:
+        title: Programmatic information
+        type: object
+        properties:
+          title:
+            title: Proposal title
+            type: string
+            fits_keyword: TITLE
+          pi_name:
+            title: Principal investigator name
+            type: string
+            fits_keyword: PI_NAME
+          category:
+            title: Program category
+            type: string
+            fits_keyword: CATEGORY
+          sub_category:
+            title: Program sub-category
+            type: string
+            fits_keyword: SUBCAT
+          science_category:
+            title: Science category assigned during TAC process
+            type: string
+            fits_keyword: SCICAT
+          continuation_id:
+            title: Continuation of previous program
+            type: string
+            fits_keyword: CONT_ID
+      observation:
+        title: Observation identifiers
+        type: object
+        properties:
+          date:
+            #allOf:
+            #- $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
+            #- title: UTC date at the start of the exposure
+            #  fits_keyword: DATE-OBS
+            title: (yyyy-mm-dd) UTC date at start of exposure
+            type: string
+            fits_keyword: DATE-OBS
+          time:
+            title: (hh:mm:ss.ssssss) UTC time at start of exposure
+            type: string
+            fits_keyword: TIME-OBS
+          obs_id:
+            title: Programmatic observation identifier
+            type: [string, 'null']
+            fits_keyword: OBS_ID
+          visit_id:
+            title: Visit identifier
+            type: string
+            fits_keyword: VISIT_ID
+          program_number:
+            title: Program number
+            type: string
+            fits_keyword: PROGRAM
+          observation_number:
+            title: Observation number
+            type: string
+            fits_keyword: OBSERVTN
+          visit_number:
+            title: Visit number
+            type: string
+            fits_keyword: VISIT
+          visit_group:
+            title: Visit group identifier
+            type: string
+            fits_keyword: VISITGRP
+          sequence_id:
+            title: Parallel sequence identifier
+            type: string
+            fits_keyword: SEQ_ID
+          activity_id:
+            title: Activity identifier
+            type: string
+            fits_keyword: ACT_ID
+          exposure_number:
+            title: Exposure request number
+            type: string
+            fits_keyword: EXPOSURE
+          template:
+            title: Proposal instruction template used
+            type: string
+            fits_keyword: TEMPLATE
+          observation_label:
+            title: Proposer label for the observation
+            type: string
+            fits_keyword: OBSLABEL
+      visit:
+        title: Visit information
+        type: object
+        properties:
+          type:
+            title: Visit type
+            type: string
+            fits_keyword: VISITYPE
+          start_time:
+            title: UTC visit start time
+            type: string
+            fits_keyword: VSTSTART
+          wfs_visit_indicator:
+            title: Wavefront sensing and control visit indicator
+            type: string
+            fits_keyword: WFSVISIT
+          total_exposures:
+            title: Total number of planned exposures in visit
+            type: integer
+            fits_keyword: NEXPOSUR
+          internal_target:
+            title: At least one exposure in visit is internal
+            type: boolean
+            fits_keyword: INTARGET
+          too_visit:
+            title: Visit scheduled as target of opportunity
+            type: boolean
+            fits_keyword: TARGOOPP
+      target:
+        title: Target information
+        type: object
+        properties:
+          proposer_name:
+            title: Proposer's name for the target
+            type: string
+            fits_keyword: TARGPROP
+          catalog_name:
+            title: Standard astronomical catalog name for target
+            type: string
+            fits_keyword: TARGNAME
+          type:
+            title: Type of target (fixed, moving, generic)
+            type: string
+            fits_keyword: TARGTYPE
+          ra:
+            title: Target RA at mid time of exposure
+            type: number
+            fits_keyword: TARG_RA
+          dec:
+            title: Target Dec at mid time of exposure
+            type: number
+            fits_keyword: TARG_DEC
+          ra_uncertainty:
+            title: Target RA uncertainty
+            type: number
+            fits_keyword: TARGURA
+          dec_uncertainty:
+            title: Target Dec uncertainty
+            type: number
+            fits_keyword: TARGUDEC
+          proposer_ra:
+            title: Proposer specified RA for the target
+            type: number
+            fits_keyword: PROP_RA
+          proposer_dec:
+            title: Proposer specified Dec for the target
+            type: number
+            fits_keyword: PROP_DEC
+          proposer_epoch:
+            title: Proposer specified epoch for RA and Dec
+            type: string
+            fits_keyword: PROPEPOC
+      instrument:
+        title: Instrument configuration information
+        type: object
+        properties:
+          name:
+            title: Instrument used to acquire the data
+            type: string
+            enum: [NIRCAM, NIRSPEC, MIRI, TFI, FGS, NIRISS, ANY, N/A]
+            fits_keyword: INSTRUME
+          detector:
+            title: Name of detector used to acquire the data
+            type: string
+            enum: [NRCA1, NRCA2, NRCA3, NRCA4, NRCALONG, NRCB1, NRCB2, NRCB3, NRCB4,
+              NRCBLONG, NRS1, NRS2, ANY, MIRIMAGE, MIRIFULONG, MIRIFUSHORT, NIRISS,
+              NIS, GUIDER1, GUIDER2, N/A]
+            description: '''NIRISS'' is deprecated in favor of ''NIS'''
+            fits_keyword: DETECTOR
+          module:
+            title: 'NIRCam module: A or B'
+            type: string
+            fits_keyword: MODULE
+          channel:
+            title: 'NIRCam channel: long or short'
+            type: string
+            enum: [LONG, SHORT, '12', '34', '1', '2', '3', '4', ANY, N/A]
+            fits_keyword: CHANNEL
+          filter:
+            title: Name of the filter element used
+            type: string
+            enum: [ANY, CLEAR, F070LP, F070W, F090W, F1000W, F100LP, F1065C,
+              F110W, F1130W, F1140C, F115W, F1280W, F140M, F140X, F1500W, F150W,
+              F150W2, F1550C, F170LP, F1800W, F182M, F187N, F200W, F2100W, F210M,
+              F212N, F227W, F2300C, F250M, F2550W, F2550WR, F277W, F290LP, F300M,
+              F322W2, F335M, F356W, F360M, F380M, F410M, F430M, F444W,
+              F460M, F480M, F560W, F770W, FLENS, FND, FNDP750L, GR150C,
+              GR150R, OPAQUE, P750L, WL3, WLP4, N/A]
+            fits_keyword: FILTER
+          pupil:
+            title: Name of the pupil element used
+            type: string
+            enum: [ANY, CLEAR, CLEARP, F090W, F115W, F140M, F150W, F158M, F162M, F164N,
+              F200W, F323N, F405N, F466N, F470N, FLAT, GDHS, GDHS0, GDHS60, GR700XD,
+              GRISMC, GRISMR, GRISMV2, GRISMV3, MASKBAR, MASKIPR, MASKRND, NRM, PINHOLES,
+              WLM8, WLP4, WLP8, N/A]
+            fits_keyword: PUPIL
+          pupil_imaging_lens:
+            title: Pupil imaging lens in the optical path?
+            type: boolean
+            fits_keyword: PILIN
+          grating:
+            title: Name of the grating element used
+            type: string
+            enum: [G140M, G235M, G395M, G140H, G235H, G395H, PRISM, MIRROR, N/A, ANY]
+            fits_keyword: GRATING
+          band:
+            title: MRS wavelength band
+            type: string
+            enum: [SHORT, MEDIUM, LONG, N/A, ANY]
+            fits_keyword: BAND
+          fixed_slit:
+            title: Name of fixed slit aperture used
+            type: string
+            fits_keyword: FXD_SLIT
+          focus_position:
+            title: Focus position
+            type: number
+            fits_keyword: FOCUSPOS
+          pre_image_id:
+            title: Pre-image ID from PPS DB
+            type: string
+            fits_keyword: PREIMAGE
+          ccc_state:
+            title: Contamination control cover state
+            type: string
+            enum: [OPEN, CLOSED, LOCKED]
+            fits_keyword: CCCSTATE
+          coronagraph:
+            title: coronagraph mask used
+            type: string
+            enum: [4QPM, LYOT, MASK210R, MASKSWB, MASK335R, MASK430R, MASKLWB, NULL]
+            fits_keyword: CORONMSK
+          msa_state:
+            title: State of the MSA
+            type: string
+            #enum: [ALL OPEN, ALL CLOSED, CONFIGURED]
+            fits_keyword: MSASTATE
+          msa_configuration_file:
+            title: MSA configuration file name
+            type: string
+            fits_keyword: MSACONFG
+          lamp_state:
+            title: Internal lamp state
+            type: string
+            fits_keyword: LAMP
+          gwa_xtilt:
+            title: Grating Y tilt angle relative to mirror
+            type: number
+            fits_keyword: GWA_XTIL
+          gwa_ytilt:
+            title: Grating X tilt angle relative to mirror
+            type: number
+            fits_keyword: GWA_YTIL
+          gwa_xp_v:
+            title: GWA X-position/tilt sensor calib
+            type: number
+            fits_keyword: GWA_XP_V
+          gwa_yp_v:
+            title: GWA Y-position/tilt sensor calib
+            type: number
+            fits_keyword: GWA_YP_V
+          gwa_pxav:
+            title: GWA REC avg X-pos/tilt sensor calib
+            type: number
+            fits_keyword: GWA_PXAV
+          gwa_pyav:
+            title: GWA REC avg Y-pos/tilt sensor calib
+            type: number
+            fits_keyword: GWA_PYAV
+          gwa_tilt:
+            title: GWA TILT (avg/calib) temperature
+            type: number
+            fits_keyword: GWA_TILT
+      exposure:
+        title: Exposure parameters
+        type: object
+        properties:
+          pointing_sequence:
+            title: Pointing sequence number
+            type: integer
+            fits_keyword: PNTG_SEQ
+          count:
+            title: Running count of exposures in visit
+            type: integer
+            fits_keyword: EXPCOUNT
+          type:
+            title: Type of data in the exposure
+            type: string
+            enum: [FGS_DARK, FGS_FOCUS, FGS_IMAGE, FGS_INTFLAT, FGS_SKYFLAT,
+              MIR_IMAGE, MIR_TACQ, MIR_LYOT, MIR_4QPM, MIR_LRS-FIXEDSLIT,
+              MIR_LRS-SLITLESS, MIR_MRS, MIR_DARK, MIR_FLAT-IMAGE, MIR_FLATIMAGE,
+              MIR_FLAT-MRS, MIR_FLATMRS, MIR_CORONCAL, NIS_AMI, NIS_DARK,
+              NIS_FOCUS, NIS_IMAGE, NIS_LAMP, NIS_SOSS, NIS_TACQ, NIS_TACONFIRM,
+              NIS_WFSS, N/A, ANY, NRC_IMAGE, NRC_GRISM, NRC_TACQ, NRC_CORON,
+              NRC_FOCUS, NRC_DARK, NRC_FLAT, NRC_LED, NRC_WFSC, NRC_TACONFIRM,
+              NRC_TSIMAGE, NRC_TSGRISM, NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BOTA,
+              NRS_BRIGHTOBJ, NRS_CONFIRM, NRS_DARK, NRS_FIXEDSLIT, NRS_FOCUS,
+              NRS_IFU, NRS_IMAGE, NRS_LAMP, NRS_MIMF, NRS_MSASPEC, NRS_TACONFIRM,
+              NRS_TACQ, NRS_TASLIT]
+            fits_keyword: EXP_TYPE
+          start_time:
+            allOf:
+              - type: number
+              - fits_keyword: EXPSTART
+                title: UTC exposure start time
+          mid_time:
+            allOf:
+              - type: number
+              - fits_keyword: EXPMID
+                title: UTC exposure mid time
+          end_time:
+            allOf:
+              - type: number
+                title: UTC exposure end time
+                fits_keyword: EXPEND
+          readpatt:
+            title: Readout pattern
+            type: string
+            enum: [ACQ1, ACQ2, ALLIRS2, BRIGHT1, BRIGHT2,
+              DEEP2, DEEP8, FAST, FASTGRPAVG, FASTINTAVG,
+              FGS, FGS60, FGS8370, FGS840, FGSRAPID, FINEGUIDE,
+              ID, MEDIUM2, MEDIUM8, NIS, NISRAPID,
+              NRS, NRSIRS2, NRSN16R4, NRSN32R8, NRSN8R2,
+              NRSRAPID, NRSIRS2RAPID, ALLIRS2, NRSSLOW, RAPID,
+              SHALLOW2, SHALLOW4, SLOW, TRACK, ANY, N/A]
+            fits_keyword: READPATT
+          nints:
+            title: Number of integrations in exposure
+            type: integer
+            fits_keyword: NINTS
+          ngroups:
+            title: Number of groups in integration
+            type: integer
+            fits_keyword: NGROUPS
+          nframes:
+            title: Number of frames per group
+            type: number
+            fits_keyword: NFRAMES
+          groupgap:
+            title: Number of frames dropped between groups
+            type: integer
+            fits_keyword: GROUPGAP
+          nsamples:
+            title: Number of A/D samples per pixel
+            type: integer
+            fits_keyword: NSAMPLES
+          sample_time:
+            title: Time between samples (microsec)
+            type: number
+            fits_keyword: TSAMPLE
+          frame_time:
+            title: Time between frames (sec)
+            type: number
+            fits_keyword: TFRAME
+          group_time:
+            title: Time between groups (sec)
+            type: number
+            fits_keyword: TGROUP
+          integration_time:
+            title: Effective integration time (sec)
+            type: number
+            fits_keyword: EFFINTTM
+          exposure_time:
+            title: Effective exposure time (sec)
+            type: number
+            fits_keyword: EFFEXPTM
+          charge_time:
+            title: Charge accumulation time per integration (sec)
+            type: number
+            fits_keyword: CHRGTIME
+          duration:
+            title: Total duration of exposure (sec)
+            type: number
+            fits_keyword: DURATION
+          nresets_at_start:
+            title: Number of resets at start of exposure
+            type: integer
+            fits_keyword: NRSTSTRT
+          nresets_between_ints:
+            title: Number of resets between integrations
+            type: integer
+            fits_keyword: NRESETS
+          zero_frame:
+            title: Zero frame was downlinked separately
+            type: boolean
+            fits_keyword: ZEROFRAM
+          data_problem:
+            title: Science telemetry indicated a problem
+            type: boolean
+            fits_keyword: DATAPROB
+          sca_num:
+            title: Sensor Chip Assembly number
+            type: integer
+            fits_keyword: SCA_NUM
+          datamode:
+            title: post-processing method used in FPAP
+            type: integer
+            fits_keyword: DATAMODE 
+          comprssd:
+            title: data compressed on-board (T/F)
+            type: boolean
+            fits_keyword: COMPRSSD 
+      subarray:
+        title: Subarray parameters
+        type: object
+        properties:
+          name:
+            title: Subarray used
+            type: string
+            enum: [1024X16, 128X128, 128X2048, 2048X128, 2048X64, 32X32,
+              64X2048, 8X8, ALLSLITS, BRIGHTSKY, FULL, GENERIC, MASKA210R, 
+              MASKA430R, MASK1065, MASK1140, MASK1550, MASKLYOT, S1600A1, 
+              S200A1, S200A2, S200B1, S400A1, SLITLESSPRISM, STRIPE, SUB1024A, 
+              SUB1024B, SUB128, SUB16, SUB160, SUB160P, SUB1A, SUB1B, SUB2048, 
+              SUB256, SUB32, SUB320, SUB400P, SUB512, SUB64, SUB640, SUB64P, 
+              SUB80, SUB96, SUBAMPCAL, SUBGRISM128, SUBGRISM256, SUBGRISM64,
+              SUBSTRIP256, SUBSTRIP96, SUBPRISM, SUBTASOSS, SUBTAAMI, WFSS128C,
+              WFSS128R, WFSS64C, WFSS64R, N/A]
+            fits_keyword: SUBARRAY
+          xstart:
+            title: Starting pixel in axis 1 direction
+            type: integer
+            fits_keyword: SUBSTRT1
+          ystart:
+            title: Starting pixel in axis 2 direction
+            type: integer
+            fits_keyword: SUBSTRT2
+          xsize:
+            title: Number of pixels in axis 1 direction
+            type: integer
+            fits_keyword: SUBSIZE1
+          ysize:
+            title: Number of pixels in axis 2 direction
+            type: integer
+            fits_keyword: SUBSIZE2
+          fastaxis:
+            title: Fast readout axis direction
+            type: integer
+            fits_keyword: FASTAXIS
+          slowaxis:
+            title: Slow readout axis direction
+            type: integer
+            fits_keyword: SLOWAXIS
+        additionalProperties: false
+      dither:
+        title: Dither information
+        type: object
+        properties:
+          primary_type:
+            title: Primary dither pattern type
+            type: string
+            enum: [CYCLING, EXTENDED_TARGET, FULL, GAUSSIAN, INTRAMODULE,
+              INTRASCA, NONE, POINT_SOURCE, REULEAUX]
+            fits_keyword: PATTTYPE
+          position_number:
+            title: Position number in primary pattern
+            type: integer
+            fits_keyword: PATT_NUM
+          starting_point:
+            title: Starting point in pattern
+            type: integer
+            fits_keyword: PATTSTRT
+          total_points:
+            title: Total number of point in pattern
+            type: integer
+            fits_keyword: NUMDTHPT
+          pattern_size:
+            title: Primary dither pattern size (arcsec)
+            type: number
+            fits_keyword: PATTSIZE
+          subpixel_type:
+            title: Subpixel dither type
+            type: string
+            fits_keyword: SUBPXTYP
+          subpixel_sampling:
+            title: Subpixel sampling performed
+            type: boolean
+            fits_keyword: SUBPIXEL
+          subpixel_number:
+            title: Subpixel pattern number
+            type: integer
+            fits_keyword: SUBPXNUM
+          subpixel_total_points:
+            title: Total number of points in subpixel pattern
+            type: integer
+            fits_keyword: SUBPXPNS
+          subpixel_dither_pattern:
+            title: subpixel dither pattern
+            type: string
+            enum: [BOTH, SPATIAL, SPECTRAL, NONE]
+            fits_keyword: SUBPXPAT
+          spectral_position_number:
+            title: Position number within spectral steps
+            type: integer
+            fits_keyword: SPEC_NUM
+          spectral_total_points:
+            title: Total number of steps in spectral direction
+            type: integer
+            fits_keyword: SPECNSTP
+          spectral_step_size:
+            title: Size of steps in spectral direction
+            type: number
+            fits_keyword: SPECSTEP
+          spectral_offset:
+            title: Spectral offset from pattern start (arcsec)
+            type: number
+            fits_keyword: SPCOFFST
+          spatial_position_number:
+            title: Position number within spatial steps
+            type: integer
+            fits_keyword: SPAT_NUM
+          spatial_total_points:
+            title: Total number of steps in spatial direction
+            type: integer
+            fits_keyword: SPATNSTP
+          spatial_step_size:
+            title: Size of steps in spatial direction
+            type: number
+            fits_keyword: SPATSTEP
+          spatial_offset:
+            title: Spatial offset from pattern start (arcsec)
+            type: number
+            fits_keyword: SPTOFFST
+          slitlet_points:
+            title: Number of slitlet offsets in spectral direction
+            type: integer
+            fits_keyword: SLIT_OFF
+          ifu_spectral_offset:
+            title: Spectral offset from IFU center (arcsec)
+            type: number
+            fits_keyword: SPEC_OFF
+          ifu_spatial_offset:
+            title: Spatial offset from IFU center (arcsec)
+            type: number
+            fits_keyword: SPAT_OFF
+      ephemeris:
+        title: JWST ephemeris information
+        type: object
+        properties:
+          coord_system:
+            title: Ephemeris coordinate system
+            type: string
+            fits_keyword: COORDSYS
+          time:
+            title: UTC time from ephemeris start time (sec)
+            type: number
+            fits_keyword: EPH_TIME
+          spatial_x:
+            title: X spatial coordinate of JWST (km)
+            type: number
+            fits_keyword: JWST_X
+          spatial_y:
+            title: Y spatial coordinate of JWST (km)
+            type: number
+            fits_keyword: JWST_Y
+          spatial_z:
+            title: Z spatial coordinate of JWST (km)
+            type: number
+            fits_keyword: JWST_Z
+          velocity_x:
+            title: X component of JWST velocity (km/sec)
+            type: number
+            fits_keyword: JWST_DX
+          velocity_y:
+            title: Y component of JWST velocity (km/sec)
+            type: number
+            fits_keyword: JWST_DY
+          velocity_z:
+            title: Z component of JWST velocity (km/sec)
+            type: number
+            fits_keyword: JWST_DZ
+      aperture:
+        title: Aperture information
+        type: object
+        properties:
+          name:
+            title: PRD science aperture used
+            type: string
+            fits_keyword: APERNAME
+          position_angle:
+            title: Position angle of aperture used (deg)
+            type: number
+            fits_keyword: PA_APER
+          aperture_sca:
+            title: SCA for intended target
+            type: number
+            fits_keyword: SCA_APER
+      wcsinfo:
+        title: WCS parameters
+        type: object
+        properties:
+          wcsaxes:
+            title: number of World Coordinate System axes
+            type: integer
+            fits_keyword: WCSAXES
+          crpix1:
+            title: axis 1 coordinate of the reference pixel
+            type: number
+            fits_keyword: CRPIX1
+          crpix2:
+            title: axis 2 coordinate of the reference pixel
+            type: number
+            fits_keyword: CRPIX2
+          crpix3:
+            title: axis 3 coordinate of the reference pixel
+            type: number
+            fits_keyword: CRPIX3
+          crval1:
+            title: RA at the reference pixel (deg)
+            type: number
+            fits_keyword: CRVAL1
+          crval2:
+            title: Dec at the reference pixel (deg)
+            type: number
+            fits_keyword: CRVAL2
+          crval3:
+            title: Wavelength at the reference pixel (microns)
+            type: number
+            fits_keyword: CRVAL3
+          ctype1:
+            title: first axis coordinate type
+            type: string
+            fits_keyword: CTYPE1
+          ctype2:
+            title: second axis coordinate type
+            type: string
+            fits_keyword: CTYPE2
+          ctype3:
+            title: third axis coordinate type
+            type: string
+            fits_keyword: CTYPE3
+          cunit1:
+            title: first axis units
+            type: string
+            fits_keyword: CUNIT1
+          cunit2:
+            title: second axis units
+            type: string
+            fits_keyword: CUNIT2
+          cunit3:
+            title: third axis units
+            type: string
+            fits_keyword: CUNIT3
+          cdelt1:
+            title: first axis increment per pixel (deg)
+            type: number
+            fits_keyword: CDELT1
+          cdelt2:
+            title: second axis increment per pixel (deg)
+            type: number
+            fits_keyword: CDELT2
+          cdelt3:
+            title: third axis increment per pixel (microns)
+            type: number
+            fits_keyword: CDELT3
+          pc1_1:
+            title: linear transformation matrix element
+            type: number
+            fits_keyword: PC1_1
+          pc1_2:
+            title: linear transformation matrix element
+            type: number
+            fits_keyword: PC1_2
+          pc2_1:
+            title: linear transformation matrix element
+            type: number
+            fits_keyword: PC2_1
+          pc2_2:
+            title: linear transformation matrix element
+            type: number
+            fits_keyword: PC2_2
+          pc3_1:
+            title: linear transformation matrix element
+            type: number
+            fits_keyword: PC3_1
+          pc3_2:
+            title: linear transformation matrix element
+            type: number
+            fits_keyword: PC3_2
+          s_region:
+            title: spatial extent of the observation
+            type: number
+            fits_keyword: S_REGION
+          waverange_start:
+            title: lower bound of the default wavelength range
+            type: number
+            fits_keyword: WAVSTART
+          waverange_end:
+            title: upper bound of the default wavelength range
+            type: number
+            fits_keyword: WAVEND
+          spectral_order:
+            title: default spectral order
+            type: number
+            fits_keyword: SPORDER
+      pointing:
+        title: Spacecraft pointing information
+        type: object
+        properties:
+          ra_v1:
+            title: RA of telescope V1 axis [deg]
+            type: number
+            fits_keyword: RA_V1
+          dec_v1:
+            title: Dec of telescope V1 axis [deg]
+            type: number
+            fits_keyword: DEC_V1
+          pa_v3:
+            title: Position angle of telescope V3 axis [deg]
+            type: number
+            fits_keyword: PA_V3
+      velocity_aberration:
+        title: Velocity aberration correction information
+        type: object
+        properties:
+          ra_offset:
+            title: Velocity aberration correction RA offset (rad)
+            type: number
+            fits_keyword: DVA_RA
+          dec_offset:
+            title: Velocity aberration correction Dec offset (rad)
+            type: number
+            fits_keyword: DVA_DEC
+          scale_factor:
+            title: Velocity aberration scale factor
+            type: number
+            fits_keyword: VA_SCALE
+      time:
+        title: Time information
+        type: object
+        properties:
+          barycentric_correction:
+            title: Barycentric time correction
+            type: number
+            fits_keyword: BARTDELT
+          barycentric_expstart:
+            title: Barycentric exposure start time
+            type: number
+            fits_keyword: BSTRTIME
+          barycentric_expend:
+            title: Barycentric exposure end time
+            type: number
+            fits_keyword: BENDTIME
+          barycentric_expmid:
+            title: Barycentric exposure mid time
+            type: number
+            fits_keyword: BMIDTIME
+          heliocentric_correction:
+            title: Heliocentric time correction
+            type: number
+            fits_keyword: HELIDELT
+          heliocentric_expstart:
+            title: Heliocentric exposure start time
+            type: number
+            fits_keyword: HSTRTIME
+          heliocentric_expend:
+            title: Heliocentric exposure end time
+            type: number
+            fits_keyword: HENDTIME
+          heliocentric_expmid:
+            title: Heliocentric exposure mid time
+            type: number
+            fits_keyword: HMIDTIME
+      photometry:
+        title: Photometry information
+        type: object
+        properties:
+          conversion_megajanskys:
+            title: Flux density (MJy/steradian) producing 1 cps
+            type: number
+            fits_keyword: PHOTMJSR
+          conversion_microjanskys:
+            title: Flux density (uJy/arcsec2) producing 1 cps
+            type: number
+            fits_keyword: PHOTUJA2
+          pixelarea_steradians:
+            title: Nominal pixel area in steradians
+            type: number
+            fits_keyword: PIXAR_SR
+          pixelarea_arcsecsq:
+            title: Nominal pixel area in arcsec^2
+            type: number
+            fits_keyword: PIXAR_A2
+      target_acq:
+        title: Target acquisition files
+        type: object
+        properties:
+          tacqname:
+            title: target acquisition file name
+            type: string
+            fits_keyword: TACQNAME
+          refstrfl:
+            title: reference star file name
+            type: string
+            fits_keyword: REFSTRFL
+          tacqslit:
+            title: target acq illuminated slit image file name
+            type: string
+            fits_keyword: TACQSLIT
+          tacq1img:
+            title: first target acq image file name
+            type: string
+            fits_keyword: TACQ1IMG
+          tacq2img:
+            title: second target acq image file name
+            type: string
+            fits_keyword: TACQ2IMG
+          tacnfimg:
+            title: target acq confirmation image file name
+            type: string
+            fits_keyword: TACNFIMG
+          sccnfimg:
+            title: science confirmation image file name
+            type: string
+            fits_keyword: SCCNFIMG
+      nircam_focus:
+        title: NIRCam Focus Adjust Mechanism parameters
+        type: object
+        properties:
+          fam_la1:
+            title: position in steps of linear actuator 1
+            type: integer
+            fits_keyword: FAM_LA1
+          fastep1:
+            title: requested focus actuator 1 starting steps
+            type: integer
+            fits_keyword: FASTEP1
+          faunit1:
+            title: requested focus actuator 1 starting units
+            type: number
+            fits_keyword: FAUNIT1
+          faphase1:
+            title: requested focus actuator 1 starting phase
+            type: string
+            fits_keyword: FAPHASE1
+          fa1value:
+            title: requested focus actuator 1 position value
+            type: integer
+            fits_keyword: FA1VALUE
+          fam_la2:
+            title: position in steps of linear actuator 2
+            type: integer
+            fits_keyword: FAM_LA2
+          fastep2:
+            title: requested focus actuator 2 starting steps
+            type: integer
+            fits_keyword: FASTEP2
+          faunit2:
+            title: requested focus actuator 2 starting units
+            type: number
+            fits_keyword: FAUNIT2
+          faphase2:
+            title: requested focus actuator 2 starting phase
+            type: string
+            fits_keyword: FAPHASE2
+          fa2value:
+            title: requested focus actuator 2 position value
+            type: integer
+            fits_keyword: FA2VALUE
+          fam_la3:
+            title: position in steps of linear actuator 3
+            type: integer
+            fits_keyword: FAM_LA3
+          fastep3:
+            title: requested focus actuator 3 starting steps
+            type: integer
+            fits_keyword: FASTEP3
+          faunit3:
+            title: requested focus actuator 3 starting units
+            type: number
+            fits_keyword: FAUNIT3
+          faphase3:
+            title: requested focus actuator 3 starting phase
+            type: string
+            fits_keyword: FAPHASE3
+          fa3value:
+            title: requested focus actuator 3 position value
+            type: integer
+            fits_keyword: FA3VALUE
+      nirspec_wfsc:
+        title: NIRSpec WFS&C engineering keywords information
+        type: object
+        properties:
+          rma_pos:
+            title: Refocus Mechanism Assembly hall-position sensor value
+            type: number
+            fits_keyword: RMA_POS
+          rma_step:
+            title: Refocus Mechanism Assembly relative position
+            type: integer
+            fits_keyword: FCSRLPOS
+      guide_star:
+        title: Guide star information
+        type: object
+        properties:
+          gs_order:
+            title: index of guide star within list of selected guide stars
+            type: integer
+            fits_keyword: GS_ORDER
+          gs_start_time:
+            title: UTC time when guide star activity started
+            type: string
+            fits_keyword: GSSTRTTM
+          gs_stop_time:
+            title: UTC time when guide star activity completed
+            type: string
+            fits_keyword: GSENDTIM
+          gs_id:
+            title: guide star identifier
+            type: string
+            fits_keyword: GDSTARID
+          gs_ra:
+            title: guide star right ascension
+            type: number
+            fits_keyword: GS_RA
+          gs_dec:
+            title: guide star declination
+            type: number
+            fits_keyword: GS_DEC
+          gs_ura:
+            title: guide star right ascension uncertainty
+            type: number
+            fits_keyword: GS_URA
+          gs_udec:
+            title: guide star declination uncertainty
+            type: number
+            fits_keyword: GS_UDEC
+          gs_mag:
+            title: guide star magnitude in FGS detector
+            type: number
+            fits_keyword: GS_MAG
+          gs_umag:
+            title: guide star magnitude uncertainty
+            type: number
+            fits_keyword: GS_UMAG
+          gs_pcs_mode:
+            title: Pointing Control System mode
+            type: string
+            enum: [COARSE, FINEGUIDE, MOVING, NONE, TRACK]
+            fits_keyword: PCS_MODE
+          gs_ctd_x:
+            title: guide star centroid x position in the FGS ideal coordinate frame (arcsec)
+            type: number
+            fits_keyword: GSCENTX
+          gs_ctd_y:
+            title: guide star centroid y position in the FGS ideal coordinate frame (arcsec)
+            type: number
+            fits_keyword: GSCENTY
+          gs_jitter_rms:
+            title: RMS jitter over the exposure (arcsec)
+            type: number
+            fits_keyword: JITTERMS
+          visit_end_time:
+            title: Observatory UTC time when the visit completed
+            type: string
+            fits_keyword: VISITEND
+          wfs_visit:
+            title: Wavefront sensing and control visit indicator
+            type: string
+            fits_keyword: WFSCFLAG
+      ref_file:
+        title: Reference file information
+        type: object
+        properties:
+          crds:
+            title: CRDS parameters
+            type: object
+            properties:
+              sw_version:
+                title: Version of CRDS file selection software used
+                type: string
+                fits_keyword: CRDS_VER
+              context_used:
+                title: CRDS context (.pmap) used to select ref files
+                type: string
+                fits_keyword: CRDS_CTX
+          area:
+            title: Pixel area reference file information
+            type: object
+            properties:
+              name:
+                title: Pixel area reference file name
+                type: string
+                fits_keyword: R_AREA
+          dark:
+            title: Dark reference file information
+            type: object
+            properties:
+              name:
+                title: Dark reference file name
+                type: string
+                fits_keyword: R_DARK
+          flat:
+            title: Flat reference file information
+            type: object
+            properties:
+              name:
+                title: Flat reference file name
+                type: string
+                fits_keyword: R_FLAT
+          fringe:
+            title: Fringe reference file information
+            type: object
+            properties:
+              name:
+                title: Fringe reference file name
+                type: string
+                fits_keyword: R_FRINGE
+          gain:
+            title: Gain reference file information
+            type: object
+            properties:
+              name:
+                title: Gain reference file name
+                type: string
+                fits_keyword: R_GAIN
+          ifufore:
+            title: IFU fore reference file information
+            type: object
+            properties:
+              name:
+                title: ifufore reference file name
+                type: string
+                fits_keyword: R_IFUFOR
+          ifupost:
+            title: IFU post reference file information
+            type: object
+            properties:
+              name:
+                title: ifupost reference file name
+                type: string
+                fits_keyword: R_IFUPOS
+          ifuslicer:
+            title: IFU slicer reference file information
+            type: object
+            properties:
+              name:
+                title: ifuslicer reference file name
+                type: string
+                fits_keyword: R_IFUSLI
+          ipc:
+            title: IPC reference file information
+            type: object
+            properties:
+              name:
+                title: IPC reference file name
+                type: string
+                fits_keyword: R_IPC
+          lastframe:
+            title: Last frame reference file information
+            type: object
+            properties:
+              name:
+                title: Last Frame reference file name
+                type: string
+                fits_keyword: R_LASTFR
+          linearity:
+            title: Linearity reference file information
+            type: object
+            properties:
+              name:
+                title: Linearity reference file name
+                type: string
+                fits_keyword: R_LINEAR
+          mask:
+            title: Mask reference file information
+            type: object
+            properties:
+              name:
+                title: Mask reference file name
+                type: string
+                fits_keyword: R_MASK
+          photom:
+            title: Photometric reference file information
+            type: object
+            properties:
+              name:
+                title: Photometric reference file name
+                type: string
+                fits_keyword: R_PHOTOM
+          readnoise:
+            title: Read noise reference file information
+            type: object
+            properties:
+              name:
+                title: Read noise reference file name
+                type: string
+                fits_keyword: R_READNO
+          reset:
+            title: Reset reference file information
+            type: object
+            properties:
+              name:
+                title: Reset reference file name
+                type: string
+                fits_keyword: R_RESET
+          rscd:
+            title: RSCD reference file information
+            type: object
+            properties:
+              name:
+                title: RSCD reference file name
+                type: string
+                fits_keyword: R_RSCD
+          saturation:
+            title: Saturation reference file information
+            type: object
+            properties:
+              name:
+                title: Saturation reference file name
+                type: string
+                fits_keyword: R_SATURA
+          straylight:
+            title: Straylight reference file information
+            type: object
+            properties:
+              name:
+                title: Straylight reference file name
+                type: string
+                fits_keyword: R_STRAY
+          superbias:
+            title: Superbias reference file information
+            type: object
+            properties:
+              name:
+                title: Superbias reference file name
+                type: string
+                fits_keyword: R_SUPERB
+          distortion:
+            title: Distortion reference file information
+            type: object
+            properties:
+              name:
+                title: Distortion reference file name
+                type: string
+                fits_keyword: R_DISTOR
+          filteroffset:
+            title: Filter Offset reference file information
+            type: object
+            properties:
+              name:
+                title: Filter Offset reference file name
+                type: string
+                fits_keyword: R_FILOFF
+          specwcs:
+            title: Spectral distortion reference file information
+            type: object
+            properties:
+              name:
+                title: Spectral distortion reference file name
+                type: string
+                fits_keyword: R_SPDIST
+          regions:
+            title: Regions reference file information
+            type: object
+            properties:
+              name:
+                title: Regions reference file name
+                type: string
+                fits_keyword: R_REGION
+          wavelengthrange:
+            title: Wavelength Range reference file information
+            type: object
+            properties:
+              name:
+                title: Wavelength Range reference file name
+                type: string
+                fits_keyword: R_WAVRAN
+          v2v3:
+            title: V2_V3 Model reference file information
+            type: object
+            properties:
+              name:
+                title: V2_V3 Model reference file name
+                type: string
+                fits_keyword: R_V2V3
+          camera:
+            title: Nirspec Camera reference file information
+            type: object
+            properties:
+              name:
+                title: Nirspec Camera reference file name
+                type: string
+                fits_keyword: R_CAMERA
+          collimator:
+            title: Nirspec Collimator reference file information
+            type: object
+            properties:
+              name:
+                title: Nirspec Collimator reference file name
+                type: string
+                fits_keyword: R_COLLIM
+          disperser:
+            title: Disperser reference file information
+            type: object
+            properties:
+              name:
+                title: Disperser reference file name
+                type: string
+                fits_keyword: R_DISPER
+          fore:
+            title: Nirspec FORE Model reference file information
+            type: object
+            properties:
+              name:
+                title: Nirspec FORE Model reference file name
+                type: string
+                fits_keyword: R_FORE
+          fpa:
+            title: Nirspec FPA Model reference file information
+            type: object
+            properties:
+              name:
+                title: Nirspec FPA Model reference file name
+                type: string
+                fits_keyword: R_FPA
+          msa:
+            title: Nirspec MSA Model reference file information
+            type: object
+            properties:
+              name:
+                title: Nirspec MSA Model reference file name
+                type: string
+                fits_keyword: R_MSA
+          ote:
+            title: Nirspec OTE Model reference file information
+            type: object
+            properties:
+              name:
+                title: Nirspec OTE Model reference file name
+                type: string
+                fits_keyword: R_OTE
+          resample:
+            title: Resample processing reference file information
+            type: object
+            properties:
+              name:
+                title: Resample parameters reference file name
+                type: string
+                fits_keyword: R_RESAMP
+      cal_step:
+        title: Calibration step information
+        type: object
+        properties:
+          ipc:
+            title: Interpixel Capacitance Correction
+            type: string
+            fits_keyword: S_IPC
+          reset:
+            title: Reset Anomaly Correction
+            type: string
+            fits_keyword: S_RESET
+          rscd:
+            title: RSCD Correction
+            type: string
+            fits_keyword: S_RSCD
+          lastframe:
+            title: Last Frame Correction
+            type: string
+            fits_keyword: S_LASTFR
+          dq_init:
+            title: Data Quality Initialization
+            type: string
+            fits_keyword: S_DQINIT
+          superbias:
+            title: Superbias Subtraction
+            type: string
+            fits_keyword: S_SUPERB
+          bias_drift:
+            title: Reference Pixel Correction
+            type: string
+            fits_keyword: S_BSDRFT
+          refpix:
+            title: Reference Pixel Correction
+            type: string
+            fits_keyword: S_REFPIX
+          err_init:
+            title: Error Initialization
+            type: string
+            fits_keyword: S_ERRINI
+          dark_sub:
+            title: Dark Subtraction
+            type: string
+            fits_keyword: S_DARK
+          saturation:
+            title: Saturation Checking
+            type: string
+            fits_keyword: S_SATURA
+          linearity:
+            title: Linearity Correction
+            type: string
+            fits_keyword: S_LINEAR
+          jump:
+            title: Jump Detection
+            type: string
+            fits_keyword: S_JUMP
+          ramp_fit:
+            title: Ramp Fitting
+            type: string
+            fits_keyword: S_RAMP
+          assign_wcs:
+            title: Assign World Coordinate System
+            type: string
+            fits_keyword: S_WCS
+          flat_field:
+            title: Flat Field Correction
+            type: string
+            fits_keyword: S_FLAT
+          fringe:
+            title: Fringe Correction
+            type: string
+            fits_keyword: S_FRINGE
+          persistence:
+            title: Persistence Correction
+            type: string
+            fits_keyword: S_PERSIS
+          straylight:
+            title: Straylight Correction
+            type: string
+            fits_keyword: S_STRAY
+          emission:
+            title: Telescope Emission Correction
+            type: string
+            fits_keyword: S_TELEMI
+          photom:
+            title: Photometric Calibration
+            type: string
+            fits_keyword: S_PHOTOM
+          wfs_combine:
+            title: Wavefront Sensing Combination
+            type: string
+            fits_keyword: S_WFSCOM
+          extract_1d:
+            title: 1-D Spectral Extraction
+            type: string
+            fits_keyword: S_EXTR1D
+          extract_2d:
+            title: 2-D Spectral Extraction
+            type: string
+            fits_keyword: S_EXTR2D
+          combine_1d:
+            title: 1-D Spectral Combination
+            type: string
+            fits_keyword: S_COMB1D
+          resample:
+            title: Image resampling
+            type: string
+            fits_keyword: S_RESAMP
+          back_sub:
+            title: Background subtraction
+            type: string
+            fits_keyword: S_BKDSUB
+          imprint:
+            title: NIRSpec MSA Imprint Subtraction
+            type: string
+            fits_keyword: S_IMPRNT
+          msa_flagging:
+            title: NIRSpec MSA Stuck Shutter Flagging
+            type: string
+            fits_keyword: S_MSAFLG
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

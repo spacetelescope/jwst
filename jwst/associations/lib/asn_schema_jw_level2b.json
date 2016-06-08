@@ -1,0 +1,53 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "title": "Association: JWST DMS Level2a->Level2b",
+    "description": "The data structure that, within the JWST DMS processing system, defines how to group level2a exposures to produce Level2b data products.",
+    "type": "object",
+    "properties": {
+        "asn_type": {
+            "description": "The type of association represented.",
+            "type": "string"
+        },
+        "asn_rule": {
+            "description": "Association definition used to create this association.",
+            "type": "string"
+        },
+        "asn_pool": {
+            "description": "Name of the Association Pool from which this association was generated.",
+            "type": "string"
+        },
+        "program": {
+            "description": "The observing program identifier",
+            "type": "string"
+        },
+        "groups": {
+            "description": "Array of groups of Level2a exposures which are needed to be processed together to produce their Level 2b versions. What these groups represent and how they should be processed is encoded by the asn_type.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "members": {
+                        "description": "Array of input members.",
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "expname": {
+                                    "description": "Name of the input member.",
+                                    "type": "string"
+                                },
+                                "exptype": {
+                                    "description": "Type of member.",
+                                    "type": "string"
+                                }
+                            },
+                            "required": ["expname", "exptype"]
+                        }
+                    }
+                },
+                "required": ["members"]
+            }
+        }
+    },
+    "required": ["asn_type", "asn_rule", "asn_pool", "groups"]
+}

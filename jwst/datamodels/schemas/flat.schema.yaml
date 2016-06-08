@@ -1,0 +1,24 @@
+allOf:
+- $ref: core.schema.yaml
+- $ref: referencefile.schema.yaml
+- type: object
+  properties:
+    data:
+      title: The science data
+      fits_hdu: SCI
+      default: 0.0
+      ndim: 2
+      datatype: float32
+    dq:
+      title: Data quality array
+      fits_hdu: DQ
+      default: 0
+      datatype: uint32
+    err:
+      title: Error array
+      fits_hdu: ERR
+      default: 0.0
+      datatype: float32
+    dq_def:
+      $ref: dq_def.schema.yaml
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

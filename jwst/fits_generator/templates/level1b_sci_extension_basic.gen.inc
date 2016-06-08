@@ -1,0 +1,9 @@
+XTENSION  = 'IMAGE' /        FITS extension type
+BITPIX    = 16      /        bits per data value
+NAXIS     = 4       /        number of data array dimensions
+PCOUNT    = 0       /        number of parameter bytes following data table
+GCOUNT    = 1       /        number of groups
+EXTNAME   = 'SCI'   /        extension name
+BSCALE    = 1.0     /        scale factor for array value to physical value
+BZERO     = 32768   /        physical value for an array value of zero
+BUNIT     = 'DN'    /        physical units of the data array values

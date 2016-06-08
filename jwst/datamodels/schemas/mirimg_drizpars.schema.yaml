@@ -1,0 +1,26 @@
+title: Default Drizzle parameters data model
+allOf:
+- $ref: drizpars.schema.yaml
+- type: object
+  properties:
+    drizpars_table:
+      title: Distortion correction parameters table
+      fits_hdu: DRIZPARS
+      datatype:
+      - name: numimages
+        datatype: int32
+      - name: filter
+        datatype: [ascii, 40]
+      - name: subarray
+        datatype: [ascii, 15]
+      - name: pixfrac
+        datatype: float32
+      - name: kernel
+        datatype: [ascii, 10]
+      - name: fillval
+        datatype: [ascii, 10]
+      - name: wht_type
+        datatype: [ascii, 10]
+      - name: stepsize
+        datatype: int32
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

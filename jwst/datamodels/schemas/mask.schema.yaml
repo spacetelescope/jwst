@@ -1,0 +1,14 @@
+allOf:
+- $ref: core.schema.yaml
+- $ref: referencefile.schema.yaml
+- type: object
+  properties:
+    dq:
+      title: The mask
+      fits_hdu: DQ
+      default: 0
+      ndim: 2
+      datatype: uint32
+    dq_def:
+      $ref: dq_def.schema.yaml
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema
