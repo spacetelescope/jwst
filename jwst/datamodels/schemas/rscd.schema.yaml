@@ -10,7 +10,9 @@ allOf:
       - name: subarray
         datatype: [ascii, 15]
       - name: readpatt
-        datatype: [ascii, 12]
+        datatype: [ascii, 4]
+      - name: rowtype
+        datatype: [ascii, 4]
       - name: tau1
         datatype: float32
       - name: scale1

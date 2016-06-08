@@ -67,6 +67,7 @@ from .ramp import RampModel
 from .rampfitoutput import RampFitOutputModel
 from .readnoise import ReadnoiseModel
 from .reset import ResetModel
+from .rscd import RSCDModel
 from .saturation import SaturationModel
 from .spec import SpecModel
 from .straylight import StrayLightModel
@@ -87,7 +88,7 @@ __all__ = [
     'MultiSpecModel', 'IFUCubeModel','PhotomModel', 'NircamPhotomModel',
     'NirissPhotomModel', 'NirspecPhotomModel', 'MiriImgPhotomModel',
     'MiriMrsPhotomModel', 'RampModel', 'RampFitOutputModel',
-    'ReadnoiseModel', 'ResetModel', 'SaturationModel', 'SpecModel',
+    'ReadnoiseModel', 'ResetModel', 'RSCDModel','SaturationModel', 'SpecModel',
     'StrayLightModel']
 
 
