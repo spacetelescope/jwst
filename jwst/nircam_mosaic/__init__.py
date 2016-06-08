@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 try:
-                          __setup_datetime__)
+    import version_noop
 except ImportError:
     __version__ = 'unknown'
     __svn_revision__ = 'unknown'

@@ -11,7 +11,7 @@ from jwst.stpipe import Step
 
 from . import quickDeriv
 
-CRBIT = np.uint32(models.dqflags.pixel.get('JUMP_DET', 4))
+CRBIT = np.uint32(datamodels.dqflags.pixel.get('JUMP_DET', 4))
 
 def do_detection(input_models, blot_models, ref_filename, **pars):
     """

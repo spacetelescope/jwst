@@ -73,10 +73,10 @@ def ipc_correction(input_model, ipc_model):
         IPC-corrected science data.
     """
 
-    log.debug("ipc_correction: nints=" + `input_model.meta.exposure.nints` +
-              ", ngroups=" + `input_model.meta.exposure.ngroups` +
-              ", size="+ `input_model.data.shape[-1]` +
-              "," + `input_model.data.shape[-2]`)
+    log.debug("ipc_correction: nints=" + input_model.meta.exposure.nints +
+              ", ngroups=" + input_model.meta.exposure.ngroups +
+              ", size="+ input_model.data.shape[-1] +
+              "," + input_model.data.shape[-2])
 
     # Create output as a copy of the input science data model.
     output = input_model.copy()

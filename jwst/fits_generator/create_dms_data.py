@@ -192,7 +192,7 @@ def flip_rotate (input_hdulist):
     if sca in [493, 494, 495]:
         # MIRI Imaging, IFUSHORT, IFULONG
         print('Data from SCA %d does not need to be flipped and/or rotated' % sca)
-	try:
+        try:
             rowstart = header['ROWSTART']
             rowstop = header['ROWSTOP']
             #
