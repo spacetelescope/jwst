@@ -1,3 +1,4 @@
+from .version import *
 from . import ami
 from . import assign_wcs
 from . import associations
@@ -37,7 +38,8 @@ from . import source_catalog
 from . import stpipe
 from . import straylight
 from . import superbias
-from . import timeconversion
+# Requires non-standard modules and enviroment settings
+#from . import timeconversion
 from . import transforms
 from . import tweakreg
 from . import tweakreg_catalog
