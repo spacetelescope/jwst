@@ -1,5 +1,5 @@
-from jwst.stpipe import Step
-from jwst import datamodels
+from ..stpipe import Step
+from .. import datamodels
 
 from . import ami_normalize
 
@@ -9,10 +9,10 @@ class AmiNormalizeStep(Step):
     AmiNormalizeStep: Normalize target LG results using reference LG results
     """
 
-    spec = """ 
+    spec = """
     """
 
-    def process( self, target, reference ): 
+    def process(self, target, reference):
         """
         Short Summary
         -------------
@@ -34,8 +34,8 @@ class AmiNormalizeStep(Step):
         """
 
         # Open the target and reference input models
-        target_model = models.AmiLgModel(target)
-        reference_model = models.AmiLgModel(reference)
+        target_model = datamodels.AmiLgModel(target)
+        reference_model = datamodels.AmiLgModel(reference)
 
         # Call the normalization routine
         result = ami_normalize.normalize_LG(target_model, reference_model)
@@ -48,4 +48,3 @@ class AmiNormalizeStep(Step):
 
         # We're done
         return result
-

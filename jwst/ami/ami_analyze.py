@@ -7,11 +7,11 @@ from __future__ import absolute_import, division
 import logging
 import warnings
 import numpy as np
-from jwst import datamodels
+from .. import datamodels
 
-from .NRM_Model import NRM_Model  
-from . import webb_psf 
-from . import leastsqnrm 
+from .NRM_Model import NRM_Model
+from . import webb_psf
+from . import leastsqnrm
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -43,7 +43,7 @@ def apply_LG (input_model, filter_model, oversample, rotation):
         Fringe analysis data
 
     """
- 
+
     # Supress harmless arithmetic warnings for now
     warnings.filterwarnings("ignore", ".*invalid value.*", RuntimeWarning)
     warnings.filterwarnings("ignore", ".*divide by zero.*", RuntimeWarning)
@@ -68,7 +68,7 @@ def apply_LG (input_model, filter_model, oversample, rotation):
     jwnrm = NRM_Model( mask='JWST', holeshape='hex',
                        pixscale=leastsqnrm.mas2rad(63.52554816773347),
                        rotate=rotation, rotlist_deg=rots_deg,
-                       scallist=relpixscales)  
+                       scallist=relpixscales)
 
     # Load the filter bandpass data into the NRM model
     jwnrm.bandpass = band
@@ -79,7 +79,7 @@ def apply_LG (input_model, filter_model, oversample, rotation):
     # (pixguess is a guess at the pixel scale of the data)
     #  produces a 19x19 image of the fit
     jwnrm.fit_image( input_model.data, pixguess=jwnrm.pixel )
-    
+
     # Construct model image from fitted PSF
     jwnrm.create_modelpsf()
 
@@ -87,7 +87,7 @@ def apply_LG (input_model, filter_model, oversample, rotation):
     warnings.resetwarnings()
 
     # Store fit results in output model
-    output_model = models.AmiLgModel (fit_image=jwnrm.modelpsf,
+    output_model = datamodels.AmiLgModel (fit_image=jwnrm.modelpsf,
                   resid_image=jwnrm.residual,
                   closure_amp_table=np.asarray(jwnrm.redundant_cas),
                   closure_phase_table=np.asarray(jwnrm.redundant_cps),
@@ -100,4 +100,3 @@ def apply_LG (input_model, filter_model, oversample, rotation):
     output_model.update (input_model)
 
     return output_model
-

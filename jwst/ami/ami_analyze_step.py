@@ -1,5 +1,5 @@
-from jwst.stpipe import Step
-from jwst import datamodels
+from ..stpipe import Step
+from .. import datamodels
 from . import ami_analyze
 
 
@@ -9,14 +9,14 @@ class AmiAnalyzeStep(Step):
     applying the LG algorithm.
     """
 
-    spec = """ 
+    spec = """
         oversample = integer( default=3,min=1 ) # Oversampling factor
         rotation = float( default=0.0 ) # Rotation initial guess (deg)
     """
 
     reference_file_types = ['throughput']
 
-    def process( self, input ): 
+    def process( self, input ):
         """
         Short Summary
         -------------
@@ -40,7 +40,7 @@ class AmiAnalyzeStep(Step):
         self.log.info('Initial rotation guess = %g deg', rotate)
 
         # Open the input data model
-        with models.ImageModel(input) as input_model:
+        with datamodels.ImageModel(input) as input_model:
 
             # Get the name of the filter throughput reference file to use
             self.filter_ref_name = self.get_reference_file(input_model,
@@ -57,7 +57,7 @@ class AmiAnalyzeStep(Step):
                 return result
 
             # Open the filter throughput reference file
-            filter_model = models.FilterModel(self.filter_ref_name)  
+            filter_model = datamodels.FilterModel(self.filter_ref_name)
 
             # Do the LG analysis on the input image
             result = ami_analyze.apply_LG(input_model, filter_model,
@@ -68,4 +68,3 @@ class AmiAnalyzeStep(Step):
             result.meta.cal_step.ami_analyze = 'COMPLETE'
 
         return result
-

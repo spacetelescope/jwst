@@ -5,13 +5,13 @@ from __future__ import division
 #
 
 import logging
-from jwst import datamodels
+from .. import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def average_LG (lg_products):
+def average_LG(lg_products):
     """
     Short Summary
     -------------
@@ -28,19 +28,19 @@ def average_LG (lg_products):
         Averaged fringe data
 
     """
- 
+
     # Create the ouput model as a copy of the first input model
-    log.debug (' Create output as copy of %s', lg_products[0])
-    output_model = models.AmiLgModel(lg_products[0]).copy()
+    log.debug(' Create output as copy of %s', lg_products[0])
+    output_model = datamodels.AmiLgModel(lg_products[0]).copy()
 
     # Loop over the remaining list of inputs, adding their values to the output
     for file in lg_products[1:]:
 
-        log.debug (' Accumulate data from %s', file)
-        prod = models.AmiLgModel (file)
+        log.debug(' Accumulate data from %s', file)
+        prod = datamodels.AmiLgModel(file)
 
         output_model.fit_image += prod.fit_image
-        output_model.resid_image =+ prod.resid_image
+        output_model.resid_image += prod.resid_image
         output_model.closure_amp_table['coeffs'] += prod.closure_amp_table['coeffs']
         output_model.closure_phase_table['coeffs'] += prod.closure_phase_table['coeffs']
         output_model.fringe_amp_table['coeffs'] += prod.fringe_amp_table['coeffs']
@@ -51,7 +51,7 @@ def average_LG (lg_products):
         prod.close()
 
     # Take the average of the accumulated results
-    log.debug (' Divide accumulated results by %d', len(lg_products))
+    log.debug(' Divide accumulated results by %d', len(lg_products))
     output_model.fit_image /= len(lg_products)
     output_model.resid_image /= len(lg_products)
     output_model.closure_amp_table['coeffs'] /= len(lg_products)
@@ -63,4 +63,3 @@ def average_LG (lg_products):
 
     # Return the averaged model
     return output_model
-
