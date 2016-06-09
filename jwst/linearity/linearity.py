@@ -1,6 +1,6 @@
 from __future__ import division
 
-from jwst.datamodels import dqflags
+from ..datamodels import dqflags
 from .linearity_func import apply_linearity_func
 
 import numpy as np

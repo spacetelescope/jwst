@@ -1,5 +1,5 @@
-from jwst.stpipe import Step
-from jwst import datamodels
+from ..stpipe import Step
+from .. import datamodels
 from . import linearity
 
 class LinearityStep(Step):
@@ -14,7 +14,7 @@ class LinearityStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # Get the name of the linearity reference file to use
             self.lin_name = self.get_reference_file(input_model, 'linearity')
@@ -29,7 +29,7 @@ class LinearityStep(Step):
                 return result
 
             # Open the linearity reference file data model
-            lin_model = models.LinearityModel(self.lin_name)
+            lin_model = datamodels.LinearityModel(self.lin_name)
 
             # Do the linearity correction
             result = linearity.do_correction(input_model, lin_model)
