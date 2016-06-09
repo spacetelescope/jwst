@@ -1,5 +1,5 @@
-from jwst.stpipe import Step
-from jwst import datamodels
+from ..stpipe import Step
+from .. import datamodels
 from . import bias_sub
 
 
@@ -18,7 +18,7 @@ class SuperBiasStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # Get the name of the superbias reference file to use
             self.bias_name = self.get_reference_file(input_model, 'superbias')
@@ -33,7 +33,7 @@ class SuperBiasStep(Step):
                 return result
 
             # Open the superbias ref file data model
-            bias_model = models.SuperBiasModel(self.bias_name)
+            bias_model = datamodels.SuperBiasModel(self.bias_name)
 
             # Do the bias subtraction
             result = bias_sub.do_correction(input_model, bias_model)

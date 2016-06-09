@@ -6,7 +6,7 @@ from __future__ import division
 
 import numpy as np
 import logging
-from jwst import datamodels
+from .. import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -110,7 +110,7 @@ def get_subarray(ref_model, sci_model):
     sub_dq = ref_model.dq[ystart:ystop, xstart:xstop]
 
     # Create the sliced model
-    sub_model = models.SuperBiasModel(data=sub_data, err=sub_err, dq=sub_dq)
+    sub_model = datamodels.SuperBiasModel(data=sub_data, err=sub_err, dq=sub_dq)
 
     # Return the sliced reference model
     return sub_model
