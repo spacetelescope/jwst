@@ -7,7 +7,6 @@ from __future__ import division, print_function, absolute_import
 from collections import namedtuple
 import logging
 import numpy as np
-from jwst import datamodels
 
 from . import x_irs2
 
