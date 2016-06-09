@@ -4,7 +4,7 @@ from astropy.stats import sigma_clipped_stats, gaussian_fwhm_to_sigma
 from astropy.table import QTable
 import astropy.units as u
 import photutils
-from jwst.datamodels import DrizProductModel
+from ..datamodels import DrizProductModel
 
 
 def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
@@ -120,7 +120,8 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
     # units of electron/s.  Poisson noise is not included for pixels
     # where data < 0.
     exptime = model.meta.resample.product_exposure_time    # total exptime
-    #total_error = np.sqrt(bkg_error**2 + np.maximum(model.data / exptime, 0))
+    #total_error = np.sqrt(bkg_error**2 +
+    #                      np.maximum(model.data / exptime, 0))
     total_error = np.sqrt(data_std**2 + np.maximum(model.data / exptime, 0))
 
     wcs = model.get_fits_wcs()
