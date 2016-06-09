@@ -14,7 +14,7 @@ import collections
 import numpy as np
 
 from jwst.stpipe import Step, cmdline
-from jwst import datamodels
+from .. import datamodels
 
 from stsci.tools import bitmask
 
@@ -54,7 +54,7 @@ class SkyMatchStep(Step):
     reference_file_types = []
 
     def process(self, input):
-        img = models.ModelContainer(input)
+        img = datamodels.ModelContainer(input)
 
         self._dqbits = bitmask.interpret_bits_value(self.dqbits)
 
