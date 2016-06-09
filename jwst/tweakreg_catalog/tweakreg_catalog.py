@@ -1,5 +1,5 @@
 import photutils
-from jwst.datamodels import ImageModel
+from ..datamodels import ImageModel
 
 
 def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
