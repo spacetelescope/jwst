@@ -2,8 +2,8 @@
 
 import os
 
-from jwst.stpipe import Step, cmdline
-from jwst import datamodels
+from ..stpipe import Step, cmdline
+from .. import datamodels
 
 from . import hlsp
 
@@ -23,7 +23,7 @@ class HlspStep(Step):
         width = self.annuli_width
 
         # Open the input target image model
-        with models.ImageModel(target) as target_model:
+        with datamodels.ImageModel(target) as target_model:
 
             # Create a signal-to-noise ratio image
             self.log.info ('Creating SNR image')

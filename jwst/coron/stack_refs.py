@@ -3,11 +3,10 @@
 
 :Authors: Howard Bushouse
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
 """
 
 import numpy as np
-from jwst import datamodels
+from .. import datamodels
 
 import logging
 log = logging.getLogger(__name__)
@@ -23,7 +22,7 @@ def make_cube(input_table):
     num_refs = len(input_table.input_filenames)
 
     # Get the size of the first input image
-    img = models.ImageModel(input_table.input_filenames[0])
+    img = datamodels.ImageModel(input_table.input_filenames[0])
     nrows, ncols = img.data.shape
     img.close()
 
@@ -34,12 +33,12 @@ def make_cube(input_table):
     # into the cube
     for i, name in enumerate(input_table.input_filenames):
         log.info('Adding member %s', name)
-        img = models.ImageModel(name)
+        img = datamodels.ImageModel(name)
         cube[i] = img.data
         img.close()
 
     # Create the ouput Cube model
-    output_model = models.CubeModel(data=cube)
+    output_model = datamodels.CubeModel(data=cube)
 
     return output_model
 

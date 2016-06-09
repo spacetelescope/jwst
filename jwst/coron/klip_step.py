@@ -2,8 +2,8 @@
 
 import os
 
-from jwst.stpipe import Step, cmdline
-from jwst import datamodels
+from ..stpipe import Step, cmdline
+from .. import datamodels
 
 from . import klip
 
@@ -22,14 +22,14 @@ class KlipStep(Step):
 
     def process(self, target, psfrefs):
 
-        with models.ImageModel(target) as target_model:
+        with datamodels.ImageModel(target) as target_model:
 
             # Retrieve the parameter values
             truncate = self.truncate
             self.log.info('KL transform truncation = %d', truncate)
 
             # Get the PSF reference images
-            refs_model = models.CubeModel(psfrefs)
+            refs_model = datamodels.CubeModel(psfrefs)
 
             # Call the KLIP routine
             (target, psf) = klip.klip(target_model, refs_model, truncate)

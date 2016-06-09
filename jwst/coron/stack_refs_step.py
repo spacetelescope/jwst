@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
-from jwst.stpipe import Step, cmdline
-from jwst import datamodels
+from ..stpipe import Step, cmdline
 
 import json
 from . import stack_refs
