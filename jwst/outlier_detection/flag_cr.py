@@ -5,11 +5,11 @@ import numpy as np
 from scipy import ndimage
 from stsci.tools import bitmask
 
-from jwst import datamodels
-from jwst import assign_wcs
-from jwst.stpipe import Step
+from .. import datamodels
+from .. import assign_wcs
+# from ..stpipe import Step
 
-from . import quickDeriv
+import .quickDeriv
 
 CRBIT = np.uint32(datamodels.dqflags.pixel.get('JUMP_DET', 4))
 
@@ -50,45 +50,45 @@ def do_detection(input_models, blot_models, ref_filename, **pars):
         flag_cr(image, blot, gain, rn, **pars)
 
 
-def build_reffile_container_func(input_models, reftype):
-    """
-    Return a ModelContainer of reference file models.
-
-    Parameters
-    ----------
-
-    input_models: ModelContainer
-        the science data, ImageModels in a ModelContainer
-
-    reftype: string
-        type of reference file
-
-    Returns
-    -------
-
-    a ModelContainer with corresponding reference files for each input model
-    """
-
-    """
-    model_mapping = {'gain':'GainModel', 'readnoise':'ReadnoiseModel'}
-    module = importlib.import_module('jwst_lib.models')
-    model_name = model_mapping[reftype]
-    ref_model = getattr(module, model_name)
-    print("ref_model defined as: {} of type {}".format(ref_model, type(ref_model)))
-    """
-    q = Step()
-    reffiles = [q.get_reference_file(im, reftype) for im in input_models]
-
-    # Check if all the ref files are the same.  If so build it by reading
-    # the reference file just once.
-    if len(set(reffiles)) <= 1:
-        length = len(input_models)
-        ref_list = [models.open(reffiles[0])] * length
-        #ref_list = [ref_model(reffiles[0])] * length
-    else:
-        ref_list = [models.open(ref) for ref in reffiles]
-        #ref_list = [ref_model(ref) for ref in reffiles]
-    return models.ModelContainer(ref_list)
+#def build_reffile_container_func(input_models, reftype):
+#    """
+#    Return a ModelContainer of reference file datamodels.
+#
+#    Parameters
+#    ----------
+#
+#    input_models: ModelContainer
+#        the science data, ImageModels in a ModelContainer
+#
+#    reftype: string
+#        type of reference file
+#
+#    Returns
+#    -------
+#
+#    a ModelContainer with corresponding reference files for each input model
+#    """
+#
+#    """
+#    model_mapping = {'gain':'GainModel', 'readnoise':'ReadnoiseModel'}
+#    module = importlib.import_module('..datamodels')
+#    model_name = model_mapping[reftype]
+#    ref_model = getattr(module, model_name)
+#    print("ref_model defined as: {} of type {}".format(ref_model, type(ref_model)))
+#    """
+#    q = Step()
+#    reffiles = [q.get_reference_file(im, reftype) for im in input_models]
+#
+#    # Check if all the ref files are the same.  If so build it by reading
+#    # the reference file just once.
+#    if len(set(reffiles)) <= 1:
+#        length = len(input_models)
+#        ref_list = [datamodels.open(reffiles[0])] * length
+#        #ref_list = [ref_model(reffiles[0])] * length
+#    else:
+#        ref_list = [datamodels.open(ref) for ref in reffiles]
+#        #ref_list = [ref_model(ref) for ref in reffiles]
+#    return datamodels.ModelContainer(ref_list)
 
 
 def buildMask(dqarr, bitvalue):
@@ -273,7 +273,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     
     # # write out the dq array as a separate file
     # outfilename = sci_image.meta.filename.split('.')[0] + '_dq.fits'
-    # out_dq = models.ImageModel()
+    # out_dq = datamodels.ImageModel()
     # out_dq.data = result_dq
     # out_dq.to_fits(outfilename, clobber=True)
 

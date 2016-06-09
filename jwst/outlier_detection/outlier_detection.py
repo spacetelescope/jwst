@@ -2,9 +2,9 @@ import time
 import numpy as np
 from collections import OrderedDict
 
-from jwst import datamodels
-from jwst import assign_wcs
-from jwst import resample
+from .. import datamodels
+from .. import assign_wcs
+from .. import resample
 
 from . import flag_cr
 from . import blot_median
@@ -80,7 +80,7 @@ class OutlierDetection(object):
         input_dm = self.input_models[0]
         filtname = input_dm.meta.instrument.filter
 
-        ref_model = models.OutlierParsModel(self.ref_filename['outlierpars'])
+        ref_model = datamodels.OutlierParsModel(self.ref_filename['outlierpars'])
 
         # look for row that applies to this set of input data models
         # NOTE:
@@ -127,7 +127,7 @@ class OutlierDetection(object):
             drizzled_models.save(None)
 
         # Initialize intermediate products used in the outlier detection
-        median_model = models.ImageModel(init=drizzled_models[0].data.shape)
+        median_model = datamodels.ImageModel(init=drizzled_models[0].data.shape)
         median_model.meta = drizzled_models[0].meta # provide median with initial metadata
         base_filename = self.input_models[0].meta.filename
         median_filename = '_'.join(base_filename.split('_')[:2]+['median.fits'])
