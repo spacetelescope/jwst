@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
-from jwst.stpipe import Step, cmdline
-from jwst import datamodels
-from jwst.jump.jump import detect_jumps
+from ..stpipe import Step, cmdline
+import ..datamodels
+from .jump import detect_jumps
 
 
 class JumpStep( Step ):
