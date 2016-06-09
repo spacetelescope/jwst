@@ -1,6 +1,6 @@
 from __future__ import division
 
-import ..datamodels
+from .. import datamodels
 from . import subtract_images
 
 import numpy as np

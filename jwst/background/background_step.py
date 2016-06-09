@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from jwst.stpipe import Step
-import ..datamodels
+from .. import datamodels
 from . import background_sub
 
 class BackgroundStep(Step):
