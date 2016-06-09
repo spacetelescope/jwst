@@ -1,5 +1,5 @@
 from jwst.stpipe import Step
-from jwst import datamodels
+from .. import datamodels
 from . import dark_sub
 
 
@@ -18,7 +18,7 @@ class DarkCurrentStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # Get the name of the dark reference file to use
             self.dark_name = self.get_reference_file(input_model, 'dark')
@@ -33,7 +33,7 @@ class DarkCurrentStep(Step):
                 return result
 
             # Open the dark ref file data model
-            dark_model = models.DarkModel(self.dark_name)
+            dark_model = datamodels.DarkModel(self.dark_name)
 
             # Do the dark correction
             result = dark_sub.do_correction(input_model, dark_model,
