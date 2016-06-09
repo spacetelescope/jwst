@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from jwst.stpipe import Step, cmdline
-from jwst.datamodels import DrizProductModel
+from ..stpipe import Step, cmdline
+from ..datamodels import DrizProductModel
 from . import source_catalog
 
 
