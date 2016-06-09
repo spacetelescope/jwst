@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from jwst.stpipe import Step 
-from ..import datamodels
+from .. import datamodels
 from . import saturation
 
 class SaturationStep(Step):
