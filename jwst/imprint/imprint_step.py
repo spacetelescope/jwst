@@ -1,6 +1,6 @@
-from jwst.stpipe import Step
-from jwst import datamodels
-from jwst.background import subtract_images
+from ..stpipe import Step
+from .. import datamodels
+from ..background import subtract_images
 
 
 class ImprintStep(Step):
@@ -15,10 +15,10 @@ class ImprintStep(Step):
     def process(self, input, imprint):
 
         # Open the input data model
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # Open the imprint exposure data model
-            imprint_model = models.open(imprint)
+            imprint_model = datamodels.open(imprint)
 
             # Do the imprint exposure subtraction
             result = subtract_images.subtract(input_model, imprint_model)
