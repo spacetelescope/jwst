@@ -113,7 +113,7 @@ def get_reference_file(input_file, reference_file_type):
 
     Parameters
     ----------
-    input_file : jwst_lib.models.ModelBase instance
+    input_file : jwst.datamodels.ModelBase instance
         A model of the input file.  Metadata on this input file will
         be used by the CRDS "bestref" algorithm to obtain a reference
         file.

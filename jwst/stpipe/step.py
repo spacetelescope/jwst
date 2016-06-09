@@ -326,7 +326,7 @@ class Step(object):
         for i, arg in enumerate(args):
             if isinstance(arg, discouraged_types):
                 self.log.error(
-                    "{0} {1} object.  Use jwst_lib.models instead.".format(
+                    "{0} {1} object.  Use jwst.datamodels instead.".format(
                         msg, i))
 
     def run(self, *args):
@@ -544,7 +544,7 @@ class Step(object):
 
         Parameters
         ----------
-        input_file : jwst_lib.models.ModelBase instance
+        input_file : jwst.datamodels.ModelBase instance
             A model of the input file.  Metadata on this input file
             will be used by the CRDS "bestref" algorithm to obtain a
             reference file.
@@ -583,14 +583,14 @@ class Step(object):
     @contextlib.contextmanager
     def get_reference_file_model(self, input_file, reference_file_type):
         """
-        Get a reference file from CRDS as a jwst_lib.models.ModelBase
+        Get a reference file from CRDS as a jwst.datamodels.ModelBase
         object.  If the configuration file or commandline parameters
         override the reference file, it will be automatically used
         when calling this function.
 
         Parameters
         ----------
-        input_file : jwst_lib.models.ModelBase instance
+        input_file : jwst.datamodels.ModelBase instance
             A model of the input file.  Metadata on this input file
             will be used by the CRDS "bestref" algorithm to obtain a
             reference file.
@@ -602,7 +602,7 @@ class Step(object):
 
         Returns
         -------
-        reference_file_model : jwst_lib.models.ModelBase instance
+        reference_file_model : jwst.datamodels.ModelBase instance
             A model to access the contents of the reference file.
         """
         from jwst import datamodels
@@ -636,7 +636,7 @@ class Step(object):
 
         Parameters
         ----------
-        model : jwst_lib.models.Model instance
+        model : jwst.datamodels.Model instance
             The model to save.
 
         name : str
