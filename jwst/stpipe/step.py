@@ -326,7 +326,7 @@ class Step(object):
         for i, arg in enumerate(args):
             if isinstance(arg, discouraged_types):
                 self.log.error(
-                    "{0} {1} object.  Use jwst_lib.models instead.".format(
+                    "{0} {1} object.  Use jwst.datamodels instead.".format(
                         msg, i))
 
     def run(self, *args):
@@ -335,7 +335,7 @@ class Step(object):
         the running of each step.  The real work that is unique to
         each step type is done in the `process` method.
         """
-        from jwst import datamodels
+        from .. import datamodels
         gc.collect()
 
         # Make generic log messages go to this step's logger
@@ -465,7 +465,7 @@ class Step(object):
     @classmethod
     def _is_association_file(cls, input_file):
         """Return True IFF `input_file` is an association file."""
-        from jwst import datamodels
+        from .. import datamodels
         return (isinstance(input_file, str) and input_file.endswith((".asn",".json"))) or \
                isinstance(input_file, models.ModelContainer)
 
@@ -480,7 +480,7 @@ class Step(object):
         if self._is_association_file(input_file):
             return
         if len(self.reference_file_types):
-            from jwst import datamodels
+            from .. import datamodels
             try:
                 model = models.open(input_file)
             except (ValueError, TypeError, IOError):
@@ -544,7 +544,7 @@ class Step(object):
 
         Parameters
         ----------
-        input_file : jwst_lib.models.ModelBase instance
+        input_file : jwst.datamodels.ModelBase instance
             A model of the input file.  Metadata on this input file
             will be used by the CRDS "bestref" algorithm to obtain a
             reference file.
@@ -583,14 +583,14 @@ class Step(object):
     @contextlib.contextmanager
     def get_reference_file_model(self, input_file, reference_file_type):
         """
-        Get a reference file from CRDS as a jwst_lib.models.ModelBase
+        Get a reference file from CRDS as a jwst.datamodels.ModelBase
         object.  If the configuration file or commandline parameters
         override the reference file, it will be automatically used
         when calling this function.
 
         Parameters
         ----------
-        input_file : jwst_lib.models.ModelBase instance
+        input_file : jwst.datamodels.ModelBase instance
             A model of the input file.  Metadata on this input file
             will be used by the CRDS "bestref" algorithm to obtain a
             reference file.
@@ -602,10 +602,10 @@ class Step(object):
 
         Returns
         -------
-        reference_file_model : jwst_lib.models.ModelBase instance
+        reference_file_model : jwst.datamodels.ModelBase instance
             A model to access the contents of the reference file.
         """
-        from jwst import datamodels
+        from .. import datamodels
 
         filename = self.get_reference_file(input, reference_file_type)
         with models.open(filename) as model:
@@ -636,7 +636,7 @@ class Step(object):
 
         Parameters
         ----------
-        model : jwst_lib.models.Model instance
+        model : jwst.datamodels.Model instance
             The model to save.
 
         name : str

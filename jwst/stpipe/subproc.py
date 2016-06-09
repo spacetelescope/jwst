@@ -58,7 +58,7 @@ class SystemCall(Step):
     """
 
     def process(self, *args):
-        from jwst import datamodels
+        from .. import datamodels
 
         newargs = []
         for i, arg in enumerate(args):

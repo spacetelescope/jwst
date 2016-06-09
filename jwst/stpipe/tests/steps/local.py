@@ -14,7 +14,7 @@ class DummyStep(Step):
     """
 
     def process(self, *args):
-        from jwst.datamodels import ImageModel
+        from ..datamodels import ImageModel
 
         log.info("Default logger")
         log.debug("Default logger")

@@ -198,7 +198,7 @@ def test_extra_parameter():
 
 def test_crds_override():
     from .steps import AnotherDummyStep
-    from jwst import datamodels
+    from .. import datamodels
 
     step = AnotherDummyStep(
         "SomeOtherStepOriginal",
