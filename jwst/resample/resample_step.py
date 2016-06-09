@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-from jwst.stpipe import Step, cmdline
-from jwst import datamodels
+from ..stpipe import Step, cmdline
+import ..datamodels
 from . import resample
 
 
@@ -30,9 +30,9 @@ class ResampleStep(Step):
 
     def process(self, input):
 
-        input_models = models.open(input)
-        if type(input_models) != type(models.ModelContainer()): # single exposure
-            s = models.ModelContainer()
+        input_models = datamodels.open(input)
+        if type(input_models) != type(datamodels.ModelContainer()): # single exposure
+            s = datamodels.ModelContainer()
             s.append(input_models)
             s.assign_group_ids()
             s.meta.resample.output = s.group_names[0].replace('_resamp','_drz')
