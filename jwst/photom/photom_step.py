@@ -2,7 +2,7 @@
 
 from jwst.stpipe import Step, cmdline
 from . import photom
-from jwst import datamodels
+from .. import datamodels
 
 
 class PhotomStep(Step):
@@ -16,19 +16,19 @@ class PhotomStep(Step):
     def process(self, input_file):
 
         try:
-            dm = models.open(input_file)
+            dm = datamodels.open(input_file)
         except IOError:
             self.log.error('Input can not be opened as a Model.')
 
         # Open input as correct type
-        if isinstance( dm, models.CubeModel ): # _integ.fits product: 3D array
+        if isinstance( dm, datamodels.CubeModel ): # _integ.fits product: 3D array
             self.log.debug('Input is a CubeModel for a multiple integ file.')
-        elif isinstance( dm, models.ImageModel ):  # standard product: 2D array
+        elif isinstance( dm, datamodels.ImageModel ):  # standard product: 2D array
             self.log.debug('Input is an ImageModel.')
-        elif isinstance( dm, models.DataModel ): # multi 2D arrays
+        elif isinstance( dm, datamodels.DataModel ): # multi 2D arrays
             self.log.debug('Input is a MultiSlitModel.')
             dm.close()
-            dm = models.MultiSlitModel( input_file )
+            dm = datamodels.MultiSlitModel( input_file )
         else:
             self.log.warning('Input is not a CubeModel, ImageModel or MultiSlitModel.')
 
