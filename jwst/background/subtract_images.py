@@ -1,6 +1,6 @@
 from __future__ import division
 
-from jwst import datamodels
+from .. import datamodels
 import numpy as np
 
 import logging
