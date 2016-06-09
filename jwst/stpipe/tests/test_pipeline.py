@@ -24,7 +24,7 @@ class FlatField(Step):
     # Load the spec from a file
 
     def process(self, science, flat):
-        from jwst import datamodels
+        from .. import datamodels
 
         self.log.info("Removing flat field")
         self.log.info("Threshold: {0}".format(self.threshold))
@@ -40,7 +40,7 @@ class Combine(Step):
     """
 
     def process(self, images):
-        from jwst import datamodels
+        from .. import datamodels
 
         combined = np.zeros((50, 50))
         for image in images:
@@ -63,7 +63,7 @@ class MultiplyBy2(Step):
     """
 
     def process(self, image):
-        from jwst import datamodels
+        from .. import datamodels
 
         with models.ImageModel(image) as dm:
             with models.ImageModel() as dm2:
@@ -89,7 +89,7 @@ class TestPipeline(Pipeline):
     """
 
     def process(self, *args):
-        from jwst import datamodels
+        from .. import datamodels
 
         science = models.open(self.science_filename)
         if self.flat_filename is None:

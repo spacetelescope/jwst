@@ -1,5 +1,5 @@
 from jwst.stpipe import Step
-from jwst import datamodels
+from .. import datamodels
 
 class AnotherDummyStep(Step):
     """
@@ -49,7 +49,7 @@ class SaveStep(Step):
     """
 
     def process(self, *args):
-        from jwst.datamodels import ImageModel
+        from ..datamodels import ImageModel
 
         model = ImageModel(args[0])
 

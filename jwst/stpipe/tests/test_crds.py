@@ -29,7 +29,7 @@ class CrdsStep(Step):
     reference_file_types = ['flat']
 
     def process(self, input_file):
-        from jwst import datamodels
+        from .. import datamodels
 
         with models.open(input_file) as dm:
             self.ref_filename = self.get_reference_file(dm, 'flat')
@@ -46,7 +46,7 @@ def test_crds_step_bad():
     _run_flat_fetch_on_dataset('data/crds_bad.fits')
 
 def _run_flat_fetch_on_dataset(dataset_path):
-    from jwst import datamodels
+    from .. import datamodels
     step = CrdsStep()
     with models.ImageModel(join(dirname(__file__), dataset_path))  as input_file:
         step.run(input_file)
@@ -55,7 +55,7 @@ def _run_flat_fetch_on_dataset(dataset_path):
 
 def test_crds_step_override():
     """Run CRDS step with override parameter bypassing CRDS lookup."""
-    from jwst import datamodels
+    from .. import datamodels
 
     step = CrdsStep(override_flat=join(dirname(__file__), 'data/flat.fits'))
     with models.ImageModel(join(dirname(__file__), 'data/crds.fits')) as input_file:

@@ -335,7 +335,7 @@ class Step(object):
         the running of each step.  The real work that is unique to
         each step type is done in the `process` method.
         """
-        from jwst import datamodels
+        from .. import datamodels
         gc.collect()
 
         # Make generic log messages go to this step's logger
@@ -465,7 +465,7 @@ class Step(object):
     @classmethod
     def _is_association_file(cls, input_file):
         """Return True IFF `input_file` is an association file."""
-        from jwst import datamodels
+        from .. import datamodels
         return (isinstance(input_file, str) and input_file.endswith((".asn",".json"))) or \
                isinstance(input_file, models.ModelContainer)
 
@@ -480,7 +480,7 @@ class Step(object):
         if self._is_association_file(input_file):
             return
         if len(self.reference_file_types):
-            from jwst import datamodels
+            from .. import datamodels
             try:
                 model = models.open(input_file)
             except (ValueError, TypeError, IOError):
@@ -605,7 +605,7 @@ class Step(object):
         reference_file_model : jwst.datamodels.ModelBase instance
             A model to access the contents of the reference file.
         """
-        from jwst import datamodels
+        from .. import datamodels
 
         filename = self.get_reference_file(input, reference_file_type)
         with models.open(filename) as model:

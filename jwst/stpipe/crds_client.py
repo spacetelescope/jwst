@@ -65,7 +65,7 @@ def get_multiple_reference_paths(input_file, reference_file_types):
 
     Returns { filetype : filepath or "N/A", ... }
     """
-    from jwst import datamodels
+    from .. import datamodels
 
     gc.collect()
 

@@ -131,7 +131,7 @@ class LinearPipeline(Pipeline):
                 mode = 'RUN'
 
             if mode == 'BEFORE':
-                from jwst import datamodels
+                from .. import datamodels
 
                 try:
                     with models.open(filename) as dm:
