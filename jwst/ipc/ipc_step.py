@@ -1,5 +1,5 @@
 from jwst.stpipe import Step
-from jwst import datamodels
+from .. import datamodels
 from . import ipc_corr
 
 
@@ -14,7 +14,7 @@ class IPCStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # Get the name of the ipc reference file to use
             self.ipc_name = self.get_reference_file(input_model, 'ipc')
@@ -29,7 +29,7 @@ class IPCStep(Step):
                 return result
 
             # Open the ipc reference file data model
-            ipc_model = models.IPCModel(self.ipc_name)
+            ipc_model = datamodels.IPCModel(self.ipc_name)
 
             # Do the ipc correction
             result = ipc_corr.do_correction(input_model, ipc_model)
