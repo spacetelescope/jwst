@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from jwst.stpipe import Step 
-from jwst import datamodels
+from ..import datamodels
 from . import saturation
 
 class SaturationStep(Step):
@@ -14,7 +14,7 @@ class SaturationStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # Get the name of the saturation reference file
             self.ref_name = self.get_reference_file(input_model, 'saturation')
@@ -29,7 +29,7 @@ class SaturationStep(Step):
                 return result
 
             # Open the reference file data model
-            ref_model = models.SaturationModel(self.ref_name)
+            ref_model = datamodels.SaturationModel(self.ref_name)
 
             # Do the saturation check
             sat = saturation.do_correction(input_model, ref_model)

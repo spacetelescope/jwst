@@ -2,7 +2,7 @@
 #  Module for 2d saturation
 #
 import logging
-from jwst.datamodels import dqflags
+from ..datamodels import dqflags
 import numpy as np
 
 from . import x_irs2
