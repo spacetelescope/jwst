@@ -2,7 +2,7 @@ import time
 import numpy as np
 from collections import OrderedDict
 
-import ..datamodels
+from .. import datamodels
 
 #from drizzlepac import cdriz, util
 from . import gwcs_drizzle
