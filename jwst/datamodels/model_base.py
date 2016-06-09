@@ -175,8 +175,8 @@ class DataModel(properties.ObjectNode):
             primary_array_name = self.get_primary_array_name()
             if primary_array_name is None:
                 raise TypeError(
-                    "Array passed to model.__init__, but model has no primary "
-                    "array in its schema")
+                    "Array passed to DataModel.__init__, but model has "
+                    "no primary array in its schema")
             setattr(self, primary_array_name, init)
 
         if is_shape:
@@ -259,7 +259,7 @@ class DataModel(properties.ObjectNode):
     @classmethod
     def from_asdf(cls, init, schema=None):
         """
-        Load a model from a ASDF file.
+        Load a data model from a ASDF file.
 
         Parameters
         ----------

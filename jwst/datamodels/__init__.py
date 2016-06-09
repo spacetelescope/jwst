@@ -94,7 +94,7 @@ __all__ = [
 
 def open(init=None, extensions=None):
     """
-    Creates a Model from a number of different types
+    Creates a DataModel from a number of different types
 
     Parameters
     ----------
@@ -190,7 +190,7 @@ def open(init=None, extensions=None):
         from . import image
         new_class = image.ImageModel
     else:
-        raise ValueError("Don't have a model class to match the shape")
+        raise ValueError("Don't have a DataModel class to match the shape")
 
     return new_class(init, extensions=extensions)
 
