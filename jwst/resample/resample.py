@@ -2,7 +2,7 @@ import time
 import numpy as np
 from collections import OrderedDict
 
-from jwst import datamodels
+import ..datamodels
 
 #from drizzlepac import cdriz, util
 from . import gwcs_drizzle
@@ -63,7 +63,7 @@ class ResampleData(object):
 
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = resample_utils.make_output_wcs(self.input_models)
-        self.blank_output = models.DrizProductModel(self.output_wcs.data_size)
+        self.blank_output = datamodels.DrizProductModel(self.output_wcs.data_size)
         self.blank_output.assign_wcs(self.output_wcs)
 
         # Default to defining output models metadata as
@@ -72,7 +72,7 @@ class ResampleData(object):
         ###    replace this with a call to a generalized version of fitsblender
         ###
         self.blank_output.meta = self.input_models[0].meta
-        self.output_models = models.ModelContainer()
+        self.output_models = datamodels.ModelContainer()
 
 
     def get_drizpars(self):
@@ -84,7 +84,7 @@ class ResampleData(object):
         filtname = input_dm.meta.instrument.filter
 
         # Create a data model for the reference file
-        ref_model = models.DrizParsModel(self.ref_filename)
+        ref_model = datamodels.DrizParsModel(self.ref_filename)
         # look for row that applies to this set of input data models
         # NOTE:
         #  This logic could be replaced by a method added to the DrizParsModel object
