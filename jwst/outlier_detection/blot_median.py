@@ -8,8 +8,8 @@ Create a blotted images that match the inputs from the combined median image.
 """
 import numpy as np
 
-from jwst.resample import gwcs_blot
-from jwst import datamodels
+from ..resample import gwcs_blot
+from .. import datamodels
 
 
 def do_blot(median_model, input_models, **pars):
@@ -18,7 +18,7 @@ def do_blot(median_model, input_models, **pars):
     sinscl = pars.get('sinscl',1.0)
     
     # Initialize output product
-    blot_models = models.ModelContainer()
+    blot_models = datamodels.ModelContainer()
 
     do_blot = gwcs_blot.GWCSBlot(median_model)
             

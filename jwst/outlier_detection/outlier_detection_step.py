@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-from jwst.stpipe import Step, cmdline
-from jwst import datamodels
+from ..stpipe import Step, cmdline
+from .. import datamodels
 from . import outlier_detection
 
 
@@ -39,7 +39,7 @@ class OutlierDetectionStep(Step):
 
     def process(self, input, to_file=False):
 
-        self.input_models = models.open(input)
+        self.input_models = datamodels.open(input)
 
         self.ref_filename = {}
         self.ref_filename['gain'] = self.build_reffile_container('gain')
@@ -77,12 +77,12 @@ class OutlierDetectionStep(Step):
         # the reference file just once.
         if len(set(reffiles)) <= 1:
             length = len(self.input_models)
-            ref_list = [models.open(reffiles[0])] * length
+            ref_list = [datamodels.open(reffiles[0])] * length
             #ref_list = [ref_model(reffiles[0])] * length
         else:
-            ref_list = [models.open(ref) for ref in reffiles]
+            ref_list = [datamodels.open(ref) for ref in reffiles]
             #ref_list = [ref_model(ref) for ref in reffiles]
-        return models.ModelContainer(ref_list) #, build_groups=False)
+        return datamodels.ModelContainer(ref_list) #, build_groups=False)
 
 
 
