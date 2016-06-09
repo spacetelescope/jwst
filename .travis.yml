@@ -15,7 +15,6 @@ env:
         - CONDA_JWST_DEPENDENCIES='pytest stsci-jwst'
         - PIP_DEPENDENCIES=''
 
-    # SETUP_CMD='test' is unreliable under 2.7; using 'nosetests' for consistency.
     matrix:
         - PYTHON_VERSION=2.7 SETUP_CMD='install'
         - PYTHON_VERSION=2.7 SETUP_CMD='test'
