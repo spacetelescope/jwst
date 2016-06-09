@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from jwst.stpipe import Step, cmdline
-from jwst.datamodels import ModelContainer
+from ..stpipe import Step, cmdline
+from ..datamodels import ModelContainer
 from .tweakreg_catalog import make_tweakreg_catalog
 
 
