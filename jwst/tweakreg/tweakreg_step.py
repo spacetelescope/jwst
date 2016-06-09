@@ -16,7 +16,7 @@ import numpy as np
 from astropy.table import Table
 
 from jwst.stpipe import Step, cmdline
-from jwst import datamodels
+import ..datamodels
 
 from . imalign import align
 from . wcsimage import *
@@ -61,7 +61,7 @@ class TweakRegStep(Step):
 
     def process(self, input):
 
-        img = models.ModelContainer(input)
+        img = datamodels.ModelContainer(input)
 
         if len(img) == 0:
             raise ValueError("Input must contain at least one image model.")
