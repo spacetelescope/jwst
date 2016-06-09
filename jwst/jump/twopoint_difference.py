@@ -13,7 +13,7 @@ This is MUCH faster than doing all the work on a pixel-by-pixel basis.
 
 import logging
 import numpy as np
-from jwst.datamodels import dqflags
+from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

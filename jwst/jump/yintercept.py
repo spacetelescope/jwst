@@ -1,7 +1,7 @@
 import numpy as np
 from math import sqrt
 
-from jwst.datamodels import dqflags
+from ..datamodels import dqflags
 
 import warnings
 warnings.simplefilter('ignore', np.RankWarning)
