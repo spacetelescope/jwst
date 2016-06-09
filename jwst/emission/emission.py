@@ -4,7 +4,7 @@
 
 import numpy as np
 import logging
-from jwst import datamodels
+from .. import datamodels
 
 log = logging.getLogger( __name__ )
 log.setLevel( logging.DEBUG )
@@ -34,7 +34,7 @@ class DataSet( object ):
         """
 
         try:
-            model = models.open(input_DM)
+            model = datamodels.open(input_DM)
         except Exception as errmess:
             log.info('Error opening: %s ', input_DM)
             model = None
