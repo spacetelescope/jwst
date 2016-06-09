@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from jwst.stpipe import Pipeline
-from jwst import datamodels
+from .. import datamodels
 
 # step imports
 from jwst.assign_wcs import assign_wcs_step
@@ -60,7 +60,7 @@ class Spec2Pipeline(Pipeline):
 
             input_file = member['expname']
             self.log.debug(' Working on %s ...', input_file)
-            input = models.open(input_file)
+            input = datamodels.open(input_file)
 
             # Apply WCS info
             input = self.assign_wcs(input)
@@ -78,7 +78,7 @@ class Spec2Pipeline(Pipeline):
 
                 # Save the background-subtracted product, if requested
                 if self.save_bsub:
-                    if isinstance(input, models.CubeModel):
+                    if isinstance(input, datamodels.CubeModel):
                         self.save_model(input, "bsubints")
                     else:
                         self.save_model(input, "bsub")
@@ -120,7 +120,7 @@ class Spec2Pipeline(Pipeline):
                 input.meta.asn.pool_name = ' '
                 input.meta.asn.table_name = ' '
 
-            if isinstance(input, models.CubeModel):
+            if isinstance(input, datamodels.CubeModel):
                 self.save_model(input, 'calints')
             else:
                 self.save_model(input, "cal")
@@ -164,7 +164,7 @@ class Lvl2Input(object):
                 self.asn = json.load(open(input, 'r'))
             except:
                 # The name of a single image file
-                self.interpret_image_model(models.open(input))
+                self.interpret_image_model(datamodels.open(input))
             self.poolname = self.asn['asn_pool']
         else:
             raise TypeError
