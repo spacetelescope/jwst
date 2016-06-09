@@ -16,7 +16,7 @@ import numpy as np
 from astropy.table import Table
 
 from jwst.stpipe import Step, cmdline
-import ..datamodels
+from .. import datamodels
 
 from . imalign import align
 from . wcsimage import *
