@@ -1,6 +1,6 @@
 from __future__ import division
 
-from jwst import datamodels
+import ..datamodels
 from . import subtract_images
 
 import numpy as np
@@ -71,11 +71,11 @@ def average_background(bkg_list):
     # Loop over the images to be used as background
     for bkg_file in bkg_list:
         log.debug(' Accumulate bkg from %s', bkg_file)
-        bkg_model = models.ImageModel(bkg_file)
+        bkg_model = datamodels.ImageModel(bkg_file)
 
         # Initialize the avg_bkg model, if necessary
         if avg_bkg is None:
-            avg_bkg = models.ImageModel(bkg_model.data.shape)
+            avg_bkg = datamodels.ImageModel(bkg_model.data.shape)
 
         # Accumulate the data from this background image
         avg_bkg.data += bkg_model.data

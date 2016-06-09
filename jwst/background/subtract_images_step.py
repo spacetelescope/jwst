@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from jwst.stpipe import Step
-from jwst import datamodels
+import ..datamodels
 from jwst.background import subtract_images
 
 class SubtractImagesStep(Step):
@@ -36,25 +36,25 @@ class SubtractImagesStep(Step):
         """
 
         # First, determine what kind of input model has been provided
-        model1 = models.open(input1)
+        model1 = datamodels.open(input1)
 
-        if isinstance(model1, models.CubeModel):
+        if isinstance(model1, datamodels.CubeModel):
             self.log.debug('Input is a CubeModel')
             model1.close()
-            model1 = models.CubeModel(input1)
-        elif isinstance(model1, models.ImageModel):
+            model1 = datamodels.CubeModel(input1)
+        elif isinstance(model1, datamodels.ImageModel):
             self.log.debug('Input is an ImageModel')
             model1.close()
-            model1 = models.ImageModel(input1)
-        elif isinstance(model1, models.DataModel):
+            model1 = datamodels.ImageModel(input1)
+        elif isinstance(model1, datamodels.DataModel):
             self.log.debug('Input is a MultiSlitModel')
             model1.close()
-            model1 = models.MultiSlitModel(input1)
+            model1 = datamodels.MultiSlitModel(input1)
 
         # Assume that the second input model is always Image or MultiSlit with
         # a single image, which is safe to open as MultiSlit for either case
-        #model2 = models.MultiSlitModel(input2)
-        model2 = models.ImageModel(input2)
+        #model2 = datamodels.MultiSlitModel(input2)
+        model2 = datamodels.ImageModel(input2)
 
         # Call the subtraction routine
         result = subtract_images.subtract(model1, model2)

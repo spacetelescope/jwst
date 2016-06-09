@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from jwst.stpipe import Step
-from jwst import datamodels
+import ..datamodels
 from . import background_sub
 
 class BackgroundStep(Step):
@@ -35,7 +35,7 @@ class BackgroundStep(Step):
         """
 
         # Load the input data model
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # Do the background subtraction
             result = background_sub.background_sub(input_model, bkg_list)
