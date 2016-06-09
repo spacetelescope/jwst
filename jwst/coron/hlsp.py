@@ -4,7 +4,6 @@
 
 :Authors: Howard Bushouse
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
 """
 
 from __future__ import division
@@ -12,7 +11,7 @@ from __future__ import division
 import numpy as np
 import math
 
-from jwst import datamodels
+from .. import datamodels
 
 import logging
 log = logging.getLogger(__name__)
@@ -95,7 +94,7 @@ def contrast_curve(target_model, width):
     sigmas = np.asarray(sigma)
 
     # Create the output contrast curve data model
-    output_model = models.ContrastModel(contrast_table=list(zip(radii, sigmas)))
+    output_model = datamodels.ContrastModel(contrast_table=list(zip(radii, sigmas)))
     output_model.update(target_model)
 
     return output_model

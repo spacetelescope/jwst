@@ -4,7 +4,6 @@
 
 :Authors: Mihai Cara
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
 """
 
 from __future__ import division
