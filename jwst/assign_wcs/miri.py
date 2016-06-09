@@ -11,7 +11,7 @@ from astropy.io import fits
 import gwcs.coordinate_frames as cf
 from gwcs import selector
 from . import pointing
-from jwst.transforms import datamodels as jwmodels
+from ..transforms import models as jwmodels
 from .util import not_implemented_mode
 
 

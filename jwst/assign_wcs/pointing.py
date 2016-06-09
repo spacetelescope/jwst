@@ -1,7 +1,7 @@
 from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
 
-from jwst.datamodels import fits_support
+from ..datamodels import fits_support
 from gwcs import utils as gwutils
 
 
