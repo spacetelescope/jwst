@@ -2,8 +2,8 @@
 from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
 
-from jwst.stpipe import Step, cmdline
-from jwst import datamodels
+from ..stpipe import Step, cmdline
+from .. import datamodels
 import logging
 from .assign_wcs import load_wcs
 

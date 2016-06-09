@@ -21,7 +21,7 @@ from astropy import coordinates as coord
 from astropy.io import fits
 from gwcs import coordinate_frames as cf
 
-from jwst.transforms.models import *
+from ..transforms.models import *
 from .util import not_implemented_mode
 
 log = logging.getLogger(__name__)

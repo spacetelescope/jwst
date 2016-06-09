@@ -2,7 +2,7 @@ from __future__ import absolute_import
 from .assign_wcs_step import AssignWcsStep
 #from .assign_wcs import nrs_set_inputs
 
-
+'''
 def test( verbose=False ) :
     import os, pytest
 
@@ -24,3 +24,4 @@ def test( verbose=False ) :
     args=[dir]
 
     return pytest.main( args)
+'''
