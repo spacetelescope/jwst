@@ -1,4 +1,4 @@
-from jwst.stpipe import Step
+from ..stpipe import Step
 
 from . import ami_average
 
@@ -8,10 +8,10 @@ class AmiAverageStep(Step):
     AmiAverageStep: Averages LG results for multiple NIRISS AMI mode exposures
     """
 
-    spec = """ 
+    spec = """
     """
 
-    def process( self, input_list ): 
+    def process(self, input_list):
         """
         Short Summary
         -------------
@@ -31,8 +31,7 @@ class AmiAverageStep(Step):
 
         # Call the LG average routine for the list of inputs
         result = ami_average.average_LG(input_list)
-            
+
         result.meta.cal_step.ami_average = 'COMPLETE'
 
         return result
-
