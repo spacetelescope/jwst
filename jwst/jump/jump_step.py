@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from ..stpipe import Step, cmdline
-import ..datamodels
+from ..import datamodels
 from .jump import detect_jumps
 
 
