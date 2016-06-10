@@ -17,16 +17,16 @@ def do_detection(input_models, blot_models, ref_filename, **pars):
     """
     Flags DQ array for cosmic rays in input images.
 
-    The science frame in each ImageModel in input_models is compared to 
+    The science frame in each ImageModel in input_models is compared to
     the corresponding blotted median image in blot_models.  The result is
     an updated DQ array in each ImageModel in input_models.
 
     Parameters
     ----------
-    input_models: JWST ModelContainer object 
+    input_models: JWST ModelContainer object
         data model container holding science ImageModels, modified in place
 
-    blot_models : JWST ModelContainer object 
+    blot_models : JWST ModelContainer object
         data model container holding ImageModels of the median output frame
         blotted back to the wcs and frame of the ImageModels in input_models
 
@@ -41,11 +41,11 @@ def do_detection(input_models, blot_models, ref_filename, **pars):
 
     #gain_models = build_reffile_container(input_models, 'gain')
     #rn_models = build_reffile_container(input_models, 'readnoise')
-    
+
     gain_models = ref_filename['gain']
     rn_models = ref_filename['readnoise']
 
-    for image, blot, gain, rn in zip(input_models, blot_models, gain_models, 
+    for image, blot, gain, rn in zip(input_models, blot_models, gain_models,
         rn_models):
         flag_cr(image, blot, gain, rn, **pars)
 
@@ -111,8 +111,8 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     ----------
     sci_image : ImageModel
         the science data
-    
-    blot_image : ImageModel 
+
+    blot_image : ImageModel
         the blotted median image of the dithered science frames
 
     gain_image : GainModel
@@ -125,7 +125,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
         the user parameters for Outlier Detection
 
     Default parameters:
-    
+
     grow     = 1               # Radius to mask [default=1 for 3x3]
     ctegrow  = 0               # Length of CTE correction to be applied
     snr      = "4.0 3.0"       # Signal-to-noise ratio
@@ -147,7 +147,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
         exptime = float(sci_image.meta.exposure.exposure_time)
     except AttributeError:
         exptime = 100.
-    
+
     input_image = sci_image.data * exptime
     blot_data = blot_image.data * exptime
     blot_deriv = quickDeriv.qderiv(blot_data)
@@ -168,14 +168,14 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     # Define output cosmic ray mask to populate
     cr_mask = np.zeros(sci_image.shape, dtype=np.uint8)
 
-    # Set scaling factor to 1 since scaling has already been accounted for 
+    # Set scaling factor to 1 since scaling has already been accounted for
     # in blotted image
     exp_mult = 1.
 
     ##################   COMPUTATION PART I    ###################
     # Create a temporary array mask
     __t1 = np.absolute(input_image - blot_data)
-    __ta = np.sqrt(gain * np.absolute(blot_data * exp_mult + 
+    __ta = np.sqrt(gain * np.absolute(blot_data * exp_mult +
         subtracted_background * exp_mult) + read_noise ** 2)
     __tb = ( mult1 * blot_deriv + snr1 * __ta / gain )
     del __ta
@@ -197,7 +197,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     ##################   COMPUTATION PART II    ###################
     # Create the CR Mask
     __xt1 = np.absolute(input_image - blot_data)
-    __xta = np.sqrt(gain * np.absolute(blot_data * exp_mult + 
+    __xta = np.sqrt(gain * np.absolute(blot_data * exp_mult +
         subtracted_background * exp_mult) + read_noise * read_noise)
     __xtb = ( mult2 *blot_deriv + snr2 * __xta / gain )
     del __xta
@@ -211,22 +211,22 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     del __tmp2
 
     ##################   COMPUTATION PART III    ###################
-    # Flag additional cte 'radial' and 'tail' pixels surrounding CR 
+    # Flag additional cte 'radial' and 'tail' pixels surrounding CR
     # pixels as CRs
 
-    # In both the 'radial' and 'length' kernels below, 0=good and 
-    # 1=bad, so that upon convolving the kernels with cr_mask, the 
-    # convolution output will have low->bad and high->good from which 
-    # 2 new arrays are created having 0->bad and 1->good. These 2 new 
+    # In both the 'radial' and 'length' kernels below, 0=good and
+    # 1=bad, so that upon convolving the kernels with cr_mask, the
+    # convolution output will have low->bad and high->good from which
+    # 2 new arrays are created having 0->bad and 1->good. These 2 new
     # arrays are then AND'ed to create a new cr_mask.
 
-    # recast cr_mask to int for manipulations below; will recast to 
+    # recast cr_mask to int for manipulations below; will recast to
     # Bool at end
     cr_mask_orig_bool = cr_mask.copy()
     cr_mask = cr_mask_orig_bool.astype(np.int8)
 
     # make radial convolution kernel and convolve it with original cr_mask
-    cr_grow_kernel = np.ones((grow, grow)) 
+    cr_grow_kernel = np.ones((grow, grow))
     cr_grow_kernel_conv = cr_mask.copy()
     ndimage.convolve(cr_mask, cr_grow_kernel, output=cr_grow_kernel_conv)
 
@@ -248,7 +248,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     # finally do the tail convolution
     ndimage.convolve(cr_mask, cr_ctegrow_kernel, output=cr_ctegrow_kernel_conv)
 
-    # select high pixels from both convolution outputs; then 'and' them to 
+    # select high pixels from both convolution outputs; then 'and' them to
     # create new cr_mask
     where_cr_grow_kernel_conv = np.where(cr_grow_kernel_conv < grow*grow, 0, 1)
     where_cr_ctegrow_kernel_conv = np.where(cr_ctegrow_kernel_conv < ctegrow, 0, 1)
@@ -270,7 +270,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
 
     # write out the updated file to disk to preserve the changes
     sci_image.save(sci_image.meta.filename)
-    
+
     # # write out the dq array as a separate file
     # outfilename = sci_image.meta.filename.split('.')[0] + '_dq.fits'
     # out_dq = datamodels.ImageModel()
