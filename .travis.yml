@@ -1,0 +1,44 @@
+language: c
+
+os:
+    - linux
+    - osx
+
+sudo: false
+
+env:
+    # CONDA_JWST_DEPENDENCIES is used because CONDA_DEPENDENCIES is not truly global.
+    global:
+        - MAIN_CMD='python setup.py'
+        - CONDA_CHANNELS='http://ssb.stsci.edu/conda-dev'
+        - CONDA_DEPENDENCIES='pytest stsci-jwst'
+        - CONDA_JWST_DEPENDENCIES='pytest stsci-jwst'
+        - PIP_DEPENDENCIES=''
+
+    matrix:
+        - PYTHON_VERSION=2.7 SETUP_CMD='install'
+        - PYTHON_VERSION=2.7 SETUP_CMD='test'
+        - PYTHON_VERSION=3.5 SETUP_CMD='install'
+        - PYTHON_VERSION=3.5 SETUP_CMD='test'
+
+matrix:
+    include:
+        # pep8 check (only once, i.e. "os: linux")
+        - os: linux
+          env: PYTHON_VERSION=3.5 MAIN_CMD='pep8 --count'
+               SETUP_CMD='jwst' TEST_CMD='pep8 --version'
+               CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
+
+    allow_failures:
+        # pep8 will fail for numerous reasons. Ignore it.
+        - env: PYTHON_VERSION=3.5 MAIN_CMD='pep8 --count'
+               SETUP_CMD='jwst' TEST_CMD='pep8 --version'
+               CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
+
+install:
+    - git clone git://github.com/astropy/ci-helpers.git
+    - source ci-helpers/travis/setup_conda_$TRAVIS_OS_NAME.sh
+
+script:
+    - $MAIN_CMD $SETUP_CMD
+
