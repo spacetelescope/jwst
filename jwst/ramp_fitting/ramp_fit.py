@@ -16,8 +16,8 @@ from __future__ import division
 import time
 import numpy as np
 import logging
-from jwst import datamodels
-from jwst.datamodels import dqflags
+from .. import datamodels
+from ..datamodels import dqflags
 
 from . import gls_fit           # used only if algorithm is "GLS"
 from . import utils
@@ -347,7 +347,7 @@ def ols_ramp_fit( model, buffsize, save_opt, readnoise_model, gain_model,
     log.debug('The execution time in seconds: %f' %(tstop - tstart))
 
     # Create new model...
-    new_model = models.ImageModel( data=c_rates.astype(np.float32),
+    new_model = datamodels.ImageModel( data=c_rates.astype(np.float32),
                                    dq=final_pixeldq.astype(np.int32),
                                    err=err_cube[0,0].copy())
 
@@ -668,11 +668,11 @@ def gls_ramp_fit(model,
 
     # Create new model...
     if n_int > 1:
-        new_model = models.ImageModel(data=slopes.astype(np.float32),
+        new_model = datamodels.ImageModel(data=slopes.astype(np.float32),
                                       dq=final_pixeldq,
                                       err=gls_err.astype(np.float32))
     else:
-        new_model = models.ImageModel(data=slope_int[0],
+        new_model = datamodels.ImageModel(data=slope_int[0],
                                       dq=final_pixeldq,
                                       err=slope_err_int[0])
 

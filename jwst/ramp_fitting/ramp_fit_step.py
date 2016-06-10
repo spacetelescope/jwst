@@ -3,7 +3,7 @@
 from __future__ import division
 
 from jwst.stpipe import Step, cmdline
-from jwst import datamodels
+from .. import datamodels
 from . import ramp_fit
 
 import logging
@@ -30,7 +30,7 @@ class RampFitStep (Step):
 
     def process(self, input):
 
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             readnoise_filename = self.get_reference_file( input_model,
                                                           'readnoise')
@@ -38,9 +38,9 @@ class RampFitStep (Step):
                                                      'gain')
 
             log.info('Using READNOISE reference file: %s', readnoise_filename)
-            readnoise_model = models.ReadnoiseModel( readnoise_filename )
+            readnoise_model = datamodels.ReadnoiseModel( readnoise_filename )
             log.info('Using GAIN reference file: %s', gain_filename)
-            gain_model = models.GainModel( gain_filename )
+            gain_model = datamodels.GainModel( gain_filename )
 
             log.info('Using algorithm = %s' % self.algorithm)
             log.info('Using weighting = %s' % self.weighting)
