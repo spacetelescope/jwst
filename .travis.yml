@@ -11,16 +11,16 @@ env:
     global:
         - MAIN_CMD='python setup.py'
         - CONDA_CHANNELS='http://ssb.stsci.edu/conda-dev'
-        - CONDA_DEPENDENCIES='pytest nose stsci-jwst'
-        - CONDA_JWST_DEPENDENCIES='pytest nose stsci-jwst'
+        - CONDA_DEPENDENCIES='pytest stsci-jwst'
+        - CONDA_JWST_DEPENDENCIES='pytest stsci-jwst'
         - PIP_DEPENDENCIES=''
 
     # SETUP_CMD='test' is unreliable under 2.7; using 'nosetests' for consistency.
     matrix:
         - PYTHON_VERSION=2.7 SETUP_CMD='install'
-        - PYTHON_VERSION=2.7 SETUP_CMD='nosetests'
+        - PYTHON_VERSION=2.7 SETUP_CMD='test'
         - PYTHON_VERSION=3.5 SETUP_CMD='install'
-        - PYTHON_VERSION=3.5 SETUP_CMD='nosetests'
+        - PYTHON_VERSION=3.5 SETUP_CMD='test'
 
 matrix:
     include:
