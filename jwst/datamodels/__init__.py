@@ -27,7 +27,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
 
-from __future__ import absolute_import, unicode_literals, division, print_function
+from __future__ import absolute_import, division, print_function
 
 import numpy as np
 from os.path import basename
@@ -130,12 +130,12 @@ def open(init=None, extensions=None):
 
     if init is None:
         return DataModel(None)
-# Send _asn.json files to ModelContainer; avoid shape "cleverness" below
-    elif (isinstance(init, six.string_types) and 
+    # Send _asn.json files to ModelContainer; avoid shape "cleverness" below
+    elif (isinstance(init, six.string_types) and
             basename(init).split('.')[0].split('_')[-1] == 'asn'):
         try:
             m = ModelContainer(init, extensions=extensions)
-        except: 
+        except:
             raise TypeError(
                 "init ASN not valid for ModelContainer"
                 )
@@ -194,7 +194,7 @@ def open(init=None, extensions=None):
 
     return new_class(init, extensions=extensions)
 
-
+'''
 def test( verbose=False ) :
     import nose
 
@@ -219,3 +219,4 @@ def test( verbose=False ) :
 
     # run nose
     return nose.main( argv = argv,  addplugins=addplugins )
+'''
