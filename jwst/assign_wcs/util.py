@@ -115,7 +115,8 @@ def wcs_from_footprints(wcslist, refwcs=None, transform=None, domain=None):
     wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame,
                              projection=prj, transform=tr)
 
-    #domain_bounds = np.hstack([gwutils._domain_to_bounds(d) for d in [w.domain for w in wcslist]]) 
+    #domain_bounds = np.hstack([gwutils._domain_to_bounds(d) for d in \
+    #[w.domain for w in wcslist]])
     domain_footprints = [w.footprint() for w in wcslist]
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in domain_footprints])
     for axs in domain_bounds:
