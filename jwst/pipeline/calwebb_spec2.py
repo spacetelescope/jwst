@@ -84,18 +84,18 @@ class Spec2Pipeline(Pipeline):
                         self.save_model(input, "bsub")
 
             # Apply NIRSpec MSA imprint subtraction
-            if input.meta.exposure.type in ['NRS_MSA', 'NRS_IFU']:
+            if input.meta.exposure.type in ['NRS_MSASPEC', 'NRS_IFU']:
                 if len(member['imprint']) > 0:
                     imprint_filename = member['imprint'][0]['expname']
                     input = self.imprint_subtract(input, imprint_filename)
 
             # Apply NIRSpec MSA bad shutter flagging
             # Stubbed out as placeholder until step module is created
-            #if input.meta.exposure.type in ['NRS_MSA', 'NRS_IFU']:
+            #if input.meta.exposure.type in ['NRS_MSASPEC', 'NRS_IFU']:
             #    input = self.msa_flagging(input)
 
             # Extract 2D sub-windows for NIRSpec slit and MSA
-            if input.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_MSA']:
+            if input.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
                 input = self.extract_2d(input)
 
             # Apply flat-field correction
