@@ -1,0 +1,11 @@
+# Header
+// key=value
+-- key2 = value2
+
+# key4 = this is a long one
+# keynokey =
+#keynospace = notvalid 
+first| second| third
+a1| a2| a3
+b1| b2| b3
+# key3 = value3
