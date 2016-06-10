@@ -1,3 +1,4 @@
+from . import datamodels
 from . import ami
 from . import assign_wcs
 from . import associations
