@@ -24,7 +24,7 @@ class FlatField(Step):
     # Load the spec from a file
 
     def process(self, science, flat):
-        from .. import datamodels
+        from ... import datamodels
 
         self.log.info("Removing flat field")
         self.log.info("Threshold: {0}".format(self.threshold))
@@ -40,7 +40,7 @@ class Combine(Step):
     """
 
     def process(self, images):
-        from .. import datamodels
+        from ... import datamodels
 
         combined = np.zeros((50, 50))
         for image in images:
@@ -63,7 +63,7 @@ class MultiplyBy2(Step):
     """
 
     def process(self, image):
-        from .. import datamodels
+        from ... import datamodels
 
         with models.ImageModel(image) as dm:
             with models.ImageModel() as dm2:
@@ -89,7 +89,7 @@ class TestPipeline(Pipeline):
     """
 
     def process(self, *args):
-        from .. import datamodels
+        from ... import datamodels
 
         science = models.open(self.science_filename)
         if self.flat_filename is None:
@@ -171,7 +171,7 @@ def test_pipeline_commandline():
 
 def test_pipeline_commandline_class():
     args = [
-        'jwst..stpipe.tests.test_pipeline.TestPipeline',
+        'jwst.stpipe.tests.test_pipeline.TestPipeline',
         '--logcfg={0}'.format(
             abspath(join(dirname(__file__), 'steps', 'log.cfg'))),
         # The file_name parameters are *required*
@@ -194,7 +194,7 @@ def test_pipeline_commandline_invalid_args():
     from io import StringIO
 
     args = [
-        'jwst..stpipe.tests.test_pipeline.TestPipeline',
+        'jwst.stpipe.tests.test_pipeline.TestPipeline',
         # The file_name parameters are *required*, and one of them
         # is missing, so we should get a message to that effect
         # followed by the commandline usage message.
