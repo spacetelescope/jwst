@@ -6,7 +6,7 @@ from __future__ import division
 
 import numpy as np
 import logging
-from jwst import datamodels
+from .. import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -119,7 +119,7 @@ def average_dark_frames(input_dark, ngroups, nframes, groupgap):
     # Create a model for the averaged dark data
     dny = input_dark.data.shape[1]
     dnx = input_dark.data.shape[2]
-    avg_dark = models.DarkModel((ngroups, dny, dnx))
+    avg_dark = datamodels.DarkModel((ngroups, dny, dnx))
     avg_dark.update(input_dark)
 
     # Do a direct copy of the 2-d DQ array into the new dark
