@@ -4,7 +4,7 @@
 
 import logging
 import numpy as np
-from jwst import datamodels
+from .. import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -341,7 +341,7 @@ class DataSet(object):
             relresps = tabdata['relresponse']
 
             # Set the relative sensitivity table for the correct Model type
-            if isinstance( self.input, models.MultiSlitModel):
+            if isinstance( self.input, datamodels.MultiSlitModel):
                 otab = np.array( list(zip(waves, relresps)),
                                 dtype=self.input.slits[0].relsens.dtype )
                 self.input.slits[0].relsens = otab
@@ -382,10 +382,10 @@ class DataSet(object):
         None  
 
         """
-        pix_area = models.PixelAreaModel( area_fname )
+        pix_area = datamodels.PixelAreaModel( area_fname )
 
         # Set model-dependent attribute to area array
-        if isinstance( self.input, models.MultiSlitModel):
+        if isinstance( self.input, datamodels.MultiSlitModel):
             self.input.slits[0].area = pix_area.data
         else:
             self.input.area = pix_area.data
@@ -447,26 +447,26 @@ class DataSet(object):
 
         """
         if self.instrument == 'NIRISS':
-            ftab = models.NirissPhotomModel(photom_fname)
+            ftab = datamodels.NirissPhotomModel(photom_fname)
             conv_factor = self.calc_niriss(ftab)
 
         if self.instrument == 'NIRSPEC':
-            ftab = models.NirspecPhotomModel(photom_fname)
+            ftab = datamodels.NirspecPhotomModel(photom_fname)
             conv_factor = self.calc_nirspec(ftab)
 
         if self.instrument == 'NIRCAM':
-            ftab = models.NircamPhotomModel(photom_fname)
+            ftab = datamodels.NircamPhotomModel(photom_fname)
             conv_factor = self.calc_nircam(ftab)
 
         if self.instrument == 'MIRI':
             if self.detector == 'MIRIMAGE':
-                ftab = models.MiriImgPhotomModel(photom_fname)
+                ftab = datamodels.MiriImgPhotomModel(photom_fname)
             else:
-                ftab = models.MiriMrsPhotomModel(photom_fname)
+                ftab = datamodels.MiriMrsPhotomModel(photom_fname)
             conv_factor = self.calc_miri(ftab)
 
         if self.instrument == 'FGS':
-            ftab = models.FgsPhotomModel(photom_fname)
+            ftab = datamodels.FgsPhotomModel(photom_fname)
             conv_factor = self.calc_fgs(ftab)
 
         if conv_factor is None:
