@@ -2,6 +2,7 @@ __pycache__
 build/
 dist/
 .cache
+*~
 *.pyc
 *.egg-info/
 *.so
