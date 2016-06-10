@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from jwst.stpipe import Pipeline
-from jwst import datamodels
+from .. import datamodels
 
 import os
 import json
@@ -136,7 +136,7 @@ class AmiInput(object):
     def __init__(self,input):
         self.input = input # keep a record of original input name for later
 
-        if isinstance(input, models.ImageModel):
+        if isinstance(input, datamodels.ImageModel):
             # It's a single image that's been passed in as a model
             self.interpret_image_model(input)
         elif isinstance(input,str):
@@ -145,7 +145,7 @@ class AmiInput(object):
                 self.asn = json.load(open(input,'r'))
             except:
                 # The name of a single image file
-                self.interpret_image_model(models.ImageModel(input))
+                self.interpret_image_model(datamodels.ImageModel(input))
         else:
             raise TypeError
 

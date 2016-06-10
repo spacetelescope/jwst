@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from jwst.stpipe import Pipeline
-from jwst import datamodels
+from .. import datamodels
 
 # calwebb Image3 step imports
 from jwst.resample import resample_step
@@ -41,9 +41,9 @@ class Image3Pipeline(Pipeline):
 
         log.info('Starting calwebb_image3 ...')
 
-        input_models = models.open(input)
+        input_models = datamodels.open(input)
 
-        is_container = (type(input_models)== type(models.ModelContainer()))
+        is_container = (type(input_models)== type(datamodels.ModelContainer()))
         if  is_container and len(input_models.group_names) > 1:
             # perform full outlier_detection of ASN data
             log.info("Generating source catalogs for alignment...")
