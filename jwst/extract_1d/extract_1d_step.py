@@ -2,7 +2,7 @@
 
 import os
 from jwst.stpipe import Step
-from jwst import datamodels
+from .. import datamodels
 from . import extract
 
 class Extract1dStep(Step):

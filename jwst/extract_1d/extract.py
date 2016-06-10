@@ -9,7 +9,7 @@ import math
 import numpy as np
 import json
 from astropy.modeling import polynomial
-from jwst import datamodels
+from .. import datamodels
 from gwcs import selector
 from . import extract1d
 
