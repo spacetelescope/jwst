@@ -75,6 +75,7 @@ from .superbias import SuperBiasModel
 from .util import fits_header_name
 
 
+
 __all__ = [
     'open',
     'DataModel', 'AmiLgModel', 'AsnModel', 'ContrastModel',
@@ -193,28 +194,29 @@ def open(init=None, extensions=None):
 
     return new_class(init, extensions=extensions)
 
+'''
+def test( verbose=False ) :
+    import nose
 
-#def test( verbose=False ) :
-    #import nose
+    # get the pandokia plugin if it is available (it will only
+    # do anything if we are run from pandokia).
+    try :
+        import pandokia.helpers.nose_plugin as nose_plugin
+    except ImportError :
+        nose_plugin = None
 
-    ## get the pandokia plugin if it is available (it will only
-    ## do anything if we are run from pandokia).
-    #try :
-        #import pandokia.helpers.nose_plugin as nose_plugin
-    #except ImportError :
-        #nose_plugin = None
+    if nose_plugin :
+        addplugins = [ nose_plugin.Pdk() ]
+    else :
+        addplugins = None
 
-    #if nose_plugin :
-        #addplugins = [ nose_plugin.Pdk() ]
-    #else :
-        #addplugins = None
+    # get the name of the test package
+    argv = [ 'nosetests', '--exe', __name__ + '.tests' ]
 
-    ## get the name of the test package
-    #argv = [ 'nosetests', '--exe', __name__ + '.tests' ]
+    import jwst.datamodels.tests
 
-    #import jwst.datamodels.tests
+    print ("ARGS", argv )
 
-    #print ("ARGS", argv )
-
-    ## run nose
-    #return nose.main( argv = argv,  addplugins=addplugins )
+    # run nose
+    return nose.main( argv = argv,  addplugins=addplugins )
+'''
