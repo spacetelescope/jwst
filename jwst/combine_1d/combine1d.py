@@ -7,7 +7,7 @@ import math
 
 import numpy as np
 import json
-from jwst import datamodels
+from .. import datamodels
 
 from . import temp_wcs
 
@@ -357,7 +357,7 @@ class OutputSpectrumModel(object):
                             self.countrate,
                             self.weight,
                             self.count)), dtype=dtype)
-        out_model = models.CombinedSpecModel(spec_table=data)
+        out_model = datamodels.CombinedSpecModel(spec_table=data)
 
         return out_model
 
@@ -451,7 +451,7 @@ def do_combine1d(asn_file, exptime_key, interpolation):
     input_spectra = []
     for file_dict in input_files:
         file = file_dict["expname"]
-        ms = models.MultiSpecModel(file)
+        ms = datamodels.MultiSpecModel(file)
         nspec = len(ms.spec)
         for in_spec in ms.spec:
             input_spectra.append(InputSpectrumModel(ms, in_spec, exptime_key))
@@ -469,7 +469,7 @@ def do_combine1d(asn_file, exptime_key, interpolation):
     output_spec.close()
 
     # Copy one of the input headers to output.
-    ms = models.MultiSpecModel(input_files[0]["expname"])
+    ms = datamodels.MultiSpecModel(input_files[0]["expname"])
     out_model.update(ms)# , primary_only=True)
     ms.close()
 
