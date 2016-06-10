@@ -9,7 +9,7 @@ from .. import datamodels
 from .. import assign_wcs
 # from ..stpipe import Step
 
-import .quickDeriv
+from . import quickDeriv
 
 CRBIT = np.uint32(datamodels.dqflags.pixel.get('JUMP_DET', 4))
 
