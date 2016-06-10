@@ -25,13 +25,13 @@ matrix:
     include:
         # pep8 check (only once, i.e. "os: linux")
         - os: linux
-          env: PYTHON_VERSION=3.5 MAIN_CMD='pep8 --first --count'
+          env: PYTHON_VERSION=3.5 MAIN_CMD='pep8 --count'
                SETUP_CMD='jwst' TEST_CMD='pep8 --version'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
 
     allow_failures:
         # pep8 will fail for numerous reasons. Ignore it.
-        - env: PYTHON_VERSION=3.5 MAIN_CMD='pep8 --first --count'
+        - env: PYTHON_VERSION=3.5 MAIN_CMD='pep8 --count'
                SETUP_CMD='jwst' TEST_CMD='pep8 --version'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
 
