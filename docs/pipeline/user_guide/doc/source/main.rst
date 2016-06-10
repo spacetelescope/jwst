@@ -36,7 +36,7 @@ Level-2b processing consists of
 
 Details of the available pipeline configurations can be found at:
 
-http://ssb.stsci.edu/doc/jwst_dev/jwst_pipeline.pipeline.doc/html/index.html
+http://ssb.stsci.edu/doc/jwst_dev/jwst.pipeline.doc/html/index.html
 
 This document contains setup instructions, discussion of the pipeline 
 configuration files, and examples of running pipelines either as
@@ -119,8 +119,8 @@ For example, running the full ramps-to-slopes pipeline or an individual step by
 referencing their class names is done as follows:
 ::
 
-  $ strun jwst_pipeline.pipeline.SloperPipeline jw00017001001_01101_00001_NRCA1_uncal.fits
-  $ strun jwst_pipeline.dq_init.DQInitStep jw00017001001_01101_00001_NRCA1_uncal.fits
+  $ strun jwst.pipeline.SloperPipeline jw00017001001_01101_00001_NRCA1_uncal.fits
+  $ strun jwst.dq_init.DQInitStep jw00017001001_01101_00001_NRCA1_uncal.fits
 
 When a pipeline or step is executed in this manner (i.e. by referencing the 
 class name), it will be run using all default parameter values. The same thing
@@ -139,7 +139,7 @@ For example, to override the default selection of a dark current reference
 file from CRDS when running a pipeline:
 ::
 
-    $ strun jwst_pipeline.pipeline.SloperPipeline jw00017001001_01101_00001_NRCA1_uncal.fits
+    $ strun jwst.pipeline.SloperPipeline jw00017001001_01101_00001_NRCA1_uncal.fits
           --steps.dark_current.override_dark='my_dark.fits'
     $ strun calwebb_sloper.cfg jw00017001001_01101_00001_NRCA1_uncal.fits
           --steps.dark_current.override_dark='my_dark.fits'
@@ -149,7 +149,7 @@ step by using the '-h' (help) argument to strun:
 ::
 
     $ strun dq_init.cfg -h
-    $ strun jwst_pipeline.pipeline.SloperPipeline -h
+    $ strun jwst.pipeline.SloperPipeline -h
 
 If you want to consistently override the default values of certain arguments
 and don't want to have to specify them on the command line every time you
@@ -161,7 +161,7 @@ contain the following:
 ::
 
  name = "SloperPipeline"
- class = "jwst_pipeline.pipeline.SloperPipeline"
+ class = "jwst.pipeline.SloperPipeline"
 
     [steps]
       [[dark_current]]
@@ -178,7 +178,7 @@ cfg file, such as:
 ::
 
  name = "SloperPipeline"
- class = "jwst_pipeline.pipeline.SloperPipeline"
+ class = "jwst.pipeline.SloperPipeline"
 
     [steps]
       [[dark_current]]
@@ -188,7 +188,7 @@ where "my_dark_current.cfg" contains:
 ::
 
  name = "dark_current" 
- class = "jwst_pipeline.dark_current.DarkCurrentStep"
+ class = "jwst.dark_current.DarkCurrentStep"
  override_dark = 'my_dark.fits'
 
 
@@ -199,10 +199,10 @@ You can execute a pipeline or a step from within python by using the
 `call` method of the class:
 ::
 
- from jwst_pipeline.pipeline import SloperPipeline
+ from jwst.pipeline import SloperPipeline
  SloperPipeline.call('jw00017001001_01101_00001_NRCA1_uncal.fits')
 
- from jwst_pipeline.linearity import LinearityStep
+ from jwst.linearity import LinearityStep
  LinearityStep.call('jw00001001001_01101_00001_MIRIMAGE_uncal.fits')
 
 The easiest way to use optional arguments when calling a pipeline from
@@ -400,7 +400,7 @@ jump detection step is:
 ::
 
     name = "jump"
-    class = "jwst_pipeline.jump.JumpStep"
+    class = "jwst.jump.JumpStep"
     rejection_threshold = 4.0
     do_yintercept = False
     yint_threshold = 1.0
@@ -414,7 +414,7 @@ which gives the usage, the positional arguments, and the optional arguments.
 More information on configuration files can be found in the `stpipe` User's
 Guide at:
 
-http://ssb.stsci.edu/doc/jwst_dev/jwst_lib.stpipe.doc/html/index.html
+http://ssb.stsci.edu/doc/jwst_dev/jwst.stpipe.doc/html/index.html
 
 Available Pipelines
 ===================
@@ -423,7 +423,7 @@ There are currently several pre-defined pipelines available for processing
 the data from different instrument observing modes. For all of the details
 see:
 
-http://ssb.stsci.edu/doc/jwst_dev/jwst_pipeline.pipeline.doc/html/index.html
+http://ssb.stsci.edu/doc/jwst_dev/jwst.pipeline.doc/html/index.html
 
 
 For More Information
@@ -432,12 +432,12 @@ For More Information
 More information on logging and running pipelines can be found in the `stpipe`
 User's Guide at:
 
-http://ssb.stsci.edu/doc/jwst_dev/jwst_lib.stpipe.doc/html/user/index.html
+http://ssb.stsci.edu/doc/jwst_dev/jwst.stpipe.doc/html/user/index.html
 
 More detailed information on writing pipelines can be found 
 in the `stpipe` Developer's Guide at:
 
-http://ssb.stsci.edu/doc/jwst_dev/jwst_lib.stpipe.doc/html/devel/index.html
+http://ssb.stsci.edu/doc/jwst_dev/jwst.stpipe.doc/html/devel/index.html
 
 
 Another Source of JWST Test Data

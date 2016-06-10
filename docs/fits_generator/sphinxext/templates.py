@@ -35,8 +35,8 @@ import re
 import textwrap
 
 # LOCAL
-from jwst_tools.fits_generator import template
-from jwst_tools.fits_generator import util
+from jwst.fits_generator import template
+from jwst.fits_generator import util
 
 def write_if_different(filename, data):
     data = data.encode('ascii')

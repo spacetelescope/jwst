@@ -5,7 +5,7 @@ Python Step Interface: TweakregCatalogStep
 
 .. moduleauthor:: Larry Bradley <help@stsci.edu>
 
-.. automodule:: jwst_pipeline.tweakreg_catalog.tweakreg_catalog_step
+.. automodule:: jwst.tweakreg_catalog.tweakreg_catalog_step
 
  .. autoclass:: TweakregCatalogStep
    :members:

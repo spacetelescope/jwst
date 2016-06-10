@@ -27,7 +27,7 @@ To create a linear pipeline, one inherits from the
 `~stpipe.LinearPipeline` class and adds a special member
 `pipeline_steps` to define the order of the steps::
 
-    from jwst_lib.stpipe import LinearPipeline
+    from jwst.stpipe import LinearPipeline
 
     # Some locally-defined steps
     from . import FlatField, RampFitting
@@ -68,9 +68,9 @@ For example, here is a pipeline with two steps: one that processes
 each chip of a multi-chip FITS file, and another to combine the chips
 into a single image::
 
-    from jwst_lib.stpipe import Pipeline
+    from jwst.stpipe import Pipeline
 
-    from jwst_lib.models import ImageModel
+    from jwst.datamodels import ImageModel
 
     # Some locally-defined steps
     from . import FlatField, Combine

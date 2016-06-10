@@ -1,4 +1,4 @@
-jwst_lib.models Developer’s Documentation
+jwst.datamodels Developer’s Documentation
 =========================================
 
 Contents:

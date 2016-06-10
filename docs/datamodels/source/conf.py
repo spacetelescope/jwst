@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# jwst_lib.models documentation build configuration file, created by
+# jwst.datamodels documentation build configuration file, created by
 # sphinx-quickstart on Wed Jan 25 09:21:48 2012.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -43,7 +43,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = 'jwst_lib.models'
+project = 'jwst.datamodels'
 copyright = '2012, STScI'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -167,7 +167,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'jwst_lib.models_doc'
+htmlhelp_basename = 'jwst.datamodels_doc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -186,7 +186,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'jwst_lib.models.tex', 'jwst\_lib.models Documentation',
+  ('index', 'jwst.datamodels.tex', 'jwst\_lib.models Documentation',
    'STScI', 'manual'),
 ]
 
@@ -216,7 +216,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'jwst_lib.models', 'jwst_lib.models Documentation',
+    ('index', 'jwst.datamodels', 'jwst.datamodels Documentation',
      ['STScI'], 1)
 ]
 
@@ -230,8 +230,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('index', 'jwst_lib.models', 'jwst_lib.models Documentation',
-   'STScI', 'jwst_lib.models', 'jwst_lib.models Documentation',
+  ('index', 'jwst.datamodels', 'jwst.datamodels Documentation',
+   'STScI', 'jwst.datamodels', 'jwst.datamodels Documentation',
    'Miscellaneous'),
 ]
 

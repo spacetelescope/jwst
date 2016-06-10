@@ -70,7 +70,7 @@ columns of information unique to that instrument:
 A NIRISS photom reference file, for example, could be constructed as follows
 from within the python environment::
 
- >>> from jwst_lib import models
+ >>> from jwst import models
  >>> import numpy as np
  >>> output=models.NirissPhotomModel()
  >>> filter=np.array(['F277W','F356W','CLEAR'])

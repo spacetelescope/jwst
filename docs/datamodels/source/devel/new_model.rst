@@ -4,7 +4,7 @@ Creating a new model
 ====================
 
 This tutorial describes the steps necessary to define a new model type
-using `jwst_lib.models`.
+using `jwst.datamodels`.
 
 For further reading and details, see the reference materials in
 :ref:`metadata`.
@@ -22,10 +22,10 @@ the bits in the array means.
   still subject to change at the time of this writing.
 
 This example will be built as a third-party Python package, i.e. not
-part of `jwst_lib.models` itself.  Doing so adds a few extra wrinkles
+part of `jwst.datamodels` itself.  Doing so adds a few extra wrinkles
 to the process, and it's most helpful to show what those wrinkles are.
 To skip ahead and just see the example in its entirety, see the
-``examples/custom_model`` directory within the `jwst_lib.models` source
+``examples/custom_model`` directory within the `jwst.datamodels` source
 tree.
 
 Directory layout
@@ -61,7 +61,7 @@ Let's start with the schema file, ``bad_pixel_mask.schema.yaml``.
 There are a few things it needs to do:
 
    1) It should contain all of the core metadata from the core schema
-      that ships with `jwst_lib.models`.  In JSON Schema parlance, this
+      that ships with `jwst.datamodels`.  In JSON Schema parlance, this
       schema "extends" the core schema.  In object-oriented
       programming terminology, this could be said that our schema
       "inherits from" the core schema.  It's all the same thing.
@@ -81,7 +81,7 @@ type "object", and should include the core schema:
 .. code-block:: yaml
 
   allOf:
-     - $ref: "http://jwst_lib.stsci.edu/schemas/core.schema.yaml"
+     - $ref: "http://jwst.stsci.edu/schemas/core.schema.yaml"
      - type: object
        properties:
           ...
@@ -95,19 +95,19 @@ The ``$ref`` URL can be a relative URL, in which case it is relative
 to the schema file where ``$ref`` is used.  In our case, however, it's
 an absolute URL.  Before you visit that URL to see what's there, I'll
 save you the trouble: there is nothing at that HTTP address.  The host
-``jwst_lib.stsci.edu`` is recognized as a "special" address by the
+``jwst.stsci.edu`` is recognized as a "special" address by the
 system that causes the schema to be looked up alongside installed
 Python code.  For example, to refer to a (hypothetical)
 ``my_instrument`` schema that ships with a Python package called
 ``astroboy``, use the following URL::
 
-  http://jwst_lib.stsci.edu/schemas/astroboy/my_instrument.schema.yaml
+  http://jwst.stsci.edu/schemas/astroboy/my_instrument.schema.yaml
 
 The "package" portion may be omitted to refer to schemas in the
-`jwst_lib.models` core, which is how we arrive at the URL we're using
+`jwst.datamodels` core, which is how we arrive at the URL we're using
 here::
 
-  http://jwst_lib.stsci.edu/schemas/core.schema.yaml
+  http://jwst.stsci.edu/schemas/core.schema.yaml
 
 .. note::
 
@@ -189,7 +189,7 @@ the model.
 First, we need to import the `DataModel` class, which is the base
 class for all models::
 
-  from jwst_lib.models import DataModel
+  from jwst.datamodels import DataModel
 
 Then we create a new Python class that inherits from `DataModel`, and
 set its `schema_url` class member to point to the schema that we just
@@ -210,7 +210,7 @@ As an alternative, we could just as easily have said that we want to
 use the ``image`` schema from the core without defining any extra
 elements, by setting `schema_url` to::
 
-  schema_url = "http://jwst_lib.stsci.edu/schemas/image.schema.yaml"
+  schema_url = "http://jwst.stsci.edu/schemas/image.schema.yaml"
 
 .. note::
 
@@ -220,18 +220,18 @@ elements, by setting `schema_url` to::
   automatically create the inheritance on the schema side (or vice
   versa).  The reason we can't is that the schema files are designed
   to be language-agnostic: it is possible to use them from an entirely
-  different implementation of the `jwst_lib.models` framework possibly
+  different implementation of the `jwst.datamodels` framework possibly
   even written in a language other than Python.  So the schemas need
   to "stand alone" from the Python classes.  It's certainly possible
   to have the schema inherit from one thing and the Python class
-  inherit from another, and the `jwst_lib.models` framework won't and
+  inherit from another, and the `jwst.datamodels` framework won't and
   can't really complain, but doing that is only going to lead to
   confusion, so just don't do it.
 
 Within this class, we'll define a constructor.  All model constructors
 must take the highly polymorphic ``init`` value as the first argument.
 This can be a file, another model, or all kinds of other things.  See
-the docstring of `jwst_lib.models.DataModel.__init__` for more
+the docstring of `jwst.datamodels.DataModel.__init__` for more
 information.  But we're going to let the base class handle that
 anyway.
 
@@ -247,7 +247,7 @@ technically writing a new constructor for the model is optional::
         Parameters
         ----------
         init : any
-            Any of the initializers supported by `~jwst_lib.models.DataModel`.
+            Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
         dq : numpy array
             The data quality array.
@@ -321,7 +321,7 @@ function.
 
    Since handling bit fields like this is such a commonly useful
    thing, it's possible that this functionality will become a part of
-   `jwst_lib.models` itself in the future.  However, this still stands
+   `jwst.datamodels` itself in the future.  However, this still stands
    as a good example of something someone may want to do in a custom
    model class.
 
@@ -356,7 +356,7 @@ minimal, ``setup.py`` is presented below::
 
   setup(
       name='custom_model',
-      description='Custom model example for jwst_lib.models',
+      description='Custom model example for jwst.datamodels',
       packages=['custom_model', 'custom_model.tests'],
       package_dir={'custom_model': 'lib'},
       package_data={'custom_model': ['schemas/*.schema.yaml'],

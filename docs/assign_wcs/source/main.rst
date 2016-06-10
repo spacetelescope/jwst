@@ -1,14 +1,14 @@
 Description
 ===========
 
-jwst_pipeline.assign_wcs is the first step in the level 2B JWST pipeline.
+jwst.assign_wcs is the first step in the level 2B JWST pipeline.
 For each exposure, it constructs a WCS object and associates it
 with its corresponding science file. The forward direction is from detector to world coordinates.
 The WCS is saved as an attribute of the meta object of a model.
 Calling it as a function with detector positions as inputs returns the
 corresponding world coordinates. Using MIRI LRS fixed slit as an example:
 
->>> from jwst_lib.models import ImageModel
+>>> from jwst.datamodels import ImageModel
 >>> exp = ImagModel(miri_fixed_assign_wcs.fits')
 >>> ra, dec, lam = exp.meta.wcs(x, y)
 >>> print(ra, dec, lam)
@@ -40,7 +40,7 @@ multiple-integration datasets the step will accept either of these data products
 the slope results for each integration in the exposure, or the single slope image
 that is the result of averaging over all integrations.
 
-jwst_pipeline.assign_wcs uses the modeling, units and coordinates subpackages in astropy.
+jwst.assign_wcs uses the modeling, units and coordinates subpackages in astropy.
 
 Software dependencies:
 

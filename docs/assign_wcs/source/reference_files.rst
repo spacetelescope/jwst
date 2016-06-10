@@ -1,7 +1,7 @@
 Reference files
 ===============
 
-This documents describes the reference files used by jwst_pipeline.assign_wcs starting with
+This documents describes the reference files used by jwst.assign_wcs starting with
 build 5.
 
 In general the basic WCS keywords are in the primary header and the distortion

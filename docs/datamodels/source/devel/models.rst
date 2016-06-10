@@ -39,7 +39,7 @@ To create a new `ImageModel`, just call its constructor.  To create a
 new model where all of the arrays will have default values, simply
 provide a shape as the first argument::
 
-    from jwst_lib.models import ImageModel
+    from jwst.datamodels import ImageModel
     with ImageModel((1024, 1024)) as im:
         ...
 
@@ -63,7 +63,7 @@ using that array by passing it in as a data keyword argument::
 Creating a data model from a file
 ---------------------------------
 
-The `jwst_lib.models.open` function is a convenient way to create a
+The `jwst.datamodels.open` function is a convenient way to create a
 model from a file on disk.  It may be passed any of the following:
 
     - a path to a FITS file
@@ -80,7 +80,7 @@ exiting the `with` block.
 
 ::
 
-    from jwst_lib import models
+    from jwst import models
     with models.open("myimage.fits") as im:
         assert isinstance(im, models.ImageModel)
 
@@ -89,7 +89,7 @@ that what is being loaded is of a particular type, use the constructor
 of the desired concrete class.  For example, if you want to ensure
 that the file being opened contains 2-dimensional image data::
 
-    from jwst_lib.models import ImageData
+    from jwst.datamodels import ImageData
     with ImageData("myimage.fits") as im:
         # raises exception if myimage.fits is not an image file
         pass
@@ -152,7 +152,7 @@ Converting from ``astropy.io.fits``
 ===================================
 
 This section describes how to port code that uses ``astropy.io.fits``
-to use `jwst_lib.models`.
+to use `jwst.datamodels`.
 
 Opening a file
 --------------
@@ -163,7 +163,7 @@ Instead of::
 
 use::
 
-    from jwst_lib.models import ImageModel
+    from jwst.datamodels import ImageModel
     with ImageModel("myfile.fits") as model:
         ...
 
@@ -196,7 +196,7 @@ use the :ref:`metadata` tree.
 There is a convenience method, `find_fits_keyword` to find where a
 FITS keyword is used in the metadata tree::
 
-    >>> from jwst_lib.models import DataModel
+    >>> from jwst.datamodels import DataModel
     # First, create a model of the desired type
     >>> model = DataModel()
     >>> model.find_fits_keyword('DATE-OBS')

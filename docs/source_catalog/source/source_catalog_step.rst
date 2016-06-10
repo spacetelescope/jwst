@@ -5,7 +5,7 @@ Python Step Interface: SourceCatalogStep
 
 .. moduleauthor:: Larry Bradley <help@stsci.edu>
 
-.. automodule:: jwst_pipeline.source_catalog.source_catalog_step
+.. automodule:: jwst.source_catalog.source_catalog_step
 
  .. autoclass:: SourceCatalogStep
    :members:

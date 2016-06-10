@@ -1,4 +1,4 @@
-.. py:module:: jwst_lib.models
+.. py:module:: jwst.datamodels
 
 Data model attributes
 `````````````````````
@@ -35,7 +35,7 @@ steps.  Note that, following FORTRAN and FITS conventions, the
 starting pixel numbers in X and Y are one-indexed.  Getting the number
 of integrations and the number of groups from the first and second
 axes assumes that the input data array is 4-D data.  Much of the
-jwst_pipeline step code assumes that the data array is 4-D.
+jwst step code assumes that the data array is 4-D.
 
     - number of integrations = input_model.data.shape[0]
     - number of groups = input_model.data.shape[1]
@@ -67,13 +67,13 @@ Model classes
 Base class
 ''''''''''
 
-.. autoclass:: jwst_lib.models.DataModel
+.. autoclass:: jwst.datamodels.DataModel
    :members:
 
 Concrete model classes
 ''''''''''''''''''''''
 
-.. automodule:: jwst_lib.models
+.. automodule:: jwst.datamodels
    :members: AmiLgModel, AsnModel, ContrastModel,
     CubeModel, DarkModel, DrizParsModel, NircamDrizParsModel,
     MiriImgDrizParsModel, DrizProductModel, FilterModel,

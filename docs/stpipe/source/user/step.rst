@@ -67,7 +67,7 @@ configspec for an imaginary step called `stpipe.cleanup`::
     Configspec information can also be displayed from Python, just
     call ``print_configspec`` on any Step class::
 
-        >>> from jwst_lib.stpipe import cleanup
+        >>> from jwst.stpipe import cleanup
         >>> cleanup.print_configspec()
         # The threshold below which to apply cleanup
         threshold = float()
@@ -157,6 +157,6 @@ setting the `config_file` kwarg (which takes a path to a configuration
 file) or as keyword arguments.  Any remaining positional arguments are
 passed along to the step's `process` method::
 
-    from jwst_lib.stpipe import cleanup
+    from jwst.stpipe import cleanup
 
     cleanup.call('image.fits', config_file='do_cleanup.cfg', threshold=42.0)

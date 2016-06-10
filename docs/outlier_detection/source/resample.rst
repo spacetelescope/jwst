@@ -6,7 +6,7 @@ Python Interface to Drizzle: DrizzleStep()
 
 .. moduleauthor:: Warren Hack, Howard Bushouse <help@stsci.edu>
 
-.. automodule:: jwst_pipeline.resample.resample
+.. automodule:: jwst.resample.resample
 
  .. autoclass:: DrizzleStep
    :members:

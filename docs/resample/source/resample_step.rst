@@ -6,7 +6,7 @@ Python Step Interface: ResampleStep()
 
 .. moduleauthor:: Warren Hack, Howard Bushouse <help@stsci.edu>
 
-.. automodule:: jwst_pipeline.resample.resample_step
+.. automodule:: jwst.resample.resample_step
 
  .. autoclass:: ResampleStep
    :members:

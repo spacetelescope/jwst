@@ -77,9 +77,9 @@ have a `spec` member to describe its configuration parameters.
 
 ::
 
-    from jwst_lib.stpipe import Step
+    from jwst.stpipe import Step
 
-    from jwst_lib.models import ImageModel
+    from jwst.datamodels import ImageModel
     from my_awesome_astronomy_library import combine
 
     class ExampleStep(Step):
@@ -274,7 +274,7 @@ For example, to make a script for the step `mypackage.ExampleStep`::
     from mypackage import ExampleStep
 
     # Import stpipe.cmdline
-    from jwst_lib.stpipe import cmdline
+    from jwst.stpipe import cmdline
 
     if __name__ == '__main__':
         # Pass the step class to cmdline.step_script

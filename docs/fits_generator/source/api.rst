@@ -4,7 +4,7 @@ API
 Main functions
 --------------
 
-.. automodule:: jwst_tools.fits_generator
+.. automodule:: jwst.fits_generator
    :members:
 
 .. _objects:
@@ -12,10 +12,10 @@ Main functions
 Objects
 -------
 
-.. inheritance-diagram:: jwst_tools.fits_generator.objects
+.. inheritance-diagram:: jwst.fits_generator.objects
    :parts: 2
 
-.. automodule:: jwst_tools.fits_generator.objects
+.. automodule:: jwst.fits_generator.objects
    :members:
    :inherited-members:
    :undoc-members:
@@ -26,7 +26,7 @@ Objects
 Generators
 ----------
 
-.. automodule:: jwst_tools.fits_generator.generators
+.. automodule:: jwst.fits_generator.generators
    :members:
    :inherited-members:
    :undoc-members:
@@ -37,7 +37,7 @@ Generators
 Verifiers
 ---------
 
-.. automodule:: jwst_tools.fits_generator.verifiers
+.. automodule:: jwst.fits_generator.verifiers
    :members:
    :inherited-members:
    :undoc-members:
@@ -48,7 +48,7 @@ Verifiers
 Template Parser
 ---------------
 
-.. automodule:: jwst_tools.fits_generator.template
+.. automodule:: jwst.fits_generator.template
    :members:
    :inherited-members:
    :undoc-members:
@@ -59,10 +59,10 @@ Template Parser
 Input File Types
 ----------------
 
-.. inheritance-diagram:: jwst_tools.fits_generator.input_file_types
+.. inheritance-diagram:: jwst.fits_generator.input_file_types
    :parts: 2
 
-.. automodule:: jwst_tools.fits_generator.input_file_types
+.. automodule:: jwst.fits_generator.input_file_types
    :members:
    :inherited-members:
    :undoc-members:
@@ -73,7 +73,7 @@ Input File Types
 Utility functions
 -----------------
 
-.. automodule:: jwst_tools.fits_generator.util
+.. automodule:: jwst.fits_generator.util
    :members:
    :inherited-members:
    :undoc-members:

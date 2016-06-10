@@ -13,28 +13,28 @@ Metadata values are automatically type-checked when they are set.
 Therefore, setting a value that expects a number to a string will
 raise an exception::
 
-    >>> from jwst_lib.models import ImageModel
+    >>> from jwst.datamodels import ImageModel
     >>> dm = ImageModel()
     >>> dm.meta.target.ra = "foo"
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-      File "site-packages/jwst_lib.models/schema.py", line 672, in __setattr__
+      File "site-packages/jwst.datamodels/schema.py", line 672, in __setattr__
         object.__setattr__(self, attr, val)
-      File "site-packages/jwst_lib.models/schema.py", line 490, in __set__
+      File "site-packages/jwst.datamodels/schema.py", line 490, in __set__
         val = self.to_basic_type(val)
-      File "site-packages/jwst_lib.models/schema.py", line 422, in to_basic_type
+      File "site-packages/jwst.datamodels/schema.py", line 422, in to_basic_type
         raise ValueError(e.message)
     ValueError: 'foo' is not of type u'number'
 
 The set of available metadata elements is defined in a JSON Schema
-that ships with `jwst_lib.models`.
+that ships with `jwst.datamodels`.
 
 There is also a utility method for finding elements in the metadata
 schema.  `search_schema` will search the schema for the given
 substring in metadata names as well as their documentation.  The
 search is case-insensitive::
 
-    >>> from jwst_lib.models import ImageModel
+    >>> from jwst.datamodels import ImageModel
     # Create a model of the desired type
     >>> model = ImageModel()
     # Call `search_schema` on it to find possibly related elements.
@@ -81,33 +81,33 @@ object where the attributes are type-checked::
 
     >>> trans = dm.meta.transformations[0]
     >>> print trans
-    <jwst_lib.models.schema.Transformations object at 0x123a810>
+    <jwst.datamodels.schema.Transformations object at 0x123a810>
     >>> print trans.type
     SIN
     >>> trans.type = 42.0
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
-      File "site-packages/jwst_lib.models/schema.py", line 672, in __setattr__
+      File "site-packages/jwst.datamodels/schema.py", line 672, in __setattr__
          object.__setattr__(self, attr, val)
-      File "site-packages/jwst_lib.models/schema.py", line 490, in __set__
+      File "site-packages/jwst.datamodels/schema.py", line 490, in __set__
          val = self.to_basic_type(val)
-      File "site-packages/jwst_lib.models/schema.py", line 422, in to_basic_type
+      File "site-packages/jwst.datamodels/schema.py", line 422, in to_basic_type
          raise ValueError(e.message)
     ValueError: 42.0 is not of type u'string'
 
 JSON Schema
 ===========
 
-The `jwst_lib.models` library defines its metadata using `Draft 4 of
+The `jwst.datamodels` library defines its metadata using `Draft 4 of
 the JSON Schema specification
 <http://tools.ietf.org/html/draft-zyp-json-schema-04>`_, but
-jwst_lib.models uses YAML for the syntax.  A good resource for
+jwst.datamodels uses YAML for the syntax.  A good resource for
 learning about JSON schema is the book `Understanding JSON Schema
 <http://spacetelescope.github.com/understanding-json-schema>`_.  The
 mapping from Javascript to Python concepts (such as Javascript “array”
 == Python “list”) is added where applicable.
 
-In addition to the standard JSON Schema keywords, ``jwst_lib.models``
+In addition to the standard JSON Schema keywords, ``jwst.datamodels``
 also supports the following additional keywords.
 
 Arrays
@@ -152,7 +152,7 @@ keys:
 FITS-specific Schema Attributes
 '''''''''''''''''''''''''''''''
 
-`jwst_lib.models` also adds some new keys to the schema language in
+`jwst.datamodels` also adds some new keys to the schema language in
 order to handle reading and writing FITS files.  These attributes all
 have the prefix ``fits_``.
 
