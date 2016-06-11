@@ -4,9 +4,7 @@ import re
 
 from . import helpers
 
-from jwst_tools.associations.association import AssociationRegistry
-from jwst_tools.associations.pool import AssociationPool
-from jwst_tools.associations.generate import generate
+from .. import (AssociationRegistry, AssociationPool, generate)
 
 LEVEL3_PRODUCT_NAME_REGEX = (
     'jw'
@@ -23,8 +21,8 @@ LEVEL3_PRODUCT_NAME_REGEX = (
 
 class TestProductNames():
     pool_files = [
-        'tests/data/jw93060_20150312T160130_pool.csv',
-        'tests/data/jw96090_20160406T233447_pool.csv'
+        helpers.t_path('data/jw93060_20150312T160130_pool.csv'),
+        helpers.t_path('data/jw96090_20160406T233447_pool.csv')
     ]
 
     global_constraints = {

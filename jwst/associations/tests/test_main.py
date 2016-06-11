@@ -3,14 +3,14 @@ from __future__ import absolute_import
 
 from . import helpers
 
-from jwst_tools.associations.main import Main
+from ..main import Main
 
 
 class TestMain():
 
     pools_size = [
-        ('tests/data/jw93060_20150312T160130_pool.csv', 14),
-        ('tests/data/jw82600_001_20151107T165901_pool.csv', 11),
+        (helpers.t_path('data/jw93060_20150312T160130_pool.csv'), 14),
+        (helpers.t_path('data/jw82600_001_20151107T165901_pool.csv'), 11),
     ]
 
     def setUp(self):

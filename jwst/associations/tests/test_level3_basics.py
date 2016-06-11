@@ -3,11 +3,10 @@ from __future__ import absolute_import
 
 import re
 
-from jwst_tools.associations.association import AssociationRegistry
-from jwst_tools.associations.pool import AssociationPool
-from jwst_tools.associations.generate import generate
-
 from . import helpers
+
+from .. import (AssociationRegistry, AssociationPool, generate)
+
 
 # Level 3 product name templates
 L35_PRODUCT_NAME = (
@@ -30,7 +29,10 @@ L3_PRODUCT_NAME = (
 class TestLevel3Environment(object):
 
     pools_size = [
-        ('tests/data/jw93060_20150312T160130_pool.csv', 14),
+        (
+            helpers.t_path('data/jw93060_20150312T160130_pool.csv'),
+            14
+        ),
     ]
 
     def setUp(self):

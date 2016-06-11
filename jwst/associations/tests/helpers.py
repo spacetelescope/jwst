@@ -1,9 +1,8 @@
 """Helpers for tests."""
 from collections import namedtuple
+import os
 
-from jwst_tools.associations.association import AssociationRegistry
-from jwst_tools.associations.pool import AssociationPool
-from jwst_tools.associations.generate import generate
+from .. import (AssociationRegistry, AssociationPool, generate)
 
 
 # Define how to setup initial conditions with pools.
@@ -81,3 +80,9 @@ def check_equal(left, right):
 
 def not_none(value):
     assert value is not None
+
+
+def t_path(partial_path):
+    """Construction the full path for test files"""
+    test_dir = os.path.dirname(__file__)
+    return os.path.join(test_dir, partial_path)

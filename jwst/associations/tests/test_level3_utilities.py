@@ -1,10 +1,10 @@
-from jwst_tools.associations.association import AssociationRegistry
-from jwst_tools.associations.pool import AssociationPool
-from jwst_tools.associations.generate import generate
+from . import helpers
+
+from .. import (AssociationRegistry, AssociationPool, generate)
 
 
 class TestUtilities():
-    pool_file = 'tests/data/jw82600_001_20151107T165901_pool.csv'
+    pool_file = helpers.t_path('data/jw82600_001_20151107T165901_pool.csv')
 
     def setUp(self):
         pass
