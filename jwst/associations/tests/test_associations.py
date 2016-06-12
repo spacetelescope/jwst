@@ -31,7 +31,7 @@ class TestAssociations():
     # Basic Association object
     def test_read_assoc_defs(self):
         rules = AssociationRegistry(
-            [helpers.t_path('tests/data/asn_rules_set1.py')],
+            [helpers.t_path('data/asn_rules_set1.py')],
             include_default=False
         )
         assert len(rules) >= 2
