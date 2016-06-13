@@ -1,5 +1,5 @@
 from jwst.stpipe import Step
-from .. import datamodels
+from .... import datamodels
 
 class AnotherDummyStep(Step):
     """
