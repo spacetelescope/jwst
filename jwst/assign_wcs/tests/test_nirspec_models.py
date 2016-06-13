@@ -5,9 +5,9 @@ from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.utils.data import get_pkg_data_filename
 
-from jwst.datamodels import ImageModel
-from jwst.assign_wcs import nirspec
-from jwst.assign_wcs import assign_wcs_step
+from ...datamodels import ImageModel
+from ..import nirspec
+from .. import assign_wcs_step
 
 from asdf import AsdfFile
 import numpy as np

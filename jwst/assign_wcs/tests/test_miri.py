@@ -11,10 +11,10 @@ from numpy.testing import utils
 import pytest
 from gwcs import wcs
 
-from jwst.datamodels import ImageModel
-from jwst.assign_wcs.tools.miri import miri_ifu_ref_tools
-from jwst.assign_wcs import miri
-from jwst.assign_wcs import AssignWcsStep
+from ...datamodels import ImageModel
+from ..tools.miri import miri_ifu_ref_tools
+from .. import miri
+from ..assign_wcs_step import AssignWcsStep
 
 
 mrs_ref_data = {
