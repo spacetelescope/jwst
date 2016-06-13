@@ -100,14 +100,14 @@ class GratingEquationType(TransformType):
             raise TypeError("Can't serialize an instance of {0}".format(model.__class__.__name__))
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
-    @classmethod
-    def assert_equal(cls, a, b):
-        from astropy import modeling
+    #@classmethod
+    #def assert_equal(cls, a, b):
+        #from astropy import modeling
 
-        TransformType.assert_equal(a, b)
-        assert (isinstance(a, modeling.models.Shift) and
-                isinstance(b, modeling.models.Shift))
-        assert_array_equal(a.offset.value, b.offset.value)
+        #TransformType.assert_equal(a, b)
+        #assert (isinstance(a, modeling.models.Shift) and
+                #isinstance(b, modeling.models.Shift))
+        #assert_array_equal(a.offset.value, b.offset.value)
 
 
 class LRSWavelengthType(TransformType):

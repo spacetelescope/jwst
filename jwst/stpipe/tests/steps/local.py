@@ -1,4 +1,4 @@
-from jwst.stpipe import Step
+from ....step import Step
 import logging
 
 log = logging.getLogger("FOO")
@@ -14,7 +14,7 @@ class DummyStep(Step):
     """
 
     def process(self, *args):
-        from ..datamodels import ImageModel
+        from ....datamodels import ImageModel
 
         log.info("Default logger")
         log.debug("Default logger")

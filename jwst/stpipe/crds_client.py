@@ -98,7 +98,7 @@ def get_multiple_reference_paths(input_file, reference_file_types):
 
 def check_reference_open(refpath):
     """Verify that `refpath` exists and is readable for the current user.
-    
+
     Ignore reference path values of "N/A" or "" for checking.
     """
     if refpath != "N/A" and refpath.strip() != "":
