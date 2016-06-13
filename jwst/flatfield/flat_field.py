@@ -487,6 +487,10 @@ def interpolate_flat(flat_val, flat_dq, flat_wl, wl, direction):
     not_flagged = np.logical_not(temp.astype(np.bool))
     num_k = not_flagged.sum(axis=0, dtype=np.intp)
     max_num_k = num_k.max()
+    if max_num_k <= 0:
+        log.warning("Every pixel in the current slit is flagged with"
+                    " NO_FLAT_FIELD.")
+        return (flat_val[0], flat_dq[0])
 
     # Maximum index for the first axis; this can vary from pixel to pixel.
     k_max = num_k - 1
