@@ -6,12 +6,21 @@ from setuptools.command.test import test as TestCommand
 from numpy import get_include as np_include
 from glob import glob
 
+NAME='jwst'
+SCRIPTS=glob('scripts/*')
+PACKAGE_DATA={
+    '': ['*.fits',
+        '*.txt',
+        '*.inc',
+        '*.json',
+        '*.cfg']
+}
 
 class PyTest(TestCommand):
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
-        self.pytest_args = []
+        self.pytest_args = [NAME]
 
     def finalize_options(self):
         TestCommand.finalize_options(self)
@@ -49,19 +58,11 @@ else:
 
 
 version = relic.release.get_info()
-relic.release.write_template(version, 'jwst/')
+relic.release.write_template(version, NAME)
 
-SCRIPTS=glob('scripts/*')
-PACKAGE_DATA={
-    '': ['*.fits',
-        '*.txt',
-        '*.inc',
-        '*.json',
-        '*.cfg']
-}
 
 setup(
-    name='jwst',
+    name=NAME,
     version=version.pep386,
     author='OED/SSB, etc',
     author_email='help@stsci.edu',
