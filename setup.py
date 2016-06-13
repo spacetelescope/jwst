@@ -12,8 +12,8 @@ PACKAGE_DATA={
     '': ['*.fits',
         '*.txt',
         '*.inc',
-        '*.json',
-        '*.cfg']
+        '*.cfg',
+        '*.csv']
 }
 
 class PyTest(TestCommand):
