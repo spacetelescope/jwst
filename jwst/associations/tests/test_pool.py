@@ -1,6 +1,6 @@
 from nose.tools import assert_raises
 
-from jwst_tools.associations.pool import AssociationPool
+from jwst.associations.pool import AssociationPool
 
 
 class TestPool():

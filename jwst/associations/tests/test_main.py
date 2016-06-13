@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 from . import helpers
 
-from jwst_tools.associations.main import Main
+from jwst.associations.main import Main
 
 
 class TestMain():

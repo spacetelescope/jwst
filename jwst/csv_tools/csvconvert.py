@@ -31,7 +31,7 @@ class CSVConvertScript(object):
 
         # Define the command line.
         parser = argparse.ArgumentParser(description='Convert CSV with headers to other formats',
-                                         usage='python -m jwst_tools.csv_tools.csvconvert csvfile outfile')
+                                         usage='python -m jwst.csv_tools.csvconvert csvfile outfile')
         parser.add_argument('csvfile', type=str,
                             help='Input CSV file to convert')
         parser.add_argument('outfile', type=str,

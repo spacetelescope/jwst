@@ -2,7 +2,7 @@
 """
 from os.path import basename
 import re
-from jwst_tools.associations.association import Association
+from jwst.associations.association import Association
 
 # The schema that these associations must adhere to.
 _ASN_SCHEMA_LEVEL3 = 'asn_schema_jw_level3.json'

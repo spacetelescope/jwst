@@ -89,7 +89,7 @@ def version():
     """
     Generate the version of fits_generate
     """
-    return jwst_tools.fits_generator.__version__
+    return jwst.fits_generator.__version__
 
 def substr(value, start = 0, end = None):
     """
