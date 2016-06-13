@@ -5,9 +5,9 @@ import nose.tools as nt
 from nose import SkipTest
 from . import helpers
 
-from jwst_tools.associations.association import *
-from jwst_tools.associations.pool import AssociationPool
-from jwst_tools.associations.generate import generate
+from jwst.associations.association import *
+from jwst.associations.pool import AssociationPool
+from jwst.associations.generate import generate
 
 
 class TestAssociations():

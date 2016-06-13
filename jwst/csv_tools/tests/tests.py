@@ -1,8 +1,8 @@
 import nose.tools as nt
 from nose import SkipTest
 
-from jwst_tools.csv_tools.csv_to_hdulist import *
-from jwst_tools.csv_tools.table_to_json import table_to_json
+from jwst.csv_tools.csv_to_hdulist import *
+from jwst.csv_tools.table_to_json import table_to_json
 
 class TestCSVConvert():
 

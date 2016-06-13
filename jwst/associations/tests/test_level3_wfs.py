@@ -1,9 +1,9 @@
 """test_level3_dithers: Test of WFS rules."""
 from __future__ import absolute_import
 
-from jwst_tools.associations.association import AssociationRegistry
-from jwst_tools.associations.pool import AssociationPool
-from jwst_tools.associations.generate import generate
+from jwst.associations.association import AssociationRegistry
+from jwst.associations.pool import AssociationPool
+from jwst.associations.generate import generate
 
 from .helpers import BasePoolRule, PoolParams
 

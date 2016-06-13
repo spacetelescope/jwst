@@ -1,9 +1,9 @@
 """Helpers for tests."""
 from collections import namedtuple
 
-from jwst_tools.associations.association import AssociationRegistry
-from jwst_tools.associations.pool import AssociationPool
-from jwst_tools.associations.generate import generate
+from jwst.associations.association import AssociationRegistry
+from jwst.associations.pool import AssociationPool
+from jwst.associations.generate import generate
 
 
 # Define how to setup initial conditions with pools.

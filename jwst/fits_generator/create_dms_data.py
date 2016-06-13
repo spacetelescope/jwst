@@ -91,7 +91,7 @@ def rotated_and_flipped(input_hdulist):
         return False
 
 def getSCA_ID(input_hdulist):
-    if jwst_tools.fits_generator.is_ncont(input_hdulist):
+    if jwst.fits_generator.is_ncont(input_hdulist):
         module = input_hdulist[0].header['MODULE'].strip()
         detector = input_hdulist[0].header['DETECTOR'].strip()
         SCA = input_hdulist[0].header['SCA']
@@ -323,7 +323,7 @@ def flip_rotate (input_hdulist):
         # NIRSpec NRS1
         #
         rcube = numpy.swapaxes(cube, 1, 2)
-        if jwst_tools.fits_generator.is_nirspec_ips(input_hdulist):
+        if jwst.fits_generator.is_nirspec_ips(input_hdulist):
             #
             # IPS data is all full-frame
             detector_row_start = 0
@@ -370,7 +370,7 @@ def flip_rotate (input_hdulist):
         # NIRSpec NRS2
         #
         rcube = numpy.swapaxes(cube, 1, 2)[:, ::-1, ::-1]
-        if jwst_tools.fits_generator.is_nirspec_ips(input_hdulist):
+        if jwst.fits_generator.is_nirspec_ips(input_hdulist):
             #
             # IPS data is all full-frame
             detector_row_start = 0
@@ -423,7 +423,7 @@ def flip_rotate (input_hdulist):
         rcube = numpy.swapaxes(cube, 1, 2)[:, ::-1, ::-1]
         #
         # TFI and NIRISS data have different keywords
-        if jwst_tools.fits_generator.is_tfi(input_hdulist):
+        if jwst.fits_generator.is_tfi(input_hdulist):
             #
             #  TFI data doesn't have any subarray keywords at all,
             #  so for now we'll make some up
@@ -437,7 +437,7 @@ def flip_rotate (input_hdulist):
 #                instrument = 'NIRISS'
 #                header.update('INSTRUME', 'NIRISS')
 #                header.update('DETECTOR', 'NIRISS')
-        elif jwst_tools.fits_generator.is_niriss(input_hdulist):
+        elif jwst.fits_generator.is_niriss(input_hdulist):
             detector_rowstart = header['ROWCORNR']
             detector_rowstop = detector_rowstart + header['NAXIS2'] -1
             detector_colstart = header['COLCORNR']
@@ -684,17 +684,17 @@ def create_dms(base_file, level="1b", parfile=None, subarray=None, exp_type='UNK
                                '_observation_identifiers.dat'))
             print(parfile)
             
-        hdulist = jwst_tools.fits_generator.generate([subarray_file, parfile], level=level)
-        filename = jwst_tools.fits_generator.guess_filename(hdulist)
+        hdulist = jwst.fits_generator.generate([subarray_file, parfile], level=level)
+        filename = jwst.fits_generator.guess_filename(hdulist)
         hdulist[0].header['FILENAME'] = filename
         hdulist.writeto(filename, output_verify='silentfix')
         os.remove(subarray_file)
     else:
         if instrument == 'MIRI':
             split_data_and_refout(base_hdulist)
-        hdulist = jwst_tools.fits_generator.generate([base_hdulist, parfile],
+        hdulist = jwst.fits_generator.generate([base_hdulist, parfile],
                                           level=level)
-        filename = jwst_tools.fits_generator.guess_filename(hdulist)
+        filename = jwst.fits_generator.guess_filename(hdulist)
         hdulist[0].header['FILENAME'] = filename
         hdulist.writeto(filename, output_verify='silentfix')
 
