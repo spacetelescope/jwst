@@ -399,11 +399,6 @@ def do_MOS_flat_field(output_model, flat_model, flat_suffix=None):
             # Save flat_2d and flat_dq_2d for an output file.
             new_flat = datamodels.ImageModel(data=flat_2d, dq=flat_dq_2d)
             interpolated_flats.slits.append(new_flat.copy())
-            # xxx begin sanity test debug:
-            nslit = len(interpolated_flats.slits) - 1
-            if k != nslit:
-                print("xxx test debug:  nslit = {}, k = {}".format(nslit, k))
-            # xxx end test debug
             interpolated_flats.slits[k].err[...] = 1.   # xxx not realistic
             nslit = len(interpolated_flats.slits) - 1
             interpolated_flats.slits[k].name = slit.name
