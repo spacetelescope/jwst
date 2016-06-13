@@ -11,7 +11,7 @@ class AsnModel(model_base.DataModel):
     A data model for association tables.
     """
     schema_url = "asn.schema.yaml"
-    supported_formats = ['yaml','json','fits']
+    supported_formats = ['yaml', 'json', 'fits']
 
     def __init__(self, init=None, asn_table=None, **kwargs):
         super(AsnModel, self).__init__(init=init, **kwargs)

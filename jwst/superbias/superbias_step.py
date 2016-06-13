@@ -44,4 +44,3 @@ class SuperBiasStep(Step):
             result.meta.cal_step.superbias = 'COMPLETE'
 
         return result
-

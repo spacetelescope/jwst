@@ -10,7 +10,7 @@ import jwst.fits_generator
 #  {Instrument:{Name: (colstart, colstop, rowstart, rowstop, Name)}
 #  Values are 1-indexed
 #
-subarrays = {'MIRI':{'FULL': (1, 1032, 1, 1024, 'FULL'),
+subarrays = {'MIRI': {'FULL': (1, 1032, 1, 1024, 'FULL'),
                      'MASK1065': (1, 256, 1, 256, 'MASK1065'),
                      'MASK1140': (1, 256, 229, 484, 'MASK1140'),
                      'MASK1550': (1, 256, 452, 707, 'MASK1550'),
@@ -21,8 +21,8 @@ subarrays = {'MIRI':{'FULL': (1, 1032, 1, 1024, 'FULL'),
                      'SUB64': (1, 68, 897, 960, 'SUB64'),
                      'SLITLESSPRISM': (1, 68, 321, 1024, 'SLITLESSPRISM')
                      },
-             'NIRCAM':{'FULL': (1, 2048, 1, 2048, 'FULL')},
-             'NIRSPEC':{'FULL': (1, 2048, 1, 2048, 'FULL'),
+             'NIRCAM': {'FULL': (1, 2048, 1, 2048, 'FULL')},
+             'NIRSPEC': {'FULL': (1, 2048, 1, 2048, 'FULL'),
                         'ALLSLITS': (1, 2048, 890, 1145, 'ALLSLITS'),
                         'S200A1': (1, 2048, 911, 974, 'S200A1'),
                         'S200A2': (1, 2048, 951, 1014, 'S200A2'),
@@ -30,7 +30,7 @@ subarrays = {'MIRI':{'FULL': (1, 1032, 1, 1024, 'FULL'),
                         'S400A1': (1, 2048, 993, 1056, 'S400A1'),
                         'S1600A1': (1, 2048, 1044, 1075, 'S1600A1')
                         },
-             'NIRISS':{'FULL': (1, 2048, 1, 2048, 'FULL'),
+             'NIRISS': {'FULL': (1, 2048, 1, 2048, 'FULL'),
                         'SUB256': (1793, 2048, 1793, 2048, 'SUB256'),
                         'SUB128': (1921, 2048, 1921, 2048, 'SUB128'),
                         'SUB64': (1985, 2048, 1985, 2048, 'SUB64'),
@@ -41,7 +41,7 @@ subarrays = {'MIRI':{'FULL': (1, 1032, 1, 1024, 'FULL'),
                         'SOSSBT1': (1969, 2048, 1, 2048, 'SOSSBT1'),
                         'SOSSBT4': (1969, 2048, 1, 2048, 'SOSSBT4')
                         },
-             'TFI':{'FULL': (1, 2048, 1, 2048, 'FULL'),
+             'TFI': {'FULL': (1, 2048, 1, 2048, 'FULL'),
                      'SUB512': (1, 512, 769, 1280, 'SUB512'),
                      'SUB256': (1, 256, 897, 1152, 'SUB256'),
                      'SUB128': (1, 128, 961, 1088, 'SUB128'),
@@ -58,7 +58,7 @@ subarrays = {'MIRI':{'FULL': (1, 1032, 1, 1024, 'FULL'),
                      'SUBPB': (717, 1024, 1025, 1332, 'SUBPB'),
                      'SUBPC': (1025, 1332, 1025, 1332, 'SUBPC')
                      },
-             'GUIDER':{'FULL': (1, 2048, 1, 2048, 'FULL')
+             'GUIDER': {'FULL': (1, 2048, 1, 2048, 'FULL')
                         }
               }
 
@@ -164,7 +164,7 @@ def sanitize(header, keyword, type=float, default=0.0):
         return type(default)
     return converted_value
 
-def flip_rotate (input_hdulist):
+def flip_rotate(input_hdulist):
     """Given a PyFITS HDUList, flip and rotate the data as appropriate.
     Decide on how to flip and rotate by the SCA_ID keyword.
     NIRSpec data always needs to be flipped and rotated: data from SCA 491
@@ -183,7 +183,7 @@ def flip_rotate (input_hdulist):
     Returns a PyFITS HDUList with the data flipped and rotated accordingly"""
 
     header = input_hdulist[0].header
-    
+
     sca = getSCA_ID(input_hdulist)
     cube = input_hdulist[0].data
 
@@ -197,8 +197,8 @@ def flip_rotate (input_hdulist):
             rowstop = header['ROWSTOP']
             #
             # columns are per amplifier, so there are only 258 in the full frame
-            colstart = int(4*(header['COLSTART'] - 1) + 1)
-            colstop = int(4*header['COLSTOP'])
+            colstart = int(4 * (header['COLSTART'] - 1) + 1)
+            colstop = int(4 * header['COLSTOP'])
         except KeyError:
             #
             # VM2 data doesn't have any subarray keywords at all, so for
@@ -237,7 +237,7 @@ def flip_rotate (input_hdulist):
         # NIRCAM A1, A3, ALONG, B2, B4
         # Flip horizontally
         #
-        rcube = cube[:,:,::-1]
+        rcube = cube[:, :, ::-1]
         #
         # ROWSTART and COLSTART are zero-indexed
         #
@@ -280,7 +280,7 @@ def flip_rotate (input_hdulist):
         # NIRCAM A2, A4, B1, B3, BLONG
         # Flip vertically
         #
-        rcube = cube[:,::-1]
+        rcube = cube[:, ::-1]
         #
         # ROWSTART and COLSTART are zero-indexed
         #
@@ -337,7 +337,7 @@ def flip_rotate (input_hdulist):
                     detector_row_start = int(float(header['A1WINVSA']))
                     print(('Detector row start = %d, from keyword A1WINVSA' % detector_row_start))
                 except KeyError:
-                    print ('Unable to get keyword A1_ROW_C or A1WINVSA, using 1')
+                    print('Unable to get keyword A1_ROW_C or A1WINVSA, using 1')
                     detector_row_start = 0  # corresponds to 1 in detector/IRAF coordinates
             try:
                 detector_column_start = int(float(header['A1_COL_C']))
@@ -347,7 +347,7 @@ def flip_rotate (input_hdulist):
                     detector_column_start = int(float(header['A1WINHSA']))
                     print(('Detector column start = %d, from keyword A1WINHSA' % detector_column_start))
                 except KeyError:
-                    print ('Unable to get keyword A1_COL_C or A1WINHSA, using 1')
+                    print('Unable to get keyword A1_COL_C or A1WINHSA, using 1')
                     detector_column_start = 0  # corresponds to 1 in detector/IRAF coordinates
         ncols = int(float(header['NAXIS1']))
         nrows = int(float(header['NAXIS2']))
@@ -384,7 +384,7 @@ def flip_rotate (input_hdulist):
                     detector_row_start = int(float(header['A1WINVSA']))
                     print(('Detector row start = %d from keyword A1WINVSA' % detector_row_start))
                 except KeyError:
-                    print ('Unable to get keyword A2_ROW_C or A1WINVSA, using 1')
+                    print('Unable to get keyword A2_ROW_C or A1WINVSA, using 1')
                     detector_row_start = 0  # corresponds to 1 in detector/IRAF coordinates
             try:
                 detector_column_start = int(float(header['A2_COL_C']))
@@ -394,7 +394,7 @@ def flip_rotate (input_hdulist):
                     detector_column_start = int(float(header['A1WINHSA']))
                     print(('Detector column start = %d from keyword A1WINHSA' % detector_column_start))
                 except KeyError:
-                    print ('Unable to get keyword A2_COL_C or A1WINHSA, using 1')
+                    print('Unable to get keyword A2_COL_C or A1WINHSA, using 1')
                     detector_column_start = 0
         ncols = int(float(header['NAXIS1']))
         nrows = int(float(header['NAXIS2']))
@@ -439,7 +439,7 @@ def flip_rotate (input_hdulist):
 #                header.update('DETECTOR', 'NIRISS')
         elif jwst_tools.fits_generator.is_niriss(input_hdulist):
             detector_rowstart = header['ROWCORNR']
-            detector_rowstop = detector_rowstart + header['NAXIS2'] -1
+            detector_rowstop = detector_rowstart + header['NAXIS2'] - 1
             detector_colstart = header['COLCORNR']
             detector_colstop = detector_colstart + header['NAXIS1'] - 1
             #
@@ -562,9 +562,9 @@ def create_single_subarray(input_hdulist, subarray):
     print('Subarray = %s' % subarray)
     print(subarrays[instrument][subarray])
     xstart, xstop, ystart, ystop, name = subarrays[instrument][subarray]
-    subarray_data = cube[:,ystart-1:ystop,xstart-1:xstop]
+    subarray_data = cube[:, ystart - 1:ystop, xstart - 1:xstop]
     if (instrument == 'MIRI'):
-        # 
+        #
         #  Add the Reference Output if MIRI
         #
         # Start by reforming Reference output to be contiguous
@@ -572,10 +572,10 @@ def create_single_subarray(input_hdulist, subarray):
         refout = cube[:, 1024:, :]
         continuous_refout = refout.reshape(refout.shape[0], 1024, 258)
         print('Reference Output subarray in contiguous goes from')
-        print('x:  %d to %d' % ((xstart-1)/4, xstop/4))
-        print('y:  %d to %d' % ((ystart-1), ystop))
+        print('x:  %d to %d' % ((xstart - 1) / 4, xstop / 4))
+        print('y:  %d to %d' % ((ystart - 1), ystop))
         refout_subarray = continuous_refout[:, (ystart - 1):ystop,
-                                          (xstart - 1)/4:(xstop + 1)/4]
+                                          (xstart - 1) / 4:(xstop + 1) / 4]
 ##        print('Reshaped array has dimensions %d by %d' % \
 ##              (refout_subarray.shape[2]*4, refout_subarray.shape[1]/4))
 ##        reshaped_refout_subarray = refout_subarray.reshape(refout_subarray.shape[0],
@@ -625,7 +625,7 @@ def create_single_subarray(input_hdulist, subarray):
     return outputfilename
 
 def split_data_and_refout(hdulist):
-        
+
     hdr = hdulist[0].header
     #
     # ncols and nrows refer to the science data dimensions, not the keywords
@@ -633,11 +633,11 @@ def split_data_and_refout(hdulist):
     ncols = hdr['COLSTOP'] - hdr['COLSTART'] + 1
     nrows = hdr['ROWSTOP'] - hdr['ROWSTART'] + 1
     fulldata = hdulist[0].data
-    detectordata = fulldata[:,:nrows]
-    refoutdata = fulldata[:,nrows:]
+    detectordata = fulldata[:, :nrows]
+    refoutdata = fulldata[:, nrows:]
     #
     # Reference output has 1/4 the columns of science data
-    refout = refoutdata.reshape((fulldata.shape[0], nrows, ncols/4))
+    refout = refoutdata.reshape((fulldata.shape[0], nrows, ncols / 4))
     hdulist[0].data = detectordata
     try:
         del hdulist[1]
@@ -654,8 +654,8 @@ def create_dms(base_file, level="1b", parfile=None, subarray=None, exp_type='UNK
     # base_file is the full-format image the subarray is created from
     # subarray is a tuple describing the subarray:
     # (nxstart, nxstop, nystart, nystop, name)
-    # 
-    
+    #
+
     base_root = base_file.split('.')[0]
 
     base_hdulist = pyfits.open(base_file)
@@ -663,7 +663,7 @@ def create_dms(base_file, level="1b", parfile=None, subarray=None, exp_type='UNK
     #
     # Add the exp_type to the input hdulist
     base_hdulist[0].header['EXP_TYPE'] = exp_type
-    
+
     #
     #  If we've already rotated/flipped the file, it will have a keyword set
     #  and we skip this step
@@ -680,10 +680,10 @@ def create_dms(base_file, level="1b", parfile=None, subarray=None, exp_type='UNK
         print('Parfile = %s' % parfile)
         if parfile is None:
 
-            parfile = ''.join((base_root, '_',subarray[4].lower(),
+            parfile = ''.join((base_root, '_', subarray[4].lower(),
                                '_observation_identifiers.dat'))
             print(parfile)
-            
+
         hdulist = jwst_tools.fits_generator.generate([subarray_file, parfile], level=level)
         filename = jwst_tools.fits_generator.guess_filename(hdulist)
         hdulist[0].header['FILENAME'] = filename
@@ -700,4 +700,3 @@ def create_dms(base_file, level="1b", parfile=None, subarray=None, exp_type='UNK
 
     base_hdulist.close()
     return
-

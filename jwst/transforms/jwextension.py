@@ -25,6 +25,3 @@ class JWSTExtension(AsdfExtension):
         return [('http://stsci.edu/schemas/jwst_pipeline/',
                  util.filepath_to_url(SCHEMA_PATH) +
                  '/{url_suffix}.yaml')]
-
-
-

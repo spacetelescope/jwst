@@ -197,7 +197,7 @@ class InputAPTFile(InputFileType):
                 self._tree = ElementTree.parse(xml)
         # Remove all namespaces for convenience
         for element in self._tree.getroot().iter():
-            element.tag = element.tag[element.tag.find('}')+1:]
+            element.tag = element.tag[element.tag.find('}') + 1:]
 
     @staticmethod
     def is_file(file_id):
@@ -279,4 +279,3 @@ file_type_names = [
 
 file_type_names[-1] = 'or ' + file_type_names[-1]
 file_type_names = ', '.join(file_type_names)
-

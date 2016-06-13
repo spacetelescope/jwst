@@ -7,18 +7,18 @@ import numpy as np
 
 from . import x_irs2
 
-log = logging.getLogger( __name__ )
-log.setLevel( logging.INFO )
+log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
 
 HUGE_NUM = 100000.
 
-def do_correction( input_model, ref_model ):
+def do_correction(input_model, ref_model):
     """
     Short Summary
     -------------
     Execute all tasks for saturation, including using a saturation reference
     file.
-    
+
     Parameters
     ----------
     input_model: data model object
@@ -44,20 +44,20 @@ def do_correction( input_model, ref_model ):
     groupdq = output_model.groupdq
 
     # Check for subarray mode
-    if ref_matches_sci( ref_model, input_model):
+    if ref_matches_sci(ref_model, input_model):
         satmask = ref_model.data
         dqmask = ref_model.dq
     else:
-        satmask = get_subarray( ref_model.data, input_model)
-        dqmask  = get_subarray( ref_model.dq, input_model)
+        satmask = get_subarray(ref_model.data, input_model)
+        dqmask = get_subarray(ref_model.dq, input_model)
 
     # For pixels flagged in reference file as NO_SAT_CHECK, set the dq mask
     #   and saturation mask
-    wh_sat = np.bitwise_and( dqmask, dqflags.pixel['NO_SAT_CHECK'])
-    dqmask[wh_sat==dqflags.pixel['NO_SAT_CHECK']] = dqflags.pixel['NO_SAT_CHECK']
-    satmask[wh_sat==dqflags.pixel['NO_SAT_CHECK']] = HUGE_NUM
+    wh_sat = np.bitwise_and(dqmask, dqflags.pixel['NO_SAT_CHECK'])
+    dqmask[wh_sat == dqflags.pixel['NO_SAT_CHECK']] = dqflags.pixel['NO_SAT_CHECK']
+    satmask[wh_sat == dqflags.pixel['NO_SAT_CHECK']] = HUGE_NUM
     # Correct saturation values for NaNs in the ref file
-    correct_for_NaN( satmask, dqmask )
+    correct_for_NaN(satmask, dqmask)
 
     dq_flag = dqflags.group['SATURATED']
 
@@ -77,7 +77,7 @@ def do_correction( input_model, ref_model ):
                 # Copy flag_temp into flagarray.
                 x_irs2.to_irs2(flagarray, flag_temp, irs2_mask, detector)
             else:
-                flagarray[:,:] = np.where(ramparr[ints, plane, :, :] >= satmask,
+                flagarray[:, :] = np.where(ramparr[ints, plane, :, :] >= satmask,
                                           dq_flag, 0)
             np.bitwise_or(groupdq[ints, plane:, :, :], flagarray,
                           groupdq[ints, plane:, :, :])
@@ -89,12 +89,12 @@ def do_correction( input_model, ref_model ):
         pixeldq_temp = np.bitwise_or(pixeldq_temp, dqmask)
         x_irs2.to_irs2(output_model.pixeldq, pixeldq_temp, irs2_mask, detector)
     else:
-        output_model.pixeldq = np.bitwise_or( output_model.pixeldq, dqmask )
+        output_model.pixeldq = np.bitwise_or(output_model.pixeldq, dqmask)
 
     return output_model
 
 
-def correct_for_NaN( satmask, dqmask ):
+def correct_for_NaN(satmask, dqmask):
     """
     Short Summary
     -------------
@@ -127,7 +127,7 @@ def correct_for_NaN( satmask, dqmask ):
                  " saturation check will be made.")
 
 
-def ref_matches_sci( ref_model, sci_model ): 
+def ref_matches_sci(ref_model, sci_model):
     """
     Short Summary
     -------------  
@@ -158,7 +158,7 @@ def ref_matches_sci( ref_model, sci_model ):
         return False
 
 
-def get_subarray( input_array, reference ):
+def get_subarray(input_array, reference):
     """
     Short Summary
     -------------
@@ -180,16 +180,16 @@ def get_subarray( input_array, reference ):
     input_array: numpy array
         subarray slice of the input array
     """
-    if (reference.meta.subarray.xstart==None or
-        reference.meta.subarray.xsize==None or
-        reference.meta.subarray.ystart==None or
-        reference.meta.subarray.ysize==None):
-        raise ValueError( 'subarray metadata values not found')
+    if (reference.meta.subarray.xstart == None or
+        reference.meta.subarray.xsize == None or
+        reference.meta.subarray.ystart == None or
+        reference.meta.subarray.ysize == None):
+        raise ValueError('subarray metadata values not found')
 
     xstart = reference.meta.subarray.xstart - 1
-    xstop  = xstart + reference.meta.subarray.xsize
+    xstop = xstart + reference.meta.subarray.xsize
     ystart = reference.meta.subarray.ystart - 1
-    ystop  = ystart + reference.meta.subarray.ysize
-    log.debug("xstart=%d, xstop=%d, ystart=%d, ystop=%d" % (xstart,xstop,ystart,ystop))
-         
-    return input_array[ ..., ystart:ystop, xstart:xstop ]
+    ystop = ystart + reference.meta.subarray.ysize
+    log.debug("xstart=%d, xstop=%d, ystart=%d, ystop=%d" % (xstart, xstop, ystart, ystop))
+
+    return input_array[..., ystart:ystop, xstart:xstop]

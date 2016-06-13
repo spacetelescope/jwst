@@ -32,15 +32,15 @@ class RampFitStep (Step):
 
         with datamodels.open(input) as input_model:
 
-            readnoise_filename = self.get_reference_file( input_model,
+            readnoise_filename = self.get_reference_file(input_model,
                                                           'readnoise')
-            gain_filename = self.get_reference_file( input_model,
+            gain_filename = self.get_reference_file(input_model,
                                                      'gain')
 
             log.info('Using READNOISE reference file: %s', readnoise_filename)
-            readnoise_model = datamodels.ReadnoiseModel( readnoise_filename )
+            readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
             log.info('Using GAIN reference file: %s', gain_filename)
-            gain_model = datamodels.GainModel( gain_filename )
+            gain_model = datamodels.GainModel(gain_filename)
 
             log.info('Using algorithm = %s' % self.algorithm)
             log.info('Using weighting = %s' % self.weighting)
@@ -49,7 +49,7 @@ class RampFitStep (Step):
             if self.algorithm == "GLS":
                 buffsize //= 10
             out_model, int_model, opt_model, gls_opt_model = \
-                        ramp_fit.ramp_fit (input_model,
+                        ramp_fit.ramp_fit(input_model,
                                            buffsize, self.save_opt,
                                            readnoise_model, gain_model,
                                            self.algorithm, self.weighting)
@@ -77,4 +77,4 @@ class RampFitStep (Step):
         return out_model
 
 if __name__ == '__main__':
-    cmdline.step_script( ramp_fit_step )
+    cmdline.step_script(ramp_fit_step)

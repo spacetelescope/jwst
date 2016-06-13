@@ -22,7 +22,7 @@ def get_proposals(base_directory='.'):
     '''Returns a list of all proposals (files that end in .prop)
     that are below the baseDirectory.  Returns a list of
     (directory, proposalfilename) tuples'''
-    
+
     proposal_list = []
     def append_proposal_file(proposal_list, dirpath, namelist):
         for name in namelist:

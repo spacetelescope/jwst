@@ -26,7 +26,7 @@ class ResampleStep(Step):
         fillval = string(default='INDEF')
         good_bits = integer(default=-1)
     """
-    reference_file_types=['drizpars']
+    reference_file_types = ['drizpars']
 
     def process(self, input):
 
@@ -35,15 +35,15 @@ class ResampleStep(Step):
             s = datamodels.ModelContainer()
             s.append(input_models)
             s.assign_group_ids()
-            s.meta.resample.output = s.group_names[0].replace('_resamp','_drz')
-            
+            s.meta.resample.output = s.group_names[0].replace('_resamp', '_drz')
+
             self.input_models = s
         else:
             self.input_models = input_models
-        
+
         # identify what reference file has been associated with these inputs
         try:
-            self.ref_filename = self.get_reference_file(self.input_models[0], 'drizpars' )
+            self.ref_filename = self.get_reference_file(self.input_models[0], 'drizpars')
         except:
             # This is only in place for initial testing of this code, prior
             # to ref file being included in CRDS
@@ -58,7 +58,7 @@ class ResampleStep(Step):
         self.step.do_drizzle()
 
         #self.input_models.close()
-        
+
         if len(self.step.output_models) == 1:
             output_model = self.step.output_models[0]
         else:

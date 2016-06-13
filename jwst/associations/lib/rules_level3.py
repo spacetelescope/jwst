@@ -161,8 +161,8 @@ class DMS_Level3_Base(Association):
         except KeyError:
             exposerr = None
         entry = {
-            'expname':  Utility.rename_to_level2b(member['FILENAME']),
-            'exptype':  member['PNTGTYPE'],
+            'expname': Utility.rename_to_level2b(member['FILENAME']),
+            'exptype': member['PNTGTYPE'],
             'exposerr': exposerr,
             'asn_candidate_id': getattr_from_list(
                 member,
@@ -285,7 +285,7 @@ class AsnMixin_Unique_Config(DMS_Level3_Base):
                 'inputs': ['INSTRUME']
             },
             'opt_elem': {
-                'value':  None,
+                'value': None,
                 'inputs': ['FILTER']
             },
             'opt_elem2': {
@@ -293,7 +293,7 @@ class AsnMixin_Unique_Config(DMS_Level3_Base):
                 'inputs': ['PUPIL']
             },
             'detector': {
-                'value':  '(?!NULL).+',
+                'value': '(?!NULL).+',
                 'inputs': ['DETECTOR']
             },
             'target_acq': {
@@ -314,7 +314,7 @@ class AsnMixin_Target(DMS_Level3_Base):
         # Setup for checking.
         self.add_constraints({
             'target_name': {
-                'value':  None,
+                'value': None,
                 'inputs': ['TARGETID']
             },
         })
@@ -331,7 +331,7 @@ class AsnMixin_MIRI(AsnMixin_Unique_Config):
         # Setup for checking.
         self.add_constraints({
             'instrument': {
-                'value':  'MIRI',
+                'value': 'MIRI',
                 'inputs': ['INSTRUME']
             }
         })
@@ -348,7 +348,7 @@ class AsnMixin_NIRSPEC(AsnMixin_Unique_Config):
         # Setup for checking.
         self.add_constraints({
             'instrument': {
-                'value':  'NIRSPEC',
+                'value': 'NIRSPEC',
                 'inputs': ['INSTRUME']
             }
         })
@@ -365,7 +365,7 @@ class AsnMixin_NIRISS(AsnMixin_Unique_Config):
         # Setup for checking.
         self.add_constraints({
             'instrument': {
-                'value':  'NIRISS',
+                'value': 'NIRISS',
                 'inputs': ['INSTRUME']
             },
         })
@@ -382,7 +382,7 @@ class AsnMixin_NIRCAM(AsnMixin_Unique_Config):
         # Setup for checking.
         self.add_constraints({
             'instrument': {
-                'value':  'NIRCAM',
+                'value': 'NIRCAM',
                 'inputs': ['INSTRUME']
             },
         })
@@ -447,7 +447,7 @@ class Asn_Mosaic(
         # Setup for checking.
         self.add_constraints({
             'asn_candidate_id': {
-                'value':  None,
+                'value': None,
                 'inputs': ['ASN_CANDIDATE_ID'],
             },
             'asn_candidate_type': {
@@ -483,7 +483,7 @@ class Asn_Dither(
         # Setup for checking.
         self.add_constraints({
             'pointing_type': {
-                'value':  'SCIENCE',
+                'value': 'SCIENCE',
                 'inputs': ['PNTGTYPE']
             },
             'wfsvisit': {

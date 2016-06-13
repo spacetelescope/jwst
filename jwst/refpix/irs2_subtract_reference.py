@@ -84,10 +84,10 @@ def correct_model(input_model, irs2_model,
     alpha[1, :] = irs2_model.irs2_table.field("alpha_1")
     alpha[2, :] = irs2_model.irs2_table.field("alpha_2")
     alpha[3, :] = irs2_model.irs2_table.field("alpha_3")
-    beta[0, :]  = irs2_model.irs2_table.field("beta_0")
-    beta[1, :]  = irs2_model.irs2_table.field("beta_1")
-    beta[2, :]  = irs2_model.irs2_table.field("beta_2")
-    beta[3, :]  = irs2_model.irs2_table.field("beta_3")
+    beta[0, :] = irs2_model.irs2_table.field("beta_0")
+    beta[1, :] = irs2_model.irs2_table.field("beta_1")
+    beta[2, :] = irs2_model.irs2_table.field("beta_2")
+    beta[3, :] = irs2_model.irs2_table.field("beta_3")
 
     if beta is None:
         log.info("Using reference pixels only.")
@@ -113,7 +113,7 @@ def correct_model(input_model, irs2_model,
     if detector == "NRS1":
         data = np.swapaxes(data, 2, 3)
     elif detector == "NRS2":
-        data = np.swapaxes(data, 2, 3)[:, :, ::-1,::-1]
+        data = np.swapaxes(data, 2, 3)[:, :, ::-1, ::-1]
     else:
         log.warning("Detector '%s'; not changing orientation (sky vs detector)"
                     % detector)
@@ -134,14 +134,14 @@ def correct_model(input_model, irs2_model,
         data0 = data[integ, :, :, :]
         data0 = subtract_reference(data0, alpha, beta, irs2_mask,
                                    scipix_n, refpix_r, pad)
-        data[integ, :, :, nx-ny:] = data0
-    temp_data = data[:, :, :, nx-ny:]
+        data[integ, :, :, nx - ny:] = data0
+    temp_data = data[:, :, :, nx - ny:]
     del data
     # Convert back to sky orientation.
     if detector == "NRS1":
         output_model.data = np.swapaxes(temp_data, 2, 3)
     elif detector == "NRS2":
-        output_model.data = np.swapaxes(temp_data[:, :, ::-1,::-1], 2, 3)
+        output_model.data = np.swapaxes(temp_data[:, :, ::-1, ::-1], 2, 3)
     else:                       # don't change orientation
         output_model.data = temp_data
 
@@ -173,22 +173,22 @@ def make_irs2_mask(output_model, scipix_n, refpix_r):
         # Yes, they are in the same locations.
         for i in range(refout + scipix_n // 2, irs2_nx + 1,
                        scipix_n + refpix_r):
-            irs2_mask[i:i+refpix_r] = False
+            irs2_mask[i:i + refpix_r] = False
     else:
         # Set the flags for each readout direction separately.
         nelem = refout                  # number of elements per output
         temp = np.ones(nelem, dtype=np.bool)
         for i in range(scipix_n // 2, nelem + 1,
                        scipix_n + refpix_r):
-            temp[i:i+refpix_r] = False
+            temp[i:i + refpix_r] = False
         j = refout
-        irs2_mask[j:j+nelem] = temp.copy()
+        irs2_mask[j:j + nelem] = temp.copy()
         j += nelem
-        irs2_mask[j:j+nelem] = temp[::-1].copy()
+        irs2_mask[j:j + nelem] = temp[::-1].copy()
         j += nelem
-        irs2_mask[j:j+nelem] = temp.copy()
+        irs2_mask[j:j + nelem] = temp.copy()
         j += nelem
-        irs2_mask[j:j+nelem] = temp[::-1].copy()
+        irs2_mask[j:j + nelem] = temp[::-1].copy()
 
     return irs2_mask
 
@@ -489,9 +489,9 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     #  [1 3 1 3]]
     # After flattening, two_indr_t = [0 2 0 2 1 3 1 3].
     two_indr_t = np.concatenate((indr_t, indr_t), axis=1).flatten()
-    two_indr_t += (scipix_n//2 + 1)     # [ 9 11 9 11 10 12 10 12]
-    hs[:, scipix_n//2 + 1 - refpix_r//2:
-          scipix_n//2 + 1 + refpix_r//2 + refpix_r] = hs[:, two_indr_t]
+    two_indr_t += (scipix_n // 2 + 1)     # [ 9 11 9 11 10 12 10 12]
+    hs[:, scipix_n // 2 + 1 - refpix_r // 2:
+          scipix_n // 2 + 1 + refpix_r // 2 + refpix_r] = hs[:, two_indr_t]
     mask = (hs >= 0)
     hs = hs[mask]                       # hs is now 1-D
 
@@ -503,7 +503,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
 
     # ; construct the reference data
     r0 = np.zeros_like(data0)
-    r0[:,:,:, ht] = data0[:,:,:, hs]
+    r0[:, :, :, ht] = data0[:, :, :, hs]
     #;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
     # data0 has shape (5, ngroups, ny, row).  See the section above where
@@ -524,7 +524,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
 
     if beta is not None:
         # IDL:  refout0 = reform(data0[*,*,*,0], sd[1] * sd[2], sd[3])
-        refout0 = data0[0, :,:,:].reshape((shape_d[1],
+        refout0 = data0[0, :, :, :].reshape((shape_d[1],
                                            shape_d[2] * shape_d[3]))
         # IDL:  refout0 = fft(refout0, dim=1, /over)
         # Divide by the length of the axis to be consistent with IDL.
@@ -542,14 +542,14 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     for k in range(1, 5):
         for i in range(ngroups):
             # Each element of r0f is the fft of r0[k, :, :], for some k.
-            r0f[k][i, :] *= alpha[k-1]
+            r0f[k][i, :] *= alpha[k - 1]
 
     # IDL:  for k=0,3 do oBridge[k]->Execute,
     #           "for i=0, s3-1 do r0[*,i] += beta * refout0[*,i]"
     if beta is not None:
         for k in range(1, 5):
             for i in range(ngroups):
-                r0f[k][i, :] += (beta[k-1] * refout0[i, :])
+                r0f[k][i, :] += (beta[k - 1] * refout0[i, :])
 
     # IDL:  for k=0,3 do oBridge[k]->Execute,
     #           "r0 = fft(r0, 1, dim=1, /overwrite)", /nowait
@@ -563,8 +563,8 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     # IDL:  r0 = reform(r0, sd[1], sd[2], sd[3], 5, /over)
     r0 = r0.reshape(shape_d)
     r0 = r0.real
-    r0 = r0[:,:,:, hnorm1]
-    data0 = data0[:,:,:, hnorm1]
+    r0 = r0[:, :, :, hnorm1]
+    data0 = data0[:, :, :, hnorm1]
 
     data0 -= r0
     data0[2, :, :, :] = data0[2, :, :, ::-1]

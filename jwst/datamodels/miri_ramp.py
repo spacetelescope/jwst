@@ -57,7 +57,7 @@ class MIRIRampModel(ramp.RampModel):
 
         if zeroframe is not None:
             self.zeroframe = zeroframe
-            
+
         if group is not None:
             self.group = group
 

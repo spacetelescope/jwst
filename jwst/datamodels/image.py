@@ -54,4 +54,3 @@ class ImageModel(model_base.DataModel):
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err
-        

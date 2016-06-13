@@ -3,7 +3,7 @@ from jwst import datamodels
 from . import reset_sub
 
 
-class ResetStep( Step ):
+class ResetStep(Step):
     """
     ResetStep: Performs a reset  correction by subtracting
     the reset correction reference data from the input science data model.
@@ -11,7 +11,7 @@ class ResetStep( Step ):
 
     reference_file_types = ['reset']
 
-    def process(self, input): 
+    def process(self, input):
 
         # Open the input data model
         with models.open(input) as input_model:
@@ -19,7 +19,7 @@ class ResetStep( Step ):
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
             if detector.startswith('MIR'):
-                 
+
                 # Get the name of the reset reference file to use
                 self.reset_name = self.get_reference_file(input_model, 'reset')
                 self.log.info('Using RESET reference file %s', self.reset_name)
@@ -40,12 +40,12 @@ class ResetStep( Step ):
 
                 # Close the reference file and update the step status
                 reset_model.close()
-                result.meta.cal_step.reset = 'COMPLETE' 
+                result.meta.cal_step.reset = 'COMPLETE'
 
             else:
                 self.log.warning('Reset Correction is only for MIRI data')
                 self.log.warning('Reset step will be skipped')
                 result = input_model.copy()
-                result.meta.cal_step.reset = 'SKIPPED' 
+                result.meta.cal_step.reset = 'SKIPPED'
 
         return result

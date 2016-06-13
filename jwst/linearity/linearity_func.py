@@ -6,8 +6,8 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 import numpy as np
-    
-def apply_linearity_func( ramparr, dqarr, coeffarr, dq_flag ):
+
+def apply_linearity_func(ramparr, dqarr, coeffarr, dq_flag):
     """
     Short Summary
     -------------
@@ -52,19 +52,18 @@ def apply_linearity_func( ramparr, dqarr, coeffarr, dq_flag ):
         for plane in range(ngroups):
 
             # Accumulate the polynomial terms into the corrected counts
-            scorr = coeffarr[ ncoeffs-1 ]*ramparr[ ints, plane ]
-            for j in range( ncoeffs-2, 0, -1 ):
-                scorr = ( scorr+coeffarr[j] )*ramparr[ ints, plane ]
-            scorr = coeffarr[0]+scorr
+            scorr = coeffarr[ncoeffs - 1] * ramparr[ints, plane]
+            for j in range(ncoeffs - 2, 0, -1):
+                scorr = (scorr + coeffarr[j]) * ramparr[ints, plane]
+            scorr = coeffarr[0] + scorr
 
            # Only use the corrected signal where the original signal value
            # has not been flagged by the saturation step.
            # Otherwise use the original signal.
             ramparr[ ints, plane, :, : ] = \
                 np.where( np.bitwise_and( dqarr[ ints, plane, :, : ], dq_flag),\
-                        ramparr[ ints, plane, :, : ], scorr )
+                        ramparr[ints, plane, :, :], scorr)
 
     del scorr
 
     return ramparr
-

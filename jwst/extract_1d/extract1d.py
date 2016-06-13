@@ -229,11 +229,11 @@ def bxcar(image, smoothing_length):
 
     i = 0
     for k in range(smoothing_length):
-        temp_im[..., i:i+width] += image
+        temp_im[..., i:i + width] += image
         i += 1
     temp_im /= float(smoothing_length)
 
-    return temp_im[..., half:half+width].astype(image.dtype)
+    return temp_im[..., half:half + width].astype(image.dtype)
 
 
 def _extract_src_flux(image, x, j, lam, srclim,
@@ -280,7 +280,7 @@ def _extract_src_flux(image, x, j, lam, srclim,
     tarea = area.sum(dtype=np.float64)
     twht = wht.sum(dtype=np.float64)
     mwht = twht / wht.shape[0]
-    total_flux = (val*wht).sum(dtype=np.float64) / mwht
+    total_flux = (val * wht).sum(dtype=np.float64) / mwht
     bkg_flux = bkg.sum(dtype=np.float64)
 
     # src total flux, bkg total flux, area, total weight
@@ -305,7 +305,7 @@ def _fit_background_model(image, x, j, bkglim, bkg_order):
     y = y[good]
 
     lsqfitter = fitting.LinearLSQFitter()
-    bkg_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts-1)),
+    bkg_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
                           y, val, weights=wht)
 
     return (bkg_model, npts)
@@ -328,7 +328,7 @@ def _extract_colpix(image_data, x, j, limits):
     ns12 = ns + 0.5
 
     npts = sum(map(lambda x: min(ns, int(round(x[1]))) - \
-                   max(0, int(math.floor(x[0]+0.5))) + 1,
+                   max(0, int(math.floor(x[0] + 0.5))) + 1,
                    intervals))
 
     # pre-allocate data arrays:
@@ -342,7 +342,7 @@ def _extract_colpix(image_data, x, j, limits):
         i1 = i[0] if i[0] >= -0.5 else -0.5
         i2 = i[1] if i[1] <= ns12 else ns12
 
-        ii1 = max(0, int(math.floor(i1+0.5)))
+        ii1 = max(0, int(math.floor(i1 + 0.5)))
         ii2 = min(ns, int(round(i2)))
 
         # special case: ii1 == ii2:
@@ -366,8 +366,8 @@ def _extract_colpix(image_data, x, j, limits):
         wht[kn] = divmod(i2 + 0.5, 1)[1] if i2 < ns12 else 1.0
 
         # c. all other intermediate pixels:
-        val[k+1:kn] = image_data[ii1+1:ii2, x]
-        y[k:kn+1] = np.arange(ii1, ii2+1, 1, dtype=np.float32)
+        val[k + 1:kn] = image_data[ii1 + 1:ii2, x]
+        y[k:kn + 1] = np.arange(ii1, ii2 + 1, 1, dtype=np.float32)
 
         k += ii2 - ii1 + 1
 
@@ -413,7 +413,7 @@ def _coalesce_bounds(segments):
 
     # coalesce intervals/segments:
     if len(intervals) > 0:
-        cint = [ intervals.pop(0) ]
+        cint = [intervals.pop(0)]
     else:
         return [[]]
 

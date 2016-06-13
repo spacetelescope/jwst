@@ -41,4 +41,3 @@ def make_cube(input_table):
     output_model = datamodels.CubeModel(data=cube)
 
     return output_model
-

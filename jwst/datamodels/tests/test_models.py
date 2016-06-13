@@ -155,7 +155,7 @@ def test_copy():
         dm.meta.foo = "BAR"
 
         with dm.copy() as dm2:
-            dm2.data[0,0] = 42
+            dm2.data[0, 0] = 42
             assert np.sum(dm.data.flatten()) == 0
 
             assert dm2.meta.instrument.name == "NIRCAM"

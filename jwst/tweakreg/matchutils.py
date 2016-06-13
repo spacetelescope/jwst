@@ -97,7 +97,7 @@ def find_xy_peak(img, center=None, sigma=3.0):
 
     # clip out all values below mean+3*sigma from histogram
     imgc = img[:, :].copy()
-    imgc[imgc < istats.mode + istats.stddev*sigma] = 0.0
+    imgc[imgc < istats.mode + istats.stddev * sigma] = 0.0
 
     # identify position of peak
     yp0, xp0 = np.where(imgc == imgc.max())

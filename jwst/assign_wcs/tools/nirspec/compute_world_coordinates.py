@@ -44,7 +44,7 @@ def compute_world_coordinates(fname, output=None):
     hdulist.append(phdu)
     for slit in model.slits:
         ysize, xsize = slit.data.shape
-        y, x = np.mgrid[ : ysize, : xsize]
+        y, x = np.mgrid[: ysize, : xsize]
         ra, dec, lam = slit.meta.wcs(x, y)
         world_coordinates = np.array([lam, ra, dec])
         imhdu = fits.ImageHDU(data=world_coordinates)
@@ -97,7 +97,7 @@ def compute_msa_coordinates(fname, output=None):
     hdulist.append(phdu)
     for slit in model.slits:
         ysize, xsize = slit.data.shape
-        y, x = np.mgrid[ : ysize, : xsize]
+        y, x = np.mgrid[: ysize, : xsize]
         det2msa = slit.meta.wcs.get_transform('detector', 'msa')
         x, y, lam = det2msa(x, y)
         msa_coordinates = np.array([lam, x, y])

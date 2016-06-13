@@ -42,4 +42,3 @@ class DarkCurrentStep(Step):
             dark_model.close()
 
         return result
-

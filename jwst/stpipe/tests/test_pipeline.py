@@ -77,9 +77,9 @@ class TestPipeline(Pipeline):
     """
 
     step_defs = {
-        'flat_field'  : FlatField,
-        'combine'     : Combine,
-        'display'     : Display
+        'flat_field': FlatField,
+        'combine': Combine,
+        'display': Display
         }
 
     spec = """
@@ -117,7 +117,7 @@ def test_pipeline():
 
 def test_pipeline_python():
     steps = {
-        'flat_field':   {'threshold': 42.0}
+        'flat_field': {'threshold': 42.0}
         }
 
     pipe = TestPipeline(

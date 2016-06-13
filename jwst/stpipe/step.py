@@ -439,7 +439,7 @@ class Step(object):
     def _is_association_file(cls, input_file):
         """Return True IFF `input_file` is an association file."""
         from .. import datamodels
-        return (isinstance(input_file, str) and input_file.endswith((".asn",".json"))) or \
+        return (isinstance(input_file, str) and input_file.endswith((".asn", ".json"))) or \
                isinstance(input_file, datamodels.ModelContainer)
 
     def _precache_reference_files(self, input_file):
@@ -486,7 +486,7 @@ class Step(object):
         if self._is_association_file(model):
             return
         ovr_refs = {
-            reftype : self._get_ref_override(reftype)
+            reftype: self._get_ref_override(reftype)
             for reftype in self.reference_file_types
             if self._get_ref_override(reftype) is not None
             }

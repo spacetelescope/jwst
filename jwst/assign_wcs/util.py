@@ -155,7 +155,7 @@ def compute_fiducial(wcslist, domain=None):
         z_mean = np.mean(np.sin(lat))
         lon_fiducial = np.rad2deg(np.arctan2(y_mean, x_mean)) % 360.0
         lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean**2 + y_mean\
-**2)))
+** 2)))
         fiducial[spatial_axes] = lon_fiducial, lat_fiducial
     if (spectral_footprint).any():
         fiducial[spectral_axes] = spectral_footprint.min()

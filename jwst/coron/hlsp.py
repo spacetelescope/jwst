@@ -47,12 +47,12 @@ def contrast_curve(target_model, width):
     # Get the target array size and center
     nrows = target_model.data.shape[0]
     ncols = target_model.data.shape[1]
-    crow = int(round(nrows/2)) - 1
-    ccol = int(round(ncols/2)) - 1
+    crow = int(round(nrows / 2)) - 1
+    ccol = int(round(ncols / 2)) - 1
 
     # Create a series of annuli inner radii that starts at zero, extends
     # to the nearest edge of the image, and goes in increments of "width"
-    limits = list(range(0, min(crow,ccol), width))
+    limits = list(range(0, min(crow, ccol), width))
 
     # Initialize the mask array and the output lists of radii and sigma values
     mask = target_model.data * 0.0
@@ -73,7 +73,7 @@ def contrast_curve(target_model, width):
             for c in range(ncols):
 
                 # Compute the distance of this pixel from the image center
-                d = math.sqrt((r-crow)**2 + (c-ccol)**2)
+                d = math.sqrt((r - crow)**2 + (c - ccol)**2)
 
                 # If this pixel is within the current annulus,
                 # reset its mask value to 1
@@ -98,4 +98,3 @@ def contrast_curve(target_model, width):
     output_model.update(target_model)
 
     return output_model
-

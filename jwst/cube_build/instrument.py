@@ -1,6 +1,6 @@
 # Instrument class
-# Information on MIRI and NIRSPEC. 
-# Basic information that will not change 
+# Information on MIRI and NIRSPEC.
+# Basic information that will not change
 # Default sampling to use based on MIRI:Channel,subchannel, NIRSPEC: FWA,GWS
 
 import sys
@@ -47,8 +47,8 @@ class Info(object):
         self.Info['3']['end_slice'] = 316
         self.Info['3']['xstart'] = 513
         self.Info['3']['xend'] = 1031
-        self.Info['3']['ascale'] = 0.22414 
-        self.Info['3']['bscale'] = 0.42113  
+        self.Info['3']['ascale'] = 0.22414
+        self.Info['3']['bscale'] = 0.42113
         self.Info['3']['wscale'] = 0.002
 
         self.Info['4'] = {}
@@ -63,10 +63,10 @@ class Info(object):
 
         self.Info['PRISM'] = {}
         self.Info['PRISM']['wscale'] = 0.1
-        self.Info['PRISM']['ascale'] = 0.1 
+        self.Info['PRISM']['ascale'] = 0.1
         self.Info['PRISM']['bscale'] = 0.1
         self.Info['PRISM']['nslices'] = 30
-            
+
         self.Info['G140M'] = {}
         self.Info['G140M']['wscale'] = 0.1
         self.Info['G140M']['ascale'] = 0.1
@@ -85,7 +85,7 @@ class Info(object):
         self.Info['G395M']['bscale'] = 0.1
         self.Info['G395M']['bscale'] = 0.1
         self.Info['G395M']['nslices'] = 30
-        
+
         self.Info['G140H'] = {}
         self.Info['G140H']['wscale'] = 0.1
         self.Info['G140H']['ascale'] = 0.1
@@ -104,22 +104,20 @@ class Info(object):
         self.Info['G395H']['bscale'] = 0.1
         self.Info['G395H']['nslices'] = 30
 
-    def GetScale(self,parameter):
-        scale = (self.Info[parameter]['ascale'],self.Info[parameter]['bscale'],self.Info[parameter]['wscale'])
+    def GetScale(self, parameter):
+        scale = (self.Info[parameter]['ascale'], self.Info[parameter]['bscale'], self.Info[parameter]['wscale'])
         return scale
 
 
-    def GetMIRISliceEndPts(self,parameter1):
-        slice_xstart =  self.Info[parameter1]['xstart']
+    def GetMIRISliceEndPts(self, parameter1):
+        slice_xstart = self.Info[parameter1]['xstart']
         slice_xend = self.Info[parameter1]['xend']
-        return slice_xstart,slice_xend
+        return slice_xstart, slice_xend
 
-    def GetStartSlice(self,parameter1):
+    def GetStartSlice(self, parameter1):
         sliceno = self.Info[parameter1]['start_slice']
         return sliceno
 
-    def GetEndSlice(self,parameter1):
+    def GetEndSlice(self, parameter1):
         sliceno = self.Info[parameter1]['end_slice']
         return sliceno
-
-

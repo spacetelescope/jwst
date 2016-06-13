@@ -60,13 +60,13 @@ class SkyMatchStep(Step):
 
         # set sky stattistics:
         self._skystat = SkyStats(
-            skystat = self.skystat,
-            lower = self.lower,
-            upper = self.upper,
-            nclip = self.nclip,
-            lsig = self.lsigma,
-            usig = self.usigma,
-            binwidth = self.binwidth
+            skystat=self.skystat,
+            lower=self.lower,
+            upper=self.upper,
+            nclip=self.nclip,
+            lsig=self.lsigma,
+            usig=self.usigma,
+            binwidth=self.binwidth
         )
 
         # group images by their "group id":
@@ -122,7 +122,7 @@ class SkyMatchStep(Step):
                                           dtype=np.uint8)
 
         sky_im = SkyImage(
-            image = image_model.data,
+            image=image_model.data,
             wcs_fwd=image_model.meta.wcs.__call__,
             wcs_inv=image_model.meta.wcs.invert,
             pix_area=1.0, #TODO: pixel area
@@ -131,7 +131,7 @@ class SkyMatchStep(Step):
             id=None, # file name?
             skystat=self._skystat,
             stepsize=self.stepsize,
-            meta={'imagemodel' : image_model}
+            meta={'imagemodel': image_model}
         )
 
         return sky_im

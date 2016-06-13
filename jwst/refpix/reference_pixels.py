@@ -42,21 +42,21 @@ log.setLevel(logging.DEBUG)
 # (rowstart: rowstop, colstart:colstop)
 # The 'stop' values are one more than the actual final row or column, in
 # accordance with how Python slices work
- 
-NIR_reference_sections = {'A':{'top':(2044, 2048, 0, 512),
-                               'bottom':(0, 4, 0, 512),
-                               'side':(0, 2048, 0, 4),
-                               'data':(0, 2048, 0, 512)},
-                          'B':{'top':(2044, 2048, 512, 1024),
-                               'bottom':(0, 4, 512, 1024),
-                               'data':(0, 2048, 512, 1024)},
-                          'C':{'top':(2044, 2048, 1024, 1536),
-                               'bottom':(0, 4, 1024, 1536),
-                               'data':(0, 2048, 1024, 1536)},
-                          'D':{'top':(2044, 2048, 1536, 2048),
-                               'bottom':(0, 4, 1536, 2048),
-                               'side':(0, 2048, 2044, 2048),
-                               'data':(0, 2048, 1536, 2048)}
+
+NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
+                               'bottom': (0, 4, 0, 512),
+                               'side': (0, 2048, 0, 4),
+                               'data': (0, 2048, 0, 512)},
+                          'B': {'top': (2044, 2048, 512, 1024),
+                               'bottom': (0, 4, 512, 1024),
+                               'data': (0, 2048, 512, 1024)},
+                          'C': {'top': (2044, 2048, 1024, 1536),
+                               'bottom': (0, 4, 1024, 1536),
+                               'data': (0, 2048, 1024, 1536)},
+                          'D': {'top': (2044, 2048, 1536, 2048),
+                               'bottom': (0, 4, 1536, 2048),
+                               'side': (0, 2048, 2044, 2048),
+                               'data': (0, 2048, 1536, 2048)}
                           }
 
 #
@@ -66,18 +66,18 @@ NIR_reference_sections = {'A':{'top':(2044, 2048, 0, 512),
 # except the 'data' entry:
 # 'data': (rowstart, rowstop, colstart, colstop, stride)
 
-MIR_reference_sections = {'A':{'left':(0, 1024, 0),
-                               'right':(0, 1024, 1028),
-                               'data':(0, 1024, 4, 1028, 4)},
-                          'B':{'left':(0, 1024, 1),
-                               'right':(0, 1024, 1029),
-                               'data':(0, 1024, 5, 1028, 4)},
-                          'C':{'left':(0, 1024, 2),
-                               'right':(0, 1024, 1030),
-                               'data':(0, 1024, 6, 1028, 4)},
-                          'D':{'left':(0, 1024, 3),
-                               'right':(0, 1024, 1031),
-                               'data':(0, 1024, 7, 1028, 4)}
+MIR_reference_sections = {'A': {'left': (0, 1024, 0),
+                               'right': (0, 1024, 1028),
+                               'data': (0, 1024, 4, 1028, 4)},
+                          'B': {'left': (0, 1024, 1),
+                               'right': (0, 1024, 1029),
+                               'data': (0, 1024, 5, 1028, 4)},
+                          'C': {'left': (0, 1024, 2),
+                               'right': (0, 1024, 1030),
+                               'data': (0, 1024, 6, 1028, 4)},
+                          'D': {'left': (0, 1024, 3),
+                               'right': (0, 1024, 1031),
+                               'data': (0, 1024, 7, 1028, 4)}
                           }
 
 class Dataset(object):
@@ -117,10 +117,10 @@ class Dataset(object):
                  side_gain,
                  odd_even_rows):
 
-        if (input_model.meta.subarray.xstart==None or
-            input_model.meta.subarray.ystart==None or
-            input_model.meta.subarray.xsize==None or
-            input_model.meta.subarray.ysize==None):
+        if (input_model.meta.subarray.xstart == None or
+            input_model.meta.subarray.ystart == None or
+            input_model.meta.subarray.xsize == None or
+            input_model.meta.subarray.ysize == None):
             raise ValueError('subarray metadata not found')
 
         self.data = input_model.data
@@ -165,10 +165,10 @@ class Dataset(object):
         #
         # Only calculate the clipped mean for pixels that don't have the DO_NOT_USE
         # DQ bit set
-        goodpixels = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE'])==0)
+        goodpixels = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']) == 0)
         #
         # scipy routine fails if the pixels all have exactly the same value
-        if np.std(data[goodpixels],dtype=np.float64) != 0.0:
+        if np.std(data[goodpixels], dtype=np.float64) != 0.0:
             clipped_ref, lowlim, uplim = stats.sigmaclip(data[goodpixels],
                                                          low, high)
             mean = clipped_ref.mean()
@@ -341,7 +341,7 @@ class NIRDataset(Dataset):
         even: float
             Value of the clipped mean of the reference pixels in even-numbered
             columns
-            
+
         """
 
         ref, dq = self.collect_even_refpixels(group, amplifier, top_or_bottom)
@@ -463,19 +463,19 @@ class NIRDataset(Dataset):
                 evenrefbottom = refvalues[amplifier]['even']['bottom']
                 #
                 # For now, just average the top and bottom corrections
-                oddrefsignal = 0.5*(oddreftop + oddrefbottom)
-                evenrefsignal = 0.5*(evenreftop + evenrefbottom)
-                oddslice = (slice(datarowstart,datarowstop,1),
+                oddrefsignal = 0.5 * (oddreftop + oddrefbottom)
+                evenrefsignal = 0.5 * (evenreftop + evenrefbottom)
+                oddslice = (slice(datarowstart, datarowstop, 1),
                             slice(datacolstart, datacolstop, 2))
-                evenslice = (slice(datarowstart,datarowstop,1),
-                             slice(datacolstart+1, datacolstop, 2))
+                evenslice = (slice(datarowstart, datarowstop, 1),
+                             slice(datacolstart + 1, datacolstop, 2))
                 group[oddslice] = group[oddslice] - oddrefsignal
                 group[evenslice] = group[evenslice] - evenrefsignal
             else:
                 reftop = refvalues[amplifier]['top']
                 refbottom = refvalues[amplifier]['bottom']
-                refsignal = 0.5*(reftop + refbottom)
-                dataslice = (slice(datarowstart,datarowstop,1),
+                refsignal = 0.5 * (reftop + refbottom)
+                dataslice = (slice(datarowstart, datarowstop, 1),
                              slice(datacolstart, datacolstop, 1))
                 group[dataslice] = group[dataslice] - refsignal
         return
@@ -507,15 +507,15 @@ class NIRDataset(Dataset):
         """
 
         nrows, ncols = data.shape
-        if smoothing_length%2 == 0:
+        if smoothing_length % 2 == 0:
             log.info("Smoothing length must be odd, adding 1")
             smoothing_length = smoothing_length + 1
         newheight = nrows + smoothing_length - 1
         reflected = np.zeros((newheight, ncols), dtype=data.dtype)
         bufsize = smoothing_length // 2
-        reflected[bufsize:bufsize+nrows] = data[:]
+        reflected[bufsize:bufsize + nrows] = data[:]
         reflected[:bufsize] = data[bufsize:0:-1]
-        reflected[nrows+bufsize:] = data[-1:nrows-1-bufsize:-1]
+        reflected[nrows + bufsize:] = data[-1:nrows - 1 - bufsize:-1]
         return reflected
 
     def median_filter(self, data, dq, smoothing_length):
@@ -543,13 +543,13 @@ class NIRDataset(Dataset):
 
         augmented_data = self.create_reflected(data, smoothing_length)
         augmented_dq = self.create_reflected(dq, smoothing_length)
-        nrows,ncols = data.shape
+        nrows, ncols = data.shape
         result = np.zeros(nrows)
         for i in range(nrows):
             rowstart = i
             rowstop = rowstart + smoothing_length
             goodpixels = np.where(np.bitwise_and(dq[rowstart:rowstop],
-                                                 dqflags.pixel['DO_NOT_USE'])==0)
+                                                 dqflags.pixel['DO_NOT_USE']) == 0)
             window = augmented_data[rowstart:rowstop][goodpixels]
             result[i] = np.median(window)
         return result
@@ -580,8 +580,8 @@ class NIRDataset(Dataset):
         """
 
         smoothing_length = self.side_smoothing_length
-        data = group[:, colstart:colstop+1]
-        dq = self.pixeldq[:, colstart:colstop+1]
+        data = group[:, colstart:colstop + 1]
+        dq = self.pixeldq[:, colstart:colstop + 1]
         return self.median_filter(data, dq, smoothing_length)
 
     def combine_ref_signals(self, left, right):
@@ -605,10 +605,10 @@ class NIRDataset(Dataset):
 
         """
 
-        combined = 0.5*(left+right)
+        combined = 0.5 * (left + right)
         sidegroup = np.zeros((2048, 2048))
         for column in range(2048):
-            sidegroup[:,column] = combined
+            sidegroup[:, column] = combined
         return sidegroup
 
     def apply_side_correction(self, group, sidegroup):
@@ -631,7 +631,7 @@ class NIRDataset(Dataset):
 
         """
 
-        corrected_group = group - self.side_gain*sidegroup
+        corrected_group = group - self.side_gain * sidegroup
         return corrected_group
 
     def do_side_correction(self, group):
@@ -657,7 +657,7 @@ class NIRDataset(Dataset):
         corrected_group = self.apply_side_correction(group, sidegroup)
         return corrected_group
 
-    def do_corrections (self):
+    def do_corrections(self):
         """Do Reference Pixels Corrections for all amplifiers, NIR detectors
         First read of each integration is NOT subtracted, as the signal is removed
         in the superbias subtraction step"""
@@ -673,7 +673,7 @@ class NIRDataset(Dataset):
                 # Get the reference values from the top and bottom reference
                 # pixels
                 #
-                thisgroup = self.data[integration,group].copy()
+                thisgroup = self.data[integration, group].copy()
                 refvalues = self.get_refvalues(thisgroup)
                 self.do_top_bottom_correction(thisgroup, refvalues)
                 if self.use_side_ref_pixels:
@@ -708,13 +708,13 @@ class NRS2Dataset(NIRDataset):
     def DMS_to_detector(self):
         #
         # NRS2 is flipped over the line Y=X, then rotated 180 degrees
-        self.data = np.swapaxes(self.data, 2, 3)[:, :, ::-1,::-1]
+        self.data = np.swapaxes(self.data, 2, 3)[:, :, ::-1, ::-1]
         self.pixeldq = np.swapaxes(self.pixeldq, 0, 1)[::-1, ::-1]
 
     def detector_to_DMS(self):
         #
         # The inverse is to rotate 180 degrees, then flip over the line Y=X
-        self.data = np.swapaxes(self.data[:, :, ::-1,::-1], 2, 3)
+        self.data = np.swapaxes(self.data[:, :, ::-1, ::-1], 2, 3)
         self.pixeldq = np.swapaxes(self.pixeldq[::-1, ::-1], 1, 0)
 
 class NRCA1Dataset(NIRDataset):
@@ -723,13 +723,13 @@ class NRCA1Dataset(NIRDataset):
     def DMS_to_detector(self):
         #
         # NRCA1 is just flipped in X
-        self.data = self.data[:,:,:,::-1]
+        self.data = self.data[:, :, :, ::-1]
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_DMS(self):
         #
         # Just flip back
-        self.data = self.data[:,:,:,::-1]
+        self.data = self.data[:, :, :, ::-1]
         self.pixeldq = self.pixeldq[:, ::-1]
 
 class NRCA2Dataset(NIRDataset):
@@ -738,13 +738,13 @@ class NRCA2Dataset(NIRDataset):
     def DMS_to_detector(self):
         #
         # NRCA2 is just flipped in Y
-        self.data = self.data[:,:,::-1]
+        self.data = self.data[:, :, ::-1]
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_DMS(self):
         #
         # Just flip back
-        self.data = self.data[:,:,::-1]
+        self.data = self.data[:, :, ::-1]
         self.pixeldq = self.pixeldq[::-1]
 
 class NRCA3Dataset(NIRDataset):
@@ -753,14 +753,14 @@ class NRCA3Dataset(NIRDataset):
     def DMS_to_detector(self):
         #
         # NRCA3 is just flipped in X
-        self.data = self.data[:,:,:,::-1]
-        self.pixeldq = self.pixeldq[:,::-1]
+        self.data = self.data[:, :, :, ::-1]
+        self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_DMS(self):
         #
         # Just flip back
-        self.data = self.data[:,:,:,::-1]
-        self.pixeldq = self.pixeldq[:,::-1]
+        self.data = self.data[:, :, :, ::-1]
+        self.pixeldq = self.pixeldq[:, ::-1]
 
 class NRCA4Dataset(NIRDataset):
     """For NRCA4 data"""
@@ -768,13 +768,13 @@ class NRCA4Dataset(NIRDataset):
     def DMS_to_detector(self):
         #
         # NRCA4 is just flipped in Y
-        self.data = self.data[:,:,::-1]
+        self.data = self.data[:, :, ::-1]
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_DMS(self):
         #
         # Just flip back
-        self.data = self.data[:,:,::-1]
+        self.data = self.data[:, :, ::-1]
         self.pixeldq = self.pixeldq[::-1]
 
 class NRCALONGDataset(NIRDataset):
@@ -783,14 +783,14 @@ class NRCALONGDataset(NIRDataset):
     def DMS_to_detector(self):
         #
         # NRCALONG is just flipped in X
-        self.data = self.data[:,:,:,::-1]
-        self.pixeldq = self.pixeldq[:,::-1]
+        self.data = self.data[:, :, :, ::-1]
+        self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_DMS(self):
         #
         # Just flip back
-        self.data = self.data[:,:,:,::-1]
-        self.pixeldq = self.pixeldq[:,::-1]
+        self.data = self.data[:, :, :, ::-1]
+        self.pixeldq = self.pixeldq[:, ::-1]
 
 class NRCB1Dataset(NIRDataset):
     """For NRCB1 data"""
@@ -798,13 +798,13 @@ class NRCB1Dataset(NIRDataset):
     def DMS_to_detector(self):
         #
         # NRCB1 is just flipped in Y
-        self.data = self.data[:,:,::-1]
+        self.data = self.data[:, :, ::-1]
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_DMS(self):
         #
         # Just flip back
-        self.data = self.data[:,:,::-1]
+        self.data = self.data[:, :, ::-1]
         self.pixeldq = self.pixeldq[::-1]
 
 class NRCB2Dataset(NIRDataset):
@@ -813,14 +813,14 @@ class NRCB2Dataset(NIRDataset):
     def DMS_to_detector(self):
         #
         # NRCB2 is just flipped in X
-        self.data = self.data[:,:,:,::-1]
-        self.pixeldq = self.pixeldq[:,::-1]
+        self.data = self.data[:, :, :, ::-1]
+        self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_DMS(self):
         #
         # Just flip back
-        self.data = self.data[:,:,:,::-1]
-        self.pixeldq = self.pixeldq[:,::-1]
+        self.data = self.data[:, :, :, ::-1]
+        self.pixeldq = self.pixeldq[:, ::-1]
 
 class NRCB3Dataset(NIRDataset):
     """For NRCB3 data"""
@@ -828,13 +828,13 @@ class NRCB3Dataset(NIRDataset):
     def DMS_to_detector(self):
         #
         # NRCB3 is just flipped in Y
-        self.data = self.data[:,:,::-1]
+        self.data = self.data[:, :, ::-1]
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_DMS(self):
         #
         # Just flip back
-        self.data = self.data[:,:,::-1]
+        self.data = self.data[:, :, ::-1]
         self.pixeldq = self.pixeldq[::-1]
 
 class NRCB4Dataset(NIRDataset):
@@ -843,14 +843,14 @@ class NRCB4Dataset(NIRDataset):
     def DMS_to_detector(self):
         #
         # NRCB4 is just flipped in X
-        self.data = self.data[:,:,:,::-1]
-        self.pixeldq = self.pixeldq[:,::-1]
+        self.data = self.data[:, :, :, ::-1]
+        self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_DMS(self):
         #
         # Just flip back
-        self.data = self.data[:,:,:,::-1]
-        self.pixeldq = self.pixeldq[:,::-1]
+        self.data = self.data[:, :, :, ::-1]
+        self.pixeldq = self.pixeldq[:, ::-1]
 
 class NRCBLONGDataset(NIRDataset):
     """For NRCBLONG data"""
@@ -858,13 +858,13 @@ class NRCBLONGDataset(NIRDataset):
     def DMS_to_detector(self):
         #
         # NRCBLONG is just flipped in Y
-        self.data = self.data[:,:,::-1]
+        self.data = self.data[:, :, ::-1]
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_DMS(self):
         #
         # Just flip back
-        self.data = self.data[:,:,::-1]
+        self.data = self.data[:, :, ::-1]
         self.pixeldq = self.pixeldq[::-1]
 
 class NIRISSDataset(NIRDataset):
@@ -874,13 +874,13 @@ class NIRISSDataset(NIRDataset):
         #
         # NIRISS has a 180 degree rotation followed by a flip across the line
         # X=Y
-        self.data = np.swapaxes(self.data[:,:,::-1,::-1], 2, 3)
+        self.data = np.swapaxes(self.data[:, :, ::-1, ::-1], 2, 3)
         self.pixeldq = np.swapaxes(self.pixeldq[::-1, ::-1], 0, 1)
 
     def detector_to_DMS(self):
         #
         # Just flip and rotate back
-        self.data = np.swapaxes(self.data, 2, 3)[:,:,::-1,::-1]
+        self.data = np.swapaxes(self.data, 2, 3)[:, :, ::-1, ::-1]
         self.pixeldq = np.swapaxes(self.pixeldq, 0, 1)[::-1, ::-1]
 
 class GUIDER1Dataset(NIRDataset):
@@ -889,13 +889,13 @@ class GUIDER1Dataset(NIRDataset):
     def DMS_to_detector(self):
         #
         # GUIDER1 is flipped in X and Y
-        self.data = self.data[:,:,::-1,::-1]
+        self.data = self.data[:, :, ::-1, ::-1]
         self.pixeldq = self.pixeldq[::-1, ::-1]
 
     def detector_to_DMS(self):
         #
         # Just flip back
-        self.data = self.data[:,:,::-1,::-1]
+        self.data = self.data[:, :, ::-1, ::-1]
         self.pixeldq = self.pixeldq[::-1, ::-1]
 
 class GUIDER2Dataset(NIRDataset):
@@ -904,13 +904,13 @@ class GUIDER2Dataset(NIRDataset):
     def DMS_to_detector(self):
         #
         # GUIDER2 is just flipped in X
-        self.data = self.data[:,:,:,::-1]
+        self.data = self.data[:, :, :, ::-1]
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_DMS(self):
         #
         # Just flip back
-        self.data = self.data[:,:,:,::-1]
+        self.data = self.data[:, :, :, ::-1]
         self.pixeldq = self.pixeldq[:, ::-1]
 
 class MIRIDataset(Dataset):
@@ -1182,24 +1182,24 @@ class MIRIDataset(Dataset):
                 evenrefright = refvalues[amplifier]['even']['right']
                 #
                 # For now, just average the left and right corrections
-                oddrefsignal = 0.5*(oddrefleft + oddrefright)
-                evenrefsignal = 0.5*(evenrefleft + evenrefright)
+                oddrefsignal = 0.5 * (oddrefleft + oddrefright)
+                evenrefsignal = 0.5 * (evenrefleft + evenrefright)
                 oddslice = (slice(datarowstart, datarowstop, 2),
                             slice(datacolstart, datacolstop, 4))
-                evenslice = (slice(datarowstart+1, datarowstop, 2),
+                evenslice = (slice(datarowstart + 1, datarowstop, 2),
                              slice(datacolstart, datacolstop, 4))
                 group[oddslice] = group[oddslice] - oddrefsignal
                 group[evenslice] = group[evenslice] - evenrefsignal
             else:
                 refleft = refvalues[amplifier]['left']
                 refright = refvalues[amplifier]['right']
-                refsignal = 0.5*(refleft + refright)
+                refsignal = 0.5 * (refleft + refright)
                 dataslice = (slice(datarowstart, datarowstop, 1),
                              slice(datacolstart, datacolstop, 4))
                 group[dataslice] = group[dataslice] - refsignal
         return
 
-    def do_corrections (self):
+    def do_corrections(self):
         """Do Reference Pixels Corrections for all amplifiers, MIRI detectors"""
         #
         #  First we need to subtract the first read of each integration
@@ -1207,7 +1207,7 @@ class MIRIDataset(Dataset):
         (nint, ngroup, ny, nx) = self.data.shape
 
         first_read = np.zeros((nint, ny, nx))
-        log.info ('Subtracting initial read from each integration')
+        log.info('Subtracting initial read from each integration')
 
         for i in range(nint):
             first_read[i] = self.data[i, 0].copy()
@@ -1228,7 +1228,7 @@ class MIRIDataset(Dataset):
                 # Get the reference values from the top and bottom reference
                 # pixels
                 #
-                thisgroup = self.data[integration,group].copy()
+                thisgroup = self.data[integration, group].copy()
                 refvalues = self.get_refvalues(thisgroup)
                 self.do_left_right_correction(thisgroup, refvalues)
                 self.data[integration, group] = thisgroup
@@ -1238,7 +1238,7 @@ class MIRIDataset(Dataset):
         log.setLevel(logging.INFO)
         #
         #  All done, now add the first read back in
-        log.info ('Adding initial read back in')
+        log.info('Adding initial read back in')
 
         for i in range(nint):
             self.data[i] = self.data[i] + first_read[i]
@@ -1400,7 +1400,7 @@ def is_subarray(input_model):
     else:
         return True
 
-def correct_model (input_model, odd_even_columns,
+def correct_model(input_model, odd_even_columns,
                    use_side_ref_pixels,
                    side_smoothing_length, side_gain,
                    odd_even_rows):
@@ -1433,7 +1433,7 @@ def correct_model (input_model, odd_even_columns,
     odd_even_rows: boolean
         flag that controls whether odd and even-numbered rows are handled
         separately (MIR only)
-    
+
     """
 
     if is_subarray(input_model):
@@ -1471,4 +1471,3 @@ def reference_pixel_correction(input_dataset):
     input_dataset.do_corrections()
 
     return input_dataset
-

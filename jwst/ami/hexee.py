@@ -5,7 +5,7 @@
 # Erin Elliott's analytical hexagon-aperture PSF, page 1361 equation 5
 # Coordinate center at center of symmetry, and flat edge along xi axis
 #     ---  eta
-#   /     \ ^ 
+#   /     \ ^
 #   \     / |
 #     ---   -> xi
 # hex(xi,eta) = g(xi,eta) + g(-xi,eta)
@@ -14,14 +14,14 @@
 from __future__ import absolute_import, division
 
 import numpy as np
-from . import leastsqnrm 
+from . import leastsqnrm
 
-import logging  
-log = logging.getLogger(__name__)  
-log.setLevel(logging.DEBUG) 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
-def g_eeAG( xi, eta, **kwargs ):
+def g_eeAG(xi, eta, **kwargs):
     """ 
     Short Summary
     -------------
@@ -45,7 +45,7 @@ def g_eeAG( xi, eta, **kwargs ):
 
     d (optional, via **kwargs): float
         flat-to-flat distance across hexagon
-      
+
     lambda (optional, via **kwargs): float
         wavelength
 
@@ -56,31 +56,31 @@ def g_eeAG( xi, eta, **kwargs ):
     -------
     g: 2D complex array
         Fourier transform of one half of a hexagon.
-    """    
-    
+    """
+
     c = kwargs['c']
     pixel = kwargs['pixel']
     d = kwargs['d']
     lam = kwargs['lam']
-    xi = (d/lam)*pixel*(xi - c[0])
-    eta = (d/lam)*pixel*(eta - c[1])
+    xi = (d / lam) * pixel * (xi - c[0])
+    eta = (d / lam) * pixel * (eta - c[1])
 
     if kwargs['minus'] is True:
-        xi = -1*xi
+        xi = -1 * xi
     i = 1j
     Pi = np.pi
 
-    g1 = np.exp(-i*Pi*(2*eta/np.sqrt(3) + xi)) 
-    g2 = (np.sqrt(3)*eta - 3*xi) 
-    g3 = (np.exp(i*Pi*np.sqrt(3)*eta) - np.exp(i*Pi*(4*eta/np.sqrt(3) + xi))) 
-    g4 = (np.sqrt(3)*eta + 3*xi)
-    g5 = (np.exp(i*Pi*eta/np.sqrt(3)) - np.exp(i*Pi*xi)) 
-    g6 = (4*Pi*Pi*(eta*eta*eta - 3*eta*xi*xi))   
-    g = g1 * (g2*g3 + g4*g5)/g6
+    g1 = np.exp(-i * Pi * (2 * eta / np.sqrt(3) + xi))
+    g2 = (np.sqrt(3) * eta - 3 * xi)
+    g3 = (np.exp(i * Pi * np.sqrt(3) * eta) - np.exp(i * Pi * (4 * eta / np.sqrt(3) + xi)))
+    g4 = (np.sqrt(3) * eta + 3 * xi)
+    g5 = (np.exp(i * Pi * eta / np.sqrt(3)) - np.exp(i * Pi * xi))
+    g6 = (4 * Pi * Pi * (eta * eta * eta - 3 * eta * xi * xi))
+    g = g1 * (g2 * g3 + g4 * g5) / g6
 
     return g
 
-def g_eeGEN( xi, eta, **kwargs ):
+def g_eeGEN(xi, eta, **kwargs):
     """ 
     Short Summary
     -------------
@@ -104,23 +104,23 @@ def g_eeGEN( xi, eta, **kwargs ):
     g: 2D complex array
         Fourier transform of one half of a hexagon.    
     """
-    
+
     D = kwargs['D']
     i = 1j
     Pi = np.pi
 
-    g1 = np.exp(-i*Pi*D*(2*eta/np.sqrt(3) + xi))
-    g2 = (np.sqrt(3)*eta - 3*xi) 
-    g3 = (np.exp(i*Pi*D*np.sqrt(3)*eta) - np.exp(i*Pi*D*(4*eta/np.sqrt(3) + xi)))
-    g4 = (np.sqrt(3)*eta + 3*xi)
-    g5 = (np.exp(i*Pi*D*eta/np.sqrt(3)) - np.exp(i*Pi*D*xi))
-    g6 = (4*Pi*Pi*(eta*eta*eta - 3*eta*xi*xi))
-    g = g1 *(g2*g3 + g4*g5)/g6 
+    g1 = np.exp(-i * Pi * D * (2 * eta / np.sqrt(3) + xi))
+    g2 = (np.sqrt(3) * eta - 3 * xi)
+    g3 = (np.exp(i * Pi * D * np.sqrt(3) * eta) - np.exp(i * Pi * D * (4 * eta / np.sqrt(3) + xi)))
+    g4 = (np.sqrt(3) * eta + 3 * xi)
+    g5 = (np.exp(i * Pi * D * eta / np.sqrt(3)) - np.exp(i * Pi * D * xi))
+    g6 = (4 * Pi * Pi * (eta * eta * eta - 3 * eta * xi * xi))
+    g = g1 * (g2 * g3 + g4 * g5) / g6
 
     return g
 
 
-def glimit( xi, eta, **kwargs ):
+def glimit(xi, eta, **kwargs):
     """
     Short Summary
     -------------
@@ -162,17 +162,17 @@ def glimit( xi, eta, **kwargs ):
     pixel = kwargs['pixel']
     d = kwargs['d']
     lam = kwargs['lam']
-    xi = (d/lam)*pixel*(xi - c[0])
-    eta = (d/lam)*pixel*(eta - c[1]) # not used; so should delete
+    xi = (d / lam) * pixel * (xi - c[0])
+    eta = (d / lam) * pixel * (eta - c[1]) # not used; so should delete
 
     if kwargs['minus'] is True:
-        xi = -1*xi
+        xi = -1 * xi
     i = 1j
     Pi = np.pi
 
-    g1 = (np.exp(-1j*Pi*xi)/(2*np.sqrt(3)*Pi*Pi*xi*xi) )
-    g2 = (-1 + 1j*Pi*xi + np.exp(1j*Pi*xi)-2j*Pi*xi*np.exp(1J*Pi*xi))  
-    g = g1*g2
+    g1 = (np.exp(-1j * Pi * xi) / (2 * np.sqrt(3) * Pi * Pi * xi * xi))
+    g2 = (-1 + 1j * Pi * xi + np.exp(1j * Pi * xi) - 2j * Pi * xi * np.exp(1J * Pi * xi))
+    g = g1 * g2
 
     return g
 
@@ -193,13 +193,13 @@ def centralpix_limit():
         analytic limit of the Fourier transform of one half of the hexagon
         at the origin.  
     """
-    g = np.sqrt(3) / 4.0 
+    g = np.sqrt(3) / 4.0
 
     return g
 
 
-def hex_eeAG( s=(121,121), c=None, d=0.80, lam=4.3e-6,
-              pitch=leastsqnrm.mas2rad(65) ):
+def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
+              pitch=leastsqnrm.mas2rad(65)):
     """ 
     Short Summary
     -------------
@@ -216,7 +216,7 @@ def hex_eeAG( s=(121,121), c=None, d=0.80, lam=4.3e-6,
 
     d: float
         flat-to-flat distance across hexagon
-      
+
     lam: float
         wavelength
 
@@ -229,12 +229,12 @@ def hex_eeAG( s=(121,121), c=None, d=0.80, lam=4.3e-6,
         hexagonal hole Fourier transform by adding the transforms
     """
     if c is None:
-        c = float(s[0])/2.0-0.5, float(s[1])/2.0 - 0.5
+        c = float(s[0]) / 2.0 - 0.5, float(s[1]) / 2.0 - 0.5
 
-    log.debug('hex_eeAG: center: %s, s: %s', c, s)  
+    log.debug('hex_eeAG: center: %s, s: %s', c, s)
 
-    h1 = np.fromfunction( g_eeAG, s, d=d, c=c, lam=lam, pixel=pitch, minus=False) 
-    h2 = np.fromfunction( g_eeAG, s, d=d, c=c, lam=lam, pixel=pitch, minus=True)
+    h1 = np.fromfunction(g_eeAG, s, d=d, c=c, lam=lam, pixel=pitch, minus=False)
+    h2 = np.fromfunction(g_eeAG, s, d=d, c=c, lam=lam, pixel=pitch, minus=True)
     hex_complex = h1 + h2
 
     # There will be a strip of NaNs down the middle (eta-axis)
@@ -243,18 +243,18 @@ def hex_eeAG( s=(121,121), c=None, d=0.80, lam=4.3e-6,
     # The "yval" will be the same for all points;
     # loop over the xi values to replace NaN strip with limiting behavior.
     for index in range(len(xnan)):
-        h1 = glimit( xnan[index], xnan[index], d=d, c=c, lam=lam, pixel=pitch,
+        h1 = glimit(xnan[index], xnan[index], d=d, c=c, lam=lam, pixel=pitch,
                      minus=False)
-        h2 = glimit( xnan[index], xnan[index], d=d, c=c, lam=lam, pixel=pitch,
-                     minus=True)       
+        h2 = glimit(xnan[index], xnan[index], d=d, c=c, lam=lam, pixel=pitch,
+                     minus=True)
         hex_complex[xnan[index], ynan[index]] = h1 + h2
 
-    (xnan, ynan)= np.where(np.isnan(hex_complex))
+    (xnan, ynan) = np.where(np.isnan(hex_complex))
 
     # Replace NaN strip with limiting behavior; the same for both halves
-    hex_complex[xnan[:], ynan[:]] = 2.0 * centralpix_limit() 
-    
-    if ( log.getEffectiveLevel() <= logging.DEBUG): 
+    hex_complex[xnan[:], ynan[:]] = 2.0 * centralpix_limit()
+
+    if (log.getEffectiveLevel() <= logging.DEBUG):
         hr = hex_complex.real
         hi = hex_complex.imag
         log.debug('hex_eeAG: hr.min: %s, hr.mean: %s, hr.max: %s',
@@ -262,6 +262,4 @@ def hex_eeAG( s=(121,121), c=None, d=0.80, lam=4.3e-6,
         log.debug('hex_eeAG: hi.min: %s, hi.mean: %s, hi.max: %s',
                   hi.mean(), hi.max(), hi.min())
 
-    return np.abs( hex_complex )
-
-
+    return np.abs(hex_complex)

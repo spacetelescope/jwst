@@ -50,7 +50,7 @@ def test_crds_step_bad():
 def _run_flat_fetch_on_dataset(dataset_path):
     from ... import datamodels
     step = CrdsStep()
-    with datamodels.ImageModel(join(dirname(__file__), dataset_path))  as input_file:
+    with datamodels.ImageModel(join(dirname(__file__), dataset_path)) as input_file:
         step.run(input_file)
     print(step.ref_filename)
     assert basename(step.ref_filename) == "jwst_nircam_flat_0000.fits"

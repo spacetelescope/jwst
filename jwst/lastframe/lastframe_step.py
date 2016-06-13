@@ -3,7 +3,7 @@ from jwst import datamodels
 from . import lastframe_sub
 
 
-class LastFrameStep( Step ):
+class LastFrameStep(Step):
     """
     LastFrameStep: This is a MIRI specific task to correct the last frame by
     subtracting the array contained in the last frame reference file from the
@@ -50,4 +50,3 @@ class LastFrameStep( Step ):
                 result.meta.cal_step.lastframe = 'SKIPPED'
 
         return result
-

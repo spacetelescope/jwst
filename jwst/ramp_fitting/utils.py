@@ -9,11 +9,11 @@ import logging
 from .. import datamodels
 from ..datamodels import dqflags
 
-log = logging.getLogger( __name__ )
-log.setLevel( logging.DEBUG )
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
-class OptRes( object ):
+class OptRes(object):
     """
     Object to hold optional results for all good pixels for
     y-intercept, slope, uncertainty for y-intercept, uncertainty for
@@ -21,7 +21,7 @@ class OptRes( object ):
     cosmic ray magnitude.
     """
 
-    def __init__( self, n_int, imshape, max_seg, nreads ):
+    def __init__(self, n_int, imshape, max_seg, nreads):
         """
         Short Summary
         -------------
@@ -45,17 +45,17 @@ class OptRes( object ):
         nreads: int
             number of reads in an integration
         """
-        self.yint_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-        self.slope_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-        self.sigyint_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-        self.sigslope_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
-        self.inv_var_seg = np.zeros((n_int,)+(max_seg,)+imshape, dtype=np.float32)
-        self.firstf_int = np.zeros((n_int,) + imshape, dtype = np.float32)
-        self.ped_int = np.zeros((n_int,) + imshape, dtype = np.float32)
-        self.cr_mag_seg = np.zeros((n_int,)+(nreads,)+imshape, dtype = np.int16)
+        self.yint_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
+        self.slope_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
+        self.sigyint_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
+        self.sigslope_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
+        self.inv_var_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
+        self.firstf_int = np.zeros((n_int,) + imshape, dtype=np.float32)
+        self.ped_int = np.zeros((n_int,) + imshape, dtype=np.float32)
+        self.cr_mag_seg = np.zeros((n_int,) + (nreads,) + imshape, dtype=np.int16)
 
 
-    def init_2d( self, npix, max_seg ):
+    def init_2d(self, npix, max_seg):
         """
         Short Summary
         -------------
@@ -76,15 +76,15 @@ class OptRes( object ):
         None
 
         """
-        self.interc_2d = np.zeros((max_seg, npix), dtype = np.float32)
-        self.slope_2d = np.zeros((max_seg, npix), dtype = np.float32)
-        self.siginterc_2d = np.zeros((max_seg, npix), dtype = np.float32)
-        self.sigslope_2d = np.zeros((max_seg, npix), dtype = np.float32)
-        self.inv_var_2d = np.zeros((max_seg, npix), dtype = np.float32)
-        self.firstf_2d = np.zeros((max_seg, npix), dtype = np.float32)
+        self.interc_2d = np.zeros((max_seg, npix), dtype=np.float32)
+        self.slope_2d = np.zeros((max_seg, npix), dtype=np.float32)
+        self.siginterc_2d = np.zeros((max_seg, npix), dtype=np.float32)
+        self.sigslope_2d = np.zeros((max_seg, npix), dtype=np.float32)
+        self.inv_var_2d = np.zeros((max_seg, npix), dtype=np.float32)
+        self.firstf_2d = np.zeros((max_seg, npix), dtype=np.float32)
 
 
-    def reshape_res( self, num_int, rlo, rhi, sect_shape, ff_sect ):
+    def reshape_res(self, num_int, rlo, rhi, sect_shape, ff_sect):
         """
         Short Summary
         -------------
@@ -113,21 +113,21 @@ class OptRes( object ):
 
         """
 
-        for ii_seg in range(0, self.yint_seg.shape[1] ):
+        for ii_seg in range(0, self.yint_seg.shape[1]):
             self.yint_seg[ num_int, ii_seg, rlo:rhi, :] = \
-                           self.interc_2d[ii_seg,:].reshape(sect_shape)
+                           self.interc_2d[ii_seg, :].reshape(sect_shape)
             self.slope_seg[ num_int, ii_seg, rlo:rhi, :] = \
-                            self.slope_2d[ii_seg,:].reshape(sect_shape)
+                            self.slope_2d[ii_seg, :].reshape(sect_shape)
             self.sigyint_seg[ num_int, ii_seg, rlo:rhi, :] = \
-                              self.siginterc_2d[ii_seg,:].reshape(sect_shape)
+                              self.siginterc_2d[ii_seg, :].reshape(sect_shape)
             self.sigslope_seg[ num_int, ii_seg, rlo:rhi, :] = \
-                               self.sigslope_2d[ii_seg,:].reshape(sect_shape)
+                               self.sigslope_2d[ii_seg, :].reshape(sect_shape)
             self.inv_var_seg[ num_int, ii_seg, rlo:rhi, :] = \
-                              self.inv_var_2d[ii_seg,:].reshape(sect_shape)
-            self.firstf_int[ num_int, rlo:rhi, :] = ff_sect
+                              self.inv_var_2d[ii_seg, :].reshape(sect_shape)
+            self.firstf_int[num_int, rlo:rhi, :] = ff_sect
 
 
-    def append_arr( self, num_seg, g_pix, intercept, slope, sig_intercept,
+    def append_arr(self, num_seg, g_pix, intercept, slope, sig_intercept,
                     sig_slope, inv_var):
         """
         Short Summary
@@ -165,14 +165,14 @@ class OptRes( object ):
         None
 
         """
-        self.interc_2d[ num_seg[ g_pix ], g_pix] = intercept[g_pix]
-        self.slope_2d[ num_seg[ g_pix ], g_pix] = slope[g_pix]
-        self.siginterc_2d[ num_seg[ g_pix ], g_pix] = sig_intercept[g_pix]
-        self.sigslope_2d[ num_seg[ g_pix ], g_pix] = sig_slope[g_pix]
-        self.inv_var_2d[ num_seg[ g_pix ], g_pix] = inv_var[g_pix]
+        self.interc_2d[num_seg[g_pix], g_pix] = intercept[g_pix]
+        self.slope_2d[num_seg[g_pix], g_pix] = slope[g_pix]
+        self.siginterc_2d[num_seg[g_pix], g_pix] = sig_intercept[g_pix]
+        self.sigslope_2d[num_seg[g_pix], g_pix] = sig_slope[g_pix]
+        self.inv_var_2d[num_seg[g_pix], g_pix] = inv_var[g_pix]
 
-        
-    def shrink_crmag( self, n_int, dq_cube, imshape, nreads, skip_i, skip_f ):
+
+    def shrink_crmag(self, n_int, dq_cube, imshape, nreads, skip_i, skip_f):
         """
         Extended Summary
         ----------------
@@ -214,37 +214,37 @@ class OptRes( object ):
         # Loop over data integrations to find max num of crs flagged per pixel
         # (this could exceed the maximum number of segments fit)
         max_cr = 0
-        for ii_int in range ( 0, n_int ):
-            dq_int = dq_cube[ ii_int, :, :, :]
-            dq_cr = np.bitwise_and( dqflags.group['JUMP_DET'], dq_int )
+        for ii_int in range(0, n_int):
+            dq_int = dq_cube[ii_int, :, :, :]
+            dq_cr = np.bitwise_and(dqflags.group['JUMP_DET'], dq_int)
             max_cr_int = (dq_cr > 0.).sum(axis=0).max()
-            max_cr = max( max_cr, max_cr_int )
+            max_cr = max(max_cr, max_cr_int)
 
         # Allocate compressed array based on max number of crs
         cr_com = np.zeros((n_int,) + (max_cr,) + imshape, dtype=np.int16)
 
         # Loop over integrations and reads: for those pix having a cr, add
         #    the magnitude to the compressed array
-        for ii_int in range( 0, n_int ):
-            cr_mag_int = self.cr_mag_seg[ ii_int, :, :, :]
-            cr_int_has_cr = np.where( cr_mag_int.sum(axis=0) != 0 )
+        for ii_int in range(0, n_int):
+            cr_mag_int = self.cr_mag_seg[ii_int, :, :, :]
+            cr_int_has_cr = np.where(cr_mag_int.sum(axis=0) != 0)
 
             # Initialize number of crs for each image pixel for this integration
-            end_cr = np.zeros( imshape, dtype= np.int8)
+            end_cr = np.zeros(imshape, dtype=np.int8)
 
-            for k_rd in range( nreads - skip_i - skip_f ):
+            for k_rd in range(nreads - skip_i - skip_f):
                 # loop over pixels having a CR
-                for nn in range( len(cr_int_has_cr[0]) ):
+                for nn in range(len(cr_int_has_cr[0])):
                     y, x = cr_int_has_cr[0][nn], cr_int_has_cr[1][nn]
 
-                    if (cr_mag_int[ k_rd, y, x ] > 0.):
-                        cr_com[ii_int, end_cr[ y,x ],y,x] = cr_mag_int[k_rd,y,x]
-                        end_cr[ y, x ] += 1
+                    if (cr_mag_int[k_rd, y, x] > 0.):
+                        cr_com[ii_int, end_cr[y, x], y, x] = cr_mag_int[k_rd, y, x]
+                        end_cr[y, x] += 1
 
         self.cr_mag_seg = cr_com
 
 
-    def output_optional( self, model, effintim ):
+    def output_optional(self, model, effintim):
         """
         Short Summary
         -------------
@@ -272,19 +272,19 @@ class OptRes( object ):
 
         rfo_model = \
         datamodels.RampFitOutputModel(\
-            slope = self.slope_seg.astype(np.float32)/effintim,
-            sigslope = self.sigslope_seg.astype(np.float32),
-            yint = self.yint_seg.astype(np.float32),
-            sigyint = self.sigyint_seg.astype(np.float32),
-            pedestal = self.ped_int.astype(np.float32),
-            weights = (self.inv_var_seg**2).astype(np.float32),
-            crmag = self.cr_mag_seg)
+            slope=self.slope_seg.astype(np.float32) / effintim,
+            sigslope=self.sigslope_seg.astype(np.float32),
+            yint=self.yint_seg.astype(np.float32),
+            sigyint=self.sigyint_seg.astype(np.float32),
+            pedestal=self.ped_int.astype(np.float32),
+            weights=(self.inv_var_seg**2).astype(np.float32),
+            crmag=self.cr_mag_seg)
         rfo_model.meta.filename = model.meta.filename
 
         return rfo_model
 
 
-    def print_full( self ):
+    def print_full(self):
         """
         Short Summary
         -------------
@@ -298,33 +298,33 @@ class OptRes( object ):
         -------
         None
         """
-        print ('Will now print all optional output arrays - ')
-        print (' yint_seg: ')
+        print('Will now print all optional output arrays - ')
+        print(' yint_seg: ')
         print((self.yint_seg))
-        print ('  ')
-        print (' slope_seg: ')
-        print (self.slope_seg)
-        print ('  ')
-        print (' sigyint_seg: ')
-        print (self.sigyint_seg)
-        print ('  ')
-        print (' sigslope_seg: ')
-        print (self.sigslope_seg)
-        print ('  ')
-        print (' inv_var_2d: ')
+        print('  ')
+        print(' slope_seg: ')
+        print(self.slope_seg)
+        print('  ')
+        print(' sigyint_seg: ')
+        print(self.sigyint_seg)
+        print('  ')
+        print(' sigslope_seg: ')
+        print(self.sigslope_seg)
+        print('  ')
+        print(' inv_var_2d: ')
         print((self.inv_var_2d))
-        print ('  ')
-        print (' firstf_int: ')
+        print('  ')
+        print(' firstf_int: ')
         print((self.firstf_int))
-        print ('  ')
-        print (' ped_int: ')
+        print('  ')
+        print(' ped_int: ')
         print((self.ped_int))
-        print ('  ')
-        print (' cr_mag_seg: ')
+        print('  ')
+        print(' cr_mag_seg: ')
         print((self.cr_mag_seg))
 
 
-def alloc_int( n_int, imshape ):
+def alloc_int(n_int, imshape):
     """
     Short Summary
     -------------
@@ -358,16 +358,16 @@ def alloc_int( n_int, imshape ):
 
     """
 
-    slope_int = np.zeros( (n_int,) + imshape, dtype = np.float64)
-    err_int = np.zeros( (n_int,) + imshape, dtype = np.float64)
-    dq_int = np.zeros( (n_int,) + imshape, dtype = np.uint32)
-    m_by_var_int = np.zeros( (n_int,) + imshape,  dtype = np.float64)
-    inv_var_int = np.zeros( (n_int,) + imshape, dtype = np.float64)
+    slope_int = np.zeros((n_int,) + imshape, dtype=np.float64)
+    err_int = np.zeros((n_int,) + imshape, dtype=np.float64)
+    dq_int = np.zeros((n_int,) + imshape, dtype=np.uint32)
+    m_by_var_int = np.zeros((n_int,) + imshape, dtype=np.float64)
+    inv_var_int = np.zeros((n_int,) + imshape, dtype=np.float64)
 
     return slope_int, err_int, dq_int, m_by_var_int, inv_var_int
 
 
-def calc_slope_int( slope_int, m_by_var_int, inv_var_int, num_int ):
+def calc_slope_int(slope_int, m_by_var_int, inv_var_int, num_int):
     """
     Short Summary
     -------------
@@ -394,16 +394,16 @@ def calc_slope_int( slope_int, m_by_var_int, inv_var_int, num_int ):
         slope image for given integration
 
     """
-    slope_slice = slope_int[ num_int, :, :].copy()
-    m_slice = m_by_var_int[ num_int, :, :]
-    v_slice = inv_var_int[ num_int, :, :]
-    wh_v = ( v_slice != 0.0 )
-    slope_slice[ wh_v ] = m_slice[ wh_v ]/v_slice[ wh_v ]
+    slope_slice = slope_int[num_int, :, :].copy()
+    m_slice = m_by_var_int[num_int, :, :]
+    v_slice = inv_var_int[num_int, :, :]
+    wh_v = (v_slice != 0.0)
+    slope_slice[wh_v] = m_slice[wh_v] / v_slice[wh_v]
 
     return slope_slice
 
 
-def calc_pedestal( num_int, slope_int, firstf_int, dq_cube):
+def calc_pedestal(num_int, slope_int, firstf_int, dq_cube):
     """
     Short Summary
     -------------
@@ -431,15 +431,15 @@ def calc_pedestal( num_int, slope_int, firstf_int, dq_cube):
     ped: float, 2D array
         pedestal image
     """
-    ff_all = firstf_int[ num_int,:,:].astype( np.float32 )
-    ped = ff_all - slope_int[ num_int, :,:]
+    ff_all = firstf_int[num_int, :, :].astype(np.float32)
+    ped = ff_all - slope_int[num_int, :, :]
     dq_first = dq_cube[num_int, 0, :, :]
 
-    ped[ dq_first == dqflags.group['SATURATED']] = 0
+    ped[dq_first == dqflags.group['SATURATED']] = 0
 
     return ped
 
-def output_integ( model, slope_int, err_int, dq_int, effintim ):
+def output_integ(model, slope_int, err_int, dq_int, effintim):
 
     """
     Short Summary
@@ -471,11 +471,11 @@ def output_integ( model, slope_int, err_int, dq_int, effintim ):
 
     cubemod = datamodels.CubeModel()
 
-    cubemod.data = slope_int/effintim
-    cubemod.err = err_int/effintim
+    cubemod.data = slope_int / effintim
+    cubemod.err = err_int / effintim
     cubemod.dq = dq_int
 
-    cubemod.update( model ) # keys from input needed for photom step
+    cubemod.update(model) # keys from input needed for photom step
 
     return cubemod
 
@@ -584,7 +584,7 @@ def gls_pedestal(first_group, slope_int, s_mask,
     return pedestal
 
 
-def shift_z( a, off ):
+def shift_z(a, off):
     """
     Short Summary
     -------------
@@ -608,19 +608,19 @@ def shift_z( a, off ):
     """
     # set initial and final indices along z-direction for original and
     #    shifted 3D arrays
-    ai_z = int(( abs(off)+off )/2)
-    af_z = a.shape[0] + int(( -abs(off) + off )/2)
+    ai_z = int((abs(off) + off) / 2)
+    af_z = a.shape[0] + int((-abs(off) + off) / 2)
 
     bi_z = a.shape[0] - af_z
     bf_z = a.shape[0] - ai_z
 
-    b = a*0
-    b[ bi_z:bf_z, :, : ] = a[ ai_z:af_z, :, : ]
+    b = a * 0
+    b[bi_z:bf_z, :, :] = a[ai_z:af_z, :, :]
 
     return b
 
 
-def get_effintim( model ):
+def get_effintim(model):
     """
     Short Summary
     -------------
@@ -642,21 +642,21 @@ def get_effintim( model ):
     frame_time = model.meta.exposure.frame_time
 
     try:
-        effintim = ( nframes + groupgap )*frame_time
+        effintim = (nframes + groupgap) * frame_time
     except ValueError:
         log.error('Can not retrieve values needed to calculate integ. time')
 
     log.debug('Calculating effective integration time for a single group using:')
-    log.debug(' groupgap: %s' %(groupgap))
-    log.debug(' nframes: %s' %(nframes))
-    log.debug(' frame_time: %s' %(frame_time))
-    log.info('Effective integration time per group: %s' %(effintim))
+    log.debug(' groupgap: %s' % (groupgap))
+    log.debug(' nframes: %s' % (nframes))
+    log.debug(' frame_time: %s' % (frame_time))
+    log.info('Effective integration time per group: %s' % (effintim))
 
     return effintim
 
 
 
-def get_dataset_info( model ):
+def get_dataset_info(model):
     """
     Short Summary
     -------------
@@ -706,9 +706,9 @@ def get_dataset_info( model ):
     asize2 = model.data.shape[2]
     asize1 = model.data.shape[3]
 
-    npix = asize2*asize1  # number of pixels in 2D array
+    npix = asize2 * asize1  # number of pixels in 2D array
     imshape = (asize2, asize1)
-    cubeshape = (nreads,)+imshape
+    cubeshape = (nreads,) + imshape
 
     return nreads, npix, imshape, cubeshape, n_int, instrume, frame_time, ngroups
 
@@ -745,7 +745,7 @@ def get_more_info(model):
     return (group_time, nframes_used, saturated_flag, jump_flag)
 
 
-def get_max_num_cr( gdq_cube, jump_flag ):
+def get_max_num_cr(gdq_cube, jump_flag):
     """
     Short Summary
     -------------
@@ -773,7 +773,7 @@ def get_max_num_cr( gdq_cube, jump_flag ):
     return max_num_cr
 
 
-def get_skip_frames( instrume ):
+def get_skip_frames(instrume):
     """
     Short Summary
     -------------
@@ -811,7 +811,7 @@ def get_skip_frames( instrume ):
 
 
 
-def get_ref_subs( model, readnoise_model, gain_model ):
+def get_ref_subs(model, readnoise_model, gain_model):
     """ 
     Short Summary
     -------------
@@ -838,12 +838,12 @@ def get_ref_subs( model, readnoise_model, gain_model ):
         gain subarray
     """
     xstart = model.meta.subarray.xstart
-    xsize  = model.meta.subarray.xsize
+    xsize = model.meta.subarray.xsize
     ystart = model.meta.subarray.ystart
-    ysize  = model.meta.subarray.ysize
+    ysize = model.meta.subarray.ysize
 
     if (readnoise_model.meta.subarray.xstart == xstart and
-        readnoise_model.meta.subarray.xsize == xsize   and
+        readnoise_model.meta.subarray.xsize == xsize and
         readnoise_model.meta.subarray.ystart == ystart and
         readnoise_model.meta.subarray.ysize == ysize):
 
@@ -853,19 +853,19 @@ def get_ref_subs( model, readnoise_model, gain_model ):
         log.debug('Extracting readnoise subarray to match science data')
         xstop = xstart + xsize - 1
         ystop = ystart + ysize - 1
-        readnoise_2d = readnoise_model.data[ystart-1:ystop, xstart-1:xstop]
+        readnoise_2d = readnoise_model.data[ystart - 1:ystop, xstart - 1:xstop]
 
-    if (gain_model.meta.subarray.xstart==xstart and
-        gain_model.meta.subarray.xsize==xsize   and
-        gain_model.meta.subarray.ystart==ystart and
-        gain_model.meta.subarray.ysize==ysize):
+    if (gain_model.meta.subarray.xstart == xstart and
+        gain_model.meta.subarray.xsize == xsize and
+        gain_model.meta.subarray.ystart == ystart and
+        gain_model.meta.subarray.ysize == ysize):
 
         log.debug('Gain subarray matches science data')
         gain_2d = gain_model.data
     else:
         log.debug('Extracting gain subarray to match science data')
-        xstop  = xstart + xsize - 1
-        ystop  = ystart + ysize - 1
-        gain_2d = gain_model.data[ystart-1:ystop,xstart-1:xstop]
+        xstop = xstart + xsize - 1
+        ystop = ystart + ysize - 1
+        gain_2d = gain_model.data[ystart - 1:ystop, xstart - 1:xstop]
 
     return readnoise_2d, gain_2d

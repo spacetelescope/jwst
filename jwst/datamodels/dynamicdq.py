@@ -22,8 +22,8 @@ def dynamic_mask(input_model):
             try:
                 standard_bitvalue = dqflags.pixel[dqname]
             except KeyError:
-                 print('Keyword %s does not correspond to an existing DQ mnemonic, so will be ignored' % (dqname))
-                 continue
+                print('Keyword %s does not correspond to an existing DQ mnemonic, so will be ignored' % (dqname))
+                continue
             just_this_bit = np.bitwise_and(input_model.dq, bitplane)
             pixels = np.where(just_this_bit != 0)
             dqmask[pixels] = np.bitwise_or(dqmask[pixels], standard_bitvalue)

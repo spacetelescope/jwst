@@ -650,7 +650,7 @@ class Section(dict):
         if not sequence:
             raise KeyError(": 'popitem(): dictionary is empty'")
         key = sequence[0]
-        val =  self[key]
+        val = self[key]
         del self[key]
         return key, val
 
@@ -1740,7 +1740,7 @@ class ConfigObj(Section):
             return '""'
 
         no_lists_no_quotes = not self.list_values and '\n' not in value and '#' not in value
-        need_triple = multiline and ((("'" in value) and ('"' in value)) or ('\n' in value ))
+        need_triple = multiline and ((("'" in value) and ('"' in value)) or ('\n' in value))
         hash_triple_quote = multiline and not need_triple and ("'" in value) and ('"' in value) and ('#' in value)
         check_for_single = (no_lists_no_quotes or not need_triple) and not hash_triple_quote
 

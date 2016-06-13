@@ -25,7 +25,7 @@ from __future__ import division
 from collections import OrderedDict
 import numpy as np
 
-__all__ = ['Region','Edge','Polygon']
+__all__ = ['Region', 'Edge', 'Polygon']
 __taskname__ = 'region'
 __version__ = '0.2'
 __vdate__ = '30-05-2014'
@@ -119,30 +119,30 @@ class Polygon(Region):
         self._shiftx = 0
         self._shifty = 0
         for vertex in vertices:
-            x,y = vertex
+            x, y = vertex
             if x < self._shiftx: self._shiftx = x
             if y < self._shifty: self._shifty = y
-        v = [(i-self._shiftx,j-self._shifty) for i,j in vertices]
+        v = [(i - self._shiftx, j - self._shifty) for i, j in vertices]
 
         # convert to integer coordinates:
-        self._vertices = np.asarray(list(map(_round_vertex,v)))
+        self._vertices = np.asarray(list(map(_round_vertex, v)))
         self._shiftx = int(round(self._shiftx))
         self._shifty = int(round(self._shifty))
 
         self._bbox = self._get_bounding_box()
         self._scan_line_range = \
-                list(range(self._bbox[1], self._bbox[3]+self._bbox[1]+1))
+                list(range(self._bbox[1], self._bbox[3] + self._bbox[1] + 1))
         #constructs a Global Edge Table (GET) in bbox coordinates
         self._GET = self._construct_ordered_GET()
 
     def _get_bounding_box(self):
-        x = self._vertices[:,0].min()
-        y = self._vertices[:,1].min()
-        w = self._vertices[:,0].max() - x
-        h = self._vertices[:,1].max() - y
+        x = self._vertices[:, 0].min()
+        y = self._vertices[:, 1].min()
+        w = self._vertices[:, 0].max() - x
+        h = self._vertices[:, 1].max() - y
         return (x, y, w, h)
 
-    def  _construct_ordered_GET(self):
+    def _construct_ordered_GET(self):
         """
         Construct a Global Edge Table (GET)
 
@@ -160,7 +160,7 @@ class Polygon(Region):
         # with these vertices
         edges = self.get_edges()
         GET = OrderedDict.fromkeys(self._scan_line_range)
-        ymin=np.asarray([e._ymin for e in edges])
+        ymin = np.asarray([e._ymin for e in edges])
         for i in self._scan_line_range:
             ymin_ind = (ymin == i).nonzero()[0]
             yminindlen, = ymin_ind.shape
@@ -178,8 +178,8 @@ class Polygon(Region):
         """
         edges = []
         for i in range(1, len(self._vertices)):
-            name = 'E'+str(i-1)
-            edges.append(Edge(name=name, start=self._vertices[i-1], stop=self._vertices[i]))
+            name = 'E' + str(i - 1)
+            edges.append(Edge(name=name, start=self._vertices[i - 1], stop=self._vertices[i]))
         return edges
 
     def scan(self, data):
@@ -222,13 +222,13 @@ class Polygon(Region):
         AET = []
         scline = self._scan_line_range[-1]
 
-        while y <=scline:
+        while y <= scline:
 
             if y < scline:
                 AET = self.update_AET(y, AET)
 
             scan_line = Edge('scan_line', start=[self._bbox[0], y],
-                             stop=[self._bbox[0]+self._bbox[2], y])
+                             stop=[self._bbox[0] + self._bbox[2], y])
             x = [np.ceil(e.compute_AET_entry(scan_line)[1]) for e in AET if e is not None]
             xnew = np.sort(x)
             ysh = y + self._shifty
@@ -239,8 +239,8 @@ class Polygon(Region):
 
             for i, j in zip(xnew[::2], xnew[1::2]):
                 xstart = max(0, i + self._shiftx)
-                xend   = min(j + self._shiftx, nx - 1)
-                data[ysh][xstart:xend+1] = self._rid
+                xend = min(j + self._shiftx, nx - 1)
+                data[ysh][xstart:xend + 1] = self._rid
 
             y += 1
 
@@ -273,8 +273,8 @@ class Polygon(Region):
         #maxx = self._vertices[:,0].max()
         #miny = self._vertices[:,1].min()
         #maxy = self._vertices[:,1].max()
-        return px[0] >= self._bbox[0] and px[0] <= self._bbox[0]+self._bbox[2] and \
-               px[1] >=self._bbox[1] and px[1] <=self._bbox[1]+self._bbox[3]
+        return px[0] >= self._bbox[0] and px[0] <= self._bbox[0] + self._bbox[2] and \
+               px[1] >= self._bbox[1] and px[1] <= self._bbox[1] + self._bbox[3]
 
 class Edge(object):
     """
@@ -290,11 +290,11 @@ class Edge(object):
         self._start = None
         if start is not None:
             self._start = np.asarray(start)
-        self._name= name
+        self._name = name
         self._stop = stop
         if stop is not None:
             self._stop = np.asarray(stop)
-        self._next=next
+        self._next = next
 
         if self._stop is not None and self._start is not None:
             if self._start[1] < self._stop[1]:
@@ -341,10 +341,10 @@ class Edge(object):
             entry = None
         else:
             earr = np.asarray([self._start, self._stop])
-            if np.diff(earr[:,1]).item() == 0:
+            if np.diff(earr[:, 1]).item() == 0:
                 return None
             else:
-                entry=[self._ymax, self._yminx, (np.diff(earr[:,0]) / np.diff(earr[:,1])).item(), None]
+                entry = [self._ymax, self._yminx, (np.diff(earr[:, 0]) / np.diff(earr[:, 1])).item(), None]
         return entry
 
     def compute_AET_entry(self, edge):
@@ -361,7 +361,7 @@ class Edge(object):
         fmt = ""
         if self._name is not None:
             fmt += self._name
-            next=self.next
+            next = self.next
             while next is not None:
                 fmt += "-->"
                 fmt += next._name
@@ -387,7 +387,7 @@ class Edge(object):
         v = edge._stop - edge._start
         w = self._start - edge._start
         D = np.cross(u, v)
-        return np.cross(v, w)/D * u + self._start
+        return np.cross(v, w) / D * u + self._start
 
     def is_parallel(self, edge):
         u = self._stop - self._start

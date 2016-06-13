@@ -35,8 +35,8 @@ class ResampleData(object):
       5. Updates output data model with output arrays from drizzle, including
          (eventually) a record of metadata from all input models.
     """
-    drizpars = {'single':False,'kernel':'square','pixfrac':1.0,'good_bits':None,
-                        'fillval':'INDEF','wht_type':'exptime'}
+    drizpars = {'single': False, 'kernel': 'square', 'pixfrac': 1.0, 'good_bits': None,
+                        'fillval': 'INDEF', 'wht_type': 'exptime'}
 
     def __init__(self, input_models, output=None, ref_filename=None, **pars):
         """
@@ -49,12 +49,12 @@ class ResampleData(object):
             filename for output
         """
         self.input_models = input_models
-        if output is None: 
+        if output is None:
             output = input_models.meta.resample.output
         self.output_filename = output
         self.ref_filename = ref_filename
 
-        
+
         # If user specifies use of drizpars ref file (default for pipeline use)
         # update input parameters with default values from ref file
         if self.ref_filename is not None:
@@ -93,7 +93,7 @@ class ResampleData(object):
         drizpars = ref_model.drizpars_table
 
         filter_match = False # flag to support wild-card rows in drizpars table
-        for n,filt,num in zip(range(1,drizpars.numimages.shape[0]+1),drizpars.filter,
+        for n, filt, num in zip(range(1, drizpars.numimages.shape[0] + 1), drizpars.filter,
                             drizpars.numimages):
             # only remember this row if no exact match has already been made for
             # the filter. This allows the wild-card row to be anywhere in the
@@ -108,7 +108,7 @@ class ResampleData(object):
 
         # With presence of wild-card rows, code should never trigger this logic
         if row is None:
-            log.error("No row found in %s that matches input data.",self.ref_filename)
+            log.error("No row found in %s that matches input data.", self.ref_filename)
             raise ValueError
 
         # read in values from that row for each parameter
@@ -123,7 +123,7 @@ class ResampleData(object):
         numplanes = (numchips // 32) + 1
 
         # Replace CONTEXT array with full set of planes needed for all inputs
-        outcon = np.zeros((numplanes,self.output_wcs.data_size[0],
+        outcon = np.zeros((numplanes, self.output_wcs.data_size[0],
                                     self.output_wcs.data_size[1]), dtype=np.int32)
         self.blank_output.con = outcon
 
@@ -133,7 +133,7 @@ class ResampleData(object):
         """
         pass
 
-    def do_drizzle (self, **pars):
+    def do_drizzle(self, **pars):
         """ Perform drizzling operation on input images's to create a new output
 
        """
@@ -159,7 +159,7 @@ class ResampleData(object):
             for group in self.input_models.models_grouped:
                 total_exposure_time += group[0].meta.exposure.exposure_time
             group_exptime = [total_exposure_time]
-         
+
         pointings = len(self.input_models.group_names)
         # Now, generate each output for all input_models
         for obs_product, group, texptime in zip(driz_outputs, model_groups, group_exptime):
@@ -168,9 +168,9 @@ class ResampleData(object):
 
             output_model.meta.asn.pool_name = self.input_models.meta.pool_name
             output_model.meta.asn.table_name = self.input_models.meta.table_name
-                        
-            exposure_times = {'start':[], 'end':[]}
-            
+
+            exposure_times = {'start': [], 'end': []}
+
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model,
                                 single=self.drizpars['single'],
@@ -178,7 +178,7 @@ class ResampleData(object):
                                 kernel=self.drizpars['kernel'],
                                 fillval=self.drizpars['fillval'])
 
-            for n,img in enumerate(group):
+            for n, img in enumerate(group):
                 wcslin_pscale = img.meta.wcs.forward_transform['cdelt1'].factor.value
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
@@ -190,7 +190,7 @@ class ResampleData(object):
                                     good_bits=self.drizpars['good_bits'])
                 driz.add_image(img.data, img.meta.wcs, inwht=inwht,
                         expin=img.meta.exposure.exposure_time,
-                        pscale_ratio=outwcs_pscale/wcslin_pscale)
+                        pscale_ratio=outwcs_pscale / wcslin_pscale)
 
             # Update some basic exposure time values based on all the inputs
             output_model.meta.exposure.exposure_time = texptime
@@ -207,39 +207,39 @@ class ResampleData(object):
             output_model.meta.resample.drizzle_weight_scale = driz.wt_scl
             output_model.meta.resample.resample_bits = self.drizpars['good_bits']
             output_model.meta.resample.weight_type = self.drizpars['wht_type']
-            output_model.meta.resample.pointings = pointings            
+            output_model.meta.resample.pointings = pointings
 
             self.output_models.append(output_model)
         #self.output_models.save(None)  # DEBUG: Remove for production
-                
-def _buildMask(dqarr,bitvalue):
+
+def _buildMask(dqarr, bitvalue):
     """ Builds a bit-mask from an input DQ array and a bitvalue flag"""
 
     bitvalue = bitmask.interpret_bits_value(bitvalue)
 
     if bitvalue is None:
-        return (np.ones(dqarr.shape,dtype=np.uint8))
-    return np.logical_not(np.bitwise_and(dqarr,~bitvalue)).astype(np.uint8)
+        return (np.ones(dqarr.shape, dtype=np.uint8))
+    return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)
 
 
-def build_driz_weight(model,wht_type=None,good_bits=None):
+def build_driz_weight(model, wht_type=None, good_bits=None):
     """ Create input weighting image based on user inputs
 
     """
-    if good_bits is not None and good_bits < 0: good_bits=None
-    dqmask = _buildMask(model.dq,good_bits)
+    if good_bits is not None and good_bits < 0: good_bits = None
+    dqmask = _buildMask(model.dq, good_bits)
     exptime = model.meta.exposure.exposure_time
 
     if wht_type.lower()[:3] == 'err':
         # Multiply the scaled ERR file by the input mask in place.
-        inwht = (exptime/model.err)**2 * dqmask
+        inwht = (exptime / model.err)**2 * dqmask
     #elif wht_type == 'IVM':
     #    _inwht = img.buildIVMmask(chip._chip,dqarr,pix_ratio)
     elif wht_type.lower()[:3] == 'exp':# or wht_type is None, as used for single=True
-        inwht = exptime*dqmask
+        inwht = exptime * dqmask
     else:
         # Create an identity input weight map
-        inwht  = np.ones(model.data.shape, dtype=model.data.dtype)
+        inwht = np.ones(model.data.shape, dtype=model.data.dtype)
     return inwht
 
 def drizzle_image(insci, input_wcs, inwht,
@@ -266,14 +266,14 @@ def drizzle_image(insci, input_wcs, inwht,
     Modified from original code found in drizzlepac.adrizzle.
     """
     # Set various parameters needed for drizzling
-    uniqid=pars.get('uniqid',1)
-    expin=pars.get('expin')
-    wcslin_pscale = pars.get('wcslin_pscale',1.0)
+    uniqid = pars.get('uniqid', 1)
+    expin = pars.get('expin')
+    wcslin_pscale = pars.get('wcslin_pscale', 1.0)
 
-    pixfrac= pars.get('pixfrac',1.0)
-    kernel=pars.get('kernel','square')
-    fillval=pars.get('fillval','INDEF')
-    stepsize = pars.get('stepsize',10)
+    pixfrac = pars.get('pixfrac', 1.0)
+    kernel = pars.get('kernel', 'square')
+    fillval = pars.get('fillval', 'INDEF')
+    stepsize = pars.get('stepsize', 10)
 
     output_wcs_pscale = output_wcs.wcs_info['CDELT'][0]
 
@@ -292,25 +292,25 @@ def drizzle_image(insci, input_wcs, inwht,
     if pars['wt_scl'] == 'exptime':
         wt_scl = expin
     elif pars['wt_scl'] == 'expsq':
-        wt_scl = expin*expin
+        wt_scl = expin * expin
     else:
         wt_scl = float(pars['wt_scl'])
 
     # Compute what plane of the context image this input would
     # correspond to:
-    _planeid = int((uniqid-1) /32)
+    _planeid = int((uniqid - 1) / 32)
     # Compute how many planes will be needed for the context image.
     _nplanes = _planeid + 1
 
     if outcon is not None and (outcon.ndim < 3 or (outcon.ndim == 3 and outcon.shape[0] < _nplanes)):
         # convert context image to 3-D array and pass along correct plane for drizzling
         if outcon.ndim == 3:
-            nplanes = outcon.shape[0]+1
+            nplanes = outcon.shape[0] + 1
         else:
             nplanes = 1
         # We need to expand the context image here to accomodate the addition of
         # this new image
-        newcon = np.zeros((nplanes,output_wcs.naxis2,output_wcs.naxis1),dtype=np.int32)
+        newcon = np.zeros((nplanes, output_wcs.naxis2, output_wcs.naxis1), dtype=np.int32)
         # now copy original outcon arrays into new array
         if outcon.ndim == 3:
             for n in range(outcon.shape[0]):
@@ -319,7 +319,7 @@ def drizzle_image(insci, input_wcs, inwht,
             newcon[0] = outcon.copy()
     else:
         if outcon is None:
-            outcon = np.zeros((1,output_wcs.naxis2,output_wcs.naxis1),dtype=np.int32)
+            outcon = np.zeros((1, output_wcs.naxis2, output_wcs.naxis1), dtype=np.int32)
             _planeid = 0
         newcon = outcon
 
@@ -327,7 +327,7 @@ def drizzle_image(insci, input_wcs, inwht,
     # correct plane to drizzle code
     outctx = newcon[_planeid]
 
-    pix_ratio = output_wcs_pscale/wcslin_pscale
+    pix_ratio = output_wcs_pscale / wcslin_pscale
     """
     if wcsmap is None and cdriz is not None:
         log.info('Using WCSLIB-based coordinate transformation...')
@@ -342,7 +342,7 @@ def drizzle_image(insci, input_wcs, inwht,
     log.info('Using coordinate transformation defined by user...')
     if wcsmap is None:
         wcsmap = AstroPyWCSMap
-        wmap = wcsmap(input_wcs,output_wcs)
+        wmap = wcsmap(input_wcs, output_wcs)
         mapping = wmap.forward
     else:
         mapping = wcsmap
@@ -361,7 +361,7 @@ def drizzle_image(insci, input_wcs, inwht,
         #WARNING: Input array recast as a float32 array
         insci = insci.astype(np.float32)
 
-    _vers,nmiss,nskip = cdriz.tdriz(insci, inwht, outsci, outwht,
+    _vers, nmiss, nskip = cdriz.tdriz(insci, inwht, outsci, outwht,
         outctx, uniqid, ystart, 1, 1, _dny,
         pix_ratio, 1.0, 1.0, 'center', pixfrac,
         kernel, in_units, expscale, wt_scl,

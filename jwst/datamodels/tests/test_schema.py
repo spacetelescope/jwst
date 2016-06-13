@@ -114,7 +114,7 @@ transformation_schema = {
 
 def test_list():
     with pytest.raises(jsonschema.ValidationError):
-        with ImageModel( (50, 50), schema=transformation_schema) as dm:
+        with ImageModel((50, 50), schema=transformation_schema) as dm:
             dm.meta.transformations = []
             object = dm.meta.transformations.item(
                 transformation="SIN",
@@ -381,22 +381,22 @@ def test_data_array():
                     "arr": {
                         'title': 'An array of data',
                         'type': 'array',
-                        "fits_hdu" : ["FOO", "DQ"],
+                        "fits_hdu": ["FOO", "DQ"],
 
-                        "items" : {
-                            "title" : "entry",
-                            "type" : "object",
-                            "properties" : {
-                                "data" : {
-                                    "fits_hdu" : "FOO",
-                                    "default" : 0.0,
-                                    "max_ndim" : 2,
-                                    "datatype" : "float64"
+                        "items": {
+                            "title": "entry",
+                            "type": "object",
+                            "properties": {
+                                "data": {
+                                    "fits_hdu": "FOO",
+                                    "default": 0.0,
+                                    "max_ndim": 2,
+                                    "datatype": "float64"
                                 },
-                                "dq" : {
-                                    "fits_hdu" : "DQ",
-                                    "default" : 1,
-                                    "datatype" : "uint8"
+                                "dq": {
+                                    "fits_hdu": "DQ",
+                                    "default": 1,
+                                    "datatype": "uint8"
                                 },
                             }
                         }

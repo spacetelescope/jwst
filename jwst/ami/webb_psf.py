@@ -50,12 +50,12 @@ def get_webbpsf_filter(filter_model, specbin=None, trim=False):
 
     # rebin as desired - fewer wavelengths for debugging quickly
     if specbin:
-        smallshape = spec.shape[0]//specbin
+        smallshape = spec.shape[0] // specbin
 
         log.debug(' bin filter data by %d from %d to %d', specbin,
                   spec.shape[0], smallshape)
 
-        spec = spec[:smallshape*specbin, :]  # clip trailing
+        spec = spec[:smallshape * specbin, :]  # clip trailing
         spec = utils.krebin(spec, (smallshape, 2))
         spec[:, W] = spec[:, W] / float(specbin)  # krebin added up waves
         spec[:, T] = spec[:, T] / float(specbin)  # krebin added up trans too
@@ -65,8 +65,8 @@ def get_webbpsf_filter(filter_model, specbin=None, trim=False):
         log.debug(' TRIMing filter data ...')
         wl = spec[:, W].copy()
         tr = spec[:, T].copy()
-        idx = np.where((wl > (1.0 - 0.5*trim[1])*trim[0]) &
-                       (wl < (1.0 + 0.5*trim[1])*trim[0]))
+        idx = np.where((wl > (1.0 - 0.5 * trim[1]) * trim[0]) &
+                       (wl < (1.0 + 0.5 * trim[1]) * trim[0]))
         wl = wl[idx]
         tr = tr[idx]
         spec = np.zeros((len(idx[0]), 2))
@@ -76,7 +76,7 @@ def get_webbpsf_filter(filter_model, specbin=None, trim=False):
 
     log.debug(' final filter shape %s', spec.shape)
     log.debug(' %d filter samples between %.3f and %.3f um',
-              len(spec[:, 0]), spec[0, W]/NRM_consts.um_,
-              spec[-1, W]/NRM_consts.um_)
+              len(spec[:, 0]), spec[0, W] / NRM_consts.um_,
+              spec[-1, W] / NRM_consts.um_)
 
     return spec

@@ -105,11 +105,11 @@ class ModelContainer(DataModel):
 
     def assign_group_ids(self):
         for model in self._models:
-            model_attrs = [model.meta.observation.program_number ,
-                           model.meta.observation.observation_number ,
-                           model.meta.observation.visit_number , 
-                           model.meta.observation.visit_group ,
-                           model.meta.observation.sequence_id ,
+            model_attrs = [model.meta.observation.program_number,
+                           model.meta.observation.observation_number,
+                           model.meta.observation.visit_number,
+                           model.meta.observation.visit_group,
+                           model.meta.observation.sequence_id,
                            model.meta.observation.activity_id,
                            model.meta.observation.exposure_number,
                            model.meta.instrument.name,
@@ -118,11 +118,11 @@ class ModelContainer(DataModel):
                 group_id = ('jw' + "_".join([
                                 ''.join(model_attrs[:3]),
                                 ''.join(model_attrs[3:6]),
-                                model_attrs[6],model_attrs[7].lower(),
+                                model_attrs[6], model_attrs[7].lower(),
                                 model_attrs[8].lower()]))
             else:
-                root,ext = os.path.splitext(model.meta.filename)
-                group_id = "_".join([root,'group{}'.format(ext)])
+                root, ext = os.path.splitext(model.meta.filename)
+                group_id = "_".join([root, 'group{}'.format(ext)])
 
             model.meta.group_id = group_id
 
@@ -168,7 +168,7 @@ class ModelContainer(DataModel):
         self.meta.program = str(asn_data['program'])
         self.meta.asn_type = str(asn_data['asn_type'])
         self.meta.asn_rule = str(asn_data['asn_rule'])
-        
+
     @property
     def models_grouped(self):
         """
@@ -203,7 +203,7 @@ class ModelContainer(DataModel):
     def save(self, filename_not_used, path=None, *args, **kwargs):
         """
         Write out models in container to FITS or ASDF.
-        
+
         Parameters
         ----------
 

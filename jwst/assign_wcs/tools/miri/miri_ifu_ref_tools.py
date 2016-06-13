@@ -60,20 +60,20 @@ def create_cdp5_references(fname, ref):
         slices = f[1].data
         fov1 = f[2].data
         fov2 = f[3].data
-        alpha1 = f[('Alpha_'+ch1, 1)].data
-        lam1 = f[('Lambda_'+ch1, 1)].data
-        alpha2 = f[('Alpha_'+ch2, 1)].data
-        lam2 = f[('Lambda_'+ch2, 1)].data
-        x1 = f[('X_'+ch1, 1)].data
-        y1 = f[('Y_'+ch1, 1)].data
-        x2 = f[('X_'+ch2, 1)].data
-        y2 = f[('Y_'+ch2, 1)].data
+        alpha1 = f[('Alpha_' + ch1, 1)].data
+        lam1 = f[('Lambda_' + ch1, 1)].data
+        alpha2 = f[('Alpha_' + ch2, 1)].data
+        lam2 = f[('Lambda_' + ch2, 1)].data
+        x1 = f[('X_' + ch1, 1)].data
+        y1 = f[('Y_' + ch1, 1)].data
+        x2 = f[('X_' + ch2, 1)].data
+        y2 = f[('Y_' + ch2, 1)].data
         ab_v23 = f[('albe_to_XANYAN', 1)].data.copy()
         v23_ab = f[('XANYAN_to_albe', 1)].data.copy()
-        b0_ch1 = f[0].header['B_ZERO'+ch1[2]]
-        bdel_ch1 = f[0].header['B_DEL'+ch1[2]]
-        b0_ch2 = f[0].header['B_ZERO'+ch2[2]]
-        bdel_ch2 = f[0].header['B_DEL'+ch2[2]]
+        b0_ch1 = f[0].header['B_ZERO' + ch1[2]]
+        bdel_ch1 = f[0].header['B_DEL' + ch1[2]]
+        b0_ch2 = f[0].header['B_ZERO' + ch2[2]]
+        bdel_ch2 = f[0].header['B_DEL' + ch2[2]]
     # Get channel names, e.g. 1LONG, 2LONG
     channels = [c + band for c in channel]
 
@@ -142,20 +142,20 @@ def create_cdp4_references(fname, ref):
         slices = f[1].data
         fov1 = f[2].data
         fov2 = f[3].data
-        alpha1 = f[('Alpha-'+ch1, 1)].data
-        lam1 = f[('Lambda-'+ch1, 1)].data
-        alpha2 = f[('Alpha-'+ch2, 1)].data
-        lam2 = f[('Lambda-'+ch2, 1)].data
-        x1 = f[('X-'+ch1, 1)].data
-        y1 = f[('Y-'+ch1, 1)].data
-        x2 = f[('X-'+ch2, 1)].data
-        y2 = f[('Y-'+ch2, 1)].data
+        alpha1 = f[('Alpha-' + ch1, 1)].data
+        lam1 = f[('Lambda-' + ch1, 1)].data
+        alpha2 = f[('Alpha-' + ch2, 1)].data
+        lam2 = f[('Lambda-' + ch2, 1)].data
+        x1 = f[('X-' + ch1, 1)].data
+        y1 = f[('Y-' + ch1, 1)].data
+        x2 = f[('X-' + ch2, 1)].data
+        y2 = f[('Y-' + ch2, 1)].data
         ab_v23 = f[('al,be->V2/V3', 1)].data.copy()
         v23_ab = f[('V2/V3->al,be', 1)].data.copy()
-        b0_ch1 = f[0].header['B_ZERO'+ch1[2]]
-        bdel_ch1 = f[0].header['B_DEL'+ch1[2]]
-        b0_ch2 = f[0].header['B_ZERO'+ch2[2]]
-        bdel_ch2 = f[0].header['B_DEL'+ch2[2]]
+        b0_ch1 = f[0].header['B_ZERO' + ch1[2]]
+        bdel_ch1 = f[0].header['B_DEL' + ch1[2]]
+        b0_ch2 = f[0].header['B_ZERO' + ch2[2]]
+        bdel_ch2 = f[0].header['B_DEL' + ch2[2]]
     # Get channel names, e.g. 1LONG, 2LONG
     channels = [c + band for c in channel]
 
@@ -220,7 +220,7 @@ def create_v23(reftype, detector, band, channels, data, name):
     """
     channel = "".join([ch[0] for ch in channels])
     tree = {"detector": detector,
-            "instrument" : "MIRI",
+            "instrument": "MIRI",
             "band": band,
             "channel": channel,
             "exp_type": "MIR_MRS",
@@ -258,10 +258,10 @@ def create_v23(reftype, detector, band, channels, data, name):
     c0_0, c0_1, c1_0, c1_1 = v23_ab[3][1:]
     ch2_b = models.Polynomial2D(2, c0_0=c0_0, c1_0=c1_0, c0_1=c0_1, c1_1=c1_1,
                                 name="v23_ab")
-    ch1_for =  ch1_v2 & ch1_v3
+    ch1_for = ch1_v2 & ch1_v3
     ch2_for = ch2_v2 & ch2_v3
-    ch1_for.inverse =  ch1_a & ch1_b
-    ch2_for.inverse =  ch2_a & ch2_b
+    ch1_for.inverse = ch1_a & ch1_b
+    ch2_for.inverse = ch2_a & ch2_b
     m[channels[0]] = ch1_for
     m[channels[1]] = ch2_for
     tree['model'] = m
@@ -271,7 +271,7 @@ def create_v23(reftype, detector, band, channels, data, name):
     f.write_to(name)
 
 
-def create_distortion_file(reftype, detector,  band, channel, data, name):
+def create_distortion_file(reftype, detector, band, channel, data, name):
 
     tree = create_reffile_header(reftype, detector, band, channel)
 
@@ -280,7 +280,7 @@ def create_distortion_file(reftype, detector,  band, channel, data, name):
     tree['beta_model'] = bdata
     tree['x_model'] = xdata
     tree['y_model'] = ydata
-    tree['slice_model'] = {str(channel[0])+band: sdata1, str(channel[1])+band: sdata2}
+    tree['slice_model'] = {str(channel[0]) + band: sdata1, str(channel[1]) + band: sdata2}
     f = AsdfFile()
     f.tree = tree
     f.write_to(name)
@@ -301,11 +301,11 @@ def create_poly_models(data, channel, coeff_names, name):
     Works for alpha and lambda coordinates.
     """
     nslices = len(data)
-    sl = channel * 100 + np.arange(1, nslices+1)
+    sl = channel * 100 + np.arange(1, nslices + 1)
 
     transforms = {}
     for i in range(nslices):
-        sl = channel * 100 + i +1
+        sl = channel * 100 + i + 1
         al = data[i]
         xs = al[0]
         coeffs = {}
@@ -322,12 +322,12 @@ def create_xy_models(data, channel, coeff_names, name):
     local_MIRI --> detector frame.
     """
     nslices = len(data)
-    sl = channel * 100 + np.arange(1, nslices+1)
+    sl = channel * 100 + np.arange(1, nslices + 1)
     shname = "shift_{0}".format(name)
     pname = "polynomial_{0}".format(name)
     transforms = {}
     for i in range(nslices):
-        sl = channel * 100 + i +1
+        sl = channel * 100 + i + 1
         al = data[i]
         xs = al[0]
         coeffs = {}
@@ -357,12 +357,12 @@ def create_beta_models(b0, bdel, channel, nslices):
     beta = {}
     slices = {}
     for s in range(nslices):
-        sl = channel * 100 + s +1
+        sl = channel * 100 + s + 1
         beta_s = b0 + s * bdel
         m = models.Const1D(beta_s, name='det2local') #xy2beta and xy2lam
         beta[sl] = m
         inv = models.Const1D(sl)
-        slices[beta_s] = models.Mapping([1,]) | inv
+        slices[beta_s] = models.Mapping([1, ]) | inv
     return beta, slices
 
 
@@ -413,4 +413,3 @@ def create_wavelengthrange_file(name):
         vr[i] = wavelengthrange[ch]
     f.tree['wavelengthrange'] = vr
     f.write_to(name)
-

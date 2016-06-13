@@ -28,4 +28,3 @@ class ImprintStep(Step):
             imprint_model.close()
 
         return result
-

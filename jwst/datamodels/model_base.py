@@ -66,16 +66,16 @@ class DataModel(properties.ObjectNode):
             The schema to use to understand the elements on the model.
             If not provided, the schema associated with this class
             will be used.
-            
+
         extensions: classes extending the standard set of extensions
-        
+
         pass_invalid_values: If True, values that do not validate the schema can
             be read and written, but with a warning message
         """
         filename = os.path.abspath(inspect.getfile(self.__class__))
         base_url = os.path.join(
             os.path.dirname(filename), 'schemas', '')
-        
+
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
             schema = asdf_schema.load_schema(
@@ -164,7 +164,7 @@ class DataModel(properties.ObjectNode):
         # if the input model doesn't have a date set, use the current date/time
         if self.meta.date is None:
             self.meta.date = Time(datetime.datetime.now())
-            self.meta.date.format='isot'
+            self.meta.date.format = 'isot'
             self.meta.date = self.meta.date.value
 
         # if the input is from a file, set the filename attribute
@@ -232,7 +232,7 @@ class DataModel(properties.ObjectNode):
             self.meta.filename = os.path.basename(path)
 
         self.meta.date = Time(datetime.datetime.now())
-        self.meta.date.format='isot'
+        self.meta.date.format = 'isot'
         self.meta.date = self.meta.date.value
 
     def save(self, path, *args, **kwargs):
@@ -620,7 +620,7 @@ class DataModel(properties.ObjectNode):
             if not included(that_cursor, part):
                 return
             if len(path) == 0:
-               this_cursor[part] = copy.deepcopy(that_cursor[part])
+                this_cursor[part] = copy.deepcopy(that_cursor[part])
             else:
                 that_cursor = that_cursor[part]
                 if not included(this_cursor, part):
@@ -630,7 +630,7 @@ class DataModel(properties.ObjectNode):
                         this_cursor[part] = {}
                 this_cursor = this_cursor[part]
                 set_hdu_keyword(this_cursor, that_cursor, path)
-        
+
         # Get the list of hdu names from the model so that updates
         # are limited to those hdus
 
@@ -644,7 +644,7 @@ class DataModel(properties.ObjectNode):
             mschema.walk_schema(self._schema, hdu_names_from_schema, hdu_names)
 
         # Get the paths to all the keywords that will be updated from
-        
+
         hdu_keywords = []
         if isinstance(d, DataModel):
             schema = d._schema
@@ -655,12 +655,12 @@ class DataModel(properties.ObjectNode):
             hdu_keywords_from_data(d, path, hdu_keywords)
 
         # Perform the updates to the keywords mentioned in the schema
-        
+
         for path in hdu_keywords:
             set_hdu_keyword(self._instance, d, path)
 
         # Perform updates to extra_fits area of a model
-        
+
         for hdu_name in hdu_names:
             path = ['extra_fits', hdu_name, 'header']
             set_hdu_keyword(self._instance, d, path)

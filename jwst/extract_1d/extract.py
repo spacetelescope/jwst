@@ -144,9 +144,9 @@ def get_aperture(slit, meta, extract_params):
 def aperture_from_ref(extract_params):
 
     xstart = extract_params.get('xstart', None)
-    xstop  = extract_params.get('xstop', None)
+    xstop = extract_params.get('xstop', None)
     ystart = extract_params.get('ystart', None)
-    ystop  = extract_params.get('ystop', None)
+    ystop = extract_params.get('ystop', None)
 
     if xstart is None and ystart is None and xstop is None and ystop is None:
         return None
@@ -173,9 +173,9 @@ def aperture_from_wcs(wcs, direction):
         return None
 
     xstart = domain[0]['lower']
-    xstop  = domain[0]['upper']
+    xstop = domain[0]['upper']
     ystart = domain[1]['lower']
-    ystop  = domain[1]['upper']
+    ystop = domain[1]['upper']
     # Convert limits in the dispersion direction to integer values.
     if direction == HORIZONTAL:
         x_test = round(xstart)
@@ -315,7 +315,7 @@ def create_poly(coeff):
         key = "c{}".format(i)
         coeff_dict[key] = coeff[i]
 
-    return polynomial.Polynomial1D(degree=n-1, **coeff_dict)
+    return polynomial.Polynomial1D(degree=n - 1, **coeff_dict)
 
 
 class ExtractModel(object):

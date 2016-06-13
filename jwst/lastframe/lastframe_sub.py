@@ -40,7 +40,7 @@ def do_correction(input_model, lastframe_model):
     """
 
     # Save some data params for easy use later
-    sci_nints   = input_model.data.shape[0]
+    sci_nints = input_model.data.shape[0]
     sci_ngroups = input_model.data.shape[1]
 
     #lastframe_nints = lastframe_model.data.shape[0]
@@ -54,16 +54,14 @@ def do_correction(input_model, lastframe_model):
     output = input_model.copy()
 
     # combine the science and lastframe DQ arrays
-    output.pixeldq = np.bitwise_or (input_model.pixeldq, lastframe_model.dq) 
+    output.pixeldq = np.bitwise_or(input_model.pixeldq, lastframe_model.dq)
 
 
-    output.data[:,sci_ngroups-1] -= lastframe_model.data
-           
+    output.data[:, sci_ngroups - 1] -= lastframe_model.data
+
        # combine the ERR arrays in quadrature
        # NOTE: currently stubbed out until ERR handling is decided
-       # output.err[i,j] = np.sqrt( 
+       # output.err[i,j] = np.sqrt(
        # output.err[i,j]**2 + lastframe.err[j]**2 )
-            
+
     return output
-
-

@@ -79,7 +79,7 @@ def average_background(bkg_list):
 
         # Accumulate the data from this background image
         avg_bkg.data += bkg_model.data
-        avg_bkg.err  += bkg_model.err*bkg_model.err
+        avg_bkg.err += bkg_model.err * bkg_model.err
         avg_bkg.dq = np.bitwise_or(avg_bkg.dq, bkg_model.dq)
 
         bkg_model.close()
@@ -87,7 +87,6 @@ def average_background(bkg_list):
     # Average the data in the accumulated background image
     num_bkg = len(bkg_list)
     avg_bkg.data = avg_bkg.data / num_bkg  # sci is normal average
-    avg_bkg.err  = np.sqrt(avg_bkg.err) / num_bkg  # err is uncertainty in the mean
+    avg_bkg.err = np.sqrt(avg_bkg.err) / num_bkg  # err is uncertainty in the mean
 
     return avg_bkg
-

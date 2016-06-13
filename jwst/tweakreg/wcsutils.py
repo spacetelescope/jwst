@@ -102,7 +102,7 @@ def create_ref_wcs(images):
     # create a perfectly square, orthogonal WCS
     sn = np.sin(rot)
     cs = np.cos(rot)
-    orthogonal_pc = np.array([[par*cs, sn], [-par*sn, cs]])
+    orthogonal_pc = np.array([[par * cs, sn], [-par * sn, cs]])
 
     swcs.begin_update()
     swcs.cdelt = [pscale / 3600.0, pscale / 3600.0]

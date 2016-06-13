@@ -38,10 +38,10 @@ def coeffs_from_pcf(degree, coeffslist):
     k = 0
     for i in range(degree + 1):
         for j in range(degree + 1):
-            if i+j < degree+1:
+            if i + j < degree + 1:
                 name = "c{0}_{1}".format(i, j)
-                coeffs[name] =  float(coeffslist[k])
-                k +=1
+                coeffs[name] = float(coeffslist[k])
+                k += 1
             else:
                 continue
     return coeffs
@@ -95,7 +95,7 @@ def pcf_forward(pcffile, outname):
     x_poly_forward.inverse = x_poly_backward
     y_poly_forward.inverse = y_poly_backward
 
-    poly_mapping1  = Mapping((0, 1, 0, 1))
+    poly_mapping1 = Mapping((0, 1, 0, 1))
     poly_mapping1.inverse = Identity(2)
     poly_mapping2 = Identity(2)
     poly_mapping2.inverse = Mapping((0, 1, 0, 1))
@@ -201,7 +201,7 @@ def pcf2asdf(pcffile, outname, ref_file_kw):
 
     model_poly = input2poly_mapping | (x_poly_forward & y_poly_forward) | output2poly_mapping
 
-    model = model_poly | input_offset |scale |rotation |output_offset
+    model = model_poly | input_offset | scale | rotation | output_offset
 
     f = AsdfFile()
     f.tree = ref_file_kw.copy()
@@ -247,11 +247,11 @@ def fore2asdf(pcffore, outname, ref_kw):
     # do chromatic correction
     # the input is Xote, Yote, lam
     model_x_backward = (Mapping((0, 1), n_inputs=3) | x_poly_backward) + \
-                     ((Mapping((0,1), n_inputs=3) | x_poly_backward_distortion) * Mapping((2,)))
+                     ((Mapping((0, 1), n_inputs=3) | x_poly_backward_distortion) * Mapping((2,)))
 
     ycoeff_index = lines.index('*yForwardCoefficients 21 2')
     ycoeff_forward = coeffs_from_pcf(degree, lines[ycoeff_index + 1: ycoeff_index + 22])
-    y_poly_backward = models.Polynomial2D(degree, name="y_poly_backward",  **ycoeff_forward)
+    y_poly_backward = models.Polynomial2D(degree, name="y_poly_backward", **ycoeff_forward)
 
     ylines_distortion = lines[ycoeff_index + 22: ycoeff_index + 43]
     ycoeff_forward_distortion = coeffs_from_pcf(degree, ylines_distortion)
@@ -260,24 +260,24 @@ def fore2asdf(pcffore, outname, ref_kw):
 
     # do chromatic correction
     # the input is Xote, Yote, lam
-    model_y_backward = (Mapping((0,1), n_inputs=3) | y_poly_backward) + \
+    model_y_backward = (Mapping((0, 1), n_inputs=3) | y_poly_backward) + \
                      ((Mapping((0, 1), n_inputs=3) | y_poly_backward_distortion) * Mapping((2,)))
 
     xcoeff_index = lines.index('*xBackwardCoefficients 21 2')
     xcoeff_backward = coeffs_from_pcf(degree, lines[xcoeff_index + 1: xcoeff_index + 22])
-    x_poly_forward = models.Polynomial2D(degree,name="x_poly_forward", **xcoeff_backward)
+    x_poly_forward = models.Polynomial2D(degree, name="x_poly_forward", **xcoeff_backward)
 
     xcoeff_backward_distortion = coeffs_from_pcf(degree, lines[xcoeff_index + 22: xcoeff_index + 43])
     x_poly_forward_distortion = models.Polynomial2D(degree, name="x_forward_distortion", **xcoeff_backward_distortion)
 
     # the chromatic correction is done here
     # the input is Xmsa, Ymsa, lam
-    model_x_forward = (Mapping((0,1), n_inputs=3) | x_poly_forward) + \
-                    ((Mapping((0,1), n_inputs=3) | x_poly_forward_distortion) * Mapping((2,)))
+    model_x_forward = (Mapping((0, 1), n_inputs=3) | x_poly_forward) + \
+                    ((Mapping((0, 1), n_inputs=3) | x_poly_forward_distortion) * Mapping((2,)))
 
     ycoeff_index = lines.index('*yBackwardCoefficients 21 2')
     ycoeff_backward = coeffs_from_pcf(degree, lines[ycoeff_index + 1: ycoeff_index + 22])
-    y_poly_forward = models.Polynomial2D(degree, name="y_poly_forward",**ycoeff_backward)
+    y_poly_forward = models.Polynomial2D(degree, name="y_poly_forward", **ycoeff_backward)
 
     ycoeff_backward_distortion = coeffs_from_pcf(degree, lines[ycoeff_index + 22: ycoeff_index + 43])
     y_poly_forward_distortion = models.Polynomial2D(degree, name="y_forward_distortion",
@@ -285,8 +285,8 @@ def fore2asdf(pcffore, outname, ref_kw):
 
     # do chromatic correction
     # the input is Xmsa, Ymsa, lam
-    model_y_forward = (Mapping((0,1), n_inputs=3) | y_poly_forward) + \
-                    ((Mapping((0,1), n_inputs=3) | y_poly_forward_distortion) * Mapping((2,)))
+    model_y_forward = (Mapping((0, 1), n_inputs=3) | y_poly_forward) + \
+                    ((Mapping((0, 1), n_inputs=3) | y_poly_forward_distortion) * Mapping((2,)))
 
     #assign inverse transforms
     model_x = model_x_forward.copy()
@@ -300,9 +300,9 @@ def fore2asdf(pcffore, outname, ref_kw):
     input2poly_mapping = Mapping([0, 1, 2, 0, 1, 2], name="input_mapping")
     input2poly_mapping.inverse = Identity(2)
 
-    model_poly = input2poly_mapping  | (model_x & model_y) | output2poly_mapping
+    model_poly = input2poly_mapping | (model_x & model_y) | output2poly_mapping
     fore_linear = (input_offset | rotation | scale | output_offset)
-    fore_linear_inverse  = fore_linear.inverse
+    fore_linear_inverse = fore_linear.inverse
     fore_linear.inverse = fore_linear_inverse & Identity(1)
     model = model_poly | fore_linear
 
@@ -340,7 +340,7 @@ def disperser2asdf(disfile, tiltyfile, tiltxfile, outname, ref_kw):
     #t = {}
     disperser = disfile.split('.dis')[0].split('_')[1]
     with open(disfile) as f:
-        lines=[l.strip() for l in f.readlines()]
+        lines = [l.strip() for l in f.readlines()]
     d = dict.fromkeys(['groove_density', 'theta_z', 'theta_y', 'theta_x', 'tilt_y'])
     d.update(ref_kw)
     for line in lines:
@@ -375,18 +375,18 @@ def disperser2asdf(disfile, tiltyfile, tiltxfile, outname, ref_kw):
             l = line.split('\n')
             n = int(l[0].split()[1])
             coeffs = {}
-            for i , c in enumerate([float(c) for c in l[1:1+n]]):
+            for i, c in enumerate([float(c) for c in l[1:1 + n]]):
                 coeffs['c' + str(i)] = c
-            tiltyd['tilt_model'] = models.Polynomial1D(n-1, **coeffs)
+            tiltyd['tilt_model'] = models.Polynomial1D(n - 1, **coeffs)
         elif line.startswith("Temperatures"):
             l = line.split('\n')
             n = int(l[0].split()[1])
-            coeffs = l[1:1+n]
+            coeffs = l[1:1 + n]
             tiltyd['temperatures'] = [float(c) for c in coeffs]
         elif line.startswith("Zeroreadings"):
             l = line.split('\n')
             n = int(l[0].split()[1])
-            coeffs = l[1:1+n]
+            coeffs = l[1:1 + n]
             tiltyd['zeroreadings'] = [float(c) for c in coeffs]
         elif line.startswith("Unit"):
             tiltyd['unit'] = line.split('\n')[1]
@@ -400,18 +400,18 @@ def disperser2asdf(disfile, tiltyfile, tiltxfile, outname, ref_kw):
             l = line.split('\n')
             n = int(l[0].split()[1])
             coeffs = {}
-            for i , c in enumerate([float(c) for c in l[1:1+n]]):
+            for i, c in enumerate([float(c) for c in l[1:1 + n]]):
                 coeffs['c' + str(i)] = c
-            tiltxd['tilt_model'] = models.Polynomial1D(n-1, **coeffs)
+            tiltxd['tilt_model'] = models.Polynomial1D(n - 1, **coeffs)
         elif line.startswith("Temperatures"):
             l = line.split('\n')
             n = int(l[0].split()[1])
-            coeffs = l[1:1+n]
+            coeffs = l[1:1 + n]
             tiltxd['temperatures'] = [float(c) for c in coeffs]
         elif line.startswith("Zeroreadings"):
             l = line.split('\n')
             n = int(l[0].split()[1])
-            coeffs = l[1:1+n]
+            coeffs = l[1:1 + n]
             tiltxd['zeroreadings'] = [float(c) for c in coeffs]
         elif line.startswith("Unit"):
             tiltxd['unit'] = line.split('\n')[1]
@@ -439,7 +439,7 @@ def wavelength_range(spectral_conf, outname, ref_kw):
     """
     with open(spectral_conf) as f:
         lines = f.readlines()
-    lines = [l.strip() for l in lines][13 :]
+    lines = [l.strip() for l in lines][13:]
     lines = [l.split() for l in lines]
     tree = ref_kw.copy()
     filter_grating = {}
@@ -481,7 +481,7 @@ def msa2asdf(msafile, outname, ref_kw):
         slitdata = data[j]
         t = {}
         for i, s in enumerate(['xcenter', 'ycenter', 'xsize', 'ysize']):
-            t[s] = slitdata[i+1]
+            t[s] = slitdata[i + 1]
         model = models.Scale(t['xsize']) & models.Scale(t['ysize']) | \
               models.Shift(t['xcenter']) & models.Shift(t['ycenter']) | \
               slitrot | shiftx & shifty
@@ -517,27 +517,27 @@ def fpa2asdf(fpafile, outname, ref_kw):
 
     # NRS1
     ind = lines.index("*SCA491_PitchX")
-    scalex_nrs1 = models.Scale(1/float(lines[ind+1]), name='fpa_scale_x')
+    scalex_nrs1 = models.Scale(1 / float(lines[ind + 1]), name='fpa_scale_x')
     ind = lines.index("*SCA491_PitchY")
-    scaley_nrs1 = models.Scale(1/float(lines[ind+1]), name='fpa_scale_y')
+    scaley_nrs1 = models.Scale(1 / float(lines[ind + 1]), name='fpa_scale_y')
     ind = lines.index("*SCA491_RotAngle")
-    rot_nrs1 = models.Rotation2D(np.rad2deg(-float(lines[ind+1])), name='fpa_rotation')
+    rot_nrs1 = models.Rotation2D(np.rad2deg(-float(lines[ind + 1])), name='fpa_rotation')
     ind = lines.index("*SCA491_PosX")
-    shiftx_nrs1 = models.Shift(-float(lines[ind+1]), name='fpa_shift_x')
+    shiftx_nrs1 = models.Shift(-float(lines[ind + 1]), name='fpa_shift_x')
     ind = lines.index("*SCA491_PosY")
-    shifty_nrs1 = models.Shift(-float(lines[ind+1]), name='fpa_shift_y')
+    shifty_nrs1 = models.Shift(-float(lines[ind + 1]), name='fpa_shift_y')
 
     # NRS2
     ind = lines.index("*SCA492_PitchX")
-    scalex_nrs2 = models.Scale(1/float(lines[ind+1]), name='fpa_scale_x')
+    scalex_nrs2 = models.Scale(1 / float(lines[ind + 1]), name='fpa_scale_x')
     ind = lines.index("*SCA492_PitchY")
-    scaley_nrs2 = models.Scale(1/float(lines[ind+1]), name='fpa_scale_y')
+    scaley_nrs2 = models.Scale(1 / float(lines[ind + 1]), name='fpa_scale_y')
     ind = lines.index("*SCA492_RotAngle")
-    rot_nrs2 = models.Rotation2D(np.rad2deg(float(lines[ind+1])), name='fpa_rotation')
+    rot_nrs2 = models.Rotation2D(np.rad2deg(float(lines[ind + 1])), name='fpa_rotation')
     ind = lines.index("*SCA492_PosX")
-    shiftx_nrs2 = models.Shift(-float(lines[ind+1]), name='fpa_shift_x')
+    shiftx_nrs2 = models.Shift(-float(lines[ind + 1]), name='fpa_shift_x')
     ind = lines.index("*SCA492_PosY")
-    shifty_nrs2 = models.Shift(-float(lines[ind+1]), name='fpa_shift_y')
+    shifty_nrs2 = models.Shift(-float(lines[ind + 1]), name='fpa_shift_y')
     tree = ref_kw.copy()
     tree['NRS1'] = (shiftx_nrs1 & shifty_nrs1) | rot_nrs1 | (scalex_nrs1 & scaley_nrs1)
     tree['NRS2'] = (shiftx_nrs2 & shifty_nrs2) | rot_nrs2 | (scalex_nrs2 & scaley_nrs2)
@@ -673,7 +673,7 @@ def nirspec_models_to_asdf():
         ref_kw['filter'] = filter
         filename = "Fore_{0}.pcf".format(filter)
         fore_refname = os.path.join(ref_files, "CoordTransform", filename)
-        fore_name = "jwst_nirspec_fore_000{0}.asdf".format(str(i+1))
+        fore_name = "jwst_nirspec_fore_000{0}.asdf".format(str(i + 1))
         # "fore_f070lp.asdf"
         try:
             fore2asdf(fore_refname, fore_name, ref_kw)
@@ -693,7 +693,7 @@ def nirspec_models_to_asdf():
         disp_refname = os.path.join(ref_files, "Description", dis_file)#"disperser_G140H.dis")
         tilty_refname = os.path.join(ref_files, "Description", gtpy_file)#"disperser_G140H_TiltY.gtp")
         tiltx_refname = os.path.join(ref_files, "Description", gtpx_file)
-        disperser_name =  "jwst_nirspec_disperser_000{0}.asdf".format(str(i+1))
+        disperser_name = "jwst_nirspec_disperser_000{0}.asdf".format(str(i + 1))
         #"disperserG140H.asdf"
         try:
             disperser2asdf(disp_refname, tilty_refname, tiltx_refname, disperser_name, ref_kw)

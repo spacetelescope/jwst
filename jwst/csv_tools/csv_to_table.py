@@ -2,8 +2,8 @@ import re
 from astropy.io import ascii
 
 
-def csv_to_table(handle, 
-                 delimiter='|', 
+def csv_to_table(handle,
+                 delimiter='|',
                  comments=r'\s*(#|//|--)',
                  header_search=r'(?P<keyword>\w+)\s*=\s*(?P<value>\w+.*?)(/(?P<comment>.*))?$'):
     '''Produce an astropy table, and related keyword/value pairs from a CSV file.

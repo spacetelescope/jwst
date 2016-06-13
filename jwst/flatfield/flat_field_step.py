@@ -24,7 +24,7 @@ class FlatFieldStep(Step):
         # Figure out what kind of input data model is in use
         if isinstance(input_model, datamodels.CubeModel): # multi-integration dataset
             self.log.debug('Input is a CubeModel')
-        elif isinstance(input_model, datamodels.ImageModel): 
+        elif isinstance(input_model, datamodels.ImageModel):
             self.log.debug('Input is an ImageModel')
         elif isinstance(input_model, datamodels.DataModel):
             self.log.debug('Input is a MultiSlitModel')

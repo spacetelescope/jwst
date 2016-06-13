@@ -294,22 +294,22 @@ class WCSImageCatalog(object):
 
         npts = 2 * (nptx + npty)
 
-        borderx = np.empty((npts+1,), dtype=np.float)
-        bordery = np.empty((npts+1,), dtype=np.float)
+        borderx = np.empty((npts + 1,), dtype=np.float)
+        bordery = np.empty((npts + 1,), dtype=np.float)
 
         # "bottom" points:
         borderx[:nptx] = xs
         bordery[:nptx] = -0.5
         # "right"
-        sl = np.s_[nptx:nptx+npty]
+        sl = np.s_[nptx:nptx + npty]
         borderx[sl] = nx - 0.5
         bordery[sl] = ys
         # "top"
-        sl = np.s_[nptx+npty:2*nptx+npty]
+        sl = np.s_[nptx + npty:2 * nptx + npty]
         borderx[sl] = xs[::-1]
         bordery[sl] = ny - 0.5
         # "left"
-        sl = np.s_[2*nptx+npty:-1]
+        sl = np.s_[2 * nptx + npty:-1]
         borderx[sl] = -0.5
         bordery[sl] = ys[::-1]
 
@@ -361,7 +361,7 @@ class WCSImageCatalog(object):
 
             vx = -(y[1] - y[0])
             vy = x[1] - x[0]
-            norm = 2.0 * np.sqrt(vx*vx + vy*vy)
+            norm = 2.0 * np.sqrt(vx * vx + vy * vy)
             vx /= norm
             vy /= norm
 
@@ -1236,7 +1236,7 @@ class RefCatalog(object):
 
             vx = -(y[1] - y[0])
             vy = x[1] - x[0]
-            norm = 2.0 * np.sqrt(vx*vx + vy*vy)
+            norm = 2.0 * np.sqrt(vx * vx + vy * vy)
             vx /= norm
             vy /= norm
 

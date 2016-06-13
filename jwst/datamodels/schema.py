@@ -173,7 +173,7 @@ def flatten_combiners(schema):
                 cursor = cursor.setdefault('items', OrderedDict())
             else:
                 cursor = cursor.setdefault('properties', OrderedDict())
-                if i < len(path) - 1 and isinstance(path[i+1], int):
+                if i < len(path) - 1 and isinstance(path[i + 1], int):
                     cursor = cursor.setdefault(part, [])
                 else:
                     cursor = cursor.setdefault(part, OrderedDict())

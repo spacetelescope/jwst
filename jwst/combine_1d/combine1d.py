@@ -125,7 +125,7 @@ class OutputSpectrumModel(object):
         for in_spec in input_spectra:
             nelem = in_spec.nelem
             # Concatenate current input wavelengths to wl array.
-            wl[i:i+nelem] = in_spec.wavelength.copy()
+            wl[i:i + nelem] = in_spec.wavelength.copy()
             i += nelem
         wl.sort()
 
@@ -237,10 +237,10 @@ class OutputSpectrumModel(object):
                     if sigma[k] < cutoff * sigma[1]:
                         temp_wl[k] = mean_wl[k]
                 elif k == nwl - 1:
-                    if sigma[k] < cutoff * sigma[nwl-2]:
+                    if sigma[k] < cutoff * sigma[nwl - 2]:
                         temp_wl[k] = mean_wl[k]
                 else:
-                    if sigma[k] < cutoff * (sigma[k-1] + sigma[k+1]) / 2.:
+                    if sigma[k] < cutoff * (sigma[k - 1] + sigma[k + 1]) / 2.:
                         temp_wl[k] = mean_wl[k]
 
         # Fill gaps in the output wavelengths by taking averages of the
@@ -255,7 +255,7 @@ class OutputSpectrumModel(object):
                 n = count_input[i]
                 middle = n // 2
                 if i + middle < nwl:
-                    n = count_input[i+middle]
+                    n = count_input[i + middle]
                     if i + n < nwl:
                         # The nominal range is i - 1 to i + n (inclusive) for
                         # checking whether an output wavelength has already
@@ -263,7 +263,7 @@ class OutputSpectrumModel(object):
                         low = max(i - 1, 0)
                         high = min(i + n + 1, nwl - 1)
                         if temp_wl[low:high].max() <= 0.:
-                            temp_wl[i] = wl[i:i+n].mean()
+                            temp_wl[i] = wl[i:i + n].mean()
                 i += n
 
         self.wavelength = temp_wl[np.where(temp_wl > 0.)].copy()

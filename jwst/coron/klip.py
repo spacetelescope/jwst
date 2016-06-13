@@ -44,7 +44,7 @@ def klip(target_model, refs_model, truncate):
     refs = refs.astype(np.float64)
     rshape = refs.shape
     nrefs = rshape[0]
-    refs = refs.reshape(nrefs, rshape[1]*rshape[2])
+    refs = refs.reshape(nrefs, rshape[1] * rshape[2])
 
     # Make each ref image have zero mean
     for k in range(nrefs):

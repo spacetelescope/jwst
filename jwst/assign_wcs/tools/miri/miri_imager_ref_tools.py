@@ -38,7 +38,7 @@ def polynomial_from_coeffs_matrix(coefficients, name=None):
         for i in range(shape[0]):
             for j in range(shape[0]):
                 if i + j < degree + 1:
-                    cname = 'c' + str(i) + '_' +str(j)
+                    cname = 'c' + str(i) + '_' + str(j)
                     coeffs[cname] = coefficients[i, j]
         model = models.Polynomial2D(degree, name=name, **coeffs)
     return model
@@ -123,11 +123,11 @@ def create_miri_imager_distortion(distfile, outname):
     """
     fdist = fits.open(distfile)
     mi_matrix = fdist[8].data
-    mi_col = models.Polynomial1D(1, c0=mi_matrix[0, 2], c1=mi_matrix[0,0], name="M_column_correction")
-    mi_row = models.Polynomial1D(1, c0=mi_matrix[1, 2], c1=mi_matrix[1,1], name="M_row_correction")
+    mi_col = models.Polynomial1D(1, c0=mi_matrix[0, 2], c1=mi_matrix[0, 0], name="M_column_correction")
+    mi_row = models.Polynomial1D(1, c0=mi_matrix[1, 2], c1=mi_matrix[1, 1], name="M_row_correction")
     m_matrix = fdist[4].data
-    m_col = models.Polynomial1D(1, c0=m_matrix[0, 2], c1=m_matrix[0,0])
-    m_row = models.Polynomial1D(1, c0=m_matrix[1, 2], c1=m_matrix[1,1])
+    m_col = models.Polynomial1D(1, c0=m_matrix[0, 2], c1=m_matrix[0, 0])
+    m_row = models.Polynomial1D(1, c0=m_matrix[1, 2], c1=m_matrix[1, 1])
     mi_col.inverse = m_col
     mi_row.inverse = m_row
     m_transform = mi_col & mi_row #mi_row & mi_col
@@ -162,7 +162,7 @@ def create_miri_imager_distortion(distfile, outname):
 
     # ident is created here so that mapping can be assigned as inverse
     ident = models.Identity(2)
-    ident.inverse = models.Mapping([0,1,0,1])
+    ident.inverse = models.Mapping([0, 1, 0, 1])
 
     poly2t_mapping = models.Mapping([0, 1, 0, 1])
     poly2t_mapping.inverse = models.Mapping([0, 1, 0, 1])
@@ -231,15 +231,15 @@ def test_transform(asdf_file):
     v2 = np.array([-2, -2, -2, -2, -1.5, -1.5, -1.5, -1.5, -1, -1, -1, -1], dtype=np.float)
     v3 = np.array([-8, -7.5, -7, -6.5, -8, -7.5, -7, -6.5, -8, -7.5, -7, -6.5], dtype=np.float)
     xy = np.array([[945.80, 728.45], [676.57, 748.63], [408.29, 768.69], [138.02, 789.09],
-                   [924.30, 456.59],[655.18, 477.89], [387.05, 498.99], [116.92, 519.96],
+                   [924.30, 456.59], [655.18, 477.89], [387.05, 498.99], [116.92, 519.96],
                    [904.31, 185.02], [635.09, 207.37], [366.53, 229.45], [95.58, 250.95]],
                   dtype=np.float)
 
     f = AsdfFile.open(asdf_file)
     transform = f.tree['distortion']
     x, y = transform.inverse(v2, v3)
-    assert_allclose(x, xy[:,0], atol=.05)
-    assert_allclose(y, xy[:,1], atol=.05)
-    s1, s2 = transform (xy[:,0], xy[:,1])
+    assert_allclose(x, xy[:, 0], atol=.05)
+    assert_allclose(y, xy[:, 1], atol=.05)
+    s1, s2 = transform(xy[:, 0], xy[:, 1])
     assert_allclose(s1, v2, atol=0.05)
     assert_allclose(s2, v3, atol=.05)
