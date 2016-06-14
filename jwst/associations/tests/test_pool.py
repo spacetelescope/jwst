@@ -1,10 +1,12 @@
-from nose.tools import assert_raises
+from __future__ import absolute_import
 
-from jwst_tools.associations.pool import AssociationPool
+from .helpers import t_path
+
+from .. import AssociationPool
 
 
 class TestPool():
-    pool_file = 'tests/data/jw93060_20150312T160130_pool.csv'
+    pool_file = t_path('data/jw93060_20150312T160130_pool.csv')
 
     def setUp(self):
         pass

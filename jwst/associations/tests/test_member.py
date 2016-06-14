@@ -2,8 +2,8 @@ from nose.tools import assert_raises
 
 from collections import MutableMapping
 
-from jwst_tools.associations.lib.dictwithattrs import DictWithAttributes
-from jwst_tools.associations.lib.member import Member
+from ..lib.dictwithattrs import DictWithAttributes
+from ..lib.member import Member
 
 class TestMember():
     def setUp(self):

@@ -1,18 +1,16 @@
 """test_level3_dithers: Test of WFS rules."""
 from __future__ import absolute_import
 
-from jwst_tools.associations.association import AssociationRegistry
-from jwst_tools.associations.pool import AssociationPool
-from jwst_tools.associations.generate import generate
+from . import helpers
 
-from .helpers import BasePoolRule, PoolParams
+from .. import (AssociationRegistry, AssociationPool, generate)
 
 
-class TestLevel3WFS(BasePoolRule):
+class TestLevel3WFS(helpers.BasePoolRule):
 
     pools = [
-        PoolParams(
-            path='tests/data/jw82600_002_20151107T165901_pool.csv',
+        helpers.PoolParams(
+            path=helpers.t_path('data/jw82600_002_20151107T165901_pool.csv'),
             n_asns=1,
             n_orphaned=0
         ),
@@ -25,7 +23,7 @@ class TestLevel3WFS(BasePoolRule):
     def test_wfs_product_name(self):
         rules = AssociationRegistry()
         pool = AssociationPool.read(
-            'tests/data/jw82600_002_20151107T165901_pool.csv'
+            helpers.t_path('data/jw82600_002_20151107T165901_pool.csv')
         )
         (asns, orphaned) = generate(pool, rules)
         name = asns[0].data['products'][0]['name']

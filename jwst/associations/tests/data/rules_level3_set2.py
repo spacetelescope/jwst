@@ -1,8 +1,11 @@
 """Association Definitions: DMS Level3 product associations
 """
-from os.path import basename
-import re
-from jwst_tools.associations.association import Association
+import os
+import sys
+
+sys.path.append(os.path.abspath(os.path.dirname(__file__) + '../../..'))
+
+from association import Association
 
 # The schema that these associations must adhere to.
 _ASN_SCHEMA_LEVEL3 = 'asn_schema_jw_level3.json'

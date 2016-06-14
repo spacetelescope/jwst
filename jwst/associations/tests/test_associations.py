@@ -3,17 +3,23 @@ from __future__ import absolute_import
 
 import nose.tools as nt
 from nose import SkipTest
+
 from . import helpers
 
-from jwst_tools.associations.association import *
-from jwst_tools.associations.pool import AssociationPool
-from jwst_tools.associations.generate import generate
+from .. import (
+    AssociationError,
+    AssociationRegistry,
+    AssociationPool,
+    generate)
 
 
 class TestAssociations():
 
     pools_size = [
-        ('tests/data/jw93060_20150312T160130_pool.csv', 14),
+        (
+            helpers.t_path('data/jw93060_20150312T160130_pool.csv'),
+            14
+        ),
     ]
 
     def setUp(self):
@@ -24,8 +30,10 @@ class TestAssociations():
 
     # Basic Association object
     def test_read_assoc_defs(self):
-        rules = AssociationRegistry(['tests/data/asn_rules_set1.py'],
-                                    include_default=False)
+        rules = AssociationRegistry(
+            [helpers.t_path('data/asn_rules_set1.py')],
+            include_default=False
+        )
         assert len(rules) >= 2
         assert 'DMS_Level3_Base_Set1' not in rules
         valid_rules = ['Asn_Dither_Set1', 'Asn_WFS_Set1']
@@ -45,8 +53,10 @@ class TestAssociations():
         rules = AssociationRegistry(include_default=False)
 
     def test_multi_rules(self):
-        rule_files = ['tests/data/asn_rules_set1.py',
-                      'tests/data/asn_rules_set2.py']
+        rule_files = [
+            helpers.t_path('data/asn_rules_set1.py'),
+            helpers.t_path('data/asn_rules_set2.py')
+        ]
         rules = AssociationRegistry(rule_files, include_default=False)
         assert len(rules) == 4
         assert 'DMS_Level3_Base_Set1' not in rules
@@ -76,7 +86,7 @@ class TestAssociations():
                         'inputs': ['OBS_ID']
                     }
                 },
-                'pool': 'tests/data/jw93060_20150312T160130_pool.csv',
+                'pool': helpers.t_path('data/jw93060_20150312T160130_pool.csv'),
                 'n_asns': 6,
             },
             'empty': {
@@ -86,7 +96,7 @@ class TestAssociations():
                         'inputs': ['OBS_ID']
                     }
                 },
-                'pool': 'tests/data/jw93060_20150312T160130_pool.csv',
+                'pool': helpers.t_path('data/jw93060_20150312T160130_pool.csv'),
                 'n_asns': 0,
             },
             'combined_candidates': {
@@ -97,7 +107,7 @@ class TestAssociations():
                         'force_unique': False,
                     }
                 },
-                'pool': 'tests/data/jw93060_002_20150312T160130_pool.csv',
+                'pool': helpers.t_path('data/jw93060_002_20150312T160130_pool.csv'),
                 'n_asns': 6,
             },
             'exclusive_candidates': {
@@ -108,7 +118,7 @@ class TestAssociations():
                         'force_unique': True,
                     }
                 },
-                'pool': 'tests/data/jw93060_002_20150312T160130_pool.csv',
+                'pool': helpers.t_path('data/jw93060_002_20150312T160130_pool.csv'),
                 'n_asns': 12,
             },
         }
