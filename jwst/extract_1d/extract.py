@@ -10,6 +10,7 @@ import numpy as np
 import json
 from astropy.modeling import polynomial
 from .. import datamodels
+from gwcs import selector
 from . import extract1d
 
 log = logging.getLogger(__name__)
