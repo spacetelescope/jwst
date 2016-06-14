@@ -13,7 +13,8 @@ PACKAGE_DATA={
         '*.txt',
         '*.inc',
         '*.cfg',
-        '*.csv']
+        '*.csv',
+        '*.yaml']
 }
 
 class PyTest(TestCommand):
