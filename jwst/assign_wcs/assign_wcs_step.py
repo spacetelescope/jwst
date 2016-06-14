@@ -45,10 +45,10 @@ class AssignWcsStep(Step):
     def process(self, input):
         reference_file_names = {}
 
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
             # If input type is not supported, log warning, set to 'skipped', exit
-            if not (isinstance(input_model, models.ImageModel) or
-                    isinstance(input_model, models.CubeModel)):
+            if not (isinstance(input_model, datamodels.ImageModel) or
+                    isinstance(input_model, datamodels.CubeModel)):
                 log.warning("Input dataset type is not supported, as it is")
                 log.warning("neither ImageModel or CubeModel, so skipping step.")
                 result = input_model.copy()
