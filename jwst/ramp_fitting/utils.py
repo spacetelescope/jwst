@@ -6,8 +6,8 @@ from __future__ import division, print_function
 from __future__ import division
 import numpy as np
 import logging
-from jwst import datamodels
-from jwst.datamodels import dqflags
+from .. import datamodels
+from ..datamodels import dqflags
 
 log = logging.getLogger( __name__ )
 log.setLevel( logging.DEBUG )
@@ -271,7 +271,7 @@ class OptRes( object ):
         """
 
         rfo_model = \
-        models.RampFitOutputModel(\
+        datamodels.RampFitOutputModel(\
             slope = self.slope_seg.astype(np.float32)/effintim,
             sigslope = self.sigslope_seg.astype(np.float32),
             yint = self.yint_seg.astype(np.float32),
@@ -469,7 +469,7 @@ def output_integ( model, slope_int, err_int, dq_int, effintim ):
 
     """
 
-    cubemod = models.CubeModel()
+    cubemod = datamodels.CubeModel()
 
     cubemod.data = slope_int/effintim
     cubemod.err = err_int/effintim
@@ -522,7 +522,7 @@ def gls_output_optional(model, intercept_int, intercept_err_int,
         GLS-specific ramp fit data for the exposure.
     """
 
-    gls_ramp_model = models.GLS_RampFitModel()
+    gls_ramp_model = datamodels.GLS_RampFitModel()
 
     gls_ramp_model.yint = intercept_int
     gls_ramp_model.sigyint = intercept_err_int

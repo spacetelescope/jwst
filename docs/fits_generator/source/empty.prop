@@ -1,0 +1,19 @@
+<Proposal title="Test">
+  <Observation>
+    <Visit>
+      <VisitGroup>
+        <ParallelSequenceID>
+          <Activity>
+            <Exposure>
+              <Detector>
+                <base></base>
+                <subarray></subarray>
+                <exp_type></exp_type>
+              </Detector>
+            </Exposure>
+          </Activity>
+        </ParallelSequenceID>
+      </VisitGroup>
+    </Visit>
+  </Observation>
+</Proposal>

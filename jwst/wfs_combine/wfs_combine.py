@@ -5,8 +5,8 @@
 from __future__ import division
 import numpy as np
 import logging
-from jwst import datamodels
-from jwst.datamodels import dqflags
+from .. import datamodels
+from ..datamodels import dqflags
 import scipy
 from scipy.interpolate import griddata
 from scipy import signal
@@ -48,8 +48,8 @@ class DataSet( object ):
             log.error('No output product specified in the association table.')
 
         try:
-            self.input_1 = models.open( infile_1 )
-            self.input_2 = models.open( infile_2 )
+            self.input_1 = datamodels.open( infile_1 )
+            self.input_2 = datamodels.open( infile_2 )
         except IOError:
             log.error('Error creating a model from at least 1 of : %s %s ',
                       infile_1, infile_2)
@@ -92,7 +92,7 @@ class DataSet( object ):
         data_c, dq_c, err_c, wcs_1 = self.create_combined( im_1_a, im_2_a )
 
         # Create a new model using the combined arrays...
-        new_model = models.ImageModel(data=data_c, dq=dq_c, err=err_c)
+        new_model = datamodels.ImageModel(data=data_c, dq=dq_c, err=err_c)
         new_model.update(self.input_1)
 
         return new_model

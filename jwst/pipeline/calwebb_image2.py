@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from jwst.stpipe import Pipeline
-from jwst import datamodels
+from .. import datamodels
 import os
 
 # calwebb IMAGE2 step imports
@@ -68,7 +68,7 @@ class Image2Pipeline(Pipeline):
         # given in self.output_file.
 
         # first determine the proper file name suffix to use later
-        if isinstance(input, models.CubeModel):
+        if isinstance(input, datamodels.CubeModel):
             suffix = 'calints'
         else:
             suffix = 'cal'

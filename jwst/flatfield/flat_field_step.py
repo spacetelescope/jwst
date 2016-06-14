@@ -1,7 +1,7 @@
-#! /usr/bin/env python
+2#! /usr/bin/env python
 
 from jwst.stpipe import Step, cmdline
-from jwst import datamodels
+from .. import datamodels
 from . import flat_field
 
 
@@ -19,17 +19,17 @@ class FlatFieldStep(Step):
 
     def process(self, input):
 
-        input_model = models.open(input)
+        input_model = datamodels.open(input)
 
         # Figure out what kind of input data model is in use
-        if isinstance(input_model, models.CubeModel): # multi-integration dataset
+        if isinstance(input_model, datamodels.CubeModel): # multi-integration dataset
             self.log.debug('Input is a CubeModel')
-        elif isinstance(input_model, models.ImageModel): 
+        elif isinstance(input_model, datamodels.ImageModel): 
             self.log.debug('Input is an ImageModel')
-        elif isinstance(input_model, models.DataModel):
+        elif isinstance(input_model, datamodels.DataModel):
             self.log.debug('Input is a MultiSlitModel')
             input_model.close()
-            input_model = models.MultiSlitModel(input)
+            input_model = datamodels.MultiSlitModel(input)
 
         # Retrieve the reference file name
         self.flat_filename = self.get_reference_file(input_model, 'flat')
@@ -45,18 +45,18 @@ class FlatFieldStep(Step):
             return result
 
         # Find out what model to use for the flat field reference file.
-        # If models.open() thinks it's a CubeModel, open it as a
+        # If datamodels.open() thinks it's a CubeModel, open it as a
         # CubeFlatModel; otherwise, open it as a MultiSlitModel.
-        flat_model = models.open(self.flat_filename)
-        if isinstance(flat_model, models.CubeModel):
+        flat_model = datamodels.open(self.flat_filename)
+        if isinstance(flat_model, datamodels.CubeModel):
             # MOS/MSA_mode
             self.log.debug('Flatfield is a CubeFlatModel')
             flat_model.close()
-            flat_model = models.CubeFlatModel(self.flat_filename)
+            flat_model = datamodels.CubeFlatModel(self.flat_filename)
         else:
             self.log.debug('Flatfield is an ImageModel or MultiSlitModel')
             flat_model.close()
-            flat_model = models.MultiSlitModel(self.flat_filename)
+            flat_model = datamodels.MultiSlitModel(self.flat_filename)
 
         # Do the flat-field correction
         (output_model, interpolated_flats)  = \

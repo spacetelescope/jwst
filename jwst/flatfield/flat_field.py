@@ -6,8 +6,8 @@ from __future__ import division
 
 import numpy as np
 import logging
-from jwst import datamodels
-from jwst.datamodels import dqflags
+from .. import datamodels
+from .. datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -41,7 +41,7 @@ def do_correction (input_model, flat_model, flat_suffix=None):
     # Initialize the output model as a copy of the input
     output_model = input_model.copy()
 
-    if isinstance(flat_model, models.CubeFlatModel):
+    if isinstance(flat_model, datamodels.CubeFlatModel):
         interpolated_flats = do_MOS_flat_field(output_model,
                                                flat_model, flat_suffix)
     else:
@@ -89,14 +89,14 @@ def do_slit_flat_field(output_model, flat_model):
         flat_model.slits[0].ysize  = flat_model.meta.subarray.ysize
 
     # Apply flat to simple ImageModels
-    if isinstance(output_model, models.ImageModel):
+    if isinstance(output_model, datamodels.ImageModel):
         flat = get_flat(output_model, flat_model)
         if flat != None:
             apply_flat_field(output_model, flat)
             any_updated = True
 
     # Apply flat to MultiSlits
-    elif isinstance(output_model, models.MultiSlitModel):
+    elif isinstance(output_model, datamodels.MultiSlitModel):
         
         # Retrieve and apply flat to each slit contained in the input
         for slit in output_model.slits:
@@ -107,7 +107,7 @@ def do_slit_flat_field(output_model, flat_model):
                 any_updated = True
 
     # Apply flat to multiple-integration dataset
-    elif isinstance(output_model, models.CubeModel):
+    elif isinstance(output_model, datamodels.CubeModel):
         sci_data = output_model.data
         nints = sci_data.shape[0]   # number of integrations   
 
@@ -116,7 +116,7 @@ def do_slit_flat_field(output_model, flat_model):
             data_slice = sci_data[ integ,:,:]
 
             # Create model for integration's data, w/needed subarray metadata 
-            integ_model = models.ImageModel( data_slice )
+            integ_model = datamodels.ImageModel( data_slice )
             integ_model.update( output_model )
 
             log.info('Retrieving flat for integration %s' % (integ))
@@ -370,7 +370,7 @@ def do_MOS_flat_field(output_model, flat_model, flat_suffix=None):
 
     # Create an output model for the interpolated flat fields.
     if flat_suffix is not None:
-        interpolated_flats = models.MultiSlitModel()
+        interpolated_flats = datamodels.MultiSlitModel()
         interpolated_flats.update(output_model, only="PRIMARY")
     else:
         interpolated_flats = None
@@ -397,13 +397,8 @@ def do_MOS_flat_field(output_model, flat_model, flat_suffix=None):
                                                  flat_wl, wl, direction)
         if flat_suffix is not None:
             # Save flat_2d and flat_dq_2d for an output file.
-            new_flat = models.ImageModel(data=flat_2d, dq=flat_dq_2d)
+            new_flat = datamodels.ImageModel(data=flat_2d, dq=flat_dq_2d)
             interpolated_flats.slits.append(new_flat.copy())
-            # xxx begin sanity test debug:
-            nslit = len(interpolated_flats.slits) - 1
-            if k != nslit:
-                print("xxx test debug:  nslit = {}, k = {}".format(nslit, k))
-            # xxx end test debug
             interpolated_flats.slits[k].err[...] = 1.   # xxx not realistic
             nslit = len(interpolated_flats.slits) - 1
             interpolated_flats.slits[k].name = slit.name
@@ -487,6 +482,10 @@ def interpolate_flat(flat_val, flat_dq, flat_wl, wl, direction):
     not_flagged = np.logical_not(temp.astype(np.bool))
     num_k = not_flagged.sum(axis=0, dtype=np.intp)
     max_num_k = num_k.max()
+    if max_num_k <= 0:
+        log.warning("Every pixel in the current slit is flagged with"
+                    " NO_FLAT_FIELD.")
+        return (flat_val[0], flat_dq[0])
 
     # Maximum index for the first axis; this can vary from pixel to pixel.
     k_max = num_k - 1

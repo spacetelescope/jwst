@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 from jwst.stpipe import Pipeline
-from jwst import datamodels
+from .. import datamodels
 import os
 
 # step imports
@@ -49,7 +49,7 @@ class DarkPipeline(Pipeline):
         log.info('Starting calwebb_dark ...')
 
         # open the input
-        input = models.open(input)
+        input = datamodels.open(input)
 
         # apply dq_init, saturation, and ipc steps
         input = self.dq_init(input)
