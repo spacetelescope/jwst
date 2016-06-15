@@ -205,7 +205,7 @@ def test_crds_override():
         par1=42.0, par2="abc def",
         override_flat_field=join(dirname(__file__), 'data', 'flat.fits'))
 
-    fd = step.get_reference_file(models.open(), 'flat_field')
+    fd = step.get_reference_file(datamodels.open(), 'flat_field')
     assert fd == join(dirname(__file__), 'data', 'flat.fits')
 
 
