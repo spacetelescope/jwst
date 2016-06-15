@@ -62,7 +62,7 @@ class SystemCall(Step):
 
         newargs = []
         for i, arg in enumerate(args):
-            if isinstance(arg, models.DataModel):
+            if isinstance(arg, datamodels.DataModel):
                 filename = "{0}.{1:04d}.{1}".format(
                     self.qualified_name, i, arg.get_fileext())
                 arg.save(filename)
