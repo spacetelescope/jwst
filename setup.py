@@ -9,13 +9,17 @@ from glob import glob
 NAME='jwst'
 SCRIPTS=glob('scripts/*')
 PACKAGE_DATA={
-    '': ['*.fits',
+    '': [
+        '*.fits',
         '*.txt',
         '*.inc',
         '*.cfg',
         '*.csv',
-        '*.yaml']
+        '*.yaml',
+        '*.json'
+    ]
 }
+
 
 class PyTest(TestCommand):
 
