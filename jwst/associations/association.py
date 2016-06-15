@@ -1,4 +1,5 @@
 import logging
+from collections import namedtuple
 from copy import deepcopy
 from datetime import datetime
 from inspect import getfile, getmembers, isclass, ismodule
@@ -213,7 +214,21 @@ class Association(object):
             base name for the file.
             Second item is the serialization.
         """
-        return SERIALIZATION_PROTOCOLS[protocol](self)
+        return SERIALIZATION_PROTOCOLS[protocol].serialize(self)
+
+    @classmethod
+    def unserialize(cls, serialized):
+        """Marshall a previously serialized association
+
+        Parameters
+        ----------
+        serialized: object
+            The serialized form of the association.
+
+        Returns
+        -------
+        The Association object
+        """
 
     def to_json(self):
         """Create JSON representation.
@@ -236,6 +251,10 @@ class Association(object):
             self.asn_name,
             json.dumps(self.data, indent=4, separators=(',', ': '))
         )
+
+    @classmethod
+    def from_json(cls):
+        """Unserialize an assocation from a JSON string"""
 
     def add(self, member, check_constraints=True):
         """Add the member to the association
@@ -430,6 +449,9 @@ def get_classes(module):
 
 
 # Available serialization protocols
+ProtocolFuncs = namedtuple('ProtocolFuncs', ['serialize', 'unserialize'])
 SERIALIZATION_PROTOCOLS = {
-    'json': Association.to_json
+    'json': ProtocolFuncs(
+        serialize=Association.to_json,
+        unserialize=Association.from_json)
 }
