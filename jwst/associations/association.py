@@ -189,6 +189,26 @@ class Association(object):
     def asn_name(self):
         return 'unamed_association'
 
+    def serialize(self, protocol='json'):
+        """Serialize the association
+
+        Parameters
+        ----------
+        protocol: ('json',)
+            The format to use for serialization.
+
+        Returns
+        -------
+        (name, serialized):
+            Tuple where the first item is the suggested
+            base name for the file.
+            Second item is the serialization.
+        """
+        available = {
+            'json': self.to_json
+        }
+        return available[protocol]()
+
     def to_json(self):
         """Create JSON representation.
 

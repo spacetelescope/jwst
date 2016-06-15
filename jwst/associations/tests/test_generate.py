@@ -20,4 +20,4 @@ class TestGenerate():
         (asns, orphaned) = generate(pool, rules)
         assert len(asns) == 14
         assert len(orphaned) == 36
-        json = asns[0].to_json() # This will test the validity.
+        serialized = asns[0].serialize() # This will test the validity.
