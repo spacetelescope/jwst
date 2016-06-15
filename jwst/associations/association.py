@@ -13,6 +13,15 @@ import sys
 from astropy.extern import six
 from numpy.ma import masked
 
+
+__all__ = [
+    'Association',
+    'AssociationRegistry',
+    'AssociationError',
+    'SERIALIZATION_PROTOCOLS',
+]
+
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -204,10 +213,7 @@ class Association(object):
             base name for the file.
             Second item is the serialization.
         """
-        available = {
-            'json': self.to_json
-        }
-        return available[protocol]()
+        return SERIALIZATION_PROTOCOLS[protocol](self)
 
     def to_json(self):
         """Create JSON representation.
@@ -421,3 +427,9 @@ def get_classes(module):
                 yield sub_name, sub_class
         elif isclass(class_object):
             yield class_name, class_object
+
+
+# Available serialization protocols
+SERIALIZATION_PROTOCOLS = {
+    'json': Association.to_json
+}
