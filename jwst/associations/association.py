@@ -229,6 +229,17 @@ class Association(object):
         -------
         The Association object
         """
+        asn = None
+        for protocol in SERIALIZATION_PROTOCOLS:
+            try:
+                asn = SERIALIZATION_PROTOCOLS[protocol].unserialize(serialized)
+                break
+            except AssociationError:
+                continue
+        else:
+            raise AssociationError('Cannot translate "{}" to an association'.format(serialized))
+
+        return asn
 
     def to_json(self):
         """Create JSON representation.
@@ -253,8 +264,28 @@ class Association(object):
         )
 
     @classmethod
-    def from_json(cls):
-        """Unserialize an assocation from a JSON string"""
+    def from_json(cls, serialized):
+        """Unserialize an assocation from JSON
+
+        Parameters
+        ----------
+        serialized: str or file object
+            The JSON to read
+
+        Returns
+        -------
+        association: dict
+            The association
+        """
+        try:
+            asn = json.loads(serialized)
+        except TypeError:
+            try:
+                asn = json.load(serialized)
+            except IOError:
+                raise AssociationError('Containter is not JSON: "{}"'.format(serialized))
+
+        return asn
 
     def add(self, member, check_constraints=True):
         """Add the member to the association

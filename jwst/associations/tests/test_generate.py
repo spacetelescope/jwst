@@ -4,7 +4,7 @@ import pytest
 
 from . import helpers
 
-from .. import (AssociationRegistry, AssociationPool, generate)
+from .. import (Association, AssociationRegistry, AssociationPool, generate)
 from ..association import SERIALIZATION_PROTOCOLS
 
 
@@ -28,4 +28,14 @@ def test_serialize():
     (asns, orphaned) = generate(pool, rules)
     for protocol in SERIALIZATION_PROTOCOLS:
         for asn in asns:
-            yield helpers.not_none, asn.serialize(protocol=protocol)
+            fname, serialized = asn.serialize(protocol=protocol)
+            yield helpers.not_none, serialized
+            recovered = Association.unserialize(serialized)
+            yield helpers.not_none, recovered
+
+
+def test_unserialize():
+    asn_file = helpers.t_path('data/jw96090_20160615t210324_mosaic_001_asn.json')
+    with open(asn_file, 'r') as asn_fp:
+        asn = Association.unserialize(asn_fp)
+    assert isinstance(asn, dict)
