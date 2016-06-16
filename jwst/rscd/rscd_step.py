@@ -1,7 +1,7 @@
 from jwst.stpipe import Step
 from jwst import datamodels
 
-import jwst.datamodels.rscd as rscd_mod
+import ..datamodels.rscd as rscd_mod
 from . import rscd_sub
 
 
@@ -16,7 +16,7 @@ class RSCD_Step(Step):
     def process(self, input):
 
         # Open the input data model
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
@@ -35,8 +35,13 @@ class RSCD_Step(Step):
                     return result
 
                 # Open the rscd ref file data model
+<<<<<<< HEAD
                 print('RSCD reference file name', self.rscd_name)
                 #rscd_model = models.RSCDModel(self.rscd_name)
+=======
+                print('RSCD reference file name',self.rscd_name)
+                #rscd_model = datamodels.RSCDModel(self.rscd_name)
+>>>>>>> Changing models to datamodels in many step modules
                 rscd_model = rscd_mod.RSCD_Model(self.rscd_name)
 
                 # Do the rscd correction subtraction
