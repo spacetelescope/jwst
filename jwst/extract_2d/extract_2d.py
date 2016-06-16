@@ -7,7 +7,7 @@ import logging
 import copy
 import numpy as np
 from astropy.modeling import models as astmodels
-from jwst import datamodels
+from .. import datamodels
 from asdf import AsdfFile
 from jwst.assign_wcs import nirspec
 
@@ -31,7 +31,7 @@ def extract2d(input_model, which_subarray=None):
 
     log.info('open slits {0}'.format(open_slits))
 
-    output_model = models.MultiSlitModel()
+    output_model = datamodels.MultiSlitModel()
     output_model.update(input_model)
 
     _, wrange = nirspec.spectral_order_wrange_from_model(input_model)
@@ -56,7 +56,7 @@ def extract2d(input_model, which_subarray=None):
         ext_data = input_model.data[ylo : yhi+1, xlo : xhi+1].copy()
         ext_err  = input_model.err [ylo : yhi+1, xlo : xhi+1].copy()
         ext_dq   = input_model.dq  [ylo : yhi+1, xlo : xhi+1].copy()
-        new_model = models.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
+        new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
         shape = ext_data.shape
         domain = [{'lower': -0.5, 'upper': shape[1] + 0.5, 'includes_lower': True, 'includes_upper': False},
                   {'lower': -0.5, 'upper': shape[0] + 0.5, 'includes_lower': True, 'includes_upper': False}]

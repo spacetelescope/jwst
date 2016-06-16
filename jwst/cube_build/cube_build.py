@@ -6,7 +6,7 @@ import numpy as np
 import math
 import json
 from astropy.io import fits
-from jwst import datamodels
+from .. import datamodels
 from jwst.assign_wcs import nirspec
 from gwcs.utils import _domain_to_bounds
 from . import cube
@@ -177,7 +177,7 @@ def FilesinCube(self,input_table,iproduct,MasterTable):
         # Open the input data model
         # Fill in the FileMap information 
 
-        with models.ImageModel(ifile) as input_model:
+        with datamodels.ImageModel(ifile) as input_model:
 
             detector = input_model.meta.instrument.detector
             assign_wcs = input_model.meta.cal_step.assign_wcs
@@ -491,7 +491,7 @@ def DetermineCubeSize(self,Cube,MasterTable,InstrumentInfo):
 #________________________________________________________________________________
 
                 # Open the input data model
-                with models.ImageModel(ifile) as input_model:
+                with datamodels.ImageModel(ifile) as input_model:
 
                     t0 = time.time()
                     if(detector == 'NIRSPEC'):
@@ -588,7 +588,7 @@ def MapDetectorToCube(self,this_channel,this_subchannel,Cube,spaxel,PixelCloud,M
             
         log.info( 'Mapping file to cube %s ',ifile)
         # Open the input data model
-        with models.ImageModel(ifile) as input_model:
+        with datamodels.ImageModel(ifile) as input_model:
 
             det2ab_transform = input_model.meta.wcs.get_transform('detector','alpha_beta')
             v2ab_transform = input_model.meta.wcs.get_transform('V2_V3','alpha_beta')
@@ -844,7 +844,7 @@ def WriteCube(self,Cube,spaxel):
 
     name = Cube.output_name
 
-    new_model = models.IFUCubeModel(data=data,dq=dq_cube,err=err_cube,weightmap=idata)
+    new_model = datamodels.IFUCubeModel(data=data,dq=dq_cube,err=err_cube,weightmap=idata)
     new_model.meta.wcsinfo.crval1 = Cube.Crval1
     new_model.meta.wcsinfo.crval2 = Cube.Crval2
     new_model.meta.wcsinfo.crval3 = Cube.Crval3
@@ -916,7 +916,7 @@ class IFUCubeInput(object):
         self.input = input # keep a record of original input name for later
 
         self.input_models = []
-        if isinstance(input, models.ImageModel):
+        if isinstance(input, datamodels.ImageModel):
             log.debug( 'going to read imagemodel')
             # It's a single image that's been passed in as a model
 
@@ -929,7 +929,7 @@ class IFUCubeInput(object):
                 # The name of a single image file
                 log.debug( 'going to read a single file')
                 self.filename = input  # temp until figure out model.meta.filename                
-                self.interpret_image_model(models.ImageModel(input))
+                self.interpret_image_model(datamodels.ImageModel(input))
         else:
             raise TypeError
 

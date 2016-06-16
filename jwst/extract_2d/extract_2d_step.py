@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from jwst.stpipe import Step
-from jwst import datamodels
+from .. import datamodels
 from . import extract_2d
 
 class Extract2dStep(Step):
@@ -15,7 +15,7 @@ class Extract2dStep(Step):
 
     def process(self, input_file):
 
-        with models.open(input_file) as dm:
+        with datamodels.open(input_file) as dm:
 
             output_model = extract_2d.extract2d(dm, self.which_subarray)
         

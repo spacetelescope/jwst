@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from jwst.stpipe import Step
-from jwst import datamodels
+from .. import datamodels
 from . import reference_pixels
 from . import irs2_subtract_reference
 
@@ -24,7 +24,7 @@ class RefPixStep(Step):
 
     def process(self, input):
 
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
             if input_model.meta.exposure.readpatt is not None and \
                input_model.meta.exposure.readpatt.find("IRS2") >= 0:
                 self.irs2_name = self.get_reference_file(input_model, 'irs2')
@@ -39,7 +39,7 @@ class RefPixStep(Step):
                     input_model.close()
                     return result
 
-                irs2_model = models.IRS2Model(self.irs2_name)
+                irs2_model = datamodels.IRS2Model(self.irs2_name)
                 result = irs2_subtract_reference.correct_model(input_model,
                                                                irs2_model)
                 irs2_model.close()

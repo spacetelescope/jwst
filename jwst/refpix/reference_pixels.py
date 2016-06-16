@@ -30,8 +30,8 @@ from __future__ import division
 import numpy as np
 from scipy import stats
 import logging
-from jwst import datamodels
-from jwst.datamodels import dqflags
+from .. import datamodels
+from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -1390,7 +1390,7 @@ def is_subarray(input_model):
     Parameters:
     -----------
 
-    input_model: jwstlib.models.model
+    input_model: jwst.datamodels.model
         Model to be tested
 
     """
@@ -1411,7 +1411,7 @@ def correct_model (input_model, odd_even_columns,
     Parameters:
     -----------
 
-    input_model: jwstlib.models.model
+    input_model: jwst.datamodels.model
         Model to be corrected
 
     odd_even_columns: booolean

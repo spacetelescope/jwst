@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 from ..stpipe import Step, cmdline
-from ..import datamodels
+from .. import datamodels
 from .jump import detect_jumps
 
 
@@ -23,7 +23,7 @@ class JumpStep( Step ):
 
     def process(self, input):
 
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # Check for an input model with NGROUPS <=2
             if input_model.meta.exposure.ngroups<=2:
@@ -45,13 +45,13 @@ class JumpStep( Step ):
             # Get the gain and readnoise reference files
             gain_filename = self.get_reference_file( input_model, 'gain')
             self.log.info('Using GAIN reference file: %s', gain_filename)
-            gain_model = models.GainModel( gain_filename )
+            gain_model = datamodels.GainModel( gain_filename )
 
             readnoise_filename = self.get_reference_file( input_model,
                                                           'readnoise')
             self.log.info('Using READNOISE reference file: %s',
                           readnoise_filename)
-            readnoise_model = models.ReadnoiseModel( readnoise_filename )
+            readnoise_model = datamodels.ReadnoiseModel( readnoise_filename )
 
             # Call the jump detection routine
             result = detect_jumps( input_model, gain_model, readnoise_model,
