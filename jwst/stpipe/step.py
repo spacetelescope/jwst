@@ -383,7 +383,7 @@ class Step(object):
 
             if len(self._reference_files_used) and not self._is_association_file(args[0]):
                 for result in results:
-                    if isinstance(result, models.DataModel):
+                    if isinstance(result, datamodels.DataModel):
                         for ref_name, filename in self._reference_files_used:
                             if hasattr(result.meta.ref_file, ref_name):
                                 getattr(result.meta.ref_file, ref_name).name = filename
@@ -396,7 +396,7 @@ class Step(object):
 
             # Save the output file if one was specified
             for i, result in enumerate(results):
-                if isinstance(result, models.DataModel):
+                if isinstance(result, datamodels.DataModel):
                     result.meta.calibration_software_revision = __svn_revision__
                     result.meta.calibration_software_version = __version__
                     if self.output_file is not None:
@@ -467,7 +467,7 @@ class Step(object):
         """Return True IFF `input_file` is an association file."""
         from .. import datamodels
         return (isinstance(input_file, str) and input_file.endswith((".asn",".json"))) or \
-               isinstance(input_file, models.ModelContainer)
+               isinstance(input_file, datamodels.ModelContainer)
 
     def _precache_reference_files(self, input_file):
         """
@@ -482,7 +482,7 @@ class Step(object):
         if len(self.reference_file_types):
             from .. import datamodels
             try:
-                model = models.open(input_file)
+                model = datamodels.open(input_file)
             except (ValueError, TypeError, IOError):
                 self.log.info(
                     'First argument {0} does not appear to be a '
@@ -608,7 +608,7 @@ class Step(object):
         from .. import datamodels
 
         filename = self.get_reference_file(input, reference_file_type)
-        with models.open(filename) as model:
+        with datamodels.open(filename) as model:
             yield model
         gc.collect()
 

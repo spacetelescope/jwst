@@ -73,11 +73,11 @@ def get_multiple_reference_paths(input_file, reference_file_types):
         return {}
 
     if six.PY2:
-        model_types = (str, unicode, models.DataModel)
+        model_types = (str, unicode, datamodels.DataModel)
     else:
-        model_types = (str, models.DataModel)
+        model_types = (str, datamodels.DataModel)
     if isinstance(input_file, model_types):
-        with models.open(input_file) as dm:
+        with datamodels.open(input_file) as dm:
             data_dict = dm.to_flat_dict(include_arrays=False)
     else:
         data_dict = _flatten_dict(input_file)

@@ -6,5 +6,6 @@ recursive-include jwst *.json
 recursive-include jwst *.txt
 recursive-include jwst *.cfg
 recursive-include jwst *.csv
+recursive-include jwst *.yaml
 prune relic/relic/__pycache__
 prune relic/.git
