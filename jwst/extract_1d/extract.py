@@ -9,7 +9,7 @@ import math
 import numpy as np
 import json
 from astropy.modeling import polynomial
-from jwst import datamodels
+from .. import datamodels
 from gwcs import selector
 from . import extract1d
 
@@ -608,10 +608,10 @@ class ExtractModel(object):
 
 def do_extract1d(input_model, refname, smoothing_length, bkg_order):
 
-    output_model = models.MultiSpecModel()
+    output_model = datamodels.MultiSpecModel()
     output_model.update(input_model)
 
-    if isinstance(input_model, models.MultiSlitModel):
+    if isinstance(input_model, datamodels.MultiSlitModel):
 
         # Loop over the slits in the input model
         for slit in input_model.slits:
@@ -621,10 +621,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 extract_one_slit(slit, -1,
                                  input_model.meta, refname,
                                  slit.name, **extract_params)
-            spec = models.SpecModel()
+            spec = datamodels.SpecModel()
             otab = np.array(zip(column, wavelength, background, countrate),
                             dtype=spec.spec_table.dtype)
-            spec = models.SpecModel(spec_table=otab)
+            spec = datamodels.SpecModel(spec_table=otab)
             output_model.spec.append(spec)
     else:
         slitname = input_model.meta.exposure.type
@@ -632,7 +632,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             slitname = input_model.meta.subarray.name
         log.debug('slitname=%s' % slitname)
 
-        if isinstance(input_model, models.ImageModel):
+        if isinstance(input_model, datamodels.ImageModel):
             extract_params = get_extract_parameters(refname, slitname,
                                 input_model.meta, smoothing_length, bkg_order)
             if extract_params:
@@ -643,13 +643,13 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             else:
                 log.critical('Missing extraction parameters.')
                 raise ValueError('Missing extraction parameters.')
-            spec = models.SpecModel()
+            spec = datamodels.SpecModel()
             otab = np.array(zip(column, wavelength, background, countrate),
                             dtype=spec.spec_table.dtype)
-            spec = models.SpecModel(spec_table=otab)
+            spec = datamodels.SpecModel(spec_table=otab)
             output_model.spec.append(spec)
 
-        elif isinstance(input_model, models.CubeModel):
+        elif isinstance(input_model, datamodels.CubeModel):
 
             extract_params = get_extract_parameters(refname, slitname,
                                 input_model.meta, smoothing_length, bkg_order)
@@ -664,10 +664,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                         extract_one_slit(input_model, integ,
                                          input_model.meta, refname,
                                          slitname, **extract_params)
-                spec = models.SpecModel()
+                spec = datamodels.SpecModel()
                 otab = np.array(zip(column, wavelength, background, countrate),
                                 dtype=spec.spec_table.dtype)
-                spec = models.SpecModel(spec_table=otab)
+                spec = datamodels.SpecModel(spec_table=otab)
                 output_model.spec.append(spec)
 
     return output_model
