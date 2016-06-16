@@ -49,8 +49,8 @@ from astropy.io import fits as pyfits
 from astropy.extern import six
 
 # LOCAL
-from jwst.fits_generator import objects
-from jwst.fits_generator import template
+from ..fits_generator import objects
+from ..fits_generator import template
 
 class FITSGetter:
     """

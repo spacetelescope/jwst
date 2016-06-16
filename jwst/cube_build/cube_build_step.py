@@ -4,8 +4,8 @@ import sys
 import time
 import json
 import numpy as np
-from jwst.stpipe import Step, cmdline
-from jwst import datamodels
+from ..stpipe import Step, cmdline
+from .. import datamodels
 from . import cube_build
 from . import cube
 from . import CubeD2C
@@ -32,7 +32,6 @@ class CubeBuildStep (Step):
        """
 
     def process(self, input):
-
         self.log.info('Starting IFU Cube Building Step...')
 
         if(not self.wcs_method.islower()): self.wcs_method = self.wcs_method.lower()
@@ -125,6 +124,7 @@ class CubeBuildStep (Step):
 
             self.output_name = input_table.asn_table['products'][iproduct]['name']
             if(self.input_table_type == 'singleton'):
+
                 self.output_name = cube_build.UpdateOutPutName(self)
 
 #            print('Output name',self.output_name)
@@ -252,6 +252,5 @@ class CubeBuildStep (Step):
 #        sys.exit('Stop')
 
 
-
 if __name__ == '__main__':
-    cmdline.step_script(cube_build_step)
+    cmdline.step_script( cube_build_step )

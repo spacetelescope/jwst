@@ -5,7 +5,7 @@ import sys
 import numpy as np
 import math
 import logging
-from jwst import datamodels
+from .. import datamodels
 
 
 log = logging.getLogger(__name__)
@@ -105,6 +105,7 @@ class CubeInfo(object):
 #        else:
         self.naxis2 = int(math.ceil(range_b / self.Cdelt2))
         b_center = (self.b_max + self.b_min) / 2.0
+
         # adjust min and max based on integer value of naxis2
         self.b_max = b_center + (self.naxis2 / 2.0) * self.Cdelt2
         self.b_min = b_center - (self.naxis2 / 2.0) * self.Cdelt2

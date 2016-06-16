@@ -2,7 +2,7 @@
 
 import time
 import os
-from jwst.stpipe import Step
+from ..stpipe import Step
 from . import combine1d
 
 class Combine1dStep(Step):

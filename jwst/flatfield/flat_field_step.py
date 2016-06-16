@@ -1,6 +1,6 @@
-2#! /usr/bin/env python
+#! /usr/bin/env python
 
-from jwst.stpipe import Step, cmdline
+from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import flat_field
 

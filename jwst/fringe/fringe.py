@@ -6,8 +6,13 @@ from __future__ import division
 
 import numpy as np
 import logging
+<<<<<<< HEAD
 from jwst import datamodels
 from jwst.datamodels import dqflags
+=======
+from .. import datamodels
+from ..datamodels import dqflags
+>>>>>>> more imports
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -33,7 +38,11 @@ def do_correction(input_model, fringe_model):
         fringe-corrected science data model
 
     """
+<<<<<<< HEAD
     output_model = apply_fringe(input_model, fringe_model)
+=======
+    output_model = apply_fringe( input_model, fringe_model )
+>>>>>>> more imports
     output_model.meta.cal_step.fringe = 'COMPLETE'
 
     return output_model
@@ -90,3 +99,7 @@ def apply_fringe(input_model, fringe):
     DQ values in the output DQ array.')
 
     return output_model
+<<<<<<< HEAD
+=======
+
+>>>>>>> more imports

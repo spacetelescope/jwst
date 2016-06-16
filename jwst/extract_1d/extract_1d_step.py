@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import os
-from jwst.stpipe import Step
+from ..stpipe import Step
 from .. import datamodels
 from . import extract
 
@@ -24,6 +24,7 @@ class Extract1dStep(Step):
 
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
+
         if isinstance(input_model, datamodels.CubeModel):
            # It's a 3-D multi-integration model
             self.log.debug('Input is a CubeModel for a multiple integ. file')

@@ -38,8 +38,8 @@ import datetime
 from astropy.time import Time
 
 # LOCAL
-from jwst.fits_generator import util
-import jwst.fits_generator
+from ..fits_generator import util
+import ..fits_generator
 
 bool = __builtins__['bool']
 str = __builtins__['str']

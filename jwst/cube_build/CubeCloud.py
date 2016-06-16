@@ -4,7 +4,7 @@ from __future__ import absolute_import, print_function
 import sys
 import numpy as np
 import math
-from jwst import datamodels
+from .. import datamodels
 from . import CubeD2C
 from . import cube
 #________________________________________________________________________________
@@ -55,11 +55,19 @@ def MakePointCloudMIRI(self, x, y, file_no, c1_offset, c2_offset, input_model):
     beta = beta[index[0]]
     xpix = x[index[0]]
     ypix = y[index[0]]
+<<<<<<< HEAD
     ifile = np.zeros(flux.shape, dtype='int') + int(file_no)
 
     # get in form of 8 columns of data - shove the information in an array.
 
     cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile, xpix, ypix])
+=======
+    ifile = np.zeros(flux.shape,dtype='int') + int(file_no)
+
+    # get in form of 8 columns of data - shove the information in an array.
+
+    cloud = np.asarray([coord1,coord2,wave,alpha,beta,flux,error,ifile,xpix,ypix])
+>>>>>>> more imports
 
     return cloud
 #______________________________________________________________________
@@ -105,19 +113,33 @@ def MakePointCloudMIRI_DistortionFile(self, x, y, file_no, c1_offset, c2_offset,
 #________________________________________________________________________________
 # loop over pixels in slice
 #________________________________________________________________________________
+<<<<<<< HEAD
     for ipixel in range(0, nn - 1):
+=======
+    for ipixel  in range(0, nn-1):
+>>>>>>> more imports
         valid_pixel = True
         if(y[ipixel] >= 1024):
             valid_pixel = False
             #print(' Error ypixel = ',y[ipixel])
 
         if(valid_pixel):
+<<<<<<< HEAD
             alpha_pixel, beta_pixel, wave_pixel = CubeD2C.xy2abl(self, sliceno_use - 1, x[ipixel], y[ipixel])
 
             flux_pixel = input_model.data[y[ipixel], x[ipixel]]
             error_pixel = input_model.err[y[ipixel], x[ipixel]]
             xan, yan = CubeD2C.ab2xyan(self, alpha_pixel, beta_pixel)
             v2, v3 = CubeD2C.xyan2v23(self, xan, yan)
+=======
+            alpha_pixel,beta_pixel,wave_pixel = CubeD2C.xy2abl(self, sliceno_use-1,x[ipixel],y[ipixel])
+
+            flux_pixel = input_model.data[y[ipixel],x[ipixel]]
+            error_pixel = input_model.err[y[ipixel],x[ipixel]]
+            xan,yan = CubeD2C.ab2xyan(self, alpha_pixel,beta_pixel)
+            v2,v3 = CubeD2C.xyan2v23(self, xan,yan)
+
+>>>>>>> more imports
 
 
             coord1_pixel = v2 * 60.0
@@ -176,6 +198,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
         weight_wave = weights[2]
 
 
+<<<<<<< HEAD
         coord1 = PointCloud[0, ipt]
         coord2 = PointCloud[1, ipt]
         alpha = PointCloud[3, ipt]
@@ -184,6 +207,16 @@ def FindROI(self, Cube, spaxel, PointCloud):
         y = PointCloud[9, ipt]
 
         if(self.coord_system == 'alpha-beta'):
+=======
+        coord1 = PointCloud[0,ipt]
+        coord2 = PointCloud[1,ipt]
+        alpha = PointCloud[3,ipt]
+        beta = PointCloud[4,ipt]
+        x = PointCloud[8,ipt]
+        y = PointCloud[9,ipt]
+
+        if(self.coord_system =='alpha-beta'):
+>>>>>>> more imports
             coord1 = alpha
             coord2 = beta
 # Map this point cloud to spaxel (distance from spaxel center = ROI)
@@ -355,6 +388,10 @@ def FindWaveWeights(channel, subchannel):
             c = 1200.0
             wa = 23.83
             wc = 28.43
+<<<<<<< HEAD
+=======
+
+>>>>>>> more imports
 
 
     return a, c, wa, wc
@@ -385,7 +422,11 @@ gs     weighting is determined from width of PSF as well as wavelength resolutio
     beta_weight = 1.0
     lambda_weight = 1.0
 
+<<<<<<< HEAD
     beta_weight = 0.31 * (wavelength / 8.0)
+=======
+    beta_weight = 0.31 * (wavelength/8.0)
+>>>>>>> more imports
 
     if(wavelength < 8.0):
         alpha_weight = 0.31
@@ -396,7 +437,11 @@ gs     weighting is determined from width of PSF as well as wavelength resolutio
         # linear interpolation
 
     if (wavelength >= wa and wavelength <= wc):
+<<<<<<< HEAD
         b = a + (c - a) * (wavelength - wa) / (wc - wa)
+=======
+        b = a + (c-a)*(wavelength - wa)/(wc-wa)
+>>>>>>> more imports
     elif (wavelength < wa):
         b = a
     else:
@@ -407,3 +452,9 @@ gs     weighting is determined from width of PSF as well as wavelength resolutio
 
     weight = [alpha_weight, beta_weight, lambda_weight]
     return weight
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> more imports

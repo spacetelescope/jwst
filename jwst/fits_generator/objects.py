@@ -37,7 +37,7 @@ import warnings
 from astropy.io import fits as pyfits
 
 # LOCAL
-from jwst.fits_generator import util
+from ..fits_generator import util
 
 # Set DEBUG_TYPES to True to get warning information about problems in
 # the type definitions themselves.

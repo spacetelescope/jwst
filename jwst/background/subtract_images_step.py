@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
-from jwst.stpipe import Step
+from ..stpipe import Step
 from .. import datamodels
-from jwst.background import subtract_images
+from .. import subtract_images
 
 class SubtractImagesStep(Step):
     """
