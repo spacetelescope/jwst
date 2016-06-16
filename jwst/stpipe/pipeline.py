@@ -125,7 +125,7 @@ class Pipeline(Step):
         if self._is_association_file(input_file):
             return 
         try:
-            with models.open(input_file) as model:
+            with datamodels.open(input_file) as model:
                 pass
         except (ValueError, TypeError, IOError):
             self.log.info(

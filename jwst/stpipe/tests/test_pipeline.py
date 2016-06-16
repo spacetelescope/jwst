@@ -30,7 +30,7 @@ class FlatField(Step):
         self.log.info("Threshold: {0}".format(self.threshold))
         library_function()
 
-        output = models.ImageModel(data=science.data - flat.data)
+        output = datamodels.ImageModel(data=science.data - flat.data)
         return output
 
 
@@ -45,7 +45,7 @@ class Combine(Step):
         combined = np.zeros((50, 50))
         for image in images:
             combined += image.data
-        return models.ImageModel(data=combined)
+        return datamodels.ImageModel(data=combined)
 
 
 class Display(Step):
@@ -65,8 +65,8 @@ class MultiplyBy2(Step):
     def process(self, image):
         from ... import datamodels
 
-        with models.ImageModel(image) as dm:
-            with models.ImageModel() as dm2:
+        with datamodels.ImageModel(image) as dm:
+            with datamodels.ImageModel() as dm2:
                 dm2.data = dm.data * 2
                 return dm2
 
@@ -91,15 +91,15 @@ class TestPipeline(Pipeline):
     def process(self, *args):
         from ... import datamodels
 
-        science = models.open(self.science_filename)
+        science = datamodels.open(self.science_filename)
         if self.flat_filename is None:
             self.flat_filename = join(dirname(__file__), "data/flat.fits")
-        flat = models.open(self.flat_filename)
+        flat = datamodels.open(self.flat_filename)
         calibrated = []
         calibrated.append(self.flat_field(science, flat))
         combined = self.combine(calibrated)
         self.display(combined)
-        dm = models.ImageModel(combined)
+        dm = datamodels.ImageModel(combined)
         dm.save(self.output_filename)
         return dm
 
