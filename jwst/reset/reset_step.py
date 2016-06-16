@@ -14,7 +14,7 @@ class ResetStep( Step ):
     def process(self, input): 
 
         # Open the input data model
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
@@ -33,7 +33,7 @@ class ResetStep( Step ):
                     return result
 
                 # Open the reset ref file data model
-                reset_model = models.ResetModel(self.reset_name)
+                reset_model = datamodels.ResetModel(self.reset_name)
 
                 # Do the reset correction subtraction
                 result = reset_sub.do_correction(input_model, reset_model)

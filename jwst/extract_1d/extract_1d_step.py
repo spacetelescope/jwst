@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
 import os
-from jwst.stpipe import Step
-from jwst import datamodels
+from ..stpipe import Step
+from .. import datamodels
 from . import extract
 
 class Extract1dStep(Step):
@@ -23,19 +23,19 @@ class Extract1dStep(Step):
     def process(self, input):
 
         # Open the input and figure out what type of model it is
-        input_model = models.open(input)
+        input_model = datamodels.open(input)
 
-        if isinstance(input_model, models.CubeModel): 
+        if isinstance(input_model, datamodels.CubeModel): 
             # It's a 3-D multi-integration model
             self.log.debug('Input is a CubeModel for a multiple integ. file')
-        elif isinstance(input_model, models.ImageModel):
+        elif isinstance(input_model, datamodels.ImageModel):
             # It's a single 2-D image
             self.log.debug('Input is an ImageModel')
-        elif isinstance(input_model, models.DataModel):
+        elif isinstance(input_model, datamodels.DataModel):
             # It's a MultiSlitModel
             self.log.debug('Input is a MultiSlitModel')
             input_model.close()
-            input_model = models.MultiSlitModel(input)
+            input_model = datamodels.MultiSlitModel(input)
         
         # Get the reference file name
         self.ref_file = self.get_reference_file(input_model, 'extract1d')
