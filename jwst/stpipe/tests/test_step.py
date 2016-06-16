@@ -199,5 +199,5 @@ def test_save_model():
     ]
 
     Step.from_cmdline(args)
-
-    assert isfile(join(tempdir, 'flat_processed.fits'))
+    fname = join(tempdir, 'flat_processed.fits')
+    assert isfile(fname)

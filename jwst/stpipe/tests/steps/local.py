@@ -1,6 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
-from ....step import Step
+from ... import Step
 import logging
 
 log = logging.getLogger("FOO")

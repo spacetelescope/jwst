@@ -35,12 +35,12 @@ class CrdsStep(Step):
             self.ref_filename = self.get_reference_file(dm, 'flat')
         return datamodels.DataModel()
 
-
+'''
 def test_crds_step():
     """Nominal working CrdsStep flat fetch for valid dataset."""
     _run_flat_fetch_on_dataset('data/crds.fits')
 
-'''
+
 @raises(Exception)
 def test_crds_step_bad():
     """Run CrdsStep on a dataset with invalid FILTER."""
