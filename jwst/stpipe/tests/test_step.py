@@ -4,8 +4,8 @@ from os.path import dirname, join, abspath, isfile
 import shutil
 import tempfile
 
-from nose.tools import raises
-
+#from nose.tools import raises
+import pytest
 import numpy as np
 
 from ..config_parser import ValidationError
@@ -94,48 +94,48 @@ def test_step_from_commandline_class():
     step.run(1, 2)
 
 
-@raises(ValueError)
+#@raises(ValueError)
 def test_step_from_commandline_invalid():
     from .. import Step
-
     args = [
-        '__foo__'
+            '__foo__'
         ]
 
-    step = Step.from_cmdline(args)
+    with pytest.raises(ValueError):
+        step = Step.from_cmdline(args)
 
 
-@raises(ValueError)
+#@raises(ValueError)
 def test_step_from_commandline_invalid2():
     from .. import Step
 
     args = [
         '__foo__.__bar__'
         ]
+    with pytest.raises(ValueError):
+        step = Step.from_cmdline(args)
 
-    step = Step.from_cmdline(args)
 
-
-@raises(ValueError)
+#@raises(ValueError)
 def test_step_from_commandline_invalid3():
     from .. import Step
 
     args = [
         'sys.foo'
         ]
+    with pytest.raises(ValueError):
+        step = Step.from_cmdline(args)
 
-    step = Step.from_cmdline(args)
 
-
-@raises(ValueError)
+#@raises(ValueError)
 def test_step_from_commandline_invalid4():
     from .. import Step
 
     args = [
         'sys.argv'
         ]
-
-    step = Step.from_cmdline(args)
+    with pytest.raises(ValueError):
+        step = Step.from_cmdline(args)
 
 
 def test_step_print_spec():
@@ -160,11 +160,11 @@ def test_step_with_local_class():
     step.run(np.array([[0,0]]))
 
 
-@raises(ValidationError)
+#@raises(ValidationError)
 def test_extra_parameter():
     from .steps import AnotherDummyStep
-
-    step = AnotherDummyStep("SomeOtherStepOriginal", par5='foo')
+    with pytest.raises(ValidationError):
+        step = AnotherDummyStep("SomeOtherStepOriginal", par5='foo')
 
 
 def test_crds_override():

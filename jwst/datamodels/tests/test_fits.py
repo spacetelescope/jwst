@@ -7,7 +7,7 @@ import os
 import shutil
 import tempfile
 
-from nose.tools import raises
+import pytest
 
 import numpy as np
 from numpy.testing import assert_array_equal
@@ -41,12 +41,12 @@ def teardown():
     shutil.rmtree(TMP_DIR)
 
 
-@raises(AttributeError)
 def test_from_new_hdulist():
-    from astropy.io import fits
-    hdulist = fits.HDUList()
-    with open(hdulist) as dm:
-        sci = dm.data
+    with pytest.raises(AttributeError):
+        from astropy.io import fits
+        hdulist = fits.HDUList()
+        with open(hdulist) as dm:
+            sci = dm.data
 
 
 def test_from_new_hdulist2():
@@ -76,18 +76,18 @@ def test_setting_arrays_on_fits():
         dm.dq = np.empty((10, 50, 50), dtype=np.uint32)
 
 
-@raises(AttributeError)
 def delete_array():
-    from astropy.io import fits
-    hdulist = fits.HDUList()
-    data = np.empty((50, 50))
-    science = fits.ImageHDU(data=data, name='SCI')
-    hdulist.append(science)
-    hdulist.append(science)
-    with open(hdulist) as dm:
-        del dm.data
-        assert len(hdulist) == 1
-        x = dm.data
+    with pytest.raises(AttributeError):
+        from astropy.io import fits
+        hdulist = fits.HDUList()
+        data = np.empty((50, 50))
+        science = fits.ImageHDU(data=data, name='SCI')
+        hdulist.append(science)
+        hdulist.append(science)
+        with open(hdulist) as dm:
+            del dm.data
+            assert len(hdulist) == 1
+            x = dm.data
 
 
 def test_from_fits():
