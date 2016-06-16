@@ -1,7 +1,6 @@
-"""
-Models used by jwst_pipeline.assign_wcs.
-Some of these should go in astropy.modeling in the future.
+"""Models used by jwst_pipeline.assign_wcs.
 
+Some of these may go in astropy.modeling in the future.
 """
 import math
 import numpy as np
@@ -10,13 +9,120 @@ from astropy.modeling.parameters import Parameter
 from astropy.modeling.models import Polynomial2D
 
 
-__all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation', 'NRSZCoord',
-           'Unitless2DirCos', 'DirCos2Unitless', 'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa',
-           'slitid_to_slit', 'slit_to_slitid']
+__all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
+           'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
+           'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa', 'slitid_to_slit',
+           'slit_to_slitid', 'Snell', 'RefractionIndex']
 
 
 # Number of shutters per quadrant
 N_SHUTTERS_QUADRANT = 62415
+
+
+class RefractionIndex(Model):
+    """Calculate a refraction index given lamda and a reference file.
+
+    Referenced in Muzzerole's IDL program
+    Requires  reference file information
+
+    lam is in angstroms
+    temp is in kelvin
+    pressure is in atmospheres
+    pref is the reference pressure
+    kcoef is a 3 item list
+    lcoef is a 3 item list
+    tref is the reference temperature
+    """
+
+    fittable = False
+    separable = False
+
+    inputs = ("lam",)
+    outputs = ("n",)
+
+    temp = Parameter()
+    tref = Parameter()
+    pref = Parameter
+    pressure = Parameter()
+    kcoef = Parameter()
+    lcoef = Parameter()
+    tcoef = Parameter()
+
+    def __init__(self, lam, temp, tref, pref, pressure, kcoef, lcoef, tcoef,
+                 name=None):
+        super(RefractionIndex, self).__init__(self, temp=temp, tref=tref,
+                                              pref=pref, pressure=pressure,
+                                              kcoef=kcoef, lcoef=lcoef,
+                                              tcoef=tcoef, name=name)
+
+    def evaluate(self, lam, temp, tref, pref, pressure, kcoef, lcoef, tcoef):
+        """Calculate and retrun the refraction index."""
+
+        # scale input wavelength to air at reference temp and
+        # pressure (T=35 K, P=1 atm)
+        # convert the wavelength to microns
+        lam = lam * 1e6
+        KtoC = 273.15  # kelvin to celcius conversion
+
+        nref = 1. + (6432.8 + 2949810. * lam**2 /
+                     (146.0 * lam**2 - 1.) + 25540.0 * lam**2 /
+                     (41.0 * lam**2 - 1.)) * 1e-8
+
+        nair_obs = 1.0 + (nref - 1.0) * pressure / \
+            (1.0 + (temp - KtoC - 15.) * 2.4785e-3)
+
+        nair_ref = 1.0 + (nref - 1.0) * pref / \
+            (1.0 + tref - KtoC)
+
+        lamrel = lam * nair_obs / nair_ref
+        nrel = np.sqrt(1.0 + kcoef[0] * lamrel**2 /
+                       (lamrel**2 - lcoef[0]) +
+                       kcoef[1] * lamrel**2 / (lamrel**2 - lcoef[1]) +
+                       kcoef[2] * lamrel**2 / (lamrel**2 - lcoef[2]))
+        nabs_ref = nrel * nair_ref
+
+        # compute the absolute index of the glass
+        delt = temp - tref
+        delnabs = 0.5 * (nrel**2 - 1.) / nrel * \
+            (tcoef[0] * delt + tcoef[1] * delt**2 + tcoef[2] * delt**2 +
+             (tcoef[3] * delt + tcoef[4] * delt**2) / (lamrel**2 - tcoef[5]**2))
+        nabs_obs = nabs_ref + delnabs
+        return nabs_obs / nair_obs
+
+
+class Snell(Model):
+    """Computes the Prism Snell refraction through a surface.
+
+    Parameters
+    ----------
+    x: float
+    y: float
+    z: float
+    n: float
+        refraction index as calculated for a given wavelenth
+    """
+
+    inputs = ("xin", "yin", "zin")
+    outputs = ("xout", "yout", "zout")
+
+    n = Parameter(default=1.0)
+
+    def __init__(self, n, name=None):
+        super(Snell, self).__init__(self, n=n, name=name)
+
+    def evaluate(self, x, y, z, n):
+        """Compute Snell's refraction law from the front surface."""
+
+        xout = x/n
+        yout = y/n
+        zout = np.sqrt(1.0 - xout**2 - yout**2)
+
+    def inverse(self, x, y, z, n):
+        """Compute Snell's refraction law from the back surface."""
+
+        xout = x * n
+        yout = y * n
+        zout = np.sqrt(1.0 - xout**2 - yout**2)
 
 
 class NRSChromaticCorrection(Polynomial2D):
@@ -24,10 +130,8 @@ class NRSChromaticCorrection(Polynomial2D):
     def __init__(self, degree, **coeffs):
         super(NRSChromaticCorrection, self).__init__(degree, **coeffs)
 
-
     def evaluate(self, x, y, lam, *coeffs):
-        """
-        For each input multiply the distortion coefficients by the computed lambda.
+        """For each input multiply the distortion coefficients by the computed lambda.
         """
         coeffs *= lam
         return super(NRSChromaticCorrection, self).evaluate(x, y, *coeffs)
@@ -50,9 +154,13 @@ class AngleFromGratingEquation(Model):
     inputs = ("lam", "alpha_in", "beta_in", "z")
     outputs = ("alpha_out", "beta_out", "zout")
 
-
     groove_density = Parameter()
     order = Parameter(default=-1)
+
+    def __init__(self, lam, alpha_in, beta_in, z, groove_density, order,
+                 name=None):
+        super(AngleFromGratingEquation, self).__init__(self,
+                        groove_density=groove_density, order=order, name=name)
 
     def evaluate(self, lam, alpha_in, beta_in, z, groove_density, order):
         if alpha_in.shape != beta_in.shape != z.shape:
@@ -66,8 +174,7 @@ class AngleFromGratingEquation(Model):
 
 
 class WavelengthFromGratingEquation(Model):
-    """
-    Grating Equation Model. Computes the wavelength.
+    """Grating Equation Model. Computes the wavelength.
 
     Parameters
     ----------
@@ -136,9 +243,6 @@ class DirCos2Unitless(Model):
 
         return x / z, y / z
 
-    def inverse(self):
-        return Unitless2DirCos()
-
 
 class Rotation3DToGWA(Model):
     separable = False
@@ -171,7 +275,8 @@ class Rotation3DToGWA(Model):
         unrecognized = set(axes_order).difference(self.axes)
         if unrecognized:
             raise ValueError("Unrecognized axis label {0}; "
-                             "should be one of {1} ".format(unrecognized, self.axes))
+                             "should be one of {1} ".format(unrecognized,
+                                                            self.axes))
         self.axes_order = axes_order
 
         self._func_map = {'x': self._xrot,
@@ -213,9 +318,8 @@ class Rotation3DToGWA(Model):
         if x.shape != y.shape != z.shape:
             raise ValueError("Expected input arrays to have the same shape")
 
-
-        # Note: If the original shape was () (an array scalar) convert to a
-        # 1-element 1-D array on output for consistency with most other models
+        #  Note: If the original shape was () (an array scalar) convert to a
+        #  1-element 1-D array on output for consistency with most other models
         orig_shape = x.shape or (1,)
         for ang, ax in zip(angles[0], self.axes_order):
             x, y, z = self._func_map[ax](x, y, z, theta=ang)
@@ -242,17 +346,18 @@ class Rotation3D(Model):
     outputs = ('x', 'y', 'z')
     angles = Parameter(getter=np.rad2deg, setter=np.deg2rad)
 
-
     def __init__(self, angles, axes_order, name=None):
         self.axes = ['x', 'y', 'z']
         unrecognized = set(axes_order).difference(self.axes)
         if unrecognized:
             raise ValueError("Unrecognized axis label {0}; "
-                             "should be one of {1} ".format(unrecognized, self.axes))
+                             "should be one of {1} ".format(unrecognized,
+                                                            self.axes))
         self.axes_order = axes_order
         if len(angles) != len(axes_order):
-            raise ValueError("The number of angles {0} should match the number of axes {1}.".format(
-                len(angles), len(axes_order)))
+            raise ValueError("The number of angles {0} should match the number \
+                              of axes {1}.".format(len(angles),
+                                                   len(axes_order)))
         super(Rotation3D, self).__init__(angles, name=name)
 
     @property
@@ -284,8 +389,8 @@ class Rotation3D(Model):
                 matrix[2, 2] = 1
                 matrix[:2, :2] = mat
             else:
-                raise ValueError("Expected axes_order to be a combination of characters"
-                                 "'x', 'y' and 'z', got {0}".format(
+                raise ValueError("Expected axes_order to be a combination \
+                        of characters 'x', 'y' and 'z', got {0}".format(
                                      set(axes_order).difference(self.axes)))
             matrices.append(matrix)
         if len(angles) == 1:
@@ -331,7 +436,6 @@ class LRSWavelength(Model):
     inputs = ('x', 'y')
     outputs = ('lambda',)
 
-
     def __init__(self, wavetable, zero_point, name=None):
         self._wavetable = wavetable
         self._zero_point = zero_point
@@ -360,8 +464,7 @@ class LRSWavelength(Model):
 
         diff0 = (dy - y0[0])
         ind = np.abs(np.asarray(diff0 / slitsize, dtype=np.int))
-
-        condition = np.logical_and(dy < y0[0], dy > y0[-1])#, dx>x0, dx<x1)
+        condition = np.logical_and(dy < y0[0], dy > y0[-1])  #, dx>x0, dx<x1)
         xyind = condition.nonzero()
         wavelength = np.zeros(condition.shape)
         wavelength += np.nan
@@ -396,7 +499,6 @@ class Gwa2Slit(Model):
 
     inputs = ('angle1', 'angle2', 'angle3', 'quadrant', 'slitid')
     outputs = ('x_slit', 'y_slit', 'lam', 'quadrant', 'slitid')
-
 
     def __init__(self, models):
         self.slits = slit_to_slitid(models.keys())
