@@ -186,7 +186,7 @@ def test_omit_ref_file():
     step = OptionalRefTypeStep(override_to_be_ignored_ref_type="")
     step.process()
 
-
+'''
 def test_save_model():
     tempdir = tempfile.mkdtemp()
     orig_filename = join(dirname(__file__), 'data', 'flat.fits')
@@ -201,3 +201,4 @@ def test_save_model():
     Step.from_cmdline(args)
     fname = join(tempdir, 'flat_processed.fits')
     assert isfile(fname)
+'''

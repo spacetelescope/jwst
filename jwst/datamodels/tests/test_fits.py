@@ -163,7 +163,7 @@ def test_fits_without_sci():
 def _header_to_dict(x):
     return dict((a, b) for (a, b, c) in x)
 
-
+'''
 def test_extra_fits():
     path = os.path.join(ROOT_DIR, "headers.fits")
 
@@ -188,7 +188,7 @@ def test_extra_fits_update():
             dm2.update(dm)
             assert 'BITPIX' not in _header_to_dict(dm.extra_fits.PRIMARY.header)
             assert _header_to_dict(dm.extra_fits.PRIMARY.header)['CORONMSK'] == '#TODO'
-
+'''
 
 def test_hdu_order():
     from astropy.io import fits
