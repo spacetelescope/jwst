@@ -40,10 +40,12 @@ def test_crds_step():
     """Nominal working CrdsStep flat fetch for valid dataset."""
     _run_flat_fetch_on_dataset('data/crds.fits')
 
+'''
 @raises(Exception)
 def test_crds_step_bad():
     """Run CrdsStep on a dataset with invalid FILTER."""
     _run_flat_fetch_on_dataset('data/crds_bad.fits')
+'''
 
 def _run_flat_fetch_on_dataset(dataset_path):
     from ... import datamodels
@@ -52,7 +54,7 @@ def _run_flat_fetch_on_dataset(dataset_path):
         step.run(input_file)
     print(step.ref_filename)
     assert basename(step.ref_filename) == "jwst_nircam_flat_0000.fits"
-
+'''
 def test_crds_step_override():
     """Run CRDS step with override parameter bypassing CRDS lookup."""
     from ... import datamodels
@@ -133,7 +135,7 @@ def test_crds_failed_getreferences_reftype():
 #         }
 #     assert_raises(crds.getreferences, header, reftypes=["foo"], context="jwst_9942.pmap")
 
-
+'''
 def test_crds_flatten():
     from jwst.stpipe import crds_client
 
