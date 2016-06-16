@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import os
-from jwst.stpipe import Step
+from ..stpipe import Step
 from .. import datamodels
 from . import extract
 

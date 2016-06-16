@@ -9,7 +9,7 @@ import numpy as np
 from astropy.modeling import models as astmodels
 from .. import datamodels
 from asdf import AsdfFile
-from jwst.assign_wcs import nirspec
+from ..assign_wcs import nirspec
 
 
 log = logging.getLogger(__name__)

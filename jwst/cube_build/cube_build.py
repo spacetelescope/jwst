@@ -7,7 +7,7 @@ import math
 import json
 from astropy.io import fits
 from .. import datamodels
-from jwst.assign_wcs import nirspec
+from ..assign_wcs import nirspec
 from gwcs.utils import _domain_to_bounds
 from . import cube
 from . import CubeOverlap

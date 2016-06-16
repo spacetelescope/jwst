@@ -2,7 +2,7 @@
 
 from jwst.stpipe import Step
 from .. import datamodels
-from jwst.dq_init import dq_initialization
+from . import dq_initialization
 
 class DQInitStep(Step):
     """
