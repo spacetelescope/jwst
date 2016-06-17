@@ -1271,7 +1271,7 @@ class CreatePSF:
 
         # End corrections
         # Values at lambda1
-        fine1 =  (fine[lf1] * (lfine[lf1 + 1] - lambda1) + fine[lf1 + 1] * (lambda1 - lfine[lf1])) / \
+        fine1 = (fine[lf1] * (lfine[lf1 + 1] - lambda1) + fine[lf1 + 1] * (lambda1 - lfine[lf1])) / \
               (lfine[lf1 + 1] - lfine[lf1])
         coarse1 = (coarse[lc1] * (lcoarse[lc1 + 1] - lambda1) + coarse[lc1 + 1] * (lambda1 - lcoarse[lc1])) / \
                 (lcoarse[lc1 + 1] - lcoarse[lc1])
@@ -1285,7 +1285,7 @@ class CreatePSF:
 
 
         # Values at lambda2
-        fine2 =  (fine[lf2 - 1] * (lfine[lf2] - lambda2) + fine[lf2] * (lambda2 - lfine[lf2 - 1])) / \
+        fine2 = (fine[lf2 - 1] * (lfine[lf2] - lambda2) + fine[lf2] * (lambda2 - lfine[lf2 - 1])) / \
               (lfine[lf2] - lfine[lf2 - 1])
         coarse2 = (coarse[lc2 - 1] * (lcoarse[lc2] - lambda2) + coarse[lc2] * (lambda2 - lcoarse[lc2 - 1])) / \
                 (lcoarse[lc2] - lcoarse[lc2 - 1])
