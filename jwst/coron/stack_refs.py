@@ -15,7 +15,7 @@ log.setLevel(logging.DEBUG)
 def make_cube(input_table):
     """
     make_cube: Stack individual coronagraphic PSF reference images into a
-    jwst_lib.CubeModel, for use in LOCI/KLIP processing.
+    jwst.datamodels.CubeModel, for use in LOCI/KLIP processing.
     """
 
     # Get the number of input images

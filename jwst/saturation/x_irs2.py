@@ -11,7 +11,7 @@ import numpy as np
         to_irs2.
         n and r can be specified as keyword arguments to override the
         default values.  This option is primarily useful if `input_model`
-        is a numpy.ndarray rather than a jwst_lib.models object.
+        is a numpy.ndarray rather than a jwst.datamodels object.
     shape = normal_shape(input_model, n=n, r=r)
         The shape of the data array when excluding interleaved reference
         pixels.
@@ -21,7 +21,7 @@ import numpy as np
     to_irs2(irs2_data, normal_data, mask, detector)
         Insert an array of normal pixels back into data in IRS2 format.
 
-    Note that `input_model` may be either a jwst_lib.models object or a
+    Note that `input_model` may be either a jwst.datamodels object or a
     numpy.ndarray (though in the latter case the parameters will be
     assigned default values, unless specified explicitly).
 """
