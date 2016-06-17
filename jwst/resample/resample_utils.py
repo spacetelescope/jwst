@@ -9,7 +9,7 @@ from gwcs import wcstools
 
 from jwst import assign_wcs
 
-DEFAULT_DOMAIN = {'lower':None,'upper':None,'includes_lower':True, 'includes_upper':False}
+DEFAULT_DOMAIN = {'lower': None, 'upper': None, 'includes_lower': True, 'includes_upper': False}
 
 def make_output_wcs(input_models):
     """ Generate output WCS here based on footprints of all input WCS objects
@@ -17,21 +17,21 @@ def make_output_wcs(input_models):
     ----------
     input_models : ModelContainer or list
         ModelContainer or list of ImageModels for all input images to be combined
-        
+
     Returns
     -------
     output_wcs : object
         WCS object, with defined domain, covering entire set of input frames
-        
+
     """
     wcslist = [i.meta.wcs for i in input_models]
-    for w,i in zip(wcslist,input_models):
+    for w, i in zip(wcslist, input_models):
         if w.domain is None:
-           w.domain = create_domain(w,i.data.shape)
+            w.domain = create_domain(w, i.data.shape)
 
     output_wcs = assign_wcs.util.wcs_from_footprints(wcslist)
     data_size = build_size_from_domain(output_wcs.domain)
-    output_wcs.data_size = (data_size[1],data_size[0])
+    output_wcs.data_size = (data_size[1], data_size[0])
     return output_wcs
 
 def define_wcslin(model):
@@ -40,8 +40,8 @@ def define_wcslin(model):
     from jwst.assign_wcs import jwcs
     hdr = model.storage.get_fits_header('PRIMARY')
     return jwcs.JWSTWCS(model.meta, hdr)
-   
-def create_domain(wcs,shape):
+
+def create_domain(wcs, shape):
     """ Create domain for WCS based on shape of model data.
     """
     wcs_domain = []
@@ -59,14 +59,14 @@ def build_size_from_domain(domain):
     for axs in domain:
         delta = axs['upper'] - axs['lower']
         #for i in [axs['includes_lower'], axs['includes_upper']]: delta += 1
-        size.append(int(delta+0.5))
+        size.append(int(delta + 0.5))
     return tuple(size)
 
 def calc_gwcs_pixmap(in_wcs, out_wcs):
 
     g = wcstools.grid_from_domain(in_wcs.domain)
 
-    pixmap_tuple = reproject(in_wcs,out_wcs)(g[1],g[0])
+    pixmap_tuple = reproject(in_wcs, out_wcs)(g[1], g[0])
     pixmap = np.dstack(pixmap_tuple)
     return pixmap
 

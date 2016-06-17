@@ -26,11 +26,11 @@ class HlspStep(Step):
         with datamodels.ImageModel(target) as target_model:
 
             # Create a signal-to-noise ratio image
-            self.log.info ('Creating SNR image')
+            self.log.info('Creating SNR image')
             snr = hlsp.snr_image(target_model)
 
             # Create a contrast curve
-            self.log.info ('Creating contrast curve')
+            self.log.info('Creating contrast curve')
             contrast = hlsp.contrast_curve(target_model, width)
 
         # Save the SNR output file
@@ -51,4 +51,3 @@ class HlspStep(Step):
 
 if __name__ == '__main__':
     cmdline.step_script(HlspStep)
-

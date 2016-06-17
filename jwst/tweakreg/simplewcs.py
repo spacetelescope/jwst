@@ -138,7 +138,7 @@ class SimpleWCS(object):
 
     def _compose_stdwcs_transform(self):
         shift = self._shift_x & self._shift_y
-        scale = self._scale_x &  self._scale_y
+        scale = self._scale_x & self._scale_y
         return (shift | self._affine | scale | self._proj | self._skyrot)
 
     def strip_nonstd_wcs(self):
@@ -182,7 +182,7 @@ class SimpleWCS(object):
         frm1 = getattr(self._wcs, frmname1)
         frm2 = getattr(self._wcs, frmname2)
         shift = self._shift_x & self._shift_y
-        scale = self._scale_x &  self._scale_y
+        scale = self._scale_x & self._scale_y
         tran = (shift | self._affine | scale | self._proj | self._skyrot)
         return gwcs.wcs.WCS([(frm1, tran), (frm2, None)], name=self._wcs.name)
 
@@ -348,8 +348,8 @@ def _deriv(tr, x0, y0, dx, dy):
     tp = np.asanyarray(tr(p[:, 0], p[:, 1])).T # transformed points
 
     # derivative with regard to x:
-    u1 = ((tp[1] - tp[4]) + 8 * (tp[3] - tp[2])) / (6*dx)
+    u1 = ((tp[1] - tp[4]) + 8 * (tp[3] - tp[2])) / (6 * dx)
     # derivative with regard to y:
-    u2 = ((tp[5] - tp[8]) + 8 * (tp[7] - tp[6])) / (6*dy)
+    u2 = ((tp[5] - tp[8]) + 8 * (tp[7] - tp[6])) / (6 * dy)
 
     return (np.asarray([u1, u2]).T, tp[0])

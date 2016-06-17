@@ -35,12 +35,12 @@ def extract2d(input_model, which_subarray=None):
     output_model.update(input_model)
 
     _, wrange = nirspec.spectral_order_wrange_from_model(input_model)
-    
+
     if exp_type == 'NRS_FIXEDSLIT':
         slit_names = [nirspec.slit_id2name[tuple(slit)] for slit in open_slits]
     else:
         slit_names = [str(slit) for slit in open_slits]
-    for slit, slit_name in zip (open_slits, slit_names):
+    for slit, slit_name in zip(open_slits, slit_names):
         slit_wcs = nirspec.nrs_wcs_set_input(input_model.meta.wcs, slit[0], slit[1], wrange)
         if (input_model.meta.subarray.ystart is not None):
             xlo, xhi, ylo, yhi = _adjust_subarray(input_model, slit_wcs)
@@ -53,9 +53,9 @@ def extract2d(input_model, which_subarray=None):
         log.info('Subarray x-extents are: %s %s', xlo, xhi)
         log.info('Subarray y-extents are: %s %s', ylo, yhi)
 
-        ext_data = input_model.data[ylo : yhi+1, xlo : xhi+1].copy()
-        ext_err  = input_model.err [ylo : yhi+1, xlo : xhi+1].copy()
-        ext_dq   = input_model.dq  [ylo : yhi+1, xlo : xhi+1].copy()
+        ext_data = input_model.data[ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_err = input_model.err[ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_dq = input_model.dq[ylo: yhi + 1, xlo: xhi + 1].copy()
         new_model = models.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
         shape = ext_data.shape
         domain = [{'lower': -0.5, 'upper': shape[1] + 0.5, 'includes_lower': True, 'includes_upper': False},
@@ -68,9 +68,9 @@ def extract2d(input_model, which_subarray=None):
         nslit = len(output_model.slits) - 1
         output_model.slits[nslit].name = slit_name
         output_model.slits[nslit].xstart = input_model.meta.subarray.xstart + xlo
-        output_model.slits[nslit].xsize  = xhi - xlo + 1
+        output_model.slits[nslit].xsize = xhi - xlo + 1
         output_model.slits[nslit].ystart = input_model.meta.subarray.ystart + ylo
-        output_model.slits[nslit].ysize  = yhi - ylo + 1
+        output_model.slits[nslit].ysize = yhi - ylo + 1
     del input_model
     #del output_model.meta.wcs
     # Set the step status to COMPLETE
@@ -91,5 +91,3 @@ def _adjust_subarray(input_model, slit_wcs):
     xhi -= deltax
 
     return xlo, xhi, ylo, yhi
-
-

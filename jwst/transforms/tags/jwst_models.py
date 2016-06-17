@@ -13,7 +13,7 @@ from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
 
 
 
-__all__ = ['GratingEquationType',  'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
+__all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
            'Gwa2SlitType', 'Slit2MsaType']
 
 

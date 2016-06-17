@@ -181,21 +181,21 @@ def make_mask(input_model, n=None, r=None):
         # The interspersed reference pixels are in the same locations
         # regardless of readout direction.
         for i in range(refout + n_norm // 2, irs2_nx + 1, n_norm + n_ref):
-            irs2_mask[i:i+n_ref] = False
+            irs2_mask[i:i + n_ref] = False
     else:
         # Set the flags for each readout direction separately.
         nelem = (irs2_nx - refout) // 4         # number of elements per output
         temp = np.ones(nelem, dtype=np.bool)
         for i in range(n_norm // 2, nelem + 1, n_norm + n_ref):
-            temp[i:i+n_ref] = False
+            temp[i:i + n_ref] = False
         j = refout
-        irs2_mask[j:j+nelem] = temp.copy()
+        irs2_mask[j:j + nelem] = temp.copy()
         j = refout + nelem
-        irs2_mask[j+nelem-1:j-1:-1] = temp.copy()
+        irs2_mask[j + nelem - 1:j - 1:-1] = temp.copy()
         j = refout + 2 * nelem
-        irs2_mask[j:j+nelem] = temp.copy()
+        irs2_mask[j:j + nelem] = temp.copy()
         j = refout + 3 * nelem
-        irs2_mask[j+nelem-1:j-1:-1] = temp.copy()
+        irs2_mask[j + nelem - 1:j - 1:-1] = temp.copy()
 
     return irs2_mask
 

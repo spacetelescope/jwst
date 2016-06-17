@@ -42,10 +42,10 @@ class CSVConvertScript(object):
         parser.add_argument('-c', '--comments', type=str,
                             default=defaults['comments'],
                             help='Regular expression of initial characters that indicate comment lines. Default: "%(default)s"')
-        parser.add_argument('-s','--header-search', type=str,
+        parser.add_argument('-s', '--header-search', type=str,
                             default=defaults['header_search'],
                             help='Regular expression to pull the keyword and value from a comment. Default: "%(default)s"')
-        parser.add_argument('-d', '--delimiter', type=str, 
+        parser.add_argument('-d', '--delimiter', type=str,
                             default=defaults['delimiter'],
                             help='Single character delimiter to distinguish columns. Default: "%(default)s"')
         parsed = parser.parse_args(args=args)
@@ -60,7 +60,7 @@ class CSVConvertScript(object):
         self.table = csv_to_table(parsed.csvfile, **kwargs)
         self.format = None
         if parsed.format == 'json':
-            self.output = table_to_json(self.table, 
+            self.output = table_to_json(self.table,
                                         separators=self.json_separators,
                                         indent=self.json_indent)
             with open(parsed.outfile, 'w') as outfile:
@@ -81,7 +81,7 @@ def get_default_args(func):
     '''Retrieve the defaults for arguments of a given fucntion.'''
 
     args = inspect.getargspec(func)
-    return dict(list(zip(args.args[-len(args.defaults):],args.defaults)))
+    return dict(list(zip(args.args[-len(args.defaults):], args.defaults)))
 
 
 #******

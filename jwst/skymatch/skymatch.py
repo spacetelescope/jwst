@@ -471,7 +471,7 @@ def _overlap_matrix(images, apply_sky=True):
     W = np.zeros((ns, ns), dtype=float)
 
     for i in range(ns):
-        for j in range(i+1, ns):
+        for j in range(i + 1, ns):
             s1, w1, area1 = images[i].calc_sky(
                 overlap=images[j], delta=apply_sky
             )
@@ -483,10 +483,10 @@ def _overlap_matrix(images, apply_sky=True):
             if area1 == 0.0 or area2 == 0.0 or s1 is None or s2 is None:
                 continue
 
-            A[j,i] = s1
-            W[j,i] = w1
-            A[i,j] = s2
-            W[i,j] = w2
+            A[j, i] = s1
+            W[j, i] = w1
+            A[i, j] = s2
+            W[i, j] = w2
 
     return A, W
 
@@ -496,7 +496,7 @@ def _find_optimum_sky_deltas(images, apply_sky=True):
     A, W = _overlap_matrix(images, apply_sky=apply_sky)
 
     def is_valid(i, j):
-        return (W[i,j] > 0 and W[j,i] > 0)
+        return (W[i, j] > 0 and W[j, i] > 0)
 
     # We need to know how many "non-trivial" (at least for now... - we will
     # compute rank later) equations can be built so that we know the
@@ -506,7 +506,7 @@ def _find_optimum_sky_deltas(images, apply_sky=True):
     # considered):
     neq = 0
     for i in range(ns):
-        for j in range(i+1, ns):
+        for j in range(i + 1, ns):
             if is_valid(i, j):
                 neq += 1
 
@@ -521,17 +521,17 @@ def _find_optimum_sky_deltas(images, apply_sky=True):
     # now process intersections between the rest of the images:
     ieq = 0
     for i in range(0, ns):
-        for j in range(i+1, ns):
+        for j in range(i + 1, ns):
             if is_valid(i, j):
-                K[ieq,i] = Wm[i,j]
-                K[ieq,j] = -Wm[i,j]
-                F[ieq] = Wm[i,j] * (A[j,i]-A[i,j])
+                K[ieq, i] = Wm[i, j]
+                K[ieq, j] = -Wm[i, j]
+                F[ieq] = Wm[i, j] * (A[j, i] - A[i, j])
                 invalid[i] = False
                 invalid[j] = False
                 ieq += 1
 
     rank = np.linalg.matrix_rank(K, 1.0e-12)
-    if rank < ns-1:
+    if rank < ns - 1:
         log.warning("There are more unknown sky values ({}) to be solved for"
                     .format(ns))
         log.warning("than there are independent equations available "

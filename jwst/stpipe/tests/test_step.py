@@ -157,7 +157,7 @@ def test_step_with_local_class():
     step_fn = join(dirname(__file__), 'steps', 'local_class.cfg')
     step = Step.from_config_file(step_fn)
 
-    step.run(np.array([[0,0]]))
+    step.run(np.array([[0, 0]]))
 
 
 #@raises(ValidationError)

@@ -26,7 +26,7 @@ class DMS_Level2b_Base(Association):
         # I am defined by the following constraints
         self.add_constraints({
             'pointing_type': {
-                'value':  'SCIENCE',
+                'value': 'SCIENCE',
                 'inputs': ['PNTGTYPE']
             },
             'program': {
@@ -34,15 +34,15 @@ class DMS_Level2b_Base(Association):
                 'inputs': ['PROGRAM']
             },
             'opt_elem': {
-                'value':  None,
+                'value': None,
                 'inputs': ['FILTER']
             },
             'detector': {
-                'value':  '(?!NULL).+',
+                'value': '(?!NULL).+',
                 'inputs': ['DETECTOR']
             },
             'target_name': {
-                'value':  None,
+                'value': None,
                 'inputs': ['TARGNAME']
             },
         })
@@ -165,7 +165,7 @@ class Asn_MIRI_LRS_BKGNOD(DMS_Level2b_Base):
         # Setup for checking.
         self.add_constraints({
             'instrument': {
-                'value':  'MIRI',
+                'value': 'MIRI',
                 'inputs': ['INSTRUME']
             },
             'patttype': {

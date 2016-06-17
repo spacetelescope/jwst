@@ -16,14 +16,14 @@ def table_to_hdulist(table):
     astropy.io.fits.HDUlist
         The HDUlist.
     '''
-        
+
     # Create the Primary HDU
     fits_header = fits.Header()
     fits_header.update(table.meta)
     hdu_primary = fits.PrimaryHDU(header=fits_header)
-    
+
     # Create the Table HDU
     hdu_table = fits.TableHDU(np.array(table))
-    
+
     # Put it all together.
     return fits.HDUList([hdu_primary, hdu_table])

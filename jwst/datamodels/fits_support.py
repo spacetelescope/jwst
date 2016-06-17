@@ -381,7 +381,7 @@ def _save_history(hdulist, tree):
 
 def _tag_values(tree, schema):
     # Replace tag value in tree with tagged versions
-    
+
     def included(cursor, part):
         if isinstance(part, int):
             return part > 0 and part < len(cursor)
@@ -411,7 +411,7 @@ def to_fits(tree, schema, extensions=None):
     _save_from_schema(hdulist, tree, schema)
     _save_extra_fits(hdulist, tree)
     _save_history(hdulist, tree)
-    
+
     asdf = fits_embed.AsdfInFits(hdulist, tree, extensions=extensions)
     return asdf
 

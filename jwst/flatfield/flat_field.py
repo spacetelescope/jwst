@@ -12,7 +12,7 @@ from .. datamodels import dqflags
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-def do_correction (input_model, flat_model, flat_suffix=None):
+def do_correction(input_model, flat_model, flat_suffix=None):
     """
     Short Summary
     -------------
@@ -61,7 +61,7 @@ def do_slit_flat_field(output_model, flat_model):
     Short Summary
     -------------
     Apply flat-fielding for the slit (not MSA) mode, updating the output model.
- 
+
     Parameters
     ----------
     output_model: JWST data model
@@ -82,11 +82,11 @@ def do_slit_flat_field(output_model, flat_model):
     # Check for a single image in the flat model
     if len(flat_model.slits) == 1 and flat_model.slits[0].name == None:
         # Populate slit attributes that will be needed later
-        flat_model.slits[0].name   = flat_model.meta.subarray.name
+        flat_model.slits[0].name = flat_model.meta.subarray.name
         flat_model.slits[0].xstart = flat_model.meta.subarray.xstart
         flat_model.slits[0].ystart = flat_model.meta.subarray.ystart
-        flat_model.slits[0].xsize  = flat_model.meta.subarray.xsize
-        flat_model.slits[0].ysize  = flat_model.meta.subarray.ysize
+        flat_model.slits[0].xsize = flat_model.meta.subarray.xsize
+        flat_model.slits[0].ysize = flat_model.meta.subarray.ysize
 
     # Apply flat to simple ImageModels
     if isinstance(output_model, datamodels.ImageModel):
@@ -97,7 +97,7 @@ def do_slit_flat_field(output_model, flat_model):
 
     # Apply flat to MultiSlits
     elif isinstance(output_model, datamodels.MultiSlitModel):
-        
+
         # Retrieve and apply flat to each slit contained in the input
         for slit in output_model.slits:
             log.info('Retrieving flat for slit %s' % (slit.name))
@@ -109,18 +109,18 @@ def do_slit_flat_field(output_model, flat_model):
     # Apply flat to multiple-integration dataset
     elif isinstance(output_model, datamodels.CubeModel):
         sci_data = output_model.data
-        nints = sci_data.shape[0]   # number of integrations   
+        nints = sci_data.shape[0]   # number of integrations
 
         #  Loop over integrations to flat field each
-        for integ in range( nints ):
-            data_slice = sci_data[ integ,:,:]
+        for integ in range(nints):
+            data_slice = sci_data[integ, :, :]
 
-            # Create model for integration's data, w/needed subarray metadata 
-            integ_model = datamodels.ImageModel( data_slice )
-            integ_model.update( output_model )
+            # Create model for integration's data, w/needed subarray metadata
+            integ_model = datamodels.ImageModel(data_slice)
+            integ_model.update(output_model)
 
             log.info('Retrieving flat for integration %s' % (integ))
-            flat = get_flat(integ_model, flat_model)       
+            flat = get_flat(integ_model, flat_model)
             if flat != None:
                 apply_flat_field(integ_model, flat)
                 any_updated = True
@@ -151,7 +151,7 @@ def get_flat(slit, flat_model):
     flat: 2D array
         flat field array for output model
     """
- 
+
     if len(flat_model.slits) == 1:
         return flat_model.slits[0]
     else:
@@ -167,7 +167,7 @@ def get_flat(slit, flat_model):
             return None
 
 
-def apply_flat_field (science, flat ):
+def apply_flat_field(science, flat):
     """
     Short Summary
     -------------
@@ -190,13 +190,13 @@ def apply_flat_field (science, flat ):
 
     # If the input science data model is a subarray, extract the same
     # subarray from the flatfield model
-    if ref_matches_sci (flat, science):
+    if ref_matches_sci(flat, science):
         flat_data = flat.data
-        flat_dq   = flat.dq
-    else: 
+        flat_dq = flat.dq
+    else:
         log.info("Extracting matching subarray from flat")
         flat_data = get_subarray(flat.data, science)
-        flat_dq   = get_subarray(flat.dq, science)
+        flat_dq = get_subarray(flat.dq, science)
 
     # For pixels whose flat is either NaN or NO_FLAT_FIELD, update their DQ to
     # indicate that no flat is applied to those pixels
@@ -204,22 +204,22 @@ def apply_flat_field (science, flat ):
                                                  dqflags.pixel['NO_FLAT_FIELD'])
 
     # Replace NaN's in flat with 1's
-    flat_data[np.isnan(flat_data)] = 1.0 
+    flat_data[np.isnan(flat_data)] = 1.0
 
     # Reset flat values of pixels having DQ values containing NO_FLAT_FIELD
-    # to 1.0, so that no flat fielding correction is made 
-    wh_dq = np.bitwise_and( flat_dq, dqflags.pixel['NO_FLAT_FIELD'])
-    flat_data[ wh_dq == dqflags.pixel['NO_FLAT_FIELD'] ] = 1.0  
+    # to 1.0, so that no flat fielding correction is made
+    wh_dq = np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD'])
+    flat_data[wh_dq == dqflags.pixel['NO_FLAT_FIELD']] = 1.0
 
     # Flatten data and error arrays
     science.data /= flat_data
-    science.err  /= flat_data
+    science.err /= flat_data
 
     # Combine the science and flat DQ arrays
     science.dq = np.bitwise_or(science.dq, flat_dq)
 
 
-def ref_matches_sci (ref_model, sci_model):
+def ref_matches_sci(ref_model, sci_model):
     """
     Short Summary
     -------------
@@ -243,14 +243,14 @@ def ref_matches_sci (ref_model, sci_model):
     # Get the science model subarray parameters
     try:
         xstart = sci_model.xstart
-        xsize  = sci_model.xsize
+        xsize = sci_model.xsize
         ystart = sci_model.ystart
-        ysize  = sci_model.ysize
+        ysize = sci_model.ysize
     except:
         xstart = sci_model.meta.subarray.xstart
-        xsize  = sci_model.meta.subarray.xsize
+        xsize = sci_model.meta.subarray.xsize
         ystart = sci_model.meta.subarray.ystart
-        ysize  = sci_model.meta.subarray.ysize
+        ysize = sci_model.meta.subarray.ysize
 
     log.debug(' sci xstart=%d, xsize=%d', xstart, xsize)
     log.debug(' sci ystart=%d, ysize=%d', ystart, ysize)
@@ -258,8 +258,8 @@ def ref_matches_sci (ref_model, sci_model):
     log.debug(' ref ystart=%d, ysize=%d', ref_model.ystart, ref_model.ysize)
 
     # See if they match the reference model subarray parameters
-    if (ref_model.xstart==xstart and ref_model.xsize==xsize and
-        ref_model.ystart==ystart and ref_model.ysize==ysize):
+    if (ref_model.xstart == xstart and ref_model.xsize == xsize and
+        ref_model.ystart == ystart and ref_model.ysize == ysize):
         return True
     else:
         return False
@@ -289,20 +289,20 @@ def get_subarray(input_array, sci_model):
     # Get the science model subarray parameters
     try:
         xstart = sci_model.xstart
-        xsize  = sci_model.xsize
+        xsize = sci_model.xsize
         ystart = sci_model.ystart
-        ysize  = sci_model.ysize
-    except:  
+        ysize = sci_model.ysize
+    except:
         xstart = sci_model.meta.subarray.xstart
-        xsize  = sci_model.meta.subarray.xsize
+        xsize = sci_model.meta.subarray.xsize
         ystart = sci_model.meta.subarray.ystart
-        ysize  = sci_model.meta.subarray.ysize
+        ysize = sci_model.meta.subarray.ysize
 
     # Compute the slicing indexes
     xstart = xstart - 1
-    xstop  = xstart + xsize
+    xstop = xstart + xsize
     ystart = ystart - 1
-    ystop  = ystart + ysize
+    ystop = ystart + ysize
 
     # Return the slice from the input array
     return input_array[ystart:ystop, xstart:xstop]
@@ -501,13 +501,13 @@ def interpolate_flat(flat_val, flat_dq, flat_wl, wl, direction):
 
     for j in range(ysize):
         for i in range(xsize):
-            compr_val[0:num_k[j,i], j, i] = np.compress(not_flagged[:, j, i],
+            compr_val[0:num_k[j, i], j, i] = np.compress(not_flagged[:, j, i],
                                                         flat_val[:, j, i],
                                                         axis=0)
-            compr_wl[0:num_k[j,i], j, i] = np.compress(not_flagged[:, j, i],
+            compr_wl[0:num_k[j, i], j, i] = np.compress(not_flagged[:, j, i],
                                                        flat_wl[:, j, i],
                                                        axis=0)
-            compr_dq[0:num_k[j,i], j, i] = np.compress(not_flagged[:, j, i],
+            compr_dq[0:num_k[j, i], j, i] = np.compress(not_flagged[:, j, i],
                                                        flat_dq[:, j, i],
                                                        axis=0)
 
@@ -542,10 +542,10 @@ def interpolate_flat(flat_val, flat_dq, flat_wl, wl, direction):
     for k_test in range(k_max_max):
         if direction > 0:
             test1 = np.logical_and(wl >= compr_wl[k_test, :, :],
-                                   wl <  compr_wl[k_test+1, :, :])
+                                   wl < compr_wl[k_test + 1, :, :])
         else:
             test1 = np.logical_and(wl <= compr_wl[k_test, :, :],
-                                   wl >  compr_wl[k_test+1, :, :])
+                                   wl > compr_wl[k_test + 1, :, :])
         # If an element of k is not -1, it has already been assigned, and
         # I don't want to clobber it.
         test2 = np.logical_and(k == -1, test1)
@@ -568,18 +568,18 @@ def interpolate_flat(flat_val, flat_dq, flat_wl, wl, direction):
 
     # Use linear interpolation within the 3-D flat field to get a 2-D
     # flat field.
-    denom = compr_wl[k+1, iypixel, ixpixel] - compr_wl[k, iypixel, ixpixel]
+    denom = compr_wl[k + 1, iypixel, ixpixel] - compr_wl[k, iypixel, ixpixel]
     zero_denom = (denom == 0.)
     denom = np.where(zero_denom, 1., denom)
     q = np.where(zero_denom, 0.,
                  (wl - compr_wl[k, iypixel, ixpixel]) / denom)
     p = 1. - q
     flat_2d = p * compr_val[k, iypixel, ixpixel] + \
-              q * compr_val[k+1, iypixel, ixpixel]
+              q * compr_val[k + 1, iypixel, ixpixel]
     flat_dq_2d = np.where(q == 0.,
                           compr_dq[k, iypixel, ixpixel],
                           np.bitwise_or(compr_dq[k, iypixel, ixpixel],
-                                        compr_dq[k+1, iypixel, ixpixel]))
+                                        compr_dq[k + 1, iypixel, ixpixel]))
     del p, q, denom
 
     # If the wavelength is out of range, set the 2-D flat field to 1,

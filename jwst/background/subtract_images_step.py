@@ -64,4 +64,3 @@ class SubtractImagesStep(Step):
 
         # We're done. Return the result.
         return result
-

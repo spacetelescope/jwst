@@ -21,5 +21,3 @@ test_models = [DirCos2Unitless(), Unitless2DirCos(), NRSZCoord(),
 def test_model(tmpdir, model):
     tree = {'model': model}
     helpers.assert_roundtrip_tree(tree, tmpdir, extensions=jwextension.JWSTExtension())
-
-

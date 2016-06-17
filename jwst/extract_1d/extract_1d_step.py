@@ -25,7 +25,7 @@ class Extract1dStep(Step):
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
 
-        if isinstance(input_model, datamodels.CubeModel): 
+        if isinstance(input_model, datamodels.CubeModel):
             # It's a 3-D multi-integration model
             self.log.debug('Input is a CubeModel for a multiple integ. file')
         elif isinstance(input_model, datamodels.ImageModel):
@@ -36,7 +36,7 @@ class Extract1dStep(Step):
             self.log.debug('Input is a MultiSlitModel')
             input_model.close()
             input_model = datamodels.MultiSlitModel(input)
-        
+
         # Get the reference file name
         self.ref_file = self.get_reference_file(input_model, 'extract1d')
         self.log.info('Using EXTRACT1D reference file %s', self.ref_file)

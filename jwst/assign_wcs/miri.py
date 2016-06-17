@@ -37,8 +37,8 @@ def imaging(input_model, reference_files):
 
     reference_files={'distortion': 'test.asdf', 'filter_offsets': 'filter_offsets.asdf'}
     """
-    detector = cf.Frame2D(name='detector', axes_order=(0,1), unit=(u.pix, u.pix))
-    focal = cf.Frame2D(name='focal', axes_order=(0,1), unit=(u.arcmin, u.arcmin))
+    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+    focal = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
     sky = cf.CelestialFrame(reference_frame=coord.ICRS())
     distortion = imaging_distortion(input_model, reference_files)
     fitswcs_transform = pointing.create_fitswcs_transform(input_model)
@@ -89,8 +89,8 @@ def lrs(input_model, reference_files):
 
     reference_files = {"specwcs": 'MIRI_FM_MIRIMAGE_P750L_DISTORTION_04.02.00.fits'}
     """
-    detector = cf.Frame2D(name='detector', axes_order=(0,1), unit=(u.pix, u.pix))
-    focal_spatial = cf.Frame2D(name='focal', axes_order=(0,1), unit=(u.arcmin, u.arcmin))
+    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+    focal_spatial = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
     sky = cf.CelestialFrame(reference_frame=coord.ICRS())
     spec = cf.SpectralFrame(name='wavelength', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     focal = cf.CompositeFrame([focal_spatial, spec])
@@ -103,13 +103,13 @@ def lrs(input_model, reference_files):
         #zero_point = ref[1].header['imysltl'], ref[1].header['imxsltl']
         #zero point in reference file is wrong
         # This should eb moved eventually to the reference file.
-        zero_point = [35,442]#[35, 763] # account for subarray
+        zero_point = [35, 442]#[35, 763] # account for subarray
     lrsdata = np.array([l for l in ldata])
     x0 = lrsdata[:, 3]
     x1 = lrsdata[:, 5]
     y0 = lrsdata[:, 4]
-    domain = [{'lower': x0.min()+zero_point[0], 'upper': x1.max()+zero_point[0]},
-              {'lower': (y0.min() + zero_point[1]), 'upper': (y0.max()+zero_point[1])}
+    domain = [{'lower': x0.min() + zero_point[0], 'upper': x1.max() + zero_point[0]},
+              {'lower': (y0.min() + zero_point[1]), 'upper': (y0.max() + zero_point[1])}
               ]
     log.info("Setting domain to {0}".format(domain))
     lrs_wav_model = jwmodels.LRSWavelength(lrsdata, zero_point)
@@ -135,7 +135,7 @@ def ifu(input_model, reference_files):
                         #'regions': 'jwst_miri_regions_00001.asdf',
                         #'v2v3': 'jwst_miri_v2v3_00001.asdf'
                         #'wavelengthrange': 'jwst_miri_wavelengthrange_0001.asdf'}
-    detector = cf.Frame2D(name='detector', axes_order=(0,1), unit=(u.pix, u.pix))
+    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     alpha_beta = cf.Frame2D(name='alpha_beta_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec), axes_names=('alpha', 'beta'))
     spec_local = cf.SpectralFrame(name='alpha_beta_spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     miri_focal = cf.CompositeFrame([alpha_beta, spec_local], name='alpha_beta')
@@ -218,7 +218,7 @@ def detector_to_alpha_beta(input_model, reference_files):
     ch_dict = {}
     for c in channels:
         ch_dict.update({tuple(wr[c]): selector.LabelMapperDict(('alpha', 'beta', 'lam'), slice_model[c],
-                                                   models.Mapping([1,], n_inputs=3))})
+                                                   models.Mapping([1, ], n_inputs=3))})
     alpha_beta_mapper = selector.LabelMapperRange(('alpha', 'beta', 'lam'), ch_dict,
                                                   models.Mapping((2,)))
     label_mapper.inverse = alpha_beta_mapper
@@ -282,7 +282,7 @@ def alpha_beta2XanYan(input_model, reference_files):
         sel[ch] = v23c
 
     wave_range_mapper = selector.LabelMapperRange(('alpha', 'beta', 'lam'), dict_mapper,
-                                                  inputs_mapping=models.Mapping([2,]))
+                                                  inputs_mapping=models.Mapping([2, ]))
     wave_range_mapper.inverse = wave_range_mapper.copy()
     ab2xyan = selector.RegionsSelector(('alpha', 'beta', 'lam'), ('v2', 'v3', 'lam'),
                                       label_mapper=wave_range_mapper,
@@ -290,8 +290,8 @@ def alpha_beta2XanYan(input_model, reference_files):
 
     return ab2xyan
 
-exp_type2transform = {'mir_image' : imaging,
-                      'mir_tacq':  imaging,
+exp_type2transform = {'mir_image': imaging,
+                      'mir_tacq': imaging,
                       'mir_lyot': imaging,
                       'mir_4qpm': imaging,
                       'mir_coroncal': imaging,

@@ -33,11 +33,11 @@ class LoadPsfRefs(object):
        input and output member info into a table model.
     """
 
-    def __init__(self,input):
+    def __init__(self, input):
         self.input = input # keep a record of original input name for later
 
-        if isinstance(input,str):
-            self.asn_table = json.load(open(input,'r'))
+        if isinstance(input, str):
+            self.asn_table = json.load(open(input, 'r'))
         else:
             raise TypeError
 
@@ -45,13 +45,13 @@ class LoadPsfRefs(object):
         self.input_filenames = self.get_inputs()
         self.output_filename = self.get_output()
 
-    def get_inputs(self,product=0):
+    def get_inputs(self, product=0):
         members = []
         for p in self.asn_table['products'][product]['members']:
             members.append(p['expname'])
         return members
 
-    def get_output(self,product=0):
+    def get_output(self, product=0):
         return self.asn_table['products'][product]['name']
 
 

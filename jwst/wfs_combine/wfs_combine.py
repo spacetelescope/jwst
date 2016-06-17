@@ -11,8 +11,8 @@ import scipy
 from scipy.interpolate import griddata
 from scipy import signal
 
-log = logging.getLogger( __name__ )
-log.setLevel( logging.DEBUG )
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 # The following should probably be in a ref file instead
 OFF_DELTA = 2  # for searching +/-2 around nominal offsets
@@ -20,13 +20,13 @@ PSF_SIZE = 200 # half width of psf for 12 waves
 BLUR_SIZE = 10  # size of gaussian kernel for convolution
 N_SIZE = 2 # size of neighborhood in create_griddata_array
 
-class DataSet( object ):
+class DataSet(object):
     """
     Two dithered input wavefront sensing images to be combined
 
     """
 
-    def __init__ ( self, infile_1, infile_2, outfile, do_refine ):
+    def __init__(self, infile_1, infile_2, outfile, do_refine):
         """
         Short Summary
         -------------
@@ -48,15 +48,15 @@ class DataSet( object ):
             log.error('No output product specified in the association table.')
 
         try:
-            self.input_1 = datamodels.open( infile_1 )
-            self.input_2 = datamodels.open( infile_2 )
+            self.input_1 = models.open(infile_1)
+            self.input_2 = models.open(infile_2)
         except IOError:
             log.error('Error creating a model from at least 1 of : %s %s ',
                       infile_1, infile_2)
 
         self.do_refine = do_refine
 
-        if ( self.input_1.data.shape != self.input_2.data.shape ):
+        if (self.input_1.data.shape != self.input_2.data.shape):
             log.error('Incompatible sizes for input files')
 
         log.info('File 1 to combine: %s ', infile_1)
@@ -65,7 +65,7 @@ class DataSet( object ):
         log.info('do_refine: %s ', do_refine)
 
 
-    def do_all( self ):
+    def do_all(self):
         """
         Short Summary
         -------------
@@ -82,14 +82,14 @@ class DataSet( object ):
 
         # Input SCI arrays may have nan's so replace with 0's to prevent
         # later annoyances (hopefully this can be removed later)
-        self.input_1.data[ np.isnan( self.input_1.data )] = 0.
-        self.input_2.data[ np.isnan( self.input_2.data )] = 0.
+        self.input_1.data[np.isnan(self.input_1.data)] = 0.
+        self.input_2.data[np.isnan(self.input_2.data)] = 0.
 
         im_1_a = self.input_1.copy()  # Aligned image #1 (already aligned)
         im_2_a = self.create_aligned_2()  # Aligned image #2
 
         # Create and populate extensions for combined data
-        data_c, dq_c, err_c, wcs_1 = self.create_combined( im_1_a, im_2_a )
+        data_c, dq_c, err_c, wcs_1 = self.create_combined(im_1_a, im_2_a)
 
         # Create a new model using the combined arrays...
         new_model = datamodels.ImageModel(data=data_c, dq=dq_c, err=err_c)
@@ -98,7 +98,7 @@ class DataSet( object ):
         return new_model
 
 
-    def create_aligned_2( self ):
+    def create_aligned_2(self):
         """
         Short Summary
         -------------
@@ -140,46 +140,46 @@ class DataSet( object ):
             # 1a. create image to smooth by first setting bad DQ pixels equal
             #     to mean of good pixels
             data_1 = self.input_1.data.copy()
-            wh_bad_1 = np.where( self.input_1.dq != 0 )
-            wh_good_1 = np.where( self.input_1.dq == 0 )
-            data_1[ wh_bad_1 ] = self.input_1.data[ wh_good_1 ].mean()
+            wh_bad_1 = np.where(self.input_1.dq != 0)
+            wh_good_1 = np.where(self.input_1.dq == 0)
+            data_1[wh_bad_1] = self.input_1.data[wh_good_1].mean()
 
             # 1b. Create smoothed image by smoothing this 'repaired' image
-            s_data_1 = smooth_image( data_1, BLUR_SIZE )
+            s_data_1 = smooth_image(data_1, BLUR_SIZE)
 
             # 2. Find approximate center of PSF in umsmoothed frame by taking
             #    all pixels in smoothed image exceeding 50% of the maximum
             #    of the smoothed image, and taking the mean of the coordinates
             #    of these pixels. Add BLUR_SIZE to take smoothing into account
-            wh_data_hi = np.where( s_data_1 > 0.5 * s_data_1.max())
+            wh_data_hi = np.where(s_data_1 > 0.5 * s_data_1.max())
 
             ctrd_x = wh_data_hi[1].mean() + BLUR_SIZE
             ctrd_y = wh_data_hi[0].mean() + BLUR_SIZE
 
             log.info('Approximate centroid of image 1 PSF has x,y : %s %s ', \
-                     round( ctrd_x), round( ctrd_y))
+                     round(ctrd_x), round(ctrd_y))
 
             # 3. Set limits of the subarrays (in frames of input data)
             #    for interpolation by taking this centroid +/- PSF_SIZE
             #    and adding BLUR_SIZE, taking edges into account
-            xmin = round( max( 0, ctrd_x-PSF_SIZE ))
-            ymin = round( max( 0, ctrd_y-PSF_SIZE ))
-            xmax = round( min( self.input_1.data.shape[1], ctrd_x+PSF_SIZE ))
-            ymax = round( min( self.input_1.data.shape[0], ctrd_y+PSF_SIZE ))
+            xmin = round(max(0, ctrd_x - PSF_SIZE))
+            ymin = round(max(0, ctrd_y - PSF_SIZE))
+            xmax = round(min(self.input_1.data.shape[1], ctrd_x + PSF_SIZE))
+            ymax = round(min(self.input_1.data.shape[0], ctrd_y + PSF_SIZE))
 
             # 3a. Set subarrays and interpolate over bad pixels
-            data_sub_1 = self.input_1.data[ ymin : ymax, xmin : xmax ]
-            dq_sub_1 = self.input_1.dq[ ymin : ymax, xmin : xmax ]
-            sci_int_1 = interp_array( data_sub_1, dq_sub_1)
+            data_sub_1 = self.input_1.data[ymin: ymax, xmin: xmax]
+            dq_sub_1 = self.input_1.dq[ymin: ymax, xmin: xmax]
+            sci_int_1 = interp_array(data_sub_1, dq_sub_1)
 
-            data_sub_2 = self.input_2.data[ ymin : ymax, xmin : xmax ]
-            dq_sub_2 = self.input_2.dq[ ymin : ymax, xmin : xmax ]
-            sci_int_2 = interp_array( data_sub_2, dq_sub_2)
+            data_sub_2 = self.input_2.data[ymin: ymax, xmin: xmax]
+            dq_sub_2 = self.input_2.dq[ymin: ymax, xmin: xmax]
+            sci_int_2 = interp_array(data_sub_2, dq_sub_2)
 
             # 4. Determine overlap of these interpolated images, and
             #    return nominally aligned, interpolated images
-            sci_nai_1, sci_nai_2 =  get_overlap( sci_int_1, sci_int_2,
-                                                 self.off_x, self.off_y )
+            sci_nai_1, sci_nai_2 = get_overlap(sci_int_1, sci_int_2,
+                                                 self.off_x, self.off_y)
 
             # 5. Around this nominal alignment, get refined (delta) offsets
             ref_del_off_x, ref_del_off_y = optimize_offs(sci_nai_1, sci_nai_2)
@@ -207,7 +207,7 @@ class DataSet( object ):
         return model_2_a
 
 
-    def apply_final_offsets( self ):
+    def apply_final_offsets(self):
         """
         Short Summary
         -------------
@@ -226,14 +226,14 @@ class DataSet( object ):
             aligned ERR array of image #2
         """
 
-        data_2_a = self.do_2d_shifts( self.input_2.data )
-        dq_2_a = self.do_2d_shifts( self.input_2.dq )
-        err_2_a = self.do_2d_shifts( self.input_2.err )
+        data_2_a = self.do_2d_shifts(self.input_2.data)
+        dq_2_a = self.do_2d_shifts(self.input_2.dq)
+        err_2_a = self.do_2d_shifts(self.input_2.err)
 
         return data_2_a, dq_2_a, err_2_a
 
 
-    def get_wcs_offsets( self ):
+    def get_wcs_offsets(self):
         """
         Short Summary
         -------------
@@ -265,7 +265,7 @@ class DataSet( object ):
         crval2 = crval2_model.lon.value, crval2_model.lat.value
         # exclude the distortion as the inverse does not give sensible numbers yet
         # but may be include it after this is fixed?
-        fits_wcs_transform = self.input_1.meta.wcs.forward_transform['crpix1' : ]
+        fits_wcs_transform = self.input_1.meta.wcs.forward_transform['crpix1':]
         #crpix2_in_1 = self.input_1.meta.wcs.backward_transform(*crval2)
         crpix2_in_1 = fits_wcs_transform.inverse(*crval2)
         crpix = np.array((self.input_1.meta.wcs.forward_transform['crpix1'].offset.value,
@@ -279,13 +279,13 @@ class DataSet( object ):
         log.info('Image 2 has these nominal offsets relative to image 1\
                  (x,y): %s %s', off_x, off_y)
 
-        off_x = int( round( off_x )) # Offsets required to be integers
-        off_y = int( round( off_y ))
+        off_x = int(round(off_x)) # Offsets required to be integers
+        off_y = int(round(off_y))
 
-        return  off_x, off_y
+        return off_x, off_y
 
 
-    def create_combined( self, im_1_a, im_2_a ):
+    def create_combined(self, im_1_a, im_2_a):
         """
         Short Summary
         -------------
@@ -341,17 +341,17 @@ class DataSet( object ):
 
         # Populate combined SCI, DQ and ERR arrays
         data_comb = sci_data_1 * 0  # Pixels that are bad in both will stay 0
-        data_comb[ wh_1_good ] = sci_data_1[ wh_1_good ]
-        data_comb[ wh_1_bad_2_good ] = sci_data_2[ wh_1_bad_2_good ]
+        data_comb[wh_1_good] = sci_data_1[wh_1_good]
+        data_comb[wh_1_bad_2_good] = sci_data_2[wh_1_bad_2_good]
 
         dq_comb = dq_data_1.copy()
-        dq_comb[ wh_1_bad_2_good ] = dq_data_2[ wh_1_bad_2_good ]
-        dq_comb[ wh_1_bad_2_bad ] = np.bitwise_or( dqflags.group['DO_NOT_USE'],
-                                                   dq_comb[ wh_1_bad_2_bad ])
+        dq_comb[wh_1_bad_2_good] = dq_data_2[wh_1_bad_2_good]
+        dq_comb[wh_1_bad_2_bad] = np.bitwise_or(dqflags.group['DO_NOT_USE'],
+                                                   dq_comb[wh_1_bad_2_bad])
 
         err_comb = err_data_1.copy()
-        err_comb[ wh_1_bad_2_good ] = err_data_2[ wh_1_bad_2_good ]
-        err_comb[ wh_1_bad_2_bad ] = 0.
+        err_comb[wh_1_bad_2_good] = err_data_2[wh_1_bad_2_good]
+        err_comb[wh_1_bad_2_bad] = 0.
 
         # Use wcs of input 1 for combination
         wcs_1 = self.input_1.get_fits_wcs('SCI')
@@ -359,7 +359,7 @@ class DataSet( object ):
         return data_comb, dq_comb, err_comb, wcs_1
 
 
-    def do_2d_shifts( self, a ):
+    def do_2d_shifts(self, a):
         """
         Short Summary
         -------------
@@ -377,8 +377,8 @@ class DataSet( object ):
             shifted array of input a
         """
 
-        ai_x, af_x = get_index_range( self.off_x, a.shape[1] )
-        ai_y, af_y = get_index_range( self.off_y, a.shape[0] )
+        ai_x, af_x = get_index_range(self.off_x, a.shape[1])
+        ai_y, af_y = get_index_range(self.off_y, a.shape[0])
 
         bi_x = a.shape[1] - af_x  # For output, x-direction's initial channel
         bf_x = a.shape[1] - ai_x  # ...and final channel
@@ -386,13 +386,13 @@ class DataSet( object ):
         bi_y = a.shape[0] - af_y  # For output, y-direction's initial channel
         bf_y = a.shape[0] - ai_y  # ...and final channel
 
-        b = a*0
-        b[ bi_y:bf_y, bi_x:bf_x ] = a[ ai_y:af_y, ai_x:af_x ]
+        b = a * 0
+        b[bi_y:bf_y, bi_x:bf_x] = a[ai_y:af_y, ai_x:af_x]
 
         return b
 
 
-def gauss_kern( size, sizey=None ):
+def gauss_kern(size, sizey=None):
     """
     Short Summary
     -------------
@@ -411,19 +411,19 @@ def gauss_kern( size, sizey=None ):
         normalized 2D gauss kernel array
 
     """
-    size = int( size )
+    size = int(size)
     if not sizey:
         sizey = size
     else:
-        sizey = int( sizey )
+        sizey = int(sizey)
 
-    x, y = scipy.mgrid[-size:size+1, -sizey:sizey+1]
-    g = scipy.exp(-(x**2/float(size) + y**2/float(sizey)))
+    x, y = scipy.mgrid[-size:size + 1, -sizey:sizey + 1]
+    g = scipy.exp(-(x**2 / float(size) + y**2 / float(sizey)))
 
-    return g/g.sum()
+    return g / g.sum()
 
 
-def smooth_image(im, n, ny=None) :
+def smooth_image(im, n, ny=None):
     """
     Short Summary
     -------------
@@ -450,12 +450,12 @@ def smooth_image(im, n, ny=None) :
 
     """
     g = gauss_kern(n, sizey=ny)
-    improc = signal.convolve( im, g, mode='valid')
+    improc = signal.convolve(im, g, mode='valid')
 
     return improc
 
 
-def interp_array( sci_data, dq_data ):
+def interp_array(sci_data, dq_data):
     """
     Short Summary
     -------------
@@ -476,33 +476,33 @@ def interp_array( sci_data, dq_data ):
         interpolated SCI image
     """
 
-    wh_bad_dq = np.where( dq_data != 0 )
-    num_bad_dq = len( wh_bad_dq[0] )
+    wh_bad_dq = np.where(dq_data != 0)
+    num_bad_dq = len(wh_bad_dq[0])
 
     # Create array of locations of bad DQ pixels
-    bad_dq = np.zeros( (num_bad_dq, 2), dtype= np.int16 )
-    for ii in np.arange( num_bad_dq ):
+    bad_dq = np.zeros((num_bad_dq, 2), dtype=np.int16)
+    for ii in np.arange(num_bad_dq):
         bad_dq[ii] = wh_bad_dq[0][ii], wh_bad_dq[1][ii]
 
     # Loop over bad pixels, filling in missing values with interpolated values
-    for jj in np.arange( num_bad_dq ):
-        ga = create_griddata_array( sci_data, bad_dq[jj] )
+    for jj in np.arange(num_bad_dq):
+        ga = create_griddata_array(sci_data, bad_dq[jj])
 
         x = bad_dq[jj][1]
         y = bad_dq[jj][0]
 
         # Linearly interpolate using scipy's griddata to fill in missing value
-        sci_data[y, x] = griddata( ga[:,0:2],ga[:,2],[(y, x)], method='linear')
+        sci_data[y, x] = griddata(ga[:, 0:2], ga[:, 2], [(y, x)], method='linear')
 
         # For those interpolations just done that result in a nan (because
         #    there may be too few pixels), check and redo with 'nearest'
-        if  np.isnan(sci_data[y, x]):
-            sci_data[y,x]=griddata(ga[:,0:2],ga[:,2],[(y, x)],method='nearest')
+        if np.isnan(sci_data[y, x]):
+            sci_data[y, x] = griddata(ga[:, 0:2], ga[:, 2], [(y, x)], method='nearest')
 
     return sci_data
 
 
-def create_griddata_array( sci_data, pixel ):
+def create_griddata_array(sci_data, pixel):
     """
     Short Summary
     -------------
@@ -528,31 +528,31 @@ def create_griddata_array( sci_data, pixel ):
     ydim = sci_data.shape[0]
 
     # Generate neighborhood limits
-    xmin = max( 0, pixel[1]-N_SIZE )
-    ymin = max( 0, pixel[0]-N_SIZE )
-    xmax = min( xdim-N_SIZE, pixel[1]+N_SIZE )
-    ymax = min( ydim-N_SIZE, pixel[0]+N_SIZE )
+    xmin = max(0, pixel[1] - N_SIZE)
+    ymin = max(0, pixel[0] - N_SIZE)
+    xmax = min(xdim - N_SIZE, pixel[1] + N_SIZE)
+    ymax = min(ydim - N_SIZE, pixel[0] + N_SIZE)
 
     # Make a list for neighboring pixels, containing:
     # 1. coordinates for up to (2*N_SIZE+1)^2-1 neighbors, accounting for edges
     # 2. SCI data
 
     interp_list = []
-    for x in range(xmin, xmax+1):
-        for y in range(ymin, ymax+1):
-            interp_list.append([ y, x, sci_data[ y, x ]])
+    for x in range(xmin, xmax + 1):
+        for y in range(ymin, ymax + 1):
+            interp_list.append([y, x, sci_data[y, x]])
 
     try:  # Remove identity element (central pixel)
-        interp_list.remove([ pixel[0], pixel[1], sci_data[ pixel[0], pixel[1]]])
+        interp_list.remove([pixel[0], pixel[1], sci_data[pixel[0], pixel[1]]])
     except:
         pass
 
-    interp_arr = np.asarray( interp_list )  # griddata requires an array
+    interp_arr = np.asarray(interp_list)  # griddata requires an array
 
-    return  interp_arr
+    return interp_arr
 
 
-def get_index_range( offset, length ):
+def get_index_range(offset, length):
 
     """
     Short Summary
@@ -577,13 +577,13 @@ def get_index_range( offset, length ):
         final index
     """
 
-    i = int((abs(offset) + offset)/2)
-    f = length + int((-abs(offset) + offset)/2)
+    i = int((abs(offset) + offset) / 2)
+    f = length + int((-abs(offset) + offset) / 2)
 
     return i, f
 
 
-def get_overlap( sci_int_1, sci_int_2, nom_off_x, nom_off_y ):
+def get_overlap(sci_int_1, sci_int_2, nom_off_x, nom_off_y):
     """
     Short Summary
     -------------
@@ -635,16 +635,16 @@ def get_overlap( sci_int_1, sci_int_2, nom_off_x, nom_off_y ):
 
     # From the nominal offsets, determine array indices to shift image #2
     #     onto frame #1
-    ix, fx = get_index_range( nom_off_x, sci_int_2.shape[1] )
-    iy, fy = get_index_range( nom_off_y, sci_int_2.shape[0] )
+    ix, fx = get_index_range(nom_off_x, sci_int_2.shape[1])
+    iy, fy = get_index_range(nom_off_y, sci_int_2.shape[0])
 
-    sub_1 = sci_int_1[ :fy-iy, :fx-ix ]
-    sub_2 = sci_int_2[ iy:fy, ix:fx ]
+    sub_1 = sci_int_1[:fy - iy, :fx - ix]
+    sub_2 = sci_int_2[iy:fy, ix:fx]
 
     return sub_1, sub_2
 
 
-def optimize_offs( sci_nai_1, sci_nai_2 ):
+def optimize_offs(sci_nai_1, sci_nai_2):
     """
     Short Summary
     -------------
@@ -670,11 +670,11 @@ def optimize_offs( sci_nai_1, sci_nai_2 ):
 
     max_diff = 0.
 
-    for off_y in range( -OFF_DELTA, OFF_DELTA+1 ):
-        for off_x in range( -OFF_DELTA, OFF_DELTA+1 ):
-            this_diff = calc_cor_coef( sci_nai_1, sci_nai_2, off_x, off_y )
+    for off_y in range(-OFF_DELTA, OFF_DELTA + 1):
+        for off_x in range(-OFF_DELTA, OFF_DELTA + 1):
+            this_diff = calc_cor_coef(sci_nai_1, sci_nai_2, off_x, off_y)
 
-            if ( this_diff > max_diff ):
+            if (this_diff > max_diff):
                 max_diff = this_diff
                 max_off_x = off_x
                 max_off_y = off_y
@@ -682,7 +682,7 @@ def optimize_offs( sci_nai_1, sci_nai_2 ):
     return max_off_x, max_off_y
 
 
-def calc_cor_coef( sci_nai_1, sci_nai_2, off_x, off_y ):
+def calc_cor_coef(sci_nai_1, sci_nai_2, off_x, off_y):
     """
     Short Summary
     -------------
@@ -708,11 +708,11 @@ def calc_cor_coef( sci_nai_1, sci_nai_2, off_x, off_y ):
 
     """
 
-    sub_1, sub_2 = get_overlap( sci_nai_1, sci_nai_2, off_x, off_y )
+    sub_1, sub_2 = get_overlap(sci_nai_1, sci_nai_2, off_x, off_y)
     num_pix = sub_1.shape[0] * sub_1.shape[1]  # Number of overlapping pixels
 
     # Raise (fatal) exception if there are no overlapping pixels
-    if ( num_pix == 0):
+    if (num_pix == 0):
         log.error('Applying offsets to image #2 results in 0 overlapping pix')
         raise RuntimeWarning('No overlapping pixels in 2 images')
 
@@ -720,21 +720,21 @@ def calc_cor_coef( sci_nai_1, sci_nai_2, off_x, off_y ):
     #   taking edges into account
     xlen = sub_1.shape[1]
     ylen = sub_1.shape[0]
-    xcen = xlen/2+1
-    ycen = ylen/2+1
+    xcen = xlen / 2 + 1
+    ycen = ylen / 2 + 1
 
-    xmin = max( 0, xcen-PSF_SIZE )
-    xmax = min( xlen-1, xcen+PSF_SIZE )
-    ymin = max( 0, ycen-PSF_SIZE )
-    ymax = min( ylen-1, ycen+PSF_SIZE )
+    xmin = max(0, xcen - PSF_SIZE)
+    xmax = min(xlen - 1, xcen + PSF_SIZE)
+    ymin = max(0, ycen - PSF_SIZE)
+    ymax = min(ylen - 1, ycen + PSF_SIZE)
 
     # Create subarrays using these limits, and make them
     #   1D for numpy's correlation coefficient
-    sub_1_sub = sub_1[ ymin:ymax, xmin:xmax]
-    sub_2_sub = sub_2[ ymin:ymax, xmin:xmax]
-    sub_1_sub = np.ravel( sub_1_sub)
-    sub_2_sub = np.ravel( sub_2_sub)
+    sub_1_sub = sub_1[ymin:ymax, xmin:xmax]
+    sub_2_sub = sub_2[ymin:ymax, xmin:xmax]
+    sub_1_sub = np.ravel(sub_1_sub)
+    sub_2_sub = np.ravel(sub_2_sub)
 
-    cor_coef = np.corrcoef( sub_1_sub, sub_2_sub)
+    cor_coef = np.corrcoef(sub_1_sub, sub_2_sub)
 
     return cor_coef.mean()

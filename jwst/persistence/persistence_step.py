@@ -3,14 +3,14 @@
 from jwst.stpipe import Step, cmdline
 from . import persistence
 
-class PersistenceStep( Step ):
+class PersistenceStep(Step):
     """
     PersistenceStep: Step for removing persistence from exposures. This
     is currently a no-op step.
     """
-    def process( self, input ):
+    def process(self, input):
 
-        pers_a = persistence.DataSet( input )
+        pers_a = persistence.DataSet(input)
         output_obj = pers_a.do_all()
 
         if output_obj is not None:
@@ -20,4 +20,4 @@ class PersistenceStep( Step ):
 
 
 if __name__ == '__main__':
-    cmdline.step_script( persistence_step )
+    cmdline.step_script(persistence_step)

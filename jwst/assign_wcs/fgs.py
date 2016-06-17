@@ -46,8 +46,8 @@ def imaging(input_model, reference_files):
 
     reference_files={'distortion': 'jwst_fgs_distortioon_0001.asdf'}
     """
-    detector = cf.Frame2D(name='detector', axes_order=(0,1), unit=(u.pix, u.pix))
-    focal = cf.Frame2D(name='focal', axes_order=(0,1), unit=(u.arcmin, u.arcmin))
+    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+    focal = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
     sky = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS())
     fitswcs_transform = pointing.create_fitswcs_transform(input_model)
     if reference_files:
@@ -67,7 +67,7 @@ def imaging_distortion(input_model, reference_files):
     return distortion
 
 
-exp_type2transform = {'fgs_image' : imaging,
+exp_type2transform = {'fgs_image': imaging,
                       'fgs_focus': imaging,
                       'fgs_skyflat': imaging,
                       'fgs_intflat': imaging,

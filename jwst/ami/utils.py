@@ -5,10 +5,10 @@ import numpy as np
 import numpy.fft as fft
 
 import logging
-log = logging.getLogger( __name__ )  
-log.setLevel( logging.DEBUG ) 
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
-def quadratic( p, x ):
+def quadratic(p, x):
     """
     Short Summary
     -------------
@@ -33,16 +33,16 @@ def quadratic( p, x ):
 
     fit_val: 1D float array
         values of quadratic function at arguments in x array
-    
+
     """
-    maxx = -p[1]/(2.0*p[0])
-    maxy = -p[1]*p[1] /(4.0*p[0]) + p[2]
-    fit_val = p[0]*x*x + p[1]*x + p[2]
+    maxx = -p[1] / (2.0 * p[0])
+    maxy = -p[1] * p[1] / (4.0 * p[0]) + p[2]
+    fit_val = p[0] * x * x + p[1] * x + p[2]
 
     return maxx, maxy, fit_val
 
 
-def makeA( nh ):
+def makeA(nh):
     """ 
     Long Summary
     -------------
@@ -63,7 +63,7 @@ def makeA( nh ):
 
         (-1 +1  0  0  ...)
         ( 0 -1 +1  0  ...)
-    
+
     which is implemented in makeA() as:
         matrixA[row,h2] = -1
         matrixA[row,h1] = +1
@@ -85,32 +85,32 @@ def makeA( nh ):
          nh columns, nh(nh-1)/2 rows (eg 21 for nh=7)      
     """
 
-    log.debug('-------') 
-    log.debug(' makeA:') 
+    log.debug('-------')
+    log.debug(' makeA:')
 
-    ncols = (nh*(nh-1))//2
+    ncols = (nh * (nh - 1)) // 2
     nrows = nh
     matrixA = np.zeros((ncols, nrows))
 
     row = 0
     for h2 in range(nh):
-        for h1 in range(h2+1,nh):
+        for h1 in range(h2 + 1, nh):
             if h1 >= nh:
                 break
             else:
-                log.debug(' row: %s, h1: %s, h2: %s', row, h1, h2)  
+                log.debug(' row: %s, h1: %s, h2: %s', row, h1, h2)
 
-                matrixA[row,h2] = -1
-                matrixA[row,h1] = +1
+                matrixA[row, h2] = -1
+                matrixA[row, h1] = +1
                 row += 1
 
-    log.debug('matrixA:') 
-    log.debug(' %s', matrixA) 
-    
+    log.debug('matrixA:')
+    log.debug(' %s', matrixA)
+
     return matrixA
 
 
-def fringes2pistons( fringephases, nholes ):
+def fringes2pistons(fringephases, nholes):
     """
     Short Summary
     -------------
@@ -138,7 +138,7 @@ def fringes2pistons( fringephases, nholes ):
     return np.dot(Apinv, fringephases)
 
 
-def rebin( a = None, rc=(2,2) ):  
+def rebin(a=None, rc=(2, 2)):
     """
     Short Summary
     -------------
@@ -159,12 +159,12 @@ def rebin( a = None, rc=(2,2) ):
     binned_arr: float array
         binned array
     """
-    binned_arr = krebin(a, (a.shape[0]//rc[0], a.shape[1]//rc[1]))
-    
+    binned_arr = krebin(a, (a.shape[0] // rc[0], a.shape[1] // rc[1]))
+
     return binned_arr
 
 
-def krebin( a, shape ):
+def krebin(a, shape):
     """ 
     Short Summary
     -------------
@@ -177,20 +177,20 @@ def krebin( a, shape ):
 
     shape: tuple (integer, integer)
         dimensions of array 'a' binned down by dimensions of binning kernel  
-    
+
     Returns
     -------
     reshaped_a: 2D float array
         reshaped input array    
     """
-    
-    sh = shape[0],a.shape[0]//shape[0],shape[1],a.shape[1]//shape[1]
-    reshaped_a = a.reshape(sh).sum(-1).sum(1)        
+
+    sh = shape[0], a.shape[0] // shape[0], shape[1], a.shape[1] // shape[1]
+    reshaped_a = a.reshape(sh).sum(-1).sum(1)
 
     return reshaped_a
 
 
-def rcrosscorrelate( a=None, b=None ):
+def rcrosscorrelate(a=None, b=None):
     """
     Short Summary
     -------------
@@ -209,12 +209,12 @@ def rcrosscorrelate( a=None, b=None ):
     c.real.copy():
         real part of array that is the correlation of the two input arrays.
     """
-    
-    c = crosscorrelate(a=a, b=b) / (np.sqrt((a*a).sum())*np.sqrt((b*b).sum()))
-    return  c.real.copy()
+
+    c = crosscorrelate(a=a, b=b) / (np.sqrt((a * a).sum()) * np.sqrt((b * b).sum()))
+    return c.real.copy()
 
 
-def crosscorrelate( a=None, b=None ):
+def crosscorrelate(a=None, b=None):
     """
     Short Summary
     -------------
@@ -235,14 +235,14 @@ def crosscorrelate( a=None, b=None ):
     """
 
     if a.shape != b.shape:
-        log.critical('crosscorrelate: need identical arrays' ) 
+        log.critical('crosscorrelate: need identical arrays')
         return None
 
     fac = np.sqrt(a.shape[0] * a.shape[1])
 
-    A = fft.fft2(a)/fac
-    B = fft.fft2(b)/fac
-    c = fft.ifft2(A * B.conj())  * fac * fac
+    A = fft.fft2(a) / fac
+    B = fft.fft2(b) / fac
+    c = fft.ifft2(A * B.conj()) * fac * fac
 
     log.debug('----------------')
     log.debug(' crosscorrelate:')
@@ -254,14 +254,14 @@ def crosscorrelate( a=None, b=None ):
     log.debug(' a.sum(): %s:', a.sum())
     log.debug(' b.sum(): %s:', b.sum())
     log.debug(' c.sum(): %s:', c.sum())
-    log.debug(' a.sum()*b.sum(): %s:', a.sum()*b.sum())
+    log.debug(' a.sum()*b.sum(): %s:', a.sum() * b.sum())
     log.debug(' c.sum().real: %s:', c.sum().real)
-    log.debug(' a.sum()*b.sum()/c.sum().real: %s:', a.sum()*b.sum()/c.sum().real)
+    log.debug(' a.sum()*b.sum()/c.sum().real: %s:', a.sum() * b.sum() / c.sum().real)
 
     return fft.fftshift(c)
 
 
-def findmax( mag, vals, mid=1.0 ):
+def findmax(mag, vals, mid=1.0):
     """ 
     Short Summary
     -------------
@@ -287,11 +287,9 @@ def findmax( mag, vals, mid=1.0 ):
     maxy: float
         value of vals corresponding to maxx
     """
-     
-    p = np.polyfit( mag, vals, 2 )
-    fitr = np.arange( 0.95*mid, 1.05*mid, .01 ) 
-    maxx, maxy, fitc = quadratic( p, fitr )
+
+    p = np.polyfit(mag, vals, 2)
+    fitr = np.arange(0.95 * mid, 1.05 * mid, .01)
+    maxx, maxy, fitc = quadratic(p, fitr)
 
     return maxx, maxy
-
-

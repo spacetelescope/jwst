@@ -43,4 +43,3 @@ def subtract(model1, model2):
 
     # Return the subtracted model
     return output
-

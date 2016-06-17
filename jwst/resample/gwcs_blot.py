@@ -83,8 +83,8 @@ class GWCSBlot(object):
             The scaling factor for sinc interpolation.
         """
         blot_shape = resample_utils.build_size_from_domain(blot_wcs.domain)
-        _outsci = np.zeros((blot_shape[1],blot_shape[0]),dtype=np.float32)
-        
+        _outsci = np.zeros((blot_shape[1], blot_shape[0]), dtype=np.float32)
+
         # Compute the mapping between the input and output pixel coordinates
         #log.info("Creating PIXMAP for blotted image...")
         pixmap = resample_utils.calc_gwcs_pixmap(self.source_wcs, blot_wcs)
@@ -92,10 +92,9 @@ class GWCSBlot(object):
         source_pscale = self.source_wcs.forward_transform['cdelt1'].factor.value
         blot_pscale = blot_wcs.forward_transform['cdelt1'].factor.value
 
-        pix_ratio = source_pscale/blot_pscale
+        pix_ratio = source_pscale / blot_pscale
         #log.info("Starting blot...")
         cdrizzle.tblot(self.source, pixmap, _outsci, scale=pix_ratio, kscale=1.0,
                        interp=interp, exptime=1.0, misval=0.0, sinscl=sinscl)
-       
-        return _outsci
 
+        return _outsci

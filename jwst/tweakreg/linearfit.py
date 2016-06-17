@@ -204,12 +204,12 @@ def fit_rscale(xyin, xyref):
     yr0 = Sy / n
     xi0 = Su / n
     yi0 = Sv / n
-    Sxrxr = np.power((dx-xr0), 2).sum()
-    Syryr = np.power((dy-yr0), 2).sum()
-    Syrxi = ((dy-yr0) * (du-xi0)).sum()
-    Sxryi = ((dx-xr0) * (dv-yi0)).sum()
-    Sxrxi = ((dx-xr0) * (du-xi0)).sum()
-    Syryi = ((dy-yr0) * (dv-yi0)).sum()
+    Sxrxr = np.power((dx - xr0), 2).sum()
+    Syryr = np.power((dy - yr0), 2).sum()
+    Syrxi = ((dy - yr0) * (du - xi0)).sum()
+    Sxryi = ((dx - xr0) * (dv - yi0)).sum()
+    Sxrxi = ((dx - xr0) * (du - xi0)).sum()
+    Syryi = ((dy - yr0) * (dv - yi0)).sum()
 
     rot_num = Sxrxi * Syryi
     rot_denom = Syrxi * Sxryi
@@ -466,7 +466,7 @@ def build_fit_matrix(rot, scale=1):
     matrix = np.array(
         [
             [sx * np.cos(np.deg2rad(rx)), -sx * np.sin(np.deg2rad(rx))],
-            [sy * np.sin(np.deg2rad(ry)),  sy * np.cos(np.deg2rad(ry))]
+            [sy * np.sin(np.deg2rad(ry)), sy * np.cos(np.deg2rad(ry))]
         ]
     )
 

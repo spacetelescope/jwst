@@ -32,14 +32,14 @@ class DarkPipeline(Pipeline):
     """
 
     # Define aliases to steps
-    step_defs = {'dq_init' : dq_init_step.DQInitStep,
-                 'saturation' : saturation_step.SaturationStep,
-                 'ipc' : ipc_step.IPCStep,
-                 'superbias' : superbias_step.SuperBiasStep,
-                 'refpix' : refpix_step.RefPixStep,
-                 'reset' : reset_step.ResetStep,
-                 'lastframe' : lastframe_step.LastFrameStep,
-                 'linearity' : linearity_step.LinearityStep,
+    step_defs = {'dq_init': dq_init_step.DQInitStep,
+                 'saturation': saturation_step.SaturationStep,
+                 'ipc': ipc_step.IPCStep,
+                 'superbias': superbias_step.SuperBiasStep,
+                 'refpix': refpix_step.RefPixStep,
+                 'reset': reset_step.ResetStep,
+                 'lastframe': lastframe_step.LastFrameStep,
+                 'linearity': linearity_step.LinearityStep,
                  }
 
 
@@ -100,13 +100,12 @@ class DarkPipeline(Pipeline):
             # Check to see if the output_file name is the default set by
             # stpipe for command-line processing
             root, ext = os.path.splitext(self.output_file)
-            if root[root.rfind('_')+1:] == 'DarkPipeline':
+            if root[root.rfind('_') + 1:] == 'DarkPipeline':
 
                 # Remove the class name that stpipe appended to the file name,
                 # as well as the original suffix on the input file name,
                 # and create a new name with the appropriate output suffix
                 root = root[:root.rfind('_')]
-                self.output_file = root[:root.rfind('_')+1] + suffix + ext
+                self.output_file = root[:root.rfind('_') + 1] + suffix + ext
 
         # If no output name was set, take no action
-            

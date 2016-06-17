@@ -42,4 +42,3 @@ class BackgroundStep(Step):
             result.meta.cal_step.back_sub = 'COMPLETE'
 
         return result
-

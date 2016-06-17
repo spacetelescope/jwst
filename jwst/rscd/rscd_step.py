@@ -13,7 +13,7 @@ class RSCD_Step(Step):
 
     reference_file_types = ['rscd']
 
-    def process(self, input): 
+    def process(self, input):
 
         # Open the input data model
         with models.open(input) as input_model:
@@ -21,7 +21,7 @@ class RSCD_Step(Step):
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
             if detector.startswith('MIR'):
-                 
+
                 # Get the name of the rscd reference file to use
                 self.rscd_name = self.get_reference_file(input_model, 'rscd')
                 self.log.info('Using RSCD reference file %s', self.rscd_name)
@@ -35,7 +35,7 @@ class RSCD_Step(Step):
                     return result
 
                 # Open the rscd ref file data model
-                print('RSCD reference file name',self.rscd_name)
+                print('RSCD reference file name', self.rscd_name)
                 #rscd_model = models.RSCDModel(self.rscd_name)
                 rscd_model = rscd_mod.RSCD_Model(self.rscd_name)
 
@@ -44,12 +44,12 @@ class RSCD_Step(Step):
 
                 # Close the reference file and update the step status
                 rscd_model.close()
-                result.meta.cal_step.rscd = 'COMPLETE' 
+                result.meta.cal_step.rscd = 'COMPLETE'
 
             else:
                 self.log.warning('RSCD Correction is only for MIRI data')
                 self.log.warning('RSCD step will be skipped')
                 result = input_model.copy()
-                result.meta.cal_step.rscd = 'SKIPPED' 
+                result.meta.cal_step.rscd = 'SKIPPED'
 
         return result

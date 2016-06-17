@@ -114,7 +114,7 @@ def is_cds(val):
 
     return success
 
-def in_range(val, min = 0, max = 0, inclusive = True):
+def in_range(val, min=0, max=0, inclusive=True):
     """
     Verifies that the value is in the given range [min, max].  If
     *inclusive* is False, min and max will not be considered part

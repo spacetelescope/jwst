@@ -40,7 +40,7 @@ def do_correction(input_model, bias_model):
     # bias reference data if necessary
     if not ref_matches_sci(bias_model, input_model):
         bias_model = get_subarray(bias_model, input_model)
-       
+
     # Subtract the bias ref image from the science data
     output_model = subtract_bias(input_model, bias_model)
 
@@ -87,10 +87,10 @@ def subtract_bias(input, bias):
 def ref_matches_sci(ref_model, sci_model):
 
     # See if the reference and science model subarray parameters match
-    if (ref_model.meta.subarray.xstart==sci_model.meta.subarray.xstart and
-        ref_model.meta.subarray.xsize==sci_model.meta.subarray.xsize and
-        ref_model.meta.subarray.ystart==sci_model.meta.subarray.ystart and
-        ref_model.meta.subarray.ysize==sci_model.meta.subarray.ysize):
+    if (ref_model.meta.subarray.xstart == sci_model.meta.subarray.xstart and
+        ref_model.meta.subarray.xsize == sci_model.meta.subarray.xsize and
+        ref_model.meta.subarray.ystart == sci_model.meta.subarray.ystart and
+        ref_model.meta.subarray.ysize == sci_model.meta.subarray.ysize):
         return True
     else:
         return False
@@ -114,4 +114,3 @@ def get_subarray(ref_model, sci_model):
 
     # Return the sliced reference model
     return sub_model
-

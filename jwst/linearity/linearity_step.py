@@ -8,7 +8,7 @@ class LinearityStep(Step):
     detector response, using the "classic" polynomial method.
     """
 
-    reference_file_types=['linearity']
+    reference_file_types = ['linearity']
 
 
     def process(self, input):
@@ -36,7 +36,6 @@ class LinearityStep(Step):
 
             # Close the reference file and update the step status
             lin_model.close()
-            result.meta.cal_step.linearity = 'COMPLETE' 
-  
-        return result
+            result.meta.cal_step.linearity = 'COMPLETE'
 
+        return result

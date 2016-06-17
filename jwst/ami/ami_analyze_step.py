@@ -16,7 +16,7 @@ class AmiAnalyzeStep(Step):
 
     reference_file_types = ['throughput']
 
-    def process( self, input ):
+    def process(self, input):
         """
         Short Summary
         -------------
@@ -46,7 +46,7 @@ class AmiAnalyzeStep(Step):
             self.filter_ref_name = self.get_reference_file(input_model,
                                    'throughput')
             self.log.info('Using filter throughput reference file %s',
-                           self.filter_ref_name )
+                           self.filter_ref_name)
 
             # Check for a valid reference file
             if self.filter_ref_name == 'N/A':

@@ -59,7 +59,7 @@ class RefPixStep(Step):
                                                     self.side_gain,
                                                     self.odd_even_rows)
 
-        result.meta.cal_step.refpix = 'COMPLETE' 
+        result.meta.cal_step.refpix = 'COMPLETE'
 
         return result
 

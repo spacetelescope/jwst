@@ -62,7 +62,7 @@ def date_and_time_to_cds(date_str, time_str):
 
     return util.datetime2cds(dt)
 
-def map(value, mapping = {}):
+def map(value, mapping={}):
     """
     Given a source value with the keyword *key*, returns the
     result of mapping it through the given dictionary-like
@@ -75,7 +75,7 @@ def map(value, mapping = {}):
 
     return mapping[value]
 
-def now(date_only = False):
+def now(date_only=False):
     """
     Generates a date or datetime value from the current UTC time.
     """
@@ -91,7 +91,7 @@ def version():
     """
     return jwst_tools.fits_generator.__version__
 
-def substr(value, start = 0, end = None):
+def substr(value, start=0, end=None):
     """
     Copies a substring of the value with the given *key* from the
     source FITS file.  If *key* is None, the source key is the
@@ -105,10 +105,10 @@ def substr(value, start = 0, end = None):
     return value[start:end]
 
 def fromfitstime(fitstimestring):
-        return datetime.datetime.strptime(fitstimestring, "%Y-%m-%dT%H:%M:%S.%f")
+    return datetime.datetime.strptime(fitstimestring, "%Y-%m-%dT%H:%M:%S.%f")
 
 def tofitstime(datetimeobject):
-        return datetimeobject.strftime("%Y-%m-%dT%H:%M:%S.%f")
+    return datetimeobject.strftime("%Y-%m-%dT%H:%M:%S.%f")
 
 def toMJD(timestring):
     #

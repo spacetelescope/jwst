@@ -14,5 +14,3 @@ def create_fitswcs_transform(input_model):
     header = hdu.header
     transform = gwutils.make_fitswcs_transform(header)
     return transform
-
-

@@ -10,12 +10,12 @@ class FringeStep(Step):
     reference image.
     """
 
-    reference_file_types = ['fringe']  
+    reference_file_types = ['fringe']
 
     def process(self, input):
 
         with models.ImageModel(input) as input_model:
-            
+
             # Open the reference file
             self.fringe_filename = self.get_reference_file(input_model,
                                                            'fringe')

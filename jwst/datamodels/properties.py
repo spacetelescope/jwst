@@ -41,7 +41,7 @@ def _cast(val, schema):
         tag = schema.get('tag')
         if tag is not None:
             val = tagged.tag_object(tag, val)
-            
+
     return val
 
 
@@ -353,7 +353,7 @@ def put_value(path, value, tree):
                 cursor.append({})
             cursor = cursor[part]
         else:
-            if isinstance(path[i+1], int) or path[i+1] == 'items':
+            if isinstance(path[i + 1], int) or path[i + 1] == 'items':
                 cursor = cursor.setdefault(part, [])
             else:
                 cursor = cursor.setdefault(part, {})

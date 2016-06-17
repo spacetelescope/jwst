@@ -28,7 +28,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-slit_id2name = {(5,1): 'S200A1', (5, 2): 'S200A2', (5, 3): 'S400A1',
+slit_id2name = {(5, 1): 'S200A1', (5, 2): 'S200A2', (5, 3): 'S400A1',
                 (5, 4): 'S1600A1', (5, 5): 'S200B1', (5, 6): 'IFU'}
 
 
@@ -69,7 +69,7 @@ def imaging(input_model, reference_files):
 
     gwa_through = Const1D(-1) * Identity(1) & Const1D(-1) * Identity(1) & Identity(1)
 
-    angles = [ disperser['theta_x'], disperser['theta_y'],
+    angles = [disperser['theta_x'], disperser['theta_y'],
                disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton').inverse
     dircos2unitless = DirCos2Unitless(name='directional_cosines2unitless')
@@ -102,7 +102,7 @@ def imaging(input_model, reference_files):
     det, gwa, msa_frame, oteip, v2v3 = create_imaging_frames()
 
     imaging_pipeline = [(det, det2gwa),
-                    (gwa,  gwa2msa),
+                    (gwa, gwa2msa),
                     (msa_frame, msa2oteip),
                     (oteip, oteip2v23),
                     (v2v3, None)]
@@ -143,7 +143,7 @@ def ifu(input_model, reference_files):
     # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
     det, gwa, slit_frame, msa_frame, oteip, v2v3 = create_frames()
     pipeline = [(det, det2gwa.rename('detector2gwa')),
-                (gwa,  gwa2slit.rename('gwa2slit')),
+                (gwa, gwa2slit.rename('gwa2slit')),
                 (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
                 (msa_frame, msa2oteip.rename('msa2oteip')),
                 (oteip, oteip2v23.rename('oteip2v23')),
@@ -197,7 +197,7 @@ def slits_wcs(input_model, reference_files):
     det, gwa, slit_frame, msa_frame, oteip, v2v3 = create_frames()
 
     msa_pipeline = [(det, det2gwa),
-                    (gwa,  gwa2slit),
+                    (gwa, gwa2slit),
                     (slit_frame, Mapping((0, 1, 2, 3, 4)) | slit2msa),
                     (msa_frame, msa2oteip),
                     (oteip, oteip2v23),
@@ -223,11 +223,11 @@ def get_open_fixed_slits(input_model):
     if input_model.meta.instrument.detector == 'NRS1':
         if input_model.meta.instrument.filter == 'F070LP' and \
                 input_model.meta.instrument.grating == 'G140H':
-            slits = np.array([(5, 1), (5,2), (5, 3), (5, 4), (5, 5)])
+            slits = np.array([(5, 1), (5, 2), (5, 3), (5, 4), (5, 5)])
         else:
-            slits = np.array([(5, 1), (5,2), (5, 3), (5, 4)])
+            slits = np.array([(5, 1), (5, 2), (5, 3), (5, 4)])
     else:
-        slits = np.array([(5, 1), (5,2), (5, 3), (5, 4), (5, 5)])
+        slits = np.array([(5, 1), (5, 2), (5, 3), (5, 4), (5, 5)])
     return slits
 
 
@@ -342,7 +342,7 @@ def slit_to_msa(slits_id, msafile):
     msa = AsdfFile.open(msafile)
     models = {}
     for i in range(1, 6):
-        slit_names = slits_id[slits_id[:,0]==i]
+        slit_names = slits_id[slits_id[:, 0] == i]
         if slit_names.any():
             msa_model = msa.tree[i]['model']
             for slit in slit_names:
@@ -398,7 +398,7 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
                  Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                  Identity(1) & gwa2msa & Identity(2) | \
                  Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
-                 Mapping((0, 1, 2, 5), n_inputs=7)| Identity(2) & lgreq
+                 Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq
 
         # msa to before_gwa
         #msa2bgwa = Mapping((0, 1, 2, 2)) | msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
@@ -454,7 +454,7 @@ def gwa_to_slit(slits_id, disperser, wrange, order, reference_files):
                     Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                     Identity(1) & gwa2msa & Identity(2) | \
                     Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
-                    Mapping((0, 1, 2, 5), n_inputs=7)| Identity(2) & lgreq
+                    Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq
 
                 # msa to before_gwa
                 msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
@@ -489,7 +489,7 @@ def detector_to_gwa(reference_files, detector, disperser):
     with AsdfFile.open(reference_files['camera']) as f:
         camera = f.tree['model'].copy()
 
-    angles = [ disperser['theta_x'], disperser['theta_y'],
+    angles = [disperser['theta_x'], disperser['theta_y'],
                disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
@@ -530,7 +530,7 @@ def compute_domain(slit2detector, wavelength_range):
     y0 = min(y_range_min.min(), y_range_max.min())
     y1 = max(y_range_min.max(), y_range_max.max())
 
-    domain = [{'lower': int(x0), 'upper': int(x1)}, {'lower':int(y0), 'upper': int(y1)}]
+    domain = [{'lower': int(x0), 'upper': int(x1)}, {'lower': int(y0), 'upper': int(y1)}]
     return domain
 
 
@@ -553,7 +553,7 @@ def collimator_to_gwa(reference_files, disperser):
     """
     with AsdfFile.open(reference_files['collimator']) as f:
         collimator = f.tree['model'].copy()
-    angles = [ disperser['theta_x'], disperser['theta_y'],
+    angles = [disperser['theta_x'], disperser['theta_y'],
                disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
@@ -860,7 +860,7 @@ def slit_to_detector(input_model, slits_id, lam, reference_files):
     dircos2u = DirCos2Unitless(name='directional2unitless_cosines')
     disperser = correct_tilt(disperser, input_model.meta.instrument.gwa_xtilt,
                              input_model.meta.instrument.gwa_ytilt)
-    angles = [ disperser['theta_x'], disperser['theta_y'],
+    angles = [disperser['theta_x'], disperser['theta_y'],
                disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
 
@@ -871,14 +871,14 @@ def slit_to_detector(input_model, slits_id, lam, reference_files):
 
     agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
     # GWA to detector
-    gwa2det = rotation.inverse | dircos2u | camera.inverse |fpa.inverse
+    gwa2det = rotation.inverse | dircos2u | camera.inverse | fpa.inverse
     # collimator to GWA
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
 
 
     msa = AsdfFile.open(reference_files['msa'])
     for i in range(1, 5):
-        slit_names = slits_id[slits_id[:,0]==i]
+        slit_names = slits_id[slits_id[:, 0] == i]
         if slit_names.any():
             msa_model = msa.tree[i]['model']
             for slit in slit_names:
@@ -927,7 +927,7 @@ def nrs_ifu_wcs(input_model):
     return wcs_list
 
 
-exp_type2transform = {'nrs_tacq' : imaging,
+exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_taslit': imaging,
                       'nrs_taconfirm': imaging,
                       'nrs_confirm': imaging,

@@ -18,7 +18,7 @@ class Extract2dStep(Step):
         with models.open(input_file) as dm:
 
             output_model = extract_2d.extract2d(dm, self.which_subarray)
-        
+
         return output_model
 
 

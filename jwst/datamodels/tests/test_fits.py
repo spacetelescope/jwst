@@ -265,9 +265,9 @@ def test_table_with_metadata():
                     "fits_hdu": "FLUX",
                     "datatype":
                     [
-                        {"name": "parameter",    "datatype": ['ascii', 7]},
-                        {"name": "factor",       "datatype": "float64"},
-                        {"name": "uncertainty",  "datatype": "float64"}
+                        {"name": "parameter", "datatype": ['ascii', 7]},
+                        {"name": "factor", "datatype": "float64"},
+                        {"name": "uncertainty", "datatype": "float64"}
                     ]
                 },
                 "meta": {
@@ -300,8 +300,8 @@ def test_table_with_metadata():
                 self.flux_table = flux_table
 
     flux_im = [
-        ('F560W',  1.0e-5,  1.0e-7),
-        ('F770W',  1.1e-5,  1.6e-7),
+        ('F560W', 1.0e-5, 1.0e-7),
+        ('F770W', 1.1e-5, 1.6e-7),
         ]
     with FluxModel(flux_table=flux_im) as datamodel:
         datamodel.meta.fluxinfo.exposure = 'Exposure info'
@@ -333,11 +333,11 @@ def test_replace_table():
                         "title": "relative sensitivity table",
                         "fits_hdu": "RELSENS",
                         "datatype": [
-                            {"name" : "TYPE",       "datatype" : ["ascii", 16]},
-                            {"name" : "T_OFFSET",   "datatype" : "float32"},
-                            {"name" : "DECAY_PEAK", "datatype" : "float32"},
-                            {"name" : "DECAY_FREQ", "datatype" : "float32"},
-                            {"name" : "TAU",        "datatype" : "float32"}
+                            {"name": "TYPE", "datatype": ["ascii", 16]},
+                            {"name": "T_OFFSET", "datatype": "float32"},
+                            {"name": "DECAY_PEAK", "datatype": "float32"},
+                            {"name": "DECAY_FREQ", "datatype": "float32"},
+                            {"name": "TAU", "datatype": "float32"}
                         ]
                     }
                 }
@@ -358,11 +358,11 @@ def test_replace_table():
                         "title": "relative sensitivity table",
                         "fits_hdu": "RELSENS",
                         "datatype": [
-                            {"name" : "TYPE",       "datatype" : ["ascii", 16]},
-                            {"name" : "T_OFFSET",   "datatype" : "float64"},
-                            {"name" : "DECAY_PEAK", "datatype" : "float64"},
-                            {"name" : "DECAY_FREQ", "datatype" : "float64"},
-                            {"name" : "TAU",        "datatype" : "float64"}
+                            {"name": "TYPE", "datatype": ["ascii", 16]},
+                            {"name": "T_OFFSET", "datatype": "float64"},
+                            {"name": "DECAY_PEAK", "datatype": "float64"},
+                            {"name": "DECAY_FREQ", "datatype": "float64"},
+                            {"name": "TAU", "datatype": "float64"}
                         ]
                     }
                 }

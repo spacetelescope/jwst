@@ -571,4 +571,3 @@ class File(list, Object):
             hdu = hdudef.describe(stream, state)
             state.depth -= 1
     describe.__doc__ = Object.describe.__doc__
-

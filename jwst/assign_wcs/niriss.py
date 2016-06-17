@@ -29,8 +29,8 @@ def imaging(input_model, reference_files):
 
     reference_files={'distortion': 'jwst_niriss_distortioon_0001.asdf'}
     """
-    detector = cf.Frame2D(name='detector', axes_order=(0,1), unit=(u.pix, u.pix))
-    focal = cf.Frame2D(name='focal', axes_order=(0,1), unit=(u.arcmin, u.arcmin))
+    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+    focal = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
     sky = cf.CelestialFrame(reference_frame=coord.ICRS())
     distortion = imaging_distortion(input_model, reference_files)
     fitswcs_transform = pointing.create_fitswcs_transform(input_model)
@@ -46,7 +46,7 @@ def imaging_distortion(input_model, reference_files):
     return distortion
 
 
-exp_type2transform = {'nis_image' : imaging,
+exp_type2transform = {'nis_image': imaging,
                       'nis_wfss': not_implemented_mode,#        ?? WFSS spec
                       'nis_soss': not_implemented_mode,#       ?? FS spec
                       'nis_ami': not_implemented_mode#        ?? imaging

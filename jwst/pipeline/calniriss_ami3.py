@@ -33,9 +33,9 @@ class NirissAmiPipeline(Pipeline):
     """
 
     # Define alias to steps
-    step_defs = {'ami_analyze' : ami_analyze_step.AmiAnalyzeStep,
-                 'ami_average' : ami_average_step.AmiAverageStep,
-                 'ami_normalize' : ami_normalize_step.AmiNormalizeStep
+    step_defs = {'ami_analyze': ami_analyze_step.AmiAnalyzeStep,
+                 'ami_average': ami_average_step.AmiAverageStep,
+                 'ami_normalize': ami_normalize_step.AmiNormalizeStep
                  }
 
     def process(self, input):
@@ -43,7 +43,7 @@ class NirissAmiPipeline(Pipeline):
         log.info('Starting calniriss_ami ...')
 
         # Retrieve the input(s)
-        input_table = AmiInput (input)
+        input_table = AmiInput(input)
 
         # Process all 'LGAVG' output products that are present in the ASN
         for prod in input_table.asn['products']:
@@ -117,7 +117,7 @@ class AmiInput(object):
        The input and output member info is loaded into an ASN table model.
     """
 
-    template={"asn_rule": "",
+    template = {"asn_rule": "",
               "targname": "",
               "asn_pool": "",
               "program": "",
@@ -133,23 +133,23 @@ class AmiInput(object):
                 ]
               }
 
-    def __init__(self,input):
+    def __init__(self, input):
         self.input = input # keep a record of original input name for later
 
         if isinstance(input, datamodels.ImageModel):
             # It's a single image that's been passed in as a model
             self.interpret_image_model(input)
-        elif isinstance(input,str):
+        elif isinstance(input, str):
             try:
                 # The name of an association table
-                self.asn = json.load(open(input,'r'))
+                self.asn = json.load(open(input, 'r'))
             except:
                 # The name of a single image file
                 self.interpret_image_model(datamodels.ImageModel(input))
         else:
             raise TypeError
 
-    def interpret_image_model(self,model):
+    def interpret_image_model(self, model):
         """ Interpret image model as single member association data product.
         """
         self.input_models = []
@@ -169,5 +169,4 @@ class AmiInput(object):
         self.input_models.append(model)
 
 def lg_product_name(filename):
-    return os.path.splitext(filename)[0]+"_{0}.fits".format("lg")
-
+    return os.path.splitext(filename)[0] + "_{0}.fits".format("lg")

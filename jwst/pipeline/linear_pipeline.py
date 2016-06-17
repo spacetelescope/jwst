@@ -38,5 +38,3 @@ class TestLinearPipeline(LinearPipeline):
         ('fringe', FringeStep),
         ('photom', PhotomStep)
         ]
-
-

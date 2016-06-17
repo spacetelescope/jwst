@@ -430,7 +430,7 @@ def compute_slope(data_sect, input_var_sect,
     # at this point we wouldn't need to be concerned about a jump.  If
     # there is more than one group, just ignore any jump the first group.
     if data_sect.shape[0] > 1:
-        cr_flagged[0,:,:] = 0
+        cr_flagged[0, :, :] = 0
 
     # Sum over groups to get an (ny, nx) image of the number of cosmic
     # rays in each pixel, accumulated over the ramp.
@@ -442,14 +442,14 @@ def compute_slope(data_sect, input_var_sect,
     # a negative number.  The test `ncr_mask = (sum_flagged == num_cr)`
     # will therefore never match, since num_cr is zero or larger, and the
     # pixel will not be included in any ncr_mask.
-    mask1 = (gdq_sect[0,:,:] == saturated_flag)
+    mask1 = (gdq_sect[0, :, :] == saturated_flag)
     sum_flagged[mask1] = -1
     # one_group_mask flags pixels that are not saturated in the first
     # group but are saturated in the second group (if there is a second
     # group).  For these pixels, we will assign a value to the slope
     # image by just dividing the value in the first group by group_time.
     if len(gdq_sect) > 1:
-        mask2 = (gdq_sect[1,:,:] == saturated_flag)
+        mask2 = (gdq_sect[1, :, :] == saturated_flag)
         sum_flagged[mask2] = -1
         one_group_mask = np.bitwise_and(mask2, np.bitwise_not(mask1))
         del mask2
@@ -538,8 +538,8 @@ def compute_slope(data_sect, input_var_sect,
         # In this loop, i is just an index.  cr_sect is populated for
         # number of cosmic rays = 1 to num_cr, inclusive.
         for i in range(num_cr):
-            cr_sect[ncr_mask, i] = result[:, 2+i].copy()
-            cr_var_sect[ncr_mask, i] = variances[:, 2+i].copy()
+            cr_sect[ncr_mask, i] = result[:, 2 + i].copy()
+            cr_var_sect[ncr_mask, i] = variances[:, 2 + i].copy()
 
     return (intercept_sect, int_var_sect, slope_sect, slope_var_sect,
             cr_sect, cr_var_sect)
@@ -679,9 +679,9 @@ def gls_fit(ramp_data, input_var_data,
     prev_fit_T = np.transpose(prev_fit_data, (1, 0))
     for k in range(ngroups):
         # Populate the upper right, row by row.
-        cov[:, k, k:ngroups] = prev_fit_T[:, k:k+1]
+        cov[:, k, k:ngroups] = prev_fit_T[:, k:k + 1]
         # Populate the lower left, column by column.
-        cov[:, k:ngroups, k] = prev_fit_T[:, k:k+1]
+        cov[:, k:ngroups, k] = prev_fit_T[:, k:k + 1]
         # Propagate errors from input.
         cov[:, k, k] += input_var_data[k, :]
         # Give saturated pixels very low weight (i.e. high variance).

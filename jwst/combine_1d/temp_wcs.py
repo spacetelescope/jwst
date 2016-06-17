@@ -108,9 +108,9 @@ class WCS(object):
                     for k in range(self.nelem - 1):
                         # Linear interpolation.
                         if w[i] >= self.world[k] and \
-                           w[i] <= self.world[k+1]:
+                           w[i] <= self.world[k + 1]:
                             pixel[i] = float(k) + (w[i] - self.world[k]) / \
-                                           (self.world[k+1] - self.world[k])
+                                           (self.world[k + 1] - self.world[k])
                             break
         else:                                   # dir < 0
             for i in range(len(w)):
@@ -124,10 +124,10 @@ class WCS(object):
                 else:
                     for k in range(self.nelem - 1):
                         if w[i] <= self.world[k] and \
-                           w[i] >= self.world[k+1]:
+                           w[i] >= self.world[k + 1]:
                             pixel[i] = float(k + 1) - \
-                                       (w[i] - self.world[k+1]) / \
-                                       (self.world[k] - self.world[k+1])
+                                       (w[i] - self.world[k + 1]) / \
+                                       (self.world[k] - self.world[k + 1])
                             break
 
         if w_has_len:
@@ -161,7 +161,7 @@ class WCS(object):
         ix = np.where(ix < 0, 0, ix)
         ix = np.where(ix >= self.nelem - 2, self.nelem - 2, ix)
         v1 = self.world[ix]
-        v2 = self.world[ix+1]
+        v2 = self.world[ix + 1]
 
         p = pixel - ix
         q = 1. - p

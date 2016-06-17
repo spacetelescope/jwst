@@ -7,5 +7,3 @@ from .calwebb_image3 import Image3Pipeline
 from .calwebb_sloper import SloperPipeline
 from .calwebb_spec2 import Spec2Pipeline
 from .linear_pipeline import TestLinearPipeline
-
-

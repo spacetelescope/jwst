@@ -18,11 +18,11 @@ log.setLevel(logging.DEBUG)
 def correct_model(input_model, mask_model):
     """DQ Initialize a JWST Model"""
 
-    output_model = do_dqinit (input_model, mask_model)
+    output_model = do_dqinit(input_model, mask_model)
 
     return output_model
 
-def do_dqinit (input_model, mask_model):
+def do_dqinit(input_model, mask_model):
     """Do the DQ initialization"""
 
     check_dimensions(input_model)
@@ -38,14 +38,14 @@ def do_dqinit (input_model, mask_model):
     dq = np.bitwise_or(input_model.pixeldq, mask_array)
     output_model.pixeldq = dq
 
-    output_model.meta.cal_step.dq_init = 'COMPLETE' 
+    output_model.meta.cal_step.dq_init = 'COMPLETE'
 
     return output_model
 
 def is_subarray(input_model):
 
-    if (input_model.meta.subarray.xsize==None or
-        input_model.meta.subarray.ysize==None):
+    if (input_model.meta.subarray.xsize == None or
+        input_model.meta.subarray.ysize == None):
         raise ValueError('xsize or ysize metadata values not found')
 
     ncols = input_model.meta.subarray.xsize
@@ -60,15 +60,15 @@ def is_subarray(input_model):
 
 def get_mask_subarray(mask_model, output_model):
 
-    if (output_model.meta.subarray.xstart==None or
-        output_model.meta.subarray.ystart==None):
+    if (output_model.meta.subarray.xstart == None or
+        output_model.meta.subarray.ystart == None):
         raise ValueError('xstart or ystart metadata values not found')
 
     xstart = output_model.meta.subarray.xstart
     xstop = xstart + output_model.meta.subarray.xsize - 1
     ystart = output_model.meta.subarray.ystart
     ystop = ystart + output_model.meta.subarray.ysize - 1
-    return mask_model.dq[ystart-1:ystop, xstart-1:xstop]
+    return mask_model.dq[ystart - 1:ystop, xstart - 1:xstop]
 
 def check_dimensions(input_model):
     #
@@ -81,12 +81,12 @@ def check_dimensions(input_model):
         #
         # If the shape is different, then the mask model should have a shape of (0,0)
         # If that's the case, create the array
-        if input_model.pixeldq.shape == (0,0):
+        if input_model.pixeldq.shape == (0, 0):
             input_model.pixeldq = np.zeros((input_shape[-2:])).astype('uint32')
         else:
             print("Pixeldq array has the wrong shape: (%d, %d)" % input_model.pixeldq.shape)
     if input_model.groupdq.shape != input_shape:
-        if input_model.groupdq.shape == (0,0,0,0):
+        if input_model.groupdq.shape == (0, 0, 0, 0):
             input_model.groupdq = np.zeros((input_shape)).astype('uint8')
         else:
             print("Groupdq array has the wrong shape: (%d, %d, %d, %d)" % input_model.groupdq.shape)

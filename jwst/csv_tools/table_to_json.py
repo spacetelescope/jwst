@@ -9,7 +9,7 @@ def table_to_json(table, **json_kwargs):
     table: astropy.table.Table
            The table. Note that the extra parameter, table.meta,
            if present, is expected to be a dictionary of keyword/value pairs.
-           
+
     json_kwargs: dict
                  Arguments to the json.dumps call.
 

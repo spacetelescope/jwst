@@ -55,7 +55,7 @@ try:
 except KeyError:
     raise KeyError('Environmental variable JPL_EPHEMERIS not found')
 
-ekernel = SPK.open(os.path.join(EPHEMERIS_PATH,'de430.bsp'))
+ekernel = SPK.open(os.path.join(EPHEMERIS_PATH, 'de430.bsp'))
 
 # The following three functions are only needed if reading from a file
 # Currently it is obtained from a DMS database
@@ -65,12 +65,12 @@ def read_jwst_ephemeris(times):
     Returns the x,y,z positions of JWST with respect to the earth's center
     for the times provided. Times should be in JD.
     '''
-    f = open(os.path.join(EPHEMERIS_PATH,'ephem_10days.txt'),'r')
+    f = open(os.path.join(EPHEMERIS_PATH, 'ephem_10days.txt'), 'r')
     # First get header info.
     mdict = get_jwst_ephem_metadata(f)
-    if ((mdict['CENTER_NAME'] != 'Earth') or 
+    if ((mdict['CENTER_NAME'] != 'Earth') or
         (mdict['OBJECT_NAME'] != 'JWST') or
-        (mdict['REF_FRAME']   != 'EME2000') or
+        (mdict['REF_FRAME'] != 'EME2000') or
         (mdict['TIME_SYSTEM'] != 'UTC')):
         raise RuntimeError("JWST ephemeris file metadata doesn't match expectations")
     # Determine size of time data; used to estimate location of desired times
@@ -79,7 +79,7 @@ def read_jwst_ephemeris(times):
     time2, position2 = parse_jwst_ephem_line(f.readline())
     l1 = f.readline()
     f.seek(1, os.SEEK_END)
-    end = f.tell()    
+    end = f.tell()
     starttime = atime.Time(mdict['START_TIME']).jd
     endtime = atime.Time(mdict['STOP_TIME']).jd
     interval = (time2 - time1) * 1440 # in minutes
@@ -92,36 +92,36 @@ def read_jwst_ephemeris(times):
         raise ValueException(
             'Some of times provided are out of the range of times in the JWST ephemeris file')
     # Determine fractional locations
-    minpos = int((mintime - starttime)/(endtime - starttime)*(end - start) + start - 5000)
-    maxpos = int((maxtime - starttime)/(endtime - starttime)*(end - start) + start + 5000)
+    minpos = int((mintime - starttime) / (endtime - starttime) * (end - start) + start - 5000)
+    maxpos = int((maxtime - starttime) / (endtime - starttime) * (end - start) + start + 5000)
     if minpos < start:
         minpos = start
     if maxpos > end:
         maxpos = end
     f.seek(minpos)
-    text = f.read(maxpos-minpos)
+    text = f.read(maxpos - minpos)
     # Convert this to lines
     lines = text.split('\n')
     # Throw away truncated lines
     if not lines[0].startswith('20') or len(lines[0] < 125):
         lines = lines[1:]
-    if len(lines[-1]) < 80: # Can be looser here since 
+    if len(lines[-1]) < 80: # Can be looser here since
                             # we don't care about the last 3 numbers.
         lines = lines[:-1]
     # Turn into numpy arrays
     nrecords = len(lines)
     etimes = np.zeros(nrecords)
     epos = np.zeros((nrecords, 3))
-    for i,line in enumerate(lines):
-        etimes[i], epos[i,:] = parse_jwst_ephem_line(line)
-    outpos = np.zeros((len(times),3))
-    for i,t in enumerate(times):
-        tdiff = np.abs(etimes-t)
+    for i, line in enumerate(lines):
+        etimes[i], epos[i, :] = parse_jwst_ephem_line(line)
+    outpos = np.zeros((len(times), 3))
+    for i, t in enumerate(times):
+        tdiff = np.abs(etimes - t)
         tdiffmin = np.where(tdiff == tdiff.min())[0][0]
-        if tdiff[tdiffmin]*1440 > 6:
+        if tdiff[tdiffmin] * 1440 > 6:
             raise RuntimeError(
                 "didn't find time close enough; check the code for sufficient margin")
-        outpos[i,:] = epos[tdiffmin,:]
+        outpos[i, :] = epos[tdiffmin, :]
     return outpos
 
 def get_jwst_ephem_metadata(fh):
@@ -156,15 +156,15 @@ def jwst_ephem_interp(t):
     apply cubic interpolation to obtain x, y, z values for the 
     requested time(s) t (t in MJD)
     '''
-    
+
     etab = get_jwst_ephemeris()
-    if t.min() < etab[:,0].min() or t.max() > etab[:,0].max():
+    if t.min() < etab[:, 0].min() or t.max() > etab[:, 0].max():
         raise ValueException(
             "One or more of the requested times extends beyond\n" + \
             "the range of the JWST ephemeris.")
-    fx = sciint.interp1d(etab[:,0], etab[:,1], kind='cubic', assume_sorted=True)
-    fy = sciint.interp1d(etab[:,0], etab[:,2], kind='cubic', assume_sorted=True)
-    fz = sciint.interp1d(etab[:,0], etab[:,3], kind='cubic', assume_sorted=True)
+    fx = sciint.interp1d(etab[:, 0], etab[:, 1], kind='cubic', assume_sorted=True)
+    fy = sciint.interp1d(etab[:, 0], etab[:, 2], kind='cubic', assume_sorted=True)
+    fz = sciint.interp1d(etab[:, 0], etab[:, 3], kind='cubic', assume_sorted=True)
     return fx(t), fy(t), fz(t)
 
 # the following is only needed if obtaining from a file instead of DB, not used yet
@@ -199,7 +199,7 @@ def get_jwst_position(times, jwstpos, debug=False):
     baryearth_centerearth_pos = ekernel[3, 399].compute(times + JDOFFSET)
     if debug:
         return barysun_baryearth_pos, barysun_centersun_pos
-    barysun_centerearth_pos =  barysun_baryearth_pos + baryearth_centerearth_pos
+    barysun_centerearth_pos = barysun_baryearth_pos + baryearth_centerearth_pos
     centersun_centerearth_pos = barysun_centerearth_pos - barysun_centersun_pos
     if jwstpos is not None:
         centerearth_jwst = jwstpos
@@ -215,11 +215,11 @@ def get_target_vector(targetcoord):
     ra, dec = targetcoord
     coord = acoord.SkyCoord(ra, dec, distance=1, frame='icrs', unit='deg')
     cartcoord = coord.represent_as(acoord.CartesianRepresentation)
-    x = cartcoord.x.value 
-    y = cartcoord.y.value 
+    x = cartcoord.x.value
+    y = cartcoord.y.value
     z = cartcoord.z.value
     vector = np.array([x, y, z])
-    return vector/np.sqrt((vector**2).sum())
+    return vector / np.sqrt((vector**2).sum())
 
 def compute_bary_helio_time(targetcoord, times, jwstpos=None):
     '''
@@ -236,6 +236,5 @@ def compute_bary_helio_time(targetcoord, times, jwstpos=None):
     jwst_bary_vectors, jwst_sun_vectors = get_jwst_position(times, jwstpos)
     proj_bary_dist = (tvector * jwst_bary_vectors.transpose()).sum(axis=-1)
     proj_sun_dist = (tvector * jwst_sun_vectors.transpose()).sum(axis=-1)
-    cspeed = astropy.constants.c.value/1000.
-    return times + proj_bary_dist/cspeed/86400., times + proj_sun_dist/cspeed/86400.
-
+    cspeed = astropy.constants.c.value / 1000.
+    return times + proj_bary_dist / cspeed / 86400., times + proj_sun_dist / cspeed / 86400.

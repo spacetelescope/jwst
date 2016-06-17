@@ -83,7 +83,7 @@ class WavelengthFromGratingEquation(Model):
     outputs = ("lam", )
 
     groove_density = Parameter()
-    order = Parameter(default=1 )
+    order = Parameter(default=1)
 
     def evaluate(self, alpha_in, alpha_out, groove_density, order):
         return -(alpha_in + alpha_out) / (groove_density * order)
@@ -113,7 +113,7 @@ class Unitless2DirCos(Model):
     outputs = ('x', 'y', 'z')
 
     def evaluate(self, x, y):
-        vabs = np.sqrt(1.+ x**2 + y**2)
+        vabs = np.sqrt(1. + x**2 + y**2)
         cosa = x / vabs
         cosb = y / vabs
         cosc = 1. / vabs
@@ -127,21 +127,21 @@ class DirCos2Unitless(Model):
     """
     Directional Cosines to vector.
     """
-    separable =False
+    separable = False
 
     inputs = ('x', 'y', 'z')
     outputs = ('x', 'y')
 
     def evaluate(self, x, y, z):
 
-        return x/z, y/z
+        return x / z, y / z
 
     def inverse(self):
         return Unitless2DirCos()
 
 
 class Rotation3DToGWA(Model):
-    separable =False
+    separable = False
 
     """
     Perform a 3D rotation given an angle in degrees.
@@ -226,7 +226,7 @@ class Rotation3DToGWA(Model):
 
 class Rotation3D(Model):
 
-    separable =False
+    separable = False
     """
     Perform a 3D rotation given an angle in degrees.
     Positive angles represent a counter-clockwise rotation and vice-versa.
@@ -361,7 +361,7 @@ class LRSWavelength(Model):
         diff0 = (dy - y0[0])
         ind = np.abs(np.asarray(diff0 / slitsize, dtype=np.int))
 
-        condition = np.logical_and(dy < y0[0],  dy > y0[-1])#, dx>x0, dx<x1)
+        condition = np.logical_and(dy < y0[0], dy > y0[-1])#, dx>x0, dx<x1)
         xyind = condition.nonzero()
         wavelength = np.zeros(condition.shape)
         wavelength += np.nan
@@ -381,7 +381,7 @@ def slitid_to_slit(open_slits_id):
     Internally a slit is represented as a number
     slit = quadrant_number * N_SHUTTERS_QUADRANT + slit_number
     """
-    return open_slits_id[:,0] * N_SHUTTERS_QUADRANT + open_slits_id[:,1]
+    return open_slits_id[:, 0] * N_SHUTTERS_QUADRANT + open_slits_id[:, 1]
 
 
 def slit_to_slitid(slits):
@@ -405,12 +405,12 @@ class Gwa2Slit(Model):
 
     def evaluate(self, quadrant, slitid, x, y, z):
         slit = int(slitid_to_slit(np.array([quadrant, slitid]).T)[0])
-        return (quadrant, slitid) + self.models[slit](x,y, z)
+        return (quadrant, slitid) + self.models[slit](x, y, z)
 
 
 class Slit2Msa(Model):
 
-    inputs = ( 'quadrant', 'slitid','x_slit', 'y_slit', 'lam')
+    inputs = ('quadrant', 'slitid', 'x_slit', 'y_slit', 'lam')
     outputs = ('x_msa', 'y_msa', 'lam')
 
     def __init__(self, models):
@@ -420,4 +420,4 @@ class Slit2Msa(Model):
 
     def evaluate(self, quadrant, slitid, x, y, lam):
         slit = int(slitid_to_slit(np.array([quadrant, slitid]).T)[0])
-        return self.models[slit](x, y) +(lam,)
+        return self.models[slit](x, y) + (lam,)

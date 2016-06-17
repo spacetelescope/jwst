@@ -50,8 +50,8 @@ def do_correction(input_model, dark_model, dark_output=None):
     # Check that the number of groups in the science data does not exceed
     # the number of groups in the dark current array.
     drk_ngroups = dark_model.meta.exposure.ngroups
-    if (sci_nframes+sci_groupgap)*sci_ngroups-sci_groupgap > drk_ngroups:
-        log.warning("There are more groups in the science data than in the "+
+    if (sci_nframes + sci_groupgap) * sci_ngroups - sci_groupgap > drk_ngroups:
+        log.warning("There are more groups in the science data than in the " +
         "dark data, so returning the input without the dark current subtracted.")
         # copy() needed in return because original is closed at end of
         # 'with' loop in dark_current_step
@@ -141,10 +141,10 @@ def average_dark_frames(input_dark, ngroups, nframes, groupgap):
         # Otherwise average nframes into a new group: take the mean of
         # the SCI arrays and the quadratic sum of the ERR arrays.
         else:
-            log.debug('average dark frames %d to %d', start+1, end)
+            log.debug('average dark frames %d to %d', start + 1, end)
             avg_dark.data[group] = input_dark.data[start:end].mean(axis=0)
             avg_dark.err[group] = np.sqrt(np.add.reduce(
-                input_dark.err[start:end]**2, axis=0)) / (end-start)
+                input_dark.err[start:end]**2, axis=0)) / (end - start)
 
         # Skip over unused frames
         start = end + groupgap
@@ -202,4 +202,3 @@ def subtract_dark(input, dark):
             #           output.err[i,j]**2 + dark.err[j]**2 )
 
     return output
-

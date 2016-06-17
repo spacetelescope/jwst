@@ -157,8 +157,8 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     # dq_mask = buildMask(sci_image.dq, CRBIT)
 
     #parse out the SNR and scaling information
-    snr1=float(snr[0])
-    snr2=float(snr[1])
+    snr1 = float(snr[0])
+    snr2 = float(snr[1])
     mult1 = float(scale[0])
     mult2 = float(scale[1])
 
@@ -177,7 +177,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     __t1 = np.absolute(input_image - blot_data)
     __ta = np.sqrt(gain * np.absolute(blot_data * exp_mult +
         subtracted_background * exp_mult) + read_noise ** 2)
-    __tb = ( mult1 * blot_deriv + snr1 * __ta / gain )
+    __tb = (mult1 * blot_deriv + snr1 * __ta / gain)
     del __ta
     __t2 = __tb / exp_mult
     del __tb
@@ -186,7 +186,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     del __t2
 
     # Create a convolution kernel that is 3 x 3 of 1's
-    kernel = np.ones((3,3), dtype=np.uint8)
+    kernel = np.ones((3, 3), dtype=np.uint8)
     # Create an output tmp file the same size as the input temp mask array
     __tmp2 = np.zeros(__tmp1.shape, dtype=np.int16)
     # Convolve the mask with the kernel
@@ -199,7 +199,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     __xt1 = np.absolute(input_image - blot_data)
     __xta = np.sqrt(gain * np.absolute(blot_data * exp_mult +
         subtracted_background * exp_mult) + read_noise * read_noise)
-    __xtb = ( mult2 *blot_deriv + snr2 * __xta / gain )
+    __xtb = (mult2 * blot_deriv + snr2 * __xta / gain)
     del __xta
     __xt2 = __xtb / exp_mult
     del __xtb
@@ -231,7 +231,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     ndimage.convolve(cr_mask, cr_grow_kernel, output=cr_grow_kernel_conv)
 
     # make tail convolution kernel and (shortly) convolve it with original cr_mask
-    cr_ctegrow_kernel = np.zeros((2*ctegrow+1,2*ctegrow+1))
+    cr_ctegrow_kernel = np.zeros((2 * ctegrow + 1, 2 * ctegrow + 1))
     cr_ctegrow_kernel_conv = cr_mask.copy()
 
     # which pixels are masked by tail kernel depends on readout direction
@@ -241,7 +241,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     if (ctedir == 1):  # HRC: amp C or D ; WFC: chip = sci,1 ; WFPC2
         cr_ctegrow_kernel[0:ctegrow, ctegrow] = 1    #  'positive' direction
     if (ctedir == -1): # HRC: amp A or B ; WFC: chip = sci,2
-        cr_ctegrow_kernel[ctegrow+1:2*ctegrow+1, ctegrow] = 1 #'negative' direction
+        cr_ctegrow_kernel[ctegrow + 1:2 * ctegrow + 1, ctegrow] = 1 #'negative' direction
     if (ctedir == 0):  # NICMOS: no cte tail correction
         pass
 
@@ -250,7 +250,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
 
     # select high pixels from both convolution outputs; then 'and' them to
     # create new cr_mask
-    where_cr_grow_kernel_conv = np.where(cr_grow_kernel_conv < grow*grow, 0, 1)
+    where_cr_grow_kernel_conv = np.where(cr_grow_kernel_conv < grow * grow, 0, 1)
     where_cr_ctegrow_kernel_conv = np.where(cr_ctegrow_kernel_conv < ctegrow, 0, 1)
 
     # combine masks and cast back to Bool

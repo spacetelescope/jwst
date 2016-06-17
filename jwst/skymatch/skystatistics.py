@@ -69,8 +69,8 @@ cgi-bin/gethelp.cgi?gstatistics>`_
             A dictionary of optional arguments to be passed to `ImageStats`.
 
         """
-        self.npix    = None
-        self.skyval  = None
+        self.npix = None
+        self.skyval = None
 
         self._fields = ','.join(['npix', skystat])
 
@@ -86,10 +86,10 @@ cgi-bin/gethelp.cgi?gstatistics>`_
         self._kwargs['usig'] = usig
         self._kwargs['binwidth'] = binwidth
 
-        self._skystat = { 'mean'   : self._extract_mean,
-                          'mode'   : self._extract_mode,
-                          'median' : self._extract_median,
-                          'midpt'  : self._extract_midpt
+        self._skystat = {'mean': self._extract_mean,
+                          'mode': self._extract_mode,
+                          'median': self._extract_median,
+                          'midpt': self._extract_midpt
                         }[skystat]
 
     def _extract_mean(self, imstat):
@@ -121,10 +121,10 @@ cgi-bin/gethelp.cgi?gstatistics>`_
             in comuting the statistics reported in `skyvalue`.
 
         """
-        imstat = ImageStats(image = data, fields = self._fields,
+        imstat = ImageStats(image=data, fields=self._fields,
                             **(self._kwargs))
         self.skyval = self._skystat(imstat)
-        self.npix   = imstat.npix
+        self.npix = imstat.npix
         return (self.skyval, self.npix)
 
     def __call__(self, data):

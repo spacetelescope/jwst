@@ -42,7 +42,7 @@ class XMLProposal(object):
             n = n + 1
             observation.value = '%03d' % n
             observation.id = ''.join((self.proposal_id, '_', observation.value))
-        
+
         return self.observations
 
     def get_visits(self):
@@ -112,7 +112,7 @@ class XMLProposal(object):
                 exposure.value = '%05d' % n
                 exposure.id = ''.join((activity.id, '_', exposure.value))
                 self.exposures.append(exposure)
-                
+
         return self.exposures
 
     def get_detectors(self):
@@ -128,5 +128,5 @@ class XMLProposal(object):
                 detector.exp_type = detector.find('exp_type').text
                 detector.id = exposure.id
                 self.detectors.append(detector)
-                
+
         return self.detectors

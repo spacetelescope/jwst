@@ -30,11 +30,11 @@ class Image2Pipeline(Pipeline):
     """
 
     # Define alias to steps
-    step_defs = {'assign_wcs' : assign_wcs_step.AssignWcsStep,
-                 'flat_field' : flat_field_step.FlatFieldStep,
-                 'persistence' : persistence_step.PersistenceStep,
-                 'emission' : emission_step.EmissionStep,
-                 'photom' : photom_step.PhotomStep,
+    step_defs = {'assign_wcs': assign_wcs_step.AssignWcsStep,
+                 'flat_field': flat_field_step.FlatFieldStep,
+                 'persistence': persistence_step.PersistenceStep,
+                 'emission': emission_step.EmissionStep,
+                 'photom': photom_step.PhotomStep,
                  }
 
     def process(self, input):
@@ -79,13 +79,12 @@ class Image2Pipeline(Pipeline):
             # Check to see if the output_file name is the default set by
             # stpipe for command-line processing
             root, ext = os.path.splitext(self.output_file)
-            if root[root.rfind('_')+1:] == 'Image2Pipeline':
+            if root[root.rfind('_') + 1:] == 'Image2Pipeline':
 
                 # Remove the step name that stpipe appended to the file name,
                 # as well as the original suffix on the input file name,
                 # and create a new name with the appropriate output suffix
                 root = root[:root.rfind('_')]
-                self.output_file = root[:root.rfind('_')+1] + suffix + ext
+                self.output_file = root[:root.rfind('_') + 1] + suffix + ext
 
         # If no output name was set, take no action
-

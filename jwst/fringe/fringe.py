@@ -7,13 +7,13 @@ from __future__ import division
 import numpy as np
 import logging
 from jwst import datamodels
-from jwst.datamodels import dqflags   
+from jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def do_correction (input_model, fringe_model):
+def do_correction(input_model, fringe_model):
     """
     Short Summary
     -------------
@@ -33,13 +33,13 @@ def do_correction (input_model, fringe_model):
         fringe-corrected science data model
 
     """
-    output_model = apply_fringe( input_model, fringe_model )
-    output_model.meta.cal_step.fringe = 'COMPLETE' 
+    output_model = apply_fringe(input_model, fringe_model)
+    output_model.meta.cal_step.fringe = 'COMPLETE'
 
     return output_model
 
 
-def apply_fringe( input_model, fringe ):
+def apply_fringe(input_model, fringe):
     """
     Short Summary
     -------------
@@ -66,21 +66,21 @@ def apply_fringe( input_model, fringe ):
     output_model = input_model.copy()
 
     fringe_data = fringe.data
-    fringe_dq   = fringe.dq
+    fringe_dq = fringe.dq
 
     # Fringe-correct data and error arrays, applying correction only
     #    to pixels having good reference values
-    good_pix = np.isfinite( fringe_data )
-    output_model.data[ good_pix ] /= fringe_data[ good_pix ]
-    output_model.err[ good_pix ] /= fringe_data[ good_pix ]
+    good_pix = np.isfinite(fringe_data)
+    output_model.data[good_pix] /= fringe_data[good_pix]
+    output_model.err[good_pix] /= fringe_data[good_pix]
 
 ### 05/22/14: For now, commenting out the following updating of the output
 ###    DQ based on the DQ of the reference file. This is done now because the
 ###    current DQ values in the ref file do not correspond to 'bad' data
 ###    values in the SCI array of the ref file.  Accordingly, this information
-###    will be logged for now. This behavior may be changed later. 
+###    will be logged for now. This behavior may be changed later.
 ###
-    # set DQ flag for bad pixels in the fringe 
+    # set DQ flag for bad pixels in the fringe
 #       dq_mask = fringe_dq * 0
 #       dq_mask[np.where(fringe_dq != 0)] = dqflags.pixel['DEAD']
 
@@ -89,5 +89,4 @@ def apply_fringe( input_model, fringe ):
     log.info('The DQ values in the reference file will NOT be used to update the\
     DQ values in the output DQ array.')
 
-    return output_model 
-
+    return output_model

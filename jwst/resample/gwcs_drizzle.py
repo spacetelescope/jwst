@@ -247,7 +247,7 @@ class GWCSDrizzle(object):
                             pscale_ratio=pscale_ratio, uniqid=self.uniqid,
                             xmin=xmin, xmax=xmax, ymin=ymin, ymax=ymax,
                             pixfrac=self.pixfrac, kernel=self.kernel,
-                            fillval=self.fillval)        
+                            fillval=self.fillval)
 
     def blot_fits_file(self, infile, interp='poly5', sinscl=1.0):
         """
@@ -488,7 +488,7 @@ def dodrizzle(insci, input_wcs, inwht,
 
     # Compute what plane of the context image this input would
     # correspond to:
-    planeid = int((uniqid-1) / 32)
+    planeid = int((uniqid - 1) / 32)
 
     # Check if the context image has this many planes
     if outcon.ndim == 3:
@@ -506,7 +506,7 @@ def dodrizzle(insci, input_wcs, inwht,
         outcon = outcon[planeid]
 
     # Compute the mapping between the input and output pixel coordinates
-    pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs)    
+    pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs)
 
     #
     # Call 'drizzle' to perform image combination
@@ -520,6 +520,3 @@ def dodrizzle(insci, input_wcs, inwht,
         wtscale=wt_scl, fillstr=fillval)
 
     return _vers, nmiss, nskip
-
-
-

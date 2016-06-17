@@ -14,7 +14,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-DEFAULT_DOMAIN = {'lower':None,'upper':None,'includes_lower':True, 'includes_upper':False}
+DEFAULT_DOMAIN = {'lower': None, 'upper': None, 'includes_lower': True, 'includes_upper': False}
 
 class OutlierDetection(object):
     """
@@ -37,12 +37,12 @@ class OutlierDetection(object):
       6. Updates input data model DQ arrays with mask of detected outliers.
 
     """
-    outlierpars = {'kernel':'square','pixfrac':1.0,'resample_bits':None,
-                        'fillval':'INDEF','wht_type':'exptime',
-                    'nlow': 0, 'nhigh':1,
-                        'hthresh':None, 'lthresh':None,
-                        'nsigma': '4 3', 'maskpt':0.7,
-                    'grow': 1, 'ctegrow':0, 'snr': "4.0 3.0", 
+    outlierpars = {'kernel': 'square', 'pixfrac': 1.0, 'resample_bits': None,
+                        'fillval': 'INDEF', 'wht_type': 'exptime',
+                    'nlow': 0, 'nhigh': 1,
+                        'hthresh': None, 'lthresh': None,
+                        'nsigma': '4 3', 'maskpt': 0.7,
+                    'grow': 1, 'ctegrow': 0, 'snr': "4.0 3.0",
                         'scale': "0.5 0.4", 'backg': 0
                 }
 
@@ -56,7 +56,7 @@ class OutlierDetection(object):
 
         drizzled_models : list of objects
             ModelContainer containing drizzled grouped input images
-      
+
         to_file : bool
             Control whether or not to write out intermediate results to files
 
@@ -90,7 +90,7 @@ class OutlierDetection(object):
         outlierpars = ref_model.outlierpars_table
 
         filter_match = False # flag to support wild-card rows in outlierpars table
-        for n,filt,num in zip(range(1,outlierpars.numimages.shape[0]+1),outlierpars.filter,
+        for n, filt, num in zip(range(1, outlierpars.numimages.shape[0] + 1), outlierpars.filter,
                             outlierpars.numimages):
             # only remember this row if no exact match has already been made for
             # the filter. This allows the wild-card row to be anywhere in the
@@ -99,25 +99,25 @@ class OutlierDetection(object):
             if filt == "ANY" and not filter_match and self.num_groups >= num:
                 row = n
             # always go for an exact match if present, though...
-            if filtname == filt and self.num_groups>= num:
+            if filtname == filt and self.num_groups >= num:
                 row = n
                 filter_match = True
 
         # With presence of wild-card rows, code should never trigger this logic
         if row is None:
-            log.error("No row found in %s that matches input data.",self.ref_filename)
+            log.error("No row found in %s that matches input data.", self.ref_filename)
             raise ValueError
 
         # read in values from that row for each parameter
         for kw in list(self.outlierpars.keys()):
             self.outlierpars[kw] = ref_model['outlierpars_table.{0}'.format(kw)]
 
-    def do_detection (self):
+    def do_detection(self):
         """ Perform drizzling operation on input images's to create a new output
 
         """
         pars = self.outlierpars
-        
+
         # Start by creating resampled/mosaic images for each group of exposures
         sdriz = resample.resample.ResampleData(self.input_models, single=True, **pars)
         sdriz.do_drizzle(**pars)
@@ -130,7 +130,7 @@ class OutlierDetection(object):
         median_model = datamodels.ImageModel(init=drizzled_models[0].data.shape)
         median_model.meta = drizzled_models[0].meta # provide median with initial metadata
         base_filename = self.input_models[0].meta.filename
-        median_filename = '_'.join(base_filename.split('_')[:2]+['median.fits'])
+        median_filename = '_'.join(base_filename.split('_')[:2] + ['median.fits'])
         median_model.meta.filename = median_filename
 
         # Perform median combination on set of drizzled mosaics
@@ -149,11 +149,11 @@ class OutlierDetection(object):
         if self.to_file:
             log.info("Writing out BLOT input images...")
             blot_models.save(None)
-            
+
         # Perform outlier detection using statistical comparisons between
         # original input images and their blotted-median images
-        flag_cr.do_detection(self.input_models, blot_models, 
-            self.ref_filename,**pars)
+        flag_cr.do_detection(self.input_models, blot_models,
+            self.ref_filename, **pars)
 
         # clean-up (just to be explicit about being finished with these results)
         del median_model, blot_models

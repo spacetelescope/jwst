@@ -40,4 +40,3 @@ def check_in_list(element, alist):
 
 def check_equal(left, right):
     assert left == right
-    

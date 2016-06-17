@@ -17,7 +17,7 @@ class DataSet():
     Parameters
    ----------
     """
-    def __init__( self, input_DM ):
+    def __init__(self, input_DM):
         """
         Short Summary
         -------------
@@ -31,7 +31,7 @@ class DataSet():
         """
         try:
             self.input_file = input_DM
-            model = models.open( input_DM )
+            model = models.open(input_DM)
             # If model comes back as generic DataModel, reopen as MultiSlit
             if isinstance(model, models.CubeModel) or isinstance(model, models.ImageModel):
                 pass
@@ -40,11 +40,11 @@ class DataSet():
                 model = models.MultiSlitModel(input_DM)
             self.input = model
         except Exception as errmess:
-            log.error ('Error opening %s', input_DM)
+            log.error('Error opening %s', input_DM)
             self.input = None
-       
 
-    def do_all( self ):
+
+    def do_all(self):
         """
         Short Summary
         -------------
@@ -60,12 +60,12 @@ class DataSet():
             persistence-applied input file data
 
         """
-        self.apply_persistence( get_pers_file_name() )
+        self.apply_persistence(get_pers_file_name())
 
         return self.input
 
 
-    def apply_persistence( self, persistence ):
+    def apply_persistence(self, persistence):
         """
         Short Summary
         -------------
@@ -84,22 +84,22 @@ class DataSet():
         pass
 
 
-def get_pers_file_name( ):
-        """
-        Short Summary
-        -------------
-        Retrieve the particular persistence reference file name. Will be
-        done via call(s) to CRDS eventually
+def get_pers_file_name():
+    """
+    Short Summary
+    -------------
+    Retrieve the particular persistence reference file name. Will be
+    done via call(s) to CRDS eventually
 
-        Parameters
-        ----------
+    Parameters
+    ----------
 
-        Returns
-        -------
-        pers_file: string
-            name of persistence file (None for pre Build 1)
+    Returns
+    -------
+    pers_file: string
+        name of persistence file (None for pre Build 1)
 
-        """
+    """
 
-        pers_file = None
-        return pers_file
+    pers_file = None
+    return pers_file

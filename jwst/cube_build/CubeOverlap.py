@@ -8,7 +8,7 @@ from . import cube
 from . import CubeD2C
 from jwst import datamodels
 #________________________________________________________________________________
-def FindAreaPoly(nVertices,xpixel,ypixel):
+def FindAreaPoly(nVertices, xpixel, ypixel):
     """
     Short Summary
     -------------
@@ -29,16 +29,16 @@ def FindAreaPoly(nVertices,xpixel,ypixel):
     xmin = min(xpixel)
     ymin = min(ypixel)
 
-    for i in range(0,nVertices-1):
-        area = (xpixel[i]-xmin)*(ypixel[i+1]-ymin) - (xpixel[i+1]-xmin)*(ypixel[i]-ymin)
+    for i in range(0, nVertices - 1):
+        area = (xpixel[i] - xmin) * (ypixel[i + 1] - ymin) - (xpixel[i + 1] - xmin) * (ypixel[i] - ymin)
         areaPoly = areaPoly + area
 
-    areaPoly = abs(0.5*areaPoly)
+    areaPoly = abs(0.5 * areaPoly)
     return areaPoly
 
 
 #________________________________________________________________________________
-def FindAreaQuad(MinX,MinY,Xcorner,Ycorner):
+def FindAreaQuad(MinX, MinY, Xcorner, Ycorner):
     """
     Summary
     -------
@@ -71,17 +71,17 @@ def FindAreaQuad(MinX,MinY,Xcorner,Ycorner):
     PY.append(PY[0])
 
 
-    Area = 0.5* (  (PX[0]*PY[1] - PX[1]*PY[0]) +
-                   (PX[1]*PY[2] - PX[2]*PY[1]) +
-                   (PX[2]*PY[3] - PX[3]*PY[2]) +
-                   (PX[3]*PY[4] - PX[4]*PY[3]) )
+    Area = 0.5 * ((PX[0] * PY[1] - PX[1] * PY[0]) +
+                   (PX[1] * PY[2] - PX[2] * PY[1]) +
+                   (PX[2] * PY[3] - PX[3] * PY[2]) +
+                   (PX[3] * PY[4] - PX[4] * PY[3]))
 
     return abs(Area)
 
 
 #_______________________________________________________________________
 
-def calcCondition(edge,x1,  y1, x2, y2, left,  right, top,  bottom):
+def calcCondition(edge, x1, y1, x2, y2, left, right, top, bottom):
     """
     Short Summary
     -------------
@@ -101,23 +101,23 @@ def calcCondition(edge,x1,  y1, x2, y2, left,  right, top,  bottom):
 
     """
 
-    stat1 = insideWindow(edge,x1,y1,left,right,top,bottom)
-    stat2 = insideWindow(edge,x2,y2,left,right,top,bottom);
+    stat1 = insideWindow(edge, x1, y1, left, right, top, bottom)
+    stat2 = insideWindow(edge, x2, y2, left, right, top, bottom);
 
-    if( not stat1 and stat2):
+    if(not stat1 and stat2):
         return 1;
-    if(stat1  and stat2):
+    if(stat1 and stat2):
         return 2;
-    if(stat1  and   not stat2):
+    if(stat1 and not stat2):
         return 3;
-    if(not stat1 and  not stat2):
+    if(not stat1 and not stat2):
         return 4;
     return 0   #never executed
 
 
 #_______________________________________________________________________
 
-def insideWindow(edge, x,  y,  left, right, top, bottom):
+def insideWindow(edge, x, y, left, right, top, bottom):
     """
     Short Summary
     -------------
@@ -145,8 +145,8 @@ def insideWindow(edge, x,  y,  left, right, top, bottom):
     if(edge == CP_LEFT):
         return (x > left)
     elif(edge == CP_RIGHT):
-        return (x<right)
-    elif(edge== CP_BOTTOM):
+        return (x < right)
+    elif(edge == CP_BOTTOM):
         return (y > bottom)
     elif(edge == CP_TOP):
         return (y < top)
@@ -154,8 +154,8 @@ def insideWindow(edge, x,  y,  left, right, top, bottom):
         return 0
 #_______________________________________________________________________
 
-def solveIntersection(edge ,x1,y1, x2, y2,
-                      left, right,  top,  bottom):
+def solveIntersection(edge, x1, y1, x2, y2,
+                      left, right, top, bottom):
     """
     Short Summary
     -------------
@@ -173,15 +173,15 @@ def solveIntersection(edge ,x1,y1, x2, y2,
 
     """
 
-    x= 0
-    y= 0
+    x = 0
+    y = 0
     CP_LEFT = 0
     CP_RIGHT = 1
     CP_BOTTOM = 2
     CP_TOP = 3
     m = 0
     if(x2 != x1):
-        m = (y2-y1)/(x2-x1)
+        m = (y2 - y1) / (x2 - x1)
     if(edge == CP_LEFT):
         x = left
         y = y1 + m * (x - x1)
@@ -191,19 +191,19 @@ def solveIntersection(edge ,x1,y1, x2, y2,
     elif (edge == CP_BOTTOM):
         y = bottom
         if(x1 != x2):
-            x = x1 + (1.0/m) * (y - y1)
-        else :
+            x = x1 + (1.0 / m) * (y - y1)
+        else:
             x = x1
     elif (edge == CP_TOP):
         y = top;
         if(x1 != x2):
-            x = x1 + (1.0/m) * (y - y1)
+            x = x1 + (1.0 / m) * (y - y1)
         else:
             x = x1
-    return x,y
+    return x, y
 #_______________________________________________________________________
 
-def addpoint (x, y,  xnew,  ynew, nVertices2):
+def addpoint(x, y, xnew, ynew, nVertices2):
     """
     Short Summary
     -------------
@@ -225,11 +225,11 @@ def addpoint (x, y,  xnew,  ynew, nVertices2):
     xnew[nVertices2] = x
     ynew[nVertices2] = y
 #     print('in add point',nVertices2,xnew[nVertices2],ynew[nVertices2],x,y)
-    nVertices2 = nVertices2 +1
+    nVertices2 = nVertices2 + 1
 
     return nVertices2
 #________________________________________________________________________________
-def SH_FindOverlap(xcenter,ycenter,xlength,ylength,xp_corner,yp_corner):
+def SH_FindOverlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
     """
     Summary
     -------
@@ -257,11 +257,11 @@ def SH_FindOverlap(xcenter,ycenter,xlength,ylength,xp_corner,yp_corner):
 #    xlength = 1.0
     #####
     areaClipped = 0.0
-    top = ycenter + 0.5*ylength
-    bottom = ycenter - 0.5*ylength
+    top = ycenter + 0.5 * ylength
+    bottom = ycenter - 0.5 * ylength
 
-    left = xcenter - 0.5*xlength
-    right = xcenter + 0.5*xlength
+    left = xcenter - 0.5 * xlength
+    right = xcenter + 0.5 * xlength
 
     #print('top bottom left right',top,bottom,left,right)
     nVertices = 4 # input detector pixel vertices
@@ -277,7 +277,7 @@ def SH_FindOverlap(xcenter,ycenter,xlength,ylength,xp_corner,yp_corner):
     xnew = list()
     ynew = list()
 
-    for j in range(0,9):
+    for j in range(0, 9):
         xnew.append(0.0)
         ynew.append(0.0)
         xPixel.append(0.0)
@@ -285,62 +285,62 @@ def SH_FindOverlap(xcenter,ycenter,xlength,ylength,xp_corner,yp_corner):
 
 
     # Xpixel, YPixel closed (5 corners)
-    for i in range(0,4):
+    for i in range(0, 4):
         xPixel[i] = xp_corner[i]
         yPixel[i] = yp_corner[i]
     xPixel[4] = xp_corner[0]
     yPixel[4] = yp_corner[0]
 
 
-    for i in range (0, 4) :     # 0:left, 1: right, 2: bottom, 3: top
+    for i in range(0, 4):     # 0:left, 1: right, 2: bottom, 3: top
 #        print('**************************',i)
         nVertices2 = 0
-        for  j in range (0, nVertices):
+        for j in range(0, nVertices):
             x1 = xPixel[j]
             y1 = yPixel[j]
-            x2 = xPixel[j+1]
-            y2 = yPixel[j+1]
+            x2 = xPixel[j + 1]
+            y2 = yPixel[j + 1]
 
-            condition = calcCondition(i,x1,y1,x2,y2,left,right,top,bottom)
+            condition = calcCondition(i, x1, y1, x2, y2, left, right, top, bottom)
 
             x = 0
             y = 0
 #            print('nVertices2 ',nVertices2)
 
             if(condition == 1):
-                x,y = solveIntersection(i,x1,y1,x2,y2,
-                                        left,right,top,bottom)
-                nVertices2 = addpoint (x,y,xnew,ynew,nVertices2);
-                nVertices2 = addpoint (x2,y2,xnew,ynew,nVertices2)
+                x, y = solveIntersection(i, x1, y1, x2, y2,
+                                        left, right, top, bottom)
+                nVertices2 = addpoint(x, y, xnew, ynew, nVertices2);
+                nVertices2 = addpoint(x2, y2, xnew, ynew, nVertices2)
 
-            elif(condition==2):
-                nVertices2 = addpoint (x2,y2,xnew,ynew,nVertices2)
-            elif (condition ==3):
-                x,y = solveIntersection(i,x1,y1,x2,y2,
-                                        left,right,top,bottom)
-                nVertices2 = addpoint (x,y,xnew,ynew,nVertices2)
+            elif(condition == 2):
+                nVertices2 = addpoint(x2, y2, xnew, ynew, nVertices2)
+            elif (condition == 3):
+                x, y = solveIntersection(i, x1, y1, x2, y2,
+                                        left, right, top, bottom)
+                nVertices2 = addpoint(x, y, xnew, ynew, nVertices2)
 
 #	condition ==  4: points outside
 #  Done looping over J  corners
-        nVertices2 = addpoint (xnew[0],ynew[0],xnew,ynew,nVertices2)  # close polygon
+        nVertices2 = addpoint(xnew[0], ynew[0], xnew, ynew, nVertices2)  # close polygon
 
-        if(nVertices2 >  MaxVertices ):
+        if(nVertices2 > MaxVertices):
             print("SH_findOverlap:: failure in finding the clipped polygon, nVertices2 > 9 ");
             exit(EXIT_FAILURE);
 
-        nVertices = nVertices2-1;
+        nVertices = nVertices2 - 1;
 
-        for k in range(0,nVertices2):
+        for k in range(0, nVertices2):
             xPixel[k] = xnew[k]
             yPixel[k] = ynew[k]
 
 #  done loop over top,bottom,left,right
-    nVertices= nVertices + 1
+    nVertices = nVertices + 1
 
 
     if(nVertices > 0):
 #        print('xPixel yPixel',nVertices, xPixel, yPixel)
-        areaClipped = FindAreaPoly(nVertices,xPixel,yPixel);
+        areaClipped = FindAreaPoly(nVertices, xPixel, yPixel);
 #        print('Area clipped',areaClipped)
 
 
@@ -349,7 +349,7 @@ def SH_FindOverlap(xcenter,ycenter,xlength,ylength,xp_corner,yp_corner):
 #________________________________________________________________________________
 
 
-def SpaxelOverlap(self, x,y,sliceno,start_slice,input_model,transform,beta_width,Cube,spaxel):
+def SpaxelOverlap(self, x, y, sliceno, start_slice, input_model, transform, beta_width, Cube, spaxel):
     """
     Short Summary
     -------------
@@ -384,37 +384,37 @@ def SpaxelOverlap(self, x,y,sliceno,start_slice,input_model,transform,beta_width
 
     sliceno_use = sliceno - start_slice + 1
 
-    pixel_flux = input_model.data[y,x]
-    pixel_error = input_model.err[y,x]
+    pixel_flux = input_model.data[y, x]
+    pixel_error = input_model.err[y, x]
 
     #center of first pixel, x,y = 1 for Adrian's equations
     # but we want the pixel corners, x,y values passed into this routine start at 0
-    yy_bot = y 
-    xx_left  = x 
+    yy_bot = y
+    xx_left = x
 
-    yy_top = y +1
+    yy_top = y + 1
     xx_right = x + 1
 
 
     if (self.wcs['Method'] == 'assign_wcs'):
-        
-        alpha,beta,lam = transform(x,y)
-        alpha1,beta1,lam1 = transform(xx_left,yy_bot)
-        alpha2,beta2,lam2 = transform(xx_right,yy_bot)
-        alpha3,beta3,lam3 = transform(xx_right,yy_top)
-        alpha4,beta4,lam4 = transform(xx_left,yy_top)
+
+        alpha, beta, lam = transform(x, y)
+        alpha1, beta1, lam1 = transform(xx_left, yy_bot)
+        alpha2, beta2, lam2 = transform(xx_right, yy_bot)
+        alpha3, beta3, lam3 = transform(xx_right, yy_top)
+        alpha4, beta4, lam4 = transform(xx_left, yy_top)
 
     if (self.wcs['Method'] == 'distortion'):
-        alpha,beta,lam = CubeD2C.xy2abl(self, sliceno_use-1,x,y)
-        alpha1,beta1,lam1 = CubeD2C.xy2abl(self, sliceno_use-1,xx_left,yy_bot)
-        alpha2,beta2,lam2 = CubeD2C.xy2abl(self, sliceno_use-1,xx_right,yy_bot)
-        alpha3,beta3,lam3 = CubeD2C.xy2abl(self, sliceno_use-1,xx_right,yy_top)
-        alpha4,beta4,lam4 = CubeD2C.xy2abl(self, sliceno_use-1,xx_left,yy_top)
-       
+        alpha, beta, lam = CubeD2C.xy2abl(self, sliceno_use - 1, x, y)
+        alpha1, beta1, lam1 = CubeD2C.xy2abl(self, sliceno_use - 1, xx_left, yy_bot)
+        alpha2, beta2, lam2 = CubeD2C.xy2abl(self, sliceno_use - 1, xx_right, yy_bot)
+        alpha3, beta3, lam3 = CubeD2C.xy2abl(self, sliceno_use - 1, xx_right, yy_top)
+        alpha4, beta4, lam4 = CubeD2C.xy2abl(self, sliceno_use - 1, xx_left, yy_top)
+
 
 
     # Loop over all pixels in slice
-    for ipixel  in range(0, nn-1):
+    for ipixel in range(0, nn - 1):
         valid_pixel = True
         debug = 0
 
@@ -438,7 +438,7 @@ def SpaxelOverlap(self, x,y,sliceno,start_slice,input_model,transform,beta_width
         wave_corner.append(lam2[ipixel])
         wave_corner.append(lam3[ipixel])
         wave_corner.append(lam4[ipixel])
-        
+
 #________________________________________________________________________________
 # Now it does not matter the WCS method used
 
@@ -451,50 +451,50 @@ def SpaxelOverlap(self, x,y,sliceno,start_slice,input_model,transform,beta_width
         # estimate the where the pixel overlaps in the cube
         # find the min and max values in the cube xcoord,ycoord and zcoord
 
-            MinA = (alpha_min - Cube.Crval1)/Cube.Cdelt1
-            MaxA = (alpha_max - Cube.Crval1)/Cube.Cdelt1
-            ix1 = max(0,int(math.trunc(MinA)))
+            MinA = (alpha_min - Cube.Crval1) / Cube.Cdelt1
+            MaxA = (alpha_max - Cube.Crval1) / Cube.Cdelt1
+            ix1 = max(0, int(math.trunc(MinA)))
             ix2 = int(math.ceil(MaxA))
             if(ix2 >= nxc):
-                ix2 = nxc-1
+                ix2 = nxc - 1
 
 
-            MinW = (wave_min - Cube.Crval3)/Cube.Cdelt3
-            MaxW = (wave_max - Cube.Crval3)/Cube.Cdelt3
+            MinW = (wave_min - Cube.Crval3) / Cube.Cdelt3
+            MaxW = (wave_max - Cube.Crval3) / Cube.Cdelt3
             iz1 = int(math.trunc(MinW))
             iz2 = int(math.ceil(MaxW))
             if(iz2 >= nzc):
-                iz2 = nzc-1
+                iz2 = nzc - 1
 
 
 # 1-1 mapping in beta
-            iy2 = sliceno_use-1 
+            iy2 = sliceno_use - 1
 
         #_______________________________________________________________________
 
-            Area = FindAreaQuad(alpha_min,wave_min,alpha_corner,wave_corner)
+            Area = FindAreaQuad(alpha_min, wave_min, alpha_corner, wave_corner)
 
         #_______________________________________________________________________
         # loop over possible overlapping cube pixels
 
             noverlap = 0
-            nplane  = Cube.naxis1 * Cube.naxis2
-            
-            for zz  in range(iz1, iz2+1):
+            nplane = Cube.naxis1 * Cube.naxis2
+
+            for zz in range(iz1, iz2 + 1):
 
                 zcenter = Cube.zcoord[zz]
                 istart = zz * nplane
-                yy = iy2 # one to one mapping 
+                yy = iy2 # one to one mapping
 
 
-                for xx in range(ix1,ix2+1):
-                    cube_index = istart + yy*Cube.naxis1 + xx
+                for xx in range(ix1, ix2 + 1):
+                    cube_index = istart + yy * Cube.naxis1 + xx
                     xcenter = Cube.xcoord[xx]
-                    AreaOverlap = SH_FindOverlap(xcenter,zcenter,Cube.Cdelt1,Cube.Cdelt3,alpha_corner,wave_corner)
+                    AreaOverlap = SH_FindOverlap(xcenter, zcenter, Cube.Cdelt1, Cube.Cdelt3, alpha_corner, wave_corner)
 
                     if(AreaOverlap > 0.0):
 
-                        AreaRatio = AreaOverlap/Area
+                        AreaRatio = AreaOverlap / Area
                         spaxel[cube_index].pixel_overlap.append(AreaRatio)
                         spaxel[cube_index].pixel_flux.append(pixel_flux[ipixel])
                         spaxel[cube_index].pixel_error.append(pixel_error[ipixel])
@@ -508,7 +508,7 @@ def SpaxelOverlap(self, x,y,sliceno,start_slice,input_model,transform,beta_width
 #                            print(' Overlaping Spaxel',cube_index,xx,yy,zz)
 #                            print('Spaxel Area', AreaOverlap,AreaRatio*100.0)
 #________________________________________________________________________________
-def SpaxelFlux(radius_y,i,Cube,spaxel):
+def SpaxelFlux(radius_y, i, Cube, spaxel):
 
     """
     Short Summary
@@ -527,22 +527,21 @@ def SpaxelFlux(radius_y,i,Cube,spaxel):
     weighted flux of spaxel
 
     """
-    debug = 0 
+    debug = 0
     num = len(spaxel[i].pixel_overlap)
 
     #print(' For spaxel i # overlaps',num)
     flux = 0
     FinalWeight = 0.0
-    FinalFlux  = 0.0
+    FinalFlux = 0.0
 
-    for j in range (num):
-        FinalFlux = FinalFlux + spaxel[i].pixel_flux[j]*spaxel[i].pixel_overlap[j] 
-        FinalWeight = FinalWeight + spaxel[i].pixel_overlap[j] 
+    for j in range(num):
+        FinalFlux = FinalFlux + spaxel[i].pixel_flux[j] * spaxel[i].pixel_overlap[j]
+        FinalWeight = FinalWeight + spaxel[i].pixel_overlap[j]
     if(num > 0):
-        FinalFlux = FinalFlux/FinalWeight
+        FinalFlux = FinalFlux / FinalWeight
         spaxel[i].flux = FinalFlux
         if(i == -debug):
-            print('Flux',FinalFlux,i)
+            print('Flux', FinalFlux, i)
     else:
         spaxel[i].flux = 0.0
-

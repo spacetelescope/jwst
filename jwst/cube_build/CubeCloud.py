@@ -10,7 +10,7 @@ from . import cube
 #________________________________________________________________________________
 
 
-def MakePointCloudMIRI(self,x,y,file_no,c1_offset,c2_offset,input_model):
+def MakePointCloudMIRI(self, x, y, file_no, c1_offset, c2_offset, input_model):
     """
     Short Summary
     -------------
@@ -30,40 +30,40 @@ def MakePointCloudMIRI(self,x,y,file_no,c1_offset,c2_offset,input_model):
 
     """
 
-    det2ab_transform = input_model.meta.wcs.get_transform('detector','alpha_beta')
-    alpha,beta,wave = det2ab_transform(x,y)
+    det2ab_transform = input_model.meta.wcs.get_transform('detector', 'alpha_beta')
+    alpha, beta, wave = det2ab_transform(x, y)
 
-    detector2v23 = input_model.meta.wcs.get_transform('detector','V2_V3')
+    detector2v23 = input_model.meta.wcs.get_transform('detector', 'V2_V3')
 
-    v2,v3,lam = detector2v23(x,y)
+    v2, v3, lam = detector2v23(x, y)
     #v2,v3,lam = input_model.meta.wcs(x,y)
-    index = np.asarray(np.where( np.logical_and (np.isfinite(v2), np.isfinite(v3), np.isfinite(lam) )))
+    index = np.asarray(np.where(np.logical_and(np.isfinite(v2), np.isfinite(v3), np.isfinite(lam))))
 
-    coord1= v2[index[0]]*60.0
-    coord2 = v3[index[0]]*60.0
-    coord1 = coord1 + c1_offset/60.0
-    coord2 = coord2 + c2_offset/60.0
+    coord1 = v2[index[0]] * 60.0
+    coord2 = v3[index[0]] * 60.0
+    coord1 = coord1 + c1_offset / 60.0
+    coord2 = coord2 + c2_offset / 60.0
 
     wave = lam[index[0]]
 
-    flux_all = input_model.data[y,x]
-    error_all = input_model.err[y,x]
+    flux_all = input_model.data[y, x]
+    error_all = input_model.err[y, x]
 
     flux = flux_all[index[0]]
     error = error_all[index[0]]
-    alpha =alpha[index[0]]
+    alpha = alpha[index[0]]
     beta = beta[index[0]]
     xpix = x[index[0]]
     ypix = y[index[0]]
-    ifile = np.zeros(flux.shape,dtype='int') + int(file_no)
-               
+    ifile = np.zeros(flux.shape, dtype='int') + int(file_no)
+
     # get in form of 8 columns of data - shove the information in an array.
 
-    cloud = np.asarray([coord1,coord2,wave,alpha,beta,flux,error,ifile,xpix,ypix])
-    
+    cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile, xpix, ypix])
+
     return cloud
 #______________________________________________________________________
-def MakePointCloudMIRI_DistortionFile(self,x,y,file_no,c1_offset,c2_offset,channel,subchannel,sliceno,start_sliceno,input_model):
+def MakePointCloudMIRI_DistortionFile(self, x, y, file_no, c1_offset, c2_offset, channel, subchannel, sliceno, start_sliceno, input_model):
 
 
     """
@@ -89,42 +89,42 @@ def MakePointCloudMIRI_DistortionFile(self,x,y,file_no,c1_offset,c2_offset,chann
     """
 #________________________________________________________________________________
 # if using distortion polynomials
-    
+
     nn = len(x)
     sliceno_use = sliceno - start_sliceno + 1
     coord1 = list()
-    coord2= list()
-    wave= list()
-    alpha= list()
-    beta= list()
-    ifile= list()
+    coord2 = list()
+    wave = list()
+    alpha = list()
+    beta = list()
+    ifile = list()
     flux = list()
-    error= list()
+    error = list()
     x_pixel = list()
     y_pixel = list()
 #________________________________________________________________________________
-# loop over pixels in slice 
+# loop over pixels in slice
 #________________________________________________________________________________
-    for ipixel  in range(0, nn-1): 
+    for ipixel in range(0, nn - 1):
         valid_pixel = True
         if(y[ipixel] >= 1024):
             valid_pixel = False
             #print(' Error ypixel = ',y[ipixel])
 
-        if(valid_pixel): 
-            alpha_pixel,beta_pixel,wave_pixel = CubeD2C.xy2abl(self, sliceno_use-1,x[ipixel],y[ipixel])
+        if(valid_pixel):
+            alpha_pixel, beta_pixel, wave_pixel = CubeD2C.xy2abl(self, sliceno_use - 1, x[ipixel], y[ipixel])
 
-            flux_pixel = input_model.data[y[ipixel],x[ipixel]]
-            error_pixel = input_model.err[y[ipixel],x[ipixel]]
-            xan,yan = CubeD2C.ab2xyan(self, alpha_pixel,beta_pixel)
-            v2,v3 = CubeD2C.xyan2v23(self, xan,yan)
-            
+            flux_pixel = input_model.data[y[ipixel], x[ipixel]]
+            error_pixel = input_model.err[y[ipixel], x[ipixel]]
+            xan, yan = CubeD2C.ab2xyan(self, alpha_pixel, beta_pixel)
+            v2, v3 = CubeD2C.xyan2v23(self, xan, yan)
 
-            coord1_pixel = v2*60.0
-            coord2_pixel = v3*60.0
 
-            coord1_pixel = coord1_pixel + c1_offset/60.0
-            coord2_pixel = coord2_pixel + c2_offset/60.0
+            coord1_pixel = v2 * 60.0
+            coord2_pixel = v3 * 60.0
+
+            coord1_pixel = coord1_pixel + c1_offset / 60.0
+            coord2_pixel = coord2_pixel + c2_offset / 60.0
 
             coord1.append(coord1_pixel)
             coord2.append(coord2_pixel)
@@ -132,61 +132,61 @@ def MakePointCloudMIRI_DistortionFile(self,x,y,file_no,c1_offset,c2_offset,chann
             beta.append(beta_pixel)
             flux.append(flux_pixel)
             error.append(error_pixel)
-            ifile.append(file_no) 
+            ifile.append(file_no)
 
             x_pixel.append(x[ipixel])
             y_pixel.append(y[ipixel])
     # get in form of 8 columns of data - shove the information in an array.
     #print('size',len(coord1),len(coord2))
 
-    cloud = np.asarray([coord1,coord2,wave,alpha,beta,flux,error,ifile,x_pixel,y_pixel])
+    cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile, x_pixel, y_pixel])
     return cloud
 
 #_______________________________________________________________________
 
 
 
-def FindROI(self,Cube,spaxel,PointCloud):
+def FindROI(self, Cube, spaxel, PointCloud):
 
     nxc = len(Cube.xcoord)
     nzc = len(Cube.zcoord)
     nyc = len(Cube.ycoord)
 
-    nplane  = Cube.naxis1 * Cube.naxis2
+    nplane = Cube.naxis1 * Cube.naxis2
     lower_limit = 0.0001
 
-    iprint = 0 
+    iprint = 0
     nn = len(PointCloud[0])
 #    print('number of elements in PT',nn)
-    for ipt  in range(0, nn-1):
+    for ipt in range(0, nn - 1):
 
 #        if(iprint == 0):
 #            print('On pt member',ipt,'out of ',nn)
-        ifile = int(PointCloud[7,ipt])
+        ifile = int(PointCloud[7, ipt])
 
         a = Cube.a_wave[ifile]
         c = Cube.c_wave[ifile]
         wa = Cube.a_weight[ifile]
         wc = Cube.c_weight[ifile]
-        wave = PointCloud[2,ipt]
-        weights = FindNormalizationWeights(wave,a,c,wa,wc)
+        wave = PointCloud[2, ipt]
+        weights = FindNormalizationWeights(wave, a, c, wa, wc)
 
         weight_alpha = weights[0]
-        weight_beta  = weights[1]
+        weight_beta = weights[1]
         weight_wave = weights[2]
 
 
-        coord1 = PointCloud[0,ipt]
-        coord2 = PointCloud[1,ipt]
-        alpha = PointCloud[3,ipt]
-        beta = PointCloud[4,ipt]
-        x = PointCloud[8,ipt]
-        y = PointCloud[9,ipt]
-        
-        if(self.coord_system =='alpha-beta'):
+        coord1 = PointCloud[0, ipt]
+        coord2 = PointCloud[1, ipt]
+        alpha = PointCloud[3, ipt]
+        beta = PointCloud[4, ipt]
+        x = PointCloud[8, ipt]
+        y = PointCloud[9, ipt]
+
+        if(self.coord_system == 'alpha-beta'):
             coord1 = alpha
             coord2 = beta
-# Map this point cloud to spaxel (distance from spaxel center = ROI) 
+# Map this point cloud to spaxel (distance from spaxel center = ROI)
 # use the vector of cube centers in each dimension to speed things up
         # both coordinates are in arc seconds
         indexz = np.asarray(np.where(abs(Cube.zcoord - wave) <= self.radius_z))
@@ -194,8 +194,8 @@ def FindROI(self,Cube,spaxel,PointCloud):
         indexy = np.asarray(np.where(abs(Cube.ycoord - coord2) <= self.radius_y))
 
 
-        # transform Cube Spaxel to alpha,beta system of Point Cloud 
-        # use inverse transfrom of V2,V3 back to local alpha,beta, lam 
+        # transform Cube Spaxel to alpha,beta system of Point Cloud
+        # use inverse transfrom of V2,V3 back to local alpha,beta, lam
         # convert v2,v3 from arc seconds to arc min first
 
 
@@ -204,27 +204,27 @@ def FindROI(self,Cube,spaxel,PointCloud):
         yloc = Cube.ycoord[indexy[0]]
 
 
-        v2ab_transform = Cube.transform[ifile]         
+        v2ab_transform = Cube.transform[ifile]
 
-        if(self.coord_system =='alpha-beta'):
-            distance1 = abs(xloc-alpha)
-            distance2 = abs(yloc-beta)
+        if(self.coord_system == 'alpha-beta'):
+            distance1 = abs(xloc - alpha)
+            distance2 = abs(yloc - beta)
 
-        if(self.coord_system =='v2-v3'):
-            distance1 = abs(xloc-coord1)
-            distance2 = abs(yloc-coord2)
+        if(self.coord_system == 'v2-v3'):
+            distance1 = abs(xloc - coord1)
+            distance2 = abs(yloc - coord2)
 
-        distance3 = abs(zloc-wave)
-        distance12 = distance1*distance1
-        distance22 = distance2*distance2
-        distance32 = distance3*distance3
+        distance3 = abs(zloc - wave)
+        distance12 = distance1 * distance1
+        distance22 = distance2 * distance2
+        distance32 = distance3 * distance3
 
         iz = 0
-        for zz  in indexz[0]:
+        for zz in indexz[0]:
             istart = zz * nplane
-            iy = 0 
+            iy = 0
             for yy in indexy[0]:
-                ix = 0 
+                ix = 0
                 for xx in indexx[0]:
 
 #                    if(self.coord_system=='v2-v3'):
@@ -239,20 +239,20 @@ def FindROI(self,Cube,spaxel,PointCloud):
 #                        yn = beta_distance/weight_beta
 #                        wn = wave_distance/weight_wave
 #                        weight_distance = xn*xn + yn*yn + wn*wn
-                        
+
 
                     weight_distance = distance12[ix] + distance22[iy] + distance32[iz]
 
                     if(weight_distance < lower_limit): weight_distance = lower_limit
-                    weight_distance = 1.0/weight_distance
+                    weight_distance = 1.0 / weight_distance
 
 
-                    cube_index = istart + yy*Cube.naxis1 + xx
+                    cube_index = istart + yy * Cube.naxis1 + xx
                     spaxel[cube_index].ipointcloud.append(ipt)
-                    spaxel[cube_index].pointcloud_weight.append(weight_distance )
+                    spaxel[cube_index].pointcloud_weight.append(weight_distance)
 
-                    #if(zz == 100 and xx == 7 and yy == 10): 
-                    #    print('Match',ipt,cube_index) 
+                    #if(zz == 100 and xx == 7 and yy == 10):
+                    #    print('Match',ipt,cube_index)
                     #    print('Pt point',coord1,coord2,wave)
                     #    print('Pt a-b-l',alpha,beta)
                     #    print('x y',x+1,y+1)
@@ -270,7 +270,7 @@ def FindROI(self,Cube,spaxel,PointCloud):
 #_______________________________________________________________________
 
 #_______________________________________________________________________
-def FindWaveWeights(channel,subchannel):
+def FindWaveWeights(channel, subchannel):
     """
     Short Summary
     -------------
@@ -288,7 +288,7 @@ def FindWaveWeights(channel,subchannel):
     """
 
     if(channel == '1'):
-        if( subchannel == 'SHORT'):
+        if(subchannel == 'SHORT'):
             a = 3050.0
             c = 3340.0
             wa = 4.91
@@ -306,7 +306,7 @@ def FindWaveWeights(channel,subchannel):
 
 
     if(channel == '2'):
-        if( subchannel == 'SHORT'):
+        if(subchannel == 'SHORT'):
             a = 2700.0
             c = 2800.0
             wa = 7.55
@@ -323,7 +323,7 @@ def FindWaveWeights(channel,subchannel):
             wc = 11.71
 
     if(channel == '3'):
-        if( subchannel == 'SHORT'):
+        if(subchannel == 'SHORT'):
             a = 2390.0
             c = 2650.0
             wa = 11.50
@@ -340,7 +340,7 @@ def FindWaveWeights(channel,subchannel):
             wc = 18.14
 
     if(channel == '4'):
-        if( subchannel == 'SHORT'):
+        if(subchannel == 'SHORT'):
             a = 1320.0
             c = 1720.0
             wa = 17.88
@@ -355,15 +355,15 @@ def FindWaveWeights(channel,subchannel):
             c = 1200.0
             wa = 23.83
             wc = 28.43
-            
 
-    return a,c,wa,wc
+
+    return a, c, wa, wc
 
 #_______________________________________________________________________
 
 
 
-def FindNormalizationWeights(a,c,wa,wc,wavelength):
+def FindNormalizationWeights(a, c, wa, wc, wavelength):
     """
     Short Summary
     -------------
@@ -381,32 +381,29 @@ gs     weighting is determined from width of PSF as well as wavelength resolutio
     normalized weighting for 3 dimension
 
     """
-    alpha_weight =1.0
+    alpha_weight = 1.0
     beta_weight = 1.0
     lambda_weight = 1.0
-    
-    beta_weight = 0.31 * (wavelength/8.0)
+
+    beta_weight = 0.31 * (wavelength / 8.0)
 
     if(wavelength < 8.0):
         alpha_weight = 0.31
     else:
         alpha_weight = beta_weight
-        
+
 
         # linear interpolation
 
-    if (wavelength >= wa and wavelength <= wc): 
-        b = a + (c-a)*(wavelength - wa)/(wc-wa)
+    if (wavelength >= wa and wavelength <= wc):
+        b = a + (c - a) * (wavelength - wa) / (wc - wa)
     elif (wavelength < wa):
         b = a
     else:
         b = c
 
 
-    lambda_weight = wavelength/b
+    lambda_weight = wavelength / b
 
-    weight = [alpha_weight,beta_weight,lambda_weight]
+    weight = [alpha_weight, beta_weight, lambda_weight]
     return weight
-
-
-        

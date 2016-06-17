@@ -91,8 +91,8 @@ def get_multiple_reference_paths(input_file, reference_file_types):
     except crds.CrdsBadReferenceError as exc:
         raise crds.CrdsBadReferenceError(str(exc))
 
-    refpaths = { filetype : filepath if "N/A" not in filepath.upper() else "N/A"
-                 for (filetype, filepath) in bestrefs.items() }
+    refpaths = {filetype: filepath if "N/A" not in filepath.upper() else "N/A"
+                 for (filetype, filepath) in bestrefs.items()}
 
     return refpaths
 
@@ -163,4 +163,3 @@ def get_context_used():
     """Return the context (.pmap) used for determining best references."""
     _connected, final_context = crds.heavy_client.get_processing_mode("jwst")
     return final_context
-

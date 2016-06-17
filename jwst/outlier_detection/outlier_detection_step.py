@@ -35,7 +35,7 @@ class OutlierDetectionStep(Step):
         scale = string(default='0.5 0.4')
         backg = float(default=0.0)        
     """
-    reference_file_types=['gain','readnoise'] # No ref file for Build6...
+    reference_file_types = ['gain', 'readnoise'] # No ref file for Build6...
 
     def process(self, input, to_file=False):
 
@@ -43,16 +43,16 @@ class OutlierDetectionStep(Step):
 
         self.ref_filename = {}
         self.ref_filename['gain'] = self.build_reffile_container('gain')
-        self.ref_filename['readnoise'] = self.build_reffile_container('readnoise')        
-        
+        self.ref_filename['readnoise'] = self.build_reffile_container('readnoise')
+
         # Call the resampling routine
         self.step = outlier_detection.OutlierDetection(self.input_models,
                                 to_file=to_file,
-                                ref_filename = self.ref_filename)
+                                ref_filename=self.ref_filename)
         self.step.do_detection()
 
         return self.input_models
-        
+
     def build_reffile_container(self, reftype):
         """
         Return a ModelContainer of reference file models.

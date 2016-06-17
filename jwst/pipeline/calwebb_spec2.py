@@ -36,15 +36,15 @@ class Spec2Pipeline(Pipeline):
     """
 
     # Define aliases to steps
-    step_defs = {'assign_wcs' : assign_wcs_step.AssignWcsStep,
-                 'bkg_subtract' : background_step.BackgroundStep,
-                 'imprint_subtract' : imprint_step.ImprintStep,
+    step_defs = {'assign_wcs': assign_wcs_step.AssignWcsStep,
+                 'bkg_subtract': background_step.BackgroundStep,
+                 'imprint_subtract': imprint_step.ImprintStep,
                  #'msa_flagging' : msa_flag_step.MsaFlagStep,
-                 'extract_2d' : extract_2d_step.Extract2dStep,
-                 'flat_field' : flat_field_step.FlatFieldStep,
-                 'straylight' : straylight_step.StraylightStep,
-                 'fringe' : fringe_step.FringeStep,
-                 'photom' : photom_step.PhotomStep
+                 'extract_2d': extract_2d_step.Extract2dStep,
+                 'flat_field': flat_field_step.FlatFieldStep,
+                 'straylight': straylight_step.StraylightStep,
+                 'fringe': fringe_step.FringeStep,
+                 'photom': photom_step.PhotomStep
                 }
 
     # The main process method
@@ -143,7 +143,7 @@ class Lvl2Input(object):
     The input and output member info is loaded into an ASN table model.
     """
 
-    template={"asn_rule": "",
+    template = {"asn_rule": "",
               "targname": "",
               "asn_pool": "",
               "asn_type": "",
@@ -182,4 +182,3 @@ class Lvl2Input(object):
 
         self.rootname = self.filename[:self.filename.rfind('_')]
         self.asn['members'][0]['expname'] = self.filename
-

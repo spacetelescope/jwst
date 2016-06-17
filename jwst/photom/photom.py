@@ -329,7 +329,7 @@ class DataSet(object):
         """
         # Get the conversion factor from the PHOTMJSR column of the table row
         conv_factor = tabdata['photmjsr']
-        
+
         # Get the length of the relative response arrays in this row
         nelem = tabdata['nelem']
 
@@ -341,14 +341,14 @@ class DataSet(object):
             relresps = tabdata['relresponse']
 
             # Set the relative sensitivity table for the correct Model type
-            if isinstance( self.input, datamodels.MultiSlitModel):
-                otab = np.array( list(zip(waves, relresps)),
-                                dtype=self.input.slits[0].relsens.dtype )
+            if isinstance(self.input, datamodels.MultiSlitModel):
+                otab = np.array(list(zip(waves, relresps)),
+                                dtype=self.input.slits[0].relsens.dtype)
                 self.input.slits[0].relsens = otab
 
             else:
-                otab = np.array( list(zip(waves, relresps)),
-                                dtype=self.input.relsens.dtype )
+                otab = np.array(list(zip(waves, relresps)),
+                                dtype=self.input.relsens.dtype)
                 self.input.relsens = otab
 
             log.info('Relative response table written.')
@@ -382,10 +382,10 @@ class DataSet(object):
         None  
 
         """
-        pix_area = datamodels.PixelAreaModel( area_fname )
+        pix_area = datamodels.PixelAreaModel(area_fname)
 
         # Set model-dependent attribute to area array
-        if isinstance( self.input, datamodels.MultiSlitModel):
+        if isinstance(self.input, datamodels.MultiSlitModel):
             self.input.slits[0].area = pix_area.data
         else:
             self.input.area = pix_area.data
@@ -395,20 +395,20 @@ class DataSet(object):
         # (the *_ster keys are read but not used)
         try:
             tab_ster = ftab.meta.photometry.pixelarea_steradians
-            tab_a2 = ftab.meta.photometry.pixelarea_arcsecsq 
+            tab_a2 = ftab.meta.photometry.pixelarea_arcsecsq
             area_ster = pix_area.meta.photometry.pixelarea_steradians
             area_a2 = pix_area.meta.photometry.pixelarea_arcsecsq
 
-            a2_tol = abs(tab_a2 - area_a2)/(tab_a2 + area_a2) # rel. tolerance
-            if ( a2_tol > PHOT_TOL ):
+            a2_tol = abs(tab_a2 - area_a2) / (tab_a2 + area_a2) # rel. tolerance
+            if (a2_tol > PHOT_TOL):
                 log.warning('The relative difference between the values for the')
-                log.warning('pixel area in sq arcsec (%s)', a2_tol )
-                log.warning('exceeds the allowed tolerance (%s)', PHOT_TOL )
-            else:  # copy the keys to the primary header of the output 
+                log.warning('pixel area in sq arcsec (%s)', a2_tol)
+                log.warning('exceeds the allowed tolerance (%s)', PHOT_TOL)
+            else:  # copy the keys to the primary header of the output
                 log.debug('The values of the pixel areas (PIXAR_A2 and PIXAR_SR)')
                 log.debug('will be copied to the output.')
                 self.input.meta.photometry.pixelarea_arcsecsq = float(tab_a2)
-                self.input.meta.photometry.pixelarea_steradians = float(tab_ster)     
+                self.input.meta.photometry.pixelarea_steradians = float(tab_ster)
         except: # at least 1 keyword is missing so keys will not be written
             pass
 
@@ -475,12 +475,12 @@ class DataSet(object):
 
         if area_fname is not None: # Load and save the pixel area info
             if 'IMAGE' in self.exptype:
-                result = self.save_area_info( ftab, area_fname ) 
+                result = self.save_area_info(ftab, area_fname)
 
         # Store the conversion factors in the meta data
         log.info('Writing PHOTMJSR with value: %g', conv_factor)
         self.input.meta.photometry.conversion_megajanskys = conv_factor
-        self.input.meta.photometry.conversion_microjanskys = 23.50443*conv_factor
+        self.input.meta.photometry.conversion_microjanskys = 23.50443 * conv_factor
 
         ftab.close()
 

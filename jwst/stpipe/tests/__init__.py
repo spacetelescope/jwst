@@ -9,4 +9,3 @@ def setup():
     buffer = io.BytesIO(b"[*]\n")
 
     log.load_configuration(buffer)
-
