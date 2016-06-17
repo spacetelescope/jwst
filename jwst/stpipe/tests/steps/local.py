@@ -1,3 +1,5 @@
+from __future__ import absolute_import, division, print_function
+
 from jwst.stpipe import Step
 import logging
 
@@ -14,7 +16,7 @@ class DummyStep(Step):
     """
 
     def process(self, *args):
-        from ..datamodels import ImageModel
+        from jwst.datamodels import ImageModel
 
         log.info("Default logger")
         log.debug("Default logger")

@@ -15,8 +15,10 @@ class JWSTExtension(AsdfExtension):
 
     @property
     def tag_mapping(self):
+        #return [('tag:stsci.edu:jwst',
+                 #'http://stsci.edu/schemas/jwst{tag_suffix}')]
         return [('tag:stsci.edu:jwst_pipeline',
-                 'http://stsci.edu/schemas/jwst_pipeline{tag_suffix}')]
+                     'http://stsci.edu/schemas/jwst_pipeline{tag_suffix}')]
 
     @property
     def url_mapping(self):

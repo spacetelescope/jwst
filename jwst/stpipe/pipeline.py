@@ -123,7 +123,7 @@ class Pipeline(Step):
         from .. import datamodels
         gc.collect()
         if self._is_association_file(input_file):
-            return 
+            return
         try:
             with datamodels.open(input_file) as model:
                 pass

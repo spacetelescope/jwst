@@ -1,4 +1,4 @@
-from jwst.stpipe import Step
+from ... import Step
 from .... import datamodels
 
 class AnotherDummyStep(Step):
@@ -37,7 +37,7 @@ class OptionalRefTypeStep(Step):
     reference_file_types = ['to_be_ignored_ref_type']
 
     def process(self):
-        ref_file = self.get_reference_file(models.open(), 'to_be_ignored_ref_type')
+        ref_file = self.get_reference_file(datamodels.open(), 'to_be_ignored_ref_type')
         assert ref_file == ""
 
 
@@ -49,7 +49,7 @@ class SaveStep(Step):
     """
 
     def process(self, *args):
-        from ..datamodels import ImageModel
+        from ....datamodels import ImageModel
 
         model = ImageModel(args[0])
 

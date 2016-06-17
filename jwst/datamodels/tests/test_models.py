@@ -6,8 +6,7 @@ import os
 import shutil
 import tempfile
 
-from nose.tools import raises
-
+import pytest
 try:
     import yaml
     has_yaml = True
@@ -48,11 +47,11 @@ def teardown():
     shutil.rmtree(TMP_DIR)
 
 
-@raises(AttributeError)
 def test_set_shape():
-    with ImageModel((50, 50)) as dm:
-        assert dm.shape == (50, 50)
-        dm.shape = (42, 23)
+    with pytest.raises(AttributeError):
+        with ImageModel((50, 50)) as dm:
+            assert dm.shape == (50, 50)
+            dm.shape = (42, 23)
 
 
 def test_broadcast():
@@ -186,18 +185,18 @@ def test_init_with_array2():
         assert dm.data.shape == (50, 50)
 
 
-@raises(ValueError)
 def test_init_with_array3():
-    array = np.empty((50, ))
-    with ImageModel(array) as dm:
-        pass
+    with pytest.raises(ValueError):
+        array = np.empty((50, ))
+        with ImageModel(array) as dm:
+            pass
 
 
-@raises(ValueError)
 def test_set_array():
-    with ImageModel() as dm:
-        data = np.empty((50,))
-        dm.data = data
+    with pytest.raises(ValueError):
+        with ImageModel() as dm:
+            data = np.empty((50,))
+            dm.data = data
 
 
 def test_set_array2():
@@ -206,10 +205,10 @@ def test_set_array2():
         dm.data = data
 
 
-@raises(AttributeError)
 def test_base_model_has_no_arrays():
-    with DataModel() as dm:
-        dm.data
+    with pytest.raises(AttributeError):
+        with DataModel() as dm:
+            dm.data
 
 
 def test_array_type():

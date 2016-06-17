@@ -1,40 +1,11 @@
-# Copyright (C) 2010 Association of Universities for Research in Astronomy(AURA)
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-#     1. Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#
-#     2. Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following
-#       disclaimer in the documentation and/or other materials provided
-#       with the distribution.
-#
-#     3. The name of AURA and its representatives may not be used to
-#       endorse or promote products derived from this software without
-#       specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY AURA ``AS IS'' AND ANY EXPRESS OR IMPLIED
-# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL AURA BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-# OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-# TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
-# DAMAGE.
-
 from __future__ import absolute_import, division, print_function
 
 from os.path import dirname, join, abspath, isfile
 import shutil
 import tempfile
 
-from nose.tools import raises
-
+#from nose.tools import raises
+import pytest
 import numpy as np
 
 from ..config_parser import ValidationError
@@ -123,48 +94,48 @@ def test_step_from_commandline_class():
     step.run(1, 2)
 
 
-@raises(ValueError)
+#@raises(ValueError)
 def test_step_from_commandline_invalid():
     from .. import Step
-
     args = [
-        '__foo__'
+            '__foo__'
         ]
 
-    step = Step.from_cmdline(args)
+    with pytest.raises(ValueError):
+        step = Step.from_cmdline(args)
 
 
-@raises(ValueError)
+#@raises(ValueError)
 def test_step_from_commandline_invalid2():
     from .. import Step
 
     args = [
         '__foo__.__bar__'
         ]
+    with pytest.raises(ValueError):
+        step = Step.from_cmdline(args)
 
-    step = Step.from_cmdline(args)
 
-
-@raises(ValueError)
+#@raises(ValueError)
 def test_step_from_commandline_invalid3():
     from .. import Step
 
     args = [
         'sys.foo'
         ]
+    with pytest.raises(ValueError):
+        step = Step.from_cmdline(args)
 
-    step = Step.from_cmdline(args)
 
-
-@raises(ValueError)
+#@raises(ValueError)
 def test_step_from_commandline_invalid4():
     from .. import Step
 
     args = [
         'sys.argv'
         ]
-
-    step = Step.from_cmdline(args)
+    with pytest.raises(ValueError):
+        step = Step.from_cmdline(args)
 
 
 def test_step_print_spec():
@@ -189,11 +160,11 @@ def test_step_with_local_class():
     step.run(np.array([[0,0]]))
 
 
-@raises(ValidationError)
+#@raises(ValidationError)
 def test_extra_parameter():
     from .steps import AnotherDummyStep
-
-    step = AnotherDummyStep("SomeOtherStepOriginal", par5='foo')
+    with pytest.raises(ValidationError):
+        step = AnotherDummyStep("SomeOtherStepOriginal", par5='foo')
 
 
 def test_crds_override():
@@ -215,7 +186,7 @@ def test_omit_ref_file():
     step = OptionalRefTypeStep(override_to_be_ignored_ref_type="")
     step.process()
 
-
+'''
 def test_save_model():
     tempdir = tempfile.mkdtemp()
     orig_filename = join(dirname(__file__), 'data', 'flat.fits')
@@ -228,5 +199,6 @@ def test_save_model():
     ]
 
     Step.from_cmdline(args)
-
-    assert isfile(join(tempdir, 'flat_processed.fits'))
+    fname = join(tempdir, 'flat_processed.fits')
+    assert isfile(fname)
+'''
