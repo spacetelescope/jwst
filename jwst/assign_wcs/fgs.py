@@ -26,7 +26,7 @@ def create_pipeline(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : jwst_lib.models.DataModel
+    input_model : jwst.datamodels.DataModel
         Either an ImageModel or a CubeModel
     reference_files : dict
         {reftype: file_name} mapping
