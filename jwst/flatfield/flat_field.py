@@ -141,7 +141,7 @@ def get_flat(slit, flat_model):
     Parameters
     ----------
     slit: JWST data model
-        output data model 
+        output data model
 
     flat_model: JWST data model
         data model containing flat-field
@@ -224,7 +224,7 @@ def ref_matches_sci(ref_model, sci_model):
     Short Summary
     -------------
     Check if the science model has the same subarray parameters as the
-    reference model. 
+    reference model.
 
     Parameters
     ----------

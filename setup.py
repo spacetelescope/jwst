@@ -6,9 +6,9 @@ from setuptools.command.test import test as TestCommand
 from numpy import get_include as np_include
 from glob import glob
 
-NAME='jwst'
-SCRIPTS=glob('scripts/*')
-PACKAGE_DATA={
+NAME = 'jwst'
+SCRIPTS = glob('scripts/*')
+PACKAGE_DATA = {
     '': [
         '*.fits',
         '*.txt',
@@ -74,7 +74,7 @@ setup(
     description='JWST',
     url='http://ssb.stsci.edu',
     license='BSD',
-    classifiers = [
+    classifiers=[
         'License :: OSI Approved :: BSD License',
         'Operating System :: OS Independent',
         'Programming Language :: Python',
@@ -87,7 +87,7 @@ setup(
         Extension('jwst.tweakreg.chelp',
             glob('src/tweakreg/*.c'),
             include_dirs=[np_include()],
-            define_macros=[('NUMPY','1')]),
+            define_macros=[('NUMPY', '1')]),
     ],
     tests_require=[
         'pytest'

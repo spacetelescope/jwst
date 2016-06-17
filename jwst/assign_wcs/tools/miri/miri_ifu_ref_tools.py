@@ -334,7 +334,7 @@ def create_xy_models(data, channel, coeff_names, name):
         for c, val in zip(coeff_names, al[1:]):
             coeffs[c] = val
 
-        transforms[sl] =  models.Shift(-xs, name=shname) & models.Identity(1) | \
+        transforms[sl] = models.Shift(-xs, name=shname) & models.Identity(1) | \
                   models.Polynomial2D(8, name=pname, **coeffs)
     return transforms
 

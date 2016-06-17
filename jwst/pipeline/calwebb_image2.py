@@ -21,7 +21,7 @@ log.setLevel(logging.DEBUG)
 class Image2Pipeline(Pipeline):
     """
 
-    CalWebbImage2: Processes JWST imaging-mode slope images from 
+    CalWebbImage2: Processes JWST imaging-mode slope images from
                    Level-2a to Level-2b.
 
     Included steps are:

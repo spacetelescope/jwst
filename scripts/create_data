@@ -41,8 +41,8 @@ from jwst.fits_generator import create_data
 if __name__ == '__main__':
 
     # bug: figure out how to get argparse to do this
-    if '--version' in sys.argv :
-        sys.stdout.write("%s\n"%fits_generator.__version__)
+    if '--version' in sys.argv:
+        sys.stdout.write("%s\n" % fits_generator.__version__)
         sys.exit(0)
 
     parser = argparse.ArgumentParser(
@@ -51,8 +51,8 @@ if __name__ == '__main__':
         'directory', nargs=1,
         help="""A list of directories containing proposal files
         to be processsed.""")
-    parser.add_argument('-l','--level', dest='level',
-                        nargs=1, default='1b', choices=('1b','2a'),
+    parser.add_argument('-l', '--level', dest='level',
+                        nargs=1, default='1b', choices=('1b', '2a'),
                         help="Level of data to produce: default='1b'")
 
     args = parser.parse_args()

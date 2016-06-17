@@ -17,7 +17,7 @@ def Jinc(x, y):
     """
     Short Summary
     -------------
-    Compute 2d Jinc for given coordinates     
+    Compute 2d Jinc for given coordinates
 
     Parameters
     ----------
@@ -27,7 +27,7 @@ def Jinc(x, y):
     Returns
     -------
     jinc_2d: float array
-        2d Jinc at the given coordinates, with NaNs replaced by pi/4. 
+        2d Jinc at the given coordinates, with NaNs replaced by pi/4.
     """
 
     R = (Jinc.d / Jinc.lam) * Jinc.pitch *  \
@@ -64,7 +64,7 @@ def phasor(kx, ky, hx, hy, lam, phi, pitch):
     Returns
     -------
     phasor: complex
-        Calculate wavefront for a single hole ??    
+        Calculate wavefront for a single hole ??
     """
 
     return np.exp(-2 * np.pi * 1j * ((pitch * kx * hx + pitch * ky * hy) / lam + (phi / lam)))
@@ -84,7 +84,7 @@ def interf(kx, ky):
     Returns
     -------
     interference: 2D complex array
-        interference for all holes ??    
+        interference for all holes ??
     """
     interference = 0j
     for hole, ctr in enumerate(interf.ctrs):
@@ -194,7 +194,7 @@ def ASFfringe(pixel, fov, oversample, ctrs, d, lam, phi,
         oversampling factor
 
     ctrs: 2D float array
-        centers of holes 
+        centers of holes
 
     d: float
         hole diameter
@@ -270,7 +270,7 @@ def ASFhex(pixel, fov, oversample, ctrs, d, lam, phi,
         oversampling factor
 
     ctrs: 2D float array
-        centers of holes 
+        centers of holes
 
     d: float
         flat-to-flat distance across hexagon
@@ -348,7 +348,7 @@ def PSF(pixel, fov, oversample, ctrs, d, lam, phi,
         oversampling factor
 
     ctrs: 2D float array
-        centers of holes           
+        centers of holes
 
     d: float
         hole diameter for 'circ'; flat-to-flat distance across for 'hex'
@@ -367,7 +367,7 @@ def PSF(pixel, fov, oversample, ctrs, d, lam, phi,
 
     Returns
     -------
-    PSF - 2D float array     
+    PSF - 2D float array
     """
 
     if shape == 'circ':

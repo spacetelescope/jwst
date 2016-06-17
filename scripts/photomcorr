@@ -40,8 +40,8 @@ if __name__ == '__main__':
 
     import sys
 
-    if '--version' in sys.argv :
-        sys.stdout.write("%s\n"%pc.__version__)
+    if '--version' in sys.argv:
+        sys.stdout.write("%s\n" % pc.__version__)
         sys.exit(0)
 
     parser = argparse.ArgumentParser(
@@ -57,6 +57,5 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    ff_a = photom.DataSet( args.infile[0], args.outfile[0] )
+    ff_a = photom.DataSet(args.infile[0], args.outfile[0])
     ff_a.do_all()
-

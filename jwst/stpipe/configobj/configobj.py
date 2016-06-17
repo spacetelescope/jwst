@@ -1041,7 +1041,7 @@ class ConfigObj(Section):
 
     _keyword = re.compile(r'''^ # line start
         (\s*)                   # indentation
-        (                       # keyword
+        (                      # keyword
             (?:".*?")|          # double quotes
             (?:'.*?')|          # single quotes
             (?:[^'"=].*?)       # no quotes
@@ -1055,7 +1055,7 @@ class ConfigObj(Section):
     _sectionmarker = re.compile(r'''^
         (\s*)                     # 1: indentation
         ((?:\[\s*)+)              # 2: section marker open
-        (                         # 3: section name open
+        (                        # 3: section name open
             (?:"\s*\S.*?\s*")|    # at least one non-space with double quotes
             (?:'\s*\S.*?\s*')|    # at least one non-space with single quotes
             (?:[^'"\s].*?)        # at least one non-space unquoted

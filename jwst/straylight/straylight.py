@@ -65,7 +65,7 @@ def correct_MRS(input_model, straylight_model):
 
     # Create output as a copy of the input science data model
     # sci_mask is the input science image * mask
-    # science regions  = 0 (reference pixel are  also = 0 )
+    # science regions  = 0 (reference pixel are  also = 0)
 
     output = input_model.copy() # this is used in algorithm to
     # find the straylight correction.
@@ -170,7 +170,7 @@ def correct_MRS(input_model, straylight_model):
                 xmean = np.mean(xuse[igap[0]])
                 yg[i] = ymean
                 xg[i] = xmean
-                #if(j ==1 ):
+                #if(j ==1):
                 #    print 'xg yg ',i,xg[i],yg[i]
         # else  entire row is zero
         else:

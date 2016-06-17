@@ -187,7 +187,7 @@ def test_init_with_array2():
 
 def test_init_with_array3():
     with pytest.raises(ValueError):
-        array = np.empty((50, ))
+        array = np.empty((50,))
         with ImageModel(array) as dm:
             pass
 

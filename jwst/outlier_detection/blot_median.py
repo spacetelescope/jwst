@@ -1,6 +1,6 @@
 """
 Create a blotted images that match the inputs from the combined median image.
-        
+
 :Authors: Warren Hack
 
 :License:

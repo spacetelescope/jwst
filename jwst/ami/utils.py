@@ -43,7 +43,7 @@ def quadratic(p, x):
 
 
 def makeA(nh):
-    """ 
+    """
     Long Summary
     -------------
     Writes the 'NRM matrix' that gets pseudo-inverted to provide
@@ -59,10 +59,10 @@ def makeA(nh):
         x = np.dot(Apinv, b)
 
     Following Noah Gamper's convention of fringe phases,
-    for holes 'a b c d e f g', rows of A are 
+    for holes 'a b c d e f g', rows of A are
 
         (-1 +1  0  0  ...)
-        ( 0 -1 +1  0  ...)
+        (0 -1 +1  0  ...)
 
     which is implemented in makeA() as:
         matrixA[row,h2] = -1
@@ -82,7 +82,7 @@ def makeA(nh):
     Returns
     -------
     matrixA: 2D float array
-         nh columns, nh(nh-1)/2 rows (eg 21 for nh=7)      
+         nh columns, nh(nh-1)/2 rows (eg 21 for nh=7)
     """
 
     log.debug('-------')
@@ -123,13 +123,13 @@ def fringes2pistons(fringephases, nholes):
     fringephases: 1D integer array
         fringe phases
 
-    nholes: integer 
+    nholes: integer
         number of holes
 
     Returns
     -------
     np.dot(Apinv, fringephases): 1D integer array
-        pistons in same units as fringe phases         
+        pistons in same units as fringe phases
 
     """
     Anrm = makeA(nholes)
@@ -165,7 +165,7 @@ def rebin(a=None, rc=(2, 2)):
 
 
 def krebin(a, shape):
-    """ 
+    """
     Short Summary
     -------------
     Klaus P's fastrebin from web (dg - more ?)
@@ -176,12 +176,12 @@ def krebin(a, shape):
         input array to rebin
 
     shape: tuple (integer, integer)
-        dimensions of array 'a' binned down by dimensions of binning kernel  
+        dimensions of array 'a' binned down by dimensions of binning kernel
 
     Returns
     -------
     reshaped_a: 2D float array
-        reshaped input array    
+        reshaped input array
     """
 
     sh = shape[0], a.shape[0] // shape[0], shape[1], a.shape[1] // shape[1]
@@ -231,7 +231,7 @@ def crosscorrelate(a=None, b=None):
     Returns
     -------
     fft.fftshift(c)
-        complex array that is the correlation of the two input arrays.    
+        complex array that is the correlation of the two input arrays.
     """
 
     if a.shape != b.shape:
@@ -262,7 +262,7 @@ def crosscorrelate(a=None, b=None):
 
 
 def findmax(mag, vals, mid=1.0):
-    """ 
+    """
     Short Summary
     -------------
     Fit a quadratic to the given input arrays mag and vals, and calculate the

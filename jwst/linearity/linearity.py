@@ -165,7 +165,7 @@ def correct_for_NaN(lin_coeffs, input):
         array of correction coefficients in reference file
 
     input: data model object
-        science data model to be corrected in place    
+        science data model to be corrected in place
 
     Returns
     -------
@@ -201,7 +201,7 @@ def correct_for_NaN(lin_coeffs, input):
 
 
 def correct_for_flag(lin_coeffs, lin_dq):
-    """ 
+    """
     Short Summary
     -------------
     Check for pixels that are flagged as NO_LIN_CORR
@@ -247,7 +247,7 @@ def correct_for_flag(lin_coeffs, lin_dq):
 
 
 def ben_coeffs(lin_coeffs):
-    """ 
+    """
     Short Summary
     -------------
     For pixels having at least 1 NaN coefficient, reset the coefficients to be

@@ -23,7 +23,7 @@ def generate(pool, rules):
 
     Returns
     -------
-    ([association, ], [orphans,])
+    ([association,], [orphans,])
         A 2-tuple consisting of:
            * List of associations
            * List of members from the pool that

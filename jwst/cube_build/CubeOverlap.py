@@ -355,7 +355,7 @@ def SpaxelOverlap(self, x, y, sliceno, start_slice, input_model, transform, beta
     -------------
     This routine assumes a 1-1 mapping in beta - slice no.
     This routine assumes the output coordinate systems is alpha-beta
-    The user can not change scaling in beta 
+    The user can not change scaling in beta
     Map the corners of the x,y detector values to a cube defined by alpha,beta, lambda
     In the alpha,lambda plane find the % area of the detector pixel which it overlaps with
     in the cube.  For each spaxel record the detector pixels that overlap with it - store flux,

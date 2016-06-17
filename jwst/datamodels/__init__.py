@@ -195,7 +195,7 @@ def open(init=None, extensions=None):
     return new_class(init, extensions=extensions)
 
 '''
-def test( verbose=False ) :
+def test(verbose=False) :
     import nose
 
     # get the pandokia plugin if it is available (it will only
@@ -206,17 +206,17 @@ def test( verbose=False ) :
         nose_plugin = None
 
     if nose_plugin :
-        addplugins = [ nose_plugin.Pdk() ]
+        addplugins = [nose_plugin.Pdk()]
     else :
         addplugins = None
 
     # get the name of the test package
-    argv = [ 'nosetests', '--exe', __name__ + '.tests' ]
+    argv = ['nosetests', '--exe', __name__ + '.tests']
 
     import jwst.datamodels.tests
 
-    print ("ARGS", argv )
+    print ("ARGS", argv)
 
     # run nose
-    return nose.main( argv = argv,  addplugins=addplugins )
+    return nose.main(argv = argv,  addplugins=addplugins)
 '''

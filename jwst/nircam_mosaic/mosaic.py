@@ -325,7 +325,7 @@ def _insert_image(position, dat, mosaic):
         x2 = dat.shape[1]
         y2 = mosaic.shape[0]
         y1 = y2 - dat.shape[0]
-    elif position in ('upper_right', ):
+    elif position in ('upper_right',):
         x2 = mosaic.shape[1]
         x1 = x2 - dat.shape[1]
         y2 = mosaic.shape[0]

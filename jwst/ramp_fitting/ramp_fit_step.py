@@ -18,11 +18,11 @@ class RampFitStep (Step):
     """
 
     spec = """
-        int_name = string( default='' )
-        save_opt = boolean( default=False )
-        opt_name = string( default='' )
-        algorithm = string( default='OLS')
-        weighting = string( default='unwtd')
+        int_name = string(default='')
+        save_opt = boolean(default=False)
+        opt_name = string(default='')
+        algorithm = string(default='OLS')
+        weighting = string(default='unwtd')
     """
 
     reference_file_types = ['readnoise', 'gain']

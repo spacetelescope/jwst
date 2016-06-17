@@ -15,11 +15,11 @@ def do_correction(input_model, reset_model):
     Short Summary
     -------------
     Subtracts reset correction from science arrays, combines
-    error arrays in quadrature, and updates data quality array based on 
+    error arrays in quadrature, and updates data quality array based on
     DQ flags in the reset arrays. When applying correction, if integration
     # of input data > reset_nints, use  correction of reset_nints to
     correct data. When apply correction, if group # of input data >
-    reset_ngroups, use correction of reset_ngroups (which = 0). 
+    reset_ngroups, use correction of reset_ngroups (which = 0).
 
     Parameters
     ----------
@@ -79,7 +79,7 @@ def do_correction(input_model, reset_model):
             # combine the ERR arrays in quadrature
             # NOTE: currently stubbed out until ERR handling is decided
             #output.err[i,j] = np.sqrt(
-            #           output.err[i,j]**2 + reset.err[j]**2 )
+            #           output.err[i,j]**2 + reset.err[j]**2)
 
 
     return output

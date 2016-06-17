@@ -114,15 +114,15 @@ class OptRes(object):
         """
 
         for ii_seg in range(0, self.yint_seg.shape[1]):
-            self.yint_seg[ num_int, ii_seg, rlo:rhi, :] = \
+            self.yint_seg[num_int, ii_seg, rlo:rhi, :] = \
                            self.interc_2d[ii_seg, :].reshape(sect_shape)
-            self.slope_seg[ num_int, ii_seg, rlo:rhi, :] = \
+            self.slope_seg[num_int, ii_seg, rlo:rhi, :] = \
                             self.slope_2d[ii_seg, :].reshape(sect_shape)
-            self.sigyint_seg[ num_int, ii_seg, rlo:rhi, :] = \
+            self.sigyint_seg[num_int, ii_seg, rlo:rhi, :] = \
                               self.siginterc_2d[ii_seg, :].reshape(sect_shape)
-            self.sigslope_seg[ num_int, ii_seg, rlo:rhi, :] = \
+            self.sigslope_seg[num_int, ii_seg, rlo:rhi, :] = \
                                self.sigslope_2d[ii_seg, :].reshape(sect_shape)
-            self.inv_var_seg[ num_int, ii_seg, rlo:rhi, :] = \
+            self.inv_var_seg[num_int, ii_seg, rlo:rhi, :] = \
                               self.inv_var_2d[ii_seg, :].reshape(sect_shape)
             self.firstf_int[num_int, rlo:rhi, :] = ff_sect
 
@@ -812,7 +812,7 @@ def get_skip_frames(instrume):
 
 
 def get_ref_subs(model, readnoise_model, gain_model):
-    """ 
+    """
     Short Summary
     -------------
     Get readnoise array for calculation of variance of noiseless ramps, and

@@ -199,6 +199,6 @@ def subtract_dark(input, dark):
             # combine the ERR arrays in quadrature
             # NOTE: currently stubbed out until ERR handling is decided
             #output.err[i,j] = np.sqrt(
-            #           output.err[i,j]**2 + dark.err[j]**2 )
+            #           output.err[i,j]**2 + dark.err[j]**2)
 
     return output

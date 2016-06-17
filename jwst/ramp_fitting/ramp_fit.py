@@ -105,7 +105,7 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
 def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                   weighting):
-    """ 
+    """
     Extended Summary
     ----------------
     Fit a ramp using ordinary least squares. Calculate the count rate for each
@@ -234,7 +234,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             gain_sect = gain_2d[rlo:rhi, :]
 
             t_err_cube, t_dq_cube, m_by_var, inv_var, opt_res = \
-                 calc_slope( data_sect, gdq_sect, frame_time, opt_res, \
+                 calc_slope(data_sect, gdq_sect, frame_time, opt_res, \
                              rn_sect, gain_sect, max_seg, ngroups, weighting)
 
             err_cube[num_int, :, rlo:rhi, :] += t_err_cube
@@ -249,7 +249,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
             # Compress 4D->2D dq arrays for saturated and jump-detected pixels
             pixeldq_sect = pixeldq[rlo:rhi, :].copy()
-            dq_int[ num_int, rlo:rhi, : ] = \
+            dq_int[num_int, rlo:rhi, :] = \
                   dq_compress_sect(t_dq_cube, pixeldq_sect).copy()
 
             sect_shape = data_sect.shape[-2:]
@@ -270,7 +270,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             m_by_var_int[num_int, rlo:rhi, :] = m_by_var.reshape(sect_shape)
             inv_var_int[num_int, rlo:rhi, :] = inv_var.reshape(sect_shape)
 
-        slope_int[ num_int, :, : ] = \
+        slope_int[num_int, :, :] = \
                  utils.calc_slope_int(slope_int, m_by_var_int, inv_var_int,
                                        num_int)
 
@@ -722,9 +722,9 @@ def revert_dq(gdq_cube, gdq_cube_orig, num_int, skip_i, skip_f, rlo, rhi):
         jump-detected reverted in their initial values.
 
     """
-    gdq_cube[ num_int, :skip_i, rlo:rhi, : ] = \
+    gdq_cube[num_int, :skip_i, rlo:rhi, :] = \
             gdq_cube_orig[num_int, :skip_i, rlo:rhi, :]
-    gdq_cube[ num_int, -skip_f:, rlo:rhi, : ] = \
+    gdq_cube[num_int, -skip_f:, rlo:rhi, :] = \
             gdq_cube_orig[num_int, -skip_f:, rlo:rhi, :]
 
     return gdq_cube
@@ -1186,7 +1186,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
         if (opt_res is not None):
             # Append results to arrays
-            opt_res.append_arr( num_seg, these_pix, intercept, slope,\
+            opt_res.append_arr(num_seg, these_pix, intercept, slope,\
                                     sig_intercept, sig_slope, inv_var)
 
         num_seg[these_pix] += 1
@@ -1262,7 +1262,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
             if (opt_res is not None):
                 # Append results to arrays
-                opt_res.append_arr( num_seg, g_pix, intercept, slope, \
+                opt_res.append_arr(num_seg, g_pix, intercept, slope, \
                                     sig_intercept, sig_slope, inv_var)
 
             num_seg[g_pix] += 1
@@ -1287,7 +1287,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
             if (opt_res is not None):
                 # Append results to arrays
-                opt_res.append_arr( num_seg, g_pix, intercept, slope,\
+                opt_res.append_arr(num_seg, g_pix, intercept, slope,\
                                     sig_intercept, sig_slope, inv_var)
 
             num_seg[g_pix] += 1
@@ -1313,7 +1313,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
             if (opt_res is not None): # multi-integration, NGROUPS=1 datasets
                 # Append results to arrays
-                opt_res.append_arr( num_seg, g_pix, intercept, slope,\
+                opt_res.append_arr(num_seg, g_pix, intercept, slope,\
                                     sig_intercept, sig_slope, inv_var)
 
             num_seg[g_pix] = 1
@@ -1443,7 +1443,7 @@ def fit_lines(data, mask_2d, end_heads, end_st, start, rn_sect, gain_sect,
     if weighting.lower() == 'optim': # do the fits using optimal weighting
         # get sums from optimal weighting
         sumx, sumxx, sumxy, sumy, nreads_wtd, xvalues =\
-           calc_opt_sums( rn_sect, gain_sect, data_masked, mask_2d, good_pix, \
+           calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, good_pix, \
                           xvalues)
 
         slope, intercept, sig_slope, sig_intercept, line_fit =\
@@ -1479,12 +1479,12 @@ def fit_lines(data, mask_2d, end_heads, end_st, start, rn_sect, gain_sect,
 
     if (ngroups == 1): # process 1 group/integration dataset
         full_slope, full_intercept, full_variance, full_sig_intercept, \
-        full_sig_slope = fit_1_group( full_slope, full_intercept, \
+        full_sig_slope = fit_1_group(full_slope, full_intercept, \
         full_variance, full_sig_intercept, full_sig_slope, npix, data, mask_2d)
 
     if (ngroups == 2): # process 2 group/integration dataset
         full_slope, full_intercept, full_variance, full_sig_intercept, \
-        full_sig_slope = fit_2_group( full_slope, full_intercept, \
+        full_sig_slope = fit_2_group(full_slope, full_intercept, \
         full_variance, full_sig_intercept, full_sig_slope, npix, data, mask_2d)
 
     return full_slope, full_intercept, full_variance,  \
@@ -1779,7 +1779,7 @@ def fit_2_group(full_slope, full_intercept, full_variance, full_sig_intercept,
         full_slope[wh_sat_no] = data1_slice[wh_sat_no] - data0_slice[wh_sat_no]
         ## full_variance - already been correctly calculated
         full_sig_slope[wh_sat_no] = MIN_ERR
-        full_intercept[ wh_sat_no ] = data0_slice[ wh_sat_no ] -\
+        full_intercept[wh_sat_no] = data0_slice[wh_sat_no] -\
             data1_slice[wh_sat_no] # by geometry
         full_sig_intercept[wh_sat_no] = MIN_ERR
 
@@ -2044,7 +2044,7 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, good_pix, xvalues):
         sum of product of data and weight
 
     xvalues: int, 2D array
-        rolled up indices of valid pixel values for all reads    
+        rolled up indices of valid pixel values for all reads
     """
 
     # Return 'empty' sums if there is no more data to fit
@@ -2086,7 +2086,7 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, good_pix, xvalues):
 
     sqrt_arg = rn_2_r + data_diff * gain_sect_r
     wh_pos = np.where((sqrt_arg >= 0.) & (gain_sect_r != 0.))
-    numer_ir[wh_pos] = np.sqrt( rn_2_r[wh_pos] + \
+    numer_ir[wh_pos] = np.sqrt(rn_2_r[wh_pos] + \
                                 data_diff[wh_pos] * gain_sect_r[wh_pos])
     sigma_ir[wh_pos] = numer_ir[wh_pos] / gain_sect_r[wh_pos]
     snr = data_diff * 0.
@@ -2120,7 +2120,7 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, good_pix, xvalues):
     wt_h = np.zeros(data_masked.shape, dtype=np.float32)
 
     for jj_rd in range(data_masked.shape[0]):
-        wt_h[ jj_rd, : ] = \
+        wt_h[jj_rd, :] = \
               abs((abs(jj_rd - nrd_prime) / nrd_prime) ** power_wt_r) * invrdns2_r
 
     wt_h[np.isnan(wt_h)] = 0.

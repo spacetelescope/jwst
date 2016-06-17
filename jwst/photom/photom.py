@@ -379,7 +379,7 @@ class DataSet(object):
 
         Returns
         -------
-        None  
+        None
 
         """
         pix_area = datamodels.PixelAreaModel(area_fname)

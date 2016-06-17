@@ -492,7 +492,7 @@ class DataModel(properties.ObjectNode):
         dot-separated name.  For example, the schema element
         `meta.observation.date` will end up in the result as::
 
-            ( "meta.observation.date": "2012-04-22T03:22:05.432" )
+            ("meta.observation.date": "2012-04-22T03:22:05.432")
         """
         def recurse(tree, path=[]):
             if isinstance(tree, dict):
@@ -520,7 +520,7 @@ class DataModel(properties.ObjectNode):
             dot-separated name.  For example, the schema element
             `meta.observation.date` will end up in the result as::
 
-                ( "meta.observation.date": "2012-04-22T03:22:05.432" )
+                ("meta.observation.date": "2012-04-22T03:22:05.432")
             """
             return list(self.items())
 

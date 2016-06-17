@@ -9,12 +9,12 @@ from astropy.io import fits
 from . import cube
 
 #________________________________________________________________________________
-def ReadD2CMapFile(self, channel, subchannel, ):
+def ReadD2CMapFile(self, channel, subchannel,):
     """
     Short Summary
     -------------
     Uses old style of distortion files. A 1033 X 1025 file containing the alpha,beta and lambda for
-    each pixel corner. There is a  seperate fits file for each Detector and subchannel (so 6 files). 
+    each pixel corner. There is a  seperate fits file for each Detector and subchannel (so 6 files).
 
     Parameters
     ----------
@@ -23,7 +23,7 @@ def ReadD2CMapFile(self, channel, subchannel, ):
 
     Returns
     -------
-    returns self.wcs holding a mapping information 
+    returns self.wcs holding a mapping information
 
 
     """
@@ -99,7 +99,7 @@ def ReadD2CMapFile(self, channel, subchannel, ):
 
 
 
-def ReadDistortionFile(self, channel, subchannel, ):
+def ReadDistortionFile(self, channel, subchannel,):
     """
     Short Summary
     -------------
@@ -120,7 +120,7 @@ def ReadDistortionFile(self, channel, subchannel, ):
 
     Returns
     -------
-    returns self.wcs holding a mapping information 
+    returns self.wcs holding a mapping information
 
 
     """

@@ -43,5 +43,5 @@ if __name__ == '__main__':
     if '--version' in sys.argv:
         sys.stdout.write("Version %s\n" % dq_init.__version__)
         sys.exit(0)
-        
+
     cmdline.step_script(DQInitStep)

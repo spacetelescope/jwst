@@ -84,8 +84,8 @@ def find_CRs(data, err, gdq, times, read_noise, rejection_threshold, signal_thre
                     yint(ramp, read_noise[row, col], rejection_threshold)
 
                     # Add any new CR flags to input DQ array
-                    gdq[integration, :, row, col] = np.bitwise_or \
-                        (gdq[integration, :, row, col], ramp.dqs)
+                    gdq[integration, :, row, col] = np.bitwise_or(
+                                                        gdq[integration, :, row, col], ramp.dqs)
 
         # next pixel
     # next integration

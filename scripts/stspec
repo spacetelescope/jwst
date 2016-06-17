@@ -10,8 +10,8 @@ from jwst.stpipe import utilities
 
 if __name__ == '__main__':
 
-    if '--version' in sys.argv :
-        sys.stdout.write("%s\n"%stpipe.__version__)
+    if '--version' in sys.argv:
+        sys.stdout.write("%s\n" % stpipe.__version__)
         sys.exit(0)
 
     parser = argparse.ArgumentParser(
@@ -29,4 +29,3 @@ if __name__ == '__main__':
         sys.exit(1)
 
     step_class.print_configspec()
-

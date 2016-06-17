@@ -28,7 +28,7 @@
 #  'm_flux' : multiplicative factor for flux; value given is multiplied by the expected fluxes for cosmic
 #             rays ; default = 1.0
 #  'old_cr_file': file of previously generated GCR/SPs to add to the input data cube; default = None (which
-#                 causes new cosmic rays to be generated )
+#                 causes new cosmic rays to be generated)
 #
 # Arrays output to files:
 #  'new_cube.fits': input data cube with GCRs and SPs added
@@ -320,7 +320,7 @@ class cr_add_3d:
                     x_ctr_pix = int(cr_slice_data.shape[0] / 2); y_ctr_pix = int(cr_slice_data.shape[0] / 2) # center pixel of CR template
 
                     if (verb > 1):
-                        print('  The CR template at its center is cr_slice_data[ y_ctr_pix, x_ctr_pix] =', cr_slice_data[y_ctr_pix, x_ctr_pix])
+                        print('  The CR template at its center is cr_slice_data[y_ctr_pix, x_ctr_pix] =', cr_slice_data[y_ctr_pix, x_ctr_pix])
                         print('  The CR max deposited energy  =', cr_slice_data.max())
 
                     wh_nz = N.where(cr_slice_data > 0.0)

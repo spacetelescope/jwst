@@ -23,7 +23,7 @@ else:
     ok = False
     while not ok:
         msg = '''WARNING: %s already exists, do you want to overwrite the
-contents of this directory?  Enter yes or no [yes]: ''' %dst
+contents of this directory?  Enter yes or no [yes]: ''' % dst
 
         sys_vrs = sys.version[:3]
         if sys_vrs == '2.7':
@@ -31,7 +31,7 @@ contents of this directory?  Enter yes or no [yes]: ''' %dst
         else:
             answer = input(msg).strip().lower()
         if answer not in ['yes', 'no', '']:
-            print('%s is not a valid response\n' %answer)
+            print('%s is not a valid response\n' % answer)
         else:
             ok = True
             print('')
@@ -52,4 +52,3 @@ for i in os.listdir(cfg_dir):
     if i.endswith('.cfg'):
         cfg = os.path.join(cfg_dir, i)
         shutil.copy(cfg, dst)
-

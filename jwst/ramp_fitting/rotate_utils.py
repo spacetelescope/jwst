@@ -210,7 +210,7 @@ def glue_all_ext(nfiles):
     Parameters
     ----------
     nfiles: integer
-       number of files (one per integration )
+       number of files (one per integration)
 
     Returns
     _______
