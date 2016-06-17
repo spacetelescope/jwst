@@ -2,7 +2,7 @@
 
 from ..stpipe import Step
 from .. import datamodels
-from .. import dq_initialization
+from . import dq_initialization
 
 class DQInitStep(Step):
     """

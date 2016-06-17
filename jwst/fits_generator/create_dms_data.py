@@ -3,7 +3,7 @@ from __future__ import print_function
 import os
 import numpy
 from astropy.io import fits as pyfits
-from .. import fits_generator
+from .. import *
 
 #
 # Subarrays:
