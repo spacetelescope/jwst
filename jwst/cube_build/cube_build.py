@@ -207,11 +207,7 @@ def FilesinCube(self, input_table, iproduct, MasterTable):
                 detector = 'NIRSPEC'
 
                 fwa = input_model.meta.instrument.filter
-<<<<<<< HEAD
                 gwa = input_model.meta.instrument.grating
-=======
-                gwa  = input_model.meta.instrument.grating
->>>>>>> more imports
 
                 MasterTable.FileMap['NIRSPEC'][fwa][gwa].append(ifile)
             else:
@@ -257,11 +253,6 @@ def DetermineScale(Cube, InstrumentInfo):
                 min_b = b_scale
             if(wscale < min_w):
                 min_w = wscale
-<<<<<<< HEAD
-=======
-
-        scale = [min_a,min_b,min_w]
->>>>>>> more imports
 
         scale = [min_a, min_b, min_w]
 
@@ -282,11 +273,7 @@ def DetermineScale(Cube, InstrumentInfo):
             if(wscale < min_w):
                 min_w = wscale
 
-<<<<<<< HEAD
         scale = [min_a, min_b, min_w]
-=======
-        scale = [min_a,min_b,min_w]
->>>>>>> more imports
 
     return scale
 #_______________________________________________________________________
@@ -338,12 +325,6 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
         coord1, coord2, lam = detector2v23(x, y)
         coord1 = coord1 * 60.0
         coord2 = coord2 * 60.0
-
-
-<<<<<<< HEAD
-=======
-
->>>>>>> more imports
 
     a_min = np.nanmin(coord1)
     a_max = np.nanmax(coord1)
@@ -398,21 +379,13 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
     b_slice = np.zeros(nslices * 2)
     lambda_slice = np.zeros(nslices * 2)
 
-<<<<<<< HEAD
     regions = list(range(start_slice, end_slice + 1))
     k = 0
     sorder, wrange = nirspec.spectral_order_wrange_from_model(input)
     for i in regions:
 
         slice_wcs = nirspec.nrs_wcs_set_input(input.meta.wcs, 0, i, wrange)
-=======
-    regions = list(range(start_slice,end_slice+1))
-    k = 0
-    sorder,wrange = nirspec.spectral_order_wrange_from_model(input)
-    for i in regions:
 
-        slice_wcs = nirspec.nrs_wcs_set_input(input.meta.wcs,0,i,wrange)
->>>>>>> more imports
         b = _domain_to_bounds(slice_wcs.domain)
         y, x = np.mgrid[b[1][0]:b[1][1], b[0][0]:b[0][1]]
         v2, v3, lam = slice_wcs(x, y)
@@ -561,7 +534,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 
 
      # min and max values are for the center of the pixels
-<<<<<<< HEAD
+
     final_a_min = min(a_min) - Cube.Cdelt1 / 2.0
     final_a_max = max(a_max) + Cube.Cdelt1 / 2.0
     final_b_min = min(b_min) - Cube.Cdelt2 / 2.0
@@ -570,18 +543,8 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
     final_lambda_max = max(lambda_max) + Cube.Cdelt3 / 2.0
 
 
-    CubeFootPrint = final_a_min, final_a_max, final_b_min, final_b_max, final_lambda_min, final_lambda_max
-=======
-    final_a_min = min(a_min) - Cube.Cdelt1/2.0
-    final_a_max = max(a_max) + Cube.Cdelt1/2.0
-    final_b_min  = min(b_min)  - Cube.Cdelt2/2.0
-    final_b_max  = max(b_max)  + Cube.Cdelt2/2.0
-    final_lambda_min = min(lambda_min) - Cube.Cdelt3/2.0
-    final_lambda_max = max(lambda_max) + Cube.Cdelt3/2.0
-
-
-    CubeFootPrint = final_a_min,final_a_max,final_b_min,final_b_max,final_lambda_min,final_lambda_max
->>>>>>> more imports
+    CubeFootPrint = (final_a_min, final_a_max, final_b_min, final_b_max,
+                     final_lambda_min, final_lambda_max)
     return CubeFootPrint
 #________________________________________________________________________________
 
@@ -610,11 +573,7 @@ def MapDetectorToCube(self, this_channel, this_subchannel, Cube, spaxel, PixelCl
     detector = Cube.detector
     nfiles = len(MasterTable.FileMap[detector][this_channel][this_subchannel])
 
-<<<<<<< HEAD
     log.info('Number of files in cube %i', nfiles)
-=======
-    log.info('Number of files in cube %i',nfiles)
->>>>>>> more imports
 
     for k in range(nfiles):
         ifile = MasterTable.FileMap[detector][this_channel][this_subchannel][k]
@@ -627,12 +586,8 @@ def MapDetectorToCube(self, this_channel, this_subchannel, Cube, spaxel, PixelCl
             c1_offset = MasterTable.FileOffset[this_channel][this_subchannel]['C1'][k]
             c2_offset = MasterTable.FileOffset[this_channel][this_subchannel]['C2'][k]
 
-
-<<<<<<< HEAD
         log.info('Mapping file to cube %s ', ifile)
-=======
-        log.info( 'Mapping file to cube %s ',ifile)
->>>>>>> more imports
+
         # Open the input data model
         with datamodels.ImageModel(ifile) as input_model:
 
@@ -656,11 +611,8 @@ def MapDetectorToCube(self, this_channel, this_subchannel, Cube, spaxel, PixelCl
                 t0 = time.time()
                 cloud = CubeCloud.MakePointCloudMIRI(self, x, y, k, c1_offset, c2_offset, input_model)
                 n = PixelCloud.size
-<<<<<<< HEAD
+
                 if(n == 10):  # If first time
-=======
-                if(n ==10):  # If first time
->>>>>>> more imports
                     PixelCloud = cloud
 #                    print('pixelcloud',PixelCloud.shape, cloud.shape)
                 else:    #  add information for another slice  to the  PixelCloud
@@ -674,30 +626,16 @@ def MapDetectorToCube(self, this_channel, this_subchannel, Cube, spaxel, PixelCl
             if(self.interpolation == 'pointcloud' and self.wcs_method == 'distortion'):
 
                 start_region = InstrumentInfo.GetStartSlice(this_channel)
-<<<<<<< HEAD
                 end_region = InstrumentInfo.GetEndSlice(this_channel)
                 regions = list(range(start_region, end_region + 1))
 
                 for i in regions:
                     log.info('Working on Slice # %d', i)
                     y, x = (det2ab_transform.label_mapper.mapper == i).nonzero()
-=======
-                end_region   = InstrumentInfo.GetEndSlice(this_channel)
-                regions = list(range(start_region,end_region+1))
-
-                for i in regions:
-                    log.info( 'Working on Slice # %d',i)
-                    y,x = (det2ab_transform.label_mapper.mapper ==i).nonzero()
->>>>>>> more imports
-
                     t0 = time.time()
                     cloud = CubeCloud.MakePointCloudMIRI_DistortionFile(self, x, y, k, c1_offset, c2_offset, this_channel, this_subchannel, i, start_region, input_model)
                     n = PixelCloud.size
-<<<<<<< HEAD
                     if(n == 8):  # If first time
-=======
-                    if(n ==8):  # If first time
->>>>>>> more imports
                         PixelCloud = cloud
                     else:    #  add information for another slice  to the  PixelCloud
 
@@ -711,7 +649,6 @@ def MapDetectorToCube(self, this_channel, this_subchannel, Cube, spaxel, PixelCl
             if(self.interpolation == 'area'):
 
                 start_region = InstrumentInfo.GetStartSlice(this_channel)
-<<<<<<< HEAD
                 end_region = InstrumentInfo.GetEndSlice(this_channel)
                 regions = list(range(start_region, end_region + 1))
 
@@ -719,15 +656,6 @@ def MapDetectorToCube(self, this_channel, this_subchannel, Cube, spaxel, PixelCl
                     log.info('Working on Slice # %d', i)
 
                     y, x = (det2ab_transform.label_mapper.mapper == i).nonzero()
-=======
-                end_region   = InstrumentInfo.GetEndSlice(this_channel)
-                regions = list(range(start_region,end_region+1))
-
-                for i in regions:
-                    log.info( 'Working on Slice # %d',i)
-
-                    y,x = (det2ab_transform.label_mapper.mapper ==i).nonzero()
->>>>>>> more imports
 
                     # spaxel object holds all needed information in a set of lists
                     #    flux (of overlapping detector pixel)
@@ -745,11 +673,6 @@ def MapDetectorToCube(self, this_channel, this_subchannel, Cube, spaxel, PixelCl
                     t1 = time.time()
                     log.debug("Time Map one Slice  to Cube = %.1f.s" % (t1 - t0,))
 
-
-<<<<<<< HEAD
-=======
-
->>>>>>> more imports
     return PixelCloud
 
 #********************************************************************************
@@ -779,16 +702,9 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
         for i in range(nspaxel):
             s = len(spaxel[i].pixel_overlap)
             if(s > 0):
-<<<<<<< HEAD
                 CubeOverlap.SpaxelFlux(self.radius_y, i, Cube, spaxel)
 
     elif self.interpolation == 'pointcloud':
-=======
-                CubeOverlap.SpaxelFlux(self.radius_y,i,Cube,spaxel)
-
-    elif self.interpolation =='pointcloud' :
->>>>>>> more imports
-
         icube = 0
         t0 = time.time()
         iz = 0
@@ -816,7 +732,6 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
 
 
                             if(icube == -52757):
-<<<<<<< HEAD
                                 print('Checking ', ix, iy, iz)
                                 print('icube', icube)
                                 print('pointcloud', pointcloud_index[j])
@@ -828,28 +743,11 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
                         if(weight != 0):
                             value = value / weight
                             spaxel[icube].flux = value
-=======
-                                print('Checking ',ix,iy,iz)
-                                print('icube',icube)
-                                print('pointcloud',pointcloud_index[j])
-                                print('flux',pixelflux[j])
-                                print('w',weightpt[j])
-
-
-
-                        if(weight !=0):
-                            value = value/weight
-                            spaxel[icube].flux=value
->>>>>>> more imports
                             if(icube == -52757):
                                 print('Final Flux', value * weight, weight, value)
 
 
-<<<<<<< HEAD
                     icube = icube + 1
-=======
-                    icube = icube+1
->>>>>>> more imports
                     ix = ix + 1
                 iy = iy + 1
             iz = iz + 1
@@ -899,12 +797,7 @@ def CheckCubeType(self):
         if(len(self.metadata['channel']) > 1):
             raise IncorrectInput("For interpolation = area, only channel can be used to created the cube")
 
-
-<<<<<<< HEAD
     if(self.coord_system == "alpha-beta"):
-=======
-    if(self.coord_system =="alpha-beta"):
->>>>>>> more imports
         if(self.metadata['number_files'] > 1):
             raise IncorrectInput("Cubes built in alpha-beta coordinate system are built from a single file")
 
@@ -930,12 +823,6 @@ def WriteCube(self, Cube, spaxel):
 
     """
     #pull out data into array
-<<<<<<< HEAD
-=======
-
-    data = np.zeros((Cube.naxis3,Cube.naxis2,Cube.naxis1))
-    idata = np.zeros((Cube.naxis3,Cube.naxis2,Cube.naxis1))
->>>>>>> more imports
 
     data = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
     idata = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
@@ -950,12 +837,7 @@ def WriteCube(self, Cube, spaxel):
                 data[z, y, x] = spaxel[icube].flux
                 idata[z, y, x] = len(spaxel[icube].ipointcloud)
                 icube = icube + 1
-
-
-
     name = Cube.output_name
-
-
     new_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
 
     new_model.meta.wcsinfo.crval1 = Cube.Crval1
@@ -1063,11 +945,7 @@ class IFUCubeInput(object):
         self.asn_table['products'][0]['members'][0]['expname'] = self.filename
         self.input_models.append(model)
 
-<<<<<<< HEAD
     def build_product_name(self, filename):
-=======
-    def build_product_name(self,filename):
->>>>>>> more imports
         indx = filename.rfind('.fits')
         single_product = filename[:indx]
         return single_product
@@ -1079,8 +957,3 @@ class IFUCubeInput(object):
         return members
     def get_outputs(self, product=0):
         return self.asn_table['products'][product]['name']
-<<<<<<< HEAD
-=======
-
-
->>>>>>> more imports
