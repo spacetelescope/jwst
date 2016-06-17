@@ -24,7 +24,7 @@ def get_webbpsf_filter(filter_model, specbin=None, trim=False):
         factor to bin spectrum down by
 
     trim: boolean
-        trims below 0.8 and above 1.2 lambda_c ( dg - is this right?)
+        trims below 0.8 and above 1.2 lambda_c (dg - is this right?)
 
     Returns
     -------

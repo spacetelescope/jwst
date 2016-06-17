@@ -489,7 +489,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask,
     #  [1 3 1 3]]
     # After flattening, two_indr_t = [0 2 0 2 1 3 1 3].
     two_indr_t = np.concatenate((indr_t, indr_t), axis=1).flatten()
-    two_indr_t += (scipix_n // 2 + 1)     # [ 9 11 9 11 10 12 10 12]
+    two_indr_t += (scipix_n // 2 + 1)     # [9 11 9 11 10 12 10 12]
     hs[:, scipix_n // 2 + 1 - refpix_r // 2:
           scipix_n // 2 + 1 + refpix_r // 2 + refpix_r] = hs[:, two_indr_t]
     mask = (hs >= 0)

@@ -132,7 +132,7 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
 
     - The ``'match'`` algorithm is somewhat
       similar to the traditional sky subtraction method (`skymethod`\ =\
-      ``'local'``\ ) in the sense that it measures the sky indipendently
+      ``'local'``\) in the sense that it measures the sky indipendently
       in input images (or groups). The major differences are that,
       unlike the traditional method,
 

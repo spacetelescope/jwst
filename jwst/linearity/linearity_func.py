@@ -60,8 +60,8 @@ def apply_linearity_func(ramparr, dqarr, coeffarr, dq_flag):
            # Only use the corrected signal where the original signal value
            # has not been flagged by the saturation step.
            # Otherwise use the original signal.
-            ramparr[ ints, plane, :, : ] = \
-                np.where( np.bitwise_and( dqarr[ ints, plane, :, : ], dq_flag),\
+            ramparr[ints, plane, :, :] = \
+                np.where(np.bitwise_and(dqarr[ints, plane, :, :], dq_flag),\
                         ramparr[ints, plane, :, :], scorr)
 
     del scorr

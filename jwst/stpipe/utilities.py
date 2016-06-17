@@ -65,7 +65,7 @@ def import_class(full_name, subclassof=object, config_file=None):
         if not package_name:
             raise ImportError("{0} is not a Python class".format(full_name))
         imported = __import__(
-            package_name, globals(), locals(), [class_name, ], level=0)
+            package_name, globals(), locals(), [class_name,], level=0)
 
         step_class = getattr(imported, class_name)
 

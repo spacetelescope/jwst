@@ -80,7 +80,7 @@ class WavelengthFromGratingEquation(Model):
     separable = False
 
     inputs = ("alpha_in", "alpha_out")
-    outputs = ("lam", )
+    outputs = ("lam",)
 
     groove_density = Parameter()
     order = Parameter(default=1)

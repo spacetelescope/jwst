@@ -362,7 +362,7 @@ def create_beta_models(b0, bdel, channel, nslices):
         m = models.Const1D(beta_s, name='det2local') #xy2beta and xy2lam
         beta[sl] = m
         inv = models.Const1D(sl)
-        slices[beta_s] = models.Mapping([1, ]) | inv
+        slices[beta_s] = models.Mapping([1,]) | inv
     return beta, slices
 
 

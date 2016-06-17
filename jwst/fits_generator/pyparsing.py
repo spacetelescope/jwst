@@ -37,10 +37,10 @@ Here is a program to parse "Hello, World!" (or any greeting of the form C{"<salu
     from pyparsing import Word, alphas
 
     # define grammar of a greeting
-    greet = Word( alphas ) + "," + Word( alphas ) + "!"
+    greet = Word(alphas) + "," + Word(alphas) + "!"
 
     hello = "Hello, World!"
-    print hello, "->", greet.parseString( hello )
+    print hello, "->", greet.parseString(hello)
 
 The program outputs the following::
 
@@ -71,7 +71,7 @@ import sys
 import warnings
 import re
 import sre_constants
-#~ sys.stderr.write( "testing pyparsing module, version %s, %s\n" % (__version__,__versionTime__ ) )
+#~ sys.stderr.write("testing pyparsing module, version %s, %s\n" % (__version__,__versionTime__))
 
 __all__ = [
 'And', 'CaselessKeyword', 'CaselessLiteral', 'CharsNotIn', 'Combine', 'Dict', 'Each', 'Empty',
@@ -245,7 +245,7 @@ class ParseSyntaxException(ParseFatalException):
        #~ exception in a parse action to cause pyparsing to use the new string/location.
        #~ Setting the values as None causes no change to be made.
        #~ """
-    #~ def __init_( self, newstring, restartLoc ):
+    #~ def __init_(self, newstring, restartLoc):
         #~ self.newParseText = newstring
         #~ self.reparseLoc = restartLoc
 
@@ -273,7 +273,7 @@ class ParseResults(object):
        - by list index (C{results[0], results[1]}, etc.)
        - by attribute (C{results.<resultsName>})
        """
-    #~ __slots__ = ( "__toklist", "__tokdict", "__doinit", "__name", "__parent", "__accumNames", "__weakref__" )
+    #~ __slots__ = ("__toklist", "__tokdict", "__doinit", "__name", "__parent", "__accumNames", "__weakref__")
     def __new__(cls, toklist, name=None, asList=True, modal=True):
         if isinstance(toklist, cls):
             return toklist
@@ -923,10 +923,10 @@ class ParserElement(object):
 
     #~ @profile
     def _parseNoCache(self, instring, loc, doActions=True, callPreParse=True):
-        debugging = (self.debug) #and doActions )
+        debugging = (self.debug) #and doActions)
 
         if debugging or self.failAction:
-            #~ print ("Match",self,"at loc",loc,"(%d,%d)" % ( lineno(loc,instring), col(loc,instring) ))
+            #~ print ("Match",self,"at loc",loc,"(%d,%d)" % (lineno(loc,instring), col(loc,instring)))
             if (self.debugActions[0]):
                 self.debugActions[0](instring, loc, self)
             if callPreParse and self.callPreparse:
@@ -1087,7 +1087,7 @@ class ParserElement(object):
         try:
             loc, tokens = self._parse(instring, 0)
             if parseAll:
-                #loc = self.preParse( instring, loc )
+                #loc = self.preParse(instring, loc)
                 se = StringEnd()
                 se._parse(instring, loc)
         except ParseBaseException:
@@ -1571,7 +1571,7 @@ class Literal(Token):
         if (instring[loc] == self.firstMatchChar and
             (self.matchLen == 1 or instring.startswith(self.match, loc))):
             return loc + self.matchLen, self.match
-        #~ raise ParseException( instring, loc, self.errmsg )
+        #~ raise ParseException(instring, loc, self.errmsg)
         exc = self.myException
         exc.loc = loc
         exc.pstr = instring
@@ -1622,7 +1622,7 @@ class Keyword(Token):
                 (loc >= len(instring) - self.matchLen or instring[loc + self.matchLen] not in self.identChars) and
                 (loc == 0 or instring[loc - 1] not in self.identChars)):
                 return loc + self.matchLen, self.match
-        #~ raise ParseException( instring, loc, self.errmsg )
+        #~ raise ParseException(instring, loc, self.errmsg)
         exc = self.myException
         exc.loc = loc
         exc.pstr = instring
@@ -1655,7 +1655,7 @@ class CaselessLiteral(Literal):
     def parseImpl(self, instring, loc, doActions=True):
         if instring[loc:loc + self.matchLen].upper() == self.match:
             return loc + self.matchLen, self.returnString
-        #~ raise ParseException( instring, loc, self.errmsg )
+        #~ raise ParseException(instring, loc, self.errmsg)
         exc = self.myException
         exc.loc = loc
         exc.pstr = instring
@@ -1669,7 +1669,7 @@ class CaselessKeyword(Keyword):
         if ((instring[loc:loc + self.matchLen].upper() == self.caselessmatch) and
              (loc >= len(instring) - self.matchLen or instring[loc + self.matchLen].upper() not in self.identChars)):
             return loc + self.matchLen, self.match
-        #~ raise ParseException( instring, loc, self.errmsg )
+        #~ raise ParseException(instring, loc, self.errmsg)
         exc = self.myException
         exc.loc = loc
         exc.pstr = instring
@@ -1748,7 +1748,7 @@ class Word(Token):
             return loc, result.group()
 
         if not(instring[loc] in self.initChars):
-            #~ raise ParseException( instring, loc, self.errmsg )
+            #~ raise ParseException(instring, loc, self.errmsg)
             exc = self.myException
             exc.loc = loc
             exc.pstr = instring
@@ -1772,7 +1772,7 @@ class Word(Token):
                 throwException = True
 
         if throwException:
-            #~ raise ParseException( instring, loc, self.errmsg )
+            #~ raise ParseException(instring, loc, self.errmsg)
             exc = self.myException
             exc.loc = loc
             exc.pstr = instring
@@ -2021,7 +2021,7 @@ class CharsNotIn(Token):
 
     def parseImpl(self, instring, loc, doActions=True):
         if instring[loc] in self.notChars:
-            #~ raise ParseException( instring, loc, self.errmsg )
+            #~ raise ParseException(instring, loc, self.errmsg)
             exc = self.myException
             exc.loc = loc
             exc.pstr = instring
@@ -2036,7 +2036,7 @@ class CharsNotIn(Token):
             loc += 1
 
         if loc - start < self.minLen:
-            #~ raise ParseException( instring, loc, self.errmsg )
+            #~ raise ParseException(instring, loc, self.errmsg)
             exc = self.myException
             exc.loc = loc
             exc.pstr = instring
@@ -2094,7 +2094,7 @@ class White(Token):
 
     def parseImpl(self, instring, loc, doActions=True):
         if not(instring[loc] in self.matchWhite):
-            #~ raise ParseException( instring, loc, self.errmsg )
+            #~ raise ParseException(instring, loc, self.errmsg)
             exc = self.myException
             exc.loc = loc
             exc.pstr = instring
@@ -2107,7 +2107,7 @@ class White(Token):
             loc += 1
 
         if loc - start < self.minLen:
-            #~ raise ParseException( instring, loc, self.errmsg )
+            #~ raise ParseException(instring, loc, self.errmsg)
             exc = self.myException
             exc.loc = loc
             exc.pstr = instring
@@ -2164,7 +2164,7 @@ class LineStart(_PositionToken):
         if not(loc == 0 or
             (loc == self.preParse(instring, 0)) or
             (instring[loc - 1] == "\n")): #col(loc, instring) != 1:
-            #~ raise ParseException( instring, loc, "Expected start of line" )
+            #~ raise ParseException(instring, loc, "Expected start of line")
             exc = self.myException
             exc.loc = loc
             exc.pstr = instring
@@ -2184,7 +2184,7 @@ class LineEnd(_PositionToken):
             if instring[loc] == "\n":
                 return loc + 1, "\n"
             else:
-                #~ raise ParseException( instring, loc, "Expected end of line" )
+                #~ raise ParseException(instring, loc, "Expected end of line")
                 exc = self.myException
                 exc.loc = loc
                 exc.pstr = instring
@@ -2208,7 +2208,7 @@ class StringStart(_PositionToken):
         if loc != 0:
             # see if entire string up to here is just whitespace and ignoreables
             if loc != self.preParse(instring, 0):
-                #~ raise ParseException( instring, loc, "Expected start of text" )
+                #~ raise ParseException(instring, loc, "Expected start of text")
                 exc = self.myException
                 exc.loc = loc
                 exc.pstr = instring
@@ -2224,7 +2224,7 @@ class StringEnd(_PositionToken):
 
     def parseImpl(self, instring, loc, doActions=True):
         if loc < len(instring):
-            #~ raise ParseException( instring, loc, "Expected end of text" )
+            #~ raise ParseException(instring, loc, "Expected end of text")
             exc = self.myException
             exc.loc = loc
             exc.pstr = instring
@@ -2279,7 +2279,7 @@ class WordEnd(_PositionToken):
         if instrlen > 0 and loc < instrlen:
             if (instring[loc] in self.wordChars or
                 instring[loc - 1] not in self.wordChars):
-                #~ raise ParseException( instring, loc, "Expected end of word" )
+                #~ raise ParseException(instring, loc, "Expected end of word")
                 exc = self.myException
                 exc.loc = loc
                 exc.pstr = instring
@@ -2347,7 +2347,7 @@ class ParseExpression(ParserElement):
         for e in self.exprs:
             e.streamline()
 
-        # collapse nested And's of the form And( And( And( a,b), c), d) to And( a,b,c,d )
+        # collapse nested And's of the form And(And(And(a,b), c), d) to And(a,b,c,d)
         # but only if there are no parse actions or resultsNames on the nested And's
         # (likewise for Or's and MatchFirst's)
         if (len(self.exprs) == 2):
@@ -2433,7 +2433,7 @@ class And(ParseExpression):
     def __iadd__(self, other):
         if isinstance(other, six.string_types):
             other = Literal(other)
-        return self.append(other) #And( [ self, other ] )
+        return self.append(other) #And([self, other])
 
     def checkRecursion(self, parseElementList):
         subRecCheckList = parseElementList[:] + [self]
@@ -2497,7 +2497,7 @@ class Or(ParseExpression):
     def __ixor__(self, other):
         if isinstance(other, six.string_types):
             other = Literal(other)
-        return self.append(other) #Or( [ self, other ] )
+        return self.append(other) #Or([self, other])
 
     def __str__(self):
         if hasattr(self, "name"):
@@ -2556,7 +2556,7 @@ class MatchFirst(ParseExpression):
     def __ior__(self, other):
         if isinstance(other, six.string_types):
             other = Literal(other)
-        return self.append(other) #MatchFirst( [ self, other ] )
+        return self.append(other) #MatchFirst([self, other])
 
     def __str__(self):
         if hasattr(self, "name"):
@@ -2767,7 +2767,7 @@ class NotAny(ParseElementEnhance):
         except (ParseException, IndexError):
             pass
         else:
-            #~ raise ParseException(instring, loc, self.errmsg )
+            #~ raise ParseException(instring, loc, self.errmsg)
             exc = self.myException
             exc.loc = loc
             exc.pstr = instring
@@ -3044,7 +3044,7 @@ class _ForwardNoRecurse(Forward):
 class TokenConverter(ParseElementEnhance):
     """Abstract subclass of ParseExpression, for converting parsed results."""
     def __init__(self, expr, savelist=False):
-        super(TokenConverter, self).__init__(expr)#, savelist )
+        super(TokenConverter, self).__init__(expr)#, savelist)
         self.saveAsList = False
 
 class Upcase(TokenConverter):
@@ -3320,7 +3320,7 @@ def oneOf(strs, caseless=False, useRegex=True):
             i += 1
 
     if not caseless and useRegex:
-        #~ print (strs,"->", "|".join( [ _escapeRegexChars(sym) for sym in symbols] ))
+        #~ print (strs,"->", "|".join([_escapeRegexChars(sym) for sym in symbols]))
         try:
             if len(symbols) == len("".join(symbols)):
                 return Regex("[%s]" % "".join([_escapeRegexRangeChars(sym) for sym in symbols]))
@@ -3431,7 +3431,7 @@ def replaceWith(replStr):
 def removeQuotes(s, l, t):
     """Helper parse action for removing quotation marks from parsed quoted strings.
        To use, add this parse action to quoted string using::
-         quotedString.setParseAction( removeQuotes )
+         quotedString.setParseAction(removeQuotes)
     """
     return t[0][1:-1]
 
@@ -3483,14 +3483,14 @@ def _makeTags(tagStr, xml):
     if (xml):
         tagAttrValue = dblQuotedString.copy().setParseAction(removeQuotes)
         openTag = Suppress("<") + tagStr("tag") + \
-                Dict(ZeroOrMore(Group( tagAttrName + Suppress("=") + tagAttrValue ))) + \
+                Dict(ZeroOrMore(Group(tagAttrName + Suppress("=") + tagAttrValue))) + \
                 Optional("/", default=[False]).setResultsName("empty").setParseAction(lambda s, l, t: t[0] == '/') + Suppress(">")
     else:
         printablesLessRAbrack = "".join([c for c in printables if c not in ">"])
         tagAttrValue = quotedString.copy().setParseAction(removeQuotes) | Word(printablesLessRAbrack)
         openTag = Suppress("<") + tagStr + \
-                Dict(ZeroOrMore(Group( tagAttrName.setParseAction(downcaseTokens) + \
-                Optional( Suppress("=") + tagAttrValue ) ))) + \
+                Dict(ZeroOrMore(Group(tagAttrName.setParseAction(downcaseTokens) + \
+                Optional(Suppress("=") + tagAttrValue)))) + \
                 Optional("/", default=[False]).setResultsName("empty").setParseAction(lambda s, l, t: t[0] == '/') + Suppress(">")
     closeTag = Combine(_L("</") + tagStr + ">")
 
@@ -3517,7 +3517,7 @@ def withAttribute(*args, **attrDict):
        Call withAttribute with a series of attribute names and values. Specify the list
        of filter attributes names and values as:
         - keyword arguments, as in (class="Customer",align="right"), or
-        - a list of name-value tuples, as in ( ("ns1:class", "Customer"), ("ns2:align","right") )
+        - a list of name-value tuples, as in (("ns1:class", "Customer"), ("ns2:align","right"))
        For attribute names with a namespace prefix, you must use the second form.  Attribute
        names are matched insensitive to upper/lower case.
 
@@ -3775,8 +3775,8 @@ if __name__ == "__main__":
     columnNameList = Group(delimitedList(columnName))#.setName("columns")
     tableName = delimitedList(ident, ".", combine=True).setParseAction(upcaseTokens)
     tableNameList = Group(delimitedList(tableName))#.setName("tables")
-    simpleSQL      = ( selectToken + \
-                     ( '*' | columnNameList ).setResultsName( "columns" ) + \
+    simpleSQL      = (selectToken + \
+                     ('*' | columnNameList).setResultsName("columns") + \
                      fromToken + \
                      tableNameList.setResultsName("tables"))
 

@@ -225,7 +225,7 @@ def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
 
     Returns
     -------
-    np.abs( hex_complex ): 2D float array
+    np.abs(hex_complex): 2D float array
         hexagonal hole Fourier transform by adding the transforms
     """
     if c is None:

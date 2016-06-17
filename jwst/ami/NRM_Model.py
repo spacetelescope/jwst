@@ -92,7 +92,7 @@ class NRM_Model():
             # at the top instead of at bottom in traditional XY plots
 
         if scallist is None:
-            self.scallist = np.array([0.995, 0.998, 1.0, 1.002, 1.005, ])
+            self.scallist = np.array([0.995, 0.998, 1.0, 1.002, 1.005,])
         else:
             self.scallist = scallist
 
@@ -187,7 +187,7 @@ class NRM_Model():
             log.debug('fov: %s', self.fov_sim)
             log.debug('over: %s', self.over)
 
-            self.psf_over += w * analyticnrm2.PSF( self.pixel_sim, \
+            self.psf_over += w * analyticnrm2.PSF(self.pixel_sim, \
                         self.fov_sim, self.over, self.rotctrs, self.d, l, \
                         self.phi, centering=self.centering, \
                         shape=self.holeshape)
@@ -283,7 +283,7 @@ class NRM_Model():
             log.debug('weight:%s lambda: %s', w, l)
 
             # model_array returns the envelope and fringe model
-            pb, ff = leastsqnrm.model_array( self.modelctrs, l, self.over, \
+            pb, ff = leastsqnrm.model_array(self.modelctrs, l, self.over, \
                               self.modelpix, self.fov, self.d, \
                               shape=self.holeshape, centering=self.centering)
 
@@ -491,7 +491,7 @@ class NRM_Model():
                                 vals=self.pixscl_corr)
 
         self.pixscale_factor = self.pixscale_optimal / self.pixel
-        closestpixscale = self.pixscales[ self.pixscl_corr ==\
+        closestpixscale = self.pixscales[self.pixscl_corr ==\
                                           self.pixscl_corr.max()][0]
 
         log.debug('pixel scales search for max: %s %s ',
@@ -506,7 +506,7 @@ class NRM_Model():
 
         self.rots = self.rotlist_rad
         for q, rad in enumerate(radlist):
-            psf = self.simulate( bandpass=self.bandpass, fov=reffov, \
+            psf = self.simulate(bandpass=self.bandpass, fov=reffov, \
                   pixel=self.pixscale_optimal, rotate=rad, \
                   centering=centering)
 
@@ -516,7 +516,7 @@ class NRM_Model():
         log.debug('rotation search for max: rots: %s corrs: %s', \
                             self.rots, self.corrs)
 
-        self.rot_measured, maxy = utils.findmax( mag=self.rots, \
+        self.rot_measured, maxy = utils.findmax(mag=self.rots, \
                                    vals=self.corrs)
         self.refpsf = self.simulate(bandpass=self.bandpass,
                                      pixel=self.pixscale_optimal,

@@ -218,7 +218,7 @@ def detector_to_alpha_beta(input_model, reference_files):
     ch_dict = {}
     for c in channels:
         ch_dict.update({tuple(wr[c]): selector.LabelMapperDict(('alpha', 'beta', 'lam'), slice_model[c],
-                                                   models.Mapping([1, ], n_inputs=3))})
+                                                   models.Mapping([1,], n_inputs=3))})
     alpha_beta_mapper = selector.LabelMapperRange(('alpha', 'beta', 'lam'), ch_dict,
                                                   models.Mapping((2,)))
     label_mapper.inverse = alpha_beta_mapper
@@ -282,7 +282,7 @@ def alpha_beta2XanYan(input_model, reference_files):
         sel[ch] = v23c
 
     wave_range_mapper = selector.LabelMapperRange(('alpha', 'beta', 'lam'), dict_mapper,
-                                                  inputs_mapping=models.Mapping([2, ]))
+                                                  inputs_mapping=models.Mapping([2,]))
     wave_range_mapper.inverse = wave_range_mapper.copy()
     ab2xyan = selector.RegionsSelector(('alpha', 'beta', 'lam'), ('v2', 'v3', 'lam'),
                                       label_mapper=wave_range_mapper,

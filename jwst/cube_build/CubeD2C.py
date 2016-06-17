@@ -9,7 +9,7 @@ from astropy.io import fits
 from . import cube
 
 #________________________________________________________________________________
-def ReadD2CMapFile(self, channel, subchannel, ):
+def ReadD2CMapFile(self, channel, subchannel,):
     """
     Short Summary
     -------------
@@ -99,7 +99,7 @@ def ReadD2CMapFile(self, channel, subchannel, ):
 
 
 
-def ReadDistortionFile(self, channel, subchannel, ):
+def ReadDistortionFile(self, channel, subchannel,):
     """
     Short Summary
     -------------

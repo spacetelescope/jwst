@@ -194,7 +194,7 @@ class compare_cr_navg_files:
 
                     if verb > 1:
                         print(' The corresponding subvectors of :')
-                        print(' ... the averaged created data [', which_read, ' ]= ', c_navg_line[which_read])
+                        print(' ... the averaged created data [', which_read, ']= ', c_navg_line[which_read])
                         print(' ... the averaged found data for the current pixel: ', f_pix_whole_stack[which_read])
                         print(' ... the averaged found data for the next pixel: ', f_pix_whole_stack[which_read + 1])
 
@@ -236,7 +236,7 @@ class compare_cr_navg_files:
                         f_only_flag = ' '
 
                     if (yy_pix % 50 == 0):
-                        print('xx, yy = : c_only, f_only , neither, both, [ CFLAG / FFLAG ]  ')
+                        print('xx, yy = : c_only, f_only , neither, both, [CFLAG / FFLAG]  ')
 
                     print(xx_pix, yy_pix, ' : ', c_only_along_stack[yy_pix, xx_pix], f_only_along_stack[yy_pix, xx_pix], neither_along_stack[yy_pix, xx_pix], both_along_stack[yy_pix, xx_pix], c_only_flag, f_only_flag)
 

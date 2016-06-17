@@ -603,16 +603,16 @@ def get_overlap(sci_int_1, sci_int_2, nom_off_x, nom_off_y):
     the elements of arrays indexed are:
 
     for off < 0 : ix = 0 and fx = length - abs(off)
-       subarray indices: sub_1[ 0: length - abs(off) ]
-       subarray indices: sub_2[ 0: length - abs(off) ]
+       subarray indices: sub_1[0: length - abs(off)]
+       subarray indices: sub_2[0: length - abs(off)]
 
-    for off = 0 : ix = 0 ; fx = length )
-       subarray indices: sub_1[ 0: length ]
-       subarray indices: sub_2[ 0: length ]
+    for off = 0 : ix = 0 ; fx = length)
+       subarray indices: sub_1[0: length]
+       subarray indices: sub_2[0: length]
 
     for off > 0 : ix = off ; fx = length
-       subarray indices: sub_1[ 0: length - off ]
-       subarray indices: sub_2[ off: length ]
+       subarray indices: sub_1[0: length - off]
+       subarray indices: sub_2[off: length]
 
     Parameters
     ----------

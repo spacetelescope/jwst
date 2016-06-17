@@ -23,7 +23,7 @@
 #  'm_flux' : multiplicative factor for flux; value given is multiplied by the expected fluxes for galactic cosmic
 #             rays and solar particles; default = 1.0
 #  'old_cr_file': file of previously generated GCR/SPs to add to the input data cube; default = None (which
-#                 causes new GCR/SPs to be generated )
+#                 causes new GCR/SPs to be generated)
 #
 # Arrays output to files:
 #  'new_cube.fits': input data cube with GCRs and SPs added
@@ -396,7 +396,7 @@ class cr_add_2d:
 
     def ray_trace(self, ii_pix, jj_pix, energy):
         """  Ray trace through pixel to calculate path length of incident particle within pixel
-        ( simplified case since the particles are normally incident at the center of the pixel )
+        (simplified case since the particles are normally incident at the center of the pixel)
         @param ii_pix: x-coordinate of pixel within array
         @type ii_pix: integer
         @param jj_pix: y-coordinate of pixel within array

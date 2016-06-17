@@ -79,7 +79,7 @@ def do_correction(input_model, reset_model):
             # combine the ERR arrays in quadrature
             # NOTE: currently stubbed out until ERR handling is decided
             #output.err[i,j] = np.sqrt(
-            #           output.err[i,j]**2 + reset.err[j]**2 )
+            #           output.err[i,j]**2 + reset.err[j]**2)
 
 
     return output

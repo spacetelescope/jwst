@@ -42,13 +42,13 @@ def interpret_bits_value(val):
 
     Examples
     --------
-        >>> "{0:016b}".format(0xFFFF & interpret_bit_flags(28) )
+        >>> "{0:016b}".format(0xFFFF & interpret_bit_flags(28))
         '0000000000011100'
-        >>> "{0:016b}".format(0xFFFF & interpret_bit_flags('4,8,16') )
+        >>> "{0:016b}".format(0xFFFF & interpret_bit_flags('4,8,16'))
         '0000000000011100'
-        >>> "{0:016b}".format(0xFFFF & interpret_bit_flags('~4,8,16') )
+        >>> "{0:016b}".format(0xFFFF & interpret_bit_flags('~4,8,16'))
         '1111111111100011'
-        >>> "{0:016b}".format(0xFFFF & interpret_bit_flags('~(4+8+16)') )
+        >>> "{0:016b}".format(0xFFFF & interpret_bit_flags('~(4+8+16)'))
         '1111111111100011'
 
     """
@@ -190,7 +190,7 @@ def bitmask2mask(bitmask, ignore_bits, good_mask_value=1, dtype=np.uint8):
         array([[1, 1, 0, 0, 1, 0, 0, 1],
                [0, 0, 1, 1, 1, 0, 0, 1]])
         >>> bitmask.bitmask2mask(dqbits, ignore_bits=0, dtype=bool)
-        array([[ True,  True, False, False,  True, False, False,  True],
+        array([[True,  True, False, False,  True, False, False,  True],
                [False, False,  True,  True,  True, False, False,  True]], dtype=bool)
         >>> bitmask.bitmask2mask(dqbits, ignore_bits=6, good_pix_value=0, dtype=int)
         array([[0, 0, 1, 0, 0, 1, 1, 0],

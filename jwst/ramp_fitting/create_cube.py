@@ -146,7 +146,7 @@ class create_cube:
         t_read = t_int / float(nread)
         print(' The integration time per single read = ', t_read)
 
-###        acube = N.zeros(( n_ind_reads, asize_2, asize_1 ), dtype = N.float32)  # < 080210
+###        acube = N.zeros((n_ind_reads, asize_2, asize_1), dtype = N.float32)  # < 080210
         acube = N.zeros((n_ind_reads, asize_2, asize_1), dtype=N.float64)  # try 080210
 
         print(' The output cube will have dimensions:', n_ind_reads, asize_2, asize_1)

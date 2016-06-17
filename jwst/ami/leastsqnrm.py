@@ -607,8 +607,8 @@ def redundant_cps(deltaps, N=7):
     for kk in range(N - 2):
         for ii in range(N - kk - 2):
             for jj in range(N - kk - ii - 2):
-                cps[ nn + jj ] = arr[ kk, ii + kk + 1 ] \
-                       + arr[ ii + kk + 1, jj + ii + kk + 2 ] \
+                cps[nn + jj] = arr[kk, ii + kk + 1] \
+                       + arr[ii + kk + 1, jj + ii + kk + 2] \
                        + arr[jj + ii + kk + 2, kk]
 
             nn += jj + 1
@@ -638,10 +638,10 @@ def closurephase(deltap, N=7):
 
     # p is a triangular matrix set up to calculate closure phases
     if N == 7:
-        p = np.array( [ deltap[:6], deltap[6:11], deltap[11:15], \
+        p = np.array([deltap[:6], deltap[6:11], deltap[11:15], \
                 deltap[15:18], deltap[18:20], deltap[20:]])
     elif N == 10:
-        p = np.array( [ deltap[:9], deltap[9:17], deltap[17:24], \
+        p = np.array([deltap[:9], deltap[9:17], deltap[17:24], \
                 deltap[24:30], deltap[30:35], deltap[35:39], \
                 deltap[39:42], deltap[42:44], deltap[44:]])
     else:
@@ -684,9 +684,9 @@ def return_CAs(amps, N=7):
         for jj in range(N - ii - 3):
             for kk in range(N - jj - ii - 3):
                 for ll in range(N - jj - ii - kk - 3):
-                    CAs[ nn + ll ] = arr[ ii, jj + ii + 1 ] \
-                           * arr[ ll + ii + jj + kk + 3, kk + jj + ii + 2 ] \
-                           / (arr[ ii, kk + ii + jj + 2 ] * \
+                    CAs[nn + ll] = arr[ii, jj + ii + 1] \
+                           * arr[ll + ii + jj + kk + 3, kk + jj + ii + 2] \
+                           / (arr[ii, kk + ii + jj + 2] * \
                               arr[jj + ii + 1, ll + ii + jj + kk + 3])
                 nn = nn + ll + 1
     return CAs

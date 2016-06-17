@@ -62,7 +62,7 @@ def makeA(nh):
     for holes 'a b c d e f g', rows of A are
 
         (-1 +1  0  0  ...)
-        ( 0 -1 +1  0  ...)
+        (0 -1 +1  0  ...)
 
     which is implemented in makeA() as:
         matrixA[row,h2] = -1

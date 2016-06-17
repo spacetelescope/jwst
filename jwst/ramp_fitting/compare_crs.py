@@ -73,7 +73,7 @@ def do_comparison(found_file, created_file):
     f_only = (data_c_start == 0.) & (data_f_end != 0.) # found CR was not created
 
     try:
-        assert( neither.sum() + both.sum() + c_only.sum() + f_only.sum() \
+        assert(neither.sum() + both.sum() + c_only.sum() + f_only.sum() \
                 == data_c_start.size)
     except AssertionError:
         print('FATAL ERROR: sum of components must equal total number of pixels ')
@@ -201,7 +201,7 @@ def write_files(neither, both, c_only, f_only, fh_c, data_c_start):
         write_to_file(c_only.sum(axis=1).sum(axis=0), 'c_only_2d.fits')
         write_to_file(f_only.sum(axis=1).sum(axis=0), 'f_only_2d.fits')
         print(' The fraction of pixels in the 2d array having true CRs:',\
-              float(len(np.where( both.sum(axis=1).sum(axis=0) != 0.)[0])) / \
+              float(len(np.where(both.sum(axis=1).sum(axis=0) != 0.)[0])) / \
               data_c_start.size)
     else:
         print('FATAL ERROR - unexpected case in write_file()')

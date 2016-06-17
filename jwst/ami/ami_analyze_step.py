@@ -10,8 +10,8 @@ class AmiAnalyzeStep(Step):
     """
 
     spec = """
-        oversample = integer( default=3,min=1 ) # Oversampling factor
-        rotation = float( default=0.0 ) # Rotation initial guess (deg)
+        oversample = integer(default=3,min=1) # Oversampling factor
+        rotation = float(default=0.0) # Rotation initial guess (deg)
     """
 
     reference_file_types = ['throughput']

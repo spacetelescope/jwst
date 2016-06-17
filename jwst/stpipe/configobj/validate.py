@@ -1252,7 +1252,7 @@ def is_mixed_list(value, *args):
     ...     'passed an incorrect value "',
     ...     'yoda',
     ...     '" for parameter "mixed_list".',
-    ... )
+    ...)
     >>> res_str = "'".join(res_seq)
     >>> try:
     ...     vtor.check('mixed_list("yoda")', ('a'))
