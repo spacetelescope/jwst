@@ -84,12 +84,12 @@ def do_comparison(found_file, created_file):
     print('   Number of pixels that are both found and created: ', both.sum())
     print('   Number of pixels that are neither found nor created: ', neither.sum())
     print('   ')
-    print('  The fraction of all pixels that were found only: ' \
-          , float(f_only.sum()) / float(data_c_start.size))
-    print('  The fraction of all pixels that were created only: ' \
-          , float(c_only.sum()) / float(data_c_start.size))
-    print('  The fraction of pixels in the created file having cosmic rays:' \
-          , float(c_only.sum()) / (data_c_start.shape[-2] * data_c_start.shape[-1]))
+    print('  The fraction of all pixels that were found only: ', \
+        float(f_only.sum()) / float(data_c_start.size))
+    print('  The fraction of all pixels that were created only: ', \
+        float(c_only.sum()) / float(data_c_start.size))
+    print('  The fraction of pixels in the created file having cosmic rays:', \
+        float(c_only.sum()) / (data_c_start.shape[-2] * data_c_start.shape[-1]))
     print('   ')
 
     write_files(neither, both, c_only, f_only, fh_c, data_c_start)
