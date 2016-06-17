@@ -14,7 +14,7 @@ from . import instrument
 1
 class CubeBuildStep (Step):
     """
-    CubeBuildStep: Creates a 3-D spectral cube from a given list of input files 
+    CubeBuildStep: Creates a 3-D spectral cube from a given list of input files
     """
 
     spec = """

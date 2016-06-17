@@ -22,7 +22,7 @@ log.setLevel(logging.DEBUG)
 
 
 def g_eeAG(xi, eta, **kwargs):
-    """ 
+    """
     Short Summary
     -------------
     Calculate the Fourier transform of one half of a hexagon that is bisected
@@ -50,7 +50,7 @@ def g_eeAG(xi, eta, **kwargs):
         wavelength
 
     minus: (optional, via **kwargs) boolean
-        if set, use flipped sign of xi in calculation 
+        if set, use flipped sign of xi in calculation
 
     Returns
     -------
@@ -81,7 +81,7 @@ def g_eeAG(xi, eta, **kwargs):
     return g
 
 def g_eeGEN(xi, eta, **kwargs):
-    """ 
+    """
     Short Summary
     -------------
     Calculate the Fourier transform of one half of a hexagon that is bisected
@@ -102,7 +102,7 @@ def g_eeGEN(xi, eta, **kwargs):
     Returns
     -------
     g: 2D complex array
-        Fourier transform of one half of a hexagon.    
+        Fourier transform of one half of a hexagon.
     """
 
     D = kwargs['D']
@@ -143,13 +143,13 @@ def glimit(xi, eta, **kwargs):
         pixel scale
 
     d (optional, via **kwargs): float
-        flat-to-flat distance across hexagon      
+        flat-to-flat distance across hexagon
 
     lam: (optional, via **kwargs): float
         wavelength
 
     minus: (optional, via **kwargs) boolean
-        if set, use flipped sign of xi in calculation 
+        if set, use flipped sign of xi in calculation
 
     Returns
     -------
@@ -181,7 +181,7 @@ def centralpix_limit():
     Short Summary
     -------------
     Calculate the analytic limit of the Fourier transform of one half of the
-    hexagon at the origin.  
+    hexagon at the origin.
 
     Parameters
     ----------
@@ -191,7 +191,7 @@ def centralpix_limit():
     -------
     g: float
         analytic limit of the Fourier transform of one half of the hexagon
-        at the origin.  
+        at the origin.
     """
     g = np.sqrt(3) / 4.0
 
@@ -200,7 +200,7 @@ def centralpix_limit():
 
 def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
               pitch=leastsqnrm.mas2rad(65)):
-    """ 
+    """
     Short Summary
     -------------
     Calculate the hexagonal hole Fourier transform by adding the transforms

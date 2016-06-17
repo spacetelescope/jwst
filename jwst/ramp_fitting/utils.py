@@ -812,7 +812,7 @@ def get_skip_frames(instrume):
 
 
 def get_ref_subs(model, readnoise_model, gain_model):
-    """ 
+    """
     Short Summary
     -------------
     Get readnoise array for calculation of variance of noiseless ramps, and

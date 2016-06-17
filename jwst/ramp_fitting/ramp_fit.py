@@ -105,7 +105,7 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
 def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                   weighting):
-    """ 
+    """
     Extended Summary
     ----------------
     Fit a ramp using ordinary least squares. Calculate the count rate for each
@@ -2044,7 +2044,7 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, good_pix, xvalues):
         sum of product of data and weight
 
     xvalues: int, 2D array
-        rolled up indices of valid pixel values for all reads    
+        rolled up indices of valid pixel values for all reads
     """
 
     # Return 'empty' sums if there is no more data to fit

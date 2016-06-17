@@ -153,7 +153,7 @@ def parse_jwst_ephem_line(line):
 def jwst_ephem_interp(t):
     '''
     Given the values of time (ttab), x, y, z (xtab, ytab, ztab) obtained from an ephemeris,
-    apply cubic interpolation to obtain x, y, z values for the 
+    apply cubic interpolation to obtain x, y, z values for the
     requested time(s) t (t in MJD)
     '''
 
@@ -229,7 +229,7 @@ def compute_bary_helio_time(targetcoord, times, jwstpos=None):
 
     Times is assumed to be MJD_TT
     jwstpos is a 3 element vector (list, tuple, whatever) in km if it is provided.
-    When jwstpos is provided, it overrides what would have been obtained 
+    When jwstpos is provided, it overrides what would have been obtained
     from the JWST ephemeris. This is useful for regression testing.
     '''
     tvector = get_target_vector(targetcoord)

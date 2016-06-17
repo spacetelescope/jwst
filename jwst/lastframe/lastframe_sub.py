@@ -15,7 +15,7 @@ def do_correction(input_model, lastframe_model):
     Short Summary
     -------------
     Subtracts lastframe correction from science arrays, combines
-    error arrays in quadrature, and updates data quality array based on 
+    error arrays in quadrature, and updates data quality array based on
     DQ flags in the lastframe arrays.
 
     Parameters

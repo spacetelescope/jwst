@@ -33,7 +33,7 @@ class OutlierDetectionStep(Step):
         ctegrow = integer(default=0)
         snr = string(default='4.0 3.0')
         scale = string(default='0.5 0.4')
-        backg = float(default=0.0)        
+        backg = float(default=0.0)
     """
     reference_file_types = ['gain', 'readnoise'] # No ref file for Build6...
 

@@ -46,7 +46,7 @@ def apply_fringe(input_model, fringe):
     Fringe Correction: fringe-corrects data and error arrays by dividing these
     arrays by the respective values in the reference array (for the reference
     pixels having good values), and updates the data quality array based on
-    bad pixels in the reference array. 
+    bad pixels in the reference array.
 
     Parameters
     ----------

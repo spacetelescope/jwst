@@ -8,7 +8,7 @@ from . import stack_refs
 class StackRefsStep(Step):
 
     """
-    StackRefsStep: Stack multiple PSF reference images into a CubeModel, for 
+    StackRefsStep: Stack multiple PSF reference images into a CubeModel, for
     use by subsequent coronagraphic processing tasks.
     """
 

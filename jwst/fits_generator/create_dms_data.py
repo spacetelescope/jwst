@@ -172,7 +172,7 @@ def flip_rotate(input_hdulist):
     'swapaxes' function), while data from SCA 492 needs to be flipped across
     the other diagonal (achieved using swapaxes then flipping both axes, i.e.
     a flip across x=y then a 180 degree rotation).
-    NIRCAM detectors A1, A3, ALONG, B2 and B4 (481, 483, 485, 487 and 489) 
+    NIRCAM detectors A1, A3, ALONG, B2 and B4 (481, 483, 485, 487 and 489)
     need to be flipped in the X direction.
     NIRCAM detectors A2, A4, B1, B3 and BLONG (482, 484, 486, 488 and 490)
     need to be flipped in the Y direction.

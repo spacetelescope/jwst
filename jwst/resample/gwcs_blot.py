@@ -62,8 +62,8 @@ class GWCSBlot(object):
 
     def extract_image(self, blot_wcs, interp='poly5', sinscl=1.0):
         """
-        Resample the output/resampled image to recreate an input image based on 
-        the input image's world coordinate system 
+        Resample the output/resampled image to recreate an input image based on
+        the input image's world coordinate system
 
         Parameters
         ----------

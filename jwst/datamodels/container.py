@@ -138,7 +138,7 @@ class ModelContainer(DataModel):
         """
         Load the ImageModels from a JWST association JSON file.
 
-        The from_asn() method assumes that all FITS files listed in the 
+        The from_asn() method assumes that all FITS files listed in the
         association are ImageModels.
 
         Parameters

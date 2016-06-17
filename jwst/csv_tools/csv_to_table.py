@@ -23,16 +23,16 @@ def csv_to_table(handle,
     header_search: string
                    A regular expression the finds and parses
                    keyword/value pairs from comment lines.
-                   The regex must contain two named groups: 
+                   The regex must contain two named groups:
                    'keyword' for the keyword match and 'value'
-                   for the value. An optional 'comment' 
+                   for the value. An optional 'comment'
                    group may also be present to put a comment with
                    the keyword/value pair, as in standard FITS fashion.
     Returns
     -------
     astropy.Table:
         An astropy Table is returned.
-        Of note is one extra parameter on the table, 'meta', 
+        Of note is one extra parameter on the table, 'meta',
         which is the dict of header keywords found.
     '''
 

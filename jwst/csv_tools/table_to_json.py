@@ -15,7 +15,7 @@ def table_to_json(table, **json_kwargs):
 
     Notes
     -----
-    The JSON will consist of an object where keyword/value pairs are located 
+    The JSON will consist of an object where keyword/value pairs are located
     in the header object and the table will be in the table object.
 
     Returns

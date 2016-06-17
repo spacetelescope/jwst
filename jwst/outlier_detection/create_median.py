@@ -1,12 +1,12 @@
 """
 Create a median image from the singly drizzled images.
 
-NOTE: This version is simplified from astrodrizzle's version in the 
+NOTE: This version is simplified from astrodrizzle's version in the
         following ways:
         - type of combination: fixed to 'median'
         - 'minmed' not implemented as an option
         - does not use buffers to try to minimize memory usage
-        
+
 :Authors: Warren Hack
 
 :License:

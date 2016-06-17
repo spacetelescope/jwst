@@ -37,12 +37,12 @@ class NRM_Model():
         Parameters
         ----------
         mask: string
-            keyword for built-in values 
+            keyword for built-in values
 
         holeshape: string
            shape of apertures
 
-        pixscale: float    
+        pixscale: float
            initial estimate of pixel scale in radians.??
 
         rotate: float
@@ -52,7 +52,7 @@ class NRM_Model():
            oversampling factor
 
         scallist: float 1D array
-           candidate relative pixel scales        
+           candidate relative pixel scales
 
         rotlist_deg: float 1D array
             Search window for rotation fine-tuning, in degrees
@@ -319,12 +319,12 @@ class NRM_Model():
         -------------
         Run a least-squares fit on an input image.
         Specifying a model is optional. If a model is not specified then this
-        method will find the appropriate wavelength scale, rotation (and 
+        method will find the appropriate wavelength scale, rotation (and
         hopefully centering as well -- This is not written into the object
         yet, but should be soon).
 
-        Without specifying a model, fit_image can take a reference image 
-        (a cropped deNaNed version of the data) to run correlations. It is 
+        Without specifying a model, fit_image can take a reference image
+        (a cropped deNaNed version of the data) to run correlations. It is
         recommended that the symmetric part of the data be used to avoid piston
         confusion in scaling.
 
@@ -344,7 +344,7 @@ class NRM_Model():
 
         Returns
         -------
-        None        
+        None
 
         """
         self.model_in = modelin
@@ -437,9 +437,9 @@ class NRM_Model():
         """
         Short Summary
         -------------
-        Calculate pixel scale factor, rotation in addition to guess, and a 
+        Calculate pixel scale factor, rotation in addition to guess, and a
         goodness of fit parameter than can be compared in multiple iterations.
-        Correlations are calculated in the image plane, in anticipation of 
+        Correlations are calculated in the image plane, in anticipation of
         data with many bad pixels.
 
         Parameters
@@ -557,7 +557,7 @@ def makedisk(N, R, ctr=(0, 0), array="ODD"):
         center of disk
 
     array: 'ODD' or 'EVEN'
-        parity of size of edge 
+        parity of size of edge
 
     Returns
     -------
@@ -585,7 +585,7 @@ def makedisk(N, R, ctr=(0, 0), array="ODD"):
 
 
 def goodness_of_fit(data, bestfit, diskR=8):
-    """ 
+    """
     Short Summary
     -------------
     Calculate goodness of fit between the data and the fit.
@@ -620,7 +620,7 @@ def goodness_of_fit(data, bestfit, diskR=8):
 
 
 def run_data_correlate(data, model):
-    """  
+    """
     Short Summary
     -------------
     Calculate correlation between data and model

@@ -130,7 +130,7 @@ def correct_for_NaN(satmask, dqmask):
 def ref_matches_sci(ref_model, sci_model):
     """
     Short Summary
-    -------------  
+    -------------
     Determine whether or not the reference file data are from the same
     subarray region as the science data model. Currently this is done by
     simply comparing the sizes of the two arrays. In the future, the

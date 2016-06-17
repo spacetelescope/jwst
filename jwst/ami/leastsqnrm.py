@@ -19,12 +19,12 @@ def flip(holearray):
 
     Parameters
     ----------
-    holearray: 2D float array   
+    holearray: 2D float array
         coordinates of holes
 
     Return
     ------
-    fliparray: 2D float array   
+    fliparray: 2D float array
         flipped coordinates of holes
     """
 
@@ -73,7 +73,7 @@ def mas2rad(mas):
     Parameters
     ----------
     mas: float
-        angle in milli arc-sec 
+        angle in milli arc-sec
 
     Returns
     -------
@@ -86,7 +86,7 @@ def mas2rad(mas):
 
 
 def rad2mas(rad):
-    """ 
+    """
     Short Summary
     -------------
     Convert input angle in radians to milli arc sec
@@ -108,7 +108,7 @@ def rad2mas(rad):
 
 
 def replacenan(array):
-    """ 
+    """
     Short Summary
     -------------
     Replace singularities encountered in the analytical hexagon Fourier
@@ -132,7 +132,7 @@ def replacenan(array):
 
 
 def primarybeam(kx, ky):
-    """ 
+    """
     Short Summary
     -------------
     Calculate the envelope intensity for circular holes & monochromatic light
@@ -158,7 +158,7 @@ def primarybeam(kx, ky):
 
 
 def hexpb():
-    """ 
+    """
     Short Summary
     -------------
     Calculate the primary beam for hexagonal holes.
@@ -170,7 +170,7 @@ def hexpb():
     Returns
     -------
     pb * pb.conj(): 2D float array
-        primary beam for hexagonal holes    
+        primary beam for hexagonal holes
     """
     from . import hexee
     pb = hexee.hex_eeAG(s=hexpb.size, c=(hexpb.offx, hexpb.offy), \
@@ -180,10 +180,10 @@ def hexpb():
 
 
 def ffc(kx, ky):
-    """ 
+    """
     Short Summary
     -------------
-    Calculate cosine terms of analytic model.    
+    Calculate cosine terms of analytic model.
 
     Parameters
     ----------
@@ -193,7 +193,7 @@ def ffc(kx, ky):
     Returns
     -------
     cos_array: 2D float array
-        cosine terms of analytic model    
+        cosine terms of analytic model
     """
 
     cos_array = 2 * np.cos(2 * np.pi * ffc.pitch *
@@ -204,10 +204,10 @@ def ffc(kx, ky):
 
 
 def ffs(kx, ky):
-    """ 
+    """
     Short Summary
     -------------
-    Calculate sine terms of analytic model.    
+    Calculate sine terms of analytic model.
 
     Parameters
     ----------
@@ -217,7 +217,7 @@ def ffs(kx, ky):
     Returns
     -------
     sin_array: 2D float array
-        sine terms of analytic model    
+        sine terms of analytic model
     """
 
     sin_array = -2 * np.sin(2 * np.pi * ffs.pitch *
@@ -229,7 +229,7 @@ def ffs(kx, ky):
 
 def model_array(ctrs, lam, oversample, pitch, fov, d,
                  centering='PIXELCENTERED', shape='circ'):
-    """ 
+    """
     Short Summary
     -------------
     Create a model using the specified wavelength.
@@ -237,7 +237,7 @@ def model_array(ctrs, lam, oversample, pitch, fov, d,
     Parameters
     ----------
     ctrs: 2D float array
-        centers of holes 
+        centers of holes
 
     lam: float
         wavelength in the bandpass for this particular model
@@ -252,7 +252,7 @@ def model_array(ctrs, lam, oversample, pitch, fov, d,
         number of detector pixels on a side.
 
     d: float
-        hole diameter for 'circ'; flat to flat distance for 'hex   
+        hole diameter for 'circ'; flat to flat distance for 'hex
 
     centering: string
         subpixel centering; for now only option is PIXELCENTERED, which means
@@ -358,7 +358,7 @@ def matrix_operations(img, model, flux=None):
     -------------
     Use least squares matrix operations to solve A x = b, where A is the model,
     b is the data (img), and x is the coefficient vector we are solving for.
-    In 2-D, data x = inv(At.A).(At.b) 
+    In 2-D, data x = inv(At.A).(At.b)
     If a flux is given, use it to normalize the data.
 
     Parameters
@@ -367,7 +367,7 @@ def matrix_operations(img, model, flux=None):
         input data
 
     model: 2D float array
-        analytic model 
+        analytic model
 
     flux: float
         normalization factor
@@ -472,7 +472,7 @@ def tan2visibilities(coeffs):
     ------------
     Technically the fit measures phase AND amplitude, so to retrieve the
     phase we need to consider both sin and cos terms. Consider one fringe:
-    A { cos(kx)cos(dphi) + sin(kx)sin(dphi) } = 
+    A { cos(kx)cos(dphi) + sin(kx)sin(dphi) } =
     A(a cos(kx) + b sin(kx)), where a = cos(dphi) and b = sin(dphi)
     and A is the fringe amplitude, therefore coupling a and b.
     In practice we measure A*a and A*b from the coefficients, so:
@@ -490,7 +490,7 @@ def tan2visibilities(coeffs):
 
     Returns
     -------
-    amp, delta: 1D float array, 1D float array   
+    amp, delta: 1D float array, 1D float array
         fringe amplitude & phase
     """
 
@@ -598,7 +598,7 @@ def redundant_cps(deltaps, N=7):
     Returns
     -------
     cps: 1D float array
-        closure phases     
+        closure phases
     """
     arr = populate_antisymmphasearray(deltaps, N=N) # fringe phase array
     cps = np.zeros(int(comb(N, 3)))
@@ -617,7 +617,7 @@ def redundant_cps(deltaps, N=7):
 
 
 def closurephase(deltap, N=7):
-    """ 
+    """
     Short Summary
     -------------
     Calculate closure phases between each pair of holes
@@ -659,7 +659,7 @@ def closurephase(deltap, N=7):
 
 
 def return_CAs(amps, N=7):
-    """ 
+    """
     Short Summary
     -------------
     Calculate closure amplitudes

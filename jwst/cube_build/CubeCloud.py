@@ -76,7 +76,7 @@ def MakePointCloudMIRI_DistortionFile(self, x, y, file_no, c1_offset, c2_offset,
     ----------
     x,y list of x and y values to map
     channel: channel number working with
-    subchannel: subchannel working with 
+    subchannel: subchannel working with
     sliceno
     input_model: slope image
     transform: wsc transform to go from x,y to point cloud
@@ -274,7 +274,7 @@ def FindWaveWeights(channel, subchannel):
     """
     Short Summary
     -------------
-    Get the wavelength normalization weights that we will use to normalize wavelengths. 
+    Get the wavelength normalization weights that we will use to normalize wavelengths.
 
     Parameters
     ----------

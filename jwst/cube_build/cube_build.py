@@ -26,9 +26,9 @@ def DetermineCubeCoverage(self, MasterTable):
     """
     Short Summary
     -------------
-    Function to determine which channels and subchannels are used in the creation of the cubes. 
+    Function to determine which channels and subchannels are used in the creation of the cubes.
     For MIRI The channels  to be used are set by the association and the subchannels are  determined from
-    the data 
+    the data
 
     Parameter
     ----------
@@ -120,18 +120,18 @@ def FilesinCube(self, input_table, iproduct, MasterTable):
     Short Summary
     -------------
     Fill in the MasterTable which holds the files for all the cubes to be made for
-    the iproduct index  of Association table (input_table). 
+    the iproduct index  of Association table (input_table).
 
     Parameters
     ----------
-    input_table: Association Table 
+    input_table: Association Table
     iproduct: index for the product in the assocation table. The product the is top grouping
-    of how the data is organized. The Mastertable only holds the data for 1 product at a time. 
+    of how the data is organized. The Mastertable only holds the data for 1 product at a time.
 
 
     Returns
     -------
-    MasterTable filled in with files needed 
+    MasterTable filled in with files needed
     num: number of files to create cube from
     detector
 
@@ -227,11 +227,11 @@ def DetermineScale(Cube, InstrumentInfo):
     Parameters
     ----------
     Cube: Class holding basic information on cube
-    InstrumentInfo holds the defaults scales for each channel/subchannel 
+    InstrumentInfo holds the defaults scales for each channel/subchannel
 
     Returns
     -------
-    scale, holding the scale for the 3 dimensions of the cube/ 
+    scale, holding the scale for the 3 dimensions of the cube/
 
     """
     a = Cube.detector
@@ -287,20 +287,20 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
     Short Summary
     -------------
     For each channel find:
-    a. the min and max spatial coordinates (alpha,beta) or (V2-v3) depending on coordinate system. 
-      axis a = naxis 1, axis b = naxis2 
+    a. the min and max spatial coordinates (alpha,beta) or (V2-v3) depending on coordinate system.
+      axis a = naxis 1, axis b = naxis2
     b. min and max wavelength is also determined. , beta and lambda for those slices
 
 
     Parameters
     ----------
-    input: input model (or file) 
+    input: input model (or file)
     this_channel: channel working with
 
 
     Returns
     -------
-    min and max spaxial coordinates  and wavelength for channel. 
+    min and max spaxial coordinates  and wavelength for channel.
 
     """
     # x,y values for channel - convert to output coordinate system
@@ -349,20 +349,20 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
     Short Summary
     -------------
     For each slice find:
-    a. the min and max spatial coordinates (alpha,beta) or (V2-v3) depending on coordinate system. 
-      axis a = naxis 1, axis b = naxis2 
+    a. the min and max spatial coordinates (alpha,beta) or (V2-v3) depending on coordinate system.
+      axis a = naxis 1, axis b = naxis2
     b. min and max wavelength is also determined. , beta and lambda for those slices
 
 
     Parameters
     ----------
-    input: input model (or file) 
+    input: input model (or file)
     this_channel: channel working with
 
 
     Returns
     -------
-    min and max spaxial coordinates  and wavelength for channel. 
+    min and max spaxial coordinates  and wavelength for channel.
 
     """
     # loop over all the region (Slices) in the Channel
@@ -432,13 +432,13 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 
     Parameter
     ----------
-    Input - list of files to make cube from 
+    Input - list of files to make cube from
 
     Returns
     -------
     Cube Dimension Information:
 
-    Footprint of cube: min and max of coordinates of cube 
+    Footprint of cube: min and max of coordinates of cube
 
 
     """
@@ -693,7 +693,7 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
     -------
     if(interpolation = area) flux determined for each spaxel
     or
-    if(interpolation = pointcloud) flux determined for each spaxel based on interpolation of PixelCloud 
+    if(interpolation = pointcloud) flux determined for each spaxel based on interpolation of PixelCloud
     """
 
     if self.interpolation == 'area':
