@@ -13,7 +13,7 @@ class SpecModel(model_base.DataModel):
     Parameters
     ----------
     init : any
-        Any of the initializers supported by `~jwst_lib.models.DataModel`.
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     spec_table : numpy array
         A table with 3 columns: pixel number, wavelength, and count rate.

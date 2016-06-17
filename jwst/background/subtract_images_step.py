@@ -2,7 +2,7 @@
 
 from ..stpipe import Step
 from .. import datamodels
-from .. import subtract_images
+from . import subtract_images
 
 class SubtractImagesStep(Step):
     """

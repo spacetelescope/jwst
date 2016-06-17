@@ -11,7 +11,7 @@ class IPCModel(model_base.DataModel):
     Parameters
     ----------
     init : any
-        Any of the initializers supported by `~jwst_lib.models.DataModel`.
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     data : numpy array
         The deconvolution kernel (a very small image).
