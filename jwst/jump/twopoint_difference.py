@@ -144,9 +144,9 @@ def find_CRs(data, gdq, read_noise, rej_threshold):
                         break
 
             # Set CR flags in input DQ array for this pixel
-            gdq[integration, 1:, row, col] = np.bitwise_or \
-                              (gdq[integration, 1:, row, col],
-                               dqflags.group['JUMP_DET'] * np.invert(cr_mask))
+            gdq[integration, 1:, row, col] = np.bitwise_or(
+                                                gdq[integration, 1:, row, col],
+                                                dqflags.group['JUMP_DET'] * np.invert(cr_mask))
 
             # Save the CR-cleaned median slope for this pixel
             median_slopes[integration, row, col] = med
