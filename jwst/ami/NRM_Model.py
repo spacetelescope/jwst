@@ -92,7 +92,7 @@ class NRM_Model():
             # at the top instead of at bottom in traditional XY plots
 
         if scallist is None:
-            self.scallist = np.array([0.995, 0.998, 1.0, 1.002, 1.005,])
+            self.scallist = np.array([0.995, 0.998, 1.0, 1.002, 1.005, ])
         else:
             self.scallist = scallist
 
