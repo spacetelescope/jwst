@@ -30,8 +30,8 @@
 # DAMAGE.
 
 '''
-This is a script to update JWST data files to include 
-barycentric and heliocentric times as computed from the spacecraft 
+This is a script to update JWST data files to include
+barycentric and heliocentric times as computed from the spacecraft
 times. It also updates the extension that contains the times
 for each group by adding the necessary columns to that table.
 '''
@@ -49,7 +49,7 @@ import astropy.units as u
 def set_bary_helio_times(filename, jwstpos=None):
     '''
     Compute the barycentric and heliocentric times for the
-    given file and update the contents of the file to contain 
+    given file and update the contents of the file to contain
     these values.
     '''
     print('Starting set_bary_helio_times task')
