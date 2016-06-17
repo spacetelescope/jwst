@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-from jwst.stpipe import Pipeline
+from ..stpipe import Pipeline
 from .. import datamodels
 
 import os
 import json
 
 # calniriss ami step imports
-from jwst.ami import ami_analyze_step
-from jwst.ami import ami_average_step
-from jwst.ami import ami_normalize_step
+from ..ami import ami_analyze_step
+from ..ami import ami_average_step
+from ..ami import ami_normalize_step
 
 
 __version__ = "1.0"

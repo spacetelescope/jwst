@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from jwst.stpipe import Step
+from ..stpipe import Step
 from .. import datamodels
 from . import saturation
 

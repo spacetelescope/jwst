@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-from jwst.stpipe import Pipeline
+from ..stpipe import Pipeline
 from .. import datamodels
 import os
 
 # calwebb IMAGE2 step imports
-from jwst.assign_wcs import assign_wcs_step
-from jwst.flatfield import flat_field_step
-from jwst.persistence import persistence_step
-from jwst.emission import emission_step
-from jwst.photom import photom_step
+from ..assign_wcs import assign_wcs_step
+from ..flatfield import flat_field_step
+from ..persistence import persistence_step
+from ..emission import emission_step
+from ..photom import photom_step
 
 
 __version__ = "2.1"

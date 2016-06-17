@@ -1,17 +1,17 @@
 #!/usr/bin/env python
-from jwst.stpipe import Pipeline
+from ..stpipe import Pipeline
 from .. import datamodels
 import os
 
 # step imports
-from jwst.dq_init import dq_init_step
-from jwst.saturation import saturation_step
-from jwst.ipc import ipc_step
-from jwst.superbias import superbias_step
-from jwst.refpix import refpix_step
-from jwst.reset import reset_step
-from jwst.lastframe import lastframe_step
-from jwst.linearity import linearity_step
+from ..dq_init import dq_init_step
+from ..saturation import saturation_step
+from ..ipc import ipc_step
+from ..superbias import superbias_step
+from ..refpix import refpix_step
+from ..reset import reset_step
+from ..lastframe import lastframe_step
+from ..linearity import linearity_step
 
 
 __version__ = "0.6"

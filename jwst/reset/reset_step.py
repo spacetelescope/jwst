@@ -1,5 +1,5 @@
-from jwst.stpipe import Step
-from jwst import datamodels
+from ..stpipe import Step
+from .. import datamodels
 from . import reset_sub
 
 

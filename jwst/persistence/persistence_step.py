@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from jwst.stpipe import Step, cmdline
+from ..stpipe import Step, cmdline
 from . import persistence
 
 class PersistenceStep(Step):

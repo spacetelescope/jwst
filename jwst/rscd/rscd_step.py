@@ -1,7 +1,7 @@
-from jwst.stpipe import Step
-from jwst import datamodels
+from ..stpipe import Step
+from .. import datamodels
 
-import ..datamodels.rscd as rscd_mod
+from ..datamodels import rscd as rscd_mod
 from . import rscd_sub
 
 

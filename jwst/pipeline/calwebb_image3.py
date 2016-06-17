@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-from jwst.stpipe import Pipeline
+from ..stpipe import Pipeline
 from .. import datamodels
 
 # calwebb Image3 step imports
-from jwst.resample import resample_step
-from jwst.skymatch import skymatch_step
-from jwst.outlier_detection import outlier_detection_step
-from jwst.source_catalog import source_catalog_step
-from jwst.tweakreg_catalog import tweakreg_catalog_step
-from jwst.tweakreg import tweakreg_step
+from ..resample import resample_step
+from ..skymatch import skymatch_step
+from ..outlier_detection import outlier_detection_step
+from ..source_catalog import source_catalog_step
+from ..tweakreg_catalog import tweakreg_catalog_step
+from ..tweakreg import tweakreg_step
 
 __version__ = "0.1"
 

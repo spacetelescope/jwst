@@ -2,7 +2,7 @@
 
 from __future__ import division
 
-from jwst.stpipe import Step, cmdline
+from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import ramp_fit
 

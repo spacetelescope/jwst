@@ -1,17 +1,17 @@
 #!/usr/bin/env python
-from jwst.stpipe import Pipeline
+from ..stpipe import Pipeline
 from .. import datamodels
 
 # step imports
-from jwst.assign_wcs import assign_wcs_step
-from jwst.background import background_step
-from jwst.imprint import imprint_step
+from ..assign_wcs import assign_wcs_step
+from ..background import background_step
+from ..imprint import imprint_step
 #from jwst.msaflagging import msa_flag_step
-from jwst.extract_2d import extract_2d_step
-from jwst.flatfield import flat_field_step
-from jwst.straylight import straylight_step
-from jwst.fringe import fringe_step
-from jwst.photom import photom_step
+from ..extract_2d import extract_2d_step
+from ..flatfield import flat_field_step
+from ..straylight import straylight_step
+from ..fringe import fringe_step
+from ..photom import photom_step
 
 __version__ = "2.0"
 
