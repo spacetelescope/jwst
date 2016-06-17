@@ -4,7 +4,7 @@ from __future__ import absolute_import, print_function
 import sys
 import numpy as np
 import math
-from jwst import datamodels
+from .. import datamodels
 from . import CubeD2C
 from . import cube
 #________________________________________________________________________________
@@ -105,6 +105,7 @@ def MakePointCloudMIRI_DistortionFile(self, x, y, file_no, c1_offset, c2_offset,
 #________________________________________________________________________________
 # loop over pixels in slice
 #________________________________________________________________________________
+
     for ipixel in range(0, nn - 1):
         valid_pixel = True
         if(y[ipixel] >= 1024):
@@ -118,7 +119,6 @@ def MakePointCloudMIRI_DistortionFile(self, x, y, file_no, c1_offset, c2_offset,
             error_pixel = input_model.err[y[ipixel], x[ipixel]]
             xan, yan = CubeD2C.ab2xyan(self, alpha_pixel, beta_pixel)
             v2, v3 = CubeD2C.xyan2v23(self, xan, yan)
-
 
             coord1_pixel = v2 * 60.0
             coord2_pixel = v3 * 60.0
@@ -174,7 +174,6 @@ def FindROI(self, Cube, spaxel, PointCloud):
         weight_alpha = weights[0]
         weight_beta = weights[1]
         weight_wave = weights[2]
-
 
         coord1 = PointCloud[0, ipt]
         coord2 = PointCloud[1, ipt]
@@ -355,8 +354,6 @@ def FindWaveWeights(channel, subchannel):
             c = 1200.0
             wa = 23.83
             wc = 28.43
-
-
     return a, c, wa, wc
 
 #_______________________________________________________________________
@@ -387,6 +384,7 @@ gs     weighting is determined from width of PSF as well as wavelength resolutio
 
     beta_weight = 0.31 * (wavelength / 8.0)
 
+
     if(wavelength < 8.0):
         alpha_weight = 0.31
     else:
@@ -397,6 +395,7 @@ gs     weighting is determined from width of PSF as well as wavelength resolutio
 
     if (wavelength >= wa and wavelength <= wc):
         b = a + (c - a) * (wavelength - wa) / (wc - wa)
+
     elif (wavelength < wa):
         b = a
     else:
@@ -407,3 +406,4 @@ gs     weighting is determined from width of PSF as well as wavelength resolutio
 
     weight = [alpha_weight, beta_weight, lambda_weight]
     return weight
+

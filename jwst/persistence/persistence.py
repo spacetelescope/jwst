@@ -4,7 +4,7 @@
 
 import numpy as np
 import logging
-from jwst import datamodels
+from .. import datamodels
 
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
@@ -31,13 +31,13 @@ class DataSet():
         """
         try:
             self.input_file = input_DM
-            model = models.open(input_DM)
+            model = datamodels.open( input_DM )
             # If model comes back as generic DataModel, reopen as MultiSlit
-            if isinstance(model, models.CubeModel) or isinstance(model, models.ImageModel):
+            if isinstance(model, datamodels.CubeModel) or isinstance(model, datamodels.ImageModel):
                 pass
-            elif isinstance(model, models.DataModel):
+            elif isinstance(model, datamodels.DataModel):
                 model.close()
-                model = models.MultiSlitModel(input_DM)
+                model = datamodels.MultiSlitModel(input_DM)
             self.input = model
         except Exception as errmess:
             log.error('Error opening %s', input_DM)

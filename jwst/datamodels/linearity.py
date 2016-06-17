@@ -14,7 +14,7 @@ class LinearityModel(model_base.DataModel):
     Parameters
     ----------
     init : any
-        Any of the initializers supported by `~jwst_lib.models.DataModel`.
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     coeffs : numpy array
         Coefficients defining the nonlinearity function.

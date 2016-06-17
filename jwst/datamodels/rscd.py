@@ -13,7 +13,7 @@ class RSCDModel(model_base.DataModel):
     Parameters
     ----------
     init : any
-        Any of the initializers supported by `~jwst_lib.models.DataModel`.
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     rscd_table : numpy array
         A table with seven columns, three string-valued that identify which

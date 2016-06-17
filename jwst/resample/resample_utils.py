@@ -7,7 +7,7 @@ from astropy import wcs as fitswcs
 from gwcs import wcs
 from gwcs import wcstools
 
-from jwst import assign_wcs
+from .. import assign_wcs
 
 DEFAULT_DOMAIN = {'lower': None, 'upper': None, 'includes_lower': True, 'includes_upper': False}
 

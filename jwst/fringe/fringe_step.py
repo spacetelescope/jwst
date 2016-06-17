@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-from jwst.stpipe import Step, cmdline
-from jwst import datamodels
+from ..stpipe import Step, cmdline
+from .. import datamodels
 from . import fringe
 
 class FringeStep(Step):
@@ -13,8 +13,7 @@ class FringeStep(Step):
     reference_file_types = ['fringe']
 
     def process(self, input):
-
-        with models.ImageModel(input) as input_model:
+        with datamodels.ImageModel(input) as input_model:
 
             # Open the reference file
             self.fringe_filename = self.get_reference_file(input_model,
@@ -31,7 +30,7 @@ class FringeStep(Step):
                 return result
 
             # Load the fringe reference file
-            fringe_model = models.FringeModel(self.fringe_filename)
+            fringe_model = datamodels.FringeModel(self.fringe_filename)
 
             # Do the correction
             output_model = fringe.do_correction(input_model, fringe_model)

@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
-from jwst.stpipe import Step, cmdline
-from jwst import datamodels
+from ..stpipe import Step, cmdline
+from .. import datamodels
 from . import straylight
 
 
@@ -14,7 +14,7 @@ class StraylightStep (Step):
     def process(self, input):
 
         # Open the input data model
-        with models.ImageModel(input) as input_model:
+        with datamodels.ImageModel(input) as input_model:
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
@@ -35,7 +35,7 @@ class StraylightStep (Step):
                     return result
 
                 # Open the straylight mask ref file data model
-                straylight_model = models.StrayLightModel(self.straylight_name)
+                straylight_model = datamodels.StrayLightModel(self.straylight_name)
 
                 # Do the correction
                 result = straylight.correct_MRS(input_model, straylight_model)

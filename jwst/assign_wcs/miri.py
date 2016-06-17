@@ -55,7 +55,7 @@ def imaging_distortion(input_model, reference_files):
 
     Parameters
     ----------
-    model : jwst_lib.models.ImagingModel
+    model : jwst.datamodels.ImagingModel
         input model
     reference_files : dict
         reference files from CRDS

@@ -13,7 +13,7 @@
 import numpy as np
 import logging
 import math
-from jwst import datamodels
+from .. import datamodels
 from astropy.convolution import convolve, Box2DKernel
 #from matplotlib import pyplot as plt
 

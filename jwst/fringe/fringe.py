@@ -6,8 +6,8 @@ from __future__ import division
 
 import numpy as np
 import logging
-from jwst import datamodels
-from jwst.datamodels import dqflags
+from .. import datamodels
+from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

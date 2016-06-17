@@ -13,7 +13,7 @@ from __future__ import (absolute_import, division, unicode_literals,
 import collections
 import numpy as np
 
-from jwst.stpipe import Step, cmdline
+from ..stpipe import Step, cmdline
 from .. import datamodels
 
 from stsci.tools import bitmask

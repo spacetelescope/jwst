@@ -4,7 +4,7 @@ from __future__ import absolute_import, print_function
 import sys
 import numpy as np
 import math
-from jwst import datamodels
+from .. import datamodels
 from astropy.io import fits
 from . import cube
 
@@ -94,9 +94,6 @@ def ReadD2CMapFile(self, channel, subchannel,):
         self.wcs['B_DELTA'] = header['B_DEL4']
 
 #    print(' Header wcs',self.wcs['L_MIN'],self.wcs['L_MAX'],self.wcs['A_MIN'],self.wcs['A_MAX'],self.wcs['B_MIN'],self.wcs['B_DELTA'])
-
-
-
 
 
 def ReadDistortionFile(self, channel, subchannel,):
@@ -337,7 +334,6 @@ def ReadDistortionFile(self, channel, subchannel,):
     return amin_final, amax_final, bmin_final, bmax_final, lmin, lmax
 
 
-
 def build_coeff_names(names):
     names = names[1:]
     names = [name.replace('VAR2(', "c") for name in names]
@@ -365,7 +361,6 @@ def pullout_poly_models(data):
 
 
 def find_slices(slices, sliceno):
-
     index = np.where(slices == sliceno)
     #y = index[0]+1
     #x = index[1]+1

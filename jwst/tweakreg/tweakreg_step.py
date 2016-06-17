@@ -15,7 +15,7 @@ import logging
 import numpy as np
 from astropy.table import Table
 
-from jwst.stpipe import Step, cmdline
+from ..stpipe import Step, cmdline
 from .. import datamodels
 
 from . imalign import align

@@ -6,8 +6,8 @@ import numpy as np
 import math
 import json
 from astropy.io import fits
-from jwst import datamodels
-from jwst.assign_wcs import nirspec
+from .. import datamodels
+from ..assign_wcs import nirspec
 from gwcs.utils import _domain_to_bounds
 from . import cube
 from . import CubeOverlap
@@ -177,7 +177,7 @@ def FilesinCube(self, input_table, iproduct, MasterTable):
         # Open the input data model
         # Fill in the FileMap information
 
-        with models.ImageModel(ifile) as input_model:
+        with datamodels.ImageModel(ifile) as input_model:
 
             detector = input_model.meta.instrument.detector
             assign_wcs = input_model.meta.cal_step.assign_wcs
@@ -326,8 +326,6 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
         coord1 = coord1 * 60.0
         coord2 = coord2 * 60.0
 
-
-
     a_min = np.nanmin(coord1)
     a_max = np.nanmax(coord1)
 
@@ -387,6 +385,7 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
     for i in regions:
 
         slice_wcs = nirspec.nrs_wcs_set_input(input.meta.wcs, 0, i, wrange)
+
         b = _domain_to_bounds(slice_wcs.domain)
         y, x = np.mgrid[b[1][0]:b[1][1], b[0][0]:b[0][1]]
         v2, v3, lam = slice_wcs(x, y)
@@ -491,7 +490,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 #________________________________________________________________________________
 
                 # Open the input data model
-                with models.ImageModel(ifile) as input_model:
+                with datamodels.ImageModel(ifile) as input_model:
 
                     t0 = time.time()
                     if(detector == 'NIRSPEC'):
@@ -535,6 +534,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 
 
      # min and max values are for the center of the pixels
+
     final_a_min = min(a_min) - Cube.Cdelt1 / 2.0
     final_a_max = max(a_max) + Cube.Cdelt1 / 2.0
     final_b_min = min(b_min) - Cube.Cdelt2 / 2.0
@@ -543,7 +543,8 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
     final_lambda_max = max(lambda_max) + Cube.Cdelt3 / 2.0
 
 
-    CubeFootPrint = final_a_min, final_a_max, final_b_min, final_b_max, final_lambda_min, final_lambda_max
+    CubeFootPrint = (final_a_min, final_a_max, final_b_min, final_b_max,
+                     final_lambda_min, final_lambda_max)
     return CubeFootPrint
 #________________________________________________________________________________
 
@@ -585,10 +586,10 @@ def MapDetectorToCube(self, this_channel, this_subchannel, Cube, spaxel, PixelCl
             c1_offset = MasterTable.FileOffset[this_channel][this_subchannel]['C1'][k]
             c2_offset = MasterTable.FileOffset[this_channel][this_subchannel]['C2'][k]
 
-
         log.info('Mapping file to cube %s ', ifile)
+
         # Open the input data model
-        with models.ImageModel(ifile) as input_model:
+        with datamodels.ImageModel(ifile) as input_model:
 
             det2ab_transform = input_model.meta.wcs.get_transform('detector', 'alpha_beta')
             v2ab_transform = input_model.meta.wcs.get_transform('V2_V3', 'alpha_beta')
@@ -610,6 +611,7 @@ def MapDetectorToCube(self, this_channel, this_subchannel, Cube, spaxel, PixelCl
                 t0 = time.time()
                 cloud = CubeCloud.MakePointCloudMIRI(self, x, y, k, c1_offset, c2_offset, input_model)
                 n = PixelCloud.size
+
                 if(n == 10):  # If first time
                     PixelCloud = cloud
 #                    print('pixelcloud',PixelCloud.shape, cloud.shape)
@@ -630,7 +632,6 @@ def MapDetectorToCube(self, this_channel, this_subchannel, Cube, spaxel, PixelCl
                 for i in regions:
                     log.info('Working on Slice # %d', i)
                     y, x = (det2ab_transform.label_mapper.mapper == i).nonzero()
-
                     t0 = time.time()
                     cloud = CubeCloud.MakePointCloudMIRI_DistortionFile(self, x, y, k, c1_offset, c2_offset, this_channel, this_subchannel, i, start_region, input_model)
                     n = PixelCloud.size
@@ -672,7 +673,6 @@ def MapDetectorToCube(self, this_channel, this_subchannel, Cube, spaxel, PixelCl
                     t1 = time.time()
                     log.debug("Time Map one Slice  to Cube = %.1f.s" % (t1 - t0,))
 
-
     return PixelCloud
 
 #********************************************************************************
@@ -705,7 +705,6 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
                 CubeOverlap.SpaxelFlux(self.radius_y, i, Cube, spaxel)
 
     elif self.interpolation == 'pointcloud':
-
         icube = 0
         t0 = time.time()
         iz = 0
@@ -798,7 +797,6 @@ def CheckCubeType(self):
         if(len(self.metadata['channel']) > 1):
             raise IncorrectInput("For interpolation = area, only channel can be used to created the cube")
 
-
     if(self.coord_system == "alpha-beta"):
         if(self.metadata['number_files'] > 1):
             raise IncorrectInput("Cubes built in alpha-beta coordinate system are built from a single file")
@@ -839,12 +837,9 @@ def WriteCube(self, Cube, spaxel):
                 data[z, y, x] = spaxel[icube].flux
                 idata[z, y, x] = len(spaxel[icube].ipointcloud)
                 icube = icube + 1
-
-
-
     name = Cube.output_name
+    new_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
 
-    new_model = models.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
     new_model.meta.wcsinfo.crval1 = Cube.Crval1
     new_model.meta.wcsinfo.crval2 = Cube.Crval2
     new_model.meta.wcsinfo.crval3 = Cube.Crval3
@@ -916,10 +911,10 @@ class IFUCubeInput(object):
         self.input = input # keep a record of original input name for later
 
         self.input_models = []
-        if isinstance(input, models.ImageModel):
-            log.debug('going to read imagemodel')
-            # It's a single image that's been passed in as a model
 
+        if isinstance(input, datamodels.ImageModel):
+            log.debug( 'going to read imagemodel')
+            # It's a single image that's been passed in as a model
             self.interpret_image_model(input)
         elif isinstance(input, str):
             try:
@@ -927,10 +922,11 @@ class IFUCubeInput(object):
                 self.asn_table = json.load(open(input, 'r'))
             except:
                 # The name of a single image file
-                log.debug('going to read a single file')
+
+                log.debug( 'going to read a single file')
                 self.filename = input  # temp until figure out model.meta.filename
-                self.interpret_image_model(models.ImageModel(input))
-        else:
+                self.interpret_image_model(datamodels.ImageModel(input))
+
             raise TypeError
 
 

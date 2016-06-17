@@ -4,7 +4,7 @@
 
 import numpy as np
 import logging
-from jwst import datamodels
+from .. import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

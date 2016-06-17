@@ -27,12 +27,12 @@ class MultiSpecModel(model_base.DataModel):
     Parameters
     ----------
     init : any
-        Any of the initializers supported by `~jwst_lib.models.DataModel`.
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     Examples
     --------
-    >>> output_model = models.MultiSpecModel()
-    >>> spec = models.SpecModel()           # for the default data type
+    >>> output_model = datamodels.MultiSpecModel()
+    >>> spec = datamodels.SpecModel()       # for the default data type
     >>> for slit in input_model.slits:
     >>>     slitname = slit.name
     >>>     slitmodel = ExtractModel()
@@ -40,7 +40,7 @@ class MultiSpecModel(model_base.DataModel):
     >>>     column, wavelength, countrate = slitmodel.extract(slit.data)
     >>>     otab = np.array(zip(column, wavelength, countrate),
     >>>                     dtype=spec.spec_table.dtype)
-    >>>     spec = models.SpecModel(spec_table=otab)
+    >>>     spec = datamodels.SpecModel(spec_table=otab)
     >>>     output_model.spec.append(spec)
     """
     schema_url = "multispec.schema.yaml"

@@ -13,7 +13,7 @@ class MIRIRampModel(ramp.RampModel):
     Parameters
     ----------
     init : any
-        Any of the initializers supported by `~jwst_lib.models.DataModel`.
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     data : numpy array
         The science data.

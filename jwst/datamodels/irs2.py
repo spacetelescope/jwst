@@ -13,7 +13,7 @@ class IRS2Model(model_base.DataModel):
     Parameters
     ----------
     init : any
-        Any of the initializers supported by `~jwst_lib.models.DataModel`.
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     irs2_table : numpy array
         A table with 8 columns and 1458176 (2048 * 712) rows; all values

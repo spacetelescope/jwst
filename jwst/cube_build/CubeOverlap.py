@@ -6,7 +6,7 @@ import numpy as np
 import math
 from . import cube
 from . import CubeD2C
-from jwst import datamodels
+from .. import datamodels
 #________________________________________________________________________________
 def FindAreaPoly(nVertices, xpixel, ypixel):
     """
@@ -411,8 +411,6 @@ def SpaxelOverlap(self, x, y, sliceno, start_slice, input_model, transform, beta
         alpha3, beta3, lam3 = CubeD2C.xy2abl(self, sliceno_use - 1, xx_right, yy_top)
         alpha4, beta4, lam4 = CubeD2C.xy2abl(self, sliceno_use - 1, xx_left, yy_top)
 
-
-
     # Loop over all pixels in slice
     for ipixel in range(0, nn - 1):
         valid_pixel = True
@@ -470,6 +468,7 @@ def SpaxelOverlap(self, x, y, sliceno, start_slice, input_model, transform, beta
 # 1-1 mapping in beta
             iy2 = sliceno_use - 1
 
+
         #_______________________________________________________________________
 
             Area = FindAreaQuad(alpha_min, wave_min, alpha_corner, wave_corner)
@@ -481,7 +480,6 @@ def SpaxelOverlap(self, x, y, sliceno, start_slice, input_model, transform, beta
             nplane = Cube.naxis1 * Cube.naxis2
 
             for zz in range(iz1, iz2 + 1):
-
                 zcenter = Cube.zcoord[zz]
                 istart = zz * nplane
                 yy = iy2 # one to one mapping

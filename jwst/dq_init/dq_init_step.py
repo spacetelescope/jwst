@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 
-from jwst.stpipe import Step
-from jwst import datamodels
-from jwst.dq_init import dq_initialization
+from ..stpipe import Step
+from .. import datamodels
+from . import dq_initialization
 
 class DQInitStep(Step):
     """
@@ -16,7 +16,7 @@ class DQInitStep(Step):
 
     def process(self, input):
 
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # Retreive the mask reference file name
             self.mask_filename = self.get_reference_file(input_model, 'mask')
@@ -31,7 +31,7 @@ class DQInitStep(Step):
                 return result
 
             # Load the reference file
-            mask_model = models.MaskModel(self.mask_filename)
+            mask_model = datamodels.MaskModel(self.mask_filename)
 
             # Apply the step
             result = dq_initialization.correct_model(input_model, mask_model)

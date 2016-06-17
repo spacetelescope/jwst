@@ -1,5 +1,5 @@
-from jwst.stpipe import Step
-from jwst import datamodels
+from ..stpipe import Step
+from .. import datamodels
 from . import lastframe_sub
 
 
@@ -15,7 +15,7 @@ class LastFrameStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
@@ -34,7 +34,7 @@ class LastFrameStep(Step):
                     return result
 
                 # Open the last frame ref file data model
-                lastframe_model = models.LastFrameModel(self.filename)
+                lastframe_model = datamodels.LastFrameModel(self.filename)
 
                 # Do the lastframe correction subtraction
                 result = lastframe_sub.do_correction(input_model, lastframe_model)

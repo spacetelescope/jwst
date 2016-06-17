@@ -25,7 +25,7 @@ class NircamPhotomModel(PhotomModel):
     Parameters
     ----------
     init : any
-        Any of the initializers supported by `~jwst_lib.models.DataModel`.
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     phot_table : numpy array
         A table-like object containing row selection criteria made up
@@ -48,7 +48,7 @@ class NirissPhotomModel(PhotomModel):
     Parameters
     ----------
     init : any
-        Any of the initializers supported by `~jwst_lib.models.DataModel`.
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     phot_table : numpy array
         A table-like object containing row selection criteria made up
@@ -71,7 +71,7 @@ class NirspecPhotomModel(PhotomModel):
     Parameters
     ----------
     init : any
-        Any of the initializers supported by `~jwst_lib.models.DataModel`.
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     phot_table : numpy array
         A table-like object containing row selection criteria made up
@@ -94,7 +94,7 @@ class MiriImgPhotomModel(PhotomModel):
     Parameters
     ----------
     init : any
-        Any of the initializers supported by `~jwst_lib.models.DataModel`.
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     phot_table : numpy array
         A table-like object containing row selection criteria made up
@@ -117,7 +117,7 @@ class MiriMrsPhotomModel(PhotomModel):
     Parameters
     ----------
     init : any
-        Any of the initializers supported by `~jwst_lib.models.DataModel`.
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     phot_table : numpy array
         A table-like object containing row selection criteria made up
@@ -139,7 +139,7 @@ class FgsPhotomModel(PhotomModel):
     Parameters
     ----------
     init : any
-        Any of the initializers supported by `~jwst_lib.models.DataModel`.
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     phot_table : numpy array
         A table-like object containing row selection criteria made up

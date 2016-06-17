@@ -42,7 +42,7 @@ def create_pipeline(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : jwst_lib.models.DataModel
+    input_model : jwst.datamodels.DataModel
         Either an ImageModel or a CubeModel
     reference_files : dict
         {reftype: file_name} mapping
@@ -158,7 +158,7 @@ def slits_wcs(input_model, reference_files):
 
     Parameters
     ----------
-    input_model : `~jwst_lib.models.ImageModel`
+    input_model : `~jwst.datamodels.ImageModel`
         The input data model.
     reference_files : dict
         Dictionary with reference files supplied by CRDS.
@@ -304,7 +304,7 @@ def ifuslit_to_msa(slits, reference_files):
 
     Returns
     -------
-    model : `~jwst_lib.pipeline_models.Slit2Msa` model.
+    model : `~jwst.transforms.Slit2Msa` model.
         Transform from slit_frame to msa_frame.
     """
     with AsdfFile.open(reference_files['ifufore']) as f:
@@ -336,7 +336,7 @@ def slit_to_msa(slits_id, msafile):
 
     Returns
     -------
-    model : `~jwst_lib.pipeline_models.Slit2Msa` model.
+    model : `~jwst.transforms.Slit2Msa` model.
         Transform from slit_frame to msa_frame.
     """
     msa = AsdfFile.open(msafile)
@@ -375,7 +375,7 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
 
     Returns
     -------
-    model : `~jwst_lib.pipeline_models.Gwa2Slit` model.
+    model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
    """
     agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
@@ -430,7 +430,7 @@ def gwa_to_slit(slits_id, disperser, wrange, order, reference_files):
 
     Returns
     -------
-    model : `~jwst_lib.pipeline_models.Gwa2Slit` model.
+    model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
     """
     agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
@@ -503,7 +503,7 @@ def compute_domain(slit2detector, wavelength_range):
 
     Parameters
     ----------
-    input_model : `jwst_lib.models.DataModel`
+    input_model : `jwst.datamodels.DataModel`
         The input data model - either an ImageModel or a CubeModel.
     open_slits : list
         The open slitlets in the observation.
@@ -567,7 +567,7 @@ def get_disperser(input_model, disperserfile):
 
     Parameters
     ----------
-    input_model : `jwst_lib.models.DataModel`
+    input_model : `jwst.datamodels.DataModel`
         The input data model - either an ImageModel or a CubeModel.
     disperserfile : str
         The name of the disperser reference file.
@@ -830,7 +830,7 @@ def slit_to_detector(input_model, slits_id, lam, reference_files):
 
     Parameters
     ----------
-    input_model : jwst_lib.DataModel
+    input_model : jwst.datamodels.DataModel
         Input data model
     slits : list
         A list of slit IDs. A slit ID is a tuple of (quadrant, slit_nimber)
@@ -901,7 +901,7 @@ def spectral_order_wrange_from_model(input_model):
 
     Parameters
     ----------
-    input_model : jwst_lib.models.DataModel
+    input_model : jwst.datamodels.DataModel
         The data model. Must have been through the assign_wcs step.
 
     """
@@ -916,7 +916,7 @@ def nrs_ifu_wcs(input_model):
 
     Parameters
     ----------
-    input_model : jwst_lib.models.DataModel
+    input_model : jwst.datamodels.DataModel
         The data model. Must have been through the assign_wcs step.
     """
     _, wrange = spectral_order_wrange_from_model(input_model)

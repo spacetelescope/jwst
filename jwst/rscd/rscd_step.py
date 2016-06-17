@@ -1,7 +1,7 @@
-from jwst.stpipe import Step
-from jwst import datamodels
+from ..stpipe import Step
+from .. import datamodels
 
-import jwst.datamodels.rscd as rscd_mod
+from ..datamodels import rscd as rscd_mod
 from . import rscd_sub
 
 
@@ -16,7 +16,7 @@ class RSCD_Step(Step):
     def process(self, input):
 
         # Open the input data model
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
