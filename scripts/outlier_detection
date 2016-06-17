@@ -29,7 +29,7 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
 
-# STDLIB 
+# STDLIB
 import argparse
 import sys
 
@@ -39,8 +39,8 @@ from jwst.outlier_detection.outlier_detection import do_detection
 
 if __name__ == '__main__':
 
-    if '--version' in sys.argv :
-        sys.stdout.write("%s\n"%jump.__version__)
+    if '--version' in sys.argv:
+        sys.stdout.write("%s\n" % jump.__version__)
         sys.exit(0)
 
     parser = argparse.ArgumentParser(
@@ -52,5 +52,4 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    rs_a = outlier_detection.do_detection( args.infile[0], args.outfile[0] ) 
-
+    rs_a = outlier_detection.do_detection(args.infile[0], args.outfile[0])

@@ -36,8 +36,8 @@ from jwst.saturation import saturation_step
 from jwst.stpipe import cmdline
 
 if __name__ == '__main__':
-    if '--version' in sys.argv :
-        sys.stdout.write("%s\n"%saturation.__version__)
+    if '--version' in sys.argv:
+        sys.stdout.write("%s\n" % saturation.__version__)
         sys.exit(0)
         # Pass the step class to cmdline.step_script
-        cmdline.step_script( saturation_step.SaturationStep )
+        cmdline.step_script(saturation_step.SaturationStep)

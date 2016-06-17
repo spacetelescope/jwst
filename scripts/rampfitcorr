@@ -39,8 +39,8 @@ from jwst.ramp_fitting import ramp_fit
 
 if __name__ == '__main__':
 
-    if '--version' in sys.argv :
-        sys.stdout.write("%s\n"%rf.__version__)
+    if '--version' in sys.argv:
+        sys.stdout.write("%s\n" % rf.__version__)
         sys.exit(0)
 
     parser = argparse.ArgumentParser(
@@ -51,5 +51,4 @@ if __name__ == '__main__':
        help="""Input Level 1b FITS file.""")
 
     args = parser.parse_args()
-    slopes = ramp_fit.ramp_fit( args.infile[0], ramp_fit.BUFSIZE )
-
+    slopes = ramp_fit.ramp_fit(args.infile[0], ramp_fit.BUFSIZE)

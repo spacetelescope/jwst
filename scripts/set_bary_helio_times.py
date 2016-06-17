@@ -42,7 +42,7 @@ import sys
 import astropy.io.fits as fits
 import argparse
 import numpy as np
-import astropy.time 
+import astropy.time
 import astropy.coordinates
 import astropy.units as u
 
@@ -57,13 +57,13 @@ def set_bary_helio_times(filename, jwstpos=None):
     pheader = hdul[0].header
     # Obtain the necessary info from the header
     targcoord = astropy.coordinates.SkyCoord(
-        ra=pheader['PROP_RA'], dec=pheader['PROP_DEC'], frame='fk5', unit=(u.hourangle,u.deg))
+        ra=pheader['PROP_RA'], dec=pheader['PROP_DEC'], frame='fk5', unit=(u.hourangle, u.deg))
     starttime = pheader['EXPSTART']
     middletime = pheader['EXPMID']
     endtime = pheader['EXPEND']
     times = astropy.time.Time(np.array([starttime, middletime, endtime]),
         format='mjd', scale='utc').tt.mjd
-    ((bstrtime, bmidtime, bendtime),(hstrtime, hmidtime, hendtime)) = \
+    ((bstrtime, bmidtime, bendtime), (hstrtime, hmidtime, hendtime)) = \
         timeconversion.compute_bary_helio_time(
             targetcoord=(targcoord.ra.degree, targcoord.dec.degree), times=times)
     pheader['BSTRTIME'] = bstrtime
@@ -78,7 +78,7 @@ def set_bary_helio_times(filename, jwstpos=None):
     tabhdu = hdul['GROUP']
     tendtimes = tabhdu.data['group_end_time']
     # replace colon as separator between date and time to be consistent
-    tendtimeslist = [item[:10]+'T'+item[11:] for item in tendtimes]
+    tendtimeslist = [item[:10] + 'T' + item[11:] for item in tendtimes]
     astropy_endtimes = astropy.time.Time(tendtimeslist, format='isot', scale='utc')
     mjdtimes = astropy_endtimes.tt.mjd
     btimes, htimes = timeconversion.compute_bary_helio_time(
@@ -91,7 +91,7 @@ def set_bary_helio_times(filename, jwstpos=None):
     hdul.flush()
     hdul.close()
     print('Completed set_bary_helio_times task')
- 
+
 
 
 def main(args):
@@ -100,16 +100,14 @@ def main(args):
         jwstposstr = args.jwstpos.split(',')
         jwstpos = [float(item) for item in jwstposstr]
     else:
-        jwstpos=None
+        jwstpos = None
     for filename in args.filenames:
         set_bary_helio_times(filename, jwstpos=jwstpos)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description=
-        "Add corresponding barycentric and heliocentric times to JWST data files")
+        description="Add corresponding barycentric and heliocentric times to JWST data files")
     parser.add_argument('filenames', metavar='Filename', nargs='+')
-    parser.add_argument('--jwstpos',help="x,y,z JWST position relative to Earth's center in km as comma separated string of values")
+    parser.add_argument('--jwstpos', help="x,y,z JWST position relative to Earth's center in km as comma separated string of values")
     args = parser.parse_args()
     main(args)
-    

@@ -4,7 +4,7 @@
 import sys  # rij
 
 import flat_field  #dg
- 
+
 # Import the custom step
 from flat_field import flat_field_step
 

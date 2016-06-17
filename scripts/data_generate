@@ -39,10 +39,10 @@ from jwst import fits_generator
 
 if __name__ == '__main__':
 
-    if '--version' in sys.argv :
-        sys.stdout.write("%s\n"%fits_generator.__version__)
+    if '--version' in sys.argv:
+        sys.stdout.write("%s\n" % fits_generator.__version__)
         sys.exit(0)
-    
+
     parser = argparse.ArgumentParser(
         """Adds data to a raw FITS file to correspond to a given file type.""")
     parser.add_argument(
@@ -85,4 +85,3 @@ if __name__ == '__main__':
             warnings.warn(str(e))
             filename = 'output.fits'
     hdulist.writeto(filename, clobber=args.clobber, output_verify='silentfix')
-
