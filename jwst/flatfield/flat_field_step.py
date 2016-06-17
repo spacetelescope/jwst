@@ -59,7 +59,7 @@ class FlatFieldStep(Step):
             flat_model = datamodels.MultiSlitModel(self.flat_filename)
 
         # Do the flat-field correction
-        (output_model, interpolated_flats)  = \
+        (output_model, interpolated_flats) = \
                 flat_field.do_correction(input_model, flat_model,
                                          self.flat_suffix)
 

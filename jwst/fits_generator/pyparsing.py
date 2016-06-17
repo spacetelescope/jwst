@@ -3775,7 +3775,7 @@ if __name__ == "__main__":
     columnNameList = Group(delimitedList(columnName))#.setName("columns")
     tableName = delimitedList(ident, ".", combine=True).setParseAction(upcaseTokens)
     tableNameList = Group(delimitedList(tableName))#.setName("tables")
-    simpleSQL      = (selectToken + \
+    simpleSQL = (selectToken + \
                      ('*' | columnNameList).setResultsName("columns") + \
                      fromToken + \
                      tableNameList.setResultsName("tables"))
