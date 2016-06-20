@@ -171,13 +171,13 @@ def test_extra_fits():
 
     with DataModel(path) as dm:
         assert 'BITPIX' not in _header_to_dict(dm.extra_fits.PRIMARY.header)
-        assert _header_to_dict(dm.extra_fits.PRIMARY.header)['CORONMSK'] == 'MASKSWB'
+        assert _header_to_dict(dm.extra_fits.PRIMARY.header)['SCIYSTRT'] == 705
         dm2 = dm.copy()
         dm2.to_fits(TMP_FITS, clobber=True)
 
     with DataModel(TMP_FITS) as dm3:
         assert 'BITPIX' not in _header_to_dict(dm.extra_fits.PRIMARY.header)
-        assert _header_to_dict(dm.extra_fits.PRIMARY.header)['CORONMSK'] == 'MASKSWB'
+        assert _header_to_dict(dm.extra_fits.PRIMARY.header)['SCIYSTRT'] == 705
 
 
 def test_extra_fits_update():
@@ -187,7 +187,7 @@ def test_extra_fits_update():
         with DataModel() as dm2:
             dm2.update(dm)
             assert 'BITPIX' not in _header_to_dict(dm.extra_fits.PRIMARY.header)
-            assert _header_to_dict(dm.extra_fits.PRIMARY.header)['CORONMSK'] == '#TODO'
+            assert _header_to_dict(dm.extra_fits.PRIMARY.header)['SCIYSTRT'] == 705
 '''
 
 def test_hdu_order():
