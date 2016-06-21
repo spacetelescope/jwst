@@ -22,16 +22,23 @@ N_SHUTTERS_QUADRANT = 62415
 class RefractionIndex(Model):
     """Calculate a refraction index given lamda and a reference file.
 
-    Referenced in Muzzerole's IDL program
+    Referenced in NTN-2014-004/ESA-JWST-TN-20930
     Requires  reference file information
 
-    lam is in angstroms
-    temp is in kelvin
-    pressure is in atmospheres
-    pref is the reference pressure
-    kcoef is a 3 item list
-    lcoef is a 3 item list
-    tref is the reference temperature
+    Parameters
+    ----------
+    temp: float
+        the instrument temperature in kelvins
+    pressure: float
+        local pressure in atmospheres
+    pref: float
+        the reference pressure
+    kcoef: list of floats
+        three items which are fit coefficients
+    lcoef: list of floats
+        three items which are fit coefficients
+    tref: float
+        the reference temperature in kelvins
     """
 
     fittable = False
@@ -42,15 +49,15 @@ class RefractionIndex(Model):
 
     temp = Parameter()
     tref = Parameter()
-    pref = Parameter
+    pref = Parameter()
     pressure = Parameter()
     kcoef = Parameter()
     lcoef = Parameter()
     tcoef = Parameter()
 
-    def __init__(self, lam, temp, tref, pref, pressure, kcoef, lcoef, tcoef,
+    def __init__(self, temp, tref, pref, pressure, kcoef, lcoef, tcoef,
                  name=None):
-        super(RefractionIndex, self).__init__(self, temp=temp, tref=tref,
+        super(RefractionIndex, self).__init__(temp=temp, tref=tref,
                                               pref=pref, pressure=pressure,
                                               kcoef=kcoef, lcoef=lcoef,
                                               tcoef=tcoef, name=name)
@@ -95,9 +102,6 @@ class Snell(Model):
 
     Parameters
     ----------
-    x: float
-    y: float
-    z: float
     n: float
         refraction index as calculated for a given wavelenth
     """
@@ -107,8 +111,8 @@ class Snell(Model):
 
     n = Parameter(default=1.0)
 
-    def __init__(self, n, name=None):
-        super(Snell, self).__init__(self, n=n, name=name)
+    def __init__(self, n=n, name=None):
+        super(Snell, self).__init__(n=n, name=name)
 
     def evaluate(self, x, y, z, n):
         """Compute Snell's refraction law from the front surface."""
@@ -116,6 +120,7 @@ class Snell(Model):
         xout = x/n
         yout = y/n
         zout = np.sqrt(1.0 - xout**2 - yout**2)
+        return xout, yout, zout
 
     def inverse(self, x, y, z, n):
         """Compute Snell's refraction law from the back surface."""
@@ -123,6 +128,7 @@ class Snell(Model):
         xout = x * n
         yout = y * n
         zout = np.sqrt(1.0 - xout**2 - yout**2)
+        return xout, yout, zout
 
 
 class NRSChromaticCorrection(Polynomial2D):
@@ -156,11 +162,6 @@ class AngleFromGratingEquation(Model):
 
     groove_density = Parameter()
     order = Parameter(default=-1)
-
-    def __init__(self, lam, alpha_in, beta_in, z, groove_density, order,
-                 name=None):
-        super(AngleFromGratingEquation, self).__init__(self,
-                        groove_density=groove_density, order=order, name=name)
 
     def evaluate(self, lam, alpha_in, beta_in, z, groove_density, order):
         if alpha_in.shape != beta_in.shape != z.shape:
