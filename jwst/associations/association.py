@@ -199,7 +199,7 @@ class Association(object):
     def asn_name(self):
         return 'unamed_association'
 
-    def serialize(self, protocol='json'):
+    def dump(self, protocol='json'):
         """Serialize the association
 
         Parameters
@@ -217,7 +217,7 @@ class Association(object):
         return SERIALIZATION_PROTOCOLS[protocol].serialize(self)
 
     @classmethod
-    def unserialize(cls, serialized):
+    def load(cls, serialized):
         """Marshall a previously serialized association
 
         Parameters
