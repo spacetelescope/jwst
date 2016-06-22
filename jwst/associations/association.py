@@ -1,4 +1,5 @@
 import logging
+from collections import namedtuple
 from copy import deepcopy
 from datetime import datetime
 from inspect import getfile, getmembers, isclass, ismodule
@@ -12,6 +13,15 @@ import sys
 
 from astropy.extern import six
 from numpy.ma import masked
+
+
+__all__ = [
+    'Association',
+    'AssociationRegistry',
+    'AssociationError',
+    'SERIALIZATION_PROTOCOLS',
+]
+
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -189,6 +199,48 @@ class Association(object):
     def asn_name(self):
         return 'unamed_association'
 
+    def dump(self, protocol='json'):
+        """Serialize the association
+
+        Parameters
+        ----------
+        protocol: ('json',)
+            The format to use for serialization.
+
+        Returns
+        -------
+        (name, serialized):
+            Tuple where the first item is the suggested
+            base name for the file.
+            Second item is the serialization.
+        """
+        return SERIALIZATION_PROTOCOLS[protocol].serialize(self)
+
+    @classmethod
+    def load(cls, serialized):
+        """Marshall a previously serialized association
+
+        Parameters
+        ----------
+        serialized: object
+            The serialized form of the association.
+
+        Returns
+        -------
+        The Association object
+        """
+        asn = None
+        for protocol in SERIALIZATION_PROTOCOLS:
+            try:
+                asn = SERIALIZATION_PROTOCOLS[protocol].unserialize(serialized)
+                break
+            except AssociationError:
+                continue
+        else:
+            raise AssociationError('Cannot translate "{}" to an association'.format(serialized))
+
+        return asn
+
     def to_json(self):
         """Create JSON representation.
 
@@ -210,6 +262,30 @@ class Association(object):
             self.asn_name,
             json.dumps(self.data, indent=4, separators=(',', ': '))
         )
+
+    @classmethod
+    def from_json(cls, serialized):
+        """Unserialize an assocation from JSON
+
+        Parameters
+        ----------
+        serialized: str or file object
+            The JSON to read
+
+        Returns
+        -------
+        association: dict
+            The association
+        """
+        try:
+            asn = json.loads(serialized)
+        except TypeError:
+            try:
+                asn = json.load(serialized)
+            except IOError:
+                raise AssociationError('Containter is not JSON: "{}"'.format(serialized))
+
+        return asn
 
     def add(self, member, check_constraints=True):
         """Add the member to the association
@@ -401,3 +477,12 @@ def get_classes(module):
                 yield sub_name, sub_class
         elif isclass(class_object):
             yield class_name, class_object
+
+
+# Available serialization protocols
+ProtocolFuncs = namedtuple('ProtocolFuncs', ['serialize', 'unserialize'])
+SERIALIZATION_PROTOCOLS = {
+    'json': ProtocolFuncs(
+        serialize=Association.to_json,
+        unserialize=Association.from_json)
+}
