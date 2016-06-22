@@ -19,7 +19,8 @@ from gwcs import coordinate_frames as cf
 
 from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  AngleFromGratingEquation, WavelengthFromGratingEquation,
-                                 Gwa2Slit, Unitless2DirCos, Logical, Slit)
+                                 Gwa2Slit, Unitless2DirCos, Logical, Slit, Snell,
+                                 RefractionIndexFromPrism)
 from .util import not_implemented_mode
 from . import pointing
 
@@ -210,7 +211,7 @@ def slits_wcs(input_model, reference_files):
     det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 
     # GWA to SLIT
-    gwa2slit = gwa_to_slit(open_slits_id, disperser, wrange, sporder, reference_files)
+    gwa2slit = gwa_to_slit(open_slits_id, input_model, disperser, reference_files)
 
     # SLIT to MSA transform
     slit2msa = slit_to_msa(open_slits_id, reference_files['msa'])
@@ -550,7 +551,7 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
     return Gwa2Slit(slits, slit_models)
 
 
-def gwa_to_slit(open_slits, disperser, wrange, order, reference_files):
+def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     """
     GWA to SLIT transform.
 
@@ -572,9 +573,14 @@ def gwa_to_slit(open_slits, disperser, wrange, order, reference_files):
     model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
     """
-    agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
-    lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
+
+    wrange, order = (input_model.meta.wcsinfo.waverange_start, input_model.meta.wcsinfo.waverange_end), \
+        input_model.meta.wcsinfo.spectral_order
+    #agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
+    agreq = angle_from_disperser(disperser, input_model)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
+    #lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
+    lgreq = wavelength_from_disperser(disperser, input_model)
 
     msa = AsdfFile.open(reference_files['msa'])
     slit_models = []
@@ -597,14 +603,60 @@ def gwa_to_slit(open_slits, disperser, wrange, order, reference_files):
                     Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                     Identity(1) & gwa2msa & Identity(2) | \
                     Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
-                    Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
-
+                    Mapping((0, 1, 2, 3, 5), n_inputs=7) | Identity(2) & lgreq | mask
+                    #Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
+                    # and modify lgreq to accept alpha_in, beta_in, alpha_out
                 # msa to before_gwa
                 msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
                 bgwa2msa.inverse = msa2bgwa
                 slit_models.append(bgwa2msa)
     msa.close()
     return Gwa2Slit(open_slits, slit_models)
+
+
+def angle_from_disperser(disperser, input_model):
+    lmin = input_model.meta.wcsinfo.waverange_start
+    lmax = input_model.meta.wcsinfo.waverange_end
+    sporder = input_model.meta.wcsinfo.spectral_order
+    if input_model.meta.instrument.grating.lower() != 'prism':
+        agreq = AngleFromGratingEquation(disperser['groove_density'],
+                                         sporder, name='alpha_from_greq')
+        return agreq
+    else:
+        system_temperature = input_model.meta.instrument.gwa_tilt
+        system_pressure = disperser['pref']
+
+        snell = Snell(disperser['angle'], disperser['kcoef'], disperser['lcoef'],
+                      disperser['tcoef'], disperser['tref'], disperser['pref'],
+                      system_temperature, system_pressure, name="snell_law")
+        return snell
+
+def wavelength_from_disperser(disperser, input_model):
+    sporder = input_model.meta.wcsinfo.spectral_order
+    if input_model.meta.instrument.grating.lower() != 'prism':
+        lgreq = WavelengthFromGratingEquation(disperser['groove_density'],
+                                              sporder, name='lambda_from_gratingeq')
+        return lgreq
+    else:
+        lmin = input_model.meta.wcsinfo.waverange_start
+        lmax = input_model.meta.wcsinfo.waverange_end
+        lam = np.linspace(lmin, lmax, 10000)
+        system_temperature = input_model.meta.instrument.gwa_tilt
+        system_pressure = disperser['pref']
+        tref = disperser['tref']
+        pref = disperser['pref']
+        kcoef = disperser['kcoef'].copy()
+        lcoef = disperser['lcoef'].copy()
+        tcoef = disperser['tcoef'].copy()
+        n = Snell.compute_refraction_index(lam, system_temperature, tref, pref,
+                                           system_pressure, kcoef, lcoef, tcoef
+                                           )
+        poly = models.Polynomial1D(1)
+        fitter = fitting.LinearLSQFitter()
+        lam_of_n = fitter(poly, n, lam)
+        lam_of_n = lam_of_n.rename('n_interpolate')
+        n_from_prism = RefractionIndexFromPrism(disperser['angle'], name='n_prism')
+        return n_from_prism | lam_of_n
 
 
 def detector_to_gwa(reference_files, detector, disperser):
@@ -896,6 +948,7 @@ def oteip_to_v23(reference_files):
     oteip_to_xyan = fore2ote_mapping | (ote & Scale(1e6))
     # Add a shift for the aperture.
     oteip2v23 = oteip_to_xyan | Identity(1) & (Shift(468 / 3600) | Scale(-1)) & Identity(1)
+
     return oteip2v23
 
 

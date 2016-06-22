@@ -174,7 +174,7 @@ def frame_from_model(wcsinfo):
         world = cf.CompositeFrame([sky, spec], name='world')
         return world
     else:
-        raise ValueError("WCSAXES can be 2 or 3, git {0}".format(wcsaxes))
+        raise ValueError("WCSAXES can be 2 or 3, got {0}".format(wcsaxes))
 
 
 def create_fitswcs(inp, input_frame=None):

@@ -360,7 +360,7 @@ properties:
             type: number
             fits_keyword: GWA_PYAV
           gwa_tilt:
-            title: GWA TILT (avg/calib) temperature
+            title: GWA TILT (avg/calib) temperature [K]
             type: number
             fits_keyword: GWA_TTIL
       exposure:
