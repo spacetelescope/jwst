@@ -154,7 +154,7 @@ def test_partial_pipeline():
 
     assert_allclose(np.sum(result.data), 9969.82514685, rtol=1e-4)
 
-'''
+   
 def test_pipeline_commandline():
     args = [
         abspath(join(dirname(__file__), 'steps', 'python_pipeline.cfg')),
@@ -167,7 +167,7 @@ def test_pipeline_commandline():
     assert pipe.flat_field.multiplier == 2.0
 
     pipe.run()
-'''
+   
 
 def test_pipeline_commandline_class():
     args = [
