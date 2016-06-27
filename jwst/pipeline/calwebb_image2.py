@@ -6,12 +6,10 @@ import os
 # calwebb IMAGE2 step imports
 from ..assign_wcs import assign_wcs_step
 from ..flatfield import flat_field_step
-from ..persistence import persistence_step
-from ..emission import emission_step
 from ..photom import photom_step
 
 
-__version__ = "2.1"
+__version__ = "2.2"
 
 # Define logging
 import logging
@@ -25,15 +23,13 @@ class Image2Pipeline(Pipeline):
                    Level-2a to Level-2b.
 
     Included steps are:
-    assign_wcs, flat_field, persistence, emission, and photom.
+    assign_wcs, flat_field, and photom.
 
     """
 
     # Define alias to steps
     step_defs = {'assign_wcs': assign_wcs_step.AssignWcsStep,
                  'flat_field': flat_field_step.FlatFieldStep,
-                 'persistence': persistence_step.PersistenceStep,
-                 'emission': emission_step.EmissionStep,
                  'photom': photom_step.PhotomStep,
                  }
 
@@ -44,8 +40,6 @@ class Image2Pipeline(Pipeline):
         # work on slope images
         input = self.assign_wcs(input)
         input = self.flat_field(input)
-        input = self.persistence(input)
-        input = self.emission(input)
         input = self.photom(input)
 
         # setup output_file for saving
