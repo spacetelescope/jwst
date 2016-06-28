@@ -5,7 +5,7 @@ import pytest
 from . import helpers
 
 from .. import (Association, AssociationRegistry, AssociationPool, generate)
-from ..association import SERIALIZATION_PROTOCOLS
+from ..association import SERIALIZATION_PROTOCOLS, validate
 
 
 @pytest.fixture
@@ -21,6 +21,13 @@ def test_generate(pool_rules):
     (asns, orphaned) = generate(pool, rules)
     assert len(asns) == 14
     assert len(orphaned) == 36
+    for asn in asns:
+        asn_name, asn_store = asn.dump()
+        asn_table = Association.load(asn_store)
+        schemas = rules.validate(asn_table)
+        assert len(schemas) > 0
+        schemas = validate(asn_table)
+        assert len(schemas) > 0
 
 
 def test_serialize():

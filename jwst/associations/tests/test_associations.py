@@ -11,6 +11,10 @@ from .. import (
     AssociationRegistry,
     AssociationPool,
     generate)
+from ..association import (
+    import_from_file,
+    find_member
+)
 
 
 class TestAssociations():
@@ -137,3 +141,10 @@ class TestAssociations():
             pool = AssociationPool.read(test['pool'])
             asns, orphaned = generate(pool, rules)
             yield helpers.check_equal, len(asns), test['n_asns']
+
+    def test_rulesets(self):
+        """Test finding members in a ruleset"""
+        rule_file = helpers.t_path('../lib/association_rules.py')
+        module = import_from_file(rule_file)
+        schemas = [schema for schema in find_member(module, 'ASN_SCHEMA')]
+        assert len(schemas) == 2

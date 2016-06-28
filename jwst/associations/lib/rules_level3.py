@@ -6,7 +6,8 @@ import re
 
 from jwst.associations.association import (
     Association,
-    getattr_from_list
+    getattr_from_list,
+    libpath
 )
 
 # Configure logging
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # The schema that these associations must adhere to.
-_ASN_SCHEMA_LEVEL3 = 'asn_schema_jw_level3.json'
+ASN_SCHEMA = libpath('asn_schema_jw_level3.json')
 
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 _EMPTY = (None, 'NULL', 'CLEAR')
@@ -133,7 +134,7 @@ class DMS_Level3_Base(Association):
         """Post-check and pre-add initialization"""
         super(DMS_Level3_Base, self)._init_hook(member)
 
-        self.schema_file = _ASN_SCHEMA_LEVEL3
+        self.schema_file = ASN_SCHEMA
         self.data['targname'] = member['TARGETID']
         self.data['program'] = str(member['PROGRAM'])
         self.data['asn_pool'] = basename(
