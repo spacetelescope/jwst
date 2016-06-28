@@ -31,7 +31,6 @@ from gwcs.extension import GWCSExtension
 
 jwst_extensions = [GWCSExtension(), JWSTExtension()]
 
-
 class DataModel(properties.ObjectNode):
     """
     Base class of all of the data models.
@@ -164,8 +163,9 @@ class DataModel(properties.ObjectNode):
         # if the input model doesn't have a date set, use the current date/time
         if self.meta.date is None:
             self.meta.date = Time(datetime.datetime.now())
-            self.meta.date.format = 'isot'
-            self.meta.date = self.meta.date.value
+            if hasattr(self.meta.date, 'value'):
+                self.meta.date.format = 'isot'
+                self.meta.date = str(self.meta.date.value)
 
         # if the input is from a file, set the filename attribute
         if isinstance(init, six.string_types):
