@@ -19,7 +19,9 @@ __all__ = [
     'Association',
     'AssociationRegistry',
     'AssociationError',
+    'AssociationNotValidError',
     'SERIALIZATION_PROTOCOLS',
+    'validate',
 ]
 
 
@@ -39,6 +41,10 @@ _TIMESTAMP_TEMPLATE = '%Y%m%dT%H%M%S'
 
 class AssociationError(Exception):
     """Basic failure of an association"""
+
+
+class AssociationNotValidError(AssociationError):
+    """Given data structure is not a valid association"""
 
 
 class AssociationRegistry(dict):
@@ -73,11 +79,17 @@ class AssociationRegistry(dict):
             definition_files.insert(0, libpath(_ASN_RULE))
         if len(definition_files) <= 0:
             raise AssociationError('No rule definition files specified.')
+
+        self.schemas = []
         Utility = type('Utility', (object,), {})
         for fname in definition_files:
             logger.debug('Import rules files "{}"'.format(fname))
             module = import_from_file(fname)
             logger.debug('Module="{}"'.format(module))
+            self.schemas += [
+                schema
+                for schema in find_member(module, 'ASN_SCHEMA')
+            ]
             for class_name, class_object in get_classes(module):
                 logger.debug('class_name="{}"'.format(class_name))
                 if class_name.startswith(USER_ASN):
@@ -122,6 +134,41 @@ class AssociationRegistry(dict):
         if len(associations) == 0:
             raise AssociationError('Member does not match any rules.')
         return associations
+
+    def validate(self, association):
+        """Validate a given association against schema
+
+        Parameters
+        ----------
+        association: dict
+            The data to validate
+
+        Returns
+        -------
+        schemas: list
+            List of schemas which validated
+
+        Raises
+        ------
+        AssociationNotValidError
+            Association did not validate
+        """
+        results = []
+        for schema_file in self.schemas:
+            with open(schema_file, 'r') as handle:
+                schema = json.load(handle)
+            try:
+                jsonschema.validate(association, schema)
+            except jsonschema.ValidationError:
+                continue
+            else:
+                results.append(schema)
+
+        if len(results) == 0:
+            raise AssociationNotValidError(
+                'Structure did not valid: "{}"'.format(Association)
+            )
+        return results
 
 
 class Association(object):
@@ -253,10 +300,9 @@ class Association(object):
         """
 
         # Validate
-        schema_path = libpath(self.schema_file)
-        with open(schema_path, 'r') as schema_file:
-            adb_schema = json.load(schema_file)
-        jsonschema.validate(self.data, adb_schema)
+        with open(self.schema_file, 'r') as schema_file:
+            asn_schema = json.load(schema_file)
+        jsonschema.validate(self.data, asn_schema)
 
         return (
             self.asn_name,
@@ -282,8 +328,10 @@ class Association(object):
         except TypeError:
             try:
                 asn = json.load(serialized)
-            except IOError:
-                raise AssociationError('Containter is not JSON: "{}"'.format(serialized))
+            except (AttributeError, IOError):
+                raise AssociationError(
+                    'Containter is not JSON: "{}"'.format(serialized)
+                )
 
         return asn
 
@@ -378,6 +426,45 @@ class Association(object):
         """Add a member, association-specific"""
         raise NotImplementedError('Association._add must be implemented by a specific assocation rule.')
 
+
+# User module level functions
+def validate(association,
+             definition_files=None,
+             include_default=True,
+             global_constraints=None
+):
+    """Validate an association against know schema
+
+    Parameters
+    ----------
+    association: dict-like
+        The association to validate
+
+    definition_files: [str,]
+        The files to find the association definitions in.
+
+    include_default: bool
+        True to include the default definitions.
+
+    global_constraints: dict
+        Constraints to be added to each rule.
+
+    Returns
+    -------
+    schemas: list
+        List of schemas which validated
+
+    Raises
+    ------
+    AssociationNotValidError
+        Association did not validate
+    """
+    rules = AssociationRegistry(
+        definition_files=definition_files,
+        include_default=include_default,
+        global_constraints=global_constraints
+    )
+    return rules.validate(association)
 
 # Utilities
 def import_from_file(filename):
@@ -477,6 +564,30 @@ def get_classes(module):
                 yield sub_name, sub_class
         elif isclass(class_object):
             yield class_name, class_object
+
+
+def find_member(module, member):
+    """Find all instances of member in module or sub-modules
+
+    Parameters
+    ----------
+    module: module
+        The module to recursively search through.
+
+    member: str
+        The member to find.
+
+    Returns
+    -------
+    values: iterator
+        Iterator that returns all values of the member
+    """
+    for name, value in getmembers(module):
+        if ismodule(value) and name.startswith('asn_'):
+            for inner_value in find_member(value, member):
+                yield inner_value
+        elif name == member:
+            yield value
 
 
 # Available serialization protocols

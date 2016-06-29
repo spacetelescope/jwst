@@ -4,14 +4,17 @@ import logging
 from os.path import basename
 import re
 
-from jwst.associations.association import Association
+from jwst.associations.association import (
+    Association,
+    libpath
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # The schema that these associations must adhere to.
-_ASN_SCHEMA_LEVEL2b = 'asn_schema_jw_level2b.json'
+ASN_SCHEMA = libpath('asn_schema_jw_level2b.json')
 
 # File templates
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
@@ -77,7 +80,7 @@ class DMS_Level2b_Base(Association):
 
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
-        self.schema_file = _ASN_SCHEMA_LEVEL2b
+        self.schema_file = ASN_SCHEMA
         self.data['targname'] = member['TARGNAME']
         self.data['program'] = str(member['PROGRAM'])
         self.data['asn_pool'] = basename(member.meta['pool_file']).split('.')[0]
