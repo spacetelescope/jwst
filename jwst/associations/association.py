@@ -328,8 +328,10 @@ class Association(object):
         except TypeError:
             try:
                 asn = json.load(serialized)
-            except AttributeError, IOError:
-                raise AssociationError('Containter is not JSON: "{}"'.format(serialized))
+            except (AttributeError, IOError):
+                raise AssociationError(
+                    'Containter is not JSON: "{}"'.format(serialized)
+                )
 
         return asn
 
