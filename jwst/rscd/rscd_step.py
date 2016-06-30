@@ -36,8 +36,8 @@ class RSCD_Step(Step):
 
                 # Open the rscd ref file data model
                 print('RSCD reference file name', self.rscd_name)
-                #rscd_model = models.RSCDModel(self.rscd_name)
-                rscd_model = rscd_mod.RSCD_Model(self.rscd_name)
+                rscd_model = models.RSCDModel(self.rscd_name)
+
 
                 # Do the rscd correction subtraction
                 result = rscd_sub.do_correction(input_model, rscd_model)
