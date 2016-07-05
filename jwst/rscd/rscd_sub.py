@@ -46,50 +46,80 @@ def do_correction(input_model, rscd_model):
     # Create output as a copy of the input science data model
     output = input_model.copy()
 
-    tau1, scale1, tau2, scale2 = get_rscd_parameters(input_model, rscd_model)
+    even,odd = get_rscd_parameters(input_model, rscd_model)
     frame_time = input_model.meta.exposure.frame_time
 
-    # loop over all integrations except the first
 
+    # loop over all integrations except the first
+    tau1_even,scale1_even,tau2_even,scale2_even = even
+    tau1_odd,scale1_odd,tau2_odd,scale2_odd = odd
     for i in range(1, sci_nints):
         dn_last = get_DNaccumulated_last_int(input_model, i, sci_ngroups)
+        
        # loop over groups in input science data:
         for j in range(sci_ngroups):
            # Apply the correction
             T = (j + 1) * frame_time
-            tau = tau1 * frame_time
-            eterm = np.exp(-T / tau)
-            correction = dn_last * scale1 * eterm
-            output.data[i, j] += correction
+            tau_even = tau1_even * frame_time
+            eterm_even = np.exp(-T / tau_even)
+
+            tau_odd = tau1_odd * frame_time
+            eterm_odd = np.exp(-T / tau_odd)
+
+            correction_odd = dn_last[0::2,:] * scale1_odd * eterm_odd
+            correction_even = dn_last[1::2,:] * scale1_even * eterm_even
+
+            output.data[i, j,0::2,:] += correction_odd
+            output.data[i, j,1::2,:] += correction_even
 
     return output
 
 def get_rscd_parameters(input_model, rscd_model):
     readpatt = input_model.meta.exposure.readpatt
     subarray = input_model.meta.subarray.name
-    print("exposure readpatt,subarray", readpatt, subarray)
+
     # Read the correct row in table in the reference file to get the coefficients.
-    tau1_table = rscd_model.rscd_table.field("tau1")
-    scale1_table = rscd_model.rscd_table.field("scale1")
-    tau2_table = rscd_model.rscd_table.field("tau2")
-    scale2_table = rscd_model.rscd_table.field("scale2")
-    readpatt_table = rscd_model.rscd_table.field("readpatt")
-    subarray_table = rscd_model.rscd_table.field("subarray")
-#    print('tau1',tau1_table)
+    #print('rscd_table',type(rscd_model.rscd_table))
+
+    tau1_table = rscd_model.rscd_table['TAU1']
+    scale1_table = rscd_model.rscd_table['scale1']
+    tau2_table = rscd_model.rscd_table['tau2']
+    scale2_table = rscd_model.rscd_table['scale2']
+    readpatt_table = rscd_model.rscd_table['readpatt']
+    subarray_table = rscd_model.rscd_table['subarray']
+    rowtype = rscd_model.rscd_table['rows']
+    
+
+#    print('TAU1',tau1_table)
+#    print('scale',scale1_table)
 #    print('readpatt',readpatt_table)
-#    print(readpatt_table.size)
-#    num_rows = readpatt_table.size
 
+    num_rows = readpatt_table.size
 
-    index = np.asarray(np.where(np.logical_and(readpatt_table == readpatt, subarray_table == subarray)))
+    index = np.asarray(np.where(np.logical_and(readpatt_table == readpatt, 
+                                               np.logical_and(subarray_table == subarray,rowtype=='EVEN'))))
 
-    tau1 = tau1_table[index[0]]
-    tau2 = tau2_table[index[0]]
+    #print('rowtype',rowtype,readpatt,subarray)
+    tau1_even = tau1_table[index[0]]
+    #print('tau1 even',tau1_even)
+    #print(index[0])
+    tau2_even = tau2_table[index[0]]
 
-    scale1 = scale1_table[index[0]]
-    scale2 = scale2_table[index[0]]
-    #print('RSCD parameters',tau1,tau2,scale1,scale2)
-    return tau1, scale1, tau2, scale2
+    scale1_even = scale1_table[index[0]]
+    scale2_even = scale2_table[index[0]]
+
+    index2 = np.asarray(np.where(np.logical_and(readpatt_table == readpatt, 
+                                               np.logical_and(subarray_table == subarray,rowtype=='ODD'))))
+    tau1_odd = tau1_table[index2[0]]
+    tau2_odd = tau2_table[index2[0]]
+
+    scale1_odd = scale1_table[index2[0]]
+    scale2_odd = scale2_table[index2[0]]
+
+    even = tau1_even,scale1_even,tau2_even,scale2_even
+    odd = tau1_odd,scale1_odd,tau2_odd,scale2_odd
+
+    return even,odd
 
 
 def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
