@@ -34,7 +34,6 @@ class CubeBuildStep (Step):
     def process(self, input):
         self.log.info('Starting IFU Cube Building Step...')
 
-        print('GIT Verision')
         if(not self.wcs_method.islower()): self.wcs_method = self.wcs_method.lower()
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
         if(not self.interpolation.islower()): self.interpolation = self.interpolation.lower()

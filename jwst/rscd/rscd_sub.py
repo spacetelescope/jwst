@@ -66,6 +66,8 @@ def do_correction(input_model, rscd_model):
             tau_odd = tau1_odd * frame_time
             eterm_odd = np.exp(-T / tau_odd)
 
+            # The first row is defined in the RSCD correction as odd (python indexed 0)
+            # The second row is the first even row (python index of 1) 
             correction_odd = dn_last[0::2,:] * scale1_odd * eterm_odd
             correction_even = dn_last[1::2,:] * scale1_even * eterm_even
 
@@ -82,39 +84,35 @@ def get_rscd_parameters(input_model, rscd_model):
     #print('rscd_table',type(rscd_model.rscd_table))
 
     tau1_table = rscd_model.rscd_table['TAU1']
-    scale1_table = rscd_model.rscd_table['scale1']
-    tau2_table = rscd_model.rscd_table['tau2']
-    scale2_table = rscd_model.rscd_table['scale2']
-    readpatt_table = rscd_model.rscd_table['readpatt']
-    subarray_table = rscd_model.rscd_table['subarray']
+    scale1_table = rscd_model.rscd_table['SCALE1']
+    tau2_table = rscd_model.rscd_table['TAU2']
+    scale2_table = rscd_model.rscd_table['SCALE2']
+    readpatt_table = rscd_model.rscd_table['READPATT']
+    subarray_table = rscd_model.rscd_table['SUBARRAY']
     rowtype = rscd_model.rscd_table['rows']
     
-
-#    print('TAU1',tau1_table)
-#    print('scale',scale1_table)
-#    print('readpatt',readpatt_table)
 
     num_rows = readpatt_table.size
 
     index = np.asarray(np.where(np.logical_and(readpatt_table == readpatt, 
                                                np.logical_and(subarray_table == subarray,rowtype=='EVEN'))))
 
-    #print('rowtype',rowtype,readpatt,subarray)
-    tau1_even = tau1_table[index[0]]
-    #print('tau1 even',tau1_even)
-    #print(index[0])
-    tau2_even = tau2_table[index[0]]
 
-    scale1_even = scale1_table[index[0]]
-    scale2_even = scale2_table[index[0]]
+    tau1_even = tau1_table[index]
+    #print('tau1 even',tau1_even)
+
+    tau2_even = tau2_table[index]
+
+    scale1_even = scale1_table[index]
+    scale2_even = scale2_table[index]
 
     index2 = np.asarray(np.where(np.logical_and(readpatt_table == readpatt, 
                                                np.logical_and(subarray_table == subarray,rowtype=='ODD'))))
-    tau1_odd = tau1_table[index2[0]]
-    tau2_odd = tau2_table[index2[0]]
+    tau1_odd = tau1_table[index2]
+    tau2_odd = tau2_table[index2]
 
-    scale1_odd = scale1_table[index2[0]]
-    scale2_odd = scale2_table[index2[0]]
+    scale1_odd = scale1_table[index2]
+    scale2_odd = scale2_table[index2]
 
     even = tau1_even,scale1_even,tau2_even,scale2_even
     odd = tau1_odd,scale1_odd,tau2_odd,scale2_odd

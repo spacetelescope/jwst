@@ -35,7 +35,7 @@ class RSCD_Step(Step):
                     return result
 
                 # Open the rscd ref file data model
-                print('RSCD reference file name', self.rscd_name)
+
                 rscd_model = datamodels.RSCDModel(self.rscd_name)
 
 
