@@ -81,6 +81,7 @@ class SloperPipelineB7(Pipeline):
             input = self.lastframe(input)
             input = self.dark_current(input)
             input = self.refpix(input)
+            input = self.persistence(input)
 
         else:
 
@@ -93,10 +94,8 @@ class SloperPipelineB7(Pipeline):
             input = self.superbias(input)
             input = self.refpix(input)
             input = self.linearity(input)
+            input = self.persistence(input)
             input = self.dark_current(input)
-
-        # apply the persistence step
-        input = self.persistence(input)
 
         # apply the jump step
         input = self.jump(input)
