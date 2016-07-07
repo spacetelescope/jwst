@@ -32,13 +32,19 @@ class DarkCurrentStep(Step):
                 result.meta.cal_step.dark = 'SKIPPED'
                 return result
 
-            # Open the dark ref file data model
-            dark_model = datamodels.DarkModel(self.dark_name)
+            detector = input_model.meta.instrument.detector
 
-            # Do the dark correction
+            # Open the dark ref file data model - based on Detector type
+            if(detector[:3] == 'MIR'):
+                dark_model = datamodels.DarkMIRIModel(self.dark_name)
+            else:    
+                dark_model = datamodels.DarkModel(self.dark_name)
+
+            # Do the dark correction                    
             result = dark_sub.do_correction(input_model, dark_model,
-                                            self.dark_output)
+                                                    self.dark_output)
 
             dark_model.close()
+
 
         return result

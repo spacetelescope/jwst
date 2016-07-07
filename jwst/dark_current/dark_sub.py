@@ -182,19 +182,32 @@ def subtract_dark(input, dark):
               input.meta.exposure.nints, input.meta.exposure.ngroups,
               input.data.shape[-1], input.data.shape[-2])
 
+
     # Create output as a copy of the input science data model
     output = input.copy()
 
     # combine the science and dark DQ arrays
-    output.pixeldq = np.bitwise_or(input.pixeldq, dark.dq)
+    detector = input.meta.instrument.detector
+    if(detector[:3] == 'MIR'):
+           output.pixeldq = np.bitwise_or(input.pixeldq, dark.dq[0,0,:,:])
+    else:
+           output.pixeldq = np.bitwise_or(input.pixeldq, dark.dq)
+
 
 
     # loop over all integrations and groups in input science data
     for i in range(input.data.shape[0]):
-        for j in range(input.data.shape[1]):
+        if(detector[:3] =='MIR'):
 
+            if(i == 0): dark_int = dark.data[0]
+            if(i > 0): dark_int = dark.data[1]
+
+        for j in range(input.data.shape[1]):
             # subtract the SCI arrays
-            output.data[i, j] -= dark.data[j]
+            if(detector[:3] =='MIR'):
+                output.data[i,j]  -=dark_int[j]
+            else:
+                output.data[i, j] -= dark.data[j]
 
             # combine the ERR arrays in quadrature
             # NOTE: currently stubbed out until ERR handling is decided
