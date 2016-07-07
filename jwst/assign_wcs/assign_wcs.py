@@ -33,7 +33,7 @@ def load_wcs(input_model, reference_files={}):
         log.critical("assign_wcs needs reference files to compute the WCS, none were passed")
         raise ValueError("assign_wcs needs reference files to compute the WCS, none were passed")
     instrument = input_model.meta.instrument.name.lower()
-    mod = importlib.import_module('.' + instrument, 'jwst_pipeline.assign_wcs')
+    mod = importlib.import_module('.' + instrument, 'jwst.assign_wcs')
 
     pipeline = mod.create_pipeline(input_model, reference_files)
     # Initialize the output model as a copy of the input
