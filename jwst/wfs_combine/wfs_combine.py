@@ -48,8 +48,8 @@ class DataSet(object):
             log.error('No output product specified in the association table.')
 
         try:
-            self.input_1 = models.open(infile_1)
-            self.input_2 = models.open(infile_2)
+            self.input_1 = datamodels.open(infile_1)
+            self.input_2 = datamodels.open(infile_2)
         except IOError:
             log.error('Error creating a model from at least 1 of : %s %s ',
                       infile_1, infile_2)
