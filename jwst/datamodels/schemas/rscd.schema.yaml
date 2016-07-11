@@ -8,7 +8,7 @@ allOf:
       fits_hdu: RSCD
       datatype:
       - name: subarray
-        datatype: [ascii, 15]
+        datatype: [ascii, 13]
       - name: readpatt
         datatype: [ascii, 4]
       - name: rowtype

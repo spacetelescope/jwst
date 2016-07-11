@@ -1,7 +1,7 @@
 from ..stpipe import Step
 from .. import datamodels
 
-from ..datamodels import rscd as rscd_mod
+from .. import datamodels  
 from . import rscd_sub
 
 
@@ -35,9 +35,9 @@ class RSCD_Step(Step):
                     return result
 
                 # Open the rscd ref file data model
-                print('RSCD reference file name', self.rscd_name)
-                #rscd_model = models.RSCDModel(self.rscd_name)
-                rscd_model = rscd_mod.RSCD_Model(self.rscd_name)
+
+                rscd_model = datamodels.RSCDModel(self.rscd_name)
+
 
                 # Do the rscd correction subtraction
                 result = rscd_sub.do_correction(input_model, rscd_model)
