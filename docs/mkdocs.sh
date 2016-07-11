@@ -40,7 +40,7 @@ function _ok
 function build_parent
 {
     pushd "$SOURCE_DIR/.." &>/dev/null
-    python setup.py develop
+    python setup.py install
     retval=$?
     popd &>/dev/null
     if [[ $retval > 0 ]]; then
@@ -59,6 +59,26 @@ function install_travis_deps
         CONDA_CHANNELS=http://ssb.stsci.edu/conda-dev
     fi
     conda install -c $CONDA_CHANNELS stsci.sphinxext
+}
+
+function dump_logs
+{
+	local logdir=$1
+	if [[ -z $logdir ]]; then
+		echo "Expecting a log directory but recieved nothing."
+		exit 1
+	fi
+
+	for log in $logdir/*
+	do
+		echo
+		echo "#"
+		echo "# LOG: $log"
+		echo "# (Final 20 lines)"
+		echo "#"
+		[[ -f $log ]] && tail -n 20 "$log"
+		echo
+	done
 }
 
 while [[ $# -ge 1 ]]
@@ -90,6 +110,12 @@ do
     esac
     shift
 done
+
+if [[ -n $TRAVIS ]]; then
+    echo "Inside travis-ci environment, building parent package..."
+    install_travis_deps
+    build_parent
+fi
 
 if [[ ! -e `which sphinx-build` ]]; then
     echo "Please install sphinx."
@@ -133,12 +159,6 @@ do
     fi
 done
 
-if [[ -n $TRAVIS ]]; then
-    echo "Inside travis-ci environment, building in develop mode..."
-    install_travis_deps
-    build_parent
-fi
-
 for docs in $SOURCE_DIR/*
 do
     [[ -f $docs ]] && continue
@@ -158,7 +178,7 @@ do
         fi
 
         /bin/echo -n "latexpdf "
-        yes 'q' | make latexpdf &>$logname-build-pdf.txt
+        yes 'X' | make latexpdf &>$logname-build-pdf.txt
         _ok $?
         if [[ $? == 0 ]]; then
             rsync $RSYNC_OPT $docs/build/latex/*.pdf \
@@ -175,6 +195,7 @@ if [[ $ERRORS > 0 ]]; then
     echo "Failures detected: $ERRORS"
     echo "Investigate '$LOGS' for more information..."
     echo
+	dump_logs "$LOGS"
 fi
 
 exit $ERRORS
