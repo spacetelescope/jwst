@@ -31,7 +31,7 @@ matrix:
 
         # build sphinx documentation
         - os: linux
-          env: PYTHON_VERSION=3.5 MAIN_CMD='docs/mkdocs.sh -o /tmp/docbuild'
+          env: PYTHON_VERSION=3.5 MAIN_CMD='docs/mkdocs.sh'
                SETUP_CMD=''
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
 

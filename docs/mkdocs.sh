@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 SOURCE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 RSYNC_OPT="-aiH --delete"
 OUTDIR=$(pwd)/jwst_git
@@ -40,10 +40,13 @@ function _ok
 function build_parent
 {
     pushd "$SOURCE_DIR/.." &>/dev/null
-    set -e
-        python setup.py develop
-    set +e
+    python setup.py develop
+    retval=$?
     popd &>/dev/null
+    if [[ $retval > 0 ]]; then
+        echo "Failed to build the parent package so there's no reason to continue."
+        exit 1
+    fi
     echo
     echo '----'
     echo
@@ -52,6 +55,9 @@ function build_parent
 function install_travis_deps
 {
     # because travis is a mess
+    if [[ -z $CONDA_CHANNELS ]]; then
+        CONDA_CHANNELS=http://ssb.stsci.edu/conda-dev
+    fi
     conda install -c $CONDA_CHANNELS stsci.sphinxext
 }
 
