@@ -49,6 +49,11 @@ function build_parent
     echo
 }
 
+function install_travis_deps
+{
+    # because travis is a mess
+    conda install -c $CONDA_CHANNELS stsci.sphinxext
+}
 
 while [[ $# -ge 1 ]]
 do
@@ -124,6 +129,7 @@ done
 
 if [[ -n $TRAVIS ]]; then
     echo "Inside travis-ci environment, building in develop mode..."
+    install_travis_deps
     build_parent
 fi
 
