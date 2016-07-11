@@ -10,7 +10,7 @@ function usage
     Not specifiying -o will place generated files into:\n    $OUTDIR
     \n
     -c  --clean  Runs 'make clean' on all projects\n\
-    -o  --output {DIR}\n\
+    -o  --output {DIR} (default: \$PWD/jwst_git)\n\
     -h  --help   This message\n\n" "$(basename $0)"
 }
 
@@ -72,6 +72,14 @@ if [[ ! -e `which sphinx-build` ]]; then
     exit 1
 fi
 
+python -c 'import stsci.sphinxext' &>/dev/null
+_ok $? &>/dev/null
+
+if [[ $? > 0 ]]; then
+    echo "Please install stsci.sphinxext."
+    exit 1
+fi
+
 echo "
 !!
 !! Sphinx 1.3.5 is required to build this documentation
@@ -86,10 +94,20 @@ fi
 
 LOGS=$OUTDIR/logs
 FINAL=$OUTDIR/docs
+TASK_CURRENT=1
+TASK_TOTAL=0
 
 mkdir -pv $OUTDIR
 mkdir -pv $LOGS
 mkdir -pv $FINAL
+
+# A portable way of determining the top-level directory count
+for d in $SOURCE_DIR/*
+do
+    if [[ -d $d ]]; then
+        TASK_TOTAL=$((TASK_TOTAL + 1))
+    fi
+done
 
 for docs in $SOURCE_DIR/*
 do
@@ -98,7 +116,7 @@ do
     name=$(basename $docs)
     logname="$LOGS/$name"
 
-    printf "building %-20s %s " "$name" "..."
+    printf "[%2d/%d] building %-20s %s " "$TASK_CURRENT" "$TASK_TOTAL" "$name" "..."
     pushd $docs 2>&1 >/dev/null
         /bin/echo -n "html "
         make html &>$logname-build-html.txt
@@ -119,6 +137,14 @@ do
         fi
     popd 2>&1 >/dev/null
     echo
+    TASK_CURRENT=$((TASK_CURRENT + 1))
 done
+
+if [[ $ERRORS > 0 ]]; then
+    echo
+    echo "Failures detected: $ERRORS"
+    echo "Investigate '$LOGS' for more information..."
+    echo
+fi
 
 exit $ERRORS
