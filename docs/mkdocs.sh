@@ -37,6 +37,19 @@ function _ok
     return $1
 }
 
+function build_parent
+{
+    pushd "$SOURCE_DIR/.." &>/dev/null
+    set -e
+        python setup.py develop
+    set +e
+    popd &>/dev/null
+    echo
+    echo '----'
+    echo
+}
+
+
 while [[ $# -ge 1 ]]
 do
     arg="$1"
@@ -108,6 +121,11 @@ do
         TASK_TOTAL=$((TASK_TOTAL + 1))
     fi
 done
+
+if [[ -n $TRAVIS ]]; then
+    echo "Inside travis-ci environment, building in develop mode..."
+    build_parent
+fi
 
 for docs in $SOURCE_DIR/*
 do
