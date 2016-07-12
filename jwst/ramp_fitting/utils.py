@@ -6,6 +6,7 @@ from __future__ import division, print_function
 from __future__ import division
 import numpy as np
 import logging
+
 from .. import datamodels
 from ..datamodels import dqflags
 
@@ -45,6 +46,7 @@ class OptRes(object):
         nreads: int
             number of reads in an integration
         """
+
         self.yint_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
         self.slope_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
         self.sigyint_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
@@ -172,7 +174,7 @@ class OptRes(object):
         self.inv_var_2d[num_seg[g_pix], g_pix] = inv_var[g_pix]
 
 
-    def shrink_crmag(self, n_int, dq_cube, imshape, nreads, skip_i, skip_f):
+    def shrink_crmag(self, n_int, dq_cube, imshape, nreads):
         """
         Extended Summary
         ----------------
@@ -200,12 +202,6 @@ class OptRes(object):
         nreads: int
             number of reads in an integration
 
-        skip_i: int
-            number of initial reads to skip
-
-        skip_f: int
-            number of final reads to skip
-
         Returns
         ----------
         None
@@ -232,7 +228,7 @@ class OptRes(object):
             # Initialize number of crs for each image pixel for this integration
             end_cr = np.zeros(imshape, dtype=np.int8)
 
-            for k_rd in range(nreads - skip_i - skip_f):
+            for k_rd in range(nreads):
                 # loop over pixels having a CR
                 for nn in range(len(cr_int_has_cr[0])):
                     y, x = cr_int_has_cr[0][nn], cr_int_has_cr[1][nn]
@@ -771,44 +767,6 @@ def get_max_num_cr(gdq_cube, jump_flag):
     del cr_flagged
 
     return max_num_cr
-
-
-def get_skip_frames(instrume):
-    """
-    Short Summary
-    -------------
-    Get instrument-specific values of numbers of frames to skip.
-    May eventually want to retrieve from reference files instead,
-    or perhaps handle the leading/trailing reads earlier in the
-    pipeline.
-
-    Parameters
-    ----------
-    instrume: string
-       instrument name
-
-    Returns
-    -------
-    skip_i: int
-       number of initial frames to skip
-
-    skip_f: int
-       number of final frames to skip
-
-    """
-
-    if instrume == 'MIRI':
-        skip_i = 0
-        skip_f = 0
-    elif instrume == 'NIRCAM':
-        skip_i = 0
-        skip_f = 0
-    else:   # NIRSPEC
-        skip_i = 0
-        skip_f = 0
-
-    return skip_i, skip_f
-
 
 
 def get_ref_subs(model, readnoise_model, gain_model):

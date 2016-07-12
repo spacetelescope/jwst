@@ -16,6 +16,7 @@ from __future__ import division
 import time
 import numpy as np
 import logging
+
 from .. import datamodels
 from ..datamodels import dqflags
 
@@ -87,7 +88,6 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         Object containing optional GLS-specific ramp fitting data for the
         exposure
     """
-
     if algorithm == "GLS":
         new_model, int_model, gls_opt_model = gls_ramp_fit(model,
                                 buffsize, save_opt,
@@ -155,6 +155,26 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     nreads, npix, imshape, cubeshape, n_int, instrume, frame_time, ngroups = \
         utils.get_dataset_info(model)
 
+    # Save original shapes for writing to log file, as these may change for MIRI
+    orig_nreads = nreads
+    orig_cubeshape = cubeshape
+
+    # For MIRI datasets having >1 reads, if all final reads are flagged
+    # as DO_NOT_USE, resize the input model arrays to exclude the final group.
+    if (instrume == 'MIRI' and nreads > 1):
+        last_gdq = model.groupdq[:,-1,:,:]
+        gdq_shape = last_gdq.shape
+
+        if np.array_equal(np.full(gdq_shape, dqflags.group['DO_NOT_USE']), \
+                      last_gdq):
+            model.data = model.data[:,:-1,:,:]
+            model.err = model.err[:,:-1,:,:]
+            model.groupdq = model.groupdq[:,:-1,:,:]
+            nreads -= 1
+            ngroups -= 1
+            cubeshape = (nreads,)+imshape
+            log.info('MIRI dataset has all final reads flagged as DO_NOT_USE.')
+
     if (ngroups == 1):
         log.warn('Dataset has NGROUPS=1, so count rates for each integration')
         log.warn('will be calculated as the value of that 1 group divided by')
@@ -185,19 +205,6 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     # calculate number of (contiguous) rows per data section
     nrows = calc_nrows(model, buffsize, cubeshape, nreads)
-
-    # get numbers of frames to skip
-    skip_i, skip_f = utils.get_skip_frames(instrume)
-
-    # If there are initial or final frames to skip (MIRI), 1. make a copy of
-    #   the original (input) GROUPDQ array, and 2. flag (in the GROUPDQ array)
-    #   the appropriate initial and frames as jump-detected so that the slope
-    #   fitting will skip them for each data section. After each data section
-    #   has been processed, those frames will have their GROUPDQ values reverted
-    #   to their original values.
-    if (skip_i + skip_f > 0):
-        gdq_cube_orig = gdq_cube.copy()
-        gdq_cube = groupdq_skip(gdq_cube, skip_i, skip_f)
 
     # Get readnoise array for calculation of variance of noiseless ramps, and
     #   gain array in case optimal weighting is to be done
@@ -239,13 +246,6 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
             err_cube[num_int, :, rlo:rhi, :] += t_err_cube
             gdq_cube[num_int, :, rlo:rhi, :] = t_dq_cube
-
-            # The current data section has been fit, so if any initial/final
-            #   frames were skipped, revert the corresponding GROUPDQ values
-            #   back to their original values.
-            if (skip_i + skip_f > 0):
-                gdq_cube = revert_dq(gdq_cube, gdq_cube_orig, num_int,
-                                      skip_i, skip_f, rlo, rhi)
 
             # Compress 4D->2D dq arrays for saturated and jump-detected pixels
             pixeldq_sect = pixeldq[rlo:rhi, :].copy()
@@ -296,7 +296,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     if save_opt: # collect optional results for output
         ### opt_res.print_full() # diagnostic; uncomment for small datasets
         # Shrink cosmic ray magnitude array; attach to optional results object
-        opt_res.shrink_crmag(n_int, gdq_cube, imshape, nreads, skip_i, skip_f)
+        opt_res.shrink_crmag(n_int, gdq_cube, imshape, nreads)
         opt_model = opt_res.output_optional(model, effintim)
     else:
         opt_model = None
@@ -314,16 +314,6 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     #   primary output
     final_pixeldq = dq_compress_final(dq_int, n_int)
 
-    # If either skip_i or skip_f are > 0, include the FRAMES_SKIPPED flag
-    #   within the output 2D PIXELDQ and, if there is more than one
-    #   integration, also include this flag within the integration-specific dq
-    #   output cube
-    if (skip_i + skip_f > 0):
-        final_pixeldq = np.bitwise_or(dqflags.pixel['FRAMES_SKIPPED'],
-                                       final_pixeldq)
-        if n_int > 1:
-            dq_int = np.bitwise_or(dqflags.pixel['FRAMES_SKIPPED'], dq_int)
-
     if n_int > 1:
         int_model = utils.output_integ(model, slope_int, err_int, dq_int,
                                         effintim)
@@ -337,13 +327,11 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     log.debug('Instrument: %s' % (instrume))
     log.debug('Number of pixels in 2D array: %d' % (npix))
     log.debug('Shape of 2D image: (%d, %d)' % (imshape))
-    log.debug('Shape of data cube: (%d, %d, %d)' % (cubeshape))
+    log.debug('Shape of data cube: (%d, %d, %d)' % (orig_cubeshape))
     log.debug('Buffer size (bytes): %d' % (buffsize))
     log.debug('Number of rows per buffer: %d' % (nrows))
-    log.info('Number of groups per integration: %d' % (nreads))
+    log.info('Number of groups per integration: %d' % (orig_nreads))
     log.info('Number of integrations: %d' % (n_int))
-    log.info('Number of initial groups skipped: %d' % (skip_i))
-    log.info('Number of final groups skipped: %d' % (skip_f))
     log.debug('The execution time in seconds: %f' % (tstop - tstart))
 
     # Create new model...
@@ -463,9 +451,6 @@ def gls_ramp_fit(model,
 
     # calculate number of (contiguous) rows per data section
     nrows = calc_nrows(model, buffsize, cubeshape, nreads)
-
-    # get numbers of frames to skip
-    skip_i, skip_f = utils.get_skip_frames(instrume)
 
     # These parameters will be compared with both the readnoise and
     # gain models.
@@ -620,16 +605,6 @@ def gls_ramp_fit(model,
     #   primary output
     final_pixeldq = dq_compress_final(dq_int, n_int)
 
-    # If either skip_i or skip_f is > 0, include the FRAMES_SKIPPED flag
-    # within the output 2D PIXELDQ and, if there is more than one
-    # integration, also include this flag within the integration-specific
-    # DQ output cube.
-    if skip_i + skip_f > 0:
-        final_pixeldq = np.bitwise_or(dqflags.pixel['FRAMES_SKIPPED'],
-                                      final_pixeldq)
-        if n_int > 1:
-            dq_int = np.bitwise_or(dqflags.pixel['FRAMES_SKIPPED'], dq_int)
-
     if n_int > 1:
         effintim = 1.                   # slopes are already in DN/s
         int_model = utils.output_integ(model, slope_int, slope_err_int, dq_int,
@@ -662,8 +637,6 @@ def gls_ramp_fit(model,
     log.info('Buffer size (bytes): %d' % buffsize)
     log.info('Number of rows per buffer: %d' % nrows)
     log.info('Number of integrations: %d' % n_int)
-    log.info('Number of initial frames skipped: %d' % skip_i)
-    log.info('Number of final frames skipped: %d' % skip_f)
     log.info('The execution time in seconds: %f' % (tstop - tstart,))
 
     # Create new model...
@@ -679,55 +652,6 @@ def gls_ramp_fit(model,
     new_model.update(model)     # ... and add all keys from input
 
     return new_model, int_model, gls_opt_model
-
-
-def revert_dq(gdq_cube, gdq_cube_orig, num_int, skip_i, skip_f, rlo, rhi):
-    """
-    Short Summary
-    -------------
-    The current data section has been processed, so the skipped frames will
-    have their GROUPDQ values reverted to their original values.
-
-    Parameters
-    ----------
-    gdq_cube: uint8, 4D array
-        4D cube of GROUPDQ arrays for all data sections in all integrations,
-        having initial/final frames temporarily flagged as jump-detected for
-        the purpose of fitting.
-
-    gdq_cube_orig: uint8, 4D array
-        initial 4D cube of GROUPDQ arrays for all data sections in all
-        integrations.
-
-    num_int: int
-        total number of integrations in data set
-
-    skip_i: int
-       number of initial frames to skip
-
-    skip_f: int
-       number of final frames to skip
-
-    rlo: int
-       lowest column number in group dq cubes
-
-    rhi: int
-       highest column number in group dq cubes
-
-    Returns
-    -------
-    gdq_cube: uint8, 4D array
-        4D cube of GROUPDQ arrays for all data sections in all integrations,
-        having initial/final frames that were temporarily flagged as
-        jump-detected reverted in their initial values.
-
-    """
-    gdq_cube[num_int, :skip_i, rlo:rhi, :] = \
-            gdq_cube_orig[num_int, :skip_i, rlo:rhi, :]
-    gdq_cube[num_int, -skip_f:, rlo:rhi, :] = \
-            gdq_cube_orig[num_int, -skip_f:, rlo:rhi, :]
-
-    return gdq_cube
 
 
 def calc_power(snr):
@@ -826,45 +750,6 @@ def dq_compress_sect(gdq_sect, pixeldq_sect):
                                                dqflags.pixel['JUMP_DET'])
 
     return pixeldq_sect
-
-
-def groupdq_skip(gdq_cube, skip_i, skip_f):
-    """
-    Extended Summary
-    ----------------
-    Because at least one of skip_i or skip_f are > 0, flag the reads to be
-    skipped during the fitting by updating the GROUPDQ array.  The JUMP_DET
-    flag is used here because:
-       1. This existing flag is not currently used elsewhere,
-       2. Any non-zero value will result in the appropriate reads being
-          skipped during the fitting, and,
-       3. This flag will not be included during the later dq compression
-
-    Parameters
-    ----------
-    gdq_cube: float, 4D array
-        cube of GROUPDQ array
-
-    skip_i: int
-       number of initial frames to skip
-
-    skip_f: int
-       number of final frames to skip
-
-    Returns
-    -------
-    gdq_cube: float, 4D array
-        cube of GROUPDQ array, updated to have intial and/or final reads
-        flagged to be skipped
-
-    """
-
-    gdq_cube[:, :skip_i, :, :] = np.bitwise_or(gdq_cube[:, :skip_i, :, :],
-                                              dqflags.group['JUMP_DET'])
-    gdq_cube[:, -skip_f:, :, :] = np.bitwise_or(gdq_cube[:, -skip_f:, :, :],
-                                               dqflags.group['JUMP_DET'])
-
-    return gdq_cube
 
 
 def calc_nrows(model, buffsize, cubeshape, nreads):
@@ -1446,15 +1331,15 @@ def fit_lines(data, mask_2d, end_heads, end_st, start, rn_sect, gain_sect,
            calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, good_pix, \
                           xvalues)
 
-        slope, intercept, sig_slope, sig_intercept, line_fit =\
-               calc_opt_fit(xvalues, nreads_wtd, sumxx, sumx, sumxy, sumy)
+        slope, intercept, sig_slope, sig_intercept =\
+               calc_opt_fit(nreads_wtd, sumxx, sumx, sumxy, sumy)
 
         denominator = nreads_wtd * sumxx - sumx**2
 
     else: # do the fits using unweighted weighting
         # get sums from unweighted
         sumx, sumxx, sumxy, sumy =\
-              calc_unwtd_sums(data_masked, good_pix, xvalues)
+              calc_unwtd_sums(data_masked, xvalues)
 
         denominator = nreads_1d * sumxx - sumx**2
 
@@ -1547,7 +1432,7 @@ def calc_unwtd_fit(xvalues, nreads_1d, sumxx, sumx, sumxy, sumy):
     return slope, intercept, sig_slope, sig_intercept, line_fit
 
 
-def calc_opt_fit(xvalues, nreads_wtd, sumxx, sumx, sumxy, sumy):
+def calc_opt_fit(nreads_wtd, sumxx, sumx, sumxy, sumy):
     """
     Extended Summary
     ----------------
@@ -1557,10 +1442,6 @@ def calc_opt_fit(xvalues, nreads_wtd, sumxx, sumx, sumxy, sumy):
 
     Parameters
     ----------
-
-    xvalues: int, 1D array
-        indices of valid pixel values for all reads
-
     nreads_wtd: float, 1D array
         sum of product of data and weight
 
@@ -1590,9 +1471,6 @@ def calc_opt_fit(xvalues, nreads_wtd, sumxx, sumx, sumxy, sumy):
     sig_intercept: float, 1D array
        sigma of y-intercepts from fit for data section
 
-    line_fit: float, 1D array
-       values of fit using slope and intercept
-
     """
 
     denominator = nreads_wtd * sumxx - sumx**2
@@ -1602,8 +1480,6 @@ def calc_opt_fit(xvalues, nreads_wtd, sumxx, sumx, sumxy, sumy):
     sig_intercept = (sumxx / denominator)**0.5
     sig_slope = (nreads_wtd / denominator)**0.5
 
-    line_fit = (slope * xvalues) + intercept
-
     # Set to 0 those values that are NaN or Inf just in case these were not
     # properly handled by dq
     slope[np.isnan(slope)] = 0.
@@ -1611,7 +1487,7 @@ def calc_opt_fit(xvalues, nreads_wtd, sumxx, sumx, sumxy, sumy):
     sig_slope[np.isnan(sig_slope)] = 0.
     sig_intercept[np.isnan(sig_intercept)] = 0.
 
-    return slope, intercept, sig_slope, sig_intercept, line_fit
+    return slope, intercept, sig_slope, sig_intercept
 
 
 
@@ -1953,7 +1829,7 @@ def calc_num_seg(gdq, imshape, n_int, nreads):
     return num_seg.max()
 
 
-def calc_unwtd_sums(data_masked, good_pix, xvalues):
+def calc_unwtd_sums(data_masked, xvalues):
     """
     Short Summary
     -------------
@@ -1964,9 +1840,6 @@ def calc_unwtd_sums(data_masked, good_pix, xvalues):
     ----------
     data_masked: float, 2D array
         masked values for all pixels in data section
-
-    good_pix: int, 1D array
-        indices of pixels having valid data for all reads
 
     xvalues: int, 1D array
         indices of valid pixel values for all reads
@@ -1994,7 +1867,7 @@ def calc_unwtd_sums(data_masked, good_pix, xvalues):
     return sumx, sumxx, sumxy, sumy
 
 
-def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, good_pix, xvalues):
+def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, xvalues):
     """
     Short Summary
     -------------
@@ -2019,9 +1892,6 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, good_pix, xvalues):
 
     mask_2d: int, 2D array
         delineates which channels to fit for each pixel
-
-    good_pix: int, 1D array
-        indices of pixels having valid data for all reads
 
     xvalues: int, 2D array
         indices of valid pixel values for all reads
@@ -2094,7 +1964,6 @@ def calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, good_pix, xvalues):
     snr[snr < 0.] = 0.0
 
     gain_sect_r = 0
-    wh_gain_nz = 0
     numer_ir = 0
     data_diff = 0
     sigma_ir = 0
