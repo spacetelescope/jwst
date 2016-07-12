@@ -63,22 +63,22 @@ function install_travis_deps
 
 function dump_logs
 {
-	local logdir=$1
-	if [[ -z $logdir ]]; then
-		echo "Expecting a log directory but recieved nothing."
-		exit 1
-	fi
+    local logdir=$1
+    if [[ -z $logdir ]]; then
+        echo "Expecting a log directory but recieved nothing."
+        exit 1
+    fi
 
-	for log in $logdir/*
-	do
-		echo
-		echo "#"
-		echo "# LOG: $log"
-		echo "# (Final 20 lines)"
-		echo "#"
-		[[ -f $log ]] && tail -n 20 "$log"
-		echo
-	done
+    for log in $logdir/*
+    do
+        echo
+        echo "#"
+        echo "# LOG: $log"
+        echo "# (Final 20 lines)"
+        echo "#"
+        [[ -f $log ]] && tail -n 20 "$log"
+        echo
+    done
 }
 
 while [[ $# -ge 1 ]]
@@ -177,13 +177,15 @@ do
             _ok $?
         fi
 
-        /bin/echo -n "latexpdf "
-        yes 'X' | make latexpdf &>$logname-build-pdf.txt
-        _ok $?
-        if [[ $? == 0 ]]; then
-            rsync $RSYNC_OPT $docs/build/latex/*.pdf \
-                $FINAL/$name &>$logname-rsync-pdf.txt
+        if [[ -z $TRAVIS ]]; then
+            /bin/echo -n "latexpdf "
+            yes 'X' | make latexpdf &>$logname-build-pdf.txt
             _ok $?
+            if [[ $? == 0 ]]; then
+                rsync $RSYNC_OPT $docs/build/latex/*.pdf \
+                    $FINAL/$name &>$logname-rsync-pdf.txt
+                _ok $?
+            fi
         fi
     popd 2>&1 >/dev/null
     echo
@@ -195,7 +197,7 @@ if [[ $ERRORS > 0 ]]; then
     echo "Failures detected: $ERRORS"
     echo "Investigate '$LOGS' for more information..."
     echo
-	dump_logs "$LOGS"
+    dump_logs "$LOGS"
 fi
 
 exit $ERRORS

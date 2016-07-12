@@ -6,12 +6,6 @@ os:
 
 sudo: false
 
-addons:
-    apt:
-        packages:
-            - texlive-full
-            - texlive-latex-extra
-
 env:
     # CONDA_JWST_DEPENDENCIES is used because CONDA_DEPENDENCIES is not truly global.
     global:
