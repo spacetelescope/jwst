@@ -51,7 +51,7 @@ def get_fitsfile(fitsfile):
     Given a filename or pyfits.HDUList object, returns a (filename,
     pyfits.HDUList, opened) triple.
     """
-    from jwst.fits_generator import input_file_types
+    from . import input_file_types
     if isinstance(fitsfile, six.string_types):
         return (fitsfile, pyfits.open(fitsfile), True)
     elif isinstance(fitsfile, pyfits.HDUList):

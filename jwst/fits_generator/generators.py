@@ -32,6 +32,8 @@ Contains a number of helper functions for generating header card
 values.
 """
 
+from __future__ import absolute_import
+
 # STDLIB
 import datetime
 
@@ -39,6 +41,7 @@ from astropy.time import Time
 
 # LOCAL
 from . import util
+from . import __version__
 
 bool = __builtins__['bool']
 str = __builtins__['str']
@@ -86,9 +89,9 @@ def now(date_only=False):
 
 def version():
     """
-    Generate the version of fits_generate
+    Generates the version of fits_generator software
     """
-    return jwst_tools.fits_generator.__version__
+    return __version__
 
 def substr(value, start=0, end=None):
     """

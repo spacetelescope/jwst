@@ -24,14 +24,13 @@ def get_proposals(base_directory='.'):
     (directory, proposalfilename) tuples'''
 
     proposal_list = []
-    def append_proposal_file(proposal_list, dirpath, namelist):
-        for name in namelist:
+    for dirname, subdirlist, filelist in os.walk(base_directory):
+        for name in filelist:
             if name.endswith('.prop'):
-                proposal_list.append((dirpath, name))
-    os.path.walk(base_directory, append_proposal_file, proposal_list)
+                proposal_list.append((dirname, name))
     return proposal_list
 
-def write_observation_identifiers(detector):
+def write_observation_identifiers(id):
     '''Write out an ObservationIdentifiers.dat file'''
     filename = 'ObservationIdentifiers.dat'
     #
@@ -46,13 +45,13 @@ def write_observation_identifiers(detector):
     lines = []
     lines.append('<<file obsid>>\n')
     lines.append('<<header primary>>\n')
-    lines.append("PROGRAM   = '%s'\n" % detector.id[0:5])
-    lines.append("OBSERVTN  = '%s'\n" % detector.id[6:9])
-    lines.append("VISIT     = '%s'\n" % detector.id[10:13])
-    lines.append("VISITGRP  = '%s'\n" % detector.id[14:16])
-    lines.append("SEQ_ID    = '%s'\n" % detector.id[16:17])
-    lines.append("ACT_ID    = '%s'\n" % detector.id[17:19])
-    lines.append("EXPOSURE  = '%s'\n" % detector.id[20:25])
+    lines.append("PROGRAM   = '%s'\n" % id[0:5])
+    lines.append("OBSERVTN  = '%s'\n" % id[5:8])
+    lines.append("VISIT     = '%s'\n" % id[8:11])
+    lines.append("VISITGRP  = '%s'\n" % id[11:13])
+    lines.append("SEQ_ID    = '%s'\n" % id[13:14])
+    lines.append("ACT_ID    = '%s'\n" % id[14:16])
+    lines.append("EXPOSURE  = '%s'\n" % id[16:21])
     f1.writelines(lines)
     f1.close()
 ##     except:
@@ -105,23 +104,22 @@ def run(base_directory='.', level='1b'):
         #  Clean up everything by moving existing output files to a 'previous'
         #  subdirectory
         pre_clean()
-        proposal_tree = proposalparser.XMLProposal(proposal_file)
 
-        detectors = proposal_tree.get_detectors()
+        detectors = proposalparser.get_detectors(proposal_file)
 
         for detector in detectors:
-            base = detector.base
-            subarray = detector.subarray
-            exp_type = detector.exp_type
+            base = detector['base']
+            subarray = detector['subarray']
+            exp_type = detector['exp_type']
             if exp_type == '':
                 exp_type = 'UNKNOWN'
-            obsid = detector.id
-            obsid = write_observation_identifiers(detector)
+            obsid = detector['id']
+            obsidfile = write_observation_identifiers(obsid)
             subarray_argument = subarray
             print('Creating Level %s data' % level)
             create_dms_data.create_dms(base,
                                        level=level,
-                                       parfile=obsid,
+                                       parfile=obsidfile,
                                        subarray=subarray_argument,
                                        exp_type=exp_type)
-            remove_observation_identifiers(obsid)
+            remove_observation_identifiers(obsidfile)
