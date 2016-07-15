@@ -182,6 +182,9 @@ do
             yes 'X' | make latexpdf &>$logname-build-pdf.txt
             _ok $?
             if [[ $? == 0 ]]; then
+                # Why is this file even generated?
+                rm -f $docs/build/latex/stsci_logo.pdf
+
                 rsync $RSYNC_OPT $docs/build/latex/*.pdf \
                     $FINAL/$name &>$logname-rsync-pdf.txt
                 _ok $?
