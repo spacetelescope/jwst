@@ -1,9 +1,10 @@
-from __future__ import print_function
+from __future__ import division, print_function
 
 import os
 import numpy
-from astropy.io import fits as pyfits
-from .. import *
+from astropy.io import fits
+from . import input_file_types
+from . import main
 
 #
 # Subarrays:
@@ -91,7 +92,7 @@ def rotated_and_flipped(input_hdulist):
         return False
 
 def getSCA_ID(input_hdulist):
-    if jwst_tools.fits_generator.is_ncont(input_hdulist):
+    if input_file_types.is_ncont(input_hdulist):
         module = input_hdulist[0].header['MODULE'].strip()
         detector = input_hdulist[0].header['DETECTOR'].strip()
         SCA = input_hdulist[0].header['SCA']
@@ -165,7 +166,7 @@ def sanitize(header, keyword, type=float, default=0.0):
     return converted_value
 
 def flip_rotate(input_hdulist):
-    """Given a PyFITS HDUList, flip and rotate the data as appropriate.
+    """Given a FITS HDUList, flip and rotate the data as appropriate.
     Decide on how to flip and rotate by the SCA_ID keyword.
     NIRSpec data always needs to be flipped and rotated: data from SCA 491
     needs to be flipped across the line x=y (achieved using the numpy
@@ -180,7 +181,7 @@ def flip_rotate(input_hdulist):
     rotated 180 degrees like NRS2.
     FGS 2 (#498) needs to be flipped across x=y and then flipped along the
     Y direction.
-    Returns a PyFITS HDUList with the data flipped and rotated accordingly"""
+    Returns a FITS HDUList with the data flipped and rotated accordingly"""
 
     header = input_hdulist[0].header
 
@@ -323,7 +324,7 @@ def flip_rotate(input_hdulist):
         # NIRSpec NRS1
         #
         rcube = numpy.swapaxes(cube, 1, 2)
-        if jwst_tools.fits_generator.is_nirspec_ips(input_hdulist):
+        if input_file_types.is_nirspec_ips(input_hdulist):
             #
             # IPS data is all full-frame
             detector_row_start = 0
@@ -370,7 +371,7 @@ def flip_rotate(input_hdulist):
         # NIRSpec NRS2
         #
         rcube = numpy.swapaxes(cube, 1, 2)[:, ::-1, ::-1]
-        if jwst_tools.fits_generator.is_nirspec_ips(input_hdulist):
+        if input_file_types.is_nirspec_ips(input_hdulist):
             #
             # IPS data is all full-frame
             detector_row_start = 0
@@ -423,7 +424,7 @@ def flip_rotate(input_hdulist):
         rcube = numpy.swapaxes(cube, 1, 2)[:, ::-1, ::-1]
         #
         # TFI and NIRISS data have different keywords
-        if jwst_tools.fits_generator.is_tfi(input_hdulist):
+        if input_file_types.is_tfi(input_hdulist):
             #
             #  TFI data doesn't have any subarray keywords at all,
             #  so for now we'll make some up
@@ -437,7 +438,7 @@ def flip_rotate(input_hdulist):
 #                instrument = 'NIRISS'
 #                header.update('INSTRUME', 'NIRISS')
 #                header.update('DETECTOR', 'NIRISS')
-        elif jwst_tools.fits_generator.is_niriss(input_hdulist):
+        elif input_file_types.is_niriss(input_hdulist):
             detector_rowstart = header['ROWCORNR']
             detector_rowstop = detector_rowstart + header['NAXIS2'] - 1
             detector_colstart = header['COLCORNR']
@@ -572,10 +573,10 @@ def create_single_subarray(input_hdulist, subarray):
         refout = cube[:, 1024:, :]
         continuous_refout = refout.reshape(refout.shape[0], 1024, 258)
         print('Reference Output subarray in contiguous goes from')
-        print('x:  %d to %d' % ((xstart - 1) / 4, xstop / 4))
+        print('x:  %d to %d' % ((xstart - 1) // 4, xstop // 4))
         print('y:  %d to %d' % ((ystart - 1), ystop))
         refout_subarray = continuous_refout[:, (ystart - 1):ystop,
-                                          (xstart - 1) / 4:(xstop + 1) / 4]
+                                          (xstart - 1) // 4:(xstop + 1) // 4]
 ##        print('Reshaped array has dimensions %d by %d' % \
 ##              (refout_subarray.shape[2]*4, refout_subarray.shape[1]/4))
 ##        reshaped_refout_subarray = refout_subarray.reshape(refout_subarray.shape[0],
@@ -597,8 +598,8 @@ def create_single_subarray(input_hdulist, subarray):
 ##         os.remove(outputfilename)
 ##     except:
 ##         pass
-    output_hdulist = pyfits.HDUList()
-    output_primaryhdu = pyfits.PrimaryHDU()
+    output_hdulist = fits.HDUList()
+    output_primaryhdu = fits.PrimaryHDU()
     output_primary_header = header.copy()
     #
     #  Add the keywords to the header
@@ -616,7 +617,7 @@ def create_single_subarray(input_hdulist, subarray):
 #    except:
 #        pass
     if instrument == 'MIRI':
-        output_refhdu = pyfits.ImageHDU()
+        output_refhdu = fits.ImageHDU()
         output_refhdu.data = refout_subarray
         output_hdulist.append(output_refhdu)
 
@@ -637,13 +638,13 @@ def split_data_and_refout(hdulist):
     refoutdata = fulldata[:, nrows:]
     #
     # Reference output has 1/4 the columns of science data
-    refout = refoutdata.reshape((fulldata.shape[0], nrows, ncols / 4))
+    refout = refoutdata.reshape((fulldata.shape[0], nrows, ncols // 4))
     hdulist[0].data = detectordata
     try:
         del hdulist[1]
     except:
         pass
-    refhdu = pyfits.ImageHDU()
+    refhdu = fits.ImageHDU()
     refhdu.data = refout
     hdulist.append(refhdu)
     return
@@ -658,7 +659,7 @@ def create_dms(base_file, level="1b", parfile=None, subarray=None, exp_type='UNK
 
     base_root = base_file.split('.')[0]
 
-    base_hdulist = pyfits.open(base_file)
+    base_hdulist = fits.open(base_file)
 
     #
     # Add the exp_type to the input hdulist
@@ -684,17 +685,17 @@ def create_dms(base_file, level="1b", parfile=None, subarray=None, exp_type='UNK
                                '_observation_identifiers.dat'))
             print(parfile)
 
-        hdulist = jwst_tools.fits_generator.generate([subarray_file, parfile], level=level)
-        filename = jwst_tools.fits_generator.guess_filename(hdulist)
+        hdulist = main.generate([subarray_file, parfile], level=level)
+        filename = main.guess_filename(hdulist)
         hdulist[0].header['FILENAME'] = filename
         hdulist.writeto(filename, output_verify='silentfix')
         os.remove(subarray_file)
     else:
         if instrument == 'MIRI':
             split_data_and_refout(base_hdulist)
-        hdulist = jwst_tools.fits_generator.generate([base_hdulist, parfile],
+        hdulist = main.generate([base_hdulist, parfile],
                                           level=level)
-        filename = jwst_tools.fits_generator.guess_filename(hdulist)
+        filename = main.guess_filename(hdulist)
         hdulist[0].header['FILENAME'] = filename
         hdulist.writeto(filename, output_verify='silentfix')
 

@@ -39,11 +39,11 @@ import numpy as np
 from astropy.extern import six
 
 # LOCAL
-from jwst.fits_generator import objects
-from jwst.fits_generator import generators
-from jwst.fits_generator import util
-from jwst.fits_generator import verifiers
-from jwst.fits_generator.pyparsing import *
+from . import objects
+from . import generators
+from . import util
+from . import verifiers
+from .pyparsing import *
 
 class TemplateParserBase:
     # This parser is a hybrid between hand-written parsing and
