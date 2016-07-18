@@ -66,7 +66,7 @@ class NirissPhotomModel(PhotomModel):
 
 class NirspecPhotomModel(PhotomModel):
     """
-    A data model for NIRSpec photom reference files.
+    A data model for NIRSpec imaging, IFU, and MOS photom reference files.
 
     Parameters
     ----------
@@ -82,6 +82,29 @@ class NirspecPhotomModel(PhotomModel):
 
     def __init__(self, init=None, phot_table=None, **kwargs):
         super(NirspecPhotomModel, self).__init__(init=init, **kwargs)
+
+        if phot_table is not None:
+            self.phot_table = phot_table
+
+
+class NirspecFSPhotomModel(PhotomModel):
+    """
+    A data model for NIRSpec Fixed-Slit (FS) photom reference files.
+
+    Parameters
+    ----------
+    init : any
+        Any of the initializers supported by `~jwst.datamodels.DataModel`.
+
+    phot_table : numpy array
+        A table-like object containing row selection criteria made up
+        of instrument mode parameters and photometric conversion
+        factors associated with those modes.
+    """
+    schema_url = "nirspecfs_photom.schema.yaml"
+
+    def __init__(self, init=None, phot_table=None, **kwargs):
+        super(NirspecFSPhotomModel, self).__init__(init=init, **kwargs)
 
         if phot_table is not None:
             self.phot_table = phot_table

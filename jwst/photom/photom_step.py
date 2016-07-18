@@ -38,10 +38,18 @@ class PhotomStep(Step):
         area_filename = self.get_reference_file(dm, 'area')
         self.log.info('Using area reference file: %s', area_filename)
 
+        # Check for a valid photom reference file
+        if phot_filename == 'N/A':
+            self.log.warning('No PHOTOM reference file found')
+            self.log.warning('Photom step will be skipped')
+            result = dm.copy()
+            result.meta.cal_step.photom = 'SKIPPED'
+            return result
+
         # Do the correction
         ff_a = photom.DataSet(dm, phot_filename, area_filename)
-
         output_obj = ff_a.do_all()
+
         output_obj.meta.cal_step.photom = 'COMPLETE'
 
         return output_obj
