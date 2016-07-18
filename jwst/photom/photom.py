@@ -52,6 +52,7 @@ class DataSet(object):
         self.pupil = None
         if model.meta.instrument.pupil is not None:
             self.pupil = model.meta.instrument.pupil.upper()
+        self.slitnum = -1
 
         log.debug('Using instrument: %s', self.instrument)
         log.debug(' detector: %s', self.detector)
@@ -89,25 +90,60 @@ class DataSet(object):
 
         # Get the GRATING value from the input data model
         grating = self.input.meta.instrument.grating.upper()
-        log.debug(' grating: %s', grating)
 
-        # Locate the matching row in reference file
-        for tabdata in ftab.phot_table:
+        # Handle MultiSlitModels separately
+        if isinstance(self.input, datamodels.MultiSlitModel):
 
-            ref_filter = tabdata['filter'].strip().upper()
-            ref_grating = tabdata['grating'].strip().upper()
+            # Loop over the slits in the input model
+            for slit in self.input.slits:
 
-            # Finding matching FILTER and GRATING values
-            if self.filter == ref_filter and grating == ref_grating:
-                conv_factor = self.photom_io(tabdata)
-                break
+                log.info('Working on slit %s' % slit.name)
+                conv_factor = None
+                self.slitnum += 1
 
-        if conv_factor is not None:
-            return float(conv_factor)
+                # Loop through reference table to find matching row
+                for tabdata in ftab.phot_table:
+                    ref_filter = tabdata['filter'].strip().upper()
+                    ref_grating = tabdata['grating'].strip().upper()
+                    ref_slit = tabdata['slit'].strip().upper()
+                    log.debug(' Ref table data: %s %s %s' %
+                              (ref_filter, ref_grating, ref_slit))
+
+                    # Match on filter, grating, and slit name
+                    if (self.filter == ref_filter and
+                        grating == ref_grating and
+                        slit.name == ref_slit):
+                        conv_factor = self.photom_io(tabdata)
+                        break
+
+                if conv_factor is None:
+                    log.warning('Did not find a match in the ref file')
+
+            if conv_factor is not None:
+                return float(conv_factor)
+            else:
+                return 0.0
+
+        # Simple image model (no slits)
         else:
-            log.warning('Did not find a match in the ref file, so returning'
-                        ' conversion factor 0.0')
-            return 0.0
+
+            # Loop through the reference table to find matching row
+            for tabdata in ftab.phot_table:
+
+                ref_filter = tabdata['filter'].strip().upper()
+                ref_grating = tabdata['grating'].strip().upper()
+
+                # Match on filter and grating only
+                if self.filter == ref_filter and grating == ref_grating:
+                    conv_factor = self.photom_io(tabdata)
+                    break
+
+            if conv_factor is not None:
+                return float(conv_factor)
+            else:
+                log.warning('Did not find a match in the ref file, so returning'
+                            ' conversion factor 0.0')
+                return 0.0
 
 
     def calc_niriss(self, ftab):
@@ -337,14 +373,13 @@ class DataSet(object):
         # relsens table of the data model
         if nelem > 0:
             waves = tabdata['wavelength']
-
             relresps = tabdata['relresponse']
 
             # Set the relative sensitivity table for the correct Model type
             if isinstance(self.input, datamodels.MultiSlitModel):
                 otab = np.array(list(zip(waves, relresps)),
-                                dtype=self.input.slits[0].relsens.dtype)
-                self.input.slits[0].relsens = otab
+                       dtype=self.input.slits[self.slitnum].relsens.dtype)
+                self.input.slits[self.slitnum].relsens = otab
 
             else:
                 otab = np.array(list(zip(waves, relresps)),
@@ -451,7 +486,10 @@ class DataSet(object):
             conv_factor = self.calc_niriss(ftab)
 
         if self.instrument == 'NIRSPEC':
-            ftab = datamodels.NirspecPhotomModel(photom_fname)
+            if self.exptype == 'NRS_FIXEDSLIT':
+                ftab = datamodels.NirspecFSPhotomModel(photom_fname)
+            else:
+                ftab = datamodels.NirspecPhotomModel(photom_fname)
             conv_factor = self.calc_nirspec(ftab)
 
         if self.instrument == 'NIRCAM':

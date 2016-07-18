@@ -62,7 +62,8 @@ from .multispec import MultiSpecModel
 from .ifucube import IFUCubeModel
 from .pixelarea import PixelAreaModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
-from .photom import NirspecPhotomModel, MiriImgPhotomModel, MiriMrsPhotomModel
+from .photom import NirspecPhotomModel, NirspecFSPhotomModel
+from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
 from .ramp import RampModel
 from .rampfitoutput import RampFitOutputModel
 from .readnoise import ReadnoiseModel
@@ -86,10 +87,10 @@ __all__ = [
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'LinearityModel',
     'MaskModel', 'MIRIRampModel', 'ModelContainer', 'MultiSlitModel',
     'MultiSpecModel', 'IFUCubeModel', 'PhotomModel', 'NircamPhotomModel',
-    'NirissPhotomModel', 'NirspecPhotomModel', 'MiriImgPhotomModel',
-    'MiriMrsPhotomModel', 'RampModel', 'RampFitOutputModel',
-    'ReadnoiseModel', 'ResetModel', 'RSCDModel', 'SaturationModel', 'SpecModel',
-    'StrayLightModel']
+    'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
+    'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'RampModel',
+    'RampFitOutputModel', 'ReadnoiseModel', 'ResetModel', 'RSCDModel',
+    'SaturationModel', 'SpecModel', 'StrayLightModel']
 
 
 def open(init=None, extensions=None):
