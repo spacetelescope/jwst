@@ -13,14 +13,16 @@ This is MUCH faster than doing all the work on a pixel-by-pixel basis.
 
 import logging
 import numpy as np
+
 from ..datamodels import dqflags
+from .. import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 HUGE_NUM = np.finfo(np.float32).max
 
-def find_CRs(data, gdq, read_noise, rej_threshold):
+def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
     """
     Find CRs/Jumps in each integration within the input data array.
 
@@ -74,7 +76,7 @@ def find_CRs(data, gdq, read_noise, rej_threshold):
         # read noise taking into account the fact that multiple frames were
         # averaged into each group./
         poisson_noise = np.sqrt(np.abs(med_diffs))
-        sigma = np.sqrt(poisson_noise*poisson_noise + read_noise_2/ngroups)
+        sigma = np.sqrt(poisson_noise*poisson_noise + read_noise_2/nframes)
 
         # Reset sigma to exclude pixels with both readnoise and signal=0
         wh_sig = np.where(sigma == 0.)
@@ -111,12 +113,16 @@ def find_CRs(data, gdq, read_noise, rej_threshold):
         # Get indices of the 2nd highest values above the rejection threshold
         r2, c2 = np.where(ratio[r,c,max_index2] > rej_threshold)
 
-        log.debug('From 2nd highest outlier Twopt found %d pixels with at least one CR' % (len(r2)))
+        if nframes>1:  # Use 2nd highest outliers if nframes>1
+            # Combine both sets of rows,columns for outliers above threshold
+            rboth = np.concatenate((r1,r2))
+            cboth = np.concatenate((c1,c2))
+            log.debug('From 2nd highest outlier Twopt found %d pixels with at least one CR' % (len(r2)))
+        else:
+            rboth = r1.copy()
+            cboth = c1.copy()
 
-        # Combine both sets of rows,columns for outliers above threshold
-        rboth = np.concatenate((r1,r2))
-        cboth = np.concatenate((c1,c2))
-        total_both = len(rboth)
+        total_both = len(rboth)  
 
         # Loop over pixels that have an outlier, checking to see if they have
         # more than 1 outlier
@@ -148,7 +154,7 @@ def find_CRs(data, gdq, read_noise, rej_threshold):
                 # Recompute the masked median, noise, and ratios for this pixel
                 med = np.median(masked_diffs[cr_mask*sat_mask])
                 poisson_noise = np.sqrt(np.abs(med))
-                sigma = np.sqrt(poisson_noise*poisson_noise + rn2/ngroups)
+                sigma = np.sqrt(poisson_noise*poisson_noise + rn2/nframes)
 
                 ratio = np.abs(masked_diffs - med)/sigma
  
