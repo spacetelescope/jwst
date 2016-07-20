@@ -80,7 +80,7 @@ def do_slit_flat_field(output_model, flat_model):
     any_updated = False # will set True if any flats applied
 
     # Check for a single image in the flat model
-    if len(flat_model.slits) == 1 and flat_model.slits[0].name == None:
+    if len(flat_model.slits) == 1 and flat_model.slits[0].name is None:
         # Populate slit attributes that will be needed later
         flat_model.slits[0].name = flat_model.meta.subarray.name
         flat_model.slits[0].xstart = flat_model.meta.subarray.xstart
@@ -91,7 +91,7 @@ def do_slit_flat_field(output_model, flat_model):
     # Apply flat to simple ImageModels
     if isinstance(output_model, datamodels.ImageModel):
         flat = get_flat(output_model, flat_model)
-        if flat != None:
+        if flat is not None:
             apply_flat_field(output_model, flat)
             any_updated = True
 
@@ -102,7 +102,7 @@ def do_slit_flat_field(output_model, flat_model):
         for slit in output_model.slits:
             log.info('Retrieving flat for slit %s' % (slit.name))
             flat = get_flat(slit, flat_model)
-            if flat != None:
+            if flat is not None:
                 apply_flat_field(slit, flat)
                 any_updated = True
 
@@ -121,7 +121,7 @@ def do_slit_flat_field(output_model, flat_model):
 
             log.info('Retrieving flat for integration %s' % (integ))
             flat = get_flat(integ_model, flat_model)
-            if flat != None:
+            if flat is not None:
                 apply_flat_field(integ_model, flat)
                 any_updated = True
 
