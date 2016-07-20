@@ -10,7 +10,7 @@ from .. import datamodels
 from .. datamodels import dqflags
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 def do_correction(input_model, flat_model, flat_suffix=None):
     """
