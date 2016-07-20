@@ -424,14 +424,18 @@ class Association(object):
 
     def _add(self, member):
         """Add a member, association-specific"""
-        raise NotImplementedError('Association._add must be implemented by a specific assocation rule.')
+        raise NotImplementedError(
+            'Association._add must be implemented'
+            ' by a specific assocation rule.'
+        )
 
 
 # User module level functions
-def validate(association,
-             definition_files=None,
-             include_default=True,
-             global_constraints=None
+def validate(
+        association,
+        definition_files=None,
+        include_default=True,
+        global_constraints=None
 ):
     """Validate an association against know schema
 
@@ -465,6 +469,7 @@ def validate(association,
         global_constraints=global_constraints
     )
     return rules.validate(association)
+
 
 # Utilities
 def import_from_file(filename):

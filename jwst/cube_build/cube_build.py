@@ -1,14 +1,18 @@
 # Routines used for building cubes
 from __future__ import absolute_import, print_function
+
 import sys
 import time
 import numpy as np
 import math
 import json
+
 from astropy.io import fits
+
+from gwcs.utils import _domain_to_bounds
+from ..associations import Association
 from .. import datamodels
 from ..assign_wcs import nirspec
-from gwcs.utils import _domain_to_bounds
 from . import cube
 from . import CubeOverlap
 from . import CubeCloud
@@ -919,11 +923,12 @@ class IFUCubeInput(object):
         elif isinstance(input, str):
             try:
                 # The name of an association table
-                self.asn_table = json.load(open(input, 'r'))
+                with open(input, 'r') as input_fh:
+                    self.asn_table = Association.load(input_fh)
             except:
                 # The name of a single image file
 
-                log.debug( 'going to read a single file')
+                log.debug('going to read a single file')
                 self.filename = input  # temp until figure out model.meta.filename
                 self.interpret_image_model(datamodels.ImageModel(input))
 
