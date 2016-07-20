@@ -7,5 +7,7 @@ dist/
 *.egg-info/
 *.so
 */version.py
+docs/*/source/*.txt.rst
+docs/fits_generator/source/templates.rst
 RELIC-INFO
 relic/

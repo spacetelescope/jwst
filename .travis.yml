@@ -11,8 +11,8 @@ env:
     global:
         - MAIN_CMD='python setup.py'
         - CONDA_CHANNELS='http://ssb.stsci.edu/conda-dev'
-        - CONDA_DEPENDENCIES='pytest stsci-jwst'
-        - CONDA_JWST_DEPENDENCIES='pytest stsci-jwst'
+        - CONDA_DEPENDENCIES='pytest jwst sphinx=1.3.5'
+        - CONDA_JWST_DEPENDENCIES='pytest stsci-jwst sphinx=1.3.5'
         - PIP_DEPENDENCIES=''
 
     matrix:
@@ -27,6 +27,12 @@ matrix:
         - os: linux
           env: PYTHON_VERSION=3.5 MAIN_CMD='pep8 --count'
                SETUP_CMD='jwst' TEST_CMD='pep8 --version'
+               CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
+
+        # build sphinx documentation
+        - os: linux
+          env: PYTHON_VERSION=3.5 MAIN_CMD='docs/mkdocs.sh'
+               SETUP_CMD=''
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
 
     allow_failures:
