@@ -506,7 +506,7 @@ class Gwa2Slit(Model):
         self.models = models
         super(Gwa2Slit, self).__init__()
 
-    def evaluate(self, quadrant, slitid,list x, y, z):
+    def evaluate(self, quadrant, slitid,istax, y, z):
         slit = int(slitid_to_slit(np.array([quadrant, slitid]).T)[0])
         return (quadrant, slitid) + self.models[slit](x, y, z)
 
