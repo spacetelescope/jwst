@@ -144,7 +144,7 @@ class Gwa2SlitType(TransformType):
     def to_tree_transform(cls, model, ctx):
         slits = []
         models = []
-        for s, m in model.models.iteritems():
+        for s, m in model.models.items():
             slits.append(s)
             models.append(m)
         node = {'slits': slits,
@@ -167,7 +167,7 @@ class Slit2MsaType(TransformType):
     def to_tree_transform(cls, model, ctx):
         slits = []
         models = []
-        for s, m in model.models.iteritems():
+        for s, m in model.models.items():
             slits.append(s)
             models.append(m)
         node = {'slits': slits,

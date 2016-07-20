@@ -502,7 +502,7 @@ class Gwa2Slit(Model):
     outputs = ('x_slit', 'y_slit', 'lam', 'quadrant', 'slitid')
 
     def __init__(self, models):
-        self.slits = slit_to_slitid(models.keys())
+        self.slits = slit_to_slitid(list(models.keys()))
         self.models = models
         super(Gwa2Slit, self).__init__()
 
@@ -518,7 +518,7 @@ class Slit2Msa(Model):
 
     def __init__(self, models):
         super(Slit2Msa, self).__init__()
-        self.slits = slit_to_slitid(models.keys())
+        self.slits = slit_to_slitid(list(models.keys()))
         self.models = models
 
     def evaluate(self, quadrant, slitid, x, y, lam):
