@@ -5,6 +5,7 @@
 import numpy as np
 import logging
 from .. import datamodels
+from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -43,12 +44,8 @@ def do_correction(input_model, lastframe_model):
     sci_nints = input_model.data.shape[0]
     sci_ngroups = input_model.data.shape[1]
 
-    #lastframe_nints = lastframe_model.data.shape[0]
-
     log.debug("LastFrame Sub using: nints=%d " %
           (sci_nints))
-
-
 
     # Create output as a copy of the input science data model
     output = input_model.copy()
@@ -56,6 +53,10 @@ def do_correction(input_model, lastframe_model):
     # combine the science and lastframe DQ arrays
     output.pixeldq = np.bitwise_or(input_model.pixeldq, lastframe_model.dq)
 
+    # If ngroups > 1, set all of the GROUPDQ in the final group to 'DO_NOT_USE'
+    if sci_ngroups > 1:
+        output.groupdq[:, -1, :, :] = dqflags.group['DO_NOT_USE']
+        log.debug("LastFrame Sub: resetting GROUPDQ in last frame to DO_NOT_USE")
 
     output.data[:, sci_ngroups - 1] -= lastframe_model.data
 

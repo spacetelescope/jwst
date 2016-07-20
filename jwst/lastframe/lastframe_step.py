@@ -7,7 +7,8 @@ class LastFrameStep(Step):
     """
     LastFrameStep: This is a MIRI specific task to correct the last frame by
     subtracting the array contained in the last frame reference file from the
-    last frame.
+    last frame.  If the number of groups is greater than 1, the GROUP data
+    quality flags for the final group will be set to DO_NOT_USE.
     """
 
     reference_file_types = ['lastframe']
