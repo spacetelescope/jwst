@@ -28,11 +28,13 @@
 # DAMAGE.
 
 # STDLIB
-from cStringIO import StringIO
 import glob
 import os
 import re
 import textwrap
+
+from astropy.extern import six
+from six.moves import cStringIO
 
 # LOCAL
 from jwst.fits_generator import template
@@ -59,7 +61,7 @@ class TemplateToRst(template.TemplateParserBase):
         self._output.write('\n')
 
     def _parse_file(self, name):
-        self._output = StringIO()
+        self._output = cStringIO()
         self._print(name)
         self._print('=' * len(name))
         self._print()
@@ -128,7 +130,7 @@ def convert_templates(outdir):
 
     files = list(files)
     files.sort()
-    with open(os.path.join(outdir, 'templates.rst'), 'wb') as fd:
+    with open(os.path.join(outdir, 'templates.rst'), 'w') as fd:
         fd.write('Templates\n')
         fd.write('=========\n')
         fd.write('\n')
