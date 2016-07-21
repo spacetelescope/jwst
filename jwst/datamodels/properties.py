@@ -159,12 +159,11 @@ class ObjectNode(Node):
         return list(six.iterkeys(self._schema.get('properties', {})))
 
     def __eq__(self, other):
-        if isinstance(other, dict):
-            return self._instance == other
-        elif isinstance(other, ObjectNode):
+        if isinstance(other, ObjectNode):
             return self._instance == other._instance
-        return self == other
-
+        else:
+            return self._instance == other
+        
     def __getattr__(self, attr):
         if attr.startswith('_'):
             raise AttributeError('No attribute {0}'.format(attr))
