@@ -130,7 +130,7 @@ def convert_templates(outdir):
 
     files = list(files)
     files.sort()
-    with open(os.path.join(outdir, 'templates.rst'), 'wb') as fd:
+    with open(os.path.join(outdir, 'templates.rst'), 'w') as fd:
         fd.write('Templates\n')
         fd.write('=========\n')
         fd.write('\n')
