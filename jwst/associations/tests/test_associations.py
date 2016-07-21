@@ -11,7 +11,7 @@ from .. import (
     AssociationRegistry,
     AssociationPool,
     generate)
-from ..association import (
+from ..registry import (
     import_from_file,
     find_member
 )
