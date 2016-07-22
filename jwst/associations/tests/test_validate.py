@@ -4,7 +4,7 @@ import pytest
 
 from . import helpers
 
-from ..association import (
+from .. import (
     Association,
     AssociationRegistry,
     AssociationNotValidError

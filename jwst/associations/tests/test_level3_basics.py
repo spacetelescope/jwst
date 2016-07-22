@@ -12,16 +12,16 @@ from .. import (AssociationRegistry, AssociationPool, generate)
 L35_PRODUCT_NAME = (
     'jw(?P<program>\d{5})'
     '_(?P<targetid>t\d{3})'
-    '_(?P<instrument>.+)'
-    '_(?P<opt_elem>.+)'
+    '_(?P<instrument>.+?)'
+    '_(?P<opt_elem>.+?)'
     '_(?P<ptype>.+)\.fits'
 )
 L3_PRODUCT_NAME = (
     'jw(?P<program>\d{5})'
     '-(?P<acid>[a-z]\d{3,4})'
     '_(?P<targetid>t\d{3})'
-    '_(?P<instrument>.+)'
-    '_(?P<opt_elem>.+)'
+    '_(?P<instrument>.+?)'
+    '_(?P<opt_elem>.+?)'
     '_(?P<ptype>.+)\.fits'
 )
 
@@ -46,14 +46,14 @@ class TestLevel3Environment(object):
         pool = AssociationPool.read(self.pools_size[0][0])
         asns, orphaned = generate(pool, rules)
         asn = asns[0]
-        match = re.match(L35_PRODUCT_NAME, asn.data['products'][0]['name'])
+        match = re.match(L35_PRODUCT_NAME, asn['products'][0]['name'])
         yield helpers.not_none, match
         matches = match.groupdict()
         yield helpers.check_equal, matches['program'], '93060'
         yield helpers.check_equal, matches['targetid'], 't001'
         yield helpers.check_equal, matches['instrument'], 'miri'
         yield helpers.check_equal, matches['opt_elem'], 'f560w'
-        yield helpers.check_equal, matches['ptype'], 'dither'
+        yield helpers.check_equal, matches['ptype'], '{product_type}'
 
     def test_l3_productname(self):
         global_constraints = {}
@@ -66,7 +66,7 @@ class TestLevel3Environment(object):
         pool = AssociationPool.read(self.pools_size[0][0])
         asns, orphaned = generate(pool, rules)
         asn = asns[0]
-        match = re.match(L3_PRODUCT_NAME, asn.data['products'][0]['name'])
+        match = re.match(L3_PRODUCT_NAME, asn['products'][0]['name'])
         yield helpers.not_none, match
         matches = match.groupdict()
         yield helpers.check_equal, matches['program'], '93060'
@@ -74,4 +74,4 @@ class TestLevel3Environment(object):
         yield helpers.check_equal, matches['targetid'], 't001'
         yield helpers.check_equal, matches['instrument'], 'miri'
         yield helpers.check_equal, matches['opt_elem'], 'f560w'
-        yield helpers.check_equal, matches['ptype'], 'dither'
+        yield helpers.check_equal, matches['ptype'], '{product_type}'

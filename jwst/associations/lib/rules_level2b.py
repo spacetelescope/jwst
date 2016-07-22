@@ -4,7 +4,7 @@ import logging
 from os.path import basename
 import re
 
-from jwst.associations.association import (
+from jwst.associations import (
     Association,
     libpath
 )
