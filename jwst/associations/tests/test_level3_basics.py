@@ -46,7 +46,7 @@ class TestLevel3Environment(object):
         pool = AssociationPool.read(self.pools_size[0][0])
         asns, orphaned = generate(pool, rules)
         asn = asns[0]
-        match = re.match(L35_PRODUCT_NAME, asn.data['products'][0]['name'])
+        match = re.match(L35_PRODUCT_NAME, asn['products'][0]['name'])
         yield helpers.not_none, match
         matches = match.groupdict()
         yield helpers.check_equal, matches['program'], '93060'
@@ -66,7 +66,7 @@ class TestLevel3Environment(object):
         pool = AssociationPool.read(self.pools_size[0][0])
         asns, orphaned = generate(pool, rules)
         asn = asns[0]
-        match = re.match(L3_PRODUCT_NAME, asn.data['products'][0]['name'])
+        match = re.match(L3_PRODUCT_NAME, asn['products'][0]['name'])
         yield helpers.not_none, match
         matches = match.groupdict()
         yield helpers.check_equal, matches['program'], '93060'

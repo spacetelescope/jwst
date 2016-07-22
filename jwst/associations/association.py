@@ -1,10 +1,10 @@
-import logging
-from collections import namedtuple
+from collections import namedtuple, MutableMapping
 from copy import deepcopy
 from datetime import datetime
 from itertools import count
 import json
 import jsonschema
+import logging
 from nose.tools import nottest
 import re
 
@@ -30,7 +30,7 @@ logger.addHandler(logging.NullHandler())
 _TIMESTAMP_TEMPLATE = '%Y%m%dT%H%M%S'
 
 
-class Association(object):
+class Association(MutableMapping):
     """An Association
 
     Parameters
@@ -50,6 +50,10 @@ class Association(object):
 
     Attributes
     ----------
+    instance: dict-like
+        The instance is the association data structure.
+        See `data` below
+
     meta: dict
         Information about the association.
 
@@ -78,6 +82,7 @@ class Association(object):
 
     def __init__(self, member=None, timestamp=None):
 
+        self.data = dict()
         self.add_constraints(deepcopy(self.GLOBAL_CONSTRAINTS))
         self.run_init_hook = True
         if timestamp is not None:
@@ -85,11 +90,11 @@ class Association(object):
         else:
             self.timestamp = make_timestamp()
         self.meta = {}
-        self.data = {
+        self.data.update({
             'asn_type': 'None',
             'asn_rule': self.__class__.__name__,
             'creation_time': self.timestamp
-        }
+        })
 
         if member is not None:
             self.add(member)
@@ -285,6 +290,24 @@ class Association(object):
         raise NotImplementedError(
             'Association._add must be implemented by a specific assocation rule.'
         )
+
+    def __getitem__(self, key):
+        return self.data[self.__keytransform__(key)]
+
+    def __setitem__(self, key, value):
+        self.data[self.__keytransform__(key)] = value
+
+    def __delitem__(self, key):
+        del self.data[self.__keytransform__(key)]
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __keytransform__(self, key):
+        return key
 
 
 # User module level functions

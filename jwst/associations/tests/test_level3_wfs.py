@@ -26,5 +26,5 @@ class TestLevel3WFS(helpers.BasePoolRule):
             helpers.t_path('data/jw82600_002_20151107t165901_pool.csv')
         )
         (asns, orphaned) = generate(pool, rules)
-        name = asns[0].data['products'][0]['name']
+        name = asns[0]['products'][0]['name']
         assert name == 'jw82600_t001_nircam_clear_wfscmb-01.fits'

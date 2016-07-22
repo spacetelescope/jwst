@@ -45,7 +45,7 @@ class TestProductNames():
             pool = AssociationPool.read(pool_file)
             (asns, orphaned) = generate(pool, rules)
             for asn in asns:
-                product_name = asn.data['products'][0]['name']
+                product_name = asn['products'][0]['name']
                 m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
                 yield helpers.not_none, m
 
@@ -56,7 +56,7 @@ class TestProductNames():
         pool = AssociationPool.read(self.pool_files[0])
         (asns, orphaned) = generate(pool, rules)
         for asn in asns:
-            product_name = asn.data['products'][0]['name']
+            product_name = asn['products'][0]['name']
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
             yield helpers.not_none, m
             yield helpers.check_equal, m.groupdict()['acid'], 'o002'
@@ -66,7 +66,7 @@ class TestProductNames():
         pool = AssociationPool.read(self.pool_files[1])
         (asns, orphaned) = generate(pool, rules)
         for asn in asns:
-            product_name = asn.data['products'][0]['name']
+            product_name = asn['products'][0]['name']
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
             yield helpers.not_none, m
             if asn.constraints['opt_elem2']['value'] == 'CLEAR':
