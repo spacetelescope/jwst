@@ -244,6 +244,9 @@ class DirCos2Unitless(Model):
 
         return x / z, y / z
 
+    def inverse(self):
+        return Unitless2DirCos()
+
 
 class Rotation3DToGWA(Model):
     separable = False
