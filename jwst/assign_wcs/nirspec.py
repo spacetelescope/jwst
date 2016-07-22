@@ -177,8 +177,8 @@ def slits_wcs(input_model, reference_files):
     input_model.meta.wcsinfo.spectral_order = sporder
 
     # DETECTOR to GWA transform
-    #det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
-    det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
+    det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
+    #det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 
     # GWA to SLIT
     gwa2slit = gwa_to_slit(open_slits_id, disperser, wrange, sporder, reference_files)
@@ -808,8 +808,8 @@ def nrs_wcs_set_input(wcsobj, quadrant, slitid, wavelength_range):
     import copy # TODO: Add a copy method to gwcs.WCS
     slit = slitid_to_slit(np.array([(quadrant, slitid)]))[0]
     slit_wcs = copy.deepcopy(wcsobj)
-    #slit_wcs.set_transform('detector', 'gwa', wcsobj.pipeline[0][1][1:])
-    slit_wcs.set_transform('detector', 'gwa', wcsobj.pipeline[0][1])
+    slit_wcs.set_transform('detector', 'gwa', wcsobj.pipeline[0][1][1:])
+    #slit_wcs.set_transform('detector', 'gwa', wcsobj.pipeline[0][1])
     slit_wcs.set_transform('gwa', 'slit_frame', wcsobj.pipeline[1][1].models[slit])
     slit_wcs.set_transform('slit_frame', 'msa_frame', wcsobj.pipeline[2][1][1].models[slit] & Identity(1))
 
