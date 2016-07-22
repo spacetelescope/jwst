@@ -76,14 +76,10 @@ class Association(object):
     # Associations of the same type are sequenced.
     _sequence = count(1)
 
-    def __init__(self, member, timestamp=None):
+    def __init__(self, member=None, timestamp=None):
 
         self.add_constraints(deepcopy(self.GLOBAL_CONSTRAINTS))
-        self.test_and_set_constraints(member)
-
-        # Member belongs to us!
-        # Continue initialization.
-        self.sequence = six.advance_iterator(self._sequence)
+        self.run_init_hook = True
         if timestamp is not None:
             self.timestamp = timestamp
         else:
@@ -95,11 +91,9 @@ class Association(object):
             'creation_time': self.timestamp
         }
 
-        # Peform further initializations before actually
-        # adding the member to this association.
-        self._init_hook(member)
-
-        self.add(member, check_constraints=False)
+        if member is not None:
+            self.add(member)
+        self.sequence = six.advance_iterator(self._sequence)
 
     @property
     def asn_name(self):
@@ -211,7 +205,10 @@ class Association(object):
         if check_constraints:
             self.test_and_set_constraints(member)
 
+        if self.run_init_hook:
+            self._init_hook(member)
         self._add(member)
+        self.run_init_hook = False
 
     @nottest
     def test_and_set_constraints(self, member):

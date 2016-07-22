@@ -7,6 +7,7 @@ from nose import SkipTest
 from . import helpers
 
 from .. import (
+    Association,
     AssociationError,
     AssociationRegistry,
     AssociationPool,
@@ -77,7 +78,7 @@ class TestAssociations():
 
     def test_base_instatiation(self):
         """Create an association without any initialization"""
-        raise SkipTest('Need to implement.')
+        assert Association()
 
     def test_global_constraints(self):
         """Test that global constraints get applied to all rules"""
