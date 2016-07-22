@@ -45,7 +45,7 @@ class Asn_Mosaic(
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
 
-        self.data['asn_type'] = 'mosaic'
+        self.data['asn_type'] = 'image'
         super(Asn_Mosaic, self)._init_hook(member)
 
 
@@ -82,7 +82,7 @@ class Asn_Dither(
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
 
-        self.data['asn_type'] = 'dither'
+        self.data['asn_type'] = 'image'
         super(Asn_Dither, self)._init_hook(member)
 
 
@@ -120,7 +120,7 @@ class Asn_WFSCMB(
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
 
-        self.data['asn_type'] = 'wfscmb'
+        self.data['asn_type'] = 'wfs'
         super(Asn_WFSCMB, self)._init_hook(member)
 
 

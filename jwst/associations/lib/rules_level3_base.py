@@ -99,7 +99,6 @@ class DMS_Level3_Base(Association):
             target = 't{0:0>3s}'.format(self.data['targname'])
 
         instrument = self.constraints['instrument']['value']
-        asn_type = self.data['asn_type']
 
         opt_elem = ''
         join_char = ''
@@ -122,12 +121,11 @@ class DMS_Level3_Base(Association):
             if activity_id not in _EMPTY:
                 exposure = '-{0:0>2s}'.format(activity_id)
 
-        product_name = 'jw{}_{}_{}_{}_{}{}.fits'.format(
+        product_name = 'jw{}_{}_{}_{}_{{product_type}}{}.fits'.format(
             program,
             target,
             instrument,
             opt_elem,
-            asn_type,
             exposure
         )
 
@@ -417,7 +415,7 @@ class AsnMixin_Spectrum(AsnMixin_Unique_Config):
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
 
-        self.data['asn_type'] = 'spectrum'
+        self.data['asn_type'] = 'spec'
         super(AsnMixin_Spectrum, self)._init_hook(member)
 
 
