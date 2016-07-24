@@ -11,7 +11,7 @@ import numpy as np
 from . import x_irs2
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 NumRefPixels = namedtuple("NumRefPixels",
                           ["bottom_rows", "top_rows",
