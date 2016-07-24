@@ -132,22 +132,30 @@ def ifu(input_model, reference_files):
 
     # SLIT to MSA transform
     slit2msa = ifuslit_to_msa(slits, reference_files)
-
-    # MSA to OTEIP transform
-    msa2oteip = ifu_msa_to_oteip(reference_files)
-
-    # OTEIP to V2,V3 transform
-    oteip2v23 = oteip_to_v23(reference_files)
-
-    # Create coordinate frames in the NIRSPEC WCS pipeline"
-    # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
+    
     det, gwa, slit_frame, msa_frame, oteip, v2v3 = create_frames()
-    pipeline = [(det, det2gwa.rename('detector2gwa')),
-                (gwa, gwa2slit.rename('gwa2slit')),
-                (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
-                (msa_frame, msa2oteip.rename('msa2oteip')),
-                (oteip, oteip2v23.rename('oteip2v23')),
-                (v2v3, None)]
+    if input_model.meta.instrument.filter != 'OPAQUE':
+        # MSA to OTEIP transform
+        msa2oteip = ifu_msa_to_oteip(reference_files)
+
+        # OTEIP to V2,V3 transform
+        oteip2v23 = oteip_to_v23(reference_files)
+
+        # Create coordinate frames in the NIRSPEC WCS pipeline"
+        # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
+
+        pipeline = [(det, det2gwa.rename('detector2gwa')),
+                    (gwa, gwa2slit.rename('gwa2slit')),
+                    (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
+                    (msa_frame, msa2oteip.rename('msa2oteip')),
+                    (oteip, oteip2v23.rename('oteip2v23')),
+                    (v2v3, None)]
+    else:
+
+        pipeline = [(det, det2gwa.rename('detector2gwa')),
+                    (gwa, gwa2slit.rename('gwa2slit')),
+                    (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
+                    (msa_frame, None)]
 
     return pipeline
 
