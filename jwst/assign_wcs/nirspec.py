@@ -23,6 +23,7 @@ from gwcs import coordinate_frames as cf
 
 from ..transforms.models import *
 from .util import not_implemented_mode
+from . import pointing
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -101,11 +102,15 @@ def imaging(input_model, reference_files):
         with AsdfFile.open(reference_files['ote']) as f:
             oteip2v23 = f.tree['model'].copy()
 
+        # V2, V3 to wprld (RA, DEC) transform
+        v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
+
         imaging_pipeline = [(det, det2gwa),
                             (gwa, gwa2msa),
                             (msa_frame, msa2oteip),
                             (oteip, oteip2v23),
-                            (v2v3, None)]
+                            (v2v3, v23_to_sky),
+                            (world, None)]
     else:
         imaging_pipeline = [(det, det2gwa),
                             (gwa, gwa2msa),
@@ -137,13 +142,17 @@ def ifu(input_model, reference_files):
     # SLIT to MSA transform
     slit2msa = ifuslit_to_msa(slits, reference_files)
 
-    det, gwa, slit_frame, msa_frame, oteip, v2v3 = create_frames()
+    det, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
     if input_model.meta.instrument.filter != 'OPAQUE':
         # MSA to OTEIP transform
         msa2oteip = ifu_msa_to_oteip(reference_files)
 
         # OTEIP to V2,V3 transform
         oteip2v23 = oteip_to_v23(reference_files)
+
+        # V2, V3 to wprld (RA, DEC ,LAMBDA) transform
+        v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
+        v23_to_world = v23_to_sky & Identity(1)
 
         # Create coordinate frames in the NIRSPEC WCS pipeline"
         # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
@@ -153,7 +162,8 @@ def ifu(input_model, reference_files):
                     (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
                     (msa_frame, msa2oteip.rename('msa2oteip')),
                     (oteip, oteip2v23.rename('oteip2v23')),
-                    (v2v3, None)]
+                    (v2v3, v23_to_world),
+                    (world, None)]
     else:
 
         pipeline = [(det, det2gwa.rename('detector2gwa')),
@@ -200,7 +210,7 @@ def slits_wcs(input_model, reference_files):
 
     # Create coordinate frames in the NIRSPEC WCS pipeline"
     # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
-    det, gwa, slit_frame, msa_frame, oteip, v2v3 = create_frames()
+    det, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
     if input_model.meta.instrument.filter != 'OPAQUE':
         # MSA to OTEIP transform
         msa2oteip = msa_to_oteip(reference_files)
@@ -208,12 +218,17 @@ def slits_wcs(input_model, reference_files):
         # OTEIP to V2,V3 transform
         oteip2v23 = oteip_to_v23(reference_files)
 
+        # V2, V3 to wprld (RA, DEC ,LAMBDA) transform
+        v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
+        v23_to_world = v23_to_sky & Identity(1)
+
         msa_pipeline = [(det, det2gwa),
                         (gwa, gwa2slit),
                         (slit_frame, Mapping((0, 1, 2, 3, 4)) | slit2msa),
                         (msa_frame, msa2oteip),
                         (oteip, oteip2v23),
-                        (v2v3, None)]
+                        (v2v3, v23_to_world),
+                        (world, None)]
     else:
         msa_pipeline = [(det, det2gwa),
                         (gwa, gwa2slit),
@@ -726,7 +741,7 @@ def create_frames():
                              axes_names=('x_msa', 'y_msa'))
     slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), unit=("", ""),
                              axes_names=('x_slit', 'y_slit'))
-    #sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
+    sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.m,),
                             axes_names=('wavelength',))
     v2v3_spatial = cf.Frame2D(name='V2V3_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
@@ -737,14 +752,15 @@ def create_frames():
     oteip_spatial = cf.Frame2D(name='OTEIP_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
                                axes_names=('X_OTEIP', 'Y_OTEIP'))
     oteip = cf.CompositeFrame([oteip_spatial, spec], name='oteip')
-    #world = cf.CompositeFrame([sky, spec], name='world')
-    return det, gwa, slit_frame, msa_frame, oteip, v2v3
+    world = cf.CompositeFrame([sky, spec], name='world')
+    return det, gwa, slit_frame, msa_frame, oteip, v2v3, world
 
 
 def create_imaging_frames():
     """
     Create the coordinate frames in the NIRSPEC WCS pipeline.
-    These are                                                                                          "detector", "gwa", "msa_frame", "oteip", "v2v3", "world".
+    These are
+    "detector", "gwa", "msa_frame", "oteip", "v2v3", "world".
     """
     det = cf.Frame2D(name='detector', axes_order=(0, 1))
     gwa = cf.Frame2D(name="gwa", axes_order=(0, 1), unit=(u.rad, u.rad),
