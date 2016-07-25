@@ -37,7 +37,8 @@ def do_correction(input_model, dark_model, dark_output=None):
     """
 
     # Save some data params for easy use later
-    detector = input_model.meta.instrument.detector
+
+    instrument = input_model.meta.instrument.name
     sci_nints = input_model.data.shape[0]
     sci_ngroups = input_model.data.shape[1]
     sci_nframes = input_model.meta.exposure.nframes
@@ -76,7 +77,7 @@ def do_correction(input_model, dark_model, dark_output=None):
         # If the data is MIRI data - then the darks are integration dependent and we average them
         # with a seperate routine
 
-        if detector[:3] == 'MIR':
+        if instrument== 'MIRI':
             averaged_dark = average_MIRIdark_frames(dark_model, sci_nints, sci_ngroups,
                                                     sci_nframes, sci_groupgap)
         else:
@@ -275,35 +276,44 @@ def subtract_dark(input, dark):
 
     """
 
-    dark_ints = dark.data.shape[0] -1
+    instrument = input.meta.instrument.name
+    dark_nints = dark.data.shape[0]
 
     log.debug("subtract_dark: nints=%d, ngroups=%d, size=%d,%d",
               input.meta.exposure.nints, input.meta.exposure.ngroups,
               input.data.shape[-1], input.data.shape[-2])
 
-
     # Create output as a copy of the input science data model
     output = input.copy()
-
     
     # combine the science and dark DQ arrays
-    detector = input.meta.instrument.detector
-    if(detector[:3] == 'MIR'):
-           output.pixeldq = np.bitwise_or(input.pixeldq, np.bitwise_or(dark.dq[0,0,:,:], dark.dq[1,0,:,:]))
+
+    # MIRI Dark reference file has a DQ plane for each integration in the Dark
+    # First lets collapse the dark DQ plane into a single 2-D array
+    if(instrument == 'MIRI'):
+        collapse_darkdq = dark.dq[0,0,:,:].copy()
+        for i in range(1, dark_nints):
+            combined_darkdq = np.bitwise_or(collapse_darkdq,dark.dq[i,0,:,:])
+            collapse_darkdq = combined_darkdq
+           #output.pixeldq = np.bitwise_or(input.pixeldq, np.bitwise_or(dark.dq[0,0,:,:], dark.dq[1,0,:,:]))
+
+        output.pixeldq = np.bitwise_or(input.pixeldq, collapse_darkdq)
+           
     else:
-           output.pixeldq = np.bitwise_or(input.pixeldq, dark.dq)
+        output.pixeldq = np.bitwise_or(input.pixeldq, dark.dq)
 
 
     # loop over all integrations and groups in input science data
     for i in range(input.data.shape[0]):
-        if(detector[:3] =='MIR'):
-
-            if(i <= dark_ints): dark_int = dark.data[i]
-            if(i > dark_ints): dark_int = dark.data[dark_ints]
+        if(instrument =='MIRI'):
+            if(i < dark_nints): 
+                dark_int = dark.data[i]
+            else:
+                dark_int = dark.data[dark_nints-1]
 
         for j in range(input.data.shape[1]):
             # subtract the SCI arrays
-            if(detector[:3] =='MIR'):
+            if(instrument =='MIRI'):
                 output.data[i,j]  -=dark_int[j]
             else:
                 output.data[i, j] -= dark.data[j]

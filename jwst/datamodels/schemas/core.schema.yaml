@@ -1070,14 +1070,6 @@ properties:
                 title: Dark reference file name
                 type: string
                 fits_keyword: R_DARK
-          darkMIRI:
-            title: MIRI Dark reference file information
-            type: object
-            properties:
-              name:
-                title: MIRI Dark reference file name
-                type: string
-                fits_keyword: R_DARK
           flat:
             title: Flat reference file information
             type: object

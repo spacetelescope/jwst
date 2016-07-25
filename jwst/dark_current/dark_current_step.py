@@ -32,10 +32,9 @@ class DarkCurrentStep(Step):
                 result.meta.cal_step.dark = 'SKIPPED'
                 return result
 
-            detector = input_model.meta.instrument.detector
-
-            # Open the dark ref file data model - based on Detector type
-            if(detector[:3] == 'MIR'):
+            instrument = input_model.meta.instrument.name
+            # Open the dark ref file data model - based on Instrument
+            if(instrument == 'MIRI'):
                 dark_model = datamodels.DarkMIRIModel(self.dark_name)
             else:    
                 dark_model = datamodels.DarkModel(self.dark_name)
