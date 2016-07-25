@@ -89,23 +89,27 @@ def imaging(input_model, reference_files):
     gwa2msa = gwa_through | rotation | dircos2unitless | col | lam_model
     gwa2msa.inverse = col.inverse | dircos2unitless.inverse | rotation.inverse | gwa_through
 
-    # MSA to OTEIP transform
-    msa2ote = msa_to_oteip(reference_files)
-    msa2oteip = msa2ote | Mapping((0, 1), n_inputs=3)
-    msa2oteip.inverse = Mapping((0, 1, 0, 1)) | msa2ote.inverse | Mapping((0, 1), n_inputs=3)
-    # OTEIP to V2,V3 transform
-    with AsdfFile.open(reference_files['ote']) as f:
-        oteip2v23 = f.tree['model'].copy()
-
     # Create coordinate frames in the NIRSPEC WCS pipeline
     # "detector", "gwa", "msa", "oteip", "v2v3", "world"
     det, gwa, msa_frame, oteip, v2v3 = create_imaging_frames()
+    if input_model.meta.instrument.filter != 'OPAQUE':
+        # MSA to OTEIP transform
+        msa2ote = msa_to_oteip(reference_files)
+        msa2oteip = msa2ote | Mapping((0, 1), n_inputs=3)
+        msa2oteip.inverse = Mapping((0, 1, 0, 1)) | msa2ote.inverse | Mapping((0, 1), n_inputs=3)
+        # OTEIP to V2,V3 transform
+        with AsdfFile.open(reference_files['ote']) as f:
+            oteip2v23 = f.tree['model'].copy()
 
-    imaging_pipeline = [(det, det2gwa),
-                    (gwa, gwa2msa),
-                    (msa_frame, msa2oteip),
-                    (oteip, oteip2v23),
-                    (v2v3, None)]
+        imaging_pipeline = [(det, det2gwa),
+                            (gwa, gwa2msa),
+                            (msa_frame, msa2oteip),
+                            (oteip, oteip2v23),
+                            (v2v3, None)]
+    else:
+        imaging_pipeline = [(det, det2gwa),
+                            (gwa, gwa2msa),
+                            (msa_frame, None)]
 
     return imaging_pipeline
 
@@ -132,7 +136,7 @@ def ifu(input_model, reference_files):
 
     # SLIT to MSA transform
     slit2msa = ifuslit_to_msa(slits, reference_files)
-    
+
     det, gwa, slit_frame, msa_frame, oteip, v2v3 = create_frames()
     if input_model.meta.instrument.filter != 'OPAQUE':
         # MSA to OTEIP transform
@@ -194,22 +198,27 @@ def slits_wcs(input_model, reference_files):
     # SLIT to MSA transform
     slit2msa = slit_to_msa(open_slits_id, reference_files['msa'])
 
-    # MSA to OTEIP transform
-    msa2oteip = msa_to_oteip(reference_files)
-
-    # OTEIP to V2,V3 transform
-    oteip2v23 = oteip_to_v23(reference_files)
-
     # Create coordinate frames in the NIRSPEC WCS pipeline"
     # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
     det, gwa, slit_frame, msa_frame, oteip, v2v3 = create_frames()
+    if input_model.meta.instrument.filter != 'OPAQUE':
+        # MSA to OTEIP transform
+        msa2oteip = msa_to_oteip(reference_files)
 
-    msa_pipeline = [(det, det2gwa),
-                    (gwa, gwa2slit),
-                    (slit_frame, Mapping((0, 1, 2, 3, 4)) | slit2msa),
-                    (msa_frame, msa2oteip),
-                    (oteip, oteip2v23),
-                    (v2v3, None)]
+        # OTEIP to V2,V3 transform
+        oteip2v23 = oteip_to_v23(reference_files)
+
+        msa_pipeline = [(det, det2gwa),
+                        (gwa, gwa2slit),
+                        (slit_frame, Mapping((0, 1, 2, 3, 4)) | slit2msa),
+                        (msa_frame, msa2oteip),
+                        (oteip, oteip2v23),
+                        (v2v3, None)]
+    else:
+        msa_pipeline = [(det, det2gwa),
+                        (gwa, gwa2slit),
+                        (slit_frame, Mapping((0, 1, 2, 3, 4)) | slit2msa),
+                        (msa_frame, None)]
 
     return msa_pipeline
 
