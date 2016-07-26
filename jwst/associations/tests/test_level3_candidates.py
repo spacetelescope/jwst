@@ -18,5 +18,5 @@ class TestLevel3Candidates(BasePoolRule):
     ]
 
     valid_rules = [
-        'Asn_Mosaic',
+        'Asn_Image',
     ]

@@ -49,7 +49,7 @@ class TestAssociations():
         rules = AssociationRegistry()
         assert len(rules) >= 3
         assert 'DMS_Level3_Base' not in rules
-        valid_rules = ['Asn_Dither', 'Asn_WFSCMB']
+        valid_rules = ['Asn_Image', 'Asn_WFSCMB']
         for rule in valid_rules:
             yield helpers.check_in_list, rule, rules
 
