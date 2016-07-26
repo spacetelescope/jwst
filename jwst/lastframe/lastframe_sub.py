@@ -1,67 +1,44 @@
 #
-#  Module for  subtracting lastframe correction from MIRI science data sets
+#  Module for the lastframe correction for MIRI science data sets
 #
 
 import numpy as np
 import logging
+
 from .. import datamodels
+from ..datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-
-def do_correction(input_model, lastframe_model):
+def do_correction(input_model):
     """
     Short Summary
     -------------
-    Subtracts lastframe correction from science arrays, combines
-    error arrays in quadrature, and updates data quality array based on
-    DQ flags in the lastframe arrays.
-
+    The sole correction is to reset to DO_NOT_USE the GROUP data quality flags
+    for the final group, if the number of groups is greater than 1.
+    
     Parameters
     ----------
     input_model: data model object
         science data to be corrected
 
-    lastframe_model: lastframe model object
-        lastframe data
-
-    sci_ngroups:int
-        number of groups in input data
-
-    sci_nints: int
-        number of integrations in input data
-
     Returns
     -------
-    output_model: data model object
-        lastframe-subtracted science data
+    output: data model object
+        lastframe-corrected science data
 
     """
 
     # Save some data params for easy use later
-    sci_nints = input_model.data.shape[0]
     sci_ngroups = input_model.data.shape[1]
-
-    #lastframe_nints = lastframe_model.data.shape[0]
-
-    log.debug("LastFrame Sub using: nints=%d " %
-          (sci_nints))
-
-
 
     # Create output as a copy of the input science data model
     output = input_model.copy()
 
-    # combine the science and lastframe DQ arrays
-    output.pixeldq = np.bitwise_or(input_model.pixeldq, lastframe_model.dq)
-
-
-    output.data[:, sci_ngroups - 1] -= lastframe_model.data
-
-       # combine the ERR arrays in quadrature
-       # NOTE: currently stubbed out until ERR handling is decided
-       # output.err[i,j] = np.sqrt(
-       # output.err[i,j]**2 + lastframe.err[j]**2)
+    # If ngroups > 1, set all of the GROUPDQ in the final group to 'DO_NOT_USE'
+    if sci_ngroups > 1:
+        output.groupdq[:, -1, :, :] = dqflags.group['DO_NOT_USE']
+        log.debug("LastFrame Sub: resetting GROUPDQ in last frame to DO_NOT_USE")
 
     return output
