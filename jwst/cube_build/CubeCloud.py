@@ -41,8 +41,10 @@ def MakePointCloudMIRI(self, x, y, file_no, c1_offset, c2_offset, input_model):
 
     coord1 = v2[index[0]] * 60.0
     coord2 = v3[index[0]] * 60.0
-    coord1 = coord1 + c1_offset / 60.0
-    coord2 = coord2 + c2_offset / 60.0
+    coord1 = coord1 - c1_offset 
+    coord2 = coord2 - c2_offset 
+#    coord1 = coord1 + c1_offset / 60.0
+#    coord2 = coord2 + c2_offset / 60.0
 
     wave = lam[index[0]]
 

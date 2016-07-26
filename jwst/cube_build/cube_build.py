@@ -513,12 +513,17 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
                             ChannelFootPrint = CubeD2C.ReadDistortionFile(self, this_a, this_b)
                             amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
 
-# If a dither offset list exists then apply the dither offsets
-                amin = amin + c1_offset / 60.0
-                amax = amax + c1_offset / 60.0
+# If a dither offset list exists then apply the dither offsets (offsets in arc seconds) 
+#                amin = amin + c1_offset / 60.0
+#                amax = amax + c1_offset / 60.0
+#                bmin = bmin + c2_offset / 60.0
+#                bmax = bmax + c2_offset / 60.0
 
-                bmin = bmin + c2_offset / 60.0
-                bmax = bmax + c2_offset / 60.0
+                amin = amin - c1_offset 
+                amax = amax - c1_offset
+
+                bmin = bmin - c2_offset 
+                bmax = bmax - c2_offset 
 
                 a_min.append(amin)
                 a_max.append(amax)
@@ -775,7 +780,7 @@ def ReadOffSetFile(self):
 
         self.v2offset.append(v2off)
         self.v3offset.append(v3off)
-        print('Offset in V2,V3 for exposure', v2off, v3off, i)
+        print('Offset in V2,V3 (in arc seconds) for exposure', v2off, v3off, i)
         i = i + 1
     f.close()
 #********************************************************************************
@@ -912,6 +917,7 @@ class IFUCubeInput(object):
 
         self.input_models = []
 
+        print('input trying to open',input)
         if isinstance(input, datamodels.ImageModel):
             log.debug( 'going to read imagemodel')
             # It's a single image that's been passed in as a model
@@ -921,13 +927,12 @@ class IFUCubeInput(object):
                 # The name of an association table
                 self.asn_table = json.load(open(input, 'r'))
             except:
-                # The name of a single image file
-
+                # The name of a single image file	
                 log.debug( 'going to read a single file')
                 self.filename = input  # temp until figure out model.meta.filename
                 self.interpret_image_model(datamodels.ImageModel(input))
-
-            raise TypeError
+            #except:
+            #    raise IOError("Input is not single filei, fits file or association table")
 
 
     def interpret_image_model(self, model):

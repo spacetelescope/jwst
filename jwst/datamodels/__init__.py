@@ -42,6 +42,7 @@ from .contrast import ContrastModel
 from .cube import CubeModel
 from .cubeflat import CubeFlatModel
 from .dark import DarkModel
+from .darkMIRI import DarkMIRIModel
 from .drizpars import DrizParsModel, NircamDrizParsModel, MiriImgDrizParsModel
 from .outlierpars import OutlierParsModel, NircamOutlierParsModel, MiriImgOutlierParsModel
 from .drizproduct import DrizProductModel
@@ -80,7 +81,7 @@ from .util import fits_header_name
 __all__ = [
     'open',
     'DataModel', 'AmiLgModel', 'AsnModel', 'ContrastModel',
-    'CubeModel', 'CubeFlatModel', 'DarkModel', 'DrizParsModel',
+    'CubeModel', 'CubeFlatModel', 'DarkModel', 'DarkMIRIModel','DrizParsModel',
     'NircamDrizParsModel', 'MiriImgDrizParsModel',
     'DrizProductModel', 'FgsPhotomModel', 'FilterModel',
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
