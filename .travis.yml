@@ -14,6 +14,8 @@ env:
         - CONDA_DEPENDENCIES='pytest jwst sphinx=1.3.5'
         - CONDA_JWST_DEPENDENCIES='pytest stsci-jwst sphinx=1.3.5'
         - PIP_DEPENDENCIES=''
+        - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
+        - CRDS_PATH='/tmp/crds_cache'
 
     matrix:
         - PYTHON_VERSION=2.7 SETUP_CMD='install'
