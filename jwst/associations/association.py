@@ -98,7 +98,7 @@ class Association(MutableMapping):
 
         if member is not None:
             self.add(member)
-        self.sequence = six.advance_iterator(self._sequence)
+        self.sequence = next(self._sequence)
 
     @property
     def asn_name(self):
