@@ -368,9 +368,14 @@ def meets_conditions(value, conditions):
     True if any condition is meant.
     """
 
-    if isinstance(conditions, six.string_types):
+    if not is_iterable(conditions):
         conditions = [conditions]
     for condition in conditions:
+        condition = ''.join([
+            '^',
+            condition,
+            '$'
+        ])
         match = re.match(condition, value, flags=re.IGNORECASE)
         if match:
             return True
@@ -425,3 +430,9 @@ SERIALIZATION_PROTOCOLS = {
         serialize=Association.to_json,
         unserialize=Association.from_json)
 }
+
+
+# Utility
+def is_iterable(obj):
+    return not isinstance(obj, six.string_types) and \
+        hasattr(obj, '__iter__')

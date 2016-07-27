@@ -13,7 +13,7 @@ class TestLevel3Candidates(BasePoolRule):
             path=t_path('data/jw96090_20160406T233447_pool.csv'),
             n_asns=2,
             n_orphaned=0,
-            n_candidates=[1, 1],
+            candidates=[['100'], ['100']],
         ),
     ]
 

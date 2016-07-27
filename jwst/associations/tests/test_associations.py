@@ -126,6 +126,28 @@ class TestAssociations():
                 'pool': helpers.t_path('data/jw93060_002_20150312T160130_pool.csv'),
                 'n_asns': 12,
             },
+            'clashing_candidates_invalid': {
+                'constraints': {
+                    'asn_candidate_id': {
+                        'value': '1',
+                        'inputs': ['ASN_CANDIDATE_ID', 'OBS_NUM'],
+                        'force_unique': True,
+                    }
+                },
+                'pool': helpers.t_path('data/jw96090_20160406T233447_pool.csv'),
+                'n_asns': 0,
+            },
+            'clashing_candidates_valid': {
+                'constraints': {
+                    'asn_candidate_id': {
+                        'value': '100',
+                        'inputs': ['ASN_CANDIDATE_ID', 'OBS_NUM'],
+                        'force_unique': True,
+                    }
+                },
+                'pool': helpers.t_path('data/jw96090_20160406T233447_pool.csv'),
+                'n_asns': 2,
+            },
         }
 
         for test_name, test in tests.items():
