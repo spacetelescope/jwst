@@ -92,7 +92,7 @@ def imaging(input_model, reference_files):
 
     # Create coordinate frames in the NIRSPEC WCS pipeline
     # "detector", "gwa", "msa", "oteip", "v2v3", "world"
-    det, gwa, msa_frame, oteip, v2v3 = create_imaging_frames()
+    det, gwa, msa_frame, oteip, v2v3, world = create_imaging_frames()
     if input_model.meta.instrument.filter != 'OPAQUE':
         # MSA to OTEIP transform
         msa2ote = msa_to_oteip(reference_files)
@@ -771,7 +771,8 @@ def create_imaging_frames():
                               axes_names=('v2', 'v3'))
     oteip = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
                                axes_names=('x_oteip', 'y_oteip'))
-    return det, gwa, msa, oteip, v2v3
+    world = cf.CelestialFrame(name='world', axes_order=(0, 1), reference_frame=coord.ICRS())
+    return det, gwa, msa, oteip, v2v3, world
 
 
 def get_slit_location_model(slitdata):
