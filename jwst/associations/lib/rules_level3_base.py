@@ -298,11 +298,6 @@ class AsnMixin_Unique_Config(DMS_Level3_Base):
                 'value': '(?!NULL).+',
                 'inputs': ['DETECTOR']
             },
-            'target_acq': {
-                'value': '(TARGET_ACQUISITION)?',
-                'inputs': ['PNTGTYPE'],
-                'force_unique': False,
-            }
         })
 
         super(AsnMixin_Unique_Config, self).__init__(*args, **kwargs)

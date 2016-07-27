@@ -1,10 +1,16 @@
-"""test_level3_dithers: Test of dither rules."""
+"""Test Image rules
+
+Image rules produce associations meant to be
+processed by CALIMAGE3.
+
+Such associations are mosaics and dithers.
+"""
 from __future__ import absolute_import
 
 from .helpers import BasePoolRule, PoolParams, t_path
 
 
-class TestLevel3Dithers(BasePoolRule):
+class TestLevel3Image(BasePoolRule):
 
     pools = [
         PoolParams(
@@ -21,5 +27,5 @@ class TestLevel3Dithers(BasePoolRule):
     ]
 
     valid_rules = [
-        'Asn_Dither',
+        'Asn_Image',
     ]

@@ -10,23 +10,23 @@ class PoolParams(namedtuple('PoolParams', [
                             'path',
                             'n_asns',
                             'n_orphaned',
-                            'n_candidates',
+                            'candidates',
                             'kwargs'])):
     def __new__(cls, path='',
                 n_asns=0,
                 n_orphaned=0,
-                n_candidates=None,
+                candidates=None,
                 kwargs=None):
         if not kwargs:
             kwargs = {}
-        if n_candidates is None:
-            n_candidates = []
+        if candidates is None:
+            candidates = []
         return super(PoolParams, cls).__new__(
             cls,
             path,
             n_asns,
             n_orphaned,
-            n_candidates,
+            candidates,
             kwargs
         )
 
@@ -61,8 +61,8 @@ class BasePoolRule(object):
             (asns, orphaned) = generate(pool, rules)
             yield check_equal, len(asns), ppars.n_asns
             yield check_equal, len(orphaned), ppars.n_orphaned
-            for asn, n_candidates in zip(asns, ppars.n_candidates):
-                yield check_equal, len(asn.candidates), n_candidates
+            for asn, candidates in zip(asns, ppars.candidates):
+                yield check_equal, set(asn.candidates), set(candidates)
 
 
 # Basic utilities.
