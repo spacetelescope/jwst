@@ -21,19 +21,19 @@ class TestMain():
 
     def test_script(self):
         for name, number in self.pools_size:
-            gs = Main([name, '--dry_run'])
+            gs = Main([name, '--dry-run'])
             yield helpers.check_equal, len(gs.associations), number
 
     def test_asn_candidates(self):
         pool_name = self.pools_size[0][0]
-        gs = Main([pool_name, '--dry_run', '-i', '1'])
+        gs = Main([pool_name, '--dry-run', '-i', '1'])
         assert len(gs.associations) == 6
-        gs = Main([pool_name, '--dry_run', '-i', '1', '2'])
+        gs = Main([pool_name, '--dry-run', '-i', '1', '2'])
         assert len(gs.associations) == 14
 
     def test_cross_candidate(self):
         pool_name = self.pools_size[1][0]
-        gs = Main([pool_name, '--dry_run'])
+        gs = Main([pool_name, '--dry-run'])
         assert len(gs.associations) == 11
-        gs = Main([pool_name, '--dry_run', '--cross-candidate-only'])
+        gs = Main([pool_name, '--dry-run', '--cross-candidate-only'])
         assert len(gs.associations) == 5

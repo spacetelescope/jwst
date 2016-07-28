@@ -46,7 +46,7 @@ class Main(object):
             help='Do not include default rules. -r should be used if set.'
         )
         parser.add_argument(
-            '--dry_run',
+            '--dry-run',
             action='store_true', dest='dry_run',
             help='Execute but do not save results.'
         )
@@ -85,6 +85,16 @@ class Main(object):
             action='store_true', dest='cross_candidate_only',
             help='Only produce cross-candidate associations'
         )
+        parser.add_argument(
+            '--pool-format', type=str,
+            default='ascii',
+            help=(
+                'Format of the pool file.'
+                ' Any format allowed by the astropy'
+                ' Unified File I/O interface is allowed.'
+                ' Default: "%(default)s"'
+            )
+        )
 
         parsed = parser.parse_args(args=args)
 
@@ -101,7 +111,8 @@ class Main(object):
 
         logger.info('Reading pool {}'.format(parsed.pool))
         self.pool = AssociationPool.read(
-            parsed.pool, delimiter=parsed.delimiter
+            parsed.pool, delimiter=parsed.delimiter,
+            format=parsed.pool_format,
         )
 
         # DMS: Add further info to logging.

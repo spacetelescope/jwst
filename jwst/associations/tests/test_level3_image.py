@@ -14,16 +14,10 @@ class TestLevel3Image(BasePoolRule):
 
     pools = [
         PoolParams(
-            path=t_path('data/jw93065_20151105T004034_pool.csv'),
+            path=t_path('data/pool_of_everything.csv'),
             n_asns=3,
             n_orphaned=0
         ),
-        PoolParams(
-            path=t_path('data/jw82600_001_20151107T165901_pool.csv'),
-            n_asns=11,
-            n_orphaned=298
-        ),
-
     ]
 
     valid_rules = [
