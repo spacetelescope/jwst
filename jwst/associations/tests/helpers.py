@@ -2,8 +2,10 @@
 from collections import namedtuple
 import os
 
-from .. import (AssociationRegistry, AssociationPool, generate)
+from astropy.table import (Table, vstack)
 
+from .. import (AssociationRegistry, AssociationPool, generate)
+from ..association import is_iterable
 
 # Define how to setup initial conditions with pools.
 class PoolParams(namedtuple('PoolParams', [
@@ -57,7 +59,7 @@ class BasePoolRule(object):
     def test_run_generate(self):
         rules = AssociationRegistry()
         for ppars in self.pools:
-            pool = AssociationPool.read(ppars.path, **ppars.kwargs)
+            pool = combine_pools(ppars.path, **ppars.kwargs)
             (asns, orphaned) = generate(pool, rules)
             yield check_equal, len(asns), ppars.n_asns
             yield check_equal, len(orphaned), ppars.n_orphaned
@@ -86,3 +88,33 @@ def t_path(partial_path):
     """Construction the full path for test files"""
     test_dir = os.path.dirname(__file__)
     return os.path.join(test_dir, partial_path)
+
+
+def combine_pools(pools, **pool_kwargs):
+    """Combine pools into a single pool
+
+    Parameters
+    ----------
+    pools: str, astropy.table.Table, [str|Table, ...]
+        The pools to combine. Either a singleton is
+        passed or and iterable can be passed.
+        The entries themselves can be either a file path
+        or an astropy.table.Table-like object.
+
+    pool_kwargs: dict
+        Other keywoard arguments to pass to AssociationPool.read
+
+    Returns
+    -------
+    AssociationPool|astropy.table.Table
+        The combined pool
+    """
+    if not is_iterable(pools):
+        pools = [pools]
+    just_pools = []
+    for pool in pools:
+        if not isinstance(pool, Table):
+            pool = AssociationPool.read(pool, **pool_kwargs)
+        just_pools.append(pool)
+    mega_pool = vstack(just_pools)
+    return mega_pool
