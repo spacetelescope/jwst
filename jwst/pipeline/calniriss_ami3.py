@@ -94,7 +94,7 @@ class NirissAmiPipeline(Pipeline):
                         ref_name = member['expname']
 
                 # Apply the normalization
-                if target_name != None and ref_name != None:
+                if target_name is not None and ref_name is not None:
 
                     self.log.debug(' Call normalize_LG for %s and %s', target_name, ref_name)
                     result = self.ami_normalize(target_name, ref_name)
