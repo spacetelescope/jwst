@@ -19,9 +19,6 @@ from .. import miri
 from ..assign_wcs_step import AssignWcsStep
 from . import data
 
-data_path = os.path.split(os.path.abspath(data.__file__))[0]
-
-
 wcs_kw = {'wcsaxes': 2, 'crval1': 5.6, 'crval2': -72,
           'crpix1': 1024, 'crpix2': 1024,
           'cdelt1': .08, 'cdelt2': .08,
@@ -38,10 +35,6 @@ refs = {'distortion': '',
         'v2v3': '',
         'wavelengthrange': ''
         }
-
-
-def get_file_path(filename):
-    return os.path.join(data_path, filename)
 
 
 def create_hdul():
@@ -249,14 +242,15 @@ def test_miri_mrs_1B():
     for ch in im.meta.instrument.channel:
         ref_data = mrs_ref_data[ch + band_mapping[im.meta.instrument.band]]
     for i, s in enumerate(ref_data['s']):
-        sl = int(ch) * 100 + s
-
-        detector_to_xan_yan = wcsobj.get_transform('detector', 'Xan_Yan')
         xan, yan, lam = wcsobj(ref_data['x'], ref_data['y'])
         utils.assert_allclose(xan, ref_data['v2'][i], atol=10**-5)
         utils.assert_allclose(yan, ref_data['v3'][i], atol=10**-5)
         utils.assert_allclose(lam, ref_data['lam'][i], atol=10**-5)
 
+        xan, yan, lam = wcsobj.forward_transform.set_input(sl)(ref_data['x'][i], ref_data['y'][i])
+        utils.assert_allclose(xan, ref_data['v2'][i], atol=10**-5)
+        utils.assert_allclose(yan, ref_data['v3'][i], atol=10**-5)
+        utils.assert_allclose(lam, ref_data['lam'][i], atol=10**-5)
 
         xin, yin = wcsobj.backward_transform(ref_data['v2'][i],
                                              ref_data['v3'][i],
