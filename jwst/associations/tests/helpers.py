@@ -1,6 +1,7 @@
 """Helpers for tests."""
 from collections import namedtuple
 import os
+import re
 
 from astropy.table import (Table, vstack)
 
@@ -8,12 +9,17 @@ from .. import (AssociationRegistry, AssociationPool, generate)
 from ..association import is_iterable
 
 # Define how to setup initial conditions with pools.
-class PoolParams(namedtuple('PoolParams', [
-                            'path',
-                            'n_asns',
-                            'n_orphaned',
-                            'candidates',
-                            'kwargs'])):
+class PoolParams(
+        namedtuple('PoolParams',
+                   [
+                       'path',
+                       'n_asns',
+                       'n_orphaned',
+                       'candidates',
+                       'kwargs'
+                   ]
+        )
+):
     def __new__(cls, path='',
                 n_asns=0,
                 n_orphaned=0,
@@ -68,6 +74,28 @@ class BasePoolRule(object):
 
 
 # Basic utilities.
+class Counter(object):
+    """Like itertools.count but access to the current value"""
+    def __init__(self, start=0, step=1, end=None):
+        self.value = start
+        self.step = step
+        self.end = end
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.end is not None and \
+           abs(self.value) > abs(self.end):
+            raise StopIteration
+        self.value += self.step
+        return self.value
+
+    def next(self):
+        """python2 compatibility"""
+        return self.__next__()
+
+
 def check_in_list(element, alist):
     assert element in alist
 
@@ -116,5 +144,33 @@ def combine_pools(pools, **pool_kwargs):
         if not isinstance(pool, Table):
             pool = AssociationPool.read(pool, **pool_kwargs)
         just_pools.append(pool)
-    mega_pool = vstack(just_pools)
+    if len(just_pools) > 1:
+        mega_pool = vstack(just_pools, metadata_conflicts='silent')
+    else:
+        mega_pool = just_pools[0].copy(copy_data=True)
+
+    # Replace OBS_NUM and ASN_CANDIDATE_ID with actual numbers, if
+    # necessary
+    obsnum = Counter(start=0)
+    acid = Counter(start=0)
+    local_env = locals()
+    for row in mega_pool:
+        mega_pool[row.index] = [
+            parse_value(v, local_env)
+            for v in row
+        ]
+
     return mega_pool
+
+
+def parse_value(v, local_env):
+    """Evaluate if indicated"""
+    result = v
+    try:
+        m = re.match('#!(.+)', v)
+    except TypeError:
+        pass
+    else:
+        if m:
+            result = eval(m.group(1), local_env)
+    return result
