@@ -1,12 +1,15 @@
+"""
+Test functions for NIRSPEC WCS - all modes.
+"""
 import os.path
 import numpy as np
-from numpy.testing import assert_allclose
+from numpy.testing.utils import assert_allclose
 from astropy.io import fits
 from astropy.modeling import models as astmodels
 from gwcs import wcs
 from ... import datamodels
 from .. import nirspec
-from .. import assign_wcs_step, assign_wcs
+from .. import assign_wcs_step
 from . import data
 
 
@@ -22,10 +25,16 @@ wcs_kw = {'wcsaxes': 2, 'crval1': 5.6, 'crval2': -72,
 
 
 def get_file_path(filename):
+    """
+    Construct an absolute path.
+    """
     return os.path.join(data_path, filename)
 
 
 def create_hdul():
+    """
+    Create a fits HDUList instance.
+    """
     hdul = fits.HDUList()
     phdu = fits.PrimaryHDU()
     phdu.header['instrume'] = 'NIRSPEC'
@@ -40,6 +49,9 @@ def create_hdul():
 
 
 def create_reference_files(datamodel):
+    """
+    Create a dict {reftype: reference_file}.
+    """
     refs = {}
     step = assign_wcs_step.AssignWcsStep()
     for reftype in assign_wcs_step.AssignWcsStep.reference_file_types:
@@ -125,8 +137,8 @@ def test_nirspec_ifu_against_esa():
     Test Nirspec IFU mode using build 6 reference files.
     """
     #Test creating the WCS
-    f = create_nirspec_ifu_file('OPAQUE', 'G140H', 'REF')
-    im = datamodels.ImageModel(f)
+    filename = create_nirspec_ifu_file('OPAQUE', 'G140H', 'REF')
+    im = datamodels.ImageModel(filename)
     refs = create_reference_files(im)
 
     pipe = nirspec.create_pipeline(im, refs)
@@ -138,15 +150,15 @@ def test_nirspec_ifu_against_esa():
 
     ref = fits.open(get_file_path('Trace_IFU_Slice_00_MON-COMBO-IFU-06_8410_jlab85.fits.gz'))
     crpix = np.array([ref[1].header['crpix1'], ref[1].header['crpix2']])
-    crval= np.array([ref[1].header['crval1'], ref[1].header['crval2']])
+    crval = np.array([ref[1].header['crval1'], ref[1].header['crval2']])
 
     # get positions within the slit and the coresponding lambda
     slit1 = ref[5].data # y offset on the slit
     lam = ref[4].data
     # filter out locations outside the slit
-    cond = np.logical_and(slit1<.5 , slit1>-.5)
+    cond = np.logical_and(slit1 < .5, slit1 > -.5)
     y, x = cond.nonzero()
-    cor = crval -np.array(crpix)
+    cor = crval - np.array(crpix)
     y = y + cor[1]
     x = x + cor[0]
 
@@ -178,8 +190,8 @@ def test_nirspec_fs_esa():
     Test Nirspec FS mode using build 6 reference files.
     """
     #Test creating the WCS
-    f = create_nirspec_fs_file()
-    im = datamodels.ImageModel(f)
+    filename = create_nirspec_fs_file()
+    im = datamodels.ImageModel(filename)
 
     refs = create_reference_files(im)
     #refs['disperser'] = get_file_path('jwst_nirspec_disperser_0001.asdf')
@@ -192,14 +204,14 @@ def test_nirspec_fs_esa():
 
     ref = fits.open(get_file_path('Trace_SLIT_A_200_1_SLIT-COMBO-016_9791_jlab85_0001.fits.gz'))
     crpix = np.array([ref[1].header['crpix1'], ref[1].header['crpix2']])
-    crval= np.array([ref[1].header['crval1'], ref[1].header['crval2']])
+    crval = np.array([ref[1].header['crval1'], ref[1].header['crval2']])
     # get positions within the slit and the coresponding lambda
     slit1 = ref[5].data # y offset on the slit
     lam = ref[4].data
     # filter out locations outside the slit
-    cond = np.logical_and(slit1<.5 , slit1>-.5)
+    cond = np.logical_and(slit1 < .5, slit1 > -.5)
     y, x = cond.nonzero()
-    cor = crval -np.array(crpix)
+    cor = crval - np.array(crpix)
     y = y + cor[1]
     x = x + cor[0]
     ra, dec, lp = w1(x, y)
@@ -213,12 +225,13 @@ def test_correct_tilt():
     """
     xtilt = 0.35896975
     ytilt = 0.1343827
-    ztilt = None
+    #ztilt = None
     corrected_theta_x = 0.02942671219861111
     corrected_theta_y = 0.00018649006677464447
-    corrected_theta_z = -0.2523269848788889
+    #corrected_theta_z = -0.2523269848788889
     disp = {'gwa_tiltx': {'temperatures': [39.58],
-                          'tilt_model': astmodels.Polynomial1D(1, c0=3307.85402614, c1=-9182.87552123),
+                          'tilt_model': astmodels.Polynomial1D(1, c0=3307.85402614,
+                                                               c1=-9182.87552123),
                           'unit': 'arcsec',
                           'zeroreadings': [0.35972327]},
             'gwa_tilty': {'temperatures': [39.58],
@@ -234,6 +247,6 @@ def test_correct_tilt():
             'tilt_y': -8.8
             }
     disp_corrected = nirspec.correct_tilt(disp, xtilt, ytilt)#, ztilt)
-    assert(np.isclose(disp_corrected['theta_x'], corrected_theta_x))
+    assert np.isclose(disp_corrected['theta_x'], corrected_theta_x)
     #assert(np.isclose(disp_corrected['theta_z'], corrected_theta_z))
-    assert(np.isclose(disp_corrected['theta_y'], corrected_theta_y))
+    assert np.isclose(disp_corrected['theta_y'], corrected_theta_y)
