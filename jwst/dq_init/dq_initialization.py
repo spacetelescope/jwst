@@ -44,8 +44,8 @@ def do_dqinit(input_model, mask_model):
 
 def is_subarray(input_model):
 
-    if (input_model.meta.subarray.xsize == None or
-        input_model.meta.subarray.ysize == None):
+    if (input_model.meta.subarray.xsize is None or
+        input_model.meta.subarray.ysize is None):
         raise ValueError('xsize or ysize metadata values not found')
 
     ncols = input_model.meta.subarray.xsize
@@ -60,8 +60,8 @@ def is_subarray(input_model):
 
 def get_mask_subarray(mask_model, output_model):
 
-    if (output_model.meta.subarray.xstart == None or
-        output_model.meta.subarray.ystart == None):
+    if (output_model.meta.subarray.xstart is None or
+        output_model.meta.subarray.ystart is None):
         raise ValueError('xstart or ystart metadata values not found')
 
     xstart = output_model.meta.subarray.xstart
