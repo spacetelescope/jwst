@@ -1,9 +1,10 @@
 #!/usr/bin/env python
+import os
+
+from ..associations import Association
 from ..stpipe import Pipeline
 from .. import datamodels
 
-import os
-import json
 
 # calniriss ami step imports
 from ..ami import ami_analyze_step
@@ -142,7 +143,8 @@ class AmiInput(object):
         elif isinstance(input, str):
             try:
                 # The name of an association table
-                self.asn = json.load(open(input, 'r'))
+                with open(input, 'r') as input_fh:
+                    self.asn = Association.load(input_fh)
             except:
                 # The name of a single image file
                 self.interpret_image_model(datamodels.ImageModel(input))
