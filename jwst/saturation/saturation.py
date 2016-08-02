@@ -8,7 +8,7 @@ import numpy as np
 from . import x_irs2
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 HUGE_NUM = 100000.
 
