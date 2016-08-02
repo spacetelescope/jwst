@@ -106,6 +106,11 @@ class Counter(object):
         """python2 compatibility"""
         return self.__next__()
 
+    def set(self, value):
+        """Set new value for counter"""
+        self.value = value
+        return self.value
+
 
 def check_in_list(element, alist):
     assert element in alist
@@ -163,19 +168,25 @@ def combine_pools(pools, **pool_kwargs):
     # Replace OBS_NUM and ASN_CANDIDATE_ID with actual numbers, if
     # necessary
     obsnum = Counter(start=0)
-    acid = Counter(start=0)
+    acid = Counter(start=999)
     local_env = locals()
+    global_env = globals()
     for row in mega_pool:
         mega_pool[row.index] = [
-            parse_value(v, local_env)
+            parse_value(v, global_env=global_env, local_env=local_env)
             for v in row
         ]
 
     return mega_pool
 
 
-def parse_value(v, local_env):
+def parse_value(v, global_env=None, local_env=None):
     """Evaluate if indicated"""
+    if global_env is None:
+        global_env = globals()
+    if local_env is None:
+        local_env = locals()
+
     result = v
     try:
         m = re.match('#!(.+)', v)
@@ -183,5 +194,41 @@ def parse_value(v, local_env):
         pass
     else:
         if m:
-            result = eval(m.group(1), local_env)
+            result = eval(m.group(1), global_env, local_env)
     return result
+
+
+def fmt_cand(candidate_list):
+    """Format the candidate field
+
+    Parameters
+    ----------
+    candidate_list: iterator
+        An iterator with each element a 2-tuple of:
+            cid: int
+                Candidate ID
+            ctype: str
+                Candidate type
+
+    Returns
+    -------
+    candidate_list_field: str
+        A string of the list of candidates, with any evaluation
+        performed.
+    """
+    evaled_list = []
+    for cid, ctype in candidate_list:
+        if isinstance(cid, int):
+            if ctype == 'OBSERVATION' and cid < 1000:
+                cid_format = 'o{:0>3d}'
+            elif ctype in ['MOSAIC'] and cid >= 1000 and cid < 3000:
+                cid_format = 'c{:0>4d}'
+            else:
+                cid_format = 'r{:0>4d}'
+        else:
+            cid_format = cid
+
+        cid_str = cid_format.format(cid)
+        evaled_list.append((cid_str, ctype))
+
+    return str(evaled_list)
