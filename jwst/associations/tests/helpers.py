@@ -1,12 +1,15 @@
 """Helpers for tests."""
 from collections import namedtuple
+from glob import iglob
 import os
+import pytest
 import re
 
 from astropy.table import (Table, vstack)
 
 from .. import (AssociationRegistry, AssociationPool, generate)
 from ..association import is_iterable
+
 
 # Define how to setup initial conditions with pools.
 class PoolParams(
@@ -71,6 +74,14 @@ class BasePoolRule(object):
             yield check_equal, len(orphaned), ppars.n_orphaned
             for asn, candidates in zip(asns, ppars.candidates):
                 yield check_equal, set(asn.candidates), set(candidates)
+
+
+@pytest.fixture(scope='session')
+def full_pool_rules():
+    pool_files = iglob(t_path('data/pool_*.csv'))
+    pool = combine_pools(pool_files)
+    rules = AssociationRegistry()
+    return (pool, rules)
 
 
 # Basic utilities.

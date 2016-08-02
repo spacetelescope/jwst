@@ -1,8 +1,6 @@
 """test_level3_dithers: Test of dither rules."""
 from __future__ import absolute_import
 
-from nose import SkipTest
-
 from .helpers import BasePoolRule, PoolParams, t_path
 
 

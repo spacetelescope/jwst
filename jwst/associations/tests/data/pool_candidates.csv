@@ -1,0 +1,42 @@
+# Pool.Candidates
+# 
+# Examples of observation, candidates, and whole proposal associations
+# 
+# OBS_NUM and AC_CANDIDATE_ID must be computed and inserted. Other columns which also incorporate these values are not modified.
+#
+# Columns are the minimum necessary, so as to more easily edit.
+# Based on NIRCam Mosaic where any single observation produces a minimum of two assocations: one for the short and long channels.
+# The basic exposure set will be repeated as needed to create other observations and candidates.
+# 
+# ########
+# Prposal 93065
+# Mosaic: 1 row by 2 columns
+# Filters: F090W/F227W
+# Notes: detectors within ACT_ID witin VISIT
+# 
+FILENAME|PROGRAM|OBS_NUM|WFSVISIT|EXP_TYPE|INSTRUME|DETECTOR|TARGETID|PNTGTYPE|FILTER|PUPIL|GRATING|ASN_CANDIDATE_TYPE|ASN_CANDIDATE_ID
+#
+# Base exposure set.
+# First observation, type==OBSERVATION
+jw99009002001_02101_00001_nrca1_uncal.fits|99009|#!next(obsnum)|NULL|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02101_00001_nrca2_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02102_00001_nrca3_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02101_00001_nrca4_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02101_00001_nrcalong_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02101_00001_nrcb1_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02102_00001_nrcb2_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02102_00001_nrcb3_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002002_02101_00001_nrcb4_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002002_02101_00001_nrcblong_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+#
+# Second observation, type=OBSERVATION
+jw99009002001_02101_00001_nrca1_uncal.fits|99009|#!next(obsnum)|NULL|NRC_IMAGE|NIRCAM|NRCA1|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02101_00001_nrca2_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCA2|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02102_00001_nrca3_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCA3|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02101_00001_nrca4_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCA4|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02101_00001_nrcalong_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCALONG|1|SCIENCE|F277W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02101_00001_nrcb1_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCB1|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02102_00001_nrcb2_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCB2|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002001_02102_00001_nrcb3_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCB3|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002002_02101_00001_nrcb4_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCB4|1|SCIENCE|F090W|CLEAR|NULL|OBSERVATION|#!obsnum.value
+jw99009002002_02101_00001_nrcblong_uncal.fits|99009|#!obsnum.value|NULL|NRC_IMAGE|NIRCAM|NRCBLONG|1|SCIENCE|F277W|CLEAR|NULL|OBSERVATION|#!obsnum.value
