@@ -51,7 +51,12 @@ class Asn_WFSCMB(
         AsnMixin_Target,
         AsnMixin_Unique_Config
 ):
-    """Wavefront Sensing association"""
+    """Wavefront Sensing association
+
+    Notes
+    -----
+    Defined by `TRAC issue #269 <https://aeon.stsci.edu/ssb/trac/jwst/ticket/269>`_
+    """
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
@@ -60,13 +65,9 @@ class Asn_WFSCMB(
                 'value': '(?!NULL).+',
                 'inputs': ['WFSVISIT'],
             },
-            'asn_candidate_type': {
-                'value': '(?!OBSERVATION).+',
-                'inputs': ['ASN_CANDIDATE_TYPE']
-            },
-            'asn_candidate_id': {
-                'value': None,
-                'inputs': ['ASN_CANDIDATE_ID']
+            'asn_candidate': {
+                'value': '.+(?!OBSERVATION).+',
+                'inputs': ['ASN_CANDIDATE']
             },
             'activity_id': {
                 'value': None,

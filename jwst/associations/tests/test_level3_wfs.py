@@ -22,7 +22,7 @@ class TestLevel3WFS(helpers.BasePoolRule):
 
     def test_wfs_product_name(self):
         rules = AssociationRegistry()
-        pool = AssociationPool.read(
+        pool = helpers.combine_pools(
             helpers.t_path('data/pool_wfs.csv')
         )
         (asns, orphaned) = generate(pool, rules)

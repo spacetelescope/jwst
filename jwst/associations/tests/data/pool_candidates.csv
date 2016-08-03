@@ -2,7 +2,7 @@
 # 
 # Examples of observation, candidates, and whole proposal associations
 # 
-# OBS_NUM and AC_CANDIDATE_ID must be computed and inserted. Other columns which also incorporate these values are not modified.
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
 #
 # Columns are the minimum necessary, so as to more easily edit.
 # Based on NIRCam Mosaic where any single observation produces a minimum of two assocations: one for the short and long channels.
