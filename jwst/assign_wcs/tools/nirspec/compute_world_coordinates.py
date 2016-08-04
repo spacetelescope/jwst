@@ -1,8 +1,8 @@
 #! /bin/env python
 """
-A simple tool to read in the output of extract2d (FS and MOS) or assign_wcs (IFU) and
+A simple tool to read in the output of extract2d (FS and MOS) or assign_wcs (IFU, Imaging) and
 apply the WCS transforms to all pixels in a slit. For each slit it writes the results
-as a cube with three planes (wavelength, ra, dec) in a separate fits extension.
+as a cube with three planes (wavelength, spatial_x, spatial_y) in a separate fits extension.
 The file is saved with an suffix "world_coordinates".
 
 Requested by the NIRSPEC team.
