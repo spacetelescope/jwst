@@ -4,6 +4,7 @@ from glob import iglob
 import os
 import pytest
 import re
+from tempfile import mkstemp
 
 from astropy.table import (Table, vstack)
 
@@ -77,11 +78,23 @@ class BasePoolRule(object):
 
 
 @pytest.fixture(scope='session')
-def full_pool_rules():
+def full_pool_rules(request):
     pool_files = iglob(t_path('data/pool_*.csv'))
     pool = combine_pools(pool_files)
     rules = AssociationRegistry()
-    return (pool, rules)
+
+    # Create a file that has the pool.
+    # For testing pool reading routines.
+    pool_fd, pool_fname = mkstemp()
+    pool.write(pool_fname, format='ascii', delimiter='|', overwrite=True)
+
+    # Teardown to remove tempfile.
+    def teardown():
+        os.close(pool_fd)
+        os.remove(pool_fname)
+    request.addfinalizer(teardown)
+
+    return (pool, rules, pool_fname)
 
 
 # Basic utilities.

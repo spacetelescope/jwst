@@ -166,14 +166,11 @@ class DMS_Level3_Base(Association):
             'expname': Utility.rename_to_level2b(member['FILENAME']),
             'exptype': member['PNTGTYPE'],
             'exposerr': exposerr,
-            'asn_candidate_id': getattr_from_list(
-                member,
-                ['ASN_CANDIDATE_ID', 'OBS_NUM']
-            )[1]
+            'asn_candidate': member['ASN_CANDIDATE']
         }
         members = self.current_product['members']
         members.append(entry)
-        self.candidates.add(entry['asn_candidate_id'])
+        self.candidates.add(entry['asn_candidate'])
         self.data['degraded_status'] = _DEGRADED_STATUS_OK
         if exposerr not in _EMPTY:
             self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK

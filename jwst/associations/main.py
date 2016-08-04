@@ -122,6 +122,7 @@ class Main(object):
             pass
 
         # Setup rules.
+        global_constraints = {}
 
         # Check for Candidate-specific or whole program.
         # In DMS, this is the difference between Level 3
@@ -129,13 +130,8 @@ class Main(object):
         # The rules themselves do not contain this knowledge.
         self.cross_candidate_mode = parsed.asn_candidate_ids is None
         self.cross_candidate_only = parsed.cross_candidate_only
-        global_constraints = {}
         if not self.cross_candidate_mode:
-            global_constraints['asn_candidate_ids'] = {
-                'value': parsed.asn_candidate_ids,
-                'inputs': ['ASN_CANDIDATE_ID', 'OBS_NUM'],
-                'force_unique': True,
-            }
+            global_constraints['asn_candidate'] = constrain_on_candidates(parsed.asn_candidate_ids)
 
         logger.info('Reading rules.')
         self.rules = AssociationRegistry(
@@ -181,6 +177,24 @@ class Main(object):
             (fname, json_repr) = asn.to_json()
             with open(''.join((path, '/', fname, '.json')), 'w') as f:
                 f.write(json_repr)
+
+
+# Utilities
+def constrain_on_candidates(candidates):
+    """Create a constraint based on a list of candidates"""
+    constraint = {}
+    if len(candidates):
+        c_list = '|'.join(candidates)
+        values = ''.join([
+            '.+(', c_list, ').+'
+        ])
+        constraint = {
+            'value': values,
+            'inputs': ['ASN_CANDIDATE'],
+            'force_unique': True,
+        }
+
+    return constraint
 
 
 if __name__ == '__main__':
