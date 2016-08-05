@@ -66,7 +66,7 @@ class Asn_WFSCMB(
                 'inputs': ['WFSVISIT'],
             },
             'asn_candidate_wfs': {
-                'value': '.+(?!OBSERVATION).+',
+                'value': '.+MOSAIC.+',
                 'inputs': ['ASN_CANDIDATE']
             },
             'activity_id': {

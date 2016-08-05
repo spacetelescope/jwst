@@ -21,26 +21,20 @@ LEVEL3_ASN_NAME_REGEX = (
 class TestASNtNames():
 
     pool_file = helpers.t_path(
-        'data/jw93060_20150312T160130_pool.csv'
+        'data/pool_001_candidates.csv'
     )
 
     global_constraints = {
         'asn_candidate_ids': {
-            'value': ['2'],
-            'inputs': ['ASN_CANDIDATE_ID', 'OBS_NUM'],
+            'value': ['o002'],
+            'inputs': ['ASN_CANDIDATE'],
             'force_unique': True,
         }
     }
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     def test_level35_names(self):
         rules = AssociationRegistry()
-        pool = AssociationPool.read(self.pool_file)
+        pool = helpers.combine_pools(self.pool_file)
         (asns, orphaned) = generate(pool, rules)
         for asn in asns:
             asn_name = asn.asn_name
@@ -51,10 +45,10 @@ class TestASNtNames():
         rules = AssociationRegistry(
             global_constraints=self.global_constraints
         )
-        pool = AssociationPool.read(self.pool_file)
+        pool = helpers.combine_pools(self.pool_file)
         (asns, orphaned) = generate(pool, rules)
         for asn in asns:
             asn_name = asn.asn_name
             m = re.match(LEVEL3_ASN_NAME_REGEX, asn_name)
             yield helpers.not_none, m
-            yield helpers.check_equal, m.groupdict()['acid'], '0002'
+            yield helpers.check_equal, m.groupdict()['acid'], 'o002'

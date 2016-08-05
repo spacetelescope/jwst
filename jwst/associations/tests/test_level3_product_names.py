@@ -21,14 +21,13 @@ LEVEL3_PRODUCT_NAME_REGEX = (
 
 class TestProductNames():
     pool_files = [
-        helpers.t_path('data/jw93060_20150312T160130_pool.csv'),
-        helpers.t_path('data/jw96090_20160406T233447_pool.csv')
+        helpers.t_path('data/mega_pool.csv'),
     ]
 
     global_constraints = {
         'asn_candidate_ids': {
-            'value': ['2'],
-            'inputs': ['ASN_CANDIDATE_ID', 'OBS_NUM'],
+            'value': ['.+o002.+'],
+            'inputs': ['ASN_CANDIDATE'],
             'force_unique': True,
         }
     }
@@ -63,7 +62,7 @@ class TestProductNames():
 
     def test_multiple_optelems(self):
         rules = AssociationRegistry()
-        pool = AssociationPool.read(self.pool_files[1])
+        pool = AssociationPool.read(self.pool_files[0])
         (asns, orphaned) = generate(pool, rules)
         for asn in asns:
             product_name = asn['products'][0]['name']

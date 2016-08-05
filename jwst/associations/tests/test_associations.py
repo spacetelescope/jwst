@@ -19,19 +19,6 @@ from ..registry import (
 
 class TestAssociations():
 
-    pools_size = [
-        (
-            helpers.t_path('data/jw93060_20150312T160130_pool.csv'),
-            14
-        ),
-    ]
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     # Basic Association object
     def test_read_assoc_defs(self):
         rules = AssociationRegistry(
@@ -81,7 +68,7 @@ class TestAssociations():
 
     def test_global_constraints(self, full_pool_rules):
         """Test that global constraints get applied to all rules"""
-        full_pool, default_rules = full_pool_rules
+        full_pool, default_rules, pool_fname = full_pool_rules
 
         tests = {
             'exists': {
@@ -101,7 +88,7 @@ class TestAssociations():
                         'inputs': ['OBS_ID']
                     }
                 },
-                'pool': helpers.t_path('data/pool_candidates.csv'),
+                'pool': helpers.t_path('data/pool_001_candidates.csv'),
                 'n_asns': 0,
             },
             'combined_candidates': {
@@ -112,7 +99,7 @@ class TestAssociations():
                         'force_unique': False,
                     }
                 },
-                'pool': helpers.t_path('data/pool_candidates.csv'),
+                'pool': helpers.t_path('data/pool_001_candidates.csv'),
                 'n_asns': 2,
             },
             'exclusive_candidates': {
@@ -123,7 +110,7 @@ class TestAssociations():
                         'force_unique': True,
                     }
                 },
-                'pool': helpers.t_path('data/pool_candidates.csv'),
+                'pool': helpers.t_path('data/pool_001_candidates.csv'),
                 'n_asns': 4,
             },
         }

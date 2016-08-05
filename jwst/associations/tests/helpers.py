@@ -1,10 +1,9 @@
 """Helpers for tests."""
 from collections import namedtuple
-from glob import iglob
+from glob import glob
 import os
 import pytest
 import re
-from tempfile import mkstemp
 
 from astropy.table import (Table, vstack)
 
@@ -79,22 +78,32 @@ class BasePoolRule(object):
 
 @pytest.fixture(scope='session')
 def full_pool_rules(request):
-    pool_files = iglob(t_path('data/pool_*.csv'))
-    pool = combine_pools(pool_files)
+    pool_fname = t_path('data/mega_pool.csv')
+    pool = AssociationPool.read(pool_fname)
     rules = AssociationRegistry()
 
-    # Create a file that has the pool.
-    # For testing pool reading routines.
-    pool_fd, pool_fname = mkstemp()
-    pool.write(pool_fname, format='ascii', delimiter='|', overwrite=True)
-
-    # Teardown to remove tempfile.
-    def teardown():
-        os.close(pool_fd)
-        os.remove(pool_fname)
-    request.addfinalizer(teardown)
-
     return (pool, rules, pool_fname)
+
+
+def make_megapool():
+    """Combine the individual test pools into one
+
+    Notes
+    -----
+    This is meant to be run in the source tree in
+    the folder the test pools reside in. The package
+    does need to have been installed.
+    `python -c 'import jwst.associations.tests.helpers as helpers; helpers.make_megapool()'`
+    """
+    pool_files = glob('pool_*.csv')
+    pool_files.sort()
+    pool = combine_pools(pool_files)
+    pool.write(
+        'mega_pool.csv',
+        format='ascii',
+        delimiter='|',
+        overwrite=True
+    )
 
 
 # Basic utilities.
@@ -180,6 +189,7 @@ def combine_pools(pools, **pool_kwargs):
 
     # Replace OBS_NUM and ASN_CANDIDATE_ID with actual numbers, if
     # necessary
+    expnum = Counter(start=0)
     obsnum = Counter(start=0)
     acid = Counter(start=999)
     local_env = locals()
@@ -202,7 +212,7 @@ def parse_value(v, global_env=None, local_env=None):
 
     result = v
     try:
-        m = re.match('#!(.+)', v)
+        m = re.match('@!(.+)', v)
     except TypeError:
         pass
     else:
@@ -245,3 +255,8 @@ def fmt_cand(candidate_list):
         evaled_list.append((cid_str, ctype))
 
     return str(evaled_list)
+
+
+def fmt_fname(expnum):
+    """Format the filename"""
+    return 'jw_{:0>5d}_uncal.fits'.format(next(expnum))
