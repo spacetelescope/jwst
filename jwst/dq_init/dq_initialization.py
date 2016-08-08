@@ -30,6 +30,7 @@ def do_dqinit(input_model, mask_model):
     output_model = input_model.copy()
 
     if is_subarray(output_model):
+        log.debug('input exposure is a subarray readout')
         mask_array = get_mask_subarray(mask_model, output_model)
     else:
         mask_array = mask_model.dq
@@ -44,12 +45,7 @@ def do_dqinit(input_model, mask_model):
 
 def is_subarray(input_model):
 
-    if (input_model.meta.subarray.xsize is None or
-        input_model.meta.subarray.ysize is None):
-        raise ValueError('xsize or ysize metadata values not found')
-
-    ncols = input_model.meta.subarray.xsize
-    nrows = input_model.meta.subarray.ysize
+    nrows, ncols = input_model.pixeldq.shape
     instrument = input_model.meta.instrument.name
     if instrument == 'MIRI':
         if ncols < 1032 or nrows < 1024: return True
@@ -64,10 +60,27 @@ def get_mask_subarray(mask_model, output_model):
         output_model.meta.subarray.ystart is None):
         raise ValueError('xstart or ystart metadata values not found')
 
+    ysize, xsize = output_model.pixeldq.shape
+
     xstart = output_model.meta.subarray.xstart
-    xstop = xstart + output_model.meta.subarray.xsize - 1
+    xstop = xstart + xsize - 1
     ystart = output_model.meta.subarray.ystart
-    ystop = ystart + output_model.meta.subarray.ysize - 1
+    ystop = ystart + ysize - 1
+
+    log.debug('science xstart=%d, xstop=%d, ystart=%d, ystop=%d',
+              xstart, xstop, ystart, ystop)
+    log.debug('ref xsize=%d, ysize=%d',
+              mask_model.dq.shape[1], mask_model.dq.shape[0])
+
+    if (xstart < 1 or ystart < 1 or
+        xstop > mask_model.dq.shape[1] or ystop > mask_model.dq.shape[0]):
+        log.error('Computed reference file subarray indexes are incompatible with size of reference data array')
+        log.error('xstart=%d, xstop=%d, ystart=%d, ystop=%d',
+                   xstart, xstop, ystart, ystop)
+        log.error('Reference xsize=%d, ysize=%d',
+                   mask_model.dq.shape[1], mask_model.dq.shape[0])
+        raise ValueError('Bad subarray indexes')
+
     return mask_model.dq[ystart - 1:ystop, xstart - 1:xstop]
 
 def check_dimensions(input_model):
@@ -84,10 +97,13 @@ def check_dimensions(input_model):
         if input_model.pixeldq.shape == (0, 0):
             input_model.pixeldq = np.zeros((input_shape[-2:])).astype('uint32')
         else:
-            print("Pixeldq array has the wrong shape: (%d, %d)" % input_model.pixeldq.shape)
+            log.error("Pixeldq array has the wrong shape: (%d, %d)" % input_model.pixeldq.shape)
+
+    # Perform the same check for the input model groupdq array
     if input_model.groupdq.shape != input_shape:
         if input_model.groupdq.shape == (0, 0, 0, 0):
             input_model.groupdq = np.zeros((input_shape)).astype('uint8')
         else:
-            print("Groupdq array has the wrong shape: (%d, %d, %d, %d)" % input_model.groupdq.shape)
+            log.error("Groupdq array has the wrong shape: (%d, %d, %d, %d)" % input_model.groupdq.shape)
+
     return
