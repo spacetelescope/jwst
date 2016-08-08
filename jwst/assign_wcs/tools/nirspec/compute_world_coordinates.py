@@ -55,11 +55,14 @@ def ifu_coords(fname, output=None):
     for i, slit in enumerate(ifu_slits):
         x, y = wcstools.grid_from_domain(slit.domain)
         ra, dec, lam = slit(x, y)
-        world_coordinates = np.array([lam, ra, dec])
+        detector2slit = slit.get_transform('detector', 'slit_frame')
+        sx, sy, ls = detector2slit(x, y)
+        world_coordinates = np.array([np.rot(lam), np.rot90(ra), np.rot90(dec), np.rot90(sy)])
         imhdu = fits.ImageHDU(data=world_coordinates)
         imhdu.header['PLANE1'] = 'lambda, microns'
         imhdu.header['PLANE2'] = '{0}_x, arcsec'.format(output_frame)
         imhdu.header['PLANE3'] = '{0}_y, arcsec'.format(output_frame)
+        imhdu.header['PLANE4'] = 'slit_y, relative to center (0, 0)'
         imhdu.header['SLIT'] = "SLIT_{0}".format(i)
         hdulist.append(imhdu)
     if output is not None:
@@ -108,13 +111,19 @@ def compute_world_coordinates(fname, output=None):
     hdulist.append(phdu)
     output_frame = model.slits[0].meta.wcs.available_frames[-1]
     for slit in model.slits:
-        x, y = wcstools.grid_from_domain(slit.meta.wcs.domain)
+        #x, y = wcstools.grid_from_domain(slit.meta.wcs.domain)
+        xstart, xend = slit.xstart, slit.xstart + slit.xsize
+        ystart, yend = slit.ystart, slit.ystart + slit.ysize
+        x, y = np.mgrid[xstart : xend, ystart : yend]
         ra, dec, lam = slit.meta.wcs(x, y)
-        world_coordinates = np.array([lam, ra, dec])
+        detector2slit = slit.meta.wcs.get_transform('detector', 'slit_frame')
+        sx, sy, ls = detector2slit(x, y)
+        world_coordinates = np.array([np.rot90(lam), np.rot90(ra), np.rot90(dec), np.rot90(sy)])
         imhdu = fits.ImageHDU(data=world_coordinates)
         imhdu.header['PLANE1'] = 'lambda, microns'
         imhdu.header['PLANE2'] = '{0}_x, arcsec'.format(output_frame)
         imhdu.header['PLANE3'] = '{0}_y, arcsec'.format(output_frame)
+        imhdu.header['PLANE4'] = 'slit_y, relative to center (0, 0)'
         imhdu.header['SLIT'] = slit.name
         hdulist.append(imhdu)
     if output is not None:
