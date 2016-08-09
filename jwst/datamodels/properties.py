@@ -11,7 +11,6 @@ import numpy as np
 import jsonschema
 
 from astropy.extern import six
-from astropy.extern.six.moves import xrange
 from astropy.utils.compat.misc import override__dir__
 
 from asdf import schema
@@ -163,7 +162,7 @@ class ObjectNode(Node):
             return self._instance == other._instance
         else:
             return self._instance == other
-        
+
     def __getattr__(self, attr):
         if attr.startswith('_'):
             raise AttributeError('No attribute {0}'.format(attr))

@@ -196,4 +196,3 @@ def test_save_model():
     Step.from_cmdline(args)
     fname = join(tempdir, 'flat_FOO_SaveStep.fits')
     assert isfile(fname)
-
