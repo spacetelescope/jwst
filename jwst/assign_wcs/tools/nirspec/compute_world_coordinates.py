@@ -1,8 +1,8 @@
-#! /bin/env python
+#! /usr/bin/env python
 """
-A simple tool to read in the output of extract2d (FS and MOS) or assign_wcs (IFU, Imaging) and
+A simple tool to read in the output of extract2d (FS and MOS) or assign_wcs (IFU) and
 apply the WCS transforms to all pixels in a slit. For each slit it writes the results
-as a cube with three planes (wavelength, spatial_x, spatial_y) in a separate fits extension.
+as a cube with three planes (wavelength, ra, dec) in a separate fits extension.
 The file is saved with an suffix "world_coordinates".
 
 Requested by the NIRSPEC team.
@@ -10,12 +10,12 @@ Requested by the NIRSPEC team.
 Build 6 testing.
 """
 from __future__ import absolute_import, division, unicode_literals, print_function
-
+import os.path
 import numpy as np
 from astropy.io import fits
 from gwcs import wcstools
-from jwst import datamodels
-from jwst.assign_wcs import nirspec
+from ... import datamodels
+from .. import nirspec
 
 
 imaging_modes = supported_modes = ['nrs_taconfirm', 'nrs_brightobj', 'nrs_bota', 'nrs_tacq', 'nrs_focus',
@@ -114,9 +114,10 @@ def compute_world_coordinates(fname, output=None):
         #x, y = wcstools.grid_from_domain(slit.meta.wcs.domain)
         xstart, xend = slit.xstart, slit.xstart + slit.xsize
         ystart, yend = slit.ystart, slit.ystart + slit.ysize
-        x, y = np.mgrid[xstart : xend, ystart : yend]
+        x, y = np.mgrid[xstart: xend, ystart: yend]
         ra, dec, lam = slit.meta.wcs(x, y)
         detector2slit = slit.meta.wcs.get_transform('detector', 'slit_frame')
+
         sx, sy, ls = detector2slit(x, y)
         world_coordinates = np.array([np.rot90(lam), np.rot90(ra), np.rot90(dec), np.rot90(sy)])
         imhdu = fits.ImageHDU(data=world_coordinates)

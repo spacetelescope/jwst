@@ -81,7 +81,7 @@ from .util import fits_header_name
 __all__ = [
     'open',
     'DataModel', 'AmiLgModel', 'AsnModel', 'ContrastModel',
-    'CubeModel', 'CubeFlatModel', 'DarkModel', 'DarkMIRIModel','DrizParsModel',
+    'CubeModel', 'CubeFlatModel', 'DarkModel', 'DarkMIRIModel', 'DrizParsModel',
     'NircamDrizParsModel', 'MiriImgDrizParsModel',
     'DrizProductModel', 'FgsPhotomModel', 'FilterModel',
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
