@@ -35,17 +35,17 @@ The bare minimum directory layout for a Python package that creates a
 custom model is as below::
 
   .
-  │── lib
-  │   ┌── __init__.py
-  │   ├── bad_pixel_mask.py
-  │   ├── schemas
-  │   │   ╶── bad_pixel_mask.schema.yaml
-  │   └── tests
-  │       ┌── __init__.py
-  │       ├── test_bad_pixel_mask.py
-  │       └── data
-  │           ╶── bad_pixel_mask.fits
-  └── setup.py
+  |-- lib
+  |   |--- __init__.py
+  |   |--- bad_pixel_mask.py
+  |   |--- schemas
+  |   |--- bad_pixel_mask.schema.yaml
+  |   |--- tests
+  |       |--- __init__.py
+  |       |--- test_bad_pixel_mask.py
+  |       |--- data
+  |       |--- bad_pixel_mask.fits
+  |--- setup.py
 
 The main pieces are the new schema in ``bad_pixel_mask.schema.yaml``,
 the custom model class in ``bad_pixel_mask.py``, a distutils-based
