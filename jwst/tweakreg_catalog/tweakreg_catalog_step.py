@@ -12,7 +12,7 @@ class TweakregCatalogStep(Step):
     Parameters
     -----------
     input : str or `ModelContainer`
-        A JSON association table filename or a `ModelContainer`
+        An association table filename or a `ModelContainer`
         instance.
     """
 

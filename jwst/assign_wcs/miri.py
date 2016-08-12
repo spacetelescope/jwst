@@ -12,7 +12,6 @@ import gwcs.coordinate_frames as cf
 from gwcs import selector
 from . import pointing
 from ..transforms import models as jwmodels
-from .util import not_implemented_mode
 
 
 log = logging.getLogger(__name__)
@@ -91,7 +90,7 @@ def lrs(input_model, reference_files):
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     focal_spatial = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
-    sky = cf.CelestialFrame(reference_frame=coord.ICRS())
+    #sky = cf.CelestialFrame(reference_frame=coord.ICRS())
     spec = cf.SpectralFrame(name='wavelength', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     focal = cf.CompositeFrame([focal_spatial, spec])
 
@@ -200,7 +199,7 @@ def detector_to_alpha_beta(input_model, reference_files):
     transforms = {}
 
     for sl in alpha_model:
-        chan = str(sl // 100) + band
+        #chan = str(sl // 100) + band
         forward = models.Mapping([1, 0, 0, 1, 0]) | \
                 alpha_model[sl] & beta_model[sl] & lambda_model[sl]
         inv = models.Mapping([2, 0, 2, 0]) | x_model[sl] & y_model[sl]

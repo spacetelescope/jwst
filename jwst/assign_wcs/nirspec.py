@@ -7,21 +7,19 @@ Call create_pipeline() which redirects based on EXP_TYPE
 from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
 import logging
-import copy
-import types
-import os.path
 import numpy as np
 
 from asdf import AsdfFile
 from astropy.modeling import models, fitting
-from astropy.modeling.core import Model
 from astropy.modeling.models import Mapping, Identity, Const1D
 from astropy import units as u
 from astropy import coordinates as coord
 from astropy.io import fits
 from gwcs import coordinate_frames as cf
 
-from ..transforms.models import *
+from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa, slitid_to_slit,
+                                 AngleFromGratingEquation, WavelengthFromGratingEquation, Gwa2Slit,
+                                 Unitless2DirCos)
 from .util import not_implemented_mode
 from . import pointing
 
@@ -92,7 +90,7 @@ def imaging(input_model, reference_files):
 
     # Create coordinate frames in the NIRSPEC WCS pipeline
     # "detector", "gwa", "msa", "oteip", "v2v3", "world"
-    det, gwa, msa_frame, oteip, v2v3 = create_imaging_frames()
+    det, gwa, msa_frame, oteip, v2v3, world = create_imaging_frames()
     if input_model.meta.instrument.filter != 'OPAQUE':
         # MSA to OTEIP transform
         msa2ote = msa_to_oteip(reference_files)
@@ -339,8 +337,6 @@ def ifuslit_to_msa(slits, reference_files):
     model : `~jwst.transforms.Slit2Msa` model.
         Transform from slit_frame to msa_frame.
     """
-    with AsdfFile.open(reference_files['ifufore']) as f:
-        ifufore = f.tree['model']
 
     ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
     models = {}
@@ -413,7 +409,7 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
     agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
     lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
-    lam = (wrange[1] - wrange[0]) / 2 + wrange[0]
+    #lam = (wrange[1] - wrange[0]) / 2 + wrange[0]
 
     ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
     ifupost = AsdfFile.open(reference_files['ifupost'])
@@ -771,7 +767,8 @@ def create_imaging_frames():
                               axes_names=('v2', 'v3'))
     oteip = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
                                axes_names=('x_oteip', 'y_oteip'))
-    return det, gwa, msa, oteip, v2v3
+    world = cf.CelestialFrame(name='world', axes_order=(0, 1), reference_frame=coord.ICRS())
+    return det, gwa, msa, oteip, v2v3, world
 
 
 def get_slit_location_model(slitdata):
@@ -883,12 +880,8 @@ def slit_to_detector(input_model, slits_id, lam, reference_files):
         fpa = f.tree[input_model.meta.instrument.detector].copy()
     with AsdfFile.open(reference_files['camera']) as f:
         camera = f.tree['model'].copy()
-    with AsdfFile.open(reference_files['collimator']) as f:
-        collimator = f.tree['model'].copy()
     with AsdfFile.open(reference_files['disperser']) as f:
         disperser = f.tree
-    with AsdfFile.open(reference_files['wavelengthrange']) as f:
-        wave_range = f.tree
 
     dircos2u = DirCos2Unitless(name='directional2unitless_cosines')
     disperser = correct_tilt(disperser, input_model.meta.instrument.gwa_xtilt,
@@ -900,7 +893,7 @@ def slit_to_detector(input_model, slits_id, lam, reference_files):
     order, wrange = get_spectral_order_wrange(input_model, reference_files['wavelengthrange'])
     input_model.meta.wcsinfo.waverange_start = wrange[0]
     input_model.meta.wcsinfo.waverange_end = wrange[1]
-    input_model.meta.wcsinfo.spectral_order = sporder
+    input_model.meta.wcsinfo.spectral_order = order
 
     agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
     # GWA to detector

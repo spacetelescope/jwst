@@ -36,7 +36,7 @@ def fitswcs_transform_from_model(input_model):
 
     for i in range(1, wcsaxes + 1):
         for j in range(1, 3):
-            pc[i-1, j-1] = input_model._instance['meta']['wcsinfo']['pc{0}_{1}'.format(i, j)]
+            pc[i - 1, j - 1] = input_model._instance['meta']['wcsinfo']['pc{0}_{1}'.format(i, j)]
     wcsinfo['PC'] = pc
     # getting "coordinates" from the schema is currently broken.
     wcsinfo['RADESYS'] = 'ICRS' #input_model._instance['meta']['coordinates']['reference_frame']

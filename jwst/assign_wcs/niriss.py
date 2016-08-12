@@ -2,7 +2,6 @@ from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
 
 from asdf import AsdfFile
-from astropy.modeling import models
 from astropy import coordinates as coord
 from astropy import units as u
 
