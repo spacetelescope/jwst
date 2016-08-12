@@ -60,6 +60,7 @@ from .mask import MaskModel
 from .miri_ramp import MIRIRampModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
+from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
 from .ifucube import IFUCubeModel
 from .pixelarea import PixelAreaModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
@@ -89,6 +90,7 @@ __all__ = [
     'MaskModel', 'MIRIRampModel', 'ModelContainer', 'MultiSlitModel',
     'MultiSpecModel', 'IFUCubeModel', 'PhotomModel', 'NircamPhotomModel',
     'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
+    'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'RampModel',
     'RampFitOutputModel', 'ReadnoiseModel', 'ResetModel', 'RSCDModel',
     'SaturationModel', 'SpecModel', 'StrayLightModel']

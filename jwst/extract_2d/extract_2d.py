@@ -26,7 +26,7 @@ def extract2d(input_model, which_subarray=None):
             open_slits = [nirspec.slit_name2id[which_subarray]]
     else:
         # Set the step status to COMPLETE
-        output_model.meta.cal_step.extract_2d = 'SKIPPED'
+        input_model.meta.cal_step.extract_2d = 'SKIPPED'
         return input_model
 
     log.info('open slits {0}'.format(open_slits))
