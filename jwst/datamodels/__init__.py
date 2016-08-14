@@ -65,6 +65,7 @@ from .pixelarea import PixelAreaModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
 from .photom import NirspecPhotomModel, NirspecFSPhotomModel
 from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
+from .quad import QuadModel
 from .ramp import RampModel
 from .rampfitoutput import RampFitOutputModel
 from .readnoise import ReadnoiseModel
@@ -89,7 +90,7 @@ __all__ = [
     'MaskModel', 'MIRIRampModel', 'ModelContainer', 'MultiSlitModel',
     'MultiSpecModel', 'IFUCubeModel', 'PhotomModel', 'NircamPhotomModel',
     'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
-    'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'RampModel',
+    'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'QuadModel', 'RampModel',
     'RampFitOutputModel', 'ReadnoiseModel', 'ResetModel', 'RSCDModel',
     'SaturationModel', 'SpecModel', 'StrayLightModel']
 
@@ -178,13 +179,19 @@ def open(init=None, extensions=None):
         new_class = DataModel
     elif len(shape) == 4:
         try:
-            refouthdu = hdulist[fits_header_name('REFOUT')]
+            groupdqhdu = hdulist[fits_header_name('GROUPDQ')]
         except KeyError:
-            from . import ramp
-            new_class = ramp.RampModel
+            from . import quad
+            new_class = quad.QuadModel
         else:
-            from . import miri_ramp
-            new_class = miri_ramp.MIRIRampModel
+            try:
+                refouthdu = hdulist[fits_header_name('REFOUT')]
+            except KeyError:
+                from . import ramp
+                new_class = ramp.RampModel
+            else:
+                from . import miri_ramp
+                new_class = miri_ramp.MIRIRampModel
     elif len(shape) == 3:
         from . import cube
         new_class = cube.CubeModel
