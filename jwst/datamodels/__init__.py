@@ -59,6 +59,7 @@ from .linearity import LinearityModel
 from .mask import MaskModel
 from .miri_ramp import MIRIRampModel
 from .multislit import MultiSlitModel
+from .multislitexposure import MultiSlitExposureModel
 from .multispec import MultiSpecModel
 from .ifucube import IFUCubeModel
 from .pixelarea import PixelAreaModel
@@ -77,16 +78,17 @@ from .superbias import SuperBiasModel
 from .util import fits_header_name
 
 
-
 __all__ = [
     'open',
     'DataModel', 'AmiLgModel', 'AsnModel', 'ContrastModel',
-    'CubeModel', 'CubeFlatModel', 'DarkModel', 'DarkMIRIModel', 'DrizParsModel',
+    'CubeModel', 'CubeFlatModel', 'DarkModel', 'DarkMIRIModel',
+    'DrizParsModel',
     'NircamDrizParsModel', 'MiriImgDrizParsModel',
     'DrizProductModel', 'FgsPhotomModel', 'FilterModel',
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'LinearityModel',
     'MaskModel', 'MIRIRampModel', 'ModelContainer', 'MultiSlitModel',
+    'MultiSlitExposureModel',
     'MultiSpecModel', 'IFUCubeModel', 'PhotomModel', 'NircamPhotomModel',
     'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
     'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'RampModel',
