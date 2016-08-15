@@ -59,7 +59,6 @@ from .linearity import LinearityModel
 from .mask import MaskModel
 from .miri_ramp import MIRIRampModel
 from .multislit import MultiSlitModel
-from .multislitexposure import MultiSlitExposureModel
 from .multispec import MultiSpecModel
 from .ifucube import IFUCubeModel
 from .pixelarea import PixelAreaModel
@@ -89,7 +88,6 @@ __all__ = [
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'LinearityModel',
     'MaskModel', 'MIRIRampModel', 'ModelContainer', 'MultiSlitModel',
-    'MultiSlitExposureModel',
     'MultiSpecModel', 'IFUCubeModel', 'PhotomModel', 'NircamPhotomModel',
     'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
     'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'QuadModel', 'RampModel',
