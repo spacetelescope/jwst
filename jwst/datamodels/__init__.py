@@ -178,24 +178,31 @@ def open(init=None, extensions=None):
     if len(shape) == 0:
         new_class = DataModel
     elif len(shape) == 4:
+        # It's a RampModel, MIRIRampModel, or QuadModel
         try:
-            groupdqhdu = hdulist[fits_header_name('GROUPDQ')]
+            dqhdu = hdulist[fits_header_name('DQ')]
         except KeyError:
-            from . import quad
-            new_class = quad.QuadModel
-        else:
+            # It's a RampModel or MIRIRampModel
             try:
                 refouthdu = hdulist[fits_header_name('REFOUT')]
             except KeyError:
+                # It's a RampModel
                 from . import ramp
                 new_class = ramp.RampModel
             else:
+                # It's a MIRIRampModel
                 from . import miri_ramp
                 new_class = miri_ramp.MIRIRampModel
+        else:
+            # It's a QuadModel
+            from . import quad
+            new_class = quad.QuadModel
     elif len(shape) == 3:
+        # It's a CubeModel
         from . import cube
         new_class = cube.CubeModel
     elif len(shape) == 2:
+        # It's an ImageModel
         from . import image
         new_class = image.ImageModel
     else:
