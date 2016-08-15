@@ -2,7 +2,7 @@
 """
 from collections import defaultdict
 
-from jwst.datamodels import MultiSlitExposureModel
+from jwst.datamodels import MultiSlitModel
 
 
 def exp_to_source(inputs):
@@ -15,19 +15,13 @@ def exp_to_source(inputs):
 
     Returns
     -------
-    {str: MultiSlitExposureModel, }
-        Returns a dict of MultiSlitExposureModel instances wherein each
+    {str: MultiSlitModel, }
+        Returns a dict of MultiSlitModel instances wherein each
         instance contains slits belonging to the same source.
         The key is the name of each source.
     """
-    result = defaultdict(MultiSlitExposureModel)
+    result = defaultdict(MultiSlitModel)
     for exposure in inputs:
         for slit in exposure.slits:
             result[slit.name].slits.append(slit)
-            try:
-                result[slit.name].meta.exposures.append(
-                    exposure.meta.to_tree()
-                )
-            except AttributeError:
-                result[slit.name].meta.exposures = [exposure.meta.to_tree()]
     return result
