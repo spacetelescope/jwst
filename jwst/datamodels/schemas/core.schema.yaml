@@ -661,10 +661,6 @@ properties:
             title: Position angle of aperture used (deg)
             type: number
             fits_keyword: PA_APER
-          aperture_sca:
-            title: SCA for intended target
-            type: number
-            fits_keyword: SCA_APER
       wcsinfo:
         title: WCS parameters
         type: object
@@ -1034,10 +1030,6 @@ properties:
             title: Observatory UTC time when the visit completed
             type: string
             fits_keyword: VISITEND
-          wfs_visit:
-            title: Wavefront sensing and control visit indicator
-            type: string
-            fits_keyword: WFSCFLAG
       ref_file:
         title: Reference file information
         type: object
