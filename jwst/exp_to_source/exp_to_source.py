@@ -4,6 +4,8 @@ from collections import defaultdict
 
 from jwst.datamodels import MultiSlitModel
 
+__all__ = ['exp_to_source']
+
 
 def exp_to_source(inputs):
     """Reformat exposure-based MSA data to source-based.
