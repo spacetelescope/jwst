@@ -4,6 +4,12 @@ from __future__ import (
     division,
     print_function
 )
+from copy import deepcopy
+import inspect
+import os
+
+from asdf import schema as asdf_schema
+from asdf import treeutil
 
 from . import model_base
 from .image import ImageModel
@@ -19,26 +25,35 @@ class MultiExposureModel(model_base.DataModel):
     in this model are of the same source, with each slit
     representing a separate exposure of that source.
 
-    This model has a special member `slits` that can be used to
+    This model has a special member `exposures` that can be used to
     deal with an entire slit at a time.  It behaves like a list::
 
-       >>> multislit_model.slits.append(image_model)
-       >>> multislit_model.slits[0]
+       >>> multislit_model.exposures.append(image_model)
+       >>> multislit_model.exposures[0]
        <ImageModel>
 
-    Also, there is an extra mete attribute, `exposures`. This will
-    contain a list of dicts representing the meta attribute from
-    the exposures from which each slit has been taken.
+    Also, there is an extra attribute, `meta`. This will
+    contain the meta attribute from
+    the exposure from which each slit has been taken.
 
     See the module `exp_to_source` for the initial creation of these
     models. This is part of the Level 3 processing of multi-objection
     observations.
     """
     schema_url = "multiexposure.schema.yaml"
+    core_schema_url = 'core.schema.yaml'
 
     def __init__(self, init=None, **kwargs):
+
+        # Lets create a schema
+        schema = self._build_schema()
+
         if isinstance(init, ImageModel):
-            super(MultiExposureModel, self).__init__(init=None, **kwargs)
+            super(MultiExposureModel, self).__init__(
+                init=None,
+                schema=schema,
+                **kwargs
+            )
             self.update(init)
             self.exposures.append(self.exposures.item())
             self.exposures[0].data = init.data
@@ -48,4 +63,48 @@ class MultiExposureModel(model_base.DataModel):
             self.exposures[0].area = init.area
             return
 
-        super(MultiExposureModel, self).__init__(init=init, **kwargs)
+        super(MultiExposureModel, self).__init__(
+            init=init,
+            schema=schema,
+            **kwargs
+        )
+
+    def _build_schema(self):
+        """Build the schema, encorporating the core."""
+        # Determine the schema path
+        filename = os.path.abspath(inspect.getfile(self.__class__))
+        base_url = os.path.join(
+            os.path.dirname(filename), 'schemas', '')
+        schema_path = os.path.join(base_url, self.schema_url)
+        core_schema_path = os.path.join(base_url, self.core_schema_url)
+
+        # Get the schemas
+        schema = asdf_schema.load_schema(
+            schema_path,
+            resolve_references=True
+        )
+        core_schema = asdf_schema.load_schema(
+            core_schema_path,
+            resolve_references=True
+        )
+
+        # Create a new core.meta that will co-locate
+        # with each exposure entry. This is done
+        # by saving the meta information in a separate
+        # FITS HDU.
+        core_meta = deepcopy(core_schema['properties']['meta'])
+        treeutil.walk(core_meta, set_hdu)
+        schema['allOf'][1]['properties']['exposures']['items']['properties']['meta'] = core_meta
+
+        # That's all folks
+        return schema
+
+
+# Utilities
+def set_hdu(obj, hdu_id='EXP'):
+    """Add fits_hdu specification to fits-connected properties"""
+    try:
+        if 'fits_keyword' in obj.keys():
+            obj['fits_hdu'] = hdu_id
+    except AttributeError:
+        pass

@@ -9,7 +9,7 @@ allOf:
         type: object
         properties:
           meta:
-            $ref: core_exposures.schema.yaml
+            title: META info from each exposure
           data:
             fits_hdu: SCI
             default: 0.0
