@@ -22,32 +22,23 @@ class KlipStep(Step):
 
     def process(self, target, psfrefs):
 
-        with datamodels.ImageModel(target) as target_model:
+        with datamodels.CubeModel(target) as target_model:
 
             # Retrieve the parameter values
             truncate = self.truncate
             self.log.info('KL transform truncation = %d', truncate)
 
             # Get the PSF reference images
-            refs_model = datamodels.CubeModel(psfrefs)
+            refs_model = datamodels.QuadModel(psfrefs)
 
             # Call the KLIP routine
             (target, psf) = klip.klip(target_model, refs_model, truncate)
 
             refs_model.close()
 
-        # Save the output target and psf images
-        root = os.path.abspath(os.path.splitext(target.meta.filename)[0])
-        target_file = root + "_klip.fits"
-        psf_file = root + "_psf.fits"
-        target.save(target_file)
-        target.close()
-        psf.save(psf_file)
-        psf.close()
+        result.meta.cal_step.klip = 'COMPLETE'
 
-        #result.meta.cal_step.klip = 'COMPLETE'
-
-        return
+        return (target, psf)
 
 
 if __name__ == '__main__':
