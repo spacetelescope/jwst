@@ -1054,6 +1054,14 @@ properties:
                 title: Pixel area reference file name
                 type: string
                 fits_keyword: R_AREA
+          badshutter:
+            title: NIRSpec bad shutter reference file information
+            type: object
+            properties:
+              name:
+                title: NIRSpec bad shutter reference file name
+                type: string
+                fits_keyword: R_BADSHR
           dark:
             title: Dark reference file information
             type: object
