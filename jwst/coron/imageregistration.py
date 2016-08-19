@@ -224,21 +224,14 @@ def align_models(reference, target, mask):
         # the science ("reference") image in this integration, and apply
         # the shifts to the PSF images
         d, shifts = align_array(reference.data[k], target.data, mask.data)
+        output_model.data[k] = d
 
         # Apply the same shifts to the PSF error arrays, if they exist
         if target.err is not None:
-            e = fourier_imshift(target.err, -shifts)
-        else:
-            e = None
-
-        # Copy the shifted model data into the output model
-        output_model.data[k] = d
-        output_model.err[k] = e
-        output_model.dq[k] = None
+            output_model.err[k] = fourier_imshift(target.err, -shifts)
 
         # TODO: in the future we need to add shifts and other info (such as
         # slice ID from the reference image to which target was aligned)
         # to output cube metadata (or property).
 
     return output_model
-

@@ -1,10 +1,7 @@
 #! /usr/bin/env python
 
-import os
-
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
-
 from . import klip
 
 class KlipStep(Step):
@@ -22,24 +19,20 @@ class KlipStep(Step):
 
     def process(self, target, psfrefs):
 
-        with datamodels.CubeModel(target) as target_model:
+        with datamodels.open(target) as target_model:
 
             # Retrieve the parameter values
             truncate = self.truncate
             self.log.info('KL transform truncation = %d', truncate)
 
             # Get the PSF reference images
-            refs_model = datamodels.QuadModel(psfrefs)
+            refs_model = datamodels.open(psfrefs)
 
             # Call the KLIP routine
-            (target, psf) = klip.klip(target_model, refs_model, truncate)
+            (psf_sub, psf_fit) = klip.klip(target_model, refs_model, truncate)
 
-            refs_model.close()
+        # Update the step completion status
+        psf_sub.meta.cal_step.klip = 'COMPLETE'
 
-        result.meta.cal_step.klip = 'COMPLETE'
-
-        return (target, psf)
-
-
-if __name__ == '__main__':
-    cmdline.step_script(KlipStep)
+        #return psf_sub, psf_fit
+        return psf_sub

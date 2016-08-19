@@ -30,7 +30,7 @@ class AlignRefsStep(Step):
                 self.log.warning('No PSFMASK reference file found')
                 self.log.warning('Align_refs step will be skipped')
                 return None
- 
+
             # Open the psf mask reference file
             mask_model = datamodels.ImageModel(self.mask_name)
 
@@ -42,9 +42,9 @@ class AlignRefsStep(Step):
                                                     mask_model)
             mask_model.close()
             psf_model.close()
-            
+
         return result
 
 
 if __name__ == '__main__':
-    cmdline.step_script(StackRefsStep)
+    cmdline.step_script(AlignRefsStep)
