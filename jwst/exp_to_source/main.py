@@ -1,3 +1,4 @@
+import os
 import sys
 import argparse
 
@@ -6,8 +7,14 @@ from .exp_to_source import exp_to_source
 
 
 class Main(object):
-    """Convert exposure-based slits data to source-based slit data
+    """Convert exposure-based slits data to source-based data
     Docs from the source.
+
+    Attributes
+    ----------
+    results: {source: MultiExposureModel, ...}
+        A dict keyed on source name whose value is
+        the corresponding MultiExposureModel.
     """
 
     def __init__(self, args=None):
@@ -19,7 +26,7 @@ class Main(object):
 
         parser = argparse.ArgumentParser(
             description='Convert exposure-based data to source-based data',
-            usage='python -m jwst_pipeline.exp_to_source.exp_to_source files'
+            usage='python -m jwst.exp_to_source.main files'
         )
         parser.add_argument(
             'files',
@@ -27,12 +34,32 @@ class Main(object):
             nargs='+',
             help='Files to convert')
 
-        parsed = parser.parse_args(args=args)
+        parser.add_argument(
+            '-o', '--output-path',
+            type=str,
+            default='.',
+            help='Folder to save results in. Default: "%(default)s"'
+        )
 
-        models = [MultiSlitModel(f) for f in parsed.files]
-        results = exp_to_source(models)
-        for source in results:
-            results[source].save('.'.join([source, 'fits']))
+        parser.add_argument(
+            '--dry-run',
+            action='store_true', dest='dry_run',
+            help='Execute but do not save results.'
+        )
+
+        try:
+            parsed = parser.parse_args(args=args)
+        except SystemExit:
+            return
+
+        exposures = [MultiSlitModel(f) for f in parsed.files]
+        self.sources = exp_to_source(exposures)
+        if not parsed.dry_run:
+            for source in self.sources:
+                out_path = '.'.join([source, 'fits'])
+                out_path = os.path.join(parsed.output_path, out_path)
+                self.sources[source].save(out_path)
+
 
 if __name__ == '__main__':
     Main()
