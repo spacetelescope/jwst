@@ -60,10 +60,12 @@ class Coron3Pipeline(Pipeline):
         for member in prod['members']:
             if member['exptype'].upper() == 'PSF':
                 psf_files.append(member['expname'])
-                log.debug(' psf_file {0} = {1}'.format(len(psf_files), member['expname']))
+                log.debug(' psf_file {0} = {1}'.format(len(psf_files),
+                          member['expname']))
             if member['exptype'].upper() == 'SCIENCE':
                 targ_files.append(member['expname'])
-                log.debug(' targ_file {0} = {1}'.format(len(targ_files), member['expname']))
+                log.debug(' targ_file {0} = {1}'.format(len(targ_files),
+                          member['expname']))
 
         # Make sure we found some PSF and target members
         if len(psf_files) == 0:
@@ -98,12 +100,10 @@ class Coron3Pipeline(Pipeline):
         resample_input = datamodels.ModelContainer()
         for target_file in targ_files:
 
-            target_model = datamodels.CubeModel(target_file)
-
             # Call align_refs
             log.debug(' Calling align_refs for member %s', target_file)
-            psf_aligned = self.align_refs(target_model, psf_stack)
-    
+            psf_aligned = self.align_refs(target_file, psf_stack)
+
             # Save the alignment results
             filename = mk_filename(self.output_dir, target_file, 'psfalign')
             log.info('Saving psfalign file %s', filename)
@@ -111,34 +111,35 @@ class Coron3Pipeline(Pipeline):
 
             # Call KLIP
             log.debug(' Calling klip for member %s', target_file)
-            psf_sub, psf_fit = self.klip(target_model, psf_aligned)
-            target_model.close()
+            #psf_sub, psf_fit = self.klip(target_file, psf_aligned)
+            psf_sub = self.klip(target_file, psf_aligned)
             psf_aligned.close()
 
             # Save the psf subtraction results
             filename = mk_filename(self.output_dir, target_file, 'psfsub')
             log.info('Saving psfsub file %s', filename)
             psf_sub.save(filename)
-         
+
             # Create a ModelContainer of the psf_sub results to send to
             # outlier_detection
             log.debug(' Building ModelContainer of klip results')
-            outlier_input = datamodels.ModelContainer()
+            target_models = datamodels.ModelContainer()
             for i in range(psf_sub.data.shape[0]):
                 image = datamodels.ImageModel(data=psf_sub.data[i],
                         err=psf_sub.err[i], dq=psf_sub.dq[i])
-                outlier_input.append(image)
+                image.update(psf_sub)
+                image.meta.wcs = psf_sub.meta.wcs
+                target_models.append(image)
 
             # Call outlier_detection
-            targ_cr = self.outlier_detection(outlier_input)
-            outlier_input.close()
+            target_models = self.outlier_detection(target_models)
 
             # Append results from this target exposure to resample input model
-            for i in range(len(targ_cr)):
-                resample_input.append(targ_cr[i])
+            for i in range(len(target_models)):
+                resample_input.append(target_models[i])
 
         # Call the resample step to combine all the psf-subtracted target images
-        result = self.reample(resample_input)
+        result = self.resample(resample_input)
 
         # Save the final result
         filename = prod['name']
@@ -166,4 +167,3 @@ def mk_filename(output_dir, filename, suffix):
     # Now replace the existing suffix with the new one
     base, ext = os.path.splitext(filename)
     return base[:base.rfind('_')] + '_' + suffix + ext
-

@@ -40,7 +40,7 @@ def make_cube(input_models):
     # into the output arrays
     nint = 0
     for i in range(num_refs):
-        log.info(' Adding psf member %d to output stack', i+1)
+        log.info(' Adding psf member %d to output stack', i + 1)
         for j in range(input_models[i].shape[0]):
             outdata[nint] = input_models[i].data[j]
             outerr[nint] = input_models[i].err[j]
