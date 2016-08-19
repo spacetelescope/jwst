@@ -18,7 +18,7 @@ def exp_to_source(inputs):
     Returns
     -------
     {str: MultiExposureModel, }
-        Returns a dict of MultiSlitModel instances wherein each
+        Returns a dict of MultiExposureModel instances wherein each
         instance contains slits belonging to the same source.
         The key is the name of each source.
     """
