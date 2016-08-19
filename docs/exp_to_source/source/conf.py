@@ -18,8 +18,9 @@ from stsci.sphinxext.conf import *
 
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-sys.path.insert(0, os.path.abspath('../../jwst_pipeline/exp_to_source'))
+# documentation root, use os.path.abspath to make it absolute, like
+# shown here.
+sys.path.insert(0, os.path.abspath('../../../jwst/exp_to_source'))
 sys.path.insert(0, os.path.abspath('../sphinxext'))
 
 # -- General configuration ------------------------------------------------
@@ -34,7 +35,6 @@ extensions += [
     'sphinx.ext.autodoc',
     'sphinx.ext.doctest',
     'sphinx.ext.intersphinx',
-    'sphinx.ext.pngmath',
     'programoutput',
 ]
 
@@ -51,8 +51,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'associations'
-copyright = u'2015, J.D.Eisenhamer'
+project = u'exp_to_source'
+copyright = u'2016, J.D.Eisenhamer'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -184,7 +184,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'associationsdoc'
+htmlhelp_basename = 'exp_to_sourcedoc'
 
 
 # -- Options for LaTeX output ---------------------------------------------

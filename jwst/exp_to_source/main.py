@@ -2,17 +2,24 @@ import os
 import sys
 import argparse
 
-from ..datamodels import MultiSlitModel
-from .exp_to_source import exp_to_source
+from jwst.datamodels import MultiSlitModel
+from jwst.exp_to_source import exp_to_source
 
 
 class Main(object):
     """Convert exposure-based slits data to source-based data
     Docs from the source.
 
+    Parameters
+    ----------
+    args: str or [str,...]
+        The command-line arguments. This is passed to
+        `argparse.parse_args`. If None, `sys.argv`
+        is used.
+
     Attributes
     ----------
-    results: {source: MultiExposureModel, ...}
+    sources: {source: MultiExposureModel, ...}
         A dict keyed on source name whose value is
         the corresponding MultiExposureModel.
     """
