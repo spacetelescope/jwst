@@ -9,7 +9,7 @@ allOf:
         type: object
         properties:
           meta:
-            title: META info from each exposure
+            title: META info from the exposure source file
           data:
             fits_hdu: SCI
             default: 0.0
