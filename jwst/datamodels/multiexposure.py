@@ -92,9 +92,11 @@ class MultiExposureModel(model_base.DataModel):
         # with each exposure entry. This is done
         # by saving the meta information in a separate
         # FITS HDU.
-        core_meta = deepcopy(core_schema['properties']['meta'])
-        treeutil.walk(core_meta, set_hdu)
-        schema['allOf'][1]['properties']['exposures']['items']['properties']['meta'] = core_meta
+        core_meta_schema = deepcopy(core_schema['properties']['meta'])
+        treeutil.walk(core_meta_schema, remove_fits)
+        exposure_schema = schema['allOf'][1]['properties']['exposures']
+        exposure_meta_schema = exposure_schema['items']['properties']['meta']
+        exposure_meta_schema.update(core_meta_schema)
 
         # That's all folks
         return schema
@@ -107,4 +109,15 @@ def set_hdu(obj, hdu_id='EXP'):
         if 'fits_keyword' in obj.keys():
             obj['fits_hdu'] = hdu_id
     except AttributeError:
+        pass
+
+
+def remove_fits(obj):
+    try:
+        obj.pop('fits_keyword', None)
+    except (AttributeError, KeyError, TypeError):
+        pass
+    try:
+        obj.pop('fits_hdu', None)
+    except (AttributeError, KeyError, TypeError):
         pass
