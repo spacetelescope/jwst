@@ -1158,6 +1158,14 @@ properties:
                 title: Photometric reference file name
                 type: string
                 fits_keyword: R_PHOTOM
+          psfmask:
+            title: PSF mask reference file information
+            type: object
+            properties:
+              name:
+                title: PSF mask reference file name
+                type: string
+                fits_keyword: R_PSFMAS
           readnoise:
             title: Read noise reference file information
             type: object
@@ -1438,4 +1446,16 @@ properties:
             title: NIRSpec MSA Stuck Shutter Flagging
             type: string
             fits_keyword: S_MSAFLG
+          stack_psfs:
+            title: Coronagraphic PSF Stacking
+            type: string
+            fits_keyword: S_PSFSTK
+          align_psfs:
+            title: Coronagraphic PSF Alignment
+            type: string
+            fits_keyword: S_PSFALI
+          klip:
+            title: Coronagraphic PSF Subtraction
+            type: string
+            fits_keyword: S_KLIP
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
