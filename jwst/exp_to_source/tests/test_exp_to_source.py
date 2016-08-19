@@ -1,19 +1,17 @@
-from glob import iglob
 import os
 import pytest
 import tempfile
 
+from . import helpers
 from ...datamodels import (MultiExposureModel, MultiSlitModel)
 from ..exp_to_source import exp_to_source
-
-INPUT_FILES = 'data/jwst_nod*_cal.fits'
 
 
 @pytest.fixture
 def run_exp_to_source(scope='module'):
     inputs = [
         MultiSlitModel(f)
-        for f in iglob(t_path(INPUT_FILES))
+        for f in helpers.INPUT_FILES
     ]
     outputs = exp_to_source(inputs)
     return inputs, outputs
@@ -35,7 +33,7 @@ def test_model_structure(run_exp_to_source):
 def test_model_roundtrip(run_exp_to_source):
     inputs, outputs = run_exp_to_source
     files = []
-    with tempfile.TemporaryDirectory() as path:
+    with helpers.TemporaryDirectory() as path:
         for output in outputs:
             file_path = os.path.join(path, output) + '.fits'
             outputs[output].save(file_path)
@@ -48,9 +46,3 @@ def test_model_roundtrip(run_exp_to_source):
                 exp_files.add(exposure.meta.filename)
             assert len(exp_files) == len(multiexposure_model.exposures)
             assert multiexposure_model.meta.filename not in exp_files
-
-
-def t_path(partial_path):
-    """Construction the full path for test files"""
-    test_dir = os.path.dirname(__file__)
-    return os.path.join(test_dir, partial_path)
