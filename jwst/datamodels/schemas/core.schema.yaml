@@ -1061,7 +1061,7 @@ properties:
               name:
                 title: NIRSpec bad shutter reference file name
                 type: string
-                fits_keyword: R_BADSHR
+                fits_keyword: R_MSAOPE
           dark:
             title: Dark reference file information
             type: object
