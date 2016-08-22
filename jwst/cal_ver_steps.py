@@ -30,16 +30,16 @@ class StepVersions(object):
             Name of user generating this reference file [Required]
                     
         descrip : str, optional
-            Basic description of this generated report. Default string will be 
+            Basic description of this generated report. Default string will be
             generated if no user-supplied string is provided.
         
         history : str, optional
             Single line to provide info on when this file was created. Default
-            string based on current date task was run will be used if no 
+            string based on current date task was run will be used if no
             user-supplied string is provided.
             
         verbose : bool, optional
-            Specify whether or not to generate additional diagnostic 
+            Specify whether or not to generate additional diagnostic
             messages during operation. [Default: False}
             
         """
@@ -54,10 +54,10 @@ class StepVersions(object):
         
         self.output = {'reftype': "CALVER",
                       'instrument': "SYSTEM",
-                      'descrip': descrip, 
-#                      'useafter': useafter, 
-                      'author': author, 
-                      'history': history, 
+                      'descrip': descrip,
+#                      'useafter': useafter,
+                      'author': author,
+                      'history': history,
                       'CAL_VER': version.__version__,
                       'versions': {}
                   }
@@ -80,11 +80,11 @@ class StepVersions(object):
             print(e, file=sys.stderr)
             exit(1)
                     
-        # Identify which sub-packages are defined in this environment as 
+        # Identify which sub-packages are defined in this environment as
         # included in the 'steps' module
         self.modules = inspect.getmembers(jwst_pkg,inspect.ismodule)
 
-        # Look for all modules within each sub-package which MAY contain a 
+        # Look for all modules within each sub-package which MAY contain a
         # processing step
         self.steps = {}
         for m in self.modules:
@@ -119,16 +119,16 @@ class StepVersions(object):
         return json.dumps(self.output, sort_keys=True)
    
     def write_json(self,filename, clobber=False):
-        """ Writes results out to json file. 
+        """ Writes results out to json file.
 
         Parameters
         ==========
         filename : str
-            Filename for output file.  If it does not end in .json, method will 
+            Filename for output file.  If it does not end in .json, method will
             append '.json' to end of filename automatically.
             
         clobber : bool
-            Specify whether or not this method should over-write a previous 
+            Specify whether or not this method should over-write a previous
             output file. If True, it will delete previous file.
             If False, it will raise an IOError exception when trying to overwrite
             a file.
