@@ -8,10 +8,15 @@ from .. import datamodels
 from ..datamodels import dqflags
 from . import CubeD2C
 from . import cube
+from . import coord
 #________________________________________________________________________________
 
 
-def MakePointCloudMIRI(self, x, y, file_no, c1_offset, c2_offset, input_model):
+#def MakePointCloudMIRI(self, x, y, file_no, Crval1,Crval2,c1_offset, c2_offset, input_model):
+def MakePointCloudMIRI(self, input_model,
+                       x, y, file_no, 
+                       Cube,
+                       c1_offset, c2_offset):
     """
     Short Summary
     -------------
@@ -45,17 +50,17 @@ def MakePointCloudMIRI(self, x, y, file_no, c1_offset, c2_offset, input_model):
     valid1 = np.isfinite(v2) 
     valid2 = np.isfinite(v3)
     valid3 = np.isfinite(lam)  
-    #index = np.asarray(np.where(np.logical_and(np.logical_and(valid1,valid2),valid3)))
 
-
+    valid = dq_all.copy() * 0 
+    index  = np.where(np.logical_and(np.logical_and(valid1,valid2),valid3))
+    valid[index] = 1
+    #print(valid.shape,valid[0:20])
+    
     all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['DROPOUT'] + dqflags.pixel['NON_SCIENCE'] +
                  dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] + dqflags.pixel['RC'] + dqflags.pixel['NONLINEAR'])
-    
-    good_data = np.asarray(np.where((np.bitwise_and(dq_all, all_flags)==0) & (np.logical_and(np.logical_and(valid1,valid2),valid3))))
 
-
-    # find the location of all the values to reject in cube building
-    #loc_do_not_use = np.bitwise_and(dq_all,dqflags.pixel['DO_NOT_USE'])  
+    # find the location of all the values to reject in cube building    
+    good_data = np.where((np.bitwise_and(dq_all, all_flags)==0) & (valid == 1))
 
     flux = flux_all[good_data]
     error = error_all[good_data]
@@ -64,16 +69,37 @@ def MakePointCloudMIRI(self, x, y, file_no, c1_offset, c2_offset, input_model):
     xpix = x[good_data]
     ypix = y[good_data]
 
-    coord1 = v2[good_data] * 60.0
-    coord2 = v3[good_data] * 60.0
-    coord1 = coord1 - c1_offset 
-    coord2 = coord2 - c2_offset 
-    wave = lam[good_data]
+    if(self.coord_system == 'alpha-beta'):
+        coord1 = alpha
+        coord2 = beta
 
+#    elif (self.coord_system == 'v2-v3'):
+#        coord1 = v2[good_data] * 60.0
+#        coord2 = v3[good_data] * 60.0
+#        coord1 = coord1 - c1_offset 
+#        coord2 = coord2 - c2_offset
+    else:
+        v2_use = v2[good_data] #arc mins
+        v3_use = v3[good_data] #arc mins
+
+        ra,dec = coord.V2V32RADEC(Cube.ra_ref,Cube.dec_ref,Cube.roll_ref,
+                                  Cube.v2_ref, Cube.v3_ref,
+                                  v2_use,v3_use) # return ra and dec in degrees
+        ra = ra - c1_offset/3600.0
+        dec = dec - c2_offset/3600.0
+        xi,eta = coord.radec2std(Cube.Crval1, Cube.Crval2,ra,dec) # xi,eta in arc seconds
+        coord1 = xi
+        coord2 = eta
+
+
+    wave = lam[good_data]
     ifile = np.zeros(flux.shape, dtype='int') + int(file_no)
 
     # get in form of 8 columns of data - shove the information in an array.
 
+    print('xi results', coord1[0:10])
+    print('eta results',coord2[0:10])
+    print('wave',wave[0:10])
     cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile, xpix, ypix])
 
     return cloud
@@ -172,26 +198,27 @@ def FindROI(self, Cube, spaxel, PointCloud):
 
     iprint = 0
     nn = len(PointCloud[0])
-#    print('number of elements in PT',nn)
+    
+    print('number of elements in PT',nn)
     for ipt in range(0, nn - 1):
 
 #        if(iprint == 0):
-#            print('On pt member',ipt,'out of ',nn)
+#        print('On pt member',ipt,'out of ',nn)
         ifile = int(PointCloud[7, ipt])
-
+#        print(ifile)
         a = Cube.a_wave[ifile]
         c = Cube.c_wave[ifile]
         wa = Cube.a_weight[ifile]
         wc = Cube.c_weight[ifile]
-        wave = PointCloud[2, ipt]
+        wave = PointCloud[2,ipt]
         weights = FindNormalizationWeights(wave, a, c, wa, wc)
 
         weight_alpha = weights[0]
         weight_beta = weights[1]
         weight_wave = weights[2]
 
-        coord1 = PointCloud[0, ipt]
-        coord2 = PointCloud[1, ipt]
+        coord1 = PointCloud[0, ipt]  # default coords xi
+        coord2 = PointCloud[1, ipt]  # default coords eta
         alpha = PointCloud[3, ipt]
         beta = PointCloud[4, ipt]
         x = PointCloud[8, ipt]
@@ -200,23 +227,28 @@ def FindROI(self, Cube, spaxel, PointCloud):
         if(self.coord_system == 'alpha-beta'):
             coord1 = alpha
             coord2 = beta
+
+        
 # Map this point cloud to spaxel (distance from spaxel center = ROI)
 # use the vector of cube centers in each dimension to speed things up
-        # both coordinates are in arc seconds
+
+        # find values within the ROI
         indexz = np.asarray(np.where(abs(Cube.zcoord - wave) <= self.roiw))
         indexx = np.asarray(np.where(abs(Cube.xcoord - coord1) <= self.roi1))
         indexy = np.asarray(np.where(abs(Cube.ycoord - coord2) <= self.roi2))
 
 
+#        print('coord1,2,wave',coord1,coord2,wave)
+#        print(indexz.shape) 
+#        sys.exit('STOP')
+
         # transform Cube Spaxel to alpha,beta system of Point Cloud
         # use inverse transfrom of V2,V3 back to local alpha,beta, lam
         # convert v2,v3 from arc seconds to arc min first
 
-
         zloc = Cube.zcoord[indexz[0]]
-        xloc = Cube.xcoord[indexx[0]]
-        yloc = Cube.ycoord[indexy[0]]
-
+        xloc = Cube.xcoord[indexx[0]]  # default coordinates are xi
+        yloc = Cube.ycoord[indexy[0]]  # default coordinates are eta
 
         v2ab_transform = Cube.transform[ifile]
 
@@ -228,11 +260,12 @@ def FindROI(self, Cube, spaxel, PointCloud):
             distance1 = abs(xloc - coord1)
             distance2 = abs(yloc - coord2)
 
+        # Determine the distances in alpha-beta system
         distance3 = abs(zloc - wave)
         distance12 = distance1 * distance1
         distance22 = distance2 * distance2
         distance32 = distance3 * distance3
-
+        
         iz = 0
         for zz in indexz[0]:
             istart = zz * nplane

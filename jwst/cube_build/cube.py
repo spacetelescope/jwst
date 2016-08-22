@@ -6,7 +6,7 @@ import numpy as np
 import math
 import logging
 from .. import datamodels
-
+from . import coord
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -26,13 +26,17 @@ class CubeInfo(object):
         self.a_wave = list()
         self.c_wave = list()
 
+        self.ra_ref = list()
+        self.dec_ref = list()
+        self.roll_ref = list()
+        self.v2_ref = list()
+        self.v3_ref = list()
         self.a_weight = list()
         self.c_weight = list()
         self.transform = list()
 
         self.filter = list()
         self.grating = list()
-
 
         self.output_name = ''
         self.detector = detector
@@ -54,7 +58,8 @@ class CubeInfo(object):
         self.Cdelt2 = b_scale
         self.Cdelt3 = wscale
 #_______________________________________________________________________
-    def SetGeometry(self, coord_system, footprint):
+# cube in alpha-beta space (single exposure cube - small FOV assume rectangular coord system
+    def SetGeometryAB(self, footprint):
         self.a_min, self.a_max, self.b_min, self.b_max, self.lambda_min, self.lambda_max = footprint
 
         #set up the a (x) coordinates of the cube
@@ -99,11 +104,7 @@ class CubeInfo(object):
 #_______________________________________________________________________
 
         range_b = self.b_max - self.b_min
-#        if(coord_system == 'alpha-beta'):
-#            self.naxis2 = 21
-#            self.b_max = self.b_min + (self.naxis2+1)*self.Cdelt2
 
-#        else:
         self.naxis2 = int(math.ceil(range_b / self.Cdelt2))
         b_center = (self.b_max + self.b_min) / 2.0
 
@@ -126,6 +127,114 @@ class CubeInfo(object):
 #        print(xcube)
 #        sys.exit('STOP')
 #_______________________________________________________________________
+# Footprint values are RA,DEC values on the sky
+# Values are given in degrees 
+
+    def SetGeometry(self, footprint):
+        padfactor = 1.1 # a padding on the size of cube to make sure the spatial dimensions are large eniugh
+        deg2rad = math.pi/180.0
+        
+        ra_min, ra_max, dec_min, dec_max,lambda_min, lambda_max = footprint # in degrees
+
+        print('in SetGeometry',ra_min,ra_max,dec_min,dec_max)
+        dec_ave = (dec_min + dec_max)/2.0
+        ra_ave = ((ra_min + ra_max)/2.0 )* math.cos(dec_ave*deg2rad) # actually this is hard due to converenge of hour angle
+        # improve determining ra_ave in the future
+
+        range_ra = (ra_max - ra_min) * 3600.0 #* math.cos(dec_ave*deg2rad)
+
+        self.naxis1 = int(math.ceil(range_ra / self.Cdelt1)) 
+        print('ra range',range_ra,self.naxis1)
+
+        range_dec = (dec_max - dec_min) * 3600.0
+        self.naxis2 = int(math.ceil(range_dec / self.Cdelt2)) 
+        print('dec range', range_dec,self.naxis2)
+
+        self.Crval1 = ra_ave 
+        self.Crval2 = dec_ave
+        xi,eta = coord.radec2std(self.Crval1, self.Crval2,ra_ave,dec_ave)
+        print('xi eta',xi,eta)
+
+        xi_min,eta_min = coord.radec2std(self.Crval1, self.Crval2,ra_min,dec_min)
+        xi_max,eta_max = coord.radec2std(self.Crval1, self.Crval2,ra_max,dec_max)
+        
+        xi_min = xi_min - self.Cdelt1/2.0
+        xi_max = xi_max + self.Cdelt1/2.0
+
+        eta_min = eta_min - self.Cdelt2/2.0
+        eta_max = eta_max + self.Cdelt2/2.0
+
+        print('xi eta min ',xi_min,eta_min)
+        print('xi eta max ',xi_max,eta_max)
+
+        
+        n1a = int(math.ceil(math.fabs(xi_min) / self.Cdelt1)) 
+        n1b = int(math.ceil(math.fabs(xi_max) / self.Cdelt1)) 
+
+        n2a = int(math.ceil(math.fabs(eta_min) / self.Cdelt2)) 
+        n2b = int(math.ceil(math.fabs(eta_max) / self.Cdelt2)) 
+
+        self.naxis1 = n1a + n1b
+        self.naxis2 = n2a + n2b 
+#        range_xi = (xi_max - xi_min)
+#        range_eta = (eta_max - eta_min)
+#        self.naxis1 = int(math.ceil(range_xi / self.Cdelt1)) 
+#        self.naxis2 = int(math.ceil(range_eta / self.Cdelt2)) 
+
+        self.a_min  = xi_min
+        self.a_max = xi_max
+        self.b_min = eta_min
+        self.b_max = eta_max
+
+
+        self.xcoord = np.zeros(self.naxis1)
+
+        self.Crpix1 = n1a
+        xstart = self.a_min + self.Cdelt1 / 2.0
+        for i in range(self.naxis1):
+            self.xcoord[i] = xstart
+            xstart = xstart + self.Cdelt1
+
+        self.ycoord = np.zeros(self.naxis2)
+
+        self.Crpix2 = n2a
+        ystart = self.b_min + self.Cdelt2 / 2.0
+        for i in range(self.naxis2):
+            self.ycoord[i] = ystart
+            ystart = ystart + self.Cdelt2
+#_______________________________________________________________________
+        #set up the lambda (z) coordinate of the cube
+
+        self.lambda_min = lambda_min
+        self.lambda_max = lambda_max
+
+        range_lambda = self.lambda_max - self.lambda_min
+        self.naxis3 = int(math.ceil(range_lambda / self.Cdelt3))
+
+         # adjust max based on integer value of naxis3
+        lambda_center = (self.lambda_max + self.lambda_min) / 2.0
+
+        self.lambda_min = lambda_center - (self.naxis3 / 2.0) * self.Cdelt3
+        self.lambda_max = lambda_center + (self.naxis3 / 2.0) * self.Cdelt3
+
+        self.lambda_max = self.lambda_min + (self.naxis3) * self.Cdelt3
+
+        self.zcoord = np.zeros(self.naxis3)
+        self.Crval3 = self.lambda_min
+        self.Crpix3 = 0.5
+        zstart = self.lambda_min + self.Cdelt3 / 2.0
+
+        for i in range(self.naxis3):
+            self.zcoord[i] = zstart
+            zstart = zstart + self.Cdelt3
+#_______________________________________________________________________
+
+#        ycube,xcube = np.mgrid[:self.naxis2,:self.naxis1]
+#        print(ycube)
+#        print(xcube)
+#        sys.exit('STOP')
+#_______________________________________________________________________
+
 
     def PrintCubeGeometry(self, instrument):
         log.info('Cube Geometry')
