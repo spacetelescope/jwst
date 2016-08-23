@@ -11,30 +11,55 @@ from .. import datamodels
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+def getCenter(input_model):
+    """
+    Get the center of the target in the aperture.
+    (0.0, 0.0) is the aperture center.  Coordinates go
+    from -0.5 to 0.5.
+    """
+    return (0.0, 0.0)
 
-def do_correction(input_model, pathloss_model, pathloss_output=None):
+def do_correction(input_model, pathloss_model):
     """
     Short Summary
     -------------
-    Execute all tasks for Dark Current Subtraction
+    Execute all tasks for Path Loss Correction
 
     Parameters
     ----------
     input_model: data model object
         science data to be corrected
 
-    dark_model: dark model object
-        dark data
-
-    dark_output: string
-        file name in which to optionally save averaged dark data
+    pathloss_model: pathloss model object
+        pathloss correction data
 
     Returns
     -------
     output_model: data model object
-        dark-subtracted science data
+        Science data with pathloss extensions added
 
     """
+
+    # Get centering
+    x0, y0 = getCenter(input_model)
+
+    # For each slit
+    for slit in input_model.slits:
+        size = slit.data.size
+    # That has data.size > 0
+        if size > 0:
+            nrows, ncols = slit.data.shape
+    # Create pathloss array
+            pathloss_point = np.zeros((nrows, ncols), dtype=np.float32)
+            pathloss_uniform = np.zeros((nrows, ncols), dtype=np.float32)
+            
+    # Get wavelengths of each end
+    # For point source and extended source case
+    # For each pixel
+    # Get wavelength
+    # Interpolate path loss
+    # Set pixel in pathloss array to interpolated value
+    # Write out data
 
     # For each SCI extension in input
     # Save some data params for easy use later
