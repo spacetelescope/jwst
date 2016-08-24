@@ -2,7 +2,7 @@
 from glob import glob
 import os
 
-INPUT_FILES_GLOB = 'data/jwst_nod*_cal.fits'
+INPUT_FILES_GLOB = 'data/jwst_nod?_cal.fits'
 
 
 def t_path(partial_path):
