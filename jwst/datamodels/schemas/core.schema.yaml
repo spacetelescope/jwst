@@ -320,8 +320,12 @@ properties:
             fits_keyword: MSACONFL
           msa_metadata_id:
             title: MSA metadata ID
-            type: number
+            type: integer
             fits_keyword: MSAMETID
+          msa_configuration_id:
+            title: MSA configuration ID
+            type: integer
+            fits_keyword: MSACONID
           lamp_state:
             title: Internal lamp state
             type: string
