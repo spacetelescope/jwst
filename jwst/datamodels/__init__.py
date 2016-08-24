@@ -29,6 +29,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+__version__ = '1.1.0'
+
 import numpy as np
 from os.path import basename
 from astropy.extern import six
