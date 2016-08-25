@@ -1,9 +1,15 @@
 """Helpers for tests."""
 from collections import namedtuple
+from contextlib import contextmanager
 from glob import glob
 import os
 import pytest
 import re
+
+try:
+    from tempfile import TemporaryDirectory
+except ImportError:
+    from .tempfile_py2 import TemporaryDirectory
 
 from astropy.table import (Table, vstack)
 
@@ -260,3 +266,29 @@ def fmt_cand(candidate_list):
 def fmt_fname(expnum):
     """Format the filename"""
     return 'jw_{:0>5d}_uncal.fits'.format(next(expnum))
+
+
+def generate_params(request):
+    """Simple param reflection for pytest.fixtures"""
+    return request.param
+
+
+@contextmanager
+def mkstemp_pool_file(pools, **pool_kwargs):
+    """Make an actual pool file"""
+    pool = combine_pools(pools, **pool_kwargs)
+    with TemporaryDirectory() as path:
+        pool_path = os.path.join(path, 'pool')
+        pool.write(
+            pool_path,
+            format='ascii',
+            delimiter='|',
+        )
+        yield pool_path
+
+
+def generate_pool_paths(request):
+    """Fixture to create temporary files for pools"""
+    pool_file = t_path(request.param)
+    with  mkstemp_pool_file(pool_file) as pool_path:
+        yield pool_path

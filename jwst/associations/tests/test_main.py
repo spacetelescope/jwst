@@ -9,7 +9,7 @@ from .helpers import full_pool_rules
 from ..main import Main
 
 
-class TestMain():
+class TestMain(object):
 
     def test_script(self, full_pool_rules):
         pool, rules, pool_fname = full_pool_rules
@@ -23,7 +23,6 @@ class TestMain():
         )
         assert 'Asn_Image' in found_rules
         assert 'Asn_WFSCMB' in found_rules
-
 
     def test_asn_candidates(self, full_pool_rules):
         pool, rules, pool_fname = full_pool_rules
