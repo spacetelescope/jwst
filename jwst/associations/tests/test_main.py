@@ -16,7 +16,7 @@ class TestMain():
 
         generated = Main([pool_fname, '--dry-run'])
         asns = generated.associations
-        assert len(asns) == 4
+        assert len(asns) == 11
         found_rules = set(
             asn['asn_rule']
             for asn in asns
@@ -29,9 +29,9 @@ class TestMain():
         pool, rules, pool_fname = full_pool_rules
 
         generated = Main([pool_fname, '--dry-run', '-i', 'o001'])
-        assert len(generated.associations) == 1
+        assert len(generated.associations) == 2
         generated = Main([pool_fname, '--dry-run', '-i', 'o001', 'o002'])
-        assert len(generated.associations) == 14
+        assert len(generated.associations) == 4
 
     def test_cross_candidate(self, full_pool_rules):
         pool, rules, pool_fname = full_pool_rules

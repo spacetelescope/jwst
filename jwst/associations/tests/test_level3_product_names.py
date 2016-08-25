@@ -19,6 +19,10 @@ LEVEL3_PRODUCT_NAME_REGEX = (
 )
 
 
+# Null values
+EMPTY = (None, 'NULL', 'CLEAR')
+
+
 class TestProductNames():
     pool_files = [
         helpers.t_path('data/mega_pool.csv'),
@@ -68,7 +72,7 @@ class TestProductNames():
             product_name = asn['products'][0]['name']
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
             yield helpers.not_none, m
-            if asn.constraints['opt_elem2']['value'] == 'CLEAR':
+            if asn.constraints['opt_elem2']['value'] in EMPTY:
                 yield helpers.check_not_in_list, '-', m.groupdict()['opt_elem']
             else:
                 yield helpers.check_in_list, '-', m.groupdict()['opt_elem']

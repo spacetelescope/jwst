@@ -10,7 +10,7 @@ from ..association import SERIALIZATION_PROTOCOLS, validate
 def test_generate(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
     (asns, orphaned) = generate(pool, rules)
-    assert len(asns) == 4
+    assert len(asns) == 11
     assert len(orphaned) == 2
     for asn in asns:
         asn_name, asn_store = asn.dump()

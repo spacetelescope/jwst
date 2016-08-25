@@ -5,9 +5,9 @@ import re
 
 from jwst.associations import (
     Association,
-    getattr_from_list,
     libpath
 )
+from jwst.associations.error import AssociationNotAConstraint
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -31,6 +31,9 @@ _DEGRADED_STATUS_NOTOK = (
 # DMS file name templates
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
+
+# Product name regex's
+_REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
 
 
 class DMS_Level3_Base(Association):
@@ -84,45 +87,29 @@ class DMS_Level3_Base(Association):
         """Define product name."""
         program = self.data['program']
 
-        asn_candidate_ids = self.constraints.get('asn_candidate_ids', None)
-        if asn_candidate_ids is not None:
-            id = asn_candidate_ids['value']
-            if len(id) <= 3:
-                id = 'o{0:0>3s}'.format(id)
-            program = '-'.join([
-                program,
-                '{}'.format(id)
-            ])
         try:
-            target = 's{0:0>5s}'.format(self.data['source_id'])
-        except KeyError:
-            target = 't{0:0>3s}'.format(self.data['targname'])
-
-        instrument = self.constraints['instrument']['value']
-
-        opt_elem = ''
-        join_char = ''
-        if self.constraints['opt_elem']['value'] not in _EMPTY:
-            opt_elem = self.constraints['opt_elem']['value']
-            join_char = '-'
-        if self.constraints['opt_elem2']['value'] not in _EMPTY:
-            opt_elem = join_char.join(
-                [opt_elem, self.constraints['opt_elem2']['value']]
-            )
-        if opt_elem == '':
-            opt_elem = 'clear'
-
-        exposure = ''
-        try:
-            activity_id = self.constraints['activity_id']['value']
-        except KeyError:
-            pass
+            asn_candidate_id = self._get_asn_candidate_id()
+        except AssociationNotAConstraint:
+            asn_candidate_id = ''
         else:
-            if activity_id not in _EMPTY:
-                exposure = '-{0:0>2s}'.format(activity_id)
+            asn_candidate_id = '-' + asn_candidate_id
 
-        product_name = 'jw{}_{}_{}_{}_{{product_type}}{}.fits'.format(
+        target = self._get_target_id()
+
+        instrument = self._get_instrument()
+
+        opt_elem = self._get_opt_element()
+
+        try:
+            exposure = self._get_exposure()
+        except AssociationNotAConstraint:
+            exposure = ''
+        else:
+            exposure = '-' + exposure
+
+        product_name = 'jw{}{}_{}_{}_{}_{{product_type}}{}.fits'.format(
             program,
+            asn_candidate_id,
             target,
             instrument,
             opt_elem,
@@ -178,6 +165,103 @@ class DMS_Level3_Base(Association):
                 member['FILENAME'],
                 exposerr
             ))
+
+    def _get_asn_candidate_id(self):
+        """Retrieve association candidate id from contraints
+
+        Returns
+        -------
+        asn_candidate_id: str
+            The Level3 Product name representation
+            of the association candidate ID.
+
+        Raises
+        ------
+        AssociationNoACIDConstraint
+            If no association candidate is part of the
+            constraints
+        """
+        asn_candidate_ids = self.constraints.get('asn_candidate_ids', None)
+        if asn_candidate_ids is None:
+            raise AssociationNotAConstraint
+
+        match = re.search(_REGEX_ACID_VALUE, asn_candidate_ids['value'])
+        if match is None:
+            raise AssociationNotAConstraint
+
+        return match.group(1)
+
+    def _get_target_id(self):
+        """Get string representation of the target
+
+        Returns
+        -------
+        target_id: str
+            The Level3 Product name representation
+            of the target or source ID.
+        """
+        try:
+            target = 's{0:0>5s}'.format(self.data['source_id'])
+        except KeyError:
+            target = 't{0:0>3s}'.format(self.data['targname'])
+        return target
+
+    def _get_instrument(self):
+        """Get string representation of the instrument
+
+        Returns
+        -------
+        instrument: str
+            The Level3 Product name representation
+            of the instrument
+        """
+        instrument = self.constraints['instrument']['value']
+        return instrument
+
+    def _get_opt_element(self):
+        """Get string representation of the optical elements
+
+        Returns
+        -------
+        opt_elem: str
+            The Level3 Product name representation
+            of the optical elements.
+        """
+        opt_elem = ''
+        join_char = ''
+        if self.constraints['opt_elem']['value'] not in _EMPTY:
+            opt_elem = self.constraints['opt_elem']['value']
+            join_char = '-'
+        if self.constraints['opt_elem2']['value'] not in _EMPTY:
+            opt_elem = join_char.join(
+                [opt_elem, self.constraints['opt_elem2']['value']]
+            )
+        if opt_elem == '':
+            opt_elem = 'clear'
+        return opt_elem
+
+    def _get_exposure(self):
+        """Get string representation of the exposure id
+
+        Returns
+        -------
+        exposure: str
+            The Level3 Product name representation
+            of the exposure & activity id.
+
+        Raises
+        ------
+        AssociationNotAConstraint
+            No constraints produce this value
+        """
+        try:
+            activity_id = self.constraints['activity_id']['value']
+        except KeyError:
+            raise AssociationNotAConstraint
+        else:
+            if activity_id not in _EMPTY:
+                exposure = '{0:0>2s}'.format(activity_id)
+        return exposure
 
     def __repr__(self):
         file_name, json_repr = self.to_json()
