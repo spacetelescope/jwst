@@ -317,7 +317,15 @@ properties:
           msa_configuration_file:
             title: MSA configuration file name
             type: string
-            fits_keyword: MSACONFG
+            fits_keyword: MSACONFL
+          msa_metadata_id:
+            title: MSA metadata ID
+            type: integer
+            fits_keyword: MSAMETID
+          msa_configuration_id:
+            title: MSA configuration ID
+            type: integer
+            fits_keyword: MSACONID
           lamp_state:
             title: Internal lamp state
             type: string
@@ -474,11 +482,11 @@ properties:
           datamode:
             title: post-processing method used in FPAP
             type: integer
-            fits_keyword: DATAMODE 
+            fits_keyword: DATAMODE
           comprssd:
             title: data compressed on-board (T/F)
             type: boolean
-            fits_keyword: COMPRSSD 
+            fits_keyword: COMPRSSD
       subarray:
         title: Subarray parameters
         type: object
@@ -487,11 +495,11 @@ properties:
             title: Subarray used
             type: string
             enum: [1024X16, 128X128, 128X2048, 2048X128, 2048X64, 32X32,
-              64X2048, 8X8, ALLSLITS, BRIGHTSKY, FULL, GENERIC, MASKA210R, 
-              MASKA430R, MASK1065, MASK1140, MASK1550, MASKLYOT, S1600A1, 
-              S200A1, S200A2, S200B1, S400A1, SLITLESSPRISM, STRIPE, SUB1024A, 
-              SUB1024B, SUB128, SUB16, SUB160, SUB160P, SUB1A, SUB1B, SUB2048, 
-              SUB256, SUB32, SUB320, SUB400P, SUB512, SUB64, SUB640, SUB64P, 
+              64X2048, 8X8, ALLSLITS, BRIGHTSKY, FULL, GENERIC, MASKA210R,
+              MASKA430R, MASK1065, MASK1140, MASK1550, MASKLYOT, S1600A1,
+              S200A1, S200A2, S200B1, S400A1, SLITLESSPRISM, STRIPE, SUB1024A,
+              SUB1024B, SUB128, SUB16, SUB160, SUB160P, SUB1A, SUB1B, SUB2048,
+              SUB256, SUB32, SUB320, SUB400P, SUB512, SUB64, SUB640, SUB64P,
               SUB80, SUB96, SUBAMPCAL, SUBFP1A, SUBFP1B, SUBGRISM128,
               SUBGRISM256, SUBGRISM64, SUBSTRIP256, SUBSTRIPE256, SUBSTRIP96,
               SUBPRISM, SUBTASOSS, SUBTAAMI, WFSS128C, WFSS128R, WFSS64C,
