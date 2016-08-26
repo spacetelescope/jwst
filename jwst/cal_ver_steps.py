@@ -2,11 +2,12 @@
 JWST calibration processing steps.
 
 """
+from __future__ import print_function
 
 import os, sys, inspect
 import imp
 import json
- 
+
 from datetime import datetime as dtime
 
 from verhawk.scanner import Scanner
@@ -28,20 +29,20 @@ class StepVersions(object):
         ==========
         author : str
             Name of user generating this reference file [Required]
-                    
+
         descrip : str, optional
             Basic description of this generated report. Default string will be
             generated if no user-supplied string is provided.
-        
+
         history : str, optional
             Single line to provide info on when this file was created. Default
             string based on current date task was run will be used if no
             user-supplied string is provided.
-            
+
         verbose : bool, optional
             Specify whether or not to generate additional diagnostic
             messages during operation. [Default: False}
-            
+
         """
         # Initialize output reference file information based on user input
         descrip = pars.get('pars', "JWST calibration processing step version reference file")
@@ -51,7 +52,7 @@ class StepVersions(object):
 #        useafter = pars.get('useafter', None)
 #        if useafter is None:
         useafter = dtime.isoformat(dtime.today())#"%Y-%m-%dT%H:%M:%S"
-        
+
         self.output = {'reftype': "CALVER",
                       'instrument': "SYSTEM",
                       'descrip': descrip,
@@ -62,7 +63,7 @@ class StepVersions(object):
                       'versions': {}
                   }
         self.versions = {}
-        
+
         # Use verhawk to extract all the version information from the package
         self.pkg_name = jwst_pkg_name
 
@@ -79,7 +80,7 @@ class StepVersions(object):
         except ImportError as e:
             print(e, file=sys.stderr)
             exit(1)
-                    
+
         # Identify which sub-packages are defined in this environment as
         # included in the 'steps' module
         self.modules = inspect.getmembers(jwst_pkg,inspect.ismodule)
@@ -90,7 +91,7 @@ class StepVersions(object):
         for m in self.modules:
             mod_name = "{}.{}".format(self.pkg_name,m[0])
             self.steps[mod_name] = inspect.getmembers(m[1],inspect.ismodule)
-            
+
     def scan(self):
         for s in self.steps:
             for mod in self.steps[s]:
@@ -112,12 +113,12 @@ class StepVersions(object):
 
         # Use this new information to update output versions
         self.output['versions'].update(self.versions)
-        
+
     def as_json(self):
         """ Return json string for output version information.
         """
         return json.dumps(self.output, sort_keys=True)
-   
+
     def write_json(self,filename, clobber=False):
         """ Writes results out to json file.
 
@@ -126,19 +127,19 @@ class StepVersions(object):
         filename : str
             Filename for output file.  If it does not end in .json, method will
             append '.json' to end of filename automatically.
-            
+
         clobber : bool
             Specify whether or not this method should over-write a previous
             output file. If True, it will delete previous file.
             If False, it will raise an IOError exception when trying to overwrite
             a file.
-            
+
         """
         json_out = self.as_json()
 
         if not filename.endswith('.json'):
             filename += '.json'
-            
+
         if clobber:
             try:
                 os.remove(filename)
