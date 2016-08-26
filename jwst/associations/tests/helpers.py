@@ -1,6 +1,7 @@
 """Helpers for tests."""
 from collections import namedtuple
 from contextlib import contextmanager
+from functools import wraps
 from glob import glob
 import os
 import pytest
@@ -271,6 +272,30 @@ def fmt_fname(expnum):
 def generate_params(request):
     """Simple param reflection for pytest.fixtures"""
     return request.param
+
+
+def dup_func(f):
+    """Duplicate a function"""
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        return f(*args, **kwargs)
+    return wrapper
+
+
+def func_fixture(f, **kwargs):
+    """Create a true decorator for pytest.fixture
+
+    Parameters
+    ----------
+    f: func
+        The function.
+
+    kwargs: dict
+        Keyword arguments to pass to pytest.fixture
+    """
+    duped = dup_func(f)
+    fixture = pytest.fixture(**kwargs)(duped)
+    return fixture
 
 
 @contextmanager
