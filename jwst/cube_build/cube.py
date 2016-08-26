@@ -155,6 +155,7 @@ class CubeInfo(object):
         xi,eta = coord.radec2std(self.Crval1, self.Crval2,ra_ave,dec_ave)
         print('xi eta',xi,eta)
 
+        
         xi_min,eta_min = coord.radec2std(self.Crval1, self.Crval2,ra_min,dec_min)
         xi_max,eta_max = coord.radec2std(self.Crval1, self.Crval2,ra_max,dec_max)
         
@@ -269,13 +270,16 @@ class CubeInfo(object):
 ##################################################################################
 class Spaxel(object):
 
-    __slots__ = ['xcenter', 'ycenter', 'zcenter', 'flux', 'error', 'pixel_flux', 'pixel_error', 'pixel_overlap',\
-                     'pixel_beta', 'ipointcloud', 'pointcloud_weight']
+    __slots__ = ['xcenter', 'ycenter', 'zcenter', 'v2center','v3center',
+                 'flux', 'error', 'pixel_flux', 'pixel_error', 'pixel_overlap',
+                 'pixel_beta', 'ipointcloud', 'pointcloud_weight']
 
     def __init__(self, xcenter, ycenter, zcenter):
-        self.xcenter = xcenter    # set in cube_build_step
-        self.ycenter = ycenter    # set in cube_build_step
-        self.zcenter = zcenter    # set in cube build step
+        self.xcenter = xcenter    # set in cube_build_step, default xi
+        self.ycenter = ycenter    # set in cube_build_step, default eta
+        self.zcenter = zcenter    # set in cube build step, defailt lambda
+        self.v2center  = 0
+        self.v3center = 0
         self.flux = 0
         self.error = 0
 

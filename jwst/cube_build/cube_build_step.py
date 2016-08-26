@@ -227,11 +227,13 @@ class CubeBuildStep (Step):
             for z in range(Cube.naxis3):
                 for y in range(Cube.naxis2):
                     for x in range(Cube.naxis1):
+
+
+
+
                         spaxel.append(cube.Spaxel(Cube.xcoord[x], 
                                                   Cube.ycoord[y], 
-                                                  Cube.zcoord[z]))
-
-
+                                                  Cube.zcoord[z]))                        
             t1 = time.time()
             print("Time to create list of spaxel classes = %.1f.s" % (t1 - t0,))
 

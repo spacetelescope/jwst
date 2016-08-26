@@ -586,6 +586,7 @@ def MapDetectorToCube(self, this_channel, this_subchannel,
     Short Summary
     -------------
     Loop over files that cover the cube and map the detector pixel to Cube spaxels
+    If dither offsets have been supplied then apply those values to the data
 
     Parameter
     ----------
@@ -604,6 +605,8 @@ def MapDetectorToCube(self, this_channel, this_subchannel,
     nfiles = len(MasterTable.FileMap[instrument][this_channel][this_subchannel])
     log.info('Number of files in cube %i', nfiles)
 
+    # loop over the files that cover the spectral range the cube is for
+    
     for k in range(nfiles):
         ifile = MasterTable.FileMap[instrument][this_channel][this_subchannel][k]
         #print(' On File k',k,nfiles)
@@ -611,6 +614,8 @@ def MapDetectorToCube(self, this_channel, this_subchannel,
         Cube.file.append(ifile)
         c1_offset = 0.0
         c2_offset = 0.0
+        # c1_offset and c2_offset are the dither offset sets (in arc seconds)
+        # by default these are zer0. The user has to supply these 
         if(ioffset == nfiles):
             c1_offset = MasterTable.FileOffset[this_channel][this_subchannel]['C1'][k]
             c2_offset = MasterTable.FileOffset[this_channel][this_subchannel]['C2'][k]
@@ -640,6 +645,10 @@ def MapDetectorToCube(self, this_channel, this_subchannel,
             v2_ref = input_model.meta.wcsinfo.v2_ref # arc min
             v3_ref = input_model.meta.wcsinfo.v3_ref # arc min 
 
+            v2v32radec = ra_ref,dec_ref,roll_ref,v2_ref,v3_ref  # temporarily
+            # store the info needed to transform to ra,dec (this will later
+            # be in assign_wcs) 
+
             Cube.ra_ref.append(ra_ref)
             Cube.dec_ref.append(dec_ref)
             Cube.roll_ref.append(roll_ref)
@@ -648,7 +657,8 @@ def MapDetectorToCube(self, this_channel, this_subchannel,
 
 #________________________________________________________________________________
 # Standard method 
-            if(self.interpolation == 'pointcloud' and self.wcs_method == 'assign_wcs'):
+            if(self.interpolation == 'pointcloud' and 
+               self.wcs_method == 'assign_wcs'):
                 xstart, xend = InstrumentInfo.GetMIRISliceEndPts(this_channel)
                 y, x = np.mgrid[:1024, xstart:xend]
                 y = np.reshape(y, y.size)
@@ -658,6 +668,7 @@ def MapDetectorToCube(self, this_channel, this_subchannel,
                 cloud = CubeCloud.MakePointCloudMIRI(self,input_model,
                                                      x, y, k, 
                                                      Cube,
+                                                     v2v32radec,
                                                      c1_offset, c2_offset)
                 n = PixelCloud.size
                 print('size of PixelCloud',n)
@@ -672,7 +683,8 @@ def MapDetectorToCube(self, this_channel, this_subchannel,
                 log.debug("Time Map one Channel  to Cloud = %.1f.s" % (t1 - t0,))
 #________________________________________________________________________________
 #Point cloud using Distortion Files: (need to loop over slices) - this is just for checking purposes
-            if(self.interpolation == 'pointcloud' and self.wcs_method == 'distortion'):
+            if(self.interpolation == 'pointcloud' and 
+               self.wcs_method == 'distortion'):
 
                 start_region = InstrumentInfo.GetStartSlice(this_channel)
                 end_region = InstrumentInfo.GetEndSlice(this_channel)
