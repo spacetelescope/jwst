@@ -62,6 +62,7 @@ from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
 from .ifucube import IFUCubeModel
 from .pixelarea import PixelAreaModel
+from .pathloss import PathlossModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
 from .photom import NirspecPhotomModel, NirspecFSPhotomModel
 from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
@@ -87,7 +88,8 @@ __all__ = [
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'LinearityModel',
     'MaskModel', 'MIRIRampModel', 'ModelContainer', 'MultiSlitModel',
-    'MultiSpecModel', 'IFUCubeModel', 'PhotomModel', 'NircamPhotomModel',
+    'MultiSpecModel', 'IFUCubeModel', 'PathlossModel',
+    'PhotomModel', 'NircamPhotomModel',
     'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
     'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'RampModel',
     'RampFitOutputModel', 'ReadnoiseModel', 'ResetModel', 'RSCDModel',
