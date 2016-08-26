@@ -10,13 +10,6 @@ from .. import (AssociationRegistry, generate)
 
 
 # Level 3 product name templates
-L35_PRODUCT_NAME = (
-    'jw(?P<program>\d{5})'
-    '_(?P<targetid>t\d{3})'
-    '_(?P<instrument>.+?)'
-    '_(?P<opt_elem>.+?)'
-    '_(?P<ptype>.+)\.fits'
-)
 L3_PRODUCT_NAME = (
     'jw(?P<program>\d{5})'
     '-(?P<acid>[a-z]\d{3,4})'
@@ -34,10 +27,11 @@ class TestLevel3Environment(object):
         pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
         asns, orphaned = generate(pool, rules)
         asn = asns[0]
-        match = re.match(L35_PRODUCT_NAME, asn['products'][0]['name'])
+        match = re.match(L3_PRODUCT_NAME, asn['products'][0]['name'])
         yield helpers.not_none, match
         matches = match.groupdict()
         yield helpers.check_equal, matches['program'], '99009'
+        yield helpers.check_equal, matches['acid'], 'a3001'
         yield helpers.check_equal, matches['targetid'], 't001'
         yield helpers.check_equal, matches['instrument'], 'miri'
         yield helpers.check_equal, matches['opt_elem'], 'f560w'

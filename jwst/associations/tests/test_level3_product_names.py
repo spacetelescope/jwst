@@ -50,7 +50,6 @@ global_constraints = helpers.func_fixture(
 
 class TestProductNames():
 
-    @pytest.mark.xfail(run=False, reason='Bug to be fixed')
     def test_level35_names(self, pool_file):
         rules = AssociationRegistry()
         pool = AssociationPool.read(pool_file)
@@ -72,7 +71,6 @@ class TestProductNames():
             assert m is not None
             assert m.groupdict()['acid'] == 'o002'
 
-    @pytest.mark.xfail(run=False, reason='Bug to be fixed')
     def test_multiple_optelems(self, pool_file):
         rules = AssociationRegistry()
         pool = AssociationPool.read(pool_file)

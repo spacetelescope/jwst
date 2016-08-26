@@ -8,10 +8,14 @@ from jwst.associations import (
     libpath
 )
 from jwst.associations.error import AssociationNotAConstraint
+from jwst.associations.lib.counter import Counter
 
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+# Start of the discovered association ids.
+_DISCOVERED_ID_START = 3001
 
 # Non-specified values found in DMS Association Pools
 _EMPTY = (None, 'NULL', 'CLEAR')
@@ -42,6 +46,9 @@ class DMS_Level3_Base(Association):
     def __init__(self, *args, **kwargs):
 
         self.candidates = set()
+
+        # Initialize discovered association ID
+        self.discovered_id = Counter(_DISCOVERED_ID_START)
 
         # Let us see if member belongs to us.
         super(DMS_Level3_Base, self).__init__(*args, **kwargs)
@@ -87,12 +94,7 @@ class DMS_Level3_Base(Association):
         """Define product name."""
         program = self.data['program']
 
-        try:
-            asn_candidate_id = self._get_asn_candidate_id()
-        except AssociationNotAConstraint:
-            asn_candidate_id = ''
-        else:
-            asn_candidate_id = '-' + asn_candidate_id
+        asn_candidate_id = '-' + self._get_asn_candidate_id()
 
         target = self._get_target_id()
 
@@ -175,21 +177,14 @@ class DMS_Level3_Base(Association):
             The Level3 Product name representation
             of the association candidate ID.
 
-        Raises
-        ------
-        AssociationNoACIDConstraint
-            If no association candidate is part of the
-            constraints
         """
+        result = 'a{:0>4d}'.format(self.discovered_id.value)
         asn_candidate_ids = self.constraints.get('asn_candidate_ids', None)
-        if asn_candidate_ids is None:
-            raise AssociationNotAConstraint
-
-        match = re.search(_REGEX_ACID_VALUE, asn_candidate_ids['value'])
-        if match is None:
-            raise AssociationNotAConstraint
-
-        return match.group(1)
+        if asn_candidate_ids is not None:
+            match = re.search(_REGEX_ACID_VALUE, asn_candidate_ids['value'])
+            if match is not None:
+                result =  match.group(1)
+        return result
 
     def _get_target_id(self):
         """Get string representation of the target

@@ -7,7 +7,7 @@ from .. import (AssociationRegistry, AssociationPool, generate)
 
 
 class TestUtilities():
-    @pytest.mark.xfail
+    @pytest.mark.xfail(run=False, reason='Not Implemented')
     def test_filter_cross_candidates(self, full_pool_rules):
         pool, rules, pool_fname = full_pool_rules
         (asns, orphaned) = generate(pool, rules)
