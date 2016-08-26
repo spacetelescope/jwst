@@ -66,7 +66,7 @@ def create_nirspec_imaging_file():
     image[0].header['grating'] = 'MIRROR'
     return image
 
-
+'''
 def create_nirspec_mos_file():
     image = create_hdul()
     image[0].header['exp_type'] = 'NRS_MSASPEC'
@@ -81,7 +81,7 @@ def create_nirspec_mos_file():
     msa_status_file = get_file_path('SPCB-GD-A.msa.fits.gz')
     image[0].header['MSACONFG'] = msa_status_file
     return image
-
+'''
 
 def create_nirspec_ifu_file(filter, grating, lamp='N/A'):
     image = create_hdul()
@@ -166,7 +166,7 @@ def test_nirspec_ifu_against_esa():
     assert_allclose(lp, lam[cond], atol=10**-10)
     ref.close()
 
-
+'''
 def test_nirspec_mos():
     """
     Test full optical path in Nirspec MOS mode using build 6 reference files.
@@ -183,7 +183,7 @@ def test_nirspec_mos():
     _, wrange = nirspec.spectral_order_wrange_from_model(im)
     w1 = nirspec.nrs_wcs_set_input(im.meta.wcs, 4, 5824, wrange)
     w1(1, 2)
-
+'''
 
 def test_nirspec_fs_esa():
     """
@@ -192,7 +192,6 @@ def test_nirspec_fs_esa():
     #Test creating the WCS
     filename = create_nirspec_fs_file()
     im = datamodels.ImageModel(filename)
-
     refs = create_reference_files(im)
     #refs['disperser'] = get_file_path('jwst_nirspec_disperser_0001.asdf')
     pipe = nirspec.create_pipeline(im, refs)
