@@ -117,7 +117,7 @@ class StepVersions(object):
     def as_json(self):
         """ Return json string for output version information.
         """
-        return json.dumps(self.output, sort_keys=True)
+        return json.dumps(self.output, indent=4, sort_keys=True)
 
     def write_json(self,filename, clobber=False):
         """ Writes results out to json file.
@@ -135,7 +135,6 @@ class StepVersions(object):
             a file.
 
         """
-        json_out = self.as_json()
 
         if not filename.endswith('.json'):
             filename += '.json'
@@ -152,7 +151,8 @@ class StepVersions(object):
                 raise IOError("previous version of {} found, clobber not set".format(filename))
 
         with open(filename,'w') as outfile:
-            outfile.write(json.dumps(json_out,indent=4,sort_keys=True))
+            outfile.write(self.as_json())
+
         if self.verbose:
             print("Versions written to {}".format(filename))
 
