@@ -51,12 +51,14 @@ class StepVersions(object):
 
 #        useafter = pars.get('useafter', None)
 #        if useafter is None:
-        useafter = dtime.isoformat(dtime.today())#"%Y-%m-%dT%H:%M:%S"
+#        useafter = dtime.isoformat(dtime.today())#"%Y-%m-%dT%H:%M:%S"
 
         self.output = {'reftype': "CALVER",
                       'instrument': "SYSTEM",
+                      'useafter': "1900-01-01T00:00:00",
+                      'telescope': "jwst",
+                      'pedigree': "dummy",
                       'descrip': descrip,
-#                      'useafter': useafter,
                       'author': author,
                       'history': history,
                       'CAL_VER': version.__version__,
@@ -70,10 +72,10 @@ class StepVersions(object):
         try:
             with open(os.devnull, 'w') as devnull:
                 sys.stdout = devnull
-            jwst_pkg = imp.load_source(jwst_pkg_name,jwst_pkg_file)
+            jwst_pkg = imp.load_source(jwst_pkg_name, jwst_pkg_file)
             sys.stdout = STDOUT
 
-            pvers = Scanner(jwst_pkg,recursive=True)
+            pvers = Scanner(jwst_pkg, recursive=True)
             pvers.scan()
             self.pkg_versions = pvers.versions
 
@@ -83,14 +85,14 @@ class StepVersions(object):
 
         # Identify which sub-packages are defined in this environment as
         # included in the 'steps' module
-        self.modules = inspect.getmembers(jwst_pkg,inspect.ismodule)
+        self.modules = inspect.getmembers(jwst_pkg, inspect.ismodule)
 
         # Look for all modules within each sub-package which MAY contain a
         # processing step
         self.steps = {}
         for m in self.modules:
-            mod_name = "{}.{}".format(self.pkg_name,m[0])
-            self.steps[mod_name] = inspect.getmembers(m[1],inspect.ismodule)
+            mod_name = "{}.{}".format(self.pkg_name, m[0])
+            self.steps[mod_name] = inspect.getmembers(m[1], inspect.ismodule)
 
     def scan(self):
         for s in self.steps:
@@ -101,15 +103,15 @@ class StepVersions(object):
                 step_version = self.pkg_versions[s]
                 if '_step' in step_name:
                     # Return all classes defined by step
-                    classnames = inspect.getmembers(step_module,inspect.isclass)
+                    classnames = inspect.getmembers(step_module, inspect.isclass)
 
                     # Extract actual processing step associated with this module
                     for c in classnames:
                         if c[0].endswith('Step') and c[0] != 'Step':
                             # store results
-                            self.versions.update({c[0]:step_version})
+                            self.versions.update({c[0]: step_version})
                             if self.verbose:
-                                print("Found Step class {} in {}".format(c[0],s))
+                                print("Found Step class {} in {}".format(c[0], s))
 
         # Use this new information to update output versions
         self.output['versions'].update(self.versions)
@@ -119,7 +121,7 @@ class StepVersions(object):
         """
         return json.dumps(self.output, indent=4, sort_keys=True)
 
-    def write_json(self,filename, clobber=False):
+    def write_json(self, filename, clobber=False):
         """ Writes results out to json file.
 
         Parameters
@@ -150,9 +152,8 @@ class StepVersions(object):
             if os.path.exists(filename):
                 raise IOError("previous version of {} found, clobber not set".format(filename))
 
-        with open(filename,'w') as outfile:
+        with open(filename, 'w') as outfile:
             outfile.write(self.as_json())
 
         if self.verbose:
             print("Versions written to {}".format(filename))
-
