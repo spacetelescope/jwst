@@ -214,7 +214,7 @@ def test_nirspec_fs_esa():
     y = y + cor[1]
     x = x + cor[0]
     ra, dec, lp = w1(x, y)
-    assert_allclose(lp * 10**-6, lam[cond], atol=10**-10)
+    assert_allclose(lp, lam[cond], atol=10**-10)
     ref.close()
 
 
