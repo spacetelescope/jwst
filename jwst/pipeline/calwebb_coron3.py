@@ -91,9 +91,11 @@ class Coron3Pipeline(Pipeline):
         psf_models.close()
 
         # Save the resulting PSF stack
-        filename = mk_filename(self.output_dir, prod['name'], 'psfstack')
-        log.info('Saving psfstack file %s', filename)
-        psf_stack.save(filename)
+        output_file = prod['name'].format(product_type='psfstack')
+        if self.output_dir is not None:
+            output_file = os.path.join(self.output_dir, output_file)
+        log.info('Saving psfstack file %s', output_file)
+        psf_stack.save(output_file)
 
         # Call the sequence of steps align_refs, klip, and outlier_detection
         # once for each input target exposure
@@ -142,12 +144,11 @@ class Coron3Pipeline(Pipeline):
         result = self.resample(resample_input)
 
         # Save the final result
-        filename = prod['name']
+        output_file = prod['name'].format(product_type='coroncmb')
         if self.output_dir is not None:
-            dirname, filename = os.path.split(filename)
-            filename = os.path.join(self.output_dir, filename)
-        self.log.info(' Saving final result to %s', filename)
-        result.save(filename)
+            output_file = os.path.join(self.output_dir, output_file)
+        self.log.info(' Saving final result to %s', output_file)
+        result.save(output_file)
         result.close()
 
         # We're done

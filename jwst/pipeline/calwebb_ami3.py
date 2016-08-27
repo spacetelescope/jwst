@@ -12,7 +12,7 @@ from ..ami import ami_average_step
 from ..ami import ami_normalize_step
 
 
-__version__ = "1.0"
+__version__ = "1.1"
 
 # Define logging
 import logging
@@ -31,6 +31,7 @@ class Ami3Pipeline(Pipeline):
     """
 
     spec = """
+        save_averages = boolean(default=False)
     """
 
     # Define alias to steps
@@ -84,7 +85,7 @@ class Ami3Pipeline(Pipeline):
 
             # Save the LG analysis results to a file
             output_file = mk_filename(self.output_dir, input_file, 'lg')
-            self.log.debug(' Saving LG results to %s', output_file)
+            self.log.info(' Saving LG results to %s', output_file)
             result.save(output_file)
 
         # Average the PSF image results
@@ -93,30 +94,38 @@ class Ami3Pipeline(Pipeline):
             self.log.debug(' Calling ami_average for PSF results ...')
             psf_avg = self.ami_average(psf_files)
 
-            # Save the results to a file
-            output_file = mk_filename(self.output_dir, psf_files[0], 'lgavg')
-            self.log.debug(' Saving average PSF results to %s', output_file)
-            psf_avg.save(output_file)
+            # Save the results to a file, if requested
+            if self.save_averages:
+                output_file = prod['name'].format(product_type='lgavgr')
+                if self.output_dir is not None:
+                    output_file = os.path.join(self.output_dir, output_file)
+                self.log.info(' Saving average PSF results to %s', output_file)
+                psf_avg.save(output_file)
 
         # Average the science target image results
         if len(targ_files) > 0:
             self.log.debug(' Calling ami_average for target results ...')
             targ_avg = self.ami_average(targ_files)
 
-            # Save the results to a file
-            output_file = mk_filename(self.output_dir, targ_files[0], 'lgavg')
-            self.log.debug(' Saving average target results to %s', output_file)
-            targ_avg.save(output_file)
+            # Save the results to a file, if requested
+            if self.save_averages:
+                output_file = prod['name'].format(product_type='lgavgt')
+                if self.output_dir is not None:
+                    output_file = os.path.join(self.output_dir, output_file)
+                self.log.info(' Saving average target results to %s', output_file)
+                targ_avg.save(output_file)
 
         # Now that all LGAVG products have been produced, do normalization of
-        # the target results by reference results, if reference results exist
+        # the target results by the reference results, if reference results exist
         if psf_avg is not None:
 
             result = self.ami_normalize(targ_avg, psf_avg)
 
             # Save the result
-            output_file = mk_filename(self.output_dir, prod['name'], 'lgnorm')
-            self.log.info(' Saving result to %s', output_file)
+            output_file = prod['name'].format(product_type='lgnorm')
+            if self.output_dir is not None:
+                output_file = os.path.join(self.output_dir, output_file)
+            self.log.info(' Saving normalized result to %s', output_file)
             result.save(output_file)
             result.close()
 
