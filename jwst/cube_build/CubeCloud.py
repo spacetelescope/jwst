@@ -5,6 +5,7 @@ import sys
 import numpy as np
 import math
 from .. import datamodels
+from ..datamodels import dqflags
 from . import CubeD2C
 from . import cube
 #________________________________________________________________________________
@@ -36,25 +37,39 @@ def MakePointCloudMIRI(self, x, y, file_no, c1_offset, c2_offset, input_model):
     detector2v23 = input_model.meta.wcs.get_transform('detector', 'V2_V3')
 
     v2, v3, lam = detector2v23(x, y)
-    #v2,v3,lam = input_model.meta.wcs(x,y)
-    index = np.asarray(np.where(np.logical_and(np.isfinite(v2), np.isfinite(v3), np.isfinite(lam))))
-
-    coord1 = v2[index[0]] * 60.0
-    coord2 = v3[index[0]] * 60.0
-    coord1 = coord1 + c1_offset / 60.0
-    coord2 = coord2 + c2_offset / 60.0
-
-    wave = lam[index[0]]
-
     flux_all = input_model.data[y, x]
     error_all = input_model.err[y, x]
+    dq_all = input_model.dq[y,x]
+    #v2,v3,lam = input_model.meta.wcs(x,y)
 
-    flux = flux_all[index[0]]
-    error = error_all[index[0]]
-    alpha = alpha[index[0]]
-    beta = beta[index[0]]
-    xpix = x[index[0]]
-    ypix = y[index[0]]
+    valid1 = np.isfinite(v2) 
+    valid2 = np.isfinite(v3)
+    valid3 = np.isfinite(lam)  
+    #index = np.asarray(np.where(np.logical_and(np.logical_and(valid1,valid2),valid3)))
+
+
+    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['DROPOUT'] + dqflags.pixel['NON_SCIENCE'] +
+                 dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] + dqflags.pixel['RC'] + dqflags.pixel['NONLINEAR'])
+    
+    good_data = np.asarray(np.where((np.bitwise_and(dq_all, all_flags)==0) & (np.logical_and(np.logical_and(valid1,valid2),valid3))))
+
+
+    # find the location of all the values to reject in cube building
+    #loc_do_not_use = np.bitwise_and(dq_all,dqflags.pixel['DO_NOT_USE'])  
+
+    flux = flux_all[good_data]
+    error = error_all[good_data]
+    alpha = alpha[good_data]
+    beta = beta[good_data]
+    xpix = x[good_data]
+    ypix = y[good_data]
+
+    coord1 = v2[good_data] * 60.0
+    coord2 = v3[good_data] * 60.0
+    coord1 = coord1 - c1_offset 
+    coord2 = coord2 - c2_offset 
+    wave = lam[good_data]
+
     ifile = np.zeros(flux.shape, dtype='int') + int(file_no)
 
     # get in form of 8 columns of data - shove the information in an array.
@@ -188,9 +203,9 @@ def FindROI(self, Cube, spaxel, PointCloud):
 # Map this point cloud to spaxel (distance from spaxel center = ROI)
 # use the vector of cube centers in each dimension to speed things up
         # both coordinates are in arc seconds
-        indexz = np.asarray(np.where(abs(Cube.zcoord - wave) <= self.radius_z))
-        indexx = np.asarray(np.where(abs(Cube.xcoord - coord1) <= self.radius_x))
-        indexy = np.asarray(np.where(abs(Cube.ycoord - coord2) <= self.radius_y))
+        indexz = np.asarray(np.where(abs(Cube.zcoord - wave) <= self.roiw))
+        indexx = np.asarray(np.where(abs(Cube.xcoord - coord1) <= self.roi1))
+        indexy = np.asarray(np.where(abs(Cube.ycoord - coord2) <= self.roi2))
 
 
         # transform Cube Spaxel to alpha,beta system of Point Cloud

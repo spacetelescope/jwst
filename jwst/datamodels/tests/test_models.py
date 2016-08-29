@@ -19,7 +19,7 @@ import numpy as np
 from numpy.testing.decorators import knownfailureif
 from numpy.testing import assert_array_equal
 
-from .. import DataModel, ImageModel, RampModel, MultiSlitModel, open
+from .. import DataModel, ImageModel, QuadModel, MultiSlitModel, open
 from .. import schema
 
 
@@ -146,7 +146,7 @@ def test_open():
         pass
 
     with open(FITS_FILE) as dm:
-        assert isinstance(dm, RampModel)
+        assert isinstance(dm, QuadModel)
 
 
 def test_copy():
@@ -167,7 +167,7 @@ def test_copy():
 
 
 def test_section():
-    with RampModel((5, 35, 40, 32)) as dm:
+    with QuadModel((5, 35, 40, 32)) as dm:
         section = dm.get_section('data')[3:4, 1:3]
         assert section.shape == (1, 2, 40, 32)
 

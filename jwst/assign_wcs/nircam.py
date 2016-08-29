@@ -2,12 +2,10 @@ from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
 
 from asdf import AsdfFile
-from astropy.modeling import models
 from astropy import coordinates as coord
 from astropy import units as u
 
 import gwcs.coordinate_frames as cf
-from gwcs import selector
 from . import pointing
 from .util import not_implemented_mode
 

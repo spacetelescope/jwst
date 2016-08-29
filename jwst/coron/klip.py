@@ -8,9 +8,9 @@
 
 from __future__ import division
 
-import logging
 import numpy as np
 
+import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -19,11 +19,19 @@ def klip(target_model, refs_model, truncate):
     """
     Parameters
     ----------
-    target_model : ImageModel
-        The input image of the target
+    target_model : CubeModel (NINTS x NROWS x NCOLS)
+        The input images of the target. Multiple integrations within
+        a single exposure are stacked along the first (NINTS) axis of
+        the data arrays.
 
-    refs_model : CubeModel
-        The input cube of reference images
+    refs_model : QuadModel (NTARG x NINTS x NROWS x NCOLS)
+        The input 4D stack of reference images. The first (NTARG) axis
+        corresponds to the index of each target integration. The second
+        (NINTS) axis is the stack of aligned PSF integrations for that
+        target image. The length of the target_model first (NINTS) axis
+        should be equal to the length of the refs_model first (NTARG)
+        axis (i.e. one stack of aligned PSF images for each target
+        integration).
 
     truncate : int
         Indicates how many rows to keep in the Karhunen-Loeve transform.
@@ -33,52 +41,57 @@ def klip(target_model, refs_model, truncate):
     output_target = target_model.copy()
     output_psf = target_model.copy()
 
-    # Load the target data array and flatten it from 2-D to 1-D
-    target = target_model.data
-    target = target.astype(np.float64)
-    tshape = target.shape
-    target = target.reshape(-1)
+    # Loop over the target integrations
+    for i in range(target_model.data.shape[0]):
 
-    # Load the reference psf arrays and flatten them from 3-D to 2-D
-    refs = refs_model.data
-    refs = refs.astype(np.float64)
-    rshape = refs.shape
-    nrefs = rshape[0]
-    refs = refs.reshape(nrefs, rshape[1] * rshape[2])
+        # Load the target data array and flatten it from 2-D to 1-D
+        target = target_model.data[i]
+        target = target.astype(np.float64)
+        tshape = target.shape
+        target = target.reshape(-1)
 
-    # Make each ref image have zero mean
-    for k in range(nrefs):
-        refs[k] -= np.mean(refs[k], dtype=np.float64)
+        # Load the reference psf arrays and flatten them from 3-D to 2-D
+        refs = refs_model.data[i]
+        refs = refs.astype(np.float64)
+        rshape = refs.shape
+        nrefs = rshape[0]
+        refs = refs.reshape(nrefs, rshape[1] * rshape[2])
 
-    # Compute Karhunen-Loeve transform of ref images and normalize vectors
-    klvect, eigval, eigvect = KarhunenLoeveTransform(refs, normalize=True)
+        # Make each ref image have zero mean
+        for k in range(nrefs):
+            refs[k] -= np.mean(refs[k], dtype=np.float64)
 
-    # Truncate the Karhunen-Loeve vectors
-    klvect = klvect[:truncate]
+        # Compute Karhunen-Loeve transform of ref images and normalize vectors
+        klvect, eigval, eigvect = KarhunenLoeveTransform(refs, normalize=True)
 
-    # Compute the PSF fit to the target image
-    psfimg = np.dot(klvect.T, np.dot(target, klvect.T))
+        # Truncate the Karhunen-Loeve vectors
+        klvect = klvect[:truncate]
 
-    # Subtract the PSF fit from the target image
-    outimg = target - np.mean(target, dtype=np.float64)
-    outimg = outimg - psfimg
+        # Compute the PSF fit to the target image
+        psfimg = np.dot(klvect.T, np.dot(target, klvect.T))
 
-    # Unflatten the PSF and subtracted target images from 1-D to 2-D
-    psfimg = psfimg.reshape(tshape)
-    output_psf.data = psfimg
-    outimg = outimg.reshape(tshape)
-    output_target.data = outimg
+        # Subtract the PSF fit from the target image
+        outimg = target - np.mean(target, dtype=np.float64)
+        outimg = outimg - psfimg
 
-    # Compute the ERR for the fitted target image:
-    # the ERR is taken as the std-dev of the KLIP results for all of the
-    # PSF reference images.
-    #
-    # First, apply the PSF fit to each PSF reference image
-    refs_fit = refs * 0.0
-    for k in range(nrefs):
-        refs_fit[k] = refs[k] - np.dot(klvect.T, np.dot(refs[k], klvect.T))
-    # Now take the standard deviation of the results
-    output_target.err = np.std(refs_fit, 0).reshape(tshape)
+        # Unflatten the PSF and subtracted target images from 1-D to 2-D
+        # and copy them to the output models
+        psfimg = psfimg.reshape(tshape)
+        output_psf.data[i] = psfimg
+        outimg = outimg.reshape(tshape)
+        output_target.data[i] = outimg
+
+        # Compute the ERR for the fitted target image:
+        # the ERR is taken as the std-dev of the KLIP results for all of the
+        # PSF reference images.
+        #
+        # First, apply the PSF fit to each PSF reference image
+        refs_fit = refs * 0.0
+        for k in range(nrefs):
+            refs_fit[k] = refs[k] - np.dot(klvect.T, np.dot(refs[k], klvect.T))
+
+        # Now take the standard deviation of the results
+        output_target.err[i] = np.std(refs_fit, 0).reshape(tshape)
 
     return (output_target, output_psf)
 

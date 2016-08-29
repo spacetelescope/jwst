@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 from ..stpipe import Step, cmdline
+from .. import datamodels
 from . import persistence
 
 class PersistenceStep(Step):
@@ -10,11 +11,13 @@ class PersistenceStep(Step):
     """
     def process(self, input):
 
-        pers_a = persistence.DataSet(input)
-        output_obj = pers_a.do_all()
+        # Skip all processing for now
+        output_obj = datamodels.open(input).copy()
+        output_obj.meta.cal_step.persistence = 'SKIPPED'
+        self.log.warning('Persistence step is currently a no-op: SKIPPING')
 
-        if output_obj is not None:
-            output_obj.meta.cal_step.persistence = 'SKIPPED' # no-op
+        #pers_a = persistence.DataSet(input)
+        #output_obj = pers_a.do_all()
 
         return output_obj
 

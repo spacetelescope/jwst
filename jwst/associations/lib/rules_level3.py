@@ -14,43 +14,8 @@ logger.addHandler(logging.NullHandler())
 
 
 # ----------------------------------
-# Associations defined by Candidates
-class Asn_Mosaic(
-        AsnMixin_Target,
-        AsnMixin_Unique_Config
-):
-    """Association Candidate type of Mosaic"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.add_constraints({
-            'asn_candidate_id': {
-                'value': None,
-                'inputs': ['ASN_CANDIDATE_ID'],
-            },
-            'asn_candidate_type': {
-                'value': 'MOSAIC',
-                'inputs': ['ASN_CANDIDATE_TYPE'],
-            },
-            'wfsvisit': {
-                'value': 'NULL',
-                'inputs': ['WFSVISIT']
-            }
-        })
-
-        # Now check and continue initialization.
-        super(Asn_Mosaic, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, member):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'image'
-        super(Asn_Mosaic, self)._init_hook(member)
-
-
 # Image associations
-class Asn_Dither(
+class Asn_Image(
         AsnMixin_Image,
         AsnMixin_Target,
         AsnMixin_Unique_Config
@@ -69,21 +34,16 @@ class Asn_Dither(
                 'value': 'NULL',
                 'inputs': ['WFSVISIT'],
             },
-            'asn_candidate_type': {
-                'value': 'OBSERVATION',
-                'inputs': ['ASN_CANDIDATE_TYPE'],
-                'required': False,
-            },
         })
 
         # Now check and continue initialization.
-        super(Asn_Dither, self).__init__(*args, **kwargs)
+        super(Asn_Image, self).__init__(*args, **kwargs)
 
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'image'
-        super(Asn_Dither, self)._init_hook(member)
+        super(Asn_Image, self)._init_hook(member)
 
 
 class Asn_WFSCMB(
@@ -91,7 +51,12 @@ class Asn_WFSCMB(
         AsnMixin_Target,
         AsnMixin_Unique_Config
 ):
-    """Wavefront Sensing association"""
+    """Wavefront Sensing association
+
+    Notes
+    -----
+    Defined by `TRAC issue #269 <https://aeon.stsci.edu/ssb/trac/jwst/ticket/269>`_
+    """
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
@@ -100,13 +65,9 @@ class Asn_WFSCMB(
                 'value': '(?!NULL).+',
                 'inputs': ['WFSVISIT'],
             },
-            'asn_candidate_type': {
-                'value': '(?!OBSERVATION).+',
-                'inputs': ['ASN_CANDIDATE_TYPE']
-            },
-            'asn_candidate_id': {
-                'value': None,
-                'inputs': ['ASN_CANDIDATE_ID']
+            'asn_candidate_wfs': {
+                'value': '.+MOSAIC.+',
+                'inputs': ['ASN_CANDIDATE']
             },
             'activity_id': {
                 'value': None,

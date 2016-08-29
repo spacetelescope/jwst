@@ -4,7 +4,6 @@ FGS WCS pipeline - depends on EXP_TYPE.
 from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
 import logging
-import numpy as np
 
 from asdf import AsdfFile
 from astropy.modeling import models
