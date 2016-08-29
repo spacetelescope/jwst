@@ -17,7 +17,7 @@ class CubeInfo(object):
 # Array of classes, CubeType[i]  defines type of Cube being created and the list
 # of files are are used in making the cube.
 
-    def __init__(self, detector, parameter1, parameter2, output_name):
+    def __init__(self, instrument,detector, parameter1, parameter2, output_name):
 
         self.channel = list()
         self.subchannel = list()
@@ -36,12 +36,13 @@ class CubeInfo(object):
 
         self.output_name = ''
         self.detector = detector
+        self.instrument = instrument
         self.output_name = output_name
-        if(detector == 'MIRI'):
+        if(instrument == 'MIRI'):
             self.channel = parameter1
             self.subchannel = parameter2
-
-        elif(detector == 'NIRSPEC'):
+            
+        elif(instrument == 'NIRSPEC'):
             self.filter = parameter1
             self.grating = parameter2
 
@@ -126,7 +127,7 @@ class CubeInfo(object):
 #        sys.exit('STOP')
 #_______________________________________________________________________
 
-    def PrintCubeGeometry(self, detector):
+    def PrintCubeGeometry(self, instrument):
         log.info('Cube Geometry')
         blank = '  '
         log.info('axis# Naxis  CRPIX    CRVAL        CDELT           MIN           MAX')
@@ -134,7 +135,7 @@ class CubeInfo(object):
         log.info('Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', self.naxis2, self.Crpix2, self.Crval2, self.Cdelt2, self.b_min, self.b_max)
         log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', self.naxis3, self.Crpix3, self.Crval3, self.Cdelt3, self.lambda_min, self.lambda_max)
 
-        if(detector == 'MIRI'):
+        if(instrument == 'MIRI'):
             number_channels = len(self.channel)
             number_subchannels = len(self.subchannel)
             for i in range(number_channels):
@@ -143,7 +144,7 @@ class CubeInfo(object):
             for j in range(number_subchannels):
                 this_subchannel = self.subchannel[j]
                 log.info('Cube covers subchannel: %s', this_subchannel)
-        elif(detector == 'NIRSPEC'):
+        elif(instrument == 'NIRSPEC'):
             number_fwa = len(self.filter)
             number_gwa = len(self.grating)
             for i in range(number_fwa):

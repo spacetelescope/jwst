@@ -35,10 +35,10 @@ allOf:
       - name: nelem
         datatype: int32
       - name: wavelength
-        shape: [10000]
+        shape: [130000]
         datatype: float32
       - name: data
-        shape: [10000]
+        shape: [130000]
         datatype: float32
     dq_def:   
       $ref: dq_def.schema.yaml

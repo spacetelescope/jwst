@@ -47,7 +47,7 @@ class NirspecFlatModel(NRSFlatModel):
     schema_url = "nirspec_flat.schema.yaml"
 
     def __init__(self, init=None, data=None, dq=None, err=None,
-                 wavelength=None, flat_table=None,
+                 wavelength=None, flat_table=None, dq_def=None,
                  **kwargs):
         super(NirspecFlatModel, self).__init__(init=init, **kwargs)
 
@@ -65,6 +65,12 @@ class NirspecFlatModel(NRSFlatModel):
 
         if flat_table is not None:
             self.flat_table = flat_table
+
+        if dq_def is not None:
+            self.dq_def = dq_def
+
+        if self.dq is not None or self.dq_def is not None:
+            self.dq = dynamic_mask(self)
 
         # Implicitly create arrays
         self.dq = self.dq
@@ -113,6 +119,8 @@ class NirspecQuadFlatModel(NRSFlatModel):
             self.quadrants[0].err = init.err
             self.quadrants[0].wavelength = init.wavelength
             self.quadrants[0].flat_table = init.flat_table
+            self.quadrants[0].dq_def = init.dq_def
+            self.quadrants[0].dq = dynamic_mask(self.quadrants[0])
             return
 
         super(NirspecQuadFlatModel, self).__init__(init=init, **kwargs)

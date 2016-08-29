@@ -6,6 +6,6 @@ Assciation Pool
 
 .. currentmodule:: pool
 
-.. automodule:: pool
+.. automodule:: jwst.associations.pool
    :members:
    :undoc-members:

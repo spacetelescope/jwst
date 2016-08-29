@@ -31,11 +31,20 @@ def generate(pool, rules):
            * Table of members from the pool that
              do not belong to any association.
     """
+    def reprocess_member(member):
+        """A member which should be reprocessed."""
+        if member is None:
+            return
+        logger.debug('Reprocess request for member="{}"'.format(member))
+        working_pool.add_row(member)
+
     asns = []
     orphaned = Table(dtype=pool.dtype)
     timestamp = make_timestamp()
+    working_pool = pool.copy(copy_data=False)
+    n_orignal = len(working_pool)
     logger.debug('Starting...')
-    for member in pool:
+    for member in working_pool:
         logger.debug('Working member="{}"'.format(member))
         member_asns = set()
         for asn in asns:
@@ -52,7 +61,12 @@ def generate(pool, rules):
                 logger.debug('Matched association "{}"'.format(asn))
 
         try:
-            new_asns = rules.match(member, timestamp, member_asns)
+            new_asns = rules.match(
+                member,
+                timestamp=timestamp,
+                ignore=member_asns,
+                reprocess_cb=reprocess_member
+            )
         except AssociationError as error:
             logger.debug('Did not match any rule.')
             logger.debug('error="{}"'.format(error))
@@ -66,7 +80,12 @@ def generate(pool, rules):
                 'Member created new associations "{}"'.format(new_asns)
             )
 
-        if len(member_asns) == 0:
+        # If no associations were matched or made
+        # AND
+        # if the member is not reprocessed member
+        # THEN
+        # orphan it.
+        if len(member_asns) == 0 and member.index < n_orignal:
             orphaned.add_row(member)
 
     return asns, orphaned

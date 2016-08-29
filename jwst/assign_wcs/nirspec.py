@@ -540,24 +540,21 @@ def compute_domain(slit2detector, wavelength_range):
         Reference files for the observation returned by CRDS.
 
     """
-    x = [-.55, .55]
-    y = [0, 0]
+    step = 100
+    y = np.linspace(-.55, .55, step)
+    x = np.zeros(y.shape)
 
     lam_min = wavelength_range[0]
     lam_max = wavelength_range[1]
 
-    x_range_low = slit2detector(x, y, lam_min)[0]
-    x_range_high = slit2detector(x, y, lam_max)[0]
-    x_range_low = np.where(x_range_low > 0, x_range_low, 0)
-    x_range_high = np.where(x_range_high < 2048, x_range_high, 2048)
-    x0, x1 = x_range_low.min(), x_range_high.max()
-    y = [-.55, .55]
-    x = [0, 0]
-    y_range_min = slit2detector(x, y, lam_min)[1]
-    y_range_max = slit2detector(x, y, lam_max)[1]
-    y0 = min(y_range_min.min(), y_range_max.min())
-    y1 = max(y_range_min.max(), y_range_max.max())
-
+    x_range_low, y_range_low = slit2detector(x, y, lam_min)
+    x_range_high, y_range_high = slit2detector(x, y, lam_max)
+    # add 5 px margin
+    x0 = max(0, x_range_low.min() - 10)
+    x1 = min(2047, x_range_high.max() + 10)
+    # add 2 px margin
+    y0 = y_range_low.min() - 2
+    y1 = y_range_high.max() + 2
     domain = [{'lower': int(x0), 'upper': int(x1)}, {'lower': int(y0), 'upper': int(y1)}]
     return domain
 
@@ -582,7 +579,7 @@ def collimator_to_gwa(reference_files, disperser):
     with AsdfFile.open(reference_files['collimator']) as f:
         collimator = f.tree['model'].copy()
     angles = [disperser['theta_x'], disperser['theta_y'],
-               disperser['theta_z'], disperser['tilt_y']]
+              disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
 
@@ -720,7 +717,7 @@ def oteip_to_v23(reference_files):
     fore2ote_mapping = Identity(3, name='fore2ote_mapping')
     fore2ote_mapping.inverse = Mapping((0, 1, 2, 2))
     # Convert the wavelength to microns
-    return fore2ote_mapping | (ote & Identity(1) / Const1D(1e-6))
+    return fore2ote_mapping | (ote & (Identity(1)))# / Const1D(1e-6)))
 
 
 def create_frames():

@@ -29,6 +29,8 @@
 
 from __future__ import absolute_import, division, print_function
 
+__version__ = '1.1.0'
+
 import numpy as np
 from os.path import basename
 from astropy.extern import six
@@ -58,6 +60,7 @@ from .lastframe import LastFrameModel
 from .linearity import LinearityModel
 from .mask import MaskModel
 from .miri_ramp import MIRIRampModel
+from .multiexposure import MultiExposureModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
 from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
@@ -66,6 +69,7 @@ from .pixelarea import PixelAreaModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
 from .photom import NirspecPhotomModel, NirspecFSPhotomModel
 from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
+from .quad import QuadModel
 from .ramp import RampModel
 from .rampfitoutput import RampFitOutputModel
 from .readnoise import ReadnoiseModel
@@ -87,11 +91,13 @@ __all__ = [
     'DrizProductModel', 'FgsPhotomModel', 'FilterModel',
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'LinearityModel',
-    'MaskModel', 'MIRIRampModel', 'ModelContainer', 'MultiSlitModel',
+    'MaskModel', 'MIRIRampModel', 'ModelContainer',
+    'MultiExposureModel',
+    'MultiSlitModel',
     'MultiSpecModel', 'IFUCubeModel', 'PhotomModel', 'NircamPhotomModel',
     'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
     'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
-    'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'RampModel',
+    'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'QuadModel', 'RampModel',
     'RampFitOutputModel', 'ReadnoiseModel', 'ResetModel', 'RSCDModel',
     'SaturationModel', 'SpecModel', 'StrayLightModel']
 
@@ -179,18 +185,31 @@ def open(init=None, extensions=None):
     if len(shape) == 0:
         new_class = DataModel
     elif len(shape) == 4:
+        # It's a RampModel, MIRIRampModel, or QuadModel
         try:
-            refouthdu = hdulist[fits_header_name('REFOUT')]
+            dqhdu = hdulist[fits_header_name('DQ')]
         except KeyError:
-            from . import ramp
-            new_class = ramp.RampModel
+            # It's a RampModel or MIRIRampModel
+            try:
+                refouthdu = hdulist[fits_header_name('REFOUT')]
+            except KeyError:
+                # It's a RampModel
+                from . import ramp
+                new_class = ramp.RampModel
+            else:
+                # It's a MIRIRampModel
+                from . import miri_ramp
+                new_class = miri_ramp.MIRIRampModel
         else:
-            from . import miri_ramp
-            new_class = miri_ramp.MIRIRampModel
+            # It's a QuadModel
+            from . import quad
+            new_class = quad.QuadModel
     elif len(shape) == 3:
+        # It's a CubeModel
         from . import cube
         new_class = cube.CubeModel
     elif len(shape) == 2:
+        # It's an ImageModel
         from . import image
         new_class = image.ImageModel
     else:

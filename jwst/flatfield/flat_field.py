@@ -4,6 +4,7 @@
 
 from __future__ import division
 
+import sys                              # xxx for sys.stdout.flush()
 import math
 import numpy as np
 import logging
@@ -12,8 +13,6 @@ from .. datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-OUT_OF_BOUNDS = 0
 
 MICRONS_100 = 1.e-4                     # 100 microns, in meters
 
@@ -366,12 +365,10 @@ def do_NIRSpec_flat_field(output_model,
 
     Returns
     -------
-    MultiSlitModel or None
+    MultiSlitModel, ImageModel (for IFU data), or None
         If not None, the value will be the interpolated flat fields.
 
     """
-
-    global OUT_OF_BOUNDS
 
     log.debug("Flat field correction for NIRSpec data.")
 
@@ -384,6 +381,22 @@ def do_NIRSpec_flat_field(output_model,
         raise ValueError("Invalid exposure type (EXP_TYPE)")
     del valid_types
 
+    # We expect NIRSpec IFU data to be an ImageModel, but it's conceivable
+    # that the slices have been copied out into a MultiSlitModel, so
+    # check for that case.
+    try:
+        dummy = output_model.slits[0]
+    except AttributeError:
+        if exposure_type == "NRS_IFU":
+            if not isinstance(output_model, datamodels.ImageModel):
+                log.error("NIRSpec IFU data is not an ImageModel;"
+                          " don't know how to process it.")
+                raise RuntimeError("Input is {}; expected ImageModel"
+                                   .format(type(output_model)))
+            return NIRSpec_IFU(output_model,
+                               f_flat_model, s_flat_model,
+                               d_flat_model, flat_suffix)
+
     # Create an output model for the interpolated flat fields.
     if flat_suffix is not None:
         interpolated_flats = datamodels.MultiSlitModel()
@@ -393,15 +406,20 @@ def do_NIRSpec_flat_field(output_model,
 
     for (k, slit) in enumerate(output_model.slits):
         print("xxx Processing slit {}".format(slit.name))
-        OUT_OF_BOUNDS = 0
+        sys.stdout.flush()          # xxx test debug
         # Get the wavelength of each pixel in the extracted slit data.
         ysize, xsize = slit.data.shape
         grid = np.indices((ysize, xsize), dtype=np.float64)
         # The arguments are the X and Y pixel coordinates (in that order).
         (ra, dec, wl) = slit.meta.wcs(grid[1], grid[0])
         del ra, dec, grid
+        if wl.max() > 0. and wl.max() < MICRONS_100:
+            print("xxx Converting wavelengths for sci data to microns")
+            sys.stdout.flush()          # xxx test debug
+            wl *= 1.e6
         print("xxx wavelengths in sci data range from {} ({}) to {}"
               .format(wl.min(), wl.mean(dtype=np.float64), wl.max()))
+        sys.stdout.flush()          # xxx test debug
 
         xstart = slit.xstart - 1
         ystart = slit.ystart - 1
@@ -446,6 +464,74 @@ def do_NIRSpec_flat_field(output_model,
         output_model.meta.cal_step.flat_field = 'SKIPPED'
 
     return interpolated_flats
+
+def NIRSpec_IFU(output_model,
+                f_flat_model, s_flat_model,
+                d_flat_model, flat_suffix):
+    """
+    Short Summary
+    -------------
+    Apply flat-fielding for NIRSpec data, updating the output model.
+
+    Parameters
+    ----------
+    output_model: JWST data model
+        Science data model, modified (flat fielded) in-place.
+
+    f_flat_model: NirspecFlatModel or NirspecQuadFlatModel object
+        Flat field for the fore optics.
+
+    s_flat_model: NirspecFlatModel object
+        Flat field for the spectrograph.
+
+    d_flat_model: NirspecFlatModel object
+        Flat field for the detector.
+
+    flat_suffix: str or None
+        Filename suffix for optional output file to save the interpolated
+        flat field images.  If not None, a file will be written (later, not
+        by the current function).
+
+    Returns
+    -------
+    ImageModel or None
+        If not None, the value will be the interpolated flat field.
+
+    """
+
+    log.warning("Flat fielding of NIRSpec IFU data is currently"
+                " not supported.")
+    output_model.meta.cal_step.flat_field = 'SKIPPED'
+    return None
+
+"""
+from jwst import datamodels
+from jwst.assign_wcs import nirspec
+dm = datamodels.ImageModel("<whatever>_assign_wcs.fits")
+
+The WCS function for a stripe (specified by integer 0 through 29) can be
+obtained as follows, either:
+    list_of_wcs = nirspec.nrs_ifu_wcs(dm)
+    t1 = list_of_wcs[5]
+or:
+    sporder, wrange = nirspec.spectral_order_wrange_from_model(dm)
+    t1 = nirspec.nrs_wcs_set_input(dm.meta.wcs, 0, 5, wrange)
+
+example of using the WCS function:
+t1.domain
+Out[17]: [{u'lower': 1601, u'upper': 2048}, {u'lower': 1887, u'upper': 1925}]
+Use t1.domain and np.indices to generate a grid of wavelengths.  The values
+will (but this is not implemented yet) be None in the region outside the
+actual stripe but within the stripe's domain.
+dx = t1.domain[0]['upper'] - t1.domain[0]['lower']
+dy = t1.domain[1]['upper'] - t1.domain[1]['lower']
+ind = np.indices((dy, dx))
+x = ind[0] + t1.domain[0]['lower']
+y = ind[1] + t1.domain[1]['lower']
+output = t1(x, y)
+wl = output[2]
+flag = np.isnan(wl)
+"""
 
 
 def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
@@ -510,22 +596,26 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
 
     (f_flat, f_flat_dq) = fore_optics_flat(wl, f_flat_model, exposure_type,
                                            slit_name, quadrant, slit_id)
-    print("xxx f_flat ranges from {}  ({})  to {}"
-          .format(f_flat.min(), f_flat.mean(dtype=np.float64), f_flat.max()))
 
     (s_flat, s_flat_dq) = spectrograph_flat(wl, s_flat_model,
                                             xstart, xstop, ystart, ystop,
                                             exposure_type, slit_name)
-    print("xxx s_flat ranges from {}  ({})  to {}"
-          .format(s_flat.min(), s_flat.mean(dtype=np.float64), s_flat.max()))
 
     (d_flat, d_flat_dq) = detector_flat(wl, d_flat_model,
                                         xstart, xstop, ystart, ystop,
                                         exposure_type, slit_name)
+    print("xxx f_flat ranges from {}  ({})  to {}"
+          .format(f_flat.min(), f_flat.mean(dtype=np.float64), f_flat.max()))
+    print("xxx s_flat ranges from {}  ({})  to {}"
+          .format(s_flat.min(), s_flat.mean(dtype=np.float64), s_flat.max()))
     print("xxx d_flat ranges from {}  ({})  to {}"
           .format(d_flat.min(), d_flat.mean(dtype=np.float64), d_flat.max()))
 
     flat_2d = f_flat * s_flat * d_flat
+
+    print("xxx flat_2d ranges from {}  ({})  to {}"
+          .format(flat_2d.min(), flat_2d.mean(dtype=np.float64), flat_2d.max()))
+    sys.stdout.flush()          # xxx test debug
 
     flat_dq = combine_dq(f_flat_dq, s_flat_dq, d_flat_dq,
                          default_shape=flat_2d.shape)
@@ -581,6 +671,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
         tab_wl *= 1.e6
     print("xxx wavelengths in fore-optics flat range from {} ({}) to {}"
           .format(tab_wl.min(), tab_wl.mean(dtype=np.float64), tab_wl.max()))
+    sys.stdout.flush()          # xxx test debug
 
     # While there actually is a slowly varying flat field for the MSA mode,
     # it's a 1-D array, not 2-D.  This array will be applied by incorporating
@@ -602,6 +693,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
         print("xxx wavelengths in f_flat image range from {} ({}) to {}"
               .format(image_wl.min(), image_wl.mean(dtype=np.float64),
                       image_wl.max()))
+        sys.stdout.flush()          # xxx test debug
         one_d_flat = full_array_flat[:, msa_y, msa_x]
         # This is just a single value, i.e. the shutter can be flagged
         # as bad.  But if it's bad, why was the shutter used?  And what are
@@ -675,6 +767,7 @@ def spectrograph_flat(wl, s_flat_model,
         tab_wl *= 1.e6
     print("xxx wavelengths in spectrograph flat range from {} ({}) to {}"
           .format(tab_wl.min(), tab_wl.mean(dtype=np.float64), tab_wl.max()))
+    sys.stdout.flush()          # xxx test debug
 
     full_array_flat = s_flat_model.data
     full_array_dq = s_flat_model.dq
@@ -691,6 +784,7 @@ def spectrograph_flat(wl, s_flat_model,
         print("xxx wavelengths in s_flat image range from {} ({}) to {}"
               .format(image_wl.min(), image_wl.mean(dtype=np.float64),
                       image_wl.max()))
+        sys.stdout.flush()          # xxx test debug
         (flat_2d, s_flat_dq) = interpolate_flat(image_flat, image_dq,
                                                 image_wl, wl)
     else:
@@ -749,9 +843,11 @@ def detector_flat(wl, d_flat_model,
         tab_wl *= 1.e6
     print("xxx in detector_flat:  tab_wl ranges from {}  ({})  to {}"
           .format(tab_wl.min(), tab_wl.mean(dtype=np.float64), tab_wl.max()))
+    print("xxx                    len(tab_wl) = {}".format(len(tab_wl)))
     print("xxx                    tab_flat ranges from {}  ({})  to {}"
           .format(tab_flat.min(), tab_flat.mean(dtype=np.float64),
                   tab_flat.max()))
+    sys.stdout.flush()          # xxx test debug
 
     full_array_flat = d_flat_model.data
     full_array_dq = d_flat_model.dq
@@ -776,6 +872,7 @@ def detector_flat(wl, d_flat_model,
                   image_wl.max()))
     print("xxx                    wl ranges from {}  ({})  to {}"
           .format(wl.min(), wl.mean(dtype=np.float64), wl.max()))
+    sys.stdout.flush()          # xxx test debug
 
     (flat_2d, d_flat_dq) = interpolate_flat(image_flat, image_dq,
                                             image_wl, wl)
@@ -785,10 +882,12 @@ def detector_flat(wl, d_flat_model,
     print("xxx                    d_flat_dq ranges from {}  ({})  to {}"
           .format(d_flat_dq.min(), d_flat_dq.mean(dtype=np.float64),
                   d_flat_dq.max()))
+    sys.stdout.flush()          # xxx test debug
 
     d_flat = combine_fast_slow(wl, flat_2d, tab_wl, tab_flat)
     print("xxx                    d_flat ranges from {}  ({})  to {}"
           .format(d_flat.min(), d_flat.mean(dtype=np.float64), d_flat.max()))
+    sys.stdout.flush()          # xxx test debug
 
     return (d_flat, d_flat_dq)
 
@@ -935,18 +1034,18 @@ def read_flat_table(flat_model,
         nelem_col = None
     wl_col = data["wavelength"]
     flat_col = data["data"]
-    # xxx print("xxx slit_col = {}".format(slit_col))
 
     nrows = len(wl_col)
     row = None
-    # Note that it's only for fixed-slit data that we will select the row
-    # based on the slit name.
+    # Note that it's only for fixed-slit data that we need to select the
+    # row based on the slit name.
     if exposure_type == "NRS_FIXEDSLIT" and slit_col is not None:
         slit_name_lc = slit_name.lower()
         for i in range(nrows):
-            # save:  column_value = slit_col[i].lower()
+            # Note:  The .strip() is a workaround.  As of the time of
+            # writing, the value of a text string may have trailing blanks
+            # if there is only one row in the table.
             column_value = slit_col[i].lower().strip()
-            # xxx print("xxx column_value = '{}'".format(column_value))
             if column_value == "any" or column_value == slit_name_lc:
                 row = i
                 break
@@ -957,7 +1056,7 @@ def read_flat_table(flat_model,
 
     nelem = None                        # initial value
     if row is not None:
-        # Table contains arrays; use the row for the current slit name.
+        # Table contains arrays; use the row that was found above.
         tab_wl = wl_col[row].copy()
         tab_flat = flat_col[row].copy()
         if nelem_col is not None:
@@ -975,29 +1074,45 @@ def read_flat_table(flat_model,
             tab_wl = wl_col.copy()
             tab_flat = flat_col.copy()
             if nelem_col is not None:
-                nelem = len(tab_wl)
+                nelem = nelem_col[0]            # arbitrary choice of row
+    print("xxx yyy nelem = {}, len(tab_wl) = {}".format(nelem, len(tab_wl)))
+    sys.stdout.flush()          # xxx test debug
     if nelem is not None:
-        tab_wl = tab_wl[:nelem]
-        tab_flat = tab_flat[:nelem]
+        if len(tab_wl) < nelem:
+            log.warning("READ THIS:  The fast_variation array size %d in"
+                        " the data model is too small, and table data were"
+                        " truncated.", len(tab_wl))
+            nelem = len(tab_wl)                 # truncated!
+        else:
+            tab_wl = tab_wl[:nelem]
+            tab_flat = tab_flat[:nelem]
     else:
         nelem = len(tab_wl)
 
     # Trailing dummy rows should have been taken care of via nelem above,
     # but only if an nelem column was present and was set correctly.
     filter1 = np.logical_not(np.isnan(tab_wl))  # skip NaNs
-    n1 = filter1.sum(dtype=np.intp)
+    filter2 = np.logical_not(np.isnan(tab_flat))
+    filter = np.logical_and(filter1, filter2)
+    n1 = filter.sum(dtype=np.intp)
     if n1 != nelem:
         log.warning("The table wavelength array contained %d NaNs;"
                     " these have been skipped.", nelem - n1)
-        tab_wl = tab_wl[filter1]
-        tab_flat = tab_flat[filter1]
-    filter2 = (tab_wl > 0.)                     # skip zero or negative values
-    n2 = filter2.sum(dtype=np.intp)
+        tab_wl = tab_wl[filter]
+        tab_flat = tab_flat[filter]
+    del filter1, filter2, filter
+    # Skip zero or negative wavelengths, and skip zero flat-field values.
+    filter1 = (tab_wl > 0.)
+    filter2 = (tab_flat != 0.)
+    filter = np.logical_and(filter1, filter2)
+    n2 = filter.sum(dtype=np.intp)
     if n2 != n1:
-        log.warning("The table wavelength array contained %d zero or"
-                    " negative values; these have been skipped.", n2 - n2)
-        tab_wl = tab_wl[filter2]
-        tab_flat = tab_flat[filter2]
+        log.warning("The table wavelength or flat-field data array contained"
+                    " %d zero or negative values; these have been skipped.",
+                    n1 - n2)
+        tab_wl = tab_wl[filter]
+        tab_flat = tab_flat[filter]
+    del filter1, filter2, filter
 
     return (tab_wl, tab_flat)
 
@@ -1072,8 +1187,6 @@ def combine_fast_slow(wl, flat_2d, tab_wl, tab_flat):
             # average the tabular data over the range of wavelengths
             values[j, i] = g_average(wl[j, i], dwl[j, i],
                                      tab_wl, tab_flat, dx, wgt)
-    if OUT_OF_BOUNDS > 0:
-        print("xxx OUT_OF_BOUNDS = {}".format(OUT_OF_BOUNDS))   # xxx debug
 
     return flat_2d * values
 
@@ -1128,6 +1241,7 @@ def wl_interpolate(wavelength, tab_wl, tab_flat):
 
     tab_wl: ndarray, 1-D
         Array of wavelengths corresponding to `tab_flat` flat-field values.
+        These are assumed to be strictly increasing.
 
     tab_flat: ndarray, 1-D
         Array of flat-field values.
@@ -1138,10 +1252,7 @@ def wl_interpolate(wavelength, tab_wl, tab_flat):
         The flat-field value (from `tab_flat`) at `wavelength`.
     """
 
-    global OUT_OF_BOUNDS                        # xxx test debug
-
     if wavelength < tab_wl[0] or wavelength > tab_wl[-1]:
-        OUT_OF_BOUNDS += 1
         return 1.
     n0 = np.searchsorted(tab_wl, wavelength) - 1
     p = (wavelength - tab_wl[n0]) / (tab_wl[n0 + 1] - tab_wl[n0])
@@ -1190,6 +1301,12 @@ def interpolate_flat(image_flat, image_dq, image_wl, wl):
         return (image_flat, image_dq)
 
     (nz, ysize, xsize) = image_flat.shape
+    if nz == 1:
+        if len(image_dq.shape) == 2:
+            return (image_flat.reshape((ysize, xsize)), image_dq)
+        else:
+            return (image_flat.reshape((ysize, xsize)),
+                    image_dq.reshape((ysize, xsize)))
 
     grid = np.indices((ysize, xsize), dtype=np.intp)
     ixpixel = grid[1]
@@ -1203,10 +1320,10 @@ def interpolate_flat(image_flat, image_dq, image_wl, wl):
     # image_wl.  Near the end of this function we'll flag these pixels
     # with NO_FLAT_FIELD and set flat_2d to 1, but for now the indices
     # need to be assigned harmless values to avoid indexing out of bounds.
-    #   Why do we set the upper limit of k to nz - 1 instead of just nz?
+    #   Why do we set the upper limit of k to nz - 2?
     #   Because we interpolate using elements k and k + 1.
     k[:, :] = np.where(wl <= image_wl[0], 0, k)
-    k[:, :] = np.where(wl >= image_wl[nz - 1], nz - 1, k)
+    k[:, :] = np.where(wl >= image_wl[nz - 1], nz - 2, k)
 
     # Look for the correct interval for linear interpolation.
     for k_test in range(nz - 1):
@@ -1237,16 +1354,18 @@ def interpolate_flat(image_flat, image_dq, image_wl, wl):
                                          image_dq[k + 1, iypixel, ixpixel]))
 
     # If the wavelength is out of range, set a DQ flag.
-    print("xxx in interpolate_flat:  flat_dq:  {}".format(flat_dq.dtype))
     indx = np.where(wl < image_wl[0])
     print("xxx in interpolate_flat:  less than:  {}".format(len(indx[0])))
+    sys.stdout.flush()          # xxx test debug
     flat_dq[indx] |= dqflags.pixel['NO_FLAT_FIELD']
     indx = np.where(wl > image_wl[nz - 1])
     print("xxx in interpolate_flat:  greater than:  {}".format(len(indx[0])))
+    sys.stdout.flush()          # xxx test debug
     flat_dq[indx] |= dqflags.pixel['NO_FLAT_FIELD']
     flag = (flat_dq > 0)             # xxx test debug
     print("xxx in interpolate_flat:  total flagged = {}"
           .format(flag.sum(dtype=np.int32)))
+    sys.stdout.flush()          # xxx test debug
 
     # If a pixel is flagged as bad, applying flat_2d should not make any
     # change to the science data.
