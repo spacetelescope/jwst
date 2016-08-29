@@ -150,20 +150,15 @@ def ifu(input_model, reference_files):
         # OTEIP to V2,V3 transform
         oteip2v23 = oteip_to_v23(reference_files)
 
-        # V2, V3 to wprld (RA, DEC ,LAMBDA) transform
-        v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
-        v23_to_world = v23_to_sky & Identity(1)
-
         # Create coordinate frames in the NIRSPEC WCS pipeline"
-        # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
+        # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3"
 
         pipeline = [(det, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
                     (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
                     (msa_frame, msa2oteip.rename('msa2oteip')),
                     (oteip, oteip2v23.rename('oteip2v23')),
-                    (v2v3, v23_to_world),
-                    (world, None)]
+                    (v2v3, None)]
     else:
 
         pipeline = [(det, det2gwa.rename('detector2gwa')),
