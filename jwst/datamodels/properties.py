@@ -54,10 +54,12 @@ def _make_default_array(attr, schema, ctx):
     primary_array_name = ctx.get_primary_array_name()
 
     if attr == primary_array_name:
-        if ctx.shape is None:
+        if ctx.shape is not None:
+            shape = ctx.shape
+        elif ndim is not None:
             shape = tuple([0] * ndim)
         else:
-            shape = ctx.shape
+            shape = (0,)
     else:
         if dtype.names is not None:
             if ndim is None:
