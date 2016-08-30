@@ -1,9 +1,22 @@
 from __future__ import absolute_import
 
+from os.path import (
+    abspath,
+    dirname,
+    join
+)
+__version__ = '0.6.0'
 
-from .association import (
-    Association,
-    AssociationError,
-    AssociationRegistry)
-from .pool import AssociationPool
-from .generate import generate
+# Utility
+def libpath(filepath):
+    '''Return the full path to the module library.'''
+
+    return join(dirname(abspath(__file__)),
+                'lib',
+                filepath)
+
+from .association import *
+from .exceptions import *
+from .generate import *
+from .pool import *
+from .registry import *

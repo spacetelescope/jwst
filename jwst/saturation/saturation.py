@@ -8,7 +8,7 @@ import numpy as np
 from . import x_irs2
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 HUGE_NUM = 100000.
 
@@ -180,10 +180,10 @@ def get_subarray(input_array, reference):
     input_array: numpy array
         subarray slice of the input array
     """
-    if (reference.meta.subarray.xstart == None or
-        reference.meta.subarray.xsize == None or
-        reference.meta.subarray.ystart == None or
-        reference.meta.subarray.ysize == None):
+    if (reference.meta.subarray.xstart is None or
+        reference.meta.subarray.xsize is None or
+        reference.meta.subarray.ystart is None or
+        reference.meta.subarray.ysize is None):
         raise ValueError('subarray metadata values not found')
 
     xstart = reference.meta.subarray.xstart - 1

@@ -13,7 +13,7 @@ from ..assign_wcs import nirspec
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 
 def extract2d(input_model, which_subarray=None):
@@ -25,8 +25,8 @@ def extract2d(input_model, which_subarray=None):
         else:
             open_slits = [nirspec.slit_name2id[which_subarray]]
     else:
-        # Set the step status to COMPLETE
-        output_model.meta.cal_step.extract_2d = 'SKIPPED'
+        # Set the step status to SKIPPED, since it won't be done.
+        input_model.meta.cal_step.extract_2d = 'SKIPPED'
         return input_model
 
     log.info('open slits {0}'.format(open_slits))

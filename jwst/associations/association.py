@@ -1,25 +1,23 @@
-import logging
-from collections import namedtuple
+from ast import literal_eval
+from collections import namedtuple, MutableMapping
 from copy import deepcopy
 from datetime import datetime
-from inspect import getfile, getmembers, isclass, ismodule
 from itertools import count
 import json
 import jsonschema
+import logging
 from nose.tools import nottest
-from os.path import abspath, basename, dirname, expanduser, expandvars, join
 import re
-import sys
 
 from astropy.extern import six
 from numpy.ma import masked
 
+from .exceptions import AssociationError
+from .registry import AssociationRegistry
 
 __all__ = [
     'Association',
-    'AssociationRegistry',
-    'AssociationError',
-    'AssociationNotValidError',
+    'getattr_from_list',
     'SERIALIZATION_PROTOCOLS',
     'validate',
 ]
@@ -29,149 +27,11 @@ __all__ = [
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-# Library files
-_ASN_RULE = 'association_rules.py'
-
-# User-level association definitions start with...
-USER_ASN = 'Asn_'
-
 # Timestamp template
 _TIMESTAMP_TEMPLATE = '%Y%m%dT%H%M%S'
 
 
-class AssociationError(Exception):
-    """Basic failure of an association"""
-
-
-class AssociationNotValidError(AssociationError):
-    """Given data structure is not a valid association"""
-
-
-class AssociationRegistry(dict):
-    """The available assocations
-
-    Parameters
-    ----------
-    definition_files: [str,]
-        The files to find the association definitions in.
-
-    include_default: bool
-        True to include the default definitions.
-
-    global_constraints: dict
-        Constraints to be added to each rule.
-    """
-
-    def __init__(self,
-                 definition_files=None,
-                 include_default=True,
-                 global_constraints=None):
-        super(AssociationRegistry, self).__init__()
-
-        # Setup constraints that are to be applied
-        # to every rule.
-        if global_constraints is None:
-            global_constraints = {}
-
-        if definition_files is None:
-            definition_files = []
-        if include_default:
-            definition_files.insert(0, libpath(_ASN_RULE))
-        if len(definition_files) <= 0:
-            raise AssociationError('No rule definition files specified.')
-
-        self.schemas = []
-        Utility = type('Utility', (object,), {})
-        for fname in definition_files:
-            logger.debug('Import rules files "{}"'.format(fname))
-            module = import_from_file(fname)
-            logger.debug('Module="{}"'.format(module))
-            self.schemas += [
-                schema
-                for schema in find_member(module, 'ASN_SCHEMA')
-            ]
-            for class_name, class_object in get_classes(module):
-                logger.debug('class_name="{}"'.format(class_name))
-                if class_name.startswith(USER_ASN):
-                    class_object.GLOBAL_CONSTRAINTS = global_constraints
-                    self.__setitem__(class_name, class_object)
-                if class_name == 'Utility':
-                    Utility = type('Utility', (class_object, Utility), {})
-        self.Utility = Utility
-
-    def match(self, member, timestamp=None, ignore=None):
-        """See if member belongs to any of the association defined.
-
-        Parameters
-        ----------
-        member: dict
-            A member, like from a Pool, to find assocations for.
-
-        timestamp: str
-            If specified, a string appened to association names.
-            Generated if not specified.
-
-        ignore: list
-            A list of associations to ignore when looking for a match.
-            Intended to ensure that already created associations
-            are not re-created.
-
-        Returns
-        -------
-        [association,]
-            A list of associations this member belongs to.
-        """
-        logger.debug('Starting...')
-        associations = []
-        for name, rule in self.items():
-            if rule not in ignore:
-                try:
-                    associations.append(rule(member, timestamp))
-                except AssociationError as error:
-                    logger.debug('Rule "{}" not matched'.format(name))
-                    logger.debug('Error="{}"'.format(error))
-                    continue
-        if len(associations) == 0:
-            raise AssociationError('Member does not match any rules.')
-        return associations
-
-    def validate(self, association):
-        """Validate a given association against schema
-
-        Parameters
-        ----------
-        association: dict
-            The data to validate
-
-        Returns
-        -------
-        schemas: list
-            List of schemas which validated
-
-        Raises
-        ------
-        AssociationNotValidError
-            Association did not validate
-        """
-        results = []
-        for schema_file in self.schemas:
-            with open(schema_file, 'r') as handle:
-                schema = json.load(handle)
-            try:
-                jsonschema.validate(association, schema)
-            except jsonschema.ValidationError:
-                continue
-            else:
-                results.append(schema)
-
-        if len(results) == 0:
-            raise AssociationNotValidError(
-                'Structure did not valid: "{}"'.format(Association)
-            )
-        return results
-
-
-class Association(object):
+class Association(MutableMapping):
     """An Association
 
     Parameters
@@ -184,6 +44,10 @@ class Association(object):
         to the datetime.strftime format '%Y%m%dT%M%H%S'. If None, class
         instantiation will create this string using current time.
 
+    reprocess_cb: func
+        If a member needs to be further processed, this function will be
+        called.
+
     Raises
     ------
     AssociationError
@@ -191,6 +55,10 @@ class Association(object):
 
     Attributes
     ----------
+    instance: dict-like
+        The instance is the association data structure.
+        See `data` below
+
     meta: dict
         Information about the association.
 
@@ -217,30 +85,34 @@ class Association(object):
     # Associations of the same type are sequenced.
     _sequence = count(1)
 
-    def __init__(self, member, timestamp=None):
+    def __init__(
+            self,
+            member=None,
+            timestamp=None,
+            reprocess_cb=lambda member: None
+    ):
 
+        self.data = dict()
         self.add_constraints(deepcopy(self.GLOBAL_CONSTRAINTS))
-        self.test_and_set_constraints(member)
+        self.run_init_hook = True
+        self.meta = {}
 
-        # Member belongs to us!
-        # Continue initialization.
-        self.sequence = six.advance_iterator(self._sequence)
         if timestamp is not None:
             self.timestamp = timestamp
         else:
             self.timestamp = make_timestamp()
-        self.meta = {}
-        self.data = {
+
+        self.reprocess_cb = reprocess_cb
+
+        self.data.update({
             'asn_type': 'None',
             'asn_rule': self.__class__.__name__,
             'creation_time': self.timestamp
-        }
+        })
 
-        # Peform further initializations before actually
-        # adding the member to this association.
-        self._init_hook(member)
-
-        self.add(member, check_constraints=False)
+        if member is not None:
+            self.add(member)
+        self.sequence = next(self._sequence)
 
     @property
     def asn_name(self):
@@ -284,7 +156,9 @@ class Association(object):
             except AssociationError:
                 continue
         else:
-            raise AssociationError('Cannot translate "{}" to an association'.format(serialized))
+            raise AssociationError(
+                'Cannot translate "{}" to an association'.format(serialized)
+            )
 
         return asn
 
@@ -346,11 +220,17 @@ class Association(object):
         check_constraints: bool
             If True, see if the member should belong to this association.
             If False, just add it.
+
         """
         if check_constraints:
-            self.test_and_set_constraints(member)
+            member_pushback = self.test_and_set_constraints(member)
 
+        if self.run_init_hook:
+            self._init_hook(member)
         self._add(member)
+        self.run_init_hook = False
+
+        self.reprocess_cb(member_pushback)
 
     @nottest
     def test_and_set_constraints(self, member):
@@ -368,11 +248,19 @@ class Association(object):
         AssociationError
             If a match fails.
 
+        Returns
+        -------
+        new_member: dict
+            If one of the constraints is a list, and
+            the current member matches, pop the item
+            and pass back the new member.
+
         Notes
         -----
         If a constraint is present, but does not have a value,
         that constraint is set, and, by definition, matches.
         """
+        return_member = None
         for constraint, conditions in self.constraints.items():
             try:
                 input, value = getattr_from_list(member, conditions['inputs'])
@@ -384,19 +272,56 @@ class Association(object):
                 else:
                     conditions['value'] = 'Constraint not present and ignored'
                     continue
-            if conditions['value'] is not None:
-                if not meets_conditions(
-                        value, conditions['value']
-                ):
-                    raise AssociationError(
-                        'Constraint {} does not match association.'.format(constraint)
-                    )
-            if conditions['value'] is None or \
-               conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
-                logger.debug('Input="{}" Value="{}"'.format(input, value))
-                conditions['value'] = re.escape(value)
-                conditions['input'] = [input]
-                conditions['force_unique'] = False
+
+            # Try evaulating the value. If it is an iterable,
+            # then we need to check each.
+            try:
+                evaled = literal_eval(value)
+            except (ValueError, SyntaxError):
+                evaled = value
+            possible_return = True
+            if not is_iterable(evaled):
+                evaled = [value]
+                possible_return = False
+
+            for avalue in evaled:
+                avalue_str = str(avalue)
+                if conditions['value'] is not None:
+                    if not meets_conditions(
+                            avalue_str, conditions['value']
+                    ):
+                        continue
+
+                # Fix the conditions.
+                if conditions['value'] is None or \
+                   conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
+                    logger.debug('Input="{}" Value="{}"'.format(input, avalue_str))
+                    conditions['value'] = re.escape(avalue_str)
+                    conditions['input'] = [input]
+                    conditions['force_unique'] = False
+
+                # If there are more values in the list,
+                # pop and pass back a new member.
+                if possible_return:
+                    evaled.remove(avalue)
+                    if len(evaled):
+                        if return_member is None:
+                            return_member = deepcopy(member)
+                        return_member[input] = str(evaled)
+                    else:
+                        return_member = None
+
+                # Success, break out.
+                break
+
+            # If we've gone through all possible values,
+            # then we have failure.
+            else:
+                raise AssociationError(
+                    'Constraint {} does not match association.'.format(constraint)
+                )
+
+        return return_member
 
     def add_constraints(self, new_constraints):
         """Add a set of constraints to the current constraints."""
@@ -424,14 +349,35 @@ class Association(object):
 
     def _add(self, member):
         """Add a member, association-specific"""
-        raise NotImplementedError('Association._add must be implemented by a specific assocation rule.')
+        raise NotImplementedError(
+            'Association._add must be implemented by a specific assocation rule.'
+        )
+
+    def __getitem__(self, key):
+        return self.data[self.__keytransform__(key)]
+
+    def __setitem__(self, key, value):
+        self.data[self.__keytransform__(key)] = value
+
+    def __delitem__(self, key):
+        del self.data[self.__keytransform__(key)]
+
+    def __iter__(self):
+        return iter(self.data)
+
+    def __len__(self):
+        return len(self.data)
+
+    def __keytransform__(self, key):
+        return key
 
 
 # User module level functions
-def validate(association,
-             definition_files=None,
-             include_default=True,
-             global_constraints=None
+def validate(
+        association,
+        definition_files=None,
+        include_default=True,
+        global_constraints=None
 ):
     """Validate an association against know schema
 
@@ -466,17 +412,8 @@ def validate(association,
     )
     return rules.validate(association)
 
+
 # Utilities
-def import_from_file(filename):
-    path = expandvars(expanduser(filename))
-    module_name = basename(path).split('.')[0]
-    folder = dirname(path)
-    sys.path.insert(0, folder)
-    module = __import__(module_name)
-    sys.path.pop(0)
-    return module
-
-
 def meets_conditions(value, conditions):
     """Check whether value meets any of the provided conditions
 
@@ -493,21 +430,18 @@ def meets_conditions(value, conditions):
     True if any condition is meant.
     """
 
-    if isinstance(conditions, six.string_types):
+    if not is_iterable(conditions):
         conditions = [conditions]
     for condition in conditions:
+        condition = ''.join([
+            '^',
+            condition,
+            '$'
+        ])
         match = re.match(condition, value, flags=re.IGNORECASE)
         if match:
             return True
     return False
-
-
-def libpath(filepath):
-    '''Return the full path to the module library.'''
-
-    return join(dirname(abspath(getfile(Association))),
-                'lib',
-                filepath)
 
 
 def make_timestamp():
@@ -551,45 +485,6 @@ def getattr_from_list(adict, attributes):
         raise KeyError
 
 
-def get_classes(module):
-    """Recursively get all classes in the module"""
-    logger.debug('Called.')
-    for class_name, class_object in getmembers(
-            module,
-            lambda o: isclass(o) or ismodule(o)
-    ):
-        logger.debug('name="{}" object="{}"'.format(class_name, class_object))
-        if ismodule(class_object) and class_name.startswith('asn_'):
-            for sub_name, sub_class in get_classes(class_object):
-                yield sub_name, sub_class
-        elif isclass(class_object):
-            yield class_name, class_object
-
-
-def find_member(module, member):
-    """Find all instances of member in module or sub-modules
-
-    Parameters
-    ----------
-    module: module
-        The module to recursively search through.
-
-    member: str
-        The member to find.
-
-    Returns
-    -------
-    values: iterator
-        Iterator that returns all values of the member
-    """
-    for name, value in getmembers(module):
-        if ismodule(value) and name.startswith('asn_'):
-            for inner_value in find_member(value, member):
-                yield inner_value
-        elif name == member:
-            yield value
-
-
 # Available serialization protocols
 ProtocolFuncs = namedtuple('ProtocolFuncs', ['serialize', 'unserialize'])
 SERIALIZATION_PROTOCOLS = {
@@ -597,3 +492,9 @@ SERIALIZATION_PROTOCOLS = {
         serialize=Association.to_json,
         unserialize=Association.from_json)
 }
+
+
+# Utility
+def is_iterable(obj):
+    return not isinstance(obj, six.string_types) and \
+        hasattr(obj, '__iter__')

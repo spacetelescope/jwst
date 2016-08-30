@@ -7,22 +7,21 @@ Call create_pipeline() which redirects based on EXP_TYPE
 from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
 import logging
-import copy
-import types
-import os.path
 import numpy as np
 
 from asdf import AsdfFile
 from astropy.modeling import models, fitting
-from astropy.modeling.core import Model
 from astropy.modeling.models import Mapping, Identity, Const1D
 from astropy import units as u
 from astropy import coordinates as coord
 from astropy.io import fits
 from gwcs import coordinate_frames as cf
 
-from ..transforms.models import *
+from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa, slitid_to_slit,
+                                 AngleFromGratingEquation, WavelengthFromGratingEquation, Gwa2Slit,
+                                 Unitless2DirCos)
 from .util import not_implemented_mode
+from . import pointing
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -89,23 +88,31 @@ def imaging(input_model, reference_files):
     gwa2msa = gwa_through | rotation | dircos2unitless | col | lam_model
     gwa2msa.inverse = col.inverse | dircos2unitless.inverse | rotation.inverse | gwa_through
 
-    # MSA to OTEIP transform
-    msa2ote = msa_to_oteip(reference_files)
-    msa2oteip = msa2ote | Mapping((0, 1), n_inputs=3)
-    msa2oteip.inverse = Mapping((0, 1, 0, 1)) | msa2ote.inverse | Mapping((0, 1), n_inputs=3)
-    # OTEIP to V2,V3 transform
-    with AsdfFile.open(reference_files['ote']) as f:
-        oteip2v23 = f.tree['model'].copy()
-
     # Create coordinate frames in the NIRSPEC WCS pipeline
     # "detector", "gwa", "msa", "oteip", "v2v3", "world"
-    det, gwa, msa_frame, oteip, v2v3 = create_imaging_frames()
+    det, gwa, msa_frame, oteip, v2v3, world = create_imaging_frames()
+    if input_model.meta.instrument.filter != 'OPAQUE':
+        # MSA to OTEIP transform
+        msa2ote = msa_to_oteip(reference_files)
+        msa2oteip = msa2ote | Mapping((0, 1), n_inputs=3)
+        msa2oteip.inverse = Mapping((0, 1, 0, 1)) | msa2ote.inverse | Mapping((0, 1), n_inputs=3)
+        # OTEIP to V2,V3 transform
+        with AsdfFile.open(reference_files['ote']) as f:
+            oteip2v23 = f.tree['model'].copy()
 
-    imaging_pipeline = [(det, det2gwa),
-                    (gwa, gwa2msa),
-                    (msa_frame, msa2oteip),
-                    (oteip, oteip2v23),
-                    (v2v3, None)]
+        # V2, V3 to wprld (RA, DEC) transform
+        v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
+
+        imaging_pipeline = [(det, det2gwa),
+                            (gwa, gwa2msa),
+                            (msa_frame, msa2oteip),
+                            (oteip, oteip2v23),
+                            (v2v3, v23_to_sky),
+                            (world, None)]
+    else:
+        imaging_pipeline = [(det, det2gwa),
+                            (gwa, gwa2msa),
+                            (msa_frame, None)]
 
     return imaging_pipeline
 
@@ -133,21 +140,29 @@ def ifu(input_model, reference_files):
     # SLIT to MSA transform
     slit2msa = ifuslit_to_msa(slits, reference_files)
 
-    # MSA to OTEIP transform
-    msa2oteip = ifu_msa_to_oteip(reference_files)
+    det, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
+    if input_model.meta.instrument.filter != 'OPAQUE':
+        # MSA to OTEIP transform
+        msa2oteip = ifu_msa_to_oteip(reference_files)
 
-    # OTEIP to V2,V3 transform
-    oteip2v23 = oteip_to_v23(reference_files)
+        # OTEIP to V2,V3 transform
+        oteip2v23 = oteip_to_v23(reference_files)
 
-    # Create coordinate frames in the NIRSPEC WCS pipeline"
-    # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
-    det, gwa, slit_frame, msa_frame, oteip, v2v3 = create_frames()
-    pipeline = [(det, det2gwa.rename('detector2gwa')),
-                (gwa, gwa2slit.rename('gwa2slit')),
-                (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
-                (msa_frame, msa2oteip.rename('msa2oteip')),
-                (oteip, oteip2v23.rename('oteip2v23')),
-                (v2v3, None)]
+        # Create coordinate frames in the NIRSPEC WCS pipeline"
+        # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3"
+
+        pipeline = [(det, det2gwa.rename('detector2gwa')),
+                    (gwa, gwa2slit.rename('gwa2slit')),
+                    (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
+                    (msa_frame, msa2oteip.rename('msa2oteip')),
+                    (oteip, oteip2v23.rename('oteip2v23')),
+                    (v2v3, None)]
+    else:
+
+        pipeline = [(det, det2gwa.rename('detector2gwa')),
+                    (gwa, gwa2slit.rename('gwa2slit')),
+                    (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
+                    (msa_frame, None)]
 
     return pipeline
 
@@ -177,8 +192,8 @@ def slits_wcs(input_model, reference_files):
     input_model.meta.wcsinfo.spectral_order = sporder
 
     # DETECTOR to GWA transform
-    #det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
-    det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
+    det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
+    #det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 
     # GWA to SLIT
     gwa2slit = gwa_to_slit(open_slits_id, disperser, wrange, sporder, reference_files)
@@ -186,22 +201,32 @@ def slits_wcs(input_model, reference_files):
     # SLIT to MSA transform
     slit2msa = slit_to_msa(open_slits_id, reference_files['msa'])
 
-    # MSA to OTEIP transform
-    msa2oteip = msa_to_oteip(reference_files)
-
-    # OTEIP to V2,V3 transform
-    oteip2v23 = oteip_to_v23(reference_files)
-
     # Create coordinate frames in the NIRSPEC WCS pipeline"
     # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
-    det, gwa, slit_frame, msa_frame, oteip, v2v3 = create_frames()
+    det, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
+    if input_model.meta.instrument.filter != 'OPAQUE':
+        # MSA to OTEIP transform
+        msa2oteip = msa_to_oteip(reference_files)
 
-    msa_pipeline = [(det, det2gwa),
-                    (gwa, gwa2slit),
-                    (slit_frame, Mapping((0, 1, 2, 3, 4)) | slit2msa),
-                    (msa_frame, msa2oteip),
-                    (oteip, oteip2v23),
-                    (v2v3, None)]
+        # OTEIP to V2,V3 transform
+        oteip2v23 = oteip_to_v23(reference_files)
+
+        # V2, V3 to wprld (RA, DEC ,LAMBDA) transform
+        v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
+        v23_to_world = v23_to_sky & Identity(1)
+
+        msa_pipeline = [(det, det2gwa),
+                        (gwa, gwa2slit),
+                        (slit_frame, Mapping((0, 1, 2, 3, 4)) | slit2msa),
+                        (msa_frame, msa2oteip),
+                        (oteip, oteip2v23),
+                        (v2v3, v23_to_world),
+                        (world, None)]
+    else:
+        msa_pipeline = [(det, det2gwa),
+                        (gwa, gwa2slit),
+                        (slit_frame, Mapping((0, 1, 2, 3, 4)) | slit2msa),
+                        (msa_frame, None)]
 
     return msa_pipeline
 
@@ -307,8 +332,6 @@ def ifuslit_to_msa(slits, reference_files):
     model : `~jwst.transforms.Slit2Msa` model.
         Transform from slit_frame to msa_frame.
     """
-    with AsdfFile.open(reference_files['ifufore']) as f:
-        ifufore = f.tree['model']
 
     ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
     models = {}
@@ -381,7 +404,7 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
     agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
     lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
-    lam = (wrange[1] - wrange[0]) / 2 + wrange[0]
+    #lam = (wrange[1] - wrange[0]) / 2 + wrange[0]
 
     ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
     ifupost = AsdfFile.open(reference_files['ifupost'])
@@ -512,24 +535,21 @@ def compute_domain(slit2detector, wavelength_range):
         Reference files for the observation returned by CRDS.
 
     """
-    x = [-.55, .55]
-    y = [0, 0]
+    step = 100
+    y = np.linspace(-.55, .55, step)
+    x = np.zeros(y.shape)
 
     lam_min = wavelength_range[0]
     lam_max = wavelength_range[1]
 
-    x_range_low = slit2detector(x, y, lam_min)[0]
-    x_range_high = slit2detector(x, y, lam_max)[0]
-    x_range_low = np.where(x_range_low > 0, x_range_low, 0)
-    x_range_high = np.where(x_range_high < 2048, x_range_high, 2048)
-    x0, x1 = x_range_low.min(), x_range_high.max()
-    y = [-.55, .55]
-    x = [0, 0]
-    y_range_min = slit2detector(x, y, lam_min)[1]
-    y_range_max = slit2detector(x, y, lam_max)[1]
-    y0 = min(y_range_min.min(), y_range_max.min())
-    y1 = max(y_range_min.max(), y_range_max.max())
-
+    x_range_low, y_range_low = slit2detector(x, y, lam_min)
+    x_range_high, y_range_high = slit2detector(x, y, lam_max)
+    # add 5 px margin
+    x0 = max(0, x_range_low.min() - 10)
+    x1 = min(2047, x_range_high.max() + 10)
+    # add 2 px margin
+    y0 = y_range_low.min() - 2
+    y1 = y_range_high.max() + 2
     domain = [{'lower': int(x0), 'upper': int(x1)}, {'lower': int(y0), 'upper': int(y1)}]
     return domain
 
@@ -554,7 +574,7 @@ def collimator_to_gwa(reference_files, disperser):
     with AsdfFile.open(reference_files['collimator']) as f:
         collimator = f.tree['model'].copy()
     angles = [disperser['theta_x'], disperser['theta_y'],
-               disperser['theta_z'], disperser['tilt_y']]
+              disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
 
@@ -692,7 +712,7 @@ def oteip_to_v23(reference_files):
     fore2ote_mapping = Identity(3, name='fore2ote_mapping')
     fore2ote_mapping.inverse = Mapping((0, 1, 2, 2))
     # Convert the wavelength to microns
-    return fore2ote_mapping | (ote & Identity(1) / Const1D(1e-6))
+    return fore2ote_mapping | (ote & (Identity(1)))# / Const1D(1e-6)))
 
 
 def create_frames():
@@ -709,7 +729,7 @@ def create_frames():
                              axes_names=('x_msa', 'y_msa'))
     slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), unit=("", ""),
                              axes_names=('x_slit', 'y_slit'))
-    #sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
+    sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.m,),
                             axes_names=('wavelength',))
     v2v3_spatial = cf.Frame2D(name='V2V3_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
@@ -720,14 +740,15 @@ def create_frames():
     oteip_spatial = cf.Frame2D(name='OTEIP_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
                                axes_names=('X_OTEIP', 'Y_OTEIP'))
     oteip = cf.CompositeFrame([oteip_spatial, spec], name='oteip')
-    #world = cf.CompositeFrame([sky, spec], name='world')
-    return det, gwa, slit_frame, msa_frame, oteip, v2v3
+    world = cf.CompositeFrame([sky, spec], name='world')
+    return det, gwa, slit_frame, msa_frame, oteip, v2v3, world
 
 
 def create_imaging_frames():
     """
     Create the coordinate frames in the NIRSPEC WCS pipeline.
-    These are                                                                                          "detector", "gwa", "msa_frame", "oteip", "v2v3", "world".
+    These are
+    "detector", "gwa", "msa_frame", "oteip", "v2v3", "world".
     """
     det = cf.Frame2D(name='detector', axes_order=(0, 1))
     gwa = cf.Frame2D(name="gwa", axes_order=(0, 1), unit=(u.rad, u.rad),
@@ -738,7 +759,8 @@ def create_imaging_frames():
                               axes_names=('v2', 'v3'))
     oteip = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
                                axes_names=('x_oteip', 'y_oteip'))
-    return det, gwa, msa, oteip, v2v3
+    world = cf.CelestialFrame(name='world', axes_order=(0, 1), reference_frame=coord.ICRS())
+    return det, gwa, msa, oteip, v2v3, world
 
 
 def get_slit_location_model(slitdata):
@@ -808,8 +830,8 @@ def nrs_wcs_set_input(wcsobj, quadrant, slitid, wavelength_range):
     import copy # TODO: Add a copy method to gwcs.WCS
     slit = slitid_to_slit(np.array([(quadrant, slitid)]))[0]
     slit_wcs = copy.deepcopy(wcsobj)
-    #slit_wcs.set_transform('detector', 'gwa', wcsobj.pipeline[0][1][1:])
-    slit_wcs.set_transform('detector', 'gwa', wcsobj.pipeline[0][1])
+    slit_wcs.set_transform('detector', 'gwa', wcsobj.pipeline[0][1][1:])
+    #slit_wcs.set_transform('detector', 'gwa', wcsobj.pipeline[0][1])
     slit_wcs.set_transform('gwa', 'slit_frame', wcsobj.pipeline[1][1].models[slit])
     slit_wcs.set_transform('slit_frame', 'msa_frame', wcsobj.pipeline[2][1][1].models[slit] & Identity(1))
 
@@ -850,12 +872,8 @@ def slit_to_detector(input_model, slits_id, lam, reference_files):
         fpa = f.tree[input_model.meta.instrument.detector].copy()
     with AsdfFile.open(reference_files['camera']) as f:
         camera = f.tree['model'].copy()
-    with AsdfFile.open(reference_files['collimator']) as f:
-        collimator = f.tree['model'].copy()
     with AsdfFile.open(reference_files['disperser']) as f:
         disperser = f.tree
-    with AsdfFile.open(reference_files['wavelengthrange']) as f:
-        wave_range = f.tree
 
     dircos2u = DirCos2Unitless(name='directional2unitless_cosines')
     disperser = correct_tilt(disperser, input_model.meta.instrument.gwa_xtilt,
@@ -867,7 +885,7 @@ def slit_to_detector(input_model, slits_id, lam, reference_files):
     order, wrange = get_spectral_order_wrange(input_model, reference_files['wavelengthrange'])
     input_model.meta.wcsinfo.waverange_start = wrange[0]
     input_model.meta.wcsinfo.waverange_end = wrange[1]
-    input_model.meta.wcsinfo.spectral_order = sporder
+    input_model.meta.wcsinfo.spectral_order = order
 
     agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
     # GWA to detector

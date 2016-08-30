@@ -3,12 +3,11 @@
 #
 
 import logging
-import math
 
 import numpy as np
-import json
-from .. import datamodels
 
+from ..associations import Association
+from .. import datamodels
 from . import temp_wcs
 
 log = logging.getLogger(__name__)
@@ -439,7 +438,9 @@ def do_combine1d(asn_file, exptime_key, interpolation):
         The type of interpolation between input pixels.
     """
 
-    asn = json.load(open(asn_file))
+    with open(asn_file) as asn_file_handle:
+        asn = Association.load(asn_file_handle)
+
     # Get the name to use for the output file.
     output_name = asn["products"][0]["name"]
     # Get the dictionary that contains the input file names.

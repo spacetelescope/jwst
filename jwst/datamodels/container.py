@@ -4,9 +4,11 @@ import os.path as op
 import os
 import copy
 from collections import OrderedDict
-import json
+
 from asdf import AsdfFile
 from astropy.extern import six
+
+from ..associations import Association
 from .model_base import DataModel
 from .image import ImageModel
 
@@ -22,7 +24,7 @@ class ModelContainer(DataModel):
     ----------
     init : file path, list of DataModels, or None
 
-        - file path: initialize from an association table in JSON format
+        - file path: initialize from an association table
 
         - list: a list of any DataModel models
 
@@ -61,13 +63,13 @@ class ModelContainer(DataModel):
             self.__class__ = init.__class__
             self._models = init._models
         elif isinstance(init, six.string_types):
-            if init.endswith('_asn.json'):
+            try:
                 self.from_asn(init)
-            else:
-                raise ValueError('file path must be an ASN JSON file')
+            except:
+                raise ValueError('file path must be an ASN file')
         else:
             raise TypeError('Input {0!r} is not a list of DataModels or '
-                            'an ASN JSON file'.format(init))
+                            'an ASN file'.format(init))
 
         self.assign_group_ids()
 
@@ -136,7 +138,7 @@ class ModelContainer(DataModel):
 
     def from_asn(self, filepath):
         """
-        Load the ImageModels from a JWST association JSON file.
+        Load the ImageModels from a JWST association file.
 
         The from_asn() method assumes that all FITS files listed in the
         association are ImageModels.
@@ -144,16 +146,16 @@ class ModelContainer(DataModel):
         Parameters
         ----------
         filepath : str
-            The path to an ASN JSON file.
+            The path to an ASN file.
         """
 
         filepath = op.abspath(op.expanduser(op.expandvars(filepath)))
         basedir = op.dirname(filepath)
         try:
             with open(filepath) as asn_file:
-                asn_data = json.load(asn_file)
+                asn_data = Association.load(asn_file)
         except IOError:
-            raise IOError("Cannot read ASN JSON file.")
+            raise IOError("Cannot read ASN file.")
 
         # make a list of all the input FITS files
         infiles = [op.join(basedir, member['expname']) for member

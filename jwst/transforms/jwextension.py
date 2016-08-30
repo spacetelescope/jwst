@@ -11,7 +11,8 @@ SCHEMA_PATH = os.path.abspath(
 class JWSTExtension(AsdfExtension):
     @property
     def types(self):
-        return [GratingEquationType, CoordsType, RotationSequenceType]
+        return [GratingEquationType, CoordsType, RotationSequenceType, LRSWavelengthType,
+                Gwa2SlitType, Slit2MsaType]
 
     @property
     def tag_mapping(self):

@@ -2,8 +2,10 @@ import logging
 
 from astropy.table import Table
 
-from jwst.associations.association import (AssociationError,
-                                                 make_timestamp)
+from .association import (
+    AssociationError,
+    make_timestamp
+)
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -23,41 +25,67 @@ def generate(pool, rules):
 
     Returns
     -------
-    ([association,], [orphans,])
+    ([association,], orphans)
         A 2-tuple consisting of:
            * List of associations
-           * List of members from the pool that
+           * Table of members from the pool that
              do not belong to any association.
     """
+    def reprocess_member(member):
+        """A member which should be reprocessed."""
+        if member is None:
+            return
+        logger.debug('Reprocess request for member="{}"'.format(member))
+        working_pool.add_row(member)
+
     asns = []
     orphaned = Table(dtype=pool.dtype)
     timestamp = make_timestamp()
+    working_pool = pool.copy(copy_data=False)
+    n_orignal = len(working_pool)
     logger.debug('Starting...')
-    for member in pool:
+    for member in working_pool:
         logger.debug('Working member="{}"'.format(member))
         member_asns = set()
-        is_a_member = False
         for asn in asns:
             try:
                 asn.add(member)
-                member_asns.add(type(asn))
-                is_a_member = True
-                logger.debug('Matched association "{}"'.format(asn))
             except AssociationError as error:
                 logger.debug(
                     'Did not match association "{}"'.format(asn)
                 )
                 logger.debug('error="{}"'.format(error))
                 continue
+            else:
+                member_asns.add(type(asn))
+                logger.debug('Matched association "{}"'.format(asn))
+
         try:
-            asns.extend(rules.match(member, timestamp, member_asns))
-            is_a_member = True
-            logger.debug(
-                'Member created new association "{}"'.format(asns[-1])
+            new_asns = rules.match(
+                member,
+                timestamp=timestamp,
+                ignore=member_asns,
+                reprocess_cb=reprocess_member
             )
         except AssociationError as error:
             logger.debug('Did not match any rule.')
             logger.debug('error="{}"'.format(error))
-        if not is_a_member:
+        else:
+            asns.extend(new_asns)
+            member_asns.update(
+                type(asn)
+                for asn in new_asns
+            )
+            logger.debug(
+                'Member created new associations "{}"'.format(new_asns)
+            )
+
+        # If no associations were matched or made
+        # AND
+        # if the member is not reprocessed member
+        # THEN
+        # orphan it.
+        if len(member_asns) == 0 and member.index < n_orignal:
             orphaned.add_row(member)
+
     return asns, orphaned

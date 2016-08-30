@@ -238,7 +238,7 @@ class SkyImage(object):
         """
         ny, nx = self.image.shape
 
-        if stepsize == None:
+        if stepsize is None:
             nintx = 2
             ninty = 2
         else:

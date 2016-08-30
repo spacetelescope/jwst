@@ -1,14 +1,12 @@
 from ..stpipe import Step
 from .. import datamodels
-
-from .. import datamodels  
 from . import rscd_sub
 
 
 class RSCD_Step(Step):
     """
-    RSCD_Step: Performs an RSCD correction by adding a function of time,
-    frame by frame, to a copy of the input science data model.
+    RSCD_Step: Performs an RSCD correction to MIRI data by adding a function
+    of time, frame by frame, to a copy of the input science data model.
     """
 
     reference_file_types = ['rscd']
@@ -34,20 +32,17 @@ class RSCD_Step(Step):
                     result.meta.cal_step.rscd = 'SKIPPED'
                     return result
 
-                # Open the rscd ref file data model
-
+                # Load the rscd ref file data model
                 rscd_model = datamodels.RSCDModel(self.rscd_name)
 
-
-                # Do the rscd correction subtraction
+                # Do the rscd correction
                 result = rscd_sub.do_correction(input_model, rscd_model)
 
-                # Close the reference file and update the step status
+                # Close the reference file
                 rscd_model.close()
-                result.meta.cal_step.rscd = 'COMPLETE'
 
             else:
-                self.log.warning('RSCD Correction is only for MIRI data')
+                self.log.warning('RSCD correction is only for MIRI data')
                 self.log.warning('RSCD step will be skipped')
                 result = input_model.copy()
                 result.meta.cal_step.rscd = 'SKIPPED'

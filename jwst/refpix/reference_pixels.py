@@ -117,10 +117,10 @@ class Dataset(object):
                  side_gain,
                  odd_even_rows):
 
-        if (input_model.meta.subarray.xstart == None or
-            input_model.meta.subarray.ystart == None or
-            input_model.meta.subarray.xsize == None or
-            input_model.meta.subarray.ysize == None):
+        if (input_model.meta.subarray.xstart is None or
+            input_model.meta.subarray.ystart is None or
+            input_model.meta.subarray.xsize is None or
+            input_model.meta.subarray.ysize is None):
             raise ValueError('subarray metadata not found')
 
         self.data = input_model.data

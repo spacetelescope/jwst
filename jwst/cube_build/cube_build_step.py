@@ -10,7 +10,7 @@ from . import cube_build
 from . import cube
 from . import CubeD2C
 from . import CubeCloud
-from . import instrument
+from . import InstrumentDefaults
 1
 class CubeBuildStep (Step):
     """
@@ -25,9 +25,9 @@ class CubeBuildStep (Step):
          interpolation = string(default='pointcloud')
          wcs_method = string(default='assign_wcs')
          coord_system = string(default='v2-v3')
-         power_x = float(default=1.0)
-         power_y = float(default=1.0)
-         power_z = float(default=1.0)
+         roi1 = float(default=1.0)
+         roi2 = float(default=1.0)
+         roiw = float(default=1.0)
          offset_list = string(default='NA')
        """
 
@@ -38,12 +38,14 @@ class CubeBuildStep (Step):
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
         if(not self.interpolation.islower()): self.interpolation = self.interpolation.lower()
 
+
         # input parameters
         if(self.channel != ''): self.log.info('Input Channel %s', self.channel)
         if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
         if(self.scale2 != 0.0): self.log.info('Input Scale of axis 2 %f', self.scale2)
         if(self.scalew != 0.0): self.log.info('Input wavelength scale %f  ', self.scalew)
         if(self.offset_list != 'NA'): self.log.info('Offset Dither list %s', self.offset_list)
+
 
         # valid coord_system:
         # 1. alpha-beta (only valid for Single Cubes)
@@ -58,10 +60,8 @@ class CubeBuildStep (Step):
         if (self.interpolation == 'area'):
             self.coord_system = 'alpha-beta'
 
-
         if (self.coord_system == 'v2-v3'):
             self.interpolation = 'pointcloud'  # can not be area
-
 
         self.log.info('Input interpolation %s', self.interpolation)
         self.log.info('WCS methods to use %s', self.wcs_method)
@@ -89,7 +89,9 @@ class CubeBuildStep (Step):
             self.log.debug('Output Base %s ', input_table.asn_table['products'][iproduct]['name'])
 #_________________________________________________________________________________________________
             self.metadata = {}
-            self.metadata['Detector'] = ''
+            self.metadata['instrument'] = ''
+            self.metadata['detector'] = ''
+
             self.metadata['channel'] = list()     # filled in by association table in FilesinCube
             self.metadata['subchannel'] = list()  # figured out from the members in the association
 
@@ -97,7 +99,6 @@ class CubeBuildStep (Step):
             self.metadata['grating'] = list()  #figured out from the memebers in the assoication
             self.metadata['output_name'] = ''
             self.metadata['number_files'] = 0
-
 
         # Check if there is an offset list
             self.v2offset = list()
@@ -111,9 +112,10 @@ class CubeBuildStep (Step):
         # Also if there is an Offset list - fill in MasterTable.FileOffset
             MasterTable = cube.FileTable()
 
-            num, detector = cube_build.FilesinCube(self, input_table, iproduct, MasterTable)
+            num, instrument,detector = cube_build.FilesinCube(self, input_table, iproduct, MasterTable)
             self.metadata['number_files'] = num
-            self.metadata['Detector'] = detector
+            self.metadata['detector'] = detector            
+            self.metadata['instrument'] = instrument
         # Determine which channels/subchannels or filter/grating cubes will be constructed from.
         # returns self.metadata['subchannel'] and self.metadata['channel']
         # or self.metadata['filter'], self.metadata['grating']
@@ -131,17 +133,19 @@ class CubeBuildStep (Step):
 #________________________________________________________________________________
 
 # Cube is an instance of CubeInfo - which holds basic information on Cube
-            if(detector == 'MIRI'):
-                Cube = cube.CubeInfo('MIRI', self.metadata['channel'], self.metadata['subchannel'], self.output_name)
+            if(instrument == 'MIRI'):
+                Cube = cube.CubeInfo('MIRI',detector,self.metadata['channel'], self.metadata['subchannel'], self.output_name)
 
-            if(detector == 'NIRSPEC'):
-                Cube = cube.CubeInfo('NIRSPEC', self.metadata['filter'], self.metadata['grating'], self.output_name)
+            if(instrument == 'NIRSPEC'):
+                Cube = cube.CubeInfo('NIRSPEC',detector,self.metadata['filter'], self.metadata['grating'], self.output_name)
 
-            InstrumentInfo = instrument.Info()
+            InstrumentInfo = InstrumentDefaults.Info()
             self.log.info(' Building Cube %s ', Cube.output_name)
 
+            # Scale is 3 dimensions and is determined from default values InstrumentInfo.GetScale
             scale = cube_build.DetermineScale(Cube, InstrumentInfo)
 
+            # if the user has set the scale of output cube use those values instead
             a_scale = scale[0]
             if self.scale1 != 0:
                 a_scale = self.scale1
@@ -174,15 +178,24 @@ class CubeBuildStep (Step):
                 # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
                 # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
             Cube.SetGeometry(self.coord_system, CubeFootPrint)
-            Cube.PrintCubeGeometry(detector)
+            Cube.PrintCubeGeometry(instrument)
 
 
-            self.radius_x = Cube.Cdelt1 * 1.0
-            self.radius_y = Cube.Cdelt2 * 1.0 / 2.0
-            self.radius_z = Cube.Cdelt3 * 1.0
+            # if the user has not set the size of the ROI then use defaults of 1* cube scale in dimension
+            if(self.roi1 == 1): self.roi1 = Cube.Cdelt1* 1.0
+            if(self.roi2 == 1): self.roi2 = Cube.Cdelt2* 1.0
+            if(self.roiw == 1): self.roiw = Cube.Cdelt3* 1.0
+            #self.radius_x = Cube.Cdelt1 * 1.5
+            #self.radius_y = Cube.Cdelt2 * 1.5
+            #self.radius_z = Cube.Cdelt3 * 2.0
+
+            # for now keep these values - may not use them in the future
+            self.power_x = 1
+            self.power_y = 1
+            self.power_z = 1
 
             if(self.interpolation == 'pointcloud'):
-                self.log.info('Region of interest %f %f %f', self.radius_x, self.radius_y, self.radius_z)
+                self.log.info('Region of interest %f %f %f', self.roi1, self.roi2, self.roiw)
                 self.log.info('Power parameters for weighting %5.1f %5.1f %5.1f', self.power_x, self.power_y, self.power_z)
 
             # now you have the size of cube - create an instance for each spaxel
@@ -210,10 +223,10 @@ class CubeBuildStep (Step):
             t0 = time.time()
             # now need to loop over every file that covers this channel/subchannel and
             # map the detector pixels to the cube spaxel.
-            if(detector == 'MIRI'):
+            if(instrument == 'MIRI'):
                 parameter1 = Cube.channel
                 parameter2 = Cube.subchannel
-            elif(detector == 'NIRSPEC'):
+            elif(instrument == 'NIRSPEC'):
                 parameter1 = Cube.grating
                 parameter2 = Cube.filter
 

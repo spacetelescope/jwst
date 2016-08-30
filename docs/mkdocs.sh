@@ -58,7 +58,7 @@ function install_travis_deps
     if [[ -z $CONDA_CHANNELS ]]; then
         CONDA_CHANNELS=http://ssb.stsci.edu/conda-dev
     fi
-    conda install -c $CONDA_CHANNELS stsci.sphinxext
+    conda install -y -c $CONDA_CHANNELS stsci.sphinxext sphinxcontrib-programoutput
 }
 
 function dump_logs
