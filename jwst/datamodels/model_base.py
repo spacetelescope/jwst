@@ -155,6 +155,9 @@ class DataModel(properties.ObjectNode):
                                               validate=False,
                                               pass_invalid_values=self._pass_invalid_values)
                 self._files_to_close.append(hdulist)
+        else:
+            raise ValueError(
+                "Can't initialize datamodel using {0}".format(str(type(init))))
 
         self._shape = shape
         self._instance = asdf.tree
