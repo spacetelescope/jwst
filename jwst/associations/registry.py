@@ -1,4 +1,5 @@
 """Association Registry"""
+from importlib import import_module
 from inspect import (
     getmembers,
     isclass,
@@ -181,7 +182,7 @@ def import_from_file(filename):
     folder = dirname(path)
     sys.path.insert(0, folder)
     try:
-        module = __import__(module_name)
+        module = import_module(module_name)
     finally:
         sys.path.pop(0)
     return module
