@@ -18,8 +18,8 @@ class TestLevel3Spectrographic(BasePoolRule):
     valid_rules = [
         'Asn_MIRI_LRS_FIXEDSLIT',
         'Asn_NIR_SO_SLITLESS',
-        'Asn_NIR_FIXEDSLIT',
-        'Asn_NIR_MSA',
+        'Asn_NRS_FIXEDSLIT',
+        'Asn_NRS_MSA',
         'Asn_MIRI_MRS',
-        'Asn_NIR_IFU'
+        'Asn_NRS_IFU'
     ]
