@@ -180,8 +180,10 @@ def import_from_file(filename):
     module_name = basename(path).split('.')[0]
     folder = dirname(path)
     sys.path.insert(0, folder)
-    module = __import__(module_name)
-    sys.path.pop(0)
+    try:
+        module = __import__(module_name)
+    finally:
+        sys.path.pop(0)
     return module
 
 
@@ -233,3 +235,19 @@ def get_classes(module):
                 yield sub_name, sub_class
         elif isclass(class_object):
             yield class_name, class_object
+
+
+# ##########
+# Unit Tests
+# ##########
+def test_import_from_file():
+    from copy import deepcopy
+    from pytest import raises as pytest_raises
+    from tempfile import NamedTemporaryFile
+
+    current_path = deepcopy(sys.path)
+    with NamedTemporaryFile() as junk_fh:
+        junk_path = junk_fh.name
+        with pytest_raises(ImportError):
+            module = import_from_file(junk_path)
+        assert current_path == sys.path
