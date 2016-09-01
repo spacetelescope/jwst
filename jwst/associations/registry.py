@@ -81,8 +81,9 @@ class AssociationRegistry(dict):
             for class_name, class_object in get_classes(module):
                 logger.debug('class_name="{}"'.format(class_name))
                 if class_name.startswith(USER_ASN):
-                    class_object.GLOBAL_CONSTRAINTS = global_constraints
-                    self.__setitem__(class_name, class_object)
+                    rule = type(class_name, (class_object,), {})
+                    rule.GLOBAL_CONSTRAINTS = global_constraints
+                    self.__setitem__(class_name, rule)
                 if class_name == 'Utility':
                     Utility = type('Utility', (class_object, Utility), {})
         self.Utility = Utility
