@@ -39,7 +39,7 @@ class DataModel(properties.ObjectNode):
     schema_url = "core.schema.yaml"
 
     def __init__(self, init=None, schema=None, extensions=None,
-                 pass_invalid_values=False):
+                 resolver=None, pass_invalid_values=False):
         """
         Parameters
         ----------
@@ -67,8 +67,11 @@ class DataModel(properties.ObjectNode):
             If not provided, the schema associated with this class
             will be used.
 
-        extensions: classes extending the standard set of extensions
+        extensions: classes extending the standard set of extensions, optional
 
+        resolver: an object which resolves references in schemas into filenames, optional
+            If None, the default resolver will be used.
+            
         pass_invalid_values: If True, values that do not validate the schema can
             be read and written, but with a warning message
         """
@@ -78,8 +81,8 @@ class DataModel(properties.ObjectNode):
 
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
-            schema = asdf_schema.load_schema(
-                schema_path, resolve_references=True)
+            schema = asdf_schema.load_schema(schema_path, 
+                resolver=resolver, resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
 
