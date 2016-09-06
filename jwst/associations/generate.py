@@ -31,61 +31,106 @@ def generate(pool, rules):
            * Table of members from the pool that
              do not belong to any association.
     """
-    def reprocess_member(member):
-        """A member which should be reprocessed."""
-        if member is None:
-            return
-        logger.debug('Reprocess request for member="{}"'.format(member))
-        working_pool.add_row(member)
-
-    asns = []
+    associations = []
     orphaned = Table(dtype=pool.dtype)
     timestamp = make_timestamp()
-    working_pool = pool.copy(copy_data=False)
-    n_orignal = len(working_pool)
     logger.debug('Starting...')
-    for member in working_pool:
+    for member in pool:
         logger.debug('Working member="{}"'.format(member))
-        member_asns = set()
-        for asn in asns:
-            try:
-                asn.add(member)
-            except AssociationError as error:
-                logger.debug(
-                    'Did not match association "{}"'.format(asn)
-                )
-                logger.debug('error="{}"'.format(error))
-                continue
-            else:
-                member_asns.add(type(asn))
-                logger.debug('Matched association "{}"'.format(asn))
-
-        try:
-            new_asns = rules.match(
-                member,
-                timestamp=timestamp,
-                ignore=member_asns,
-                reprocess_cb=reprocess_member
-            )
-        except AssociationError as error:
-            logger.debug('Did not match any rule.')
-            logger.debug('error="{}"'.format(error))
-        else:
-            asns.extend(new_asns)
-            member_asns.update(
-                type(asn)
-                for asn in new_asns
-            )
-            logger.debug(
-                'Member created new associations "{}"'.format(new_asns)
-            )
-
-        # If no associations were matched or made
-        # AND
-        # if the member is not reprocessed member
-        # THEN
-        # orphan it.
-        if len(member_asns) == 0 and member.index < n_orignal:
+        member_associations = generate_from_member(
+            member,
+            timestamp,
+            associations,
+            rules
+        )
+        if len(member_associations) == 0:
             orphaned.add_row(member)
 
-    return asns, orphaned
+    return associations, orphaned
+
+
+def generate_from_member(member, timestamp, associations, rules):
+    """Either match or generate a new assocation
+
+    Parameters
+    ----------
+    member: dict
+        The member to match to existing associations
+        or generate new associations from
+
+    timestamp: str
+        Timestamp to use with association creation.
+
+    associations: [association, ...]
+        List of already existing associations.
+        If the member matches any of these, it will be added
+        to them.
+
+    rules: AssociationRegistry
+        List of rules to create new associations
+
+    Returns
+    -------
+    [association,...]
+        List of associations member belongs to. Empty if none match
+    """
+
+    # Check membership in existing associations.
+    member_associations = match_member(member, associations)
+
+    # Now see if this member will create new associatons.
+    # By default, a member will not be allowed to create
+    # an association based on rules of existing associations.
+    ignore_asns = set([type(asn) for asn in member_associations])
+    try:
+        new_asns = rules.match(
+            member,
+            timestamp=timestamp,
+            ignore=ignore_asns,
+        )
+    except AssociationError as error:
+        logger.debug('Did not match any rule.')
+        logger.debug('error="{}"'.format(error))
+    else:
+        member_associations.extend(new_asns)
+        logger.debug(
+            'Member created new associations "{}"'.format(new_asns)
+        )
+
+    return member_associations
+
+
+def match_member(member, associations):
+    """Match member to a list of associations
+
+    Parameters
+    ----------
+    member: dict
+        The member to match to the associations.
+
+    associations: [association, ...]
+        List of already existing associations.
+        If the member matches any of these, it will be added
+        to them.
+
+    Returns
+    -------
+    [association,...]
+        List of associations member belongs to. Empty if none match
+    """
+    member_associations = []
+    for asn in associations:
+        if asn in member_associations:
+            continue
+        try:
+            asn.add(member)
+        except AssociationError as error:
+            logger.debug(
+                'Did not match association "{}"'.format(asn)
+            )
+            logger.debug('error="{}"'.format(error))
+            continue
+        else:
+            logger.debug('Matched association "{}"'.format(asn))
+            member_associations.append(asn)
+    return member_associations

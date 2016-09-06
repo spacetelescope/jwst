@@ -15,6 +15,7 @@ from os.path import (
     expandvars,
 )
 import sys
+from uuid import uuid4
 
 from . import libpath
 from .exceptions import (
@@ -56,6 +57,10 @@ class AssociationRegistry(dict):
                  global_constraints=None):
         super(AssociationRegistry, self).__init__()
 
+        # Generate a UUID for this instance. Used to modify rule
+        # names.
+        self.uuid = uuid4()
+
         # Setup constraints that are to be applied
         # to every rule.
         if global_constraints is None:
@@ -83,12 +88,15 @@ class AssociationRegistry(dict):
                 if class_name.startswith(USER_ASN):
                     rule = type(class_name, (class_object,), {})
                     rule.GLOBAL_CONSTRAINTS = global_constraints
-                    self.__setitem__(class_name, rule)
+                    self.__setitem__(
+                        '_'.join([class_name, str(self.uuid)]),
+                        rule
+                    )
                 if class_name == 'Utility':
                     Utility = type('Utility', (class_object, Utility), {})
         self.Utility = Utility
 
-    def match(self, member, timestamp=None, ignore=None, reprocess_cb=None):
+    def match(self, member, timestamp=None, ignore=None):
         """See if member belongs to any of the associations defined.
 
         Parameters
@@ -105,10 +113,6 @@ class AssociationRegistry(dict):
             Intended to ensure that already created associations
             are not re-created.
 
-        reprocess_cb: func(member)
-            If a member should be reprocessed,
-            this function is called.
-
         Returns
         -------
         [association,]
@@ -118,12 +122,15 @@ class AssociationRegistry(dict):
         associations = []
         for name, rule in self.items():
             if rule not in ignore:
+                logger.debug('Checking membership for rule "{}"'.format(rule))
                 try:
-                    associations.append(rule(member, timestamp, reprocess_cb))
+                    associations.append(rule(member, timestamp))
                 except AssociationError as error:
                     logger.debug('Rule "{}" not matched'.format(name))
                     logger.debug('Error="{}"'.format(error))
                     continue
+                else:
+                    logger.debug('Member belongs to rule "{}"'.format(rule))
         if len(associations) == 0:
             raise AssociationError('Member does not match any rules.')
         return associations
