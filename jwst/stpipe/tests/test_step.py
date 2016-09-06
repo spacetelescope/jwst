@@ -94,7 +94,6 @@ def test_step_from_commandline_class():
     step.run(1, 2)
 
 
-#@raises(ValueError)
 def test_step_from_commandline_invalid():
     from .. import Step
     args = [
@@ -105,7 +104,6 @@ def test_step_from_commandline_invalid():
         step = Step.from_cmdline(args)
 
 
-#@raises(ValueError)
 def test_step_from_commandline_invalid2():
     from .. import Step
 
@@ -116,7 +114,6 @@ def test_step_from_commandline_invalid2():
         step = Step.from_cmdline(args)
 
 
-#@raises(ValueError)
 def test_step_from_commandline_invalid3():
     from .. import Step
 
@@ -127,7 +124,6 @@ def test_step_from_commandline_invalid3():
         step = Step.from_cmdline(args)
 
 
-#@raises(ValueError)
 def test_step_from_commandline_invalid4():
     from .. import Step
 
@@ -160,7 +156,6 @@ def test_step_with_local_class():
     step.run(np.array([[0, 0]]))
 
 
-#@raises(ValidationError)
 def test_extra_parameter():
     from .steps import AnotherDummyStep
     with pytest.raises(ValidationError):
@@ -186,7 +181,7 @@ def test_omit_ref_file():
     step = OptionalRefTypeStep(override_to_be_ignored_ref_type="")
     step.process()
 
-'''
+
 def test_save_model():
     tempdir = tempfile.mkdtemp()
     orig_filename = join(dirname(__file__), 'data', 'flat.fits')
@@ -199,6 +194,5 @@ def test_save_model():
     ]
 
     Step.from_cmdline(args)
-    fname = join(tempdir, 'flat_processed.fits')
+    fname = join(tempdir, 'flat_FOO_SaveStep.fits')
     assert isfile(fname)
-'''

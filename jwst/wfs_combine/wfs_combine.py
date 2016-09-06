@@ -89,7 +89,7 @@ class DataSet(object):
         im_2_a = self.create_aligned_2()  # Aligned image #2
 
         # Create and populate extensions for combined data
-        data_c, dq_c, err_c, wcs_1 = self.create_combined(im_1_a, im_2_a)
+        data_c, dq_c, err_c = self.create_combined(im_1_a, im_2_a)
 
         # Create a new model using the combined arrays...
         new_model = datamodels.ImageModel(data=data_c, dq=dq_c, err=err_c)
@@ -269,7 +269,7 @@ class DataSet(object):
         #crpix2_in_1 = self.input_1.meta.wcs.backward_transform(*crval2)
         crpix2_in_1 = fits_wcs_transform.inverse(*crval2)
         crpix = np.array((self.input_1.meta.wcs.forward_transform['crpix1'].offset.value,
-                 self.input_1.meta.wcs.forward_transform['crpix2'].offset.value), dtype=np.float)
+                self.input_1.meta.wcs.forward_transform['crpix2'].offset.value), dtype=np.float)
         off_x, off_y = crpix2_in_1 + crpix
 
         log.info('CRVAL of Image 1 in WCS of #1 has pixel coords:%s %s',
@@ -292,19 +292,22 @@ class DataSet(object):
         Create combined image from aligned input images. In the combined image:
 
         The SCI pixel values are set by:
-        1. use pixels that are good (based on DQ) in image #1, else
-        2. for pixels that are bad in image #1, use good image #2 pixels, else
-        3. for pixels that are bad in both images, leave as default (0)
+        1. for pixels that are good (based on DQ) in both images, use their average
+        2. for pixels that are good in image #1 and bad in image #2, use image #1
+        3. for pixels that are bad in image #1 and good in image #2, use image #2
+        4. for pixels that are bad in both images, leave as default (0)
 
-        The DQ pixel values are similarly set, by:
-        1. use pixels that are good in image #1, else
-        2. for pixels that are bad in image #1, use good image #2 pixels, else
-        3. for pixels that are bad in both images, add a 'DO_NOT_USE' value to
-           the corresponding DQ value in image #1.
-       The ERR pixel values are set by:
-        1. use pixels that are good in image #1, else
-        2. for pixels that are bad in image #1, use good image #2 pixels, else
-        3. for pixels that are bad in both images, leave as default (0)
+        The DQ pixel values are set by:
+        1. use pixels that are good in either image #1 or image #2
+        2. for pixels that are bad in both images, add a 'DO_NOT_USE' value to the
+           corresponding DQ value
+
+        The ERR pixel values are similarly set:
+        1. for pixels that are good in both images, use their average (will modify
+           later)
+        2. for pixels that are good in image #1 and bad in image #2, use image #1
+        3. for pixels that are bad in image #1 and good in image #2, use image #2
+        4. for pixels that are bad in both images, leave as default (0)
 
         The WCS of the output model is set to the WCS of the 1st input
 
@@ -323,8 +326,6 @@ class DataSet(object):
             combined DQ array
         err_comb: 2d float array
             combined ERR array
-        wcs_1: pywcs.WCS object
-            wcs information for the 1st input
         """
 
         sci_data_1 = im_1_a.data.copy()
@@ -335,28 +336,31 @@ class DataSet(object):
         err_data_1 = im_1_a.err.copy()
         err_data_2 = im_2_a.err.copy()
 
-        wh_1_good = (dq_data_1 == 0)  # Where ALIGNED #1 pixels are good
         wh_1_bad_2_good = (dq_data_1 != 0) & (dq_data_2 == 0)
         wh_1_bad_2_bad = (dq_data_1 != 0) & (dq_data_2 != 0)
+        wh_1_good_2_good = (dq_data_1 == 0) & (dq_data_2 == 0)
+        wh_1_good_2_bad = (dq_data_1 == 0) & (dq_data_2 != 0)
 
         # Populate combined SCI, DQ and ERR arrays
         data_comb = sci_data_1 * 0  # Pixels that are bad in both will stay 0
-        data_comb[wh_1_good] = sci_data_1[wh_1_good]
+        data_comb[wh_1_good_2_good] = 0.5*(sci_data_1[wh_1_good_2_good] +
+                                       sci_data_2[wh_1_good_2_good])
+        data_comb[wh_1_good_2_bad] = sci_data_1[wh_1_good_2_bad]
         data_comb[wh_1_bad_2_good] = sci_data_2[wh_1_bad_2_good]
 
         dq_comb = dq_data_1.copy()
+        dq_comb[wh_1_good_2_bad] = dq_data_1[wh_1_good_2_bad]
         dq_comb[wh_1_bad_2_good] = dq_data_2[wh_1_bad_2_good]
         dq_comb[wh_1_bad_2_bad] = np.bitwise_or(dqflags.group['DO_NOT_USE'],
-                                                   dq_comb[wh_1_bad_2_bad])
+                                               dq_comb[wh_1_bad_2_bad])
 
-        err_comb = err_data_1.copy()
+        err_comb = err_data_1.copy() * 0 # will leave bad (= 0)
+        err_comb[wh_1_good_2_good] = 0.5*(err_data_1[wh_1_good_2_good] +
+                                          err_data_2[wh_1_good_2_good])
+        err_comb[wh_1_good_2_bad] = err_data_1[wh_1_good_2_bad]
         err_comb[wh_1_bad_2_good] = err_data_2[wh_1_bad_2_good]
-        err_comb[wh_1_bad_2_bad] = 0.
 
-        # Use wcs of input 1 for combination
-        wcs_1 = self.input_1.get_fits_wcs('SCI')
-
-        return data_comb, dq_comb, err_comb, wcs_1
+        return data_comb, dq_comb, err_comb
 
 
     def do_2d_shifts(self, a):

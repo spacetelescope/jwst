@@ -438,9 +438,16 @@ class Step(object):
     @classmethod
     def _is_association_file(cls, input_file):
         """Return True IFF `input_file` is an association file."""
+        from ..associations import Association
         from .. import datamodels
-        return (isinstance(input_file, str) and input_file.endswith((".asn", ".json"))) or \
-               isinstance(input_file, datamodels.ModelContainer)
+        if isinstance(input_file, datamodels.ModelContainer):
+            return True
+        try:
+            with open(input_file, 'r') as input_file_fh:
+                asn = Association.load(input_file_fh)
+        except:
+            return False
+        return True
 
     def _precache_reference_files(self, input_file):
         """

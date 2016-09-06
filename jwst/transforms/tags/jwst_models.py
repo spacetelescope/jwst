@@ -1,9 +1,6 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
 
-import numpy as np
-from numpy.testing import assert_array_equal
-
 from asdf import yamlutil
 from asdf.tags.transform.basic import TransformType
 
