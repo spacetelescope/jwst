@@ -252,3 +252,83 @@ def test_correct_tilt():
     assert np.isclose(disp_corrected['theta_x'], corrected_theta_x)
     #assert(np.isclose(disp_corrected['theta_z'], corrected_theta_z))
     assert np.isclose(disp_corrected['theta_y'], corrected_theta_y)
+
+def test_msa_configuration_normal():
+    """
+    Test the get_open_msa_slits function.
+
+    Returns
+    -------
+
+    """
+
+    # Test 1: Reasonably normal as well
+    msa_meta_id = 12
+    msaconfl = get_file_path('test_configuration_msa.fits')
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
+    assert_allclose(np.array([(55, 4, 251, 26, 262.79999999999995, -258.19999999999999)]), np.array(slitlet_info))
+
+
+def test_msa_configuration_no_background():
+    """
+    Test the get_open_msa_slits function.
+
+    Returns
+    -------
+
+    """
+
+    # Test 2: Reasonably normal
+    msa_meta_id = 13
+    msaconfl = get_file_path('test_configuration_msa.fits')
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
+    assert_allclose(np.array([(56, 4, 251, 22, 262.79999999999995, -258.19999999999999)]), np.array(slitlet_info))
+
+
+def test_msa_configuration_all_background():
+    """
+    Test the get_open_msa_slits function.
+
+    Returns
+    -------
+
+    """
+
+    # Test 3:  No non-background, not acceptable.
+    msa_meta_id = 14
+    msaconfl = get_file_path('test_configuration_msa.fits')
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
+    assert len(slitlet_info) == 0
+
+
+def test_msa_configuration_row_skipped():
+    """
+    Test the get_open_msa_slits function.
+
+    Returns
+    -------
+
+    """
+
+    # Test 4: One row is skipped, should be acceptable.
+    msa_meta_id = 15
+    msaconfl = get_file_path('test_configuration_msa.fits')
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
+    assert_allclose(np.array([(58, 4, 251, 24, 262.79999999999995, -255.89999999999998)]), np.array(slitlet_info))
+
+
+def test_msa_configuration_multiple_returns():
+    """
+    Test the get_open_msa_slits function.
+
+    Returns
+    -------
+
+    """
+
+    # Test 4: One row is skipped, should be acceptable.
+    msa_meta_id = 16
+    msaconfl = get_file_path('test_configuration_msa.fits')
+    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
+    assert_allclose(np.array([(58, 4, 251, 24, 262.79999999999995, -255.89999999999998),
+                              (59, 4, 256, 24, 268.54999999999995, -261.64999999999998)]), np.array(slitlet_info))

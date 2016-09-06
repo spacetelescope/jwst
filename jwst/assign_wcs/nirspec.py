@@ -264,7 +264,7 @@ def get_open_slits(input_model):
     if exp_type == "nrs_msaspec":
         #msa_config = "SPCB-GD-A.msa.fits"
         msa_config = input_model.meta.instrument.msa_configuration_file
-        slits = get_open_msa_slits(msa_config)
+        slits = get_open_msa_slits(msa_config, input_model.meta.instrument.msa_metadata_id)
     elif exp_type == "nrs_fixedslit":
         slits = get_open_fixed_slits(input_model)
     else:
@@ -284,29 +284,91 @@ def get_open_fixed_slits(input_model):
     return slits
 
 
-def get_open_msa_slits(msa_status):
+def get_open_msa_slits(msa_file, msa_metadata_id):
     """
-    Returns slit_id for all open slits.
+    Computes (ymin, ymax) of open slitlets.
+
+    The msa_file is expected to contain data (tuples) with the following fields:
+
+        ('slitlet_id', '>i2'),
+        ('msa_metadata_id', '>i2'),
+        ('shutter_quadrant', '>i2'),
+        ('shutter_row', '>i2'),
+        ('shutter_column', '>i2'),
+        ('source_id', '>i2'),
+        ('background', 'S1'),
+        ('shutter_state', 'S6'),
+        ('estimated_source_in_shutter_x', '>f4'),
+        ('estimated_source_in_shutter_y', '>f4')])
+
+    For example, something like:
+        (12, 2, 4, 251, 22, 1, 'Y', 'OPEN', nan, nan),
 
     Parameters
     ----------
-    msa_status : str
-        Name of MSA status file.
+        msa_file : str
+            MSA configuration file name, FITS keyword MSACONFL.
+        msa_metadata_id : int
+            The MSA meta id for the science file, FITS keyword MSAMETID.
 
     Returns
     -------
-    msa_slits_id : ndarray
-        An array of slit ids.
-        A slit_id is a tuple of (quadrant_number, slit_number).
+    slitlets : list
+        A list of slitlets. Each slitlet is a tuple with
+        (slitlet_id, quadrant, xcen, ycen, ymin, ymax)
 
     """
-    with fits.open(msa_status) as fmsa:
-        msa_slits_id = []
-        for i in range(1, 5):
-            quadrant = fmsa[i].data
-            open_shutters = quadrant[quadrant['status'].nonzero()]
-            msa_slits_id.extend([(i, n) for n in open_shutters['NO']])
-    return np.array(msa_slits_id)
+
+    slitlets = []
+
+    # If they passed in a string then we shall assume it is the filename
+    # of the configuration file.
+    with fits.open(msa_file) as msa_file:
+        # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
+        msa_conf = msa_file[('SHUTTER_INFO', 1)]
+
+        # First we are going to filter the msa_file data on the msa_metadata_id
+        # as that is all we are interested in for this function.
+        msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id]
+
+        # First thing to do is to get the unique slitlet_ids
+        slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
+
+        # Now lets look at each unique slitlet id
+        for slitlet_id in slitlet_ids_unique:
+
+            # Get the rows for the current slitlet_id
+            ss = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
+
+            # X and Y center based on where background == 'N'
+            xy_centers = [(s['shutter_row'], s['shutter_column'])
+                          for s in ss
+                          if s['background'] == 'N']
+
+            if len(xy_centers) >= 1:
+                # TODO: Might need to reverse these if row col are reversed
+                xcen, ycen = xy_centers[0]
+            else:
+                log.warning('WARNING: Could not find shutter that is not background.')
+                return []
+
+            # y-size
+            margin = 0.05
+            jmin = min([s['shutter_column'] for s in ss])
+            jmax = max([s['shutter_column'] for s in ss])
+            j = xcen
+            ymax = 0.5 + margin + (jmax - j) * 1.15
+            ymin = -(0.5 + margin + (jmin - j) * 1.15)
+
+            # Create the output list of tuples that contain the required
+            # data for further computations
+            slitlets.append(
+                (
+                    slitlet_id, ss[0]['shutter_quadrant'], xcen, ycen, ymin, ymax
+                )
+            )
+
+    return slitlets
 
 
 def get_spectral_order_wrange(input_model, wavelengthrange_file):
