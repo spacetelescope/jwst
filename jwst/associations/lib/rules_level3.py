@@ -51,7 +51,12 @@ class Asn_WFSCMB(
         AsnMixin_Target,
         AsnMixin_Unique_Config
 ):
-    """Wavefront Sensing association"""
+    """Wavefront Sensing association
+
+    Notes
+    -----
+    Defined by `TRAC issue #269 <https://aeon.stsci.edu/ssb/trac/jwst/ticket/269>`_
+    """
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
@@ -60,13 +65,9 @@ class Asn_WFSCMB(
                 'value': '(?!NULL).+',
                 'inputs': ['WFSVISIT'],
             },
-            'asn_candidate_type': {
-                'value': '(?!OBSERVATION).+',
-                'inputs': ['ASN_CANDIDATE_TYPE']
-            },
-            'asn_candidate_id': {
-                'value': None,
-                'inputs': ['ASN_CANDIDATE_ID']
+            'asn_candidate_wfs': {
+                'value': '.+MOSAIC.+',
+                'inputs': ['ASN_CANDIDATE']
             },
             'activity_id': {
                 'value': None,
@@ -185,7 +186,7 @@ class Asn_NIR_SO_SLITLESS(
         super(Asn_NIR_SO_SLITLESS, self).__init__(*args, **kwargs)
 
 
-class Asn_NIR_FIXEDSLIT(
+class Asn_NRS_FIXEDSLIT(
         AsnMixin_Spectrum,
         AsnMixin_NIRSPEC,
         AsnMixin_Target,
@@ -220,10 +221,10 @@ class Asn_NIR_FIXEDSLIT(
         })
 
         # Check and continue initialization.
-        super(Asn_NIR_FIXEDSLIT, self).__init__(*args, **kwargs)
+        super(Asn_NRS_FIXEDSLIT, self).__init__(*args, **kwargs)
 
 
-class Asn_NIR_MSA(
+class Asn_NRS_MSA(
         AsnMixin_Spectrum,
         AsnMixin_NIRSPEC,
         AsnMixin_Target,
@@ -254,7 +255,7 @@ class Asn_NIR_MSA(
         })
 
         # Check and continue initialization.
-        super(Asn_NIR_MSA, self).__init__(*args, **kwargs)
+        super(Asn_NRS_MSA, self).__init__(*args, **kwargs)
 
 
 class Asn_MIRI_MRS(
@@ -283,7 +284,7 @@ class Asn_MIRI_MRS(
         super(Asn_MIRI_MRS, self).__init__(*args, **kwargs)
 
 
-class Asn_NIR_IFU(
+class Asn_NRS_IFU(
         AsnMixin_Spectrum,
         AsnMixin_NIRSPEC,
         AsnMixin_Target,
@@ -310,4 +311,4 @@ class Asn_NIR_IFU(
         })
 
         # Check and continue initialization.
-        super(Asn_NIR_IFU, self).__init__(*args, **kwargs)
+        super(Asn_NRS_IFU, self).__init__(*args, **kwargs)

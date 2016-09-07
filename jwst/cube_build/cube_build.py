@@ -47,7 +47,7 @@ def DetermineCubeCoverage(self, MasterTable):
 #________________________________________________________________________________
 # loop over the file names
 
-    if(self.metadata['Detector'] == 'MIRI'):
+    if(self.metadata['instrument'] == 'MIRI'):
         ValidChannel = ['1', '2', '3', '4']
         ValidSubchannel = ['SHORT', 'MEDIUM', 'LONG']
         nchannels = len(ValidChannel)
@@ -91,7 +91,7 @@ def DetermineCubeCoverage(self, MasterTable):
         if(number_subchannels == 0):
             raise ErrorNoSubchannels("The cube  does not cover any subchannels, change parameter subchannel")
 #______________________________________________________________________
-    if(self.metadata['Detector'] == 'NIRSPEC'):
+    if(self.metadata['instrument'] == 'NIRSPEC'):
 
         ValidFWA = ['F070LP', 'F070LP', 'F100LP', 'F100LP', 'F170LP', 'F170LP', 'F290LP', 'F290LP', 'CLEAR']
         ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H', 'G395M', 'G395H', 'PRISM']
@@ -184,16 +184,19 @@ def FilesinCube(self, input_table, iproduct, MasterTable):
         with datamodels.ImageModel(ifile) as input_model:
 
             detector = input_model.meta.instrument.detector
+            instrument = input_model.meta.instrument.name
             assign_wcs = input_model.meta.cal_step.assign_wcs
 
             if(assign_wcs != 'COMPLETE' and self.wcs_method == 'assign_wcs'):
                 raise ErrorNoAssignWCS("Assign WCS has not been run on file %s", ifile)
 
             #________________________________________________________________________________
-            #MIRI DETECTOR
+            #MIRI instrument
             #________________________________________________________________________________
-            if detector == 'MIRIFUSHORT' or detector == 'MIRIFULONG':
-                detector = 'MIRI'
+            #if detector == 'MIRIFUSHORT' or detector == 'MIRIFULONG':
+            #    detector = 'MIRI'
+
+            if instrument == 'MIRI':
                 channel = input_model.meta.instrument.channel
                 subchannel = input_model.meta.instrument.band
             #________________________________________________________________________________
@@ -207,8 +210,7 @@ def FilesinCube(self, input_table, iproduct, MasterTable):
                         MasterTable.FileOffset[channel[k]][subchannel]['C1'].append(v2)
                         MasterTable.FileOffset[channel[k]][subchannel]['C2'].append(v3)
             #________________________________________________________________________________
-            elif detector == 'NRS1' or detector == 'NRS2':
-                detector = 'NIRSPEC'
+            elif instrument== 'NIRSPEC':
 
                 fwa = input_model.meta.instrument.filter
                 gwa = input_model.meta.instrument.grating
@@ -216,9 +218,9 @@ def FilesinCube(self, input_table, iproduct, MasterTable):
                 MasterTable.FileMap['NIRSPEC'][fwa][gwa].append(ifile)
             else:
 
-                print('Detector not valid for cube')
+                print('Instrument not valid for cube')
 
-    return num, detector
+    return num, instrument,detector
 #********************************************************************************
 
 def DetermineScale(Cube, InstrumentInfo):
@@ -241,7 +243,7 @@ def DetermineScale(Cube, InstrumentInfo):
     a = Cube.detector
     scale = [0, 0, 0]
 
-    if(Cube.detector == 'MIRI'):
+    if(Cube.instrument == 'MIRI'):
         number_channels = len(Cube.channel)
         min_a = 1000.00
         min_b = 1000.00
@@ -260,7 +262,7 @@ def DetermineScale(Cube, InstrumentInfo):
 
         scale = [min_a, min_b, min_w]
 
-    elif(Cube.detector == 'NIRSPEC'):
+    elif(Cube.instrument == 'NIRSPEC'):
         number_gratings = len(Cube.grating)
         min_a = 1000.00
         min_b = 1000.00
@@ -445,13 +447,13 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 
 
     """
-    detector = Cube.detector
+    instrument = Cube.instrument
     parameter1 = list()
     parameter2 = list()
-    if(detector == 'MIRI'):
+    if(instrument == 'MIRI'):
         parameter1 = Cube.channel
         parameter2 = Cube.subchannel
-    elif(detector == 'NIRSPEC'):
+    elif(instrument == 'NIRSPEC'):
         parameter1 = Cube.filter
         parameter2 = Cube.grating
 
@@ -472,7 +474,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
         this_a = parameter1[i]
         for j in range(number_par2):
             this_b = parameter2[j]
-            n = len(MasterTable.FileMap[detector][this_a][this_b])
+            n = len(MasterTable.FileMap[instrument][this_a][this_b])
             log.debug('number of files %d ', n)
     # each file find the min and max a and lambda (OFFSETS NEED TO BE APPLIED TO THESE VALUES)
             for k in range(n):
@@ -485,7 +487,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
                 c1_offset = 0.0
                 c2_offset = 0.0
 
-                ifile = MasterTable.FileMap[detector][this_a][this_b][k]
+                ifile = MasterTable.FileMap[instrument][this_a][this_b][k]
                 ioffset = len(MasterTable.FileOffset[this_a][this_b]['C1'])
                 if(ioffset == n):
                     c1_offset = MasterTable.FileOffset[this_a][this_b]['C1'][k]
@@ -497,7 +499,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
                 with datamodels.ImageModel(ifile) as input_model:
 
                     t0 = time.time()
-                    if(detector == 'NIRSPEC'):
+                    if(instrument == 'NIRSPEC'):
                         input_model.meta.ref_file.wavelengthrange.name = \
                         '/Users/morrison/Pipeline/testing/cubetest/NIRSPEC/jwst_nirspec_wavelengthrange_0001.asdf'
                         ChannelFootPrint = FindFootPrintNIRSPEC(self, input_model, this_a)
@@ -506,7 +508,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
                         t1 = time.time()
                         log.info("Time find foot print = %.1f.s" % (t1 - t0,))
 #________________________________________________________________________________
-                    if(detector == 'MIRI'):
+                    if(instrument == 'MIRI'):
                         if(self.wcs_method == 'assign_wcs'):  # coord_system = alpha-beta, v2-v3
                             ChannelFootPrint = FindFootPrintMIRI(self, input_model, this_a, InstrumentInfo)
                             t1 = time.time()
@@ -579,13 +581,13 @@ def MapDetectorToCube(self, this_channel, this_subchannel, Cube, spaxel, PixelCl
     if(interpolation = pointcloud
     """
 
-    detector = Cube.detector
-    nfiles = len(MasterTable.FileMap[detector][this_channel][this_subchannel])
+    instrument = Cube.instrument
+    nfiles = len(MasterTable.FileMap[instrument][this_channel][this_subchannel])
 
     log.info('Number of files in cube %i', nfiles)
 
     for k in range(nfiles):
-        ifile = MasterTable.FileMap[detector][this_channel][this_subchannel][k]
+        ifile = MasterTable.FileMap[instrument][this_channel][this_subchannel][k]
         #print(' On File k',k,nfiles)
         ioffset = len(MasterTable.FileOffset[this_channel][this_subchannel]['C1'])
         Cube.file.append(ifile)
@@ -711,7 +713,7 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
         for i in range(nspaxel):
             s = len(spaxel[i].pixel_overlap)
             if(s > 0):
-                CubeOverlap.SpaxelFlux(self.radius_y, i, Cube, spaxel)
+                CubeOverlap.SpaxelFlux(self.roi2, i, Cube, spaxel)
 
     elif self.interpolation == 'pointcloud':
         icube = 0
@@ -746,7 +748,6 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
                                 print('pointcloud', pointcloud_index[j])
                                 print('flux', pixelflux[j])
                                 print('w', weightpt[j])
-
 
 
                         if(weight != 0):

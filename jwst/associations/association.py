@@ -1,3 +1,4 @@
+from ast import literal_eval
 from collections import namedtuple, MutableMapping
 from copy import deepcopy
 from datetime import datetime
@@ -43,6 +44,10 @@ class Association(MutableMapping):
         to the datetime.strftime format '%Y%m%dT%M%H%S'. If None, class
         instantiation will create this string using current time.
 
+    reprocess_cb: func
+        If a member needs to be further processed, this function will be
+        called.
+
     Raises
     ------
     AssociationError
@@ -80,16 +85,25 @@ class Association(MutableMapping):
     # Associations of the same type are sequenced.
     _sequence = count(1)
 
-    def __init__(self, member=None, timestamp=None):
+    def __init__(
+            self,
+            member=None,
+            timestamp=None,
+            reprocess_cb=lambda member: None
+    ):
 
         self.data = dict()
         self.add_constraints(deepcopy(self.GLOBAL_CONSTRAINTS))
         self.run_init_hook = True
+        self.meta = {}
+
         if timestamp is not None:
             self.timestamp = timestamp
         else:
             self.timestamp = make_timestamp()
-        self.meta = {}
+
+        self.reprocess_cb = reprocess_cb
+
         self.data.update({
             'asn_type': 'None',
             'asn_rule': self.__class__.__name__,
@@ -206,14 +220,17 @@ class Association(MutableMapping):
         check_constraints: bool
             If True, see if the member should belong to this association.
             If False, just add it.
+
         """
         if check_constraints:
-            self.test_and_set_constraints(member)
+            member_pushback = self.test_and_set_constraints(member)
 
         if self.run_init_hook:
             self._init_hook(member)
         self._add(member)
         self.run_init_hook = False
+
+        self.reprocess_cb(member_pushback)
 
     @nottest
     def test_and_set_constraints(self, member):
@@ -231,11 +248,19 @@ class Association(MutableMapping):
         AssociationError
             If a match fails.
 
+        Returns
+        -------
+        new_member: dict
+            If one of the constraints is a list, and
+            the current member matches, pop the item
+            and pass back the new member.
+
         Notes
         -----
         If a constraint is present, but does not have a value,
         that constraint is set, and, by definition, matches.
         """
+        return_member = None
         for constraint, conditions in self.constraints.items():
             try:
                 input, value = getattr_from_list(member, conditions['inputs'])
@@ -247,19 +272,56 @@ class Association(MutableMapping):
                 else:
                     conditions['value'] = 'Constraint not present and ignored'
                     continue
-            if conditions['value'] is not None:
-                if not meets_conditions(
-                        value, conditions['value']
-                ):
-                    raise AssociationError(
-                        'Constraint {} does not match association.'.format(constraint)
-                    )
-            if conditions['value'] is None or \
-               conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
-                logger.debug('Input="{}" Value="{}"'.format(input, value))
-                conditions['value'] = re.escape(value)
-                conditions['input'] = [input]
-                conditions['force_unique'] = False
+
+            # Try evaulating the value. If it is an iterable,
+            # then we need to check each.
+            try:
+                evaled = literal_eval(value)
+            except (ValueError, SyntaxError):
+                evaled = value
+            possible_return = True
+            if not is_iterable(evaled):
+                evaled = [value]
+                possible_return = False
+
+            for avalue in evaled:
+                avalue_str = str(avalue)
+                if conditions['value'] is not None:
+                    if not meets_conditions(
+                            avalue_str, conditions['value']
+                    ):
+                        continue
+
+                # Fix the conditions.
+                if conditions['value'] is None or \
+                   conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
+                    logger.debug('Input="{}" Value="{}"'.format(input, avalue_str))
+                    conditions['value'] = re.escape(avalue_str)
+                    conditions['input'] = [input]
+                    conditions['force_unique'] = False
+
+                # If there are more values in the list,
+                # pop and pass back a new member.
+                if possible_return:
+                    evaled.remove(avalue)
+                    if len(evaled):
+                        if return_member is None:
+                            return_member = deepcopy(member)
+                        return_member[input] = str(evaled)
+                    else:
+                        return_member = None
+
+                # Success, break out.
+                break
+
+            # If we've gone through all possible values,
+            # then we have failure.
+            else:
+                raise AssociationError(
+                    'Constraint {} does not match association.'.format(constraint)
+                )
+
+        return return_member
 
     def add_constraints(self, new_constraints):
         """Add a set of constraints to the current constraints."""

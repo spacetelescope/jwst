@@ -6,6 +6,6 @@ Association: Rules and Data Products
 
 .. currentmodule:: association
 
-.. automodule:: association
+.. automodule:: jwst.associations.association
    :members:
    :undoc-members:

@@ -53,8 +53,9 @@ class AssociationPool(Table):
     """
 
     @classmethod
-    def read(cls, filename, delimiter='|', **kwargs):
+    def read(cls, filename, delimiter='|', format='ascii', **kwargs):
         table = Table.read(filename, delimiter=delimiter,
+                           format=format,
                            converters=_ConvertToStr(), **kwargs)
         table.meta['pool_file'] = filename
         return table

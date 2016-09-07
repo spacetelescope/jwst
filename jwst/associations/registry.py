@@ -86,8 +86,8 @@ class AssociationRegistry(dict):
                     Utility = type('Utility', (class_object, Utility), {})
         self.Utility = Utility
 
-    def match(self, member, timestamp=None, ignore=None):
-        """See if member belongs to any of the association defined.
+    def match(self, member, timestamp=None, ignore=None, reprocess_cb=None):
+        """See if member belongs to any of the associations defined.
 
         Parameters
         ----------
@@ -103,6 +103,10 @@ class AssociationRegistry(dict):
             Intended to ensure that already created associations
             are not re-created.
 
+        reprocess_cb: func(member)
+            If a member should be reprocessed,
+            this function is called.
+
         Returns
         -------
         [association,]
@@ -113,7 +117,7 @@ class AssociationRegistry(dict):
         for name, rule in self.items():
             if rule not in ignore:
                 try:
-                    associations.append(rule(member, timestamp))
+                    associations.append(rule(member, timestamp, reprocess_cb))
                 except AssociationError as error:
                     logger.debug('Rule "{}" not matched'.format(name))
                     logger.debug('Error="{}"'.format(error))

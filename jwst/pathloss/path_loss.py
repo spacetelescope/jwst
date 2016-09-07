@@ -87,6 +87,7 @@ def do_correction(input_model, pathloss_model):
             # Create pathloss arrays
             pathloss_point = np.zeros((nrows, ncols), dtype=np.float32)
             pathloss_uniform = np.zeros((nrows, ncols), dtype=np.float32)
+            wavelength = np.zeros((nrows, ncols), dtype=np.float32)
             # Get wavelengths of each end
             xstart = slit.xstart
             xstop = xstart + slit.xsize - 1
@@ -101,7 +102,19 @@ def do_correction(input_model, pathloss_model):
             print("Slit %d has parameters %d %d %d %d" % (slit_number,
                                                           xstart, xstop,
                                                           ystart, ystop))
-    # For each pixel
+            # For each pixel
+            # Use linear interpolation as using the WCS is too slow
+            for row in range(nrows):
+                deltax = column
+                slope = (max_wavelength - min_wavelength) / (slit.xsize - 1.0)
+                wave =  = min_wavelength + deltax * slope
+                for column in range(ncols):
+                    wave_array[row, column] = wave
+            pathloss_point = calculate_pathloss(wave_array, wavelength,
+                                                pathloss)
+
+            
+            
     # Get wavelength
     # Interpolate path loss
     # Set pixel in pathloss array to interpolated value
@@ -111,3 +124,87 @@ def do_correction(input_model, pathloss_model):
     # Save some data params for easy use later
 
     return pathloss
+
+def calculate_pathloss(wave_array, wavelength, pathloss):
+    """
+    Short Summary
+    -------------
+    
+    Calculate pathloss given wavelength of each pixel in a 2-d array, and
+    1-d arrays of wavelength and pathloss
+
+    Parameters
+    ----------
+
+    wave_array: numpy ndarray
+        Input array of wavelength values at each pixel
+
+    wavelength: numpy ndarray
+        1-d array of wavelength values
+
+    pathloss: numpy ndarray
+        1-d array of corresponding pathloss values
+
+    Returns:
+    --------
+
+    pathloss_array: 2-d array of pathloss values
+
+    """
+
+    #
+    # Make sure wavelength and pathloss arrays have the same length
+    if wavelength.shape[0] != pathloss.shape[0]:
+        log.warning("Wavelength and pathloss arrays have different dimensions")
+        return None
+
+    nrows, ncols = wave_array.shape
+
+    #
+    # Make an array of ones for the pathloss
+    pathloss_array = np.ones((nrows, ncols), dtype=np.float32)
+    
+    for i in range(nrows):
+        for j in range(ncols):
+            array_value = wave_array[i, j]
+            pathloss_value = interpolated_lookup(array_value, wavelength,
+                                                 pathloss)
+            pathloss_array[i, j] = pathloss_value
+
+    return pathloss_array
+
+def interpolated_lookup(value, array_in, array_out):
+    """
+    Short Summary
+    -------------
+    
+    Given two 1-d arrays of corresponding (x, y) values, use the input
+    value to find the location in the first array using linear
+    interpolation, then linearly interpolate at that location in the
+    second array
+
+    Parameters
+    ----------
+
+    value: float
+        Input value the be used to calculate index in array_in
+
+    array_in: numpy ndarray
+        1-d array of input values
+
+    array_out: numpy ndarray
+        1-d array of corresponding output values
+
+    Returns:
+    --------
+
+    output: float
+        Value interpolated at the corresponding location of array_out
+
+    """
+
+    subtracted = array_in - value
+    shift_mult = subtracted[1:] * subtracted[:-1]
+    index = np.where(shift_mult[1:]*shift_mult[:-1] < 0.0)
+    if len(index[0]) > 0:
+        
