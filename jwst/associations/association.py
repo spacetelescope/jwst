@@ -279,10 +279,10 @@ class Association(MutableMapping):
                     new_member = deepcopy(member)
                     new_member[input] = str(avalue)
                     process_members.append(new_member)
-                    raise AssociationProcessMembers(
-                        process_members,
-                        [type(self)]
-                    )
+                raise AssociationProcessMembers(
+                    process_members,
+                    [type(self)]
+                )
 
             evaled_str = str(evaled)
             if conditions['value'] is not None:

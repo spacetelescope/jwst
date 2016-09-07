@@ -35,6 +35,6 @@ class TestMain(object):
         pool, rules, pool_fname = full_pool_rules
 
         generated = Main([pool_fname, '--dry-run'])
-        assert len(generated.associations) == 45
+        assert len(generated.associations) == 44
         generated = Main([pool_fname, '--dry-run', '--cross-candidate-only'])
         assert len(generated.associations) == 5
