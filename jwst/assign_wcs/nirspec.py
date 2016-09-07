@@ -554,12 +554,12 @@ def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5)
     x_range = np.hstack((x_range_low, x_range_high))
     y_range = np.hstack((y_range_low, y_range_high))
     # add 5 px margin
-    x0 = max(0, x_range.min() - 10)
-    x1 = min(2047, x_range.max() + 10)
+    x0 = int(max(0, x_range.min() - 10))
+    x1 = int(min(2047, x_range.max() + 10))
     # add 2 px margin
-    y0 = y_range.min() - 2
-    y1 = y_range.max() + 2
-    domain = [{'lower': int(x0), 'upper': int(x1)}, {'lower': int(y0), 'upper': int(y1)}]
+    y0 = int(y_range.min()) - 2
+    y1 = int(y_range.max()) + 2
+    domain = [{'lower': x0, 'upper': x1}, {'lower': y0, 'upper': y1}]
     return domain
 
 
