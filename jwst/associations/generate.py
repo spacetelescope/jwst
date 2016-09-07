@@ -3,8 +3,11 @@ import logging
 from astropy.table import Table
 
 from .association import (
-    AssociationError,
     make_timestamp
+)
+from .exceptions import (
+    AssociationError,
+    AssociationProcessMembers
 )
 
 # Configure logging
@@ -31,25 +34,41 @@ def generate(pool, rules):
            * Table of members from the pool that
              do not belong to any association.
     """
+    logger.debug('Starting...')
+
     associations = []
     orphaned = Table(dtype=pool.dtype)
     timestamp = make_timestamp()
-    logger.debug('Starting...')
-    for member in pool:
-        logger.debug('Working member="{}"'.format(member))
-        member_associations = generate_from_member(
-            member,
-            timestamp,
-            associations,
-            rules
+    process_list = [
+        AssociationProcessMembers(
+            members=pool,
+            allowed_rules=[rule for _, rule in rules.items()]
         )
-        if len(member_associations) == 0:
-            orphaned.add_row(member)
+    ]
 
+    for process_event in process_list:
+        for member in process_event.members:
+            logger.debug('Working member="{}"'.format(member))
+            existing_asns, new_asns, to_process = generate_from_member(
+                member,
+                timestamp,
+                associations,
+                rules,
+                process_event.allowed_rules
+            )
+            associations.extend(new_asns)
+            process_list.extend(to_process)
+
+    logger.debug('Number of processes: "{}"'.format(len(process_list)))
     return associations, orphaned
 
 
-def generate_from_member(member, timestamp, associations, rules):
+def generate_from_member(
+        member,
+        timestamp,
+        associations,
+        rules,
+        allowed_rules):
     """Either match or generate a new assocation
 
     Parameters
@@ -69,35 +88,46 @@ def generate_from_member(member, timestamp, associations, rules):
     rules: AssociationRegistry
         List of rules to create new associations
 
+    allwed_rules: [rule, ...]
+        Only compare existing associations and rules if the
+        the rule is in this list. If none, all rules are valid.
+
     Returns
     -------
-    [association,...]
-        List of associations member belongs to. Empty if none match
+    (associations, process_list): 3-tuple where
+        existing_asns: [association,...]
+            List of existing associations member belongs to.
+            Empty if none match
+        new_asns: [association,...]
+            List of new associations member creates. Empty if none match
+        process_list: [AssociationProcess, ...]
+            List of process events.
     """
 
     # Check membership in existing associations.
-    member_associations = match_member(member, associations)
+    associations = [
+        asn
+        for asn in associations
+        if type(asn) in allowed_rules
+    ]
+    existing_asns, process_list = match_member(member, associations)
 
     # Now see if this member will create new associatons.
     # By default, a member will not be allowed to create
     # an association based on rules of existing associations.
-    ignore_asns = set([type(asn) for asn in member_associations])
-    try:
-        new_asns = rules.match(
-            member,
-            timestamp=timestamp,
-            ignore=ignore_asns,
-        )
-    except AssociationError as error:
-        logger.debug('Did not match any rule.')
-        logger.debug('error="{}"'.format(error))
-    else:
-        member_associations.extend(new_asns)
-        logger.debug(
-            'Member created new associations "{}"'.format(new_asns)
-        )
+    ignore_asns = set([type(asn) for asn in existing_asns])
+    new_asns, to_process = rules.match(
+        member,
+        timestamp=timestamp,
+        allow=allowed_rules,
+        ignore=ignore_asns,
+    )
+    logger.debug(
+        'Member created new associations "{}"'.format(new_asns)
+    )
 
-    return member_associations
+    process_list.extend(to_process)
+    return existing_asns, new_asns, process_list
 
 
 def match_member(member, associations):
@@ -115,10 +145,14 @@ def match_member(member, associations):
 
     Returns
     -------
-    [association,...]
-        List of associations member belongs to. Empty if none match
+    (associations, process_list): 2-tuple where
+        associations: [association,...]
+            List of associations member belongs to. Empty if none match
+        process_list: [AssociationProcess, ...]
+            List of process events.
     """
     member_associations = []
+    process_list = []
     for asn in associations:
         if asn in member_associations:
             continue
@@ -128,9 +162,11 @@ def match_member(member, associations):
             logger.debug(
                 'Did not match association "{}"'.format(asn)
             )
-            logger.debug('error="{}"'.format(error))
-            continue
+            logger.debug('Reason="{}"'.format(error))
+        except AssociationProcessMembers as process_event:
+            logger.debug('Process event "{}"'.format(process_event))
+            process_list.append(process_event)
         else:
             logger.debug('Matched association "{}"'.format(asn))
             member_associations.append(asn)
-    return member_associations
+    return member_associations, process_list

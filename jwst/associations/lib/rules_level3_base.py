@@ -7,7 +7,7 @@ from jwst.associations import (
     Association,
     libpath
 )
-from jwst.associations.error import AssociationNotAConstraint
+from jwst.associations.exceptions import AssociationNotAConstraint
 from jwst.associations.lib.counter import Counter
 
 # Configure logging
@@ -183,7 +183,7 @@ class DMS_Level3_Base(Association):
         if asn_candidate_ids is not None:
             match = re.search(_REGEX_ACID_VALUE, asn_candidate_ids['value'])
             if match is not None:
-                result =  match.group(1)
+                result = match.group(1)
         return result
 
     def _get_target_id(self):

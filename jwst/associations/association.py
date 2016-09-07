@@ -12,7 +12,7 @@ import re
 from astropy.extern import six
 from numpy.ma import masked
 
-from .exceptions import AssociationError
+from .exceptions import (AssociationError, AssociationProcessMembers)
 from .registry import AssociationRegistry
 
 __all__ = [
@@ -224,16 +224,12 @@ class Association(MutableMapping):
 
         """
         if check_constraints:
-            member_pushback = self.test_and_set_constraints(member)
+            self.test_and_set_constraints(member)
 
         if self.run_init_hook:
             self._init_hook(member)
         self._add(member)
         self.run_init_hook = False
-
-        # Backref the member to this association
-        member._asns_belong_to = getattr(member, '_asns_belong_to', [])
-        member._asns_belong_to.append(self)
 
     @nottest
     def test_and_set_constraints(self, member):
@@ -251,20 +247,11 @@ class Association(MutableMapping):
         AssociationError
             If a match fails.
 
-        Returns
-        -------
-        new_member: dict
-            If one of the constraints is a list, and
-            the current member matches, pop the item
-            and pass back the new member.
-
         Notes
         -----
         If a constraint is present, but does not have a value,
         that constraint is set, and, by definition, matches.
         """
-        return_member = deepcopy(member)
-        return_member_valid = False
         for constraint, conditions in self.constraints.items():
             logger.debug('Constraint="{}" Conditions="{}"'.format(constraint, conditions))
             try:
@@ -278,57 +265,41 @@ class Association(MutableMapping):
                     conditions['value'] = 'Constraint not present and ignored'
                     continue
 
-            # Try evaulating the value. If it is an iterable,
-            # then we need to check each.
+            # If the value is a list, signal that a reprocess
+            # needs to be done.
             logger.debug('To check: Input="{}" Value="{}"'.format(input, value))
             try:
                 evaled = literal_eval(value)
             except (ValueError, SyntaxError):
                 evaled = value
-            possible_return = True
-            if not is_iterable(evaled):
-                evaled = [value]
-                possible_return = False
 
-            for avalue in evaled:
-                avalue_str = str(avalue)
-                if conditions['value'] is not None:
-                    if not meets_conditions(
-                            avalue_str, conditions['value']
-                    ):
-                        continue
+            if is_iterable(evaled):
+                process_members = []
+                for avalue in evaled:
+                    new_member = deepcopy(member)
+                    new_member[input] = str(avalue)
+                    process_members.append(new_member)
+                    raise AssociationProcessMembers(
+                        process_members,
+                        [type(self)]
+                    )
 
-                # Fix the conditions.
-                logger.debug('Success Input="{}" Value="{}"'.format(input, avalue_str))
-                if conditions['value'] is None or \
-                   conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
-                    conditions['value'] = re.escape(avalue_str)
-                    conditions['input'] = [input]
-                    conditions['force_unique'] = False
+            evaled_str = str(evaled)
+            if conditions['value'] is not None:
+                if not meets_conditions(
+                        evaled_str, conditions['value']
+                ):
+                    raise AssociationError(
+                        'Constraint {} does not match association.'.format(constraint)
+                    )
 
-                # If there are more values in the list,
-                # pop and pass back a new member.
-                if possible_return:
-                    evaled.remove(avalue)
-                    if len(evaled):
-                        return_member[input] = str(evaled)
-                        return_member_valid = True
-                    else:
-                        return_member[input] = None
-
-                # Success, break out.
-                break
-
-            # If we've gone through all possible values,
-            # then we have failure.
-            else:
-                raise AssociationError(
-                    'Constraint {} does not match association.'.format(constraint)
-                )
-
-        if not return_member_valid:
-            return_member = None
-        return return_member
+            # Fix the conditions.
+            logger.debug('Success Input="{}" Value="{}"'.format(input, evaled_str))
+            if conditions['value'] is None or \
+               conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
+                conditions['value'] = re.escape(evaled_str)
+                conditions['input'] = [input]
+                conditions['force_unique'] = False
 
     def add_constraints(self, new_constraints):
         """Add a set of constraints to the current constraints."""
@@ -504,4 +475,5 @@ SERIALIZATION_PROTOCOLS = {
 # Utility
 def is_iterable(obj):
     return not isinstance(obj, six.string_types) and \
+        not isinstance(obj, tuple) and \
         hasattr(obj, '__iter__')
