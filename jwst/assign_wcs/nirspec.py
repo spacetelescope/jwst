@@ -520,37 +520,41 @@ def detector_to_gwa(reference_files, detector, disperser):
     return model
 
 
-def compute_domain(slit2detector, wavelength_range):
+def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5):
     """
-    Compute the projection of a slit on the detector.
+    Compute the projection of a slit/slice on the detector.
+
+    The edges of the slit are used to determine the location
+    of the projection of the slit on the detector.
+    Because the trace is curved and the wavelength_range may span the
+    two detectors, y_min of the projection may be at an arbitrary wavelength.
+    The transform is run with a regularly sampled wavelengths to determin y_min.
 
     Parameters
     ----------
-    input_model : `jwst.datamodels.DataModel`
-        The input data model - either an ImageModel or a CubeModel.
-    open_slits : list
-        The open slitlets in the observation.
-    reference_files : dict
-        {reftype: file_name} mapping
-        Reference files for the observation returned by CRDS.
+    slit2detector : `astropy.modeling.core.Model`
+        The transform from slit to detector.
+    wavelength_range : tuple
+        The wavelength range for the combination of grating and filter.
 
     """
-    step = 100
-    y = np.linspace(-.55, .55, step)
-    x = np.zeros(y.shape)
-
     lam_min = wavelength_range[0]
     lam_max = wavelength_range[1]
 
-    x_range_low, y_range_low = slit2detector(x, y, lam_min)
-    x_range_high, y_range_high = slit2detector(x, y, lam_max)
+    step = 1e-10
+    nsteps = int((lam_max - lam_min) / step)
+    lam_grid = np.linspace(lam_min, lam_max, nsteps)
+    x_range_low, y_range_low = slit2detector([0] * nsteps, [slit_ymin] * nsteps, lam_grid)
+    x_range_high, y_range_high = slit2detector([0] * nsteps, [slit_ymax] * nsteps, lam_grid)
+    x_range = np.hstack((x_range_low, x_range_high))
+    y_range = np.hstack((y_range_low, y_range_high))
     # add 5 px margin
-    x0 = max(0, x_range_low.min() - 10)
-    x1 = min(2047, x_range_high.max() + 10)
+    x0 = int(max(0, x_range.min() - 10))
+    x1 = int(min(2047, x_range.max() + 10))
     # add 2 px margin
-    y0 = y_range_low.min() - 2
-    y1 = y_range_high.max() + 2
-    domain = [{'lower': int(x0), 'upper': int(x1)}, {'lower': int(y0), 'upper': int(y1)}]
+    y0 = int(y_range.min()) - 2
+    y1 = int(y_range.max()) + 2
+    domain = [{'lower': x0, 'upper': x1}, {'lower': y0, 'upper': y1}]
     return domain
 
 
