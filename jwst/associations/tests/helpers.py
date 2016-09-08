@@ -70,8 +70,9 @@ class BasePoolRule(object):
     def test_rules_exist(self):
         rules = AssociationRegistry()
         assert len(rules) >= len(self.valid_rules)
+        rule_names = get_rule_names(rules)
         for rule in self.valid_rules:
-            yield check_in_list, rule, rules
+            yield check_in_list, rule, rule_names
 
     def test_run_generate(self):
         rules = AssociationRegistry()
@@ -84,7 +85,7 @@ class BasePoolRule(object):
                 yield check_equal, set(asn.candidates), set(candidates)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture()
 def full_pool_rules(request):
     pool_fname = t_path('data/mega_pool.csv')
     pool = AssociationPool.read(pool_fname)
@@ -284,3 +285,22 @@ def generate_pool_paths(request):
     pool_file = t_path(request.param)
     with mkstemp_pool_file(pool_file) as pool_path:
         yield pool_path
+
+
+def get_rule_names(rules):
+    """Return rules names found in a registry
+
+    Parameters
+    ----------
+    rules: AssociationRegistry
+        The registry to look through
+
+    Returns
+    -------
+    rule_names: list
+        The list of rule names
+    """
+    return [
+        rule._asn_rule()
+        for rule_name, rule in rules.items()
+    ]
