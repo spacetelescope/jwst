@@ -298,7 +298,7 @@ class Association(MutableMapping):
             if conditions['value'] is None or \
                conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
                 conditions['value'] = re.escape(evaled_str)
-                conditions['input'] = [input]
+                conditions['inputs'] = [input]
                 conditions['force_unique'] = False
 
     def add_constraints(self, new_constraints):
