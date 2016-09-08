@@ -90,9 +90,10 @@ def lrs(input_model, reference_files):
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     focal_spatial = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
-    #sky = cf.CelestialFrame(reference_frame=coord.ICRS())
+    sky = cf.CelestialFrame(name='sky', reference_frame=coord.ICRS())
     spec = cf.SpectralFrame(name='wavelength', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
-    focal = cf.CompositeFrame([focal_spatial, spec])
+    focal = cf.CompositeFrame(name='focal', frames=[focal_spatial, spec])
+    world = cf.CompositeFrame(name='world', frames=[sky, spec])
 
     ref = fits.open(reference_files['specwcs'])
     ldata = ref[1].data
@@ -117,10 +118,12 @@ def lrs(input_model, reference_files):
     spatial = models.Rotation2D(angle)
     det2focal = models.Mapping((0, 1, 0, 1)) | spatial & lrs_wav_model
     det2focal.meta['domain'] = domain
+    focal2sky_spatial = pointing.fitswcs_transform_from_model(input_model)
+    focal2sky = focal2sky_spatial & models.Identity(1)
     pipeline = [(detector, det2focal),
-                (focal, None)]
-                #(sky, None)
-                #]
+                (focal, focal2sky),
+                (sky, None)
+                ]
     return pipeline
 
 
@@ -288,6 +291,7 @@ def alpha_beta2XanYan(input_model, reference_files):
                                       selector=sel)
 
     return ab2xyan
+
 
 exp_type2transform = {'mir_image': imaging,
                       'mir_tacq': imaging,
