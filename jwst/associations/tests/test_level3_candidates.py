@@ -51,7 +51,7 @@ pool_params = pytest.fixture(
         # Whole program
         (
             [],
-            2
+            22
         ),
     ]
 )(generate_params)

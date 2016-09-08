@@ -1,4 +1,5 @@
 """Association Registry"""
+from importlib import import_module
 from inspect import (
     getmembers,
     isclass,
@@ -14,11 +15,13 @@ from os.path import (
     expandvars,
 )
 import sys
+from uuid import uuid4
 
 from . import libpath
 from .exceptions import (
     AssociationError,
-    AssociationNotValidError
+    AssociationNotValidError,
+    AssociationProcessMembers,
 )
 
 __all__ = ['AssociationRegistry']
@@ -55,6 +58,13 @@ class AssociationRegistry(dict):
                  global_constraints=None):
         super(AssociationRegistry, self).__init__()
 
+        # Generate a UUID for this instance. Used to modify rule
+        # names.
+        self.uuid = uuid4()
+
+        # Precache the set of rules
+        self._rule_set = set()
+
         # Setup constraints that are to be applied
         # to every rule.
         if global_constraints is None:
@@ -80,13 +90,22 @@ class AssociationRegistry(dict):
             for class_name, class_object in get_classes(module):
                 logger.debug('class_name="{}"'.format(class_name))
                 if class_name.startswith(USER_ASN):
-                    class_object.GLOBAL_CONSTRAINTS = global_constraints
-                    self.__setitem__(class_name, class_object)
+                    rule = type(class_name, (class_object,), {})
+                    rule.GLOBAL_CONSTRAINTS = global_constraints
+                    self.__setitem__(
+                        '_'.join([class_name, str(self.uuid)]),
+                        rule
+                    )
+                    self._rule_set.add(rule)
                 if class_name == 'Utility':
                     Utility = type('Utility', (class_object, Utility), {})
         self.Utility = Utility
 
-    def match(self, member, timestamp=None, ignore=None, reprocess_cb=None):
+    @property
+    def rule_set(self):
+        return self._rule_set
+
+    def match(self, member, timestamp=None, allow=None, ignore=None):
         """See if member belongs to any of the associations defined.
 
         Parameters
@@ -98,33 +117,42 @@ class AssociationRegistry(dict):
             If specified, a string appened to association names.
             Generated if not specified.
 
+        allow: [type(Association), ...]
+            List of rules to allow to be matched. If None, all
+            available rules will be used.
+
         ignore: list
             A list of associations to ignore when looking for a match.
             Intended to ensure that already created associations
             are not re-created.
 
-        reprocess_cb: func(member)
-            If a member should be reprocessed,
-            this function is called.
-
         Returns
         -------
-        [association,]
-            A list of associations this member belongs to.
+        (associations, reprocess_list): 2-tuple where
+            associations: [association,...]
+                List of associations member belongs to. Empty if none match
+            reprocess_list: [AssociationReprocess, ...]
+                List of reprocess events.
         """
         logger.debug('Starting...')
+        if allow is None:
+            allow = self.rule_set
         associations = []
+        process_list = []
         for name, rule in self.items():
-            if rule not in ignore:
+            if rule not in ignore and rule in allow:
+                logger.debug('Checking membership for rule "{}"'.format(rule))
                 try:
-                    associations.append(rule(member, timestamp, reprocess_cb))
+                    associations.append(rule(member, timestamp))
                 except AssociationError as error:
                     logger.debug('Rule "{}" not matched'.format(name))
-                    logger.debug('Error="{}"'.format(error))
-                    continue
-        if len(associations) == 0:
-            raise AssociationError('Member does not match any rules.')
-        return associations
+                    logger.debug('Reason="{}"'.format(error))
+                except AssociationProcessMembers as process_event:
+                    logger.debug('Process event "{}"'.format(process_event))
+                    process_list.append(process_event)
+                else:
+                    logger.debug('Member belongs to rule "{}"'.format(rule))
+        return associations, process_list
 
     def validate(self, association):
         """Validate a given association against schema
@@ -180,8 +208,10 @@ def import_from_file(filename):
     module_name = basename(path).split('.')[0]
     folder = dirname(path)
     sys.path.insert(0, folder)
-    module = __import__(module_name)
-    sys.path.pop(0)
+    try:
+        module = import_module(module_name)
+    finally:
+        sys.path.pop(0)
     return module
 
 
@@ -233,3 +263,19 @@ def get_classes(module):
                 yield sub_name, sub_class
         elif isclass(class_object):
             yield class_name, class_object
+
+
+# ##########
+# Unit Tests
+# ##########
+def test_import_from_file():
+    from copy import deepcopy
+    from pytest import raises as pytest_raises
+    from tempfile import NamedTemporaryFile
+
+    current_path = deepcopy(sys.path)
+    with NamedTemporaryFile() as junk_fh:
+        junk_path = junk_fh.name
+        with pytest_raises(ImportError):
+            module = import_from_file(junk_path)
+        assert current_path == sys.path
