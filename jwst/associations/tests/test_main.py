@@ -14,7 +14,7 @@ class TestMain(object):
 
         generated = Main([pool_fname, '--dry-run'])
         asns = generated.associations
-        assert len(asns) == 45
+        assert len(asns) == 44
         found_rules = set(
             asn['asn_rule']
             for asn in asns

@@ -1,6 +1,7 @@
 import logging
 
 from astropy.table import Table
+import numpy as np
 
 from .association import (
     make_timestamp
@@ -37,7 +38,7 @@ def generate(pool, rules):
     logger.debug('Starting...')
 
     associations = []
-    orphaned = Table(dtype=pool.dtype)
+    in_an_asn = np.zeros((len(pool),), dtype=bool)
     timestamp = make_timestamp()
     process_list = [
         AssociationProcessMembers(
@@ -58,8 +59,12 @@ def generate(pool, rules):
             )
             associations.extend(new_asns)
             process_list.extend(to_process)
-
+            if len(existing_asns) +\
+               len(new_asns) > 0:
+                in_an_asn[member.index] = True
     logger.debug('Number of processes: "{}"'.format(len(process_list)))
+
+    orphaned = pool[np.logical_not(in_an_asn)]
     return associations, orphaned
 
 
