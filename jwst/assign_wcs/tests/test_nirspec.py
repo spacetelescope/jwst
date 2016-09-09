@@ -162,7 +162,7 @@ def test_nirspec_ifu_against_esa():
     x = x + cor[0]
 
     ra, dec, lp = w0(x, y)
-    assert_allclose(lp, lam[cond], atol=10**-10)
+    assert_allclose(lp, lam[cond], atol=10**-13)
     ref.close()
 
 '''
@@ -212,7 +212,7 @@ def test_nirspec_fs_esa():
     y = y + cor[1]
     x = x + cor[0]
     ra, dec, lp = w1(x, y)
-    assert_allclose(lp, lam[cond], atol=10**-10)
+    assert_allclose(lp, lam[cond], atol=10**-13)
     ref.close()
 
 
