@@ -216,16 +216,16 @@ properties:
             title: Target Dec uncertainty
             type: number
             fits_keyword: TARGUDEC
-          proposer_ra:
-            title: Proposer specified RA for the target
+          proper_motion_ra:
+            title: Target proper motion in RA
             type: number
             fits_keyword: PROP_RA
-          proposer_dec:
-            title: Proposer specified Dec for the target
+          proper_motion_dec:
+            title: Target proper motion in Dec
             type: number
             fits_keyword: PROP_DEC
-          proposer_epoch:
-            title: Proposer specified epoch for RA and Dec
+          proper_motion_epoch:
+            title: Target proper motion epoch
             type: string
             fits_keyword: PROPEPOC
       instrument:
