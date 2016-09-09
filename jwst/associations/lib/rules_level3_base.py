@@ -111,10 +111,6 @@ class DMS_Level3_Base(Association):
 
     def product_name(self):
         """Define product name."""
-        program = self.data['program']
-
-        asn_candidate_id = '-' + self._get_asn_candidate_id()
-
         target = self._get_target_id()
 
         instrument = self._get_instrument()
@@ -128,9 +124,9 @@ class DMS_Level3_Base(Association):
         else:
             exposure = '-' + exposure
 
-        product_name = 'jw{}{}_{}_{}_{}_{{product_type}}{}.fits'.format(
-            program,
-            asn_candidate_id,
+        product_name = 'jw{}-{}_{}_{}_{}_{{product_type}}{}.fits'.format(
+            self.data['program'],
+            self.acid.id,
             target,
             instrument,
             opt_elem,
@@ -186,24 +182,6 @@ class DMS_Level3_Base(Association):
                 member['FILENAME'],
                 exposerr
             ))
-
-    def _get_asn_candidate_id(self):
-        """Retrieve association candidate id from contraints
-
-        Returns
-        -------
-        asn_candidate_id: str
-            The Level3 Product name representation
-            of the association candidate ID.
-
-        """
-        result = 'a{:0>4d}'.format(self.discovered_id.value)
-        asn_candidate_ids = self.constraints.get('asn_candidate_ids', None)
-        if asn_candidate_ids is not None:
-            match = re.search(_REGEX_ACID_VALUE, asn_candidate_ids['value'])
-            if match is not None:
-                result = match.group(1)
-        return result
 
     def _get_target_id(self):
         """Get string representation of the target

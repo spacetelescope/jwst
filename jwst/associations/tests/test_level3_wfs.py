@@ -27,4 +27,4 @@ class TestLevel3WFS(helpers.BasePoolRule):
         )
         (asns, orphaned) = generate(pool, rules)
         name = asns[0]['products'][0]['name']
-        assert name == 'jw99009-a3001_t001_nircam_clear_{product_type}-01.fits'
+        assert name == 'jw99009-c1000_t001_nircam_clear_{product_type}-01.fits'

@@ -43,6 +43,7 @@ class TestLevel3Environment(object):
             'value': '.+o001.+',
             'inputs': ['ASN_CANDIDATE'],
             'force_unique': True,
+            'is_acid': True,
         }
         rules = AssociationRegistry(global_constraints=global_constraints)
         pool = combine_pools(t_path('data/pool_002_image_miri.csv'))

@@ -38,10 +38,11 @@ global_constraints = helpers.func_fixture(
     scope='module',
     params=[
         {
-            'asn_candidate_ids': {
+            'asn_candidate': {
                 'value': ['.+o002.+'],
                 'inputs': ['ASN_CANDIDATE'],
                 'force_unique': True,
+                'is_acid': True,
             }
         },
     ]
