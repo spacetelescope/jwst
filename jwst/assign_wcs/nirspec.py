@@ -63,6 +63,8 @@ def imaging(input_model, reference_files):
     # Get the corrected disperser model
     disperser = get_disperser(input_model, reference_files['disperser'])
 
+    # DMS to SCA transform
+    dms2detector = dms_to_sca(input_model)
     # DETECTOR to GWA transform
     det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 
@@ -133,6 +135,8 @@ def ifu(input_model, reference_files):
     input_model.meta.wcsinfo.waverange_end = wrange[1]
     input_model.meta.wcsinfo.spectral_order = sporder
 
+    # DMS to SCA transform
+    dms2detector = dms_to_sca(input_model)
     # DETECTOR to GWA transform
     det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 

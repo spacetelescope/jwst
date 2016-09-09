@@ -144,9 +144,8 @@ def test_nirspec_ifu_against_esa():
     pipe = nirspec.create_pipeline(im, refs)
     w = wcs.WCS(pipe)
     im.meta.wcs = w
-    _, wrange = nirspec.spectral_order_wrange_from_model(im)
     # Test evaluating the WCS
-    w0 = nirspec.nrs_wcs_set_input(im.meta.wcs, 0, 0, wrange)
+    w0 = nirspec.nrs_wcs_set_input(im, 0, 0)
 
     ref = fits.open(get_file_path('Trace_IFU_Slice_00_MON-COMBO-IFU-06_8410_jlab85.fits.gz'))
     crpix = np.array([ref[1].header['crpix1'], ref[1].header['crpix2']])
@@ -181,7 +180,7 @@ def test_nirspec_mos():
     im.meta.wcs = w
     # Test evaluating the WCS
     _, wrange = nirspec.spectral_order_wrange_from_model(im)
-    w1 = nirspec.nrs_wcs_set_input(im.meta.wcs, 4, 5824, wrange)
+    w1 = nirspec.nrs_wcs_set_input(im, 4, 5824, wrange)
     w1(1, 2)
 '''
 
@@ -198,8 +197,7 @@ def test_nirspec_fs_esa():
     w = wcs.WCS(pipe)
     im.meta.wcs = w
     # Test evaluating the WCS
-    _, wrange = nirspec.spectral_order_wrange_from_model(im)
-    w1 = nirspec.nrs_wcs_set_input(im.meta.wcs, 5, 1, wrange)
+    w1 = nirspec.nrs_wcs_set_input(im, 5, 1)
 
     ref = fits.open(get_file_path('Trace_SLIT_A_200_1_SLIT-COMBO-016_9791_jlab85_0001.fits.gz'))
     crpix = np.array([ref[1].header['crpix1'], ref[1].header['crpix2']])
