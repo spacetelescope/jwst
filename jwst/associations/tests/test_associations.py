@@ -1,7 +1,6 @@
 """test_associations: Test of general Association functionality."""
 from __future__ import absolute_import
-
-import nose.tools as nt
+import pytest
 
 from . import helpers
 from .helpers import full_pool_rules
@@ -26,22 +25,24 @@ class TestAssociations():
             include_default=False
         )
         assert len(rules) >= 2
+        rule_names = helpers.get_rule_names(rules)
         assert 'DMS_Level3_Base_Set1' not in rules
         valid_rules = ['Asn_Dither_Set1', 'Asn_WFS_Set1']
         for rule in valid_rules:
-            yield helpers.check_in_list, rule, rules
+            yield helpers.check_in_list, rule, rule_names
 
     def test_read_assoc_defs_fromdefault(self):
         rules = AssociationRegistry()
         assert len(rules) >= 3
+        rule_names = helpers.get_rule_names(rules)
         assert 'DMS_Level3_Base' not in rules
         valid_rules = ['Asn_Image', 'Asn_WFSCMB']
         for rule in valid_rules:
-            yield helpers.check_in_list, rule, rules
+            yield helpers.check_in_list, rule, rule_names
 
-    @nt.raises(AssociationError)
     def test_nodefs(self):
-        rules = AssociationRegistry(include_default=False)
+        with pytest.raises(AssociationError):
+            rules = AssociationRegistry(include_default=False)
 
     def test_multi_rules(self):
         rule_files = [
@@ -50,8 +51,9 @@ class TestAssociations():
         ]
         rules = AssociationRegistry(rule_files, include_default=False)
         assert len(rules) == 4
-        assert 'DMS_Level3_Base_Set1' not in rules
-        assert 'DMS_Level3_Base_Set2' not in rules
+        rule_names = helpers.get_rule_names(rules)
+        assert 'DMS_Level3_Base_Set1' not in rule_names
+        assert 'DMS_Level3_Base_Set2' not in rule_names
         valid_rules = [
             'Asn_Dither_Set1',
             'Asn_Dither_Set2',
@@ -60,7 +62,7 @@ class TestAssociations():
         ]
 
         for rule in valid_rules:
-            yield helpers.check_in_list, rule, rules
+            yield helpers.check_in_list, rule, rule_names
 
     def test_base_instatiation(self):
         """Create an association without any initialization"""
