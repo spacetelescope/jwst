@@ -124,7 +124,7 @@ class DMS_Level3_Base(Association):
         else:
             exposure = '-' + exposure
 
-        product_name = 'jw{}-{}_{}_{}_{}_{{product_type}}{}.fits'.format(
+        product_name = 'jw{}-{}_{}_{}_{}'.format(
             self.data['program'],
             self.acid.id,
             target,

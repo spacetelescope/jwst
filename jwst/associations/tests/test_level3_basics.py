@@ -15,8 +15,7 @@ L3_PRODUCT_NAME = (
     '-(?P<acid>[a-z]\d{3,4})'
     '_(?P<targetid>t\d{3})'
     '_(?P<instrument>.+?)'
-    '_(?P<opt_elem>.+?)'
-    '_(?P<ptype>.+)\.fits'
+    '_(?P<opt_elem>.+)'
 )
 
 
@@ -35,7 +34,6 @@ class TestLevel3Environment(object):
         yield helpers.check_equal, matches['targetid'], 't001'
         yield helpers.check_equal, matches['instrument'], 'miri'
         yield helpers.check_equal, matches['opt_elem'], 'f560w'
-        yield helpers.check_equal, matches['ptype'], '{product_type}'
 
     def test_l3_productname(self):
         global_constraints = {}
@@ -57,4 +55,3 @@ class TestLevel3Environment(object):
         yield helpers.check_equal, matches['targetid'], 't001'
         yield helpers.check_equal, matches['instrument'], 'miri'
         yield helpers.check_equal, matches['opt_elem'], 'f560w'
-        yield helpers.check_equal, matches['ptype'], '{product_type}'
