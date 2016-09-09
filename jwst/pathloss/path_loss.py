@@ -104,12 +104,7 @@ def do_correction(input_model, pathloss_model):
                                                           ystart, ystop))
             # For each pixel
             # Use linear interpolation as using the WCS is too slow
-            for row in range(nrows):
-                deltax = column
-                slope = (max_wavelength - min_wavelength) / (slit.xsize - 1.0)
-                wave =  = min_wavelength + deltax * slope
-                for column in range(ncols):
-                    wave_array[row, column] = wave
+            x, y = np.mgrid[xstart:xstop, ystart:ystop]
             pathloss_point = calculate_pathloss(wave_array, wavelength,
                                                 pathloss)
 
@@ -205,6 +200,10 @@ def interpolated_lookup(value, array_in, array_out):
 
     subtracted = array_in - value
     shift_mult = subtracted[1:] * subtracted[:-1]
-    index = np.where(shift_mult[1:]*shift_mult[:-1] < 0.0)
-    if len(index[0]) > 0:
-        
+    index_tuple = np.where(shift_mult[1:]*shift_mult[:-1] < 0.0)
+    if len(index_tuple[0]) > 0:
+        index = index_tuple[0][0]
+        remainder = value - array_in[value]
+        partial = remainder/(array_in[index+1] - array_in[index])
+        returned = array_out[index] + \
+                   partial*(array_out[index+1] - array_out[index])
