@@ -204,6 +204,7 @@ def constrain_on_candidates(candidates):
         'value': values,
         'inputs': ['ASN_CANDIDATE'],
         'force_unique': True,
+        'is_acid': True,
     }
 
     return constraint

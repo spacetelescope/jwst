@@ -1,4 +1,5 @@
 """Base classes which define the Level3 Associations"""
+from collections import namedtuple
 import logging
 from os.path import basename
 import re
@@ -33,11 +34,17 @@ _DEGRADED_STATUS_NOTOK = (
 )
 
 # DMS file name templates
+_ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
 # Product name regex's
 _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
+_REGEX_ACID_CONSTRAINT = '\(.*\'(?P<id>[a-z]\d{3,4})\'.*\,.*\'(?P<type>\w+)\'.*\)'
+
+
+# Define the association's association candidate id.
+ACID = namedtuple('ACID', ['id', 'type'])
 
 
 class DMS_Level3_Base(Association):
@@ -54,24 +61,36 @@ class DMS_Level3_Base(Association):
         super(DMS_Level3_Base, self).__init__(*args, **kwargs)
 
     @property
+    def acid(self):
+        """Association ID"""
+        for _, constraint in self.constraints.items():
+            if constraint.get('is_acid', False):
+                value = re.sub('\\\\', '', constraint['value'])
+                m = re.search(_REGEX_ACID_CONSTRAINT, value)
+                acid = ACID(
+                    id=m.groupdict()['id'],
+                    type=m.groupdict()['type']
+                )
+                break
+        else:
+            id = 'a{:0>3}'.format(self.discovered_id.value)
+            acid = ACID(id=id, type='DISCOVERED')
+
+        return acid
+
+    @property
     def asn_name(self):
-        template = 'jw{}_{}_{}_{:03d}_asn'
         program = self.data['program']
-        asn_candidate_ids = self.constraints.get('asn_candidate_ids', None)
-        if asn_candidate_ids is not None:
-            program = '-'.join([
-                program,
-                '{0:0>4s}'.format(asn_candidate_ids['value'])
-            ])
         timestamp = self.timestamp
         asn_type = self.data['asn_type']
         sequence = self.sequence
 
-        name = template.format(
-            program,
-            timestamp,
-            asn_type,
-            sequence,
+        name = _ASN_NAME_TEMPLATE.format(
+            program=program,
+            acid=self.acid.id,
+            stamp=timestamp,
+            type=asn_type,
+            sequence=sequence,
         )
         return name.lower()
 
@@ -92,10 +111,6 @@ class DMS_Level3_Base(Association):
 
     def product_name(self):
         """Define product name."""
-        program = self.data['program']
-
-        asn_candidate_id = '-' + self._get_asn_candidate_id()
-
         target = self._get_target_id()
 
         instrument = self._get_instrument()
@@ -109,9 +124,9 @@ class DMS_Level3_Base(Association):
         else:
             exposure = '-' + exposure
 
-        product_name = 'jw{}{}_{}_{}_{}_{{product_type}}{}.fits'.format(
-            program,
-            asn_candidate_id,
+        product_name = 'jw{}-{}_{}_{}_{}'.format(
+            self.data['program'],
+            self.acid.id,
             target,
             instrument,
             opt_elem,
@@ -167,24 +182,6 @@ class DMS_Level3_Base(Association):
                 member['FILENAME'],
                 exposerr
             ))
-
-    def _get_asn_candidate_id(self):
-        """Retrieve association candidate id from contraints
-
-        Returns
-        -------
-        asn_candidate_id: str
-            The Level3 Product name representation
-            of the association candidate ID.
-
-        """
-        result = 'a{:0>4d}'.format(self.discovered_id.value)
-        asn_candidate_ids = self.constraints.get('asn_candidate_ids', None)
-        if asn_candidate_ids is not None:
-            match = re.search(_REGEX_ACID_VALUE, asn_candidate_ids['value'])
-            if match is not None:
-                result = match.group(1)
-        return result
 
     def _get_target_id(self):
         """Get string representation of the target
