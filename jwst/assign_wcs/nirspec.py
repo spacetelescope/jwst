@@ -533,7 +533,7 @@ def detector_to_gwa(reference_files, detector, disperser):
 
 def dms_to_sca(input_model):
     """
-    Transforms from SCA to DMS coordinates.
+    Transforms from DMS to SCA coordinates.
     """
     detector = input_model.meta.instrument.detector
     xstart = input_model.meta.subarray.xstart
