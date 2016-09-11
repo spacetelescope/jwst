@@ -63,6 +63,8 @@ def imaging(input_model, reference_files):
     # Get the corrected disperser model
     disperser = get_disperser(input_model, reference_files['disperser'])
 
+    # DMS to SCA transform
+    dms2detector = dms_to_sca(input_model)
     # DETECTOR to GWA transform
     det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 
@@ -90,7 +92,7 @@ def imaging(input_model, reference_files):
 
     # Create coordinate frames in the NIRSPEC WCS pipeline
     # "detector", "gwa", "msa", "oteip", "v2v3", "world"
-    det, gwa, msa_frame, oteip, v2v3, world = create_imaging_frames()
+    det, sca, gwa, msa_frame, oteip, v2v3, world = create_imaging_frames()
     if input_model.meta.instrument.filter != 'OPAQUE':
         # MSA to OTEIP transform
         msa2ote = msa_to_oteip(reference_files)
@@ -103,14 +105,16 @@ def imaging(input_model, reference_files):
         # V2, V3 to wprld (RA, DEC) transform
         v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
 
-        imaging_pipeline = [(det, det2gwa),
+        imaging_pipeline = [(det, dms2detector),
+                            (sca, det2gwa),
                             (gwa, gwa2msa),
                             (msa_frame, msa2oteip),
                             (oteip, oteip2v23),
                             (v2v3, v23_to_sky),
                             (world, None)]
     else:
-        imaging_pipeline = [(det, det2gwa),
+        imaging_pipeline = [(det, dms2detector),
+                            (sca, det2gwa),
                             (gwa, gwa2msa),
                             (msa_frame, None)]
 
@@ -131,6 +135,8 @@ def ifu(input_model, reference_files):
     input_model.meta.wcsinfo.waverange_end = wrange[1]
     input_model.meta.wcsinfo.spectral_order = sporder
 
+    # DMS to SCA transform
+    dms2detector = dms_to_sca(input_model)
     # DETECTOR to GWA transform
     det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 
@@ -140,7 +146,7 @@ def ifu(input_model, reference_files):
     # SLIT to MSA transform
     slit2msa = ifuslit_to_msa(slits, reference_files)
 
-    det, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
+    det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
     if input_model.meta.instrument.filter != 'OPAQUE':
         # MSA to OTEIP transform
         msa2oteip = ifu_msa_to_oteip(reference_files)
@@ -149,9 +155,10 @@ def ifu(input_model, reference_files):
         oteip2v23 = oteip_to_v23(reference_files)
 
         # Create coordinate frames in the NIRSPEC WCS pipeline"
-        # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3"
+        # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
 
-        pipeline = [(det, det2gwa.rename('detector2gwa')),
+        pipeline = [(det, dms2detector),
+                    (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
                     (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
                     (msa_frame, msa2oteip.rename('msa2oteip')),
@@ -159,7 +166,8 @@ def ifu(input_model, reference_files):
                     (v2v3, None)]
     else:
 
-        pipeline = [(det, det2gwa.rename('detector2gwa')),
+        pipeline = [(det, dms2detector),
+                    (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
                     (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
                     (msa_frame, None)]
@@ -191,6 +199,8 @@ def slits_wcs(input_model, reference_files):
     input_model.meta.wcsinfo.waverange_end = wrange[1]
     input_model.meta.wcsinfo.spectral_order = sporder
 
+    # DMS to SCA transform
+    dms2detector = dms_to_sca(input_model)
     # DETECTOR to GWA transform
     det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
     #det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
@@ -203,7 +213,7 @@ def slits_wcs(input_model, reference_files):
 
     # Create coordinate frames in the NIRSPEC WCS pipeline"
     # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
-    det, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
+    det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
     if input_model.meta.instrument.filter != 'OPAQUE':
         # MSA to OTEIP transform
         msa2oteip = msa_to_oteip(reference_files)
@@ -212,18 +222,19 @@ def slits_wcs(input_model, reference_files):
         oteip2v23 = oteip_to_v23(reference_files)
 
         # V2, V3 to wprld (RA, DEC ,LAMBDA) transform
-        v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
-        v23_to_world = v23_to_sky & Identity(1)
+        #v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
+        #v23_to_world = v23_to_sky & Identity(1)
 
-        msa_pipeline = [(det, det2gwa),
+        msa_pipeline = [(det, dms2detector),
+                        (sca, det2gwa),
                         (gwa, gwa2slit),
                         (slit_frame, Mapping((0, 1, 2, 3, 4)) | slit2msa),
                         (msa_frame, msa2oteip),
                         (oteip, oteip2v23),
-                        (v2v3, v23_to_world),
-                        (world, None)]
+                        (v2v3, None)]
     else:
-        msa_pipeline = [(det, det2gwa),
+        msa_pipeline = [(det, dms2detector),
+                        (sca, det2gwa),
                         (gwa, gwa2slit),
                         (slit_frame, Mapping((0, 1, 2, 3, 4)) | slit2msa),
                         (msa_frame, None)]
@@ -516,8 +527,28 @@ def detector_to_gwa(reference_files, detector, disperser):
                disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
-    model = (fpa | camera | u2dircos | rotation)
+    model = (models.Shift(-1) & models.Shift(-1) | fpa | camera | u2dircos | rotation)
     return model
+
+
+def dms_to_sca(input_model):
+    """
+    Transforms from DMS to SCA coordinates.
+    """
+    detector = input_model.meta.instrument.detector
+    xstart = input_model.meta.subarray.xstart
+    ystart = input_model.meta.subarray.ystart
+    if xstart is None:
+        xstart = 1
+    if ystart is None:
+        ystart = 1
+    # The SCA coordinates are in full frame
+    subarray2full = models.Shift(xstart) & models.Shift(ystart)
+    if detector == 'NRS2':
+        model = models.Shift(-2048) & models.Shift(-2048) | models.Scale(-1) & models.Scale(-1)
+    elif detector == 'NRS1':
+        model = models.Identity(2)
+    return subarray2full | model
 
 
 def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5):
@@ -554,6 +585,7 @@ def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5)
     # add 2 px margin
     y0 = int(y_range.min()) - 2
     y1 = int(y_range.max()) + 2
+
     domain = [{'lower': x0, 'upper': x1}, {'lower': y0, 'upper': y1}]
     return domain
 
@@ -674,6 +706,7 @@ def ifu_msa_to_oteip(reference_files):
     fore_transform = msa2fore_mapping | fore & Identity(1)
     return msa2fore_mapping | ifu_fore_transform | fore_transform
 
+
 def msa_to_oteip(reference_files):
     """
     Transform from the MSA frame to the OTEIP frame.
@@ -727,6 +760,7 @@ def create_frames():
     "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world".
     """
     det = cf.Frame2D(name='detector', axes_order=(0, 1))
+    sca = cf.Frame2D(name='sca', axes_order=(0, 1))
     gwa = cf.Frame2D(name="gwa", axes_order=(0, 1), unit=(u.rad, u.rad),
                       axes_names=('alpha_in', 'beta_in'))
     msa_spatial = cf.Frame2D(name='msa_spatial', axes_order=(0, 1), unit=(u.m, u.m),
@@ -745,7 +779,7 @@ def create_frames():
                                axes_names=('X_OTEIP', 'Y_OTEIP'))
     oteip = cf.CompositeFrame([oteip_spatial, spec], name='oteip')
     world = cf.CompositeFrame([sky, spec], name='world')
-    return det, gwa, slit_frame, msa_frame, oteip, v2v3, world
+    return det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, world
 
 
 def create_imaging_frames():
@@ -755,6 +789,7 @@ def create_imaging_frames():
     "detector", "gwa", "msa_frame", "oteip", "v2v3", "world".
     """
     det = cf.Frame2D(name='detector', axes_order=(0, 1))
+    sca = cf.Frame2D(name='sca', axes_order=(0, 1))
     gwa = cf.Frame2D(name="gwa", axes_order=(0, 1), unit=(u.rad, u.rad),
                       axes_names=('alpha_in', 'beta_in'))
     msa = cf.Frame2D(name='msa', axes_order=(0, 1), unit=(u.m, u.m),
@@ -764,7 +799,7 @@ def create_imaging_frames():
     oteip = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
                                axes_names=('x_oteip', 'y_oteip'))
     world = cf.CelestialFrame(name='world', axes_order=(0, 1), reference_frame=coord.ICRS())
-    return det, gwa, msa, oteip, v2v3, world
+    return det, sca, gwa, msa, oteip, v2v3, world
 
 
 def get_slit_location_model(slitdata):
@@ -811,7 +846,7 @@ def gwa_to_ymsa(msa2gwa_model):
     return poly_model
 
 
-def nrs_wcs_set_input(wcsobj, quadrant, slitid, wavelength_range):
+def nrs_wcs_set_input(input_model, quadrant, slitid, wavelength_range=None):
     """
     Returns a WCS object for this slit.
 
@@ -832,16 +867,21 @@ def nrs_wcs_set_input(wcsobj, quadrant, slitid, wavelength_range):
         WCS object for this slit.
     """
     import copy # TODO: Add a copy method to gwcs.WCS
+    wcsobj = input_model.meta.wcs
+    if wavelength_range is None:
+        _, wrange = spectral_order_wrange_from_model(input_model)
+    else:
+        wrange = wavelength_range
     slit = slitid_to_slit(np.array([(quadrant, slitid)]))[0]
     slit_wcs = copy.deepcopy(wcsobj)
-    slit_wcs.set_transform('detector', 'gwa', wcsobj.pipeline[0][1][1:])
+    slit_wcs.set_transform('sca', 'gwa', wcsobj.pipeline[1][1][1:])
     #slit_wcs.set_transform('detector', 'gwa', wcsobj.pipeline[0][1])
-    slit_wcs.set_transform('gwa', 'slit_frame', wcsobj.pipeline[1][1].models[slit])
-    slit_wcs.set_transform('slit_frame', 'msa_frame', wcsobj.pipeline[2][1][1].models[slit] & Identity(1))
+    slit_wcs.set_transform('gwa', 'slit_frame', wcsobj.pipeline[2][1].models[slit])
+    slit_wcs.set_transform('slit_frame', 'msa_frame', wcsobj.pipeline[3][1][1].models[slit] & Identity(1))
 
     slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
 
-    domain = compute_domain(slit2detector, wavelength_range)
+    domain = compute_domain(slit2detector, wrange)
     slit_wcs.domain = domain
     return slit_wcs
 
