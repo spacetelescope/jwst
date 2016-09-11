@@ -1,12 +1,12 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
-
+import numpy as np
 from asdf import yamlutil
 from asdf.tags.transform.basic import TransformType
 
 from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
                       NRSZCoord, Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA,
-                      LRSWavelength, Gwa2Slit, Slit2Msa)
+                      LRSWavelength, Gwa2Slit, Slit2Msa, slit_to_slitid, slitid_to_slit)
 
 
 
@@ -134,17 +134,21 @@ class Gwa2SlitType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        models = dict(zip(node['slits'], node['models']))
-        return Gwa2Slit(models)
+        slits = node['slits']
+        sl = slitid_to_slit(slits)
+        models = dict(zip(sl, node['models']))
+        return Gwa2Slit(slits, models)
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
         slits = []
         models = []
-        for s, m in model.models.items():
-            slits.append(s)
-            models.append(m)
-        node = {'slits': slits,
+        #for s, m in model.models.items():
+        for slit in model.slits:
+            msa_slit_id = slitid_to_slit(np.array([slit]))[0]
+            slits.append(slit)
+            models.append(model.models[msa_slit_id])
+        node = {'slits': np.array(slits),
                 'models': models}
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 

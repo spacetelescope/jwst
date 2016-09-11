@@ -504,8 +504,8 @@ class Gwa2Slit(Model):
     inputs = ('angle1', 'angle2', 'angle3', 'quadrant', 'slitid')
     outputs = ('x_slit', 'y_slit', 'lam', 'quadrant', 'slitid')
 
-    def __init__(self, models):
-        self.slits = slit_to_slitid(list(models.keys()))
+    def __init__(self, slits, models):
+        self.slits = np.asarray(slits)
         self.models = models
         super(Gwa2Slit, self).__init__()
 
