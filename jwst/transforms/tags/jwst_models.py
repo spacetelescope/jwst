@@ -143,7 +143,7 @@ class Gwa2SlitType(TransformType):
     def to_tree_transform(cls, model, ctx):
         slits = []
         models = []
-        #for s, m in model.models.items():
+
         for slit in model.slits:
             msa_slit_id = slitid_to_slit(np.array([slit]))[0]
             slits.append(slit)
