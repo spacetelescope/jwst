@@ -777,6 +777,26 @@ properties:
             title: default spectral order
             type: number
             fits_keyword: SPORDER
+          ra_ref:
+            title: Right ascension of the reference point (deg)
+            type: number
+            fits_keyword: RA_REF
+          dec_ref:
+            title: Declination of the reference point (deg)
+            type: number
+            fits_keyword: DEC_REF
+          v2_ref:
+            title: Telescope v2 coordinate of the reference point (arcmin)
+            type: number
+            fits_keyword: V2_REF
+          v3_ref:
+            title: Telescope v3 coordinate of the reference point (arcmin)
+            type: number
+            fits_keyword: V3_REF
+          roll_ref:
+            title: Telescope roll angle of V3 measured from North over East at the ref. point (deg)
+            type: number
+            fits_keyword: ROLL_REF
       pointing:
         title: Spacecraft pointing information
         type: object
