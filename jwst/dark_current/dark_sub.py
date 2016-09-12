@@ -44,7 +44,7 @@ def do_correction(input_model, dark_model, dark_output=None):
     sci_groupgap = input_model.meta.exposure.groupgap
 
     if instrument == 'MIRI':
-        drk_nints = dark_model.meta.data.shape[0]
+        drk_nints = dark_model.data.shape[0]
         drk_ngroups = dark_model.data.shape[1]
     else:
         drk_nints = 1
