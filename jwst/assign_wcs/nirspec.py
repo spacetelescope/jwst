@@ -304,6 +304,11 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
     For example, something like:
         (12, 2, 4, 251, 22, 1, 'Y', 'OPEN', nan, nan),
 
+
+       column
+
+
+
     Parameters
     ----------
         msa_file : str
@@ -331,6 +336,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
         # as that is all we are interested in for this function.
         msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id]
 
+        print('msa_data with msa_metadata_id = {}   {}'.format(msa_metadata_id, msa_data))
+
         # First thing to do is to get the unique slitlet_ids
         slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
 
@@ -338,33 +345,51 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
         for slitlet_id in slitlet_ids_unique:
 
             # Get the rows for the current slitlet_id
-            ss = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
+            slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
 
-            # X and Y center based on where background == 'N'
-            xy_centers = [(s['shutter_row'], s['shutter_column'])
-                          for s in ss
-                          if s['background'] == 'N']
+            # Count the number of backgrounds that have an 'N' (meaning main shutter)
+            # This needs to be 0 or 1 and we will have to deal with those differently
+            # See: https://github.com/STScI-JWST/jwst/commit/7588668b44b77486cdafb35f7e2eb2dcfa7d1b63#commitcomment-18987564
 
-            if len(xy_centers) >= 1:
-                # TODO: Might need to reverse these if row col are reversed
-                xcen, ycen = xy_centers[0]
-            else:
-                log.warning('WARNING: Could not find shutter that is not background.')
-                return []
+            n_main_shutter = len([s for s in slitlets_sid if s['background'] == 'N'])
 
-            # y-size
+            # In the next part we need to calculate, find, determine 5 things:
+            #    quadrant,  xcen, ycen,  ymin, max
+
             margin = 0.05
-            jmin = min([s['shutter_column'] for s in ss])
-            jmax = max([s['shutter_column'] for s in ss])
-            j = xcen
-            ymax = 0.5 + margin + (jmax - j) * 1.15
-            ymin = -(0.5 + margin + (jmin - j) * 1.15)
+
+            # There are no main shutters, all are background
+            if n_main_shutter == 0:
+                jmin = min([s['shutter_column'] for s in slitlets_sid])
+                jmax = max([s['shutter_column'] for s in slitlets_sid])
+                j = (jmax - jmin) // 2 + 1
+                ymax = 0.5 + margin + (jmax - j) * 1.15
+                ymin = -(0.5 + margin + (jmin - j) * 1.15)
+                quadrant = slitlets_sid[0]['shutter_quadrant']
+                xcen = j
+                ycen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
+
+            # There is 1 main shutter, phew, that makes it easier.
+            elif n_main_shutter == 1:
+                xcen, ycen, quadrant = [(s['shutter_row'], s['shutter_column'], s['shutter_quadrant']) for s in slitlets_sid if s['background'] == 'N'][0]
+
+                # y-size
+                jmin = min([s['shutter_column'] for s in slitlets_sid])
+                jmax = max([s['shutter_column'] for s in slitlets_sid])
+                j = xcen
+                ymax = 0.5 + margin + (jmax - j) * 1.15
+                ymin = -(0.5 + margin + (jmin - j) * 1.15)
+
+            # Not allowed....
+            else:
+                log.warning('WARNING: More than one main shutter, but there must only be 0 or 1.')
+                return []
 
             # Create the output list of tuples that contain the required
             # data for further computations
             slitlets.append(
                 (
-                    slitlet_id, ss[0]['shutter_quadrant'], xcen, ycen, ymin, ymax
+                    slitlet_id, quadrant, xcen, ycen, ymin, ymax
                 )
             )
 

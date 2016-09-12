@@ -278,11 +278,11 @@ def test_msa_configuration_no_background():
 
     """
 
-    # Test 2: Reasonably normal
+    # Test 2: Two main shutters, not allowed and should fail
     msa_meta_id = 13
     msaconfl = get_file_path('test_configuration_msa.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    assert_allclose(np.array([(56, 4, 251, 22, 262.79999999999995, -258.19999999999999)]), np.array(slitlet_info))
+    assert len(slitlet_info) == 0
 
 
 def test_msa_configuration_all_background():
@@ -298,7 +298,7 @@ def test_msa_configuration_all_background():
     msa_meta_id = 14
     msaconfl = get_file_path('test_configuration_msa.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    assert len(slitlet_info) == 0
+    assert_allclose(np.array([(57, 4, 2, 251, -23.550000000000001, 25.849999999999998)]), np.array(slitlet_info))
 
 
 def test_msa_configuration_row_skipped():
@@ -330,5 +330,6 @@ def test_msa_configuration_multiple_returns():
     msa_meta_id = 16
     msaconfl = get_file_path('test_configuration_msa.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    assert_allclose(np.array([(58, 4, 251, 24, 262.79999999999995, -255.89999999999998),
-                              (59, 4, 256, 24, 268.54999999999995, -261.64999999999998)]), np.array(slitlet_info))
+    assert_allclose(np.array([(59, 4, 256, 24, 268.54999999999995, -261.64999999999998),
+                              (60, 4, 258, 32, 261.64999999999998, -255.89999999999998)]),
+                    np.array(slitlet_info))
