@@ -67,7 +67,9 @@ class Asn_WFSCMB(
             },
             'asn_candidate_wfs': {
                 'value': '.+MOSAIC.+',
-                'inputs': ['ASN_CANDIDATE']
+                'inputs': ['ASN_CANDIDATE'],
+                'force_unique': True,
+                'is_acid': True,
             },
             'activity_id': {
                 'value': None,

@@ -510,25 +510,14 @@ class DataModel(properties.ObjectNode):
                     for x in recurse(val, path + [i]):
                         yield x
             elif tree is not None:
-                yield ('.'.join(six.text_type(x) for x in path), tree)
+                yield (str('.'.join(six.text_type(x) for x in path)), tree)
 
         for x in recurse(self._instance):
             yield x
 
-    if six.PY3:
-        items = iteritems
-    else:
-        def items(self):
-            """
-            Get all of the schema items in a flat way.
+    # We are just going to define the items to return the iteritems
+    items = iteritems
 
-            Each element is a pair (`key`, `value`).  Each `key` is a
-            dot-separated name.  For example, the schema element
-            `meta.observation.date` will end up in the result as::
-
-                ("meta.observation.date": "2012-04-22T03:22:05.432")
-            """
-            return list(self.items())
 
     def iterkeys(self):
         """

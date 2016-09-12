@@ -14,9 +14,7 @@ LEVEL3_PRODUCT_NAME_REGEX = (
     '_(?P<targname>(?:t\d{3})|(?:s\d{5}))'
     '(?:-(?P<epoch>epoch\d+))?'
     '_(?P<instrument>.+?)'
-    '_(?P<opt_elem>.+?)'
-    '_(?P<product_type>.+?)'
-    '\.fits'
+    '_(?P<opt_elem>.+)'
 )
 
 
@@ -38,10 +36,11 @@ global_constraints = helpers.func_fixture(
     scope='module',
     params=[
         {
-            'asn_candidate_ids': {
+            'asn_candidate': {
                 'value': ['.+o002.+'],
                 'inputs': ['ASN_CANDIDATE'],
                 'force_unique': True,
+                'is_acid': True,
             }
         },
     ]

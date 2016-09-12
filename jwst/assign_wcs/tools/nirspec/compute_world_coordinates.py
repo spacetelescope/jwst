@@ -14,8 +14,8 @@ import os.path
 import numpy as np
 from astropy.io import fits
 from gwcs import wcstools
-from ... import datamodels
-from .. import nirspec
+from .... import datamodels
+from ... import nirspec
 
 
 imaging_modes = supported_modes = ['nrs_taconfirm', 'nrs_brightobj', 'nrs_bota', 'nrs_tacq', 'nrs_focus',
@@ -64,6 +64,8 @@ def ifu_coords(fname, output=None):
         imhdu.header['PLANE3'] = '{0}_y, arcsec'.format(output_frame)
         imhdu.header['PLANE4'] = 'slit_y, relative to center (0, 0)'
         imhdu.header['SLIT'] = "SLIT_{0}".format(i)
+        imhdu.header['CRVAL1'] = slit.domain[0].lower() + 1
+        imhdu.header['CRVAL2'] = slit.domain[1].lower() + 1 
         hdulist.append(imhdu)
     if output is not None:
         base, ext = os.path.splitext(output)
@@ -114,18 +116,20 @@ def compute_world_coordinates(fname, output=None):
         #x, y = wcstools.grid_from_domain(slit.meta.wcs.domain)
         xstart, xend = slit.xstart, slit.xstart + slit.xsize
         ystart, yend = slit.ystart, slit.ystart + slit.ysize
-        x, y = np.mgrid[xstart: xend, ystart: yend]
-        ra, dec, lam = slit.meta.wcs(x, y)
+        y, x = np.mgrid[ystart: yend, xstart: xend]
+        ra, dec, lam = slit.meta.wcs(x + 1, y + 1)
         detector2slit = slit.meta.wcs.get_transform('detector', 'slit_frame')
 
         sx, sy, ls = detector2slit(x, y)
-        world_coordinates = np.array([np.rot90(lam), np.rot90(ra), np.rot90(dec), np.rot90(sy)])
+        world_coordinates = np.array([lam, ra, dec, sy])
         imhdu = fits.ImageHDU(data=world_coordinates)
         imhdu.header['PLANE1'] = 'lambda, microns'
         imhdu.header['PLANE2'] = '{0}_x, arcsec'.format(output_frame)
         imhdu.header['PLANE3'] = '{0}_y, arcsec'.format(output_frame)
         imhdu.header['PLANE4'] = 'slit_y, relative to center (0, 0)'
         imhdu.header['SLIT'] = slit.name
+        imhdu.header['CRVAL1'] = slit.xstart
+        imhdu.header['CRVAL2'] = slit.ystart
         hdulist.append(imhdu)
     if output is not None:
         base, ext = os.path.splitext(output)
