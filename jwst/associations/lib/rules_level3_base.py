@@ -1,5 +1,4 @@
 """Base classes which define the Level3 Associations"""
-from collections import namedtuple
 import logging
 from os.path import basename
 import re
@@ -8,7 +7,12 @@ from jwst.associations import (
     Association,
     libpath
 )
+from jwst.associations.association import (
+    evaluate,
+    is_iterable
+)
 from jwst.associations.exceptions import AssociationNotAConstraint
+from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.counter import Counter
 
 # Configure logging
@@ -40,11 +44,6 @@ _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
 # Product name regex's
 _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
-_REGEX_ACID_CONSTRAINT = '\(.*\'(?P<id>[a-z]\d{3,4})\'.*\,.*\'(?P<type>\w+)\'.*\)'
-
-
-# Define the association's association candidate id.
-ACID = namedtuple('ACID', ['id', 'type'])
 
 
 class DMS_Level3_Base(Association):
@@ -52,7 +51,10 @@ class DMS_Level3_Base(Association):
 
     def __init__(self, *args, **kwargs):
 
-        self.candidates = set()
+        # Keep track of what candidates have
+        # gone into making this association.
+        self.member_observations = set()
+        self.member_candidates = set()
 
         # Initialize discovered association ID
         self.discovered_id = Counter(_DISCOVERED_ID_START)
@@ -66,15 +68,15 @@ class DMS_Level3_Base(Association):
         for _, constraint in self.constraints.items():
             if constraint.get('is_acid', False):
                 value = re.sub('\\\\', '', constraint['value'])
-                m = re.search(_REGEX_ACID_CONSTRAINT, value)
-                acid = ACID(
-                    id=m.groupdict()['id'],
-                    type=m.groupdict()['type']
-                )
-                break
+                try:
+                    acid = ACID(value)
+                except ValueError:
+                    pass
+                else:
+                    break
         else:
             id = 'a{:0>3}'.format(self.discovered_id.value)
-            acid = ACID(id=id, type='DISCOVERED')
+            acid = ACID((id, 'DISCOVERED'))
 
         return acid
 
@@ -174,7 +176,6 @@ class DMS_Level3_Base(Association):
         }
         members = self.current_product['members']
         members.append(entry)
-        self.candidates.add(entry['asn_candidate'])
         self.data['degraded_status'] = _DEGRADED_STATUS_OK
         if exposerr not in _EMPTY:
             self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
@@ -182,6 +183,13 @@ class DMS_Level3_Base(Association):
                 member['FILENAME'],
                 exposerr
             ))
+
+        # Document what candidates this member belonged to.
+        for candidate in Utility.get_candidate_list(member['ASN_CANDIDATE']):
+            if candidate.type == 'OBSERVATION':
+                self.member_observations.add(candidate)
+            else:
+                self.member_candidates.add(candidate)
 
     def _get_target_id(self):
         """Get string representation of the target
@@ -287,7 +295,7 @@ class Utility(object):
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
-    def filter_cross_candidates(associations):
+    def filter_discoverd_only(associations):
         """Return only those associations that have multiple candidates
 
         Parameters
@@ -300,11 +308,18 @@ class Utility(object):
         -------
         iterable
             The new list of just cross candidate associations.
+
+        Notes
+        -----
+        This utility is only meant to run on associations that have
+        been constructed. Associations that have been Association.dump
+        and then Association.load will not return proper results.
         """
         result = [
             asn
             for asn in associations
-            if len(asn.candidates) > 1
+            if len(asn.member_observations) > 1 and
+            len(asn.member_candidates) != 1
         ]
         return result
 
@@ -338,6 +353,31 @@ class Utility(object):
             match.group('extension')
         ])
         return level2b_name
+
+    @staticmethod
+    def get_candidate_list(value):
+        """Parse the candidate list from a member value
+
+        Parameters
+        ----------
+        value: str
+            The value from the member to parse. Usually
+            member['ASN_CANDIDATE']
+
+        Returns
+        -------
+        [ACID, ...]
+            The list of parsed candidates.
+        """
+        result = []
+        evaled = evaluate(value)
+        if is_iterable(evaled):
+            result = [
+                ACID(v)
+                for v in evaled
+            ]
+        return result
+
 
 # ---------------------------------------------
 # Mixins to define the broad category of rules.

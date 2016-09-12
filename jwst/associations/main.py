@@ -32,14 +32,25 @@ class Main(object):
         parser.add_argument(
             'pool', type=str, help='Association Pool'
         )
-        parser.add_argument(
-            '-r', '--rules', action='append',
-            help='Association Rules file.'
-        )
-        parser.add_argument(
+        op_group = parser.add_mutually_exclusive_group()
+        op_group.add_argument(
             '-i', '--ids', nargs='+',
             dest='asn_candidate_ids',
             help='space-separated list of association candidate IDs to operate on.'
+        )
+        op_group.add_argument(
+            '--discover',
+            action='store_true',
+            help='Produce discovered associations'
+        )
+        op_group.add_argument(
+            '--all-candidates',
+            action='store_true', dest='all_candidates',
+            help='Produce all association candidate-specific associations'
+        )
+        parser.add_argument(
+            '-r', '--rules', action='append',
+            help='Association Rules file.'
         )
         parser.add_argument(
             '--ignore-default', action='store_true',
@@ -79,11 +90,6 @@ class Main(object):
             '--DMS',
             action='store_true', dest='DMS_enabled',
             help='Running under DMS workflow conditions.'
-        )
-        parser.add_argument(
-            '--discovered-only',
-            action='store_true', dest='discovered_only',
-            help='Only produce discovered associations'
         )
         parser.add_argument(
             '--pool-format', type=str,
@@ -129,18 +135,28 @@ class Main(object):
         #  2) Only discovered assocations that do not match
         #     candidate associations
         #  3) Both discovered and all candidate associations.
-        self.find_discovered = parsed.asn_candidate_ids is None
-        global_constraints['asn_candidate'] = constrain_on_candidates(
-            parsed.asn_candidate_ids
-        )
-
         logger.info('Reading rules.')
+        if not parsed.discover and\
+           not parsed.all_candidates and\
+           parsed.asn_candidate_ids is None:
+            parsed.discover = True
+            parsed.all_candidates = True
+        if parsed.discover or parsed.all_candidates:
+            global_constraints['asn_candidate'] = constrain_on_candidates(
+                None
+            )
+        elif parsed.asn_candidate_ids is not None:
+            global_constraints['asn_candidate'] = constrain_on_candidates(
+                parsed.asn_candidate_ids
+            )
+
         self.rules = AssociationRegistry(
             parsed.rules,
             include_default=not parsed.ignore_default,
             global_constraints=global_constraints
         )
-        if self.find_discovered:
+
+        if parsed.discover:
             self.rules.update(
                 AssociationRegistry(
                     parsed.rules,
@@ -151,9 +167,8 @@ class Main(object):
         logger.info('Generating associations.')
         self.associations, self.orphaned = generate(self.pool, self.rules)
 
-        if self.find_discovered and parsed.discovered_only:
-            raise NotImplementedError('Discovered Only Mode not implemented.')
-            self.associations = self.rules.Utility.filter_cross_candidates(
+        if parsed.discover and not parsed.all_candidates:
+            self.associations = self.rules.Utility.filter_discoverd_only(
                 self.associations
             )
 

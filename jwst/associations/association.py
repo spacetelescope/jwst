@@ -268,10 +268,7 @@ class Association(MutableMapping):
             # If the value is a list, signal that a reprocess
             # needs to be done.
             logger.debug('To check: Input="{}" Value="{}"'.format(input, value))
-            try:
-                evaled = literal_eval(value)
-            except (ValueError, SyntaxError):
-                evaled = value
+            evaled = evaluate(value)
 
             if is_iterable(evaled):
                 process_members = []
@@ -473,6 +470,27 @@ SERIALIZATION_PROTOCOLS = {
 
 
 # Utility
+def evaluate(value):
+    """Evaluate a value
+
+    Parameters
+    ----------
+    value: str
+        The string to evaluate.
+
+    Returns
+    -------
+    type or str
+        The evaluation. If the value cannot be
+        evaluated, the value is simply returned
+    """
+    try:
+        evaled = literal_eval(value)
+    except (ValueError, SyntaxError):
+        evaled = value
+    return evaled
+
+
 def is_iterable(obj):
     return not isinstance(obj, six.string_types) and \
         not isinstance(obj, tuple) and \

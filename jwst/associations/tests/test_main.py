@@ -30,6 +30,53 @@ class TestMain(object):
         generated = Main([pool_fname, '--dry-run', '-i', 'o001', 'o002'])
         assert len(generated.associations) == 4
 
+    def test_toomanyoptions(self, full_pool_rules):
+        pool, rules, pool_fname = full_pool_rules
+
+        with pytest.raises(SystemExit):
+            generated = Main([
+                pool_fname,
+                '--dry-run',
+                '--discover',
+                '--all-candidates',
+                '-i', 'o001',
+            ])
+        with pytest.raises(SystemExit):
+            generated = Main([
+                pool_fname,
+                '--dry-run',
+                '--discover',
+                '--all-candidates',
+            ])
+        with pytest.raises(SystemExit):
+            generated = Main([
+                pool_fname,
+                '--dry-run',
+                '--discover',
+                '-i', 'o001',
+            ])
+        with pytest.raises(SystemExit):
+            generated = Main([
+                pool_fname,
+                '--dry-run',
+                '--all-candidates',
+                '-i', 'o001',
+            ])
+
+    def test_all_candidates(self, full_pool_rules):
+        pool, rules, pool_fname = full_pool_rules
+
+        generated = Main([pool_fname, '--dry-run', '--all-candidates'])
+        assert len(generated.associations) == 2
+
+    @pytest.mark.xfail()
+    def test_discover(self, full_pool_rules):
+        pool, rules, pool_fname = full_pool_rules
+
+        generated = Main([pool_fname, '--dry-run', '--discover'])
+        assert len(generated.associations) == 2
+
+
     @pytest.mark.xfail()
     def test_cross_candidate(self, full_pool_rules):
         pool, rules, pool_fname = full_pool_rules
