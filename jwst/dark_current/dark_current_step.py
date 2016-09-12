@@ -18,7 +18,7 @@ class DarkCurrentStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with datamodels.open(input) as input_model:
+        with datamodels.RampModel(input) as input_model:
 
             # Get the name of the dark reference file to use
             self.dark_name = self.get_reference_file(input_model, 'dark')
@@ -32,8 +32,8 @@ class DarkCurrentStep(Step):
                 result.meta.cal_step.dark = 'SKIPPED'
                 return result
 
-            instrument = input_model.meta.instrument.name
             # Open the dark ref file data model - based on Instrument
+            instrument = input_model.meta.instrument.name
             if(instrument == 'MIRI'):
                 dark_model = datamodels.DarkMIRIModel(self.dark_name)
             else:
@@ -42,7 +42,6 @@ class DarkCurrentStep(Step):
             # Do the dark correction
             result = dark_sub.do_correction(input_model, dark_model,
                                                     self.dark_output)
-
             dark_model.close()
 
 

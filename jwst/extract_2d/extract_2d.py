@@ -34,20 +34,14 @@ def extract2d(input_model, which_subarray=None):
     output_model = datamodels.MultiSlitModel()
     output_model.update(input_model)
 
-    _, wrange = nirspec.spectral_order_wrange_from_model(input_model)
-
     if exp_type == 'NRS_FIXEDSLIT':
         slit_names = [nirspec.slit_id2name[tuple(slit)] for slit in open_slits]
     else:
         slit_names = [str(slit) for slit in open_slits]
     for slit, slit_name in zip(open_slits, slit_names):
-        slit_wcs = nirspec.nrs_wcs_set_input(input_model.meta.wcs, slit[0], slit[1], wrange)
-        if (input_model.meta.subarray.ystart is not None):
-            xlo, xhi, ylo, yhi = _adjust_subarray(input_model, slit_wcs)
-        else:
-            log.info('Subarray ystart metadata value not found')
-            xlo, xhi = slit_wcs.domain[0]['lower'], slit_wcs.domain[0]['upper']
-            ylo, yhi = slit_wcs.domain[1]['lower'], slit_wcs.domain[1]['upper']
+        slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit[0], slit[1])
+        xlo, xhi = slit_wcs.domain[0]['lower'], slit_wcs.domain[0]['upper']
+        ylo, yhi = slit_wcs.domain[1]['lower'], slit_wcs.domain[1]['upper']
 
         log.info('Name of subarray extracted: %s', slit_name)
         log.info('Subarray x-extents are: %s %s', xlo, xhi)
@@ -63,13 +57,12 @@ def extract2d(input_model, which_subarray=None):
         slit_wcs.domain = domain
         new_model.meta.wcs = slit_wcs
         output_model.slits.append(new_model)
-        # set x/ystart values relative to full detector space, so need
-        # to account for x/ystart values of input if it's a subarray
+        # set x/ystart values relative to full detector space
         nslit = len(output_model.slits) - 1
         output_model.slits[nslit].name = slit_name
-        output_model.slits[nslit].xstart = input_model.meta.subarray.xstart + xlo
+        output_model.slits[nslit].xstart = xlo
         output_model.slits[nslit].xsize = xhi - xlo + 1
-        output_model.slits[nslit].ystart = input_model.meta.subarray.ystart + ylo
+        output_model.slits[nslit].ystart = ylo
         output_model.slits[nslit].ysize = yhi - ylo + 1
     del input_model
     #del output_model.meta.wcs
@@ -77,17 +70,3 @@ def extract2d(input_model, which_subarray=None):
     output_model.meta.cal_step.extract_2d = 'COMPLETE'
     return output_model
 
-
-def _adjust_subarray(input_model, slit_wcs):
-    domain = slit_wcs.domain
-    xlo, xhi = domain[0]['lower'], domain[0]['upper']
-    ylo, yhi = domain[1]['lower'], domain[1]['upper']
-
-    deltay = input_model.meta.subarray.ystart - 1 # ystart is 1-indexed
-    deltax = input_model.meta.subarray.xstart - 1 # xstart is 1-indexed
-    ylo -= deltay
-    yhi -= deltay
-    xlo -= deltax
-    xhi -= deltax
-
-    return xlo, xhi, ylo, yhi
