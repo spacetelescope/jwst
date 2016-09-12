@@ -70,10 +70,9 @@ def gentle_asarray(a, dtype):
                     "Wrong number of columns.  Expected {0}, got {1}".format(
                         len(out_dtype), len(in_dtype)))
             new_dtype = []
-            # We cannot change the names in the dtype record because
-            # they are separately stored in the table _coldefs attribute
-            if hasattr(in_dtype, 'names') and hasattr(out_dtype, 'names'):
-                out_dtype.names = in_dtype.names
+            # Change the fits record names to match the schema names
+            if hasattr(a.dtype, 'names') and hasattr(out_dtype, 'names'):
+                a.dtype.names = out_dtype.names
             for i in range(len(out_dtype.fields)):
                 in_type = in_dtype[i]
                 out_type = out_dtype[i]
