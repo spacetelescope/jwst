@@ -63,14 +63,16 @@ def do_correction(input_model, dark_model, dark_output=None):
         log.warning("There are more groups in the science data than in the " +
         "dark data.")
         log.warning("Input will be returned without subtracting dark current.")
+        input_model.meta.cal_step.dark_sub = 'SKIPPED'
         return input_model.copy()
 
     # Check that the value of nframes and groupgap in the dark
     # are not greater than those of the science data
     if drk_nframes > sci_nframes or drk_groupgap > sci_groupgap:
         log.warning("The value of nframes or groupgap in the dark data is " +
-        "greater than those of the science data.")
+        "greater than that of the science data.")
         log.warning("Input will be returned without subtracting dark current.")
+        input_model.meta.cal_step.dark_sub = 'SKIPPED'
         return input_model.copy()
 
     # Replace NaN's in the dark with zeros
