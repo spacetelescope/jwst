@@ -10,6 +10,7 @@ import numpy as np
 import logging
 from .. import datamodels
 from .. datamodels import dqflags
+from jwst.assign_wcs import nirspec     # for NIRSpec IFU data
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -471,7 +472,7 @@ def NIRSpec_IFU(output_model,
     """
     Short Summary
     -------------
-    Apply flat-fielding for NIRSpec data, updating the output model.
+    Apply flat-fielding for NIRSpec IFU data, in-place
 
     Parameters
     ----------
@@ -501,37 +502,95 @@ def NIRSpec_IFU(output_model,
 
     log.warning("Flat fielding of NIRSpec IFU data is currently"
                 " not supported.")
-    output_model.meta.cal_step.flat_field = 'SKIPPED'
-    return None
 
-"""
-from jwst import datamodels
-from jwst.assign_wcs import nirspec
-dm = datamodels.ImageModel("<whatever>_assign_wcs.fits")
+    exposure_type = output_model.meta.exposure.type
+    flat = np.ones_like(output_model.data)
+    flat_dq = np.zeros_like(output_model.dq)
 
-The WCS function for a stripe (specified by integer 0 through 29) can be
-obtained as follows, either:
-    list_of_wcs = nirspec.nrs_ifu_wcs(dm)
-    t1 = list_of_wcs[5]
-or:
-    sporder, wrange = nirspec.spectral_order_wrange_from_model(dm)
-    t1 = nirspec.nrs_wcs_set_input(dm.meta.wcs, 0, 5, wrange)
+    list_of_wcs = nirspec.nrs_ifu_wcs(output_model)
+    print("# xxx number of IFU stripes = {}".format(len(list_of_wcs)))
+    sys.stdout.flush()          # xxx test debug
+    for (k, ifu_wcs) in enumerate(list_of_wcs):
+        # example:  domain = [{u'lower': 1601, u'upper': 2048},   # X
+        #                     {u'lower': 1887, u'upper': 1925}]   # Y
+        truncated = False
+        xstart = ifu_wcs.domain[0]['lower']
+        xstop = ifu_wcs.domain[0]['upper'] + 1  # Python slice notation
+        ystart = ifu_wcs.domain[1]['lower']
+        ystop = ifu_wcs.domain[1]['upper'] + 1
+        if xstart >= 2048 or ystart >= 2048 or xstop <= 0 or ystop <= 0:
+            log.info("WCS domain for stripe %d is completely outside"
+                     " the image; this stripe will be skipped.", k)
+            continue
+        if xstart < 0:
+            truncated = True
+            print("xxx WCS domain xstart was {}; set to 0".format(xstart))
+            xstart = 0
+        if ystart < 0:
+            truncated = True
+            print("xxx WCS domain ystart was {}; set to 0".format(ystart))
+            ystart = 0
+        if xstop > 2048:
+            truncated = True
+            print("xxx WCS domain xstop was {}; set to 2048".format(xstop))
+            xstop = 2048
+        if ystop > 2048:
+            truncated = True
+            print("xxx WCS domain ystop was {}; set to 2048".format(ystop))
+            ystop = 2048
+        if truncated:
+            ### log.debug("WCS domain for stripe %d extended beyond image"
+            ###           " edges, has been truncated.", k)
+            log.info("WCS domain for stripe %d extended beyond image edges,"
+                     " has been truncated.", k)
+        dx = xstop - xstart
+        dy = ystop - ystart
+        print("xxx index {}; start & stop:  {} to {}, {} to {}"
+              .format(k, ystart, ystop, xstart, xstop))
+        ind = np.indices((dy, dx))
+        x = ind[1] + xstart
+        y = ind[0] + ystart
+        coords = ifu_wcs(x, y)
+        wl = coords[2]
+        nan_flag = np.isnan(wl)
+        good_flag = np.logical_not(nan_flag)
+        if wl[good_flag].max() < MICRONS_100:
+            log.info("Converting wavelengths from WCS table to microns")
+            wl *= 1.e6
+        print("xxx wavelengths in current stripe range from {} ({}) to {}"
+              .format(wl.min(), wl.mean(dtype=np.float64), wl.max()))
+        sys.stdout.flush()          # xxx test debug
+        # Set NaNs to a harmless value, but don't modify nan_flag.
+        wl[nan_flag] = 1.
 
-example of using the WCS function:
-t1.domain
-Out[17]: [{u'lower': 1601, u'upper': 2048}, {u'lower': 1887, u'upper': 1925}]
-Use t1.domain and np.indices to generate a grid of wavelengths.  The values
-will (but this is not implemented yet) be None in the region outside the
-actual stripe but within the stripe's domain.
-dx = t1.domain[0]['upper'] - t1.domain[0]['lower']
-dy = t1.domain[1]['upper'] - t1.domain[1]['lower']
-ind = np.indices((dy, dx))
-x = ind[0] + t1.domain[0]['lower']
-y = ind[1] + t1.domain[1]['lower']
-output = t1(x, y)
-wl = output[2]
-flag = np.isnan(wl)
-"""
+        (flat_2d, flat_dq_2d) = create_flat_field(wl,
+                        f_flat_model, s_flat_model, d_flat_model,
+                        xstart, xstop, ystart, ystop,
+                        exposure_type, None)
+        flat_2d[nan_flag] = 1.
+        flat_dq_2d[nan_flag] |= dqflags.pixel['NO_FLAT_FIELD']
+
+        flat[ystart:ystop, xstart:xstop][nan_flag] = flat_2d[nan_flag]
+        flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.copy()
+
+        any_updated = True
+
+    output_model.dq |= flat_dq
+
+    if any_updated:
+        output_model.data /= flat
+        output_model.err /= flat
+        output_model.meta.cal_step.flat_field = 'COMPLETE'
+        if flat_suffix is None:
+            interpolated_flats = None
+        else:
+            # Create an output model for the interpolated flat fields.
+            interpolated_flats = datamodels.ImageModel(data=flat, dq=flat_dq)
+            interpolated_flats.update(output_model, only="PRIMARY")
+    else:
+        output_model.meta.cal_step.flat_field = 'SKIPPED'
+
+    return interpolated_flats
 
 
 def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
@@ -1096,8 +1155,8 @@ def read_flat_table(flat_model,
     filter = np.logical_and(filter1, filter2)
     n1 = filter.sum(dtype=np.intp)
     if n1 != nelem:
-        log.warning("The table wavelength array contained %d NaNs;"
-                    " these have been skipped.", nelem - n1)
+        log.warning("The table wavelength or flat-field data array contained"
+                    " %d NaNs; these have been skipped.", nelem - n1)
         tab_wl = tab_wl[filter]
         tab_flat = tab_flat[filter]
     del filter1, filter2, filter
