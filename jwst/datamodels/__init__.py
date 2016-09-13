@@ -172,7 +172,7 @@ def open(init=None, extensions=None):
 
         shape = ()
         try:
-            hdu = hdulist[fits_header_name('SCI')]
+            hdu = hdulist[(fits_header_name('SCI'), 1)]
         except KeyError:
             pass
         else:

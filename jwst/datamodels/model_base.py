@@ -39,7 +39,7 @@ class DataModel(properties.ObjectNode):
     schema_url = "core.schema.yaml"
 
     def __init__(self, init=None, schema=None, extensions=None,
-                 pass_invalid_values=False):
+                 resolver=None, pass_invalid_values=False):
         """
         Parameters
         ----------
@@ -67,8 +67,11 @@ class DataModel(properties.ObjectNode):
             If not provided, the schema associated with this class
             will be used.
 
-        extensions: classes extending the standard set of extensions
+        extensions: classes extending the standard set of extensions, optional
 
+        resolver: an object which resolves references in schemas into filenames, optional
+            If None, the default resolver will be used.
+            
         pass_invalid_values: If True, values that do not validate the schema can
             be read and written, but with a warning message
         """
@@ -78,8 +81,8 @@ class DataModel(properties.ObjectNode):
 
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
-            schema = asdf_schema.load_schema(
-                schema_path, resolve_references=True)
+            schema = asdf_schema.load_schema(schema_path, 
+                resolver=resolver, resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
 
@@ -155,6 +158,9 @@ class DataModel(properties.ObjectNode):
                                               validate=False,
                                               pass_invalid_values=self._pass_invalid_values)
                 self._files_to_close.append(hdulist)
+        else:
+            raise ValueError(
+                "Can't initialize datamodel using {0}".format(str(type(init))))
 
         self._shape = shape
         self._instance = asdf.tree
@@ -504,25 +510,14 @@ class DataModel(properties.ObjectNode):
                     for x in recurse(val, path + [i]):
                         yield x
             elif tree is not None:
-                yield ('.'.join(six.text_type(x) for x in path), tree)
+                yield (str('.'.join(six.text_type(x) for x in path)), tree)
 
         for x in recurse(self._instance):
             yield x
 
-    if six.PY3:
-        items = iteritems
-    else:
-        def items(self):
-            """
-            Get all of the schema items in a flat way.
+    # We are just going to define the items to return the iteritems
+    items = iteritems
 
-            Each element is a pair (`key`, `value`).  Each `key` is a
-            dot-separated name.  For example, the schema element
-            `meta.observation.date` will end up in the result as::
-
-                ("meta.observation.date": "2012-04-22T03:22:05.432")
-            """
-            return list(self.items())
 
     def iterkeys(self):
         """

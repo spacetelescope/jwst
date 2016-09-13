@@ -81,9 +81,9 @@ class Main(object):
             help='Running under DMS workflow conditions.'
         )
         parser.add_argument(
-            '--cross-candidate-only',
-            action='store_true', dest='cross_candidate_only',
-            help='Only produce cross-candidate associations'
+            '--discovered-only',
+            action='store_true', dest='discovered_only',
+            help='Only produce discovered associations'
         )
         parser.add_argument(
             '--pool-format', type=str,
@@ -124,14 +124,15 @@ class Main(object):
         # Setup rules.
         global_constraints = {}
 
-        # Check for Candidate-specific or whole program.
-        # In DMS, this is the difference between Level 3
-        # versus Level 3.5 processing.
-        # The rules themselves do not contain this knowledge.
-        self.cross_candidate_mode = parsed.asn_candidate_ids is None
-        self.cross_candidate_only = parsed.cross_candidate_only
-        if not self.cross_candidate_mode:
-            global_constraints['asn_candidate'] = constrain_on_candidates(parsed.asn_candidate_ids)
+        # Determine mode of operation. Options are
+        #  1) Only specified candidates
+        #  2) Only discovered assocations that do not match
+        #     candidate associations
+        #  3) Both discovered and all candidate associations.
+        self.find_discovered = parsed.asn_candidate_ids is None
+        global_constraints['asn_candidate'] = constrain_on_candidates(
+            parsed.asn_candidate_ids
+        )
 
         logger.info('Reading rules.')
         self.rules = AssociationRegistry(
@@ -139,17 +140,19 @@ class Main(object):
             include_default=not parsed.ignore_default,
             global_constraints=global_constraints
         )
+        if self.find_discovered:
+            self.rules.update(
+                AssociationRegistry(
+                    parsed.rules,
+                    include_default=not parsed.ignore_default
+                )
+            )
 
         logger.info('Generating associations.')
         self.associations, self.orphaned = generate(self.pool, self.rules)
 
-        logger.debug(
-            'cross_candidate_mode="{}" cross_candidate_only="{}"'.format(
-                self.cross_candidate_mode,
-                self.cross_candidate_only
-            )
-        )
-        if self.cross_candidate_mode and self.cross_candidate_only:
+        if self.find_discovered and parsed.discovered_only:
+            raise NotImplementedError('Discovered Only Mode not implemented.')
             self.associations = self.rules.Utility.filter_cross_candidates(
                 self.associations
             )
@@ -181,18 +184,28 @@ class Main(object):
 
 # Utilities
 def constrain_on_candidates(candidates):
-    """Create a constraint based on a list of candidates"""
+    """Create a constraint based on a list of candidates
+
+    Parameters
+    ----------
+    candidates: (str, ...) or None
+        List of candidate id's.
+        If None, then all candidates are matched.
+    """
     constraint = {}
-    if len(candidates):
+    if candidates is not None and len(candidates):
         c_list = '|'.join(candidates)
         values = ''.join([
             '.+(', c_list, ').+'
         ])
-        constraint = {
-            'value': values,
-            'inputs': ['ASN_CANDIDATE'],
-            'force_unique': True,
-        }
+    else:
+        values = None
+    constraint = {
+        'value': values,
+        'inputs': ['ASN_CANDIDATE'],
+        'force_unique': True,
+        'is_acid': True,
+    }
 
     return constraint
 
