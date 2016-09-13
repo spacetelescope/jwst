@@ -770,12 +770,12 @@ def create_frames():
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.m,),
                             axes_names=('wavelength',))
-    v2v3_spatial = cf.Frame2D(name='V2V3_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
+    v2v3_spatial = cf.Frame2D(name='V2V3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg),
                              axes_names=('V2', 'V3'))
     v2v3 = cf.CompositeFrame([v2v3_spatial, spec], name='v2v3')
     slit_frame = cf.CompositeFrame([slit_spatial, spec], name='slit_frame')
     msa_frame = cf.CompositeFrame([msa_spatial, spec], name='msa_frame')
-    oteip_spatial = cf.Frame2D(name='OTEIP_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
+    oteip_spatial = cf.Frame2D(name='OTEIP_spatial', axes_order=(0, 1), unit=(u.deg, u.deg),
                                axes_names=('X_OTEIP', 'Y_OTEIP'))
     oteip = cf.CompositeFrame([oteip_spatial, spec], name='oteip')
     world = cf.CompositeFrame([sky, spec], name='world')
@@ -794,9 +794,9 @@ def create_imaging_frames():
                       axes_names=('alpha_in', 'beta_in'))
     msa = cf.Frame2D(name='msa', axes_order=(0, 1), unit=(u.m, u.m),
                              axes_names=('x_msa', 'y_msa'))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg),
                               axes_names=('v2', 'v3'))
-    oteip = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.arcsec, u.arcsec),
+    oteip = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.deg, u.deg),
                                axes_names=('x_oteip', 'y_oteip'))
     world = cf.CelestialFrame(name='world', axes_order=(0, 1), reference_frame=coord.ICRS())
     return det, sca, gwa, msa, oteip, v2v3, world
@@ -985,7 +985,7 @@ def nrs_ifu_wcs(input_model):
     wcs_list = []
     # loop over all IFU slits
     for i in range(30):
-        wcs_list.append(nrs_wcs_set_input(input_model.meta.wcs, 0, i, wrange))
+        wcs_list.append(nrs_wcs_set_input(input_model, 0, i, wrange))
     return wcs_list
 
 
