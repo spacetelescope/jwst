@@ -783,7 +783,10 @@ def create_frames():
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
     v2v3_spatial = cf.Frame2D(name='V2V3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg),
                              axes_names=('V2', 'V3'))
-    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.m,),
+
+    # The oteip_to_v23 incorporates a scale to convert the spectral units from
+    # meters to microns.  So the v2v3 output frame will be in u.deg, u.deg, u.micron
+    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
                             axes_names=('wavelength',))
     v2v3 = cf.CompositeFrame([v2v3_spatial, spec], name='v2v3')
     slit_frame = cf.CompositeFrame([slit_spatial, spec], name='slit_frame')
