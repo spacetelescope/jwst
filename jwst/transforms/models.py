@@ -566,9 +566,15 @@ class Logical(Model):
         super(Logical, self).__init__(**kwargs)
 
     def evaluate(self, x):
+        x = x.copy()
         cond_result = self.conditions[self.condition](x, self.compareto)
         if isinstance(self.compareto, np.ndarray):
             x[cond_result] = self.value[cond_result]
         else:
             x[cond_result] = self.value
         return x
+
+    def __repr__(self):
+        return "{0}(condition={1}, compareto={2}, value={3})".format(self.__class__.__name__,
+                                                                     self.condition, self.compareto,
+                                                                     self.value)
