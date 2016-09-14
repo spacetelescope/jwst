@@ -756,8 +756,7 @@ def oteip_to_v23(reference_files):
     fore2ote_mapping.inverse = Mapping((0, 1, 2, 2))
 
     # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
-    # meters as required by the pipeline but the desired output wavelength units is microns
-    # as the expected output is microns.
+    # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
     return fore2ote_mapping | (ote & Scale(1e6))
 
