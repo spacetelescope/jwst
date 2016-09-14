@@ -14,13 +14,13 @@ class TestMain(object):
 
         generated = Main([pool_fname, '--dry-run'])
         asns = generated.associations
-        assert len(asns) == 44
+        assert len(asns) == 37
         found_rules = set(
             asn['asn_rule']
             for asn in asns
         )
-        assert 'Asn_Image' in found_rules
-        assert 'Asn_WFSCMB' in found_rules
+        assert 'candidate_Asn_Image' in found_rules
+        assert 'candidate_Asn_WFSCMB' in found_rules
 
     def test_asn_candidates(self, full_pool_rules):
         pool, rules, pool_fname = full_pool_rules
@@ -63,25 +63,10 @@ class TestMain(object):
                 '-i', 'o001',
             ])
 
-    def test_all_candidates(self, full_pool_rules):
+    def test_discovered(self, full_pool_rules):
         pool, rules, pool_fname = full_pool_rules
 
-        generated = Main([pool_fname, '--dry-run', '--all-candidates'])
-        assert len(generated.associations) == 2
-
-    @pytest.mark.xfail()
-    def test_discover(self, full_pool_rules):
-        pool, rules, pool_fname = full_pool_rules
-
-        generated = Main([pool_fname, '--dry-run', '--discover'])
-        assert len(generated.associations) == 2
-
-
-    @pytest.mark.xfail()
-    def test_cross_candidate(self, full_pool_rules):
-        pool, rules, pool_fname = full_pool_rules
-
-        generated = Main([pool_fname, '--dry-run'])
-        assert len(generated.associations) == 44
-        generated = Main([pool_fname, '--dry-run', '--cross-candidate-only'])
-        assert len(generated.associations) == 5
+        full = Main([pool_fname, '--dry-run'])
+        candidates = Main([pool_fname, '--dry-run', '--all-candidates'])
+        discovered = Main([pool_fname, '--dry-run', '--discover'])
+        assert len(full.associations) == len(candidates.associations) + len(discovered.associations)

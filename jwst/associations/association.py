@@ -66,7 +66,13 @@ class Association(MutableMapping):
     schema_file: str
         The name of the output schema that an association
         must adhere to.
+
+    registry: AssocitionRegistry
+        The registry this association came from.
     """
+
+    # Assume no registry
+    registry = None
 
     # Default force a constraint to use first value.
     DEFAULT_FORCE_UNIQUE = False

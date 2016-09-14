@@ -12,6 +12,10 @@ from jwst.associations.pool import AssociationPool
 # Configure logging
 logger = log_config(name=__package__)
 
+# Ruleset names
+DISCOVER_RULESET = 'discover'
+CANDIDATE_RULESET = 'candidate'
+
 
 class Main(object):
     """Generate Associations from an Association Pool
@@ -153,23 +157,28 @@ class Main(object):
         self.rules = AssociationRegistry(
             parsed.rules,
             include_default=not parsed.ignore_default,
-            global_constraints=global_constraints
+            global_constraints=global_constraints,
+            name=CANDIDATE_RULESET
         )
 
         if parsed.discover:
             self.rules.update(
                 AssociationRegistry(
                     parsed.rules,
-                    include_default=not parsed.ignore_default
+                    include_default=not parsed.ignore_default,
+                    name=DISCOVER_RULESET
                 )
             )
 
         logger.info('Generating associations.')
         self.associations, self.orphaned = generate(self.pool, self.rules)
 
-        if parsed.discover and not parsed.all_candidates:
-            self.associations = self.rules.Utility.filter_discoverd_only(
-                self.associations
+        if parsed.discover:
+            self.associations = self.rules.Utility.filter_discovered_only(
+                self.associations,
+                DISCOVER_RULESET,
+                CANDIDATE_RULESET,
+                keep_candidates=parsed.all_candidates,
             )
 
         logger.info(self.__str__())
