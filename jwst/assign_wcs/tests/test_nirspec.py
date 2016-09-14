@@ -212,7 +212,8 @@ def test_nirspec_fs_esa():
     y = y + cor[1]
     x = x + cor[0]
     ra, dec, lp = w1(x, y)
-    assert_allclose(lp, lam[cond], atol=10**-13)
+    # w1 now outputs in microns hence the 1e6 factor
+    assert_allclose(lp, lam[cond]*1e6, atol=10**-13)
     ref.close()
 
 
