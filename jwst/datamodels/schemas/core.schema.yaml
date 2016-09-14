@@ -778,7 +778,6 @@ properties:
             type: number
             fits_keyword: SPORDER
           ra_ref:
-<<<<<<< HEAD
             title: Right ascension of the reference point (deg)
             type: number
             fits_keyword: RA_REF
