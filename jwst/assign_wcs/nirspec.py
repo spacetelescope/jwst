@@ -758,11 +758,8 @@ def oteip_to_v23(reference_files):
     # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns
     # as the expected output is microns.
-    # So we are going to Scale the data by multiplying the spatial units by 1 and
-    # the spectral units by 1e6 (meters -> microns)
-    lambda_meters_to_microns = (Scale(1) & Scale(1) & Scale(1e6))
-
-    return fore2ote_mapping | (ote & (Identity(1))) | lambda_meters_to_microns
+    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
+    return fore2ote_mapping | (ote & Scale(1e6))
 
 
 def create_frames():
