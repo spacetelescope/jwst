@@ -5,7 +5,7 @@ Some of these may go in astropy.modeling in the future.
 import math
 import numpy as np
 from astropy.modeling.core import Model
-from astropy.modeling.parameters import Parameter
+from astropy.modeling.parameters import Parameter, InputParameterError
 from astropy.modeling.models import Polynomial2D
 
 
@@ -117,8 +117,8 @@ class Snell(Model):
     def evaluate(self, x, y, z, n):
         """Compute Snell's refraction law from the front surface."""
 
-        xout = x/n
-        yout = y/n
+        xout = x / n
+        yout = y / n
         zout = np.sqrt(1.0 - xout**2 - yout**2)
         return xout, yout, zout
 
@@ -243,6 +243,9 @@ class DirCos2Unitless(Model):
     def evaluate(self, x, y, z):
 
         return x / z, y / z
+
+    def inverse(self):
+        return Unitless2DirCos()
 
 
 class Rotation3DToGWA(Model):
@@ -460,7 +463,7 @@ class LRSWavelength(Model):
         x0 = self._wavetable[:, 3]
         y0 = self._wavetable[:, 4]
         x1 = self._wavetable[:, 5]
-        y1 = self._wavetable[:, 6]
+        #y1 = self._wavetable[:, 6]
         wave = self._wavetable[:, 2]
 
         diff0 = (dy - y0[0])
@@ -502,7 +505,7 @@ class Gwa2Slit(Model):
     outputs = ('x_slit', 'y_slit', 'lam', 'quadrant', 'slitid')
 
     def __init__(self, models):
-        self.slits = slit_to_slitid(models.keys())
+        self.slits = slit_to_slitid(list(models.keys()))
         self.models = models
         super(Gwa2Slit, self).__init__()
 
@@ -518,7 +521,7 @@ class Slit2Msa(Model):
 
     def __init__(self, models):
         super(Slit2Msa, self).__init__()
-        self.slits = slit_to_slitid(models.keys())
+        self.slits = slit_to_slitid(list(models.keys()))
         self.models = models
 
     def evaluate(self, quadrant, slitid, x, y, lam):

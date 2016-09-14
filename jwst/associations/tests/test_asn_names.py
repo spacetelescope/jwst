@@ -1,60 +1,55 @@
 from __future__ import absolute_import
 
-import os
+import pytest
 import re
 
 from . import helpers
 
 from .. import (AssociationRegistry, AssociationPool, generate)
 
-LEVEL3_ASN_NAME_REGEX = (
+LEVEL3_ASN_ACID_NAME_REGEX = (
     'jw'
     '(?P<program>\d{5})'
-    '(?:-(?P<acid>\d{4}))?'
-    '_(?P<stamp>\d{8}(T|t)\d{6})'
+    '-(?P<acid>(o|c)\d{3,4})'
+    '_(?P<stamp>.+)'
+    '_(?P<asn_type>.+)'
+    '_(?P<sequence>\d{3})'
+    '_asn'
+)
+LEVEL3_ASN_DISCOVERED_NAME_REGEX = (
+    'jw'
+    '(?P<program>\d{5})'
+    '-(?P<acid>a\d{4})'
+    '_(?P<stamp>.+)'
     '_(?P<asn_type>.+)'
     '_(?P<sequence>\d{3})'
     '_asn'
 )
 
 
+pool_params = pytest.fixture(
+    scope='module',
+    params=[
+        'data/pool_002_image_miri.csv'
+    ]
+)(helpers.generate_params)
+
+
 class TestASNtNames():
 
-    pool_file = helpers.t_path(
-        'data/jw93060_20150312T160130_pool.csv'
-    )
-
-    global_constraints = {
-        'asn_candidate_ids': {
-            'value': ['2'],
-            'inputs': ['ASN_CANDIDATE_ID', 'OBS_NUM'],
-            'force_unique': True,
-        }
-    }
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-    def test_level35_names(self):
+    def test_level3_asn_names(self, pool_params):
+        pool_path = helpers.t_path(pool_params)
+        pool = helpers.combine_pools(pool_path)
         rules = AssociationRegistry()
-        pool = AssociationPool.read(self.pool_file)
-        (asns, orphaned) = generate(pool, rules)
+        asns, orphaned = generate(pool, rules)
+        assert len(asns) > 0
         for asn in asns:
-            asn_name = asn.asn_name
-            m = re.match(LEVEL3_ASN_NAME_REGEX, asn_name)
-            yield helpers.not_none, m
-
-    def test_level3_names(self):
-        rules = AssociationRegistry(
-            global_constraints=self.global_constraints
-        )
-        pool = AssociationPool.read(self.pool_file)
-        (asns, orphaned) = generate(pool, rules)
-        for asn in asns:
-            asn_name = asn.asn_name
-            m = re.match(LEVEL3_ASN_NAME_REGEX, asn_name)
-            yield helpers.not_none, m
-            yield helpers.check_equal, m.groupdict()['acid'], '0002'
+            name = asn.asn_name
+            if any(
+                    c.get('is_acid', False)
+                    for _, c in asn.constraints.items()
+            ):
+                m = re.match(LEVEL3_ASN_ACID_NAME_REGEX, name)
+            else:
+                m = re.match(LEVEL3_ASN_DISCOVERED_NAME_REGEX, name)
+            assert m is not None

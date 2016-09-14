@@ -1,9 +1,6 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
 
-import numpy as np
-from numpy.testing import assert_array_equal
-
 from asdf import yamlutil
 from asdf.tags.transform.basic import TransformType
 
@@ -144,7 +141,7 @@ class Gwa2SlitType(TransformType):
     def to_tree_transform(cls, model, ctx):
         slits = []
         models = []
-        for s, m in model.models.iteritems():
+        for s, m in model.models.items():
             slits.append(s)
             models.append(m)
         node = {'slits': slits,
@@ -167,7 +164,7 @@ class Slit2MsaType(TransformType):
     def to_tree_transform(cls, model, ctx):
         slits = []
         models = []
-        for s, m in model.models.iteritems():
+        for s, m in model.models.items():
             slits.append(s)
             models.append(m)
         node = {'slits': slits,

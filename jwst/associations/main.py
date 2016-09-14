@@ -46,7 +46,7 @@ class Main(object):
             help='Do not include default rules. -r should be used if set.'
         )
         parser.add_argument(
-            '--dry_run',
+            '--dry-run',
             action='store_true', dest='dry_run',
             help='Execute but do not save results.'
         )
@@ -81,9 +81,19 @@ class Main(object):
             help='Running under DMS workflow conditions.'
         )
         parser.add_argument(
-            '--cross-candidate-only',
-            action='store_true', dest='cross_candidate_only',
-            help='Only produce cross-candidate associations'
+            '--discovered-only',
+            action='store_true', dest='discovered_only',
+            help='Only produce discovered associations'
+        )
+        parser.add_argument(
+            '--pool-format', type=str,
+            default='ascii',
+            help=(
+                'Format of the pool file.'
+                ' Any format allowed by the astropy'
+                ' Unified File I/O interface is allowed.'
+                ' Default: "%(default)s"'
+            )
         )
 
         parsed = parser.parse_args(args=args)
@@ -101,7 +111,8 @@ class Main(object):
 
         logger.info('Reading pool {}'.format(parsed.pool))
         self.pool = AssociationPool.read(
-            parsed.pool, delimiter=parsed.delimiter
+            parsed.pool, delimiter=parsed.delimiter,
+            format=parsed.pool_format,
         )
 
         # DMS: Add further info to logging.
@@ -111,20 +122,17 @@ class Main(object):
             pass
 
         # Setup rules.
-
-        # Check for Candidate-specific or whole program.
-        # In DMS, this is the difference between Level 3
-        # versus Level 3.5 processing.
-        # The rules themselves do not contain this knowledge.
-        self.cross_candidate_mode = parsed.asn_candidate_ids is None
-        self.cross_candidate_only = parsed.cross_candidate_only
         global_constraints = {}
-        if not self.cross_candidate_mode:
-            global_constraints['asn_candidate_ids'] = {
-                'value': parsed.asn_candidate_ids,
-                'inputs': ['ASN_CANDIDATE_ID', 'OBS_NUM'],
-                'force_unique': True,
-            }
+
+        # Determine mode of operation. Options are
+        #  1) Only specified candidates
+        #  2) Only discovered assocations that do not match
+        #     candidate associations
+        #  3) Both discovered and all candidate associations.
+        self.find_discovered = parsed.asn_candidate_ids is None
+        global_constraints['asn_candidate'] = constrain_on_candidates(
+            parsed.asn_candidate_ids
+        )
 
         logger.info('Reading rules.')
         self.rules = AssociationRegistry(
@@ -132,17 +140,19 @@ class Main(object):
             include_default=not parsed.ignore_default,
             global_constraints=global_constraints
         )
+        if self.find_discovered:
+            self.rules.update(
+                AssociationRegistry(
+                    parsed.rules,
+                    include_default=not parsed.ignore_default
+                )
+            )
 
         logger.info('Generating associations.')
         self.associations, self.orphaned = generate(self.pool, self.rules)
 
-        logger.debug(
-            'cross_candidate_mode="{}" cross_candidate_only="{}"'.format(
-                self.cross_candidate_mode,
-                self.cross_candidate_only
-            )
-        )
-        if self.cross_candidate_mode and self.cross_candidate_only:
+        if self.find_discovered and parsed.discovered_only:
+            raise NotImplementedError('Discovered Only Mode not implemented.')
             self.associations = self.rules.Utility.filter_cross_candidates(
                 self.associations
             )
@@ -170,6 +180,34 @@ class Main(object):
             (fname, json_repr) = asn.to_json()
             with open(''.join((path, '/', fname, '.json')), 'w') as f:
                 f.write(json_repr)
+
+
+# Utilities
+def constrain_on_candidates(candidates):
+    """Create a constraint based on a list of candidates
+
+    Parameters
+    ----------
+    candidates: (str, ...) or None
+        List of candidate id's.
+        If None, then all candidates are matched.
+    """
+    constraint = {}
+    if candidates is not None and len(candidates):
+        c_list = '|'.join(candidates)
+        values = ''.join([
+            '.+(', c_list, ').+'
+        ])
+    else:
+        values = None
+    constraint = {
+        'value': values,
+        'inputs': ['ASN_CANDIDATE'],
+        'force_unique': True,
+        'is_acid': True,
+    }
+
+    return constraint
 
 
 if __name__ == '__main__':

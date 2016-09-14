@@ -1,4 +1,4 @@
-title: NIRSpec photometric flux conversion data model
+title: NIRSpec Image, IFU, and MOS photometric flux conversion data model
 allOf:
 - $ref: photom.schema.yaml
 - type: object
@@ -18,9 +18,12 @@ allOf:
       - name: nelem
         datatype: int16
       - name: wavelength
-        shape: [50]
+        shape: [150]
         datatype: float32
       - name: relresponse
-        shape: [50]
+        shape: [150]
+        datatype: float32
+      - name: reluncertainty
+        shape: [150]
         datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

@@ -46,6 +46,8 @@ import astropy.constants
 import pymssql
 import scipy.interpolate as sciint
 
+__version__ = '0.1.0'
+
 # Find path to ephemeris from environmental variable.
 
 JDOFFSET = 2400000.5

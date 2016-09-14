@@ -11,9 +11,11 @@ env:
     global:
         - MAIN_CMD='python setup.py'
         - CONDA_CHANNELS='http://ssb.stsci.edu/conda-dev'
-        - CONDA_DEPENDENCIES='pytest stsci-jwst'
-        - CONDA_JWST_DEPENDENCIES='pytest stsci-jwst'
+        - CONDA_DEPENDENCIES='pytest jwst sphinx=1.3.5'
+        - CONDA_JWST_DEPENDENCIES='pytest stsci-jwst sphinx=1.3.5'
         - PIP_DEPENDENCIES=''
+        - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
+        - CRDS_PATH='/tmp/crds_cache'
 
     matrix:
         - PYTHON_VERSION=2.7 SETUP_CMD='install'
@@ -23,16 +25,22 @@ env:
 
 matrix:
     include:
-        # pep8 check (only once, i.e. "os: linux")
+        # PEP8 check with pycodestyle (only once, i.e. "os: linux")
         - os: linux
-          env: PYTHON_VERSION=3.5 MAIN_CMD='pep8 --count'
-               SETUP_CMD='jwst' TEST_CMD='pep8 --version'
+          env: PYTHON_VERSION=3.5 MAIN_CMD='pycodestyle --count'
+               SETUP_CMD='jwst' TEST_CMD='pycodestyle --version'
+               CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
+
+        # build sphinx documentation
+        - os: linux
+          env: PYTHON_VERSION=3.5 MAIN_CMD='docs/mkdocs.sh'
+               SETUP_CMD=''
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
 
     allow_failures:
-        # pep8 will fail for numerous reasons. Ignore it.
-        - env: PYTHON_VERSION=3.5 MAIN_CMD='pep8 --count'
-               SETUP_CMD='jwst' TEST_CMD='pep8 --version'
+        # PEP8 will fail for numerous reasons. Ignore it.
+        - env: PYTHON_VERSION=3.5 MAIN_CMD='pycodestyle --count'
+               SETUP_CMD='jwst' TEST_CMD='pycodestyle --version'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
 
 install:
@@ -41,4 +49,3 @@ install:
 
 script:
     - $MAIN_CMD $SETUP_CMD
-

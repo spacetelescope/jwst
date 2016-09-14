@@ -11,7 +11,6 @@ import numpy as np
 import jsonschema
 
 from astropy.extern import six
-from astropy.extern.six.moves import xrange
 from astropy.utils.compat.misc import override__dir__
 
 from asdf import schema
@@ -28,6 +27,9 @@ def _cast(val, schema):
     val = _unmake_node(val)
     if val is not None:
         if 'datatype' in schema:
+            # Handle lazy array
+            if isinstance(val, ndarray.NDArrayType):
+                val = val._make_array()
             val = util.gentle_asarray(
                 val, ndarray.asdf_datatype_to_numpy_dtype(schema['datatype']))
         if 'ndim' in schema and len(val.shape) != schema['ndim']:
@@ -54,10 +56,12 @@ def _make_default_array(attr, schema, ctx):
     primary_array_name = ctx.get_primary_array_name()
 
     if attr == primary_array_name:
-        if ctx.shape is None:
+        if ctx.shape is not None:
+            shape = ctx.shape
+        elif ndim is not None:
             shape = tuple([0] * ndim)
         else:
-            shape = ctx.shape
+            shape = (0,)
     else:
         if dtype.names is not None:
             if ndim is None:
@@ -159,11 +163,10 @@ class ObjectNode(Node):
         return list(six.iterkeys(self._schema.get('properties', {})))
 
     def __eq__(self, other):
-        if isinstance(other, dict):
-            return self._instance == other
-        elif isinstance(other, ObjectNode):
+        if isinstance(other, ObjectNode):
             return self._instance == other._instance
-        return self == other
+        else:
+            return self._instance == other
 
     def __getattr__(self, attr):
         if attr.startswith('_'):

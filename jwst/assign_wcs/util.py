@@ -4,19 +4,13 @@ Utility function for WCS
 """
 
 import logging
-import math
-import copy
 import functools
 import numpy as np
-from numpy import arctan2
 from astropy.utils.misc import isiterable
 from astropy.io import fits
-from astropy.modeling.core import Model
-from astropy.modeling.parameters import Parameter, InputParameterError
 from astropy.modeling import projections
 from astropy.modeling import models as astmodels
 from gwcs import WCS
-from gwcs import utils as gwutils
 from gwcs.wcstools import wcs_from_fiducial
 
 log = logging.getLogger(__name__)
@@ -204,7 +198,7 @@ def is_fits(input):
             try:
                 f = fits.open(input, mode='readonly')
                 fileclose = True
-            except Exception as e:
+            except Exception:
                 if f is not None:
                     f.close()
                 raise

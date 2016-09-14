@@ -3,9 +3,9 @@
 import os
 import sys
 
-sys.path.append(os.path.abspath(os.path.dirname(__file__) + '../../..'))
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__) + '../../../..'))
 
-from association import Association
+from associations import Association
 
 # The schema that these associations must adhere to.
 _ASN_SCHEMA_LEVEL3 = 'asn_schema_jw_level3.json'

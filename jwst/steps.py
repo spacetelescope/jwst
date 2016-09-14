@@ -21,7 +21,6 @@ from . import jump
 from . import jwpsf
 from . import lastframe
 from . import linearity
-from . import nircam_mosaic
 from . import outlier_detection
 from . import persistence
 from . import photom

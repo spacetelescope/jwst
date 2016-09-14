@@ -134,7 +134,7 @@ class NRM_Model():
             simulated psf
         """
         # First set up conditions for choosing various parameters
-        if fov == None:
+        if fov is None:
             if not hasattr(self, 'fov'):
                 log.critical('You must specify a field')
             else:
@@ -152,12 +152,12 @@ class NRM_Model():
         self.bandpass = bandpass  #  dg - perhaps set this in __init__
 
         if not hasattr(self, 'over'):
-            if over == None:
+            if over is None:
                 self.over = 1
             else:
                 self.over = over
 
-        if self.over == None:
+        if self.over is None:
             self.over = over
 
         self.phi = np.zeros(len(self.ctrs))
@@ -170,7 +170,7 @@ class NRM_Model():
             self.rotctrs = self.ctrs # if initialization included a
             #   rotation self.ctrs has been rotated
 
-        if pixel == None:
+        if pixel is None:
             self.pixel_sim = self.pixel
         else:
             self.pixel_sim = pixel
@@ -252,7 +252,7 @@ class NRM_Model():
             if self.pixscale_measured is not None:
                 self.modelpix = self.pixscale_measured
 
-        if pixscale == None:
+        if pixscale is None:
             self.modelpix = self.pixel
         else:
             self.modelpix = pixscale
@@ -355,7 +355,7 @@ class NRM_Model():
         if modelin is None:
             # dg - find out from Anand if I can delete this block
 
-            if pixguess == None:
+            if pixguess is None:
                 log.critical('YOU MUST SPECIFY GUESSES FOR PIX & ROT.')
                 log.critical('fit image requires a pixel scale guess PIXSCALE')
                 log.critical('  and rotation guess ROTGUESS keyword')

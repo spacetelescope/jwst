@@ -1,39 +1,40 @@
 """test_associations: Test of general Association functionality."""
 from __future__ import absolute_import
+import pytest
 
-from . import helpers
+from .helpers import full_pool_rules
 
 from ..main import Main
 
 
-class TestMain():
+class TestMain(object):
 
-    pools_size = [
-        (helpers.t_path('data/jw93060_20150312T160130_pool.csv'), 14),
-        (helpers.t_path('data/jw82600_001_20151107T165901_pool.csv'), 11),
-    ]
+    def test_script(self, full_pool_rules):
+        pool, rules, pool_fname = full_pool_rules
 
-    def setUp(self):
-        pass
+        generated = Main([pool_fname, '--dry-run'])
+        asns = generated.associations
+        assert len(asns) == 44
+        found_rules = set(
+            asn['asn_rule']
+            for asn in asns
+        )
+        assert 'Asn_Image' in found_rules
+        assert 'Asn_WFSCMB' in found_rules
 
-    def tearDown(self):
-        pass
+    def test_asn_candidates(self, full_pool_rules):
+        pool, rules, pool_fname = full_pool_rules
 
-    def test_script(self):
-        for name, number in self.pools_size:
-            gs = Main([name, '--dry_run'])
-            yield helpers.check_equal, len(gs.associations), number
+        generated = Main([pool_fname, '--dry-run', '-i', 'o001'])
+        assert len(generated.associations) == 2
+        generated = Main([pool_fname, '--dry-run', '-i', 'o001', 'o002'])
+        assert len(generated.associations) == 4
 
-    def test_asn_candidates(self):
-        pool_name = self.pools_size[0][0]
-        gs = Main([pool_name, '--dry_run', '-i', '1'])
-        assert len(gs.associations) == 6
-        gs = Main([pool_name, '--dry_run', '-i', '1', '2'])
-        assert len(gs.associations) == 14
+    @pytest.mark.xfail()
+    def test_cross_candidate(self, full_pool_rules):
+        pool, rules, pool_fname = full_pool_rules
 
-    def test_cross_candidate(self):
-        pool_name = self.pools_size[1][0]
-        gs = Main([pool_name, '--dry_run'])
-        assert len(gs.associations) == 11
-        gs = Main([pool_name, '--dry_run', '--cross-candidate-only'])
-        assert len(gs.associations) == 5
+        generated = Main([pool_fname, '--dry-run'])
+        assert len(generated.associations) == 44
+        generated = Main([pool_fname, '--dry-run', '--cross-candidate-only'])
+        assert len(generated.associations) == 5

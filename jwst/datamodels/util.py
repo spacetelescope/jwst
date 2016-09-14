@@ -70,6 +70,9 @@ def gentle_asarray(a, dtype):
                     "Wrong number of columns.  Expected {0}, got {1}".format(
                         len(out_dtype), len(in_dtype)))
             new_dtype = []
+            # Change the fits record names to match the schema names
+            if hasattr(a.dtype, 'names') and hasattr(out_dtype, 'names'):
+                a.dtype.names = out_dtype.names
             for i in range(len(out_dtype.fields)):
                 in_type = in_dtype[i]
                 out_type = out_dtype[i]
@@ -85,9 +88,12 @@ def gentle_asarray(a, dtype):
                 else:
                     return np.asanyarray(a, dtype=out_dtype)
             return a.view(dtype=np.dtype(new_dtype))
-
-    return np.asarray(a, dtype=out_dtype)
-
+    else:
+        try:
+            a = np.asarray(a, dtype=out_dtype)
+        except:
+            raise ValueError("Can't convert {0!s} to ndarray".fornat(type(a)))
+        return a
 
 def get_short_doc(schema):
     title = schema.get('title', None)
