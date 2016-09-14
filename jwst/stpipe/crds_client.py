@@ -29,20 +29,25 @@
 """
 A client library for CRDS
 """
-import contextlib
-from os.path import dirname, join
 import re
-from astropy.extern import six
-
 import gc
 
+# from .. import datamodels
+
 import crds
-from crds import log
+from crds import python23
 
 def _flatten_dict(nested):
+    """According to Mike D.,  added to give CRDS access to .json metadata."""
     def flatten(root, path, output):
+        """Recursively flatten nested `root` dictionary accumulating `path` so far plus
+        this level of `root` into flat metadata dictionary `output`.
+
+        Recursion stops along a given path when the value for that element of
+        `root` is not a dict.
+        """
         for key, val in root.items():
-            if isinstance(key, six.string_types):
+            if isinstance(key, python23.string_types):
                 if isinstance(val, dict):
                     flatten(val, path + [key], output)
                 else:
@@ -65,24 +70,13 @@ def get_multiple_reference_paths(input_file, reference_file_types):
 
     Returns { filetype : filepath or "N/A", ... }
     """
-    from .. import datamodels
-
-    gc.collect()
-
-    if not reference_file_types:   # [] interpreted as *all types*.
+    # normally [] is interpreted by CRDS as *all types*,  switch to *no* types.
+    if not reference_file_types:
         return {}
 
-    if six.PY2:
-        model_types = (str, unicode, datamodels.DataModel)
-    else:
-        model_types = (str, datamodels.DataModel)
-    if isinstance(input_file, model_types):
-        with datamodels.open(input_file) as dm:
-            data_dict = dm.to_flat_dict(include_arrays=False)
-    else:
-        data_dict = _flatten_dict(input_file)
-
     gc.collect()
+
+    data_dict = get_cached_flat_dict(input_file)
 
     try:
         bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
@@ -92,9 +86,55 @@ def get_multiple_reference_paths(input_file, reference_file_types):
         raise crds.CrdsBadReferenceError(str(exc))
 
     refpaths = {filetype: filepath if "N/A" not in filepath.upper() else "N/A"
-                 for (filetype, filepath) in bestrefs.items()}
+                for (filetype, filepath) in bestrefs.items()}
+
+    gc.collect()
 
     return refpaths
+
+# Cache of flattened data model metadata,  persistent throughout process,
+# i.e. across chained Steps.   This is to avoid CRDS opening the same 
+# data model 20 times.
+CRDS_HEADER_CACHE = dict()
+
+def get_cached_flat_dict(input_file):
+    """Return the dictionary mapping DM object paths as flat strings, e.g.
+
+    {  "meta.instrument.name" : "miri", ... }
+
+    for all the metadata associated with input_file,  do not include arrays.
+
+    input_file can be a string, DataModel,  or an object-tree
+
+    Since loading the core dataset VM for every reference is file intensive,
+    cache the result of the DM read,  cache the result associated with each
+    model or filename in memory
+    """
+    from .. import datamodels
+
+    if isinstance(input_file, (python23.string_types, datamodels.DataModel)):
+        if isinstance(input_file, python23.string_types):
+            filename = input_file
+        else:  # data model case
+            filename = input_file.meta.filename
+        if filename not in CRDS_HEADER_CACHE:
+            CRDS_HEADER_CACHE[filename] = get_uncached_flat_dict(input_file)
+        return CRDS_HEADER_CACHE[filename]
+    else:  # originally undocumented,  nominally for .json inputs,  why????
+        return _flatten_dict(input_file)
+
+def get_uncached_flat_dict(input_file):
+    """Load the flattened data model dictionary from `input_file` where 
+    `input_file` is a pre-loaded data model or the filepath of a dataset.
+    """
+    from .. import datamodels
+
+    if isinstance(input_file, python23.string_types):
+        with datamodels.open(input_file) as model:
+            flat_dict = dict(model.to_flat_dict(include_arrays=False))
+    else:
+        flat_dict = dict(input_file.to_flat_dict(include_arrays=False))
+    return flat_dict
 
 def check_reference_open(refpath):
     """Verify that `refpath` exists and is readable for the current user.
@@ -102,8 +142,8 @@ def check_reference_open(refpath):
     Ignore reference path values of "N/A" or "" for checking.
     """
     if refpath != "N/A" and refpath.strip() != "":
-        fd = open(refpath, "rb")
-        fd.close()
+        fileobj = open(refpath, "rb")
+        fileobj .close()
     return refpath
 
 def get_reference_file(input_file, reference_file_type):

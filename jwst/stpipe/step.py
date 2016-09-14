@@ -4,7 +4,6 @@ Step
 from __future__ import absolute_import, division, print_function
 
 import contextlib
-from astropy.extern import six
 from os.path import dirname, join, basename, splitext, abspath, split
 import sys
 import gc
@@ -14,6 +13,8 @@ try:
     DISCOURAGED_TYPES = (fits.HDUList,)
 except ImportError:
     DISCOURAGED_TYPES = None
+
+from astropy.extern import six
 
 from . import config_parser
 from . import crds_client
@@ -436,6 +437,16 @@ class Step(object):
         return instance.run(*args)
 
     @classmethod
+    def list_reference_files(cls, input_file):
+        """
+        List reference types and files name for a particular input file.
+        """
+        if cls._is_association_file(input_file):
+            return
+        return crds_client.get_multiple_reference_paths(
+            input_file, cls.reference_file_types)
+
+    @classmethod
     def _is_association_file(cls, input_file):
         """Return True IFF `input_file` is an association file."""
         from ..associations import Association
@@ -469,18 +480,9 @@ class Step(object):
                     'model'.format(input_file))
             else:
                 self._precache_reference_files_impl(model)
-                model.close()
+                if isinstance(input_file, six.string_types):
+                    model.close()
         gc.collect()
-
-    @classmethod
-    def list_reference_files(cls, input_file):
-        """
-        List reference types and files name for a particular input file.
-        """
-        if cls._is_association_file(input_file):
-            return
-        return crds_client.get_multiple_reference_paths(
-            input_file, cls.reference_file_types)
 
     def _precache_reference_files_impl(self, model):
         """Given open data `model`,  determine and cache reference files for
