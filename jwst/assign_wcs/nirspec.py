@@ -11,7 +11,7 @@ import numpy as np
 
 from asdf import AsdfFile
 from astropy.modeling import models, fitting
-from astropy.modeling.models import Mapping, Identity, Const1D
+from astropy.modeling.models import Mapping, Identity, Const1D, Scale
 from astropy import units as u
 from astropy import coordinates as coord
 from astropy.io import fits
@@ -152,9 +152,14 @@ def ifu(input_model, reference_files):
         msa2oteip = ifu_msa_to_oteip(reference_files)
 
         # OTEIP to V2,V3 transform
+        # This includes a wavelength unit conversion from meters to microns.
         oteip2v23 = oteip_to_v23(reference_files)
 
         # Create coordinate frames in the NIRSPEC WCS pipeline"
+        #
+        # The oteip2v2v3 transform converts the wavelength from meters (which is assumed
+        # in the whole pipeline) to microns (which is the expected output)
+        #
         # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
 
         pipeline = [(det, dms2detector),
@@ -219,6 +224,7 @@ def slits_wcs(input_model, reference_files):
         msa2oteip = msa_to_oteip(reference_files)
 
         # OTEIP to V2,V3 transform
+        # This includes a wavelength unit conversion from meters to microns.
         oteip2v23 = oteip_to_v23(reference_files)
 
         # V2, V3 to wprld (RA, DEC ,LAMBDA) transform
@@ -748,8 +754,11 @@ def oteip_to_v23(reference_files):
         ote = f.tree['model'].copy()
     fore2ote_mapping = Identity(3, name='fore2ote_mapping')
     fore2ote_mapping.inverse = Mapping((0, 1, 2, 2))
-    # Convert the wavelength to microns
-    return fore2ote_mapping | (ote & (Identity(1)))# / Const1D(1e-6)))
+
+    # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
+    # meters as required by the pipeline but the desired output wavelength units is microns.
+    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
+    return fore2ote_mapping | (ote & Scale(1e6))
 
 
 def create_frames():
@@ -768,10 +777,13 @@ def create_frames():
     slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), unit=("", ""),
                              axes_names=('x_slit', 'y_slit'))
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
-    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.m,),
-                            axes_names=('wavelength',))
     v2v3_spatial = cf.Frame2D(name='V2V3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg),
                              axes_names=('V2', 'V3'))
+
+    # The oteip_to_v23 incorporates a scale to convert the spectral units from
+    # meters to microns.  So the v2v3 output frame will be in u.deg, u.deg, u.micron
+    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
+                            axes_names=('wavelength',))
     v2v3 = cf.CompositeFrame([v2v3_spatial, spec], name='v2v3')
     slit_frame = cf.CompositeFrame([slit_spatial, spec], name='slit_frame')
     msa_frame = cf.CompositeFrame([msa_spatial, spec], name='msa_frame')

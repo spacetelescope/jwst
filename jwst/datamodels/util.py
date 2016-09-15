@@ -61,7 +61,7 @@ def gentle_asarray(a, dtype):
             if np.can_cast(in_dtype, out_dtype, 'equiv'):
                 return a
             else:
-                return np.asarray(a, dtype=out_dtype)
+                return np.asanyarray(a, dtype=out_dtype)
         elif in_dtype.fields is not None and out_dtype.fields is not None:
             if in_dtype == out_dtype:
                 return a
@@ -70,9 +70,10 @@ def gentle_asarray(a, dtype):
                     "Wrong number of columns.  Expected {0}, got {1}".format(
                         len(out_dtype), len(in_dtype)))
             new_dtype = []
-            # Change the fits record names to match the schema names
-            if hasattr(a.dtype, 'names') and hasattr(out_dtype, 'names'):
-                a.dtype.names = out_dtype.names
+            # Change the dtype name to match the fits record names
+            # as the mismatch causes case insensitive access to fail
+            if hasattr(in_dtype, 'names') and hasattr(out_dtype, 'names'):
+                out_dtype.names = in_dtype.names
             for i in range(len(out_dtype.fields)):
                 in_type = in_dtype[i]
                 out_type = out_dtype[i]
@@ -86,7 +87,7 @@ def gentle_asarray(a, dtype):
                          type_str,
                          in_type.shape))
                 else:
-                    return np.asarray(a, dtype=out_dtype)
+                    return np.asanyarray(a, dtype=out_dtype)
             return a.view(dtype=np.dtype(new_dtype))
     else:
         try:
