@@ -30,9 +30,10 @@ def DetermineCubeCoverage(self, MasterTable):
     """
     Short Summary
     -------------
-    Function to determine which files contain channels and subchannels are used in the creation of the cubes.
-    For MIRI The channels  to be used are set by the association and the subchannels are  determined from
-    the data
+    Function to determine which files contain channels and subchannels are used 
+    in the creation of the cubes.
+    For MIRI The channels  to be used are set by the association and the 
+    subchannels are  determined from the data
 
     Parameter
     ----------
@@ -57,7 +58,8 @@ def DetermineCubeCoverage(self, MasterTable):
         channellist = self.channel.split()
         user_clen = len(channellist)
 
-        if(user_clen != 0 and self.input_table_type == 'singleton'): # the user has given the channel information
+        # the user has given the channel information
+        if(user_clen != 0 and self.input_table_type == 'singleton'): 
             for j in range(user_clen):
 
                 if channellist[j] in ValidChannel:
@@ -73,25 +75,32 @@ def DetermineCubeCoverage(self, MasterTable):
                 if(nfiles > 0):
                     self.metadata['subchannel'].append(ValidSubchannel[j])
                     if(self.input_table_type == 'singleton' and user_clen == 0):
-                        self.metadata['channel'].append(ValidChannel[i]) #usually filled in from reading assoication table
+#usually filled in from reading assoication table
+                        self.metadata['channel'].append(ValidChannel[i]) 
 
         self.metadata['subchannel'] = list(set(self.metadata['subchannel']))
-        log.info('The desired cubes covers the MIRI Channels: %s', self.metadata['channel'])
-        log.info('The desried cubes covers the MIRI subchannels: %s', self.metadata['subchannel'])
+        log.info('The desired cubes covers the MIRI Channels: %s', 
+                 self.metadata['channel'])
+        log.info('The desried cubes covers the MIRI subchannels: %s', 
+                 self.metadata['subchannel'])
 
 
         number_channels = len(self.metadata['channel'])
         number_subchannels = len(self.metadata['subchannel'])
 
         if(number_channels == 0):
-            raise ErrorNoChannels("The cube  does not cover any channels, change parameter channel")
+            raise ErrorNoChannels(
+                "The cube  does not cover any channels, change parameter channel")
         if(number_subchannels == 0):
-            raise ErrorNoSubchannels("The cube  does not cover any subchannels, change parameter subchannel")
+            raise ErrorNoSubchannels(
+                "The cube  does not cover any subchannels, change parameter subchannel")
 #______________________________________________________________________
     if(self.metadata['instrument'] == 'NIRSPEC'):
 
-        ValidFWA = ['F070LP', 'F070LP', 'F100LP', 'F100LP', 'F170LP', 'F170LP', 'F290LP', 'F290LP', 'CLEAR']
-        ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H', 'G395M', 'G395H', 'PRISM']
+        ValidFWA = ['F070LP', 'F070LP', 'F100LP', 'F100LP', 'F170LP', 
+                    'F170LP', 'F290LP', 'F290LP', 'CLEAR']
+        ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H', 
+                    'G395M', 'G395H', 'PRISM']
         ntypes = len(ValidFWA)
 
         for j in range(ntypes):
@@ -102,8 +111,10 @@ def DetermineCubeCoverage(self, MasterTable):
 
         self.metadata['filter'] = list(set(self.metadata['filter']))
         self.metadata['grating'] = list(set(self.metadata['grating']))
-        log.debug('The desired cubes covers the NIRSPEC FWA  %s', self.metadata['filter'])
-        log.debug('The desried cubes covers the NIRSPEC GWA: %s', self.metadata['grating'])
+        log.debug('The desired cubes covers the NIRSPEC FWA  %s', 
+                  self.metadata['filter'])
+        log.debug('The desried cubes covers the NIRSPEC GWA: %s', 
+                  self.metadata['grating'])
 
         number_filters = len(self.metadata['filter'])
         number_gratings = len(self.metadata['grating'])
@@ -325,12 +336,6 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
     if (self.coord_system == 'alpha-beta'):
         detector2alpha_beta = input.meta.wcs.get_transform('detector', 'alpha_beta')
         coord1, coord2, lam = detector2alpha_beta(x, y)
-#    elif (self.coord_system == 'v2-v3'):
-#        detector2v23 = input.meta.wcs.get_transform('detector', 'V2_V3')
-
-#        coord1, coord2, lam = detector2v23(x, y) # v2,v3 are in units of arc minutes
-#        coord1 = coord1 * 60.0 # convert to arc seconds
-#        coord2 = coord2 * 60.0 # convert to arc seconds 
 
     elif (self.coord_system == 'ra-dec'):
         detector2v23 = input.meta.wcs.get_transform('detector', 'V2_V3')
@@ -342,7 +347,8 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
         roll_ref = input.meta.wcsinfo.roll_ref # degrees 
         v2_ref = input.meta.wcsinfo.v2_ref # arc min
         v3_ref = input.meta.wcsinfo.v3_ref # arc min         
-        coord1,coord2 = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,v2,v3) # return ra and dec in degrees
+        coord1,coord2 = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,
+                                         v2,v3) # return ra and dec in degrees
 
     else:
         # error the coordinate system is not defined
@@ -405,13 +411,21 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
 
     regions = list(range(start_slice, end_slice + 1))
     k = 0
-    sorder, wrange = nirspec.spectral_order_wrange_from_model(input)
+#    sorder, wrange = nirspec.spectral_order_wrange_from_model(input)
     for i in regions:
 
-        slice_wcs = nirspec.nrs_wcs_set_input(input.meta.wcs, 0, i, wrange)
+        slice_wcs = nirspec.nrs_wcs_set_input(input.meta.wcs, 0, i)
+#        slice_wcs = nirspec.nrs_wcs_set_input(input.meta.wcs, 0, i, wrange)
 
-        b = _domain_to_bounds(slice_wcs.domain)
-        y, x = np.mgrid[b[1][0]:b[1][1], b[0][0]:b[0][1]]
+#        b = _domain_to_bounds(slice_wcs.domain)
+    
+#        y, x = np.mgrid[b[1][0]:b[1][1], b[0][0]:b[0][1]]
+#        y, x = np.mgrid[b[1][0]:b[1][1], b[0][0]:b[0][1]]
+#        v2, v3, lam = slice_wcs(x, y)
+
+        imrows = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
+        imcols = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
+        y, x = np.mgrid[imrows[0]:imrows[1], imcols[0]:imcols[1]]
         v2, v3, lam = slice_wcs(x, y)
 
         coord1 = v2 * 60.0
