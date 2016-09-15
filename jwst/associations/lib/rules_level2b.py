@@ -44,9 +44,9 @@ class DMS_Level2b_Base(Association):
                 'value': '(?!NULL).+',
                 'inputs': ['DETECTOR']
             },
-            'target_name': {
+            'target': {
                 'value': None,
-                'inputs': ['TARGNAME']
+                'inputs': ['TARGETID']
             },
         })
 
@@ -81,7 +81,7 @@ class DMS_Level2b_Base(Association):
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
         self.schema_file = ASN_SCHEMA
-        self.data['targname'] = member['TARGNAME']
+        self.data['target'] = member['TARGETID']
         self.data['program'] = str(member['PROGRAM'])
         self.data['asn_pool'] = basename(member.meta['pool_file']).split('.')[0]
         self.data['constraints'] = '\n'.join([cc for cc in self.constraints_to_text()])
@@ -107,7 +107,7 @@ class DMS_Level2b_Base(Association):
         result.append('        Product type: {:s}'.format(self.data['asn_type']))
         result.append('        Rule:         {:s}'.format(self.data['asn_rule']))
         result.append('        Program:      {:s}'.format(self.data['program']))
-        result.append('        Target:       {:s}'.format(self.data['targname']))
+        result.append('        Target:       {:s}'.format(self.data['target']))
         result.append('        Pool:         {:s}'.format(self.data['asn_pool']))
 
         for cc in self.constraints_to_text():
