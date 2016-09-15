@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 import sys
 import argparse
 import logging
@@ -69,6 +70,11 @@ class Main(object):
             '-p', '--path', type=str,
             default='.',
             help='Folder to save the associations to. Default: "%(default)s"'
+        )
+        parser.add_argument(
+            '--save-orphans', dest='save_orphans',
+            nargs='?', const='orphaned.csv', default=False,
+            help='Save orphaned members into the specified table. Default: "%(default)s"'
         )
         parser.add_argument(
             '-d', '--delimiter', type=str,
@@ -184,7 +190,7 @@ class Main(object):
         logger.info(self.__str__())
 
         if not parsed.dry_run:
-            self.save(path=parsed.path)
+            self.save(path=parsed.path, save_orphans=parsed.save_orphans)
 
     def __str__(self):
         result = []
@@ -198,12 +204,19 @@ class Main(object):
 
         return '\n'.join(result)
 
-    def save(self, path='.'):
+    def save(self, path='.', save_orphans=False):
         """Save the associations to disk as JSON."""
         for asn in self.associations:
             (fname, json_repr) = asn.to_json()
-            with open(''.join((path, '/', fname, '.json')), 'w') as f:
+            with open(os.path.join(path, fname + '.json'), 'w') as f:
                 f.write(json_repr)
+
+        if save_orphans:
+            self.orphaned.write(
+                os.path.join(path, save_orphans),
+                format='ascii',
+                delimiter='|'
+            )
 
 
 # Utilities
