@@ -7,6 +7,7 @@ from os.path import (
 )
 __version__ = '0.6.0'
 
+
 # Utility
 def libpath(filepath):
     '''Return the full path to the module library.'''
