@@ -209,7 +209,7 @@ def open(init=None, extensions=None):
     elif len(shape) == 2:
         try:
             hdu = hdulist[(fits_header_name('SCI'), 2)]
-        except KeyError:
+        except (KeyError, NameError):
             # It's an ImageModel
             from . import image
             new_class = image.ImageModel
