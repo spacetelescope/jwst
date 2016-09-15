@@ -903,7 +903,7 @@ class IFUCubeInput(object):
     """
 
     template = {"asn_rule": "",
-              "targname": "",
+              "target": "",
               "asn_pool": "",
               "asn_type": "",
               "products": [
@@ -947,7 +947,7 @@ class IFUCubeInput(object):
 
         # An in-memory ImageModel for a single exposure was provided as input
         self.asn_table = self.template
-        self.asn_table['targname'] = model.meta.target.catalog_name
+        self.asn_table['target'] = model.meta.target.catalog_name
         self.asn_table['asn_rule'] = 'singleton'
         self.asn_table['asn_type'] = 'singleton'
 
