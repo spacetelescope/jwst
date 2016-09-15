@@ -16,7 +16,7 @@
             "description": "The observing program identifier",
             "type": "string"
         },
-        "targname": {
+        "target": {
             "description": "Canonical name of the astronomical object being observed.",
             "type": "string"
         },
@@ -64,7 +64,7 @@
     "required": ["asn_type",
                  "asn_rule",
                  "program",
-                 "targname",
+                 "target",
                  "asn_pool",
                  "products",
                  "creation_time"]

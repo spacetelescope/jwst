@@ -115,7 +115,7 @@ class DMS_Level3_Base(Association):
 
     def product_name(self):
         """Define product name."""
-        target = self._get_target_id()
+        target = self._get_target()
 
         instrument = self._get_instrument()
 
@@ -144,7 +144,7 @@ class DMS_Level3_Base(Association):
         super(DMS_Level3_Base, self)._init_hook(member)
 
         self.schema_file = ASN_SCHEMA
-        self.data['targname'] = member['TARGETID']
+        self.data['target'] = member['TARGETID']
         self.data['program'] = str(member['PROGRAM'])
         self.data['asn_pool'] = basename(
             member.meta['pool_file']
@@ -189,19 +189,19 @@ class DMS_Level3_Base(Association):
         # Add entry to the short list
         self.members.add(entry[KEY])
 
-    def _get_target_id(self):
+    def _get_target(self):
         """Get string representation of the target
 
         Returns
         -------
-        target_id: str
+        target: str
             The Level3 Product name representation
             of the target or source ID.
         """
         try:
             target = 's{0:0>5s}'.format(self.data['source_id'])
         except KeyError:
-            target = 't{0:0>3s}'.format(self.data['targname'])
+            target = 't{0:0>3s}'.format(self.data['target'])
         return target
 
     def _get_instrument(self):
@@ -458,7 +458,7 @@ class AsnMixin_Target(DMS_Level3_Base):
 
         # Setup for checking.
         self.add_constraints({
-            'target_name': {
+            'target': {
                 'value': None,
                 'inputs': ['TARGETID']
             },
