@@ -24,9 +24,16 @@
             "description": "Name of the Association Pool from which this association was generated.",
             "type": "string"
         },
-        "creation_time": {
-            "description": "Timestamp of association creation.",
-            "type": "string"
+        "version_id": {
+            "description": "Version identifier.",
+            "anyOf":[
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ] 
         },
         "products": {
             "description": "Array of output products and their required inputs derived from this association.",
@@ -66,6 +73,5 @@
                  "program",
                  "target",
                  "asn_pool",
-                 "products",
-                 "creation_time"]
+                 "products"]
 }

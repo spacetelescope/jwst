@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 
-def generate(pool, rules):
+def generate(pool, rules, version_id=None):
     """Generate associations in the pool according to the rules.
 
     Parameters
@@ -26,6 +26,12 @@ def generate(pool, rules):
 
     rules: Associations
         The associaton rule set.
+
+    version_id: None, True, or str
+        The string to use to tag associations and products.
+        If None, no tagging occurs.
+        If True, use a timestamp
+        If a string, the string.
 
     Returns
     -------
@@ -39,7 +45,8 @@ def generate(pool, rules):
 
     associations = []
     in_an_asn = np.zeros((len(pool),), dtype=bool)
-    timestamp = make_timestamp()
+    if type(version_id) is bool:
+        version_id = make_timestamp()
     process_list = [
         AssociationProcessMembers(
             members=pool,
@@ -52,7 +59,7 @@ def generate(pool, rules):
             logger.debug('Working member="{}"'.format(member))
             existing_asns, new_asns, to_process = generate_from_member(
                 member,
-                timestamp,
+                version_id,
                 associations,
                 rules,
                 process_event.allowed_rules
@@ -70,7 +77,7 @@ def generate(pool, rules):
 
 def generate_from_member(
         member,
-        timestamp,
+        version_id,
         associations,
         rules,
         allowed_rules):
@@ -82,8 +89,9 @@ def generate_from_member(
         The member to match to existing associations
         or generate new associations from
 
-    timestamp: str
-        Timestamp to use with association creation.
+    version_id: str or None
+        Version id to use with association creation.
+        If None, no versioning is used.
 
     associations: [association, ...]
         List of already existing associations.
@@ -123,7 +131,7 @@ def generate_from_member(
     ignore_asns = set([type(asn) for asn in existing_asns])
     new_asns, to_process = rules.match(
         member,
-        timestamp=timestamp,
+        version_id=version_id,
         allow=allowed_rules,
         ignore=ignore_asns,
     )

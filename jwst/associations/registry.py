@@ -110,7 +110,7 @@ class AssociationRegistry(dict):
     def rule_set(self):
         return self._rule_set
 
-    def match(self, member, timestamp=None, allow=None, ignore=None):
+    def match(self, member, version_id=None, allow=None, ignore=None):
         """See if member belongs to any of the associations defined.
 
         Parameters
@@ -118,9 +118,9 @@ class AssociationRegistry(dict):
         member: dict
             A member, like from a Pool, to find assocations for.
 
-        timestamp: str
+        version_id: str
             If specified, a string appened to association names.
-            Generated if not specified.
+            If None, nothing is used.
 
         allow: [type(Association), ...]
             List of rules to allow to be matched. If None, all
@@ -148,7 +148,7 @@ class AssociationRegistry(dict):
             if rule not in ignore and rule in allow:
                 logger.debug('Checking membership for rule "{}"'.format(rule))
                 try:
-                    associations.append(rule(member, timestamp))
+                    associations.append(rule(member, version_id))
                 except AssociationError as error:
                     logger.debug('Rule "{}" not matched'.format(name))
                     logger.debug('Reason="{}"'.format(error))

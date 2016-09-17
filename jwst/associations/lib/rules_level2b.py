@@ -60,7 +60,7 @@ class DMS_Level2b_Base(Association):
             self.data['program'],
             self.sequence,
             self.data['asn_type'],
-            self.timestamp
+            self.version_id
         )
         return name.lower()
 

@@ -38,7 +38,8 @@ _DEGRADED_STATUS_NOTOK = (
 )
 
 # DMS file name templates
-_ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
+_ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
+_ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
@@ -85,17 +86,25 @@ class DMS_Level3_Base(Association):
     @property
     def asn_name(self):
         program = self.data['program']
-        timestamp = self.timestamp
+        version_id = self.version_id
         asn_type = self.data['asn_type']
         sequence = self.sequence
 
-        name = _ASN_NAME_TEMPLATE.format(
-            program=program,
-            acid=self.acid.id,
-            stamp=timestamp,
-            type=asn_type,
-            sequence=sequence,
-        )
+        if version_id:
+            name = _ASN_NAME_TEMPLATE_STAMP.format(
+                program=program,
+                acid=self.acid.id,
+                stamp=version_id,
+                type=asn_type,
+                sequence=sequence,
+            )
+        else:
+            name = _ASN_NAME_TEMPLATE.format(
+                program=program,
+                acid=self.acid.id,
+                type=asn_type,
+                sequence=sequence,
+            )
         return name.lower()
 
     @property

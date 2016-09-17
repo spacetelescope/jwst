@@ -54,6 +54,26 @@ class Main(object):
             help='Produce all association candidate-specific associations'
         )
         parser.add_argument(
+            '-p', '--path', type=str,
+            default='.',
+            help='Folder to save the associations to. Default: "%(default)s"'
+        )
+        parser.add_argument(
+            '--save-orphans', dest='save_orphans',
+            nargs='?', const='orphaned.csv', default=False,
+            help='Save orphaned members into the specified table. Default: "%(default)s"'
+        )
+        parser.add_argument(
+            '--version-id', dest='version_id',
+            nargs='?', const=True, default=None,
+            help=(
+                'Version tag to add into association name and products.'
+                ' If not specified, no version will be used.'
+                ' If specified without a value, the current time is used.'
+                ' Otherwise, the specified string will be used.'
+            )
+        )
+        parser.add_argument(
             '-r', '--rules', action='append',
             help='Association Rules file.'
         )
@@ -65,16 +85,6 @@ class Main(object):
             '--dry-run',
             action='store_true', dest='dry_run',
             help='Execute but do not save results.'
-        )
-        parser.add_argument(
-            '-p', '--path', type=str,
-            default='.',
-            help='Folder to save the associations to. Default: "%(default)s"'
-        )
-        parser.add_argument(
-            '--save-orphans', dest='save_orphans',
-            nargs='?', const='orphaned.csv', default=False,
-            help='Save orphaned members into the specified table. Default: "%(default)s"'
         )
         parser.add_argument(
             '-d', '--delimiter', type=str,
@@ -177,7 +187,7 @@ class Main(object):
             )
 
         logger.info('Generating associations.')
-        self.associations, self.orphaned = generate(self.pool, self.rules)
+        self.associations, self.orphaned = generate(self.pool, self.rules, version_id=parsed.version_id)
 
         if parsed.discover:
             self.associations = self.rules.Utility.filter_discovered_only(
