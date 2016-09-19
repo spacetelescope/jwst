@@ -10,7 +10,7 @@ from astropy.extern import six
 
 from ..associations import Association
 from . import model_base
-from .open_model import open as datamodel_open
+from .util import open as datamodel_open
 
 
 __all__ = ['ModelContainer']
