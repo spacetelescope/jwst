@@ -10,7 +10,7 @@ import numpy as np
 import logging
 from .. import datamodels
 from .. datamodels import dqflags
-from jwst.assign_wcs import nirspec     # for NIRSpec IFU data
+from .. assign_wcs import nirspec       # for NIRSpec IFU data
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -508,9 +508,11 @@ def NIRSpec_IFU(output_model,
     flat_dq = np.zeros_like(output_model.dq)
 
     list_of_wcs = nirspec.nrs_ifu_wcs(output_model)
-    print("# xxx number of IFU stripes = {}".format(len(list_of_wcs)))
+    print("# yyy number of IFU stripes = {}".format(len(list_of_wcs)))
     sys.stdout.flush()          # xxx test debug
     for (k, ifu_wcs) in enumerate(list_of_wcs):
+    # xxx for k in range(14, 17):                     # xxx test debug
+        # xxx ifu_wcs = list_of_wcs[k]                # xxx test debug
         # example:  domain = [{u'lower': 1601, u'upper': 2048},   # X
         #                     {u'lower': 1887, u'upper': 1925}]   # Y
         truncated = False
@@ -524,19 +526,19 @@ def NIRSpec_IFU(output_model,
             continue
         if xstart < 0:
             truncated = True
-            print("xxx WCS domain xstart was {}; set to 0".format(xstart))
+            print("yyy WCS domain xstart was {}; set to 0".format(xstart))
             xstart = 0
         if ystart < 0:
             truncated = True
-            print("xxx WCS domain ystart was {}; set to 0".format(ystart))
+            print("yyy WCS domain ystart was {}; set to 0".format(ystart))
             ystart = 0
         if xstop > 2048:
             truncated = True
-            print("xxx WCS domain xstop was {}; set to 2048".format(xstop))
+            print("yyy WCS domain xstop was {}; set to 2048".format(xstop))
             xstop = 2048
         if ystop > 2048:
             truncated = True
-            print("xxx WCS domain ystop was {}; set to 2048".format(ystop))
+            print("yyy WCS domain ystop was {}; set to 2048".format(ystop))
             ystop = 2048
         if truncated:
             ### log.debug("WCS domain for stripe %d extended beyond image"
@@ -545,7 +547,7 @@ def NIRSpec_IFU(output_model,
                      " has been truncated.", k)
         dx = xstop - xstart
         dy = ystop - ystart
-        print("xxx index {}; start & stop:  {} to {}, {} to {}"
+        print("yyy index {}; start & stop:  {} to {}, {} to {}"
               .format(k, ystart, ystop, xstart, xstop))
         ind = np.indices((dy, dx))
         x = ind[1] + xstart
@@ -557,7 +559,7 @@ def NIRSpec_IFU(output_model,
         if wl[good_flag].max() < MICRONS_100:
             log.info("Converting wavelengths from WCS table to microns")
             wl *= 1.e6
-        print("xxx wavelengths in current stripe range from {} ({}) to {}"
+        print("yyy wavelengths in current stripe range from {} ({}) to {}"
               .format(wl.min(), wl.mean(dtype=np.float64), wl.max()))
         sys.stdout.flush()          # xxx test debug
         # Set NaNs to a harmless value, but don't modify nan_flag.
@@ -568,12 +570,21 @@ def NIRSpec_IFU(output_model,
                         xstart, xstop, ystart, ystop,
                         exposure_type, None)
         flat_2d[nan_flag] = 1.
+        mask = (flat_2d <= 0.)
+        nbad = mask.sum(dtype=np.intp)
+        if nbad > 0:
+            log.warning("%d flat-field values <= 0", nbad)
+            flat_2d[mask] = 1.
+            flat_dq_2d[mask] |= dqflags.pixel['NO_FLAT_FIELD']
+        del mask
         flat_dq_2d[nan_flag] |= dqflags.pixel['NO_FLAT_FIELD']
 
-        flat[ystart:ystop, xstart:xstop][nan_flag] = flat_2d[nan_flag]
+        flat[ystart:ystop, xstart:xstop][good_flag] = flat_2d[good_flag]
         flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.copy()
 
         any_updated = True
+    print("yyy flat ranges from {}  ({})  to {}"
+          .format(flat.min(), flat.mean(dtype=np.float64), flat.max()))
 
     output_model.dq |= flat_dq
 
@@ -830,6 +841,9 @@ def spectrograph_flat(wl, s_flat_model,
 
     full_array_flat = s_flat_model.data
     full_array_dq = s_flat_model.dq
+    print("xxx in spectrograph_flat:  full_array_flat ranges from {}  ({})  to {}"
+          .format(full_array_flat.min(), full_array_flat.mean(dtype=np.float64),
+                  full_array_flat.max()))
 
     # Should this test be on len(full_array_dq.shape) instead?
     if exposure_type == "NRS_MSASPEC":
@@ -848,6 +862,9 @@ def spectrograph_flat(wl, s_flat_model,
                                                 image_wl, wl)
     else:
         flat_2d = full_array_flat[ystart:ystop, xstart:xstop]
+        print("xxx in spectrograph_flat:  flat_2d ranges from {}  ({})  to {}"
+              .format(flat_2d.min(), flat_2d.mean(dtype=np.float64),
+                      flat_2d.max()))
         s_flat_dq = full_array_dq[ystart:ystop, xstart:xstop]
 
     s_flat = combine_fast_slow(wl, flat_2d, tab_wl, tab_flat)
