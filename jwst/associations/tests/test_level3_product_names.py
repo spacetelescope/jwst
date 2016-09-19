@@ -11,7 +11,7 @@ LEVEL3_PRODUCT_NAME_REGEX = (
     'jw'
     '(?P<program>\d{5})'
     '-(?P<acid>[a-z]\d{3,4})'
-    '_(?P<targname>(?:t\d{3})|(?:s\d{5}))'
+    '_(?P<target>(?:t\d{3})|(?:s\d{5}))'
     '(?:-(?P<epoch>epoch\d+))?'
     '_(?P<instrument>.+?)'
     '_(?P<opt_elem>.+)'

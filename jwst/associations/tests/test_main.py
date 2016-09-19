@@ -1,6 +1,7 @@
 """test_associations: Test of general Association functionality."""
 from __future__ import absolute_import
 import pytest
+import re
 
 from .helpers import full_pool_rules
 
@@ -71,3 +72,17 @@ class TestMain(object):
         candidates = Main([pool_fname, '--dry-run', '--all-candidates'])
         discovered = Main([pool_fname, '--dry-run', '--discover'])
         assert len(full.associations) == len(candidates.associations) + len(discovered.associations)
+
+
+    def test_version_id(self, full_pool_rules):
+        pool, rules, pool_fname = full_pool_rules
+
+        generated = Main([pool_fname, '--dry-run', '-i', 'o001', '--version-id'])
+        regex = re.compile('\d{3}t\d{6}')
+        for asn in generated.associations:
+            assert regex.search(asn.asn_name)
+
+        version_id = 'mytestid'
+        generated = Main([pool_fname, '--dry-run', '-i', 'o001', '--version-id', version_id])
+        for asn in generated.associations:
+            assert version_id in asn.asn_name

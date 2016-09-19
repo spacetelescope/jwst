@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # Timestamp template
-_TIMESTAMP_TEMPLATE = '%Y%m%dT%H%M%S'
+_TIMESTAMP_TEMPLATE = '%Y%m%dt%H%M%S'
 
 
 class Association(MutableMapping):
@@ -39,10 +39,9 @@ class Association(MutableMapping):
     member: dict
         The member to initialize the association with.
 
-    timestamp: str
-        Timestamp to use in the name of this association. Should conform
-        to the datetime.strftime format '%Y%m%dT%M%H%S'. If None, class
-        instantiation will create this string using current time.
+    version_id: str or None
+        Version_Id to use in the name of this association.
+        If None, nothing is added.
 
     Raises
     ------
@@ -90,7 +89,7 @@ class Association(MutableMapping):
     def __init__(
             self,
             member=None,
-            timestamp=None,
+            version_id=None,
     ):
 
         self.data = dict()
@@ -98,15 +97,12 @@ class Association(MutableMapping):
         self.run_init_hook = True
         self.meta = {}
 
-        if timestamp is not None:
-            self.timestamp = timestamp
-        else:
-            self.timestamp = make_timestamp()
+        self.version_id = version_id
 
         self.data.update({
             'asn_type': 'None',
             'asn_rule': self.asn_rule,
-            'creation_time': self.timestamp
+            'version_id': self.version_id
         })
 
         if member is not None:
