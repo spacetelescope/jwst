@@ -89,6 +89,8 @@ def gentle_asarray(a, dtype):
                 else:
                     return np.asanyarray(a, dtype=out_dtype)
             return a.view(dtype=np.dtype(new_dtype))
+        else:
+            return np.asanyarray(a, dtype=out_dtype)
     else:
         try:
             a = np.asarray(a, dtype=out_dtype)
