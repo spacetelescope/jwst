@@ -1,4 +1,5 @@
 """Base classes which define the Level3 Associations"""
+from collections import defaultdict
 import logging
 from os.path import basename
 import re
@@ -53,6 +54,9 @@ KEY = 'expname'
 
 class DMS_Level3_Base(Association):
     """Basic class for DMS Level3 associations."""
+
+    # Make sequences type-dependent
+    _sequences = defaultdict(Counter)
 
     def __init__(self, *args, **kwargs):
 
@@ -151,6 +155,9 @@ class DMS_Level3_Base(Association):
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
         super(DMS_Level3_Base, self)._init_hook(member)
+
+        # Set which sequence counter should be used.
+        self._sequence = self._sequences[self.data['asn_type']]
 
         self.schema_file = ASN_SCHEMA
         self.data['target'] = member['TARGETID']
