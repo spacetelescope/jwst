@@ -119,7 +119,7 @@ class AmiInput(object):
     """
 
     template = {"asn_rule": "",
-              "targname": "",
+              "target": "",
               "asn_pool": "",
               "program": "",
               "asn_type": "ami",
@@ -159,7 +159,7 @@ class AmiInput(object):
 
         # An in-memory ImageModel for a single exposure was provided as input
         self.asn = self.template
-        self.asn['targname'] = model.meta.target.catalog_name
+        self.asn['target'] = model.meta.target.catalog_name
         self.asn['program'] = model.meta.observation.program_number
         self.asn['asn_rule'] = 'Singleton_{0}'.format(model.meta.instrument.name)
 

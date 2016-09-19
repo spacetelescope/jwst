@@ -13,4 +13,4 @@ def test_gentle_asarray():
 
     y = util.gentle_asarray(x, new_dtype)
 
-    assert y['bar'][0] == 1.0
+    assert y['BAR'][0] == 1.0

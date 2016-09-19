@@ -166,7 +166,7 @@ class ModelContainer(DataModel):
         self.meta.resample.output = str(asn_data['products'][0]['name'])
         self.meta.table_name = str(filepath)
         self.meta.pool_name = str(asn_data['asn_pool'])
-        self.meta.targname = str(asn_data['targname'])
+        self.meta.targname = str(asn_data['target'])
         self.meta.program = str(asn_data['program'])
         self.meta.asn_type = str(asn_data['asn_type'])
         self.meta.asn_rule = str(asn_data['asn_rule'])

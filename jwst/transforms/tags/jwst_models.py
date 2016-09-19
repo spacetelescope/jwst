@@ -6,12 +6,12 @@ from asdf.tags.transform.basic import TransformType
 
 from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
                       NRSZCoord, Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA,
-                      LRSWavelength, Gwa2Slit, Slit2Msa)
+                      LRSWavelength, Gwa2Slit, Slit2Msa, Logical)
 
 
 
 __all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
-           'Gwa2SlitType', 'Slit2MsaType']
+           'Gwa2SlitType', 'Slit2MsaType', 'LogicalType']
 
 
 class RotationSequenceType(TransformType):
@@ -169,4 +169,22 @@ class Slit2MsaType(TransformType):
             models.append(m)
         node = {'slits': slits,
                 'models': models}
+        return yamlutil.custom_tree_to_tagged_tree(node, ctx)
+
+
+class LogicalType(TransformType):
+    name = "logical"
+    types = [Logical]
+    standard = "jwst_pipeline"
+    version = "0.1.0"
+
+    @classmethod
+    def from_tree_transform(cls, node, ctx):
+        return Logical(node['condition'], node['compareto'], node['value'])
+
+    @classmethod
+    def to_tree_transform(cls, model, ctx):
+        node = {'condition': model.condition,
+                'compareto': model.compareto,
+                'value': model.value}
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)

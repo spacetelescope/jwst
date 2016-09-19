@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 import sys
 import argparse
 import logging
@@ -11,6 +12,10 @@ from jwst.associations.pool import AssociationPool
 
 # Configure logging
 logger = log_config(name=__package__)
+
+# Ruleset names
+DISCOVER_RULESET = 'discover'
+CANDIDATE_RULESET = 'candidate'
 
 
 class Main(object):
@@ -32,14 +37,45 @@ class Main(object):
         parser.add_argument(
             'pool', type=str, help='Association Pool'
         )
-        parser.add_argument(
-            '-r', '--rules', action='append',
-            help='Association Rules file.'
-        )
-        parser.add_argument(
+        op_group = parser.add_mutually_exclusive_group()
+        op_group.add_argument(
             '-i', '--ids', nargs='+',
             dest='asn_candidate_ids',
             help='space-separated list of association candidate IDs to operate on.'
+        )
+        op_group.add_argument(
+            '--discover',
+            action='store_true',
+            help='Produce discovered associations'
+        )
+        op_group.add_argument(
+            '--all-candidates',
+            action='store_true', dest='all_candidates',
+            help='Produce all association candidate-specific associations'
+        )
+        parser.add_argument(
+            '-p', '--path', type=str,
+            default='.',
+            help='Folder to save the associations to. Default: "%(default)s"'
+        )
+        parser.add_argument(
+            '--save-orphans', dest='save_orphans',
+            nargs='?', const='orphaned.csv', default=False,
+            help='Save orphaned members into the specified table. Default: "%(default)s"'
+        )
+        parser.add_argument(
+            '--version-id', dest='version_id',
+            nargs='?', const=True, default=None,
+            help=(
+                'Version tag to add into association name and products.'
+                ' If not specified, no version will be used.'
+                ' If specified without a value, the current time is used.'
+                ' Otherwise, the specified string will be used.'
+            )
+        )
+        parser.add_argument(
+            '-r', '--rules', action='append',
+            help='Association Rules file.'
         )
         parser.add_argument(
             '--ignore-default', action='store_true',
@@ -49,11 +85,6 @@ class Main(object):
             '--dry-run',
             action='store_true', dest='dry_run',
             help='Execute but do not save results.'
-        )
-        parser.add_argument(
-            '-p', '--path', type=str,
-            default='.',
-            help='Folder to save the associations to. Default: "%(default)s"'
         )
         parser.add_argument(
             '-d', '--delimiter', type=str,
@@ -79,11 +110,6 @@ class Main(object):
             '--DMS',
             action='store_true', dest='DMS_enabled',
             help='Running under DMS workflow conditions.'
-        )
-        parser.add_argument(
-            '--discovered-only',
-            action='store_true', dest='discovered_only',
-            help='Only produce discovered associations'
         )
         parser.add_argument(
             '--pool-format', type=str,
@@ -129,38 +155,52 @@ class Main(object):
         #  2) Only discovered assocations that do not match
         #     candidate associations
         #  3) Both discovered and all candidate associations.
-        self.find_discovered = parsed.asn_candidate_ids is None
-        global_constraints['asn_candidate'] = constrain_on_candidates(
-            parsed.asn_candidate_ids
-        )
-
         logger.info('Reading rules.')
+        if not parsed.discover and\
+           not parsed.all_candidates and\
+           parsed.asn_candidate_ids is None:
+            parsed.discover = True
+            parsed.all_candidates = True
+        if parsed.discover or parsed.all_candidates:
+            global_constraints['asn_candidate'] = constrain_on_candidates(
+                None
+            )
+        elif parsed.asn_candidate_ids is not None:
+            global_constraints['asn_candidate'] = constrain_on_candidates(
+                parsed.asn_candidate_ids
+            )
+
         self.rules = AssociationRegistry(
             parsed.rules,
             include_default=not parsed.ignore_default,
-            global_constraints=global_constraints
+            global_constraints=global_constraints,
+            name=CANDIDATE_RULESET
         )
-        if self.find_discovered:
+
+        if parsed.discover:
             self.rules.update(
                 AssociationRegistry(
                     parsed.rules,
-                    include_default=not parsed.ignore_default
+                    include_default=not parsed.ignore_default,
+                    name=DISCOVER_RULESET
                 )
             )
 
         logger.info('Generating associations.')
-        self.associations, self.orphaned = generate(self.pool, self.rules)
+        self.associations, self.orphaned = generate(self.pool, self.rules, version_id=parsed.version_id)
 
-        if self.find_discovered and parsed.discovered_only:
-            raise NotImplementedError('Discovered Only Mode not implemented.')
-            self.associations = self.rules.Utility.filter_cross_candidates(
-                self.associations
+        if parsed.discover:
+            self.associations = self.rules.Utility.filter_discovered_only(
+                self.associations,
+                DISCOVER_RULESET,
+                CANDIDATE_RULESET,
+                keep_candidates=parsed.all_candidates,
             )
 
         logger.info(self.__str__())
 
         if not parsed.dry_run:
-            self.save(path=parsed.path)
+            self.save(path=parsed.path, save_orphans=parsed.save_orphans)
 
     def __str__(self):
         result = []
@@ -174,12 +214,19 @@ class Main(object):
 
         return '\n'.join(result)
 
-    def save(self, path='.'):
+    def save(self, path='.', save_orphans=False):
         """Save the associations to disk as JSON."""
         for asn in self.associations:
             (fname, json_repr) = asn.to_json()
-            with open(''.join((path, '/', fname, '.json')), 'w') as f:
+            with open(os.path.join(path, fname + '.json'), 'w') as f:
                 f.write(json_repr)
+
+        if save_orphans:
+            self.orphaned.write(
+                os.path.join(path, save_orphans),
+                format='ascii',
+                delimiter='|'
+            )
 
 
 # Utilities

@@ -209,9 +209,16 @@ def open(init=None, extensions=None):
         from . import cube
         new_class = cube.CubeModel
     elif len(shape) == 2:
-        # It's an ImageModel
-        from . import image
-        new_class = image.ImageModel
+        try:
+            hdu = hdulist[(fits_header_name('SCI'), 2)]
+        except (KeyError, NameError):
+            # It's an ImageModel
+            from . import image
+            new_class = image.ImageModel
+        else:
+            # It's a MultiSlitModel
+            from . import multislit
+            new_class = multislit.MultiSlitModel
     else:
         raise ValueError("Don't have a DataModel class to match the shape")
 

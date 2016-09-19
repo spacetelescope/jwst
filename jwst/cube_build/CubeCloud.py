@@ -8,30 +8,42 @@ from .. import datamodels
 from ..datamodels import dqflags
 from . import CubeD2C
 from . import cube
+from . import coord
 #________________________________________________________________________________
 
-
-def MakePointCloudMIRI(self, x, y, file_no, c1_offset, c2_offset, input_model):
+def MakePointCloudMIRI(self, input_model,
+                       x, y, file_no, 
+                       Cube,
+                       v2v32radec,
+                       c1_offset, c2_offset):
     """
+
     Short Summary
     -------------
-    map x,y to Point cloud
+    map x,y to Point cloud  in final coordinate system
 
     Parameters
     ----------
     x,y list of x and y values to map
     input_model: slope image
-    transform: wsc transform to go from x,y to point cloud
+    file_no: the index on the files that are used to construct the Cube
+    Cube: holds the basic information on the Cube (including wcs of Cube)
+    v2v32radec: temporary (until information is contained in assign_wcs) 
+                holds the information to do the transformation from v2-v3 to ra-dec
+    c1_offset, c2_offset: dither offsets for each file (default = 0)
+               provided by the user
+
+
 
 
     Returns
     -------
-    location of x,y in Point Cloud as well as mapping of spaxel to each overlapping PointCloud member
+    coordinates of x,y in point cloud
 
 
     """
-
-    det2ab_transform = input_model.meta.wcs.get_transform('detector', 'alpha_beta')
+#________________________________________________________________________________
+    det2ab_transform = input_model.meta.wcs.get_transform('detector','alpha_beta')
     alpha, beta, wave = det2ab_transform(x, y)
 
     detector2v23 = input_model.meta.wcs.get_transform('detector', 'V2_V3')
@@ -42,21 +54,29 @@ def MakePointCloudMIRI(self, x, y, file_no, c1_offset, c2_offset, input_model):
     dq_all = input_model.dq[y,x]
     #v2,v3,lam = input_model.meta.wcs(x,y)
 
+#________________________________________________________________________________
+# in the slice gaps the v2,v3 and lam are NaN values. Select the valid slice pixels
+# based on if v2,v3,lam are finite 
     valid1 = np.isfinite(v2) 
     valid2 = np.isfinite(v3)
     valid3 = np.isfinite(lam)  
-    #index = np.asarray(np.where(np.logical_and(np.logical_and(valid1,valid2),valid3)))
 
+    valid = dq_all.copy() * 0 
+    index  = np.where(np.logical_and(np.logical_and(valid1,valid2),valid3))
+    valid[index] = 1
 
-    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['DROPOUT'] + dqflags.pixel['NON_SCIENCE'] +
-                 dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] + dqflags.pixel['RC'] + dqflags.pixel['NONLINEAR'])
-    
-    good_data = np.asarray(np.where((np.bitwise_and(dq_all, all_flags)==0) & (np.logical_and(np.logical_and(valid1,valid2),valid3))))
+#________________________________________________________________________________
+# using the DQFlags from the input_image find pixels that should be excluded 
+# from the cube mapping    
+    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['DROPOUT'] + 
+                 dqflags.pixel['NON_SCIENCE'] +
+                 dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] + 
+                 dqflags.pixel['RC'] + dqflags.pixel['NONLINEAR'])
 
+    # find the location of all the values to reject in cube building    
+    good_data = np.where((np.bitwise_and(dq_all, all_flags)==0) & (valid == 1))
 
-    # find the location of all the values to reject in cube building
-    #loc_do_not_use = np.bitwise_and(dq_all,dqflags.pixel['DO_NOT_USE'])  
-
+    # good data holds the location of pixels we want to map to cube 
     flux = flux_all[good_data]
     error = error_all[good_data]
     alpha = alpha[good_data]
@@ -64,15 +84,50 @@ def MakePointCloudMIRI(self, x, y, file_no, c1_offset, c2_offset, input_model):
     xpix = x[good_data]
     ypix = y[good_data]
 
-    coord1 = v2[good_data] * 60.0
-    coord2 = v3[good_data] * 60.0
-    coord1 = coord1 - c1_offset 
-    coord2 = coord2 - c2_offset 
-    wave = lam[good_data]
+    if(self.coord_system == 'alpha-beta'):
+        coord1 = alpha
+        coord2 = beta
 
+#    elif (self.coord_system == 'v2-v3'):
+#        coord1 = v2[good_data] * 60.0
+#        coord2 = v3[good_data] * 60.0
+#        coord1 = coord1 - c1_offset 
+#        coord2 = coord2 - c2_offset
+    else:
+        v2_use = v2[good_data] #arc mins
+        v3_use = v3[good_data] #arc mins
+
+        ra_ref,dec_ref,roll_ref,v2_ref,v3_ref = v2v32radec
+        print('ref values',ra_ref,dec_ref,roll_ref,v2_ref,v3_ref)
+        ra,dec = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,
+                                  v2_ref, v3_ref,
+                                  v2_use,v3_use) # return ra and dec in degrees
+        ra = ra - c1_offset/3600.0
+        dec = dec - c2_offset/3600.0
+        xi,eta = coord.radec2std(Cube.Crval1, Cube.Crval2,ra,dec) # xi,eta in arc seconds
+        coord1 = xi
+        coord2 = eta
+
+        ra_test,dec_test=coord.std2radec(Cube.Crval1,Cube.Crval2,xi,eta)
+        print('testing', ra,dec,ra_test,dec_test)
+        print('ref values',ra_ref,dec_ref,roll_ref,v2_ref,v3_ref)
+        v2_test,v3_test = coord.RADEC2V2V3(ra_ref,dec_raf,roll_ref,
+                                           v2_ref,v3_ref,
+                                           ra_test,dec_test)
+        print('testing', v2_use,v3_use,v2_test,v3_test)
+        #sys.exit('STOP')
+
+
+    wave = lam[good_data]
     ifile = np.zeros(flux.shape, dtype='int') + int(file_no)
 
     # get in form of 8 columns of data - shove the information in an array.
+
+    print('xi results', coord1[0:10])
+    print('eta results',coord2[0:10])
+    print('wave',wave[0:10])
+    # stuff the point cloud arrays for this configuration into cloud 
+    # Point cloud will eventually contain all the cloud values
 
     cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile, xpix, ypix])
 
@@ -163,6 +218,31 @@ def MakePointCloudMIRI_DistortionFile(self, x, y, file_no, c1_offset, c2_offset,
 
 def FindROI(self, Cube, spaxel, PointCloud):
 
+    """
+    Short Summary
+    -------------
+    using the point cloud loop over the Spaxel and find the point cloud members that
+    fall withing the ROI of the spaxel center. 
+
+
+    For MIRI the weighting of the Cloud points is based on the distance in the local
+    MRS alpha-beta plane. Each cloud point as an associated alpha-beta coordinate
+    The spaxel centers have xi,eta & V2,V3 so we need to know the channel and band information
+    and transform the V2,V3 coordinates back to alpha-beta
+
+    Parameters
+    ----------
+    Cube: holds basic Cube information
+    spaxel: a class that holds information on each spaxel in the cube. 
+    PointCloud: array of point cloud members
+
+    Returns
+    -------
+    location of x,y in Point Cloud as well as mapping of spaxel to each overlapping PointCloud member
+
+
+    """
+#________________________________________________________________________________
     nxc = len(Cube.xcoord)
     nzc = len(Cube.zcoord)
     nyc = len(Cube.ycoord)
@@ -172,26 +252,34 @@ def FindROI(self, Cube, spaxel, PointCloud):
 
     iprint = 0
     nn = len(PointCloud[0])
-#    print('number of elements in PT',nn)
+    
+    print('number of elements in PT',nn)
+# loop over each point cloud member - might want to change this to looping
+# over spaxels but for now just keep it point cloud elements because it
+# is easy to find ROI members because the cube spaxel values are regularily spaced
+
     for ipt in range(0, nn - 1):
 
-#        if(iprint == 0):
-#            print('On pt member',ipt,'out of ',nn)
         ifile = int(PointCloud[7, ipt])
-
         a = Cube.a_wave[ifile]
         c = Cube.c_wave[ifile]
         wa = Cube.a_weight[ifile]
         wc = Cube.c_weight[ifile]
-        wave = PointCloud[2, ipt]
+        wave = PointCloud[2,ipt]
         weights = FindNormalizationWeights(wave, a, c, wa, wc)
 
         weight_alpha = weights[0]
         weight_beta = weights[1]
         weight_wave = weights[2]
 
-        coord1 = PointCloud[0, ipt]
-        coord2 = PointCloud[1, ipt]
+        ra_ref = Cube.ra_ref[ifile]
+        dec_ref = Cube.dec_ref[ifile]
+        roll_ref = Cube.roll_ref[ifile]
+        v2_ref = Cube.v2_ref[ifile]
+        v3_ref = Cube.v3_ref[ifile]
+
+        coord1 = PointCloud[0, ipt]  # default coords xi
+        coord2 = PointCloud[1, ipt]  # default coords eta
         alpha = PointCloud[3, ipt]
         beta = PointCloud[4, ipt]
         x = PointCloud[8, ipt]
@@ -200,39 +288,63 @@ def FindROI(self, Cube, spaxel, PointCloud):
         if(self.coord_system == 'alpha-beta'):
             coord1 = alpha
             coord2 = beta
-# Map this point cloud to spaxel (distance from spaxel center = ROI)
-# use the vector of cube centers in each dimension to speed things up
-        # both coordinates are in arc seconds
+
+        
+        # Coord1 and Coord2 are in the coordinate system of the cube.
+        # using the Cube regularily spaced arrays - Cube.zcoord, xcoord,ycoord
+        # find the spaxels that fall withing ROI of point cloud
+
+        # find values within the ROI
         indexz = np.asarray(np.where(abs(Cube.zcoord - wave) <= self.roiw))
         indexx = np.asarray(np.where(abs(Cube.xcoord - coord1) <= self.roi1))
         indexy = np.asarray(np.where(abs(Cube.ycoord - coord2) <= self.roi2))
 
 
         # transform Cube Spaxel to alpha,beta system of Point Cloud
-        # use inverse transfrom of V2,V3 back to local alpha,beta, lam
-        # convert v2,v3 from arc seconds to arc min first
+        # for MIRI weighting parameters are based on distance in alpha-beta coord system
+        # transform the cube coordinate values to alpha and beta values 
+        # xi,eta -> ra,dec
+        # ra-dec -> v2,v3 
+        # v2,v3 -> local alph,beta
 
 
         zloc = Cube.zcoord[indexz[0]]
-        xloc = Cube.xcoord[indexx[0]]
-        yloc = Cube.ycoord[indexy[0]]
+        xloc = Cube.xcoord[indexx[0]]  # default coordinates are xi
+        yloc = Cube.ycoord[indexy[0]]  # default coordinates are eta
 
-
+        ra_spaxel,dec_spaxel=coord.std2radec(Cube.Crval1,Cube.Crval2,
+                                             Cube.xcoord[x],Cube.ycoord[x])
+        v2_spaxel,v3_spaxel = coord.RADEC2V2V3(ra_ref,dec_ref,roll_ref,
+                                                v2_ref,v3_ref,
+                                                ra_spaxel, dec_spaxel)
+        
         v2ab_transform = Cube.transform[ifile]
+
+
+        alpha_spaxel,beta_spaxel,wave_spaxel = v2ab_transform(v2_spaxel/0.0,v3_spaxel/60.0,zloc[iz])
+        alpha_distance = abs(alpha-alpha_spaxel)
+        beta_distance = abs(beta-beta_spaxel)
+        wave_distance  = abs(wave-wave_spaxel)
+
+        xn = alpha_distance/weight_alpha
+        yn = beta_distance/weight_beta
+        wn = wave_distance/weight_wave
+        weight_distance = xn*xn + yn*yn + wn*wn
+
+
+        distance1 = abs(xloc - coord1)
+        distance2 = abs(yloc - coord2)
 
         if(self.coord_system == 'alpha-beta'):
             distance1 = abs(xloc - alpha)
             distance2 = abs(yloc - beta)
 
-        if(self.coord_system == 'v2-v3'):
-            distance1 = abs(xloc - coord1)
-            distance2 = abs(yloc - coord2)
-
+        # Determine the distances in alpha-beta system
         distance3 = abs(zloc - wave)
         distance12 = distance1 * distance1
         distance22 = distance2 * distance2
         distance32 = distance3 * distance3
-
+        
         iz = 0
         for zz in indexz[0]:
             istart = zz * nplane
@@ -241,18 +353,10 @@ def FindROI(self, Cube, spaxel, PointCloud):
                 ix = 0
                 for xx in indexx[0]:
 
+                    # in Cube_Build_step we saved the coordinate of the spaxel centers also in V2,V3
+                    
 #                    if(self.coord_system=='v2-v3'):
-#                        xloc60 = xloc[ix]/60.0
-#                        yloc60 = yloc[iy]/60.0
-#                        alpha_spaxel,beta_spaxel,wave_spaxel = v2ab_transform(xloc60,yloc60,zloc[iz])
-#                        alpha_distance = abs(alpha-alpha_spaxel)
-#                        beta_distance = abs(beta-beta_spaxel)
-#                        wave_distance  = abs(wave-wave_spaxel)
 
-#                        xn = alpha_distance/weight_alpha
-#                        yn = beta_distance/weight_beta
-#                        wn = wave_distance/weight_wave
-#                        weight_distance = xn*xn + yn*yn + wn*wn
 
 
                     weight_distance = distance12[ix] + distance22[iy] + distance32[iz]
