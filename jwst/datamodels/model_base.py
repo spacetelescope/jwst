@@ -27,11 +27,12 @@ from . import fits_support
 from . import properties
 from . import schema as mschema
 
+from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
 
 
-jwst_extensions = [GWCSExtension(), JWSTExtension()]
+jwst_extensions = [GWCSExtension(), JWSTExtension(), BaseExtension()]
 
 class DataModel(properties.ObjectNode):
     """
