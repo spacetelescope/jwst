@@ -2,7 +2,6 @@ from ast import literal_eval
 from collections import namedtuple, MutableMapping
 from copy import deepcopy
 from datetime import datetime
-from itertools import count
 import json
 import jsonschema
 import logging
@@ -13,6 +12,7 @@ from astropy.extern import six
 from numpy.ma import masked
 
 from .exceptions import (AssociationError, AssociationProcessMembers)
+from .lib.counter import Counter
 from .registry import AssociationRegistry
 
 __all__ = [
@@ -84,7 +84,7 @@ class Association(MutableMapping):
     GLOBAL_CONSTRAINTS = {}
 
     # Associations of the same type are sequenced.
-    _sequence = count(1)
+    _sequence = Counter(start=1)
 
     def __init__(
             self,
@@ -318,7 +318,7 @@ class Association(MutableMapping):
 
     @classmethod
     def reset_sequence(cls):
-        cls._sequence = count(1)
+        cls._sequence = Counter(start=1)
 
     def _init_hook(self, member):
         """Post-check and pre-member-adding initialization."""
