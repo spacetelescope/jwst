@@ -343,8 +343,8 @@ class DataSet(object):
 
         # Populate combined SCI, DQ and ERR arrays
         data_comb = sci_data_1 * 0  # Pixels that are bad in both will stay 0
-        data_comb[wh_1_good_2_good] = 0.5*(sci_data_1[wh_1_good_2_good] +
-                                       sci_data_2[wh_1_good_2_good])
+        data_comb[wh_1_good_2_good] = 0.5 * (sci_data_1[wh_1_good_2_good] +
+                                             sci_data_2[wh_1_good_2_good])
         data_comb[wh_1_good_2_bad] = sci_data_1[wh_1_good_2_bad]
         data_comb[wh_1_bad_2_good] = sci_data_2[wh_1_bad_2_good]
 
@@ -352,11 +352,11 @@ class DataSet(object):
         dq_comb[wh_1_good_2_bad] = dq_data_1[wh_1_good_2_bad]
         dq_comb[wh_1_bad_2_good] = dq_data_2[wh_1_bad_2_good]
         dq_comb[wh_1_bad_2_bad] = np.bitwise_or(dqflags.group['DO_NOT_USE'],
-                                               dq_comb[wh_1_bad_2_bad])
+                                                dq_comb[wh_1_bad_2_bad])
 
         err_comb = err_data_1.copy() * 0 # will leave bad (= 0)
-        err_comb[wh_1_good_2_good] = 0.5*(err_data_1[wh_1_good_2_good] +
-                                          err_data_2[wh_1_good_2_good])
+        err_comb[wh_1_good_2_good] = 0.5 * (err_data_1[wh_1_good_2_good] +
+                                            err_data_2[wh_1_good_2_good])
         err_comb[wh_1_good_2_bad] = err_data_1[wh_1_good_2_bad]
         err_comb[wh_1_bad_2_good] = err_data_2[wh_1_bad_2_good]
 
