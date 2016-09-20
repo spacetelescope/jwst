@@ -64,9 +64,11 @@ class ModelContainer(model_base.DataModel):
             self._models = init._models
         elif isinstance(init, six.string_types):
             try:
-                self.from_asn(init)
-            except:
-                raise ValueError('file path must be an ASN file')
+                self.from_asn(init, **kwargs)
+            except (IOError):
+                raise IOError('Cannot open files.')
+            except ValueError:
+                raise ValueError('{0} must be an ASN file'.format(init))
         else:
             raise TypeError('Input {0!r} is not a list of DataModels or '
                             'an ASN file'.format(init))
@@ -136,7 +138,7 @@ class ModelContainer(model_base.DataModel):
         models_copy = [m.copy() for m in self._models]
         return self.__class__(init=models_copy)
 
-    def from_asn(self, filepath):
+    def from_asn(self, filepath, **kwargs):
         """
         Load fits files from a JWST association file.
 
@@ -157,7 +159,10 @@ class ModelContainer(model_base.DataModel):
         # make a list of all the input FITS files
         infiles = [op.join(basedir, member['expname']) for member
                    in asn_data['products'][0]['members']]
-        self._models = [datamodel_open(infile) for infile in infiles]
+        try:
+            self._models = [datamodel_open(infile, **kwargs) for infile in infiles]
+        except IOError:
+            raise IOError('Cannot open data models.')
 
         # populate the output metadata with the output file from the ASN file
         self.meta.resample.output = str(asn_data['products'][0]['name'])

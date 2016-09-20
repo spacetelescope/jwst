@@ -9,17 +9,14 @@ import numpy as np
 from astropy.extern import six
 from astropy.io import fits
 
-from . import model_base
-
-
-def open(init=None, extensions=None):
+def open(init=None, extensions=None, **kwargs):
     """
     Creates a DataModel from a number of different types
 
     Parameters
     ----------
 
-    init : shape tuple, file path, file object, astropy.io.fits.HDUList, 
+    init : shape tuple, file path, file object, astropy.io.fits.HDUList,
            numpy array, dict, None
 
         - None: A default data model with no shape
@@ -48,6 +45,8 @@ def open(init=None, extensions=None):
     model : DataModel instance
     """
 
+    from . import model_base
+
     if init is None:
         return model_base.DataModel(None)
     # Send _asn.json files to ModelContainer; avoid shape "cleverness" below
@@ -55,7 +54,8 @@ def open(init=None, extensions=None):
             basename(init).split('.')[0].split('_')[-1] == 'asn'):
         try:
             from . import container
-            return container.ModelContainer(init, extensions=extensions)
+            return container.ModelContainer(init, extensions=extensions, 
+                **kwargs)
         except:
             raise TypeError(
                 "init ASN not valid for ModelContainer"
@@ -88,8 +88,7 @@ def open(init=None, extensions=None):
         else:
             if hasattr(hdu, 'shape'):
                 shape = hdu.shape
-
-    # Be clever about which type to return, otherwise, just return a new 
+    # Be clever about which type to return, otherwise, just return a new
     # instance of the requested class
     if len(shape) == 0:
         new_class = model_base.DataModel
@@ -130,8 +129,11 @@ def open(init=None, extensions=None):
             new_class = multislit.MultiSlitModel
     else:
         raise ValueError("Don't have a DataModel class to match the shape")
-
-    return new_class(init, extensions=extensions)
+    if isinstance(init, (six.text_type, bytes)):
+        print('Opening {0} as {1}'.format(basename(init), new_class))
+    else:
+        print('Opening as {0}'.format(new_class))
+    return new_class(init, extensions=extensions, **kwargs)
 
 
 def can_broadcast(a, b):
