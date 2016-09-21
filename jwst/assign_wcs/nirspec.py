@@ -19,7 +19,7 @@ from gwcs import coordinate_frames as cf
 
 from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa, slitid_to_slit,
                                  AngleFromGratingEquation, WavelengthFromGratingEquation, Gwa2Slit,
-                                 Unitless2DirCos)
+                                 Unitless2DirCos, Logical)
 from .util import not_implemented_mode
 from . import pointing
 
@@ -418,10 +418,12 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
     model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
    """
+    ymin = -.55
+    ymax = .55
     agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
     lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
-    #lam = (wrange[1] - wrange[0]) / 2 + wrange[0]
+    mask = mask_slit(ymin, ymax)
 
     ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
     ifupost = AsdfFile.open(reference_files['ifupost'])
@@ -438,7 +440,7 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
                  Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                  Identity(1) & gwa2msa & Identity(2) | \
                  Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
-                 Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq
+                 Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
 
         # msa to before_gwa
         #msa2bgwa = Mapping((0, 1, 2, 2)) | msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
@@ -473,9 +475,12 @@ def gwa_to_slit(slits_id, disperser, wrange, order, reference_files):
     model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
     """
+    ymin = -.55
+    ymax = .55
     agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
     lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
+    mask = mask_slit(ymin, ymax)
 
     msa = AsdfFile.open(reference_files['msa'])
     slit_models = {}
@@ -494,7 +499,7 @@ def gwa_to_slit(slits_id, disperser, wrange, order, reference_files):
                     Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                     Identity(1) & gwa2msa & Identity(2) | \
                     Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
-                    Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq
+                    Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
 
                 # msa to before_gwa
                 msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
@@ -555,6 +560,35 @@ def dms_to_sca(input_model):
     elif detector == 'NRS1':
         model = models.Identity(2)
     return subarray2full | model
+
+
+def mask_slit(ymin=-.5, ymax=.5):
+    """
+    Returns a model which masks out pixels in a NIRSpec cutout outside the slit.
+
+    Uses ymin, ymax for the slit and the wavelength range to define the location of the slit.
+
+    Parameters
+    ----------
+    ymin, ymax : float
+        ymin and ymax relative boundary of a slit.
+
+    Returns
+    -------
+    model : `~astropy.modeling.core.Model`
+        A model which takes x_slit, y_slit, lam inputs and substitutes the
+        values outside the slit with NaN.
+
+    """
+    greater_than_ymax = Logical(condition='GT', compareto=ymax, value=np.nan)
+    less_than_ymin = Logical(condition='LT', compareto=ymin, value=np.nan)
+
+    model = Mapping((0, 1, 2, 1)) | Identity(3) & \
+          (greater_than_ymax | less_than_ymin | models.Scale(0)) | \
+          Mapping((0, 1, 3, 2, 3)) | Identity(1) & Mapping((0,), n_inputs=2) + Mapping((1,)) & \
+          Mapping((0,), n_inputs=2) + Mapping((1,))
+    model.inverse = Identity(3)
+    return model
 
 
 def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5):
@@ -754,7 +788,6 @@ def oteip_to_v23(reference_files):
         ote = f.tree['model'].copy()
     fore2ote_mapping = Identity(3, name='fore2ote_mapping')
     fore2ote_mapping.inverse = Mapping((0, 1, 2, 2))
-
     # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)

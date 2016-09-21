@@ -2,7 +2,6 @@ import numpy as np
 
 from scipy import optimize
 from scipy.ndimage import fourier_shift
-import matplotlib.pyplot as plt
 
 from ..datamodels import QuadModel
 
