@@ -674,12 +674,24 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     (d_flat, d_flat_dq) = detector_flat(wl, d_flat_model,
                                         xstart, xstop, ystart, ystop,
                                         exposure_type, slit_name)
-    print("xxx f_flat ranges from {}  ({})  to {}"
-          .format(f_flat.min(), f_flat.mean(dtype=np.float64), f_flat.max()))
-    print("xxx s_flat ranges from {}  ({})  to {}"
-          .format(s_flat.min(), s_flat.mean(dtype=np.float64), s_flat.max()))
-    print("xxx d_flat ranges from {}  ({})  to {}"
-          .format(d_flat.min(), d_flat.mean(dtype=np.float64), d_flat.max()))
+    try:
+        print("xxx f_flat ranges from {}  ({})  to {}"
+              .format(f_flat.min(), f_flat.mean(dtype=np.float64),
+                      f_flat.max()))
+    except AttributeError:
+        print("xxx f_flat is not an array")
+    try:
+        print("xxx s_flat ranges from {}  ({})  to {}"
+              .format(s_flat.min(), s_flat.mean(dtype=np.float64),
+                      s_flat.max()))
+    except AttributeError:
+        print("xxx s_flat is not an array")
+    try:
+        print("xxx d_flat ranges from {}  ({})  to {}"
+              .format(d_flat.min(), d_flat.mean(dtype=np.float64),
+                      d_flat.max()))
+    except AttributeError:
+        print("xxx d_flat is not an array")
 
     flat_2d = f_flat * s_flat * d_flat
 
@@ -829,6 +841,11 @@ def spectrograph_flat(wl, s_flat_model,
     optical_path_part = S_FLAT
     quadrant = None
 
+    print("xxx debug s_flat:  xstart, xstop, ystart, ystop = {} {} {} {}"
+          .format(xstart, xstop, ystart, ystop))
+    if xstart >= xstop or ystart >= ystop:
+        return (1., None)
+
     (tab_wl, tab_flat) = read_flat_table(s_flat_model,
                                          exposure_type, optical_path_part,
                                          slit_name, quadrant)
@@ -862,6 +879,7 @@ def spectrograph_flat(wl, s_flat_model,
                                                 image_wl, wl)
     else:
         flat_2d = full_array_flat[ystart:ystop, xstart:xstop]
+        print("xxx debug s_flat:  flat_2d.shape = {}".format(flat_2d.shape))
         print("xxx in spectrograph_flat:  flat_2d ranges from {}  ({})  to {}"
               .format(flat_2d.min(), flat_2d.mean(dtype=np.float64),
                       flat_2d.max()))
@@ -910,6 +928,11 @@ def detector_flat(wl, d_flat_model,
 
     optical_path_part = D_FLAT
     quadrant = None
+
+    print("xxx debug d_flat:  xstart, xstop, ystart, ystop = {} {} {} {}"
+          .format(xstart, xstop, ystart, ystop))
+    if xstart >= xstop or ystart >= ystop:
+        return (1., None)
 
     (tab_wl, tab_flat) = read_flat_table(d_flat_model,
                                          exposure_type, optical_path_part,
