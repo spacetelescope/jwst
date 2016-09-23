@@ -62,9 +62,9 @@ def extract2d(input_model, which_subarray=None):
         nslit = len(output_model.slits) - 1
         output_model.slits[nslit].name = slit_name
         output_model.slits[nslit].xstart = xlo + 1
-        output_model.slits[nslit].xsize = xhi - xlo + 1
-        output_model.slits[nslit].ystart = ylo +1
-        output_model.slits[nslit].ysize = yhi - ylo + 1
+        output_model.slits[nslit].xsize = xhi - xlo
+        output_model.slits[nslit].ystart = ylo + 1
+        output_model.slits[nslit].ysize = yhi - ylo
     del input_model
     # Set the step status to COMPLETE
     output_model.meta.cal_step.extract_2d = 'COMPLETE'
