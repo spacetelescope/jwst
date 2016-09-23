@@ -113,6 +113,8 @@ def imaging(input_model, reference_files):
                             (v2v3, v23_to_sky),
                             (world, None)]
     else:
+        # convert to microns if the pipeline ends earlier
+        gwa2msa = (gwa2msa | Identity(2) & Scale(10**6)).rename('gwa2msa')
         imaging_pipeline = [(det, dms2detector),
                             (sca, det2gwa),
                             (gwa, gwa2msa),
@@ -170,11 +172,13 @@ def ifu(input_model, reference_files):
                     (oteip, oteip2v23.rename('oteip2v23')),
                     (v2v3, None)]
     else:
-
+        # convert to microns if the pipeline ends earlier
+        #slit2msa = (Mapping((0, 1, 2, 3, 4)) | slit2msa | Identity(2) & Scale(10**6)).rename('slit2msa')
+        slit2msa = (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')
         pipeline = [(det, dms2detector),
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
-                    (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
+                    (slit_frame, slit2msa),
                     (msa_frame, None)]
 
     return pipeline
@@ -239,6 +243,9 @@ def slits_wcs(input_model, reference_files):
                         (oteip, oteip2v23),
                         (v2v3, None)]
     else:
+        # convert to microns if the pipeline ends earlier
+        #gwa2slit = (gwa2slit | Identity(2) & Scale(10**6)).rename('gwa2slit')
+        gwa2slit = (gwa2slit).rename('gwa2slit')
         msa_pipeline = [(det, dms2detector),
                         (sca, det2gwa),
                         (gwa, gwa2slit),
