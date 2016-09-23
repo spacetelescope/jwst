@@ -68,8 +68,8 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         'GLS' specifies that generalized least squares should be used.
 
     weighting: string
-        'unwtd' specifies that no weighting should be used (default)
-        'optim' specifies that optimal weighting should be used
+        'unweighted' specifies that no weighting should be used (default)
+        'optimal' specifies that optimal weighting should be used
 
     Returns
     -------
@@ -131,8 +131,8 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         gain for all pixels
 
     weighting: string
-        'unwtd' specifies that no weighting should be used (default)
-        'optim' specifies that optimal weighting should be used
+        'unweighted' specifies that no weighting should be used (default)
+        'optimal' specifies that optimal weighting should be used
 
     Returns
     -------
@@ -830,8 +830,8 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect, gain_sect,
         number of groups per integration
 
     weighting: string
-        'unwtd' specifies that no weighting should be used (default)
-        'optim' specifies that optimal weighting should be used
+        'unweighted' specifies that no weighting should be used (default)
+        'optimal' specifies that optimal weighting should be used
 
     Returns
     -------
@@ -1024,8 +1024,8 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         number of groups per integration
 
     weighting: string
-        'unwtd' specifies that no weighting should be used (default)
-        'optim' specifies that optimal weighting should be used
+        'unweighted' specifies that no weighting should be used (default)
+        'optimal' specifies that optimal weighting should be used
 
     total_mask_sum: int, 1D array
         initial number of good reads along ramp, used to distinguish between
@@ -1246,8 +1246,8 @@ def fit_lines(data, mask_2d, end_heads, end_st, start, rn_sect, gain_sect,
         number of groups per integration
 
     weighting: string
-        'unwtd' specifies that no weighting should be used (default)
-        'optim' specifies that optimal weighting should be used
+        'unweighted' specifies that no weighting should be used (default)
+        'optimal' specifies that optimal weighting should be used
 
     Returns
     -------
@@ -1325,10 +1325,10 @@ def fit_lines(data, mask_2d, end_heads, end_st, start, rn_sect, gain_sect,
     mask_2d = mask_2d[:, good_pix]
     nreads_1d = nreads_1d[good_pix]
 
-    if weighting.lower() == 'optim': # do the fits using optimal weighting
+    if weighting.lower() == 'optimal': # do the fits using optimal weighting
         # get sums from optimal weighting
         sumx, sumxx, sumxy, sumy, nreads_wtd, xvalues =\
-           calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, good_pix, \
+           calc_opt_sums(rn_sect, gain_sect, data_masked, mask_2d, \
                           xvalues)
 
         slope, intercept, sig_slope, sig_intercept =\
@@ -1336,8 +1336,8 @@ def fit_lines(data, mask_2d, end_heads, end_st, start, rn_sect, gain_sect,
 
         denominator = nreads_wtd * sumxx - sumx**2
 
-    else: # do the fits using unweighted weighting
-        # get sums from unweighted
+    elif weighting.lower() == 'unweighted': # do the fits using unweighted weighting
+        # get sums from unweighted weighting
         sumx, sumxx, sumxy, sumy =\
               calc_unwtd_sums(data_masked, xvalues)
 
@@ -1345,6 +1345,9 @@ def fit_lines(data, mask_2d, end_heads, end_st, start, rn_sect, gain_sect,
 
         slope, intercept, sig_slope, sig_intercept, line_fit =\
                calc_unwtd_fit(xvalues, nreads_1d, sumxx, sumx, sumxy, sumy)
+
+    else: # unsupported weighting type specified
+        log.error('FATAL ERROR: unsupported weighting type specified.')
 
     line_fit = 0
     variance = nreads_1d / denominator

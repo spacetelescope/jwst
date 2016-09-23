@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 import sys
 import argparse
 import logging
@@ -11,6 +12,10 @@ from jwst.associations.pool import AssociationPool
 
 # Configure logging
 logger = log_config(name=__package__)
+
+# Ruleset names
+DISCOVER_RULESET = 'discover'
+CANDIDATE_RULESET = 'candidate'
 
 
 class Main(object):
@@ -32,28 +37,54 @@ class Main(object):
         parser.add_argument(
             'pool', type=str, help='Association Pool'
         )
-        parser.add_argument(
-            '-r', '--rules', action='append',
-            help='Association Rules file.'
-        )
-        parser.add_argument(
+        op_group = parser.add_mutually_exclusive_group()
+        op_group.add_argument(
             '-i', '--ids', nargs='+',
             dest='asn_candidate_ids',
             help='space-separated list of association candidate IDs to operate on.'
+        )
+        op_group.add_argument(
+            '--discover',
+            action='store_true',
+            help='Produce discovered associations'
+        )
+        op_group.add_argument(
+            '--all-candidates',
+            action='store_true', dest='all_candidates',
+            help='Produce all association candidate-specific associations'
+        )
+        parser.add_argument(
+            '-p', '--path', type=str,
+            default='.',
+            help='Folder to save the associations to. Default: "%(default)s"'
+        )
+        parser.add_argument(
+            '--save-orphans', dest='save_orphans',
+            nargs='?', const='orphaned.csv', default=False,
+            help='Save orphaned members into the specified table. Default: "%(default)s"'
+        )
+        parser.add_argument(
+            '--version-id', dest='version_id',
+            nargs='?', const=True, default=None,
+            help=(
+                'Version tag to add into association name and products.'
+                ' If not specified, no version will be used.'
+                ' If specified without a value, the current time is used.'
+                ' Otherwise, the specified string will be used.'
+            )
+        )
+        parser.add_argument(
+            '-r', '--rules', action='append',
+            help='Association Rules file.'
         )
         parser.add_argument(
             '--ignore-default', action='store_true',
             help='Do not include default rules. -r should be used if set.'
         )
         parser.add_argument(
-            '--dry_run',
+            '--dry-run',
             action='store_true', dest='dry_run',
             help='Execute but do not save results.'
-        )
-        parser.add_argument(
-            '-p', '--path', type=str,
-            default='.',
-            help='Folder to save the associations to. Default: "%(default)s"'
         )
         parser.add_argument(
             '-d', '--delimiter', type=str,
@@ -81,9 +112,14 @@ class Main(object):
             help='Running under DMS workflow conditions.'
         )
         parser.add_argument(
-            '--cross-candidate-only',
-            action='store_true', dest='cross_candidate_only',
-            help='Only produce cross-candidate associations'
+            '--pool-format', type=str,
+            default='ascii',
+            help=(
+                'Format of the pool file.'
+                ' Any format allowed by the astropy'
+                ' Unified File I/O interface is allowed.'
+                ' Default: "%(default)s"'
+            )
         )
 
         parsed = parser.parse_args(args=args)
@@ -101,7 +137,8 @@ class Main(object):
 
         logger.info('Reading pool {}'.format(parsed.pool))
         self.pool = AssociationPool.read(
-            parsed.pool, delimiter=parsed.delimiter
+            parsed.pool, delimiter=parsed.delimiter,
+            format=parsed.pool_format,
         )
 
         # DMS: Add further info to logging.
@@ -111,46 +148,59 @@ class Main(object):
             pass
 
         # Setup rules.
-
-        # Check for Candidate-specific or whole program.
-        # In DMS, this is the difference between Level 3
-        # versus Level 3.5 processing.
-        # The rules themselves do not contain this knowledge.
-        self.cross_candidate_mode = parsed.asn_candidate_ids is None
-        self.cross_candidate_only = parsed.cross_candidate_only
         global_constraints = {}
-        if not self.cross_candidate_mode:
-            global_constraints['asn_candidate_ids'] = {
-                'value': parsed.asn_candidate_ids,
-                'inputs': ['ASN_CANDIDATE_ID', 'OBS_NUM'],
-                'force_unique': True,
-            }
 
+        # Determine mode of operation. Options are
+        #  1) Only specified candidates
+        #  2) Only discovered assocations that do not match
+        #     candidate associations
+        #  3) Both discovered and all candidate associations.
         logger.info('Reading rules.')
+        if not parsed.discover and\
+           not parsed.all_candidates and\
+           parsed.asn_candidate_ids is None:
+            parsed.discover = True
+            parsed.all_candidates = True
+        if parsed.discover or parsed.all_candidates:
+            global_constraints['asn_candidate'] = constrain_on_candidates(
+                None
+            )
+        elif parsed.asn_candidate_ids is not None:
+            global_constraints['asn_candidate'] = constrain_on_candidates(
+                parsed.asn_candidate_ids
+            )
+
         self.rules = AssociationRegistry(
             parsed.rules,
             include_default=not parsed.ignore_default,
-            global_constraints=global_constraints
+            global_constraints=global_constraints,
+            name=CANDIDATE_RULESET
         )
+
+        if parsed.discover:
+            self.rules.update(
+                AssociationRegistry(
+                    parsed.rules,
+                    include_default=not parsed.ignore_default,
+                    name=DISCOVER_RULESET
+                )
+            )
 
         logger.info('Generating associations.')
-        self.associations, self.orphaned = generate(self.pool, self.rules)
+        self.associations, self.orphaned = generate(self.pool, self.rules, version_id=parsed.version_id)
 
-        logger.debug(
-            'cross_candidate_mode="{}" cross_candidate_only="{}"'.format(
-                self.cross_candidate_mode,
-                self.cross_candidate_only
-            )
-        )
-        if self.cross_candidate_mode and self.cross_candidate_only:
-            self.associations = self.rules.Utility.filter_cross_candidates(
-                self.associations
+        if parsed.discover:
+            self.associations = self.rules.Utility.filter_discovered_only(
+                self.associations,
+                DISCOVER_RULESET,
+                CANDIDATE_RULESET,
+                keep_candidates=parsed.all_candidates,
             )
 
         logger.info(self.__str__())
 
         if not parsed.dry_run:
-            self.save(path=parsed.path)
+            self.save(path=parsed.path, save_orphans=parsed.save_orphans)
 
     def __str__(self):
         result = []
@@ -164,12 +214,47 @@ class Main(object):
 
         return '\n'.join(result)
 
-    def save(self, path='.'):
+    def save(self, path='.', save_orphans=False):
         """Save the associations to disk as JSON."""
         for asn in self.associations:
             (fname, json_repr) = asn.to_json()
-            with open(''.join((path, '/', fname, '.json')), 'w') as f:
+            with open(os.path.join(path, fname + '.json'), 'w') as f:
                 f.write(json_repr)
+
+        if save_orphans:
+            self.orphaned.write(
+                os.path.join(path, save_orphans),
+                format='ascii',
+                delimiter='|'
+            )
+
+
+# Utilities
+def constrain_on_candidates(candidates):
+    """Create a constraint based on a list of candidates
+
+    Parameters
+    ----------
+    candidates: (str, ...) or None
+        List of candidate id's.
+        If None, then all candidates are matched.
+    """
+    constraint = {}
+    if candidates is not None and len(candidates):
+        c_list = '|'.join(candidates)
+        values = ''.join([
+            '.+(', c_list, ').+'
+        ])
+    else:
+        values = None
+    constraint = {
+        'value': values,
+        'inputs': ['ASN_CANDIDATE'],
+        'force_unique': True,
+        'is_acid': True,
+    }
+
+    return constraint
 
 
 if __name__ == '__main__':

@@ -1,16 +1,14 @@
 """test_associations: Test of general Association functionality."""
 from __future__ import absolute_import
-
-import nose.tools as nt
-from nose import SkipTest
+import pytest
 
 from . import helpers
+from .helpers import full_pool_rules
 
 from .. import (
     Association,
     AssociationError,
     AssociationRegistry,
-    AssociationPool,
     generate)
 from ..registry import (
     import_from_file,
@@ -20,19 +18,6 @@ from ..registry import (
 
 class TestAssociations():
 
-    pools_size = [
-        (
-            helpers.t_path('data/jw93060_20150312T160130_pool.csv'),
-            14
-        ),
-    ]
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
     # Basic Association object
     def test_read_assoc_defs(self):
         rules = AssociationRegistry(
@@ -40,22 +25,29 @@ class TestAssociations():
             include_default=False
         )
         assert len(rules) >= 2
+        rule_names = helpers.get_rule_names(rules)
         assert 'DMS_Level3_Base_Set1' not in rules
         valid_rules = ['Asn_Dither_Set1', 'Asn_WFS_Set1']
         for rule in valid_rules:
-            yield helpers.check_in_list, rule, rules
+            yield helpers.check_in_list, rule, rule_names
 
     def test_read_assoc_defs_fromdefault(self):
         rules = AssociationRegistry()
         assert len(rules) >= 3
+        rule_names = helpers.get_rule_names(rules)
         assert 'DMS_Level3_Base' not in rules
         valid_rules = ['Asn_Image', 'Asn_WFSCMB']
         for rule in valid_rules:
-            yield helpers.check_in_list, rule, rules
+            yield helpers.check_in_list, rule, rule_names
 
-    @nt.raises(AssociationError)
+    def test_registry_backref(self):
+        rules = AssociationRegistry()
+        for name, rule in rules.items():
+            yield helpers.check_equal, rule.registry, rules
+
     def test_nodefs(self):
-        rules = AssociationRegistry(include_default=False)
+        with pytest.raises(AssociationError):
+            rules = AssociationRegistry(include_default=False)
 
     def test_multi_rules(self):
         rule_files = [
@@ -64,8 +56,9 @@ class TestAssociations():
         ]
         rules = AssociationRegistry(rule_files, include_default=False)
         assert len(rules) == 4
-        assert 'DMS_Level3_Base_Set1' not in rules
-        assert 'DMS_Level3_Base_Set2' not in rules
+        rule_names = helpers.get_rule_names(rules)
+        assert 'DMS_Level3_Base_Set1' not in rule_names
+        assert 'DMS_Level3_Base_Set2' not in rule_names
         valid_rules = [
             'Asn_Dither_Set1',
             'Asn_Dither_Set2',
@@ -74,25 +67,26 @@ class TestAssociations():
         ]
 
         for rule in valid_rules:
-            yield helpers.check_in_list, rule, rules
+            yield helpers.check_in_list, rule, rule_names
 
     def test_base_instatiation(self):
         """Create an association without any initialization"""
         assert Association()
 
-    def test_global_constraints(self):
+    def test_global_constraints(self, full_pool_rules):
         """Test that global constraints get applied to all rules"""
+        full_pool, default_rules, pool_fname = full_pool_rules
 
         tests = {
             'exists': {
                 'constraints': {
                     'obs_id': {
-                        'value': 'V93060001004P0000000001101',
+                        'value': 'V99009001001P0000000002101',
                         'inputs': ['OBS_ID']
                     }
                 },
-                'pool': helpers.t_path('data/jw93060_20150312T160130_pool.csv'),
-                'n_asns': 6,
+                'pool': full_pool,
+                'n_asns': 1,
             },
             'empty': {
                 'constraints': {
@@ -101,52 +95,30 @@ class TestAssociations():
                         'inputs': ['OBS_ID']
                     }
                 },
-                'pool': helpers.t_path('data/jw93060_20150312T160130_pool.csv'),
+                'pool': helpers.t_path('data/pool_001_candidates.csv'),
                 'n_asns': 0,
             },
             'combined_candidates': {
                 'constraints': {
                     'asn_candidate_id': {
-                        'value': '1|2',
-                        'inputs': ['ASN_CANDIDATE_ID', 'OBS_NUM'],
+                        'value': '.+(o001|o002).+',
+                        'inputs': ['ASN_CANDIDATE'],
                         'force_unique': False,
                     }
                 },
-                'pool': helpers.t_path('data/jw93060_002_20150312T160130_pool.csv'),
-                'n_asns': 6,
+                'pool': helpers.t_path('data/pool_001_candidates.csv'),
+                'n_asns': 2,
             },
             'exclusive_candidates': {
                 'constraints': {
                     'asn_candidate_id': {
-                        'value': '1|2',
-                        'inputs': ['ASN_CANDIDATE_ID', 'OBS_NUM'],
+                        'value': '.+(o001|o002).+',
+                        'inputs': ['ASN_CANDIDATE'],
                         'force_unique': True,
                     }
                 },
-                'pool': helpers.t_path('data/jw93060_002_20150312T160130_pool.csv'),
-                'n_asns': 12,
-            },
-            'clashing_candidates_invalid': {
-                'constraints': {
-                    'asn_candidate_id': {
-                        'value': '1',
-                        'inputs': ['ASN_CANDIDATE_ID', 'OBS_NUM'],
-                        'force_unique': True,
-                    }
-                },
-                'pool': helpers.t_path('data/jw96090_20160406T233447_pool.csv'),
-                'n_asns': 0,
-            },
-            'clashing_candidates_valid': {
-                'constraints': {
-                    'asn_candidate_id': {
-                        'value': '100',
-                        'inputs': ['ASN_CANDIDATE_ID', 'OBS_NUM'],
-                        'force_unique': True,
-                    }
-                },
-                'pool': helpers.t_path('data/jw96090_20160406T233447_pool.csv'),
-                'n_asns': 2,
+                'pool': helpers.t_path('data/pool_001_candidates.csv'),
+                'n_asns': 4,
             },
         }
 
@@ -157,13 +129,11 @@ class TestAssociations():
             assert len(rules) >= 3
             for constraint in test['constraints']:
                 for rule in rules:
-                    yield helpers.check_in_list, \
-                        constraint, \
-                        rules[rule].GLOBAL_CONSTRAINTS
+                    assert constraint in rules[rule].GLOBAL_CONSTRAINTS
 
-            pool = AssociationPool.read(test['pool'])
+            pool = helpers.combine_pools(test['pool'])
             asns, orphaned = generate(pool, rules)
-            yield helpers.check_equal, len(asns), test['n_asns']
+            assert len(asns) == test['n_asns']
 
     def test_rulesets(self):
         """Test finding members in a ruleset"""

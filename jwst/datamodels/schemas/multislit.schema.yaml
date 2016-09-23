@@ -56,26 +56,36 @@ allOf:
             default: 0
             fits_keyword: SLTSIZE2
             fits_hdu: SCI
+          slitlet_id:
+            title: Slitlet ID
+            type: integer
+            default: 0
+            fits_keyword: SLITID
+            fits_hdu: SCI
           source_id:
             title: Source ID
             type: integer
             default: 0
             fits_keyword: SOURCEID
             fits_hdu: SCI
-          background:
-            title: Background (T/F)
-            type: boolean
-            fits_keyword: BACKGRND
-            fits_hdu: SCI
-          shutter_state:
-            title: Shutter state
+          source_name:
+            title: Source name
             type: string
-            fits_keyword: SHUTTER
+            fits_keyword: SRCNAME
             fits_hdu: SCI
-          slitlet_id:
-            title: Slitlet ID
+          source_alias:
+            title: Source alias
+            type: string
+            fits_keyword: SRCALIAS
+            fits_hdu: SCI
+          catalog_id:
+            title: Catalog ID
             type: integer
-            default: 0
-            fits_keyword: SLITID
+            fits_keyword: CATLOGID
+            fits_hdu: SCI
+          stellarity:
+            title: Source stellarity
+            type: number
+            fits_keyword: STLARITY
             fits_hdu: SCI
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

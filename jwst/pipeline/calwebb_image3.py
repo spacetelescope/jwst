@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import os
+
 from ..stpipe import Pipeline
 from .. import datamodels
 
@@ -10,7 +12,7 @@ from ..source_catalog import source_catalog_step
 from ..tweakreg_catalog import tweakreg_catalog_step
 from ..tweakreg import tweakreg_step
 
-__version__ = "0.1"
+__version__ = "0.2"
 
 # Define logging
 import logging
@@ -24,7 +26,12 @@ class Image3Pipeline(Pipeline):
                     any JWST instrument.
 
     Included steps are:
-    resample.
+        tweakreg_catalog
+        tweakreg
+        skymatch
+        outlier_detection
+        resample
+        source_catalog
 
     """
 
@@ -57,14 +64,63 @@ class Image3Pipeline(Pipeline):
 
             log.info("Resampling ASN to create combined product: {}".format(input_models.meta.resample.output))
 
+        # Setup output file name for subsequent use
+        output_file = mk_prodname(self.output_dir,
+            input_models.meta.resample.output, 'i2d')
+        input_models.meta.resample.output = output_file
+
         # Resample step always returns ModelContainer,
         # yet we only need the DataModel result
         output = self.resample(input_models)
 
         # create final source catalog from resampled output
         out_catalog = self.source_catalog(output)
+
+        # Save the final image product
+        log.info('Saving final image product to %s', output_file)
+        output.save(output_file)
         output.close()
+
         input_models.close()
         log.info('... ending calwebb_image3')
 
         return
+
+
+def mk_prodname(output_dir, filename, suffix):
+
+    """
+    Build a file name based on an ASN product name template.
+
+    The input ASN product name is used as a template. A user-specified
+    output directory path is prepended to the root of the product name.
+    The input product type suffix is appended to the root of the input
+    product name, preserving any existing file name extension 
+    (e.g. ".fits").
+
+    Args:
+        output_dir (str): The output_dir requested by the user
+        filename (str): The input file name, to be reworked
+        suffix (str): The desired file type suffix for the new file name
+
+    Returns:
+        string: The new file name
+
+    Examples:
+        For output_dir='/my/path', filename='jw12345_nrca_cal.fits', and
+        suffix='i2d', the returned file name will be
+        '/my/path/jw12345_nrca_cal_i2d.fits'
+    """
+
+    # If the user specified an output_dir, replace any existing
+    # path with output_dir
+    if output_dir is not None:
+        dirname, filename = os.path.split(filename)
+        filename = os.path.join(output_dir, filename)
+
+    # Now append the new suffix to the root name, preserving
+    # any existing extension
+    base, ext = os.path.splitext(filename)
+    if len(ext) == 0:
+        ext = ".fits"
+    return base + '_' + suffix + ext

@@ -3,6 +3,7 @@
 from ..stpipe import Step, cmdline
 from . import wfs_combine
 import json
+import os
 
 class WfsCombineStep(Step):
 
@@ -28,6 +29,9 @@ class WfsCombineStep(Step):
             infile_2 = asn_table['products'][which_set]['members'][1]['expname']
             outfile = asn_table['products'][which_set]['name']
 
+            # Construct the full output file name
+            outfile = mk_prodname(self.output_dir, outfile, 'wfscmb')
+
             wfs = wfs_combine.DataSet(infile_1, infile_2, outfile, self.do_refine)
 
             output_model = wfs.do_all()
@@ -35,6 +39,19 @@ class WfsCombineStep(Step):
             output_model.save(outfile)
 
         return None
+
+
+def mk_prodname(output_dir, filename, suffix):
+
+    if output_dir is not None:
+        dirname, filename = os.path.split(filename)
+        filename = os.path.join(output_dir, filename)
+
+    base, ext = os.path.splitext(filename)
+    if len(ext) == 0:
+        ext = ".fits"
+    return base + '_' + suffix + ext
+
 
 if __name__ == '__main__':
     cmdline.step_script(wfs_combine_step)

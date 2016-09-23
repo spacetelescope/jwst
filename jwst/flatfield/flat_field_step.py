@@ -26,10 +26,8 @@ class FlatFieldStep(Step):
             self.log.debug('Input is a CubeModel')
         elif isinstance(input_model, datamodels.ImageModel):
             self.log.debug('Input is an ImageModel')
-        elif isinstance(input_model, datamodels.DataModel):
+        elif isinstance(input_model, datamodels.MultiSlitModel):
             self.log.debug('Input is a MultiSlitModel')
-            input_model.close()
-            input_model = datamodels.MultiSlitModel(input)
 
         # Retrieve the reference file name
         self.flat_filename = self.get_reference_file(input_model, 'flat')

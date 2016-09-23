@@ -1,17 +1,27 @@
 """Base classes which define the Level3 Associations"""
+from collections import defaultdict
 import logging
 from os.path import basename
 import re
 
 from jwst.associations import (
     Association,
-    getattr_from_list,
     libpath
 )
+from jwst.associations.association import (
+    evaluate,
+    is_iterable
+)
+from jwst.associations.exceptions import AssociationNotAConstraint
+from jwst.associations.lib.acid import ACID
+from jwst.associations.lib.counter import Counter
 
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+# Start of the discovered association ids.
+_DISCOVERED_ID_START = 3001
 
 # Non-specified values found in DMS Association Pools
 _EMPTY = (None, 'NULL', 'CLEAR')
@@ -29,40 +39,76 @@ _DEGRADED_STATUS_NOTOK = (
 )
 
 # DMS file name templates
+_ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
+_ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
+
+# Product name regex's
+_REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
+
+
+# Key that uniquely identfies members.
+KEY = 'expname'
 
 
 class DMS_Level3_Base(Association):
     """Basic class for DMS Level3 associations."""
 
+    # Make sequences type-dependent
+    _sequences = defaultdict(Counter)
+
     def __init__(self, *args, **kwargs):
 
-        self.candidates = set()
+        # Keep the set of members included in this association
+        self.members = set()
+
+        # Initialize discovered association ID
+        self.discovered_id = Counter(_DISCOVERED_ID_START)
 
         # Let us see if member belongs to us.
         super(DMS_Level3_Base, self).__init__(*args, **kwargs)
 
     @property
+    def acid(self):
+        """Association ID"""
+        for _, constraint in self.constraints.items():
+            if constraint.get('is_acid', False):
+                value = re.sub('\\\\', '', constraint['value'])
+                try:
+                    acid = ACID(value)
+                except ValueError:
+                    pass
+                else:
+                    break
+        else:
+            id = 'a{:0>3}'.format(self.discovered_id.value)
+            acid = ACID((id, 'DISCOVERED'))
+
+        return acid
+
+    @property
     def asn_name(self):
-        template = 'jw{}_{}_{}_{:03d}_asn'
         program = self.data['program']
-        asn_candidate_ids = self.constraints.get('asn_candidate_ids', None)
-        if asn_candidate_ids is not None:
-            program = '-'.join([
-                program,
-                '{0:0>4s}'.format(asn_candidate_ids['value'])
-            ])
-        timestamp = self.timestamp
+        version_id = self.version_id
         asn_type = self.data['asn_type']
         sequence = self.sequence
 
-        name = template.format(
-            program,
-            timestamp,
-            asn_type,
-            sequence,
-        )
+        if version_id:
+            name = _ASN_NAME_TEMPLATE_STAMP.format(
+                program=program,
+                acid=self.acid.id,
+                stamp=version_id,
+                type=asn_type,
+                sequence=sequence,
+            )
+        else:
+            name = _ASN_NAME_TEMPLATE.format(
+                program=program,
+                acid=self.acid.id,
+                type=asn_type,
+                sequence=sequence,
+            )
         return name.lower()
 
     @property
@@ -82,47 +128,22 @@ class DMS_Level3_Base(Association):
 
     def product_name(self):
         """Define product name."""
-        program = self.data['program']
+        target = self._get_target()
 
-        asn_candidate_ids = self.constraints.get('asn_candidate_ids', None)
-        if asn_candidate_ids is not None:
-            id = asn_candidate_ids['value']
-            if len(id) <= 3:
-                id = 'o{0:0>3s}'.format(id)
-            program = '-'.join([
-                program,
-                '{}'.format(id)
-            ])
+        instrument = self._get_instrument()
+
+        opt_elem = self._get_opt_element()
+
         try:
-            target = 's{0:0>5s}'.format(self.data['source_id'])
-        except KeyError:
-            target = 't{0:0>3s}'.format(self.data['targname'])
-
-        instrument = self.constraints['instrument']['value']
-
-        opt_elem = ''
-        join_char = ''
-        if self.constraints['opt_elem']['value'] not in _EMPTY:
-            opt_elem = self.constraints['opt_elem']['value']
-            join_char = '-'
-        if self.constraints['opt_elem2']['value'] not in _EMPTY:
-            opt_elem = join_char.join(
-                [opt_elem, self.constraints['opt_elem2']['value']]
-            )
-        if opt_elem == '':
-            opt_elem = 'clear'
-
-        exposure = ''
-        try:
-            activity_id = self.constraints['activity_id']['value']
-        except KeyError:
-            pass
+            exposure = self._get_exposure()
+        except AssociationNotAConstraint:
+            exposure = ''
         else:
-            if activity_id not in _EMPTY:
-                exposure = '-{0:0>2s}'.format(activity_id)
+            exposure = '-' + exposure
 
-        product_name = 'jw{}_{}_{}_{}_{{product_type}}{}.fits'.format(
-            program,
+        product_name = 'jw{}-{}_{}_{}_{}'.format(
+            self.data['program'],
+            self.acid.id,
             target,
             instrument,
             opt_elem,
@@ -135,8 +156,11 @@ class DMS_Level3_Base(Association):
         """Post-check and pre-add initialization"""
         super(DMS_Level3_Base, self)._init_hook(member)
 
+        # Set which sequence counter should be used.
+        self._sequence = self._sequences[self.data['asn_type']]
+
         self.schema_file = ASN_SCHEMA
-        self.data['targname'] = member['TARGETID']
+        self.data['target'] = member['TARGETID']
         self.data['program'] = str(member['PROGRAM'])
         self.data['asn_pool'] = basename(
             member.meta['pool_file']
@@ -166,14 +190,10 @@ class DMS_Level3_Base(Association):
             'expname': Utility.rename_to_level2b(member['FILENAME']),
             'exptype': member['PNTGTYPE'],
             'exposerr': exposerr,
-            'asn_candidate_id': getattr_from_list(
-                member,
-                ['ASN_CANDIDATE_ID', 'OBS_NUM']
-            )[1]
+            'asn_candidate': member['ASN_CANDIDATE']
         }
         members = self.current_product['members']
         members.append(entry)
-        self.candidates.add(entry['asn_candidate_id'])
         self.data['degraded_status'] = _DEGRADED_STATUS_OK
         if exposerr not in _EMPTY:
             self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
@@ -181,6 +201,81 @@ class DMS_Level3_Base(Association):
                 member['FILENAME'],
                 exposerr
             ))
+
+        # Add entry to the short list
+        self.members.add(entry[KEY])
+
+    def _get_target(self):
+        """Get string representation of the target
+
+        Returns
+        -------
+        target: str
+            The Level3 Product name representation
+            of the target or source ID.
+        """
+        try:
+            target = 's{0:0>5s}'.format(self.data['source_id'])
+        except KeyError:
+            target = 't{0:0>3s}'.format(self.data['target'])
+        return target
+
+    def _get_instrument(self):
+        """Get string representation of the instrument
+
+        Returns
+        -------
+        instrument: str
+            The Level3 Product name representation
+            of the instrument
+        """
+        instrument = self.constraints['instrument']['value']
+        return instrument
+
+    def _get_opt_element(self):
+        """Get string representation of the optical elements
+
+        Returns
+        -------
+        opt_elem: str
+            The Level3 Product name representation
+            of the optical elements.
+        """
+        opt_elem = ''
+        join_char = ''
+        if self.constraints['opt_elem']['value'] not in _EMPTY:
+            opt_elem = self.constraints['opt_elem']['value']
+            join_char = '-'
+        if self.constraints['opt_elem2']['value'] not in _EMPTY:
+            opt_elem = join_char.join(
+                [opt_elem, self.constraints['opt_elem2']['value']]
+            )
+        if opt_elem == '':
+            opt_elem = 'clear'
+        return opt_elem
+
+    def _get_exposure(self):
+        """Get string representation of the exposure id
+
+        Returns
+        -------
+        exposure: str
+            The Level3 Product name representation
+            of the exposure & activity id.
+
+        Raises
+        ------
+        AssociationNotAConstraint
+            No constraints produce this value
+        """
+        try:
+            activity_id = self.constraints['activity_id']['value']
+        except KeyError:
+            raise AssociationNotAConstraint
+        else:
+            if activity_id not in _EMPTY:
+                exposure = '{0:0>2s}'.format(activity_id)
+        return exposure
 
     def __repr__(self):
         file_name, json_repr = self.to_json()
@@ -214,7 +309,12 @@ class Utility(object):
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
-    def filter_cross_candidates(associations):
+    def filter_discovered_only(
+            associations,
+            discover_ruleset,
+            candidate_ruleset,
+            keep_candidates=True,
+    ):
         """Return only those associations that have multiple candidates
 
         Parameters
@@ -223,17 +323,56 @@ class Utility(object):
             The list of associations to check. The list
             is that returned by the `generate` function.
 
+        discover_ruleset: str
+            The name of the ruleset that has the discover rules
+
+        candidate_ruleset: str
+            The name of the ruleset that finds just candidates
+
+        keep_candidates: bool
+            Keep explicit candidate associations in the list.
+
         Returns
         -------
         iterable
             The new list of just cross candidate associations.
+
+        Notes
+        -----
+        This utility is only meant to run on associations that have
+        been constructed. Associations that have been Association.dump
+        and then Association.load will not return proper results.
         """
-        result = [
-            asn
-            for asn in associations
-            if len(asn.candidates) > 1
-        ]
-        return result
+        # Split the associations along discovered/not discovered lines
+        asn_by_ruleset = {
+            candidate_ruleset: [],
+            discover_ruleset: []
+        }
+        for asn in associations:
+            asn_by_ruleset[asn.registry.name].append(asn)
+        candidate_list = asn_by_ruleset[candidate_ruleset]
+        discover_list = asn_by_ruleset[discover_ruleset]
+
+        # Filter out the non-unique discovereds.
+        for candidate in candidate_list:
+            if len(discover_list) == 0:
+                break
+            unique_list = []
+            for discover in discover_list:
+                if discover.data['asn_type'] == candidate.data['asn_type'] and \
+                   discover.members == candidate.members:
+                    # This association is not unique. Ignore
+                    pass
+                else:
+                    unique_list.append(discover)
+
+            # Reset the discovered list to the new unique list
+            # and try the next candidate.
+            discover_list = unique_list
+
+        if keep_candidates:
+            discover_list.extend(candidate_list)
+        return discover_list
 
     @staticmethod
     def rename_to_level2b(level1b_name):
@@ -265,6 +404,31 @@ class Utility(object):
             match.group('extension')
         ])
         return level2b_name
+
+    @staticmethod
+    def get_candidate_list(value):
+        """Parse the candidate list from a member value
+
+        Parameters
+        ----------
+        value: str
+            The value from the member to parse. Usually
+            member['ASN_CANDIDATE']
+
+        Returns
+        -------
+        [ACID, ...]
+            The list of parsed candidates.
+        """
+        result = []
+        evaled = evaluate(value)
+        if is_iterable(evaled):
+            result = [
+                ACID(v)
+                for v in evaled
+            ]
+        return result
+
 
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
@@ -310,7 +474,7 @@ class AsnMixin_Target(DMS_Level3_Base):
 
         # Setup for checking.
         self.add_constraints({
-            'target_name': {
+            'target': {
                 'value': None,
                 'inputs': ['TARGETID']
             },
