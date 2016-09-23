@@ -113,6 +113,8 @@ def imaging(input_model, reference_files):
                             (v2v3, v23_to_sky),
                             (world, None)]
     else:
+        # convert to microns if the pipeline ends earlier
+        gwa2msa = (gwa2msa | Identity(2) & Scale(10**6)).rename('gwa2msa')
         imaging_pipeline = [(det, dms2detector),
                             (sca, det2gwa),
                             (gwa, gwa2msa),
@@ -170,11 +172,13 @@ def ifu(input_model, reference_files):
                     (oteip, oteip2v23.rename('oteip2v23')),
                     (v2v3, None)]
     else:
-
+        # convert to microns if the pipeline ends earlier
+        #slit2msa = (Mapping((0, 1, 2, 3, 4)) | slit2msa | Identity(2) & Scale(10**6)).rename('slit2msa')
+        slit2msa = (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')
         pipeline = [(det, dms2detector),
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
-                    (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
+                    (slit_frame, slit2msa),
                     (msa_frame, None)]
 
     return pipeline
@@ -239,6 +243,9 @@ def slits_wcs(input_model, reference_files):
                         (oteip, oteip2v23),
                         (v2v3, None)]
     else:
+        # convert to microns if the pipeline ends earlier
+        #gwa2slit = (gwa2slit | Identity(2) & Scale(10**6)).rename('gwa2slit')
+        gwa2slit = (gwa2slit).rename('gwa2slit')
         msa_pipeline = [(det, dms2detector),
                         (sca, det2gwa),
                         (gwa, gwa2slit),
@@ -554,7 +561,11 @@ def dms_to_sca(input_model):
     if ystart is None:
         ystart = 1
     # The SCA coordinates are in full frame
-    subarray2full = models.Shift(xstart) & models.Shift(ystart)
+    # The inputs are 1-based, remove -1 when'if they are 0-based
+    # The outputs must be 1-based becaause this is what the model expects.
+    # If xstart was 0-based and the inputs were 0-based ->
+    # Shift(+1)
+    subarray2full = models.Shift(xstart - 1) & models.Shift(ystart - 1)
     if detector == 'NRS2':
         model = models.Shift(-2048) & models.Shift(-2048) | models.Scale(-1) & models.Scale(-1)
     elif detector == 'NRS1':
@@ -619,12 +630,13 @@ def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5)
     x_range_high, y_range_high = slit2detector([0] * nsteps, [slit_ymax] * nsteps, lam_grid)
     x_range = np.hstack((x_range_low, x_range_high))
     y_range = np.hstack((y_range_low, y_range_high))
-    # add 5 px margin
-    x0 = int(max(0, x_range.min() - 10))
-    x1 = int(min(2047, x_range.max() + 10))
+    # add 10 px margin
+    # The -1 is technically because the output of slit2detector is 1-based coordinates.
+    x0 = int(max(0, x_range.min() -1 - 10))
+    x1 = int(min(2047, x_range.max() -1 + 10))
     # add 2 px margin
-    y0 = int(y_range.min()) - 2
-    y1 = int(y_range.max()) + 2
+    y0 = int(y_range.min() -1 -2)
+    y1 = int(y_range.max() -1 + 2)
 
     domain = [{'lower': x0, 'upper': x1}, {'lower': y0, 'upper': y1}]
     return domain

@@ -144,7 +144,7 @@ def test_nirspec_ifu_against_esa():
     pipe = nirspec.create_pipeline(im, refs)
     w = wcs.WCS(pipe)
     im.meta.wcs = w
-    # Test evaluating the WCS
+    # Test evaluating the WCS (slice 0)
     w0 = nirspec.nrs_wcs_set_input(im, 0, 0)
 
     ref = fits.open(get_file_path('Trace_IFU_Slice_00_MON-COMBO-IFU-06_8410_jlab85.fits.gz'))
@@ -158,10 +158,11 @@ def test_nirspec_ifu_against_esa():
     cond = np.logical_and(slit1 < .5, slit1 > -.5)
     y, x = cond.nonzero()
     cor = crval - np.array(crpix)
-    y = y + cor[1]
-    x = x + cor[0]
-
-    ra, dec, lp = w0(x, y)
+    # 1-based coordinates full frame coordinates
+    y = y + cor[1] + 1
+    x = x + cor[0] + 1
+    sca2world = w0.get_transform('sca', 'msa_frame')
+    _, slit_y, lp = sca2world(x, y)
     assert_allclose(lp, lam[cond], atol=10**-13)
     ref.close()
 
@@ -209,11 +210,13 @@ def test_nirspec_fs_esa():
     cond = np.logical_and(slit1 < .5, slit1 > -.5)
     y, x = cond.nonzero()
     cor = crval - np.array(crpix)
-    y = y + cor[1]
-    x = x + cor[0]
-    ra, dec, lp = w1(x, y)
+    # 1-based coordinates full frame coordinates
+    y = y + cor[1] + 1
+    x = x + cor[0] + 1
+    sca2world = w1.get_transform('sca', 'v2v3')
+    ra, dec, lp = sca2world(x, y)
     # w1 now outputs in microns hence the 1e6 factor
-    assert_allclose(lp, lam[cond]*1e6, atol=10**-6)
+    assert_allclose(lp * 1e-6, lam[cond], atol=10**-13)
     ref.close()
 
 

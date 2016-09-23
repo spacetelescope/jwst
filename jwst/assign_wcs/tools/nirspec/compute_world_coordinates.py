@@ -1,13 +1,13 @@
 #! /usr/bin/env python
 """
-A simple tool to read in the output of extract2d (FS and MOS) or assign_wcs (IFU) and
+A tool to read in the output of extract2d (FS and MOS) or assign_wcs (IFU) and
 apply the WCS transforms to all pixels in a slit. For each slit it writes the results
-as a cube with three planes (wavelength, ra, dec) in a separate fits extension.
-The file is saved with an suffix "world_coordinates".
+as a cube with four planes (wavelength, ra, dec, y_slit) in a separate fits extension.
+The file is saved with a suffix "world_coordinates".
 
 Requested by the NIRSPEC team.
 
-Build 6 testing.
+Build 7 testing.
 """
 from __future__ import absolute_import, division, unicode_literals, print_function
 import os.path
@@ -54,18 +54,25 @@ def ifu_coords(fname, output=None):
     output_frame = ifu_slits[0].available_frames[-1]
     for i, slit in enumerate(ifu_slits):
         x, y = wcstools.grid_from_domain(slit.domain)
-        ra, dec, lam = slit(x, y)
+        # 1-based coordinates expected
+        ra, dec, lam = slit(x + 1, y + 1)
         detector2slit = slit.get_transform('detector', 'slit_frame')
-        sx, sy, ls = detector2slit(x, y)
-        world_coordinates = np.array([np.rot(lam), np.rot90(ra), np.rot90(dec), np.rot90(sy)])
+        sx, sy, ls = detector2slit(x + 1, y + 1)
+        world_coordinates = np.array([lam, ra, dec, sy])
         imhdu = fits.ImageHDU(data=world_coordinates)
         imhdu.header['PLANE1'] = 'lambda, microns'
         imhdu.header['PLANE2'] = '{0}_x, arcsec'.format(output_frame)
         imhdu.header['PLANE3'] = '{0}_y, arcsec'.format(output_frame)
         imhdu.header['PLANE4'] = 'slit_y, relative to center (0, 0)'
         imhdu.header['SLIT'] = "SLIT_{0}".format(i)
-        imhdu.header['CRVAL1'] = slit.domain[0].lower() + 1
-        imhdu.header['CRVAL2'] = slit.domain[1].lower() + 1 
+        # -1 and +1 are to express this in 1-based coordinates
+        imhdu.header['CRVAL1'] = model.meta.subarray.xstart -1 + slit.domain[0]['lower'] + 1
+        imhdu.header['CRVAL2'] = model.meta.subarray.xstart -1 + slit.domain[1]['lower'] + 1
+        # Input coordinates will be 1-based.
+        imhdu.header['CRPIX1'] = 1
+        imhdu.header['CRPIX2'] = 1
+        imhdu.header['CTYPE1'] = 'pixel'
+        imhdu.header['CTYPE2'] = 'pixel'
         hdulist.append(imhdu)
     if output is not None:
         base, ext = os.path.splitext(output)
@@ -77,7 +84,7 @@ def ifu_coords(fname, output=None):
     else:
         root = model.meta.filename.split('_')
         output = "".join([root[0], '_world_coordinates', '.fits'])
-    hdulist.writeto(output)
+    hdulist.writeto(output, clobber=True)
     del hdulist
     model.close()
 
@@ -113,11 +120,11 @@ def compute_world_coordinates(fname, output=None):
     hdulist.append(phdu)
     output_frame = model.slits[0].meta.wcs.available_frames[-1]
     for slit in model.slits:
-        #x, y = wcstools.grid_from_domain(slit.meta.wcs.domain)
-        xstart, xend = slit.xstart, slit.xstart + slit.xsize
-        ystart, yend = slit.ystart, slit.ystart + slit.ysize
+        # slit.x(y)start are 1-based, turn them to 0-based for extraction
+        xstart, xend = slit.xstart - 1, slit.xstart -1 + slit.xsize
+        ystart, yend = slit.ystart - 1, slit.ystart -1 + slit.ysize
         y, x = np.mgrid[ystart: yend, xstart: xend]
-        ra, dec, lam = slit.meta.wcs(x + 1, y + 1)
+        ra, dec, lam = slit.meta.wcs(x, y)
         detector2slit = slit.meta.wcs.get_transform('detector', 'slit_frame')
 
         sx, sy, ls = detector2slit(x, y)
@@ -128,8 +135,14 @@ def compute_world_coordinates(fname, output=None):
         imhdu.header['PLANE3'] = '{0}_y, arcsec'.format(output_frame)
         imhdu.header['PLANE4'] = 'slit_y, relative to center (0, 0)'
         imhdu.header['SLIT'] = slit.name
-        imhdu.header['CRVAL1'] = slit.xstart
-        imhdu.header['CRVAL2'] = slit.ystart
+        # add the overall subarray offset
+        imhdu.header['CRVAL1'] = slit.xstart -1 + model.meta.subarray.xstart
+        imhdu.header['CRVAL2'] = slit.ystart -1 + model.meta.subarray.ystart
+        # Input coordinates will be 1-based.
+        imhdu.header['CRPIX1'] = 1
+        imhdu.header['CRPIX2'] = 1
+        imhdu.header['CTYPE1'] = 'pixel'
+        imhdu.header['CTYPE2'] = 'pixel'
         hdulist.append(imhdu)
     if output is not None:
         base, ext = os.path.splitext(output)
@@ -141,7 +154,7 @@ def compute_world_coordinates(fname, output=None):
     else:
         root = model.meta.filename.split('_')
         output = "".join([root[0], '_world_coordinates', '.fits'])
-    hdulist.writeto(output)
+    hdulist.writeto(output, clobber=True)
     del hdulist
     model.close()
 
@@ -167,24 +180,31 @@ def imaging_coords(fname, output=None):
     model = datamodels.ImageModel(fname)
     if model.meta.exposure.type.lower() not in imaging_modes:
         raise ValueError("Observation mode {0} is not supported.".format(model.meta.exposure.type))
-    ifu_slits = nirspec.nrs_ifu_wcs(model)
 
     hdulist = fits.HDUList()
     phdu = fits.PrimaryHDU()
     phdu.header['filename'] = model.meta.filename
     phdu.header['data'] = 'world coordinates'
     hdulist.append(phdu)
-    output_frame = ifu_slits[0].available_frames[-1]
-    for i, slit in enumerate(ifu_slits):
-        x, y = wcstools.grid_from_domain(slit.domain)
-        ra, dec, lam = slit(x, y)
-        world_coordinates = np.array([lam, ra, dec])
-        imhdu = fits.ImageHDU(data=world_coordinates)
-        imhdu.header['PLANE1'] = 'lambda, microns'
-        imhdu.header['PLANE2'] = '{0}_x, arcsec'.format(output_frame)
-        imhdu.header['PLANE3'] = '{0}_y, arcsec'.format(output_frame)
-        imhdu.header['SLIT'] = "SLIT_{0}".format(i)
-        hdulist.append(imhdu)
+    output_frame = model.available_frames[-1]
+    domain = model.meta.wcs.domain
+    x, y = wcstools.grid_from_domain(domain)
+    ra, dec, lam = slit(x + 1, y + 1)
+    world_coordinates = np.array([lam, ra, dec])
+    imhdu = fits.ImageHDU(data=world_coordinates)
+    imhdu.header['PLANE1'] = 'lambda, microns'
+    imhdu.header['PLANE2'] = '{0}_x, deg'.format(output_frame)
+    imhdu.header['PLANE3'] = '{0}_y, deg'.format(output_frame)
+    imhdu.header['SLIT'] = "SLIT_{0}".format(i)
+    # add the overall subarray offset
+    imhdu.header['CRVAL1'] = model.meta.subarray.xstart -1 + domain[0]['lower']
+    imhdu.header['CRVAL2'] = model.meta.subarray.ystart -1 + domain[1]['lower']
+    # Input coordinates will be 1-based.
+    imhdu.header['CRPIX1'] = 1
+    imhdu.header['CRPIX2'] = 1
+    imhdu.header['CTYPE1'] = 'pixel'
+    imhdu.header['CTYPE2'] = 'pixel'
+    hdulist.append(imhdu)
     if output is not None:
         base, ext = os.path.splitext(output)
         if ext != "fits":
@@ -195,7 +215,7 @@ def imaging_coords(fname, output=None):
     else:
         root = model.meta.filename.split('_')
         output = "".join([root[0], '_world_coordinates', '.fits'])
-    hdulist.writeto(output)
+    hdulist.writeto(output, clobber=True)
     del hdulist
     model.close()
 
