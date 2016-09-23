@@ -177,10 +177,6 @@ class CubeInfo(object):
 
         self.naxis1 = n1a + n1b
         self.naxis2 = n2a + n2b 
-#        range_xi = (xi_max - xi_min)
-#        range_eta = (eta_max - eta_min)
-#        self.naxis1 = int(math.ceil(range_xi / self.Cdelt1)) 
-#        self.naxis2 = int(math.ceil(range_eta / self.Cdelt2)) 
 
         self.a_min  = xi_min
         self.a_max = xi_max
@@ -203,6 +199,14 @@ class CubeInfo(object):
         for i in range(self.naxis2):
             self.ycoord[i] = ystart
             ystart = ystart + self.Cdelt2
+#_______________________________________________________________________
+
+#        ycube,xcube = np.mgrid[:self.naxis2,:self.naxis1]
+#        print(ycube)
+#        print(xcube)
+#        sys.exit('STOP')
+
+
 #_______________________________________________________________________
         #set up the lambda (z) coordinate of the cube
 
@@ -228,15 +232,8 @@ class CubeInfo(object):
         for i in range(self.naxis3):
             self.zcoord[i] = zstart
             zstart = zstart + self.Cdelt3
+
 #_______________________________________________________________________
-
-#        ycube,xcube = np.mgrid[:self.naxis2,:self.naxis1]
-#        print(ycube)
-#        print(xcube)
-#        sys.exit('STOP')
-#_______________________________________________________________________
-
-
     def PrintCubeGeometry(self, instrument):
         log.info('Cube Geometry')
         blank = '  '

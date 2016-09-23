@@ -108,14 +108,16 @@ def MakePointCloudMIRI(self, input_model,
         coord1 = xi
         coord2 = eta
 
-        ra_test,dec_test=coord.std2radec(Cube.Crval1,Cube.Crval2,xi,eta)
-        print('testing', ra,dec,ra_test,dec_test)
-        print('ref values',ra_ref,dec_ref,roll_ref,v2_ref,v3_ref)
-        v2_test,v3_test = coord.RADEC2V2V3(ra_ref,dec_raf,roll_ref,
-                                           v2_ref,v3_ref,
-                                           ra_test,dec_test)
-        print('testing', v2_use,v3_use,v2_test,v3_test)
-        #sys.exit('STOP')
+#        ra_test,dec_test=coord.std2radec(Cube.Crval1,Cube.Crval2,xi,eta)
+#        print('testing ra,dec', ra[:5],dec[:5])
+#        print('new     ra,dec', ra_test[:5],dec_test[:5])
+#        print('ref values',ra_ref,dec_ref,roll_ref,v2_ref,v3_ref)
+#        v2_test,v3_test = coord.RADEC2V2V3(ra_ref,dec_ref,roll_ref,
+#                                           v2_ref,v3_ref,
+#                                           ra_test,dec_test)
+#        print('testing v2,v3', v2_use[:5],v3_use[:5])
+#        print('new     v2,v3', v2_test[:5],v3_test[:5])
+#        sys.exit('STOP')
 
 
     wave = lam[good_data]
@@ -123,9 +125,9 @@ def MakePointCloudMIRI(self, input_model,
 
     # get in form of 8 columns of data - shove the information in an array.
 
-    print('xi results', coord1[0:10])
-    print('eta results',coord2[0:10])
-    print('wave',wave[0:10])
+#    print('xi results', coord1[0:10])
+#    print('eta results',coord2[0:10])
+#    print('wave',wave[0:10])
     # stuff the point cloud arrays for this configuration into cloud 
     # Point cloud will eventually contain all the cloud values
 
@@ -227,8 +229,8 @@ def FindROI(self, Cube, spaxel, PointCloud):
 
     For MIRI the weighting of the Cloud points is based on the distance in the local
     MRS alpha-beta plane. Each cloud point as an associated alpha-beta coordinate
-    The spaxel centers have xi,eta & V2,V3 so we need to know the channel and band information
-    and transform the V2,V3 coordinates back to alpha-beta
+    The spaxel centers have xi,eta & V2,V3 so we need to know the channel and band 
+    information and transform the V2,V3 coordinates back to alpha-beta
 
     Parameters
     ----------
@@ -238,7 +240,8 @@ def FindROI(self, Cube, spaxel, PointCloud):
 
     Returns
     -------
-    location of x,y in Point Cloud as well as mapping of spaxel to each overlapping PointCloud member
+    location of x,y in Point Cloud as well as mapping of spaxel to each overlapping 
+    PointCloud member
 
 
     """
@@ -258,6 +261,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
 # over spaxels but for now just keep it point cloud elements because it
 # is easy to find ROI members because the cube spaxel values are regularily spaced
 
+#________________________________________________________________________________
     for ipt in range(0, nn - 1):
 
         ifile = int(PointCloud[7, ipt])
@@ -288,8 +292,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
         if(self.coord_system == 'alpha-beta'):
             coord1 = alpha
             coord2 = beta
-
-        
+#________________________________________________________________________________        
         # Coord1 and Coord2 are in the coordinate system of the cube.
         # using the Cube regularily spaced arrays - Cube.zcoord, xcoord,ycoord
         # find the spaxels that fall withing ROI of point cloud
@@ -320,8 +323,9 @@ def FindROI(self, Cube, spaxel, PointCloud):
         
         v2ab_transform = Cube.transform[ifile]
 
-
-        alpha_spaxel,beta_spaxel,wave_spaxel = v2ab_transform(v2_spaxel/0.0,v3_spaxel/60.0,zloc[iz])
+        alpha_spaxel,beta_spaxel,wave_spaxel = v2ab_transform(v2_spaxel/60.0,
+                                                              v3_spaxel/60.0,
+                                                              zloc[iz])
         alpha_distance = abs(alpha-alpha_spaxel)
         beta_distance = abs(beta-beta_spaxel)
         wave_distance  = abs(wave-wave_spaxel)

@@ -50,11 +50,13 @@ def RADEC2V2V3(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,ra, dec):
         
     d2r = math.pi/180.0
 
-    r2arcmin = 180.0 * 60.0 / math.pi
+    r2d = 180.0  / math.pi
     v2_ref = v2_ref/60.0 # covert to degrees
     v3_ref = v3_ref/60.0 # convert to degrees
 
     v3_ref_rad = v3_ref * d2r
+    v2_ref_rad = v2_ref * d2r 
+
     roll_ref_rad = roll_ref * d2r
 
     ra_ref_rad = ra_ref*d2r
@@ -68,12 +70,11 @@ def RADEC2V2V3(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,ra, dec):
     dv2 = delta_ra* math.cos(roll_ref_rad) - delta_dec*math.sin(roll_ref_rad) 
     dv3 = delta_ra*math.sin(roll_ref_rad) + delta_dec*math.cos(roll_ref_rad)
 
+    v2 = v2_ref_rad + dv2/math.cos(v3_ref_rad)
+    v3 = v3_ref_rad + dv3
 
-    v2 = v2_ref + dv2/math.cos(v3_ref_rad)
-    v3 = v3_ref + dv3
-
-    v2 = v2*r2arcmin
-    v3  = v3*r2arcmin
+    v2 = v2*r2d*60.0
+    v3  = v3*r2d*60.0
 
 
 
@@ -84,28 +85,30 @@ def radec2std(crval1,crval2,ra,dec):
 
 # Compute the standard coordinates xi,eta from CRVAL1,CRVAL2 & ra,dec
 
+    def check_val(ra):
+        ra = np.asarray(ra)
+    def check_val(dec):
+        ra = np.asarray(dec)
 
-  rad2arcsec = (180.0*3600.0)/math.pi
+    rad2arcsec = (180.0*3600.0)/math.pi
 
-  deg2rad = math.pi/180.0
+    deg2rad = math.pi/180.0
 
-  ra0 = crval1*deg2rad
-  dec0 = crval2*deg2rad
-  radiff = ra*deg2rad - ra0;
-  decr = dec*deg2rad;
+    ra0 = crval1*deg2rad
+    dec0 = crval2*deg2rad
+    radiff = ra*deg2rad - ra0;
+    decr = dec*deg2rad;
 
-  h = np.sin(decr) *math.sin(dec0) + np.cos(decr)*math.cos(dec0)*np.cos(radiff);
+    h = np.sin(decr) *math.sin(dec0) + np.cos(decr)*math.cos(dec0)*np.cos(radiff);
 
-  xi = np.cos(decr)*np.sin(radiff)/h;
-  eta = ( np.sin(decr)*math.cos(dec0) - np.cos(decr)*math.sin(dec0)*np.cos(radiff) )/h;
+    xi = np.cos(decr)*np.sin(radiff)/h;
+    eta = ( np.sin(decr)*math.cos(dec0) - np.cos(decr)*math.sin(dec0)*np.cos(radiff) )/h;
 
-  #xi = xi/deg2rad
-  #eta = eta/deg2rad;
-  xi = xi * rad2arcsec
-  eta = eta * rad2arcsec
+    xi = xi * rad2arcsec
+    eta = eta * rad2arcsec
 
 
-  return xi,eta
+    return xi,eta
 
 #________________________________________________________________________________
 def std2radec(crval1,crval2,xi,eta):
@@ -122,41 +125,54 @@ def std2radec(crval1,crval2,xi,eta):
 #  xi     - standard coordinate
 #  eta    - standard coordinate
 
+    print('eta type',type(eta))
+    def check_val(xi):
+        xi = np.asarray(xi)
+    def check_val(eta):
+        eta = np.asarray(eta)
 
-  rad2arcsec = (180.0*3600.0)/math.pi
-  deg2rad = math.pi/180.0
+    print('eta type',type(eta))
+    eta = np.asarray(eta)
+    xi = np.asarray(xi)
 
-  ra0 = crval1*deg2rad
-  dec0 = crval2*deg2rad
+    rad2arcsec = (180.0*3600.0)/math.pi
+    deg2rad = math.pi/180.0
 
+    ra0 = crval1*deg2rad
+    dec0 = crval2*deg2rad
+    print('eta type',type(eta))
+    print('ra2arcsec',type(rad2arcsec))
 
   # tangent projection
-  xi = xi/ rad2arcsec
-  eta = eta/rad2arcsec;
-  ra0 = crval1 * deg2rad
-  dec0 = crval2 * deg2rad
+    xi = xi/ rad2arcsec
+    eta = eta/rad2arcsec;
+    # it back to float64 - ?!
+    print('eta type',type(eta))
+    ra0 = crval1 * deg2rad
+    dec0 = crval2 * deg2rad
    
 
-  beta = math.cos(dec0) - eta*math.sin(dec0)
+    beta = math.cos(dec0) - eta*math.sin(dec0)
 
-  angle = xi/beta
+    angle = xi/beta
+    print(' type',type(eta),type(xi), type(angle) )
 
-  ra = np.arctan(angle) + ra0
-  gamma = np.sqrt(xi*xi + beta*beta)
-  angle =eta*math.cos(dec0) +  math.sin(dec0)
-  angle = angle/gamma
-  dec = np.arctan(angle)
-  ra = ra/deg2rad;
-  dec = dec/deg2rad;
+    ra = np.arctan(angle) + ra0
+    gamma = np.sqrt(xi*xi + beta*beta)
+    angle =eta*math.cos(dec0) +  math.sin(dec0)
+    angle = angle/gamma
+    dec = np.arctan(angle)
+    ra = ra/deg2rad;
+    dec = dec/deg2rad;
+    
+    print(type(ra))
+    print('ra',ra)
+    print(ra.size) 
+    mask = np.asarray(ra < 0)
+    print('mask',mask,type(mask))
+    ra[mask] +=  360.0
+    mask = ra > 360.0
+    ra[mask] -=  360.0
 
-  index = np.where(ra < 0) 
-  ra[index] = ra[index] + 360.0
-
-  index = np.where(ra > 360.0) 
-  ra[index] = ra[index] - 360.0
-
-
-  return ra,dec
+    return ra,dec
   
-
-
