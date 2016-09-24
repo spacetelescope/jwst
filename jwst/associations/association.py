@@ -7,8 +7,10 @@ import jsonschema
 import logging
 from nose.tools import nottest
 import re
+import yaml
 
 from astropy.extern import six
+import numpy as np
 from numpy.ma import masked
 
 from .exceptions import (AssociationError, AssociationProcessMembers)
@@ -152,17 +154,56 @@ class Association(MutableMapping):
         The Association object
         """
         asn = None
+        if not isinstance(serialized, six.string_types):
+            serialized = serialized.read()
         for protocol in SERIALIZATION_PROTOCOLS:
             try:
                 asn = SERIALIZATION_PROTOCOLS[protocol].unserialize(serialized)
-                break
             except AssociationError:
                 continue
+            else:
+                return asn
         else:
             raise AssociationError(
                 'Cannot translate "{}" to an association'.format(serialized)
             )
 
+    def to_yaml(self):
+        """Create JSON representation.
+
+        Returns
+        -------
+        (name, str):
+            Tuple where the first item is the suggested
+            base name for the JSON file.
+            Second item is the string containing the JSON serialization.
+        """
+        # Validate
+        with open(self.schema_file, 'r') as schema_file:
+            asn_schema = json.load(schema_file)
+        jsonschema.validate(self.data, asn_schema)
+
+        return (
+            self.asn_name,
+            yaml.dump(self.data, default_flow_style=False)
+        )
+
+
+    @classmethod
+    def from_yaml(cls, serialized):
+        """Unserialize an assocation from JSON
+
+        Parameters
+        ----------
+        serialized: str or file object
+            The YAML to read
+
+        Returns
+        -------
+        association: dict
+            The association
+        """
+        asn = yaml.load(serialized)
         return asn
 
     def to_json(self):
@@ -200,12 +241,13 @@ class Association(MutableMapping):
         association: dict
             The association
         """
+        if isinstance(serialized, six.string_types):
+            loader = json.loads
+        else:
+            loader = json.load
         try:
-            asn = json.loads(serialized)
-        except TypeError:
-            try:
-                asn = json.load(serialized)
-            except (AttributeError, IOError):
+            asn = loader(serialized)
+        except (AttributeError, IOError, json.JSONDecodeError):
                 raise AssociationError(
                     'Containter is not JSON: "{}"'.format(serialized)
                 )
@@ -467,7 +509,10 @@ ProtocolFuncs = namedtuple('ProtocolFuncs', ['serialize', 'unserialize'])
 SERIALIZATION_PROTOCOLS = {
     'json': ProtocolFuncs(
         serialize=Association.to_json,
-        unserialize=Association.from_json)
+        unserialize=Association.from_json),
+    'yaml': ProtocolFuncs(
+        serialize=Association.to_yaml,
+        unserialize=Association.from_yaml)
 }
 
 
@@ -497,3 +542,9 @@ def is_iterable(obj):
     return not isinstance(obj, six.string_types) and \
         not isinstance(obj, tuple) and \
         hasattr(obj, '__iter__')
+
+# Register YAML representers
+def np_str_representer(dumper, data):
+    """Convert numpy.str_ into standard YAML string"""
+    return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
+yaml.add_representer(np.str_, np_str_representer)
