@@ -190,7 +190,7 @@ class AssociationRegistry(dict):
 
         if len(results) == 0:
             raise AssociationNotValidError(
-                'Structure did not valid: "{}"'.format(association)
+                'Structure did not validate: "{}"'.format(association)
             )
         return results
 

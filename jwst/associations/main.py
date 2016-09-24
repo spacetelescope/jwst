@@ -95,6 +95,16 @@ class Main(object):
             '''
         )
         parser.add_argument(
+            '--pool-format', type=str,
+            default='ascii',
+            help=(
+                'Format of the pool file.'
+                ' Any format allowed by the astropy'
+                ' Unified File I/O interface is allowed.'
+                ' Default: "%(default)s"'
+            )
+        )
+        parser.add_argument(
             '-v', '--verbose',
             action='store_const', dest='loglevel',
             const=logging.INFO, default=logging.NOTSET,
@@ -112,14 +122,9 @@ class Main(object):
             help='Running under DMS workflow conditions.'
         )
         parser.add_argument(
-            '--pool-format', type=str,
-            default='ascii',
-            help=(
-                'Format of the pool file.'
-                ' Any format allowed by the astropy'
-                ' Unified File I/O interface is allowed.'
-                ' Default: "%(default)s"'
-            )
+            '--format',
+            default='json',
+            help='Format of the association files. Default: "%(default)s"'
         )
 
         parsed = parser.parse_args(args=args)
@@ -200,7 +205,11 @@ class Main(object):
         logger.info(self.__str__())
 
         if not parsed.dry_run:
-            self.save(path=parsed.path, save_orphans=parsed.save_orphans)
+            self.save(
+                path=parsed.path,
+                format=parsed.format,
+                save_orphans=parsed.save_orphans
+            )
 
     def __str__(self):
         result = []
@@ -214,12 +223,24 @@ class Main(object):
 
         return '\n'.join(result)
 
-    def save(self, path='.', save_orphans=False):
-        """Save the associations to disk as JSON."""
+    def save(self, path='.', format='json', save_orphans=False):
+        """Save the associations to disk.
+
+        Parameters
+        ----------
+        path: str
+            The path to save the associations to.
+
+        format: str
+            The format of the associations
+
+        save_orphans: bool
+            If true, save the orphans to an astropy.table.Table
+        """
         for asn in self.associations:
-            (fname, json_repr) = asn.to_json()
-            with open(os.path.join(path, fname + '.json'), 'w') as f:
-                f.write(json_repr)
+            (fname, serialized) = asn.dump(protocol=format)
+            with open(os.path.join(path, fname + '.' + format), 'w') as f:
+                f.write(serialized)
 
         if save_orphans:
             self.orphaned.write(
