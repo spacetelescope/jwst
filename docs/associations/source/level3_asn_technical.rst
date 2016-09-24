@@ -1,25 +1,36 @@
-Level 3 Associations
-````````````````````
-Level 3 associations associate which level2b files to process to
-create higher ordered Level 3 product3. Associations are used as the
-primary input to the Level 3 processing tasks. The associations
-themselves also define the primary output names to be used by the
-level 3 processing tasks when creating the output files.
+Level 3 Associations: Technical Specifications
+``````````````````````````````````````````````
+.. _asn-DMS-naming:
 
-For Level 3, there is a one-to-one correspondence between associations
-and the Level 3 products. However, there are cases where one
-association can define multiple Level 3 outputs. Also, Level 3 tasks
-are free to create as many auxiliary products as seen fit. Regardless,
-any outputs created must use the product names, as defined in the
-association, as a template for name creation.
+DMS Naming
+==========
 
-Level 3 associations are created running the `asn_generate` task on an
-`association pool` using the default `Level 3 Association Rules`.
+When produced through the DMS workflow, all association files are
+named according to the following scheme::
+  
+  jwPPPPP-TNNNN_YYYYMMDDtHHMMSS_PTYPE_MMM_asn.json
 
-The structure of an association is defined by a schema. Level 3
-associations follow the Level 3 Association schema. Associations are
-currently in JSON format.
+where:
 
+  * `PPPPP`: 5 digit proposal number
+  * `TNNNN`: Canididat Identifier. Can be on of the following:
+    
+    * `oNNN`: Observation candidate specified by the letter `o` followed
+      by a 3 digit number.
+    * `c1NNN`: Association candidate, specified by the letter 'c',
+      followed by a
+      number starting at 1001.
+    * `a3NNN`: Discovered whole program associations, specified by the
+      letter 'a', followed by a number starting at 3001
+    * `rNNNN`: Reserverd for future use. If you see this in practice,
+      file an issue to have this document updated.
+      
+  * `YYYYMMDDtHHMMSS`: A timestamp provided the DMS workflow. Note:
+    When used outside the workflow, this field is user-specifiable.
+  * `PTYPE`: The product type represented by the association. See
+    :ref:`asn-product-types`
+  * `MMM`: A counter for each type of association created.
+      
 Logical Structure
 =================
 
@@ -113,6 +124,8 @@ correct. How much indentation to use is arbitrary, but must be
 consistent: All nested information for a key must lie at the same
 indentation.
 
+.. _asn-association-meta-keywords:
+
 Association Meta Keywords
 -------------------------
 
@@ -125,16 +138,7 @@ targname
   Target ID for which this association refers to.
 
 asn_type
-  The type of association represented. This is used to indicate what
-  Level 3 task should be used to process this association. Possible
-  values are:
-
-  * `image`: suitable for CALIMAGE3 processing
-  * `spec`: suitable for CALSPECE3 processing
-  * `wfs`: Wave front sensing data, used by `wfs_combine`
-  * `ami`: Aperture Mask Interferometry
-  * `coron`: Coronography
-  * `tso`: Time-series Observations
+  The type of association represented. See :ref:`asn-product-types`
 
 asn_pool
   Association pool from which this association was created.
