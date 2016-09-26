@@ -184,6 +184,7 @@ class CubeBuildStep (Step):
 #________________________________________________________________________________
 # find the min & max final coordinates of cube: map each slice to cube
 # add any dither offsets, then find the min & max value in each dimension
+# Foot print is returned in ra,dec coordinates
 
             CubeFootPrint = cube_build.DetermineCubeSize(self, Cube, 
                                                          MasterTable, 
@@ -200,7 +201,6 @@ class CubeBuildStep (Step):
                 Cube.SetGeometryAB(CubeFootPrint) # local coordinate system 
 
             Cube.PrintCubeGeometry(instrument)
-
             
             # if the user has not set the size of the ROI then use defaults of 1* cube scale in dimension
             if(self.roi1 == 1): self.roi1 = Cube.Cdelt1* 1.0
@@ -227,9 +227,6 @@ class CubeBuildStep (Step):
             for z in range(Cube.naxis3):
                 for y in range(Cube.naxis2):
                     for x in range(Cube.naxis1):
-
-
-
 
                         spaxel.append(cube.Spaxel(Cube.xcoord[x], 
                                                   Cube.ycoord[y], 

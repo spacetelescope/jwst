@@ -168,7 +168,8 @@ def FilesinCube(self, input_table, iproduct, MasterTable):
         num = 1
     else:
 
-        channels = input_table.asn_table['products'][iproduct]['ch']
+        #channels = input_table.asn_table['products'][iproduct]['ch']
+        channels = ['1']
         channellist = list(channels)
         num_ch = len(channellist)
         ValidChannel = ['1', '2', '3', '4']
@@ -537,8 +538,6 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 
                     t0 = time.time()
                     if(instrument == 'NIRSPEC'):
-                        #input_model.meta.ref_file.wavelengthrange.name = \
-                        #'/Users/morrison/Pipeline/testing/cubetest/NIRSPEC/jwst_nirspec_wavelengthrange_0001.asdf'
                         ChannelFootPrint = FindFootPrintNIRSPEC(self, input_model, this_a)
                         amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
                         #print(amin,amax,bmin,bmax,lmin,lmax)
@@ -816,7 +815,6 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
                             weight = weight + weightpt[j]
                             value = value + weightpt[j] * pixelflux[j]
 
-
                             if(icube == -52757):
                                 print('Checking ', ix, iy, iz)
                                 print('icube', icube)
@@ -938,6 +936,7 @@ def WriteCube(self, Cube, spaxel):
     new_model.meta.flux_extension = 'SCI'
     new_model.meta.error_extension = 'ERR'
     new_model.meta.dq_extension = 'DQ'
+    new_model.meta.weightmap = 'WMAP'
     new_model.error_type = 'ERR'
 
 
