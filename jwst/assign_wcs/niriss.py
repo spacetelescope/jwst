@@ -115,8 +115,10 @@ def imaging(input_model, reference_files):
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     focal = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
     distortion = imaging_distortion(input_model, reference_files)
+    tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
-                (focal, None)]
+                (focal, tel2sky),
+                (sky, None)]
     return pipeline
 
 

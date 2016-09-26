@@ -40,11 +40,11 @@ def imaging(input_model, reference_files):
     focal = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
     sky = cf.CelestialFrame(reference_frame=coord.ICRS())
     distortion = imaging_distortion(input_model, reference_files)
-    #fitswcs_transform = pointing.create_fitswcs_transform(input_model)
+    tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
-                (focal, None)]
-                #(sky, None)
-                #]
+                (focal, tel2sky),
+                (sky, None)
+                ]
     return pipeline
 
 
@@ -151,13 +151,12 @@ def ifu(input_model, reference_files):
         "detector_to_alpha_beta")
     ab2xyan = (alpha_beta2XanYan(input_model, reference_files)).rename("alpha_beta_to_Xan_Yan")
     xyan2v23 = models.Identity(1) & (models.Shift(7.8) | models.Scale(-1)) & models.Identity(1)
-    #fitswcs_transform = pointing.create_fitswcs_transform(input_model) & models.Identity(1)
+    tel2sky = pointing.v23tosky(input_model) & Identity(1)
     pipeline = [(detector, det2alpha_beta),
                 (miri_focal, ab2xyan),
                 (xyan, xyan2v23),
-                (v2v3, None)]
-                 #fitswcs_transform),
-                #(sky, None)]
+                (v2v3, tel2sky),
+                (sky, None)]
     return pipeline
 
 

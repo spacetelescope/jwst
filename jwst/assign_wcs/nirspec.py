@@ -102,16 +102,16 @@ def imaging(input_model, reference_files):
         with AsdfFile.open(reference_files['ote']) as f:
             oteip2v23 = f.tree['model'].copy()
 
-        # V2, V3 to wprld (RA, DEC) transform
-        #v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
+        # V2, V3 to world (RA, DEC) transform
+        tel2sky = pointing.v23tosky(input_model)
 
         imaging_pipeline = [(det, dms2detector),
                             (sca, det2gwa),
                             (gwa, gwa2msa),
                             (msa_frame, msa2oteip),
                             (oteip, oteip2v23),
-                            (v2v3, None)]
-                            #(world, None)]
+                            (v2v3, tel2sky),
+                            (world, None)]
     else:
         # convert to microns if the pipeline ends earlier
         gwa2msa = (gwa2msa | Identity(2) & Scale(10**6)).rename('gwa2msa')
@@ -157,6 +157,9 @@ def ifu(input_model, reference_files):
         # This includes a wavelength unit conversion from meters to microns.
         oteip2v23 = oteip_to_v23(reference_files)
 
+        # V2, V3 to sky
+        tel2sky = pointing.v23tosky(input_model) & Identity(1)
+
         # Create coordinate frames in the NIRSPEC WCS pipeline"
         #
         # The oteip2v2v3 transform converts the wavelength from meters (which is assumed
@@ -170,7 +173,8 @@ def ifu(input_model, reference_files):
                     (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
                     (msa_frame, msa2oteip.rename('msa2oteip')),
                     (oteip, oteip2v23.rename('oteip2v23')),
-                    (v2v3, None)]
+                    (v2v3, tel2sky),
+                    (world, None)]
     else:
         # convert to microns if the pipeline ends earlier
         #slit2msa = (Mapping((0, 1, 2, 3, 4)) | slit2msa | Identity(2) & Scale(10**6)).rename('slit2msa')
@@ -209,7 +213,7 @@ def slits_wcs(input_model, reference_files):
     input_model.meta.wcsinfo.spectral_order = sporder
 
     # DMS to SCA transform
-    dms2detector = dms_to_sca(input_model)
+    dms2detector = dms_to_sca(input_model).rename('dms2sca')
     # DETECTOR to GWA transform
     det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
     #det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
@@ -231,17 +235,17 @@ def slits_wcs(input_model, reference_files):
         # This includes a wavelength unit conversion from meters to microns.
         oteip2v23 = oteip_to_v23(reference_files)
 
-        # V2, V3 to wprld (RA, DEC ,LAMBDA) transform
-        #v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
-        #v23_to_world = v23_to_sky & Identity(1)
+        # V2, V3 to sky
+        tel2sky = pointing.v23tosky(input_model) & Identity(1)
 
         msa_pipeline = [(det, dms2detector),
-                        (sca, det2gwa),
-                        (gwa, gwa2slit),
-                        (slit_frame, Mapping((0, 1, 2, 3, 4)) | slit2msa),
-                        (msa_frame, msa2oteip),
-                        (oteip, oteip2v23),
-                        (v2v3, None)]
+                        (sca, det2gwa.rename('det2gwa')),
+                        (gwa, gwa2slit.rename('gwa2slit')),
+                        (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
+                        (msa_frame, msa2oteip.rename('msa2oteip')),
+                        (oteip, oteip2v23.rename('oteip2v23')),
+                        (v2v3, tel2sky),
+                        (world, None)]
     else:
         # convert to microns if the pipeline ends earlier
         #gwa2slit = (gwa2slit | Identity(2) & Scale(10**6)).rename('gwa2slit')
@@ -935,7 +939,6 @@ def nrs_wcs_set_input(input_model, quadrant, slitid, wavelength_range=None):
     #slit_wcs.set_transform('detector', 'gwa', wcsobj.pipeline[0][1])
     slit_wcs.set_transform('gwa', 'slit_frame', wcsobj.pipeline[2][1].models[slit])
     slit_wcs.set_transform('slit_frame', 'msa_frame', wcsobj.pipeline[3][1][1].models[slit] & Identity(1))
-
     slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
 
     domain = compute_domain(slit2detector, wrange)
