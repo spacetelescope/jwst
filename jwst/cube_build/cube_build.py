@@ -815,7 +815,6 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
                             weight = weight + weightpt[j]
                             value = value + weightpt[j] * pixelflux[j]
 
-
                             if(icube == -52757):
                                 print('Checking ', ix, iy, iz)
                                 print('icube', icube)
@@ -937,6 +936,7 @@ def WriteCube(self, Cube, spaxel):
     new_model.meta.flux_extension = 'SCI'
     new_model.meta.error_extension = 'ERR'
     new_model.meta.dq_extension = 'DQ'
+    new_model.meta.weightmap = 'WMAP'
     new_model.error_type = 'ERR'
 
 

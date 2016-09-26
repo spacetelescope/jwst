@@ -88,7 +88,7 @@ def radec2std(crval1,crval2,ra,dec):
     def check_val(ra):
         ra = np.asarray(ra)
     def check_val(dec):
-        ra = np.asarray(dec)
+        dec = np.asarray(dec)
 
     rad2arcsec = (180.0*3600.0)/math.pi
 
@@ -125,29 +125,22 @@ def std2radec(crval1,crval2,xi,eta):
 #  xi     - standard coordinate
 #  eta    - standard coordinate
 
-    print('eta type',type(eta))
-    def check_val(xi):
-        xi = np.asarray(xi)
-    def check_val(eta):
-        eta = np.asarray(eta)
 
-    print('eta type',type(eta))
-    eta = np.asarray(eta)
-    xi = np.asarray(xi)
+
+    eta = np.asarray([eta])
+    xi = np.asarray([xi])
 
     rad2arcsec = (180.0*3600.0)/math.pi
     deg2rad = math.pi/180.0
 
     ra0 = crval1*deg2rad
     dec0 = crval2*deg2rad
-    print('eta type',type(eta))
-    print('ra2arcsec',type(rad2arcsec))
 
   # tangent projection
     xi = xi/ rad2arcsec
     eta = eta/rad2arcsec;
     # it back to float64 - ?!
-    print('eta type',type(eta))
+
     ra0 = crval1 * deg2rad
     dec0 = crval2 * deg2rad
    
@@ -155,7 +148,6 @@ def std2radec(crval1,crval2,xi,eta):
     beta = math.cos(dec0) - eta*math.sin(dec0)
 
     angle = xi/beta
-    print(' type',type(eta),type(xi), type(angle) )
 
     ra = np.arctan(angle) + ra0
     gamma = np.sqrt(xi*xi + beta*beta)
@@ -165,11 +157,8 @@ def std2radec(crval1,crval2,xi,eta):
     ra = ra/deg2rad;
     dec = dec/deg2rad;
     
-    print(type(ra))
-    print('ra',ra)
-    print(ra.size) 
-    mask = np.asarray(ra < 0)
-    print('mask',mask,type(mask))
+
+    mask = ra < 0
     ra[mask] +=  360.0
     mask = ra > 360.0
     ra[mask] -=  360.0

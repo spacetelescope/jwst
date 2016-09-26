@@ -20,7 +20,7 @@ def MakePointCloudMIRI(self, input_model,
 
     Short Summary
     -------------
-    map x,y to Point cloud  in final coordinate system
+    map x,y to Point cloud  in final coordinate system (xi,eta of cube) 
 
     Parameters
     ----------
@@ -88,17 +88,12 @@ def MakePointCloudMIRI(self, input_model,
         coord1 = alpha
         coord2 = beta
 
-#    elif (self.coord_system == 'v2-v3'):
-#        coord1 = v2[good_data] * 60.0
-#        coord2 = v3[good_data] * 60.0
-#        coord1 = coord1 - c1_offset 
-#        coord2 = coord2 - c2_offset
     else:
         v2_use = v2[good_data] #arc mins
         v3_use = v3[good_data] #arc mins
 
         ra_ref,dec_ref,roll_ref,v2_ref,v3_ref = v2v32radec
-        print('ref values',ra_ref,dec_ref,roll_ref,v2_ref,v3_ref)
+
         ra,dec = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,
                                   v2_ref, v3_ref,
                                   v2_use,v3_use) # return ra and dec in degrees
@@ -260,7 +255,8 @@ def FindROI(self, Cube, spaxel, PointCloud):
 # loop over each point cloud member - might want to change this to looping
 # over spaxels but for now just keep it point cloud elements because it
 # is easy to find ROI members because the cube spaxel values are regularily spaced
-
+# and we can search over the vector of each axis of the cube rather than entire 
+# point could
 #________________________________________________________________________________
     for ipt in range(0, nn - 1):
 
@@ -284,10 +280,10 @@ def FindROI(self, Cube, spaxel, PointCloud):
 
         coord1 = PointCloud[0, ipt]  # default coords xi
         coord2 = PointCloud[1, ipt]  # default coords eta
-        alpha = PointCloud[3, ipt]
-        beta = PointCloud[4, ipt]
-        x = PointCloud[8, ipt]
-        y = PointCloud[9, ipt]
+        alpha = PointCloud[3, ipt]   # only needed for MIRI
+        beta = PointCloud[4, ipt]    # only needed for MIRI 
+#        x = PointCloud[8, ipt]
+#        y = PointCloud[9, ipt]
 
         if(self.coord_system == 'alpha-beta'):
             coord1 = alpha
@@ -298,57 +294,36 @@ def FindROI(self, Cube, spaxel, PointCloud):
         # find the spaxels that fall withing ROI of point cloud
 
         # find values within the ROI
-        indexz = np.asarray(np.where(abs(Cube.zcoord - wave) <= self.roiw))
-        indexx = np.asarray(np.where(abs(Cube.xcoord - coord1) <= self.roi1))
-        indexy = np.asarray(np.where(abs(Cube.ycoord - coord2) <= self.roi2))
 
+        indexz = np.where(abs(Cube.zcoord - wave) <= self.roiw)
+        indexx = np.where(abs(Cube.xcoord - coord1) <= self.roi1)
+        indexy = np.where(abs(Cube.ycoord - coord2) <= self.roi2)
 
-        # transform Cube Spaxel to alpha,beta system of Point Cloud
+        zloc = Cube.zcoord[indexz]
+        xloc = Cube.xcoord[indexx]  # default coordinates are xi
+        yloc = Cube.ycoord[indexy]  # default coordinates are eta
+
+        # transform Cube Spaxel centers (located at xloc,yloc,zloc)  to alpha,beta system
+        # of point cloud member (only do this transformation for MIRI) 
+        
         # for MIRI weighting parameters are based on distance in alpha-beta coord system
         # transform the cube coordinate values to alpha and beta values 
         # xi,eta -> ra,dec
         # ra-dec -> v2,v3 
         # v2,v3 -> local alph,beta
 
+#        print('zloc',zloc)
+#        print('xloc',xloc)
+#        print('yloc',yloc)
 
-        zloc = Cube.zcoord[indexz[0]]
-        xloc = Cube.xcoord[indexx[0]]  # default coordinates are xi
-        yloc = Cube.ycoord[indexy[0]]  # default coordinates are eta
 
-        ra_spaxel,dec_spaxel=coord.std2radec(Cube.Crval1,Cube.Crval2,
-                                             Cube.xcoord[x],Cube.ycoord[x])
-        v2_spaxel,v3_spaxel = coord.RADEC2V2V3(ra_ref,dec_ref,roll_ref,
-                                                v2_ref,v3_ref,
-                                                ra_spaxel, dec_spaxel)
-        
+#        print('indexx',indexx)
+#        print('indexy',indexy)
+#        print('indexz',indexz)
+
         v2ab_transform = Cube.transform[ifile]
-
-        alpha_spaxel,beta_spaxel,wave_spaxel = v2ab_transform(v2_spaxel/60.0,
-                                                              v3_spaxel/60.0,
-                                                              zloc[iz])
-        alpha_distance = abs(alpha-alpha_spaxel)
-        beta_distance = abs(beta-beta_spaxel)
-        wave_distance  = abs(wave-wave_spaxel)
-
-        xn = alpha_distance/weight_alpha
-        yn = beta_distance/weight_beta
-        wn = wave_distance/weight_wave
-        weight_distance = xn*xn + yn*yn + wn*wn
-
-
-        distance1 = abs(xloc - coord1)
-        distance2 = abs(yloc - coord2)
-
-        if(self.coord_system == 'alpha-beta'):
-            distance1 = abs(xloc - alpha)
-            distance2 = abs(yloc - beta)
-
-        # Determine the distances in alpha-beta system
-        distance3 = abs(zloc - wave)
-        distance12 = distance1 * distance1
-        distance22 = distance2 * distance2
-        distance32 = distance3 * distance3
-        
+#________________________________________________________________________________
+# loop over the points in the ROI 
         iz = 0
         for zz in indexz[0]:
             istart = zz * nplane
@@ -356,36 +331,48 @@ def FindROI(self, Cube, spaxel, PointCloud):
             for yy in indexy[0]:
                 ix = 0
                 for xx in indexx[0]:
+                    ra_spaxel,dec_spaxel=coord.std2radec(Cube.Crval1,Cube.Crval2,
+                                                         xloc[ix],yloc[iy])
+                    v2_spaxel,v3_spaxel = coord.RADEC2V2V3(ra_ref,dec_ref,roll_ref,
+                                                           v2_ref,v3_ref,
+                                                           ra_spaxel, dec_spaxel)
+ 
+                    #v2_spaxel, v3_spaxel are in arc minutes
 
-                    # in Cube_Build_step we saved the coordinate of the spaxel centers also in V2,V3
-                    
-#                    if(self.coord_system=='v2-v3'):
+                    alpha_spaxel,beta_spaxel,wave_spaxel = v2ab_transform(v2_spaxel,
+                                                                          v3_spaxel,
+                                                                          zloc[iz])                    
+                    alpha_distance = abs(alpha-alpha_spaxel)
+                    beta_distance = abs(beta-beta_spaxel)
+                    wave_distance  = abs(wave-wave_spaxel)
 
-
-
-                    weight_distance = distance12[ix] + distance22[iy] + distance32[iz]
+                    xn = alpha_distance/weight_alpha
+                    yn = beta_distance/weight_beta
+                    wn = wave_distance/weight_wave
+                                                              
+                    weight_distance = xn*xn + yn*yn + wn*wn
+                                                              
+# Distance in final cube system (NIRSPEC will use this distance)
+              
+#        d1 = abs(xloc - coord1)
+#        d2 = abs(yloc - coord2)
+#        d3 = abs(zloc - wave)
+#        weight_distance2 = d1*d1 + d2*d2 + d3*d3
 
                     if(weight_distance < lower_limit): weight_distance = lower_limit
                     weight_distance = 1.0 / weight_distance
-
 
                     cube_index = istart + yy * Cube.naxis1 + xx
                     spaxel[cube_index].ipointcloud.append(ipt)
                     spaxel[cube_index].pointcloud_weight.append(weight_distance)
 
-                    #if(zz == 100 and xx == 7 and yy == 10):
-                    #    print('Match',ipt,cube_index)
-                    #    print('Pt point',coord1,coord2,wave)
-                    #    print('Pt a-b-l',alpha,beta)
-                    #    print('x y',x+1,y+1)
-                    #    print(xloc[ix],xloc[ix]-coord1)
-                    #    print(yloc[iy],yloc[iy]-coord2)
-                    #    print(zloc[iz],zloc[iz]-wave)
-
                     ix = ix + 1
                     iprint = iprint + 1
-#                    if(iprint > 10000):
-#                        iprint = 0
+                    if(iprint > 10000):
+                        iprint = 0
+                        print('on point',ipt,nn)
+                        
+                    #sys.exit('STOP')
                 iy = iy + 1
             iz = iz + 1
 
