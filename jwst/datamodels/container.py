@@ -9,14 +9,14 @@ from asdf import AsdfFile
 from astropy.extern import six
 
 from ..associations import Association
-from .model_base import DataModel
-from .image import ImageModel
+from . import model_base
+from .util import open as datamodel_open
 
 
 __all__ = ['ModelContainer']
 
 
-class ModelContainer(DataModel):
+class ModelContainer(model_base.DataModel):
     """
     A container for holding DataModels.
 
@@ -34,8 +34,8 @@ class ModelContainer(DataModel):
     Examples
     --------
     >>> c = ModelContainer('example_asn.json')
-    >>> c[0]    # the first ImageModel in the container
-    >>> c.models_grouped    # a list of the ImageModels grouped by exposure
+    >>> c[0]    # the first DataModel in the container
+    >>> c.models_grouped    # a list of the DataModels grouped by exposure
     """
 
     # This schema merely extends the 'meta' part of the datamodel, and
@@ -50,7 +50,7 @@ class ModelContainer(DataModel):
             self._models = []
         elif isinstance(init, list):
             for item in init:
-                if not isinstance(item, DataModel):
+                if not isinstance(item, model_base.DataModel):
                     raise ValueError('list must contain only DataModels')
             self._models = init
         elif isinstance(init, self.__class__):
@@ -64,9 +64,11 @@ class ModelContainer(DataModel):
             self._models = init._models
         elif isinstance(init, six.string_types):
             try:
-                self.from_asn(init)
-            except:
-                raise ValueError('file path must be an ASN file')
+                self.from_asn(init, **kwargs)
+            except (IOError):
+                raise IOError('Cannot open files.')
+            except ValueError:
+                raise ValueError('{0} must be an ASN file'.format(init))
         else:
             raise TypeError('Input {0!r} is not a list of DataModels or '
                             'an ASN file'.format(init))
@@ -136,12 +138,9 @@ class ModelContainer(DataModel):
         models_copy = [m.copy() for m in self._models]
         return self.__class__(init=models_copy)
 
-    def from_asn(self, filepath):
+    def from_asn(self, filepath, **kwargs):
         """
-        Load the ImageModels from a JWST association file.
-
-        The from_asn() method assumes that all FITS files listed in the
-        association are ImageModels.
+        Load fits files from a JWST association file.
 
         Parameters
         ----------
@@ -160,7 +159,10 @@ class ModelContainer(DataModel):
         # make a list of all the input FITS files
         infiles = [op.join(basedir, member['expname']) for member
                    in asn_data['products'][0]['members']]
-        self._models = [ImageModel(infile) for infile in infiles]
+        try:
+            self._models = [datamodel_open(infile, **kwargs) for infile in infiles]
+        except IOError:
+            raise IOError('Cannot open data models.')
 
         # populate the output metadata with the output file from the ASN file
         self.meta.resample.output = str(asn_data['products'][0]['name'])
@@ -189,9 +191,9 @@ class ModelContainer(DataModel):
     @property
     def group_names(self):
         """
-        Return a list of names for the ImageModel groups by exposure.
+        Return a list of names for the DataModel groups by exposure.
 
-        Note that this returns the ImageModel "group_id"s appended with
+        Note that this returns the DataModel "group_id"s appended with
         "_resamp.fits".
         """
 

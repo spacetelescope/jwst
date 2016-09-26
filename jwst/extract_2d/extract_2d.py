@@ -47,25 +47,25 @@ def extract2d(input_model, which_subarray=None):
         log.info('Subarray x-extents are: %s %s', xlo, xhi)
         log.info('Subarray y-extents are: %s %s', ylo, yhi)
 
-        ext_data = input_model.data[ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_err = input_model.err[ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_dq = input_model.dq[ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_data = input_model.data[ylo: yhi, xlo: xhi].copy()
+        ext_err = input_model.err[ylo: yhi, xlo: xhi].copy()
+        ext_dq = input_model.dq[ylo: yhi, xlo: xhi].copy()
         new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
         shape = ext_data.shape
-        domain = [{'lower': -0.5, 'upper': shape[1] + 0.5, 'includes_lower': True, 'includes_upper': False},
-                  {'lower': -0.5, 'upper': shape[0] + 0.5, 'includes_lower': True, 'includes_upper': False}]
+        domain = [{'lower': 0, 'upper': shape[1], 'includes_lower': True, 'includes_upper': False},
+                  {'lower':0, 'upper': shape[0], 'includes_lower': True, 'includes_upper': False}]
         slit_wcs.domain = domain
         new_model.meta.wcs = slit_wcs
         output_model.slits.append(new_model)
-        # set x/ystart values relative to full detector space
+        # set x/ystart values relative to the image (screen) frame.
+        # The overall subarray offset is recorded in model.meta.subarray.
         nslit = len(output_model.slits) - 1
         output_model.slits[nslit].name = slit_name
-        output_model.slits[nslit].xstart = xlo
-        output_model.slits[nslit].xsize = xhi - xlo + 1
-        output_model.slits[nslit].ystart = ylo
-        output_model.slits[nslit].ysize = yhi - ylo + 1
+        output_model.slits[nslit].xstart = xlo + 1
+        output_model.slits[nslit].xsize = xhi - xlo
+        output_model.slits[nslit].ystart = ylo + 1
+        output_model.slits[nslit].ysize = yhi - ylo
     del input_model
-    #del output_model.meta.wcs
     # Set the step status to COMPLETE
     output_model.meta.cal_step.extract_2d = 'COMPLETE'
     return output_model
