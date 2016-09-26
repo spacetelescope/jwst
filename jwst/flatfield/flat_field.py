@@ -405,6 +405,7 @@ def do_NIRSpec_flat_field(output_model,
     else:
         interpolated_flats = None
 
+    any_updated = False
     for (k, slit) in enumerate(output_model.slits):
         print("xxx Processing slit {}".format(slit.name))
         sys.stdout.flush()          # xxx test debug
@@ -414,16 +415,33 @@ def do_NIRSpec_flat_field(output_model,
         # The arguments are the X and Y pixel coordinates (in that order).
         (ra, dec, wl) = slit.meta.wcs(grid[1], grid[0])
         del ra, dec, grid
+        nan_mask = np.isnan(wl)
+        good_mask = np.logical_not(nan_mask)
+        sum_nan_mask = nan_mask.sum(dtype=np.intp)
+        sum_good_mask = good_mask.sum(dtype=np.intp)
+        if sum_nan_mask > 0:
+            log.info("Number of NaNs in sci wavelength array = %s out of %s",
+                     sum_nan_mask, sum_nan_mask + sum_good_mask)
+            if sum_good_mask < 1:
+                log.info("(all are NaN)")
+            # Replace NaNs with a harmless but out-of-bounds value.
+            wl[nan_mask] = -1000.
         if wl.max() > 0. and wl.max() < MICRONS_100:
             print("xxx Converting wavelengths for sci data to microns")
             sys.stdout.flush()          # xxx test debug
-            wl *= 1.e6
+            wl[good_mask] *= 1.e6
         print("xxx wavelengths in sci data range from {} ({}) to {}"
               .format(wl.min(), wl.mean(dtype=np.float64), wl.max()))
         sys.stdout.flush()          # xxx test debug
 
         xstart = slit.xstart - 1
         ystart = slit.ystart - 1
+        if xstart <= 0:
+            print("xxx xxx xstart was {}, set to 0".format(xstart))
+            xstart = 0
+        if ystart <= 0:
+            print("xxx xxx ystart was {}, set to 0".format(ystart))
+            ystart = 0
         xstop = xstart + xsize
         ystop = ystart + ysize
 
