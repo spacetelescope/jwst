@@ -201,12 +201,14 @@ class DataModel(properties.ObjectNode):
             if fd is not None:
                 fd.close()
 
-    def copy(self):
+    def copy(self, memo=None):
         """
         Returns a deep copy of this model.
         """
         result = self.__class__(
-            init=copy.deepcopy(self._instance), schema=self._schema, extensions=self._extensions)
+            init=copy.deepcopy(self._instance, memo=memo),
+            schema=self._schema,
+            extensions=self._extensions)
         result._shape = self._shape
         return result
 
