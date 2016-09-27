@@ -54,9 +54,8 @@ def imaging(input_model, reference_files):
     else:
         distortion = models.Identity(2)
     pipeline = [(detector, distortion),
-                (focal, fitswcs_transform),
-                (sky, None)
-                ]
+                (focal, None)]
+                #(sky, None)]
 
     return pipeline
 
