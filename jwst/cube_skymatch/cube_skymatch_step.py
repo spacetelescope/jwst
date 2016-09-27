@@ -72,7 +72,10 @@ class CubeSkyMatchStep(Step):
         for cm in cube_models:
 
             # process weights and combine with DQ:
-            weights = cm.weightmap.copy()
+            if not hasattr(cm, 'weightmap') or cm.weightmap is None:
+                weights = np.ones_like(cm.data, dtype=np.float64)
+            else:
+                weights = cm.weightmap.copy()
 
             if dqbits is not None:
                 dq = bitmask.bitmask2mask(bitmask=cm.dq,
