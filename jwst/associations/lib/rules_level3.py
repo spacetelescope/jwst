@@ -208,7 +208,7 @@ class Asn_NRS_FIXEDSLIT(
                 'value': None,
                 'inputs': ['FILTER']
             },
-            'grating': {
+            'opt_elem2': {
                 'value': None,
                 'inputs': ['GRATING']
             },
@@ -250,7 +250,7 @@ class Asn_NRS_MSA(
                 'value': None,
                 'inputs': ['FILTER']
             },
-            'grating': {
+            'opt_elem2': {
                 'value': None,
                 'inputs': ['GRATING']
             },
@@ -304,13 +304,15 @@ class Asn_NRS_IFU(
             },
             'opt_elem': {
                 'value': None,
-                'inputs': ['FILTER']
-            },
-            'grating': {
-                'value': None,
                 'inputs': ['GRATING']
             }
         })
 
         # Check and continue initialization.
         super(Asn_NRS_IFU, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, member):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'nrsifu'
+        super(AsnMixin_Spectrum, self)._init_hook(member)
