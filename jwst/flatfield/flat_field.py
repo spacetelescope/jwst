@@ -4,7 +4,6 @@
 
 from __future__ import division
 
-import sys                              # xxx for sys.stdout.flush()
 import math
 import numpy as np
 import logging
@@ -407,8 +406,7 @@ def do_NIRSpec_flat_field(output_model,
 
     any_updated = False
     for (k, slit) in enumerate(output_model.slits):
-        print("xxx Processing slit {}".format(slit.name))
-        sys.stdout.flush()          # xxx test debug
+        log.debug("Processing slit %s", slit.name)
         # Get the wavelength of each pixel in the extracted slit data.
         ysize, xsize = slit.data.shape
         grid = np.indices((ysize, xsize), dtype=np.float64)
@@ -427,21 +425,10 @@ def do_NIRSpec_flat_field(output_model,
             # Replace NaNs with a harmless but out-of-bounds value.
             wl[nan_mask] = -1000.
         if wl.max() > 0. and wl.max() < MICRONS_100:
-            print("xxx Converting wavelengths for sci data to microns")
-            sys.stdout.flush()          # xxx test debug
-            wl[good_mask] *= 1.e6
-        print("xxx wavelengths in sci data range from {} ({}) to {}"
-              .format(wl.min(), wl.mean(dtype=np.float64), wl.max()))
-        sys.stdout.flush()          # xxx test debug
+            log.warning("Wavelengths in SCI data appear to be in meters.")
 
         xstart = slit.xstart - 1
         ystart = slit.ystart - 1
-        if xstart <= 0:
-            print("xxx xxx xstart was {}, set to 0".format(xstart))
-            xstart = 0
-        if ystart <= 0:
-            print("xxx xxx ystart was {}, set to 0".format(ystart))
-            ystart = 0
         xstop = xstart + xsize
         ystop = ystart + ysize
 
@@ -526,47 +513,39 @@ def NIRSpec_IFU(output_model,
     flat_dq = np.zeros_like(output_model.dq)
 
     list_of_wcs = nirspec.nrs_ifu_wcs(output_model)
-    print("# yyy number of IFU stripes = {}".format(len(list_of_wcs)))
-    sys.stdout.flush()          # xxx test debug
     for (k, ifu_wcs) in enumerate(list_of_wcs):
-    # xxx for k in range(14, 17):                     # xxx test debug
-        # xxx ifu_wcs = list_of_wcs[k]                # xxx test debug
         # example:  domain = [{u'lower': 1601, u'upper': 2048},   # X
         #                     {u'lower': 1887, u'upper': 1925}]   # Y
         truncated = False
         xstart = ifu_wcs.domain[0]['lower']
-        xstop = ifu_wcs.domain[0]['upper'] + 1  # Python slice notation
+        xstop = ifu_wcs.domain[0]['upper']      # Python slice notation
         ystart = ifu_wcs.domain[1]['lower']
-        ystop = ifu_wcs.domain[1]['upper'] + 1
+        ystop = ifu_wcs.domain[1]['upper']
         if xstart >= 2048 or ystart >= 2048 or xstop <= 0 or ystop <= 0:
             log.info("WCS domain for stripe %d is completely outside"
                      " the image; this stripe will be skipped.", k)
             continue
         if xstart < 0:
             truncated = True
-            print("yyy WCS domain xstart was {}; set to 0".format(xstart))
+            log.info("WCS domain xstart was {}; set to 0".format(xstart))
             xstart = 0
         if ystart < 0:
             truncated = True
-            print("yyy WCS domain ystart was {}; set to 0".format(ystart))
+            log.info("WCS domain ystart was {}; set to 0".format(ystart))
             ystart = 0
         if xstop > 2048:
             truncated = True
-            print("yyy WCS domain xstop was {}; set to 2048".format(xstop))
+            log.info("WCS domain xstop was {}; set to 0".format(xstop))
             xstop = 2048
         if ystop > 2048:
             truncated = True
-            print("yyy WCS domain ystop was {}; set to 2048".format(ystop))
+            log.info("WCS domain ystop was {}; set to 0".format(ystop))
             ystop = 2048
         if truncated:
-            ### log.debug("WCS domain for stripe %d extended beyond image"
-            ###           " edges, has been truncated.", k)
             log.info("WCS domain for stripe %d extended beyond image edges,"
                      " has been truncated.", k)
         dx = xstop - xstart
         dy = ystop - ystart
-        print("yyy index {}; start & stop:  {} to {}, {} to {}"
-              .format(k, ystart, ystop, xstart, xstop))
         ind = np.indices((dy, dx))
         x = ind[1] + xstart
         y = ind[0] + ystart
@@ -577,9 +556,6 @@ def NIRSpec_IFU(output_model,
         if wl[good_flag].max() < MICRONS_100:
             log.info("Converting wavelengths from WCS table to microns")
             wl *= 1.e6
-        print("yyy wavelengths in current stripe range from {} ({}) to {}"
-              .format(wl.min(), wl.mean(dtype=np.float64), wl.max()))
-        sys.stdout.flush()          # xxx test debug
         # Set NaNs to a harmless value, but don't modify nan_flag.
         wl[nan_flag] = 1.
 
@@ -601,8 +577,6 @@ def NIRSpec_IFU(output_model,
         flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.copy()
 
         any_updated = True
-    print("yyy flat ranges from {}  ({})  to {}"
-          .format(flat.min(), flat.mean(dtype=np.float64), flat.max()))
 
     output_model.dq |= flat_dq
 
@@ -692,30 +666,8 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     (d_flat, d_flat_dq) = detector_flat(wl, d_flat_model,
                                         xstart, xstop, ystart, ystop,
                                         exposure_type, slit_name)
-    try:
-        print("xxx f_flat ranges from {}  ({})  to {}"
-              .format(f_flat.min(), f_flat.mean(dtype=np.float64),
-                      f_flat.max()))
-    except AttributeError:
-        print("xxx f_flat is not an array")
-    try:
-        print("xxx s_flat ranges from {}  ({})  to {}"
-              .format(s_flat.min(), s_flat.mean(dtype=np.float64),
-                      s_flat.max()))
-    except AttributeError:
-        print("xxx s_flat is not an array")
-    try:
-        print("xxx d_flat ranges from {}  ({})  to {}"
-              .format(d_flat.min(), d_flat.mean(dtype=np.float64),
-                      d_flat.max()))
-    except AttributeError:
-        print("xxx d_flat is not an array")
 
     flat_2d = f_flat * s_flat * d_flat
-
-    print("xxx flat_2d ranges from {}  ({})  to {}"
-          .format(flat_2d.min(), flat_2d.mean(dtype=np.float64), flat_2d.max()))
-    sys.stdout.flush()          # xxx test debug
 
     flat_dq = combine_dq(f_flat_dq, s_flat_dq, d_flat_dq,
                          default_shape=flat_2d.shape)
@@ -769,9 +721,6 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
     if tab_wl.max() < MICRONS_100:
         # xxx log.info("Converting wavelengths in f_flat table to microns")
         tab_wl *= 1.e6
-    print("xxx wavelengths in fore-optics flat range from {} ({}) to {}"
-          .format(tab_wl.min(), tab_wl.mean(dtype=np.float64), tab_wl.max()))
-    sys.stdout.flush()          # xxx test debug
 
     # While there actually is a slowly varying flat field for the MSA mode,
     # it's a 1-D array, not 2-D.  This array will be applied by incorporating
@@ -788,12 +737,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
         # Get the wavelength corresponding to each plane in the "image".
         image_wl = read_image_wl(f_flat_model, quadrant)
         if image_wl.max() < MICRONS_100:
-            # xxx log.info("Converting wavelengths in f_flat image to microns")
-            image_wl *= 1.e6
-        print("xxx wavelengths in f_flat image range from {} ({}) to {}"
-              .format(image_wl.min(), image_wl.mean(dtype=np.float64),
-                      image_wl.max()))
-        sys.stdout.flush()          # xxx test debug
+            log.warning("Wavelengths in f_flat image appear to be in meters.")
         one_d_flat = full_array_flat[:, msa_y, msa_x]
         # This is just a single value, i.e. the shutter can be flagged
         # as bad.  But if it's bad, why was the shutter used?  And what are
@@ -859,8 +803,6 @@ def spectrograph_flat(wl, s_flat_model,
     optical_path_part = S_FLAT
     quadrant = None
 
-    print("xxx debug s_flat:  xstart, xstop, ystart, ystop = {} {} {} {}"
-          .format(xstart, xstop, ystart, ystop))
     if xstart >= xstop or ystart >= ystop:
         return (1., None)
 
@@ -870,15 +812,9 @@ def spectrograph_flat(wl, s_flat_model,
     if tab_wl.max() < MICRONS_100:
         # xxx log.info("Converting wavelengths in s_flat table to microns")
         tab_wl *= 1.e6
-    print("xxx wavelengths in spectrograph flat range from {} ({}) to {}"
-          .format(tab_wl.min(), tab_wl.mean(dtype=np.float64), tab_wl.max()))
-    sys.stdout.flush()          # xxx test debug
 
     full_array_flat = s_flat_model.data
     full_array_dq = s_flat_model.dq
-    print("xxx in spectrograph_flat:  full_array_flat ranges from {}  ({})  to {}"
-          .format(full_array_flat.min(), full_array_flat.mean(dtype=np.float64),
-                  full_array_flat.max()))
 
     # Should this test be on len(full_array_dq.shape) instead?
     if exposure_type == "NRS_MSASPEC":
@@ -889,18 +825,10 @@ def spectrograph_flat(wl, s_flat_model,
         if image_wl.max() < MICRONS_100:
             # xxx log.info("Converting wavelengths in s_flat image to microns")
             image_wl *= 1.e6
-        print("xxx wavelengths in s_flat image range from {} ({}) to {}"
-              .format(image_wl.min(), image_wl.mean(dtype=np.float64),
-                      image_wl.max()))
-        sys.stdout.flush()          # xxx test debug
         (flat_2d, s_flat_dq) = interpolate_flat(image_flat, image_dq,
                                                 image_wl, wl)
     else:
         flat_2d = full_array_flat[ystart:ystop, xstart:xstop]
-        print("xxx debug s_flat:  flat_2d.shape = {}".format(flat_2d.shape))
-        print("xxx in spectrograph_flat:  flat_2d ranges from {}  ({})  to {}"
-              .format(flat_2d.min(), flat_2d.mean(dtype=np.float64),
-                      flat_2d.max()))
         s_flat_dq = full_array_dq[ystart:ystop, xstart:xstop]
 
     s_flat = combine_fast_slow(wl, flat_2d, tab_wl, tab_flat)
@@ -947,8 +875,6 @@ def detector_flat(wl, d_flat_model,
     optical_path_part = D_FLAT
     quadrant = None
 
-    print("xxx debug d_flat:  xstart, xstop, ystart, ystop = {} {} {} {}"
-          .format(xstart, xstop, ystart, ystop))
     if xstart >= xstop or ystart >= ystop:
         return (1., None)
 
@@ -956,15 +882,7 @@ def detector_flat(wl, d_flat_model,
                                          exposure_type, optical_path_part,
                                          slit_name, quadrant)
     if tab_wl.max() < MICRONS_100:
-        # xxx log.info("Converting wavelengths in d_flat table to microns")
-        tab_wl *= 1.e6
-    print("xxx in detector_flat:  tab_wl ranges from {}  ({})  to {}"
-          .format(tab_wl.min(), tab_wl.mean(dtype=np.float64), tab_wl.max()))
-    print("xxx                    len(tab_wl) = {}".format(len(tab_wl)))
-    print("xxx                    tab_flat ranges from {}  ({})  to {}"
-          .format(tab_flat.min(), tab_flat.mean(dtype=np.float64),
-                  tab_flat.max()))
-    sys.stdout.flush()          # xxx test debug
+        log.warning("Wavelengths in d_flat table appear to be in meters.")
 
     full_array_flat = d_flat_model.data
     full_array_dq = d_flat_model.dq
@@ -978,33 +896,11 @@ def detector_flat(wl, d_flat_model,
     if image_wl.max() < MICRONS_100:
         # xxx log.info("Converting wavelengths in d_flat image to microns")
         image_wl *= 1.e6
-    print("xxx                    image_flat ranges from {}  ({})  to {}"
-          .format(image_flat.min(), image_flat.mean(dtype=np.float64),
-                  image_flat.max()))
-    print("xxx                    image_dq ranges from {}  ({})  to {}"
-          .format(image_dq.min(), image_dq.mean(dtype=np.float64),
-                  image_dq.max()))
-    print("xxx                    image_wl ranges from {}  ({})  to {}"
-          .format(image_wl.min(), image_wl.mean(dtype=np.float64),
-                  image_wl.max()))
-    print("xxx                    wl ranges from {}  ({})  to {}"
-          .format(wl.min(), wl.mean(dtype=np.float64), wl.max()))
-    sys.stdout.flush()          # xxx test debug
 
     (flat_2d, d_flat_dq) = interpolate_flat(image_flat, image_dq,
                                             image_wl, wl)
-    print("xxx                    flat_2d ranges from {}  ({})  to {}"
-          .format(flat_2d.min(), flat_2d.mean(dtype=np.float64),
-                  flat_2d.max()))
-    print("xxx                    d_flat_dq ranges from {}  ({})  to {}"
-          .format(d_flat_dq.min(), d_flat_dq.mean(dtype=np.float64),
-                  d_flat_dq.max()))
-    sys.stdout.flush()          # xxx test debug
 
     d_flat = combine_fast_slow(wl, flat_2d, tab_wl, tab_flat)
-    print("xxx                    d_flat ranges from {}  ({})  to {}"
-          .format(d_flat.min(), d_flat.mean(dtype=np.float64), d_flat.max()))
-    sys.stdout.flush()          # xxx test debug
 
     return (d_flat, d_flat_dq)
 
@@ -1192,8 +1088,6 @@ def read_flat_table(flat_model,
             tab_flat = flat_col.copy()
             if nelem_col is not None:
                 nelem = nelem_col[0]            # arbitrary choice of row
-    print("xxx yyy nelem = {}, len(tab_wl) = {}".format(nelem, len(tab_wl)))
-    sys.stdout.flush()          # xxx test debug
     if nelem is not None:
         if len(tab_wl) < nelem:
             log.warning("READ THIS:  The fast_variation array size %d in"
@@ -1472,17 +1366,10 @@ def interpolate_flat(image_flat, image_dq, image_wl, wl):
 
     # If the wavelength is out of range, set a DQ flag.
     indx = np.where(wl < image_wl[0])
-    print("xxx in interpolate_flat:  less than:  {}".format(len(indx[0])))
-    sys.stdout.flush()          # xxx test debug
     flat_dq[indx] |= dqflags.pixel['NO_FLAT_FIELD']
     indx = np.where(wl > image_wl[nz - 1])
-    print("xxx in interpolate_flat:  greater than:  {}".format(len(indx[0])))
-    sys.stdout.flush()          # xxx test debug
     flat_dq[indx] |= dqflags.pixel['NO_FLAT_FIELD']
     flag = (flat_dq > 0)             # xxx test debug
-    print("xxx in interpolate_flat:  total flagged = {}"
-          .format(flag.sum(dtype=np.int32)))
-    sys.stdout.flush()          # xxx test debug
 
     # If a pixel is flagged as bad, applying flat_2d should not make any
     # change to the science data.
