@@ -761,29 +761,28 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
         t0 = time.time()
         iz = 0
 
+        print('in FindFlux') 
+
         for z in Cube.zcoord:
             iy = 0
+            itest = 0 
             for y in Cube.ycoord:
                 ix = 0
                 for x in Cube.xcoord:
                     num = len(spaxel[icube].ipointcloud)
                     if(num > 0):
-
                         pointcloud_index = spaxel[icube].ipointcloud
                         weightpt = spaxel[icube].pointcloud_weight
                         pixelflux = PixelCloud[5, pointcloud_index]
 
                         weight = 0
                         value = 0
-                        #numpts = len(pixelflux)
-
-#                        for j in range(numpts):
                         for j in range(num):
                             #weightpt[j] = 1
                             weight = weight + weightpt[j]
                             value = value + weightpt[j] * pixelflux[j]
-
-                            if(icube < 25):
+                            itest = itest + 1
+                            if(itest ==1 ):
                                 print('Checking ', icube, ix, iy, iz)
                                 print('icube', icube)
                                 print('pointcloud', pointcloud_index[j])
@@ -794,7 +793,7 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
                         if(weight != 0):
                             value = value / weight
                             spaxel[icube].flux = value
-                            if(icube < 25):
+                            if(itest == 1):
                                 print('Final Flux', value * weight, weight, value,num)
 
 

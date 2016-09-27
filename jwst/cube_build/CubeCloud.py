@@ -170,6 +170,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
     nn = len(PointCloud[0])
     
     print('number of elements in PT',nn)
+    
 # loop over each point cloud member - might want to change this to looping
 # over spaxels but for now just keep it point cloud elements because it
 # is easy to find ROI members because the cube spaxel values are regularily spaced
@@ -286,7 +287,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
 
                     ix = ix + 1
                     iprint = iprint + 1
-                    if(iprint > 10000):
+                    if(iprint > 20000):
                         iprint = 0
                         print('on point',ipt,nn)
                         
