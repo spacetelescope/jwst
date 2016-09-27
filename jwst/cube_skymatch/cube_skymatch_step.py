@@ -51,7 +51,7 @@ class CubeSkyMatchStep(Step):
     reference_file_types = []
 
     def process(self, input):
-        cube_models = input #datamodels.ModelContainer(input)
+        cube_models = datamodels.ModelContainer(input)
 
         dqbits = bitmask.interpret_bits_value(self.dqbits)
 
