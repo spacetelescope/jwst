@@ -1,7 +1,7 @@
 / NIRSpec configuration (NIRSpec only)
 
-FILTER    = input('FWA_POS')   /       name of the filter element used
-GRATING   = input('GWA_POS')   /       name of the grating element used
+FILTER    = input('FWA_POS') or 'CLEAR'   /  name of the filter element used
+GRATING   = input('GWA_POS') or 'N/A'  /     name of the grating element used
 GWA_XTIL  = input('GWA_XTIL') or 0.0  /       grating x tilt
 GWA_YTIL  = input('GWA_YTIL') or 0.0  /       grating y tilt
 FXD_SLIT  = 'NONE'            /       name of fixed slit aperture used

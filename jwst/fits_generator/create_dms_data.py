@@ -708,5 +708,6 @@ def create_dms(base_file, level="1b", parfile=None, subarray=None, exp_type='UNK
     #
     # Try and open the file as a JWST datamodel
     a = datamodels.open(filename)
+    print("%s opened as a %s" % (filename, a.__module__))
     a.close()
     return
