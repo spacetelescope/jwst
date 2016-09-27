@@ -11,7 +11,6 @@ generalized step: ``cube_skymatch``.
 from __future__ import (absolute_import, division, unicode_literals,
                         print_function)
 
-# STDLIB
 import numpy as np
 
 
@@ -25,7 +24,8 @@ class SkyCube(object):
 
     * image data;
     * data weights;
-    * mask associated image data indicating "good" (True) or "bad" (False) data;
+    * mask associated image data indicating "good" (True) or "bad" (False)
+      data;
     * id;
     * sky background value/coefficients;
     * other useful properties.
@@ -156,19 +156,6 @@ class SkyCube(object):
         self._mgy = None
         self._mgz = None
 
-        # check that mask has the same shape as image cube:
-        #if mask is None:
-            #self._mask = None
-
-        #else:
-            #if data is None:
-                #raise ValueError("'mask' must be None when 'data' is None")
-
-            #self._mask = np.asanyarray(mask, dtype=np.bool)
-
-            #if self._mask.shape != data.shape:
-                #raise ValueError("'mask' must have the same shape as 'data'.")
-
     def _set_bkg_center(self, refpt):
         if refpt is None:
             if self.wcs is None:
@@ -297,11 +284,6 @@ class SkyCube(object):
         # This function should be called ONLY AFTER _data, _wcs, _x0, _y0, _z0,
         # _bkg_degree
 
-        # TODO: remove commented lines below once code it tested
-        # nz, ny, nx = self._data.shape
-        # z, y, x = np.meshgrid(np.arange(nz, dtype=np.float),
-        #                       np.arange(ny, dtype=np.float),
-        #                       np.arange(nx, dtype=np.float), indexing='ij')
         z, y, x = np.indices(self._data.shape, dtype=np.float)
         if self._wcs is not None:
             x, y, z = self.wcs(x, y, z)
@@ -380,7 +362,6 @@ class SkyCube(object):
         self._bkg_cube_dirty = True
         self._bkg_status = 0
 
-
     @property
     def skystat(self):
         """ Stores/retrieves a callable object that takes a either a 2D image
@@ -433,4 +414,3 @@ class SkyCube(object):
         d = (w1 * self.data[m] + w2 * other.skysub_data[m]) / tw
         self._data[m] = (w1 * self.data[m] + w2 * other.skysub_data[m]) / tw
         self.weights[m] = tw
-
