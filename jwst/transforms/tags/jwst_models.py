@@ -6,12 +6,12 @@ from asdf.tags.transform.basic import TransformType
 
 from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
                       NRSZCoord, Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA,
-                      LRSWavelength, Gwa2Slit, Slit2Msa, Logical)
+                      LRSWavelength, Gwa2Slit, Slit2Msa, Logical, NirissSOSSModel)
 
 
 
 __all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
-           'Gwa2SlitType', 'Slit2MsaType', 'LogicalType']
+           'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType']
 
 
 class RotationSequenceType(TransformType):
@@ -187,4 +187,23 @@ class LogicalType(TransformType):
         node = {'condition': model.condition,
                 'compareto': model.compareto,
                 'value': model.value}
+        return yamlutil.custom_tree_to_tagged_tree(node, ctx)
+
+
+class NirissSOSSType(TransformType):
+    name = "niriss_soss"
+    types = [NirissSOSSModel]
+    standard = "jwst_pipeline"
+    version = "0.1.0"
+
+    @classmethod
+    def from_tree_transform(cls, node, ctx):
+        models = dict(zip(node['spectral_orders'], node['models']))
+        return NirissSOSSModel(models)
+
+    @classmethod
+    def to_tree_transform(cls, model, ctx):
+        node = {'spectral_orders': model.models.keys(),
+                'models': model.models.values()
+                }
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)

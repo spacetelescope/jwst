@@ -103,15 +103,15 @@ def imaging(input_model, reference_files):
             oteip2v23 = f.tree['model'].copy()
 
         # V2, V3 to wprld (RA, DEC) transform
-        v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
+        #v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
 
         imaging_pipeline = [(det, dms2detector),
                             (sca, det2gwa),
                             (gwa, gwa2msa),
                             (msa_frame, msa2oteip),
                             (oteip, oteip2v23),
-                            (v2v3, v23_to_sky),
-                            (world, None)]
+                            (v2v3, None)]
+                            #(world, None)]
     else:
         # convert to microns if the pipeline ends earlier
         gwa2msa = (gwa2msa | Identity(2) & Scale(10**6)).rename('gwa2msa')

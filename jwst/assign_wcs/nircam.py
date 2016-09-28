@@ -34,9 +34,8 @@ def imaging(input_model, reference_files):
     distortion = imaging_distortion(input_model, reference_files)
     fitswcs_transform = pointing.create_fitswcs_transform(input_model)
     pipeline = [(detector, distortion),
-                (focal, fitswcs_transform),
-                (sky, None)
-                ]
+                (focal, None)]
+                #(sky, None)]
     return pipeline
 
 
