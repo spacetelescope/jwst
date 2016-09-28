@@ -26,10 +26,6 @@ class Asn_Image(
 
         # Setup for checking.
         self.add_constraints({
-            'pointing_type': {
-                'value': 'SCIENCE',
-                'inputs': ['PNTGTYPE']
-            },
             'wfsvisit': {
                 'value': 'NULL',
                 'inputs': ['WFSVISIT'],
@@ -238,10 +234,6 @@ class Asn_NRS_MSA(
 
         # Setup for checking.
         self.add_constraints({
-            'pointing_type': {
-                'value': 'SCIENCE',
-                'inputs': ['PNTGTYPE']
-            },
             'exp_type': {
                 'value': 'NRS_MSASPEC',
                 'inputs': ['EXP_TYPE']

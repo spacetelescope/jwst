@@ -51,6 +51,19 @@ _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
 # Key that uniquely identfies members.
 KEY = 'expname'
 
+# Target acquisition Exposure types
+_TARGETACQ_TYPES = set((
+    'NRC_TACQ',
+    'MIR_TACQ',
+    'NRS_TACQ',
+    'NIS_TACQ',
+))
+
+# Science exposure types
+# Currently empty because Level3 rules will
+# presume this is the default.
+_SCIENCE_TYPES = set()
+
 
 class DMS_Level3_Base(Association):
     """Basic class for DMS Level3 associations."""
@@ -188,7 +201,7 @@ class DMS_Level3_Base(Association):
             exposerr = None
         entry = {
             'expname': Utility.rename_to_level2b(member['FILENAME']),
-            'exptype': member['PNTGTYPE'],
+            'exptype': Utility.get_exposure_type(member, default='SCIENCE'),
             'exposerr': exposerr,
             'asn_candidate': member['ASN_CANDIDATE']
         }
@@ -429,6 +442,45 @@ class Utility(object):
             ]
         return result
 
+    @staticmethod
+    def get_exposure_type(member, default=None):
+        """Determine the exposure type of a pool member
+
+        Parameters
+        ----------
+        member: dict
+            The pool entry to determine the exposure type of
+
+        default: str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+
+        Returns
+        -------
+        exposure_type: str
+            Exposure type. Can be one of
+                'SCIENCE': Member contains science data
+                'TARGET_AQUISITION': Member contains target acquisition data.
+
+        Raises
+        ------
+        LookupError
+            When `default` is None and an exposure type cannot be determined
+        """
+        result = default
+        try:
+            exp_type = member['EXP_TYPE']
+        except KeyError:
+            exp_type = None
+
+        if exp_type in _TARGETACQ_TYPES:
+            result = 'TARGET_ACQUISTION'
+        elif exp_type in _SCIENCE_TYPES:
+            result = 'SCIENCE'
+
+        if result is None:
+            raise LookupError('Exposure type cannot be determined')
+        return result
 
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
