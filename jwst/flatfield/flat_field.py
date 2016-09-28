@@ -527,19 +527,19 @@ def NIRSpec_IFU(output_model,
             continue
         if xstart < 0:
             truncated = True
-            log.info("WCS domain xstart was {}; set to 0".format(xstart))
+            log.info("WCS domain xstart was %d; set to 0" % xstart)
             xstart = 0
         if ystart < 0:
             truncated = True
-            log.info("WCS domain ystart was {}; set to 0".format(ystart))
+            log.info("WCS domain ystart was %d; set to 0" % ystart)
             ystart = 0
         if xstop > 2048:
             truncated = True
-            log.info("WCS domain xstop was {}; set to 0".format(xstop))
+            log.info("WCS domain xstop was %d; set to 0" % xstop)
             xstop = 2048
         if ystop > 2048:
             truncated = True
-            log.info("WCS domain ystop was {}; set to 0".format(ystop))
+            log.info("WCS domain ystop was %d; set to 0" % ystop)
             ystop = 2048
         if truncated:
             log.info("WCS domain for stripe %d extended beyond image edges,"
