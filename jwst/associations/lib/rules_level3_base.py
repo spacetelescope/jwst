@@ -458,10 +458,6 @@ class AsnMixin_Unique_Config(DMS_Level3_Base):
                 'value': None,
                 'inputs': ['PUPIL']
             },
-            'detector': {
-                'value': '(?!NULL).+',
-                'inputs': ['DETECTOR']
-            },
         })
 
         super(AsnMixin_Unique_Config, self).__init__(*args, **kwargs)
