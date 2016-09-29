@@ -6,7 +6,6 @@ import numpy as np
 import math
 from .. import datamodels
 from ..datamodels import dqflags
-from . import CubeD2C
 from . import cube
 from . import coord
 #________________________________________________________________________________
@@ -81,8 +80,8 @@ def MakePointCloudMIRI(self, input_model,
     error = error_all[good_data]
     alpha = alpha[good_data]
     beta = beta[good_data]
-    xpix = x[good_data]
-    ypix = y[good_data]
+    xpix = x[good_data] # only used for testing
+    ypix = y[good_data] # only used for testing
 
     if(self.coord_system == 'alpha-beta'):
         coord1 = alpha
@@ -126,92 +125,12 @@ def MakePointCloudMIRI(self, input_model,
     # stuff the point cloud arrays for this configuration into cloud 
     # Point cloud will eventually contain all the cloud values
 
+    # xpix,ypix used for testing
     cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile, xpix, ypix])
+#    cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile])
 
     return cloud
 #______________________________________________________________________
-def MakePointCloudMIRI_DistortionFile(self, x, y, file_no, c1_offset, c2_offset, channel, subchannel, sliceno, start_sliceno, input_model):
-
-
-    """
-    Short Summary
-    -------------
-    map x,y to Point cloud
-    x,y detector values for sliceno
-
-    Parameters
-    ----------
-    x,y list of x and y values to map
-    channel: channel number working with
-    subchannel: subchannel working with
-    sliceno
-    input_model: slope image
-    transform: wsc transform to go from x,y to point cloud
-
-    Returns
-    -------
-    location of x,y in Point Cloud as well as mapping of spaxel to each overlapping PointCloud member
-
-
-    """
-#________________________________________________________________________________
-# if using distortion polynomials
-
-    nn = len(x)
-    sliceno_use = sliceno - start_sliceno + 1
-    coord1 = list()
-    coord2 = list()
-    wave = list()
-    alpha = list()
-    beta = list()
-    ifile = list()
-    flux = list()
-    error = list()
-    x_pixel = list()
-    y_pixel = list()
-#________________________________________________________________________________
-# loop over pixels in slice
-#________________________________________________________________________________
-
-    for ipixel in range(0, nn - 1):
-        valid_pixel = True
-        if(y[ipixel] >= 1024):
-            valid_pixel = False
-            #print(' Error ypixel = ',y[ipixel])
-
-        if(valid_pixel):
-            alpha_pixel, beta_pixel, wave_pixel = CubeD2C.xy2abl(self, sliceno_use - 1, x[ipixel], y[ipixel])
-
-            flux_pixel = input_model.data[y[ipixel], x[ipixel]]
-            error_pixel = input_model.err[y[ipixel], x[ipixel]]
-            xan, yan = CubeD2C.ab2xyan(self, alpha_pixel, beta_pixel)
-            v2, v3 = CubeD2C.xyan2v23(self, xan, yan)
-
-            coord1_pixel = v2 * 60.0
-            coord2_pixel = v3 * 60.0
-
-            coord1_pixel = coord1_pixel + c1_offset / 60.0
-            coord2_pixel = coord2_pixel + c2_offset / 60.0
-
-            coord1.append(coord1_pixel)
-            coord2.append(coord2_pixel)
-            alpha.append(alpha_pixel)
-            beta.append(beta_pixel)
-            flux.append(flux_pixel)
-            error.append(error_pixel)
-            ifile.append(file_no)
-
-            x_pixel.append(x[ipixel])
-            y_pixel.append(y[ipixel])
-    # get in form of 8 columns of data - shove the information in an array.
-    #print('size',len(coord1),len(coord2))
-
-    cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile, x_pixel, y_pixel])
-    return cloud
-
-#_______________________________________________________________________
-
-
 
 def FindROI(self, Cube, spaxel, PointCloud):
 
@@ -252,6 +171,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
     nn = len(PointCloud[0])
     
     print('number of elements in PT',nn)
+    
 # loop over each point cloud member - might want to change this to looping
 # over spaxels but for now just keep it point cloud elements because it
 # is easy to find ROI members because the cube spaxel values are regularily spaced
@@ -281,9 +201,15 @@ def FindROI(self, Cube, spaxel, PointCloud):
         coord1 = PointCloud[0, ipt]  # default coords xi
         coord2 = PointCloud[1, ipt]  # default coords eta
         alpha = PointCloud[3, ipt]   # only needed for MIRI
-        beta = PointCloud[4, ipt]    # only needed for MIRI 
-#        x = PointCloud[8, ipt]
-#        y = PointCloud[9, ipt]
+        beta = PointCloud[4, ipt]    # only needed for MIRI
+#        if(ipt == 148262):
+#            print('located point',ipt)
+#            print(PointCloud[5,ipt])
+#            print('flux {0:.5f}'.format(PointCloud[5,ipt]))
+#            x = PointCloud[8, ipt]
+#            y = PointCloud[9, ipt]
+#            print('x,y',x,y)
+#            sys.exit('STOP')
 
         if(self.coord_system == 'alpha-beta'):
             coord1 = alpha
@@ -350,7 +276,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
                     yn = beta_distance/weight_beta
                     wn = wave_distance/weight_wave
                                                               
-                    weight_distance = xn*xn + yn*yn + wn*wn
+                    weight_distance = xn*xn + yn*yn  # did not include the wavelength distance 
                                                               
 # Distance in final cube system (NIRSPEC will use this distance)
               
@@ -368,7 +294,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
 
                     ix = ix + 1
                     iprint = iprint + 1
-                    if(iprint > 10000):
+                    if(iprint > 20000):
                         iprint = 0
                         print('on point',ipt,nn)
                         
@@ -376,7 +302,6 @@ def FindROI(self, Cube, spaxel, PointCloud):
                 iy = iy + 1
             iz = iz + 1
 
-#_______________________________________________________________________
 
 #_______________________________________________________________________
 def FindWaveWeights(channel, subchannel):
