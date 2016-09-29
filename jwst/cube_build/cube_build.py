@@ -422,16 +422,26 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
         yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
         y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
-        v2, v3, lam = slice_wcs(x, y)
+        v2, v3, lam = slice_wcs(x, y) # return v2,v3 are in degrees
 
         print(yrange)
         print(xrange)
-        print('v2 ',v2.shape,v2)
-        print('v3 ',v3)
-        sys.exit('STOP')
+#        print('v2 ',v2.shape,v2)
+#        print('v3 ',v3)
 
-        coord1 = v2 * 60.0
-        coord2 = v3 * 60.0
+
+        v2 = v2 * 60.0 # convert to arc minutes
+        v3 = v3 * 60.0 # convert to arc minutes
+
+
+        ra_ref = 45.0 # degrees
+        dec_ref = 0.0 # degrees
+        roll_ref = 0.0 # degrees 
+        v2_ref = 300.2961/60.0 # arc min
+        v3_ref = -497.9/60.0 # arc min         
+        coord1,coord2 = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,
+                                         v2,v3) # return ra and dec in degrees
+
 
         a_slice[k] = np.nanmin(coord1)
         a_slice[k + 1] = np.nanmax(coord1)
@@ -453,11 +463,10 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
     lambda_min = min(lambda_slice)
     lambda_max = max(lambda_slice)
 
-#    print('max a',a_min,a_max)
-#    print('max b',b_min,b_max)
-#    print('wave',lambda_min,lambda_max)
-
-
+    print('max a',a_min,a_max, (a_max-a_min)*60.0)
+    print('max b',b_min,b_max, (b_max-b_min)*60.0)
+    print('wave',lambda_min,lambda_max)
+    sys.exit('STOP')
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
 
 #_______________________________________________________________________
