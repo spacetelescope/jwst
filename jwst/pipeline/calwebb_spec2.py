@@ -145,7 +145,7 @@ class Lvl2Input(object):
     """
 
     template = {"asn_rule": "",
-              "targname": "",
+              "target": "",
               "asn_pool": "",
               "asn_type": "",
               "members": [
@@ -177,7 +177,7 @@ class Lvl2Input(object):
 
         # A single exposure was provided as input
         self.asn = self.template
-        self.asn['targname'] = model.meta.target.catalog_name
+        self.asn['target'] = model.meta.target.catalog_name
         self.asn['asn_rule'] = 'singleton'
         self.asn['asn_type'] = 'singleton'
         self.asn['asn_pool'] = ''

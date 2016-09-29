@@ -2,17 +2,19 @@ from ast import literal_eval
 from collections import namedtuple, MutableMapping
 from copy import deepcopy
 from datetime import datetime
-from itertools import count
 import json
 import jsonschema
 import logging
 from nose.tools import nottest
 import re
+import yaml
 
 from astropy.extern import six
+import numpy as np
 from numpy.ma import masked
 
 from .exceptions import (AssociationError, AssociationProcessMembers)
+from .lib.counter import Counter
 from .registry import AssociationRegistry
 
 __all__ = [
@@ -28,7 +30,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # Timestamp template
-_TIMESTAMP_TEMPLATE = '%Y%m%dT%H%M%S'
+_TIMESTAMP_TEMPLATE = '%Y%m%dt%H%M%S'
 
 
 class Association(MutableMapping):
@@ -39,10 +41,9 @@ class Association(MutableMapping):
     member: dict
         The member to initialize the association with.
 
-    timestamp: str
-        Timestamp to use in the name of this association. Should conform
-        to the datetime.strftime format '%Y%m%dT%M%H%S'. If None, class
-        instantiation will create this string using current time.
+    version_id: str or None
+        Version_Id to use in the name of this association.
+        If None, nothing is added.
 
     Raises
     ------
@@ -66,7 +67,13 @@ class Association(MutableMapping):
     schema_file: str
         The name of the output schema that an association
         must adhere to.
+
+    registry: AssocitionRegistry
+        The registry this association came from.
     """
+
+    # Assume no registry
+    registry = None
 
     # Default force a constraint to use first value.
     DEFAULT_FORCE_UNIQUE = False
@@ -79,12 +86,12 @@ class Association(MutableMapping):
     GLOBAL_CONSTRAINTS = {}
 
     # Associations of the same type are sequenced.
-    _sequence = count(1)
+    _sequence = Counter(start=1)
 
     def __init__(
             self,
             member=None,
-            timestamp=None,
+            version_id=None,
     ):
 
         self.data = dict()
@@ -92,15 +99,12 @@ class Association(MutableMapping):
         self.run_init_hook = True
         self.meta = {}
 
-        if timestamp is not None:
-            self.timestamp = timestamp
-        else:
-            self.timestamp = make_timestamp()
+        self.version_id = version_id
 
         self.data.update({
             'asn_type': 'None',
             'asn_rule': self.asn_rule,
-            'creation_time': self.timestamp
+            'version_id': self.version_id
         })
 
         if member is not None:
@@ -150,17 +154,56 @@ class Association(MutableMapping):
         The Association object
         """
         asn = None
+        if not isinstance(serialized, six.string_types):
+            serialized = serialized.read()
         for protocol in SERIALIZATION_PROTOCOLS:
             try:
                 asn = SERIALIZATION_PROTOCOLS[protocol].unserialize(serialized)
-                break
             except AssociationError:
                 continue
+            else:
+                return asn
         else:
             raise AssociationError(
                 'Cannot translate "{}" to an association'.format(serialized)
             )
 
+    def to_yaml(self):
+        """Create JSON representation.
+
+        Returns
+        -------
+        (name, str):
+            Tuple where the first item is the suggested
+            base name for the JSON file.
+            Second item is the string containing the JSON serialization.
+        """
+        # Validate
+        with open(self.schema_file, 'r') as schema_file:
+            asn_schema = json.load(schema_file)
+        jsonschema.validate(self.data, asn_schema)
+
+        return (
+            self.asn_name,
+            yaml.dump(self.data, default_flow_style=False)
+        )
+
+
+    @classmethod
+    def from_yaml(cls, serialized):
+        """Unserialize an assocation from JSON
+
+        Parameters
+        ----------
+        serialized: str or file object
+            The YAML to read
+
+        Returns
+        -------
+        association: dict
+            The association
+        """
+        asn = yaml.load(serialized)
         return asn
 
     def to_json(self):
@@ -198,12 +241,13 @@ class Association(MutableMapping):
         association: dict
             The association
         """
+        if isinstance(serialized, six.string_types):
+            loader = json.loads
+        else:
+            loader = json.load
         try:
-            asn = json.loads(serialized)
-        except TypeError:
-            try:
-                asn = json.load(serialized)
-            except (AttributeError, IOError):
+            asn = loader(serialized)
+        except (AttributeError, IOError, json.JSONDecodeError):
                 raise AssociationError(
                     'Containter is not JSON: "{}"'.format(serialized)
                 )
@@ -268,10 +312,7 @@ class Association(MutableMapping):
             # If the value is a list, signal that a reprocess
             # needs to be done.
             logger.debug('To check: Input="{}" Value="{}"'.format(input, value))
-            try:
-                evaled = literal_eval(value)
-            except (ValueError, SyntaxError):
-                evaled = value
+            evaled = evaluate(value)
 
             if is_iterable(evaled):
                 process_members = []
@@ -319,7 +360,7 @@ class Association(MutableMapping):
 
     @classmethod
     def reset_sequence(cls):
-        cls._sequence = count(1)
+        cls._sequence = Counter(start=1)
 
     def _init_hook(self, member):
         """Post-check and pre-member-adding initialization."""
@@ -468,12 +509,42 @@ ProtocolFuncs = namedtuple('ProtocolFuncs', ['serialize', 'unserialize'])
 SERIALIZATION_PROTOCOLS = {
     'json': ProtocolFuncs(
         serialize=Association.to_json,
-        unserialize=Association.from_json)
+        unserialize=Association.from_json),
+    'yaml': ProtocolFuncs(
+        serialize=Association.to_yaml,
+        unserialize=Association.from_yaml)
 }
 
 
 # Utility
+def evaluate(value):
+    """Evaluate a value
+
+    Parameters
+    ----------
+    value: str
+        The string to evaluate.
+
+    Returns
+    -------
+    type or str
+        The evaluation. If the value cannot be
+        evaluated, the value is simply returned
+    """
+    try:
+        evaled = literal_eval(value)
+    except (ValueError, SyntaxError):
+        evaled = value
+    return evaled
+
+
 def is_iterable(obj):
     return not isinstance(obj, six.string_types) and \
         not isinstance(obj, tuple) and \
         hasattr(obj, '__iter__')
+
+# Register YAML representers
+def np_str_representer(dumper, data):
+    """Convert numpy.str_ into standard YAML string"""
+    return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
+yaml.add_representer(np.str_, np_str_representer)

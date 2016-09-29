@@ -9,15 +9,16 @@ from ..saturation import saturation_step
 from ..ipc import ipc_step
 from ..superbias import superbias_step
 from ..refpix import refpix_step
-from ..reset import reset_step
+from ..rscd import rscd_step
 from ..lastframe import lastframe_step
 from ..linearity import linearity_step
 from ..dark_current import dark_current_step
+from ..persistence import persistence_step
 from ..jump import jump_step
 from ..ramp_fitting import ramp_fit_step
 
 
-__version__ = "3.1"
+__version__ = "7.0.0"
 
 # Define logging
 import logging
@@ -29,8 +30,8 @@ class SloperPipeline(Pipeline):
 
     SloperPipeline: Apply all calibration steps to raw JWST
     ramps to produce a 2-D slope product. Included steps are:
-    dq_init, saturation, ipc, superbias, refpix, reset,
-    lastframe, linearity, dark_current, jump detection, and ramp_fit.
+    dq_init, saturation, ipc, superbias, refpix, rscd, lastframe,
+    linearity, dark_current, persistence, jump detection, and ramp_fit.
 
     """
 
@@ -44,10 +45,11 @@ class SloperPipeline(Pipeline):
                  'ipc': ipc_step.IPCStep,
                  'superbias': superbias_step.SuperBiasStep,
                  'refpix': refpix_step.RefPixStep,
-                 'reset': reset_step.ResetStep,
+                 'rscd': rscd_step.RSCD_Step,
                  'lastframe': lastframe_step.LastFrameStep,
                  'linearity': linearity_step.LinearityStep,
                  'dark_current': dark_current_step.DarkCurrentStep,
+                 'persistence': persistence_step.PersistenceStep,
                  'jump': jump_step.JumpStep,
                  'ramp_fit': ramp_fit_step.RampFitStep,
                  }
@@ -61,27 +63,41 @@ class SloperPipeline(Pipeline):
         # open the input
         input = datamodels.open(input)
 
-        # apply dq_init, saturation, and ipc steps
-        input = self.dq_init(input)
-        input = self.saturation(input)
-        input = self.ipc(input)
-
-        # apply superbias subtraction to all except MIRI data
-        if input.meta.instrument.name != 'MIRI':
-            input = self.superbias(input)
-
-        # apply reference pixel correction
-        input = self.refpix(input)
-
-        # apply reset and lastframe corrections to MIRI data
-        if input.meta.instrument.name == 'MIRI':
-            input = self.reset(input)
-            input = self.lastframe(input)
-
-        # apply linearity, dark, and jump steps
-        input = self.linearity(input)
+        # propagate output_dir to steps that might need it
         self.dark_current.output_dir = self.output_dir
-        input = self.dark_current(input)
+        self.ramp_fit.output_dir = self.output_dir
+
+        if input.meta.instrument.name == 'MIRI':
+
+            # process MIRI exposures;
+            # the steps are in a different order than NIR
+            log.debug('Processing a MIRI exposure')
+
+            input = self.dq_init(input)
+            input = self.saturation(input)
+            input = self.ipc(input)
+            input = self.linearity(input)
+            input = self.rscd(input)
+            input = self.lastframe(input)
+            input = self.dark_current(input)
+            input = self.refpix(input)
+            input = self.persistence(input)
+
+        else:
+
+            # process Near-IR exposures
+            log.debug('Processing a Near-IR exposure')
+
+            input = self.dq_init(input)
+            input = self.saturation(input)
+            input = self.ipc(input)
+            input = self.superbias(input)
+            input = self.refpix(input)
+            input = self.linearity(input)
+            input = self.persistence(input)
+            input = self.dark_current(input)
+
+        # apply the jump step
         input = self.jump(input)
 
         # save the corrected ramp data, if requested
@@ -89,7 +105,6 @@ class SloperPipeline(Pipeline):
             self.save_model(input, 'ramp')
 
         # apply the ramp_fit step
-        self.ramp_fit.output_dir = self.output_dir
         input = self.ramp_fit(input)
 
         # setup output_file for saving

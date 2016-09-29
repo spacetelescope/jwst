@@ -40,16 +40,10 @@ class SubtractImagesStep(Step):
 
         if isinstance(model1, datamodels.CubeModel):
             self.log.debug('Input is a CubeModel')
-            model1.close()
-            model1 = datamodels.CubeModel(input1)
         elif isinstance(model1, datamodels.ImageModel):
             self.log.debug('Input is an ImageModel')
-            model1.close()
-            model1 = datamodels.ImageModel(input1)
-        elif isinstance(model1, datamodels.DataModel):
+        elif isinstance(model1, datamodels.MultiSlitModel):
             self.log.debug('Input is a MultiSlitModel')
-            model1.close()
-            model1 = datamodels.MultiSlitModel(input1)
 
         # Assume that the second input model is always Image or MultiSlit with
         # a single image, which is safe to open as MultiSlit for either case

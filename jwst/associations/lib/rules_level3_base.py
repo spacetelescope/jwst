@@ -1,5 +1,5 @@
 """Base classes which define the Level3 Associations"""
-from collections import namedtuple
+from collections import defaultdict
 import logging
 from os.path import basename
 import re
@@ -8,7 +8,12 @@ from jwst.associations import (
     Association,
     libpath
 )
+from jwst.associations.association import (
+    evaluate,
+    is_iterable
+)
 from jwst.associations.exceptions import AssociationNotAConstraint
+from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.counter import Counter
 
 # Configure logging
@@ -34,25 +39,29 @@ _DEGRADED_STATUS_NOTOK = (
 )
 
 # DMS file name templates
-_ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
+_ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
+_ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
 # Product name regex's
 _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
-_REGEX_ACID_CONSTRAINT = '\(.*\'(?P<id>[a-z]\d{3,4})\'.*\,.*\'(?P<type>\w+)\'.*\)'
 
 
-# Define the association's association candidate id.
-ACID = namedtuple('ACID', ['id', 'type'])
+# Key that uniquely identfies members.
+KEY = 'expname'
 
 
 class DMS_Level3_Base(Association):
     """Basic class for DMS Level3 associations."""
 
+    # Make sequences type-dependent
+    _sequences = defaultdict(Counter)
+
     def __init__(self, *args, **kwargs):
 
-        self.candidates = set()
+        # Keep the set of members included in this association
+        self.members = set()
 
         # Initialize discovered association ID
         self.discovered_id = Counter(_DISCOVERED_ID_START)
@@ -66,32 +75,40 @@ class DMS_Level3_Base(Association):
         for _, constraint in self.constraints.items():
             if constraint.get('is_acid', False):
                 value = re.sub('\\\\', '', constraint['value'])
-                m = re.search(_REGEX_ACID_CONSTRAINT, value)
-                acid = ACID(
-                    id=m.groupdict()['id'],
-                    type=m.groupdict()['type']
-                )
-                break
+                try:
+                    acid = ACID(value)
+                except ValueError:
+                    pass
+                else:
+                    break
         else:
             id = 'a{:0>3}'.format(self.discovered_id.value)
-            acid = ACID(id=id, type='DISCOVERED')
+            acid = ACID((id, 'DISCOVERED'))
 
         return acid
 
     @property
     def asn_name(self):
         program = self.data['program']
-        timestamp = self.timestamp
+        version_id = self.version_id
         asn_type = self.data['asn_type']
         sequence = self.sequence
 
-        name = _ASN_NAME_TEMPLATE.format(
-            program=program,
-            acid=self.acid.id,
-            stamp=timestamp,
-            type=asn_type,
-            sequence=sequence,
-        )
+        if version_id:
+            name = _ASN_NAME_TEMPLATE_STAMP.format(
+                program=program,
+                acid=self.acid.id,
+                stamp=version_id,
+                type=asn_type,
+                sequence=sequence,
+            )
+        else:
+            name = _ASN_NAME_TEMPLATE.format(
+                program=program,
+                acid=self.acid.id,
+                type=asn_type,
+                sequence=sequence,
+            )
         return name.lower()
 
     @property
@@ -111,7 +128,7 @@ class DMS_Level3_Base(Association):
 
     def product_name(self):
         """Define product name."""
-        target = self._get_target_id()
+        target = self._get_target()
 
         instrument = self._get_instrument()
 
@@ -139,8 +156,11 @@ class DMS_Level3_Base(Association):
         """Post-check and pre-add initialization"""
         super(DMS_Level3_Base, self)._init_hook(member)
 
+        # Set which sequence counter should be used.
+        self._sequence = self._sequences[self.data['asn_type']]
+
         self.schema_file = ASN_SCHEMA
-        self.data['targname'] = member['TARGETID']
+        self.data['target'] = member['TARGETID']
         self.data['program'] = str(member['PROGRAM'])
         self.data['asn_pool'] = basename(
             member.meta['pool_file']
@@ -174,7 +194,6 @@ class DMS_Level3_Base(Association):
         }
         members = self.current_product['members']
         members.append(entry)
-        self.candidates.add(entry['asn_candidate'])
         self.data['degraded_status'] = _DEGRADED_STATUS_OK
         if exposerr not in _EMPTY:
             self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
@@ -183,19 +202,22 @@ class DMS_Level3_Base(Association):
                 exposerr
             ))
 
-    def _get_target_id(self):
+        # Add entry to the short list
+        self.members.add(entry[KEY])
+
+    def _get_target(self):
         """Get string representation of the target
 
         Returns
         -------
-        target_id: str
+        target: str
             The Level3 Product name representation
             of the target or source ID.
         """
         try:
             target = 's{0:0>5s}'.format(self.data['source_id'])
         except KeyError:
-            target = 't{0:0>3s}'.format(self.data['targname'])
+            target = 't{0:0>3s}'.format(self.data['target'])
         return target
 
     def _get_instrument(self):
@@ -287,7 +309,12 @@ class Utility(object):
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
-    def filter_cross_candidates(associations):
+    def filter_discovered_only(
+            associations,
+            discover_ruleset,
+            candidate_ruleset,
+            keep_candidates=True,
+    ):
         """Return only those associations that have multiple candidates
 
         Parameters
@@ -296,17 +323,56 @@ class Utility(object):
             The list of associations to check. The list
             is that returned by the `generate` function.
 
+        discover_ruleset: str
+            The name of the ruleset that has the discover rules
+
+        candidate_ruleset: str
+            The name of the ruleset that finds just candidates
+
+        keep_candidates: bool
+            Keep explicit candidate associations in the list.
+
         Returns
         -------
         iterable
             The new list of just cross candidate associations.
+
+        Notes
+        -----
+        This utility is only meant to run on associations that have
+        been constructed. Associations that have been Association.dump
+        and then Association.load will not return proper results.
         """
-        result = [
-            asn
-            for asn in associations
-            if len(asn.candidates) > 1
-        ]
-        return result
+        # Split the associations along discovered/not discovered lines
+        asn_by_ruleset = {
+            candidate_ruleset: [],
+            discover_ruleset: []
+        }
+        for asn in associations:
+            asn_by_ruleset[asn.registry.name].append(asn)
+        candidate_list = asn_by_ruleset[candidate_ruleset]
+        discover_list = asn_by_ruleset[discover_ruleset]
+
+        # Filter out the non-unique discovereds.
+        for candidate in candidate_list:
+            if len(discover_list) == 0:
+                break
+            unique_list = []
+            for discover in discover_list:
+                if discover.data['asn_type'] == candidate.data['asn_type'] and \
+                   discover.members == candidate.members:
+                    # This association is not unique. Ignore
+                    pass
+                else:
+                    unique_list.append(discover)
+
+            # Reset the discovered list to the new unique list
+            # and try the next candidate.
+            discover_list = unique_list
+
+        if keep_candidates:
+            discover_list.extend(candidate_list)
+        return discover_list
 
     @staticmethod
     def rename_to_level2b(level1b_name):
@@ -338,6 +404,31 @@ class Utility(object):
             match.group('extension')
         ])
         return level2b_name
+
+    @staticmethod
+    def get_candidate_list(value):
+        """Parse the candidate list from a member value
+
+        Parameters
+        ----------
+        value: str
+            The value from the member to parse. Usually
+            member['ASN_CANDIDATE']
+
+        Returns
+        -------
+        [ACID, ...]
+            The list of parsed candidates.
+        """
+        result = []
+        evaled = evaluate(value)
+        if is_iterable(evaled):
+            result = [
+                ACID(v)
+                for v in evaled
+            ]
+        return result
+
 
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
@@ -383,7 +474,7 @@ class AsnMixin_Target(DMS_Level3_Base):
 
         # Setup for checking.
         self.add_constraints({
-            'target_name': {
+            'target': {
                 'value': None,
                 'inputs': ['TARGETID']
             },

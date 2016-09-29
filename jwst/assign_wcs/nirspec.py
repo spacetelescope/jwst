@@ -11,7 +11,7 @@ import numpy as np
 
 from asdf import AsdfFile
 from astropy.modeling import models, fitting
-from astropy.modeling.models import Mapping, Identity, Const1D
+from astropy.modeling.models import Mapping, Identity, Const1D, Scale
 from astropy import units as u
 from astropy import coordinates as coord
 from astropy.io import fits
@@ -19,7 +19,7 @@ from gwcs import coordinate_frames as cf
 
 from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa, slitid_to_slit,
                                  AngleFromGratingEquation, WavelengthFromGratingEquation, Gwa2Slit,
-                                 Unitless2DirCos)
+                                 Unitless2DirCos, Logical)
 from .util import not_implemented_mode
 from . import pointing
 
@@ -103,16 +103,18 @@ def imaging(input_model, reference_files):
             oteip2v23 = f.tree['model'].copy()
 
         # V2, V3 to wprld (RA, DEC) transform
-        v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
+        #v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
 
         imaging_pipeline = [(det, dms2detector),
                             (sca, det2gwa),
                             (gwa, gwa2msa),
                             (msa_frame, msa2oteip),
                             (oteip, oteip2v23),
-                            (v2v3, v23_to_sky),
-                            (world, None)]
+                            (v2v3, None)]
+                            #(world, None)]
     else:
+        # convert to microns if the pipeline ends earlier
+        gwa2msa = (gwa2msa | Identity(2) & Scale(10**6)).rename('gwa2msa')
         imaging_pipeline = [(det, dms2detector),
                             (sca, det2gwa),
                             (gwa, gwa2msa),
@@ -152,9 +154,14 @@ def ifu(input_model, reference_files):
         msa2oteip = ifu_msa_to_oteip(reference_files)
 
         # OTEIP to V2,V3 transform
+        # This includes a wavelength unit conversion from meters to microns.
         oteip2v23 = oteip_to_v23(reference_files)
 
         # Create coordinate frames in the NIRSPEC WCS pipeline"
+        #
+        # The oteip2v2v3 transform converts the wavelength from meters (which is assumed
+        # in the whole pipeline) to microns (which is the expected output)
+        #
         # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
 
         pipeline = [(det, dms2detector),
@@ -165,11 +172,13 @@ def ifu(input_model, reference_files):
                     (oteip, oteip2v23.rename('oteip2v23')),
                     (v2v3, None)]
     else:
-
+        # convert to microns if the pipeline ends earlier
+        #slit2msa = (Mapping((0, 1, 2, 3, 4)) | slit2msa | Identity(2) & Scale(10**6)).rename('slit2msa')
+        slit2msa = (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')
         pipeline = [(det, dms2detector),
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
-                    (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
+                    (slit_frame, slit2msa),
                     (msa_frame, None)]
 
     return pipeline
@@ -219,6 +228,7 @@ def slits_wcs(input_model, reference_files):
         msa2oteip = msa_to_oteip(reference_files)
 
         # OTEIP to V2,V3 transform
+        # This includes a wavelength unit conversion from meters to microns.
         oteip2v23 = oteip_to_v23(reference_files)
 
         # V2, V3 to wprld (RA, DEC ,LAMBDA) transform
@@ -233,6 +243,9 @@ def slits_wcs(input_model, reference_files):
                         (oteip, oteip2v23),
                         (v2v3, None)]
     else:
+        # convert to microns if the pipeline ends earlier
+        #gwa2slit = (gwa2slit | Identity(2) & Scale(10**6)).rename('gwa2slit')
+        gwa2slit = (gwa2slit).rename('gwa2slit')
         msa_pipeline = [(det, dms2detector),
                         (sca, det2gwa),
                         (gwa, gwa2slit),
@@ -412,10 +425,12 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
     model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
    """
+    ymin = -.55
+    ymax = .55
     agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
     lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
-    #lam = (wrange[1] - wrange[0]) / 2 + wrange[0]
+    mask = mask_slit(ymin, ymax)
 
     ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
     ifupost = AsdfFile.open(reference_files['ifupost'])
@@ -432,7 +447,7 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
                  Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                  Identity(1) & gwa2msa & Identity(2) | \
                  Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
-                 Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq
+                 Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
 
         # msa to before_gwa
         #msa2bgwa = Mapping((0, 1, 2, 2)) | msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
@@ -467,9 +482,12 @@ def gwa_to_slit(slits_id, disperser, wrange, order, reference_files):
     model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
     """
+    ymin = -.55
+    ymax = .55
     agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
     lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
+    mask = mask_slit(ymin, ymax)
 
     msa = AsdfFile.open(reference_files['msa'])
     slit_models = {}
@@ -488,7 +506,7 @@ def gwa_to_slit(slits_id, disperser, wrange, order, reference_files):
                     Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                     Identity(1) & gwa2msa & Identity(2) | \
                     Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
-                    Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq
+                    Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
 
                 # msa to before_gwa
                 msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
@@ -543,12 +561,45 @@ def dms_to_sca(input_model):
     if ystart is None:
         ystart = 1
     # The SCA coordinates are in full frame
-    subarray2full = models.Shift(xstart) & models.Shift(ystart)
+    # The inputs are 1-based, remove -1 when'if they are 0-based
+    # The outputs must be 1-based becaause this is what the model expects.
+    # If xstart was 0-based and the inputs were 0-based ->
+    # Shift(+1)
+    subarray2full = models.Shift(xstart - 1) & models.Shift(ystart - 1)
     if detector == 'NRS2':
         model = models.Shift(-2048) & models.Shift(-2048) | models.Scale(-1) & models.Scale(-1)
     elif detector == 'NRS1':
         model = models.Identity(2)
     return subarray2full | model
+
+
+def mask_slit(ymin=-.5, ymax=.5):
+    """
+    Returns a model which masks out pixels in a NIRSpec cutout outside the slit.
+
+    Uses ymin, ymax for the slit and the wavelength range to define the location of the slit.
+
+    Parameters
+    ----------
+    ymin, ymax : float
+        ymin and ymax relative boundary of a slit.
+
+    Returns
+    -------
+    model : `~astropy.modeling.core.Model`
+        A model which takes x_slit, y_slit, lam inputs and substitutes the
+        values outside the slit with NaN.
+
+    """
+    greater_than_ymax = Logical(condition='GT', compareto=ymax, value=np.nan)
+    less_than_ymin = Logical(condition='LT', compareto=ymin, value=np.nan)
+
+    model = Mapping((0, 1, 2, 1)) | Identity(3) & \
+          (greater_than_ymax | less_than_ymin | models.Scale(0)) | \
+          Mapping((0, 1, 3, 2, 3)) | Identity(1) & Mapping((0,), n_inputs=2) + Mapping((1,)) & \
+          Mapping((0,), n_inputs=2) + Mapping((1,))
+    model.inverse = Identity(3)
+    return model
 
 
 def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5):
@@ -579,12 +630,13 @@ def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5)
     x_range_high, y_range_high = slit2detector([0] * nsteps, [slit_ymax] * nsteps, lam_grid)
     x_range = np.hstack((x_range_low, x_range_high))
     y_range = np.hstack((y_range_low, y_range_high))
-    # add 5 px margin
-    x0 = int(max(0, x_range.min() - 10))
-    x1 = int(min(2047, x_range.max() + 10))
+    # add 10 px margin
+    # The -1 is technically because the output of slit2detector is 1-based coordinates.
+    x0 = int(max(0, x_range.min() -1 - 10))
+    x1 = int(min(2047, x_range.max() -1 + 10))
     # add 2 px margin
-    y0 = int(y_range.min()) - 2
-    y1 = int(y_range.max()) + 2
+    y0 = int(y_range.min() -1 -2)
+    y1 = int(y_range.max() -1 + 2)
 
     domain = [{'lower': x0, 'upper': x1}, {'lower': y0, 'upper': y1}]
     return domain
@@ -748,8 +800,10 @@ def oteip_to_v23(reference_files):
         ote = f.tree['model'].copy()
     fore2ote_mapping = Identity(3, name='fore2ote_mapping')
     fore2ote_mapping.inverse = Mapping((0, 1, 2, 2))
-    # Convert the wavelength to microns
-    return fore2ote_mapping | (ote & (Identity(1)))# / Const1D(1e-6)))
+    # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
+    # meters as required by the pipeline but the desired output wavelength units is microns.
+    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
+    return fore2ote_mapping | (ote & Scale(1e6))
 
 
 def create_frames():
@@ -768,10 +822,13 @@ def create_frames():
     slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), unit=("", ""),
                              axes_names=('x_slit', 'y_slit'))
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
-    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.m,),
-                            axes_names=('wavelength',))
     v2v3_spatial = cf.Frame2D(name='V2V3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg),
                              axes_names=('V2', 'V3'))
+
+    # The oteip_to_v23 incorporates a scale to convert the spectral units from
+    # meters to microns.  So the v2v3 output frame will be in u.deg, u.deg, u.micron
+    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
+                            axes_names=('wavelength',))
     v2v3 = cf.CompositeFrame([v2v3_spatial, spec], name='v2v3')
     slit_frame = cf.CompositeFrame([slit_spatial, spec], name='slit_frame')
     msa_frame = cf.CompositeFrame([msa_spatial, spec], name='msa_frame')
