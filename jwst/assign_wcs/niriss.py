@@ -6,12 +6,11 @@ import logging
 from asdf import AsdfFile
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import Identity, Const1D
-
+from astropy.modeling.models import Const1D, Mapping
+from gwcs import wcs
 import gwcs.coordinate_frames as cf
-from . import pointing
 from .util import not_implemented_mode
-
+from ..transforms.models import NirissSOSSModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -28,22 +27,48 @@ def create_pipeline(input_model, reference_files):
     return pipeline
 
 
-def soss_distortion_b7(reference_files):
-    distortion = AsdfFile.open(reference_files['distortion']).tree[1]
-    return distortion
+def niriss_soss_set_input(model, order_number):
+    """
+    Get the right model given the order number.
+
+    Parameters
+    ----------
+    model - Input model
+    order_number - the, well, order number desired
+
+    Returns
+    -------
+    WCS - the WCS corresponding to the order_number
+
+    """
+
+    # Make sure the order number is correct.
+    if order_number < 1 or order_number > 3:
+        raise ValueError('Order must be between 1 and 3')
+
+    # Return the correct transform based on the order_number
+    obj = model.meta.wcs.forward_transform.get_model(order_number)
+
+    # use the size of the input subarray7
+    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+    sky = cf.CelestialFrame(reference_frame=coord.ICRS())
+    pipeline = [(detector, obj),
+                (sky, None)
+                ]
+
+    return wcs.WCS(pipeline)
 
 
-def nis_soss_b7(input_model, reference_files):
+def niriss_soss(input_model, reference_files):
     """
     The NIRISS SOSS pipeline includes 3 coordinate frames -
     detector, focal plane and sky
 
-    reference_files={'distortion': 'soss_wavelengths_configuration.asdf'}
+    reference_files={'specwcs': 'soss_wavelengths_configuration.asdf'}
     """
 
     # Get the target RA and DEC, they will be used for setting the WCS RA and DEC based on a conversation
     # with Kevin Volk.
-    target_ra, target_dec = 0.0, 0.0
     try:
         target_ra = float(input_model['meta.target.ra'])
         target_dec = float(input_model['meta.target.dec'])
@@ -53,63 +78,27 @@ def nis_soss_b7(input_model, reference_files):
 
     # Define the frames
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    sky = cf.CelestialFrame(reference_frame=coord.ICRS())
+    sky = cf.CelestialFrame(reference_frame=coord.ICRS(),
+                            axes_names=('ra', 'dec'),
+                            axes_order=(0, 1), unit=(u.deg, u.deg))
 
-    # Define the transforms
-    distortion = soss_distortion_b7(reference_files)
+    try:
+        with AsdfFile.open(reference_files['specwcs']) as wl:
+            wl1 = wl.tree[1].copy()
+            wl2 = wl.tree[2].copy()
+            wl3 = wl.tree[3].copy()
+    except Exception as e:
+        raise IOError('Error reading wavelength correction from {}'.format(reference_files['specwcs']))
 
-    # Do a quick check to make sure the orientation of the data is the same
-    # in each file (DMS etc etc)
-    #ys, xs = mgrid[:2048, :2048]
-    #ww = distortion(xs, ys)
-    #if nonzero(input_model.data>0):
+    cm_order1 = (Mapping((0, 1, 0, 1)) | (Const1D(target_ra) & Const1D(target_dec) & wl1)).rename('Order1')
+    cm_order2 = (Mapping((0, 1, 0, 1)) | (Const1D(target_ra) & Const1D(target_dec) & wl2)).rename('Order2')
+    cm_order3 = (Mapping((0, 1, 0, 1)) | (Const1D(target_ra) & Const1D(target_dec) & wl3)).rename('Order3')
 
+    # Define the transforms, they should accept (x,y) and return (ra, dec, lambda)
+    soss_model = NirissSOSSModel([1, 2, 3], [cm_order1, cm_order2, cm_order3]).rename('3-order SOSS Model')
 
-    # Now set the RA and DEC based on the target.
-    distortion_rdl = (Const1D(target_ra) & Const1D(target_dec) & distortion)
-
-    pipeline = [(detector, distortion_rdl),
-                (sky, None)
-                ]
-
-    return pipeline
-
-
-def nis_soss_b7p1(input_model, reference_files):
-    """
-    The NIRISS SOSS pipeline includes 3 coordinate frames -
-    detector, focal plane and sky
-
-    reference_files={'distortion': 'soss_wavelengths_configuration.asdf'}
-    """
-
-    log.info('Input is {}'.format(input_model))
-    log.info('\tinput.data.shape {}'.format(input_model.data.shape))
-    log.info('reference_files is {}'.format(reference_files))
-
-    # We are going to assign the target RA, DEC as the output RA, DEC, per Kevin Volk.
-    target_ra, target_dec = 0.0, 0.0
-
-    # We need the PWCPOS (angle in degrees) from the SCI data
-    pwcpos_sci = 0
-
-    # Need the PWCPOS (angle in degrees) from the wavelength correction file
-    pwcpos_wave_corr = 0
-
-    # Need the PWCPOS (angle in degrees) from the wavelength standard file
-    pwcpos_wave_standard = 0
-
-    # Define the frames
-    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    focal = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
-    sky = cf.CelestialFrame(reference_frame=coord.ICRS())
-
-    # Define the transforms
-    distortion = imaging_distortion(input_model, reference_files)
-
-
-    pipeline = [(detector, distortion),
-                (focal, fitswcs_transform),
+    # Define the pipeline based on the frames and models above.
+    pipeline = [(detector, soss_model),
                 (sky, None)
                 ]
 
@@ -125,12 +114,9 @@ def imaging(input_model, reference_files):
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     focal = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
-    sky = cf.CelestialFrame(reference_frame=coord.ICRS())
     distortion = imaging_distortion(input_model, reference_files)
-    fitswcs_transform = pointing.create_fitswcs_transform(input_model)
     pipeline = [(detector, distortion),
                 (focal, None)]
-                #(sky, None)]
     return pipeline
 
 
@@ -141,6 +127,6 @@ def imaging_distortion(input_model, reference_files):
 
 exp_type2transform = {'nis_image': imaging,
                       'nis_wfss': not_implemented_mode,#        ?? WFSS spec
-                      'nis_soss': nis_soss_b7,
+                      'nis_soss': niriss_soss,
                       'nis_ami': not_implemented_mode#        ?? imaging
                       }
