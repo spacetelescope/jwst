@@ -9,6 +9,7 @@ import datetime
 import inspect
 import os
 import sys
+import warnings
 
 import numpy as np
 
@@ -20,17 +21,18 @@ from astropy.wcs import WCS
 from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
+from asdf import extension as asdf_extension
 
 from . import fits_support
 from . import properties
 from . import schema as mschema
 
+from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
 
 
-jwst_extensions = [GWCSExtension(), JWSTExtension()]
-
+jwst_extensions = [GWCSExtension(), JWSTExtension(), BaseExtension()]
 
 class DataModel(properties.ObjectNode):
     """
@@ -39,7 +41,7 @@ class DataModel(properties.ObjectNode):
     schema_url = "core.schema.yaml"
 
     def __init__(self, init=None, schema=None, extensions=None,
-                 resolver=None, pass_invalid_values=False):
+                 pass_invalid_values=False):
         """
         Parameters
         ----------
@@ -67,11 +69,9 @@ class DataModel(properties.ObjectNode):
             If not provided, the schema associated with this class
             will be used.
 
-        extensions: classes extending the standard set of extensions, optional
+        extensions: classes extending the standard set of extensions, optional.
+            If an extension is defined, the prefix used should be 'url'.
 
-        resolver: an object which resolves references in schemas into filenames, optional
-            If None, the default resolver will be used.
-            
         pass_invalid_values: If True, values that do not validate the schema can
             be read and written, but with a warning message
         """
@@ -79,18 +79,19 @@ class DataModel(properties.ObjectNode):
         base_url = os.path.join(
             os.path.dirname(filename), 'schemas', '')
 
+        if extensions is None:
+            extensions = jwst_extensions[:]
+        else:
+            extensions.extend(jwst_extensions)
+        self._extensions = extensions
+
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
+            extension_list = asdf_extension.AsdfExtensionList(self._extensions)
             schema = asdf_schema.load_schema(schema_path, 
-                resolver=resolver, resolve_references=True)
+                resolver=extension_list.url_mapping, resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
-
-        if extensions is not None:
-            extensions.extend(jwst_extensions)
-        else:
-            extensions = jwst_extensions[:]
-        self._extensions = extensions
 
         if "PASS_INVALID_VALUES" in os.environ:
             pass_invalid_values = os.environ["PASS_INVALID_VALUES"]
@@ -170,8 +171,9 @@ class DataModel(properties.ObjectNode):
         # if the input model doesn't have a date set, use the current date/time
         if self.meta.date is None:
             self.meta.date = Time(datetime.datetime.now())
-            self.meta.date.format = 'isot'
-            self.meta.date = self.meta.date.value
+            if hasattr(self.meta.date, 'value'):
+                self.meta.date.format = 'isot'
+                self.meta.date = str(self.meta.date.value)
 
         # if the input is from a file, set the filename attribute
         if isinstance(init, six.string_types):
@@ -199,12 +201,14 @@ class DataModel(properties.ObjectNode):
             if fd is not None:
                 fd.close()
 
-    def copy(self):
+    def copy(self, memo=None):
         """
         Returns a deep copy of this model.
         """
         result = self.__class__(
-            init=copy.deepcopy(self._instance), schema=self._schema, extensions=self._extensions)
+            init=copy.deepcopy(self._instance, memo=memo),
+            schema=self._schema,
+            extensions=self._extensions)
         result._shape = self._shape
         return result
 

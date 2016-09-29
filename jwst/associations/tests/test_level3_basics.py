@@ -13,7 +13,7 @@ from .. import (AssociationRegistry, generate)
 L3_PRODUCT_NAME = (
     'jw(?P<program>\d{5})'
     '-(?P<acid>[a-z]\d{3,4})'
-    '_(?P<targetid>t\d{3})'
+    '_(?P<target>t\d{3})'
     '_(?P<instrument>.+?)'
     '_(?P<opt_elem>.+)'
 )
@@ -31,7 +31,7 @@ class TestLevel3Environment(object):
         matches = match.groupdict()
         yield helpers.check_equal, matches['program'], '99009'
         yield helpers.check_equal, matches['acid'], 'a3001'
-        yield helpers.check_equal, matches['targetid'], 't001'
+        yield helpers.check_equal, matches['target'], 't001'
         yield helpers.check_equal, matches['instrument'], 'miri'
         yield helpers.check_equal, matches['opt_elem'], 'f560w'
 
@@ -52,6 +52,6 @@ class TestLevel3Environment(object):
         matches = match.groupdict()
         yield helpers.check_equal, matches['program'], '99009'
         yield helpers.check_equal, matches['acid'], 'o001'
-        yield helpers.check_equal, matches['targetid'], 't001'
+        yield helpers.check_equal, matches['target'], 't001'
         yield helpers.check_equal, matches['instrument'], 'miri'
         yield helpers.check_equal, matches['opt_elem'], 'f560w'
