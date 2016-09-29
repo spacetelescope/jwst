@@ -167,6 +167,7 @@ class CubeBuildStep (Step):
 # add any dither offsets, then find the min & max value in each dimension
 # Foot print is returned in ra,dec coordinates
 
+
             CubeFootPrint = cube_build.DetermineCubeSize(self, Cube, 
                                                          MasterTable, 
                                                          InstrumentInfo)
@@ -182,7 +183,8 @@ class CubeBuildStep (Step):
                 Cube.SetGeometryAB(CubeFootPrint) # local coordinate system 
 
             Cube.PrintCubeGeometry(instrument)
-            
+
+            sys.exit('STOP')            
             # if the user has not set the size of the ROI then use defaults of 1* cube scale in dimension
             if(self.roi1 == 1): self.roi1 = Cube.Cdelt1* 1.0
             if(self.roi2 == 1): self.roi2 = Cube.Cdelt2* 1.0
@@ -218,8 +220,8 @@ class CubeBuildStep (Step):
             # if doing interpolation on point cloud this will become a matrix of  Pixel Point cloud values
             # each row holds information for a single pixel
 
-            # Initialize the PixelCloud to 8   columns of zeros (1 row)
-            PixelCloud = np.zeros(shape=(8, 1))
+            # Initialize the PixelCloud to 10   columns of zeros (1 row)
+            PixelCloud = np.zeros(shape=(10, 1))
             t0 = time.time()
             # now need to loop over every file that covers this channel/subchannel (MIRI) or Grating/filter(NIRSPEC)
             #and map the detector pixels to the cube spaxel.

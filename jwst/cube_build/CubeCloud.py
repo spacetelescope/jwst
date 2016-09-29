@@ -80,8 +80,8 @@ def MakePointCloudMIRI(self, input_model,
     error = error_all[good_data]
     alpha = alpha[good_data]
     beta = beta[good_data]
-#    xpix = x[good_data]
-#    ypix = y[good_data]
+    xpix = x[good_data] # only used for testing
+    ypix = y[good_data] # only used for testing
 
     if(self.coord_system == 'alpha-beta'):
         coord1 = alpha
@@ -125,8 +125,9 @@ def MakePointCloudMIRI(self, input_model,
     # stuff the point cloud arrays for this configuration into cloud 
     # Point cloud will eventually contain all the cloud values
 
-#    cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile, xpix, ypix])
-    cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile])
+    # xpix,ypix used for testing
+    cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile, xpix, ypix])
+#    cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile])
 
     return cloud
 #______________________________________________________________________
@@ -200,9 +201,15 @@ def FindROI(self, Cube, spaxel, PointCloud):
         coord1 = PointCloud[0, ipt]  # default coords xi
         coord2 = PointCloud[1, ipt]  # default coords eta
         alpha = PointCloud[3, ipt]   # only needed for MIRI
-        beta = PointCloud[4, ipt]    # only needed for MIRI 
-#        x = PointCloud[8, ipt]
-#        y = PointCloud[9, ipt]
+        beta = PointCloud[4, ipt]    # only needed for MIRI
+#        if(ipt == 148262):
+#            print('located point',ipt)
+#            print(PointCloud[5,ipt])
+#            print('flux {0:.5f}'.format(PointCloud[5,ipt]))
+#            x = PointCloud[8, ipt]
+#            y = PointCloud[9, ipt]
+#            print('x,y',x,y)
+#            sys.exit('STOP')
 
         if(self.coord_system == 'alpha-beta'):
             coord1 = alpha
@@ -269,7 +276,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
                     yn = beta_distance/weight_beta
                     wn = wave_distance/weight_wave
                                                               
-                    weight_distance = xn*xn + yn*yn + wn*wn
+                    weight_distance = xn*xn + yn*yn  # did not include the wavelength distance 
                                                               
 # Distance in final cube system (NIRSPEC will use this distance)
               

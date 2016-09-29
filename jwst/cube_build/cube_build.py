@@ -411,22 +411,24 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
 
     regions = list(range(start_slice, end_slice + 1))
     k = 0
-#    sorder, wrange = nirspec.spectral_order_wrange_from_model(input)
+
+
+
+    # for NIRSPEC there are 30 regions
     for i in regions:
 
-        slice_wcs = nirspec.nrs_wcs_set_input(input.meta.wcs, 0, i)
-#        slice_wcs = nirspec.nrs_wcs_set_input(input.meta.wcs, 0, i, wrange)
+        slice_wcs = nirspec.nrs_wcs_set_input(input, 0, i)
 
-#        b = _domain_to_bounds(slice_wcs.domain)
-    
-#        y, x = np.mgrid[b[1][0]:b[1][1], b[0][0]:b[0][1]]
-#        y, x = np.mgrid[b[1][0]:b[1][1], b[0][0]:b[0][1]]
-#        v2, v3, lam = slice_wcs(x, y)
-
-        imrows = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
-        imcols = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
-        y, x = np.mgrid[imrows[0]:imrows[1], imcols[0]:imcols[1]]
+        yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
+        xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
+        y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
         v2, v3, lam = slice_wcs(x, y)
+
+        print(yrange)
+        print(xrange)
+        print('v2 ',v2.shape,v2)
+        print('v3 ',v3)
+        sys.exit('STOP')
 
         coord1 = v2 * 60.0
         coord2 = v3 * 60.0
@@ -680,7 +682,7 @@ def MapDetectorToCube(self, this_channel, this_subchannel,
                                                      c1_offset, c2_offset)
                 n = PixelCloud.size
                 print('size of PixelCloud',n)
-                if(n == 8):  # If first time
+                if(n == 10):  # If first time
                     PixelCloud = cloud
                     print(' 1 pixelcloud',PixelCloud.shape, cloud.shape)
                 else:    #  add information for another slice  to the  PixelCloud
@@ -761,11 +763,9 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
         t0 = time.time()
         iz = 0
 
-        print('in FindFlux') 
-
         for z in Cube.zcoord:
             iy = 0
-            itest = 0 
+
             for y in Cube.ycoord:
                 ix = 0
                 for x in Cube.xcoord:
@@ -781,19 +781,20 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
                             #weightpt[j] = 1
                             weight = weight + weightpt[j]
                             value = value + weightpt[j] * pixelflux[j]
-                            itest = itest + 1
-                            if(itest ==1 ):
+
+                            if(icube == 253984  ):
                                 print('Checking ', icube, ix, iy, iz)
                                 print('icube', icube)
                                 print('pointcloud', pointcloud_index[j])
-                                print('flux', pixelflux[j])
+                                print('flux = {0:.5f}'.format(pixelflux[j]))
                                 print('w', weightpt[j])
+                                print(' ',weightpt[j] * pixelflux[j])
                                 print('num',num)
                                 
                         if(weight != 0):
                             value = value / weight
                             spaxel[icube].flux = value
-                            if(itest == 1):
+                            if(icube == 253984  ):
                                 print('Final Flux', value * weight, weight, value,num)
 
 
