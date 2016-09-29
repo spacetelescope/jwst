@@ -5,7 +5,6 @@ import sys
 import numpy as np
 import math
 from . import cube
-from . import CubeD2C
 from .. import datamodels
 #________________________________________________________________________________
 def FindAreaPoly(nVertices, xpixel, ypixel):
@@ -396,20 +395,12 @@ def SpaxelOverlap(self, x, y, sliceno, start_slice, input_model, transform, beta
     xx_right = x + 1
 
 
-    if (self.wcs['Method'] == 'assign_wcs'):
+    alpha, beta, lam = transform(x, y)
+    alpha1, beta1, lam1 = transform(xx_left, yy_bot)
+    alpha2, beta2, lam2 = transform(xx_right, yy_bot)
+    alpha3, beta3, lam3 = transform(xx_right, yy_top)
+    alpha4, beta4, lam4 = transform(xx_left, yy_top)
 
-        alpha, beta, lam = transform(x, y)
-        alpha1, beta1, lam1 = transform(xx_left, yy_bot)
-        alpha2, beta2, lam2 = transform(xx_right, yy_bot)
-        alpha3, beta3, lam3 = transform(xx_right, yy_top)
-        alpha4, beta4, lam4 = transform(xx_left, yy_top)
-
-    if (self.wcs['Method'] == 'distortion'):
-        alpha, beta, lam = CubeD2C.xy2abl(self, sliceno_use - 1, x, y)
-        alpha1, beta1, lam1 = CubeD2C.xy2abl(self, sliceno_use - 1, xx_left, yy_bot)
-        alpha2, beta2, lam2 = CubeD2C.xy2abl(self, sliceno_use - 1, xx_right, yy_bot)
-        alpha3, beta3, lam3 = CubeD2C.xy2abl(self, sliceno_use - 1, xx_right, yy_top)
-        alpha4, beta4, lam4 = CubeD2C.xy2abl(self, sliceno_use - 1, xx_left, yy_top)
 
     # Loop over all pixels in slice
     for ipixel in range(0, nn - 1):
