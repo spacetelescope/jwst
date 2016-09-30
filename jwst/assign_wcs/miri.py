@@ -151,7 +151,7 @@ def ifu(input_model, reference_files):
         "detector_to_alpha_beta")
     ab2xyan = (alpha_beta2XanYan(input_model, reference_files)).rename("alpha_beta_to_Xan_Yan")
     xyan2v23 = models.Identity(1) & (models.Shift(7.8) | models.Scale(-1)) & models.Identity(1)
-    tel2sky = pointing.v23tosky(input_model) & Identity(1)
+    tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
     pipeline = [(detector, det2alpha_beta),
                 (miri_focal, ab2xyan),
                 (xyan, xyan2v23),
