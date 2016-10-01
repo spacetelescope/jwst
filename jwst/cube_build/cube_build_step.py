@@ -119,7 +119,6 @@ class CubeBuildStep (Step):
         # or self.metadata['filter'], self.metadata['grating']
 
             cube_build.DetermineCubeCoverage(self, MasterTable)
-
             cube_build.CheckCubeType(self)
 
             self.output_name = input_table.asn_table['products'][iproduct]['name']
@@ -183,8 +182,8 @@ class CubeBuildStep (Step):
                 Cube.SetGeometryAB(CubeFootPrint) # local coordinate system 
 
             Cube.PrintCubeGeometry(instrument)
-
             sys.exit('STOP')            
+
             # if the user has not set the size of the ROI then use defaults of 1* cube scale in dimension
             if(self.roi1 == 1): self.roi1 = Cube.Cdelt1* 1.0
             if(self.roi2 == 1): self.roi2 = Cube.Cdelt2* 1.0

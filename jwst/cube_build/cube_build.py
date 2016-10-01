@@ -424,16 +424,14 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
         y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
         v2, v3, lam = slice_wcs(x, y) # return v2,v3 are in degrees
 
-        print(yrange)
-        print(xrange)
-#        print('v2 ',v2.shape,v2)
-#        print('v3 ',v3)
-
+        print('yrange for slice',yrange,i)
+        print('xrange for slice',xrange,i)
 
         v2 = v2 * 60.0 # convert to arc minutes
         v3 = v3 * 60.0 # convert to arc minutes
 
 
+# Hard code these values until they are part of the WCS read in from the header
         ra_ref = 45.0 # degrees
         dec_ref = 0.0 # degrees
         roll_ref = 0.0 # degrees 
@@ -463,10 +461,11 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
     lambda_min = min(lambda_slice)
     lambda_max = max(lambda_slice)
 
-    print('max a',a_min,a_max, (a_max-a_min)*60.0)
-    print('max b',b_min,b_max, (b_max-b_min)*60.0)
+    print('Size of NIRSPEC CUBE FOV: (arcseconds)')
+    print('max a',a_min,a_max, (a_max-a_min)*3600.0)
+    print('max b',b_min,b_max, (b_max-b_min)*3600.0)
     print('wave',lambda_min,lambda_max)
-    sys.exit('STOP')
+    
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
 
 #_______________________________________________________________________
