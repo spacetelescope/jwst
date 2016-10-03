@@ -245,6 +245,9 @@ def add_wcs(filename):
     pheader['PC1_2'] = -np.sin(pa_aper_deg * D2R)
     pheader['PC2_1'] = np.sin(pa_aper_deg * D2R)
     pheader['PC2_2'] = np.cos(pa_aper_deg * D2R)
+    pheader['RA_REF'] = crval1
+    pheader['DEC_REF'] = crval2
+    pheader['ROLL_REF'] = compute_local_roll(v3_pa_deg, crval1, crval2, v2ref, v3ref)
     hdulist.flush()
     hdulist.close()
 
@@ -271,6 +274,56 @@ def get_pointing(obstart, obsend):
     # SA_ZADUCMDX, SA_ZADUCMDY
     fsmcorr = np.array([0., 0.])
     return q, j2fgs_matrix, fsmcorr
+
+
+def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
+    """
+    Computes the position angle of V3 (measured N to E) at the center af an aperture.
+
+    Parameters
+    ----------
+    pa_v3 : float
+        Position angle of V3 at (V2, V3) = (0, 0) [in deg]
+    v2_ref, v3_ref : float
+        Reference point in the V2, V3 frame [in arcsec]
+    ra_ref, dec_ref : float
+        RA and DEC corresponding to V2_REF and V3_REF, [in deg]
+
+    Returns
+    -------
+    new_roll : float
+        The value of ROLL_REF (in deg)
+
+    """
+    v2 = np.deg2rad(v2_ref / 3600)
+    v3 = np.deg2rad(v3_ref / 3600)
+
+    angles = [-pa_v3, -dec_ref, ra_ref]
+    axes = "xyz"
+
+    M = np.array([[cos(ra_ref) * cos(dec_ref),
+                   -sin(ra_ref) * cos(pa_v3) + cos(ra_ref) * sin(dec_ref) * sin(pa_v3),
+                   -sin(ra_ref) * sin(pa_v3) - cos(ra_ref) * sin(dec_ref) * cos(pa_v3)],
+                  [sin(ra_ref) * cos(dec_ref),
+                   cos(ra_ref) * cos(pa_v3) + sin(ra_ref) * sin(dec_ref) * sin(pa_v3),
+                   cos(ra_ref) * sin(pa_v3) - sin(ra_ref) * sin(dec_ref) * cos(pa_v3)],
+                   [sin(dec_ref),
+                    -cos(dec_ref) * sin(pa_v3),
+                    cos(dec_ref) * cos(pa_v3)]
+                  ])
+
+    return _roll_angle_from_matrix(M, v2, v3)
+
+
+def _roll_angle_from_matrix(matrix, v2, v3):
+    X = -(matrix[2, 0] * np.cos(v2) + matrix[2, 1] * np.sin(v2)) * np.sin(v3) + matrix[2, 2] * np.cos(v3)
+    Y = (matrix[0, 0] *  matrix[1, 2] - matrix[1, 0] * matrix[0, 2]) * np.cos(v2) + \
+      (matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]) * np.sin(v2)
+    new_roll = np.rad2deg(np.arctan2(Y, X))
+    if new_roll < 0:
+        new_roll += 360
+    return new_roll
+
 
 if __name__ == '__main__':
     if len(sys.argv) <= 1:
