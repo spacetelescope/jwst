@@ -431,7 +431,6 @@ class Rotation3D(Model):
         # 1-element 1-D array on output for consistency with most other models
         orig_shape = x.shape or (1,)
         inarr = np.array([x.flatten(), y.flatten(), z.flatten()])
-        print('angles rot', angles)
         result = np.dot(self._compute_matrix(angles[0], self.axes_order), inarr)
         x, y, z = result[0], result[1], result[2]
         x.shape = y.shape = z.shape = orig_shape
