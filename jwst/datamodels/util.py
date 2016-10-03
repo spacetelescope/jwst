@@ -222,7 +222,7 @@ def gentle_asarray(a, dtype):
         try:
             a = np.asarray(a, dtype=out_dtype)
         except:
-            raise ValueError("Can't convert {0!s} to ndarray".fornat(type(a)))
+            raise ValueError("Can't convert {0!s} to ndarray".format(type(a)))
         return a
 
 def get_short_doc(schema):
