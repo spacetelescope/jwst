@@ -292,9 +292,9 @@ class Spaxel(object):
 
 ##################################################################################
 class FileTable(object):
-        # FileMap right now it is designed with MIRI in mind
-        # For the 4 channels and 3 subchannels it holds the name of the
-        # input file that covers 'channel','subchannel' region
+    # Dictionary that maps the input files to the 
+    # MIRI: Channel & Band
+    #NIRSPEC: Grating & Filter
     def __init__(self):
 
         self.FileMap = {}

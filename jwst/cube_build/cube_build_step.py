@@ -21,6 +21,9 @@ class CubeBuildStep (Step):
 
     spec = """
          channel = string(default='')
+         band   = string(default='')
+         grating   = string(default='')
+         filter   = string(default='')
          scale1 = float(default=0.0)
          scale2 = float(default =0.0)
          scalew = float(default = 0.0)
@@ -41,6 +44,9 @@ class CubeBuildStep (Step):
 
         # input parameters
         if(self.channel != ''): self.log.info('Input Channel %s', self.channel)
+        if(self.band != ''): self.log.info('Input Channel %s', self.band)
+        if(self.grating != ''): self.log.info('Input Channel %s', self.grating)
+        if(self.filter != ''): self.log.info('Input Channel %s', self.filter)
         if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
         if(self.scale2 != 0.0): self.log.info('Input Scale of axis 2 %f', self.scale2)
         if(self.scalew != 0.0): self.log.info('Input wavelength scale %f  ', self.scalew)
@@ -97,7 +103,8 @@ class CubeBuildStep (Step):
             self.metadata['output_name'] = ''
             self.metadata['number_files'] = 0
 
-        # Check if there is an offset list (this ra,dec dither offset list will probably only be used in testing) 
+        # Check if there is an offset list (this ra,dec dither offset list will probably
+        # only be used in testing) 
             self.ra_offset = list()  # units arc seconds
             self.dec_offset = list() # units arc seconds
             if(self.offset_list != 'NA'):
