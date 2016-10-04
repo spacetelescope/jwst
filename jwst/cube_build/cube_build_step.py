@@ -8,7 +8,6 @@ from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import cube_build
 from . import cube
-from . import CubeD2C
 from . import CubeCloud
 from . import InstrumentDefaults
 from . import coord
@@ -26,7 +25,6 @@ class CubeBuildStep (Step):
          scale2 = float(default =0.0)
          scalew = float(default = 0.0)
          interpolation = string(default='pointcloud')
-         wcs_method = string(default='assign_wcs')
          coord_system = string(default='ra-dec')
          roi1 = float(default=1.0)
          roi2 = float(default=1.0)
@@ -37,10 +35,9 @@ class CubeBuildStep (Step):
     def process(self, input):
         self.log.info('Starting IFU Cube Building Step...')
 
-        if(not self.wcs_method.islower()): self.wcs_method = self.wcs_method.lower()
+
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
         if(not self.interpolation.islower()): self.interpolation = self.interpolation.lower()
-
 
         # input parameters
         if(self.channel != ''): self.log.info('Input Channel %s', self.channel)
@@ -55,22 +52,15 @@ class CubeBuildStep (Step):
         #  v2-v3 NOT USED ANY MORE
         # 2. ra-dec
 
-        # valid wcs_method
-        # 1. assign_wcs
-        # 2. distortion - only valid for MIRI, reads in distortion polynomials only used in testing
-
-
         if (self.interpolation == 'area'):
             self.coord_system = 'alpha-beta'
 
-        #if (self.coord_system == 'v2-v3'):
-        #    self.interpolation = 'pointcloud'  # can not be area
 
         if (self.coord_system == 'ra-dec'):
             self.interpolation = 'pointcloud'  # can not be area
 
         self.log.info('Input interpolation %s', self.interpolation)
-        self.log.info('WCS methods to use %s', self.wcs_method)
+
         self.log.info('Coordinate system to use %s', self.coord_system)
 
 #_________________________________________________________________________________________________
@@ -171,19 +161,12 @@ class CubeBuildStep (Step):
                 wscale = self.scalew
 
             Cube.SetScale(a_scale, b_scale, wscale)
-
-            # WCS method -
-            # 1. Use the DISTORTION files that miri_cube uses (only valid for Testing `<MIRI)
-
-            # 2. Use the assign_wcs step to determine the transformation between coordinates systems
-            self.wcs = {}
-            self.wcs['Method'] = self.wcs_method
-
-
             t0 = time.time()
 #________________________________________________________________________________
 # find the min & max final coordinates of cube: map each slice to cube
 # add any dither offsets, then find the min & max value in each dimension
+# Foot print is returned in ra,dec coordinates
+
 
             CubeFootPrint = cube_build.DetermineCubeSize(self, Cube, 
                                                          MasterTable, 
@@ -201,7 +184,7 @@ class CubeBuildStep (Step):
 
             Cube.PrintCubeGeometry(instrument)
 
-            
+            sys.exit('STOP')            
             # if the user has not set the size of the ROI then use defaults of 1* cube scale in dimension
             if(self.roi1 == 1): self.roi1 = Cube.Cdelt1* 1.0
             if(self.roi2 == 1): self.roi2 = Cube.Cdelt2* 1.0
@@ -227,16 +210,11 @@ class CubeBuildStep (Step):
             for z in range(Cube.naxis3):
                 for y in range(Cube.naxis2):
                     for x in range(Cube.naxis1):
-
-
-
-
                         spaxel.append(cube.Spaxel(Cube.xcoord[x], 
                                                   Cube.ycoord[y], 
                                                   Cube.zcoord[z]))                        
             t1 = time.time()
             print("Time to create list of spaxel classes = %.1f.s" % (t1 - t0,))
-
 
             # create an empty Pixel Cloud array of 10 columns
             # if doing interpolation on point cloud this will become a matrix of  Pixel Point cloud values

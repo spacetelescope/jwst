@@ -16,7 +16,6 @@ from ..assign_wcs import nirspec
 from . import cube
 from . import CubeOverlap
 from . import CubeCloud
-from . import CubeD2C
 from . import coord
 
 import logging
@@ -168,7 +167,8 @@ def FilesinCube(self, input_table, iproduct, MasterTable):
         num = 1
     else:
 
-        channels = input_table.asn_table['products'][iproduct]['ch']
+        #channels = input_table.asn_table['products'][iproduct]['ch']
+        channels = ['1']
         channellist = list(channels)
         num_ch = len(channellist)
         ValidChannel = ['1', '2', '3', '4']
@@ -202,7 +202,7 @@ def FilesinCube(self, input_table, iproduct, MasterTable):
             instrument = input_model.meta.instrument.name
             assign_wcs = input_model.meta.cal_step.assign_wcs
 
-            if(assign_wcs != 'COMPLETE' and self.wcs_method == 'assign_wcs'):
+            if(assign_wcs != 'COMPLETE'):
                 raise ErrorNoAssignWCS("Assign WCS has not been run on file %s", ifile)
 
             #________________________________________________________________________________
@@ -411,25 +411,37 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
 
     regions = list(range(start_slice, end_slice + 1))
     k = 0
-#    sorder, wrange = nirspec.spectral_order_wrange_from_model(input)
+
+
+
+    # for NIRSPEC there are 30 regions
     for i in regions:
 
-        slice_wcs = nirspec.nrs_wcs_set_input(input.meta.wcs, 0, i)
-#        slice_wcs = nirspec.nrs_wcs_set_input(input.meta.wcs, 0, i, wrange)
+        slice_wcs = nirspec.nrs_wcs_set_input(input, 0, i)
 
-#        b = _domain_to_bounds(slice_wcs.domain)
-    
-#        y, x = np.mgrid[b[1][0]:b[1][1], b[0][0]:b[0][1]]
-#        y, x = np.mgrid[b[1][0]:b[1][1], b[0][0]:b[0][1]]
-#        v2, v3, lam = slice_wcs(x, y)
+        yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
+        xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
+        y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
+        v2, v3, lam = slice_wcs(x, y) # return v2,v3 are in degrees
 
-        imrows = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
-        imcols = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
-        y, x = np.mgrid[imrows[0]:imrows[1], imcols[0]:imcols[1]]
-        v2, v3, lam = slice_wcs(x, y)
+        print(yrange)
+        print(xrange)
+#        print('v2 ',v2.shape,v2)
+#        print('v3 ',v3)
 
-        coord1 = v2 * 60.0
-        coord2 = v3 * 60.0
+
+        v2 = v2 * 60.0 # convert to arc minutes
+        v3 = v3 * 60.0 # convert to arc minutes
+
+
+        ra_ref = 45.0 # degrees
+        dec_ref = 0.0 # degrees
+        roll_ref = 0.0 # degrees 
+        v2_ref = 300.2961/60.0 # arc min
+        v3_ref = -497.9/60.0 # arc min         
+        coord1,coord2 = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,
+                                         v2,v3) # return ra and dec in degrees
+
 
         a_slice[k] = np.nanmin(coord1)
         a_slice[k + 1] = np.nanmax(coord1)
@@ -451,11 +463,10 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
     lambda_min = min(lambda_slice)
     lambda_max = max(lambda_slice)
 
-#    print('max a',a_min,a_max)
-#    print('max b',b_min,b_max)
-#    print('wave',lambda_min,lambda_max)
-
-
+    print('max a',a_min,a_max, (a_max-a_min)*60.0)
+    print('max b',b_min,b_max, (b_max-b_min)*60.0)
+    print('wave',lambda_min,lambda_max)
+    sys.exit('STOP')
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
 
 #_______________________________________________________________________
@@ -537,8 +548,6 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 
                     t0 = time.time()
                     if(instrument == 'NIRSPEC'):
-                        #input_model.meta.ref_file.wavelengthrange.name = \
-                        #'/Users/morrison/Pipeline/testing/cubetest/NIRSPEC/jwst_nirspec_wavelengthrange_0001.asdf'
                         ChannelFootPrint = FindFootPrintNIRSPEC(self, input_model, this_a)
                         amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
                         #print(amin,amax,bmin,bmax,lmin,lmax)
@@ -546,15 +555,12 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
                         log.info("Time find foot print = %.1f.s" % (t1 - t0,))
 #________________________________________________________________________________
                     if(instrument == 'MIRI'):
-                        if(self.wcs_method == 'assign_wcs'):  # coord_system = alpha-beta, v2-v3
-                            ChannelFootPrint = FindFootPrintMIRI(self, input_model, this_a, InstrumentInfo)
-                            t1 = time.time()
-                            print("Time find foot print Quick = %.1f.s" % (t1 - t0,))
-                            amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
 
-                        elif(self.wcs_method == 'distortion'): #coord_system = alpha-beta or v2-v3
-                            ChannelFootPrint = CubeD2C.ReadDistortionFile(self, this_a, this_b)
-                            amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
+                        ChannelFootPrint = FindFootPrintMIRI(self, input_model, this_a, InstrumentInfo)
+                        t1 = time.time()
+                        print("Time find foot print Quick = %.1f.s" % (t1 - t0,))
+                        amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
+
 
 # If a dither offset list exists then apply the dither offsets (offsets in arc seconds)
 
@@ -671,8 +677,7 @@ def MapDetectorToCube(self, this_channel, this_subchannel,
 
 #________________________________________________________________________________
 # Standard method 
-            if(self.interpolation == 'pointcloud' and 
-               self.wcs_method == 'assign_wcs'):
+            if(self.interpolation == 'pointcloud'):
                 xstart, xend = InstrumentInfo.GetMIRISliceEndPts(this_channel)
                 y, x = np.mgrid[:1024, xstart:xend]
                 y = np.reshape(y, y.size)
@@ -695,34 +700,6 @@ def MapDetectorToCube(self, this_channel, this_subchannel,
                 print('2 pixelcloud',PixelCloud.shape, cloud.shape)
                 t1 = time.time()
                 log.debug("Time Map one Channel  to Cloud = %.1f.s" % (t1 - t0,))
-#________________________________________________________________________________
-#Point cloud using Distortion Files: (need to loop over slices) - this is just for checking purposes
-            if(self.interpolation == 'pointcloud' and 
-               self.wcs_method == 'distortion'):
-
-                start_region = InstrumentInfo.GetStartSlice(this_channel)
-                end_region = InstrumentInfo.GetEndSlice(this_channel)
-                regions = list(range(start_region, end_region + 1))
-
-                for i in regions:
-                    log.info('Working on Slice # %d', i)
-                    y, x = (det2ab_transform.label_mapper.mapper == i).nonzero()
-                    t0 = time.time()
-                    cloud = CubeCloud.MakePointCloudMIRI_DistortionFile(
-                        self, x, y, k, 
-                        c1_offset, c2_offset, 
-                        this_channel, this_subchannel, 
-                        i, start_region, input_model)
-                    n = PixelCloud.size
-
-                    if(n == 8):  # If first time
-                        PixelCloud = cloud
-                    else:    #  add information for another slice  to the  PixelCloud
-
-                        PixelCloud = np.hstack((PixelCloud, cloud))
-#                        print('pixelcloud',PixelCloud.shape, cloud.shape)
-                    t1 = time.time()
-                    log.debug("Time Map one Slice  to Cloud = %.1f.s" % (t1 - t0,))
 #________________________________________________________________________________
 
 #2D area method - only works for single files and coord_system = 'alpha-beta'
@@ -797,39 +774,37 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
 
         for z in Cube.zcoord:
             iy = 0
+
             for y in Cube.ycoord:
                 ix = 0
                 for x in Cube.xcoord:
-                    nlen = len(spaxel[icube].ipointcloud)
-                    if(nlen > 0):
-
+                    num = len(spaxel[icube].ipointcloud)
+                    if(num > 0):
                         pointcloud_index = spaxel[icube].ipointcloud
                         weightpt = spaxel[icube].pointcloud_weight
                         pixelflux = PixelCloud[5, pointcloud_index]
 
                         weight = 0
                         value = 0
-                        numpts = len(pixelflux)
-
-                        for j in range(numpts):
+                        for j in range(num):
                             #weightpt[j] = 1
                             weight = weight + weightpt[j]
                             value = value + weightpt[j] * pixelflux[j]
 
-
-                            if(icube == -52757):
-                                print('Checking ', ix, iy, iz)
+                            if(icube == 253984  ):
+                                print('Checking ', icube, ix, iy, iz)
                                 print('icube', icube)
                                 print('pointcloud', pointcloud_index[j])
-                                print('flux', pixelflux[j])
+                                print('flux = {0:.5f}'.format(pixelflux[j]))
                                 print('w', weightpt[j])
-
-
+                                print(' ',weightpt[j] * pixelflux[j])
+                                print('num',num)
+                                
                         if(weight != 0):
                             value = value / weight
                             spaxel[icube].flux = value
-                            if(icube == -52757):
-                                print('Final Flux', value * weight, weight, value)
+                            if(icube == 253984  ):
+                                print('Final Flux', value * weight, weight, value,num)
 
 
                     icube = icube + 1
@@ -920,6 +895,7 @@ def WriteCube(self, Cube, spaxel):
             for x in range(Cube.naxis1):
                 data[z, y, x] = spaxel[icube].flux
                 idata[z, y, x] = len(spaxel[icube].ipointcloud)
+
                 icube = icube + 1
     name = Cube.output_name
     new_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
@@ -935,9 +911,20 @@ def WriteCube(self, Cube, spaxel):
     new_model.meta.wcsinfo.crdelt2 = Cube.Cdelt2
     new_model.meta.wcsinfo.crdelt3 = Cube.Cdelt3
 
+    new_model.meta.wcsinfo.ctype1 = 'RA---TAN'
+    new_model.meta.wcsinfo.ctype2 = 'DEC--TAN'
+    new_model.meta.wcsinfo.ctype3 = 'WAVE'
+
+    new_model.meta.wcsinfo.cunit1 = 'DEG'
+    new_model.meta.wcsinfo.cunit2 = 'DEG'
+    new_model.meta.wcsinfo.cunit3 = 'MICRON'
+
+#    new_model.meta.wcsinfo.waverange_start = 
+#    new_model.meta.wcsinfo.waverange_end = 
     new_model.meta.flux_extension = 'SCI'
     new_model.meta.error_extension = 'ERR'
     new_model.meta.dq_extension = 'DQ'
+    new_model.meta.weightmap = 'WMAP'
     new_model.error_type = 'ERR'
 
 

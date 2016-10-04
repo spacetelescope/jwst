@@ -8,7 +8,7 @@ DMS Naming
 When produced through the DMS workflow, all association files are
 named according to the following scheme::
   
-  jwPPPPP-TNNNN_YYYYMMDDtHHMMSS_PTYPE_MMM_asn.json
+  jwPPPPP-TNNNN_YYYYMMDDtHHMMSS_ATYPE_MMM_asn.json
 
 where:
 
@@ -27,8 +27,8 @@ where:
       
   * `YYYYMMDDtHHMMSS`: A timestamp provided the DMS workflow. Note:
     When used outside the workflow, this field is user-specifiable.
-  * `PTYPE`: The product type represented by the association. See
-    :ref:`asn-product-types`
+  * `ATYPE`: The type of association. See
+    :ref:`asn-association-types`
   * `MMM`: A counter for each type of association created.
       
 Logical Structure
@@ -61,7 +61,7 @@ The following example will be used to explain the contents of an association::
         "constraints": "Constraints:\n    opt_elem2: CLEAR\n    pointing_type: SCIENCE\n    detector: (?!NULL).+\n    target_name: 1\n    exp_type: NRC_IMAGE\n    wfsvisit: NULL\n    instrument: NIRCAM\n    opt_elem: F090W\n    program: 99009",
         "asn_pool": "mega_pool",
         "asn_rule": "Asn_Image",
-        "targname": "1",
+        "target": "1",
         "program": "99009",
         "products": [
             {
@@ -134,11 +134,13 @@ The following are the top-level, or meta, keywords of an association.
 program
   Program number for which this association was created.
   
-targname
-  Target ID for which this association refers to.
+target
+  Target ID for which this association refers to. DMS currently uses
+  the TARGETID header keyword in the Level2 exposure files, but there
+  is no formal restrictions on value.
 
 asn_type
-  The type of association represented. See :ref:`asn-product-types`
+  The type of association represented. See :ref:`asn-association-types`
 
 asn_pool
   Association pool from which this association was created.

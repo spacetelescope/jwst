@@ -16,7 +16,8 @@ from astropy.modeling.models import Polynomial2D
 __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
            'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa', 'slitid_to_slit',
-           'slit_to_slitid', 'Snell', 'RefractionIndex', 'Logical']
+           'slit_to_slitid', 'Snell', 'RefractionIndex', 'Logical',
+           'NirissSOSSModel']
 
 
 # Number of shutters per quadrant
@@ -531,6 +532,20 @@ class Slit2Msa(Model):
     def evaluate(self, quadrant, slitid, x, y, lam):
         slit = int(slitid_to_slit(np.array([quadrant, slitid]).T)[0])
         return self.models[slit](x, y) + (lam,)
+
+
+class NirissSOSSModel(Model):
+
+    inputs = ('x', 'y', 'spectral_order')
+    outputs = ('ra', 'dec', 'lam')
+
+    def __init__(self, spectral_orders, models):
+        super(NirissSOSSModel, self).__init__()
+        self.spectral_orders = np.asarray(spectral_orders)
+        self.models = dict(zip(spectral_orders, models))
+
+    def evaluate(self, x, y, spectral_order):
+        return self.models[spectral_order](x, y)
 
 
 class Logical(Model):
