@@ -17,9 +17,9 @@ log.setLevel(logging.DEBUG)
 MICRONS_100 = 1.e-4                     # 100 microns, in meters
 
 # Possible values for optical_path_part.
-F_FLAT = "f_flat"
-S_FLAT = "s_flat"
-D_FLAT = "d_flat"
+F_FLAT = "fflat"
+S_FLAT = "sflat"
+D_FLAT = "dflat"
 
 # number of NIRSpec MSA shutters in the X direction (and 171 in Y)
 NX_SHUTTERS = 365
@@ -407,9 +407,16 @@ def do_NIRSpec_flat_field(output_model,
     any_updated = False
     for (k, slit) in enumerate(output_model.slits):
         log.debug("Processing slit %s", slit.name)
+
         # Get the wavelength of each pixel in the extracted slit data.
         ysize, xsize = slit.data.shape
+        xstart = slit.xstart - 1
+        ystart = slit.ystart - 1
+        xstop = xstart + xsize
+        ystop = ystart + ysize
         grid = np.indices((ysize, xsize), dtype=np.float64)
+        grid[0] += ystart       # pixels with respect to the original image
+        grid[1] += xstart
         # The arguments are the X and Y pixel coordinates (in that order).
         (ra, dec, wl) = slit.meta.wcs(grid[1], grid[0])
         del ra, dec, grid
@@ -426,11 +433,6 @@ def do_NIRSpec_flat_field(output_model,
             wl[nan_mask] = -1000.
         if wl.max() > 0. and wl.max() < MICRONS_100:
             log.warning("Wavelengths in SCI data appear to be in meters.")
-
-        xstart = slit.xstart - 1
-        ystart = slit.ystart - 1
-        xstop = xstart + xsize
-        ystop = ystart + ysize
 
         # Combine the three flat fields for the current subarray.
         (flat_2d, flat_dq_2d) = create_flat_field(wl,
@@ -554,8 +556,7 @@ def NIRSpec_IFU(output_model,
         nan_flag = np.isnan(wl)
         good_flag = np.logical_not(nan_flag)
         if wl[good_flag].max() < MICRONS_100:
-            log.info("Converting wavelengths from WCS table to microns")
-            wl *= 1.e6
+            log.warning("Wavelengths in WCS table appear to be in meters")
         # Set NaNs to a harmless value, but don't modify nan_flag.
         wl[nan_flag] = 1.
 
@@ -719,8 +720,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
                                          exposure_type, optical_path_part,
                                          slit_name, quadrant)
     if tab_wl.max() < MICRONS_100:
-        # xxx log.info("Converting wavelengths in f_flat table to microns")
-        tab_wl *= 1.e6
+        log.warning("Wavelengths in f_flat table appear to be in meters")
 
     # While there actually is a slowly varying flat field for the MSA mode,
     # it's a 1-D array, not 2-D.  This array will be applied by incorporating
@@ -810,8 +810,7 @@ def spectrograph_flat(wl, s_flat_model,
                                          exposure_type, optical_path_part,
                                          slit_name, quadrant)
     if tab_wl.max() < MICRONS_100:
-        # xxx log.info("Converting wavelengths in s_flat table to microns")
-        tab_wl *= 1.e6
+        log.warning("Wavelengths in s_flat table appear to be in meters")
 
     full_array_flat = s_flat_model.data
     full_array_dq = s_flat_model.dq
@@ -823,8 +822,7 @@ def spectrograph_flat(wl, s_flat_model,
         # Get the wavelength corresponding to each plane in the image.
         image_wl = read_image_wl(s_flat_model, quadrant)
         if image_wl.max() < MICRONS_100:
-            # xxx log.info("Converting wavelengths in s_flat image to microns")
-            image_wl *= 1.e6
+            log.warning("Wavelengths in s_flat image appear to be in meters")
         (flat_2d, s_flat_dq) = interpolate_flat(image_flat, image_dq,
                                                 image_wl, wl)
     else:
@@ -894,8 +892,7 @@ def detector_flat(wl, d_flat_model,
     # Get the wavelength corresponding to each plane in the image.
     image_wl = read_image_wl(d_flat_model, quadrant)
     if image_wl.max() < MICRONS_100:
-        # xxx log.info("Converting wavelengths in d_flat image to microns")
-        image_wl *= 1.e6
+        log.warning("Wavelengths in d_flat image appear to be in meters.")
 
     (flat_2d, d_flat_dq) = interpolate_flat(image_flat, image_dq,
                                             image_wl, wl)

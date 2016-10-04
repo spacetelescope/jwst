@@ -15,7 +15,7 @@ class FlatFieldStep(Step):
         flat_suffix = string(default=None)
     """
 
-    reference_file_types = ["flat", "f_flat", "s_flat", "d_flat"]
+    reference_file_types = ["flat", "fflat", "sflat", "dflat"]
 
     def process(self, input):
 
@@ -35,16 +35,16 @@ class FlatFieldStep(Step):
         # Retrieve the reference file name or names
         if is_NIRSpec:
             self.f_flat_filename = self.get_reference_file(input_model,
-                                        'f_flat')
+                                        'fflat')
             self.s_flat_filename = self.get_reference_file(input_model,
-                                        's_flat')
+                                        'sflat')
             self.d_flat_filename = self.get_reference_file(input_model,
-                                        'd_flat')
-            self.log.info('Using F_FLAT reference file: %s',
+                                        'dflat')
+            self.log.info('Using FFLAT reference file: %s',
                           self.f_flat_filename)
-            self.log.info('Using S_FLAT reference file: %s',
+            self.log.info('Using SFLAT reference file: %s',
                           self.s_flat_filename)
-            self.log.info('Using D_FLAT reference file: %s',
+            self.log.info('Using DFLAT reference file: %s',
                           self.d_flat_filename)
         else:
             self.flat_filename = self.get_reference_file(input_model, 'flat')
