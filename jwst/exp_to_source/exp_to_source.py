@@ -37,7 +37,8 @@ def multislit_to_container(inputs):
     Parameters
     ----------
     inputs: [MultiSlitModel, ...]
-        List of MultiSlitModel instances to reformat.
+        List of MultiSlitModel instances to reformat, or just a 
+        ModelContainer full of MultiSlitModels.
 
     Returns
     -------
