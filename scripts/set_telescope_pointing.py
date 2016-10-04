@@ -248,6 +248,7 @@ def add_wcs(filename):
     pheader['RA_REF'] = crval1
     pheader['DEC_REF'] = crval2
     pheader['ROLL_REF'] = compute_local_roll(v3_pa_deg, crval1, crval2, v2ref, v3ref)
+    pheader['WCSAXES'] = len(pheader['CTYPE*'])
     hdulist.flush()
     hdulist.close()
 
