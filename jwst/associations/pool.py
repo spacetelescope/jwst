@@ -33,9 +33,7 @@ Notes
 `Project home <https://trac.stsci.edu/trac/DMS/wiki/WebbDMSDataProcessing/Associations>`_
 
 """
-from astropy.io import registry
 from astropy.io.ascii import convert_numpy
-from numpy import str as np_str
 
 from astropy.table import Table
 
@@ -53,8 +51,9 @@ class AssociationPool(Table):
     """
 
     @classmethod
-    def read(cls, filename, delimiter='|', **kwargs):
+    def read(cls, filename, delimiter='|', format='ascii', **kwargs):
         table = Table.read(filename, delimiter=delimiter,
+                           format=format,
                            converters=_ConvertToStr(), **kwargs)
         table.meta['pool_file'] = filename
         return table
@@ -62,7 +61,7 @@ class AssociationPool(Table):
 
 class _ConvertToStr(dict):
     def __getitem__(self, k):
-        return [convert_numpy(np_str)]
+        return [convert_numpy(str)]
 
     def get(self, k, default=None):
         return self.__getitem__(k)

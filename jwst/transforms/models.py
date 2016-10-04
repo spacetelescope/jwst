@@ -2,6 +2,10 @@
 
 Some of these may go in astropy.modeling in the future.
 """
+# -*- coding: utf-8 -*-
+
+from __future__ import absolute_import, division, unicode_literals, print_function
+
 import math
 import numpy as np
 from astropy.modeling.core import Model
@@ -12,7 +16,8 @@ from astropy.modeling.models import Polynomial2D
 __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
            'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa', 'slitid_to_slit',
-           'slit_to_slitid', 'Snell', 'RefractionIndex']
+           'slit_to_slitid', 'Snell', 'RefractionIndex', 'Logical',
+           'NirissSOSSModel']
 
 
 # Number of shutters per quadrant
@@ -527,3 +532,64 @@ class Slit2Msa(Model):
     def evaluate(self, quadrant, slitid, x, y, lam):
         slit = int(slitid_to_slit(np.array([quadrant, slitid]).T)[0])
         return self.models[slit](x, y) + (lam,)
+
+
+class NirissSOSSModel(Model):
+
+    inputs = ('x', 'y', 'spectral_order')
+    outputs = ('ra', 'dec', 'lam')
+
+    def __init__(self, spectral_orders, models):
+        super(NirissSOSSModel, self).__init__()
+        self.spectral_orders = np.asarray(spectral_orders)
+        self.models = dict(zip(spectral_orders, models))
+
+    def evaluate(self, x, y, spectral_order):
+        return self.models[spectral_order](x, y)
+
+
+class Logical(Model):
+    """
+    Substitute values in an array where the condition is evaluated to True.
+
+    Similar to numpy's where function.
+
+    Parameters
+    ----------
+    condition : str
+        A string representing the logical, one of GT, LT, NE, EQ
+    compareto : float, ndarray
+        A number to compare to using the condition
+        If ndarray then the input array, compareto and value should have the
+        same shape.
+    value : float, ndarray
+        Value to substitute where condition is True.
+    """
+    inputs = ('x', )
+    outputs = ('x', )
+
+    conditions = {'GT': np.greater,
+                  'LT': np.less,
+                  'EQ': np.equal,
+                  'NE': np.not_equal
+                  }
+
+    def __init__(self, condition, compareto, value, **kwargs):
+        self.condition = condition.upper()
+        self.compareto = compareto
+        self.value = value
+        super(Logical, self).__init__(**kwargs)
+
+    def evaluate(self, x):
+        x = x.copy()
+        cond_result = self.conditions[self.condition](x, self.compareto)
+        if isinstance(self.compareto, np.ndarray):
+            x[cond_result] = self.value[cond_result]
+        else:
+            x[cond_result] = self.value
+        return x
+
+    def __repr__(self):
+        return "{0}(condition={1}, compareto={2}, value={3})".format(self.__class__.__name__,
+                                                                     self.condition, self.compareto,
+                                                                     self.value)

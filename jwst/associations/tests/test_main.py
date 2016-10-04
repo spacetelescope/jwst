@@ -1,39 +1,88 @@
 """test_associations: Test of general Association functionality."""
 from __future__ import absolute_import
+import pytest
+import re
 
-from . import helpers
+from .helpers import full_pool_rules
 
 from ..main import Main
 
 
-class TestMain():
+class TestMain(object):
 
-    pools_size = [
-        (helpers.t_path('data/jw93060_20150312T160130_pool.csv'), 14),
-        (helpers.t_path('data/jw82600_001_20151107T165901_pool.csv'), 11),
-    ]
+    def test_script(self, full_pool_rules):
+        pool, rules, pool_fname = full_pool_rules
 
-    def setUp(self):
-        pass
+        generated = Main([pool_fname, '--dry-run'])
+        asns = generated.associations
+        assert len(asns) == 37
+        assert len(generated.orphaned) == 2
+        found_rules = set(
+            asn['asn_rule']
+            for asn in asns
+        )
+        assert 'candidate_Asn_Image' in found_rules
+        assert 'candidate_Asn_WFSCMB' in found_rules
 
-    def tearDown(self):
-        pass
+    def test_asn_candidates(self, full_pool_rules):
+        pool, rules, pool_fname = full_pool_rules
 
-    def test_script(self):
-        for name, number in self.pools_size:
-            gs = Main([name, '--dry_run'])
-            yield helpers.check_equal, len(gs.associations), number
+        generated = Main([pool_fname, '--dry-run', '-i', 'o001'])
+        assert len(generated.associations) == 2
+        generated = Main([pool_fname, '--dry-run', '-i', 'o001', 'o002'])
+        assert len(generated.associations) == 4
 
-    def test_asn_candidates(self):
-        pool_name = self.pools_size[0][0]
-        gs = Main([pool_name, '--dry_run', '-i', '1'])
-        assert len(gs.associations) == 6
-        gs = Main([pool_name, '--dry_run', '-i', '1', '2'])
-        assert len(gs.associations) == 14
+    def test_toomanyoptions(self, full_pool_rules):
+        pool, rules, pool_fname = full_pool_rules
 
-    def test_cross_candidate(self):
-        pool_name = self.pools_size[1][0]
-        gs = Main([pool_name, '--dry_run'])
-        assert len(gs.associations) == 11
-        gs = Main([pool_name, '--dry_run', '--cross-candidate-only'])
-        assert len(gs.associations) == 5
+        with pytest.raises(SystemExit):
+            generated = Main([
+                pool_fname,
+                '--dry-run',
+                '--discover',
+                '--all-candidates',
+                '-i', 'o001',
+            ])
+        with pytest.raises(SystemExit):
+            generated = Main([
+                pool_fname,
+                '--dry-run',
+                '--discover',
+                '--all-candidates',
+            ])
+        with pytest.raises(SystemExit):
+            generated = Main([
+                pool_fname,
+                '--dry-run',
+                '--discover',
+                '-i', 'o001',
+            ])
+        with pytest.raises(SystemExit):
+            generated = Main([
+                pool_fname,
+                '--dry-run',
+                '--all-candidates',
+                '-i', 'o001',
+            ])
+
+    def test_discovered(self, full_pool_rules):
+        pool, rules, pool_fname = full_pool_rules
+
+        full = Main([pool_fname, '--dry-run'])
+        candidates = Main([pool_fname, '--dry-run', '--all-candidates'])
+        discovered = Main([pool_fname, '--dry-run', '--discover'])
+        assert len(full.associations) == len(candidates.associations) + len(discovered.associations)
+
+
+    def test_version_id(self, full_pool_rules):
+        pool, rules, pool_fname = full_pool_rules
+
+        generated = Main([pool_fname, '--dry-run', '-i', 'o001', '--version-id'])
+        regex = re.compile('\d{3}t\d{6}')
+        for asn in generated.associations:
+            assert regex.search(asn.asn_name)
+
+        version_id = 'mytestid'
+        generated = Main([pool_fname, '--dry-run', '-i', 'o001', '--version-id', version_id])
+        for asn in generated.associations:
+            assert version_id in asn.asn_name

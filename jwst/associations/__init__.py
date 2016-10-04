@@ -5,6 +5,8 @@ from os.path import (
     dirname,
     join
 )
+__version__ = '0.6.0'
+
 
 # Utility
 def libpath(filepath):

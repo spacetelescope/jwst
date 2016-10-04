@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import, division, unicode_literals, print_function
-
+import numpy as np
 from astropy.modeling.models import Shift, Rotation2D
 from asdf.tests import helpers
 from ...import jwextension
@@ -17,7 +17,9 @@ gwa2slit_models = {1: m1, 2: m2}
 test_models = [DirCos2Unitless(), Unitless2DirCos(), NRSZCoord(),
                Rotation3DToGWA(angles=[12.1, 1.3, 0.5, 3.4], axes_order='xyzx'),
                AngleFromGratingEquation(20000, -1), WavelengthFromGratingEquation(25000, 2),
-               Gwa2Slit(gwa2slit_models)]
+               Gwa2Slit(gwa2slit_models), Logical('GT', 5, 10),
+               Logical('LT', np.ones((10,))* 5, np.arange(10))
+               ]
 
 
 @pytest.mark.parametrize(('model'), test_models)

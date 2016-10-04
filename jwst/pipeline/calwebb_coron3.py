@@ -22,7 +22,6 @@ log.setLevel(logging.DEBUG)
 
 class Coron3Pipeline(Pipeline):
     """
-
     Coron3Pipeline: Apply all level-3 calibration steps to a
     coronagraphic association of exposures. Included steps are:
     stack_refs (assemble reference PSF inputs)
@@ -30,12 +29,12 @@ class Coron3Pipeline(Pipeline):
     klip (PSF subtraction using the KLIP algorithm)
     outlier_detection (flag outliers)
     resample (image combination and resampling)
-
     """
+
     spec = """
     """
 
-    # Define alias to steps
+    # Define aliases to steps
     step_defs = {'stack_refs': stack_refs_step.StackRefsStep,
                  'align_refs': align_refs_step.AlignRefsStep,
                  'klip': klip_step.KlipStep,
@@ -60,11 +59,11 @@ class Coron3Pipeline(Pipeline):
         for member in prod['members']:
             if member['exptype'].upper() == 'PSF':
                 psf_files.append(member['expname'])
-                log.debug(' psf_file {0} = {1}'.format(len(psf_files),
+                log.info('psf file {0} = {1}'.format(len(psf_files),
                           member['expname']))
             if member['exptype'].upper() == 'SCIENCE':
                 targ_files.append(member['expname'])
-                log.debug(' targ_file {0} = {1}'.format(len(targ_files),
+                log.info('target file {0} = {1}'.format(len(targ_files),
                           member['expname']))
 
         # Make sure we found some PSF and target members
@@ -91,9 +90,9 @@ class Coron3Pipeline(Pipeline):
         psf_models.close()
 
         # Save the resulting PSF stack
-        filename = mk_filename(self.output_dir, prod['name'], 'psfstack')
-        log.info('Saving psfstack file %s', filename)
-        psf_stack.save(filename)
+        output_file = mk_prodname(self.output_dir, prod['name'], 'psfstack')
+        log.info('Saving psfstack file %s', output_file)
+        psf_stack.save(output_file)
 
         # Call the sequence of steps align_refs, klip, and outlier_detection
         # once for each input target exposure
@@ -101,7 +100,7 @@ class Coron3Pipeline(Pipeline):
         for target_file in targ_files:
 
             # Call align_refs
-            log.debug(' Calling align_refs for member %s', target_file)
+            log.debug('Calling align_refs for member %s', target_file)
             psf_aligned = self.align_refs(target_file, psf_stack)
 
             # Save the alignment results
@@ -110,7 +109,7 @@ class Coron3Pipeline(Pipeline):
             psf_aligned.save(filename)
 
             # Call KLIP
-            log.debug(' Calling klip for member %s', target_file)
+            log.debug('Calling klip for member %s', target_file)
             #psf_sub, psf_fit = self.klip(target_file, psf_aligned)
             psf_sub = self.klip(target_file, psf_aligned)
             psf_aligned.close()
@@ -122,7 +121,7 @@ class Coron3Pipeline(Pipeline):
 
             # Create a ModelContainer of the psf_sub results to send to
             # outlier_detection
-            log.debug(' Building ModelContainer of klip results')
+            log.debug('Building ModelContainer of klip results')
             target_models = datamodels.ModelContainer()
             for i in range(psf_sub.data.shape[0]):
                 image = datamodels.ImageModel(data=psf_sub.data[i],
@@ -142,12 +141,9 @@ class Coron3Pipeline(Pipeline):
         result = self.resample(resample_input)
 
         # Save the final result
-        filename = prod['name']
-        if self.output_dir is not None:
-            dirname, filename = os.path.split(filename)
-            filename = os.path.join(self.output_dir, filename)
-        self.log.info(' Saving final result to %s', filename)
-        result.save(filename)
+        output_file = mk_prodname(self.output_dir, prod['name'], 'coroncmb')
+        self.log.info('Saving final result to %s', output_file)
+        result.save(output_file)
         result.close()
 
         # We're done
@@ -158,6 +154,29 @@ class Coron3Pipeline(Pipeline):
 
 def mk_filename(output_dir, filename, suffix):
 
+    """
+    Build a file name to use when saving results.
+
+    An existing input file name is used as a template. A user-specified
+    output directory path is prepended to the root of the input file name.
+    The last product type suffix contained in the input file name is
+    replaced with the specified new suffix. Any existing file name
+    extension (e.g. ".fits") is preserved.
+
+    Args:
+        output_dir (str): The output_dir requested by the user
+        filename (str): The input file name, to be reworked
+        suffix (str): The desired file type suffix for the new file name
+
+    Returns:
+        string: The new file name
+
+    Examples:
+        For output_dir='/my/path', filename='jw12345_nrca_cal.fits', and
+        suffix='i2d', the returned file name will be
+        '/my/path/jw12345_nrca_i2d.fits'
+    """
+
     # If the user specified an output_dir, replace any existing
     # path with output_dir
     if output_dir is not None:
@@ -167,3 +186,42 @@ def mk_filename(output_dir, filename, suffix):
     # Now replace the existing suffix with the new one
     base, ext = os.path.splitext(filename)
     return base[:base.rfind('_')] + '_' + suffix + ext
+
+
+def mk_prodname(output_dir, filename, suffix):
+
+    """
+    Build a file name based on an ASN product name template.
+
+    The input ASN product name is used as a template. A user-specified
+    output directory path is prepended to the root of the product name.
+    The input product type suffix is appended to the root of the input
+    product name, preserving any existing file name extension 
+    (e.g. ".fits").
+
+    Args:
+        output_dir (str): The output_dir requested by the user
+        filename (str): The input file name, to be reworked
+        suffix (str): The desired file type suffix for the new file name
+
+    Returns:
+        string: The new file name
+
+    Examples:
+        For output_dir='/my/path', filename='jw12345_nrca_cal.fits', and
+        suffix='i2d', the returned file name will be
+        '/my/path/jw12345_nrca_cal_i2d.fits'
+    """
+
+    # If the user specified an output_dir, replace any existing
+    # path with output_dir
+    if output_dir is not None:
+        dirname, filename = os.path.split(filename)
+        filename = os.path.join(output_dir, filename)
+
+    # Now append the new suffix to the root name, preserving
+    # any existing extension
+    base, ext = os.path.splitext(filename)
+    if len(ext) == 0:
+        ext = ".fits"
+    return base + '_' + suffix + ext

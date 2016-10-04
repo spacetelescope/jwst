@@ -216,16 +216,16 @@ properties:
             title: Target Dec uncertainty
             type: number
             fits_keyword: TARGUDEC
-          proposer_ra:
-            title: Proposer specified RA for the target
+          proper_motion_ra:
+            title: Target proper motion in RA
             type: number
             fits_keyword: PROP_RA
-          proposer_dec:
-            title: Proposer specified Dec for the target
+          proper_motion_dec:
+            title: Target proper motion in Dec
             type: number
             fits_keyword: PROP_DEC
-          proposer_epoch:
-            title: Proposer specified epoch for RA and Dec
+          proper_motion_epoch:
+            title: Target proper motion epoch
             type: string
             fits_keyword: PROPEPOC
       instrument:
@@ -317,7 +317,15 @@ properties:
           msa_configuration_file:
             title: MSA configuration file name
             type: string
-            fits_keyword: MSACONFG
+            fits_keyword: MSACONFL
+          msa_metadata_id:
+            title: MSA metadata ID
+            type: integer
+            fits_keyword: MSAMETID
+          msa_configuration_id:
+            title: MSA configuration ID
+            type: integer
+            fits_keyword: MSACONID
           lamp_state:
             title: Internal lamp state
             type: string
@@ -349,7 +357,7 @@ properties:
           gwa_tilt:
             title: GWA TILT (avg/calib) temperature
             type: number
-            fits_keyword: GWA_TILT
+            fits_keyword: GWA_TTIL
       exposure:
         title: Exposure parameters
         type: object
@@ -474,11 +482,11 @@ properties:
           datamode:
             title: post-processing method used in FPAP
             type: integer
-            fits_keyword: DATAMODE 
+            fits_keyword: DATAMODE
           comprssd:
             title: data compressed on-board (T/F)
             type: boolean
-            fits_keyword: COMPRSSD 
+            fits_keyword: COMPRSSD
       subarray:
         title: Subarray parameters
         type: object
@@ -487,11 +495,11 @@ properties:
             title: Subarray used
             type: string
             enum: [1024X16, 128X128, 128X2048, 2048X128, 2048X64, 32X32,
-              64X2048, 8X8, ALLSLITS, BRIGHTSKY, FULL, GENERIC, MASKA210R, 
-              MASKA430R, MASK1065, MASK1140, MASK1550, MASKLYOT, S1600A1, 
-              S200A1, S200A2, S200B1, S400A1, SLITLESSPRISM, STRIPE, SUB1024A, 
-              SUB1024B, SUB128, SUB16, SUB160, SUB160P, SUB1A, SUB1B, SUB2048, 
-              SUB256, SUB32, SUB320, SUB400P, SUB512, SUB64, SUB640, SUB64P, 
+              64X2048, 8X8, ALLSLITS, BRIGHTSKY, FULL, GENERIC, MASKA210R,
+              MASKA430R, MASK1065, MASK1140, MASK1550, MASKLYOT, S1600A1,
+              S200A1, S200A2, S200B1, S400A1, SLITLESSPRISM, STRIPE, SUB1024A,
+              SUB1024B, SUB128, SUB16, SUB160, SUB160P, SUB1A, SUB1B, SUB2048,
+              SUB256, SUB32, SUB320, SUB400P, SUB512, SUB64, SUB640, SUB64P,
               SUB80, SUB96, SUBAMPCAL, SUBFP1A, SUBFP1B, SUBGRISM128,
               SUBGRISM256, SUBGRISM64, SUBSTRIP256, SUBSTRIPE256, SUBSTRIP96,
               SUBPRISM, SUBTASOSS, SUBTAAMI, WFSS128C, WFSS128R, WFSS64C,
@@ -769,6 +777,26 @@ properties:
             title: default spectral order
             type: number
             fits_keyword: SPORDER
+          ra_ref:
+            title: Right ascension of the reference point (deg)
+            type: number
+            fits_keyword: RA_REF
+          dec_ref:
+            title: Declination of the reference point (deg)
+            type: number
+            fits_keyword: DEC_REF
+          v2_ref:
+            title: Telescope v2 coordinate of the reference point (arcmin)
+            type: number
+            fits_keyword: V2_REF
+          v3_ref:
+            title: Telescope v3 coordinate of the reference point (arcmin)
+            type: number
+            fits_keyword: V3_REF
+          roll_ref:
+            title: Telescope roll angle of V3 measured from North over East at the ref. point (deg)
+            type: number
+            fits_keyword: ROLL_REF
       pointing:
         title: Spacecraft pointing information
         type: object
