@@ -300,7 +300,8 @@ class Association(MutableMapping):
         If a constraint is present, but does not have a value,
         that constraint is set, and, by definition, matches.
         """
-        for constraint, conditions in self.constraints.items():
+        constraints = deepcopy(self.constraints)
+        for constraint, conditions in constraints.items():
             logger.debug('Constraint="{}" Conditions="{}"'.format(constraint, conditions))
             try:
                 input, value = getattr_from_list(
@@ -350,6 +351,7 @@ class Association(MutableMapping):
                         'Constraint {} does not match association.'.format(constraint)
                     )
 
+            # At this point, the constraint has passed.
             # Fix the conditions.
             logger.debug('Success Input="{}" Value="{}"'.format(input, evaled_str))
             if conditions['value'] is None or \
@@ -357,6 +359,10 @@ class Association(MutableMapping):
                 conditions['value'] = re.escape(evaled_str)
                 conditions['inputs'] = [input]
                 conditions['force_unique'] = False
+
+        # At this point, all constraints have passed
+        # Update the constraints.
+        self.constraints = constraints
 
     def add_constraints(self, new_constraints):
         """Add a set of constraints to the current constraints."""
