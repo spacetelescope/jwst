@@ -188,7 +188,6 @@ class Association(MutableMapping):
             yaml.dump(self.data, default_flow_style=False)
         )
 
-
     @classmethod
     def from_yaml(cls, serialized):
         """Unserialize an assocation from JSON
@@ -203,8 +202,15 @@ class Association(MutableMapping):
         association: dict
             The association
         """
-        asn = yaml.load(serialized)
-        return asn
+        try:
+            asn = yaml.load(serialized)
+        except Exception as err:
+            logger.debug('Error unserializing: "{}"'.format(err))
+            raise AssociationError(
+                'Container is not YAML: "{}"'.format(serialized)
+            )
+        else:
+            return asn
 
     def to_json(self):
         """Create JSON representation.
@@ -247,12 +253,13 @@ class Association(MutableMapping):
             loader = json.load
         try:
             asn = loader(serialized)
-        except (AttributeError, IOError, json.JSONDecodeError):
-                raise AssociationError(
-                    'Containter is not JSON: "{}"'.format(serialized)
-                )
-
-        return asn
+        except Exception as err:
+            logger.debug('Error unserializing: "{}"'.format(err))
+            raise AssociationError(
+                'Containter is not JSON: "{}"'.format(serialized)
+            )
+        else:
+            return asn
 
     def add(self, member, check_constraints=True):
         """Add the member to the association
