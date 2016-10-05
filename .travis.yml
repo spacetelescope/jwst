@@ -11,7 +11,7 @@ env:
     global:
         - MAIN_CMD='python setup.py'
         - CONDA_CHANNELS='http://ssb.stsci.edu/conda-dev'
-        - CONDA_DEPENDENCIES='pytest jwst sphinx=1.3.5 qt=4'
+        - CONDA_DEPENDENCIES='pytest jwst sphinx=1.3.5'
         - CONDA_JWST_DEPENDENCIES='pytest stsci-jwst sphinx=1.3.5'
         - PIP_DEPENDENCIES=''
         - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
