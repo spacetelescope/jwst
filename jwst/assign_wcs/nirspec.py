@@ -636,7 +636,7 @@ def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5)
     y_range = np.hstack((y_range_low, y_range_high))
     # add 10 px margin
     # The -1 is technically because the output of slit2detector is 1-based coordinates.
-    x0 = int(max(0, x_range.min() -1 - 10))
+    x0 = int(max(0, x_range.min() -1 -10))
     x1 = int(min(2047, x_range.max() -1 + 10))
     # add 2 px margin
     y0 = int(y_range.min() -1 -2)
@@ -807,7 +807,8 @@ def oteip_to_v23(reference_files):
     # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    return fore2ote_mapping | (ote & Scale(1e6))
+    # The spatial units are currently in deg. Convertin to arcsec
+    return fore2ote_mapping | (ote & Identity(1)) | (Scale(3600) & Scale(3600) & Scale(1e6))
 
 
 def create_frames():
