@@ -156,7 +156,9 @@ class Utility(object):
         ])
         return level2a_name
 
-Utility.get_exposure_type = Utility_Level3.get_exposure_type
+    @staticmethod
+    def get_exposure_type(*args, **kwargs):
+        return Utility_Level3.get_exposure_type(*args, **kwargs)
 
 
 class Asn_MIRI_LRS_BKGNOD(DMS_Level2b_Base):

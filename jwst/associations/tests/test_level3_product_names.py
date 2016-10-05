@@ -78,7 +78,11 @@ class TestProductNames():
             product_name = asn['products'][0]['name']
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
             assert m is not None
-            if asn.constraints['opt_elem2']['value'] in EMPTY:
+            try:
+                value = asn.constraints['opt_elem2']['value']
+            except KeyError:
+                value = None
+            if value in EMPTY:
                 assert '-' not in m.groupdict()['opt_elem']
             else:
                 assert '-' in m.groupdict()['opt_elem']

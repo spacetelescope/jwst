@@ -68,6 +68,10 @@ _SCIENCE_TYPES = set()
 class DMS_Level3_Base(Association):
     """Basic class for DMS Level3 associations."""
 
+    # Attribute values that are indicate the
+    # attribute is not specified.
+    INVALID_VALUES = _EMPTY
+
     # Make sequences type-dependent
     _sequences = defaultdict(Counter)
 
@@ -256,13 +260,23 @@ class DMS_Level3_Base(Association):
         """
         opt_elem = ''
         join_char = ''
-        if self.constraints['opt_elem']['value'] not in _EMPTY:
-            opt_elem = self.constraints['opt_elem']['value']
-            join_char = '-'
-        if self.constraints['opt_elem2']['value'] not in _EMPTY:
-            opt_elem = join_char.join(
-                [opt_elem, self.constraints['opt_elem2']['value']]
-            )
+        try:
+            value = self.constraints['opt_elem']['value']
+        except KeyError:
+            pass
+        else:
+            if value not in _EMPTY:
+                opt_elem = value
+                join_char = '-'
+        try:
+            value = self.constraints['opt_elem2']['value']
+        except KeyError:
+            pass
+        else:
+            if value not in _EMPTY:
+                opt_elem = join_char.join(
+                    [opt_elem, value]
+                )
         if opt_elem == '':
             opt_elem = 'clear'
         return opt_elem
@@ -487,8 +501,8 @@ class Utility(object):
 # ---------------------------------------------
 
 
-class AsnMixin_Unique_Config(DMS_Level3_Base):
-    """Restrict to unique insturment configuration"""
+class AsnMixin_Base(DMS_Level3_Base):
+    """Restrict to Program and Instrument"""
 
     def __init__(self, *args, **kwargs):
 
@@ -502,17 +516,29 @@ class AsnMixin_Unique_Config(DMS_Level3_Base):
                 'value': None,
                 'inputs': ['INSTRUME']
             },
+        })
+
+        super(AsnMixin_Base, self).__init__(*args, **kwargs)
+
+
+class AsnMixin_OpticalPath(DMS_Level3_Base):
+    """Ensure unique optical path"""
+
+    def __init__(self, *args, **kwargs):
+        # I am defined by the following constraints
+        self.add_constraints({
             'opt_elem': {
                 'value': None,
                 'inputs': ['FILTER']
             },
             'opt_elem2': {
                 'value': None,
-                'inputs': ['PUPIL']
+                'inputs': ['PUPIL', 'GRATING'],
+                'required': False,
             },
         })
 
-        super(AsnMixin_Unique_Config, self).__init__(*args, **kwargs)
+        super(AsnMixin_OpticalPath, self).__init__(*args, **kwargs)
 
 
 class AsnMixin_Target(DMS_Level3_Base):
@@ -532,7 +558,7 @@ class AsnMixin_Target(DMS_Level3_Base):
         super(AsnMixin_Target, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_MIRI(AsnMixin_Unique_Config):
+class AsnMixin_MIRI(DMS_Level3_Base):
     """All things that belong to MIRI"""
 
     def __init__(self, *args, **kwargs):
@@ -549,7 +575,7 @@ class AsnMixin_MIRI(AsnMixin_Unique_Config):
         super(AsnMixin_MIRI, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_NIRSPEC(AsnMixin_Unique_Config):
+class AsnMixin_NIRSPEC(DMS_Level3_Base):
     """All things that belong to NIRSPEC"""
 
     def __init__(self, *args, **kwargs):
@@ -566,7 +592,7 @@ class AsnMixin_NIRSPEC(AsnMixin_Unique_Config):
         super(AsnMixin_NIRSPEC, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_NIRISS(AsnMixin_Unique_Config):
+class AsnMixin_NIRISS(DMS_Level3_Base):
     """All things that belong to NIRISS"""
 
     def __init__(self, *args, **kwargs):
@@ -583,7 +609,7 @@ class AsnMixin_NIRISS(AsnMixin_Unique_Config):
         super(AsnMixin_NIRISS, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_NIRCAM(AsnMixin_Unique_Config):
+class AsnMixin_NIRCAM(DMS_Level3_Base):
     """All things that belong to NIRCAM"""
 
     def __init__(self, *args, **kwargs):
@@ -616,7 +642,7 @@ class AsnMixin_Image(DMS_Level3_Base):
         super(AsnMixin_Image, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_Spectrum(AsnMixin_Unique_Config):
+class AsnMixin_Spectrum(DMS_Level3_Base):
     """All things that are spectrum"""
 
     def _init_hook(self, member):

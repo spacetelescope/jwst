@@ -85,6 +85,10 @@ class Association(MutableMapping):
     # Global constraints
     GLOBAL_CONSTRAINTS = {}
 
+    # Attribute values that are indicate the
+    # attribute is not specified.
+    INVALID_VALUES = None
+
     # Associations of the same type are sequenced.
     _sequence = Counter(start=1)
 
@@ -299,15 +303,27 @@ class Association(MutableMapping):
         for constraint, conditions in self.constraints.items():
             logger.debug('Constraint="{}" Conditions="{}"'.format(constraint, conditions))
             try:
-                input, value = getattr_from_list(member, conditions['inputs'])
+                input, value = getattr_from_list(
+                    member,
+                    conditions['inputs'],
+                    invalid_values=self.INVALID_VALUES
+                )
             except KeyError:
-                if conditions.get('required', self.DEFAULT_REQUIRE_CONSTRAINT):
+                if conditions.get('is_invalid', False) or \
+                   not conditions.get(
+                       'required',
+                       self.DEFAULT_REQUIRE_CONSTRAINT
+                   ):
+                    continue
+                else:
                     raise AssociationError(
                         'Constraint {} not present in member.'.format(constraint)
                     )
-                else:
-                    conditions['value'] = 'Constraint not present and ignored'
-                    continue
+            else:
+                if conditions.get('is_invalid', False):
+                    raise AssociationError(
+                        'Constraint {} present when it should not be'.format(constraint)
+                    )
 
             # If the value is a list, signal that a reprocess
             # needs to be done.
@@ -355,8 +371,11 @@ class Association(MutableMapping):
 
     def constraints_to_text(self):
         yield 'Constraints:'
-        for c, p in self.constraints.items():
-            yield '    {:s}: {}'.format(c, p['value'])
+        for name, conditions in self.constraints.items():
+            if conditions.get('is_invalid', False):
+                yield '    {:s}: Is Invalid'.format(name)
+            else:
+                yield '    {:s}: {}'.format(name, conditions['value'])
 
     @classmethod
     def reset_sequence(cls):
@@ -470,7 +489,7 @@ def make_timestamp():
     return timestamp
 
 
-def getattr_from_list(adict, attributes):
+def getattr_from_list(adict, attributes, invalid_values=None):
     """Retrieve value from dict using a list of attributes
 
     Parameters
@@ -480,6 +499,10 @@ def getattr_from_list(adict, attributes):
 
     attributes: list
         List of attributes
+
+    invalid_values: set
+        A set of values that essentially mean the
+        attribute does not exist.
 
     Returns
     -------
@@ -492,14 +515,21 @@ def getattr_from_list(adict, attributes):
     KeyError
         None of the attributes are found in the dict.
     """
+    if invalid_values is None:
+        invalid_values = set()
+
     for attribute in attributes:
         try:
             result = adict[attribute]
-            if result is masked:
-                raise KeyError
-            return attribute, result
         except KeyError:
             continue
+        else:
+            if result is masked:
+                continue
+            if result not in invalid_values:
+                return attribute, result
+            else:
+                continue
     else:
         raise KeyError
 

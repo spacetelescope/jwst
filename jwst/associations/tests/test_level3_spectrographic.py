@@ -55,7 +55,7 @@ class TestLevel3Spectrographic(BasePoolRule):
             'o003',
             'nrsifu',
             'jw99009-o003_nrsifu_\d{3}_asn',
-            'jw99009-o003_t002_nirspec_g235h'
+            'jw99009-o003_t002_nirspec_clear'
         ),
     ]
 )
