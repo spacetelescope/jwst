@@ -198,12 +198,12 @@ class NirissSOSSType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        models = dict(zip(node['spectral_orders'], node['models']))
-        return NirissSOSSModel(models)
+        #models = dict(zip(node['spectral_orders'], node['models']))
+        return NirissSOSSModel(node['spectral_orders'], node['models'])
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
-        node = {'spectral_orders': model.models.keys(),
-                'models': model.models.values()
+        node = {'spectral_orders': list(model.models.keys()),
+                'models': list(model.models.values())
                 }
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)

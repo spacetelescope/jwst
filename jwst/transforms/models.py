@@ -535,17 +535,32 @@ class Slit2Msa(Model):
 
 
 class NirissSOSSModel(Model):
+    """
+    This is a model to map the input order to output
+    Tabular models depending on the order that is set.
+    """
 
     inputs = ('x', 'y', 'spectral_order')
     outputs = ('ra', 'dec', 'lam')
 
     def __init__(self, spectral_orders, models):
         super(NirissSOSSModel, self).__init__()
-        self.spectral_orders = np.asarray(spectral_orders)
+        self.spectral_orders = spectral_orders
         self.models = dict(zip(spectral_orders, models))
 
+    def get_model(self, spectral_order):
+        return self.models[spectral_order]
+
     def evaluate(self, x, y, spectral_order):
-        return self.models[spectral_order](x, y)
+
+        # The spectral_order variable is coming in as an array/list of one element.
+        # So, we are going to just take the 0'th element and use that as the index.
+        try:
+            order_number = int(spectral_order[0])
+        except Exception as e:
+            raise ValueError('Spectral order is not between 1 and 3, {}'.format(spectral_order))
+
+        return self.models[order_number](x, y)
 
 
 class Logical(Model):
