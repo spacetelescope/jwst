@@ -16,7 +16,8 @@ from . import data
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
 
-wcs_kw = {'wcsaxes': 2, 'crval1': 5.6, 'crval2': -72,
+wcs_kw = {'wcsaxes': 2, 'ra_ref': 165, 'dec_ref': 54,
+          'v2_ref': -8.3942412, 'v3_ref': -5.3123744, 'roll_ref': 37,
           'crpix1': 1024, 'crpix2': 1024,
           'cdelt1': .08, 'cdelt2': .08,
           'ctype1': 'RA---TAN', 'ctype2': 'DEC--TAN',

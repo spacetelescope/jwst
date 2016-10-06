@@ -48,15 +48,16 @@ def imaging(input_model, reference_files):
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     focal = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
     sky = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS())
-    fitswcs_transform = pointing.create_fitswcs_transform(input_model)
+    # V2, V3 to sky
+    tel2sky = pointing.v23tosky(input_model)
+
     if reference_files:
         distortion = imaging_distortion(input_model, reference_files)
     else:
         distortion = models.Identity(2)
     pipeline = [(detector, distortion),
-                (focal, None)]
-                #(sky, None)]
-
+                (focal, tel2sky),
+                (sky, None)]
     return pipeline
 
 
