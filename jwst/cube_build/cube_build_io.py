@@ -334,7 +334,7 @@ def SetFileTable(self, input_table, MasterTable):
     for i in range(num):
 
         ifile = input_filenames[i]
-
+        print('openning file',ifile)
         # Open the input data model & Fill in the FileMap information
 
         with datamodels.ImageModel(ifile) as input_model:
