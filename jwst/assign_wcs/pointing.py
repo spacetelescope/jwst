@@ -13,13 +13,13 @@ from ..transforms.models import V23ToSky
 
 
 def v23tosky(input_model):
-    v2_ref = input_model.meta.wcsinfo.v2_ref
-    v3_ref = input_model.meta.wcsinfo.v3_ref
+    v2_ref = input_model.meta.wcsinfo.v2_ref / 3600
+    v3_ref = input_model.meta.wcsinfo.v3_ref / 3600
     roll_ref = input_model.meta.wcsinfo.roll_ref
     ra_ref = input_model.meta.wcsinfo.ra_ref
     dec_ref = input_model.meta.wcsinfo.dec_ref
-
-    angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, -ra_ref]
+    
+    angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
     sky_rotation = V23ToSky(angles, axes_order=axes, name="v23tosky")
     return sky_rotation
@@ -55,7 +55,7 @@ def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_
         angles = [-roll_ref, -dec_ref, - ra_ref]
         axes = "xyz"
     else:
-        angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, - ra_ref]
+        angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
         axes = "zyxyz"
     M = V23ToSky._compute_matrix(np.deg2rad(angles), axes)
     return _roll_angle_from_matrix(M, v2, v3)

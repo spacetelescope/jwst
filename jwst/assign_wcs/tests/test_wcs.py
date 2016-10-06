@@ -31,15 +31,15 @@ def test_v23_to_sky():
     """
     ra_ref = 165 # in deg
     dec_ref = 54 # in deg
-    v2_ref = -503.654472 # in arcsec
-    v3_ref = -318.742464  # in arcsec
+    v2_ref = -503.654472 / 3600 # in deg
+    v3_ref = -318.742464 / 3600 # in deg
     r0 = 37 # in deg
 
-    v2 = 210 # in deg
-    v3 = -75 # in deg
+    v2 = 210  # in deg
+    v3 = -75  # in deg
     expected_ra_dec = (107.12810484789563, -35.97940247128502) # in deg
-    angles = [-v2_ref, v3_ref, -r0, -dec_ref, -ra_ref]
+    angles = [-v2_ref, v3_ref, -r0, -dec_ref, ra_ref]
     axes = "zyxyz"
     v2s = models.V23ToSky(angles, axes_order=axes)
-    radec = v2s(v2_ref, v3_ref, r0, ra_ref, dec_ref, v2, v3)
+    radec = v2s(v2, v3)
     utils.assert_allclose(radec, expected_ra_dec, atol=1e-10)
