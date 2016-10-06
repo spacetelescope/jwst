@@ -914,7 +914,7 @@ def create_frames():
     slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), unit=("", ""),
                              axes_names=('x_slit', 'y_slit'))
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
-    v2v3_spatial = cf.Frame2D(name='V2V3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg),
+    v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg),
                              axes_names=('V2', 'V3'))
 
     # The oteip_to_v23 incorporates a scale to convert the spectral units from
@@ -924,7 +924,7 @@ def create_frames():
     v2v3 = cf.CompositeFrame([v2v3_spatial, spec], name='v2v3')
     slit_frame = cf.CompositeFrame([slit_spatial, spec], name='slit_frame')
     msa_frame = cf.CompositeFrame([msa_spatial, spec], name='msa_frame')
-    oteip_spatial = cf.Frame2D(name='OTEIP_spatial', axes_order=(0, 1), unit=(u.deg, u.deg),
+    oteip_spatial = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.deg, u.deg),
                                axes_names=('X_OTEIP', 'Y_OTEIP'))
     oteip = cf.CompositeFrame([oteip_spatial, spec], name='oteip')
     world = cf.CompositeFrame([sky, spec], name='world')
