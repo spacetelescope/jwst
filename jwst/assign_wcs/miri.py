@@ -37,13 +37,13 @@ def imaging(input_model, reference_files):
     reference_files={'distortion': 'test.asdf', 'filter_offsets': 'filter_offsets.asdf'}
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    focal = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
-    sky = cf.CelestialFrame(reference_frame=coord.ICRS())
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
+    world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
     distortion = imaging_distortion(input_model, reference_files)
     tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
-                (focal, tel2sky),
-                (sky, None)
+                (v2v3, tel2sky),
+                (world, None)
                 ]
     return pipeline
 
@@ -142,11 +142,11 @@ def ifu(input_model, reference_files):
     spec = cf.SpectralFrame(name='Xan_Yan_spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     xyan = cf.CompositeFrame([xyan_spatial, spec], name='Xan_Yan')
     v23_spatial = cf.Frame2D(name='V2_V3_spatial', axes_order=(0, 1), unit=(u.arcmin, u.arcmin), axes_names=('v2', 'v3'))
-    spec = cf.SpectralFrame(name='V2_v3_spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
-    v2v3 = cf.CompositeFrame([v23_spatial, spec], name='V2_V3')
+    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
+    v2v3 = cf.CompositeFrame([v23_spatial, spec], name='v2v3')
     icrs = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS(),
                              axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=('RA', 'DEC'))
-    sky = cf.CompositeFrame([icrs, spec], name='sky_and_wavelength')
+    world = cf.CompositeFrame([icrs, spec], name='world')
     det2alpha_beta = (detector_to_alpha_beta(input_model, reference_files)).rename(
         "detector_to_alpha_beta")
     ab2xyan = (alpha_beta2XanYan(input_model, reference_files)).rename("alpha_beta_to_Xan_Yan")
@@ -156,7 +156,7 @@ def ifu(input_model, reference_files):
                 (miri_focal, ab2xyan),
                 (xyan, xyan2v23),
                 (v2v3, tel2sky),
-                (sky, None)]
+                (world, None)]
     return pipeline
 
 

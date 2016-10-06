@@ -51,9 +51,14 @@ def niriss_soss_set_input(model, order_number):
 
     # use the size of the input subarray7
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    sky = cf.CelestialFrame(reference_frame=coord.ICRS())
+    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
+                            axes_names=('wavelength',))
+    sky = cf.CelestialFrame(reference_frame=coord.ICRS(),
+                            axes_names=('ra', 'dec'),
+                            axes_order=(0, 1), unit=(u.deg, u.deg), name='sky')
+    world = cf.CompositeFrame([sky, spec], name='world')
     pipeline = [(detector, obj),
-                (sky, None)
+                (world, None)
                 ]
 
     return wcs.WCS(pipeline)
@@ -78,10 +83,12 @@ def niriss_soss(input_model, reference_files):
 
     # Define the frames
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+    spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,),
+                            axes_names=('wavelength',))
     sky = cf.CelestialFrame(reference_frame=coord.ICRS(),
                             axes_names=('ra', 'dec'),
-                            axes_order=(0, 1), unit=(u.deg, u.deg))
-
+                            axes_order=(0, 1), unit=(u.deg, u.deg), name='sky')
+    world = cf.CompositeFrame([sky, spec], name='world')
     try:
         with AsdfFile.open(reference_files['specwcs']) as wl:
             wl1 = wl.tree[1].copy()
@@ -99,7 +106,7 @@ def niriss_soss(input_model, reference_files):
 
     # Define the pipeline based on the frames and models above.
     pipeline = [(detector, soss_model),
-                (sky, None)
+                (world, None)
                 ]
 
     return pipeline
@@ -113,12 +120,13 @@ def imaging(input_model, reference_files):
     reference_files={'distortion': 'jwst_niriss_distortioon_0001.asdf'}
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    focal = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
+    world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
     distortion = imaging_distortion(input_model, reference_files)
     tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
-                (focal, tel2sky),
-                (sky, None)]
+                (v2v3, tel2sky),
+                (world, None)]
     return pipeline
 
 
