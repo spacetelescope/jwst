@@ -142,6 +142,9 @@ target
 asn_type
   The type of association represented. See :ref:`asn-association-types`
 
+asn_id
+  The association id. The id is what appears in the :ref:`asn-DMS-naming`
+  
 asn_pool
   Association pool from which this association was created.
 
