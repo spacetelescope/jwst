@@ -132,6 +132,108 @@ def MakePointCloudMIRI(self, input_model,
     return cloud
 #______________________________________________________________________
 
+
+def MakePointCloudNIRSPEC(self, input_model,
+                          file_no,
+                          islice,
+                          Cube,
+                          v2v32radec,
+                          c1_offset, c2_offset):
+    """
+
+    Short Summary
+    -------------
+    For NIRSPEC IFU map x,y to Point cloud  in final coordinate system (xi,eta of cube) 
+
+    Parameters
+    ----------
+    input_model: slope image
+    file_no: the index on the files that are used to construct the Cube
+    Cube: holds the basic information on the Cube (including wcs of Cube)
+    v2v32radec: temporary (until information is contained in assign_wcs) 
+                holds the information to do the transformation from v2-v3 to ra-dec
+    c1_offset, c2_offset: dither offsets for each file (default = 0)
+               provided by the user
+
+    Returns
+    -------
+    each valid detector mapped to  in point cloud
+
+
+    """
+#________________________________________________________________________________
+
+
+    slice_wcs = nirspec.nrs_wcs_set_input(input_model, 0, islice)
+    yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
+    xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
+    y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
+    v2, v3, lam = slice_wcs(x, y) # return v2,v3 are in degrees
+
+    print('yrange for slice',yrange,islice)
+    print('xrange for slice',xrange,islice)
+
+    flux_all = input.data[y, x]
+    error_all = input.err[y, x]
+    dq_all = input.dq[y,x]
+
+#________________________________________________________________________________
+# Slices are curved on detector. A slice region is grabbed by corner regions so
+# the region returned may include pixels not value for slice 
+    valid1 = np.isfinite(v2) 
+    valid2 = np.isfinite(v3)
+    valid3 = np.isfinite(lam)  
+
+    valid = dq_all.copy() * 0 
+    index  = np.where(np.logical_and(np.logical_and(valid1,valid2),valid3))
+    valid[index] = 1
+
+#________________________________________________________________________________
+# using the DQFlags from the input_image find pixels that should be excluded 
+# from the cube mapping    
+    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['DROPOUT'] + 
+                 dqflags.pixel['NON_SCIENCE'] +
+                 dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] + 
+                 dqflags.pixel['RC'] + dqflags.pixel['NONLINEAR'])
+
+    # find the location of all the values to reject in cube building    
+    good_data = np.where((np.bitwise_and(dq_all, all_flags)==0) & (valid == 1))
+
+    # good data holds the location of pixels we want to map to cube 
+    flux = flux_all[good_data]
+    error = error_all[good_data]
+    alpha = flux*0
+    beta = flux*0
+    xpix = x[good_data] # only used for testing
+    ypix = y[good_data] # only used for testing
+
+
+    v2_use = v2[good_data] #arc mins
+    v3_use = v3[good_data] #arc mins
+    wave = lam[good_data]
+
+    ra_ref,dec_ref,roll_ref,v2_ref,v3_ref = v2v32radec
+
+    ra,dec = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,
+                                  v2_ref, v3_ref,
+                                  v2_use,v3_use) # return ra and dec in degrees
+    ra = ra - c1_offset/3600.0
+    dec = dec - c2_offset/3600.0
+    xi,eta = coord.radec2std(Cube.Crval1, Cube.Crval2,ra,dec) # xi,eta in arc seconds
+    coord1 = xi
+    coord2 = eta
+
+    ifile = np.zeros(flux.shape, dtype='int') + int(file_no)
+
+    # stuff the point cloud arrays for this configuration into cloud 
+    # Point cloud will eventually contain all the cloud values
+    # xpix,ypix used for testing
+    cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile, xpix, ypix])
+
+
+    return cloud
+#______________________________________________________________________
+
 def FindROI(self, Cube, spaxel, PointCloud):
 
     """
@@ -170,7 +272,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
     iprint = 0
     nn = len(PointCloud[0])
     
-    print('number of elements in PT',nn)
+    #print('number of elements in PT',nn)
     
 # loop over each point cloud member - might want to change this to looping
 # over spaxels but for now just keep it point cloud elements because it
@@ -294,7 +396,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
 
                     ix = ix + 1
                     iprint = iprint + 1
-                    if(iprint > 20000):
+                    if(iprint > 80000):
                         iprint = 0
                         print('on point',ipt,nn)
                         

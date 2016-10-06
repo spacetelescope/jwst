@@ -113,27 +113,22 @@ class CubeBuildStep (Step):
         # Fill in MasterTable   based on Channel/Subchannel  or filter/grating
         # Also if there is an Offset list - fill in MasterTable.FileOffset
         MasterTable = cube_build_io.FileTable()
-
-
         
-        num, instrument,detector = cube_build_io.FilesinCube(self, input_table, 
+        num, instrument,detector = cube_build_io.SetFileTable(self, input_table, 
                                                                MasterTable)
         self.metadata['number_files'] = num
         self.metadata['detector'] = detector            
         self.metadata['instrument'] = instrument
 
-        sys.exit('STOP')
-
         # Determine which channels/subchannels or filter/grating cubes will be constructed from.
         # returns self.metadata['subchannel'] and self.metadata['channel']
         # or self.metadata['filter'], self.metadata['grating']
 
-        cube_build.DetermineCubeCoverage(self, MasterTable)
+        cube_build_io.DetermineCubeCoverage(self, MasterTable)
         cube_build.CheckCubeType(self)
 
-        self.output_name = input_table.asn_table['products'][iproduct]['name']
+        self.output_name = input_table.asn_table['products'][0]['name']
         if(self.input_table_type == 'singleton'):
-
             self.output_name = cube_build.UpdateOutPutName(self)
 #________________________________________________________________________________
 
@@ -142,13 +137,15 @@ class CubeBuildStep (Step):
 
         if(instrument == 'MIRI'):
             Cube = cube.CubeInfo('MIRI',detector,
-                                     self.metadata['channel'], self.metadata['subchannel'], 
-                                     self.output_name)
+                                 self.metadata['channel'], 
+                                 self.metadata['subchannel'], 
+                                 self.output_name)
 
         if(instrument == 'NIRSPEC'):
             Cube = cube.CubeInfo('NIRSPEC',detector,
-                                     self.metadata['filter'], self.metadata['grating'], 
-                                     self.output_name)
+                                 self.metadata['filter'], 
+                                 self.metadata['grating'], 
+                                 self.output_name)
 
         InstrumentInfo = InstrumentDefaults.Info() # for now this holds defaults on the two instruments
         self.log.info(' Building Cube %s ', Cube.output_name)
@@ -192,7 +189,7 @@ class CubeBuildStep (Step):
             Cube.SetGeometryAB(CubeFootPrint) # local coordinate system 
 
         Cube.PrintCubeGeometry(instrument)
-        sys.exit('STOP')            
+
 
             # if the user has not set the size of the ROI then use defaults of 1* cube scale in dimension
         if(self.roi1 == 1): self.roi1 = Cube.Cdelt1* 1.0
@@ -220,8 +217,8 @@ class CubeBuildStep (Step):
             for y in range(Cube.naxis2):
                 for x in range(Cube.naxis1):
                     spaxel.append(cube.Spaxel(Cube.xcoord[x], 
-                                                  Cube.ycoord[y], 
-                                                  Cube.zcoord[z]))                        
+                                              Cube.ycoord[y], 
+                                              Cube.zcoord[z]))                        
         t1 = time.time()
         print("Time to create list of spaxel classes = %.1f.s" % (t1 - t0,))
 
@@ -250,11 +247,11 @@ class CubeBuildStep (Step):
                 print('cube_build_step',this_par1,this_par2)
 
                 PixelCloud = cube_build.MapDetectorToCube(self, 
-                                                              this_par1, this_par2, 
-                                                              Cube, spaxel, 
-                                                              PixelCloud,
-                                                              MasterTable, 
-                                                              InstrumentInfo)
+                                                          this_par1, this_par2, 
+                                                          Cube, spaxel, 
+                                                          PixelCloud,
+                                                          MasterTable, 
+                                                          InstrumentInfo)
 
         t1 = time.time()
         self.log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
@@ -276,7 +273,7 @@ class CubeBuildStep (Step):
         t1 = time.time()
         self.log.info("Time find Cube Flux= %.1f.s" % (t1 - t0,))
 # write out the IFU cube
-        cube_build.WriteCube(self, Cube, spaxel)
+        cube_build_io.WriteCube(self, Cube, spaxel)
 
 #        sys.exit('Stop')
 

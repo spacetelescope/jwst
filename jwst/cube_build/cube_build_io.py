@@ -47,6 +47,9 @@ def Read_User_Input(self):
         user_clen = len(channellist)
         print('user_clen',user_clen)
 
+#        print('self.channel',self.channel,type(self.channel))
+#        print('channellist',channellist)
+
         for j in range(user_clen):
             ch = channellist[j]
             if(user_clen > 1):
@@ -137,7 +140,7 @@ def Read_User_Input(self):
         self.metadata['grating'] = list(set(self.metadata['grating']))
 
 
-    #sys.exit('STOP') 
+
 #********************************************************************************
 # Read in dither offset file
 # For testing this is useful but possibily this might be useful during flight if the
@@ -181,6 +184,7 @@ def DetermineCubeCoverage(self, MasterTable):
 
     """
 #________________________________________________________________________________
+# IF INSTRUMENT = MIRI
 # loop over the file names
 
     if(self.metadata['instrument'] == 'MIRI'):
@@ -189,34 +193,31 @@ def DetermineCubeCoverage(self, MasterTable):
 
         nchannels = len(ValidChannel)
         nsubchannels = len(ValidSubchannel)
-    
-
 #________________________________________________________________________________
         # for MIRI we can set the channel
         channellist = self.channel.split()
         user_clen = len(channellist)
+        bandlist = self.band.split()
+        user_blen = len(bandlist) 
 
-        # the user has given the channel information
-        if(user_clen != 0 ): 
-            for j in range(user_clen):
+        # The input channel or band  parameter is not set 
+        if(user_clen == 0 or user_blen == 0): 
+            for i in range(nchannels):
+                for j in range(nsubchannels):
+                    nfiles = len(MasterTable.FileMap['MIRI'][ValidChannel[i]][ValidSubchannel[j]])
+                    if(nfiles > 0):
+                        # if the channel parameter value was not set
+                        if(user_clen ==0):
+                            self.metadata['channel'].append(ValidChannel[i]) 
+                        # if the band parameter value was not set
+                        if(user_blen ==0): 
+                            self.metadata['subchannel'].append(ValidSubchannel[j])
 
-                if channellist[j] in ValidChannel:
-                    self.metadata['channel'].append(channellist[j])
-                else:
-                    log.error(' Invalid Channel give %s', channellist[j])
+# remove duplicates if needed
+            self.metadata['channel'] = list(set(self.metadata['channel'])) 
+            self.metadata['subchannel'] = list(set(self.metadata['subchannel']))
 
-            self.metadata['channel'] = list(set(self.metadata['channel'])) # remove duplicates if needed
 
-        for i in range(nchannels):
-            for j in range(nsubchannels):
-                nfiles = len(MasterTable.FileMap['MIRI'][ValidChannel[i]][ValidSubchannel[j]])
-                if(nfiles > 0):
-                    self.metadata['subchannel'].append(ValidSubchannel[j])
-                    if(self.input_table_type == 'singleton' and user_clen == 0):
-#usually filled in from reading assoication table
-                        self.metadata['channel'].append(ValidChannel[i]) 
-
-        self.metadata['subchannel'] = list(set(self.metadata['subchannel']))
         log.info('The desired cubes covers the MIRI Channels: %s', 
                  self.metadata['channel'])
         log.info('The desried cubes covers the MIRI subchannels: %s', 
@@ -239,16 +240,31 @@ def DetermineCubeCoverage(self, MasterTable):
                     'F170LP', 'F290LP', 'F290LP', 'CLEAR']
         ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H', 
                     'G395M', 'G395H', 'PRISM']
-        ntypes = len(ValidFWA)
 
-        for j in range(ntypes):
-            nfiles = len(MasterTable.FileMap['NIRSPEC'][ValidFWA[j]][ValidGWA[j]])
-            if(nfiles > 0):
-                self.metadata['filter'].append(ValidFWA[j])
-                self.metadata['grating'].append(ValidGWA[j])
+        nfilter = len(ValidFWA)
+        ngrating = len(ValidGWA)
+#________________________________________________________________________________
+        # check if input filter or grating has been set
+        grating = self.grating.split()
+        user_glen = len(grating)
+        filter = self.filter.split()
+        user_flen = len(filter) 
 
-        self.metadata['filter'] = list(set(self.metadata['filter']))
-        self.metadata['grating'] = list(set(self.metadata['grating']))
+        # The input channel or band  parameter is not set 
+        if(user_glen == 0 or user_flen == 0): 
+            for i in range(ngrating):
+                for j in range(nfilter):
+                    nfiles = len(MasterTable.FileMap['NIRSPEC'][ValidFWA[j]][ValidGWA[j]])
+                    if(nfiles > 0):
+                        # if the channel parameter value was not set
+                        if(user_glen ==0):
+                            self.metadata['grating'].append(ValidGWA[j])
+                        # if the band parameter value was not set
+                        if(user_flen ==0): 
+                            self.metadata['filter'].append(ValidFWA[j])
+# remove duplicates if needed
+            self.metadata['filter'] = list(set(self.metadata['filter']))
+            self.metadata['grating'] = list(set(self.metadata['grating']))
         log.debug('The desired cubes covers the NIRSPEC FWA  %s', 
                   self.metadata['filter'])
         log.debug('The desried cubes covers the NIRSPEC GWA: %s', 
@@ -258,13 +274,13 @@ def DetermineCubeCoverage(self, MasterTable):
         number_gratings = len(self.metadata['grating'])
 
         if(number_filters == 0):
-            raise ErrorNoChannels("The cube  does not cover any filters")
+            raise ErrorNoFilters("The cube  does not cover any filters")
         if(number_gratings == 0):
-            raise ErrorNoSubchannels("The cube  does not cover any gratings")
+            raise ErrorNoGratings("The cube  does not cover any gratings")
 
 
 #********************************************************************************
-def FilesinCube(self, input_table, MasterTable):
+def SetFileTable(self, input_table, MasterTable):
 #********************************************************************************
     """
     Short Summary
@@ -298,40 +314,28 @@ def FilesinCube(self, input_table, MasterTable):
     num = 0
     iproduct = 0 # only one product found in association table
 
+#________________________________________________________________________________
+# find out how many files are in the association table or if it is an single file
+# store the input_filenames
     if len(input_table.input_models) > 0:  # this is a single file
         input_models.append(input_table.input_models)
         input_filenames.append(input_table.filename)
         num = 1
-    else:
-
-        #channels = input_table.asn_table['products'][iproduct]['ch']
-#        channels = ['1']
-#        channellist = list(channels)
-#        num_ch = len(channellist)
-#        ValidChannel = ['1', '2', '3', '4']
-
-#        for j in range(num_ch):
-#            if channellist[j] in ValidChannel:
-#                self.metadata['channel'].append(channellist[j])
-#            else:
-#                log.error(' Invalid Channel %s', channellist[j])
-
+    else: # read in assoication table 
         for m in input_table.asn_table['products'][iproduct]['members']:
-
             input_filenames.append(m['expname'])
-
             i = i + 1
 
     num = len(input_filenames)
-    print('number of input filenames')
+    print('number of input filenames',num)
 #________________________________________________________________________________
-# Loop over input list of files
+# Loop over input list of files and assign fill in the MasterTable with filename
+# for the correct (channel-subchannel) or (grating-band)
     for i in range(num):
 
         ifile = input_filenames[i]
 
-        # Open the input data model
-        # Fill in the FileMap information
+        # Open the input data model & Fill in the FileMap information
 
         with datamodels.ImageModel(ifile) as input_model:
 
@@ -340,12 +344,11 @@ def FilesinCube(self, input_table, MasterTable):
             assign_wcs = input_model.meta.cal_step.assign_wcs
 
             if(assign_wcs != 'COMPLETE'):
-                raise ErrorNoAssignWCS("Assign WCS has not been run on file %s", ifile)
-
+                raise ErrorNoAssignWCS("Assign WCS has not been run on file %s", 
+                                       ifile)
             #________________________________________________________________________________
             #MIRI instrument
             #________________________________________________________________________________
-
             if instrument == 'MIRI':
                 channel = input_model.meta.instrument.channel
                 subchannel = input_model.meta.instrument.band
@@ -361,7 +364,6 @@ def FilesinCube(self, input_table, MasterTable):
                         MasterTable.FileOffset[channel[k]][subchannel]['C2'].append(dec_offset)
             #________________________________________________________________________________
             elif instrument== 'NIRSPEC':
-
                 fwa = input_model.meta.instrument.filter
                 gwa = input_model.meta.instrument.grating
 
@@ -458,8 +460,6 @@ def WriteCube(self, Cube, spaxel):
     #return new_model
 
 #********************************************************************************
-class ErrorNoData(Exception):
-    pass
 
 class ErrorNoAssignWCS(Exception):
     pass
@@ -470,14 +470,13 @@ class ErrorNoChannels(Exception):
 class ErrorNoSubchannels(Exception):
     pass
 
-class ErrorNoCubes(Exception):
+class ErrorNoFilters(Exception):
     pass
 
-class IncorrectInput(Exception):
+class ErrorNoGrating(Exception):
     pass
 
-class NoCoordSystem(Exception):
-    pass
+
 #********************************************************************************
 class IFUCubeASN(object):
 #********************************************************************************
@@ -520,7 +519,7 @@ class IFUCubeASN(object):
                     self.asn_table = Association.load(input_fh)
             except:
                 # The name of a single image file
-                print('Going to read in filename')
+                print(' this is a single file  read in filename')
                 self.filename = input  # temp until figure out model.meta.filename
                 self.interpret_image_model(datamodels.ImageModel(input))
         else:
