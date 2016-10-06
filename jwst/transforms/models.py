@@ -5,23 +5,27 @@ Some of these may go in astropy.modeling in the future.
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import, division, unicode_literals, print_function
-
 import math
+from collections import namedtuple
 import numpy as np
 from astropy.modeling.core import Model
 from astropy.modeling.parameters import Parameter, InputParameterError
 from astropy.modeling.models import Polynomial2D
-
+from astropy.utils import isiterable
 
 __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
-           'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa', 'slitid_to_slit',
-           'slit_to_slitid', 'Snell', 'RefractionIndex', 'Logical',
+           'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa',
+           'Snell', 'RefractionIndex', 'Logical',
            'NirissSOSSModel', 'V23ToSky']
 
 
 # Number of shutters per quadrant
 N_SHUTTERS_QUADRANT = 62415
+
+# Nirspec slit definition
+Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
+                           "ymin", "ymax", "quadrant", "source_id"])
 
 
 class RefractionIndex(Model):
@@ -489,51 +493,76 @@ class LRSWavelength(Model):
         return wavelength
 
 
-def slitid_to_slit(open_slits_id):
-    """
-    A slit_id is a tuple of (quadrant_number, slit_number)
-    Internally a slit is represented as a number
-    slit = quadrant_number * N_SHUTTERS_QUADRANT + slit_number
-    """
-    return open_slits_id[:, 0] * N_SHUTTERS_QUADRANT + open_slits_id[:, 1]
-
-
-def slit_to_slitid(slits):
-    """
-    Return the slitid for the slits.
-    """
-    slits = np.asarray(slits)
-    return np.array(zip(*divmod(slits, N_SHUTTERS_QUADRANT)))
-
-
 class Gwa2Slit(Model):
+    """
+    Parameters
+    ----------
+    slits : list
+        open slits
+        a slit is a namedtupe
+        Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax", "quadrant"]
+    models : list
+        an instance of `~astropy.modeling.core.Model`
+    """
+    inputs = ('name', 'angle1', 'angle2', 'angle3')
+    outputs = ('name', 'x_slit', 'y_slit', 'lam')
 
-    inputs = ('angle1', 'angle2', 'angle3', 'quadrant', 'slitid')
-    outputs = ('x_slit', 'y_slit', 'lam', 'quadrant', 'slitid')
+    def __init__(self, slits, models):
+        if isiterable(slits[0]):
+            self._slits = [tuple(s) for s in slits]
+            self.slit_ids = [s[0] for s in self._slits]
+        else:
+            self._slits = list(slits)
+            self.slit_ids = self._slits
 
-    def __init__(self, models):
-        self.slits = slit_to_slitid(list(models.keys()))
         self.models = models
         super(Gwa2Slit, self).__init__()
 
-    def evaluate(self, quadrant, slitid, x, y, z):
-        slit = int(slitid_to_slit(np.array([quadrant, slitid]).T)[0])
-        return (quadrant, slitid) + self.models[slit](x, y, z)
+    @property
+    def slits(self):
+        if isiterable(self._slits[0]):
+            return [Slit(*row) for row in self._slits]
+        else:
+            return self.slit_ids
+
+    def get_model(self, name):
+        index = self.slit_ids.index(name)
+        return self.models[index]
+
+    def evaluate(self, name, x, y, z):
+        index = self.slit_ids.index(name)
+        return (name, ) + self.models[index](x, y, z)
 
 
 class Slit2Msa(Model):
 
-    inputs = ('quadrant', 'slitid', 'x_slit', 'y_slit', 'lam')
+    inputs = ('name', 'x_slit', 'y_slit', 'lam')
     outputs = ('x_msa', 'y_msa', 'lam')
 
-    def __init__(self, models):
+    def __init__(self, slits, models):
         super(Slit2Msa, self).__init__()
-        self.slits = slit_to_slitid(list(models.keys()))
+        if isiterable(slits[0]):
+            self._slits = [tuple(s) for s in slits]
+            self.slit_ids = [s[0] for s in self._slits]
+        else:
+            self._slits = list(slits)
+            self.slit_ids = self._slits
         self.models = models
 
-    def evaluate(self, quadrant, slitid, x, y, lam):
-        slit = int(slitid_to_slit(np.array([quadrant, slitid]).T)[0])
-        return self.models[slit](x, y) + (lam,)
+    @property
+    def slits(self):
+        if isiterable(self._slits[0]):
+            return [Slit(*row) for row in self._slits]
+        else:
+            return self.slit_ids
+
+    def get_model(self, name):
+        index = self.slit_ids.index(name)
+        return self.models[index]
+
+    def evaluate(self, name, x, y, lam):
+        index = self.slit_ids.index(name)
+        return self.models[index](x, y) + (lam,)
 
 
 class NirissSOSSModel(Model):
