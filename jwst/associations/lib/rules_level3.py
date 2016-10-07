@@ -252,13 +252,29 @@ class Asn_MIRI_MRS(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'MIR_MRS',
-                'inputs': ['EXP_TYPE']
+                'value': 'MIR_MRS|MIR_FLATMRS',
+                'inputs': ['EXP_TYPE'],
+                'force_unique': False,
             },
         })
 
         # Check and continue initialization.
         super(Asn_MIRI_MRS, self).__init__(*args, **kwargs)
+
+    def product_name(self):
+        """Define product name."""
+        target = self._get_target()
+
+        instrument = self._get_instrument()
+
+        product_name = 'jw{}-{}_{}_{}'.format(
+            self.data['program'],
+            self.acid.id,
+            target,
+            instrument
+        )
+
+        return product_name.lower()
 
 
 class Asn_NRS_IFU(
