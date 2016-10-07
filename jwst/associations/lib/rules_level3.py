@@ -17,8 +17,9 @@ logger.addHandler(logging.NullHandler())
 # Image associations
 class Asn_Image(
         AsnMixin_Image,
+        AsnMixin_OpticalPath,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """Non-Association Candidate Dither Associations"""
 
@@ -26,13 +27,9 @@ class Asn_Image(
 
         # Setup for checking.
         self.add_constraints({
-            'pointing_type': {
-                'value': 'SCIENCE',
-                'inputs': ['PNTGTYPE']
-            },
             'wfsvisit': {
-                'value': 'NULL',
                 'inputs': ['WFSVISIT'],
+                'is_invalid': True,
             },
         })
 
@@ -49,7 +46,7 @@ class Asn_Image(
 class Asn_WFSCMB(
         AsnMixin_Image,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """Wavefront Sensing association
 
@@ -92,7 +89,7 @@ class Asn_MIRI_LRS_FIXEDSLIT(
         AsnMixin_Spectrum,
         AsnMixin_MIRI,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """MIRI LRS Fixed slit"""
 
@@ -127,7 +124,7 @@ class Asn_MIRI_LRS_SLITLESS(
         AsnMixin_Spectrum,
         AsnMixin_MIRI,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """MIRI LRS Slitless"""
 
@@ -157,7 +154,7 @@ class Asn_NIR_SO_SLITLESS(
         AsnMixin_Spectrum,
         AsnMixin_NIRISS,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """NIRISS Single-Object Slitless"""
 
@@ -191,8 +188,9 @@ class Asn_NIR_SO_SLITLESS(
 class Asn_NRS_FIXEDSLIT(
         AsnMixin_Spectrum,
         AsnMixin_NIRSPEC,
+        AsnMixin_OpticalPath,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """NIRSPEC Fixed Slit"""
 
@@ -203,14 +201,6 @@ class Asn_NRS_FIXEDSLIT(
             'exp_type': {
                 'value': 'NRS_FIXEDSLIT',
                 'inputs': ['EXP_TYPE']
-            },
-            'opt_elem': {
-                'value': None,
-                'inputs': ['FILTER']
-            },
-            'opt_elem2': {
-                'value': None,
-                'inputs': ['GRATING']
             },
             'fixed_slit': {
                 'value': None,
@@ -229,8 +219,9 @@ class Asn_NRS_FIXEDSLIT(
 class Asn_NRS_MSA(
         AsnMixin_Spectrum,
         AsnMixin_NIRSPEC,
+        AsnMixin_OpticalPath,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """NIRSPEC MSA"""
 
@@ -238,21 +229,9 @@ class Asn_NRS_MSA(
 
         # Setup for checking.
         self.add_constraints({
-            'pointing_type': {
-                'value': 'SCIENCE',
-                'inputs': ['PNTGTYPE']
-            },
             'exp_type': {
                 'value': 'NRS_MSASPEC',
                 'inputs': ['EXP_TYPE']
-            },
-            'opt_elem': {
-                'value': None,
-                'inputs': ['FILTER']
-            },
-            'opt_elem2': {
-                'value': None,
-                'inputs': ['GRATING']
             },
         })
 
@@ -264,7 +243,7 @@ class Asn_MIRI_MRS(
         AsnMixin_Spectrum,
         AsnMixin_MIRI,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """MIRI MRS (IFU)"""
 
@@ -276,10 +255,6 @@ class Asn_MIRI_MRS(
                 'value': 'MIR_MRS',
                 'inputs': ['EXP_TYPE']
             },
-            'opt_elem': {
-                'value': None,
-                'inputs': ['BAND']
-            },
         })
 
         # Check and continue initialization.
@@ -290,7 +265,7 @@ class Asn_NRS_IFU(
         AsnMixin_Spectrum,
         AsnMixin_NIRSPEC,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """NIRSPEC IFU"""
 
@@ -302,10 +277,6 @@ class Asn_NRS_IFU(
                 'value': 'NRS_IFU',
                 'inputs': ['EXP_TYPE']
             },
-            'opt_elem': {
-                'value': None,
-                'inputs': ['GRATING']
-            }
         })
 
         # Check and continue initialization.
@@ -314,5 +285,5 @@ class Asn_NRS_IFU(
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
 
+        super(Asn_NRS_IFU, self)._init_hook(member)
         self.data['asn_type'] = 'nrsifu'
-        super(AsnMixin_Spectrum, self)._init_hook(member)

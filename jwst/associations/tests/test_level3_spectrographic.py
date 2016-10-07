@@ -55,7 +55,7 @@ class TestLevel3Spectrographic(BasePoolRule):
             'o003',
             'nrsifu',
             'jw99009-o003_nrsifu_\d{3}_asn',
-            'jw99009-o003_t002_nirspec_g235h'
+            'jw99009-o003_t002_nirspec_clear'
         ),
     ]
 )
@@ -69,13 +69,23 @@ def nirspec_params(request):
     asns, orphaned = generate(pool, rules)
     return asns, asn_type, asn_name, product_name
 
-class TestLevel3SpectrographicSpecifics(object):
 
-    def test_nirspec_modes(self, nirspec_params):
-        asns, asn_type, asn_name, product_name = nirspec_params
+def test_nirspec_modes(nirspec_params):
+    asns, asn_type, asn_name, product_name = nirspec_params
 
-        assert len(asns) == 1
-        asn = asns[0]
-        assert asn['asn_type'] == asn_type
-        assert re.match(asn_name, asn.asn_name)
-        assert asn['products'][0]['name'] == product_name
+    assert len(asns) == 1
+    asn = asns[0]
+    assert asn['asn_type'] == asn_type
+    assert re.match(asn_name, asn.asn_name)
+    assert asn['products'][0]['name'] == product_name
+
+
+@pytest.mark.xfail
+def test_miri_mrs():
+    gc = {
+        'asn_candidate': constrain_on_candidates(('o003',))
+    }
+    rules = AssociationRegistry(global_constraints=gc)
+    pool = combine_pools(t_path('data/pool_007_spec_miri.csv'))
+    asns, orphaned = generate(pool, rules)
+    assert len(asns) == 1
