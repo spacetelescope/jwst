@@ -228,6 +228,10 @@ properties:
             title: Target proper motion epoch
             type: string
             fits_keyword: PROPEPOC
+          source_type:
+            title: Advised source type (point/extended)
+            type: string
+            fits_keyword: SRCTYPE
       instrument:
         title: Instrument configuration information
         type: object
