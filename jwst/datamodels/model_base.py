@@ -587,7 +587,7 @@ class DataModel(properties.ObjectNode):
             elif isinstance(d, list):
                 for key, val in enumerate(d):
                     hdu_keywords_from_data(val, path + [key], hdu_keywords)
-            elif isinstance(b, np.ndarray):
+            elif isinstance(d, np.ndarray):
                 # skip data arrays
                 pass
             else:
@@ -609,7 +609,7 @@ class DataModel(properties.ObjectNode):
         def included(cursor, part):
             # Test if part is in the cursor
             if isinstance(part, int):
-                return part > 0 and part < len(cursor)
+                return part >= 0 and part < len(cursor)
             else:
                 return part in cursor
 
@@ -623,10 +623,16 @@ class DataModel(properties.ObjectNode):
             else:
                 that_cursor = that_cursor[part]
                 if not included(this_cursor, part):
-                    if isinstance(part, int):
-                        this_cursor[part] = []
+                    if isinstance(path[0], int):
+                        if isinstance(part, int):
+                            this_cursor.append([])
+                        else:
+                            this_cursor[part] = []
                     else:
-                        this_cursor[part] = {}
+                        if isinstance(part, int):
+                            this_cursor.append({})
+                        else:
+                            this_cursor[part] = {}
                 this_cursor = this_cursor[part]
                 set_hdu_keyword(this_cursor, that_cursor, path)
 
