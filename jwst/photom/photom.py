@@ -374,8 +374,8 @@ class DataSet(object):
         # If the relative response arrays have length > 0, copy them into the
         # relsens table of the data model
         if nelem > 0:
-            waves = tabdata['wavelength']
-            relresps = tabdata['relresponse']
+            waves = tabdata['wavelength'][:nelem]
+            relresps = tabdata['relresponse'][:nelem]
 
             # Set the relative sensitivity table for the correct Model type
             if isinstance(self.input, datamodels.MultiSlitModel):
