@@ -37,7 +37,7 @@ class CubeBuildStep (Step):
        """
 
     def process(self, input):
-        self.log.info('Starting IFU Cube Building Step...')
+        self.log.info('Starting IFU Cube Building Step 2...')
 
         if(not self.band.isupper()): self.band = self.band.upper()
         if(not self.filter.isupper()): self.filter = self.filter.upper()
@@ -68,7 +68,7 @@ class CubeBuildStep (Step):
 
         self.log.info('Coordinate system to use %s', self.coord_system)
 
-
+        print('got here')
 #_________________________________________________________________________________________________
 # Set up the IFU cube basic parameters that define a cube
         self.metadata = {}
@@ -126,6 +126,7 @@ class CubeBuildStep (Step):
 
         cube_build_io.DetermineCubeCoverage(self, MasterTable)
         cube_build.CheckCubeType(self)
+        sys.exit{'STOP')
 
         self.output_name = input_table.asn_table['products'][0]['name']
         if(self.input_table_type == 'singleton'):

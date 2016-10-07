@@ -278,7 +278,7 @@ def DetermineCubeCoverage(self, MasterTable):
         if(number_gratings == 0):
             raise ErrorNoGratings("The cube  does not cover any gratings")
 
-
+        sys.exit('STOP')
 #********************************************************************************
 def SetFileTable(self, input_table, MasterTable):
 #********************************************************************************
