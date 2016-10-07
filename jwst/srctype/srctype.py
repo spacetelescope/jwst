@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import numpy as np
+from astropy.io import fits
 import logging
 
 log = logging.getLogger(__name__)
@@ -43,5 +45,41 @@ def set_source_type(input_model):
                      'value of %s' % src_type)
 
         input_model.meta.target.source_type = src_type
-    
+
+    # For NIRSpec MSA exposures, load the stellarity values from the
+    # MSA configuration file that goes with this exposure
+    if exptype == 'NRS_MSASPEC':
+
+        # Get the MSA configuration file name and open the file
+        msa_name = input_model.meta.instrument.msa_configuration_file
+        msa_file = fits.open(msa_name)
+
+        # Load the Source info table from the MSA file
+        source_table = msa_file['SOURCE_INFO'].data
+
+        # See if the stellarity column exists
+        try:
+            stellarities = source_table['stellarity']
+        except:
+            log.error('Stellarity data not found in MSA source table')
+            log.error('Step will be skipped')
+            msa_file.close()
+            return None
+
+        # Loop over the input slits and find matching source_id in table
+        for slit in range(len(input_model.slits)):
+            source_id = input_model.slits[slit].source_id
+            row = np.where(source_table['source_id'] == source_id)
+
+            # Get the stellarity value for this source
+            stellarity = np.float32(source_table['stellarity'][row][0])
+            log.debug('source_id=%g, stellarity=%g' % (source_id, stellarity))
+
+            # Save the stellarity value in the slit meta data
+            input_model.slits[slit].stellarity = stellarity
+
+        # We're done; close the MSA configuration file
+        msa_file.close()
+
+
     return input_model
