@@ -17,7 +17,7 @@ flat-field consists of a single image model, the region corresponding to each
 slit in the science data is extracted on-the-fly from the flat-field data and
 applied to the corresponding slit in the science data.
 
-Multiple-integration datasets (the _rate.fits products from the ramp_fit
+Multiple-integration datasets (the _rateints.fits products from the ramp_fit
 step) are handled by applying the flat-field to each integration.
 
 For pixels whose DQ is NO_FLAT_FIELD in the reference file, the flat

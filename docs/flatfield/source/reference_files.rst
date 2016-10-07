@@ -2,8 +2,8 @@ Reference File
 ==============
 The flat-field correction step uses a FLAT reference file.
 For NIRSpec data, however, there are three flat-field reference files,
-F_FLAT (fore optics), S_FLAT (spectrograph optics), and
-D_FLAT (detector).
+FFLAT (fore optics), SFLAT (spectrograph optics), and
+DFLAT (detector).
 
 CRDS Selection Criteria
 -----------------------
