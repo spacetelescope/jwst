@@ -18,8 +18,13 @@ Output
 ======
 The output will be in MultiSpecModel format; for each SLIT there will be
 a table extension with the name EXTRACT1D.  This extension will have
-columns giving the number of the column or row in the input file, the
-calculated wavelength, background, and countrate in counts/pixel of
-spectral width, summed along the direction perpendicular to the dispersion.
-Currently only a simple summation is done, with no weighting.  A more
-sophisticated algorithm will be introduced in future builds.
+columns WAVELENGTH, FLUX, ERROR, DQ, NET, NERROR, BACKGROUND, and BERROR.
+WAVELENGTH is the value calculated using the WCS.  NET is the count rate
+minus background, in counts/pixel of spectral width, summed along the
+direction perpendicular to the dispersion.  Currently only a simple
+summation is done, with no weighting.  A more sophisticated algorithm will
+be introduced in future builds.  BACKGROUND is the measured background,
+scaled to the same extraction width as for the NET.  This column will be
+zero if the reference file did not specify that background should be
+determined.
+FLUX, ERROR, DQ, NERROR, and BERROR are not populated with useful values yet.

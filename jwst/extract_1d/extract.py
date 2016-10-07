@@ -541,13 +541,12 @@ class ExtractModel(object):
 
         Returns
         -------
-        (column, wavelength, background, countrate)
-            These are all 1-D arrays.  `column` is the column (or row)
-            number in the input data for each output pixel.  `wavelength`
-            is the wavelength in angstroms at each pixel.  `background`
-            is the background count rate that was subtracted from the
-            total source count rate to get `countrate`.  `countrate` is
-            the count rate (counts / s) at each pixel.
+        (wavelength, net, background)
+            These are all 1-D arrays.  `wavelength` is the wavelength in
+            micrometers at each pixel.  `net` is the count rate
+            (counts / s) minus the background at each pixel.  `background`
+            is the background count rate that was subtracted from the total
+            source count rate to get `net`.
         """
 
         log.debug('xstart=%g, xstop=%g, ystart=%g, ystop=%g' %
@@ -583,13 +582,15 @@ class ExtractModel(object):
             image = data
             # Range (slice) of pixel numbers in the dispersion direction.
             disp_range = [self.xstart, self.xstop]
-            column = np.arange(self.xstart, self.xstop, dtype=np.float64)
+            if wavelength is None:
+                wavelength = np.arange(self.xstart, self.xstop,
+                                       dtype=np.float64)
         else:
             image = np.transpose(data, (1, 0))
             disp_range = [self.ystart, self.ystop]
-            column = np.arange(self.ystart, self.ystop, dtype=np.float64)
-        if wavelength is None:
-            wavelength = column
+            if wavelength is None:
+                wavelength = np.arange(self.ystart, self.ystop,
+                                       dtype=np.float64)
 
         mask = np.isnan(wavelength)
         n_nan = mask.sum(dtype=np.float64)
@@ -599,13 +600,13 @@ class ExtractModel(object):
         del mask
 
         # src total flux, area, total weight
-        (countrate, background) = \
+        (net, background) = \
         extract1d.extract1d(image, wavelength, disp_range,
                             self.p_src, self.p_bkg, self.independent_var,
                             self.smoothing_length, self.bkg_order,
                             weights=None)
 
-        return (column, wavelength, background, countrate)
+        return (wavelength, net, background)
 
     def __del__(self):
         self.dispaxis = None
@@ -625,6 +626,29 @@ class ExtractModel(object):
         self.wcs = None
         self._wave_model = None
 
+def abs_flux(wavelength, net, relsens):
+    """Apply flux calibration to net count rate."""
+
+    # The "_relsens" means values read from the RELSENS table.
+    wl_relsens = relsens['wavelength']
+    resp_relsens = relsens['response']
+
+    bad = False
+    if np.any(np.isnan(wl_relsens)):
+        log.error("In RELSENS, the 'wavelength' column contains NaNs.")
+        bad = True
+    if np.any(np.isnan(resp_relsens)):
+        log.error("In RELSENS, the 'response' column contains NaNs.")
+        bad = True
+    if bad:
+        raise ValueError("Found NaNs in RELSENS table.")
+
+    # This is the response, interpolated at the wavelengths in the science
+    # data.
+    factor = np.interp(wavelength, wl_relsens, resp_relsens, -999., 999.)
+    mask = np.where(factor <= 0.)
+        if len(mask[0]) > 0
+
 
 def do_extract1d(input_model, refname, smoothing_length, bkg_order):
 
@@ -639,12 +663,18 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                                 input_model.meta, smoothing_length, bkg_order)
             extract_params['slit_start1'] = slit.xstart         # one indexed
             extract_params['slit_start2'] = slit.ystart         # one indexed
-            column, wavelength, background, countrate = \
+            wavelength, net, background = \
                 extract_one_slit(slit, -1,
                                  input_model.meta, refname,
                                  slit.name, **extract_params)
+            flux = abs_flux(net, slit.relsens)
+            dq = np.zeros(net.shape, dtype=np.int32)
+            fl_error = np.ones_like(net)
+            nerror = np.ones_like(net)
+            berror = np.ones_like(net)
             spec = datamodels.SpecModel()
-            otab = np.array(zip(column, wavelength, background, countrate),
+            otab = np.array(zip(wavelength, flux, fl_error, dq,
+                                net, nerror, background, berror),
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             output_model.spec.append(spec)
@@ -658,15 +688,20 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             extract_params = get_extract_parameters(refname, slitname,
                                 input_model.meta, smoothing_length, bkg_order)
             if extract_params:
-                column, wavelength, background, countrate = \
+                wavelength, net, background = \
                         extract_one_slit(input_model, -1,
                                          input_model.meta, refname,
                                          slitname, **extract_params)
             else:
                 log.critical('Missing extraction parameters.')
                 raise ValueError('Missing extraction parameters.')
+            dq = np.zeros(net.shape, dtype=np.int32)
+            flux = np.zeros_like(net)
+            fl_error = np.ones_like(net)
+            nerror = np.ones_like(net)
+            berror = np.ones_like(net)
             spec = datamodels.SpecModel()
-            otab = np.array(zip(column, wavelength, background, countrate),
+            otab = np.array(zip(column, wavelength, background, net),
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             output_model.spec.append(spec)
@@ -682,12 +717,18 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             # Loop over each integration in the input model
             for integ in range(input_model.data.shape[0]):
                 # Extract spectrum
-                column, wavelength, background, countrate = \
+                wavelength, net, background = \
                         extract_one_slit(input_model, integ,
                                          input_model.meta, refname,
                                          slitname, **extract_params)
+                dq = np.zeros(net.shape, dtype=np.int32)
+                flux = np.zeros_like(net)
+                fl_error = np.ones_like(net)
+                nerror = np.ones_like(net)
+                berror = np.ones_like(net)
                 spec = datamodels.SpecModel()
-                otab = np.array(zip(column, wavelength, background, countrate),
+                otab = np.array(zip(wavelength, flux, fl_error, dq,
+                                    net, nerror, background, berror),
                                 dtype=spec.spec_table.dtype)
                 spec = datamodels.SpecModel(spec_table=otab)
                 output_model.spec.append(spec)
@@ -704,7 +745,7 @@ def extract_one_slit(slit, integ, meta, refname, slitname=None,
     data = slit.data
     if integ > -1:
         data = slit.data[integ]
-    column, wavelength, background, countrate = extract_model.extract(data)
+    wavelength, net, background = extract_model.extract(data)
     del extract_model
 
-    return column, wavelength, background, countrate
+    return wavelength, net, background
