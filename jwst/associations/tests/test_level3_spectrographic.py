@@ -79,13 +79,57 @@ def test_nirspec_modes(nirspec_params):
     assert re.match(asn_name, asn.asn_name)
     assert asn['products'][0]['name'] == product_name
 
-
-@pytest.mark.xfail
-def test_miri_mrs():
+@pytest.fixture(
+    scope='module',
+    params=[
+        (
+            'o005',
+            'spec',
+            'jw99009-o005_spec_\d{3}_asn',
+            'jw99009-o005_t001_miri',
+        ),
+        (
+            'o006',
+            'spec',
+            'jw99009-o006_spec_\d{3}_asn',
+            'jw99009-o006_t001_miri',
+        ),
+        (
+            'o007',
+            'spec',
+            'jw99009-o007_spec_\d{3}_asn',
+            'jw99009-o007_t001_miri'
+        ),
+        (
+            'o008',
+            'spec',
+            'jw99009-o008_spec_\d{3}_asn',
+            'jw99009-o008_t001_miri'
+        ),
+        (
+            'o009',
+            'spec',
+            'jw99009-o009_spec_\d{3}_asn',
+            'jw99009-o009_t001_miri'
+        ),
+    ]
+)
+def miri_params(request):
+    cid, asn_type, asn_name, product_name = request.param
+    pool = combine_pools(t_path('data/pool_007_spec_miri.csv'))
     gc = {
-        'asn_candidate': constrain_on_candidates(('o003',))
+        'asn_candidate': constrain_on_candidates((cid,))
     }
     rules = AssociationRegistry(global_constraints=gc)
-    pool = combine_pools(t_path('data/pool_007_spec_miri.csv'))
     asns, orphaned = generate(pool, rules)
+    return asns, asn_type, asn_name, product_name
+
+
+def test_miri_modes(miri_params):
+    asns, asn_type, asn_name, product_name = miri_params
+
     assert len(asns) == 1
+    asn = asns[0]
+    assert asn['asn_type'] == asn_type
+    assert re.match(asn_name, asn.asn_name)
+    assert asn['products'][0]['name'] == product_name
