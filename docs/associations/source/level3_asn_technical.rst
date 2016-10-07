@@ -25,7 +25,8 @@ where:
     * `rNNNN`: Reserverd for future use. If you see this in practice,
       file an issue to have this document updated.
       
-  * `YYYYMMDDtHHMMSS`: A timestamp provided the DMS workflow. Note:
+  * `YYYYMMDDtHHMMSS`: This is generically referred to as the `version_id`.
+    A timestamp provided the DMS workflow. Note:
     When used outside the workflow, this field is user-specifiable.
   * `ATYPE`: The type of association. See
     :ref:`asn-association-types`
@@ -56,7 +57,7 @@ The following example will be used to explain the contents of an association::
   
     {
         "degraded_status": "No known degraded exposures in association.",
-        "creation_time": "20160826T131159",
+        "version_id": "20160826t131159",
         "asn_type": "image",
         "constraints": "Constraints:\n    opt_elem2: CLEAR\n    pointing_type: SCIENCE\n    detector: (?!NULL).+\n    target_name: 1\n    exp_type: NRC_IMAGE\n    wfsvisit: NULL\n    instrument: NIRCAM\n    opt_elem: F090W\n    program: 99009",
         "asn_pool": "mega_pool",
@@ -142,6 +143,9 @@ target
 asn_type
   The type of association represented. See :ref:`asn-association-types`
 
+asn_id
+  The association id. The id is what appears in the :ref:`asn-DMS-naming`
+  
 asn_pool
   Association pool from which this association was created.
 
@@ -152,8 +156,10 @@ degraded_status
   Error status from the observation logs. If none the phrase "No
   known degraded exposures in association." is used.
 
-creation_time
-  Time of creation or version id. If time, it will have the format `yyyymmddThhmmss`
+version_id
+  Version identifier. DMS uses a time stamp with the format
+  `yyyymmddthhmmss`
+  Can be None or NULL
 
 constraints
   List of constraints used by the association generator to create this

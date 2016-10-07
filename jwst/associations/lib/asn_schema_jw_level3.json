@@ -12,6 +12,10 @@
             "description": "Association definition used to create this association.",
             "type": "string"
         },
+        "asn_id": {
+            "description": "Association identifier",
+            "type": "string"
+        },
         "program": {
             "description": "The observing program identifier",
             "type": "string"
@@ -69,6 +73,7 @@
         }
     },
     "required": ["asn_type",
+                 "asn_id",
                  "asn_rule",
                  "program",
                  "target",

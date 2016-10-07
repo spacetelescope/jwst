@@ -185,6 +185,7 @@ class DMS_Level3_Base(Association):
         self.data['constraints'] = '\n'.join(
             [cc for cc in self.constraints_to_text()]
         )
+        self.data['asn_id'] = self.acid.id
         self.new_product(member)
 
         # Parse out information from the pool file name.
