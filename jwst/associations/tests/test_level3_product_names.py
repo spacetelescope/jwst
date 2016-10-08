@@ -102,7 +102,7 @@ def test_level35_names(pool_file):
     (asns, orphaned) = generate(pool, rules)
     for asn in asns:
         product_name = asn['products'][0]['name']
-        if asn['asn_rule'] == 'Asn_MIRI_MRS':
+        if asn['asn_rule'] == 'Asn_MIRI_IFU':
             m = re.match(LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX, product_name)
         else:
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
@@ -117,7 +117,7 @@ def test_level3_names(pool_file, global_constraints):
     (asns, orphaned) = generate(pool, rules)
     for asn in asns:
         product_name = asn['products'][0]['name']
-        if asn['asn_rule'] == 'Asn_MIRI_MRS':
+        if asn['asn_rule'] == 'Asn_MIRI_IFU':
             m = re.match(LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX, product_name)
         else:
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
@@ -131,7 +131,7 @@ def test_multiple_optelems(pool_file):
     (asns, orphaned) = generate(pool, rules)
     for asn in asns:
         product_name = asn['products'][0]['name']
-        if asn['asn_rule'] != 'Asn_MIRI_MRS':
+        if asn['asn_rule'] != 'Asn_MIRI_IFU':
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
             assert m is not None
             try:

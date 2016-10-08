@@ -31,7 +31,7 @@ class TestLevel3Spectrographic(BasePoolRule):
         'Asn_NIR_SO_SLITLESS',
         'Asn_NRS_FIXEDSLIT',
         'Asn_NRS_MSA',
-        'Asn_MIRI_MRS',
+        'Asn_MIRI_IFU',
         'Asn_NRS_IFU'
     ]
 
@@ -84,32 +84,32 @@ def test_nirspec_modes(nirspec_params):
     params=[
         (
             'o005',
-            'spec',
-            'jw99009-o005_spec_\d{3}_asn',
+            'mirifu',
+            'jw99009-o005_mirifu_\d{3}_asn',
             'jw99009-o005_t001_miri',
         ),
         (
             'o006',
-            'spec',
-            'jw99009-o006_spec_\d{3}_asn',
+            'mirifu',
+            'jw99009-o006_mirifu_\d{3}_asn',
             'jw99009-o006_t001_miri',
         ),
         (
             'o007',
-            'spec',
-            'jw99009-o007_spec_\d{3}_asn',
+            'mirifu',
+            'jw99009-o007_mirifu_\d{3}_asn',
             'jw99009-o007_t001_miri'
         ),
         (
             'o008',
-            'spec',
-            'jw99009-o008_spec_\d{3}_asn',
+            'mirifu',
+            'jw99009-o008_mirifu_\d{3}_asn',
             'jw99009-o008_t001_miri'
         ),
         (
             'o009',
-            'spec',
-            'jw99009-o009_spec_\d{3}_asn',
+            'mirifu',
+            'jw99009-o009_mirifu_\d{3}_asn',
             'jw99009-o009_t001_miri'
         ),
     ]

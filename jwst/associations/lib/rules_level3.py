@@ -239,7 +239,7 @@ class Asn_NRS_MSA(
         super(Asn_NRS_MSA, self).__init__(*args, **kwargs)
 
 
-class Asn_MIRI_MRS(
+class Asn_MIRI_IFU(
         AsnMixin_Spectrum,
         AsnMixin_MIRI,
         AsnMixin_Target,
@@ -259,7 +259,8 @@ class Asn_MIRI_MRS(
         })
 
         # Check and continue initialization.
-        super(Asn_MIRI_MRS, self).__init__(*args, **kwargs)
+        super(Asn_MIRI_IFU, self).__init__(*args, **kwargs)
+
 
     def product_name(self):
         """Define product name."""
@@ -275,6 +276,12 @@ class Asn_MIRI_MRS(
         )
 
         return product_name.lower()
+
+    def _init_hook(self, member):
+        """Post-check and pre-add initialization"""
+
+        super(Asn_MIRI_IFU, self)._init_hook(member)
+        self.data['asn_type'] = 'mirifu'
 
 
 class Asn_NRS_IFU(
