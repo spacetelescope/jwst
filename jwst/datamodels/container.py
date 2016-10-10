@@ -164,7 +164,12 @@ class ModelContainer(model_base.DataModel):
         except IOError:
             raise IOError('Cannot open data models.')
 
+        # Pull the whole association table into meta.asn_table
+        self.meta.asn_table = {}
+        model_base.properties.merge_tree(self.meta.asn_table._instance, asn_data)
+
         # populate the output metadata with the output file from the ASN file
+        # Should generalize this in the future
         self.meta.resample.output = str(asn_data['products'][0]['name'])
         self.meta.table_name = str(filepath)
         self.meta.pool_name = str(asn_data['asn_pool'])
