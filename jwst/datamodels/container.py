@@ -112,7 +112,8 @@ class ModelContainer(model_base.DataModel):
         Iterator over all the models in the container
         """
         for model in self._models:
-            yield model
+            for submodel in model.flatten():
+                yield submodel
     
     def assign_group_ids(self):
         for model in self._models:
