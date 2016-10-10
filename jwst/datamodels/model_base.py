@@ -565,6 +565,12 @@ class DataModel(properties.ObjectNode):
             """
             return list(self.itervalues())
 
+    def flatten(self):
+        """
+        Iterator over a single model. Base case.
+        """
+        yield self
+
     def update(self, d, only=''):
         """
         Updates this model with the metadata elements from another model.
