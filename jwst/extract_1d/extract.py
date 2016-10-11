@@ -219,6 +219,7 @@ def aperture_from_wcs(wcs, direction):
     ap_wcs = Aperture(xstart, ystart, xstop, ystop)
     return ap_wcs
 
+
 def reconcile_ap_limits(ap_ref, ap_wcs, ap_shape):
 
     ref_ok = (ap_ref is not None)       # But individual elements can be None
@@ -278,6 +279,12 @@ def reconcile_ap_limits(ap_ref, ap_wcs, ap_shape):
         truncated = False                       # just for info
         # ap_wcs has the limits over which the WCS transformation is
         # defined; take those as the outer limits over which we will extract.
+        # xxx begin test debug ...
+        print("xxx          xstart {} xstop {} ystart {} ystop {}"
+              .format(xstart, xstop, ystart, ystop))
+        print("xxx ap_wcs:  xstart {} xstop {} ystart {} ystop {}"
+              .format(ap_wcs.xstart, ap_wcs.xstop, ap_wcs.ystart, ap_wcs.ystop))
+        # xxx ... end test debug
         if wcs_xstart is not None and ap_wcs.xstart > xstart:
             xstart = ap_wcs.xstart
             truncated = True
@@ -294,6 +301,7 @@ def reconcile_ap_limits(ap_ref, ap_wcs, ap_shape):
             log.info("Aperture limit(s) truncated due to WCS domain")
 
     return Aperture(xstart, ystart, xstop, ystop)
+
 
 def create_poly(coeff):
     """Create a polynomial model from coefficients.
@@ -626,12 +634,34 @@ class ExtractModel(object):
         self.wcs = None
         self._wave_model = None
 
-def abs_flux(wavelength, net, relsens):
-    """Apply flux calibration to net count rate."""
 
-    # The "_relsens" means values read from the RELSENS table.
+def interpolate_response(wavelength, relsens):
+    """Interpolate within the relative response table.
+
+    Parameters
+    ----------
+    wavelength: array_like
+        Wavelengths in the science data
+
+    relsens: record array
+        Contains two columns, 'wavelength' and 'response'.
+
+    Returns
+    -------
+    r_factor: array_like
+        The response, interpolated at `wavelength`, with extrapolated
+        elements and zero or negative response values set to 1.  Divide
+        the net count rate by r_factor to obtain the flux.
+    """
+
+    # "_relsens" indicates that the values were read from the RELSENS table.
     wl_relsens = relsens['wavelength']
     resp_relsens = relsens['response']
+    # xxx Hopefully this section will be temporary.
+    MICRONS_100 = 1.e-4                 # 100 microns, in meters
+    if wl_relsens.max() > 0. and wl_relsens.max() < MICRONS_100:
+        log.warning("Converting RELSENS wavelengths to microns.")
+        wl_relsens *= 1.e6
 
     bad = False
     if np.any(np.isnan(wl_relsens)):
@@ -643,11 +673,21 @@ def abs_flux(wavelength, net, relsens):
     if bad:
         raise ValueError("Found NaNs in RELSENS table.")
 
-    # This is the response, interpolated at the wavelengths in the science
-    # data.
-    factor = np.interp(wavelength, wl_relsens, resp_relsens, -999., 999.)
-    mask = np.where(factor <= 0.)
-        if len(mask[0]) > 0
+    # `r_factor` is the response, interpolated at the wavelengths in the
+    # science data.  -2048 is a flag value, to check for extrapolation.
+    r_factor = np.interp(wavelength, wl_relsens, resp_relsens, -2048., -2048.)
+    mask = np.where(r_factor == -2048.)
+    if len(mask[0]) > 0:
+        log.warning("Using RELSENS, %d elements were extrapolated; "
+                    "these values will be set to 1.", len(mask[0]))
+        r_factor[mask] = 1.
+    mask = np.where(r_factor <= 0.)
+    if len(mask[0]) > 0:
+        log.warning("Using RELSENS, %d interpolated response values "
+                    "were <= 0; these values will be set to 1.", len(mask[0]))
+        r_factor[mask] = 1.
+
+    return r_factor
 
 
 def do_extract1d(input_model, refname, smoothing_length, bkg_order):
@@ -667,7 +707,13 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 extract_one_slit(slit, -1,
                                  input_model.meta, refname,
                                  slit.name, **extract_params)
-            flux = abs_flux(net, slit.relsens)
+            try:
+                r_factor = interpolate_response(wavelength, slit.relsens)
+                flux = net / r_factor
+            except AttributeError:
+                log.warning("No relsens for current slit, "
+                            "so can't compute flux.")
+                flux = np.zeros_like(net)
             dq = np.zeros(net.shape, dtype=np.int32)
             fl_error = np.ones_like(net)
             nerror = np.ones_like(net)
@@ -696,7 +742,14 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 log.critical('Missing extraction parameters.')
                 raise ValueError('Missing extraction parameters.')
             dq = np.zeros(net.shape, dtype=np.int32)
-            flux = np.zeros_like(net)
+            try:
+                r_factor = interpolate_response(wavelength,
+                                                input_model.relsens)
+                flux = net / r_factor
+            except AttributeError:
+                log.warning("No relsens for input model, "
+                            "so can't compute flux.")
+                flux = np.zeros_like(net)
             fl_error = np.ones_like(net)
             nerror = np.ones_like(net)
             berror = np.ones_like(net)
@@ -722,7 +775,14 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                                          input_model.meta, refname,
                                          slitname, **extract_params)
                 dq = np.zeros(net.shape, dtype=np.int32)
-                flux = np.zeros_like(net)
+                try:
+                    r_factor = interpolate_response(wavelength,
+                                                    input_model.relsens)
+                    flux = net / r_factor
+                except AttributeError:
+                    log.warning("No relsens for input model, "
+                                "so can't compute flux.")
+                    flux = np.zeros_like(net)
                 fl_error = np.ones_like(net)
                 nerror = np.ones_like(net)
                 berror = np.ones_like(net)
@@ -734,6 +794,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 output_model.spec.append(spec)
 
     return output_model
+
 
 def extract_one_slit(slit, integ, meta, refname, slitname=None,
                      **extract_params):
