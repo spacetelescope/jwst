@@ -19,6 +19,77 @@ def getCenter(input_model):
     """
     return (0.0, 0.0)
 
+def calculate_pathloss_vector(pathloss_model_type, xcenter, ycenter):
+    """
+    Calculate the pathloss vector from the pathloss model using the
+    coordinates of the center of the target to interpolate the
+    pathloss value as a function of wavelength at that location
+
+    Parameters:
+    -----------
+
+    pathloss_model_type: datamodel.PathlossModel.pointsource
+                      or datamodel.PathlossModel.uniformsource
+
+    The input pathloss model attribute
+
+    xcenter: Float
+
+    The x-center of the target (-0.5 to 0.5)
+
+    ycenter: Float
+
+    The y-center of the target (-0.5 to 0.5)
+
+    """
+
+    refdata = pathloss_model_type.data
+    pathwcs = pathloss_model_type.wcs
+    wavesize = refdata.shape[0]
+    wavelength = np.zeros(wavesize, dtype=np.float32)
+    #
+    # uniformsource.data is 1-d, we just return it, along with
+    # a vector of wavelengths calculated using the WCS
+    if len(refdata.shape) == 1:
+        crpix1 = pathwcs.crpix1
+        crval1 = pathwcs.crval1
+        cdelt1 = pathwcs.cdelt1    
+        for i in np.arange(wavesize):
+            wavelength[i] = crval1 +(float(i) - crpix1)*cdelt1
+        return wavelength, refdata
+    #
+    # pointsource.data is 3-d, so we have to extract a wavelength vector
+    # at the specified location.  We do this using bilinear interpolation
+    else:
+        crpix3 = pathwcs.crpix3
+        crval3 = pathwcs.crval3
+        cdelt3 = pathwcs.cdelt3    
+        for i in np.arange(wavesize):
+            wavelength[i] = crval3 +(float(i) - crpix3)*cdelt3
+        # Calculate python index of object center
+        crpix1 = pathwcs.crpix1
+        crval1 = pathwcs.crval1
+        cdelt1 = pathwcs.cdelt1
+        crpix2 = pathwcs.crpix2
+        crval2 = pathwcs.crval2
+        cdelt2 = pathwcs.cdelt2
+        object_colindex = crpix1 + (xcenter - crval1) / cdelt1 - 1
+        object_rowindex = crpix2 + (ycenter - crval2) / cdelt2 - 1
+        #
+        # Do bilinear interpolation to get the array of path loss vs wavelength
+        dx1 = object_colindex - int(object_colindex)
+        dx2 = 1.0 - dx1
+        dy1 = object_rowindex - int(object_rowindex)
+        dy2 = 1.0 - dy1
+        a11 = dx1*dy1
+        a12 = dx1*dy2
+        a21 = dx2*dy1
+        a22 = dx2*dy2
+        j, i = int(object_colindex), int(object_rowindex)
+        pathloss_vector = a22*refdata[:, i, j] + a12*refdata[:, i+1, j] + \
+            a21*refdata[:, i, j+1] + a11*refdata[:, i+1, j+1]
+        return wavelength, pathloss_vector
+
 def do_correction(input_model, pathloss_model):
     """
     Short Summary
@@ -41,58 +112,35 @@ def do_correction(input_model, pathloss_model):
     """
 
     # Get centering
-    x0, y0 = getCenter(input_model)
-    refdata = pathloss_model.pointsource.data
-    wavesize, ysize, xsize = refdata.shape
-    pathwcs = pathloss_model.pointsource.wcs
-    crpix1 = pathwcs.crpix1
-    crval1 = pathwcs.crval1
-    cdelt1 = pathwcs.cdelt1
-    crpix2 = pathwcs.crpix2
-    crval2 = pathwcs.crval2
-    cdelt2 = pathwcs.cdelt2
-    crpix3 = pathwcs.crpix3
-    crval3 = pathwcs.crval3
-    cdelt3 = pathwcs.cdelt3    
-    # Calculate python index of object center
-    object_colindex = crpix1 + (x0 - crval1) / cdelt1 - 1
-    object_rowindex = crpix2 + (y0 - crval2) / cdelt2 - 1
-    print("Model spatial extent is %d by %d pixels" % (xsize, ysize))
-    print("Object center is %d, %d (0-indexed)" % (object_colindex,
-                                                   object_rowindex))
+    xcenter, ycenter = getCenter(input_model)
     #
-    # Do bilinear interpolation to get the array of path loss vs wavelength
-    wavelength = np.zeros(wavesize, dtype=np.float32)
-    for i in np.arange(wavesize).astype(np.float32):
-        wavelength[i] = crval3 +(i-crpix3)*cdelt3
-    dx1 = object_colindex - int(object_colindex)
-    dx2 = 1.0 - dx1
-    dy1 = object_rowindex - int(object_rowindex)
-    dy2 = 1.0 - dy1
-    a11 = dx1*dy1
-    a12 = dx1*dy2
-    a21 = dx2*dy1
-    a22 = dx2*dy2
-    j, i = int(object_colindex), int(object_rowindex)
-    pathloss = a22*refdata[j, i, :] + a12*refdata[j+1, i, :] + \
-               a21*refdata[j, i+1, :] + a11*refdata[j+1, i+1, :]
+    # Calculate the 1-d wavelength and pathloss vectors for the source position
+    wavelength_pointsource, pathloss_pointsource_vector = \
+        calculate_pathloss_vector(pathloss_model.pointsource,
+                                  xcenter, ycenter)
+    wavelength_uniformsource, pathloss_uniform_vector = \
+        calculate_pathloss_vector(pathloss_model.uniformsource,
+                                  xcenter, ycenter)
+    #
+    # Wavelengths in the reference file are in meters, need them to be
+    # in microns
+    wavelength_pointsource *= 1.0e6
+    wavelength_uniformsource *= 1.0e6
     slit_number = 0
+    print(datamodels.__file__)
     # For each slit
     for slit in input_model.slits:
         slit_number = slit_number + 1
         size = slit.data.size
+        dir(slit)
         # That has data.size > 0
         if size > 0:
             nrows, ncols = slit.data.shape
-            # Create pathloss arrays
-            pathloss_point = np.zeros((nrows, ncols), dtype=np.float32)
-            pathloss_uniform = np.zeros((nrows, ncols), dtype=np.float32)
-            wavelength = np.zeros((nrows, ncols), dtype=np.float32)
             # Get wavelengths of each end
             xstart = slit.xstart
-            xstop = xstart + slit.xsize - 1
+            xstop = xstart + ncols
             ystart = slit.ystart
-            ystop = ystart + slit.ysize - 1
+            ystop = ystart + nrows
             ycenter = 0.5*(ystart + ystop)
             xmin, ymin, min_wavelength = slit.meta.wcs(xstart, ycenter)
             xmax, ymax, max_wavelength = slit.meta.wcs(xstop, ycenter)
@@ -103,11 +151,14 @@ def do_correction(input_model, pathloss_model):
                                                           xstart, xstop,
                                                           ystart, ystop))
             # For each pixel
-            # Use linear interpolation as using the WCS is too slow
-            x, y = np.mgrid[xstart:xstop, ystart:ystop]
-            pathloss_point = calculate_pathloss(wave_array, wavelength,
-                                                pathloss)
-
+            y, x = np.mgrid[ystart:ystop, xstart:xstop]
+            ra, dec, wave_array = slit.meta.wcs(x, y)
+            slit.pathloss.pointsource = calculate_pathloss(wave_array,
+                                                           wavelength_pointsource,
+                                                           pathloss_pointsource_vector)
+            slit.pathloss.uniformsource = calculate_pathloss(wave_array,
+                                                             wavelength_uniformsource,
+                                                             pathloss_uniform_vector)
             
             
     # Get wavelength
@@ -118,7 +169,7 @@ def do_correction(input_model, pathloss_model):
     # For each SCI extension in input
     # Save some data params for easy use later
 
-    return pathloss
+    return 
 
 def calculate_pathloss(wave_array, wavelength, pathloss):
     """
@@ -151,6 +202,8 @@ def calculate_pathloss(wave_array, wavelength, pathloss):
     # Make sure wavelength and pathloss arrays have the same length
     if wavelength.shape[0] != pathloss.shape[0]:
         log.warning("Wavelength and pathloss arrays have different dimensions")
+        log.info("wavelength shape = %s, pathloss shape = %s" % (wavelength.shape[0],
+                                                                 pathloss.shape[0]))
         return None
 
     nrows, ncols = wave_array.shape
@@ -203,7 +256,13 @@ def interpolated_lookup(value, array_in, array_out):
     index_tuple = np.where(shift_mult[1:]*shift_mult[:-1] < 0.0)
     if len(index_tuple[0]) > 0:
         index = index_tuple[0][0]
-        remainder = value - array_in[value]
+        remainder = value - array_in[index]
         partial = remainder/(array_in[index+1] - array_in[index])
         returned = array_out[index] + \
                    partial*(array_out[index+1] - array_out[index])
+        return returned
+    else:
+        if subtracted[0] >= 0:
+            return array_out[0]
+        else:
+            return array_out[-1]

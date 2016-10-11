@@ -35,11 +35,10 @@ class PathLossStep(Step):
 
             instrument = input_model.meta.instrument.name
             # Open the pathloss ref file data model
-            pathloss_model = datamodels.PathLossModel(self.pathloss_name)
+            pathloss_model = datamodels.PathlossModel(self.pathloss_name)
 
             # Do the pathloss correction     
-            result = path_loss.do_correction(input_model, pathloss_model,
-                                                    self.pathloss_output)
+            result = path_loss.do_correction(input_model, pathloss_model)
 
             pathloss_model.close()
 

@@ -88,4 +88,15 @@ allOf:
             type: number
             fits_keyword: STLARITY
             fits_hdu: SCI
+          pathloss:
+            type: object
+            properties:
+              pointsource:
+                fits_hdu: PATHLOSS_POINT
+                default: 1.0
+                datatype: float32
+              uniformsource:
+                fits_hdu: PATHLOSS_UNIFORM
+                default: 1.0
+                datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
