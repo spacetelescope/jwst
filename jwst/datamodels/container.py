@@ -107,6 +107,14 @@ class ModelContainer(model_base.DataModel):
         else:
             self._models.pop(index)
 
+    def flatten(self):
+        """
+        Iterator over all the models in the container
+        """
+        for model in self._models:
+            for submodel in model.flatten():
+                yield submodel
+    
     def assign_group_ids(self):
         for model in self._models:
             model_attrs = [model.meta.observation.program_number,
@@ -225,7 +233,7 @@ class ModelContainer(model_base.DataModel):
         if path is None:
             path = os.getcwd()
         try:
-            for model in self._models:
+            for model in self.flatten():
                 outpath = op.join(path, model.meta.filename)
                 model.save(outpath, *args, **kwargs)
         except IOError as err:
