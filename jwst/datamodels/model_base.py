@@ -587,7 +587,7 @@ class DataModel(properties.ObjectNode):
             elif isinstance(d, list):
                 for key, val in enumerate(d):
                     hdu_keywords_from_data(val, path + [key], hdu_keywords)
-            elif isinstance(b, np.ndarray):
+            elif isinstance(d, np.ndarray):
                 # skip data arrays
                 pass
             else:

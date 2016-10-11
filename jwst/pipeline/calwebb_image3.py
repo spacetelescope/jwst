@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 import os
 
+from fitsblender import blendheaders
+
 from ..stpipe import Pipeline
 from .. import datamodels
 
@@ -12,8 +14,7 @@ from ..source_catalog import source_catalog_step
 from ..tweakreg_catalog import tweakreg_catalog_step
 from ..tweakreg import tweakreg_step
 
-__version__ = "0.2"
-
+__version__ = "0.7.0"
 # Define logging
 import logging
 log = logging.getLogger()
@@ -52,6 +53,9 @@ class Image3Pipeline(Pipeline):
 
         is_container = (type(input_models) == type(datamodels.ModelContainer()))
         if is_container and len(input_models.group_names) > 1:
+
+            generate_2c_names(input_models)
+
             # perform full outlier_detection of ASN data
             log.info("Generating source catalogs for alignment...")
             input_models = self.tweakreg_catalog(input_models)
@@ -61,6 +65,13 @@ class Image3Pipeline(Pipeline):
             input_models = self.skymatch(input_models)
             log.info("Performing outlier detection on input images...")
             input_models = self.outlier_detection(input_models)
+            
+            # Now clean up intermediate products which no are no longer needed
+            for i in input_models:
+                if hasattr(i.meta,'tweakreg_catalog'):
+                    cname = i.meta.tweakreg_catalog.filename
+                    if os.path.exists(cname):
+                        os.remove(cname)
 
             log.info("Resampling ASN to create combined product: {}".format(input_models.meta.resample.output))
 
@@ -76,16 +87,33 @@ class Image3Pipeline(Pipeline):
         # create final source catalog from resampled output
         out_catalog = self.source_catalog(output)
 
+
         # Save the final image product
         log.info('Saving final image product to %s', output_file)
         output.save(output_file)
-        output.close()
 
+        # Run fitsblender on output product
+        input_files = [i.meta.filename for i in input_models]
+        blendheaders.blendheaders(output_file, input_files)
+
+        # close all inputs and outputs
+        output.close()
         input_models.close()
         log.info('... ending calwebb_image3')
 
         return
 
+def generate_2c_names(input_models):
+    """ Update the names of the input files with Level 2C names
+    """
+
+    if hasattr(input_models.meta,'asn_id'):
+        asn_id = input_models.meta.asn_id
+    else:
+        asn_id = "a3001"
+        
+    for i in input_models:
+        i.meta.filename = i.meta.filename.replace('.fits','-{}.fits'.format(asn_id))
 
 def mk_prodname(output_dir, filename, suffix):
 
