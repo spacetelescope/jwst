@@ -176,45 +176,38 @@ def aperture_from_wcs(wcs, direction):
                           'upper' not in domain[1]:
         return None
 
+    # These are supposed to be integers.
     xstart = domain[0]['lower']
     xstop = domain[0]['upper']
     ystart = domain[1]['lower']
     ystop = domain[1]['upper']
-    # Convert limits in the dispersion direction to integer values.
+    # The limits should be the limits of a slice.  Possibly modify the limits,
+    # depending on domain[i]['includes_lower'] (but just in the dispersion
+    # direction).
     if direction == HORIZONTAL:
-        x_test = round(xstart)
-        if 'includes_lower' in domain[0] and domain[0]['includes_lower']:
-            if x_test < xstart:
-                x_test += 1.
+        x_test = int(round(xstart))     # just in case it's not an int
+        if 'includes_lower' in domain[0] and not domain[0]['includes_lower']:
+            # domain[0]['lower'] is not included, so increment it.
+            xstart = x_test + 1
         else:
-            if x_test <= xstart:
-                x_test += 1.
-        xstart = int(x_test)
-        x_test = round(xstop)
+            xstart = x_test
+        x_test = int(round(xstop))
         if 'includes_upper' in domain[0] and domain[0]['includes_upper']:
-            if x_test > xstop:
-                x_test -= 1.
+            # It is included, so add one to make it an upper limit of a slice.
+            xstop = x_test + 1
         else:
-            if x_test >= xstop:
-                x_test -= 1.
-        xstop = int(x_test)
-    else:                           # dispersion is vertical
-        y_test = round(ystart)
-        if 'includes_lower' in domain[1] and domain[1]['includes_lower']:
-            if y_test < ystart:
-                y_test += 1.
+            xstop = x_test
+    else:                               # dispersion is vertical
+        y_test = int(round(ystart))
+        if 'includes_lower' in domain[1] and not domain[1]['includes_lower']:
+            ystart = y_test + 1
         else:
-            if y_test <= ystart:
-                y_test += 1.
-        ystart = int(y_test)
-        y_test = round(ystop)
+            ystart = y_test
+        y_test = int(round(ystop))
         if 'includes_upper' in domain[1] and domain[1]['includes_upper']:
-            if y_test > ystop:
-                y_test -= 1.
+            ystop = y_test + 1
         else:
-            if y_test >= ystop:
-                y_test -= 1.
-        ystop = int(y_test)
+            ystop = y_test
 
     ap_wcs = Aperture(xstart, ystart, xstop, ystop)
     return ap_wcs
