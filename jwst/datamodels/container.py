@@ -235,3 +235,30 @@ class ModelContainer(model_base.DataModel):
                 model.save(outpath, *args, **kwargs)
         except IOError as err:
             raise err
+
+    def _get_recursively(self, field, search_dict):
+        """
+        Takes a dict with nested lists and dicts, and searches all dicts for
+        a key of the field provided.
+        """
+        values_found = []
+        for key, value in search_dict.items():
+            if key == field:
+                values_found.append(value)
+            elif isinstance(value, dict):
+                results = self._get_recursively(field, value)
+                for result in results:
+                    values_found.append(result)
+            elif isinstance(value, list):
+                for item in value:
+                    if isinstance(item, dict):
+                        more_results = self._get_recursively(field, item)
+                        for another_result in more_results:
+                            values_found.append(another_result)
+        return values_found
+
+    def get_recursively(self, field):
+        """
+        Returns a list of values of the specified field from meta.
+        """
+        return self._get_recursively(field, self.meta._instance)
