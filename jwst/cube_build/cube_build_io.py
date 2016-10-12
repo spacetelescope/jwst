@@ -22,7 +22,7 @@ log.setLevel(logging.DEBUG)
 
 
 #********************************************************************************
-# Read in the User input options for Channel, Band, Filter, Grating
+# Read in the User input options for Channel, Subchannel, Filter, Grating
 
 def Read_User_Input(self):
     
@@ -63,34 +63,33 @@ def Read_User_Input(self):
                 self.metadata['channel'].append(ch)
                 print('found channel',ch) 
             else:
-                log.error(' Invalid Channel  %s', ch)
+                raise ErrorInvalidParameter("Invalid Channel %s",ch)
 # remove duplicates if needed
         self.metadata['channel'] = list(set(self.metadata['channel']))
 
 
 #________________________________________________________________________________
-    # for MIRI we can set the band 
-    if(self.band): # it is not empty the it has been set
-        bandlist = self.band.split(',')
-        user_blen = len(bandlist)
-        print('number bands',user_blen)
+    # for MIRI we can set the subchannel 
+    if(self.subchannel): # it is not empty the it has been set
+        subchannellist = self.subchannel.split(',')
+        user_blen = len(subchannellist)
+        print('number subchannels',user_blen)
         for j in range(user_blen):
-            b = bandlist[j]
+            b = subchannellist[j]
             if(user_blen > 1) :
                 b = b.strip('[')
                 b = b.strip(']')
                 b = b.strip(' ')
                 b = b[1:-1]
             b  = str(b)
-            print('band',b)
+            print('subchannel',b)
             if b in ValidSubChannel:
                 self.metadata['subchannel'].append(b)
-                print('found band',b)
+                print('found subchannel',b)
             else:
-                log.error(' Invalid SubChannel  %s', b)
+                raise ErrorInvalidParameter("Invalid Subchannel %s",b)
 # remove duplicates if needed
         self.metadata['subchannel'] = list(set(self.metadata['subchannel']))
-
 
 #________________________________________________________________________________
 
@@ -112,7 +111,7 @@ def Read_User_Input(self):
                 self.metadata['filter'].append(f)
                 print('found filter',f)
             else:
-                log.error(' Invalid Filter give %s', f)
+                raise ErrorInvalidParameter("Invalid Filter %s",f)
 # remove duplicates if needed
         self.metadata['filter'] = list(set(self.metadata['filter']))
 
@@ -135,10 +134,9 @@ def Read_User_Input(self):
                 self.metadata['grating'].append(g)
                 print('found grating',g)
             else:
-                log.error(' Invalid grating give %s', g)
+                raise ErrorInvalidParameter("Invalid Grating %s",g)
 # remove duplicates if needed
         self.metadata['grating'] = list(set(self.metadata['grating']))
-
 
 
 #********************************************************************************
@@ -194,38 +192,49 @@ def DetermineCubeCoverage(self, MasterTable):
         nchannels = len(ValidChannel)
         nsubchannels = len(ValidSubchannel)
 #________________________________________________________________________________
-        # for MIRI we can set the channel
-        channellist = self.channel.split()
-        user_clen = len(channellist)
-        bandlist = self.band.split()
-        user_blen = len(bandlist) 
+        # for MIRI we can set the channel and subchannel
 
-        # The input channel or band  parameter is not set 
-        if(user_clen == 0 or user_blen == 0): 
+
+        user_clen = len(self.metadata['channel'])
+        user_slen = len(self.metadata['subchannel'])
+
+        if(user_clen !=0 and user_slen ==0):
+            raise ErrorMissingParameter("Channel specified, but Subchannel was not")
+
+        if(user_clen ==0 and user_slen !=0):
+            raise ErrorMissingParameter("Subchannel specified, but Channel was not")
+
+        # parameters not set
+        if(user_clen == 0 and  user_slen == 0): 
             for i in range(nchannels):
                 for j in range(nsubchannels):
                     nfiles = len(MasterTable.FileMap['MIRI'][ValidChannel[i]][ValidSubchannel[j]])
                     if(nfiles > 0):
-                        # if the channel parameter value was not set
-                        if(user_clen ==0):
-                            self.metadata['channel'].append(ValidChannel[i]) 
-                        # if the band parameter value was not set
-                        if(user_blen ==0): 
-                            self.metadata['subchannel'].append(ValidSubchannel[j])
+                        self.metadata['band_channel'].append(ValidChannel[i])
+                        self.metadata['band_subchannel'].append(ValidSubchannel[j])
 
-# remove duplicates if needed
-            self.metadata['channel'] = list(set(self.metadata['channel'])) 
-            self.metadata['subchannel'] = list(set(self.metadata['subchannel']))
+        # parameters set 
+        else:
+            for i in range(nchannels):
+                for j in range(nsubchannels):
+                    nfiles = len(MasterTable.FileMap['MIRI'][ValidChannel[i]][ValidSubchannel[j]])
+
+                    if(nfiles > 0):
+                        # now check if these options have been set 
+                        if(ValidChannel[i] in self.metadata['channel'] and 
+                           ValidSubchannel[i] in self.metadata['subchannel']): 
+                            self.metadata['band_channel'].append(ValidChannel[i])
+                            self.metadata['band_subchannel'].append(ValidSubchannel[j])
 
 
         log.info('The desired cubes covers the MIRI Channels: %s', 
-                 self.metadata['channel'])
+                 self.metadata['band_channel'])
         log.info('The desried cubes covers the MIRI subchannels: %s', 
-                 self.metadata['subchannel'])
+                 self.metadata['band_subchannel'])
 
 
-        number_channels = len(self.metadata['channel'])
-        number_subchannels = len(self.metadata['subchannel'])
+        number_channels = len(self.metadata['band_channel'])
+        number_subchannels = len(self.metadata['band_subchannel'])
 
         if(number_channels == 0):
             raise ErrorNoChannels(
@@ -233,52 +242,75 @@ def DetermineCubeCoverage(self, MasterTable):
         if(number_subchannels == 0):
             raise ErrorNoSubchannels(
                 "The cube  does not cover any subchannels, change parameter subchannel")
+        
+        self.metadata['num_bands'] = number_channels # which is = number_subchannels
 #______________________________________________________________________
     if(self.metadata['instrument'] == 'NIRSPEC'):
 
-        ValidFWA = ['F070LP', 'F070LP', 'F100LP', 'F100LP', 'F170LP', 
-                    'F170LP', 'F290LP', 'F290LP', 'CLEAR']
+        # 1 to 1 mapping VALIDGWA[i] -> VALIDFWA[i]
         ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H', 
                     'G395M', 'G395H', 'PRISM']
+        ValidFWA = ['F070LP', 'F070LP', 'F100LP', 'F100LP', 'F170LP', 
+                    'F170LP', 'F290LP', 'F290LP', 'CLEAR']
 
-        nfilter = len(ValidFWA)
-        ngrating = len(ValidGWA)
+
+        nbands = len(ValidFWA)
 #________________________________________________________________________________
         # check if input filter or grating has been set
-        grating = self.grating.split()
-        user_glen = len(grating)
-        filter = self.filter.split()
-        user_flen = len(filter) 
+#        grating = self.grating.split()
+#        user_glen = len(grating)
+#        filter = self.filter.split()
+#        user_flen = len(filter) 
 
-        # The input channel or band  parameter is not set 
-        if(user_glen == 0 or user_flen == 0): 
-            for i in range(ngrating):
-                for j in range(nfilter):
-                    nfiles = len(MasterTable.FileMap['NIRSPEC'][ValidFWA[j]][ValidGWA[j]])
-                    if(nfiles > 0):
-                        # if the channel parameter value was not set
-                        if(user_glen ==0):
-                            self.metadata['grating'].append(ValidGWA[j])
-                        # if the band parameter value was not set
-                        if(user_flen ==0): 
-                            self.metadata['filter'].append(ValidFWA[j])
-# remove duplicates if needed
-            self.metadata['filter'] = list(set(self.metadata['filter']))
-            self.metadata['grating'] = list(set(self.metadata['grating']))
-        log.debug('The desired cubes covers the NIRSPEC FWA  %s', 
-                  self.metadata['filter'])
-        log.debug('The desried cubes covers the NIRSPEC GWA: %s', 
-                  self.metadata['grating'])
+        user_glen = len(self.metadata['grating'])
+        user_flen = len(self.metadata['filter'])
 
-        number_filters = len(self.metadata['filter'])
-        number_gratings = len(self.metadata['grating'])
+        if(user_glen ==0 and user_flen !=0):
+            raise ErrorMissingParameter("Filter specified, but Grating was not")
 
+        if(user_glen !=0 and user_flen ==0):
+            raise ErrorMissingParameter("Grating specified, but Filter was not")
+        # Grating and Filter not set - read in from files and create a list of all 
+        # the filters and grating contained in the files
+        if(user_glen == 0 and  user_flen == 0): 
+            for i in range(nbands):
+                print('FWA GWA',ValidFWA[i],ValidGWA[i],nbands)
+
+                nfiles = len(MasterTable.FileMap['NIRSPEC'][ValidGWA[i]][ValidFWA[i]])
+                if(nfiles > 0):
+                    self.metadata['band_grating'].append(ValidGWA[i])
+                    self.metadata['band_filter'].append(ValidFWA[i])
+
+        # Both filter and grating input parameter have been set
+        # Find the files that have these parameters set 
+
+        else:
+            for i in range(nbands):
+                nfiles = len(MasterTable.FileMap['NIRSPEC'][ValidGWA[i]][ValidFWA[i]])
+                if(nfiles > 0):
+                        # now check if THESE Filter and Grating input parameters were set 
+                    if(ValidFWA[i] in self.metadata['filter'] and 
+                       ValidGWA[i] in self.metadata['grating']): 
+                        self.metadata['band_grating'].append(ValidGWA[i])
+                        self.metadata['band_filter'].append(ValidFWA[i])
+
+
+        log.info('The desired cubes covers the NIRSPEC FWA  %s', 
+                  self.metadata['band_filter'])
+        log.info('The desried cubes covers the NIRSPEC GWA: %s', 
+                  self.metadata['band_grating'])
+
+        number_filters = len(self.metadata['band_filter'])
+        number_gratings = len(self.metadata['band_grating'])
+        
+        self.metadata['num_bands'] = number_gratings # which is = number_filters
         if(number_filters == 0):
             raise ErrorNoFilters("The cube  does not cover any filters")
         if(number_gratings == 0):
             raise ErrorNoGratings("The cube  does not cover any gratings")
 
-        sys.exit('STOP')
+        print('Num gratings and filters',number_gratings,number_filters)
+
 #********************************************************************************
 def SetFileTable(self, input_table, MasterTable):
 #********************************************************************************
@@ -330,7 +362,7 @@ def SetFileTable(self, input_table, MasterTable):
     print('number of input filenames',num)
 #________________________________________________________________________________
 # Loop over input list of files and assign fill in the MasterTable with filename
-# for the correct (channel-subchannel) or (grating-band)
+# for the correct (channel-subchannel) or (grating-subchannel)
     for i in range(num):
 
         ifile = input_filenames[i]
@@ -367,7 +399,7 @@ def SetFileTable(self, input_table, MasterTable):
                 fwa = input_model.meta.instrument.filter
                 gwa = input_model.meta.instrument.grating
 
-                MasterTable.FileMap['NIRSPEC'][fwa][gwa].append(ifile)
+                MasterTable.FileMap['NIRSPEC'][gwa][fwa].append(ifile)
             else:
 
                 print('Instrument not valid for cube')
@@ -377,8 +409,40 @@ def SetFileTable(self, input_table, MasterTable):
 #********************************************************************************
 def UpdateOutPutName(self):
 
-    ch_name = self.channel.replace(" ", "")
-    newname = self.output_name + '-CH' + ch_name + '_IFUSCube.fits'
+    if(self.metadata['instrument'] == 'MIRI'):
+
+        channels = list(set(self.metadata['band_channel']))
+        number_channels = len(channels)
+        ch_name = '_CH'
+        for i in range(number_channels):
+            ch_name = ch_name + channels[i]
+            if i < number_channels-1:
+                ch_name = ch_name + '-'
+
+        
+        subchannels = list(set(self.metadata['band_subchannel']))
+        number_subchannels = len(subchannels)
+        b_name = ''
+        for i in range(number_subchannels):
+            b_name = b_name + subchannels[i]
+
+        newname = self.output_name_base + ch_name+ '-' + b_name +  '_s3d.fits'
+
+    elif(self.metadata['instrument'] == 'NIRSPEC'):
+
+
+        fg_name = '_'
+
+        for i in range(self.metadata['num_bands']):
+            fg_name = fg_name + self.metadata['band_grating'][i] + '-'+ self.metadata['band_filter'][i]
+            if(i < self.metadata['num_bands'] -1):
+                fg_name = fg_name + '-'
+        newname = self.output_name_base + fg_name+ '_s3d.fits'
+
+    print('Output filename',newname)
+
+
+
     return newname
 
 
@@ -476,6 +540,12 @@ class ErrorNoFilters(Exception):
 class ErrorNoGrating(Exception):
     pass
 
+class ErrorInvalidParameter(Exception):
+    pass
+
+class ErrorMissingParameter(Exception):
+    pass
+
 
 #********************************************************************************
 class IFUCubeASN(object):
@@ -558,7 +628,7 @@ class IFUCubeASN(object):
 ##################################################################################
 class FileTable(object):
     # Dictionary that maps the input files to the 
-    # MIRI: Channel & Band
+    # MIRI: Channel & Subchannel
     #NIRSPEC: Grating & Filter
     def __init__(self):
 
@@ -586,24 +656,30 @@ class FileTable(object):
         self.FileMap['MIRI']['4']['LONG'] = list()
 
         self.FileMap['NIRSPEC'] = {}
-        self.FileMap['NIRSPEC']['CLEAR'] = {}
-        self.FileMap['NIRSPEC']['CLEAR']['PRISM'] = list()
+        self.FileMap['NIRSPEC']['PRISM'] = {}
+        self.FileMap['NIRSPEC']['PRISM']['CLEAR'] = list()
 
-        self.FileMap['NIRSPEC']['F070LP'] = {}
-        self.FileMap['NIRSPEC']['F070LP']['G140M'] = list()
-        self.FileMap['NIRSPEC']['F070LP']['G140H'] = list()
+        self.FileMap['NIRSPEC']['G140M'] = {}
+        self.FileMap['NIRSPEC']['G140M']['F070LP'] = list()
+        self.FileMap['NIRSPEC']['G140M']['F100LP'] = list()
 
-        self.FileMap['NIRSPEC']['F100LP'] = {}
-        self.FileMap['NIRSPEC']['F100LP']['G140M'] = list()
-        self.FileMap['NIRSPEC']['F100LP']['G140H'] = list()
+        self.FileMap['NIRSPEC']['G140H'] = {}
+        self.FileMap['NIRSPEC']['G140H']['F070LP'] = list()
+        self.FileMap['NIRSPEC']['G140H']['F100LP'] = list()
 
-        self.FileMap['NIRSPEC']['F170LP'] = {}
-        self.FileMap['NIRSPEC']['F170LP']['G235M'] = list()
-        self.FileMap['NIRSPEC']['F170LP']['G235H'] = list()
+        self.FileMap['NIRSPEC']['G235M'] = {}
+        self.FileMap['NIRSPEC']['G235M']['F170LP'] = list()
 
-        self.FileMap['NIRSPEC']['F290LP'] = {}
-        self.FileMap['NIRSPEC']['F290LP']['G395M'] = list()
-        self.FileMap['NIRSPEC']['F290LP']['G395H'] = list()
+        self.FileMap['NIRSPEC']['G235H'] = {}
+        self.FileMap['NIRSPEC']['G235H']['F170LP'] = list()
+
+        self.FileMap['NIRSPEC']['G395M'] = {}
+        self.FileMap['NIRSPEC']['G395M']['F290LP'] = list()
+
+        self.FileMap['NIRSPEC']['G395H'] = {}
+        self.FileMap['NIRSPEC']['G395H']['F290LP'] = list()
+
+
 
         self.FileOffset = {}
         self.FileOffset['1'] = {}
@@ -658,40 +734,48 @@ class FileTable(object):
         self.FileOffset['4']['LONG']['C1'] = list()
         self.FileOffset['4']['LONG']['C2'] = list()
 
-        self.FileOffset['CLEAR'] = {}
-        self.FileOffset['CLEAR']['PRISM'] = {}
-        self.FileOffset['CLEAR']['PRISM']['C1'] = list()
-        self.FileOffset['CLEAR']['PRISM']['C2'] = list()
+        self.FileOffset['PRISM'] = {}
+        self.FileOffset['PRISM']['CLEAR'] = {}
+        self.FileOffset['PRISM']['CLEAR']['C1'] = list()
+        self.FileOffset['PRISM']['CLEAR']['C2'] = list()
 
-        self.FileOffset['F070LP'] = {}
-        self.FileOffset['F070LP']['G140M'] = {}
-        self.FileOffset['F070LP']['G140M']['C1'] = list()
-        self.FileOffset['F070LP']['G140M']['C2'] = list()
+        self.FileOffset['G140M'] = {}
+        self.FileOffset['G140M']['F070LP'] = {}
+        self.FileOffset['G140M']['F070LP']['C1'] = list()
+        self.FileOffset['G140M']['F070LP']['C2'] = list()
 
-        self.FileOffset['F070LP']['G140H'] = {}
-        self.FileOffset['F070LP']['G140H']['C1'] = list()
-        self.FileOffset['F070LP']['G140H']['C2'] = list()
+        self.FileOffset['G140M']['F100LP'] = {}
+        self.FileOffset['G140M']['F100LP']['C1'] = list()
+        self.FileOffset['G140M']['F100LP']['C2'] = list()
 
-        self.FileOffset['F100LP'] = {}
-        self.FileOffset['F100LP']['G140M'] = {}
-        self.FileOffset['F100LP']['G140M']['C1'] = list()
-        self.FileOffset['F100LP']['G140M']['C2'] = list()
-        self.FileOffset['F100LP']['G140H'] = {}
-        self.FileOffset['F100LP']['G140H']['C1'] = list()
-        self.FileOffset['F100LP']['G140H']['C2'] = list()
+        self.FileOffset['G140H'] = {}
+        self.FileOffset['G140H']['F070LP'] = {}
+        self.FileOffset['G140H']['F070LP']['C1'] = list()
+        self.FileOffset['G140H']['F070LP']['C2'] = list()
 
-        self.FileOffset['F170LP'] = {}
-        self.FileOffset['F170LP']['G235M'] = {}
-        self.FileOffset['F170LP']['G235M']['C1'] = list()
-        self.FileOffset['F170LP']['G235M']['C2'] = list()
-        self.FileOffset['F170LP']['G235H'] = {}
-        self.FileOffset['F170LP']['G235H']['C1'] = list()
-        self.FileOffset['F170LP']['G235H']['C2'] = list()
+        self.FileOffset['G140H']['F100LP'] = {}
+        self.FileOffset['G140H']['F100LP']['C1'] = list()
+        self.FileOffset['G140H']['F100LP']['C2'] = list()
 
-        self.FileOffset['F290LP'] = {}
-        self.FileOffset['F290LP']['G395M'] = {}
-        self.FileOffset['F290LP']['G395M']['C1'] = list()
-        self.FileOffset['F290LP']['G395M']['C2'] = list()
-        self.FileOffset['F290LP']['G395H'] = {}
-        self.FileOffset['F290LP']['G395H']['C1'] = list()
-        self.FileOffset['F290LP']['G395H']['C2'] = list()
+
+        self.FileOffset['G235M'] = {}
+        self.FileOffset['G235M']['F170LP'] = {}
+        self.FileOffset['G235M']['F170LP']['C1'] = list()
+        self.FileOffset['G235M']['F170LP']['C2'] = list()
+
+        self.FileOffset['G235H'] = {}
+        self.FileOffset['G235H']['F170LP'] = {}
+        self.FileOffset['G235H']['F170LP']['C1'] = list()
+        self.FileOffset['G235H']['F170LP']['C2'] = list()
+
+
+        self.FileOffset['G395M'] = {}
+        self.FileOffset['G395M']['F290LP'] = {}
+        self.FileOffset['G395M']['F290LP']['C1'] = list()
+        self.FileOffset['G395M']['F290LP']['C2'] = list()
+
+        self.FileOffset['G395H'] = {}
+        self.FileOffset['G395H']['F290LP'] = {}
+        self.FileOffset['G395H']['F290LP']['C1'] = list()
+        self.FileOffset['G395H']['F290LP']['C2'] = list()
+

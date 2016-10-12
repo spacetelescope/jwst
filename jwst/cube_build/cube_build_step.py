@@ -39,13 +39,15 @@ class CubeBuildStep (Step):
     def process(self, input):
         self.log.info('Starting IFU Cube Building Step 2...')
 
-        if(not self.band.isupper()): self.band = self.band.upper()
+        self.subchannel = self.band
+
+        if(not self.subchannel.isupper()): self.subchannel = self.subchannel.upper()
         if(not self.filter.isupper()): self.filter = self.filter.upper()
         if(not self.grating.isupper()): self.grating = self.grating.upper()
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
         if(not self.interpolation.islower()): self.interpolation = self.interpolation.lower()
         if(self.channel != ''): self.log.info('Input Channel %s', self.channel)
-        if(self.band != ''): self.log.info('Input Channel %s', self.band)
+        if(self.subchannel != ''): self.log.info('Input Channel %s', self.subchannel)
         if(self.grating != ''): self.log.info('Input Channel %s', self.grating)
         if(self.filter != ''): self.log.info('Input Channel %s', self.filter)
         if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
@@ -68,24 +70,30 @@ class CubeBuildStep (Step):
 
         self.log.info('Coordinate system to use %s', self.coord_system)
 
-        print('got here')
 #_________________________________________________________________________________________________
 # Set up the IFU cube basic parameters that define a cube
         self.metadata = {}
         self.metadata['instrument'] = ''
         self.metadata['detector'] = ''
+        self.metadata['num_bands'] = 0 
 
-        self.metadata['channel'] = list()     # filled in by association table in FilesinCube
-        self.metadata['subchannel'] = list()  # figured out from the members in the association
+        self.metadata['channel'] = list()     # input parameter or determined from reading in files
+        self.metadata['subchannel'] = list()  # inputparameter or determined from reading in files 
 
-        self.metadata['filter'] = list()   #figured out from the members in the association
-        self.metadata['grating'] = list()  #figured out from the memebers in the assoication
+        self.metadata['band_channel'] = list()     # band channel: 1-1 pairing with band_subchannel
+        self.metadata['band_subchannel'] = list()  # band subchannel: 1-1 pairing with band_channel
+ 
+        self.metadata['filter'] = list()   # input parameter
+        self.metadata['grating'] = list()  # input parameter
+
+        self.metadata['band_filter'] = list()   # band filter: 1-1 pairing with band_grating 
+        self.metadata['band_grating'] = list()  # band grating: 1-1 pairing with band_filter
+
         self.metadata['output_name'] = ''
         self.metadata['number_files'] = 0
 
-        # input parameters
+        # input read parameters - Channel, Band (Subchannel), Grating, Filter
         cube_build_io.Read_User_Input(self)
-
 
 #_________________________________________________________________________________________________
         #Read in the input data - either in form of ASSOCIATION table or single filename
@@ -98,8 +106,7 @@ class CubeBuildStep (Step):
             self.offset_list = 'NA'
             self.input_table_type = 'singleton'
 
-        #self.log.debug('Output Base %s ', input_table.asn_table['products'][iproduct]['name'])
-
+        self.log.debug('Output Base %s ', input_table.asn_table['products'][0]['name'])
 
         # Check if there is an offset list (this ra,dec dither offset list will probably
         # only be used in testing) 
@@ -116,6 +123,7 @@ class CubeBuildStep (Step):
         
         num, instrument,detector = cube_build_io.SetFileTable(self, input_table, 
                                                                MasterTable)
+
         self.metadata['number_files'] = num
         self.metadata['detector'] = detector            
         self.metadata['instrument'] = instrument
@@ -126,11 +134,12 @@ class CubeBuildStep (Step):
 
         cube_build_io.DetermineCubeCoverage(self, MasterTable)
         cube_build.CheckCubeType(self)
-        sys.exit{'STOP')
 
-        self.output_name = input_table.asn_table['products'][0]['name']
-        if(self.input_table_type == 'singleton'):
-            self.output_name = cube_build.UpdateOutPutName(self)
+
+        self.output_name_base = input_table.asn_table['products'][0]['name']
+        #if(self.input_table_type == 'singleton'):
+        self.output_name = cube_build_io.UpdateOutPutName(self)
+
 #________________________________________________________________________________
 
 # Cube is an instance of CubeInfo - which holds basic information on Cube
@@ -148,8 +157,11 @@ class CubeBuildStep (Step):
                                  self.metadata['grating'], 
                                  self.output_name)
 
+
         InstrumentInfo = InstrumentDefaults.Info() # for now this holds defaults on the two instruments
         self.log.info(' Building Cube %s ', Cube.output_name)
+
+
 
             # Scale is 3 dimensions and is determined from default values InstrumentInfo.GetScale
         scale = cube_build.DetermineScale(Cube, InstrumentInfo)
@@ -178,6 +190,7 @@ class CubeBuildStep (Step):
         CubeFootPrint = cube_build.DetermineCubeSize(self, Cube, 
                                                          MasterTable, 
                                                          InstrumentInfo)
+
         t1 = time.time()
         print("Time to determine size of cube = %.1f.s" % (t1 - t0,))
 

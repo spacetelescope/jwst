@@ -119,15 +119,17 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
     coord2 = np.zeros(y.shape)
     lam = np.zeros(y.shape)
 
+    print(self.coord_system)
     if (self.coord_system == 'alpha-beta'):
         detector2alpha_beta = input.meta.wcs.get_transform('detector', 'alpha_beta')
         coord1, coord2, lam = detector2alpha_beta(x, y)
 
     elif (self.coord_system == 'ra-dec'):
-        detector2v23 = input.meta.wcs.get_transform('detector', 'V2_V3')
-        #coord1,coord2,lam = input.meta.wcs(x,y)
+        detector2v23 = input.meta.wcs.get_transform('detector', 'v2v3')
+        v23toworld = input.meta.wcs.get_transform("v2v3","world")
 
         v2, v3, lam = detector2v23(x, y) # v2,v3 are in units of arc minutes 
+        print('v2,v3 after detector2v23 ',v2[0,15:20],v3[0,15:20])
         ra_ref = input.meta.wcsinfo.ra_ref # degrees
         dec_ref = input.meta.wcsinfo.dec_ref # degrees
         roll_ref = input.meta.wcsinfo.roll_ref # degrees 
@@ -135,6 +137,25 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
         v3_ref = input.meta.wcsinfo.v3_ref # arc min         
         coord1,coord2 = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,
                                          v2,v3) # return ra and dec in degrees
+
+        coord1_test,coord2_test,lam_test = v23toworld(v2,v3,lam)
+
+        print(x.shape,y.shape)
+
+        print('x',x[0,15:20])
+        print('y',y[0,15:20])
+        print('v2',v2[0,15:20])
+        print('v3',v3[0,15:20])
+        print('lam',lam[0,15:20])
+
+        print('v2 min,max',np.nanmin(v2),np.nanmax(v2))
+        print('v3 min max',np.nanmin(v3),np.nanmax(v3))
+        print('coord1      ',coord1[0,15:20])
+        print('coord1 world',coord1_test[0,15:20])
+        print('coord2      ',coord2[0,15:20])
+        print('coord2 world',coord2_test[0,15:20])
+
+        sys.exit('STOP')
 
     else:
         # error the coordinate system is not defined
@@ -156,7 +177,7 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
 
 
 #********************************************************************************
-def FindFootPrintNIRSPEC(self, input, this_channel):
+def FindFootPrintNIRSPEC(self, input):
 #********************************************************************************
 
     """
@@ -171,8 +192,6 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
     Parameters
     ----------
     input: input model (or file)
-    this_channel: channel working with
-
 
     Returns
     -------
@@ -183,7 +202,6 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
     # based on regions mask (indexed by slice number) find all the detector
     # x,y values for slice. Then convert the x,y values to  v2,v3,lambda
     # return the min & max of spatial coords and wavelength  - these are of the pixel centers
-
 
 
     start_slice = 0
@@ -207,25 +225,45 @@ def FindFootPrintNIRSPEC(self, input, this_channel):
         yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
         y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
-        v2, v3, lam = slice_wcs(x, y) # return v2,v3 are in degrees
+        v2, v3, lam = slice_wcs(x, y) # v2,v3 units arc seconds
 
-        print('yrange for slice',yrange,i)
-        print('xrange for slice',xrange,i)
+#        print('xrange',xrange)
+#        print('yrange',yrange)
+#        print('v2',v2.shape)
+#        print('v3',v3.shape)
+        print('v2 min,max',np.nanmin(v2),np.nanmax(v2))
+        print('v3 min max',np.nanmin(v3),np.nanmax(v3))
+#        print('v2',v2[30,0:500])
+#        print('v3',v3[30,0:500])
 
 #        v2 = v2 * 60.0 #   arc minutes
 #        v3 = v3 * 60.0 #  arc minutes
 
 
 # Hard code these values until they are part of the WCS read in from the header
-        ra_ref = 45.0 # degrees
-        dec_ref = 0.0 # degrees
-        roll_ref = 0.0 # degrees 
-        v2_ref = 300.2961/60.0 # arc min
-        v3_ref = -497.9/60.0 # arc min         
+#        ra_ref = 45.0 # degrees
+#        dec_ref = 0.0 # degrees
+#        roll_ref = 0.0 # degrees 
+#        v2_ref = 300.2961/60.0 # arc min
+#        v3_ref = -497.9/60.0 # arc min         
+
+        ra_ref = input.meta.wcsinfo.ra_ref # degrees
+        dec_ref = input.meta.wcsinfo.dec_ref # degrees
+        roll_ref = input.meta.wcsinfo.roll_ref # degrees 
+        v2_ref = input.meta.wcsinfo.v2_ref # arc min
+        v3_ref = input.meta.wcsinfo.v3_ref # arc min         
+        print('ref values',v2_ref,v3_ref,ra_ref,dec_ref,roll_ref)
+
         coord1,coord2 = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,
                                          v2,v3) # return ra and dec in degrees
 
 
+
+        coord1_test,coord2_test,lam_test = v23toworld(v2,v3,lam)
+
+        print('coord1_test',coord1_test[30,0:500])
+        print('coord2_test',coord2_test[30,0:500])
+        sys.exit('STOP')
         a_slice[k] = np.nanmin(coord1)
         a_slice[k + 1] = np.nanmax(coord1)
 
@@ -282,18 +320,19 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 
     """
     instrument = Cube.instrument
-    parameter1 = list()
-    parameter2 = list()
+#    parameter1 = list()
+#    parameter2 = list()
     if(instrument == 'MIRI'):
-        parameter1 = Cube.channel
-        parameter2 = Cube.subchannel
+        parameter1 = self.metadata['band_channel']
+        parameter2 = self.metadata['band_subchannel']
     elif(instrument == 'NIRSPEC'):
-        parameter1 = Cube.filter
-        parameter2 = Cube.grating
+        parameter1 = self.metadata['band_grating']
+        parameter2 = self.metadata['band_filter']
 
+    
 
-    number_par1 = len(parameter1)
-    number_par2 = len(parameter2)
+#    number_par1 = len(parameter1)
+#    number_par2 = len(parameter2)
 
     a_min = list()
     a_max = list()
@@ -301,51 +340,51 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
     b_max = list()
     lambda_min = list()
     lambda_max = list()
+    print('Number of bands',self.metadata['num_bands'])
 
-    for i in range(number_par1):
+    for i in range(self.metadata['num_bands']):
+ 
         this_a = parameter1[i]
-        for j in range(number_par2):
-            this_b = parameter2[j]
-            n = len(MasterTable.FileMap[instrument][this_a][this_b])
-            log.debug('number of files %d ', n)
+        this_b = parameter2[i]
+        print('parameters',this_a,this_b)
+        n = len(MasterTable.FileMap[instrument][this_a][this_b])
+        log.debug('number of files %d ', n)
+        print('number of files',n)
     # each file find the min and max a and lambda (OFFSETS NEED TO BE APPLIED TO THESE VALUES)
-            for k in range(n):
-                amin = 0.0
-                amax = 0.0
-                bmin = 0.0
-                bmax = 0.0
-                lmin = 0.0
-                lmax = 0.0
-                c1_offset = 0.0
-                c2_offset = 0.0
+        for k in range(n):
+            amin = 0.0
+            amax = 0.0
+            bmin = 0.0
+            bmax = 0.0
+            lmin = 0.0
+            lmax = 0.0
+            c1_offset = 0.0
+            c2_offset = 0.0
 
-                ifile = MasterTable.FileMap[instrument][this_a][this_b][k]
-                ioffset = len(MasterTable.FileOffset[this_a][this_b]['C1'])
-                if(ioffset == n):
-                    c1_offset = MasterTable.FileOffset[this_a][this_b]['C1'][k]
-                    c2_offset = MasterTable.FileOffset[this_a][this_b]['C2'][k]
-                    print('offset to apply in arcseonds (ra,dec) ', c1_offset, c2_offset)
+            ifile = MasterTable.FileMap[instrument][this_a][this_b][k]
+            ioffset = len(MasterTable.FileOffset[this_a][this_b]['C1'])
+            if(ioffset == n):
+                c1_offset = MasterTable.FileOffset[this_a][this_b]['C1'][k]
+                c2_offset = MasterTable.FileOffset[this_a][this_b]['C2'][k]
+                print('offset to apply in arcseonds (ra,dec) ', c1_offset, c2_offset)
 #________________________________________________________________________________
-
-                # Open the input data model
-                with datamodels.ImageModel(ifile) as input_model:
-
-                    t0 = time.time()
-                    if(instrument == 'NIRSPEC'):
-                        ChannelFootPrint = FindFootPrintNIRSPEC(self, input_model, this_a)
-                        amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
+# Open the input data model
+            with datamodels.ImageModel(ifile) as input_model:
+                t0 = time.time()
+                if(instrument == 'NIRSPEC'):
+                    ChannelFootPrint = FindFootPrintNIRSPEC(self, input_model)
+                    amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
                         #print(amin,amax,bmin,bmax,lmin,lmax)
-                        t1 = time.time()
-                        log.info("Time find foot print = %.1f.s" % (t1 - t0,))
+                    t1 = time.time()
+
 #________________________________________________________________________________
-                    if(instrument == 'MIRI'):
+                if(instrument == 'MIRI'):
+                    ChannelFootPrint = FindFootPrintMIRI(self, input_model, this_a, InstrumentInfo)
+                    t1 = time.time()
+                    print("Time find foot print Quick = %.1f.s" % (t1 - t0,))
+                    amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
 
-                        ChannelFootPrint = FindFootPrintMIRI(self, input_model, this_a, InstrumentInfo)
-                        t1 = time.time()
-                        print("Time find foot print Quick = %.1f.s" % (t1 - t0,))
-                        amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
-
-
+                log.info("Time find foot print = %.1f.s" % (t1 - t0,))
 # If a dither offset list exists then apply the dither offsets (offsets in arc seconds)
 
 
@@ -651,7 +690,6 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
 #********************************************************************************
 def CheckCubeType(self):
 
-    print(self.interpolation, len(self.metadata['channel']), self.metadata['channel'])
     if(self.interpolation == "area"):
         if(self.metadata['number_files'] > 1):
             raise IncorrectInput("For interpolation = area, only one file can be used to created the cube")

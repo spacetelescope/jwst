@@ -50,6 +50,7 @@ class CubeInfo(object):
             self.filter = parameter1
             self.grating = parameter2
 
+
             self.output_name = output_name
 
 #_______________________________________________________________________
