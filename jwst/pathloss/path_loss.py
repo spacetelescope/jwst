@@ -110,7 +110,7 @@ def do_correction(input_model, pathloss_model):
         Science data with pathloss extensions added
 
     """
-
+    output_model = input_model.copy()
     # Get centering
     xcenter, ycenter = getCenter(input_model)
     #
@@ -127,12 +127,10 @@ def do_correction(input_model, pathloss_model):
     wavelength_pointsource *= 1.0e6
     wavelength_uniformsource *= 1.0e6
     slit_number = 0
-    print(datamodels.__file__)
     # For each slit
     for slit in input_model.slits:
         slit_number = slit_number + 1
         size = slit.data.size
-        dir(slit)
         # That has data.size > 0
         if size > 0:
             nrows, ncols = slit.data.shape
@@ -144,32 +142,17 @@ def do_correction(input_model, pathloss_model):
             ycenter = 0.5*(ystart + ystop)
             xmin, ymin, min_wavelength = slit.meta.wcs(xstart, ycenter)
             xmax, ymax, max_wavelength = slit.meta.wcs(xstop, ycenter)
-            print("Slit %d has wavelength limits %f, %f" % (slit_number,
-                                                            min_wavelength,
-                                                            max_wavelength))
-            print("Slit %d has parameters %d %d %d %d" % (slit_number,
-                                                          xstart, xstop,
-                                                          ystart, ystop))
             # For each pixel
             y, x = np.mgrid[ystart:ystop, xstart:xstop]
             ra, dec, wave_array = slit.meta.wcs(x, y)
-            slit.pathloss.pointsource = calculate_pathloss(wave_array,
-                                                           wavelength_pointsource,
-                                                           pathloss_pointsource_vector)
-            slit.pathloss.uniformsource = calculate_pathloss(wave_array,
-                                                             wavelength_uniformsource,
-                                                             pathloss_uniform_vector)
+            slit.pl_point = calculate_pathloss(wave_array,
+                                               wavelength_pointsource,
+                                               pathloss_pointsource_vector)
+            slit.pl_uni = calculate_pathloss(wave_array,
+                                             wavelength_uniformsource,
+                                             pathloss_uniform_vector)
             
-            
-    # Get wavelength
-    # Interpolate path loss
-    # Set pixel in pathloss array to interpolated value
-    # Write out data
-
-    # For each SCI extension in input
-    # Save some data params for easy use later
-
-    return 
+    return input_model.copy()
 
 def calculate_pathloss(wave_array, wavelength, pathloss):
     """
