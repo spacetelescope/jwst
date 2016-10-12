@@ -15,7 +15,6 @@ from os.path import (
     expandvars,
 )
 import sys
-from uuid import uuid4
 
 from . import libpath
 from .exceptions import (
@@ -50,17 +49,21 @@ class AssociationRegistry(dict):
 
     global_constraints: dict
         Constraints to be added to each rule.
+
+    name: str
+        An identifying string, used to prefix rule names.
     """
 
     def __init__(self,
                  definition_files=None,
                  include_default=True,
-                 global_constraints=None):
+                 global_constraints=None,
+                 name=None):
         super(AssociationRegistry, self).__init__()
 
         # Generate a UUID for this instance. Used to modify rule
         # names.
-        self.uuid = uuid4()
+        self.name = name
 
         # Precache the set of rules
         self._rule_set = set()
@@ -90,12 +93,14 @@ class AssociationRegistry(dict):
             for class_name, class_object in get_classes(module):
                 logger.debug('class_name="{}"'.format(class_name))
                 if class_name.startswith(USER_ASN):
-                    rule = type(class_name, (class_object,), {})
+                    try:
+                        rule_name = '_'.join([self.name, class_name])
+                    except TypeError:
+                        rule_name = class_name
+                    rule = type(rule_name, (class_object,), {})
                     rule.GLOBAL_CONSTRAINTS = global_constraints
-                    self.__setitem__(
-                        '_'.join([class_name, str(self.uuid)]),
-                        rule
-                    )
+                    rule.registry = self
+                    self.__setitem__(rule_name, rule)
                     self._rule_set.add(rule)
                 if class_name == 'Utility':
                     Utility = type('Utility', (class_object, Utility), {})
@@ -105,7 +110,7 @@ class AssociationRegistry(dict):
     def rule_set(self):
         return self._rule_set
 
-    def match(self, member, timestamp=None, allow=None, ignore=None):
+    def match(self, member, version_id=None, allow=None, ignore=None):
         """See if member belongs to any of the associations defined.
 
         Parameters
@@ -113,9 +118,9 @@ class AssociationRegistry(dict):
         member: dict
             A member, like from a Pool, to find assocations for.
 
-        timestamp: str
+        version_id: str
             If specified, a string appened to association names.
-            Generated if not specified.
+            If None, nothing is used.
 
         allow: [type(Association), ...]
             List of rules to allow to be matched. If None, all
@@ -143,7 +148,7 @@ class AssociationRegistry(dict):
             if rule not in ignore and rule in allow:
                 logger.debug('Checking membership for rule "{}"'.format(rule))
                 try:
-                    associations.append(rule(member, timestamp))
+                    associations.append(rule(member, version_id))
                 except AssociationError as error:
                     logger.debug('Rule "{}" not matched'.format(name))
                     logger.debug('Reason="{}"'.format(error))
@@ -185,7 +190,7 @@ class AssociationRegistry(dict):
 
         if len(results) == 0:
             raise AssociationNotValidError(
-                'Structure did not valid: "{}"'.format(association)
+                'Structure did not validate: "{}"'.format(association)
             )
         return results
 

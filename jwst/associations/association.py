@@ -2,17 +2,19 @@ from ast import literal_eval
 from collections import namedtuple, MutableMapping
 from copy import deepcopy
 from datetime import datetime
-from itertools import count
 import json
 import jsonschema
 import logging
 from nose.tools import nottest
 import re
+import yaml
 
 from astropy.extern import six
+import numpy as np
 from numpy.ma import masked
 
 from .exceptions import (AssociationError, AssociationProcessMembers)
+from .lib.counter import Counter
 from .registry import AssociationRegistry
 
 __all__ = [
@@ -28,7 +30,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # Timestamp template
-_TIMESTAMP_TEMPLATE = '%Y%m%dT%H%M%S'
+_TIMESTAMP_TEMPLATE = '%Y%m%dt%H%M%S'
 
 
 class Association(MutableMapping):
@@ -39,10 +41,9 @@ class Association(MutableMapping):
     member: dict
         The member to initialize the association with.
 
-    timestamp: str
-        Timestamp to use in the name of this association. Should conform
-        to the datetime.strftime format '%Y%m%dT%M%H%S'. If None, class
-        instantiation will create this string using current time.
+    version_id: str or None
+        Version_Id to use in the name of this association.
+        If None, nothing is added.
 
     Raises
     ------
@@ -66,7 +67,13 @@ class Association(MutableMapping):
     schema_file: str
         The name of the output schema that an association
         must adhere to.
+
+    registry: AssocitionRegistry
+        The registry this association came from.
     """
+
+    # Assume no registry
+    registry = None
 
     # Default force a constraint to use first value.
     DEFAULT_FORCE_UNIQUE = False
@@ -78,13 +85,17 @@ class Association(MutableMapping):
     # Global constraints
     GLOBAL_CONSTRAINTS = {}
 
+    # Attribute values that are indicate the
+    # attribute is not specified.
+    INVALID_VALUES = None
+
     # Associations of the same type are sequenced.
-    _sequence = count(1)
+    _sequence = Counter(start=1)
 
     def __init__(
             self,
             member=None,
-            timestamp=None,
+            version_id=None,
     ):
 
         self.data = dict()
@@ -92,15 +103,12 @@ class Association(MutableMapping):
         self.run_init_hook = True
         self.meta = {}
 
-        if timestamp is not None:
-            self.timestamp = timestamp
-        else:
-            self.timestamp = make_timestamp()
+        self.version_id = version_id
 
         self.data.update({
             'asn_type': 'None',
             'asn_rule': self.asn_rule,
-            'creation_time': self.timestamp
+            'version_id': self.version_id
         })
 
         if member is not None:
@@ -150,18 +158,63 @@ class Association(MutableMapping):
         The Association object
         """
         asn = None
+        if not isinstance(serialized, six.string_types):
+            serialized = serialized.read()
         for protocol in SERIALIZATION_PROTOCOLS:
             try:
                 asn = SERIALIZATION_PROTOCOLS[protocol].unserialize(serialized)
-                break
             except AssociationError:
                 continue
+            else:
+                return asn
         else:
             raise AssociationError(
                 'Cannot translate "{}" to an association'.format(serialized)
             )
 
-        return asn
+    def to_yaml(self):
+        """Create JSON representation.
+
+        Returns
+        -------
+        (name, str):
+            Tuple where the first item is the suggested
+            base name for the JSON file.
+            Second item is the string containing the JSON serialization.
+        """
+        # Validate
+        with open(self.schema_file, 'r') as schema_file:
+            asn_schema = json.load(schema_file)
+        jsonschema.validate(self.data, asn_schema)
+
+        return (
+            self.asn_name,
+            yaml.dump(self.data, default_flow_style=False)
+        )
+
+    @classmethod
+    def from_yaml(cls, serialized):
+        """Unserialize an assocation from JSON
+
+        Parameters
+        ----------
+        serialized: str or file object
+            The YAML to read
+
+        Returns
+        -------
+        association: dict
+            The association
+        """
+        try:
+            asn = yaml.load(serialized)
+        except Exception as err:
+            logger.debug('Error unserializing: "{}"'.format(err))
+            raise AssociationError(
+                'Container is not YAML: "{}"'.format(serialized)
+            )
+        else:
+            return asn
 
     def to_json(self):
         """Create JSON representation.
@@ -198,17 +251,19 @@ class Association(MutableMapping):
         association: dict
             The association
         """
+        if isinstance(serialized, six.string_types):
+            loader = json.loads
+        else:
+            loader = json.load
         try:
-            asn = json.loads(serialized)
-        except TypeError:
-            try:
-                asn = json.load(serialized)
-            except (AttributeError, IOError):
-                raise AssociationError(
-                    'Containter is not JSON: "{}"'.format(serialized)
-                )
-
-        return asn
+            asn = loader(serialized)
+        except Exception as err:
+            logger.debug('Error unserializing: "{}"'.format(err))
+            raise AssociationError(
+                'Containter is not JSON: "{}"'.format(serialized)
+            )
+        else:
+            return asn
 
     def add(self, member, check_constraints=True):
         """Add the member to the association
@@ -252,26 +307,36 @@ class Association(MutableMapping):
         If a constraint is present, but does not have a value,
         that constraint is set, and, by definition, matches.
         """
-        for constraint, conditions in self.constraints.items():
+        constraints = deepcopy(self.constraints)
+        for constraint, conditions in constraints.items():
             logger.debug('Constraint="{}" Conditions="{}"'.format(constraint, conditions))
             try:
-                input, value = getattr_from_list(member, conditions['inputs'])
+                input, value = getattr_from_list(
+                    member,
+                    conditions['inputs'],
+                    invalid_values=self.INVALID_VALUES
+                )
             except KeyError:
-                if conditions.get('required', self.DEFAULT_REQUIRE_CONSTRAINT):
+                if conditions.get('is_invalid', False) or \
+                   not conditions.get(
+                       'required',
+                       self.DEFAULT_REQUIRE_CONSTRAINT
+                   ):
+                    continue
+                else:
                     raise AssociationError(
                         'Constraint {} not present in member.'.format(constraint)
                     )
-                else:
-                    conditions['value'] = 'Constraint not present and ignored'
-                    continue
+            else:
+                if conditions.get('is_invalid', False):
+                    raise AssociationError(
+                        'Constraint {} present when it should not be'.format(constraint)
+                    )
 
             # If the value is a list, signal that a reprocess
             # needs to be done.
             logger.debug('To check: Input="{}" Value="{}"'.format(input, value))
-            try:
-                evaled = literal_eval(value)
-            except (ValueError, SyntaxError):
-                evaled = value
+            evaled = evaluate(value)
 
             if is_iterable(evaled):
                 process_members = []
@@ -293,6 +358,7 @@ class Association(MutableMapping):
                         'Constraint {} does not match association.'.format(constraint)
                     )
 
+            # At this point, the constraint has passed.
             # Fix the conditions.
             logger.debug('Success Input="{}" Value="{}"'.format(input, evaled_str))
             if conditions['value'] is None or \
@@ -300,6 +366,10 @@ class Association(MutableMapping):
                 conditions['value'] = re.escape(evaled_str)
                 conditions['inputs'] = [input]
                 conditions['force_unique'] = False
+
+        # At this point, all constraints have passed
+        # Update the constraints.
+        self.constraints = constraints
 
     def add_constraints(self, new_constraints):
         """Add a set of constraints to the current constraints."""
@@ -314,12 +384,15 @@ class Association(MutableMapping):
 
     def constraints_to_text(self):
         yield 'Constraints:'
-        for c, p in self.constraints.items():
-            yield '    {:s}: {}'.format(c, p['value'])
+        for name, conditions in self.constraints.items():
+            if conditions.get('is_invalid', False):
+                yield '    {:s}: Is Invalid'.format(name)
+            else:
+                yield '    {:s}: {}'.format(name, conditions['value'])
 
     @classmethod
     def reset_sequence(cls):
-        cls._sequence = count(1)
+        cls._sequence = Counter(start=1)
 
     def _init_hook(self, member):
         """Post-check and pre-member-adding initialization."""
@@ -429,7 +502,7 @@ def make_timestamp():
     return timestamp
 
 
-def getattr_from_list(adict, attributes):
+def getattr_from_list(adict, attributes, invalid_values=None):
     """Retrieve value from dict using a list of attributes
 
     Parameters
@@ -439,6 +512,10 @@ def getattr_from_list(adict, attributes):
 
     attributes: list
         List of attributes
+
+    invalid_values: set
+        A set of values that essentially mean the
+        attribute does not exist.
 
     Returns
     -------
@@ -451,14 +528,21 @@ def getattr_from_list(adict, attributes):
     KeyError
         None of the attributes are found in the dict.
     """
+    if invalid_values is None:
+        invalid_values = set()
+
     for attribute in attributes:
         try:
             result = adict[attribute]
-            if result is masked:
-                raise KeyError
-            return attribute, result
         except KeyError:
             continue
+        else:
+            if result is masked:
+                continue
+            if result not in invalid_values:
+                return attribute, result
+            else:
+                continue
     else:
         raise KeyError
 
@@ -468,12 +552,42 @@ ProtocolFuncs = namedtuple('ProtocolFuncs', ['serialize', 'unserialize'])
 SERIALIZATION_PROTOCOLS = {
     'json': ProtocolFuncs(
         serialize=Association.to_json,
-        unserialize=Association.from_json)
+        unserialize=Association.from_json),
+    'yaml': ProtocolFuncs(
+        serialize=Association.to_yaml,
+        unserialize=Association.from_yaml)
 }
 
 
 # Utility
+def evaluate(value):
+    """Evaluate a value
+
+    Parameters
+    ----------
+    value: str
+        The string to evaluate.
+
+    Returns
+    -------
+    type or str
+        The evaluation. If the value cannot be
+        evaluated, the value is simply returned
+    """
+    try:
+        evaled = literal_eval(value)
+    except (ValueError, SyntaxError):
+        evaled = value
+    return evaled
+
+
 def is_iterable(obj):
     return not isinstance(obj, six.string_types) and \
         not isinstance(obj, tuple) and \
         hasattr(obj, '__iter__')
+
+# Register YAML representers
+def np_str_representer(dumper, data):
+    """Convert numpy.str_ into standard YAML string"""
+    return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
+yaml.add_representer(np.str_, np_str_representer)

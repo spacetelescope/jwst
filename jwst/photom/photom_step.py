@@ -25,10 +25,8 @@ class PhotomStep(Step):
             self.log.debug('Input is a CubeModel for a multiple integ file.')
         elif isinstance(dm, datamodels.ImageModel):  # standard product: 2D array
             self.log.debug('Input is an ImageModel.')
-        elif isinstance(dm, datamodels.DataModel): # multi 2D arrays
+        elif isinstance(dm, datamodels.MultiSlitModel): # multi 2D arrays
             self.log.debug('Input is a MultiSlitModel.')
-            dm.close()
-            dm = datamodels.MultiSlitModel(input_file)
         else:
             self.log.warning('Input is not a CubeModel, ImageModel or MultiSlitModel.')
 

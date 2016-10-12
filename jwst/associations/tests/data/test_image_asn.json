@@ -1,0 +1,450 @@
+{
+    "asn_type": "image",
+    "constraints": "Constraints:\n    opt_elem2: CLEAR\n    instrument: NIRCAM\n    detector: (?!NULL).+\n    exp_type: NRC_IMAGE\n    pointing_type: SCIENCE\n    target: 1\n    program: 99009\n    opt_elem: F090W\n    wfsvisit: NULL",
+    "products": [
+        {
+            "members": [
+                {
+                    "exposerr": null,
+                    "expname": "jw_00001_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o001', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00002_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o001', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00003_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o001', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00004_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o001', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00006_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o001', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00007_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o001', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00008_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o001', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00009_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o001', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00011_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o002', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00012_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o002', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00013_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o002', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00014_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o002', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00016_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o002', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00017_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o002', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00018_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o002', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00019_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o002', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00021_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o003', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00022_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o003', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00023_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o003', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00024_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o003', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00026_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o003', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00027_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o003', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00028_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o003', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00029_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o003', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00031_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o004', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00032_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o004', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00033_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o004', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00034_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o004', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00036_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o004', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00037_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o004', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00038_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o004', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00039_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o004', 'OBSERVATION'), ('c1000', 'MOSAIC'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00041_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o005', 'OBSERVATION'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00042_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o005', 'OBSERVATION'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00043_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o005', 'OBSERVATION'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00044_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o005', 'OBSERVATION'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00046_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o005', 'OBSERVATION'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00047_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o005', 'OBSERVATION'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00048_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o005', 'OBSERVATION'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00049_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o005', 'OBSERVATION'), ('c1001', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00051_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o006', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00052_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o006', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00053_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o006', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00054_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o006', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00056_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o006', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00057_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o006', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00058_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o006', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00059_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o006', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00061_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o007', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00062_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o007', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00063_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o007', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00064_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o007', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00066_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o007', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00067_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o007', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00068_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o007', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00069_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o007', 'OBSERVATION'), ('c1002', 'MOSAIC')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00079_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00080_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00081_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00082_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00084_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00085_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00086_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00087_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00088_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00089_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00090_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00091_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00092_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00093_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00094_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                },
+                {
+                    "exposerr": null,
+                    "expname": "jw_00096_cal.fits",
+                    "exptype": "SCIENCE",
+                    "asn_candidate": "[('o009', 'OBSERVATION')]"
+                }
+            ],
+            "name": "jw99009-a3001_t001_nircam_f090w"
+        }
+    ],
+    "version_id": "20160915T142211",
+    "target": "1",
+    "asn_pool": "mega_pool",
+    "program": "99009",
+    "degraded_status": "No known degraded exposures in association.",
+    "asn_rule": "discover_Asn_Image",
+    "asn_id": "o009"
+}

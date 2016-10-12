@@ -20,7 +20,7 @@ def test_invalid():
 def test_valid():
     rules = AssociationRegistry()
     asn_file = helpers.t_path(
-        'data/jw96090_20160615t210324_mosaic_001_asn.json'
+        'data/test_image_asn.json'
     )
     with open(asn_file, 'r') as asn_fp:
         asn = Association.load(asn_fp)

@@ -12,11 +12,15 @@
             "description": "Association definition used to create this association.",
             "type": "string"
         },
+        "asn_id": {
+            "description": "Association identifier",
+            "type": "string"
+        },
         "program": {
             "description": "The observing program identifier",
             "type": "string"
         },
-        "targname": {
+        "target": {
             "description": "Canonical name of the astronomical object being observed.",
             "type": "string"
         },
@@ -24,9 +28,16 @@
             "description": "Name of the Association Pool from which this association was generated.",
             "type": "string"
         },
-        "creation_time": {
-            "description": "Timestamp of association creation.",
-            "type": "string"
+        "version_id": {
+            "description": "Version identifier.",
+            "anyOf":[
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ] 
         },
         "products": {
             "description": "Array of output products and their required inputs derived from this association.",
@@ -62,10 +73,10 @@
         }
     },
     "required": ["asn_type",
+                 "asn_id",
                  "asn_rule",
                  "program",
-                 "targname",
+                 "target",
                  "asn_pool",
-                 "products",
-                 "creation_time"]
+                 "products"]
 }

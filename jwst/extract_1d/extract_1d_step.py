@@ -31,11 +31,9 @@ class Extract1dStep(Step):
         elif isinstance(input_model, datamodels.ImageModel):
             # It's a single 2-D image
             self.log.debug('Input is an ImageModel')
-        elif isinstance(input_model, datamodels.DataModel):
+        elif isinstance(input_model, datamodels.MultiSlitModel):
             # It's a MultiSlitModel
             self.log.debug('Input is a MultiSlitModel')
-            input_model.close()
-            input_model = datamodels.MultiSlitModel(input)
 
         # Get the reference file name
         self.ref_file = self.get_reference_file(input_model, 'extract1d')

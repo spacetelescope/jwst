@@ -27,6 +27,9 @@ def _cast(val, schema):
     val = _unmake_node(val)
     if val is not None:
         if 'datatype' in schema:
+            # Handle lazy array
+            if isinstance(val, ndarray.NDArrayType):
+                val = val._make_array()
             val = util.gentle_asarray(
                 val, ndarray.asdf_datatype_to_numpy_dtype(schema['datatype']))
         if 'ndim' in schema and len(val.shape) != schema['ndim']:
@@ -111,10 +114,10 @@ def _make_node(instance, schema, ctx):
         return instance
 
 
-def _unmake_node(instance):
-    if isinstance(instance, (ObjectNode, ListNode)):
-        return instance._instance
-    return instance
+def _unmake_node(obj):
+    if isinstance(obj, Node):
+        return obj.instance
+    return obj
 
 
 def _get_schema_for_property(schema, attr):
@@ -153,6 +156,9 @@ class Node(object):
         schema.validate(
             instance, schema=self._schema)
 
+    @property
+    def instance(self):
+        return self._instance
 
 class ObjectNode(Node):
     @override__dir__

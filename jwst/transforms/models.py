@@ -2,6 +2,10 @@
 
 Some of these may go in astropy.modeling in the future.
 """
+# -*- coding: utf-8 -*-
+
+from __future__ import absolute_import, division, unicode_literals, print_function
+
 import math
 import numpy as np
 from astropy.modeling.core import Model
@@ -12,7 +16,8 @@ from astropy.modeling.models import Polynomial2D
 __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
            'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa', 'slitid_to_slit',
-           'slit_to_slitid', 'Snell', 'RefractionIndex']
+           'slit_to_slitid', 'Snell', 'RefractionIndex', 'Logical',
+           'NirissSOSSModel', 'V23ToSky']
 
 
 # Number of shutters per quadrant
@@ -368,9 +373,10 @@ class Rotation3D(Model):
     def inverse(self):
         """Inverse rotation."""
         angles = self.angles.value[::-1] * -1
-        return self.__class__(angles, self.axes_order[::-1])
+        return self.__class__(angles, axes_order=self.axes_order[::-1])
 
-    def _compute_matrix(self, angles, axes_order):
+    @staticmethod
+    def _compute_matrix(angles, axes_order):
         if len(angles) != len(axes_order):
             raise InputParameterError(
                 "Number of angles must equal number of axes in axes_order.")
@@ -378,24 +384,24 @@ class Rotation3D(Model):
         for angle, axis in zip(angles, axes_order):
             matrix = np.zeros((3, 3), dtype=np.float)
             if axis == 'x':
-                mat = self._rotation_matrix_from_angle(angle)
+                mat = Rotation3D.rotation_matrix_from_angle(angle)
                 matrix[0, 0] = 1
                 matrix[1:, 1:] = mat
             elif axis == 'y':
-                mat = self._rotation_matrix_from_angle(-angle)
+                mat = Rotation3D.rotation_matrix_from_angle(-angle)
                 matrix[1, 1] = 1
                 matrix[0, 0] = mat[0, 0]
                 matrix[0, 2] = mat[0, 1]
                 matrix[2, 0] = mat[1, 0]
                 matrix[2, 2] = mat[1, 1]
             elif axis == 'z':
-                mat = self._rotation_matrix_from_angle(angle)
+                mat = Rotation3D.rotation_matrix_from_angle(angle)
                 matrix[2, 2] = 1
                 matrix[:2, :2] = mat
             else:
                 raise ValueError("Expected axes_order to be a combination \
                         of characters 'x', 'y' and 'z', got {0}".format(
-                                     set(axes_order).difference(self.axes)))
+                                     set(axes_order).difference(['x', 'y', 'z'])))
             matrices.append(matrix)
         if len(angles) == 1:
             return matrix
@@ -407,7 +413,8 @@ class Rotation3D(Model):
                 prod = np.dot(m, prod)
             return prod
 
-    def _rotation_matrix_from_angle(self, angle):
+    @staticmethod
+    def rotation_matrix_from_angle(angle):
         """
         Clockwise rotation matrix.
         """
@@ -527,3 +534,124 @@ class Slit2Msa(Model):
     def evaluate(self, quadrant, slitid, x, y, lam):
         slit = int(slitid_to_slit(np.array([quadrant, slitid]).T)[0])
         return self.models[slit](x, y) + (lam,)
+
+
+class NirissSOSSModel(Model):
+    """
+    This is a model to map the input order to output
+    Tabular models depending on the order that is set.
+    """
+
+    inputs = ('x', 'y', 'spectral_order')
+    outputs = ('ra', 'dec', 'lam')
+
+    def __init__(self, spectral_orders, models):
+        super(NirissSOSSModel, self).__init__()
+        self.spectral_orders = spectral_orders
+        self.models = dict(zip(spectral_orders, models))
+
+    def get_model(self, spectral_order):
+        return self.models[spectral_order]
+
+    def evaluate(self, x, y, spectral_order):
+
+        # The spectral_order variable is coming in as an array/list of one element.
+        # So, we are going to just take the 0'th element and use that as the index.
+        try:
+            order_number = int(spectral_order[0])
+        except Exception as e:
+            raise ValueError('Spectral order is not between 1 and 3, {}'.format(spectral_order))
+
+        return self.models[order_number](x, y)
+
+
+class Logical(Model):
+    """
+    Substitute values in an array where the condition is evaluated to True.
+
+    Similar to numpy's where function.
+
+    Parameters
+    ----------
+    condition : str
+        A string representing the logical, one of GT, LT, NE, EQ
+    compareto : float, ndarray
+        A number to compare to using the condition
+        If ndarray then the input array, compareto and value should have the
+        same shape.
+    value : float, ndarray
+        Value to substitute where condition is True.
+    """
+    inputs = ('x', )
+    outputs = ('x', )
+
+    conditions = {'GT': np.greater,
+                  'LT': np.less,
+                  'EQ': np.equal,
+                  'NE': np.not_equal
+                  }
+
+    def __init__(self, condition, compareto, value, **kwargs):
+        self.condition = condition.upper()
+        self.compareto = compareto
+        self.value = value
+        super(Logical, self).__init__(**kwargs)
+
+    def evaluate(self, x):
+        x = x.copy()
+        cond_result = self.conditions[self.condition](x, self.compareto)
+        if isinstance(self.compareto, np.ndarray):
+            x[cond_result] = self.value[cond_result]
+        else:
+            x[cond_result] = self.value
+        return x
+
+    def __repr__(self):
+        return "{0}(condition={1}, compareto={2}, value={3})".format(self.__class__.__name__,
+                                                                     self.condition, self.compareto,
+                                                                     self.value)
+
+
+class V23ToSky(Rotation3D):
+
+    inputs = ("v2", "v3")
+    outputs = ("ra", "dec")
+
+    @staticmethod
+    def spherical2cartesian(alpha, delta):
+        """
+        Convert spherical coordinates (in deg) to cartesian.
+        """
+        alpha = np.deg2rad(alpha)
+        delta = np.deg2rad(delta)
+        x = np.cos(alpha) * np.cos(delta)
+        y = np.cos(delta) * np.sin(alpha)
+        z = np.sin(delta)
+        return np.array([x, y, z])
+
+    @staticmethod
+    def cartesian2spherical(x, y, z):
+        """
+        Convert cartesian coordinates to spherical coordinates (in deg).
+        """
+        h = np.hypot(x, y)
+        alpha  = np.rad2deg(np.arctan2(y, x))
+        delta = np.rad2deg(np.arctan2(z, h))
+        return alpha, delta
+
+    def evaluate(self, v2, v3, angles):
+        x, y, z = self.spherical2cartesian(v2, v3)
+        x1, y1, z1 = super(V23ToSky, self).evaluate(x, y, z, angles)
+        return self.cartesian2spherical(x1, y1, z1)
+
+    def __call__(self, v2, v3):
+        from itertools import chain
+        inputs, format_info = self.prepare_inputs(v2, v3)
+        parameters = self._param_sets(raw=True)
+
+        outputs = self.evaluate(*chain([v2, v3], parameters))
+
+        if self.n_outputs == 1:
+            outputs = (outputs,)
+
+        return self.prepare_outputs(format_info, *outputs)

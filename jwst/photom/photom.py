@@ -91,10 +91,12 @@ class DataSet(object):
         # Get the GRATING value from the input data model
         grating = self.input.meta.instrument.grating.upper()
 
-        # Handle MultiSlitModels separately
-        if isinstance(self.input, datamodels.MultiSlitModel):
+        # Handle fixed-slit exposures separately
+        if (isinstance(self.input, datamodels.MultiSlitModel) and
+            self.exptype == 'NRS_FIXEDSLIT'):
 
-            # Loop over the slits in the input model
+            # We have to find and attach a separate set of flux cal
+            # data for each of the fixed slits in the input
             for slit in self.input.slits:
 
                 log.info('Working on slit %s' % slit.name)
@@ -124,7 +126,7 @@ class DataSet(object):
             else:
                 return 0.0
 
-        # Simple image model (no slits)
+        # IFU and MSA exposures use one set of flux cal data
         else:
 
             # Loop through the reference table to find matching row
@@ -372,8 +374,8 @@ class DataSet(object):
         # If the relative response arrays have length > 0, copy them into the
         # relsens table of the data model
         if nelem > 0:
-            waves = tabdata['wavelength']
-            relresps = tabdata['relresponse']
+            waves = tabdata['wavelength'][:nelem]
+            relresps = tabdata['relresponse'][:nelem]
 
             # Set the relative sensitivity table for the correct Model type
             if isinstance(self.input, datamodels.MultiSlitModel):

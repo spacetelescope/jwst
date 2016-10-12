@@ -8,6 +8,7 @@ from jwst.associations import (
     Association,
     libpath
 )
+from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -28,10 +29,6 @@ class DMS_Level2b_Base(Association):
 
         # I am defined by the following constraints
         self.add_constraints({
-            'pointing_type': {
-                'value': 'SCIENCE',
-                'inputs': ['PNTGTYPE']
-            },
             'program': {
                 'value': None,
                 'inputs': ['PROGRAM']
@@ -44,9 +41,9 @@ class DMS_Level2b_Base(Association):
                 'value': '(?!NULL).+',
                 'inputs': ['DETECTOR']
             },
-            'target_name': {
+            'target': {
                 'value': None,
-                'inputs': ['TARGNAME']
+                'inputs': ['TARGETID']
             },
         })
 
@@ -60,7 +57,7 @@ class DMS_Level2b_Base(Association):
             self.data['program'],
             self.sequence,
             self.data['asn_type'],
-            self.timestamp
+            self.version_id
         )
         return name.lower()
 
@@ -81,7 +78,7 @@ class DMS_Level2b_Base(Association):
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
         self.schema_file = ASN_SCHEMA
-        self.data['targname'] = member['TARGNAME']
+        self.data['target'] = member['TARGETID']
         self.data['program'] = str(member['PROGRAM'])
         self.data['asn_pool'] = basename(member.meta['pool_file']).split('.')[0]
         self.data['constraints'] = '\n'.join([cc for cc in self.constraints_to_text()])
@@ -91,7 +88,7 @@ class DMS_Level2b_Base(Association):
         """Add member to this association."""
         entry = {
             'expname': Utility.rename_to_level2a(member['FILENAME']),
-            'exptype': member['PNTGTYPE']
+            'exptype': Utility.get_exposure_type(member, default='SCIENCE')
         }
         members = self.current_group['members']
         members.append(entry)
@@ -107,7 +104,7 @@ class DMS_Level2b_Base(Association):
         result.append('        Product type: {:s}'.format(self.data['asn_type']))
         result.append('        Rule:         {:s}'.format(self.data['asn_rule']))
         result.append('        Program:      {:s}'.format(self.data['program']))
-        result.append('        Target:       {:s}'.format(self.data['targname']))
+        result.append('        Target:       {:s}'.format(self.data['target']))
         result.append('        Pool:         {:s}'.format(self.data['asn_pool']))
 
         for cc in self.constraints_to_text():
@@ -158,6 +155,10 @@ class Utility(object):
             match.group('extension')
         ])
         return level2a_name
+
+    @staticmethod
+    def get_exposure_type(*args, **kwargs):
+        return Utility_Level3.get_exposure_type(*args, **kwargs)
 
 
 class Asn_MIRI_LRS_BKGNOD(DMS_Level2b_Base):

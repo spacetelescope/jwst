@@ -12,7 +12,7 @@ Contents:
    :maxdepth: 2
 
    asn_generate
-   level3_associations
+   level3_associations_index
    association
    pool
 

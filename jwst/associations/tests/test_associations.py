@@ -40,6 +40,11 @@ class TestAssociations():
         for rule in valid_rules:
             yield helpers.check_in_list, rule, rule_names
 
+    def test_registry_backref(self):
+        rules = AssociationRegistry()
+        for name, rule in rules.items():
+            yield helpers.check_equal, rule.registry, rules
+
     def test_nodefs(self):
         with pytest.raises(AssociationError):
             rules = AssociationRegistry(include_default=False)

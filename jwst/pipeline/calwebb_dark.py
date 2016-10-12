@@ -9,12 +9,12 @@ from ..saturation import saturation_step
 from ..ipc import ipc_step
 from ..superbias import superbias_step
 from ..refpix import refpix_step
-from ..reset import reset_step
+from ..rscd import rscd_step
 from ..lastframe import lastframe_step
 from ..linearity import linearity_step
 
 
-__version__ = "0.6"
+__version__ = "0.7"
 
 # Define logging
 import logging
@@ -25,9 +25,9 @@ class DarkPipeline(Pipeline):
     """
 
     DarkPipeline: Apply detector-level calibration steps to raw JWST
-    dark ramps to produce a corrected 4-D ramp product.
+    dark ramp to produce a corrected 4-D ramp product.
     Included steps are: dq_init, saturation, ipc, superbias, refpix,
-    reset, lastframe, and linearity.
+    rscd, lastframe, and linearity.
 
     """
 
@@ -37,7 +37,7 @@ class DarkPipeline(Pipeline):
                  'ipc': ipc_step.IPCStep,
                  'superbias': superbias_step.SuperBiasStep,
                  'refpix': refpix_step.RefPixStep,
-                 'reset': reset_step.ResetStep,
+                 'rscd': rscd_step.RSCD_Step,
                  'lastframe': lastframe_step.LastFrameStep,
                  'linearity': linearity_step.LinearityStep,
                  }
@@ -51,25 +51,30 @@ class DarkPipeline(Pipeline):
         # open the input
         input = datamodels.open(input)
 
-        # apply dq_init, saturation, and ipc steps
-        input = self.dq_init(input)
-        input = self.saturation(input)
-        input = self.ipc(input)
-
-        # apply superbias subtraction to all except MIRI data
-        if input.meta.instrument.name != 'MIRI':
-            input = self.superbias(input)
-
-        # apply reference pixel correction
-        input = self.refpix(input)
-
-        # apply reset and lastframe corrections to MIIR data
         if input.meta.instrument.name == 'MIRI':
-            input = self.reset(input)
+
+            # process MIRI exposures;
+            # the steps are in a different order than NIR
+            log.debug('Processing a MIRI exposure')
+
+            input = self.dq_init(input)
+            input = self.saturation(input)
+            input = self.ipc(input)
+            input = self.linearity(input)
+            input = self.rscd(input)
             input = self.lastframe(input)
 
-        # apply linearity step
-        input = self.linearity(input)
+        else:
+
+            # process Near-IR exposures
+            log.debug('Processing a Near-IR exposure')
+
+            input = self.dq_init(input)
+            input = self.saturation(input)
+            input = self.ipc(input)
+            input = self.superbias(input)
+            input = self.refpix(input)
+            input = self.linearity(input)
 
         # setup output_file for saving
         self.setup_output(input)
