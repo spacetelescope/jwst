@@ -507,9 +507,6 @@ def NIRSpec_IFU(output_model,
 
     """
 
-    log.warning("Flat fielding of NIRSpec IFU data is currently"
-                " not supported.")
-
     exposure_type = output_model.meta.exposure.type
     flat = np.ones_like(output_model.data)
     flat_dq = np.zeros_like(output_model.dq)
@@ -568,7 +565,7 @@ def NIRSpec_IFU(output_model,
         mask = (flat_2d <= 0.)
         nbad = mask.sum(dtype=np.intp)
         if nbad > 0:
-            log.warning("%d flat-field values <= 0", nbad)
+            log.debug("%d flat-field values <= 0", nbad)
             flat_2d[mask] = 1.
             flat_dq_2d[mask] |= dqflags.pixel['NO_FLAT_FIELD']
         del mask
@@ -1087,9 +1084,9 @@ def read_flat_table(flat_model,
                 nelem = nelem_col[0]            # arbitrary choice of row
     if nelem is not None:
         if len(tab_wl) < nelem:
-            log.warning("READ THIS:  The fast_variation array size %d in"
-                        " the data model is too small, and table data were"
-                        " truncated.", len(tab_wl))
+            log.error("The fast_variation array size %d in"
+                      " the data model is too small, and table data were"
+                      " truncated.", len(tab_wl))
             nelem = len(tab_wl)                 # truncated!
         else:
             tab_wl = tab_wl[:nelem]
@@ -1104,8 +1101,8 @@ def read_flat_table(flat_model,
     filter = np.logical_and(filter1, filter2)
     n1 = filter.sum(dtype=np.intp)
     if n1 != nelem:
-        log.warning("The table wavelength or flat-field data array contained"
-                    " %d NaNs; these have been skipped.", nelem - n1)
+        log.debug("The table wavelength or flat-field data array contained"
+                  " %d NaNs; these have been skipped.", nelem - n1)
         tab_wl = tab_wl[filter]
         tab_flat = tab_flat[filter]
     del filter1, filter2, filter
@@ -1115,8 +1112,8 @@ def read_flat_table(flat_model,
     filter = np.logical_and(filter1, filter2)
     n2 = filter.sum(dtype=np.intp)
     if n2 != n1:
-        log.warning("The table wavelength or flat-field data array contained"
-                    " %d zero or negative values; these have been skipped.",
+        log.debug("The table wavelength or flat-field data array contained"
+                  " %d zero or negative values; these have been skipped.",
                     n1 - n2)
         tab_wl = tab_wl[filter]
         tab_flat = tab_flat[filter]
@@ -1366,7 +1363,6 @@ def interpolate_flat(image_flat, image_dq, image_wl, wl):
     flat_dq[indx] |= dqflags.pixel['NO_FLAT_FIELD']
     indx = np.where(wl > image_wl[nz - 1])
     flat_dq[indx] |= dqflags.pixel['NO_FLAT_FIELD']
-    flag = (flat_dq > 0)             # xxx test debug
 
     # If a pixel is flagged as bad, applying flat_2d should not make any
     # change to the science data.
