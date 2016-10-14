@@ -9,6 +9,10 @@ import numpy as np
 from astropy.extern import six
 from astropy.io import fits
 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 def open(init=None, extensions=None, **kwargs):
     """
     Creates a DataModel from a number of different types
@@ -130,9 +134,9 @@ def open(init=None, extensions=None, **kwargs):
     else:
         raise ValueError("Don't have a DataModel class to match the shape")
     if isinstance(init, (six.text_type, bytes)):
-        print('Opening {0} as {1}'.format(basename(init), new_class))
+        log.debug('Opening {0} as {1}'.format(basename(init), new_class))
     else:
-        print('Opening as {0}'.format(new_class))
+        log.debug('Opening as {0}'.format(new_class))
     return new_class(init, extensions=extensions, **kwargs)
 
 

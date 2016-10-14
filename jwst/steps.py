@@ -33,6 +33,7 @@ from . import rscd
 from . import saturation
 from . import skymatch
 from . import source_catalog
+from . import srctype
 from . import stpipe
 from . import straylight
 from . import superbias

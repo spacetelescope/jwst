@@ -16,23 +16,26 @@ def V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,v2, v3):
         
     d2r = math.pi/180.0
 
-    v2 = v2/60.0      # convert to degrees
-    v3 = v3/60.0      # convert to degrees
+    v2deg = v2.copy()/60.0      # convert to degrees
+    v3deg = v3.copy()/60.0      # convert to degrees
 
-    v2_ref = v2_ref/60.0 # covert to degrees
-    v3_ref = v3_ref/60.0 # convert to degrees
+    #print('v2_ref',v2_ref)
+    #print('v3_ref',v3_ref)
+    #print('ra_ref',ra_ref,dec_ref)
+    v2_ref = v2_ref/3600.0 # covert to degrees
+    v3_ref = v3_ref/3600.0 # convert to degrees
     v3_ref_rad = v3_ref*d2r
     roll_ref_rad = roll_ref * d2r
         
-    delta_v2 = (v2 - v2_ref) * math.cos(v3_ref_rad)
-    delta_v3 = (v3-v3_ref)
+    delta_v2 = (v2deg - v2_ref) * math.cos(v3_ref_rad)
+    delta_v3 = (v3deg - v3_ref)
     delta_ra = delta_v2 * math.cos(roll_ref_rad) + delta_v3* math.sin(roll_ref_rad)
     delta_dec = -delta_v2* math.sin(roll_ref_rad) + delta_v3*math.cos(roll_ref_rad)
 
     ra = ra_ref + delta_ra/math.cos(dec_ref*d2r)
     dec = delta_dec + dec_ref
 
-    #print('v2,v3',v2[0,15:20],v3[0,15:20])
+
     #print('ra dec',ra[0,15:20],dec[0,15:20])
 
 

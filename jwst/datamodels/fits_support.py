@@ -256,7 +256,7 @@ def _fits_array_writer(validator, _, instance, schema):
     if instance is None:
         return
 
-    instance = np.asarray(instance)
+    instance = np.asanyarray(instance)
 
     if not len(instance.shape):
         return

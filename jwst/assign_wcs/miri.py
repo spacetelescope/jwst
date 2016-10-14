@@ -77,7 +77,7 @@ def imaging_distortion(input_model, reference_files):
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
     filter_offset = AsdfFile.open(reference_files['filteroffset']).tree[input_model.meta.instrument.filter]
     full_distortion = models.Shift(filter_offset['row_offset']) & models.Shift(
-        filter_offset['column_offset']) | distortion
+        filter_offset['column_offset']) | distortion | models.Scale(60) & models.Scale(60)
     full_distortion = full_distortion.rename('distortion')
     return full_distortion
 
@@ -150,7 +150,8 @@ def ifu(input_model, reference_files):
     det2alpha_beta = (detector_to_alpha_beta(input_model, reference_files)).rename(
         "detector_to_alpha_beta")
     ab2xyan = (alpha_beta2XanYan(input_model, reference_files)).rename("alpha_beta_to_Xan_Yan")
-    xyan2v23 = models.Identity(1) & (models.Shift(7.8) | models.Scale(-1)) & models.Identity(1)
+    xyan2v23 = models.Identity(1) & (models.Shift(7.8) | models.Scale(-1)) & models.Identity(1) | \
+        models.Scale(60) & models.Scale(60) & models.Identity(1)
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
     pipeline = [(detector, det2alpha_beta),
                 (miri_focal, ab2xyan),
