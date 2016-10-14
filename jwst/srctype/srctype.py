@@ -46,40 +46,28 @@ def set_source_type(input_model):
 
         input_model.meta.target.source_type = src_type
 
-    # For NIRSpec MSA exposures, load the stellarity values from the
-    # MSA configuration file that goes with this exposure
+    # For NIRSpec MSA exposures, read the stellarity value for the
+    # source in each extracted slit and set the point/extended value
+    # based on the stellarity.
     if exptype == 'NRS_MSASPEC':
 
-        # Get the MSA configuration file name and open the file
-        msa_name = input_model.meta.instrument.msa_configuration_file
-        msa_file = fits.open(msa_name)
+        # Loop over the input slits
+        for slit in input_model.slits:
+            stellarity = slit.stellarity
+            log.debug('source_id=%g, stellarity=%g' %
+                      (slit.source_id, stellarity))
 
-        # Load the Source info table from the MSA file
-        source_table = msa_file['SOURCE_INFO'].data
+            # Eventually the stellarity value will be compared against
+            # a threshold value from a reference file. For now, the
+            # threshold is hardwired.
+            if stellarity > 0.75:
+                slit.source_type = 'POINT'
+            else:
+                slit.source_type = 'EXTENDED'
 
-        # See if the stellarity column exists
-        try:
-            stellarities = source_table['stellarity']
-        except:
-            log.error('Stellarity data not found in MSA source table')
-            log.error('Step will be skipped')
-            msa_file.close()
-            return None
+        # Set the source type value in the primary header to
+        # a harmless default
+        input_model.meta.target.source_type = 'UNKNOWN'
 
-        # Loop over the input slits and find matching source_id in table
-        for slit in range(len(input_model.slits)):
-            source_id = input_model.slits[slit].source_id
-            row = np.where(source_table['source_id'] == source_id)
-
-            # Get the stellarity value for this source
-            stellarity = np.float32(source_table['stellarity'][row][0])
-            log.debug('source_id=%g, stellarity=%g' % (source_id, stellarity))
-
-            # Save the stellarity value in the slit meta data
-            input_model.slits[slit].stellarity = stellarity
-
-        # We're done; close the MSA configuration file
-        msa_file.close()
-
-
+    # We're done
     return input_model
