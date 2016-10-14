@@ -88,8 +88,20 @@ class DMS_Level3_Base(Association):
         # Initialize discovered association ID
         self.discovered_id = Counter(_DISCOVERED_ID_START)
 
+        # Initialize validity checks
+        self.validity = {
+            'has_science': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'SCIENCE'
+            }
+        }
+
         # Let us see if member belongs to us.
         super(DMS_Level3_Base, self).__init__(*args, **kwargs)
+
+    @property
+    def is_valid(self):
+        return all(test['validated'] for test in self.validity.values())
 
     @property
     def acid(self):
@@ -174,6 +186,11 @@ class DMS_Level3_Base(Association):
 
         return product_name.lower()
 
+    def update_validity(self, entry):
+        for test in self.validity.values():
+            if not test['validated']:
+                test['validated'] = test['check'](entry)
+
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
         super(DMS_Level3_Base, self)._init_hook(member)
@@ -215,6 +232,8 @@ class DMS_Level3_Base(Association):
             'exposerr': exposerr,
             'asn_candidate': member['ASN_CANDIDATE']
         }
+
+        self.update_validity(entry)
         members = self.current_product['members']
         members.append(entry)
         self.data['degraded_status'] = _DEGRADED_STATUS_OK
