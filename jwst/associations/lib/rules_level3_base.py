@@ -54,9 +54,14 @@ KEY = 'expname'
 # Target acquisition Exposure types
 _TARGETACQ_TYPES = set((
     'NRC_TACQ',
+    'NRC_TACONFIRM',
     'MIR_TACQ',
+    'NRS_CONFIRM',
     'NRS_TACQ',
+    'NRS_TACONFIRM',
+    'NRS_TASLIT',
     'NIS_TACQ',
+    'NIS_TACONFIRM',
 ))
 
 # Science exposure types

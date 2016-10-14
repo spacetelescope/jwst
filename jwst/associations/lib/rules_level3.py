@@ -103,7 +103,7 @@ class Asn_MIRI_LRS_FIXEDSLIT(
                 'force_unique': True
             },
             'exp_type': {
-                'value': 'MIR_LRS-FIXEDSLIT',
+                'value': 'MIR_LRS-FIXEDSLIT|MIR_TACQ',
                 'inputs': ['EXP_TYPE']
             },
             'opt_elem': {
@@ -133,7 +133,7 @@ class Asn_MIRI_LRS_SLITLESS(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'MIR_LRS-SLITLESS',
+                'value': 'MIR_LRS-SLITLESS|MIR_TACQ',
                 'inputs': ['EXP_TYPE']
             },
             'opt_elem': {
@@ -167,7 +167,7 @@ class Asn_NIR_SO_SLITLESS(
                 'inputs': ['DETECTOR']
             },
             'exp_type': {
-                'value': 'NIS_SOSS',
+                'value': 'NIS_SOSS|NIS_TACQ|NIS_TACNFRM',
                 'inputs': ['EXP_TYPE']
             },
             'opt_elem': {
@@ -199,7 +199,13 @@ class Asn_NRS_FIXEDSLIT(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'NRS_FIXEDSLIT',
+                'value': (
+                    'NRS_FIXEDSLIT'
+                    '|NRS_TASLIT'
+                    '|NRS_TACQ'
+                    '|NRS_TACONFIRM'
+                    '|NRS_CONFIRM'
+                ),
                 'inputs': ['EXP_TYPE']
             },
             'fixed_slit': {
@@ -230,7 +236,13 @@ class Asn_NRS_MSA(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'NRS_MSASPEC',
+                'value': (
+                    'NRS_MSASPEC'
+                    '|NRS_TASLIT'
+                    '|NRS_TACQ'
+                    '|NRS_TACONFIRM'
+                    '|NRS_CONFIRM'
+                ),
                 'inputs': ['EXP_TYPE']
             },
         })
@@ -252,7 +264,11 @@ class Asn_MIRI_IFU(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'MIR_MRS|MIR_FLATMRS',
+                'value': (
+                    'MIR_MRS'
+                    '|MIR_FLATMRS'
+                    '|MIR_TACQ'
+                ),
                 'inputs': ['EXP_TYPE'],
                 'force_unique': False,
             },
@@ -260,7 +276,6 @@ class Asn_MIRI_IFU(
 
         # Check and continue initialization.
         super(Asn_MIRI_IFU, self).__init__(*args, **kwargs)
-
 
     def product_name(self):
         """Define product name."""
@@ -297,7 +312,13 @@ class Asn_NRS_IFU(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'NRS_IFU',
+                'value': (
+                    'NRS_IFU'
+                    '|NRS_TASLIT'
+                    '|NRS_TACQ'
+                    '|NRS_TACONFIRM'
+                    '|NRS_CONFIRM'
+                ),
                 'inputs': ['EXP_TYPE']
             },
         })
