@@ -79,38 +79,39 @@ def test_nirspec_modes(nirspec_params):
     assert re.match(asn_name, asn.asn_name)
     assert asn['products'][0]['name'] == product_name
 
+
 @pytest.fixture(
     scope='module',
     params=[
         (
-            'o005',
-            'mirifu',
-            'jw99009-o005_mirifu_\d{3}_asn',
-            'jw99009-o005_t001_miri',
-        ),
-        (
-            'o006',
-            'mirifu',
-            'jw99009-o006_mirifu_\d{3}_asn',
-            'jw99009-o006_t001_miri',
-        ),
-        (
             'o007',
             'mirifu',
             'jw99009-o007_mirifu_\d{3}_asn',
-            'jw99009-o007_t001_miri'
+            'jw99009-o007_t001_miri',
         ),
         (
             'o008',
             'mirifu',
             'jw99009-o008_mirifu_\d{3}_asn',
-            'jw99009-o008_t001_miri'
+            'jw99009-o008_t001_miri',
         ),
         (
             'o009',
             'mirifu',
             'jw99009-o009_mirifu_\d{3}_asn',
             'jw99009-o009_t001_miri'
+        ),
+        (
+            'o010',
+            'mirifu',
+            'jw99009-o010_mirifu_\d{3}_asn',
+            'jw99009-o010_t001_miri'
+        ),
+        (
+            'o011',
+            'mirifu',
+            'jw99009-o011_mirifu_\d{3}_asn',
+            'jw99009-o011_t001_miri'
         ),
     ]
 )
