@@ -102,16 +102,16 @@ def imaging(input_model, reference_files):
         with AsdfFile.open(reference_files['ote']) as f:
             oteip2v23 = f.tree['model'].copy()
 
-        # V2, V3 to wprld (RA, DEC) transform
-        #v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
+        # V2, V3 to world (RA, DEC) transform
+        tel2sky = pointing.v23tosky(input_model)
 
         imaging_pipeline = [(det, dms2detector),
                             (sca, det2gwa),
                             (gwa, gwa2msa),
                             (msa_frame, msa2oteip),
                             (oteip, oteip2v23),
-                            (v2v3, None)]
-                            #(world, None)]
+                            (v2v3, tel2sky),
+                            (world, None)]
     else:
         # convert to microns if the pipeline ends earlier
         gwa2msa = (gwa2msa | Identity(2) & Scale(10**6)).rename('gwa2msa')
@@ -157,6 +157,9 @@ def ifu(input_model, reference_files):
         # This includes a wavelength unit conversion from meters to microns.
         oteip2v23 = oteip_to_v23(reference_files)
 
+        # V2, V3 to sky
+        tel2sky = pointing.v23tosky(input_model) & Identity(1)
+
         # Create coordinate frames in the NIRSPEC WCS pipeline"
         #
         # The oteip2v2v3 transform converts the wavelength from meters (which is assumed
@@ -170,7 +173,8 @@ def ifu(input_model, reference_files):
                     (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
                     (msa_frame, msa2oteip.rename('msa2oteip')),
                     (oteip, oteip2v23.rename('oteip2v23')),
-                    (v2v3, None)]
+                    (v2v3, tel2sky),
+                    (world, None)]
     else:
         # convert to microns if the pipeline ends earlier
         #slit2msa = (Mapping((0, 1, 2, 3, 4)) | slit2msa | Identity(2) & Scale(10**6)).rename('slit2msa')
@@ -209,7 +213,7 @@ def slits_wcs(input_model, reference_files):
     input_model.meta.wcsinfo.spectral_order = sporder
 
     # DMS to SCA transform
-    dms2detector = dms_to_sca(input_model)
+    dms2detector = dms_to_sca(input_model).rename('dms2sca')
     # DETECTOR to GWA transform
     det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
     #det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
@@ -231,17 +235,17 @@ def slits_wcs(input_model, reference_files):
         # This includes a wavelength unit conversion from meters to microns.
         oteip2v23 = oteip_to_v23(reference_files)
 
-        # V2, V3 to wprld (RA, DEC ,LAMBDA) transform
-        #v23_to_sky = pointing.fitswcs_transform_from_model(input_model)
-        #v23_to_world = v23_to_sky & Identity(1)
+        # V2, V3 to sky
+        tel2sky = pointing.v23tosky(input_model) & Identity(1)
 
         msa_pipeline = [(det, dms2detector),
-                        (sca, det2gwa),
-                        (gwa, gwa2slit),
-                        (slit_frame, Mapping((0, 1, 2, 3, 4)) | slit2msa),
-                        (msa_frame, msa2oteip),
-                        (oteip, oteip2v23),
-                        (v2v3, None)]
+                        (sca, det2gwa.rename('det2gwa')),
+                        (gwa, gwa2slit.rename('gwa2slit')),
+                        (slit_frame, (Mapping((0, 1, 2, 3, 4)) | slit2msa).rename('slit2msa')),
+                        (msa_frame, msa2oteip.rename('msa2oteip')),
+                        (oteip, oteip2v23.rename('oteip2v23')),
+                        (v2v3, tel2sky),
+                        (world, None)]
     else:
         # convert to microns if the pipeline ends earlier
         #gwa2slit = (gwa2slit | Identity(2) & Scale(10**6)).rename('gwa2slit')
@@ -260,7 +264,7 @@ def get_open_slits(input_model):
     if exp_type == "nrs_msaspec":
         #msa_config = "SPCB-GD-A.msa.fits"
         msa_config = input_model.meta.instrument.msa_configuration_file
-        slits = get_open_msa_slits(msa_config)
+        slits = get_open_msa_slits(msa_config, input_model.meta.instrument.msa_metadata_id)
     elif exp_type == "nrs_fixedslit":
         slits = get_open_fixed_slits(input_model)
     else:
@@ -280,29 +284,116 @@ def get_open_fixed_slits(input_model):
     return slits
 
 
-def get_open_msa_slits(msa_status):
+def get_open_msa_slits(msa_file, msa_metadata_id):
     """
-    Returns slit_id for all open slits.
+    Computes (ymin, ymax) of open slitlets.
+
+    The msa_file is expected to contain data (tuples) with the following fields:
+
+        ('slitlet_id', '>i2'),
+        ('msa_metadata_id', '>i2'),
+        ('shutter_quadrant', '>i2'),
+        ('shutter_row', '>i2'),
+        ('shutter_column', '>i2'),
+        ('source_id', '>i2'),
+        ('background', 'S1'),
+        ('shutter_state', 'S6'),
+        ('estimated_source_in_shutter_x', '>f4'),
+        ('estimated_source_in_shutter_y', '>f4')])
+
+    For example, something like:
+        (12, 2, 4, 251, 22, 1, 'Y', 'OPEN', nan, nan),
+
+
+       column
+
+
 
     Parameters
     ----------
-    msa_status : str
-        Name of MSA status file.
+        msa_file : str
+            MSA configuration file name, FITS keyword MSACONFL.
+        msa_metadata_id : int
+            The MSA meta id for the science file, FITS keyword MSAMETID.
 
     Returns
     -------
-    msa_slits_id : ndarray
-        An array of slit ids.
-        A slit_id is a tuple of (quadrant_number, slit_number).
+    slitlets : list
+        A list of slitlets. Each slitlet is a tuple with
+        (slitlet_id, quadrant, xcen, ycen, ymin, ymax)
 
     """
-    with fits.open(msa_status) as fmsa:
-        msa_slits_id = []
-        for i in range(1, 5):
-            quadrant = fmsa[i].data
-            open_shutters = quadrant[quadrant['status'].nonzero()]
-            msa_slits_id.extend([(i, n) for n in open_shutters['NO']])
-    return np.array(msa_slits_id)
+
+    slitlets = []
+
+    # If they passed in a string then we shall assume it is the filename
+    # of the configuration file.
+    with fits.open(msa_file) as msa_file:
+        # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
+        msa_conf = msa_file[('SHUTTER_INFO', 1)]
+
+        # First we are going to filter the msa_file data on the msa_metadata_id
+        # as that is all we are interested in for this function.
+        msa_data = [x for x in msa_conf.data if x['msa_metadata_id'] == msa_metadata_id]
+
+        print('msa_data with msa_metadata_id = {}   {}'.format(msa_metadata_id, msa_data))
+
+        # First thing to do is to get the unique slitlet_ids
+        slitlet_ids_unique = list(set([x['slitlet_id'] for x in msa_data]))
+
+        # Now lets look at each unique slitlet id
+        for slitlet_id in slitlet_ids_unique:
+
+            # Get the rows for the current slitlet_id
+            slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
+
+            # Count the number of backgrounds that have an 'N' (meaning main shutter)
+            # This needs to be 0 or 1 and we will have to deal with those differently
+            # See: https://github.com/STScI-JWST/jwst/commit/7588668b44b77486cdafb35f7e2eb2dcfa7d1b63#commitcomment-18987564
+
+            n_main_shutter = len([s for s in slitlets_sid if s['background'] == 'N'])
+
+            # In the next part we need to calculate, find, determine 5 things:
+            #    quadrant,  xcen, ycen,  ymin, max
+
+            margin = 0.05
+
+            # There are no main shutters, all are background
+            if n_main_shutter == 0:
+                jmin = min([s['shutter_column'] for s in slitlets_sid])
+                jmax = max([s['shutter_column'] for s in slitlets_sid])
+                j = (jmax - jmin) // 2 + 1
+                ymax = 0.5 + margin + (jmax - j) * 1.15
+                ymin = -(0.5 + margin + (jmin - j) * 1.15)
+                quadrant = slitlets_sid[0]['shutter_quadrant']
+                xcen = j
+                ycen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
+
+            # There is 1 main shutter, phew, that makes it easier.
+            elif n_main_shutter == 1:
+                xcen, ycen, quadrant = [(s['shutter_row'], s['shutter_column'], s['shutter_quadrant']) for s in slitlets_sid if s['background'] == 'N'][0]
+
+                # y-size
+                jmin = min([s['shutter_column'] for s in slitlets_sid])
+                jmax = max([s['shutter_column'] for s in slitlets_sid])
+                j = xcen
+                ymax = 0.5 + margin + (jmax - j) * 1.15
+                ymin = -(0.5 + margin + (jmin - j) * 1.15)
+
+            # Not allowed....
+            else:
+                log.warning('WARNING: More than one main shutter, but there must only be 0 or 1.')
+                return []
+
+            # Create the output list of tuples that contain the required
+            # data for further computations
+            slitlets.append(
+                (
+                    slitlet_id, quadrant, xcen, ycen, ymin, ymax
+                )
+            )
+
+    return slitlets
 
 
 def get_spectral_order_wrange(input_model, wavelengthrange_file):
@@ -632,7 +723,7 @@ def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5)
     y_range = np.hstack((y_range_low, y_range_high))
     # add 10 px margin
     # The -1 is technically because the output of slit2detector is 1-based coordinates.
-    x0 = int(max(0, x_range.min() -1 - 10))
+    x0 = int(max(0, x_range.min() -1 -10))
     x1 = int(min(2047, x_range.max() -1 + 10))
     # add 2 px margin
     y0 = int(y_range.min() -1 -2)
@@ -803,7 +894,8 @@ def oteip_to_v23(reference_files):
     # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    return fore2ote_mapping | (ote & Scale(1e6))
+    # The spatial units are currently in deg. Convertin to arcsec
+    return fore2ote_mapping | (ote & Identity(1)) | (Scale(3600) & Scale(3600) & Scale(1e6))
 
 
 def create_frames():
@@ -822,7 +914,7 @@ def create_frames():
     slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), unit=("", ""),
                              axes_names=('x_slit', 'y_slit'))
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
-    v2v3_spatial = cf.Frame2D(name='V2V3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg),
+    v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg),
                              axes_names=('V2', 'V3'))
 
     # The oteip_to_v23 incorporates a scale to convert the spectral units from
@@ -832,7 +924,7 @@ def create_frames():
     v2v3 = cf.CompositeFrame([v2v3_spatial, spec], name='v2v3')
     slit_frame = cf.CompositeFrame([slit_spatial, spec], name='slit_frame')
     msa_frame = cf.CompositeFrame([msa_spatial, spec], name='msa_frame')
-    oteip_spatial = cf.Frame2D(name='OTEIP_spatial', axes_order=(0, 1), unit=(u.deg, u.deg),
+    oteip_spatial = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.deg, u.deg),
                                axes_names=('X_OTEIP', 'Y_OTEIP'))
     oteip = cf.CompositeFrame([oteip_spatial, spec], name='oteip')
     world = cf.CompositeFrame([sky, spec], name='world')
@@ -935,7 +1027,6 @@ def nrs_wcs_set_input(input_model, quadrant, slitid, wavelength_range=None):
     #slit_wcs.set_transform('detector', 'gwa', wcsobj.pipeline[0][1])
     slit_wcs.set_transform('gwa', 'slit_frame', wcsobj.pipeline[2][1].models[slit])
     slit_wcs.set_transform('slit_frame', 'msa_frame', wcsobj.pipeline[3][1][1].models[slit] & Identity(1))
-
     slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
 
     domain = compute_domain(slit2detector, wrange)

@@ -85,6 +85,10 @@ class Association(MutableMapping):
     # Global constraints
     GLOBAL_CONSTRAINTS = {}
 
+    # Attribute values that are indicate the
+    # attribute is not specified.
+    INVALID_VALUES = None
+
     # Associations of the same type are sequenced.
     _sequence = Counter(start=1)
 
@@ -188,7 +192,6 @@ class Association(MutableMapping):
             yaml.dump(self.data, default_flow_style=False)
         )
 
-
     @classmethod
     def from_yaml(cls, serialized):
         """Unserialize an assocation from JSON
@@ -203,8 +206,15 @@ class Association(MutableMapping):
         association: dict
             The association
         """
-        asn = yaml.load(serialized)
-        return asn
+        try:
+            asn = yaml.load(serialized)
+        except Exception as err:
+            logger.debug('Error unserializing: "{}"'.format(err))
+            raise AssociationError(
+                'Container is not YAML: "{}"'.format(serialized)
+            )
+        else:
+            return asn
 
     def to_json(self):
         """Create JSON representation.
@@ -247,12 +257,13 @@ class Association(MutableMapping):
             loader = json.load
         try:
             asn = loader(serialized)
-        except (AttributeError, IOError, json.JSONDecodeError):
-                raise AssociationError(
-                    'Containter is not JSON: "{}"'.format(serialized)
-                )
-
-        return asn
+        except Exception as err:
+            logger.debug('Error unserializing: "{}"'.format(err))
+            raise AssociationError(
+                'Containter is not JSON: "{}"'.format(serialized)
+            )
+        else:
+            return asn
 
     def add(self, member, check_constraints=True):
         """Add the member to the association
@@ -296,18 +307,31 @@ class Association(MutableMapping):
         If a constraint is present, but does not have a value,
         that constraint is set, and, by definition, matches.
         """
-        for constraint, conditions in self.constraints.items():
+        constraints = deepcopy(self.constraints)
+        for constraint, conditions in constraints.items():
             logger.debug('Constraint="{}" Conditions="{}"'.format(constraint, conditions))
             try:
-                input, value = getattr_from_list(member, conditions['inputs'])
+                input, value = getattr_from_list(
+                    member,
+                    conditions['inputs'],
+                    invalid_values=self.INVALID_VALUES
+                )
             except KeyError:
-                if conditions.get('required', self.DEFAULT_REQUIRE_CONSTRAINT):
+                if conditions.get('is_invalid', False) or \
+                   not conditions.get(
+                       'required',
+                       self.DEFAULT_REQUIRE_CONSTRAINT
+                   ):
+                    continue
+                else:
                     raise AssociationError(
                         'Constraint {} not present in member.'.format(constraint)
                     )
-                else:
-                    conditions['value'] = 'Constraint not present and ignored'
-                    continue
+            else:
+                if conditions.get('is_invalid', False):
+                    raise AssociationError(
+                        'Constraint {} present when it should not be'.format(constraint)
+                    )
 
             # If the value is a list, signal that a reprocess
             # needs to be done.
@@ -334,6 +358,7 @@ class Association(MutableMapping):
                         'Constraint {} does not match association.'.format(constraint)
                     )
 
+            # At this point, the constraint has passed.
             # Fix the conditions.
             logger.debug('Success Input="{}" Value="{}"'.format(input, evaled_str))
             if conditions['value'] is None or \
@@ -341,6 +366,10 @@ class Association(MutableMapping):
                 conditions['value'] = re.escape(evaled_str)
                 conditions['inputs'] = [input]
                 conditions['force_unique'] = False
+
+        # At this point, all constraints have passed
+        # Update the constraints.
+        self.constraints = constraints
 
     def add_constraints(self, new_constraints):
         """Add a set of constraints to the current constraints."""
@@ -355,8 +384,11 @@ class Association(MutableMapping):
 
     def constraints_to_text(self):
         yield 'Constraints:'
-        for c, p in self.constraints.items():
-            yield '    {:s}: {}'.format(c, p['value'])
+        for name, conditions in self.constraints.items():
+            if conditions.get('is_invalid', False):
+                yield '    {:s}: Is Invalid'.format(name)
+            else:
+                yield '    {:s}: {}'.format(name, conditions['value'])
 
     @classmethod
     def reset_sequence(cls):
@@ -470,7 +502,7 @@ def make_timestamp():
     return timestamp
 
 
-def getattr_from_list(adict, attributes):
+def getattr_from_list(adict, attributes, invalid_values=None):
     """Retrieve value from dict using a list of attributes
 
     Parameters
@@ -480,6 +512,10 @@ def getattr_from_list(adict, attributes):
 
     attributes: list
         List of attributes
+
+    invalid_values: set
+        A set of values that essentially mean the
+        attribute does not exist.
 
     Returns
     -------
@@ -492,14 +528,21 @@ def getattr_from_list(adict, attributes):
     KeyError
         None of the attributes are found in the dict.
     """
+    if invalid_values is None:
+        invalid_values = set()
+
     for attribute in attributes:
         try:
             result = adict[attribute]
-            if result is masked:
-                raise KeyError
-            return attribute, result
         except KeyError:
             continue
+        else:
+            if result is masked:
+                continue
+            if result not in invalid_values:
+                return attribute, result
+            else:
+                continue
     else:
         raise KeyError
 

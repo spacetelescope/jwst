@@ -51,9 +51,31 @@ _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
 # Key that uniquely identfies members.
 KEY = 'expname'
 
+# Target acquisition Exposure types
+_TARGETACQ_TYPES = set((
+    'NRC_TACQ',
+    'NRC_TACONFIRM',
+    'MIR_TACQ',
+    'NRS_CONFIRM',
+    'NRS_TACQ',
+    'NRS_TACONFIRM',
+    'NRS_TASLIT',
+    'NIS_TACQ',
+    'NIS_TACONFIRM',
+))
+
+# Science exposure types
+# Currently empty because Level3 rules will
+# presume this is the default.
+_SCIENCE_TYPES = set()
+
 
 class DMS_Level3_Base(Association):
     """Basic class for DMS Level3 associations."""
+
+    # Attribute values that are indicate the
+    # attribute is not specified.
+    INVALID_VALUES = _EMPTY
 
     # Make sequences type-dependent
     _sequences = defaultdict(Counter)
@@ -66,8 +88,20 @@ class DMS_Level3_Base(Association):
         # Initialize discovered association ID
         self.discovered_id = Counter(_DISCOVERED_ID_START)
 
+        # Initialize validity checks
+        self.validity = {
+            'has_science': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'SCIENCE'
+            }
+        }
+
         # Let us see if member belongs to us.
         super(DMS_Level3_Base, self).__init__(*args, **kwargs)
+
+    @property
+    def is_valid(self):
+        return all(test['validated'] for test in self.validity.values())
 
     @property
     def acid(self):
@@ -152,6 +186,11 @@ class DMS_Level3_Base(Association):
 
         return product_name.lower()
 
+    def update_validity(self, entry):
+        for test in self.validity.values():
+            if not test['validated']:
+                test['validated'] = test['check'](entry)
+
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
         super(DMS_Level3_Base, self)._init_hook(member)
@@ -168,6 +207,7 @@ class DMS_Level3_Base(Association):
         self.data['constraints'] = '\n'.join(
             [cc for cc in self.constraints_to_text()]
         )
+        self.data['asn_id'] = self.acid.id
         self.new_product(member)
 
         # Parse out information from the pool file name.
@@ -188,10 +228,12 @@ class DMS_Level3_Base(Association):
             exposerr = None
         entry = {
             'expname': Utility.rename_to_level2b(member['FILENAME']),
-            'exptype': member['PNTGTYPE'],
+            'exptype': Utility.get_exposure_type(member, default='SCIENCE'),
             'exposerr': exposerr,
             'asn_candidate': member['ASN_CANDIDATE']
         }
+
+        self.update_validity(entry)
         members = self.current_product['members']
         members.append(entry)
         self.data['degraded_status'] = _DEGRADED_STATUS_OK
@@ -243,13 +285,23 @@ class DMS_Level3_Base(Association):
         """
         opt_elem = ''
         join_char = ''
-        if self.constraints['opt_elem']['value'] not in _EMPTY:
-            opt_elem = self.constraints['opt_elem']['value']
-            join_char = '-'
-        if self.constraints['opt_elem2']['value'] not in _EMPTY:
-            opt_elem = join_char.join(
-                [opt_elem, self.constraints['opt_elem2']['value']]
-            )
+        try:
+            value = self.constraints['opt_elem']['value']
+        except KeyError:
+            pass
+        else:
+            if value not in _EMPTY:
+                opt_elem = value
+                join_char = '-'
+        try:
+            value = self.constraints['opt_elem2']['value']
+        except KeyError:
+            pass
+        else:
+            if value not in _EMPTY:
+                opt_elem = join_char.join(
+                    [opt_elem, value]
+                )
         if opt_elem == '':
             opt_elem = 'clear'
         return opt_elem
@@ -429,14 +481,53 @@ class Utility(object):
             ]
         return result
 
+    @staticmethod
+    def get_exposure_type(member, default=None):
+        """Determine the exposure type of a pool member
+
+        Parameters
+        ----------
+        member: dict
+            The pool entry to determine the exposure type of
+
+        default: str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+
+        Returns
+        -------
+        exposure_type: str
+            Exposure type. Can be one of
+                'SCIENCE': Member contains science data
+                'TARGET_AQUISITION': Member contains target acquisition data.
+
+        Raises
+        ------
+        LookupError
+            When `default` is None and an exposure type cannot be determined
+        """
+        result = default
+        try:
+            exp_type = member['EXP_TYPE']
+        except KeyError:
+            exp_type = None
+
+        if exp_type in _TARGETACQ_TYPES:
+            result = 'TARGET_ACQUISTION'
+        elif exp_type in _SCIENCE_TYPES:
+            result = 'SCIENCE'
+
+        if result is None:
+            raise LookupError('Exposure type cannot be determined')
+        return result
 
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
 # ---------------------------------------------
 
 
-class AsnMixin_Unique_Config(DMS_Level3_Base):
-    """Restrict to unique insturment configuration"""
+class AsnMixin_Base(DMS_Level3_Base):
+    """Restrict to Program and Instrument"""
 
     def __init__(self, *args, **kwargs):
 
@@ -450,21 +541,29 @@ class AsnMixin_Unique_Config(DMS_Level3_Base):
                 'value': None,
                 'inputs': ['INSTRUME']
             },
+        })
+
+        super(AsnMixin_Base, self).__init__(*args, **kwargs)
+
+
+class AsnMixin_OpticalPath(DMS_Level3_Base):
+    """Ensure unique optical path"""
+
+    def __init__(self, *args, **kwargs):
+        # I am defined by the following constraints
+        self.add_constraints({
             'opt_elem': {
                 'value': None,
                 'inputs': ['FILTER']
             },
             'opt_elem2': {
                 'value': None,
-                'inputs': ['PUPIL']
-            },
-            'detector': {
-                'value': '(?!NULL).+',
-                'inputs': ['DETECTOR']
+                'inputs': ['PUPIL', 'GRATING'],
+                'required': False,
             },
         })
 
-        super(AsnMixin_Unique_Config, self).__init__(*args, **kwargs)
+        super(AsnMixin_OpticalPath, self).__init__(*args, **kwargs)
 
 
 class AsnMixin_Target(DMS_Level3_Base):
@@ -484,7 +583,7 @@ class AsnMixin_Target(DMS_Level3_Base):
         super(AsnMixin_Target, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_MIRI(AsnMixin_Unique_Config):
+class AsnMixin_MIRI(DMS_Level3_Base):
     """All things that belong to MIRI"""
 
     def __init__(self, *args, **kwargs):
@@ -501,7 +600,7 @@ class AsnMixin_MIRI(AsnMixin_Unique_Config):
         super(AsnMixin_MIRI, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_NIRSPEC(AsnMixin_Unique_Config):
+class AsnMixin_NIRSPEC(DMS_Level3_Base):
     """All things that belong to NIRSPEC"""
 
     def __init__(self, *args, **kwargs):
@@ -518,7 +617,7 @@ class AsnMixin_NIRSPEC(AsnMixin_Unique_Config):
         super(AsnMixin_NIRSPEC, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_NIRISS(AsnMixin_Unique_Config):
+class AsnMixin_NIRISS(DMS_Level3_Base):
     """All things that belong to NIRISS"""
 
     def __init__(self, *args, **kwargs):
@@ -535,7 +634,7 @@ class AsnMixin_NIRISS(AsnMixin_Unique_Config):
         super(AsnMixin_NIRISS, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_NIRCAM(AsnMixin_Unique_Config):
+class AsnMixin_NIRCAM(DMS_Level3_Base):
     """All things that belong to NIRCAM"""
 
     def __init__(self, *args, **kwargs):
@@ -568,7 +667,7 @@ class AsnMixin_Image(DMS_Level3_Base):
         super(AsnMixin_Image, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_Spectrum(AsnMixin_Unique_Config):
+class AsnMixin_Spectrum(DMS_Level3_Base):
     """All things that are spectrum"""
 
     def _init_hook(self, member):

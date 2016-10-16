@@ -3,6 +3,7 @@ Various utilities to handle running Steps from the commandline.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+# import cProfile
 import io
 import os
 import os.path
@@ -266,7 +267,12 @@ def step_from_cmdline(args, cls=None):
     log.log.info("OS: {0}".format(os.uname()[0]))
 
     try:
-        step.run(*positional)
+        profile_path = os.environ.pop("JWST_PROFILE", None)
+        if profile_path:
+            import cProfile
+            cProfile.runctx("step.run(*positional)", globals(), locals(), profile_path)
+        else:
+            step.run(*positional)
     except Exception as e:
         import traceback
         lines = traceback.format_exc()

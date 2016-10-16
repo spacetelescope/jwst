@@ -228,6 +228,10 @@ properties:
             title: Target proper motion epoch
             type: string
             fits_keyword: PROPEPOC
+          source_type:
+            title: Advised source type (point/extended)
+            type: string
+            fits_keyword: SRCTYPE
       instrument:
         title: Instrument configuration information
         type: object
@@ -786,11 +790,11 @@ properties:
             type: number
             fits_keyword: DEC_REF
           v2_ref:
-            title: Telescope v2 coordinate of the reference point (arcmin)
+            title: Telescope v2 coordinate of the reference point (arcsec)
             type: number
             fits_keyword: V2_REF
           v3_ref:
-            title: Telescope v3 coordinate of the reference point (arcmin)
+            title: Telescope v3 coordinate of the reference point (arcsec)
             type: number
             fits_keyword: V3_REF
           roll_ref:

@@ -2,6 +2,10 @@ from __future__ import print_function
 import numpy as np
 from . import dqflags
 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 def dynamic_mask(input_model):
     #
     # Return a mask model given a mask with dynamic DQ flags
@@ -22,7 +26,7 @@ def dynamic_mask(input_model):
             try:
                 standard_bitvalue = dqflags.pixel[dqname]
             except KeyError:
-                print('Keyword %s does not correspond to an existing DQ mnemonic, so will be ignored' % (dqname))
+                log.warning('Keyword %s does not correspond to an existing DQ mnemonic, so will be ignored' % (dqname))
                 continue
             just_this_bit = np.bitwise_and(input_model.dq, bitplane)
             pixels = np.where(just_this_bit != 0)

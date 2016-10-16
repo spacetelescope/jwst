@@ -9,6 +9,67 @@ from ..datamodels import fits_support, DataModel
 from gwcs import utils as gwutils
 from gwcs import coordinate_frames as cf
 from gwcs import wcs
+from ..transforms.models import V23ToSky
+
+
+def v23tosky(input_model):
+    v2_ref = input_model.meta.wcsinfo.v2_ref / 3600
+    v3_ref = input_model.meta.wcsinfo.v3_ref / 3600
+    roll_ref = input_model.meta.wcsinfo.roll_ref
+    ra_ref = input_model.meta.wcsinfo.ra_ref
+    dec_ref = input_model.meta.wcsinfo.dec_ref
+    
+    angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
+    axes = "zyxyz"
+    sky_rotation = V23ToSky(angles, axes_order=axes, name="v23tosky")
+    return sky_rotation
+
+
+def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_v3_ref):
+    """
+    Computes the position of V3 (measured N to E) at the center af an aperture.
+
+    Parameters
+    ----------
+    v2_ref, v3_ref : float
+        Reference point in the V2, V3 frame [in arcsec] (FITS keywords V2_REF and V3_REF)
+    roll_ref : float
+        Position angle of V3 at V2_REF, V3_REF, [in deg]
+        When ROLL_REF == PA_V2, V2_REF, V3_REF = (0, 0)
+    ra_ref, dec_ref : float
+        RA and DEC corresponding to V2_REF and V3_REF, [in deg]
+    new_v2_ref, new_v3_ref : float
+        The new position in V2, V3 where the position of V3 is computed, [in arcsec]
+        The center of the aperture in V2,V3
+
+    Returns
+    -------
+    new_roll : float
+        The value of ROLL_REF (in deg)
+
+    """
+    v2 = np.deg2rad(new_v2_ref / 3600)
+    v3 = np.deg2rad(new_v3_ref / 3600)
+
+    if np.isclose(v2_ref, 0, atol=1e-13) and np.isclose(v3_ref, 0, atol=1e-13):
+        angles = [-roll_ref, -dec_ref, - ra_ref]
+        axes = "xyz"
+    else:
+        angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
+        axes = "zyxyz"
+    M = V23ToSky._compute_matrix(np.deg2rad(angles), axes)
+    return _roll_angle_from_matrix(M, v2, v3)
+
+
+def _roll_angle_from_matrix(matrix, v2, v3):
+    X = -(matrix[2, 0] * np.cos(v2) + matrix[2, 1] * np.sin(v2)) * \
+        np.sin(v3) + matrix[2, 2] * np.cos(v3)
+    Y = (matrix[0, 0] * matrix[1, 2] - matrix[1, 0] * matrix[0, 2]) * np.cos(v2) + \
+        (matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]) * np.sin(v2)
+    new_roll = np.rad2deg(np.arctan2(Y, X))
+    if new_roll < 0:
+        new_roll += 360
+    return new_roll
 
 
 def create_fitswcs_transform(input_model):
@@ -105,8 +166,8 @@ def frame_from_model(wcsinfo):
 def create_fitswcs(inp):
     if isinstance(inp, DataModel):
         wcsinfo = wcsinfo_from_model(inp)
-        transform = fitswcs_transform_from_model(wcsinfo) #inp)
-        output_frame = frame_from_model(wcsinfo) #inp)
+        transform = fitswcs_transform_from_model(wcsinfo)
+        output_frame = frame_from_model(wcsinfo)
     elif isinstance(inp, six.string_types):
         transform = create_fitswcs_transform(inp)
         output_frame = frame_from_fits(inp)

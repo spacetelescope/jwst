@@ -85,7 +85,7 @@ class BasePoolRule(object):
                 yield check_equal, set(asn.candidates), set(candidates)
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def full_pool_rules(request):
     pool_fname = t_path('data/mega_pool.csv')
     pool = AssociationPool.read(pool_fname)

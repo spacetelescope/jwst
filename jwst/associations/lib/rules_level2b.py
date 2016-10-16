@@ -8,6 +8,7 @@ from jwst.associations import (
     Association,
     libpath
 )
+from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -28,10 +29,6 @@ class DMS_Level2b_Base(Association):
 
         # I am defined by the following constraints
         self.add_constraints({
-            'pointing_type': {
-                'value': 'SCIENCE',
-                'inputs': ['PNTGTYPE']
-            },
             'program': {
                 'value': None,
                 'inputs': ['PROGRAM']
@@ -91,7 +88,7 @@ class DMS_Level2b_Base(Association):
         """Add member to this association."""
         entry = {
             'expname': Utility.rename_to_level2a(member['FILENAME']),
-            'exptype': member['PNTGTYPE']
+            'exptype': Utility.get_exposure_type(member, default='SCIENCE')
         }
         members = self.current_group['members']
         members.append(entry)
@@ -158,6 +155,10 @@ class Utility(object):
             match.group('extension')
         ])
         return level2a_name
+
+    @staticmethod
+    def get_exposure_type(*args, **kwargs):
+        return Utility_Level3.get_exposure_type(*args, **kwargs)
 
 
 class Asn_MIRI_LRS_BKGNOD(DMS_Level2b_Base):
