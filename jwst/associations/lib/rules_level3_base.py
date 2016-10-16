@@ -69,6 +69,11 @@ _TARGETACQ_TYPES = set((
 # presume this is the default.
 _SCIENCE_TYPES = set()
 
+# Calibration exposure types
+_AUTO_WAVE_TYPES = set((
+    'NRS_AUTOWAVE',
+))
+
 
 class DMS_Level3_Base(Association):
     """Basic class for DMS Level3 associations."""
@@ -514,6 +519,8 @@ class Utility(object):
 
         if exp_type in _TARGETACQ_TYPES:
             result = 'TARGET_ACQUISTION'
+        elif exp_type in _AUTO_WAVE_TYPES:
+            result = 'AUTOWAVE'
         elif exp_type in _SCIENCE_TYPES:
             result = 'SCIENCE'
 

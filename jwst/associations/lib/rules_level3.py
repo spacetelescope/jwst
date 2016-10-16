@@ -314,10 +314,11 @@ class Asn_NRS_IFU(
             'exp_type': {
                 'value': (
                     'NRS_IFU'
+                    '|NRS_AUTOWAVE'
+                    '|NRS_CONFIRM'
                     '|NRS_TASLIT'
                     '|NRS_TACQ'
                     '|NRS_TACONFIRM'
-                    '|NRS_CONFIRM'
                 ),
                 'inputs': ['EXP_TYPE']
             },
