@@ -10,6 +10,7 @@ from ..imprint import imprint_step
 #from jwst.msaflagging import msa_flag_step
 from ..extract_2d import extract_2d_step
 from ..flatfield import flat_field_step
+from ..srctype import srctype_step
 from ..straylight import straylight_step
 from ..fringe import fringe_step
 from ..photom import photom_step
@@ -29,7 +30,7 @@ class Spec2Pipeline(Pipeline):
     Included steps are:
     assign_wcs, background subtraction, NIRSpec MSA imprint subtraction,
     NIRSpec MSA bad shutter flagging, 2-D subwindow extraction, flat field,
-    straylight, fringe, and photom.
+    source type decision, straylight, fringe, and photom.
     """
 
     spec = """
@@ -43,6 +44,7 @@ class Spec2Pipeline(Pipeline):
                  #'msa_flagging' : msa_flag_step.MsaFlagStep,
                  'extract_2d': extract_2d_step.Extract2dStep,
                  'flat_field': flat_field_step.FlatFieldStep,
+                 'srctype': srctype_step.SourceTypeStep,
                  'straylight': straylight_step.StraylightStep,
                  'fringe': fringe_step.FringeStep,
                  'photom': photom_step.PhotomStep
@@ -102,6 +104,9 @@ class Spec2Pipeline(Pipeline):
             # Apply flat-field correction
             input = self.flat_field(input)
 
+            # Apply the source type decision step
+            input = self.srctype(input)
+
             # Apply the straylight correction for MIRI MRS
             if input.meta.exposure.type == 'MIR_MRS':
                 input = self.straylight(input)
@@ -125,6 +130,7 @@ class Spec2Pipeline(Pipeline):
                 self.save_model(input, 'calints')
             else:
                 self.save_model(input, "cal")
+            log.info('Save calibrated product to %s' % input.meta.filename)
 
             input.close()
 
