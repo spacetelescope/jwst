@@ -134,7 +134,7 @@ def imaging_distortion(input_model, reference_files):
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
     # Convert to arcsec
     transform = distortion | Scale(60) & Scale(60)
-    return distortion
+    return transform
 
 
 exp_type2transform = {'nis_image': imaging,
