@@ -294,7 +294,7 @@ class ListNode(Node):
     def append(self, item):
         schema = _get_schema_for_index(self._schema, len(self._instance))
         self._instance.append(_cast(item, schema))
-        #self._validate()
+        self._validate()
 
     def insert(self, i, item):
         schema = _get_schema_for_index(self._schema, i)
