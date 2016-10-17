@@ -200,6 +200,10 @@ class CubeInfo(object):
         for i in range(self.naxis2):
             self.ycoord[i] = ystart
             ystart = ystart + self.Cdelt2
+
+        print('cube axis1',self.Cdelt1,self.Crpix1,self.naxis1)
+        print('cube axis2',self.Cdelt2,self.Crpix2,self.naxis2)
+        sys.exit('STOP')
 #_______________________________________________________________________
 
 #        ycube,xcube = np.mgrid[:self.naxis2,:self.naxis1]

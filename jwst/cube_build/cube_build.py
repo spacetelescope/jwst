@@ -128,34 +128,35 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
         detector2v23 = input.meta.wcs.get_transform('detector', 'v2v3')
         v23toworld = input.meta.wcs.get_transform("v2v3","world")
 
-        v2, v3, lam = detector2v23(x, y) # v2,v3 are in units of arc minutes 
-        print('v2,v3 after detector2v23 ',v2[0,15:20],v3[0,15:20])
-        ra_ref = input.meta.wcsinfo.ra_ref # degrees
-        dec_ref = input.meta.wcsinfo.dec_ref # degrees
-        roll_ref = input.meta.wcsinfo.roll_ref # degrees 
-        v2_ref = input.meta.wcsinfo.v2_ref # arc min
-        v3_ref = input.meta.wcsinfo.v3_ref # arc min         
-        coord1,coord2 = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,
-                                         v2,v3) # return ra and dec in degrees
+        v2, v3, lam = detector2v23(x, y) # v2,v3 are in units of arc seconds 
+#        print('v2,v3 after detector2v23 ',v2[0,15:20],v3[0,15:20])
+#        ra_ref = input.meta.wcsinfo.ra_ref # degrees
+#        dec_ref = input.meta.wcsinfo.dec_ref # degrees
+#        roll_ref = input.meta.wcsinfo.roll_ref # degrees 
+#        v2_ref = input.meta.wcsinfo.v2_ref # arc seconds
+#        v3_ref = input.meta.wcsinfo.v3_ref # arc seconds     
+#        coord1_test,coord2_test = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,
+#                                         v2,v3) # return ra and dec in degrees
+#        print('v2,v3 after coord.v2v33radec ',v2[0,15:20],v3[0,15:20])
+        coord1,coord2,lam = v23toworld(v2,v3,lam)
+#        print('v2,v3 to world ',v2[0,15:20],v3[0,15:20])
 
-        coord1_test,coord2_test,lam_test = v23toworld(v2,v3,lam)
+#        print(x.shape,y.shape)
 
-        print(x.shape,y.shape)
+#        print('x',x[0,15:20])
+#        print('y',y[0,15:20])
+#        print('v2',v2[0,15:20])
+#        print('v3',v3[0,15:20])
+#        print('lam',lam[0,15:20])
 
-        print('x',x[0,15:20])
-        print('y',y[0,15:20])
-        print('v2',v2[0,15:20])
-        print('v3',v3[0,15:20])
-        print('lam',lam[0,15:20])
+#        print('v2 min,max',np.nanmin(v2),np.nanmax(v2))
+#        print('v3 min max',np.nanmin(v3),np.nanmax(v3))
+#        print('coord1      ',coord1_test[0,15:20])
+#        print('coord1 world',coord1[0,15:20])
+#        print('coord2      ',coord2_test[0,15:20])
+#        print('coord2 world',coord2[0,15:20])
 
-        print('v2 min,max',np.nanmin(v2),np.nanmax(v2))
-        print('v3 min max',np.nanmin(v3),np.nanmax(v3))
-        print('coord1      ',coord1[0,15:20])
-        print('coord1 world',coord1_test[0,15:20])
-        print('coord2      ',coord2[0,15:20])
-        print('coord2 world',coord2_test[0,15:20])
-
-        sys.exit('STOP')
+#        sys.exit('STOP')
 
     else:
         # error the coordinate system is not defined
@@ -220,19 +221,24 @@ def FindFootPrintNIRSPEC(self, input):
     # for NIRSPEC there are 30 regions
     for i in regions:
 
-        slice_wcs = nirspec.nrs_wcs_set_input(input, 0, i)
+#        slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
+        slice_wcs = nirspec.nrs_wcs_set_input(input,0, i)
 
         yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
         y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
-        v2, v3, lam = slice_wcs(x, y) # v2,v3 units arc seconds
+        ra,dec,lam = slice_wcs(x,y)
 
+        detector2v23 = slice_wcs.get_transform('detector','v2v3')
+        v2, v3, lam = detector2v23(x, y) # v2,v3 units arc seconds
 #        print('xrange',xrange)
 #        print('yrange',yrange)
 #        print('v2',v2.shape)
 #        print('v3',v3.shape)
         print('v2 min,max',np.nanmin(v2),np.nanmax(v2))
         print('v3 min max',np.nanmin(v3),np.nanmax(v3))
+        sys.exit('STOP')
+
 #        print('v2',v2[30,0:500])
 #        print('v3',v3[30,0:500])
 

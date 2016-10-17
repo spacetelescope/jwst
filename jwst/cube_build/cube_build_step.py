@@ -147,14 +147,14 @@ class CubeBuildStep (Step):
 
         if(instrument == 'MIRI'):
             Cube = cube.CubeInfo('MIRI',detector,
-                                 self.metadata['channel'], 
-                                 self.metadata['subchannel'], 
+                                 self.metadata['band_channel'], 
+                                 self.metadata['band_subchannel'], 
                                  self.output_name)
 
         if(instrument == 'NIRSPEC'):
             Cube = cube.CubeInfo('NIRSPEC',detector,
-                                 self.metadata['filter'], 
-                                 self.metadata['grating'], 
+                                 self.metadata['band_filter'], 
+                                 self.metadata['band_grating'], 
                                  self.output_name)
 
 
@@ -180,6 +180,8 @@ class CubeBuildStep (Step):
             wscale = self.scalew
 
         Cube.SetScale(a_scale, b_scale, wscale)
+        print('Scale of cube',a_scale,b_scale,wscale)
+
         t0 = time.time()
 #________________________________________________________________________________
 # find the min & max final coordinates of cube: map each slice to cube
