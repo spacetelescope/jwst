@@ -51,23 +51,20 @@ _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
 # Key that uniquely identfies members.
 KEY = 'expname'
 
-# Target acquisition Exposure types
-_TARGETACQ_TYPES = set((
-    'NRC_TACQ',
-    'NRC_TACONFIRM',
-    'MIR_TACQ',
-    'NRS_CONFIRM',
-    'NRS_TACQ',
-    'NRS_TACONFIRM',
-    'NRS_TASLIT',
-    'NIS_TACQ',
-    'NIS_TACONFIRM',
-))
-
-# Science exposure types
-# Currently empty because Level3 rules will
-# presume this is the default.
-_SCIENCE_TYPES = set()
+# Exposure EXP_TYPE to Association EXPTYPE mapping
+_EXPTYPE_MAP = {
+    'MIR_TACQ':      'TARGET_ACQUISTION',
+    'NIS_TACQ':      'TARGET_ACQUISTION',
+    'NIS_TACONFIRM': 'TARGET_ACQUISTION',
+    'NRC_TACQ':      'TARGET_ACQUISTION',
+    'NRC_TACONFIRM': 'TARGET_ACQUISTION',
+    'NRS_AUTOFLAT':  'AUTOFLAT',
+    'NRS_AUTOWAVE':  'AUTOWAVE',
+    'NRS_CONFIRM':   'TARGET_ACQUISTION',
+    'NRS_TACQ':      'TARGET_ACQUISTION',
+    'NRS_TACONFIRM': 'TARGET_ACQUISTION',
+    'NRS_TASLIT':    'TARGET_ACQUISTION',
+}
 
 
 class DMS_Level3_Base(Association):
@@ -510,15 +507,9 @@ class Utility(object):
         try:
             exp_type = member['EXP_TYPE']
         except KeyError:
-            exp_type = None
-
-        if exp_type in _TARGETACQ_TYPES:
-            result = 'TARGET_ACQUISTION'
-        elif exp_type in _SCIENCE_TYPES:
-            result = 'SCIENCE'
-
-        if result is None:
             raise LookupError('Exposure type cannot be determined')
+
+        result = _EXPTYPE_MAP.get(exp_type, default)
         return result
 
 # ---------------------------------------------
