@@ -497,6 +497,8 @@ class Utility(object):
             Exposure type. Can be one of
                 'SCIENCE': Member contains science data
                 'TARGET_AQUISITION': Member contains target acquisition data.
+                'AUTOFLAT': NIRSpec AUTOFLAT
+                'AUTOWAVE': NIRSpec AUTOWAVE
 
         Raises
         ------
