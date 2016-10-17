@@ -44,7 +44,7 @@ class TestLevel3Spectrographic(BasePoolRule):
             'spec',
             'jw99009-o001_spec_\d{3}_asn',
             'jw99009-o001_t001_nirspec_f100lp-g140m',
-            set(('SCIENCE', 'TARGET_ACQUISTION'))
+            set(('SCIENCE', 'TARGET_ACQUISTION', 'AUTOWAVE'))
         ),
         (
             'o002',

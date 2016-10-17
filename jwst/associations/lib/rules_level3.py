@@ -201,10 +201,11 @@ class Asn_NRS_FIXEDSLIT(
             'exp_type': {
                 'value': (
                     'NRS_FIXEDSLIT'
-                    '|NRS_TASLIT'
+                    '|NRS_AUTOWAVE'
+                    '|NRS_CONFIRM'
                     '|NRS_TACQ'
                     '|NRS_TACONFIRM'
-                    '|NRS_CONFIRM'
+                    '|NRS_TASLIT'
                 ),
                 'inputs': ['EXP_TYPE']
             },
