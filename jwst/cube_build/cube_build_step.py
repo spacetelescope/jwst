@@ -56,8 +56,7 @@ class CubeBuildStep (Step):
         if(self.offset_list != 'NA'): self.log.info('Offset Dither list %s', self.offset_list)
 
         # valid coord_system:
-        # 1. alpha-beta (only valid for Single Cubes)
-        #  v2-v3 NOT USED ANY MORE
+        # 1. alpha-beta (only valid for MIRI Single Cubes)
         # 2. ra-dec
 
         if (self.interpolation == 'area'):
@@ -158,9 +157,9 @@ class CubeBuildStep (Step):
                                  self.output_name)
 
 
-        InstrumentInfo = InstrumentDefaults.Info() # for now this holds defaults on the two instruments
+        # for now InstrumentDefaults holds defaults on the two instruments
+        InstrumentInfo = InstrumentDefaults.Info() 
         self.log.info(' Building Cube %s ', Cube.output_name)
-
 
 
             # Scale is 3 dimensions and is determined from default values InstrumentInfo.GetScale
@@ -254,20 +253,19 @@ class CubeBuildStep (Step):
             parameter1 = Cube.grating
             parameter2 = Cube.filter
 
-        number1 = len(parameter1)
-        number2 = len(parameter2)
-        for i in range(number1):
+        number_bands = len(parameter1)
+        for i in range(number_bands):
             this_par1 = parameter1[i]
-            for j in range(number2):
-                this_par2 = parameter2[j]
-                print('cube_build_step',this_par1,this_par2)
+            this_par2 = parameter2[i]            
+            
+            print('cube_build_step',this_par1,this_par2)
 
-                PixelCloud = cube_build.MapDetectorToCube(self, 
-                                                          this_par1, this_par2, 
-                                                          Cube, spaxel, 
-                                                          PixelCloud,
-                                                          MasterTable, 
-                                                          InstrumentInfo)
+            PixelCloud = cube_build.MapDetectorToCube(self, 
+                                                      this_par1, this_par2, 
+                                                      Cube, spaxel, 
+                                                      PixelCloud,
+                                                      MasterTable, 
+                                                      InstrumentInfo)
 
         t1 = time.time()
         self.log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))

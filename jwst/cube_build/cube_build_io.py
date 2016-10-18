@@ -488,6 +488,8 @@ def WriteCube(self, Cube, spaxel):
     name = Cube.output_name
     new_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
 
+
+
     new_model.meta.wcsinfo.crval1 = Cube.Crval1
     new_model.meta.wcsinfo.crval2 = Cube.Crval2
     new_model.meta.wcsinfo.crval3 = Cube.Crval3

@@ -222,7 +222,7 @@ def FindFootPrintNIRSPEC(self, input):
     for i in regions:
 
 #        slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
-        slice_wcs = nirspec.nrs_wcs_set_input(input,0, i)
+        slice_wcs = nirspec.nrs_wcs_set_input(input, i)
 
         yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
@@ -334,8 +334,6 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
     elif(instrument == 'NIRSPEC'):
         parameter1 = self.metadata['band_grating']
         parameter2 = self.metadata['band_filter']
-
-    
 
 #    number_par1 = len(parameter1)
 #    number_par2 = len(parameter2)
@@ -475,12 +473,15 @@ def MapDetectorToCube(self, this_par1, this_par2,
         with datamodels.ImageModel(ifile) as input_model:
 #********************************************************************************
             if(instrument == 'MIRI'):
-                det2ab_transform = input_model.meta.wcs.get_transform('detector', 
-                                                                      'alpha_beta')
-                v2ab_transform = input_model.meta.wcs.get_transform('V2_V3', 
+#                det2ab_transform = input_model.meta.wcs.get_transform('detector', 
+#                                                                      'alpha_beta')
+                v2ab_transform = input_model.meta.wcs.get_transform('v2v3', 
                                                                     'alpha_beta')
                 wave_weights = CubeCloud.FindWaveWeights(this_par1, this_par2)
 
+                worldtov23 = input_model.meta.wcs.get_transform("world","v2v3")
+#        detector2v23 = input.meta.wcs.get_transform('detector', 'v2v3')
+#        v23toworld = input.meta.wcs.get_transform("v2v3","world")
             # for each file we need information that will be the same for all
             # the pixels on the image.
             # For MIRI this information is used in the weight scheme on how to 
@@ -491,8 +492,8 @@ def MapDetectorToCube(self, this_par1, this_par2,
                 Cube.c_wave.append(wave_weights[1])
                 Cube.a_weight.append(wave_weights[2])
                 Cube.c_weight.append(wave_weights[3])
-                Cube.transform.append(v2ab_transform)
-
+                Cube.transform_v23toab.append(v2ab_transform)
+                Cube.transform_worldtov23.append(worldtov23) 
             # read in the V2-V3 to RA-DEC information
                 ra_ref = input_model.meta.wcsinfo.ra_ref # degrees
                 dec_ref = input_model.meta.wcsinfo.dec_ref # degrees
@@ -500,7 +501,7 @@ def MapDetectorToCube(self, this_par1, this_par2,
                 v2_ref = input_model.meta.wcsinfo.v2_ref # arc min
                 v3_ref = input_model.meta.wcsinfo.v3_ref # arc min 
 
-                v2v32radec = ra_ref,dec_ref,roll_ref,v2_ref,v3_ref  # temporarily
+#                v2v32radec = ra_ref,dec_ref,roll_ref,v2_ref,v3_ref  # temporarily
                 # store the info needed to transform to ra,dec (this will later
                 # be in assign_wcs) 
 
@@ -522,7 +523,7 @@ def MapDetectorToCube(self, this_par1, this_par2,
                     cloud = CubeCloud.MakePointCloudMIRI(self,input_model,
                                                          x, y, k, 
                                                          Cube,
-                                                         v2v32radec,
+#                                                         v2v32radec,
                                                          c1_offset, c2_offset)
                     n = PixelCloud.size
                     if(n == 10):  # If first time
@@ -536,7 +537,8 @@ def MapDetectorToCube(self, this_par1, this_par2,
 #________________________________________________________________________________
 #2D area method - only works for single files and coord_system = 'alpha-beta'
                 if(self.interpolation == 'area'):
-
+                    det2ab_transform = input_model.meta.wcs.get_transform('detector', 
+                                                                      'alpha_beta')
                     start_region = InstrumentInfo.GetStartSlice(this_par1)
                     end_region = InstrumentInfo.GetEndSlice(this_par1)
                     regions = list(range(start_region, end_region + 1))

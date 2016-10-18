@@ -9,8 +9,8 @@ import math
 #_______________________________________________________________________
 def V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,v2, v3):
 
-        # v2_ref,v3_ref given in arc mins
-        # v2 and v3 are given in arc mins
+        # v2_ref,v3_ref given in arc seconds 
+        # v2 and v3 are given in arc seconds
         # ra_ref,dec_ref, roll_ref given in degrees
         # it is assumed that the V2,V3 coordinates have the effects of dithering included
         
@@ -19,11 +19,7 @@ def V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,v2, v3):
     v2deg = v2.copy()/3600.0      # convert to degrees
     v3deg = v3.copy()/3600.0      # convert to degrees
 
-    print('v2_ref',v2_ref)
-    print('v3_ref',v3_ref)
-    print('ra_ref',ra_ref,dec_ref)
-    print(v2deg[0,15:20])
-    print(v3deg[0,15:20])
+
     v2_ref = v2_ref/3600.0 # covert to degrees
     v3_ref = v3_ref/3600.0 # convert to degrees
     v3_ref_rad = v3_ref*d2r
@@ -37,8 +33,6 @@ def V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,v2, v3):
     ra = ra_ref + delta_ra/math.cos(dec_ref*d2r)
     dec = delta_dec + dec_ref
 
-
-    #print('ra dec',ra[0,15:20],dec[0,15:20])
 
 
     return ra,dec
