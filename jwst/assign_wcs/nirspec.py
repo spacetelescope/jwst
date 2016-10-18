@@ -264,15 +264,15 @@ def get_open_slits(input_model):
 
 def get_open_fixed_slits(input_model):
     slits = []
-    slits.append(Slit('S200A1', 0, 0, 0, -.5, .5, 5, ""))
-    slits.append(Slit('S200A2', 1, 0, 0, -.5, .5, 5, ""))
-    slits.append(Slit('S400A1', 2, 0, 0, -.5, .5, 5, ""))
-    slits.append(Slit('S1600A1', 3, 0, 0, -.5, .5, 5, ""))
+    slits.append(Slit('S200A1', 0, 0, 0, -.5, .5, 5, "", ""))
+    slits.append(Slit('S200A2', 1, 0, 0, -.5, .5, 5, "", ""))
+    slits.append(Slit('S400A1', 2, 0, 0, -.5, .5, 5, "", ""))
+    slits.append(Slit('S1600A1', 3, 0, 0, -.5, .5, 5, "", ""))
 
     if input_model.meta.instrument.detector == 'NRS1':
         if input_model.meta.instrument.filter == 'F070LP' and \
                 input_model.meta.instrument.grating == 'G140H':
-            slits.append(Slit('S200B1', 4, 0, 0, -.5, .5, 5, ""))
+            slits.append(Slit('S200B1', 4, 0, 0, -.5, .5, 5, "", ""))
     return slits
 
 
@@ -296,10 +296,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
     For example, something like:
         (12, 2, 4, 251, 22, 1, 'Y', 'OPEN', nan, nan),
 
-
        column
-
-
 
     Parameters
     ----------
@@ -312,7 +309,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
     -------
     slitlets : list
         A list of slitlets. Each slitlet is a tuple with
-        (slitlet_id, quadrant, xcen, ycen, ymin, ymax)
+        ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax", "quadrant", "source_id", "nshutters")
 
     """
 
@@ -339,7 +336,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
 
             # Get the rows for the current slitlet_id
             slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
-
+            nshutters = len(slitlets_sid)
             # Count the number of backgrounds that have an 'N' (meaning main shutter)
             # This needs to be 0 or 1 and we will have to deal with those differently
             # See: https://github.com/STScI-JWST/jwst/commit/7588668b44b77486cdafb35f7e2eb2dcfa7d1b63#commitcomment-18987564
@@ -357,7 +354,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
                 jmax = max([s['shutter_column'] for s in slitlets_sid])
                 j = (jmax - jmin) // 2 + 1
                 ymax = 0.5 + margin + (jmax - j) * 1.15
-                ## TODO: check this formula - it is different (assuming incorrect in the report).
+                ## TODO: check this formula - it is different (assuming it's incorrect in the report).
                 ymin = -(0.5 + margin) + (jmin - j) * 1.15
                 quadrant = slitlets_sid[0]['shutter_quadrant']
                 ycen = j
@@ -377,14 +374,15 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
 
             # Not allowed....
             else:
-                log.warning('WARNING: More than one main shutter, but there must only be 0 or 1.')
-                return []
+                raise ValueError("MSA configuration file has more than 1 shutter with "
+                                 "sources for metadata_id = {}".format(msa_metadata_id))
 
             shutter_id = xcen + (ycen-1) * 365
             source_id = slitlets_sid[0]['source_id']
             # Create the output list of tuples that contain the required
             # data for further computations
-            slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax, quadrant, source_id))
+            slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax,
+                                 quadrant, source_id, nshutters))
 
     return slitlets
 

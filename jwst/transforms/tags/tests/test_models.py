@@ -28,15 +28,15 @@ def test_model(tmpdir, model):
 
 
 def test_gwa_to_slit():
-    models = [m1, m2]
-    s0 = models.Slit("s0", 1, 2, 3, 4, 5, 6, 7)
-    s1 = models.Slit("s1", 10, 20, 30, 40, 50, 60, 70)
+    transforms = [m1, m2]
+    s0 = Slit("s0", 1, 2, 3, 4, 5, 6, 7)
+    s1 = Slit("s1", 10, 20, 30, 40, 50, 60, 70)
     slits = [s0, s1]
-    m = Gwa2Slit(slits, models)
+    m = Gwa2Slit(slits, transforms)
     tree = {'model': m}
     helpers.assert_roundtrip_tree(tree, tmpdir, extensions=jwextension.JWSTExtension())
 
     slits = [1, 2]
-    m = Gwa2Slit(slits, models)
+    m = Gwa2Slit(slits, transforms)
     tree = {'model': m}
     helpers.assert_roundtrip_tree(tree, tmpdir, extensions=jwextension.JWSTExtension())

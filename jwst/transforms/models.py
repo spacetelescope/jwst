@@ -17,7 +17,7 @@ __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
            'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa',
            'Snell', 'RefractionIndex', 'Logical',
-           'NirissSOSSModel', 'V23ToSky']
+           'NirissSOSSModel', 'V23ToSky', 'Slit']
 
 
 # Number of shutters per quadrant
@@ -25,7 +25,7 @@ N_SHUTTERS_QUADRANT = 62415
 
 # Nirspec slit definition
 Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
-                           "ymin", "ymax", "quadrant", "source_id"])
+                           "ymin", "ymax", "quadrant", "source_id", "nshutters"])
 
 
 class RefractionIndex(Model):
@@ -495,12 +495,15 @@ class LRSWavelength(Model):
 
 class Gwa2Slit(Model):
     """
+    NIRSpec GWA to slit transform.
+
     Parameters
     ----------
     slits : list
         open slits
         a slit is a namedtupe
-        Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax", "quadrant"]
+        Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
+             "quadrant", "source_id", "nshutters")
     models : list
         an instance of `~astropy.modeling.core.Model`
     """
@@ -535,6 +538,19 @@ class Gwa2Slit(Model):
 
 
 class Slit2Msa(Model):
+    """
+    NIRSpec slit to MSA position transform.
+
+    Parameters
+    ----------
+    slits : list
+        open slits
+        a slit is a namedtupe
+        Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
+             "quadrant", "source_id", "nshutters")
+    models : list
+        an instance of `~astropy.modeling.core.Model`
+    """
 
     inputs = ('name', 'x_slit', 'y_slit', 'lam')
     outputs = ('x_msa', 'y_msa', 'lam')
@@ -567,8 +583,15 @@ class Slit2Msa(Model):
 
 class NirissSOSSModel(Model):
     """
-    This is a model to map the input order to output
-    Tabular models depending on the order that is set.
+    NIRISS SOSS wavelength solution.
+
+    Parameters
+    ----------
+    spectral_orders : list of int
+        Spectral orders for which there is a wavelength solution.
+    models : list of `~astropy.modeling.core.Model`
+        A list of transforms representing the wavelength solution for
+        each order in spectral orders. It should match the order in ``spectral_orders``.
     """
 
     inputs = ('x', 'y', 'spectral_order')
@@ -642,6 +665,17 @@ class Logical(Model):
 
 
 class V23ToSky(Rotation3D):
+    """
+    Transform from V2V3 to a standard coordinate system.
+
+    Parameters
+    ----------
+    angles : list
+        A sequence of angles (in deg).
+    axes_order : str
+        A sequence of characters ('x', 'y', or 'z') corresponding to the
+        axis of rotation and matching the order in ``angles``.
+    """
 
     inputs = ("v2", "v3")
     outputs = ("ra", "dec")
