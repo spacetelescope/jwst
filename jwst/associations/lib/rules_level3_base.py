@@ -24,7 +24,7 @@ logger.addHandler(logging.NullHandler())
 _DISCOVERED_ID_START = 3001
 
 # Non-specified values found in DMS Association Pools
-_EMPTY = (None, 'NULL', 'CLEAR')
+_EMPTY = (None, 'NULL')
 
 # The schema that these associations must adhere to.
 ASN_SCHEMA = libpath('asn_schema_jw_level3.json')
@@ -287,7 +287,7 @@ class DMS_Level3_Base(Association):
         except KeyError:
             pass
         else:
-            if value not in _EMPTY:
+            if value not in _EMPTY and value != 'CLEAR':
                 opt_elem = value
                 join_char = '-'
         try:
@@ -295,7 +295,7 @@ class DMS_Level3_Base(Association):
         except KeyError:
             pass
         else:
-            if value not in _EMPTY:
+            if value not in _EMPTY and value != 'CLEAR':
                 opt_elem = join_char.join(
                     [opt_elem, value]
                 )
