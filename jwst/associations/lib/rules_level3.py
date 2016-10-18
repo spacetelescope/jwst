@@ -97,11 +97,6 @@ class Asn_MIRI_LRS_FIXEDSLIT(
 
         # Setup for checking.
         self.add_constraints({
-            'patttype': {
-                'value': None,
-                'inputs': ['PATTTYPE'],
-                'force_unique': True
-            },
             'exp_type': {
                 'value': 'MIR_LRS-FIXEDSLIT|MIR_TACQ',
                 'inputs': ['EXP_TYPE']
