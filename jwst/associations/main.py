@@ -232,6 +232,7 @@ class Main(object):
                 CANDIDATE_RULESET,
                 keep_candidates=parsed.all_candidates,
             )
+            self.rules.Utility.resequence(self.associations)
 
         logger.info(self.__str__())
 

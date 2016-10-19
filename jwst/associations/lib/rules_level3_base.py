@@ -358,6 +358,13 @@ class Utility(object):
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
+    def resequence(associations):
+        """Resequence the numbering for the Level3 association types"""
+        counters = defaultdict(lambda : defaultdict(Counter))
+        for asn in associations:
+            asn.sequence = next(counters[asn.data['asn_id']][asn.data['asn_type']])
+
+    @staticmethod
     def filter_discovered_only(
             associations,
             discover_ruleset,
