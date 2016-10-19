@@ -1110,6 +1110,30 @@ properties:
                 title: Flat reference file name
                 type: string
                 fits_keyword: R_FLAT
+          dflat:
+            title: DFlat reference file information
+            type: object
+            properties:
+              name:
+                title: DFlat reference file name
+                type: string
+                fits_keyword: R_DFLAT
+          fflat:
+            title: FFlat reference file information
+            type: object
+            properties:
+              name:
+                title: FFlat reference file name
+                type: string
+                fits_keyword: R_FFLAT
+          sflat:
+            title: SFlat reference file information
+            type: object
+            properties:
+              name:
+                title: SFlat reference file name
+                type: string
+                fits_keyword: R_SFLAT
           fringe:
             title: Fringe reference file information
             type: object
