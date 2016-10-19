@@ -29,8 +29,8 @@ def test_model(tmpdir, model):
 
 def test_gwa_to_slit():
     transforms = [m1, m2]
-    s0 = Slit("s0", 1, 2, 3, 4, 5, 6, 7)
-    s1 = Slit("s1", 10, 20, 30, 40, 50, 60, 70)
+    s0 = Slit("s0", 1, 2, 3, 4, 5, 6, 7, 8)
+    s1 = Slit("s1", 10, 20, 30, 40, 50, 60, 70, 80)
     slits = [s0, s1]
     m = Gwa2Slit(slits, transforms)
     tree = {'model': m}
