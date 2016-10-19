@@ -887,6 +887,35 @@ def oteip_to_v23(reference_files):
     return fore2ote_mapping | (ote & Identity(1)) | (Scale(3600) & Scale(3600) & Scale(1e6))
 
 
+def ifu_oteip_to_v23(reference_files):
+    """
+    Transform from the OTEIP frame to the V2V3 frame.
+
+    Parameters
+    ----------
+    reference_files: dict
+        Dictionary with reference files returned by CRDS.
+
+    Returns
+    -------
+    model : `~astropy.modeling.core.Model` model.
+        Transform from OTEIP to V2V3.
+
+    """
+    with AsdfFile.open(reference_files['ote']) as f:
+        ote = f.tree['model'].copy()
+    fore2ote_mapping = Identity(3, name='fore2ote_mapping')
+    fore2ote_mapping.inverse = Mapping((0, 1, 2, 2))
+    # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
+    # meters as required by the pipeline but the desired output wavelength units is microns.
+    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
+    # The spatial units are currently in deg. Converting to arcsec
+    oteip_to_xyan = fore2ote_mapping | (ote & Identity(1)) | (Scale(3600) & Scale(3600) & Scale(1e6))
+    # Add a shift for the aperture.
+    xyan_to_v23 = oteip_to_xyan | Identity(1) & (Shift(468) | Scale(-1)) & Identity(1)
+    return xyan_to_v23
+
+
 def create_frames():
     """
     Create the coordinate frames in the NIRSPEC WCS pipeline.
