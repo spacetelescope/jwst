@@ -125,17 +125,10 @@ def MakePointCloudMIRI(self, input_model,
 #        sys.exit('STOP')
 
 
-    #wave = lam[good_data]
+
     ifile = np.zeros(flux.shape, dtype='int') + int(file_no)
 
     # get in form of 8 columns of data - shove the information in an array.
-
-#    print('xi results', coord1[0:10])
-#    print('eta results',coord2[0:10])
-#    print('wave',wave[0:10])
-    # stuff the point cloud arrays for this configuration into cloud 
-    # Point cloud will eventually contain all the cloud values
-
     # xpix,ypix used for testing
     cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile, xpix, ypix])
 #    cloud = np.asarray([coord1, coord2, wave, alpha, beta, flux, error, ifile])
@@ -283,7 +276,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
     nn = len(PointCloud[0])
 #    nn = 100
 
-    #print('number of elements in PT',nn)
+#    print('number of elements in PT',nn)
     
 # loop over each point cloud member - might want to change this to looping
 # over spaxels but for now just keep it point cloud elements because it
@@ -357,7 +350,6 @@ def FindROI(self, Cube, spaxel, PointCloud):
                 ix = 0
                 for xx in indexx[0]:
 
-
                     # for NIRSPEC find distance between PT and Spaxel Center 
                     # in xi,eta coordinate system
                     if(Cube.instrument == 'NIRSPEC'):
@@ -373,6 +365,11 @@ def FindROI(self, Cube, spaxel, PointCloud):
                                                              xi[ix],eta[iy])
 
 
+#                        print('ra_ref',ra_ref)
+#                        print('dec_ref',dec_ref)
+#                        print('v2_ref',v2_ref)
+#                        print('v3_ref',v3_ref)
+
                         v2_spaxel,v3_spaxel = coord.RADEC2V2V3(ra_ref,dec_ref,
                                                                roll_ref,
                                                                v2_ref,v3_ref,
@@ -380,17 +377,13 @@ def FindROI(self, Cube, spaxel, PointCloud):
  
 #                        v2_spaxel_test,v3_spaxel_test,zl = worldtov23(ra_spaxel,dec_spaxel,zlam[iz])
 
-#                        print('ra ',ra_spaxel)
-#                   print('dec',dec_spaxel)
-#                   print('wave',zlam[iz])
+#                        print('testing methods to get to v2,v3')
+#                        print('v2      ',v2_spaxel)
+#                        print('v2 test',v2_spaxel_test)
+#                        print('v3      ',v3_spaxel)
+#                        print('v3 test',v3_spaxel_test)
 
- #                   print('testing methods to get to v2,v3')
- #                   print('v2      ',v2_spaxel)
- #                   print('v2 test',v2_spaxel_test)
- #                   print('v3      ',v3_spaxel)
- #                   print('v3 test',v3_spaxel_test)
-
-                    #v2_spaxel, v3_spaxel are in arc seconds 
+                        #v2_spaxel, v3_spaxel are in arc seconds 
 
                         alpha_spaxel,beta_spaxel,wave_spaxel = v2ab_transform(v2_spaxel,
                                                                               v3_spaxel,
@@ -402,7 +395,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
 
 #                    print('beta_spaxel ',beta_spaxel)
 #                    print('beta        ',beta)
-#                    sys.exit('STOP')
+#                        sys.exit('STOP')
                         alpha_distance = abs(alpha-alpha_spaxel)
                         beta_distance = abs(beta-beta_spaxel)
                         wave_distance  = abs(wave-wave_spaxel)

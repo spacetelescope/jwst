@@ -119,7 +119,7 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
     coord2 = np.zeros(y.shape)
     lam = np.zeros(y.shape)
 
-    print(self.coord_system)
+
     if (self.coord_system == 'alpha-beta'):
         detector2alpha_beta = input.meta.wcs.get_transform('detector', 'alpha_beta')
         coord1, coord2, lam = detector2alpha_beta(x, y)
@@ -171,11 +171,8 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
     lambda_min = np.nanmin(lam)
     lambda_max = np.nanmax(lam)
 
-    print('return from footprint',a_min,a_max,b_min,b_max)
-
     
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
-
 
 #********************************************************************************
 def FindFootPrintNIRSPEC(self, input):
@@ -222,7 +219,7 @@ def FindFootPrintNIRSPEC(self, input):
     for i in regions:
 
 #        slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
-        slice_wcs = nirspec.nrs_wcs_set_input(input, i)
+        slice_wcs = nirspec.nrs_wcs_set_input(input,0, i)
 
         yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
@@ -374,11 +371,12 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 #________________________________________________________________________________
 # Open the input data model
             with datamodels.ImageModel(ifile) as input_model:
+
+
                 t0 = time.time()
                 if(instrument == 'NIRSPEC'):
                     ChannelFootPrint = FindFootPrintNIRSPEC(self, input_model)
                     amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
-                        #print(amin,amax,bmin,bmax,lmin,lmax)
                     t1 = time.time()
 
 #________________________________________________________________________________
@@ -427,7 +425,8 @@ def MapDetectorToCube(self, this_par1, this_par2,
                       Cube, spaxel, 
                       PixelCloud, 
                       MasterTable, 
-                      InstrumentInfo):
+                      InstrumentInfo,
+                      IFUCube):
 #********************************************************************************
     """
     Short Summary
@@ -457,6 +456,7 @@ def MapDetectorToCube(self, this_par1, this_par2,
     for k in range(nfiles):
         ifile = MasterTable.FileMap[instrument][this_par1][this_par2][k]
         print(' On File k',k,nfiles,ifile)
+#        IFUCube.input_files.append(ifile)
         ioffset = len(MasterTable.FileOffset[this_par1][this_par2]['C1'])
         Cube.file.append(ifile)
         c1_offset = 0.0
@@ -471,17 +471,16 @@ def MapDetectorToCube(self, this_par1, this_par2,
 
 # Open the input data model
         with datamodels.ImageModel(ifile) as input_model:
+            #IFUCube.update(input_model) # do this for single file cubes
 #********************************************************************************
             if(instrument == 'MIRI'):
-#                det2ab_transform = input_model.meta.wcs.get_transform('detector', 
-#                                                                      'alpha_beta')
+
                 v2ab_transform = input_model.meta.wcs.get_transform('v2v3', 
                                                                     'alpha_beta')
                 wave_weights = CubeCloud.FindWaveWeights(this_par1, this_par2)
 
                 worldtov23 = input_model.meta.wcs.get_transform("world","v2v3")
-#        detector2v23 = input.meta.wcs.get_transform('detector', 'v2v3')
-#        v23toworld = input.meta.wcs.get_transform("v2v3","world")
+
             # for each file we need information that will be the same for all
             # the pixels on the image.
             # For MIRI this information is used in the weight scheme on how to 

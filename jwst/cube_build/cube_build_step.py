@@ -121,7 +121,7 @@ class CubeBuildStep (Step):
         MasterTable = cube_build_io.FileTable()
         
         num, instrument,detector = cube_build_io.SetFileTable(self, input_table, 
-                                                               MasterTable)
+                                                              MasterTable)
 
         self.metadata['number_files'] = num
         self.metadata['detector'] = detector            
@@ -136,7 +136,7 @@ class CubeBuildStep (Step):
 
 
         self.output_name_base = input_table.asn_table['products'][0]['name']
-        #if(self.input_table_type == 'singleton'):
+
         self.output_name = cube_build_io.UpdateOutPutName(self)
 
 #________________________________________________________________________________
@@ -179,7 +179,7 @@ class CubeBuildStep (Step):
             wscale = self.scalew
 
         Cube.SetScale(a_scale, b_scale, wscale)
-        print('Scale of cube',a_scale,b_scale,wscale)
+
 
         t0 = time.time()
 #________________________________________________________________________________
@@ -195,7 +195,6 @@ class CubeBuildStep (Step):
         t1 = time.time()
         print("Time to determine size of cube = %.1f.s" % (t1 - t0,))
 
-        print('CubeFootPrint',CubeFootPrint)
             # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
             # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
         if(self.coord_system == 'ra-dec'): 
@@ -215,6 +214,11 @@ class CubeBuildStep (Step):
         self.power_x = 1
         self.power_y = 1
         self.power_z = 1
+
+        IFUCube = cube_build_io.SetUpIFUCube(self,Cube)
+        print('IFU cube crval1',IFUCube.meta.wcsinfo.crval1 )
+        
+
 
         if(self.interpolation == 'pointcloud'):
             self.log.info('Region of interest %f %f %f', 
@@ -258,18 +262,19 @@ class CubeBuildStep (Step):
             this_par1 = parameter1[i]
             this_par2 = parameter2[i]            
             
-            print('cube_build_step',this_par1,this_par2)
+            self.log.info("Working on Band defined by:%s %s " ,this_par1,this_par2)
 
             PixelCloud = cube_build.MapDetectorToCube(self, 
                                                       this_par1, this_par2, 
                                                       Cube, spaxel, 
                                                       PixelCloud,
                                                       MasterTable, 
-                                                      InstrumentInfo)
+                                                      InstrumentInfo,
+                                                      IFUCube)
 
         t1 = time.time()
         self.log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
-        print('cube_build_step shape',PixelCloud.shape)
+        print('cube_build_step point cloud shape',PixelCloud.shape)
 #_______________________________________________________________________
 # Mapped all data to cube or Point Cloud
 # now determine Cube Spaxel flux
@@ -287,9 +292,10 @@ class CubeBuildStep (Step):
         t1 = time.time()
         self.log.info("Time find Cube Flux= %.1f.s" % (t1 - t0,))
 # write out the IFU cube
-        cube_build_io.WriteCube(self, Cube, spaxel)
+#        IFUcubeModel = cube_build_io.WriteCube(self, Cube, spaxel)
+        IFUCube = cube_build_io.UpdateCube(self, Cube,IFUCube, spaxel)
 
-#        sys.exit('Stop')
+
 
 
 if __name__ == '__main__':
