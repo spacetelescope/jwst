@@ -1,6 +1,6 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
-
+import numpy as np
 from asdf import yamlutil
 from asdf.tags.transform.basic import TransformType
 
@@ -152,18 +152,12 @@ class Gwa2SlitType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        models = dict(zip(node['slits'], node['models']))
-        return Gwa2Slit(models)
+        return Gwa2Slit(node['slits'], node['models'])
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
-        slits = []
-        models = []
-        for s, m in model.models.items():
-            slits.append(s)
-            models.append(m)
-        node = {'slits': slits,
-                'models': models}
+        node = {'slits': model._slits,
+                'models': model.models}
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
@@ -175,18 +169,12 @@ class Slit2MsaType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        models = dict(zip(node['slits'], node['models']))
-        return Slit2Msa(models)
+        return Slit2Msa(node['slits'], node['models'])
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
-        slits = []
-        models = []
-        for s, m in model.models.items():
-            slits.append(s)
-            models.append(m)
-        node = {'slits': slits,
-                'models': models}
+        node = {'slits': model._slits,
+                'models': model.models}
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
@@ -216,7 +204,6 @@ class NirissSOSSType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        #models = dict(zip(node['spectral_orders'], node['models']))
         return NirissSOSSModel(node['spectral_orders'], node['models'])
 
     @classmethod
