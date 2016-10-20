@@ -9,32 +9,29 @@ import math
 #_______________________________________________________________________
 def V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,v2, v3):
 
-        # v2_ref,v3_ref given in arc mins
-        # v2 and v3 are given in arc mins
+        # v2_ref,v3_ref given in arc seconds 
+        # v2 and v3 are given in arc seconds
         # ra_ref,dec_ref, roll_ref given in degrees
         # it is assumed that the V2,V3 coordinates have the effects of dithering included
         
     d2r = math.pi/180.0
 
-    v2 = v2/60.0      # convert to degrees
-    v3 = v3/60.0      # convert to degrees
+    v2deg = v2.copy()/3600.0      # convert to degrees
+    v3deg = v3.copy()/3600.0      # convert to degrees
 
-    v2_ref = v2_ref/60.0 # covert to degrees
-    v3_ref = v3_ref/60.0 # convert to degrees
+
+    v2_ref = v2_ref/3600.0 # covert to degrees
+    v3_ref = v3_ref/3600.0 # convert to degrees
     v3_ref_rad = v3_ref*d2r
     roll_ref_rad = roll_ref * d2r
         
-    delta_v2 = (v2 - v2_ref) * math.cos(v3_ref_rad)
-    delta_v3 = (v3-v3_ref)
+    delta_v2 = (v2deg - v2_ref) * math.cos(v3_ref_rad)
+    delta_v3 = (v3deg - v3_ref)
     delta_ra = delta_v2 * math.cos(roll_ref_rad) + delta_v3* math.sin(roll_ref_rad)
     delta_dec = -delta_v2* math.sin(roll_ref_rad) + delta_v3*math.cos(roll_ref_rad)
 
     ra = ra_ref + delta_ra/math.cos(dec_ref*d2r)
     dec = delta_dec + dec_ref
-
-    #print('v2,v3',v2[0,15:20],v3[0,15:20])
-    #print('ra dec',ra[0,15:20],dec[0,15:20])
-
 
     return ra,dec
 #_______________________________________________________________________
@@ -42,8 +39,8 @@ def V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,v2, v3):
 #_______________________________________________________________________
 def RADEC2V2V3(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,ra, dec):
 
-        # v2_ref,v3_ref given in arc mins
-        # v2 and v3 are given in arc mins
+        # v2_ref,v3_ref given in arc seconds
+        # v2 and v3 are given in arc seconds
         # ra_ref,dec_ref, roll_ref given in degrees
         # ra,dec are given in degrees
      
@@ -51,11 +48,9 @@ def RADEC2V2V3(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,ra, dec):
     d2r = math.pi/180.0
 
     r2d = 180.0  / math.pi
-    v2_ref = v2_ref/60.0 # covert to degrees
-    v3_ref = v3_ref/60.0 # convert to degrees
 
-    v3_ref_rad = v3_ref * d2r
-    v2_ref_rad = v2_ref * d2r 
+    v3_ref_rad = (v3_ref)/3600.0* d2r # convert from arc seconds to radians
+    v2_ref_rad = (v2_ref)/3600.0* d2r # convert from arc seconds to radians 
 
     roll_ref_rad = roll_ref * d2r
 
@@ -73,10 +68,8 @@ def RADEC2V2V3(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,ra, dec):
     v2 = v2_ref_rad + dv2/math.cos(v3_ref_rad)
     v3 = v3_ref_rad + dv3
 
-    v2 = v2*r2d*60.0
-    v3  = v3*r2d*60.0
-
-
+    v2 = v2*r2d*3600.0  # convert from radians to arc seconds 
+    v3  = v3*r2d*3600.0 # convert from radians to arc seconds
 
     return v2,v3
 #_______________________________________________________________________

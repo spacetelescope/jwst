@@ -97,13 +97,8 @@ class Asn_MIRI_LRS_FIXEDSLIT(
 
         # Setup for checking.
         self.add_constraints({
-            'patttype': {
-                'value': None,
-                'inputs': ['PATTTYPE'],
-                'force_unique': True
-            },
             'exp_type': {
-                'value': 'MIR_LRS-FIXEDSLIT',
+                'value': 'MIR_LRS-FIXEDSLIT|MIR_TACQ',
                 'inputs': ['EXP_TYPE']
             },
             'opt_elem': {
@@ -133,7 +128,7 @@ class Asn_MIRI_LRS_SLITLESS(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'MIR_LRS-SLITLESS',
+                'value': 'MIR_LRS-SLITLESS|MIR_TACQ',
                 'inputs': ['EXP_TYPE']
             },
             'opt_elem': {
@@ -167,7 +162,7 @@ class Asn_NIR_SO_SLITLESS(
                 'inputs': ['DETECTOR']
             },
             'exp_type': {
-                'value': 'NIS_SOSS',
+                'value': 'NIS_SOSS|NIS_TACQ|NIS_TACNFRM',
                 'inputs': ['EXP_TYPE']
             },
             'opt_elem': {
@@ -199,7 +194,14 @@ class Asn_NRS_FIXEDSLIT(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'NRS_FIXEDSLIT',
+                'value': (
+                    'NRS_FIXEDSLIT'
+                    '|NRS_AUTOWAVE'
+                    '|NRS_CONFIRM'
+                    '|NRS_TACQ'
+                    '|NRS_TACONFIRM'
+                    '|NRS_TASLIT'
+                ),
                 'inputs': ['EXP_TYPE']
             },
             'fixed_slit': {
@@ -230,7 +232,15 @@ class Asn_NRS_MSA(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'NRS_MSASPEC',
+                'value': (
+                    'NRS_MSASPEC'
+                    '|NRS_AUTOFLAT'
+                    '|NRS_AUTOWAVE'
+                    '|NRS_CONFIRM'
+                    '|NRS_TASLIT'
+                    '|NRS_TACQ'
+                    '|NRS_TACONFIRM'
+                ),
                 'inputs': ['EXP_TYPE']
             },
         })
@@ -239,7 +249,7 @@ class Asn_NRS_MSA(
         super(Asn_NRS_MSA, self).__init__(*args, **kwargs)
 
 
-class Asn_MIRI_MRS(
+class Asn_MIRI_IFU(
         AsnMixin_Spectrum,
         AsnMixin_MIRI,
         AsnMixin_Target,
@@ -252,13 +262,39 @@ class Asn_MIRI_MRS(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'MIR_MRS',
-                'inputs': ['EXP_TYPE']
+                'value': (
+                    'MIR_MRS'
+                    '|MIR_FLATMRS'
+                    '|MIR_TACQ'
+                ),
+                'inputs': ['EXP_TYPE'],
+                'force_unique': False,
             },
         })
 
         # Check and continue initialization.
-        super(Asn_MIRI_MRS, self).__init__(*args, **kwargs)
+        super(Asn_MIRI_IFU, self).__init__(*args, **kwargs)
+
+    def product_name(self):
+        """Define product name."""
+        target = self._get_target()
+
+        instrument = self._get_instrument()
+
+        product_name = 'jw{}-{}_{}_{}'.format(
+            self.data['program'],
+            self.acid.id,
+            target,
+            instrument
+        )
+
+        return product_name.lower()
+
+    def _init_hook(self, member):
+        """Post-check and pre-add initialization"""
+
+        super(Asn_MIRI_IFU, self)._init_hook(member)
+        self.data['asn_type'] = 'mirifu'
 
 
 class Asn_NRS_IFU(
@@ -274,7 +310,14 @@ class Asn_NRS_IFU(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'NRS_IFU',
+                'value': (
+                    'NRS_IFU'
+                    '|NRS_AUTOWAVE'
+                    '|NRS_CONFIRM'
+                    '|NRS_TASLIT'
+                    '|NRS_TACQ'
+                    '|NRS_TACONFIRM'
+                ),
                 'inputs': ['EXP_TYPE']
             },
         })

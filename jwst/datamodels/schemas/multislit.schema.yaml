@@ -88,4 +88,21 @@ allOf:
             type: number
             fits_keyword: STLARITY
             fits_hdu: SCI
+          source_type:
+            title: Source type (point/extended)
+            type: string
+            fits_keyword: SRCTYPE
+            fits_hdu: SCI
+          source_xpos:
+            title: Source position in slit (x-axis)
+            type: number
+            default: 0.0
+            fits_keyword: SRCXPOS
+            fits_hdu: SCI
+          source_ypos:
+            title: Source position in slit (y-axis)
+            type: number
+            default: 0.0
+            fits_keyword: SRCYPOS
+            fits_hdu: SCI
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

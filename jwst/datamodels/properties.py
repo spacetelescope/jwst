@@ -153,8 +153,13 @@ class Node(object):
     def _validate(self):
         instance = yamlutil.custom_tree_to_tagged_tree(
             self._instance, self._ctx._asdf)
-        schema.validate(
-            instance, schema=self._schema)
+        try:
+            schema.validate(instance, schema=self._schema)
+        except jsonschema.ValidationError:
+            if self._ctx._pass_invalid_values:
+                pass
+            else:
+                raise
 
     @property
     def instance(self):
@@ -201,16 +206,13 @@ class ObjectNode(Node):
                 self._validate()
             except jsonschema.ValidationError:
                 # Revert the transaction
-                if not self._ctx._pass_invalid_values:
-                    msgfmt = "'{0}' is not valid to write to '{1}'"
-                    warnings.warn(msgfmt.format(val, attr))
-                    if old_val is None:
-                        del self._instance[attr]
-                    else:
-                        self._instance[attr] = old_val
-                    raise
-
-
+                msgfmt = "'{0}' is not valid to write to '{1}'"
+                warnings.warn(msgfmt.format(val, attr))
+                if old_val is None:
+                    del self._instance[attr]
+                else:
+                    self._instance[attr] = old_val
+                raise
 
     def __delattr__(self, attr):
         if attr.startswith('_'):
@@ -294,7 +296,7 @@ class ListNode(Node):
     def append(self, item):
         schema = _get_schema_for_index(self._schema, len(self._instance))
         self._instance.append(_cast(item, schema))
-        #self._validate()
+        self._validate()
 
     def insert(self, i, item):
         schema = _get_schema_for_index(self._schema, i)

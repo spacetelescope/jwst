@@ -4,6 +4,7 @@ from __future__ import (absolute_import, unicode_literals, division,
 from asdf import AsdfFile
 from astropy import coordinates as coord
 from astropy import units as u
+from astropy.modeling.models import Scale
 
 import gwcs.coordinate_frames as cf
 from . import pointing
@@ -29,7 +30,7 @@ def imaging(input_model, reference_files):
     reference_files={'distortion': 'test.asdf', 'filter_offsets': 'filter_offsets.asdf'}
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
     distortion = imaging_distortion(input_model, reference_files)
     tel2sky = pointing.v23tosky(input_model)
@@ -41,7 +42,9 @@ def imaging(input_model, reference_files):
 
 def imaging_distortion(input_model, reference_files):
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    return distortion
+    # Convert to arcsec
+    transform = distortion | Scale(60) & Scale(60)
+    return transform
 
 
 exp_type2transform = {'nrc_image': imaging,

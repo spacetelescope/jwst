@@ -21,6 +21,14 @@ LEVEL3_PRODUCT_NAME_REGEX = (
     '_(?P<opt_elem>.+)'
 )
 
+LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX = (
+    'jw'
+    '(?P<program>\d{5})'
+    '-(?P<acid>[a-z]\d{3,4})'
+    '_(?P<target>(?:t\d{3})|(?:s\d{5}))'
+    '(?:-(?P<epoch>epoch\d+))?'
+    '_(?P<instrument>.+?)'
+)
 
 # Null values
 EMPTY = (None, 'NULL', 'CLEAR')
@@ -94,7 +102,10 @@ def test_level35_names(pool_file):
     (asns, orphaned) = generate(pool, rules)
     for asn in asns:
         product_name = asn['products'][0]['name']
-        m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
+        if asn['asn_rule'] == 'Asn_MIRI_IFU':
+            m = re.match(LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX, product_name)
+        else:
+            m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
         assert m is not None
 
 
@@ -106,7 +117,10 @@ def test_level3_names(pool_file, global_constraints):
     (asns, orphaned) = generate(pool, rules)
     for asn in asns:
         product_name = asn['products'][0]['name']
-        m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
+        if asn['asn_rule'] == 'Asn_MIRI_IFU':
+            m = re.match(LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX, product_name)
+        else:
+            m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
         assert m is not None
         assert m.groupdict()['acid'] == 'o002'
 
@@ -117,13 +131,14 @@ def test_multiple_optelems(pool_file):
     (asns, orphaned) = generate(pool, rules)
     for asn in asns:
         product_name = asn['products'][0]['name']
-        m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
-        assert m is not None
-        try:
-            value = asn.constraints['opt_elem2']['value']
-        except KeyError:
-            value = None
-        if value in EMPTY:
-            assert '-' not in m.groupdict()['opt_elem']
-        else:
-            assert '-' in m.groupdict()['opt_elem']
+        if asn['asn_rule'] != 'Asn_MIRI_IFU':
+            m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
+            assert m is not None
+            try:
+                value = asn.constraints['opt_elem2']['value']
+            except KeyError:
+                value = None
+            if value in EMPTY:
+                assert '-' not in m.groupdict()['opt_elem']
+            else:
+                assert '-' in m.groupdict()['opt_elem']
