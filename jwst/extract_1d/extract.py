@@ -10,7 +10,6 @@ import numpy as np
 import json
 from astropy.modeling import polynomial
 from .. import datamodels
-from gwcs import selector
 from . import extract1d
 
 log = logging.getLogger(__name__)
@@ -74,6 +73,7 @@ def get_extract_parameters(refname, slitname, meta,
                 extract_params['ystop'] = aper.get('ystop')
                 extract_params['extract_width'] = aper.get('extract_width')
                 extract_params['nod_correction'] = get_nod_offset(aper, meta)
+
                 # These can be used later (for MultiSlitModel data), and
                 # if they are, they will be one-indexed values.
                 extract_params['slit_start1'] = None
@@ -331,6 +331,8 @@ class ExtractModel(object):
                  extract_width=None, src_coeff=None, bkg_coeff=None,
                  independent_var="wavelength",
                  smoothing_length=0, bkg_order=0, nod_correction=0.,
+                 x_center=None, y_center=None,
+                 inner_bkg=None, outer_bkg=None, method='subpixel',
                  slit_start1=None, slit_start2=None):
 
         self.dispaxis = dispaxis
@@ -633,7 +635,7 @@ def interpolate_response(wavelength, relsens):
 
     Parameters
     ----------
-    wavelength: array_like
+    wavelength: array_like, 1-D
         Wavelengths in the science data
 
     relsens: record array
@@ -698,14 +700,19 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             extract_params['slit_start2'] = slit.ystart         # one indexed
             wavelength, net, background = \
                 extract_one_slit(slit, -1,
-                                 input_model.meta, refname,
+                                 input_model.meta,
                                  slit.name, **extract_params)
+            got_relsens = True
             try:
-                r_factor = interpolate_response(wavelength, slit.relsens)
-                flux = net / r_factor
+                relsens = slit.relsens
             except AttributeError:
                 log.warning("No relsens for current slit, "
                             "so can't compute flux.")
+                got_relsens = False
+            if got_relsens:
+                r_factor = interpolate_response(wavelength, relsens)
+                flux = net / r_factor
+            else:
                 flux = np.zeros_like(net)
             dq = np.zeros(net.shape, dtype=np.int32)
             fl_error = np.ones_like(net)
@@ -723,25 +730,30 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             slitname = input_model.meta.subarray.name
         log.debug('slitname=%s' % slitname)
 
-        if isinstance(input_model, datamodels.ImageModel):
+        if isinstance(input_model, datamodels.ImageModel) or \
+           isinstance(input_model, datamodels.DrizProductModel):
             extract_params = get_extract_parameters(refname, slitname,
                                 input_model.meta, smoothing_length, bkg_order)
             if extract_params:
                 wavelength, net, background = \
                         extract_one_slit(input_model, -1,
-                                         input_model.meta, refname,
+                                         input_model.meta,
                                          slitname, **extract_params)
             else:
                 log.critical('Missing extraction parameters.')
                 raise ValueError('Missing extraction parameters.')
             dq = np.zeros(net.shape, dtype=np.int32)
+            got_relsens = True
             try:
-                r_factor = interpolate_response(wavelength,
-                                                input_model.relsens)
-                flux = net / r_factor
+                relsens = input_model.relsens
             except AttributeError:
-                log.warning("No relsens for input model, "
+                log.warning("No relsens for input file, "
                             "so can't compute flux.")
+                got_relsens = False
+            if got_relsens:
+                r_factor = interpolate_response(wavelength, relsens)
+                flux = net / r_factor
+            else:
                 flux = np.zeros_like(net)
             fl_error = np.ones_like(net)
             nerror = np.ones_like(net)
@@ -760,21 +772,27 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 log.critical('Missing extraction parameters.')
                 raise ValueError('Missing extraction parameters.')
 
+            got_relsens = True
+            try:
+                relsens = input_model.relsens
+            except AttributeError:
+                log.warning("No relsens for input file, "
+                            "so can't compute flux.")
+                    got_relsens = False
+
             # Loop over each integration in the input model
             for integ in range(input_model.data.shape[0]):
                 # Extract spectrum
                 wavelength, net, background = \
                         extract_one_slit(input_model, integ,
-                                         input_model.meta, refname,
+                                         input_model.meta,
                                          slitname, **extract_params)
                 dq = np.zeros(net.shape, dtype=np.int32)
-                try:
+                if got_relsens:
                     r_factor = interpolate_response(wavelength,
                                                     input_model.relsens)
                     flux = net / r_factor
-                except AttributeError:
-                    log.warning("No relsens for input model, "
-                                "so can't compute flux.")
+                else:
                     flux = np.zeros_like(net)
                 fl_error = np.ones_like(net)
                 nerror = np.ones_like(net)
@@ -786,10 +804,23 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 spec = datamodels.SpecModel(spec_table=otab)
                 output_model.spec.append(spec)
 
+        elif isinstance(input_model, datamodels.IFUCubeModel):
+
+            try:
+                source_type = input_model.meta.target.source_type
+            except AttributeError:
+                source_type = "unknown"
+            output_model = ifu_extract1d(input_model, refname,
+                                         source_type, smoothing_length)
+
+        else:
+            log.error("The input file is not supported for this step.")
+            raise RuntimeError("Can't extract a spectrum from this file.")
+
     return output_model
 
 
-def extract_one_slit(slit, integ, meta, refname, slitname=None,
+def extract_one_slit(slit, integ, meta, slitname=None,
                      **extract_params):
 
     extract_model = ExtractModel(slit, **extract_params)

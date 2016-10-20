@@ -34,6 +34,14 @@ class Extract1dStep(Step):
         elif isinstance(input_model, datamodels.MultiSlitModel):
             # It's a MultiSlitModel
             self.log.debug('Input is a MultiSlitModel')
+        elif isinstance(input_model, datamodels.IFUCubeModel):
+            # IFU data (resampled)
+            self.log.debug('Input is an IFUCubeModel')
+        elif isinstance(input_model, datamodels.DrizProductModel):
+            # Resampled 2-D data
+            self.log.debug('Input is a DrizProductModel')
+        else:
+            self.log.warning('Input is not a recognized data model.')
 
         # Get the reference file name
         self.ref_file = self.get_reference_file(input_model, 'extract1d')
