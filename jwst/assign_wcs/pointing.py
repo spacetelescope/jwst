@@ -18,7 +18,7 @@ def v23tosky(input_model):
     roll_ref = input_model.meta.wcsinfo.roll_ref
     ra_ref = input_model.meta.wcsinfo.ra_ref
     dec_ref = input_model.meta.wcsinfo.dec_ref
-    
+
     angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
     sky_rotation = V23ToSky(angles, axes_order=axes, name="v23tosky")
@@ -133,9 +133,9 @@ def fitswcs_transform_from_model(wcsinfo):
 
     transform = gwutils.make_fitswcs_transform(wcsinfo)
     if wcsinfo['WCSAXES'] == 3:
-        spectral_transform = astmodels.Shift(-wcsinfo['CRPIX'][spectral_axes]) | \
-                           astmodels.Scale(wcsinfo['CDELT'][spectral_axes]) | \
-                           astmodels.Shift(wcsinfo['CRVAL'][spectral_axes])
+        spectral_transform = astmodels.Shift(-wcsinfo['CRPIX'][spectral_axes[0]]) | \
+                           astmodels.Scale(wcsinfo['CDELT'][spectral_axes[0]]) | \
+                           astmodels.Shift(wcsinfo['CRVAL'][spectral_axes[0]])
         transform = transform & spectral_transform
 
     return transform
@@ -163,7 +163,7 @@ def frame_from_model(wcsinfo):
         raise ValueError("WCSAXES can be 2 or 3, git {0}".format(wcsaxes))
 
 
-def create_fitswcs(inp):
+def create_fitswcs(inp, input_frame=None):
     if isinstance(inp, DataModel):
         wcsinfo = wcsinfo_from_model(inp)
         transform = fitswcs_transform_from_model(wcsinfo)
@@ -174,7 +174,9 @@ def create_fitswcs(inp):
     else:
         raise TypeError("Input is expected to be a DataModel instance or a FITS file.")
 
-    input_frame = cf.Frame2D(name='detector', axes_order=(0, 1))
+    n_input_axes = len(wcsinfo['CRPIX'])
+    if input_frame is None:
+        input_frame = "detector"
     pipeline = [(input_frame, transform),
                (output_frame, None)]
 
