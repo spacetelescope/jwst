@@ -264,15 +264,15 @@ def get_open_slits(input_model):
 
 def get_open_fixed_slits(input_model):
     slits = []
-    slits.append(Slit('S200A1', 0, 0, 0, -.5, .5, 5, "", ""))
-    slits.append(Slit('S200A2', 1, 0, 0, -.5, .5, 5, "", ""))
-    slits.append(Slit('S400A1', 2, 0, 0, -.5, .5, 5, "", ""))
-    slits.append(Slit('S1600A1', 3, 0, 0, -.5, .5, 5, "", ""))
+    slits.append(Slit('S200A1', 0, 0, 0, -.5, .5, 5))
+    slits.append(Slit('S200A2', 1, 0, 0, -.5, .5, 5))
+    slits.append(Slit('S400A1', 2, 0, 0, -.5, .5, 5))
+    slits.append(Slit('S1600A1', 3, 0, 0, -.5, .5, 5))
 
     if input_model.meta.instrument.detector == 'NRS1':
         if input_model.meta.instrument.filter == 'F070LP' and \
                 input_model.meta.instrument.grating == 'G140H':
-            slits.append(Slit('S200B1', 4, 0, 0, -.5, .5, 5, "", ""))
+            slits.append(Slit('S200B1', 4, 0, 0, -.5, .5, 5))
     return slits
 
 
