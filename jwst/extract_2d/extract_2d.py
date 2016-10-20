@@ -6,6 +6,7 @@ from __future__ import (absolute_import, unicode_literals, division,
 import logging
 import copy
 import numpy as np
+from astropy.io import fits
 from astropy.modeling import models as astmodels
 from .. import datamodels
 from asdf import AsdfFile
@@ -20,11 +21,9 @@ def extract2d(input_model, which_subarray=None):
     exp_type = input_model.meta.exposure.type.upper()
     log.info('EXP_TYPE is {0}'.format(exp_type))
     if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
-        if which_subarray is None:
-            open_slits = input_model.meta.wcs.get_transform('gwa', 'slit_frame').slits
-        else:
-            #open_slits = [nirspec.slit_name2id[which_subarray]]
-            raise NotImplementedError()
+        open_slits = nirspec.get_open_slits(input_model)
+        if which_subarray is not None:
+            open_slit_names = [sub for sub in open_slits if sub.name==which_subarray]
     else:
         # Set the step status to SKIPPED, since it won't be done.
         input_model.meta.cal_step.extract_2d = 'SKIPPED'
@@ -58,13 +57,32 @@ def extract2d(input_model, which_subarray=None):
         # The overall subarray offset is recorded in model.meta.subarray.
         nslit = len(output_model.slits) - 1
         output_model.slits[nslit].name = str(slit.name)
-        #output_model.slits[nslit].source_id = slit.source_id
         output_model.slits[nslit].xstart = xlo + 1
         output_model.slits[nslit].xsize = xhi - xlo
         output_model.slits[nslit].ystart = ylo + 1
         output_model.slits[nslit].ysize = yhi - ylo
+        output_model.slits[nslit].source_id = int(slit.source_id)
+        output_model.slits[nslit].source_name = slit.source_name
+        output_model.slits[nslit].source_alias = slit.source_alias
+        output_model.slits[nslit].catalog_id  = int(slit.catalog_id)
+        output_model.slits[nslit].stellarity = float(slit.stellarity)
+        output_model.slits[nslit].source_xpos = float(slit.source_xpos)
+        output_model.slits[nslit].source_ypos = float(slit.source_ypos)
+        output_model.slits[nslit].slitlet_id = int(slit.name)
+        # for pathloss correction
+        output_model.slits[nslit].nshutters = int(slit.nshutters)
     del input_model
     # Set the step status to COMPLETE
     output_model.meta.cal_step.extract_2d = 'COMPLETE'
     return output_model
 
+
+def populate_source_info(input_model, output_model):
+    msa_conf_file = fits.open(nput_model.meta.instrument.msa_configuration_file)
+    source_data = msa_conf_file['SOURCE_INFO'].data
+    open_slits = nirspec.get_open_msa_slits(input_model)
+    for slit in output_model.slits:
+        source_id = [sl.source_id for sl in open_slits if sl.name == slit.name][0]
+        index = ((source_data['source_id'] == source_id).nonzero()).squeeze().item()
+        source_info = source_data[index]
+    msa_conf_file.close()
