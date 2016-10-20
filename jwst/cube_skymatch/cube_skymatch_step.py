@@ -340,7 +340,7 @@ def _extend_2d_schema(model):
                 "type": "object",
                 "properties": {
                     "background": {
-                        "title": "Reference coordinates",
+                        "title": "List of background objects for each channel",
                         "type": "array",
                         "items": [
                             {
