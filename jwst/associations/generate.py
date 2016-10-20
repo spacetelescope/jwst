@@ -77,6 +77,9 @@ def generate(pool, rules, version_id=None):
         if asn.is_valid:
             valid_asns.append(asn)
 
+    # Resequence values.
+    rules.Utility.resequence(valid_asns)
+
     orphaned = pool[np.logical_not(in_an_asn)]
     return valid_asns, orphaned
 

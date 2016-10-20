@@ -97,11 +97,6 @@ class Asn_MIRI_LRS_FIXEDSLIT(
 
         # Setup for checking.
         self.add_constraints({
-            'patttype': {
-                'value': None,
-                'inputs': ['PATTTYPE'],
-                'force_unique': True
-            },
             'exp_type': {
                 'value': 'MIR_LRS-FIXEDSLIT|MIR_TACQ',
                 'inputs': ['EXP_TYPE']
@@ -201,10 +196,11 @@ class Asn_NRS_FIXEDSLIT(
             'exp_type': {
                 'value': (
                     'NRS_FIXEDSLIT'
-                    '|NRS_TASLIT'
+                    '|NRS_AUTOWAVE'
+                    '|NRS_CONFIRM'
                     '|NRS_TACQ'
                     '|NRS_TACONFIRM'
-                    '|NRS_CONFIRM'
+                    '|NRS_TASLIT'
                 ),
                 'inputs': ['EXP_TYPE']
             },
@@ -238,10 +234,12 @@ class Asn_NRS_MSA(
             'exp_type': {
                 'value': (
                     'NRS_MSASPEC'
+                    '|NRS_AUTOFLAT'
+                    '|NRS_AUTOWAVE'
+                    '|NRS_CONFIRM'
                     '|NRS_TASLIT'
                     '|NRS_TACQ'
                     '|NRS_TACONFIRM'
-                    '|NRS_CONFIRM'
                 ),
                 'inputs': ['EXP_TYPE']
             },
@@ -314,10 +312,11 @@ class Asn_NRS_IFU(
             'exp_type': {
                 'value': (
                     'NRS_IFU'
+                    '|NRS_AUTOWAVE'
+                    '|NRS_CONFIRM'
                     '|NRS_TASLIT'
                     '|NRS_TACQ'
                     '|NRS_TACONFIRM'
-                    '|NRS_CONFIRM'
                 ),
                 'inputs': ['EXP_TYPE']
             },

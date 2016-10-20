@@ -56,8 +56,7 @@ class CubeBuildStep (Step):
         if(self.offset_list != 'NA'): self.log.info('Offset Dither list %s', self.offset_list)
 
         # valid coord_system:
-        # 1. alpha-beta (only valid for Single Cubes)
-        #  v2-v3 NOT USED ANY MORE
+        # 1. alpha-beta (only valid for MIRI Single Cubes)
         # 2. ra-dec
 
         if (self.interpolation == 'area'):
@@ -122,7 +121,7 @@ class CubeBuildStep (Step):
         MasterTable = cube_build_io.FileTable()
         
         num, instrument,detector = cube_build_io.SetFileTable(self, input_table, 
-                                                               MasterTable)
+                                                              MasterTable)
 
         self.metadata['number_files'] = num
         self.metadata['detector'] = detector            
@@ -137,7 +136,7 @@ class CubeBuildStep (Step):
 
 
         self.output_name_base = input_table.asn_table['products'][0]['name']
-        #if(self.input_table_type == 'singleton'):
+
         self.output_name = cube_build_io.UpdateOutPutName(self)
 
 #________________________________________________________________________________
@@ -147,20 +146,20 @@ class CubeBuildStep (Step):
 
         if(instrument == 'MIRI'):
             Cube = cube.CubeInfo('MIRI',detector,
-                                 self.metadata['channel'], 
-                                 self.metadata['subchannel'], 
+                                 self.metadata['band_channel'], 
+                                 self.metadata['band_subchannel'], 
                                  self.output_name)
 
         if(instrument == 'NIRSPEC'):
             Cube = cube.CubeInfo('NIRSPEC',detector,
-                                 self.metadata['filter'], 
-                                 self.metadata['grating'], 
+                                 self.metadata['band_filter'], 
+                                 self.metadata['band_grating'], 
                                  self.output_name)
 
 
-        InstrumentInfo = InstrumentDefaults.Info() # for now this holds defaults on the two instruments
+        # for now InstrumentDefaults holds defaults on the two instruments
+        InstrumentInfo = InstrumentDefaults.Info() 
         self.log.info(' Building Cube %s ', Cube.output_name)
-
 
 
             # Scale is 3 dimensions and is determined from default values InstrumentInfo.GetScale
@@ -180,6 +179,8 @@ class CubeBuildStep (Step):
             wscale = self.scalew
 
         Cube.SetScale(a_scale, b_scale, wscale)
+
+
         t0 = time.time()
 #________________________________________________________________________________
 # find the min & max final coordinates of cube: map each slice to cube
@@ -194,7 +195,6 @@ class CubeBuildStep (Step):
         t1 = time.time()
         print("Time to determine size of cube = %.1f.s" % (t1 - t0,))
 
-        print('CubeFootPrint',CubeFootPrint)
             # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
             # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
         if(self.coord_system == 'ra-dec'): 
@@ -214,6 +214,11 @@ class CubeBuildStep (Step):
         self.power_x = 1
         self.power_y = 1
         self.power_z = 1
+
+        IFUCube = cube_build_io.SetUpIFUCube(self,Cube)
+        print('IFU cube crval1',IFUCube.meta.wcsinfo.crval1 )
+        
+
 
         if(self.interpolation == 'pointcloud'):
             self.log.info('Region of interest %f %f %f', 
@@ -252,24 +257,24 @@ class CubeBuildStep (Step):
             parameter1 = Cube.grating
             parameter2 = Cube.filter
 
-        number1 = len(parameter1)
-        number2 = len(parameter2)
-        for i in range(number1):
+        number_bands = len(parameter1)
+        for i in range(number_bands):
             this_par1 = parameter1[i]
-            for j in range(number2):
-                this_par2 = parameter2[j]
-                print('cube_build_step',this_par1,this_par2)
+            this_par2 = parameter2[i]            
+            
+            self.log.info("Working on Band defined by:%s %s " ,this_par1,this_par2)
 
-                PixelCloud = cube_build.MapDetectorToCube(self, 
-                                                          this_par1, this_par2, 
-                                                          Cube, spaxel, 
-                                                          PixelCloud,
-                                                          MasterTable, 
-                                                          InstrumentInfo)
+            PixelCloud = cube_build.MapDetectorToCube(self, 
+                                                      this_par1, this_par2, 
+                                                      Cube, spaxel, 
+                                                      PixelCloud,
+                                                      MasterTable, 
+                                                      InstrumentInfo,
+                                                      IFUCube)
 
         t1 = time.time()
         self.log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
-        print('cube_build_step shape',PixelCloud.shape)
+        print('cube_build_step point cloud shape',PixelCloud.shape)
 #_______________________________________________________________________
 # Mapped all data to cube or Point Cloud
 # now determine Cube Spaxel flux
@@ -287,9 +292,10 @@ class CubeBuildStep (Step):
         t1 = time.time()
         self.log.info("Time find Cube Flux= %.1f.s" % (t1 - t0,))
 # write out the IFU cube
-        cube_build_io.WriteCube(self, Cube, spaxel)
+#        IFUcubeModel = cube_build_io.WriteCube(self, Cube, spaxel)
+        IFUCube = cube_build_io.UpdateCube(self, Cube,IFUCube, spaxel)
 
-#        sys.exit('Stop')
+
 
 
 if __name__ == '__main__':

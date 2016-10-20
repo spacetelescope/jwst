@@ -33,7 +33,8 @@ class CubeInfo(object):
         self.v3_ref = list()
         self.a_weight = list()
         self.c_weight = list()
-        self.transform = list()
+        self.transform_v23toab = list()
+        self.transform_worldtov23 = list()
 
         self.filter = list()
         self.grating = list()
@@ -122,25 +123,23 @@ class CubeInfo(object):
             self.ycoord[i] = ystart
             ystart = ystart + self.Cdelt2
 
-
-#        ycube,xcube = np.mgrid[:self.naxis2,:self.naxis1]
-#        print(ycube)
-#        print(xcube)
-#        sys.exit('STOP')
 #_______________________________________________________________________
 # Footprint values are RA,DEC values on the sky
 # Values are given in degrees 
 
     def SetGeometry(self, footprint):
-        padfactor = 1.1 # a padding on the size of cube to make sure the spatial dimensions are large eniugh
+        padfactor = 1.1 # a padding on the size of cube 
+                        # to make sure the spatial dimensions are large enough
         deg2rad = math.pi/180.0
         
         ra_min, ra_max, dec_min, dec_max,lambda_min, lambda_max = footprint # in degrees
 
         print('in SetGeometry',ra_min,ra_max,dec_min,dec_max)
         dec_ave = (dec_min + dec_max)/2.0
-        ra_ave = ((ra_min + ra_max)/2.0 )* math.cos(dec_ave*deg2rad) # actually this is hard due to converenge of hour angle
+        # actually this is hard due to converenge of hour angle
         # improve determining ra_ave in the future
+        ra_ave = ((ra_min + ra_max)/2.0 )* math.cos(dec_ave*deg2rad) 
+
 
         range_ra = (ra_max - ra_min) * 3600.0 #* math.cos(dec_ave*deg2rad)
 
@@ -154,8 +153,6 @@ class CubeInfo(object):
         self.Crval1 = ra_ave 
         self.Crval2 = dec_ave
         xi,eta = coord.radec2std(self.Crval1, self.Crval2,ra_ave,dec_ave)
-        print('xi eta',xi,eta)
-
         
         xi_min,eta_min = coord.radec2std(self.Crval1, self.Crval2,ra_min,dec_min)
         xi_max,eta_max = coord.radec2std(self.Crval1, self.Crval2,ra_max,dec_max)
@@ -200,13 +197,6 @@ class CubeInfo(object):
         for i in range(self.naxis2):
             self.ycoord[i] = ystart
             ystart = ystart + self.Cdelt2
-#_______________________________________________________________________
-
-#        ycube,xcube = np.mgrid[:self.naxis2,:self.naxis1]
-#        print(ycube)
-#        print(xcube)
-#        sys.exit('STOP')
-
 
 #_______________________________________________________________________
         #set up the lambda (z) coordinate of the cube

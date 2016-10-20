@@ -49,7 +49,7 @@ def set_source_type(input_model):
     # For NIRSpec MSA exposures, read the stellarity value for the
     # source in each extracted slit and set the point/extended value
     # based on the stellarity.
-    if exptype == 'NRS_MSASPEC':
+    elif exptype == 'NRS_MSASPEC':
 
         # Loop over the input slits
         for slit in input_model.slits:
@@ -68,6 +68,13 @@ def set_source_type(input_model):
         # Set the source type value in the primary header to
         # a harmless default
         input_model.meta.target.source_type = 'UNKNOWN'
+
+    # Unrecognized exposure type
+    else:
+        log.warning('EXP_TYPE %s not applicable to this operation' %
+                    exptype)
+        log.warning('Step will be skipped')
+        return None
 
     # We're done
     return input_model

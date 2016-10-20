@@ -11,7 +11,7 @@ from ... import datamodels
 from .. import nirspec
 from .. import assign_wcs_step
 from . import data
-
+import pytest
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
@@ -146,7 +146,7 @@ def test_nirspec_ifu_against_esa():
     w = wcs.WCS(pipe)
     im.meta.wcs = w
     # Test evaluating the WCS (slice 0)
-    w0 = nirspec.nrs_wcs_set_input(im, 0, 0)
+    w0 = nirspec.nrs_wcs_set_input(im, 0)
 
     ref = fits.open(get_file_path('Trace_IFU_Slice_00_MON-COMBO-IFU-06_8410_jlab85.fits.gz'))
     crpix = np.array([ref[1].header['crpix1'], ref[1].header['crpix2']])
@@ -199,7 +199,7 @@ def test_nirspec_fs_esa():
     w = wcs.WCS(pipe)
     im.meta.wcs = w
     # Test evaluating the WCS
-    w1 = nirspec.nrs_wcs_set_input(im, 5, 1)
+    w1 = nirspec.nrs_wcs_set_input(im, "S200A1")
 
     ref = fits.open(get_file_path('Trace_SLIT_A_200_1_SLIT-COMBO-016_9791_jlab85_0001.fits.gz'))
     crpix = np.array([ref[1].header['crpix1'], ref[1].header['crpix2']])
@@ -217,7 +217,10 @@ def test_nirspec_fs_esa():
     sca2world = w1.get_transform('sca', 'v2v3')
     ra, dec, lp = sca2world(x, y)
     # w1 now outputs in microns hence the 1e6 factor
-    assert_allclose(lp * 1e-6, lam[cond], atol=10**-13)
+    lp *= 1e-6
+    lam = lam[cond]
+    nan_cond = ~np.isnan(lp)
+    assert_allclose(lp[nan_cond], lam[nan_cond], atol=10**-13)
     ref.close()
 
 
@@ -253,83 +256,65 @@ def test_correct_tilt():
     #assert(np.isclose(disp_corrected['theta_z'], corrected_theta_z))
     assert np.isclose(disp_corrected['theta_y'], corrected_theta_y)
 
+
 def test_msa_configuration_normal():
     """
     Test the get_open_msa_slits function.
-
-    Returns
-    -------
-
     """
 
     # Test 1: Reasonably normal as well
     msa_meta_id = 12
     msaconfl = get_file_path('test_configuration_msa.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    assert_allclose(np.array([(55, 4, 251, 26, 262.79999999999995, -258.19999999999999)]), np.array(slitlet_info))
+    assert_allclose([(55, 9376, 251, 26, -5.15, 0.55, 4, 1, 5)],
+                    slitlet_info, atol=10**-10)
 
 
 def test_msa_configuration_no_background():
     """
     Test the get_open_msa_slits function.
-
-    Returns
-    -------
-
     """
-
     # Test 2: Two main shutters, not allowed and should fail
     msa_meta_id = 13
     msaconfl = get_file_path('test_configuration_msa.fits')
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    assert len(slitlet_info) == 0
+    with pytest.raises(ValueError):
+        slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
 
 
 def test_msa_configuration_all_background():
     """
     Test the get_open_msa_slits function.
-
-    Returns
-    -------
-
     """
 
     # Test 3:  No non-background, not acceptable.
     msa_meta_id = 14
     msaconfl = get_file_path('test_configuration_msa.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    assert_allclose(np.array([(57, 4, 2, 251, -23.550000000000001, 25.849999999999998)]), np.array(slitlet_info))
+    assert_allclose([(57, 616, 251, 2, 22.45, 25.85, 4, 1, 3)],
+                    slitlet_info, atol=10**-10)
 
 
 def test_msa_configuration_row_skipped():
     """
     Test the get_open_msa_slits function.
-
-    Returns
-    -------
-
     """
 
     # Test 4: One row is skipped, should be acceptable.
     msa_meta_id = 15
     msaconfl = get_file_path('test_configuration_msa.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    assert_allclose(np.array([(58, 4, 251, 24, 262.79999999999995, -255.89999999999998)]), np.array(slitlet_info))
+    assert_allclose([(58, 8646, 251, 24, -2.85, 5.15, 4, 1, 6)],
+                    slitlet_info, atol=10**-10)
 
 
 def test_msa_configuration_multiple_returns():
     """
     Test the get_open_msa_slits function.
-
-    Returns
-    -------
-
     """
-
     # Test 4: One row is skipped, should be acceptable.
     msa_meta_id = 16
     msaconfl = get_file_path('test_configuration_msa.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    assert_allclose(np.array([(59, 4, 256, 24, 268.54999999999995, -261.64999999999998),
-                              (60, 4, 258, 32, 261.64999999999998, -255.89999999999998)]),
-                    np.array(slitlet_info))
+    assert_allclose([(59, 8651, 256, 24, -2.85, 5.15, 4, 1, 6),
+                     (60, 11573, 258, 32, -2.85, 4, 4, 1, 6)],
+                    slitlet_info, atol=10**-10)

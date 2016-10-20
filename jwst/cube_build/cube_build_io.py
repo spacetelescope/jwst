@@ -450,6 +450,115 @@ def UpdateOutPutName(self):
 
 
 #********************************************************************************
+def SetUpIFUCube(self, Cube):
+
+#********************************************************************************
+    """
+    Short Summary
+    -------------
+    Write the IFU cube to fits file
+
+    Parameters
+    ----------
+    Cube: holds meta data of cube
+    spaxel: list of spaxels in cube
+
+
+    Returns
+    -------
+    no return = writes file
+
+    """
+    #pull out data into array
+
+    data = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
+    idata = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
+
+    dq_cube = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
+    err_cube = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
+
+
+    new_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
+
+
+    new_model.meta.filename = Cube.output_name
+    new_model.meta.wcsinfo.crval1 = Cube.Crval1
+    new_model.meta.wcsinfo.crval2 = Cube.Crval2
+    new_model.meta.wcsinfo.crval3 = Cube.Crval3
+    new_model.meta.wcsinfo.crpix1 = Cube.Crpix1
+    new_model.meta.wcsinfo.crpix2 = Cube.Crpix2
+    new_model.meta.wcsinfo.crpix3 = Cube.Crpix3
+
+    new_model.meta.wcsinfo.crdelt1 = Cube.Cdelt1
+    new_model.meta.wcsinfo.crdelt2 = Cube.Cdelt2
+    new_model.meta.wcsinfo.crdelt3 = Cube.Cdelt3
+
+    new_model.meta.wcsinfo.ctype1 = 'RA---TAN'
+    new_model.meta.wcsinfo.ctype2 = 'DEC--TAN'
+    new_model.meta.wcsinfo.ctype3 = 'WAVE'
+
+    new_model.meta.wcsinfo.cunit1 = 'DEG'
+    new_model.meta.wcsinfo.cunit2 = 'DEG'
+    new_model.meta.wcsinfo.cunit3 = 'UM'
+
+#    new_model.meta.wcsinfo.waverange_start = 
+#    new_model.meta.wcsinfo.waverange_end = 
+    new_model.meta.flux_extension = 'SCI'
+    new_model.meta.error_extension = 'ERR'
+    new_model.meta.dq_extension = 'DQ'
+    new_model.meta.weightmap = 'WMAP'
+    new_model.error_type = 'ERR'
+    
+    
+    return new_model
+
+#********************************************************************************
+#********************************************************************************
+def UpdateCube(self, Cube,IFUCube, spaxel):
+
+#********************************************************************************
+    """
+    Short Summary
+    -------------
+    Write the IFU cube to fits file
+
+    Parameters
+    ----------
+    Cube: holds meta data of cube
+    spaxel: list of spaxels in cube
+
+
+    Returns
+    -------
+    no return = writes file
+
+    """
+    #pull out data into array
+
+
+    icube = 0
+    for z in range(Cube.naxis3):
+        for y in range(Cube.naxis2):
+            for x in range(Cube.naxis1):
+                IFUCube.data[z, y, x] = spaxel[icube].flux
+                IFUCube.weightmap[z, y, x] = len(spaxel[icube].ipointcloud)
+                icube = icube + 1
+
+
+
+    IFUCube.meta.filename = Cube.output_name    
+    IFUCube.save(IFUCube.meta.filename)
+    IFUCube.close()
+
+
+    log.info('Wrote %s', IFUCube.meta.filename)
+    return IFUCube
+
+#********************************************************************************
+
+
+
+#********************************************************************************
 def WriteCube(self, Cube, spaxel):
 
 #********************************************************************************
@@ -488,6 +597,8 @@ def WriteCube(self, Cube, spaxel):
     name = Cube.output_name
     new_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
 
+
+
     new_model.meta.wcsinfo.crval1 = Cube.Crval1
     new_model.meta.wcsinfo.crval2 = Cube.Crval2
     new_model.meta.wcsinfo.crval3 = Cube.Crval3
@@ -521,7 +632,7 @@ def WriteCube(self, Cube, spaxel):
 
 
     log.info('Wrote %s', name)
-    #return new_model
+    return new_model
 
 #********************************************************************************
 
