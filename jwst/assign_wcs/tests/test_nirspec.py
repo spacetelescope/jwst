@@ -264,7 +264,7 @@ def test_msa_configuration_normal():
 
     # Test 1: Reasonably normal as well
     msa_meta_id = 12
-    msaconfl = get_file_path('test_configuration_msa.fits')
+    msaconfl = get_file_path('msa_configuration_msa.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
     assert_allclose([(55, 9376, 251, 26, -5.15, 0.55, 4, 1, 5)],
                     slitlet_info, atol=10**-10)
@@ -276,7 +276,7 @@ def test_msa_configuration_no_background():
     """
     # Test 2: Two main shutters, not allowed and should fail
     msa_meta_id = 13
-    msaconfl = get_file_path('test_configuration_msa.fits')
+    msaconfl = get_file_path('msa_configuration.fits')
     with pytest.raises(ValueError):
         slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
 
@@ -288,7 +288,7 @@ def test_msa_configuration_all_background():
 
     # Test 3:  No non-background, not acceptable.
     msa_meta_id = 14
-    msaconfl = get_file_path('test_configuration_msa.fits')
+    msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
     assert_allclose([(57, 616, 251, 2, 22.45, 25.85, 4, 1, 3)],
                     slitlet_info, atol=10**-10)
@@ -301,7 +301,7 @@ def test_msa_configuration_row_skipped():
 
     # Test 4: One row is skipped, should be acceptable.
     msa_meta_id = 15
-    msaconfl = get_file_path('test_configuration_msa.fits')
+    msaconfl = get_file_path('msa_configuration_msa.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
     assert_allclose([(58, 8646, 251, 24, -2.85, 5.15, 4, 1, 6)],
                     slitlet_info, atol=10**-10)
@@ -313,7 +313,7 @@ def test_msa_configuration_multiple_returns():
     """
     # Test 4: One row is skipped, should be acceptable.
     msa_meta_id = 16
-    msaconfl = get_file_path('test_configuration_msa.fits')
+    msaconfl = get_file_path('msa_configuration_msa.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
     assert_allclose([(59, 8651, 256, 24, -2.85, 5.15, 4, 1, 6),
                      (60, 11573, 258, 32, -2.85, 4, 4, 1, 6)],
