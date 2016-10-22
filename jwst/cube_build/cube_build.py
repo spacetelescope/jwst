@@ -323,8 +323,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 
     """
     instrument = Cube.instrument
-#    parameter1 = list()
-#    parameter2 = list()
+
     if(instrument == 'MIRI'):
         parameter1 = self.metadata['band_channel']
         parameter2 = self.metadata['band_subchannel']
@@ -332,8 +331,6 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
         parameter1 = self.metadata['band_grating']
         parameter2 = self.metadata['band_filter']
 
-#    number_par1 = len(parameter1)
-#    number_par2 = len(parameter2)
 
     a_min = list()
     a_max = list()
@@ -456,7 +453,7 @@ def MapDetectorToCube(self, this_par1, this_par2,
     for k in range(nfiles):
         ifile = MasterTable.FileMap[instrument][this_par1][this_par2][k]
         print(' On File k',k,nfiles,ifile)
-#        IFUCube.input_files.append(ifile)
+        
         ioffset = len(MasterTable.FileOffset[this_par1][this_par2]['C1'])
         Cube.file.append(ifile)
         c1_offset = 0.0

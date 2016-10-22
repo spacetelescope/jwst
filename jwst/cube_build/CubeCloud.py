@@ -274,7 +274,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
 
     iprint = 0
     nn = len(PointCloud[0])
-#    nn = 100
+    nn = 100
 
 #    print('number of elements in PT',nn)
     

@@ -215,9 +215,14 @@ class CubeBuildStep (Step):
         self.power_y = 1
         self.power_z = 1
 
-        IFUCube = cube_build_io.SetUpIFUCube(self,Cube)
+        print('Before Setup') 
+
+
+        IFUCube = datamodels.IFUCubeModel(Cube.output_name)
+
+        cube_build_io.SetUpCube(Cube, IFUCube)
         print('IFU cube crval1',IFUCube.meta.wcsinfo.crval1 )
-        
+        sys.exit('STOP')
 
 
         if(self.interpolation == 'pointcloud'):
