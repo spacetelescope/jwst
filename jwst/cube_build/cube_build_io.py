@@ -13,6 +13,7 @@ from gwcs.utils import _domain_to_bounds
 from ..associations import Association
 from .. import datamodels
 from ..assign_wcs import nirspec
+from ..assign_wcs import pointing
 from . import cube
 
 
@@ -480,7 +481,6 @@ def SetUpIFUCube(self, Cube):
 
     new_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
 
-
     new_model.meta.filename = Cube.output_name
     new_model.meta.wcsinfo.crval1 = Cube.Crval1
     new_model.meta.wcsinfo.crval2 = Cube.Crval2
@@ -488,27 +488,28 @@ def SetUpIFUCube(self, Cube):
     new_model.meta.wcsinfo.crpix1 = Cube.Crpix1
     new_model.meta.wcsinfo.crpix2 = Cube.Crpix2
     new_model.meta.wcsinfo.crpix3 = Cube.Crpix3
-
-    new_model.meta.wcsinfo.crdelt1 = Cube.Cdelt1
-    new_model.meta.wcsinfo.crdelt2 = Cube.Cdelt2
-    new_model.meta.wcsinfo.crdelt3 = Cube.Cdelt3
+    new_model.meta.wcsinfo.cdelt1 = Cube.Cdelt1
+    new_model.meta.wcsinfo.cdelt2 = Cube.Cdelt2
+    new_model.meta.wcsinfo.cdelt3 = Cube.Cdelt3
 
     new_model.meta.wcsinfo.ctype1 = 'RA---TAN'
     new_model.meta.wcsinfo.ctype2 = 'DEC--TAN'
     new_model.meta.wcsinfo.ctype3 = 'WAVE'
 
-    new_model.meta.wcsinfo.cunit1 = 'DEG'
-    new_model.meta.wcsinfo.cunit2 = 'DEG'
-    new_model.meta.wcsinfo.cunit3 = 'UM'
+    new_model.meta.wcsinfo.cunit1 = 'deg'
+    new_model.meta.wcsinfo.cunit2 = 'deg'
+    new_model.meta.wcsinfo.cunit3 = 'um'
 
-#    new_model.meta.wcsinfo.waverange_start = 
-#    new_model.meta.wcsinfo.waverange_end = 
+    new_model.meta.wcsinfo.wcsaxes = 3
+
     new_model.meta.flux_extension = 'SCI'
     new_model.meta.error_extension = 'ERR'
     new_model.meta.dq_extension = 'DQ'
     new_model.meta.weightmap = 'WMAP'
     new_model.error_type = 'ERR'
-    
+
+    wcsobj = pointing.create_fitswcs(new_model)
+    new_model.meta.wcs = wcsobj
     
     return new_model
 
@@ -546,7 +547,15 @@ def UpdateCube(self, Cube,IFUCube, spaxel):
 
 
 
-    IFUCube.meta.filename = Cube.output_name    
+    IFUCube.meta.filename = Cube.output_name   
+
+    print('checking wcs')
+    print(IFUCube.meta.wcsinfo.cdelt1,IFUCube.meta.wcsinfo.cdelt2,IFUCube.meta.wcsinfo.cdelt3)
+    print(IFUCube.meta.wcsinfo.crpix1,IFUCube.meta.wcsinfo.crpix2,IFUCube.meta.wcsinfo.crpix3)
+    print(IFUCube.meta.wcsinfo.crval1,IFUCube.meta.wcsinfo.crval2,IFUCube.meta.wcsinfo.crval3)
+
+
+ 
     IFUCube.save(IFUCube.meta.filename)
     IFUCube.close()
 

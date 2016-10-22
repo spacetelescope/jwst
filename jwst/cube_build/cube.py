@@ -97,7 +97,7 @@ class CubeInfo(object):
 
         self.zcoord = np.zeros(self.naxis3)
         self.Crval3 = self.lambda_min
-        self.Crpix3 = 0.5
+        self.Crpix3 = 1.0
         zstart = self.lambda_min + self.Cdelt3 / 2.0
 
         for i in range(self.naxis3):
@@ -217,7 +217,7 @@ class CubeInfo(object):
 
         self.zcoord = np.zeros(self.naxis3)
         self.Crval3 = self.lambda_min
-        self.Crpix3 = 0.5
+        self.Crpix3 = 1.0
         zstart = self.lambda_min + self.Cdelt3 / 2.0
 
         for i in range(self.naxis3):
