@@ -39,7 +39,7 @@ def imaging(input_model, reference_files):
 
     # Create the Frames
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcsec, u.arcsec))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     # Create the transforms
@@ -89,7 +89,7 @@ def imaging_distortion(input_model, reference_files):
 
     # Now apply each of the models.  The Scale(60) converts from arc-minutes to arc-seconds.
     full_distortion = models.Shift(filter_offset['column_offset']) & models.Shift(
-        filter_offset['row_offset']) | distortion | models.Scale(60) & models.Scale(60)
+        filter_offset['row_offset']) | distortion | models.Scale(1/60) & models.Scale(1/60)
 
     full_distortion = full_distortion.rename('distortion')
 
@@ -155,7 +155,7 @@ def ifu(input_model, reference_files):
     xyan_spatial = cf.Frame2D(name='Xan_Yan_spatial', axes_order=(0, 1), unit=(u.arcmin, u.arcmin), axes_names=('v2', 'v3'))
     spec = cf.SpectralFrame(name='Xan_Yan_spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     xyan = cf.CompositeFrame([xyan_spatial, spec], name='Xan_Yan')
-    v23_spatial = cf.Frame2D(name='V2_V3_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
+    v23_spatial = cf.Frame2D(name='V2_V3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=('v2', 'v3'))
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     v2v3 = cf.CompositeFrame([v23_spatial, spec], name='v2v3')
     icrs = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS(),
@@ -165,7 +165,7 @@ def ifu(input_model, reference_files):
         "detector_to_alpha_beta")
     ab2xyan = (alpha_beta2XanYan(input_model, reference_files)).rename("alpha_beta_to_Xan_Yan")
     xyan2v23 = models.Identity(1) & (models.Shift(7.8) | models.Scale(-1)) & models.Identity(1) | \
-        models.Scale(60) & models.Scale(60) & models.Identity(1)
+        models.Scale(1/60) & models.Scale(1/60) & models.Identity(1)
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
     pipeline = [(detector, det2alpha_beta),
                 (miri_focal, ab2xyan),
