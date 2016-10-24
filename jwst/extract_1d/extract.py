@@ -11,6 +11,7 @@ import json
 from astropy.modeling import polynomial
 from .. import datamodels
 from . import extract1d
+from . import ifu
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -706,13 +707,15 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             try:
                 relsens = slit.relsens
             except AttributeError:
-                log.warning("No relsens for current slit, "
-                            "so can't compute flux.")
+                got_relsens = False
+            if got_relsens and len(relsens) == 0:
                 got_relsens = False
             if got_relsens:
                 r_factor = interpolate_response(wavelength, relsens)
                 flux = net / r_factor
             else:
+                log.warning("No relsens for current slit, "
+                            "so can't compute flux.")
                 flux = np.zeros_like(net)
             dq = np.zeros(net.shape, dtype=np.int32)
             fl_error = np.ones_like(net)
@@ -747,13 +750,15 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             try:
                 relsens = input_model.relsens
             except AttributeError:
-                log.warning("No relsens for input file, "
-                            "so can't compute flux.")
+                got_relsens = False
+            if got_relsens and len(relsens) == 0:
                 got_relsens = False
             if got_relsens:
                 r_factor = interpolate_response(wavelength, relsens)
                 flux = net / r_factor
             else:
+                log.warning("No relsens for input file, "
+                            "so can't compute flux.")
                 flux = np.zeros_like(net)
             fl_error = np.ones_like(net)
             nerror = np.ones_like(net)
@@ -776,9 +781,12 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             try:
                 relsens = input_model.relsens
             except AttributeError:
+                got_relsens = False
+            if got_relsens and len(relsens) == 0:
+                got_relsens = False
+            if not got_relsens:
                 log.warning("No relsens for input file, "
                             "so can't compute flux.")
-                    got_relsens = False
 
             # Loop over each integration in the input model
             for integ in range(input_model.data.shape[0]):
@@ -810,8 +818,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 source_type = input_model.meta.target.source_type
             except AttributeError:
                 source_type = "unknown"
-            output_model = ifu_extract1d(input_model, refname,
-                                         source_type, smoothing_length)
+            output_model = ifu.ifu_extract1d(input_model, refname,
+                                             source_type, smoothing_length)
 
         else:
             log.error("The input file is not supported for this step.")

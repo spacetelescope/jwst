@@ -176,7 +176,7 @@ def extract1d(image, lambdas, disp_range,
     # x is an index (column number) within `image`, while j is an index in
     # lambdas, countrate, background, and the arrays in srclim and bkglim.
     x = disp_range[0]
-    for j in xrange(nl):
+    for j in range(nl):
         lam = lambdas[j]
 
         if nbkglim > 0:

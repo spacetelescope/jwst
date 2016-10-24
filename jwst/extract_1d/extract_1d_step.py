@@ -26,7 +26,11 @@ class Extract1dStep(Step):
         input_model = datamodels.open(input)
 
         if isinstance(input_model, datamodels.CubeModel):
-           # It's a 3-D multi-integration model
+            # It's a 3-D multi-integration model
+            # xxx test debug
+            self.log.info('Input is a CubeModel; reopen as an IFUCubeModel')
+            input_model.close()
+            input_model = datamodels.IFUCubeModel(input)
             self.log.debug('Input is a CubeModel for a multiple integ. file')
         elif isinstance(input_model, datamodels.ImageModel):
             # It's a single 2-D image
@@ -35,8 +39,9 @@ class Extract1dStep(Step):
             # It's a MultiSlitModel
             self.log.debug('Input is a MultiSlitModel')
         elif isinstance(input_model, datamodels.IFUCubeModel):
-            # IFU data (resampled)
-            self.log.debug('Input is an IFUCubeModel')
+            # IFU data
+            self.log.info('Input is an IFUCubeModel')
+            # xxx self.log.debug('Input is an IFUCubeModel')
         elif isinstance(input_model, datamodels.DrizProductModel):
             # Resampled 2-D data
             self.log.debug('Input is a DrizProductModel')
