@@ -26,11 +26,6 @@ class CubeInfo(object):
         self.a_wave = list()
         self.c_wave = list()
 
-        self.ra_ref = list()
-        self.dec_ref = list()
-        self.roll_ref = list()
-        self.v2_ref = list()
-        self.v3_ref = list()
         self.a_weight = list()
         self.c_weight = list()
         self.transform_v23toab = list()
@@ -131,24 +126,21 @@ class CubeInfo(object):
         padfactor = 1.1 # a padding on the size of cube 
                         # to make sure the spatial dimensions are large enough
         deg2rad = math.pi/180.0
-        
         ra_min, ra_max, dec_min, dec_max,lambda_min, lambda_max = footprint # in degrees
-
-        print('in SetGeometry',ra_min,ra_max,dec_min,dec_max)
         dec_ave = (dec_min + dec_max)/2.0
+
         # actually this is hard due to converenge of hour angle
         # improve determining ra_ave in the future
-        ra_ave = ((ra_min + ra_max)/2.0 )* math.cos(dec_ave*deg2rad) 
+        ra_ave = ((ra_min + ra_max)/2.0 )#* math.cos(dec_ave*deg2rad) 
 
-
-        range_ra = (ra_max - ra_min) * 3600.0 #* math.cos(dec_ave*deg2rad)
+        range_ra = (ra_max - ra_min) * 3600.0 * math.cos(dec_ave*deg2rad)
 
         self.naxis1 = int(math.ceil(range_ra / self.Cdelt1)) 
-        print('ra range',range_ra,self.naxis1)
+        print('ra range, ave,naxis1',range_ra,ra_ave,self.naxis1)
 
         range_dec = (dec_max - dec_min) * 3600.0
         self.naxis2 = int(math.ceil(range_dec / self.Cdelt2)) 
-        print('dec range', range_dec,self.naxis2)
+        print('dec range,ave,naxis2', range_dec,dec_ave,self.naxis2)
 
         self.Crval1 = ra_ave 
         self.Crval2 = dec_ave
@@ -163,10 +155,6 @@ class CubeInfo(object):
         eta_min = eta_min - self.Cdelt2/2.0
         eta_max = eta_max + self.Cdelt2/2.0
 
-        print('xi eta min ',xi_min,eta_min)
-        print('xi eta max ',xi_max,eta_max)
-
-        
         n1a = int(math.ceil(math.fabs(xi_min) / self.Cdelt1)) 
         n1b = int(math.ceil(math.fabs(xi_max) / self.Cdelt1)) 
 

@@ -10,6 +10,7 @@ from . import cube_build_io
 from . import cube_build
 from . import cube
 from . import CubeCloud
+from . import cube_model
 from . import InstrumentDefaults
 from . import coord
 1
@@ -180,7 +181,6 @@ class CubeBuildStep (Step):
 
         Cube.SetScale(a_scale, b_scale, wscale)
 
-
         t0 = time.time()
 #________________________________________________________________________________
 # find the min & max final coordinates of cube: map each slice to cube
@@ -204,7 +204,6 @@ class CubeBuildStep (Step):
 
         Cube.PrintCubeGeometry(instrument)
 
-
             # if the user has not set the size of the ROI then use defaults of 1* cube scale in dimension
         if(self.roi1 == 1): self.roi1 = Cube.Cdelt1* 1.0
         if(self.roi2 == 1): self.roi2 = Cube.Cdelt2* 1.0
@@ -215,15 +214,8 @@ class CubeBuildStep (Step):
         self.power_y = 1
         self.power_z = 1
 
-        print('Before Setup') 
 
-
-        IFUCube = datamodels.IFUCubeModel(Cube.output_name)
-
-        cube_build_io.SetUpCube(Cube, IFUCube)
-        print('IFU cube crval1',IFUCube.meta.wcsinfo.crval1 )
-        sys.exit('STOP')
-
+        IFUCube = cube_model.SetUpIFUCube(Cube)
 
         if(self.interpolation == 'pointcloud'):
             self.log.info('Region of interest %f %f %f', 
@@ -298,7 +290,7 @@ class CubeBuildStep (Step):
         self.log.info("Time find Cube Flux= %.1f.s" % (t1 - t0,))
 # write out the IFU cube
 #        IFUcubeModel = cube_build_io.WriteCube(self, Cube, spaxel)
-        IFUCube = cube_build_io.UpdateCube(self, Cube,IFUCube, spaxel)
+        IFUCube = cube_model.UpdateIFUCube(self, Cube,IFUCube, spaxel)
 
 
 

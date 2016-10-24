@@ -13,7 +13,6 @@ from gwcs.utils import _domain_to_bounds
 from ..associations import Association
 from .. import datamodels
 from ..assign_wcs import nirspec
-from ..assign_wcs import pointing
 from . import cube
 
 
@@ -410,7 +409,7 @@ def SetFileTable(self, input_table, MasterTable):
 #********************************************************************************
 def UpdateOutPutName(self):
 
-    sys.exit('STOP')
+
     if(self.metadata['instrument'] == 'MIRI'):
 
         channels = list(set(self.metadata['band_channel']))
@@ -445,126 +444,6 @@ def UpdateOutPutName(self):
 
 
     return newname
-
-
-
-#********************************************************************************
-def SetUpCube(Cube, IFUCube):
-
-#********************************************************************************
-    """
-    Short Summary
-    -------------
-    Write the IFU cube to fits file
-
-    Parameters
-    ----------
-    Cube: holds meta data of cube
-    spaxel: list of spaxels in cube
-
-
-    Returns
-    -------
-    no return = writes file
-
-    """
-
-#    data = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
-#    idata = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
-
-#    dq_cube = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
-#    err_cube = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
-
-#    new_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
-
-#    IFUCube.meta.filename = Cube.output_name
-    IFUCube.meta.wcsinfo.crval1 = Cube.Crval1
-    IFUCube.meta.wcsinfo.crval2 = Cube.Crval2
-    IFUCube.meta.wcsinfo.crval3 = Cube.Crval3
-    IFUCube.meta.wcsinfo.crpix1 = Cube.Crpix1
-    IFUCube.meta.wcsinfo.crpix2 = Cube.Crpix2
-    IFUCube.meta.wcsinfo.crpix3 = Cube.Crpix3
-    IFUCube.meta.wcsinfo.cdelt1 = Cube.Cdelt1
-    IFUCube.meta.wcsinfo.cdelt2 = Cube.Cdelt2
-    IFUCube.meta.wcsinfo.cdelt3 = Cube.Cdelt3
-
-    IFUCube.meta.wcsinfo.ctype1 = 'RA---TAN'
-    IFUCube.meta.wcsinfo.ctype2 = 'DEC--TAN'
-    IFUCube.meta.wcsinfo.ctype3 = 'WAVE'
-
-    IFUCube.meta.wcsinfo.cunit1 = 'deg'
-    IFUCube.meta.wcsinfo.cunit2 = 'deg'
-    IFUCube.meta.wcsinfo.cunit3 = 'um'
-
-    IFUCube.meta.wcsinfo.wcsaxes = 3
-
-    IFUCube.meta.flux_extension = 'SCI'
-    IFUCube.meta.error_extension = 'ERR'
-    IFUCube.meta.dq_extension = 'DQ'
-    IFUCube.meta.weightmap = 'WMAP'
-    IFUCube.meta.data_model_type = 'IFUCubeModel'
-    IFUCube.error_type = 'ERR'
-
-    print('checking',IFUCube.meta.data_model)
-    wcsobj = pointing.create_fitswcs(IFUCube)
-    IFUCube.meta.wcs = wcsobj
-
-    print('checking',IFUCube.meta.data_model)
-    sys.exit('STOP')
-    #return IFUCube
-
-#********************************************************************************
-#********************************************************************************
-def UpdateCube(self, Cube,IFUCube, spaxel):
-
-#********************************************************************************
-    """
-    Short Summary
-    -------------
-    Write the IFU cube to fits file
-
-    Parameters
-    ----------
-    Cube: holds meta data of cube
-    spaxel: list of spaxels in cube
-
-
-    Returns
-    -------
-    no return = writes file
-
-    """
-    #pull out data into array
-
-
-    icube = 0
-    for z in range(Cube.naxis3):
-        for y in range(Cube.naxis2):
-            for x in range(Cube.naxis1):
-                IFUCube.data[z, y, x] = spaxel[icube].flux
-                IFUCube.weightmap[z, y, x] = len(spaxel[icube].ipointcloud)
-                icube = icube + 1
-
-
-
-    IFUCube.meta.filename = Cube.output_name   
-
-    print('checking wcs')
-    print(IFUCube.meta.wcsinfo.cdelt1,IFUCube.meta.wcsinfo.cdelt2,IFUCube.meta.wcsinfo.cdelt3)
-    print(IFUCube.meta.wcsinfo.crpix1,IFUCube.meta.wcsinfo.crpix2,IFUCube.meta.wcsinfo.crpix3)
-    print(IFUCube.meta.wcsinfo.crval1,IFUCube.meta.wcsinfo.crval2,IFUCube.meta.wcsinfo.crval3)
-
-
- 
-    IFUCube.save(IFUCube.meta.filename)
-    IFUCube.close()
-
-
-    log.info('Wrote %s', IFUCube.meta.filename)
-    return IFUCube
-
-#********************************************************************************
-
 
 
 
