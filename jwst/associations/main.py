@@ -21,9 +21,36 @@ CANDIDATE_RULESET = 'candidate'
 class Main(object):
     """Generate Associations from an Association Pool
     Docs from the source.
+
+    Parameters
+    ----------
+    args: [str, ...], or None
+        The command line arguments. Can be one of
+            - None: `sys.argv` is then used.
+            - [str, ...]: A list of strings which create the command line
+              with the similar structure as `sys.argv`
+
+    pool: None or AssociationPool
+        If None, a pool file must be specified in the `args`.
+        Otherwise, an AssociationPool
+
+    Attributes
+    ----------
+    pool: AssociationPool
+        The pool read in, or passed in through the parameter `pool`
+
+    rules: AssociationRegistry
+        The ruleset used.
+
+    associations: [Association, ...]
+        The list of generated associations.
+
+    orphaned: AssociationPool
+        The pool of exposures that do not belong
+        to any association.
     """
 
-    def __init__(self, args=None):
+    def __init__(self, args=None, pool=None):
 
         if args is None:
             args = sys.argv[1:]
@@ -34,9 +61,10 @@ class Main(object):
             description='Generate Assocation Data Products',
             usage='asn_generate pool'
         )
-        parser.add_argument(
-            'pool', type=str, help='Association Pool'
-        )
+        if pool is None:
+            parser.add_argument(
+                'pool', type=str, help='Association Pool'
+            )
         op_group = parser.add_mutually_exclusive_group()
         op_group.add_argument(
             '-i', '--ids', nargs='+',
@@ -140,11 +168,14 @@ class Main(object):
         logger.info('Command-line arguments: {}'.format(args))
         logger.context.set('asn_candidate_ids', parsed.asn_candidate_ids)
 
-        logger.info('Reading pool {}'.format(parsed.pool))
-        self.pool = AssociationPool.read(
-            parsed.pool, delimiter=parsed.delimiter,
-            format=parsed.pool_format,
-        )
+        if pool is None:
+            logger.info('Reading pool {}'.format(parsed.pool))
+            self.pool = AssociationPool.read(
+                parsed.pool, delimiter=parsed.delimiter,
+                format=parsed.pool_format,
+            )
+        else:
+            self.pool = pool
 
         # DMS: Add further info to logging.
         try:
@@ -201,6 +232,7 @@ class Main(object):
                 CANDIDATE_RULESET,
                 keep_candidates=parsed.all_candidates,
             )
+            self.rules.Utility.resequence(self.associations)
 
         logger.info(self.__str__())
 

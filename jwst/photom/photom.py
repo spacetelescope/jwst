@@ -14,7 +14,7 @@ PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
 class DataSet(object):
     """
     Input dataset whose SCI header will have photom factor
-        written to as PHOTFLAM
+        written to as PHOTMJSR
 
     Parameters
     ----------
@@ -67,7 +67,7 @@ class DataSet(object):
         """
         Extended Summary
         -------------
-        For the NIRSPEC instrument, extract PHOTFLAM from the input model to
+        For the NIRSPEC instrument, extract PHOTMJSR from the input model to
         write to the output model. Matching is based on FILTER and GRATING.
 
         The routine will find the corresponding information in the reference
@@ -83,7 +83,7 @@ class DataSet(object):
         Returns
         -------
         conv_factor: float
-            photometric conversion factor written as PHOTFLAM
+            photometric conversion factor written as PHOTMJSR
 
         """
         conv_factor = None
@@ -152,8 +152,11 @@ class DataSet(object):
         """
         Extended Summary
         -------------
-        For the NIRISS instrument, extract PHOTFLAM from the input model to
+        For the NIRISS instrument, extract PHOTMJSR from the input model to
         write to the output model. Matching is based on FILTER and PUPIL.
+        There may be multiple entries for a given FILTER+PUPIL combination,
+        corresponding to different spectral orders. Data for all orders will
+        be retrieved.
 
         The routine will find the corresponding information in the reference
         file and write the conversion factor to the output model.  The routine
@@ -168,34 +171,78 @@ class DataSet(object):
         Returns
         -------
         conv_factor: float
-            photometric conversion factor written as PHOTFLAM
+            photometric conversion factor written as PHOTMJSR
         """
         conv_factor = None
 
-        # Locate matching row in reference file
-        for tabdata in ftab.phot_table:
+        # Handle MultiSlit models separately
+        if isinstance(self.input, datamodels.MultiSlitModel):
 
-            ref_filter = tabdata['filter'].strip().upper()
-            ref_pupil = tabdata['pupil'].strip().upper()
+            # We have to find and attach a separate set of flux cal
+            # data for each of the slits/orders in the input
+            for slit in self.input.slits:
 
-            # Find matching values of FILTER and PUPIL
-            if self.filter == ref_filter and self.pupil == ref_pupil:
-                conv_factor = self.photom_io(tabdata)
-                break
+                log.info('Working on slit %s' % slit.name)
+                conv_factor = None
+                self.slitnum += 1
 
-        if conv_factor is not None:
-            return float(conv_factor)
+                # Set the input data order number.
+                # This is a hack for now; eventually the order number
+                # should be specified in the input data model
+                order = self.slitnum + 1
+
+                # Locate matching row in reference file
+                for tabdata in ftab.phot_table:
+
+                    ref_filter = tabdata['filter'].strip().upper()
+                    ref_pupil = tabdata['pupil'].strip().upper()
+                    ref_order = tabdata['order']
+
+                    # Find matching values of FILTER, PUPIL, ORDER
+                    if (self.filter == ref_filter and
+                        self.pupil == ref_pupil and
+                        order == ref_order):
+                        conv_factor = self.photom_io(tabdata)
+                        break
+
+                if conv_factor is None:
+                    log.warning('Did not find a match in the ref file')
+
+            if conv_factor is not None:
+                return float(conv_factor)
+            else:
+                return 0.0
+
+        # Simple ImageModels
         else:
-            log.warning('Did not find a match in the ref file, so returning'
-                        ' conversion factor 0.0')
-            return 0.0
+            order = 1
+
+            # Locate matching row in reference file
+            for tabdata in ftab.phot_table:
+
+                ref_filter = tabdata['filter'].strip().upper()
+                ref_pupil = tabdata['pupil'].strip().upper()
+                ref_order = tabdata['order']
+
+                # Find matching values of FILTER, PUPIL, ORDER
+                if (self.filter == ref_filter and self.pupil == ref_pupil
+                    and order == ref_order):
+                    conv_factor = self.photom_io(tabdata)
+                    break
+
+            if conv_factor is not None:
+                return float(conv_factor)
+            else:
+                log.warning('Did not find a match in the ref file, so returning'
+                            ' conversion factor 0.0')
+                return 0.0
 
 
     def calc_miri(self, ftab):
         """
         Extended Summary
         -------------
-        For the MIRI instrument, extract PHOTFLAM from the input model to
+        For the MIRI instrument, extract PHOTMJSR from the input model to
         write to the output model.
 
         For the imaging detector, matching is based on FILTER and SUBARRAY.
@@ -215,7 +262,7 @@ class DataSet(object):
         Returns
         -------
         conv_factor: float
-            photometric conversion factor written as PHOTFLAM
+            photometric conversion factor written as PHOTMJSR
         """
         conv_factor = None
 
@@ -269,7 +316,7 @@ class DataSet(object):
         """
         Extended Summary
         -------------
-        For the NIRCAM instrument, extract PHOTFLAM from the input model to
+        For the NIRCAM instrument, extract PHOTMJSR from the input model to
         write to the output model. Matching is based on FILTER and PUPIL.
 
         The routine will find the corresponding information in the reference
@@ -285,7 +332,7 @@ class DataSet(object):
         Returns
         -------
         conv_factor: float
-            photometric conversion factor written as PHOTFLAM
+            photometric conversion factor written as PHOTMJSR
         """
         conv_factor = None
 
@@ -312,7 +359,7 @@ class DataSet(object):
         """
         Extended Summary
         -------------
-        For the FGS instrument, extract PHOTFLAM from the input model to
+        For the FGS instrument, extract PHOTMJSR from the input model to
         write to the output model. There is no FILTER or PUPIL wheel, so the
         only mode is CLEAR.
 
@@ -330,7 +377,7 @@ class DataSet(object):
         Returns
         -------
         conv_factor: float
-            photometric conversion factor written as PHOTFLAM
+            photometric conversion factor written as PHOTMJSR
         """
         conv_factor = None
 
@@ -374,8 +421,8 @@ class DataSet(object):
         # If the relative response arrays have length > 0, copy them into the
         # relsens table of the data model
         if nelem > 0:
-            waves = tabdata['wavelength']
-            relresps = tabdata['relresponse']
+            waves = tabdata['wavelength'][:nelem]
+            relresps = tabdata['relresponse'][:nelem]
 
             # Set the relative sensitivity table for the correct Model type
             if isinstance(self.input, datamodels.MultiSlitModel):
@@ -459,10 +506,10 @@ class DataSet(object):
         Short Summary
         -------------
         Open the reference file, retrieve the conversion factor, and write that
-        factor as the key PHOTFLAM to header of input.  The conversion factor
+        factor as the key PHOTMJSR to header of input.  The conversion factor
         for each instrument has its own dependence on detector- and
         observation-specific parameters.  The corresponding conversion factor
-        from the reference file is written as PHOTFLAM to the model. The table
+        from the reference file is written as PHOTMJSR to the model. The table
         of relative response vs wavelength will be read from the reference file,
         and if it contains >0 rows, it will be attached to the model. If this
         is an imaging mode, there will be a pixel area map file, from which the
@@ -537,7 +584,7 @@ class DataSet(object):
         Returns
         -------
         self.input: DM object
-            input DM object with photom key word PHOTFLAM updated
+            input DM object with photom key word PHOTMJSR updated
 
         """
         photom_fname = self.phot_file

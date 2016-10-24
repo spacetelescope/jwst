@@ -35,6 +35,9 @@ def load_wcs(input_model, reference_files={}):
         output_model.meta.cal_step.assign_wcs = 'SKIPPED'
     else:
         wcs = WCS(pipeline)
+        #if output_model.meta.exposure.type.lower() in ['nrs_fixedslit', 'nrs_msaspec']:
+            #record_open_slits(wcs)
         output_model.meta.wcs = wcs
         output_model.meta.cal_step.assign_wcs = 'COMPLETE'
     return output_model
+

@@ -46,23 +46,26 @@ def imaging(input_model, reference_files):
     reference_files={'distortion': 'jwst_fgs_distortioon_0001.asdf'}
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    focal = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
-    sky = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS())
-    fitswcs_transform = pointing.create_fitswcs_transform(input_model)
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
+    world = cf.CelestialFrame(name='world', reference_frame=coord.ICRS())
+    # V2, V3 to sky
+    tel2sky = pointing.v23tosky(input_model)
+
     if reference_files:
         distortion = imaging_distortion(input_model, reference_files)
     else:
         distortion = models.Identity(2)
     pipeline = [(detector, distortion),
-                (focal, None)]
-                #(sky, None)]
-
+                (v2v3, tel2sky),
+                (world, None)]
     return pipeline
 
 
 def imaging_distortion(input_model, reference_files):
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    return distortion
+    # Convert to arcsec
+    transform = distortion | models.Scale(1/60) & models.Scale(1/60)
+    return transform
 
 
 exp_type2transform = {'fgs_image': imaging,

@@ -1,17 +1,16 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
-
+import numpy as np
 from asdf import yamlutil
 from asdf.tags.transform.basic import TransformType
 
 from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
                       NRSZCoord, Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA,
-                      LRSWavelength, Gwa2Slit, Slit2Msa, Logical, NirissSOSSModel)
-
+                      LRSWavelength, Gwa2Slit, Slit2Msa, Logical, NirissSOSSModel, V23ToSky)
 
 
 __all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
-           'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType']
+           'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSky']
 
 
 class RotationSequenceType(TransformType):
@@ -25,6 +24,25 @@ class RotationSequenceType(TransformType):
         angles = node['angles']
         axes_order = node['axes_order']
         return Rotation3DToGWA(angles, axes_order)
+
+    @classmethod
+    def to_tree_transform(cls, model, ctx):
+        node = {'angles': list(model.angles.value)}
+        node['axes_order'] = model.axes_order
+        return yamlutil.custom_tree_to_tagged_tree(node, ctx)
+
+
+class V23ToSkyType(TransformType):
+    name = "v23tosky"
+    types = [V23ToSky]
+    standard = "jwst_pipeline"
+    version = "0.1.0"
+
+    @classmethod
+    def from_tree_transform(cls, node, ctx):
+        angles = node['angles']
+        axes_order = node['axes_order']
+        return V23ToSky(angles, axes_order=axes_order)
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
@@ -134,18 +152,12 @@ class Gwa2SlitType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        models = dict(zip(node['slits'], node['models']))
-        return Gwa2Slit(models)
+        return Gwa2Slit(node['slits'], node['models'])
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
-        slits = []
-        models = []
-        for s, m in model.models.items():
-            slits.append(s)
-            models.append(m)
-        node = {'slits': slits,
-                'models': models}
+        node = {'slits': model._slits,
+                'models': model.models}
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
@@ -157,18 +169,12 @@ class Slit2MsaType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        models = dict(zip(node['slits'], node['models']))
-        return Slit2Msa(models)
+        return Slit2Msa(node['slits'], node['models'])
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
-        slits = []
-        models = []
-        for s, m in model.models.items():
-            slits.append(s)
-            models.append(m)
-        node = {'slits': slits,
-                'models': models}
+        node = {'slits': model._slits,
+                'models': model.models}
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
@@ -198,12 +204,11 @@ class NirissSOSSType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        models = dict(zip(node['spectral_orders'], node['models']))
-        return NirissSOSSModel(models)
+        return NirissSOSSModel(node['spectral_orders'], node['models'])
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
-        node = {'spectral_orders': model.models.keys(),
-                'models': model.models.values()
+        node = {'spectral_orders': list(model.models.keys()),
+                'models': list(model.models.values())
                 }
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)

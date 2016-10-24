@@ -440,10 +440,11 @@
             "name": "jw99009-a3001_t001_nircam_f090w"
         }
     ],
-    "creation_time": "20160915T142211",
+    "version_id": "20160915T142211",
     "target": "1",
     "asn_pool": "mega_pool",
     "program": "99009",
     "degraded_status": "No known degraded exposures in association.",
-    "asn_rule": "discover_Asn_Image"
+    "asn_rule": "discover_Asn_Image",
+    "asn_id": "o009"
 }

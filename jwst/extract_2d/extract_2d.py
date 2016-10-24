@@ -13,7 +13,7 @@ from ..assign_wcs import nirspec
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 
 def extract2d(input_model, which_subarray=None):
@@ -21,29 +21,26 @@ def extract2d(input_model, which_subarray=None):
     log.info('EXP_TYPE is {0}'.format(exp_type))
     if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
         if which_subarray is None:
-            open_slits = nirspec.get_open_slits(input_model)
+            open_slits = input_model.meta.wcs.get_transform('gwa', 'slit_frame').slits
         else:
-            open_slits = [nirspec.slit_name2id[which_subarray]]
+            #open_slits = [nirspec.slit_name2id[which_subarray]]
+            raise NotImplementedError()
     else:
         # Set the step status to SKIPPED, since it won't be done.
         input_model.meta.cal_step.extract_2d = 'SKIPPED'
         return input_model
 
-    log.info('open slits {0}'.format(open_slits))
+    log.debug('open slits {0}'.format(open_slits))
 
     output_model = datamodels.MultiSlitModel()
     output_model.update(input_model)
 
-    if exp_type == 'NRS_FIXEDSLIT':
-        slit_names = [nirspec.slit_id2name[tuple(slit)] for slit in open_slits]
-    else:
-        slit_names = [str(slit) for slit in open_slits]
-    for slit, slit_name in zip(open_slits, slit_names):
-        slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit[0], slit[1])
+    for slit in open_slits:
+        slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
         xlo, xhi = slit_wcs.domain[0]['lower'], slit_wcs.domain[0]['upper']
         ylo, yhi = slit_wcs.domain[1]['lower'], slit_wcs.domain[1]['upper']
 
-        log.info('Name of subarray extracted: %s', slit_name)
+        log.info('Name of subarray extracted: %s', slit.name)
         log.info('Subarray x-extents are: %s %s', xlo, xhi)
         log.info('Subarray y-extents are: %s %s', ylo, yhi)
 
@@ -60,7 +57,8 @@ def extract2d(input_model, which_subarray=None):
         # set x/ystart values relative to the image (screen) frame.
         # The overall subarray offset is recorded in model.meta.subarray.
         nslit = len(output_model.slits) - 1
-        output_model.slits[nslit].name = slit_name
+        output_model.slits[nslit].name = str(slit.name)
+        #output_model.slits[nslit].source_id = slit.source_id
         output_model.slits[nslit].xstart = xlo + 1
         output_model.slits[nslit].xsize = xhi - xlo
         output_model.slits[nslit].ystart = ylo + 1
