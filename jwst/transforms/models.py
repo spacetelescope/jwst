@@ -703,8 +703,6 @@ class V23ToSky(Rotation3D):
         return alpha, delta
 
     def evaluate(self, v2, v3, angles):
-        v2 /= 3600.
-        v3 /= 3600.
         x, y, z = self.spherical2cartesian(v2, v3)
         x1, y1, z1 = super(V23ToSky, self).evaluate(x, y, z, angles)
         return self.cartesian2spherical(x1, y1, z1)
