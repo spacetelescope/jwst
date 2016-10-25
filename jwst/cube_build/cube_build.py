@@ -224,9 +224,9 @@ def FindFootPrintNIRSPEC(self, input):
         y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
         ra,dec,lam = slice_wcs(x,y)
 
-#        detector2v23 = slice_wcs.get_transform('detector','v2v3')
-#        v23toworld = slice_wcs.get_transform("v2v3","world")
-#        v2, v3, lam = detector2v23(x, y) # v2,v3 units arc seconds
+        detector2v23 = slice_wcs.get_transform('detector','v2v3')
+        v23toworld = slice_wcs.get_transform("v2v3","world")
+        v2, v3, lam = detector2v23(x, y) # v2,v3 units arc seconds
 
 #        roll_ref = input.meta.wcsinfo.roll_ref # degrees 
 #        v2_ref = input.meta.wcsinfo.v2_ref # arc min
@@ -238,12 +238,12 @@ def FindFootPrintNIRSPEC(self, input):
 
 
 
-#        coord1,coord2,lam_test = v23toworld(v2,v3,lam)
+        coord1,coord2,lam_test = v23toworld(v2,v3,lam)
 
-#        print('coord1_test',coord1_test[30,0:50])
-#        print('coord1     ',coord1[30,0:50])
-#        print('coord2_test',coord2_test[30,0:50])
-#        print('coord2     ',coord2[30,0:50])
+        print('ra         ',ra[20,40:50])
+        print('coord1     ',coord1[20,40:50])
+        print('dec        ',dec[20,40:50])
+        print('coord2     ',coord2[20,40:50])
 
 #        print('min ra',np.nanmin(ra))
 #        print('max ra',np.nanmax(ra))
@@ -629,20 +629,23 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
                             weight = weight + weightpt[j]
                             value = value + weightpt[j] * pixelflux[j]
 
-                            if(icube == 253984  ):
-                                print('Checking ', icube, ix, iy, iz)
-                                print('icube', icube)
-                                print('pointcloud', pointcloud_index[j])
-                                print('flux = {0:.5f}'.format(pixelflux[j]))
-                                print('w', weightpt[j])
-                                print(' ',weightpt[j] * pixelflux[j])
-                                print('num',num)
+                            if(iz == 39 or iz == 40 ):
+                                if(ix == 14 and≈ß iy == 16): 
+                                    print('Checking ', icube, ix, iy, iz)
+                                    print('icube', icube)
+                                    print('pointcloud', pointcloud_index[j])
+                                    print('flux = {0:.5f}'.format(pixelflux[j]))
+                                    print('w', weightpt[j])
+                                    print(' ',weightpt[j] * pixelflux[j])
+                                    print('num',num)
                                 
                         if(weight != 0):
                             value = value / weight
                             spaxel[icube].flux = value
-                            if(icube == 253984  ):
-                                print('Final Flux', value * weight, weight, value,num)
+                            if(iz == 39 or iz == 40 ):
+                                if(ix == 14 and iy == 16): 
+
+                                    print('Final Flux', value* weight, weight, value,num)
 
 
                     icube = icube + 1

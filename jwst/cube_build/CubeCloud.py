@@ -332,34 +332,25 @@ def FindROI(self, Cube, spaxel, PointCloud):
                                                              Cube.Crval2,
                                                              xi[ix],eta[iy])
 
-                        print('ra',ra_spaxel,dec_spaxel)
+#                        print('ra',ra_spaxel,dec_spaxel)
 
-#                        v2_spaxel,v3_spaxel = coord.RADEC2V2V3(ra_ref,dec_ref,
-#                                                               roll_ref,
-#                                                               v2_ref,v3_ref,
-#                                                               ra_spaxel, dec_spaxel)
  
                         v2_spaxel,v3_spaxel,zl = worldtov23(ra_spaxel,dec_spaxel,zlam[iz])
 
-#                        print('testing methods to get to v2,v3')
-                        print('v2      ',v2_spaxel)
-#                        print('v2 test',v2_spaxel_test)
-                        print('v3      ',v3_spaxel)
-#                        print('v3 test',v3_spaxel_test)
-
-                        #v2_spaxel, v3_spaxel are in arc seconds 
+#                        print('v2      ',v2_spaxel*3600.0)
+#                        print('v3      ',v3_spaxel*3600.0)
 
                         alpha_spaxel,beta_spaxel,wave_spaxel = v2ab_transform(v2_spaxel,
                                                                               v3_spaxel,
                                                                               zlam[iz])                    
-                        alpha_spaxel = alpha_spaxel*60.0
-                        beta_spaxel = beta_spaxel*60.0
-                        print('alpha_spaxel',alpha_spaxel)
-                        print('alpha       ',alpha)
+                        alpha_spaxel = alpha_spaxel
+                        beta_spaxel = beta_spaxel
+#                        print('alpha_spaxel',alpha_spaxel)
+#                        print('alpha       ',alpha)
 
-                        print('beta_spaxel ',beta_spaxel)
-                        print('beta        ',beta)
-                        sys.exit('STOP')
+#                        print('beta_spaxel ',beta_spaxel)
+#                        print('beta        ',beta)
+#                        sys.exit('STOP')
                         alpha_distance = abs(alpha-alpha_spaxel)
                         beta_distance = abs(beta-beta_spaxel)
                         wave_distance  = abs(wave-wave_spaxel)
