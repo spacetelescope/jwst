@@ -8,7 +8,7 @@ from ...transforms import models
 def test_roll_angle():
     """
     A sanity test - when V2_REF = 0 and V3_REF = 0,
-    for V@, V3 close to he origin
+    for V2, V3 close to he origin
     ROLL_REF should be approximately PA_V3 .
 
     (Test taken from SIAF report.)

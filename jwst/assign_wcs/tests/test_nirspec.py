@@ -264,9 +264,10 @@ def test_msa_configuration_normal():
 
     # Test 1: Reasonably normal as well
     msa_meta_id = 12
-    msaconfl = get_file_path('msa_configuration_msa.fits')
+    msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    assert_allclose([(55, 9376, 251, 26, -5.15, 0.55, 4, 1, 5)],
+    assert_allclose([(55, 9376, 251, 26, -5.15, 0.55, 4, 1, 5, '95065_1', '2122',
+                      '2122', 0.13, 0.18283921, 0.31907734)],
                     slitlet_info, atol=10**-10)
 
 
@@ -290,7 +291,8 @@ def test_msa_configuration_all_background():
     msa_meta_id = 14
     msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    assert_allclose([(57, 616, 251, 2, 22.45, 25.85, 4, 1, 3)],
+    assert_allclose([(57, 616, 251, 2, 22.45, 25.85, 4, 1, 3, '95065_1', '2122',
+                      '2122', 0.13, 0, 0)],
                     slitlet_info, atol=10**-10)
 
 
@@ -301,9 +303,10 @@ def test_msa_configuration_row_skipped():
 
     # Test 4: One row is skipped, should be acceptable.
     msa_meta_id = 15
-    msaconfl = get_file_path('msa_configuration_msa.fits')
+    msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    assert_allclose([(58, 8646, 251, 24, -2.85, 5.15, 4, 1, 6)],
+    assert_allclose([(58, 8646, 251, 24, -2.85, 5.15, 4, 1, 6, '95065_1', '2122',
+                      '2122', 0.130, 0.18283921, 0.31907734)],
                     slitlet_info, atol=10**-10)
 
 
@@ -313,8 +316,10 @@ def test_msa_configuration_multiple_returns():
     """
     # Test 4: One row is skipped, should be acceptable.
     msa_meta_id = 16
-    msaconfl = get_file_path('msa_configuration_msa.fits')
+    msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    assert_allclose([(59, 8651, 256, 24, -2.85, 5.15, 4, 1, 6),
-                     (60, 11573, 258, 32, -2.85, 4, 4, 1, 6)],
+    assert_allclose([(59, 8651, 256, 24, -2.85, 5.15, 4, 1, 6, '95065_1', '2122',
+                      '2122', 0.13000000000000003, 0.18283921, 0.31907734 ),
+                     (60, 11573, 258, 32, -2.85, 4, 4, 2, 6, '95065_2', '172',
+                      '172', 0.70000000000000007, 0.18283921, 0.31907734)],
                     slitlet_info, atol=10**-10)
