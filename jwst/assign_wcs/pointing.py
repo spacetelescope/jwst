@@ -114,7 +114,7 @@ def wcsinfo_from_model(input_model):
     wcsinfo["CTYPE"] = np.array(ctypes)
     wcsinfo["CUNIT"] = np.array(cunits)
 
-    pc = np.zeros((wcsaxes, 2))
+    pc = np.zeros((wcsaxes, wcsaxes))
 
     for i in range(1, wcsaxes + 1):
         for j in range(1, 3):
