@@ -25,7 +25,10 @@ N_SHUTTERS_QUADRANT = 62415
 
 # Nirspec slit definition
 Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
-                           "ymin", "ymax", "quadrant", "source_id", "nshutters"])
+                           "ymin", "ymax", "quadrant", "source_id", "nshutters",
+                           "source_name", "source_alias", "catalog_id", "stellarity",
+                           "source_xpos", "source_ypos"])
+Slit.__new__.__defaults__= ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, "", "", "", 0.0, 0.0, 0.0)
 
 
 class RefractionIndex(Model):
