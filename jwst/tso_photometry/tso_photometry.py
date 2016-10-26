@@ -3,6 +3,7 @@ from collections import OrderedDict
 import numpy as np
 from astropy.table import QTable
 import astropy.units as u
+from astropy.time import Time, TimeDelta
 from photutils import aperture_photometry, CircularAperture, CircularAnnulus
 
 from ..datamodels import CubeModel
@@ -88,6 +89,15 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
     meta['photometry'] = info
 
     tbl = QTable(meta=meta)
+
+    dt = (datamodel.meta.exposure.group_time *
+          (datamodel.meta.exposure.ngroups + 1))
+    dt_arr = (np.arange(1, 1 + datamodel.meta.exposure.nints) *
+              dt - (dt / 2.))
+    int_dt = TimeDelta(dt_arr, format='sec')
+    int_times = (Time(datamodel.meta.exposure.start_time, format='mjd') +
+                 int_dt)
+    tbl['MJD'] = int_times.mjd
 
     tbl['aperture_sum'] = aperture_sum
     tbl['aperture_sum_err'] = aperture_sum_err
