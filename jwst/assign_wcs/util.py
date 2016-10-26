@@ -157,7 +157,7 @@ def grid_from_spec_domain(slit, domain=None):
     ystart, yend = slit.ystart - 1, slit.ystart - 1 + slit.ysize
     y, x = np.mgrid[ystart: yend, xstart: xend]
     mask = spec_domain(slit, domain=domain)
-    return ma.array([x, y], mask=[mask, mask])
+    return ma.array([y, x], mask=[mask, mask])
 
 
 def spec_footprint(slit, domain=None):
@@ -166,7 +166,7 @@ def spec_footprint(slit, domain=None):
 
     Build-7 workaround.
     """
-    x, y = grid_from_spec_domain(slit, domain=domain)
+    y, x = grid_from_spec_domain(slit, domain=domain)
     ra, dec, lam = slit.meta.wcs(x, y)
     mask = y.mask
     return ma.array([ra, dec, lam], mask=[mask, mask, mask])
@@ -205,8 +205,9 @@ def wcs_from_spec_footprints(slitlist, refwcs=None, transform=None, domain=None)
     transform = compute_spec_transform(fiducial, refslit)
     output_frame = getattr(refwcs, refwcs.output_frame)
     wnew = WCS(output_frame=output_frame, forward_transform=transform)
-    footprints = [spec_footprint(s) for s in slitlist]
-    # domain_bounds = np.hstack([wnew.backward_transform(f[0],f[1],f[2]) for f in footprints])
+    # footprints = [spec_footprint(s) for s in slitlist]
+    # db = [wnew.backward_transform(*f) for f in footprints]
+    # domain_bounds = ma.hstack(ma.array(db, mask=np.isnan(db)))
     # for axs in domain_bounds:
     #     axs -= axs.min()
     # domain = []
@@ -216,7 +217,7 @@ def wcs_from_spec_footprints(slitlist, refwcs=None, transform=None, domain=None)
     #                    'includes_lower': True, 'includes_upper': True})
 
     # wnew.domain = domain
-    return wnew, footprints
+    return wnew
 
 
 def compute_spec_fiducial(slitlist, domain=None):
@@ -259,15 +260,15 @@ def compute_spec_transform(fiducial, slitmodel):
     """
     Compute a simple transform given a fidicial point in a spatial-spectral frame.
     """
-    offset = 0.
-    shift = astmodels.Shift(offset)
+    offset = astmodels.Shift(0.) & astmodels.Shift(0.)
     rot = astmodels.Rotation2D(slitmodel.meta.wcsinfo.roll_ref)
-    pixel_scale = 1.0
-    scale = astmodels.Scale(pixel_scale)
+    cdelt1 = slitmodel.meta.wcsinfo.cdelt1 / 3600.
+    cdelt2 = slitmodel.meta.wcsinfo.cdelt2 / 3600.
+    scale = astmodels.Scale(cdelt1) & astmodels.Scale(cdelt2)
     tan = astmodels.Pix2Sky_TAN()
-    skyrot = astmodels.RotateNative2Celestial(fiducial[0], fiducial[1], 180.0)
-    spatial = rot | tan | skyrot
-    dispersion = 1.0
+    skyrot = astmodels.RotateNative2Celestial(fiducial[0][0], fiducial[0][1], 180.0)
+    spatial = offset | rot | scale | tan | skyrot
+    dispersion = slitmodel.meta.wcsinfo.cdelt3
     spectral = astmodels.Scale(dispersion)
     mapping = astmodels.Mapping((0, 1, 0))
     transform = mapping | spatial & spectral
