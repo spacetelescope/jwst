@@ -1,66 +1,56 @@
 #!/usr/bin/env python
 
 from ..stpipe import Step, cmdline
-from ..datamodels import DrizProductModel
-from . import source_catalog
+from ..datamodels import CubeModel
+from .tso_photometry import tso_aperture_photometry
 
 
 class TSOPhotometryStep(Step):
     """
-    Perform circular aperture photometry on Time-Series (Imaging)
+    Perform circular aperture photometry on imaging Time Series
     Observations (TSO).
 
     Parameters
     -----------
-    input : str or `DrizProductModel`
-        A FITS filename or an `DrizProductModel` of a single drizzled
-        image.  The input image is assumed to be background subtracted.
-    """
-
-    spec = """
-        catalog_format = string(default='ecsv')   # Catalog output file format
-        kernel_fwhm = float(default=2.0)    # Gaussian kernel FWHM in pixels
-        kernel_xsize = float(default=5)     # Kernel x size in pixels
-        kernel_ysize = float(default=5)     # Kernel y size in pixels
-        snr_threshold = float(default=3.0)  # SNR threshold above the bkg
-        npixels = float(default=5.0)        # min number of pixels in source
-        deblend = boolean(default=False)    # deblend sources?
+    input : str or `CubeModel`
+        A filename for either a FITS image or and association table or a
+        `CubeModel`.
     """
 
     def process(self, input):
+        with CubeModel(input) as datamodel:
+            # TODO:  need information about the actual source position in
+            # TSO imaging mode (for all subarrays).
+            # Meanwhile, this is a placeholder representing the geometric
+            # center of the image.
+            nint, ny, nx = datamodel.data.shape
+            xcenter = (ny - 1) / 2.
+            ycenter = (ny - 1) / 2.
 
-        catalog_format = self.catalog_format
-        kernel_fwhm = self.kernel_fwhm
-        kernel_xsize = self.kernel_xsize
-        kernel_ysize = self.kernel_ysize
-        snr_threshold = self.snr_threshold
-        npixels = self.npixels
-        deblend = self.deblend
-
-        with DrizProductModel(input) as model:
-            catalog = source_catalog.make_source_catalog(
-                model, kernel_fwhm, kernel_xsize, kernel_ysize, snr_threshold,
-                npixels, deblend=deblend)
-            self.log.info('Detected {0} sources'.format(len(catalog)))
-
-            catalog_filename = model.meta.filename.replace(
-                '.fits', '_cat.{0}'.format(catalog_format))
-            if catalog_format == 'ecsv':
-                fmt = 'ascii.ecsv'
-            elif catalog_format == 'fits':
-                # NOTE: The catalog must not contain any 'None' values.
-                #       FITS will also not clobber existing files.
-                fmt = 'fits'
+            # all radii are in pixel units
+            if datamodel.meta.instrument.pupil == 'WLP8':
+                radius = 50
+                radius_inner = 60
+                radius_outer = 70
             else:
-                raise ValueError('catalog_format must be "ecsv" or "fits".')
+                radius = 3
+                radius_inner = 4
+                radius_outer = 5
+
+            catalog = tso_aperture_photometry(datamodel, xcenter, ycenter,
+                                              radius, radius_inner,
+                                              radius_outer)
+            catalog_format = 'ecsv'
+            fmt = 'ascii.ecsv'
+            catalog_filename = datamodel.meta.filename.replace(
+                '.fits', '_cat.{0}'.format(catalog_format))
+
             catalog.write(catalog_filename, format=fmt)
             self.log.info('Wrote source catalog: {0}'.
                           format(catalog_filename))
-            model.meta.source_catalog.filename = catalog_filename
 
-        # because the is the last CALIMAGE3 step, nothing is returned
         return
 
 
 if __name__ == '__main__':
-    cmdline.step_script(source_catalog_step)
+    cmdline.step_script(tso_photometry_step)
