@@ -108,7 +108,7 @@ def generate_2c_names(input_models):
     """
 
     if hasattr(input_models.meta,'asn_id'):
-        asn_id = input_models.meta.asn_id
+        asn_id = input_models.meta.asn_table.asn_id
     else:
         asn_id = "a3001"
         
