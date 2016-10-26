@@ -82,11 +82,11 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
     meta['ra_icrs'] = ra_icrs
     meta['dec_icrs'] = dec_icrs
 
-    info = ('Circular aperture photometry, r={0} pixels. Background '
-            'estimated as the mean in a circular annulus with r_inner={1} '
-            'pixels and r_outer={2} pixels.'.format(radius, radius_inner,
-                                                    radius_outer))
-    meta['photometry'] = info
+    info = ('Photometry measured in a circular aperture of r={0} pixels. '
+            'Background calculated as the mean in a circular annulus with '
+            'r_inner={1} pixels and r_outer={2} pixels.'
+            .format(radius, radius_inner, radius_outer))
+    meta['apertures'] = info
 
     tbl = QTable(meta=meta)
 
