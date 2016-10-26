@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import os
+from astropy.io import fits             # xxx test temporary
 from ..stpipe import Step
 from .. import datamodels
 from . import extract
@@ -24,22 +25,28 @@ class Extract1dStep(Step):
 
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
+        # begin xxx test temporary ...
+        fd = fits.open(input)
+        data_model_from_header = fd[0].header.get("datamodl", "missing")
+        self.log.info("xxx data_model_from_header = %s",
+                      data_model_from_header)
+        fd.close()
+        # ... end xxx test temporary
+        if data_model_from_header == "IFUCubeModel" and \
+           not isinstance(input_model, datamodels.IFUCubeModel):
+            self.log.info("xxx Close and reopen as an IFUCubeModel")
+            input_model.close()
+            input_model = datamodels.IFUCubeModel(input)
 
         if isinstance(input_model, datamodels.CubeModel):
             # It's a 3-D multi-integration model
-            # xxx test debug
-            self.log.info('Input is a CubeModel; reopen as an IFUCubeModel')
-            input_model.close()
-            input_model = datamodels.IFUCubeModel(input)
             self.log.debug('Input is a CubeModel for a multiple integ. file')
         elif isinstance(input_model, datamodels.ImageModel):
             # It's a single 2-D image
             self.log.debug('Input is an ImageModel')
         elif isinstance(input_model, datamodels.MultiSlitModel):
-            # It's a MultiSlitModel
             self.log.debug('Input is a MultiSlitModel')
         elif isinstance(input_model, datamodels.IFUCubeModel):
-            # IFU data
             self.log.info('Input is an IFUCubeModel')
             # xxx self.log.debug('Input is an IFUCubeModel')
         elif isinstance(input_model, datamodels.DrizProductModel):
