@@ -406,7 +406,8 @@ def do_NIRSpec_flat_field(output_model,
 
     any_updated = False
     for (k, slit) in enumerate(output_model.slits):
-        log.debug("Processing slit %s", slit.name)
+        log.info("Processing slit %s", slit.name)
+        # xxx log.debug("Processing slit %s", slit.name)
 
         # Get the wavelength of each pixel in the extracted slit data.
         ysize, xsize = slit.data.shape

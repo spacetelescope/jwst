@@ -41,7 +41,7 @@ def get_extract_parameters(refname, slitname, meta,
         ref = json.load(f)
     for aper in ref['apertures']:
         if aper.has_key('id') and (aper['id'] == slitname or
-                                   slitname == "ANY"):
+                                   slitname == ANY):
             region_type = aper.get("region_type", "target")
             if region_type == "target":
                 disp = aper.get('dispaxis')
@@ -729,6 +729,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             output_model.spec.append(spec)
     else:
         slitname = input_model.meta.exposure.type
+        if slitname is None:
+            slitname = ANY
         if slitname == 'NIS_SOSS':
             slitname = input_model.meta.subarray.name
         log.debug('slitname=%s' % slitname)
