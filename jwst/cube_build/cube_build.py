@@ -119,7 +119,7 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
     coord2 = np.zeros(y.shape)
     lam = np.zeros(y.shape)
 
-    print(self.coord_system)
+
     if (self.coord_system == 'alpha-beta'):
         detector2alpha_beta = input.meta.wcs.get_transform('detector', 'alpha_beta')
         coord1, coord2, lam = detector2alpha_beta(x, y)
@@ -128,34 +128,35 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
         detector2v23 = input.meta.wcs.get_transform('detector', 'v2v3')
         v23toworld = input.meta.wcs.get_transform("v2v3","world")
 
-        v2, v3, lam = detector2v23(x, y) # v2,v3 are in units of arc minutes 
-        print('v2,v3 after detector2v23 ',v2[0,15:20],v3[0,15:20])
-        ra_ref = input.meta.wcsinfo.ra_ref # degrees
-        dec_ref = input.meta.wcsinfo.dec_ref # degrees
-        roll_ref = input.meta.wcsinfo.roll_ref # degrees 
-        v2_ref = input.meta.wcsinfo.v2_ref # arc min
-        v3_ref = input.meta.wcsinfo.v3_ref # arc min         
-        coord1,coord2 = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,
-                                         v2,v3) # return ra and dec in degrees
+        v2, v3, lam = detector2v23(x, y) # v2,v3 are in units of arc seconds 
+#        print('v2,v3 after detector2v23 ',v2[0,15:20],v3[0,15:20])
+#        ra_ref = input.meta.wcsinfo.ra_ref # degrees
+#        dec_ref = input.meta.wcsinfo.dec_ref # degrees
+#        roll_ref = input.meta.wcsinfo.roll_ref # degrees 
+#        v2_ref = input.meta.wcsinfo.v2_ref # arc seconds
+#        v3_ref = input.meta.wcsinfo.v3_ref # arc seconds     
+#        coord1_test,coord2_test = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,
+#                                         v2,v3) # return ra and dec in degrees
+#        print('v2,v3 after coord.v2v33radec ',v2[0,15:20],v3[0,15:20])
+        coord1,coord2,lam = v23toworld(v2,v3,lam)
+#        print('v2,v3 to world ',v2[0,15:20],v3[0,15:20])
 
-        coord1_test,coord2_test,lam_test = v23toworld(v2,v3,lam)
+#        print(x.shape,y.shape)
 
-        print(x.shape,y.shape)
+#        print('x',x[0,15:20])
+#        print('y',y[0,15:20])
+#        print('v2',v2[0,15:20])
+#        print('v3',v3[0,15:20])
+#        print('lam',lam[0,15:20])
 
-        print('x',x[0,15:20])
-        print('y',y[0,15:20])
-        print('v2',v2[0,15:20])
-        print('v3',v3[0,15:20])
-        print('lam',lam[0,15:20])
+#        print('v2 min,max',np.nanmin(v2),np.nanmax(v2))
+#        print('v3 min max',np.nanmin(v3),np.nanmax(v3))
+#        print('coord1      ',coord1_test[0,15:20])
+#        print('coord1 world',coord1[0,15:20])
+#        print('coord2      ',coord2_test[0,15:20])
+#        print('coord2 world',coord2[0,15:20])
 
-        print('v2 min,max',np.nanmin(v2),np.nanmax(v2))
-        print('v3 min max',np.nanmin(v3),np.nanmax(v3))
-        print('coord1      ',coord1[0,15:20])
-        print('coord1 world',coord1_test[0,15:20])
-        print('coord2      ',coord2[0,15:20])
-        print('coord2 world',coord2_test[0,15:20])
-
-        sys.exit('STOP')
+#        sys.exit('STOP')
 
     else:
         # error the coordinate system is not defined
@@ -170,11 +171,8 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
     lambda_min = np.nanmin(lam)
     lambda_max = np.nanmax(lam)
 
-    print('return from footprint',a_min,a_max,b_min,b_max)
-
     
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
-
 
 #********************************************************************************
 def FindFootPrintNIRSPEC(self, input):
@@ -220,19 +218,24 @@ def FindFootPrintNIRSPEC(self, input):
     # for NIRSPEC there are 30 regions
     for i in regions:
 
-        slice_wcs = nirspec.nrs_wcs_set_input(input, 0, i)
+#        slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
+        slice_wcs = nirspec.nrs_wcs_set_input(input,0, i)
 
         yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
         y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
-        v2, v3, lam = slice_wcs(x, y) # v2,v3 units arc seconds
+        ra,dec,lam = slice_wcs(x,y)
 
+        detector2v23 = slice_wcs.get_transform('detector','v2v3')
+        v2, v3, lam = detector2v23(x, y) # v2,v3 units arc seconds
 #        print('xrange',xrange)
 #        print('yrange',yrange)
 #        print('v2',v2.shape)
 #        print('v3',v3.shape)
         print('v2 min,max',np.nanmin(v2),np.nanmax(v2))
         print('v3 min max',np.nanmin(v3),np.nanmax(v3))
+        sys.exit('STOP')
+
 #        print('v2',v2[30,0:500])
 #        print('v3',v3[30,0:500])
 
@@ -329,8 +332,6 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
         parameter1 = self.metadata['band_grating']
         parameter2 = self.metadata['band_filter']
 
-    
-
 #    number_par1 = len(parameter1)
 #    number_par2 = len(parameter2)
 
@@ -370,11 +371,12 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 #________________________________________________________________________________
 # Open the input data model
             with datamodels.ImageModel(ifile) as input_model:
+
+
                 t0 = time.time()
                 if(instrument == 'NIRSPEC'):
                     ChannelFootPrint = FindFootPrintNIRSPEC(self, input_model)
                     amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
-                        #print(amin,amax,bmin,bmax,lmin,lmax)
                     t1 = time.time()
 
 #________________________________________________________________________________
@@ -423,7 +425,8 @@ def MapDetectorToCube(self, this_par1, this_par2,
                       Cube, spaxel, 
                       PixelCloud, 
                       MasterTable, 
-                      InstrumentInfo):
+                      InstrumentInfo,
+                      IFUCube):
 #********************************************************************************
     """
     Short Summary
@@ -453,6 +456,7 @@ def MapDetectorToCube(self, this_par1, this_par2,
     for k in range(nfiles):
         ifile = MasterTable.FileMap[instrument][this_par1][this_par2][k]
         print(' On File k',k,nfiles,ifile)
+#        IFUCube.input_files.append(ifile)
         ioffset = len(MasterTable.FileOffset[this_par1][this_par2]['C1'])
         Cube.file.append(ifile)
         c1_offset = 0.0
@@ -467,13 +471,15 @@ def MapDetectorToCube(self, this_par1, this_par2,
 
 # Open the input data model
         with datamodels.ImageModel(ifile) as input_model:
+            #IFUCube.update(input_model) # do this for single file cubes
 #********************************************************************************
             if(instrument == 'MIRI'):
-                det2ab_transform = input_model.meta.wcs.get_transform('detector', 
-                                                                      'alpha_beta')
-                v2ab_transform = input_model.meta.wcs.get_transform('V2_V3', 
+
+                v2ab_transform = input_model.meta.wcs.get_transform('v2v3', 
                                                                     'alpha_beta')
                 wave_weights = CubeCloud.FindWaveWeights(this_par1, this_par2)
+
+                worldtov23 = input_model.meta.wcs.get_transform("world","v2v3")
 
             # for each file we need information that will be the same for all
             # the pixels on the image.
@@ -485,8 +491,8 @@ def MapDetectorToCube(self, this_par1, this_par2,
                 Cube.c_wave.append(wave_weights[1])
                 Cube.a_weight.append(wave_weights[2])
                 Cube.c_weight.append(wave_weights[3])
-                Cube.transform.append(v2ab_transform)
-
+                Cube.transform_v23toab.append(v2ab_transform)
+                Cube.transform_worldtov23.append(worldtov23) 
             # read in the V2-V3 to RA-DEC information
                 ra_ref = input_model.meta.wcsinfo.ra_ref # degrees
                 dec_ref = input_model.meta.wcsinfo.dec_ref # degrees
@@ -494,7 +500,7 @@ def MapDetectorToCube(self, this_par1, this_par2,
                 v2_ref = input_model.meta.wcsinfo.v2_ref # arc min
                 v3_ref = input_model.meta.wcsinfo.v3_ref # arc min 
 
-                v2v32radec = ra_ref,dec_ref,roll_ref,v2_ref,v3_ref  # temporarily
+#                v2v32radec = ra_ref,dec_ref,roll_ref,v2_ref,v3_ref  # temporarily
                 # store the info needed to transform to ra,dec (this will later
                 # be in assign_wcs) 
 
@@ -516,7 +522,7 @@ def MapDetectorToCube(self, this_par1, this_par2,
                     cloud = CubeCloud.MakePointCloudMIRI(self,input_model,
                                                          x, y, k, 
                                                          Cube,
-                                                         v2v32radec,
+#                                                         v2v32radec,
                                                          c1_offset, c2_offset)
                     n = PixelCloud.size
                     if(n == 10):  # If first time
@@ -530,7 +536,8 @@ def MapDetectorToCube(self, this_par1, this_par2,
 #________________________________________________________________________________
 #2D area method - only works for single files and coord_system = 'alpha-beta'
                 if(self.interpolation == 'area'):
-
+                    det2ab_transform = input_model.meta.wcs.get_transform('detector', 
+                                                                      'alpha_beta')
                     start_region = InstrumentInfo.GetStartSlice(this_par1)
                     end_region = InstrumentInfo.GetEndSlice(this_par1)
                     regions = list(range(start_region, end_region + 1))
