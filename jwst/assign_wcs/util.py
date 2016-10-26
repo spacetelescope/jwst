@@ -6,12 +6,18 @@ Utility function for WCS
 import logging
 import functools
 import numpy as np
+import numpy.ma as ma
+
 from astropy.utils.misc import isiterable
 from astropy.io import fits
 from astropy.modeling import projections
 from astropy.modeling import models as astmodels
-from gwcs import WCS
-from gwcs.wcstools import wcs_from_fiducial
+from astropy.modeling.core import Model
+from astropy import coordinates as coord
+import astropy.units as u
+
+from gwcs import WCS, utils, coordinate_frames
+from gwcs.wcstools import frame2transform
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -77,7 +83,7 @@ def wcs_from_footprints(wcslist, refwcs=None, transform=None, domain=None):
     if not isiterable(wcslist):
         raise ValueError("Expected 'wcslist' to be an iterable of WCS objects.")
     if not all([isinstance(w, WCS) for w in wcslist]):
-        raise TypeError("All items in wcslist are expected to be instances of gwcs.WCS.")
+        raise TypeError("All items in wcslist are to be instances of gwcs.WCS.")
     if refwcs is None:
         refwcs = wcslist[0]
     else:
@@ -88,9 +94,7 @@ def wcs_from_footprints(wcslist, refwcs=None, transform=None, domain=None):
     prj = np.array([isinstance(m, projections.Projection) for m \
                     in refwcs.forward_transform]).nonzero()[0]
     if prj:
-        # TODO: Fix the compound model indexing with numpy integers in astropy.
-        # Remove the work around this issues from here.
-        prj = refwcs.forward_transform[int(prj[0])]
+        prj = refwcs.forward_transform[prj[0]]
     else:
         prj = astmodels.Pix2Sky_TAN()
     trans = []
@@ -125,6 +129,151 @@ def wcs_from_footprints(wcslist, refwcs=None, transform=None, domain=None):
     return wnew
 
 
+def spec_domain(slit, domain=None):
+    """
+    Returns a boolean mask of the pixels where the wcs is definied (not NaN).
+
+    Build-7 workaround.
+
+    Parameters
+    ----------
+    slit : datamodel
+
+    Returns
+    -------
+    Boolean mask of valid wcs transform pixels are set to False.  Pixels
+    in the input that produced NaNs in the output are set to True.
+    """
+    xstart, xend = slit.xstart - 1, slit.xstart - 1 + slit.xsize
+    ystart, yend = slit.ystart - 1, slit.ystart - 1 + slit.ysize
+    y, x = np.mgrid[ystart: yend, xstart: xend]
+    ra, dec, lam = slit.meta.wcs(x, y)
+    ra_masked = ma.array(ra, mask=np.isnan(ra))
+    return ra_masked.mask
+
+
+def grid_from_spec_domain(slit, domain=None):
+    xstart, xend = slit.xstart - 1, slit.xstart - 1 + slit.xsize
+    ystart, yend = slit.ystart - 1, slit.ystart - 1 + slit.ysize
+    y, x = np.mgrid[ystart: yend, xstart: xend]
+    mask = spec_domain(slit, domain=domain)
+    return ma.array([x, y], mask=[mask, mask])
+
+
+def spec_footprint(slit, domain=None):
+    """
+    Returns wcs footprint grid coordinates where NaNs are masked.
+
+    Build-7 workaround.
+    """
+    x, y = grid_from_spec_domain(slit, domain=domain)
+    ra, dec, lam = slit.meta.wcs(x, y)
+    mask = y.mask
+    return ma.array([ra, dec, lam], mask=[mask, mask, mask])
+
+
+def wcs_from_spec_footprints(slitlist, refwcs=None, transform=None, domain=None):
+    """
+    Create a WCS from a list of datamodels with spectral WCS.
+
+    Build-7 workaround.
+    """
+    if not isiterable(slitlist):
+        raise ValueError("Expected 'slitlist' to be an iterable of datamodels.")
+    if not all([isinstance(s.meta.wcs, WCS) for s in slitlist]):
+        raise TypeError("All items in 'slitlist' must have instance of gwcs.WCS.")
+    if refwcs is None:
+        refwcs = slitlist[0].meta.wcs
+        refslit = slitlist[0]
+    else:
+        if not isinstance(refwcs, WCS):
+            raise TypeError("Expected refwcs to be an instance of gwcs.WCS.")
+    fiducial = compute_spec_fiducial(slitlist, domain=domain)
+     # trans = []
+    # scales = [m for m in refwcs.forward_transform if isinstance(m, astmodels.Scale)]
+    # if scales:
+    #     trans.append(functools.reduce(lambda x, y: x & y, scales))
+    # rotation = [m for m in refwcs.forward_transform if \
+    #             isinstance(m, astmodels.AffineTransformation2D)]
+    # if rotation:
+    #     trans.append(rotation[0])
+    # if trans:
+    #     tr = functools.reduce(lambda x, y: x | y, trans)
+    # else:
+    #     tr = None
+    proj = astmodels.Pix2Sky_TAN()
+    transform = compute_spec_transform(fiducial, refslit)
+    output_frame = getattr(refwcs, refwcs.output_frame)
+    wnew = WCS(output_frame=output_frame, forward_transform=transform)
+    footprints = [spec_footprint(s) for s in slitlist]
+    # domain_bounds = np.hstack([wnew.backward_transform(f[0],f[1],f[2]) for f in footprints])
+    # for axs in domain_bounds:
+    #     axs -= axs.min()
+    # domain = []
+    # for axis in output_frame.axes_order:
+    #     axis_min, axis_max = domain_bounds[axis].min(), domain_bounds[axis].max()
+    #     domain.append({'lower': axis_min, 'upper': axis_max,
+    #                    'includes_lower': True, 'includes_upper': True})
+
+    # wnew.domain = domain
+    return wnew, footprints
+
+
+def compute_spec_fiducial(slitlist, domain=None):
+    """
+    For a celestial footprint this is the center.
+    For a spectral footprint, it is the beginning of the range.
+
+    This function assumes all WCSs have the same output coordinate frame.
+
+    Build-7 workaround.
+    """
+    output_frame = getattr(slitlist[0].meta.wcs, 'output_frame')
+    axes_types = getattr(slitlist[0].meta.wcs, output_frame).axes_type
+    spatial_axes = np.array(axes_types) == 'SPATIAL'
+    spectral_axes = np.array(axes_types) == 'SPECTRAL'
+    footprints = ma.hstack([spec_footprint(s,
+        domain=domain) for s in slitlist])
+    spatial_footprint = footprints[spatial_axes]
+    spectral_footprint = footprints[spectral_axes]
+    # Compute center of footprint
+    fiducial = np.empty(len(axes_types))
+    if (spatial_footprint).any():
+        lon, lat = spatial_footprint
+        lon, lat = np.deg2rad(lon), np.deg2rad(lat)
+        x_mean = np.mean(np.cos(lat) * np.cos(lon))
+        y_mean = np.mean(np.cos(lat) * np.sin(lon))
+        z_mean = np.mean(np.sin(lat))
+        lon_fiducial = np.rad2deg(np.arctan2(y_mean, x_mean)) % 360.0
+        lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean ** 2 +
+            y_mean ** 2)))
+        fiducial[spatial_axes] = lon_fiducial, lat_fiducial
+    #    c = coord.SkyCoord(lon_fiducial, lat_fiducial, unit='deg')
+    if (spectral_footprint).any():
+        fiducial[spectral_axes] = spectral_footprint.min()
+    return ((fiducial[spatial_axes]), fiducial[spectral_axes])
+    #return (c, spectral_footprint.min())
+
+
+def compute_spec_transform(fiducial, slitmodel):
+    """
+    Compute a simple transform given a fidicial point in a spatial-spectral frame.
+    """
+    offset = 0.
+    shift = astmodels.Shift(offset)
+    rot = astmodels.Rotation2D(slitmodel.meta.wcsinfo.roll_ref)
+    pixel_scale = 1.0
+    scale = astmodels.Scale(pixel_scale)
+    tan = astmodels.Pix2Sky_TAN()
+    skyrot = astmodels.RotateNative2Celestial(fiducial[0], fiducial[1], 180.0)
+    spatial = rot | tan | skyrot
+    dispersion = 1.0
+    spectral = astmodels.Scale(dispersion)
+    mapping = astmodels.Mapping((0, 1, 0))
+    transform = mapping | spatial & spectral
+    return transform
+
+
 def compute_fiducial(wcslist, domain=None):
     """
     For a celestial footprint this is the center.
@@ -148,8 +297,8 @@ def compute_fiducial(wcslist, domain=None):
         y_mean = np.mean(np.cos(lat) * np.sin(lon))
         z_mean = np.mean(np.sin(lat))
         lon_fiducial = np.rad2deg(np.arctan2(y_mean, x_mean)) % 360.0
-        lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean**2 + y_mean\
-** 2)))
+        lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean ** 2 +
+            y_mean ** 2)))
         fiducial[spatial_axes] = lon_fiducial, lat_fiducial
     if (spectral_footprint).any():
         fiducial[spectral_axes] = spectral_footprint.min()
