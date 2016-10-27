@@ -167,7 +167,7 @@ def test_nirspec_ifu_against_esa():
 
     # Multiplying by 1e6 to convert the lam[cond] units from meters into microns as
     # the lp output data is in microns.
-    assert_allclose(lp, lam[cond]*1e6, tol=1e-4, atol=10**-13)
+    assert_allclose(lp, lam[cond]*1e6, rtol=1e-4, atol=1e-4)
     ref.close()
 
 '''
