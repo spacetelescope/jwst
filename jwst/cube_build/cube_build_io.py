@@ -45,7 +45,7 @@ def Read_User_Input(self):
         
         channellist = self.channel.split(',')
         user_clen = len(channellist)
-        print('user_clen',user_clen)
+#        print('user_clen',user_clen)
 
 #        print('self.channel',self.channel,type(self.channel))
 #        print('channellist',channellist)
@@ -61,7 +61,7 @@ def Read_User_Input(self):
 
             if ch in ValidChannel:
                 self.metadata['channel'].append(ch)
-                print('found channel',ch) 
+#                print('found channel',ch) 
             else:
                 raise ErrorInvalidParameter("Invalid Channel %s",ch)
 # remove duplicates if needed
@@ -73,7 +73,7 @@ def Read_User_Input(self):
     if(self.subchannel): # it is not empty the it has been set
         subchannellist = self.subchannel.split(',')
         user_blen = len(subchannellist)
-        print('number subchannels',user_blen)
+#        print('number subchannels',user_blen)
         for j in range(user_blen):
             b = subchannellist[j]
             if(user_blen > 1) :
@@ -82,10 +82,10 @@ def Read_User_Input(self):
                 b = b.strip(' ')
                 b = b[1:-1]
             b  = str(b)
-            print('subchannel',b)
+#            print('subchannel',b)
             if b in ValidSubChannel:
                 self.metadata['subchannel'].append(b)
-                print('found subchannel',b)
+#                print('found subchannel',b)
             else:
                 raise ErrorInvalidParameter("Invalid Subchannel %s",b)
 # remove duplicates if needed
@@ -105,11 +105,11 @@ def Read_User_Input(self):
                 f = f.strip(' ')
                 f = f[1:-1]
             f  = str(f)
-            print('filter',f)
+#            print('filter',f)
 
             if f in ValidFWA:
                 self.metadata['filter'].append(f)
-                print('found filter',f)
+#                print('found filter',f)
             else:
                 raise ErrorInvalidParameter("Invalid Filter %s",f)
 # remove duplicates if needed
@@ -129,10 +129,10 @@ def Read_User_Input(self):
                 g = g.strip(' ')
                 g = g[1:-1]
             g  = str(g)
-            print('grating',g)
+#            print('grating',g)
             if g in ValidGWA:
                 self.metadata['grating'].append(g)
-                print('found grating',g)
+#                print('found grating',g)
             else:
                 raise ErrorInvalidParameter("Invalid Grating %s",g)
 # remove duplicates if needed
@@ -144,7 +144,7 @@ def Read_User_Input(self):
 # For testing this is useful but possibily this might be useful during flight if the
 # images need an additional offset applied to them 
 def ReadOffSetFile(self):
-    print('Going to read offset list', self.offset_list)
+#    print('Going to read offset list', self.offset_list)
     f = open(self.offset_list, 'r')
     i = 0
     for line in f:
@@ -156,7 +156,7 @@ def ReadOffSetFile(self):
 
         self.ra_offset.append(ra_off)
         self.dec_offset.append(dec_off)
-        print('Offset in V2,V3 (in arc seconds) for exposure', ra_off, dec_off, i)
+#        print('Offset in V2,V3 (in arc seconds) for exposure', ra_off, dec_off, i)
         i = i + 1
     f.close()
 
@@ -274,7 +274,7 @@ def DetermineCubeCoverage(self, MasterTable):
         # the filters and grating contained in the files
         if(user_glen == 0 and  user_flen == 0): 
             for i in range(nbands):
-                print('FWA GWA',ValidFWA[i],ValidGWA[i],nbands)
+#                print('FWA GWA',ValidFWA[i],ValidGWA[i],nbands)
 
                 nfiles = len(MasterTable.FileMap['NIRSPEC'][ValidGWA[i]][ValidFWA[i]])
                 if(nfiles > 0):
@@ -309,7 +309,7 @@ def DetermineCubeCoverage(self, MasterTable):
         if(number_gratings == 0):
             raise ErrorNoGratings("The cube  does not cover any gratings")
 
-        print('Num gratings and filters',number_gratings,number_filters)
+#        print('Num gratings and filters',number_gratings,number_filters)
 
 #********************************************************************************
 def SetFileTable(self, input_table, MasterTable):
@@ -359,14 +359,14 @@ def SetFileTable(self, input_table, MasterTable):
             i = i + 1
 
     num = len(input_filenames)
-    print('number of input filenames',num)
+#    print('number of input filenames',num)
 #________________________________________________________________________________
 # Loop over input list of files and assign fill in the MasterTable with filename
 # for the correct (channel-subchannel) or (grating-subchannel)
     for i in range(num):
 
         ifile = input_filenames[i]
-        print('openning file',ifile)
+#        print('openning file',ifile)
         # Open the input data model & Fill in the FileMap information
 
         with datamodels.ImageModel(ifile) as input_model:
@@ -409,6 +409,7 @@ def SetFileTable(self, input_table, MasterTable):
 #********************************************************************************
 def UpdateOutPutName(self):
 
+
     if(self.metadata['instrument'] == 'MIRI'):
 
         channels = list(set(self.metadata['band_channel']))
@@ -442,199 +443,10 @@ def UpdateOutPutName(self):
     print('Output filename',newname)
 
 
-
     return newname
 
 
-#********************************************************************************
 
-
-#********************************************************************************
-def SetUpIFUCube(self, Cube):
-
-#********************************************************************************
-    """
-    Short Summary
-    -------------
-    Write the IFU cube to fits file
-
-    Parameters
-    ----------
-    Cube: holds meta data of cube
-    spaxel: list of spaxels in cube
-
-
-    Returns
-    -------
-    no return = writes file
-
-    """
-    #pull out data into array
-
-    data = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
-    idata = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
-
-    dq_cube = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
-    err_cube = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
-
-
-    new_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
-
-
-    new_model.meta.filename = Cube.output_name
-    new_model.meta.wcsinfo.crval1 = Cube.Crval1
-    new_model.meta.wcsinfo.crval2 = Cube.Crval2
-    new_model.meta.wcsinfo.crval3 = Cube.Crval3
-    new_model.meta.wcsinfo.crpix1 = Cube.Crpix1
-    new_model.meta.wcsinfo.crpix2 = Cube.Crpix2
-    new_model.meta.wcsinfo.crpix3 = Cube.Crpix3
-
-    new_model.meta.wcsinfo.crdelt1 = Cube.Cdelt1
-    new_model.meta.wcsinfo.crdelt2 = Cube.Cdelt2
-    new_model.meta.wcsinfo.crdelt3 = Cube.Cdelt3
-
-    new_model.meta.wcsinfo.ctype1 = 'RA---TAN'
-    new_model.meta.wcsinfo.ctype2 = 'DEC--TAN'
-    new_model.meta.wcsinfo.ctype3 = 'WAVE'
-
-    new_model.meta.wcsinfo.cunit1 = 'DEG'
-    new_model.meta.wcsinfo.cunit2 = 'DEG'
-    new_model.meta.wcsinfo.cunit3 = 'UM'
-
-#    new_model.meta.wcsinfo.waverange_start = 
-#    new_model.meta.wcsinfo.waverange_end = 
-    new_model.meta.flux_extension = 'SCI'
-    new_model.meta.error_extension = 'ERR'
-    new_model.meta.dq_extension = 'DQ'
-    new_model.meta.weightmap = 'WMAP'
-    new_model.error_type = 'ERR'
-    
-    
-    return new_model
-
-#********************************************************************************
-#********************************************************************************
-def UpdateCube(self, Cube,IFUCube, spaxel):
-
-#********************************************************************************
-    """
-    Short Summary
-    -------------
-    Write the IFU cube to fits file
-
-    Parameters
-    ----------
-    Cube: holds meta data of cube
-    spaxel: list of spaxels in cube
-
-
-    Returns
-    -------
-    no return = writes file
-
-    """
-    #pull out data into array
-
-
-    icube = 0
-    for z in range(Cube.naxis3):
-        for y in range(Cube.naxis2):
-            for x in range(Cube.naxis1):
-                IFUCube.data[z, y, x] = spaxel[icube].flux
-                IFUCube.weightmap[z, y, x] = len(spaxel[icube].ipointcloud)
-                icube = icube + 1
-
-
-
-    IFUCube.meta.filename = Cube.output_name    
-    IFUCube.save(IFUCube.meta.filename)
-    IFUCube.close()
-
-
-    log.info('Wrote %s', IFUCube.meta.filename)
-    return IFUCube
-
-#********************************************************************************
-
-
-
-#********************************************************************************
-def WriteCube(self, Cube, spaxel):
-
-#********************************************************************************
-    """
-    Short Summary
-    -------------
-    Write the IFU cube to fits file
-
-    Parameters
-    ----------
-    Cube: holds meta data of cube
-    spaxel: list of spaxels in cube
-
-
-    Returns
-    -------
-    no return = writes file
-
-    """
-    #pull out data into array
-
-    data = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
-    idata = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
-
-    dq_cube = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
-    err_cube = np.zeros((Cube.naxis3, Cube.naxis2, Cube.naxis1))
-
-    icube = 0
-    for z in range(Cube.naxis3):
-        for y in range(Cube.naxis2):
-            for x in range(Cube.naxis1):
-                data[z, y, x] = spaxel[icube].flux
-                idata[z, y, x] = len(spaxel[icube].ipointcloud)
-
-                icube = icube + 1
-    name = Cube.output_name
-    new_model = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
-
-
-
-    new_model.meta.wcsinfo.crval1 = Cube.Crval1
-    new_model.meta.wcsinfo.crval2 = Cube.Crval2
-    new_model.meta.wcsinfo.crval3 = Cube.Crval3
-    new_model.meta.wcsinfo.crpix1 = Cube.Crpix1
-    new_model.meta.wcsinfo.crpix2 = Cube.Crpix2
-    new_model.meta.wcsinfo.crpix3 = Cube.Crpix3
-
-    new_model.meta.wcsinfo.crdelt1 = Cube.Cdelt1
-    new_model.meta.wcsinfo.crdelt2 = Cube.Cdelt2
-    new_model.meta.wcsinfo.crdelt3 = Cube.Cdelt3
-
-    new_model.meta.wcsinfo.ctype1 = 'RA---TAN'
-    new_model.meta.wcsinfo.ctype2 = 'DEC--TAN'
-    new_model.meta.wcsinfo.ctype3 = 'WAVE'
-
-    new_model.meta.wcsinfo.cunit1 = 'DEG'
-    new_model.meta.wcsinfo.cunit2 = 'DEG'
-    new_model.meta.wcsinfo.cunit3 = 'MICRON'
-
-#    new_model.meta.wcsinfo.waverange_start = 
-#    new_model.meta.wcsinfo.waverange_end = 
-    new_model.meta.flux_extension = 'SCI'
-    new_model.meta.error_extension = 'ERR'
-    new_model.meta.dq_extension = 'DQ'
-    new_model.meta.weightmap = 'WMAP'
-    new_model.error_type = 'ERR'
-
-
-    new_model.save(name)
-    new_model.close()
-
-
-    log.info('Wrote %s', name)
-    return new_model
-
-#********************************************************************************
 
 class ErrorNoAssignWCS(Exception):
     pass
@@ -687,7 +499,6 @@ class IFUCubeASN(object):
         self.input = input # keep a record of original input name for later
         self.input_models = []
 
-        print('input trying to open',input)
         if isinstance(input, datamodels.ImageModel):
             print('this is a single file passed as a Model')
             # It's a single image that's been passed in as a model
