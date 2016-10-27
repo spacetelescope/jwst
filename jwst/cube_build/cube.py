@@ -136,11 +136,11 @@ class CubeInfo(object):
         range_ra = (ra_max - ra_min) * 3600.0 * math.cos(dec_ave*deg2rad)
 
         self.naxis1 = int(math.ceil(range_ra / self.Cdelt1)) 
-        print('ra range, ave,naxis1',range_ra,ra_ave,self.naxis1)
+        #print('ra range, ave,naxis1',range_ra,ra_ave,self.naxis1)
 
         range_dec = (dec_max - dec_min) * 3600.0
         self.naxis2 = int(math.ceil(range_dec / self.Cdelt2)) 
-        print('dec range,ave,naxis2', range_dec,dec_ave,self.naxis2)
+        #print('dec range,ave,naxis2', range_dec,dec_ave,self.naxis2)
 
         self.Crval1 = ra_ave 
         self.Crval2 = dec_ave
@@ -216,10 +216,13 @@ class CubeInfo(object):
     def PrintCubeGeometry(self, instrument):
         log.info('Cube Geometry')
         blank = '  '
-        log.info('axis# Naxis  CRPIX    CRVAL        CDELT           MIN           MAX')
-        log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', self.naxis1, self.Crpix1, self.Crval1, self.Cdelt1, self.a_min, self.a_max)
-        log.info('Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', self.naxis2, self.Crpix2, self.Crval2, self.Cdelt2, self.b_min, self.b_max)
-        log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', self.naxis3, self.Crpix3, self.Crval3, self.Cdelt3, self.lambda_min, self.lambda_max)
+        log.info('axis# Naxis  CRPIX    CRVAL      CDELT(arc sec)    MIN& Max (xi,eta arc sec)')
+        log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
+                 self.naxis1, self.Crpix1, self.Crval1, self.Cdelt1, self.a_min, self.a_max)
+        log.info('Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
+                 self.naxis2, self.Crpix2, self.Crval2, self.Cdelt2, self.b_min, self.b_max)
+        log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
+                 self.naxis3, self.Crpix3, self.Crval3, self.Cdelt3, self.lambda_min, self.lambda_max)
 
         if(instrument == 'MIRI'):
             number_channels = len(self.channel)

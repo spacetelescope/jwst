@@ -128,34 +128,13 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
         detector2v23 = input.meta.wcs.get_transform('detector', 'v2v3')
         v23toworld = input.meta.wcs.get_transform("v2v3","world")
 
-        v2, v3, lam = detector2v23(x, y) # v2,v3 are in units of arc seconds 
-#        print('v2,v3 after detector2v23 ',v2[0,15:20],v3[0,15:20])
-#        ra_ref = input.meta.wcsinfo.ra_ref # degrees
-#        dec_ref = input.meta.wcsinfo.dec_ref # degrees
-#        roll_ref = input.meta.wcsinfo.roll_ref # degrees 
-#        v2_ref = input.meta.wcsinfo.v2_ref # arc seconds
-#        v3_ref = input.meta.wcsinfo.v3_ref # arc seconds     
-#        coord1_test,coord2_test = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,
-#                                         v2,v3) # return ra and dec in degrees
-#        print('v2,v3 after coord.v2v33radec ',v2[0,15:20],v3[0,15:20])
+        v2, v3, lam = detector2v23(x, y) 
         coord1,coord2,lam = v23toworld(v2,v3,lam)
 #        print('v2,v3 to world ',v2[0,15:20],v3[0,15:20])
-
-#        print(x.shape,y.shape)
-
-#        print('x',x[0,15:20])
-#        print('y',y[0,15:20])
-#        print('v2',v2[0,15:20])
-#        print('v3',v3[0,15:20])
-#        print('lam',lam[0,15:20])
-
 #        print('v2 min,max',np.nanmin(v2),np.nanmax(v2))
 #        print('v3 min max',np.nanmin(v3),np.nanmax(v3))
-#        print('coord1      ',coord1_test[0,15:20])
 #        print('coord1 world',coord1[0,15:20])
-#        print('coord2      ',coord2_test[0,15:20])
 #        print('coord2 world',coord2[0,15:20])
-
 #        sys.exit('STOP')
 
     else:
@@ -226,24 +205,13 @@ def FindFootPrintNIRSPEC(self, input):
 
         detector2v23 = slice_wcs.get_transform('detector','v2v3')
         v23toworld = slice_wcs.get_transform("v2v3","world")
-        v2, v3, lam = detector2v23(x, y) # v2,v3 units arc seconds
+        v2, v3, lam = detector2v23(x, y) 
+        coord1,coord2,lam = v23toworld(v2,v3,lam)
 
-#        roll_ref = input.meta.wcsinfo.roll_ref # degrees 
-#        v2_ref = input.meta.wcsinfo.v2_ref # arc min
-#        v3_ref = input.meta.wcsinfo.v3_ref # arc min         
-#        print('ref values',v2_ref,v3_ref,ra_ref,dec_ref,roll_ref)
-
-#        coord1_test,coord2_test = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,
-#                                         v2,v3) # return ra and dec in degrees
-
-
-
-        coord1,coord2,lam_test = v23toworld(v2,v3,lam)
-
-        print('ra         ',ra[20,40:50])
-        print('coord1     ',coord1[20,40:50])
-        print('dec        ',dec[20,40:50])
-        print('coord2     ',coord2[20,40:50])
+#        print('ra         ',ra[20,40:50])
+#        print('coord1     ',coord1[20,40:50])
+#        print('dec        ',dec[20,40:50])
+#        print('coord2     ',coord2[20,40:50])
 
 #        print('min ra',np.nanmin(ra))
 #        print('max ra',np.nanmax(ra))
@@ -343,14 +311,18 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
     lambda_max = list()
     print('Number of bands',self.metadata['num_bands'])
 
+    self.log.info('Number of bands in cube  %i', 
+                              self.metadata['num_bands'])
+
     for i in range(self.metadata['num_bands']):
  
         this_a = parameter1[i]
         this_b = parameter2[i]
-        print('parameters',this_a,this_b)
+        self.log.info(' Creating cube from %s,%s',this_a,this_b)
+
         n = len(MasterTable.FileMap[instrument][this_a][this_b])
         log.debug('number of files %d ', n)
-        print('number of files',n)
+#        print('number of files',n)
     # each file find the min and max a and lambda (OFFSETS NEED TO BE APPLIED TO THESE VALUES)
         for k in range(n):
             amin = 0.0
@@ -629,23 +601,22 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
                             weight = weight + weightpt[j]
                             value = value + weightpt[j] * pixelflux[j]
 
-                            if(iz == 39 or iz == 40 ):
-                                if(ix == 14 and≈ß iy == 16): 
-                                    print('Checking ', icube, ix, iy, iz)
-                                    print('icube', icube)
-                                    print('pointcloud', pointcloud_index[j])
-                                    print('flux = {0:.5f}'.format(pixelflux[j]))
-                                    print('w', weightpt[j])
-                                    print(' ',weightpt[j] * pixelflux[j])
-                                    print('num',num)
+#                            if(iz == 39 or iz == 40 ):
+#                                if(ix == 14 and iy == 16): 
+#                                    print('Checking ', icube, ix, iy, iz)
+#                                    print('icube', icube)
+#                                    print('pointcloud', pointcloud_index[j])
+#                                    print('flux = {0:.5f}'.format(pixelflux[j]))
+#                                    print('w', weightpt[j])
+#                                    print(' ',weightpt[j] * pixelflux[j])
+#                                    print('num',num)
                                 
                         if(weight != 0):
                             value = value / weight
                             spaxel[icube].flux = value
-                            if(iz == 39 or iz == 40 ):
-                                if(ix == 14 and iy == 16): 
-
-                                    print('Final Flux', value* weight, weight, value,num)
+#                            if(iz == 39 or iz == 40 ):
+#                                if(ix == 14 and iy == 16): 
+#                                    print('Final Flux', value* weight, weight, value,num)
 
 
                     icube = icube + 1

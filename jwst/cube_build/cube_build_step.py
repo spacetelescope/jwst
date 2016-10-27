@@ -29,12 +29,14 @@ class CubeBuildStep (Step):
          scale1 = float(default=0.0)
          scale2 = float(default =0.0)
          scalew = float(default = 0.0)
-         interpolation = string(default='pointcloud')
-         coord_system = string(default='ra-dec')
+         interpolation = option(,'pointcloud','area',default='pointcloud')
+         weighting = option('standard','miripsf',default = 'standard')
+         coord_system = option('ra-dec','alpha-beta',default='ra-dec')
          roi1 = float(default=1.0)
          roi2 = float(default=1.0)
          roiw = float(default=1.0)
          offset_list = string(default='NA')
+
        """
 
     def process(self, input):
@@ -47,6 +49,7 @@ class CubeBuildStep (Step):
         if(not self.grating.isupper()): self.grating = self.grating.upper()
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
         if(not self.interpolation.islower()): self.interpolation = self.interpolation.lower()
+        if(not self.weighting.islower()): self.weighting = self.weighting.lower()
         if(self.channel != ''): self.log.info('Input Channel %s', self.channel)
         if(self.subchannel != ''): self.log.info('Input Channel %s', self.subchannel)
         if(self.grating != ''): self.log.info('Input Channel %s', self.grating)
@@ -69,7 +72,7 @@ class CubeBuildStep (Step):
         self.log.info('Input interpolation %s', self.interpolation)
 
         self.log.info('Coordinate system to use %s', self.coord_system)
-
+        self.log.info('Weighting method for point cloud %s',self.weighting)
 #_________________________________________________________________________________________________
 # Set up the IFU cube basic parameters that define a cube
         self.metadata = {}
@@ -271,7 +274,7 @@ class CubeBuildStep (Step):
 
         t1 = time.time()
         self.log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
-        print('cube_build_step point cloud shape',PixelCloud.shape)
+
 #_______________________________________________________________________
 # Mapped all data to cube or Point Cloud
 # now determine Cube Spaxel flux
@@ -280,7 +283,7 @@ class CubeBuildStep (Step):
         if self.interpolation == 'pointcloud':
             CubeCloud.FindROI(self, Cube, spaxel, PixelCloud)
         t1 = time.time()
-        self.log.info("Time to Match Pt to cube = %.1f.s" % (t1 - t0,))
+        self.log.info("Time to find the ROI = %.1f.s" % (t1 - t0,))
 
 
         t0 = time.time()

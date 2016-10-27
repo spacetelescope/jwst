@@ -56,9 +56,9 @@ def SetUpIFUCube(Cube):
     IFUCube.meta.wcsinfo.crpix1 = Cube.Crpix1
     IFUCube.meta.wcsinfo.crpix2 = Cube.Crpix2
     IFUCube.meta.wcsinfo.crpix3 = Cube.Crpix3
-    IFUCube.meta.wcsinfo.cdelt1 = Cube.Cdelt1
-    IFUCube.meta.wcsinfo.cdelt2 = Cube.Cdelt2
-    IFUCube.meta.wcsinfo.cdelt3 = Cube.Cdelt3
+    IFUCube.meta.wcsinfo.cdelt1 = Cube.Cdelt1/3600.0
+    IFUCube.meta.wcsinfo.cdelt2 = Cube.Cdelt2/3600.0
+    IFUCube.meta.wcsinfo.cdelt3 = Cube.Cdelt3/3600.0
 
     IFUCube.meta.wcsinfo.ctype1 = 'RA---TAN'
     IFUCube.meta.wcsinfo.ctype2 = 'DEC--TAN'
@@ -119,13 +119,6 @@ def UpdateIFUCube(self, Cube,IFUCube, spaxel):
 
     IFUCube.meta.filename = Cube.output_name   
 
-    print('checking wcs')
-    print(IFUCube.meta.wcsinfo.cdelt1,IFUCube.meta.wcsinfo.cdelt2,IFUCube.meta.wcsinfo.cdelt3)
-    print(IFUCube.meta.wcsinfo.crpix1,IFUCube.meta.wcsinfo.crpix2,IFUCube.meta.wcsinfo.crpix3)
-    print(IFUCube.meta.wcsinfo.crval1,IFUCube.meta.wcsinfo.crval2,IFUCube.meta.wcsinfo.crval3)
-
-
- 
     IFUCube.save(IFUCube.meta.filename)
     IFUCube.close()
 
