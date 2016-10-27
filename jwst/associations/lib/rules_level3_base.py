@@ -24,7 +24,7 @@ logger.addHandler(logging.NullHandler())
 _DISCOVERED_ID_START = 3001
 
 # Non-specified values found in DMS Association Pools
-_EMPTY = (None, 'NULL', 'CLEAR')
+_EMPTY = (None, 'NULL')
 
 # The schema that these associations must adhere to.
 ASN_SCHEMA = libpath('asn_schema_jw_level3.json')
@@ -51,18 +51,20 @@ _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
 # Key that uniquely identfies members.
 KEY = 'expname'
 
-# Target acquisition Exposure types
-_TARGETACQ_TYPES = set((
-    'NRC_TACQ',
-    'MIR_TACQ',
-    'NRS_TACQ',
-    'NIS_TACQ',
-))
-
-# Science exposure types
-# Currently empty because Level3 rules will
-# presume this is the default.
-_SCIENCE_TYPES = set()
+# Exposure EXP_TYPE to Association EXPTYPE mapping
+_EXPTYPE_MAP = {
+    'MIR_TACQ':      'TARGET_ACQUISTION',
+    'NIS_TACQ':      'TARGET_ACQUISTION',
+    'NIS_TACONFIRM': 'TARGET_ACQUISTION',
+    'NRC_TACQ':      'TARGET_ACQUISTION',
+    'NRC_TACONFIRM': 'TARGET_ACQUISTION',
+    'NRS_AUTOFLAT':  'AUTOFLAT',
+    'NRS_AUTOWAVE':  'AUTOWAVE',
+    'NRS_CONFIRM':   'TARGET_ACQUISTION',
+    'NRS_TACQ':      'TARGET_ACQUISTION',
+    'NRS_TACONFIRM': 'TARGET_ACQUISTION',
+    'NRS_TASLIT':    'TARGET_ACQUISTION',
+}
 
 
 class DMS_Level3_Base(Association):
@@ -83,8 +85,20 @@ class DMS_Level3_Base(Association):
         # Initialize discovered association ID
         self.discovered_id = Counter(_DISCOVERED_ID_START)
 
+        # Initialize validity checks
+        self.validity = {
+            'has_science': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'SCIENCE'
+            }
+        }
+
         # Let us see if member belongs to us.
         super(DMS_Level3_Base, self).__init__(*args, **kwargs)
+
+    @property
+    def is_valid(self):
+        return all(test['validated'] for test in self.validity.values())
 
     @property
     def acid(self):
@@ -169,6 +183,11 @@ class DMS_Level3_Base(Association):
 
         return product_name.lower()
 
+    def update_validity(self, entry):
+        for test in self.validity.values():
+            if not test['validated']:
+                test['validated'] = test['check'](entry)
+
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
         super(DMS_Level3_Base, self)._init_hook(member)
@@ -210,6 +229,8 @@ class DMS_Level3_Base(Association):
             'exposerr': exposerr,
             'asn_candidate': member['ASN_CANDIDATE']
         }
+
+        self.update_validity(entry)
         members = self.current_product['members']
         members.append(entry)
         self.data['degraded_status'] = _DEGRADED_STATUS_OK
@@ -266,7 +287,7 @@ class DMS_Level3_Base(Association):
         except KeyError:
             pass
         else:
-            if value not in _EMPTY:
+            if value not in _EMPTY and value != 'CLEAR':
                 opt_elem = value
                 join_char = '-'
         try:
@@ -274,7 +295,7 @@ class DMS_Level3_Base(Association):
         except KeyError:
             pass
         else:
-            if value not in _EMPTY:
+            if value not in _EMPTY and value != 'CLEAR':
                 opt_elem = join_char.join(
                     [opt_elem, value]
                 )
@@ -335,6 +356,13 @@ class DMS_Level3_Base(Association):
 
 class Utility(object):
     """Utility functions that understand DMS Level 3 associations"""
+
+    @staticmethod
+    def resequence(associations):
+        """Resequence the numbering for the Level3 association types"""
+        counters = defaultdict(lambda : defaultdict(Counter))
+        for asn in associations:
+            asn.sequence = next(counters[asn.data['asn_id']][asn.data['asn_type']])
 
     @staticmethod
     def filter_discovered_only(
@@ -476,6 +504,8 @@ class Utility(object):
             Exposure type. Can be one of
                 'SCIENCE': Member contains science data
                 'TARGET_AQUISITION': Member contains target acquisition data.
+                'AUTOFLAT': NIRSpec AUTOFLAT
+                'AUTOWAVE': NIRSpec AUTOWAVE
 
         Raises
         ------
@@ -486,15 +516,9 @@ class Utility(object):
         try:
             exp_type = member['EXP_TYPE']
         except KeyError:
-            exp_type = None
-
-        if exp_type in _TARGETACQ_TYPES:
-            result = 'TARGET_ACQUISTION'
-        elif exp_type in _SCIENCE_TYPES:
-            result = 'SCIENCE'
-
-        if result is None:
             raise LookupError('Exposure type cannot be determined')
+
+        result = _EXPTYPE_MAP.get(exp_type, default)
         return result
 
 # ---------------------------------------------

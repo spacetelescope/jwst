@@ -36,15 +36,22 @@ def imaging(input_model, reference_files):
 
     reference_files={'distortion': 'test.asdf', 'filter_offsets': 'filter_offsets.asdf'}
     """
+
+    # Create the Frames
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
+
+    # Create the transforms
     distortion = imaging_distortion(input_model, reference_files)
     tel2sky = pointing.v23tosky(input_model)
+
+    # Create the pipeline
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),
                 (world, None)
                 ]
+
     return pipeline
 
 
@@ -61,7 +68,8 @@ def imaging_distortion(input_model, reference_files):
 
 
     using CDP 3 Reference distortion file
-    MIRI_FM_MIRIMAGE_F1000W_PSF_03.01.00.fits
+        Old one: ~~MIRI_FM_MIRIMAGE_F1000W_PSF_03.01.00.fits~~
+    Current one: MIRI_FM_MIRIMAGE_DISTORTION_06.03.00.fits
 
     reference files/corrections needed (pixel to sky):
 
@@ -74,11 +82,17 @@ def imaging_distortion(input_model, reference_files):
     ref_file: filter_offset.asdf - (1)
     ref_file: distortion.asdf -(2,3,4)
     """
+
+    # Load the distortion and filter from the reference files.
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
     filter_offset = AsdfFile.open(reference_files['filteroffset']).tree[input_model.meta.instrument.filter]
-    full_distortion = models.Shift(filter_offset['row_offset']) & models.Shift(
-        filter_offset['column_offset']) | distortion
+
+    # Now apply each of the models.  The Scale(60) converts from arc-minutes to arc-seconds.
+    full_distortion = models.Shift(filter_offset['column_offset']) & models.Shift(
+        filter_offset['row_offset']) | distortion | models.Scale(1/60) & models.Scale(1/60)
+
     full_distortion = full_distortion.rename('distortion')
+
     return full_distortion
 
 
@@ -141,7 +155,7 @@ def ifu(input_model, reference_files):
     xyan_spatial = cf.Frame2D(name='Xan_Yan_spatial', axes_order=(0, 1), unit=(u.arcmin, u.arcmin), axes_names=('v2', 'v3'))
     spec = cf.SpectralFrame(name='Xan_Yan_spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     xyan = cf.CompositeFrame([xyan_spatial, spec], name='Xan_Yan')
-    v23_spatial = cf.Frame2D(name='V2_V3_spatial', axes_order=(0, 1), unit=(u.arcmin, u.arcmin), axes_names=('v2', 'v3'))
+    v23_spatial = cf.Frame2D(name='V2_V3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=('v2', 'v3'))
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     v2v3 = cf.CompositeFrame([v23_spatial, spec], name='v2v3')
     icrs = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS(),
@@ -150,7 +164,8 @@ def ifu(input_model, reference_files):
     det2alpha_beta = (detector_to_alpha_beta(input_model, reference_files)).rename(
         "detector_to_alpha_beta")
     ab2xyan = (alpha_beta2XanYan(input_model, reference_files)).rename("alpha_beta_to_Xan_Yan")
-    xyan2v23 = models.Identity(1) & (models.Shift(7.8) | models.Scale(-1)) & models.Identity(1)
+    xyan2v23 = models.Identity(1) & (models.Shift(7.8) | models.Scale(-1)) & models.Identity(1) | \
+        models.Scale(1/60) & models.Scale(1/60) & models.Identity(1)
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
     pipeline = [(detector, det2alpha_beta),
                 (miri_focal, ab2xyan),

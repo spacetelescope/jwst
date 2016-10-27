@@ -26,14 +26,10 @@ class CubeInfo(object):
         self.a_wave = list()
         self.c_wave = list()
 
-        self.ra_ref = list()
-        self.dec_ref = list()
-        self.roll_ref = list()
-        self.v2_ref = list()
-        self.v3_ref = list()
         self.a_weight = list()
         self.c_weight = list()
-        self.transform = list()
+        self.transform_v23toab = list()
+        self.transform_worldtov23 = list()
 
         self.filter = list()
         self.grating = list()
@@ -49,6 +45,7 @@ class CubeInfo(object):
         elif(instrument == 'NIRSPEC'):
             self.filter = parameter1
             self.grating = parameter2
+
 
             self.output_name = output_name
 
@@ -95,7 +92,7 @@ class CubeInfo(object):
 
         self.zcoord = np.zeros(self.naxis3)
         self.Crval3 = self.lambda_min
-        self.Crpix3 = 0.5
+        self.Crpix3 = 1.0
         zstart = self.lambda_min + self.Cdelt3 / 2.0
 
         for i in range(self.naxis3):
@@ -121,40 +118,33 @@ class CubeInfo(object):
             self.ycoord[i] = ystart
             ystart = ystart + self.Cdelt2
 
-
-#        ycube,xcube = np.mgrid[:self.naxis2,:self.naxis1]
-#        print(ycube)
-#        print(xcube)
-#        sys.exit('STOP')
 #_______________________________________________________________________
 # Footprint values are RA,DEC values on the sky
 # Values are given in degrees 
 
     def SetGeometry(self, footprint):
-        padfactor = 1.1 # a padding on the size of cube to make sure the spatial dimensions are large eniugh
+        padfactor = 1.1 # a padding on the size of cube 
+                        # to make sure the spatial dimensions are large enough
         deg2rad = math.pi/180.0
-        
         ra_min, ra_max, dec_min, dec_max,lambda_min, lambda_max = footprint # in degrees
-
-        print('in SetGeometry',ra_min,ra_max,dec_min,dec_max)
         dec_ave = (dec_min + dec_max)/2.0
-        ra_ave = ((ra_min + ra_max)/2.0 )* math.cos(dec_ave*deg2rad) # actually this is hard due to converenge of hour angle
-        # improve determining ra_ave in the future
 
-        range_ra = (ra_max - ra_min) * 3600.0 #* math.cos(dec_ave*deg2rad)
+        # actually this is hard due to converenge of hour angle
+        # improve determining ra_ave in the future
+        ra_ave = ((ra_min + ra_max)/2.0 )#* math.cos(dec_ave*deg2rad) 
+
+        range_ra = (ra_max - ra_min) * 3600.0 * math.cos(dec_ave*deg2rad)
 
         self.naxis1 = int(math.ceil(range_ra / self.Cdelt1)) 
-        print('ra range',range_ra,self.naxis1)
+        #print('ra range, ave,naxis1',range_ra,ra_ave,self.naxis1)
 
         range_dec = (dec_max - dec_min) * 3600.0
         self.naxis2 = int(math.ceil(range_dec / self.Cdelt2)) 
-        print('dec range', range_dec,self.naxis2)
+        #print('dec range,ave,naxis2', range_dec,dec_ave,self.naxis2)
 
         self.Crval1 = ra_ave 
         self.Crval2 = dec_ave
         xi,eta = coord.radec2std(self.Crval1, self.Crval2,ra_ave,dec_ave)
-        print('xi eta',xi,eta)
-
         
         xi_min,eta_min = coord.radec2std(self.Crval1, self.Crval2,ra_min,dec_min)
         xi_max,eta_max = coord.radec2std(self.Crval1, self.Crval2,ra_max,dec_max)
@@ -165,10 +155,6 @@ class CubeInfo(object):
         eta_min = eta_min - self.Cdelt2/2.0
         eta_max = eta_max + self.Cdelt2/2.0
 
-        print('xi eta min ',xi_min,eta_min)
-        print('xi eta max ',xi_max,eta_max)
-
-        
         n1a = int(math.ceil(math.fabs(xi_min) / self.Cdelt1)) 
         n1b = int(math.ceil(math.fabs(xi_max) / self.Cdelt1)) 
 
@@ -199,13 +185,6 @@ class CubeInfo(object):
         for i in range(self.naxis2):
             self.ycoord[i] = ystart
             ystart = ystart + self.Cdelt2
-#_______________________________________________________________________
-
-#        ycube,xcube = np.mgrid[:self.naxis2,:self.naxis1]
-#        print(ycube)
-#        print(xcube)
-#        sys.exit('STOP')
-
 
 #_______________________________________________________________________
         #set up the lambda (z) coordinate of the cube
@@ -226,7 +205,7 @@ class CubeInfo(object):
 
         self.zcoord = np.zeros(self.naxis3)
         self.Crval3 = self.lambda_min
-        self.Crpix3 = 0.5
+        self.Crpix3 = 1.0
         zstart = self.lambda_min + self.Cdelt3 / 2.0
 
         for i in range(self.naxis3):
@@ -237,10 +216,13 @@ class CubeInfo(object):
     def PrintCubeGeometry(self, instrument):
         log.info('Cube Geometry')
         blank = '  '
-        log.info('axis# Naxis  CRPIX    CRVAL        CDELT           MIN           MAX')
-        log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', self.naxis1, self.Crpix1, self.Crval1, self.Cdelt1, self.a_min, self.a_max)
-        log.info('Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', self.naxis2, self.Crpix2, self.Crval2, self.Cdelt2, self.b_min, self.b_max)
-        log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', self.naxis3, self.Crpix3, self.Crval3, self.Cdelt3, self.lambda_min, self.lambda_max)
+        log.info('axis# Naxis  CRPIX    CRVAL      CDELT(arc sec)    MIN& Max (xi,eta arc sec)')
+        log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
+                 self.naxis1, self.Crpix1, self.Crval1, self.Cdelt1, self.a_min, self.a_max)
+        log.info('Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
+                 self.naxis2, self.Crpix2, self.Crval2, self.Cdelt2, self.b_min, self.b_max)
+        log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
+                 self.naxis3, self.Crpix3, self.Crval3, self.Cdelt3, self.lambda_min, self.lambda_max)
 
         if(instrument == 'MIRI'):
             number_channels = len(self.channel)
@@ -290,143 +272,3 @@ class Spaxel(object):
 
 
 
-##################################################################################
-class FileTable(object):
-        # FileMap right now it is designed with MIRI in mind
-        # For the 4 channels and 3 subchannels it holds the name of the
-        # input file that covers 'channel','subchannel' region
-    def __init__(self):
-
-        self.FileMap = {}
-        self.FileMap['MIRI'] = {}
-
-        self.FileMap['MIRI']['1'] = {}
-        self.FileMap['MIRI']['1']['SHORT'] = list()
-        self.FileMap['MIRI']['1']['MEDIUM'] = list()
-        self.FileMap['MIRI']['1']['LONG'] = list()
-
-        self.FileMap['MIRI']['2'] = {}
-        self.FileMap['MIRI']['2']['SHORT'] = list()
-        self.FileMap['MIRI']['2']['MEDIUM'] = list()
-        self.FileMap['MIRI']['2']['LONG'] = list()
-
-        self.FileMap['MIRI']['3'] = {}
-        self.FileMap['MIRI']['3']['SHORT'] = list()
-        self.FileMap['MIRI']['3']['MEDIUM'] = list()
-        self.FileMap['MIRI']['3']['LONG'] = list()
-
-        self.FileMap['MIRI']['4'] = {}
-        self.FileMap['MIRI']['4']['SHORT'] = list()
-        self.FileMap['MIRI']['4']['MEDIUM'] = list()
-        self.FileMap['MIRI']['4']['LONG'] = list()
-
-        self.FileMap['NIRSPEC'] = {}
-        self.FileMap['NIRSPEC']['CLEAR'] = {}
-        self.FileMap['NIRSPEC']['CLEAR']['PRISM'] = list()
-
-        self.FileMap['NIRSPEC']['F070LP'] = {}
-        self.FileMap['NIRSPEC']['F070LP']['G140M'] = list()
-        self.FileMap['NIRSPEC']['F070LP']['G140H'] = list()
-
-        self.FileMap['NIRSPEC']['F100LP'] = {}
-        self.FileMap['NIRSPEC']['F100LP']['G140M'] = list()
-        self.FileMap['NIRSPEC']['F100LP']['G140H'] = list()
-
-        self.FileMap['NIRSPEC']['F170LP'] = {}
-        self.FileMap['NIRSPEC']['F170LP']['G235M'] = list()
-        self.FileMap['NIRSPEC']['F170LP']['G235H'] = list()
-
-        self.FileMap['NIRSPEC']['F290LP'] = {}
-        self.FileMap['NIRSPEC']['F290LP']['G395M'] = list()
-        self.FileMap['NIRSPEC']['F290LP']['G395H'] = list()
-
-        self.FileOffset = {}
-        self.FileOffset['1'] = {}
-        self.FileOffset['1']['SHORT'] = {}
-        self.FileOffset['1']['SHORT']['C1'] = list()
-        self.FileOffset['1']['SHORT']['C2'] = list()
-        self.FileOffset['1']['MEDIUM'] = {}
-        self.FileOffset['1']['MEDIUM']['C1'] = list()
-        self.FileOffset['1']['MEDIUM']['C2'] = list()
-        self.FileOffset['1']['LONG'] = {}
-        self.FileOffset['1']['LONG']['C1'] = list()
-        self.FileOffset['1']['LONG']['C2'] = list()
-
-        self.FileOffset['2'] = {}
-        self.FileOffset['2']['SHORT'] = {}
-        self.FileOffset['2']['SHORT']['C1'] = list()
-        self.FileOffset['2']['SHORT']['C2'] = list()
-
-        self.FileOffset['2']['MEDIUM'] = {}
-        self.FileOffset['2']['MEDIUM']['C1'] = list()
-        self.FileOffset['2']['MEDIUM']['C2'] = list()
-
-        self.FileOffset['2']['LONG'] = {}
-        self.FileOffset['2']['LONG']['C1'] = list()
-        self.FileOffset['2']['LONG']['C2'] = list()
-
-
-        self.FileOffset['3'] = {}
-        self.FileOffset['3']['SHORT'] = {}
-        self.FileOffset['3']['SHORT']['C1'] = list()
-        self.FileOffset['3']['SHORT']['C2'] = list()
-
-        self.FileOffset['3']['MEDIUM'] = {}
-        self.FileOffset['3']['MEDIUM']['C1'] = list()
-        self.FileOffset['3']['MEDIUM']['C2'] = list()
-
-        self.FileOffset['3']['LONG'] = {}
-        self.FileOffset['3']['LONG']['C1'] = list()
-        self.FileOffset['3']['LONG']['C2'] = list()
-
-
-        self.FileOffset['4'] = {}
-        self.FileOffset['4']['SHORT'] = {}
-        self.FileOffset['4']['SHORT']['C1'] = list()
-        self.FileOffset['4']['SHORT']['C2'] = list()
-
-        self.FileOffset['4']['MEDIUM'] = {}
-        self.FileOffset['4']['MEDIUM']['C1'] = list()
-        self.FileOffset['4']['MEDIUM']['C2'] = list()
-
-        self.FileOffset['4']['LONG'] = {}
-        self.FileOffset['4']['LONG']['C1'] = list()
-        self.FileOffset['4']['LONG']['C2'] = list()
-
-        self.FileOffset['CLEAR'] = {}
-        self.FileOffset['CLEAR']['PRISM'] = {}
-        self.FileOffset['CLEAR']['PRISM']['C1'] = list()
-        self.FileOffset['CLEAR']['PRISM']['C2'] = list()
-
-        self.FileOffset['F070LP'] = {}
-        self.FileOffset['F070LP']['G140M'] = {}
-        self.FileOffset['F070LP']['G140M']['C1'] = list()
-        self.FileOffset['F070LP']['G140M']['C2'] = list()
-
-        self.FileOffset['F070LP']['G140H'] = {}
-        self.FileOffset['F070LP']['G140H']['C1'] = list()
-        self.FileOffset['F070LP']['G140H']['C2'] = list()
-
-        self.FileOffset['F100LP'] = {}
-        self.FileOffset['F100LP']['G140M'] = {}
-        self.FileOffset['F100LP']['G140M']['C1'] = list()
-        self.FileOffset['F100LP']['G140M']['C2'] = list()
-        self.FileOffset['F100LP']['G140H'] = {}
-        self.FileOffset['F100LP']['G140H']['C1'] = list()
-        self.FileOffset['F100LP']['G140H']['C2'] = list()
-
-        self.FileOffset['F170LP'] = {}
-        self.FileOffset['F170LP']['G235M'] = {}
-        self.FileOffset['F170LP']['G235M']['C1'] = list()
-        self.FileOffset['F170LP']['G235M']['C2'] = list()
-        self.FileOffset['F170LP']['G235H'] = {}
-        self.FileOffset['F170LP']['G235H']['C1'] = list()
-        self.FileOffset['F170LP']['G235H']['C2'] = list()
-
-        self.FileOffset['F290LP'] = {}
-        self.FileOffset['F290LP']['G395M'] = {}
-        self.FileOffset['F290LP']['G395M']['C1'] = list()
-        self.FileOffset['F290LP']['G395M']['C2'] = list()
-        self.FileOffset['F290LP']['G395H'] = {}
-        self.FileOffset['F290LP']['G395H']['C1'] = list()
-        self.FileOffset['F290LP']['G395H']['C2'] = list()

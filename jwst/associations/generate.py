@@ -71,8 +71,17 @@ def generate(pool, rules, version_id=None):
                 in_an_asn[member.index] = True
     logger.debug('Number of processes: "{}"'.format(len(process_list)))
 
+    # Ensure each association is valid
+    valid_asns = []
+    for asn in associations:
+        if asn.is_valid:
+            valid_asns.append(asn)
+
+    # Resequence values.
+    rules.Utility.resequence(valid_asns)
+
     orphaned = pool[np.logical_not(in_an_asn)]
-    return associations, orphaned
+    return valid_asns, orphaned
 
 
 def generate_from_member(

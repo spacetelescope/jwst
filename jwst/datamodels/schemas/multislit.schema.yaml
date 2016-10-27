@@ -113,4 +113,10 @@ allOf:
             fits_hdu: PATHLOSS_UNIFORM
             default: 1.0
             datatype: float32
+          nshutters:
+            title: Number of open shutters
+            type: integer
+            default: 0
+            fits_keyword: NSHUT
+            fits_hdu: SCI
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
