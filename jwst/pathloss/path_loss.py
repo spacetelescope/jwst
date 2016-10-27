@@ -7,17 +7,47 @@ from __future__ import division
 import numpy as np
 import logging
 from .. import datamodels
+from jwst.assign_wcs import nirspec
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-def getCenter(input_model):
+def getCenter(exp_type, input):
     """
     Get the center of the target in the aperture.
     (0.0, 0.0) is the aperture center.  Coordinates go
     from -0.5 to 0.5.
     """
-    return (0.0, 0.0)
+    if exp_type == "NRS_IFU":
+        #
+        # Currently assume IFU sources are centered
+        return (0.0, 0.0)
+    elif exp_type == "NRS_MSA":
+        #
+        # MSA centering specified in the MiltiSlit model
+        # "input" treated as a slit object
+        try:
+            xcenter = input.source_xcent
+            ycenter = input.source_ycent
+        except AttributeError:
+            log.warning("Unable to get source center from model")
+            log.warning("Using 0.0, 0.0")
+            xcenter = 0.0
+            ycenter = 0.0
+        return (xcenter, ycenter)
+    else:
+        log.warning("No method to get centering for exp_type %s" % exp_type)
+        log.warning("Using (0.0, 0.0)")
+        return (0.0, 0.0)
+
+def getApertureFromModel(input_model, nshutters):
+    """Figure out the correct aperture based on the number of shutters in the slit
+    """
+    for aperture in input_model.apertures:
+        if aperture.shutters == nshutters: return aperture
+    #
+    # If nothing matches, return None
+    return None
 
 def calculate_pathloss_vector(pathloss_model_type, xcenter, ycenter):
     """
@@ -110,9 +140,7 @@ def do_correction(input_model, pathloss_model):
         Science data with pathloss extensions added
 
     """
-    output_model = input_model.copy()
-    # Get centering
-    xcenter, ycenter = getCenter(input_model)
+    exp_type = input_model.meta.exposure.type
     #
     # Calculate the 1-d wavelength and pathloss vectors for the source position
     wavelength_pointsource, pathloss_pointsource_vector = \
@@ -126,31 +154,76 @@ def do_correction(input_model, pathloss_model):
     # in microns
     wavelength_pointsource *= 1.0e6
     wavelength_uniformsource *= 1.0e6
-    slit_number = 0
-    # For each slit
-    for slit in input_model.slits:
-        slit_number = slit_number + 1
-        size = slit.data.size
-        # That has data.size > 0
-        if size > 0:
-            nrows, ncols = slit.data.shape
-            # Get wavelengths of each end
-            xstart = slit.xstart
-            xstop = xstart + ncols
-            ystart = slit.ystart
-            ystop = ystart + nrows
-            ycenter = 0.5*(ystart + ystop)
-            xmin, ymin, min_wavelength = slit.meta.wcs(xstart, ycenter)
-            xmax, ymax, max_wavelength = slit.meta.wcs(xstop, ycenter)
-            # For each pixel
-            y, x = np.mgrid[ystart:ystop, xstart:xstop]
+    if exp_type == 'NRS_MSA':
+        slit_number = 0
+        # For each slit
+        for slit in input_model.slits:
+            slit_number = slit_number + 1
+            size = slit.data.size
+            # That has data.size > 0
+            if size > 0:
+                # Get centering
+                xcenter, ycenter = getCenter(exp_type, slit)
+                # Calculate the 1-d wavelength and pathloss vectors
+                # for the source position
+                # Get the aperture from the reference file that matches the slit
+                aperture = getApertureFromModel(pathloss_model, slit.nshutters)
+                if aperture is not None:
+                    wavelength_pointsource, pathloss_pointsource_vector = \
+                        calculate_pathloss_vector(aperture.pointsource_data,
+                                                  xcenter, ycenter)
+                        wavelength_uniformsource, pathloss_uniform_vector = \
+                            calculate_pathloss_vector(aperture.uniform_data,
+                                                      xcenter, ycenter)
+                else:
+                    log.warning("Cannot find matching pathloss model for slit with size %d" % slit.nshutters)
+                nrows, ncols = slit.data.shape
+                # Get wavelengths of each end
+                xstart = slit.xstart
+                xstop = xstart + ncols
+                ystart = slit.ystart
+                ystop = ystart + nrows
+                # For each pixel
+                y, x = np.mgrid[ystart:ystop, xstart:xstop]
+                ra, dec, wave_array = slit.meta.wcs(x, y)
+                slit.pl_point = calculate_pathloss(wave_array,
+                                                   wavelength_pointsource,
+                                                   pathloss_pointsource_vector)
+                slit.pl_uniform = calculate_pathloss(wave_array,
+                                                     wavelength_uniformsource,
+                                                     pathloss_uniform_vector)
+    elif exp_type == 'NRS_IFU':
+        #
+        # Make empty pathloss arrays for point and uniform
+        nrows, ncols = input_model.data.shape
+        input_model.pl_point = np.ones((nrows, ncolumns), dtype=np.float32)
+        input_model.pl_uniform = np.ones((nrows, ncolumns), dtype=np.float32)
+        #
+        # Get the list of WCS objects for each IFU slice
+        wcslist = nirspec.nrs_ifu_wcs(input_model)
+        for ifuslice in wcslist:
+            # Get centering
+            xcenter, ycenter = getCenter(exp_type, ifuslice)
+            # Calculate the 1-d wavelength and pathloss vectors
+            # for the source position
+            wavelength_pointsource, pathloss_pointsource_vector = \
+                calculate_pathloss_vector(pathloss_model.pointsource,
+                                          xcenter, ycenter)
+                wavelength_uniformsource, pathloss_uniform_vector = \
+                    calculate_pathloss_vector(pathloss_model.uniformsource,
+                                              xcenter, ycenter)
+            xmin = ifuslice.domain[0]['lower']
+            xmax = ifuslice.domain[0]['upper']
+            ymin = ifuslice.domain[1]['lower']
+            ymax = ifuslice.domain[1]['upper']
+            y, x = np,mgrid[ymin:ymax, xmin:xmax]
             ra, dec, wave_array = slit.meta.wcs(x, y)
-            slit.pl_point = calculate_pathloss(wave_array,
-                                               wavelength_pointsource,
-                                               pathloss_pointsource_vector)
-            slit.pl_uni = calculate_pathloss(wave_array,
-                                             wavelength_uniformsource,
-                                             pathloss_uniform_vector)
+            input_model.pl_point[ymin:ymax, xmin:xmax] = calculate_pathloss(wave_array,
+                                                                            wavelength_pointsource,
+                                                                            pathloss_pointsource_vector)
+            input_model.pl_uniform[ymin:ymax, xmin:xmax] = calculate_pathloss(wave_array,
+                                                                              wavelength_uniformsource,
+                                                                              pathloss_uniform_vector)
             
     return input_model.copy()
 
@@ -249,3 +322,37 @@ def interpolated_lookup(value, array_in, array_out):
             return array_out[0]
         else:
             return array_out[-1]
+
+def get_extension(hdulist, filter):
+    """Return the first extension that meets the criteria specified
+    in the dictionary 'filter'
+
+    Parameters:
+    -----------
+    hdulist: fits HDUList
+        The fits HDUList to be searched.
+
+    filter: dict
+        A dictionary specifying the conditions to be met by an extension.  The
+        conditions are a (key, value) pair with 'key' being the string containing
+        the name of a FITS keyword, and 'value' being the required keyword value.
+        For example, filter could be {'EXTNAME': 'SCI', 'APERTURE': 'A1600'}, and
+        the routine will return the index of the first extension that matches the
+        filter.
+
+    Returns
+    -------
+    integer
+        The index of the first extension that matches the filter.
+    """
+    matched_index = None
+    for index, hdu in enumerate(hdulist):
+        for key in filter.keys():
+            if hdu.header.get(key) == filter[key]:
+                matched_index = index
+            else:
+                matched_index = None
+                break
+        if matched_index is not None:
+            return matched_index
+    return None

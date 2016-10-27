@@ -88,11 +88,28 @@ allOf:
             type: number
             fits_keyword: STLARITY
             fits_hdu: SCI
+          source_type:
+            title: Source type (point/extended)
+            type: string
+            fits_keyword: SRCTYPE
+            fits_hdu: SCI
+          source_xpos:
+            title: Source position in slit (x-axis)
+            type: number
+            default: 0.0
+            fits_keyword: SRCXPOS
+            fits_hdu: SCI
+          source_ypos:
+            title: Source position in slit (y-axis)
+            type: number
+            default: 0.0
+            fits_keyword: SRCYPOS
+            fits_hdu: SCI
           pl_point:
             fits_hdu: PATHLOSS_POINT
             default: 1.0
             datatype: float32
-          pl_uni:
+          pl_uniform:
             fits_hdu: PATHLOSS_UNIFORM
             default: 1.0
             datatype: float32
