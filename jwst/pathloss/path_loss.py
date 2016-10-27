@@ -22,7 +22,7 @@ def getCenter(exp_type, input):
         #
         # Currently assume IFU sources are centered
         return (0.0, 0.0)
-    elif exp_type == "NRS_MSA":
+    elif exp_type == "NRS_MSASPEC":
         #
         # MSA centering specified in the MiltiSlit model
         # "input" treated as a slit object
@@ -141,20 +141,7 @@ def do_correction(input_model, pathloss_model):
 
     """
     exp_type = input_model.meta.exposure.type
-    #
-    # Calculate the 1-d wavelength and pathloss vectors for the source position
-    wavelength_pointsource, pathloss_pointsource_vector = \
-        calculate_pathloss_vector(pathloss_model.pointsource,
-                                  xcenter, ycenter)
-    wavelength_uniformsource, pathloss_uniform_vector = \
-        calculate_pathloss_vector(pathloss_model.uniformsource,
-                                  xcenter, ycenter)
-    #
-    # Wavelengths in the reference file are in meters, need them to be
-    # in microns
-    wavelength_pointsource *= 1.0e6
-    wavelength_uniformsource *= 1.0e6
-    if exp_type == 'NRS_MSA':
+    if exp_type == 'NRS_MSASPEC':
         slit_number = 0
         # For each slit
         for slit in input_model.slits:
@@ -172,11 +159,17 @@ def do_correction(input_model, pathloss_model):
                     wavelength_pointsource, pathloss_pointsource_vector = \
                         calculate_pathloss_vector(aperture.pointsource_data,
                                                   xcenter, ycenter)
-                        wavelength_uniformsource, pathloss_uniform_vector = \
-                            calculate_pathloss_vector(aperture.uniform_data,
-                                                      xcenter, ycenter)
+                    wavelength_uniformsource, pathloss_uniform_vector = \
+                        calculate_pathloss_vector(aperture.uniform_data,
+                                                  xcenter, ycenter)
+                    #
+                    # Wavelengths in the reference file are in meters, need them to be
+                    # in microns
+                    wavelength_pointsource *= 1.0e6
+                    wavelength_uniformsource *= 1.0e6
                 else:
-                    log.warning("Cannot find matching pathloss model for slit with size %d" % slit.nshutters)
+                    print("Cannot find matching pathloss model for slit with size %d" % slit.nshutters)
+                    continue
                 nrows, ncols = slit.data.shape
                 # Get wavelengths of each end
                 xstart = slit.xstart
@@ -209,9 +202,9 @@ def do_correction(input_model, pathloss_model):
             wavelength_pointsource, pathloss_pointsource_vector = \
                 calculate_pathloss_vector(pathloss_model.pointsource,
                                           xcenter, ycenter)
-                wavelength_uniformsource, pathloss_uniform_vector = \
-                    calculate_pathloss_vector(pathloss_model.uniformsource,
-                                              xcenter, ycenter)
+            wavelength_uniformsource, pathloss_uniform_vector = \
+                calculate_pathloss_vector(pathloss_model.uniformsource,
+                                          xcenter, ycenter)
             xmin = ifuslice.domain[0]['lower']
             xmax = ifuslice.domain[0]['upper']
             ymin = ifuslice.domain[1]['lower']
