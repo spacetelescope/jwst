@@ -5,10 +5,11 @@ import sys
 import argparse
 import logging
 
-from jwst.associations.lib.log_config import log_config, DMS_config
+from jwst.associations import __version__
 from jwst.associations.association import AssociationRegistry
 from jwst.associations.generate import generate
 from jwst.associations.pool import AssociationPool
+from jwst.associations.lib.log_config import (log_config, DMS_config)
 
 # Configure logging
 logger = log_config(name=__package__)
@@ -153,6 +154,11 @@ class Main(object):
             '--format',
             default='json',
             help='Format of the association files. Default: "%(default)s"'
+        )
+        parser.add_argument(
+            '--version', action='version',
+            version='%(prog)s {}'.format(__version__),
+            help='Version of the generator.'
         )
 
         parsed = parser.parse_args(args=args)

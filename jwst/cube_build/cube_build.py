@@ -128,34 +128,13 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
         detector2v23 = input.meta.wcs.get_transform('detector', 'v2v3')
         v23toworld = input.meta.wcs.get_transform("v2v3","world")
 
-        v2, v3, lam = detector2v23(x, y) # v2,v3 are in units of arc seconds 
-#        print('v2,v3 after detector2v23 ',v2[0,15:20],v3[0,15:20])
-#        ra_ref = input.meta.wcsinfo.ra_ref # degrees
-#        dec_ref = input.meta.wcsinfo.dec_ref # degrees
-#        roll_ref = input.meta.wcsinfo.roll_ref # degrees 
-#        v2_ref = input.meta.wcsinfo.v2_ref # arc seconds
-#        v3_ref = input.meta.wcsinfo.v3_ref # arc seconds     
-#        coord1_test,coord2_test = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,
-#                                         v2,v3) # return ra and dec in degrees
-#        print('v2,v3 after coord.v2v33radec ',v2[0,15:20],v3[0,15:20])
+        v2, v3, lam = detector2v23(x, y) 
         coord1,coord2,lam = v23toworld(v2,v3,lam)
 #        print('v2,v3 to world ',v2[0,15:20],v3[0,15:20])
-
-#        print(x.shape,y.shape)
-
-#        print('x',x[0,15:20])
-#        print('y',y[0,15:20])
-#        print('v2',v2[0,15:20])
-#        print('v3',v3[0,15:20])
-#        print('lam',lam[0,15:20])
-
 #        print('v2 min,max',np.nanmin(v2),np.nanmax(v2))
 #        print('v3 min max',np.nanmin(v3),np.nanmax(v3))
-#        print('coord1      ',coord1_test[0,15:20])
 #        print('coord1 world',coord1[0,15:20])
-#        print('coord2      ',coord2_test[0,15:20])
 #        print('coord2 world',coord2[0,15:20])
-
 #        sys.exit('STOP')
 
     else:
@@ -218,60 +197,48 @@ def FindFootPrintNIRSPEC(self, input):
     # for NIRSPEC there are 30 regions
     for i in regions:
 
-#        slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
-        slice_wcs = nirspec.nrs_wcs_set_input(input,0, i)
-
+        slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
         yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
         y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
         ra,dec,lam = slice_wcs(x,y)
 
         detector2v23 = slice_wcs.get_transform('detector','v2v3')
-        v2, v3, lam = detector2v23(x, y) # v2,v3 units arc seconds
-#        print('xrange',xrange)
-#        print('yrange',yrange)
-#        print('v2',v2.shape)
-#        print('v3',v3.shape)
-        print('v2 min,max',np.nanmin(v2),np.nanmax(v2))
-        print('v3 min max',np.nanmin(v3),np.nanmax(v3))
-        sys.exit('STOP')
+        v23toworld = slice_wcs.get_transform("v2v3","world")
+        v2, v3, lam = detector2v23(x, y) 
+        coord1,coord2,lam = v23toworld(v2,v3,lam)
 
-#        print('v2',v2[30,0:500])
-#        print('v3',v3[30,0:500])
+#        print('ra         ',ra[20,40:50])
+#        print('coord1     ',coord1[20,40:50])
+#        print('dec        ',dec[20,40:50])
+#        print('coord2     ',coord2[20,40:50])
 
-#        v2 = v2 * 60.0 #   arc minutes
-#        v3 = v3 * 60.0 #  arc minutes
+#        print('min ra',np.nanmin(ra))
+#        print('max ra',np.nanmax(ra))
+#        range_ra = (np.nanmax(ra) - np.nanmin(ra))*3600.0
+#        print('ran ra',range_ra)
+#        decr = math.cos(np.nanmin(dec*math.pi/180))
 
+#        print('ran ra',range_ra*decr)
+#        print('min v2',np.nanmin(v2))
+#        print('max v2',np.nanmax(v2))
+#        print('ran v2',np.nanmax(v2) - np.nanmin(v2))
 
-# Hard code these values until they are part of the WCS read in from the header
-#        ra_ref = 45.0 # degrees
-#        dec_ref = 0.0 # degrees
-#        roll_ref = 0.0 # degrees 
-#        v2_ref = 300.2961/60.0 # arc min
-#        v3_ref = -497.9/60.0 # arc min         
+#        print('min dec',np.nanmin(dec))
+#        print('max dec',np.nanmax(dec))
+#        print('ran dec',(np.nanmax(dec) - np.nanmin(dec)* 3600.0))
 
-        ra_ref = input.meta.wcsinfo.ra_ref # degrees
-        dec_ref = input.meta.wcsinfo.dec_ref # degrees
-        roll_ref = input.meta.wcsinfo.roll_ref # degrees 
-        v2_ref = input.meta.wcsinfo.v2_ref # arc min
-        v3_ref = input.meta.wcsinfo.v3_ref # arc min         
-        print('ref values',v2_ref,v3_ref,ra_ref,dec_ref,roll_ref)
+#        print('min v3',np.nanmin(v3))
+#        print('max v3',np.nanmax(v3))
+#        print('ran v3' ,np.nanmax(v3) - np.nanmin(v3))
+#        print('ra ',ra[30,0:10])
+#        print('dec ',dec[30,0:10])
 
-        coord1,coord2 = coord.V2V32RADEC(ra_ref,dec_ref,roll_ref,v2_ref,v3_ref,
-                                         v2,v3) # return ra and dec in degrees
+        a_slice[k] = np.nanmin(ra)
+        a_slice[k + 1] = np.nanmax(ra)
 
-
-
-        coord1_test,coord2_test,lam_test = v23toworld(v2,v3,lam)
-
-        print('coord1_test',coord1_test[30,0:500])
-        print('coord2_test',coord2_test[30,0:500])
-        sys.exit('STOP')
-        a_slice[k] = np.nanmin(coord1)
-        a_slice[k + 1] = np.nanmax(coord1)
-
-        b_slice[k] = np.nanmin(coord2)
-        b_slice[k + 1] = np.nanmax(coord2)
+        b_slice[k] = np.nanmin(dec)
+        b_slice[k + 1] = np.nanmax(dec)
 
         lambda_slice[k] = np.nanmin(lam)
         lambda_slice[k + 1] = np.nanmax(lam)
@@ -288,10 +255,14 @@ def FindFootPrintNIRSPEC(self, input):
     lambda_max = max(lambda_slice)
 
     print('Size of NIRSPEC CUBE FOV: (arcseconds)')
-    print('max a',a_min,a_max, (a_max-a_min)*3600.0)
+    print('max a',a_min,a_max, 
+          (a_max-a_min)*math.cos(b_min*math.pi/180)*3600.0)
     print('max b',b_min,b_max, (b_max-b_min)*3600.0)
     print('wave',lambda_min,lambda_max)
-    
+
+    ra_ref = input.meta.wcsinfo.ra_ref # degrees
+    dec_ref = input.meta.wcsinfo.dec_ref # degrees    
+    print('ra dec ref',ra_ref,dec_ref)
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
 
 #_______________________________________________________________________
@@ -323,8 +294,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 
     """
     instrument = Cube.instrument
-#    parameter1 = list()
-#    parameter2 = list()
+
     if(instrument == 'MIRI'):
         parameter1 = self.metadata['band_channel']
         parameter2 = self.metadata['band_subchannel']
@@ -332,8 +302,6 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
         parameter1 = self.metadata['band_grating']
         parameter2 = self.metadata['band_filter']
 
-#    number_par1 = len(parameter1)
-#    number_par2 = len(parameter2)
 
     a_min = list()
     a_max = list()
@@ -343,14 +311,18 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
     lambda_max = list()
     print('Number of bands',self.metadata['num_bands'])
 
+    self.log.info('Number of bands in cube  %i', 
+                              self.metadata['num_bands'])
+
     for i in range(self.metadata['num_bands']):
  
         this_a = parameter1[i]
         this_b = parameter2[i]
-        print('parameters',this_a,this_b)
+        self.log.info(' Creating cube from %s,%s',this_a,this_b)
+
         n = len(MasterTable.FileMap[instrument][this_a][this_b])
         log.debug('number of files %d ', n)
-        print('number of files',n)
+#        print('number of files',n)
     # each file find the min and max a and lambda (OFFSETS NEED TO BE APPLIED TO THESE VALUES)
         for k in range(n):
             amin = 0.0
@@ -371,24 +343,19 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 #________________________________________________________________________________
 # Open the input data model
             with datamodels.ImageModel(ifile) as input_model:
-
-
                 t0 = time.time()
                 if(instrument == 'NIRSPEC'):
                     ChannelFootPrint = FindFootPrintNIRSPEC(self, input_model)
                     amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
                     t1 = time.time()
-
 #________________________________________________________________________________
                 if(instrument == 'MIRI'):
                     ChannelFootPrint = FindFootPrintMIRI(self, input_model, this_a, InstrumentInfo)
-                    t1 = time.time()
-                    print("Time find foot print Quick = %.1f.s" % (t1 - t0,))
                     amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
+                    t1 = time.time()
 
                 log.info("Time find foot print = %.1f.s" % (t1 - t0,))
 # If a dither offset list exists then apply the dither offsets (offsets in arc seconds)
-
 
                 amin = amin - c1_offset/3600.0
                 amax = amax - c1_offset/3600.0
@@ -455,8 +422,7 @@ def MapDetectorToCube(self, this_par1, this_par2,
     
     for k in range(nfiles):
         ifile = MasterTable.FileMap[instrument][this_par1][this_par2][k]
-        print(' On File k',k,nfiles,ifile)
-#        IFUCube.input_files.append(ifile)
+        
         ioffset = len(MasterTable.FileOffset[this_par1][this_par2]['C1'])
         Cube.file.append(ifile)
         c1_offset = 0.0
@@ -474,11 +440,9 @@ def MapDetectorToCube(self, this_par1, this_par2,
             #IFUCube.update(input_model) # do this for single file cubes
 #********************************************************************************
             if(instrument == 'MIRI'):
-
                 v2ab_transform = input_model.meta.wcs.get_transform('v2v3', 
                                                                     'alpha_beta')
                 wave_weights = CubeCloud.FindWaveWeights(this_par1, this_par2)
-
                 worldtov23 = input_model.meta.wcs.get_transform("world","v2v3")
 
             # for each file we need information that will be the same for all
@@ -491,25 +455,8 @@ def MapDetectorToCube(self, this_par1, this_par2,
                 Cube.c_wave.append(wave_weights[1])
                 Cube.a_weight.append(wave_weights[2])
                 Cube.c_weight.append(wave_weights[3])
-                Cube.transform_v23toab.append(v2ab_transform)
                 Cube.transform_worldtov23.append(worldtov23) 
-            # read in the V2-V3 to RA-DEC information
-                ra_ref = input_model.meta.wcsinfo.ra_ref # degrees
-                dec_ref = input_model.meta.wcsinfo.dec_ref # degrees
-                roll_ref = input_model.meta.wcsinfo.roll_ref # degrees 
-                v2_ref = input_model.meta.wcsinfo.v2_ref # arc min
-                v3_ref = input_model.meta.wcsinfo.v3_ref # arc min 
-
-#                v2v32radec = ra_ref,dec_ref,roll_ref,v2_ref,v3_ref  # temporarily
-                # store the info needed to transform to ra,dec (this will later
-                # be in assign_wcs) 
-
-                Cube.ra_ref.append(ra_ref)
-                Cube.dec_ref.append(dec_ref)
-                Cube.roll_ref.append(roll_ref)
-                Cube.v2_ref.append(v2_ref)
-                Cube.v3_ref.append(v3_ref)
-
+                Cube.transform_v23toab.append(v2ab_transform)
 #________________________________________________________________________________
 # Standard method 
                 if(self.interpolation == 'pointcloud'):
@@ -522,8 +469,7 @@ def MapDetectorToCube(self, this_par1, this_par2,
                     cloud = CubeCloud.MakePointCloudMIRI(self,input_model,
                                                          x, y, k, 
                                                          Cube,
-#                                                         v2v32radec,
-                                                         c1_offset, c2_offset)
+                                                        c1_offset, c2_offset)
                     n = PixelCloud.size
                     if(n == 10):  # If first time
                         PixelCloud = cloud
@@ -532,7 +478,8 @@ def MapDetectorToCube(self, this_par1, this_par2,
                         PixelCloud = np.hstack((PixelCloud, cloud))
 
                     t1 = time.time()
-                    log.debug("Time Map one Channel from 1 file  to Cloud = %.1f.s" % (t1 - t0,))
+                    log.debug("Time Map one Channel from 1 file  to Cloud = %.1f.s" 
+                              % (t1 - t0,))
 #________________________________________________________________________________
 #2D area method - only works for single files and coord_system = 'alpha-beta'
                 if(self.interpolation == 'area'):
@@ -553,7 +500,8 @@ def MapDetectorToCube(self, this_par1, this_par2,
                     #    overlap ratio
                     #    beta distance
 
-                        index = np.where(y < 1023) # getting pixel corner - ytop = y + 1 (routine fails for y = 1024)
+# getting pixel corner - ytop = y + 1 (routine fails for y = 1024)
+                        index = np.where(y < 1023) 
                         y = y[index]
                         x = x[index]
                         t0 = time.time()
@@ -576,14 +524,6 @@ def MapDetectorToCube(self, this_par1, this_par2,
                 nslices = end_slice - start_slice + 1
                 regions = list(range(start_slice, end_slice + 1))
 
-# Hard code these values until they are part of the WCS read in from the header
-                ra_ref = 45.0 # degrees
-                dec_ref = 0.0 # degrees
-                roll_ref = 0.0 # degrees 
-                v2_ref = 300.2961/60.0 # arc min
-                v3_ref = -497.9/60.0 # arc min         
-                v2v32radec = ra_ref,dec_ref,roll_ref,v2_ref,v3_ref  # temporarily
-         
                 for i in regions:
 
 
@@ -592,7 +532,6 @@ def MapDetectorToCube(self, this_par1, this_par2,
                                                             k,
                                                             i,
                                                             Cube,
-                                                            v2v32radec,
                                                             c1_offset, c2_offset)
 
 
@@ -604,11 +543,6 @@ def MapDetectorToCube(self, this_par1, this_par2,
 
                     t1 = time.time()
                     log.debug("Time Map one NIRSPEC slice  to Cloud = %.1f.s" % (t1 - t0,))
-
-
-
-
-
 
 #________________________________________________________________________________
 
@@ -664,24 +598,25 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
                         weight = 0
                         value = 0
                         for j in range(num):
-                            #weightpt[j] = 1
                             weight = weight + weightpt[j]
                             value = value + weightpt[j] * pixelflux[j]
 
-                            if(icube == 253984  ):
-                                print('Checking ', icube, ix, iy, iz)
-                                print('icube', icube)
-                                print('pointcloud', pointcloud_index[j])
-                                print('flux = {0:.5f}'.format(pixelflux[j]))
-                                print('w', weightpt[j])
-                                print(' ',weightpt[j] * pixelflux[j])
-                                print('num',num)
+#                            if(iz == 39 or iz == 40 ):
+#                                if(ix == 14 and iy == 16): 
+#                                    print('Checking ', icube, ix, iy, iz)
+#                                    print('icube', icube)
+#                                    print('pointcloud', pointcloud_index[j])
+#                                    print('flux = {0:.5f}'.format(pixelflux[j]))
+#                                    print('w', weightpt[j])
+#                                    print(' ',weightpt[j] * pixelflux[j])
+#                                    print('num',num)
                                 
                         if(weight != 0):
                             value = value / weight
                             spaxel[icube].flux = value
-                            if(icube == 253984  ):
-                                print('Final Flux', value * weight, weight, value,num)
+#                            if(iz == 39 or iz == 40 ):
+#                                if(ix == 14 and iy == 16): 
+#                                    print('Final Flux', value* weight, weight, value,num)
 
 
                     icube = icube + 1

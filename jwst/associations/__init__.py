@@ -5,7 +5,7 @@ from os.path import (
     dirname,
     join
 )
-__version__ = '0.6.0'
+__version__ = '0.7.0-beta.1'
 
 
 # Utility

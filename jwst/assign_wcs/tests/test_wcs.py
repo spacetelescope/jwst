@@ -8,7 +8,7 @@ from ...transforms import models
 def test_roll_angle():
     """
     A sanity test - when V2_REF = 0 and V3_REF = 0,
-    for V@, V3 close to he origin
+    for V2, V3 close to he origin
     ROLL_REF should be approximately PA_V3 .
 
     (Test taken from SIAF report.)
@@ -35,8 +35,8 @@ def test_v23_to_sky():
     v3_ref = -318.742464 / 3600 # in deg
     r0 = 37 # in deg
 
-    v2 = 210 * 3600   # in arcsec
-    v3 = -75 * 3600  # in arcsec
+    v2 = 210 # in deg
+    v3 = -75 # in deg
     expected_ra_dec = (107.12810484789563, -35.97940247128502) # in deg
     angles = [-v2_ref, v3_ref, -r0, -dec_ref, ra_ref]
     axes = "zyxyz"

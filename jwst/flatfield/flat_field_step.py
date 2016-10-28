@@ -40,15 +40,15 @@ class FlatFieldStep(Step):
                                         'sflat')
             self.d_flat_filename = self.get_reference_file(input_model,
                                         'dflat')
-            self.log.info('Using FFLAT reference file: %s',
-                          self.f_flat_filename)
-            self.log.info('Using SFLAT reference file: %s',
-                          self.s_flat_filename)
-            self.log.info('Using DFLAT reference file: %s',
-                          self.d_flat_filename)
+            self.log.debug('Using FFLAT reference file: %s',
+                           self.f_flat_filename)
+            self.log.debug('Using SFLAT reference file: %s',
+                           self.s_flat_filename)
+            self.log.debug('Using DFLAT reference file: %s',
+                           self.d_flat_filename)
         else:
             self.flat_filename = self.get_reference_file(input_model, 'flat')
-            self.log.info('Using FLAT reference file: %s', self.flat_filename)
+            self.log.debug('Using FLAT reference file: %s', self.flat_filename)
 
         # Check for a valid reference file
         missing = False

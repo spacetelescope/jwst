@@ -25,7 +25,10 @@ N_SHUTTERS_QUADRANT = 62415
 
 # Nirspec slit definition
 Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
-                           "ymin", "ymax", "quadrant", "source_id", "nshutters"])
+                           "ymin", "ymax", "quadrant", "source_id", "nshutters",
+                           "source_name", "source_alias", "catalog_id", "stellarity",
+                           "source_xpos", "source_ypos"])
+Slit.__new__.__defaults__= ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, "", "", "", 0.0, 0.0, 0.0)
 
 
 class RefractionIndex(Model):
@@ -703,8 +706,6 @@ class V23ToSky(Rotation3D):
         return alpha, delta
 
     def evaluate(self, v2, v3, angles):
-        v2 /= 3600.
-        v3 /= 3600.
         x, y, z = self.spherical2cartesian(v2, v3)
         x1, y1, z1 = super(V23ToSky, self).evaluate(x, y, z, angles)
         return self.cartesian2spherical(x1, y1, z1)
