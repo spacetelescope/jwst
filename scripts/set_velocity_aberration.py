@@ -109,6 +109,45 @@ def aberration_scale(velocity_x, velocity_y, velocity_z,
 
     return scale_factor
 
+def aberration_offset(velocity_x, velocity_y, velocity_z,
+                      targ_ra, targ_dec):
+    """Compute the RA/Dec offsets due to velocity aberration.
+
+    Parameters
+    ----------
+    velocity_x, velocity_y, velocity_z: float
+        The components of the velocity of JWST, in km / s with respect to
+        the Sun.  These are celestial coordinates, with x toward the
+        vernal equinox, y toward right ascension 90 degrees and declination
+        0, z toward the north celestial pole.
+
+    targ_ra, targ_dec: float
+        The right ascension and declination of the target (or some other
+        point, such as the center of a detector).  The equator and equinox
+        should be the same as the coordinate system for the velocity.
+
+    Returns
+    -------
+    delta_ra, delta_dec: float
+        The offset to be added to the input RA/Dec, in units of radians.
+    """
+
+    xdot = velocity_x / SPEED_OF_LIGHT
+    ydot = velocity_y / SPEED_OF_LIGHT
+    zdot = velocity_z / SPEED_OF_LIGHT
+
+    sin_alpha = math.sin(targ_ra * d_to_r)
+    cos_alpha = math.cos(targ_ra * d_to_r)
+    sin_delta = math.sin(targ_dec * d_to_r)
+    cos_delta = math.cos(targ_dec * d_to_r)
+
+    delta_ra = (-xdot * sin_alpha + ydot * cos_alpha) / cos_delta
+    delta_dec = -xdot * cos_alpha * sin_delta - \
+                 ydot * sin_alpha * sin_delta + \
+                 zdot * cos_delta
+
+    return delta_ra, delta_dec
+
 def add_dva(filename):
     '''
     Given the name of a valid partially populated level 1b JWST file,
@@ -127,8 +166,12 @@ def add_dva(filename):
     # compute the velocity aberration information
     scale_factor = aberration_scale(jwst_dx, jwst_dy, jwst_dz,
                                     ra_ref, dec_ref)
+    ra_off, dec_off = aberration_offset(jwst_dx, jwst_dy, jwst_dz,
+                                        ra_ref, dec_ref)
 
     # update header
+    pheader['DVA_RA'] = ra_off
+    pheader['DVA_DEC'] = dec_off
     pheader['VA_SCALE'] = scale_factor
     hdulist.flush()
     hdulist.close()
