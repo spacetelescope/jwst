@@ -62,44 +62,44 @@ class Info(object):
         self.Info['4']['wscale'] = 0.003
 
         self.Info['PRISM'] = {}
-        self.Info['PRISM']['wscale'] = 0.1
+        self.Info['PRISM']['wscale'] = 0.005
         self.Info['PRISM']['ascale'] = 0.1
         self.Info['PRISM']['bscale'] = 0.1
         self.Info['PRISM']['nslices'] = 30
 
         self.Info['G140M'] = {}
-        self.Info['G140M']['wscale'] = 0.1
+        self.Info['G140M']['wscale'] = 0.000636
         self.Info['G140M']['ascale'] = 0.1
         self.Info['G140M']['bscale'] = 0.1
         self.Info['G140M']['nslices'] = 30
 
         self.Info['G235M'] = {}
-        self.Info['G235M']['wscale'] = 0.1
+        self.Info['G235M']['wscale'] = 0.00106
         self.Info['G235M']['ascale'] = 0.1
         self.Info['G235M']['bscale'] = 0.1
         self.Info['G235M']['nslices'] = 30
 
         self.Info['G395M'] = {}
-        self.Info['G395M']['wscale'] = 0.1
+        self.Info['G395M']['wscale'] = 0.00179
         self.Info['G395M']['ascale'] = 0.1
         self.Info['G395M']['bscale'] = 0.1
         self.Info['G395M']['bscale'] = 0.1
         self.Info['G395M']['nslices'] = 30
 
         self.Info['G140H'] = {}
-        self.Info['G140H']['wscale'] = 0.1
+        self.Info['G140H']['wscale'] = 0.000235
         self.Info['G140H']['ascale'] = 0.1
         self.Info['G140H']['bscale'] = 0.1
         self.Info['G140H']['nslices'] = 30
 
         self.Info['G235H'] = {}
-        self.Info['G235H']['wscale'] = 0.1
+        self.Info['G235H']['wscale'] = 0.000396
         self.Info['G235H']['ascale'] = 0.1
         self.Info['G235H']['bscale'] = 0.1
         self.Info['G235H']['nslices'] = 30
 
         self.Info['G395H'] = {}
-        self.Info['G395H']['wscale'] = 0.1
+        self.Info['G395H']['wscale'] = 0.000665
         self.Info['G395H']['ascale'] = 0.1
         self.Info['G395H']['bscale'] = 0.1
         self.Info['G395H']['nslices'] = 30

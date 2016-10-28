@@ -264,15 +264,15 @@ def get_open_slits(input_model):
 
 def get_open_fixed_slits(input_model):
     slits = []
-    slits.append(Slit('S200A1', 0, 0, 0, -.5, .5, 5, "", ""))
-    slits.append(Slit('S200A2', 1, 0, 0, -.5, .5, 5, "", ""))
-    slits.append(Slit('S400A1', 2, 0, 0, -.5, .5, 5, "", ""))
-    slits.append(Slit('S1600A1', 3, 0, 0, -.5, .5, 5, "", ""))
+    slits.append(Slit('S200A1', 0, 0, 0, -.5, .5, 5))
+    slits.append(Slit('S200A2', 1, 0, 0, -.5, .5, 5))
+    slits.append(Slit('S400A1', 2, 0, 0, -.5, .5, 5))
+    slits.append(Slit('S1600A1', 3, 0, 0, -.5, .5, 5))
 
     if input_model.meta.instrument.detector == 'NRS1':
         if input_model.meta.instrument.filter == 'F070LP' and \
                 input_model.meta.instrument.grating == 'G140H':
-            slits.append(Slit('S200B1', 4, 0, 0, -.5, .5, 5, "", ""))
+            slits.append(Slit('S200B1', 4, 0, 0, -.5, .5, 5))
     return slits
 
 
@@ -320,6 +320,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
     with fits.open(msa_file) as msa_file:
         # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
         msa_conf = msa_file[('SHUTTER_INFO', 1)]
+        msa_source = msa_file[("SOURCE_INFO", 1)].data
 
         # First we are going to filter the msa_file data on the msa_metadata_id
         # as that is all we are interested in for this function.
@@ -359,11 +360,15 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
                 quadrant = slitlets_sid[0]['shutter_quadrant']
                 ycen = j
                 xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
-
+                source_xpos = 0.0
+                source_ypos = 0.0
             # There is 1 main shutter, phew, that makes it easier.
             elif n_main_shutter == 1:
-                xcen, ycen, quadrant = [(s['shutter_row'], s['shutter_column'], s['shutter_quadrant']) \
-                                        for s in slitlets_sid if s['background'] == 'N'][0]
+                xcen, ycen, quadrant, source_xpos, source_ypos = [
+                    (s['shutter_row'], s['shutter_column'], s['shutter_quadrant'],
+                     s['estimated_source_in_shutter_x'],
+                     s['estimated_source_in_shutter_y'])
+                    for s in slitlets_sid if s['background'] == 'N'][0]
 
                 # y-size
                 jmin = min([s['shutter_column'] for s in slitlets_sid])
@@ -377,12 +382,16 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
                 raise ValueError("MSA configuration file has more than 1 shutter with "
                                  "sources for metadata_id = {}".format(msa_metadata_id))
 
-            shutter_id = xcen + (ycen-1) * 365
+            shutter_id = xcen + (ycen - 1) * 365
             source_id = slitlets_sid[0]['source_id']
+            source_name, source_alias, catalog_id, stellarity = [
+                (s['source_name'], s['alias'], s['catalog_id'], s['stellarity']) \
+                for s in msa_source if s['source_id'] == source_id][0]
             # Create the output list of tuples that contain the required
             # data for further computations
             slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax,
-                                 quadrant, source_id, nshutters))
+                                 quadrant, source_id, nshutters, source_name, source_alias,
+                                 catalog_id, stellarity, source_xpos, source_ypos))
 
     return slitlets
 
@@ -886,7 +895,7 @@ def oteip_to_v23(reference_files):
     # The spatial units are currently in deg. Convertin to arcsec.
     oteip_to_xyan = fore2ote_mapping | (ote & Scale(1e6))
     # Add a shift for the aperture.
-    oteip2v23 = oteip_to_xyan | Identity(1) & (Shift(468) | Scale(-1)) & Identity(1)
+    oteip2v23 = oteip_to_xyan | Identity(1) & (Shift(468 / 3600) | Scale(-1)) & Identity(1)
     return oteip2v23
 
 

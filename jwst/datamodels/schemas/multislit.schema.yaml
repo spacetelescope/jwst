@@ -105,4 +105,10 @@ allOf:
             default: 0.0
             fits_keyword: SRCYPOS
             fits_hdu: SCI
+          nshutters:
+            title: Number of open shutters
+            type: integer
+            default: 0
+            fits_keyword: NSHUT
+            fits_hdu: SCI
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

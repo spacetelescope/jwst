@@ -26,11 +26,6 @@ class CubeInfo(object):
         self.a_wave = list()
         self.c_wave = list()
 
-        self.ra_ref = list()
-        self.dec_ref = list()
-        self.roll_ref = list()
-        self.v2_ref = list()
-        self.v3_ref = list()
         self.a_weight = list()
         self.c_weight = list()
         self.transform_v23toab = list()
@@ -97,7 +92,7 @@ class CubeInfo(object):
 
         self.zcoord = np.zeros(self.naxis3)
         self.Crval3 = self.lambda_min
-        self.Crpix3 = 0.5
+        self.Crpix3 = 1.0
         zstart = self.lambda_min + self.Cdelt3 / 2.0
 
         for i in range(self.naxis3):
@@ -131,24 +126,21 @@ class CubeInfo(object):
         padfactor = 1.1 # a padding on the size of cube 
                         # to make sure the spatial dimensions are large enough
         deg2rad = math.pi/180.0
-        
         ra_min, ra_max, dec_min, dec_max,lambda_min, lambda_max = footprint # in degrees
-
-        print('in SetGeometry',ra_min,ra_max,dec_min,dec_max)
         dec_ave = (dec_min + dec_max)/2.0
+
         # actually this is hard due to converenge of hour angle
         # improve determining ra_ave in the future
-        ra_ave = ((ra_min + ra_max)/2.0 )* math.cos(dec_ave*deg2rad) 
+        ra_ave = ((ra_min + ra_max)/2.0 )#* math.cos(dec_ave*deg2rad) 
 
-
-        range_ra = (ra_max - ra_min) * 3600.0 #* math.cos(dec_ave*deg2rad)
+        range_ra = (ra_max - ra_min) * 3600.0 * math.cos(dec_ave*deg2rad)
 
         self.naxis1 = int(math.ceil(range_ra / self.Cdelt1)) 
-        print('ra range',range_ra,self.naxis1)
+        #print('ra range, ave,naxis1',range_ra,ra_ave,self.naxis1)
 
         range_dec = (dec_max - dec_min) * 3600.0
         self.naxis2 = int(math.ceil(range_dec / self.Cdelt2)) 
-        print('dec range', range_dec,self.naxis2)
+        #print('dec range,ave,naxis2', range_dec,dec_ave,self.naxis2)
 
         self.Crval1 = ra_ave 
         self.Crval2 = dec_ave
@@ -163,10 +155,6 @@ class CubeInfo(object):
         eta_min = eta_min - self.Cdelt2/2.0
         eta_max = eta_max + self.Cdelt2/2.0
 
-        print('xi eta min ',xi_min,eta_min)
-        print('xi eta max ',xi_max,eta_max)
-
-        
         n1a = int(math.ceil(math.fabs(xi_min) / self.Cdelt1)) 
         n1b = int(math.ceil(math.fabs(xi_max) / self.Cdelt1)) 
 
@@ -217,7 +205,7 @@ class CubeInfo(object):
 
         self.zcoord = np.zeros(self.naxis3)
         self.Crval3 = self.lambda_min
-        self.Crpix3 = 0.5
+        self.Crpix3 = 1.0
         zstart = self.lambda_min + self.Cdelt3 / 2.0
 
         for i in range(self.naxis3):
@@ -228,10 +216,13 @@ class CubeInfo(object):
     def PrintCubeGeometry(self, instrument):
         log.info('Cube Geometry')
         blank = '  '
-        log.info('axis# Naxis  CRPIX    CRVAL        CDELT           MIN           MAX')
-        log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', self.naxis1, self.Crpix1, self.Crval1, self.Cdelt1, self.a_min, self.a_max)
-        log.info('Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', self.naxis2, self.Crpix2, self.Crval2, self.Cdelt2, self.b_min, self.b_max)
-        log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', self.naxis3, self.Crpix3, self.Crval3, self.Cdelt3, self.lambda_min, self.lambda_max)
+        log.info('axis# Naxis  CRPIX    CRVAL      CDELT(arc sec)    MIN& Max (xi,eta arc sec)')
+        log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
+                 self.naxis1, self.Crpix1, self.Crval1, self.Cdelt1, self.a_min, self.a_max)
+        log.info('Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
+                 self.naxis2, self.Crpix2, self.Crval2, self.Cdelt2, self.b_min, self.b_max)
+        log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
+                 self.naxis3, self.Crpix3, self.Crval3, self.Cdelt3, self.lambda_min, self.lambda_max)
 
         if(instrument == 'MIRI'):
             number_channels = len(self.channel)
