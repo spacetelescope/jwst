@@ -1,9 +1,9 @@
 Description
 ===========
 
-jwst.assign_wcs is the first step in the level 2B JWST pipeline.
-For each exposure, it constructs a WCS object and associates it
-with its corresponding science file. The forward direction is from detector to world coordinates.
+jwst.assign_wcs is one of the first steps in the level 2B JWST pipeline.
+It assigns a WCS object and associates to each exposure. 
+The forward direction is from detector to world coordinates.
 The WCS is saved as an attribute of the meta object of a model.
 Calling it as a function with detector positions as inputs returns the
 corresponding world coordinates. Using MIRI LRS fixed slit as an example:
@@ -21,13 +21,13 @@ which has been through the extract_2d step:
 
 >>> exp = models.MultiSlitModel('nrs1_fixed_assign_wcs_extract_2d.fits')
 >>> exp.slits[0].meta.wcs.available_frames
-    [u'detector', u'before_gwa', u'msa', u'ote']
->>> msa2detector = exp.slits[0].meta.wcs.get_transform('msa', 'detector')
+    ['detector', 'sca', 'bgwa', 'slit_frame', 'msa_frame', 'ote', 'v2v3', 'world']
+>>> msa2detector = exp.slits[0].meta.wcs.get_transform('msa_frame', 'detector')
 >>> msa2detector(0, 0, 2*10**-6)
     (5042.064255529629, 1119.8937888372516)
 
-For each exposure, assign_wcs collects the corresponding reference files
-and creates the WCS object. What reference files are retrieved
+For each exposure, assign_wcs uses reference files and WCS header keywords
+to create the WCS object. What reference files are retrieved
 from CRDS is determined based on EXP_TYPE and other keywords in the science file header.
 The instrument/mode specific sections list all keywords which
 are used to determine what the rules to retrieve a reference file are for each supported mode.
@@ -44,11 +44,11 @@ jwst.assign_wcs uses the modeling, units and coordinates subpackages in astropy.
 
 Software dependencies:
 
-- `gwcs <https://github.com/spacetelescope/gwcs>`__
+- `gwcs <https://github.com/spacetelescope/gwcs>`__ 0.7 
 
 - `numpy <http://www.numpy.org/>`__ 1.9 or later
 
-- `astropy <http://www.astropy.org/>`__ 1.0 or later
+- `astropy <http://www.astropy.org/>`__ 1.2.1 or later
 
-- `asdf <http://pyasdf.readthedocs.org/en/latest/>`__ 1.0 or later
+- `asdf <http://pyasdf.readthedocs.org/en/latest/>`__ 1.1.1 or later
 
