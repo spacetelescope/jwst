@@ -273,12 +273,6 @@ def reconcile_ap_limits(ap_ref, ap_wcs, ap_shape):
         truncated = False                       # just for info
         # ap_wcs has the limits over which the WCS transformation is
         # defined; take those as the outer limits over which we will extract.
-        # xxx begin test debug ...
-        print("xxx          xstart {} xstop {} ystart {} ystop {}"
-              .format(xstart, xstop, ystart, ystop))
-        print("xxx ap_wcs:  xstart {} xstop {} ystart {} ystop {}"
-              .format(ap_wcs.xstart, ap_wcs.xstop, ap_wcs.ystart, ap_wcs.ystop))
-        # xxx ... end test debug
         if wcs_xstart is not None and ap_wcs.xstart > xstart:
             xstart = ap_wcs.xstart
             truncated = True
@@ -653,7 +647,6 @@ def interpolate_response(wavelength, relsens):
     # "_relsens" indicates that the values were read from the RELSENS table.
     wl_relsens = relsens['wavelength']
     resp_relsens = relsens['response']
-    # xxx Hopefully this section will be temporary.
     MICRONS_100 = 1.e-4                 # 100 microns, in meters
     if wl_relsens.max() > 0. and wl_relsens.max() < MICRONS_100:
         log.warning("Converting RELSENS wavelengths to microns.")

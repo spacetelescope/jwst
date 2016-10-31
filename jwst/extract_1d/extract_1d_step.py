@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 
 import os
-from astropy.io import fits             # xxx test temporary
+from astropy.io import fits             # xxx temporary
 from ..stpipe import Step
 from .. import datamodels
 from . import extract
@@ -25,16 +25,16 @@ class Extract1dStep(Step):
 
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
-        # begin xxx test temporary ...
+        # begin xxx temporary ...
         fd = fits.open(input)
         data_model_from_header = fd[0].header.get("datamodl", "missing")
-        self.log.info("xxx data_model_from_header = %s",
+        self.log.debug("data_model_from_header = %s",
                       data_model_from_header)
         fd.close()
-        # ... end xxx test temporary
+        # ... end xxx temporary
         if data_model_from_header == "IFUCubeModel" and \
            not isinstance(input_model, datamodels.IFUCubeModel):
-            self.log.info("xxx Close and reopen as an IFUCubeModel")
+            self.log.debug("Close and reopen as an IFUCubeModel")
             input_model.close()
             input_model = datamodels.IFUCubeModel(input)
 
@@ -47,8 +47,7 @@ class Extract1dStep(Step):
         elif isinstance(input_model, datamodels.MultiSlitModel):
             self.log.debug('Input is a MultiSlitModel')
         elif isinstance(input_model, datamodels.IFUCubeModel):
-            self.log.info('Input is an IFUCubeModel')
-            # xxx self.log.debug('Input is an IFUCubeModel')
+            self.log.debug('Input is an IFUCubeModel')
         elif isinstance(input_model, datamodels.DrizProductModel):
             # Resampled 2-D data
             self.log.debug('Input is a DrizProductModel')

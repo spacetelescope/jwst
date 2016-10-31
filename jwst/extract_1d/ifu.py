@@ -6,6 +6,7 @@ import numpy as np
 from photutils import CircularAperture, CircularAnnulus, aperture_photometry
 
 from .. import datamodels
+from .. datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -38,7 +39,6 @@ def ifu_extract1d(input_model, refname, source_type, smoothing_length):
         log.error("Expected an IFU cube.")
         raise RuntimeError("Expected an IFU cube.")
 
-    source_type = "extended"            # xxx test debug temporary
     if source_type != "point" and source_type != "extended":
         log.warning("source_type was '%s', setting to 'point'.", source_type)
         source_type = "point"
@@ -56,13 +56,11 @@ def ifu_extract1d(input_model, refname, source_type, smoothing_length):
                                             source_type, smoothing_length)
 
     if extract_params:
-        wavelength, net, background = extract_ifu(input_model,
-                                slitname, source_type, extract_params)
+        (wavelength, net, background, dq) = extract_ifu(input_model,
+                                source_type, extract_params)
     else:
         log.critical('Missing extraction parameters.')
         raise ValueError('Missing extraction parameters.')
-
-    dq = np.zeros(net.shape, dtype=np.int32)
 
     do_fluxcorr = True                          # default, and initial value
     try:
@@ -178,23 +176,23 @@ def ifu_interpolate_response(wavelength, relsens):
     return r_factor
 
 
-def extract_ifu(input_model, slitname, source_type, extract_params):
+def extract_ifu(input_model, source_type, extract_params):
     """This function does the extraction.
 
     Parameters
     ----------
-    input_model:
-
-    slitname: string
+    input_model: IFUCubeModel
+        The input model.
 
     source_type: string
         "point" or "extended"
 
-    **extract_params:
+    extract_params: dict
+        The extraction parameters for aperture photometry.
 
     Returns
     -------
-        (wavelength, net, background)
+        (wavelength, net, background, dq)
     """
 
     data = input_model.data
@@ -203,16 +201,10 @@ def extract_ifu(input_model, slitname, source_type, extract_params):
         log.error("Expected a 3-D IFU cube; dimension is %d.", len(shape))
         raise RuntimeError("The IFU cube should be 3-D.")
 
-    wavelength = np.zeros(shape[0], dtype=np.float64)
-    net = np.zeros(shape[0], dtype=np.float64)
-    background = np.zeros(shape[0], dtype=np.float64)
+    dq = np.zeros(shape[0], dtype=np.int32)
 
     x_center = extract_params['x_center']
     y_center = extract_params['y_center']
-    if x_center < 0 or x_center >= shape[2] or \
-       y_center < 0 or y_center >= shape[1]:
-        log.warning("Target coordinates are outside the image.")
-        return (wavelength, net, background)    # all zeros
 
     # xxx not used yet
     smoothing_length = extract_params['smoothing_length']
@@ -242,29 +234,46 @@ def extract_ifu(input_model, slitname, source_type, extract_params):
             outer_bkg = inner_bkg
             inner_bkg = temp
 
-    try:
-        wcs = input_model.meta.wcs
-        got_real_wcs = True
-    except AttributeError:
-        wcs = input_model.get_fits_wcs()        # FITS keywords
-        got_real_wcs = False
+    # Check for out of bounds.  Return arrays of zeros if so.
+    outside = False
+    f_nx = float(shape[2])
+    f_ny = float(shape[1])
+    if x_center < 0. or x_center >= f_nx - 1. or \
+       y_center < 0. or y_center >= f_ny - 1.:
+        outside = True
+        log.error("Target location is outside the image.")
+    elif source_type == "point":
+        radius = extract_width / 2.
+        if x_center - radius < 0. or x_center + radius >= f_nx - 1. or \
+           y_center - radius < 0. or y_center + radius >= f_ny - 1.:
+            outside = True
+            log.error("Extraction region extends outside the image.")
+        if subtract_background and \
+           (x_center - outer_bkg < 0. or
+            x_center + outer_bkg >= f_nx - 1. or
+            y_center - outer_bkg < 0. or
+            y_center + outer_bkg >= f_ny - 1.):
+                outside = True
+                log.error("Background region extends outside the image.")
+    if outside:
+        wavelength = np.zeros(shape[0], dtype=np.float64)
+        net = np.zeros(shape[0], dtype=np.float64)
+        background = np.zeros(shape[0], dtype=np.float64)
+        dq[:] = dqflags.pixel['DO_NOT_USE']
+        return (wavelength, net, background, dq)        # all bad
 
-    if got_real_wcs:
-        log.debug("WCS is input_model.meta.wcs")
-        x_array = np.empty(shape[0], dtype=np.float64)
-        x_array.fill(float(shape[2]) / 2.)
-        y_array = np.empty(shape[0], dtype=np.float64)
-        y_array.fill(float(shape[1]) / 2.)
-        z_array = np.arange(shape[0], dtype=np.float64) # for wavelengths
-        _, _, wavelength = wcs(x_array, y_array, z_array)
-    else:
-        log.warning("WCS is input_model.get_fits_wcs()")
-        x = shape[2] / 2.
-        y = shape[1] / 2.
-        for k in range(shape[0]):
-            wavelength[k] = float(wcs.wcs_pix2world(x, y, float(k), 0)[2])
+    wcs = input_model.meta.wcs
+    x_array = np.empty(shape[0], dtype=np.float64)
+    x_array.fill(float(shape[2]) / 2.)
+    y_array = np.empty(shape[0], dtype=np.float64)
+    y_array.fill(float(shape[1]) / 2.)
+    z_array = np.arange(shape[0], dtype=np.float64) # for wavelengths
+    _, _, wavelength = wcs(x_array, y_array, z_array)
 
     if source_type == "point":
+        net = np.zeros(shape[0], dtype=np.float64)
+        background = np.zeros(shape[0], dtype=np.float64)
+
         position = (x_center, y_center)
         aperture = CircularAperture(position, r=extract_width / 2.)
         if subtract_background:
@@ -282,78 +291,119 @@ def extract_ifu(input_model, slitname, source_type, extract_params):
                 background[k] = float(bkg_table['aperture_sum'][0])
                 net[k] = net[k] - background[k] * normalization
     else:
-        # Floating-point coordinates with zero point at lower left corner
-        # of a pixel, for convenience in handling fractions of a pixel.
-        x0 = x_center + 0.5
-        y0 = y_center + 0.5
+        # No background is computed for an extended source.
+        background = np.zeros(shape[0], dtype=np.float64)
+        (area, net) = rectangular_ap_phot(data, x_center, y_center,
+                                          extract_width)
 
-        # Actual lower and upper edges of extraction box.
-        x_low = x0 - extract_width / 2.
-        x_high = x0 + extract_width / 2.
-        y_low = y0 - extract_width / 2.
-        y_high = y0 + extract_width / 2.
+    return (wavelength, net, background, dq)
 
-        # Outer limits of extraction box, integer pixels.
-        xo_low = math.floor(x_low)
-        xo_high = math.ceil(x_high)
-        yo_low = math.floor(y_low)
-        yo_high = math.ceil(y_high)
-        ixl = int(xo_low)
-        ixh = int(xo_high)
-        iyl = int(yo_low)
-        iyh = int(yo_high)
-        truncated = False
-        if ixl < 0:
-            truncated = True
-            ixl = 0
-            xo_low = max(0., xo_low)
-            x_low = max(0., x_low)
-        if iyl < 0:
-            truncated = True
-            iyl = 0
-            yo_low = max(0., yo_low)
-            y_low = max(0., y_low)
-        if ixh > shape[2]:
-            truncated = True
-            ixh = shape[2]
-            xo_high = min(float(shape[2]), xo_high)
-            x_high = min(float(shape[2]), x_high)
-        if iyh > shape[1]:
-            truncated = True
-            iyh = shape[1]
-            yo_high = min(float(shape[1]), yo_high)
-            y_high = min(float(shape[1]), y_high)
-        if truncated:
-            log.warning("Extraction box was truncated to slice "
-                        "[%d:%d, %d:%d]", iy, iyh, ixl, ixh)
 
-        # Partial weight for column or row of edge pixels.  x_low will be
-        # greater than or equal to xo_low; if they're equal, the weight
-        # should be 1.  Note:  These values will only be used for the case
-        # that the lower and upper limits are in separate pixels.
-        xw_l = 1. - (x_low - xo_low)            # left edge
-        yw_l = 1. - (y_low - yo_low)            # lower edge
-        xw_h = 1. - (xo_high - x_high)          # right edge
-        yw_h = 1. - (yo_high - y_high)          # top edge
+def rectangular_ap_phot(data, x_center, y_center, extract_width):
+    """Aperture photometry for a rectangular aperture.
 
-        nx = int(xo_high) - int(xo_low)
-        ny = int(yo_high) - int(yo_low)
-        nx = max(nx, 1)
-        ny = max(ny, 1)
-        wgt = np.ones((1, ny, nx), dtype=np.float64)
-        if nx == 1:
-            wgt[0, :, 0] *= (x_high - x_low)
-        else: 
-            wgt[0, :, 0] *= xw_l
-            wgt[0, :, -1] *= xw_h
-        if ny == 1:
-            wgt[0, 0, :] *= (y_high - y_low)
-        else:
-            wgt[0, 0, :] *= yw_l
-            wgt[0, -1, :] *= yw_h
+    Parameters
+    ----------
+    data: array_like (3-D)
+        The first axis is wavelength, the second is Y, the third is X.
 
-        subset = data[:, iyl:iyh, ixl:ixh] * wgt
-        for k in range(shape[0]):
-            net[k] = subset[k, :, :].sum()
+    x_center, y_center: float
+        The X and Y pixel coordinates of the target.
 
-    return (wavelength, net, background)
+    extract_width: float
+        The full width and height (in pixels) of the extraction region,
+        which is nominally a square.  If one or more edges of the extraction
+        region extend beyond any edge of the data array, however, the
+        extraction region will be truncated, and the sum will be computed
+        only within the truncated region.
+
+    Returns
+    -------
+    (area, net)
+        area: float
+        net: array_like (1-D)
+            This is the gross count rate (because background is not
+            computed) at each wavelength, i.e. the length of `net` is the
+            same as `data.shape[0]`.
+    """
+
+    shape = data.shape
+
+    # Floating-point coordinates with zero point at lower left corner
+    # of a pixel, for convenience in handling fractions of a pixel.
+    x0 = x_center + 0.5
+    y0 = y_center + 0.5
+
+    # Actual lower and upper edges of extraction box.
+    x_low = x0 - extract_width / 2.
+    x_high = x0 + extract_width / 2.
+    y_low = y0 - extract_width / 2.
+    y_high = y0 + extract_width / 2.
+
+    # Outer limits of extraction box, integer pixels.
+    xo_low = math.floor(x_low)
+    xo_high = math.ceil(x_high)
+    yo_low = math.floor(y_low)
+    yo_high = math.ceil(y_high)
+    ixl = int(xo_low)
+    ixh = int(xo_high)
+    iyl = int(yo_low)
+    iyh = int(yo_high)
+
+    # Is the aperture truncated at an edge?
+    truncated = False                       # initial value
+    if ixl < 0:
+        truncated = True
+        ixl = 0
+        xo_low = max(0., xo_low)
+        x_low = max(0., x_low)
+    if iyl < 0:
+        truncated = True
+        iyl = 0
+        yo_low = max(0., yo_low)
+        y_low = max(0., y_low)
+    if ixh > shape[2]:
+        truncated = True
+        ixh = shape[2]
+        xo_high = min(float(shape[2]), xo_high)
+        x_high = min(float(shape[2]), x_high)
+    if iyh > shape[1]:
+        truncated = True
+        iyh = shape[1]
+        yo_high = min(float(shape[1]), yo_high)
+        y_high = min(float(shape[1]), y_high)
+    if truncated:
+        log.warning("Extraction box was truncated to slice "
+                    "[%d:%d, %d:%d]", iyl, iyh, ixl, ixh)
+
+    # Partial weight for column or row of edge pixels.  x_low will be
+    # greater than or equal to xo_low; if they're equal, the weight
+    # should be 1.  Note:  These values will only be used for the case
+    # that the lower and upper limits are in separate pixels.
+    xw_l = 1. - (x_low - xo_low)            # left edge
+    yw_l = 1. - (y_low - yo_low)            # lower edge
+    xw_h = 1. - (xo_high - x_high)          # right edge
+    yw_h = 1. - (yo_high - y_high)          # top edge
+
+    nx = int(xo_high) - int(xo_low)
+    ny = int(yo_high) - int(yo_low)
+    nx = max(nx, 1)
+    ny = max(ny, 1)
+    wgt = np.ones((1, ny, nx), dtype=np.float64)
+    if nx == 1:
+        wgt[0, :, 0] *= (x_high - x_low)
+    else: 
+        wgt[0, :, 0] *= xw_l
+        wgt[0, :, -1] *= xw_h
+    if ny == 1:
+        wgt[0, 0, :] *= (y_high - y_low)
+    else:
+        wgt[0, 0, :] *= yw_l
+        wgt[0, -1, :] *= yw_h
+
+    area = wgt.sum()
+
+    subset = data[:, iyl:iyh, ixl:ixh] * wgt
+    net = subset.sum(axis=(1, 2), dtype=np.float64)
+
+    return (area, net)
