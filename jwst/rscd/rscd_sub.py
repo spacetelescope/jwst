@@ -42,10 +42,17 @@ def do_correction(input_model, rscd_model):
     # Create output as a copy of the input science data model
     output = input_model.copy()
 
+    # Check for valid parameters
+    if sci_ngroups < 2:
+        log.warning('RSCD correction will be skipped, only 1 Group need at least 2')
+        output.meta.cal_step.rscd = 'SKIPPED'
+        return output
+
     # Retrieve the reference parameters for this exposure type
     even, odd = get_rscd_parameters(input_model, rscd_model)
 
-    # Check for valid parameters
+
+
     if even is None:
         log.warning('RSCD correction will be skipped')
         output.meta.cal_step.rscd = 'SKIPPED'
