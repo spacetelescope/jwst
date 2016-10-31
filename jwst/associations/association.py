@@ -13,6 +13,7 @@ from astropy.extern import six
 import numpy as np
 from numpy.ma import masked
 
+from . import __version__
 from .exceptions import (AssociationError, AssociationProcessMembers)
 from .lib.counter import Counter
 from .registry import AssociationRegistry
@@ -108,7 +109,8 @@ class Association(MutableMapping):
         self.data.update({
             'asn_type': 'None',
             'asn_rule': self.asn_rule,
-            'version_id': self.version_id
+            'version_id': self.version_id,
+            'code_version': __version__,
         })
 
         if member is not None:

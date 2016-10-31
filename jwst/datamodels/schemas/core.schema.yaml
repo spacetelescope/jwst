@@ -54,6 +54,7 @@ properties:
           reference_frame:
             title: Name of the coordinate reference frame
             type: string
+            default: ICRS
             fits_keyword: RADESYS
             enum: [ICRS]
       asn:
@@ -684,26 +685,32 @@ properties:
           crpix1:
             title: axis 1 coordinate of the reference pixel
             type: number
+            default: 0.0
             fits_keyword: CRPIX1
           crpix2:
             title: axis 2 coordinate of the reference pixel
             type: number
+            default: 0.0
             fits_keyword: CRPIX2
           crpix3:
             title: axis 3 coordinate of the reference pixel
             type: number
+            default: 0.0
             fits_keyword: CRPIX3
           crval1:
             title: RA at the reference pixel (deg)
             type: number
+            default: 0.0
             fits_keyword: CRVAL1
           crval2:
             title: Dec at the reference pixel (deg)
             type: number
+            default: 0.0
             fits_keyword: CRVAL2
           crval3:
             title: Wavelength at the reference pixel (microns)
             type: number
+            default: 0.0
             fits_keyword: CRVAL3
           ctype1:
             title: first axis coordinate type
@@ -732,39 +739,63 @@ properties:
           cdelt1:
             title: first axis increment per pixel (deg)
             type: number
+            default: 1.0
             fits_keyword: CDELT1
           cdelt2:
             title: second axis increment per pixel (deg)
             type: number
+            default: 1.0
             fits_keyword: CDELT2
           cdelt3:
             title: third axis increment per pixel (microns)
             type: number
+            default: 1.0
             fits_keyword: CDELT3
           pc1_1:
             title: linear transformation matrix element
             type: number
+            default: 1.0
             fits_keyword: PC1_1
           pc1_2:
             title: linear transformation matrix element
             type: number
+            default: 0.0
             fits_keyword: PC1_2
+          pc1_3:
+            title: linear transformation matrix element
+            type: number
+            default: 0.0
+            fits_keyword: PC1_3
           pc2_1:
             title: linear transformation matrix element
             type: number
+            default: 0.0
             fits_keyword: PC2_1
           pc2_2:
             title: linear transformation matrix element
             type: number
+            default: 1.0
             fits_keyword: PC2_2
+          pc2_3:
+            title: linear transformation matrix element
+            type: number
+            default: 0.0
+            fits_keyword: PC2_3
           pc3_1:
             title: linear transformation matrix element
             type: number
+            default: 0.0
             fits_keyword: PC3_1
           pc3_2:
             title: linear transformation matrix element
             type: number
+            default: 0.0
             fits_keyword: PC3_2
+          pc3_3:
+            title: linear transformation matrix element
+            type: number
+            default: 1.0
+            fits_keyword: PC3_3
           s_region:
             title: spatial extent of the observation
             type: string
@@ -784,22 +815,27 @@ properties:
           ra_ref:
             title: Right ascension of the reference point (deg)
             type: number
+            default: 0.0
             fits_keyword: RA_REF
           dec_ref:
             title: Declination of the reference point (deg)
             type: number
+            default: 0.0
             fits_keyword: DEC_REF
           v2_ref:
             title: Telescope v2 coordinate of the reference point (arcsec)
             type: number
+            default: 0.0
             fits_keyword: V2_REF
           v3_ref:
             title: Telescope v3 coordinate of the reference point (arcsec)
             type: number
+            default: 0.0
             fits_keyword: V3_REF
           roll_ref:
             title: Telescope roll angle of V3 measured from North over East at the ref. point (deg)
             type: number
+            default: 0.0
             fits_keyword: ROLL_REF
       pointing:
         title: Spacecraft pointing information
@@ -889,38 +925,6 @@ properties:
             title: Nominal pixel area in arcsec^2
             type: number
             fits_keyword: PIXAR_A2
-      target_acq:
-        title: Target acquisition files
-        type: object
-        properties:
-          tacqname:
-            title: target acquisition file name
-            type: string
-            fits_keyword: TACQNAME
-          refstrfl:
-            title: reference star file name
-            type: string
-            fits_keyword: REFSTRFL
-          tacqslit:
-            title: target acq illuminated slit image file name
-            type: string
-            fits_keyword: TACQSLIT
-          tacq1img:
-            title: first target acq image file name
-            type: string
-            fits_keyword: TACQ1IMG
-          tacq2img:
-            title: second target acq image file name
-            type: string
-            fits_keyword: TACQ2IMG
-          tacnfimg:
-            title: target acq confirmation image file name
-            type: string
-            fits_keyword: TACNFIMG
-          sccnfimg:
-            title: science confirmation image file name
-            type: string
-            fits_keyword: SCCNFIMG
       nircam_focus:
         title: NIRCam Focus Adjust Mechanism parameters
         type: object

@@ -1,7 +1,7 @@
 Tasks in the Package
 ====================
 
-The AMI pipeline package currently consists of three prototype tasks:
+The AMI pipeline package currently consists of three tasks:
 
 1) ami_analyze: apply the LG algorithm to a NIRISS AMI exposure
 2) ami_average: average the results of LG processing for multiple exposures
@@ -9,7 +9,7 @@ The AMI pipeline package currently consists of three prototype tasks:
    results for a reference target
 
 The three tasks can be applied to an association of AMI exposures using the
-pipeline module 'calniriss_ami3.'
+pipeline module 'calweb_ami3.'
 
 AMI_Analyze
 ===========
@@ -45,20 +45,6 @@ following list of extensions:
 6) ``FRINGE_PHA``: table of fringe phases
 7) ``PUPIL_PHA``: table of pupil phases
 8) ``SOLNS``: table of fringe coefficients
-
-Reference Files
----------------
-The task uses one reference file, which contains throughput data for the
-filter used in the input AMI image. These reference files are of type
-'THROUGHPUT' and are stored as FITS files with a single BINTABLE extension.
-The primary data array is always empty. The BINTABLE extension has
-``EXTNAME=THROUGHPUT`` and the columns of the table are:
-
-* WAVELENGTH (float 1-D array in units of Angstroms)
-* THROUGHPUT (float 1-D array in dimensionless units of transmission)
-
-``THROUGHPUT`` reference files are selected from CRDS by ``INSTRUME`` and
-``FILTER.``
 
 AMI_AVERAGE
 ===========
@@ -108,14 +94,14 @@ phases and fringe amplitudes have been normalized using the reference target
 closure phases and fringe amplitudes. The remaining components of the science
 target data model are left unchanged.
 
-CALNIRISS_AMI3 Pipeline
+CALWEBB_AMI3 Pipeline
 =======================
 
 Overview
 --------
-The 'calniriss_ami3' pipeline module can be used to apply all 3 steps of AMI
+The 'calwebb_ami3' pipeline module can be used to apply all 3 steps of AMI
 processing to an association of AMI exposures. The processing flow through the
-'calniriss_ami3' pipeline is as follows:
+'calwebb_ami3' pipeline is as follows:
 
 1) Apply the 'ami_analyze' step to all science target AMI exposures listed in
    the input association table. Output files will have a file name suffix of
@@ -139,6 +125,6 @@ processing to an association of AMI exposures. The processing flow through the
 
 Input
 -----
-The only input to the 'calniriss_ami3' pipeline is the name of a json-formatted
+The only input to the 'calwebb_ami3' pipeline is the name of a json-formatted
 association table. There are no optional parameters.
 
