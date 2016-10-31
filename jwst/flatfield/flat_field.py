@@ -16,14 +16,6 @@ log.setLevel(logging.DEBUG)
 
 MICRONS_100 = 1.e-4                     # 100 microns, in meters
 
-# Possible values for optical_path_part.
-F_FLAT = "fflat"
-S_FLAT = "sflat"
-D_FLAT = "dflat"
-
-# number of NIRSpec MSA shutters in the X direction (and 171 in Y)
-NX_SHUTTERS = 365
-
 def do_correction(input_model, flat_model,
                   f_flat_model, s_flat_model,
                   d_flat_model, flat_suffix=None):
@@ -405,9 +397,21 @@ def do_NIRSpec_flat_field(output_model,
         interpolated_flats = None
 
     any_updated = False
+    if exposure_type == "NRS_MSASPEC":
+        slits = nirspec.get_open_slits(output_model)
     for (k, slit) in enumerate(output_model.slits):
-        log.info("Processing slit %s", slit.name)
-        # xxx log.debug("Processing slit %s", slit.name)
+        log.debug("Processing slit %s", slit.name)
+        slit_nt = None
+        if exposure_type == "NRS_MSASPEC":
+            # Find this slit in the list of open slits.
+            for j in range(len(slits)):
+                if str(slits[j].name) == slit.name:
+                    slit_nt = slits[j]
+                    break
+            if slit_nt is None:
+                log.error("Couldn't find slit %s in list of open slits; "
+                          "skipping ...", slit.name)
+                continue
 
         # Get the wavelength of each pixel in the extracted slit data.
         ysize, xsize = slit.data.shape
@@ -439,7 +443,7 @@ def do_NIRSpec_flat_field(output_model,
         (flat_2d, flat_dq_2d) = create_flat_field(wl,
                         f_flat_model, s_flat_model, d_flat_model,
                         xstart, xstop, ystart, ystop,
-                        exposure_type, slit.name)
+                        exposure_type, slit.name, slit_nt)
         mask = (flat_2d <= 0.)
         nbad = mask.sum(dtype=np.intp)
         if nbad > 0:
@@ -452,6 +456,7 @@ def do_NIRSpec_flat_field(output_model,
             new_flat = datamodels.ImageModel(data=flat_2d, dq=flat_dq_2d)
             interpolated_flats.slits.append(new_flat.copy())
             interpolated_flats.slits[k].err[...] = 1.   # xxx not realistic
+            # xxx There's more info that could be copied over.
             interpolated_flats.slits[k].name = slit.name
             interpolated_flats.slits[k].xstart = slit.xstart
             interpolated_flats.slits[k].xsize = slit.xsize
@@ -505,7 +510,6 @@ def NIRSpec_IFU(output_model,
     -------
     ImageModel or None
         If not None, the value will be the interpolated flat field.
-
     """
 
     exposure_type = output_model.meta.exposure.type
@@ -535,11 +539,11 @@ def NIRSpec_IFU(output_model,
             ystart = 0
         if xstop > 2048:
             truncated = True
-            log.info("WCS domain xstop was %d; set to 0" % xstop)
+            log.info("WCS domain xstop was %d; set to 2048" % xstop)
             xstop = 2048
         if ystop > 2048:
             truncated = True
-            log.info("WCS domain ystop was %d; set to 0" % ystop)
+            log.info("WCS domain ystop was %d; set to 2048" % ystop)
             ystop = 2048
         if truncated:
             log.info("WCS domain for stripe %d extended beyond image edges,"
@@ -561,19 +565,18 @@ def NIRSpec_IFU(output_model,
         (flat_2d, flat_dq_2d) = create_flat_field(wl,
                         f_flat_model, s_flat_model, d_flat_model,
                         xstart, xstop, ystart, ystop,
-                        exposure_type, None)
+                        exposure_type, None, None)
         flat_2d[nan_flag] = 1.
         mask = (flat_2d <= 0.)
         nbad = mask.sum(dtype=np.intp)
         if nbad > 0:
             log.debug("%d flat-field values <= 0", nbad)
             flat_2d[mask] = 1.
-            flat_dq_2d[mask] |= dqflags.pixel['NO_FLAT_FIELD']
         del mask
-        flat_dq_2d[nan_flag] |= dqflags.pixel['NO_FLAT_FIELD']
 
         flat[ystart:ystop, xstart:xstop][good_flag] = flat_2d[good_flag]
         flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.copy()
+        del nan_flag, good_flag
 
         any_updated = True
 
@@ -597,7 +600,7 @@ def NIRSpec_IFU(output_model,
 
 def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
                       xstart, xstop, ystart, ystop,
-                      exposure_type, slit_name):
+                      exposure_type, slit_name, slit_nt=None):
     """Extract and combine flat field components.
 
     Parameters
@@ -631,6 +634,9 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     slit_name: str
         The name of the slit currently being processed.
 
+    slit_nt: namedtuple or None
+        For MSA data only, info about the current slit.
+
     Returns
     -------
     tuple, two 2-D ndarrays
@@ -642,21 +648,8 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
             The data quality array corresponding to flat_2d.
     """
 
-    if exposure_type == "NRS_MSASPEC":
-        # E.g. SLTNAME = '[    4 13855]'
-        sn = slit_name.replace("[", "").replace("]", "")
-        words = sn.split()
-        quadrant = int(words[0]) - 1            # convert to zero indexing
-        n = int(words[1])
-        msa_y = (n - 1) // NX_SHUTTERS
-        msa_x = (n - 1) - msa_y * NX_SHUTTERS
-        slit_id = (msa_y, msa_x)
-    else:
-        quadrant = None
-        slit_id = None
-
     (f_flat, f_flat_dq) = fore_optics_flat(wl, f_flat_model, exposure_type,
-                                           slit_name, quadrant, slit_id)
+                                           slit_name, slit_nt)
 
     (s_flat, s_flat_dq) = spectrograph_flat(wl, s_flat_model,
                                             xstart, xstop, ystart, ystop,
@@ -675,7 +668,7 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
 
 
 def fore_optics_flat(wl, f_flat_model, exposure_type,
-                     slit_name, quadrant, slit_id):
+                     slit_name, slit_nt):
     """Extract the flat for the fore optics part.
 
     Parameters
@@ -691,20 +684,12 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
         micro-shutter array, identified by "NRS_FIXEDSLIT", "NRS_IFU",
         or "NRS_MSASPEC" respectively.
 
-    optical_path_part: str
-        Identifies whether we are currently creating a fore-optics flat,
-        a spectrograph flat, or a detector flat.
-
     slit_name: str
         The name of the slit currently being processed.
 
-    quadrant: int or None
-        For MOS data, this is the quadrant number (zero indexed) of the
-        microshutter array.
-
-    slit_id: tuple or None
-        For MOS data, msa_y and msa_x are the indices of the current
-        shutter in the Y and X directions.
+    slit_nt: namedtuple or None
+        For MOS data (only), this is used to get the quadrant number and
+        the indices of the current shutter in the Y and X directions.
 
     Returns
     -------
@@ -712,10 +697,12 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
         The flat field and associated data quality array.
     """
 
-    optical_path_part = F_FLAT
+    if slit_nt is None:
+        quadrant = None
+    else:
+        quadrant = slit_nt.quadrant - 1         # convert to zero indexed
 
-    (tab_wl, tab_flat) = read_flat_table(f_flat_model,
-                                         exposure_type, optical_path_part,
+    (tab_wl, tab_flat) = read_flat_table(f_flat_model, exposure_type,
                                          slit_name, quadrant)
     if tab_wl.max() < MICRONS_100:
         log.warning("Wavelengths in f_flat table appear to be in meters")
@@ -729,7 +716,9 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
     if exposure_type == "NRS_MSASPEC":
         # The MOS "image" is in MSA coordinates (shutter index in x and y),
         # not detector pixel coordinates.
-        (msa_y, msa_x) = slit_id
+        # This is an example to show what xcen and ycen mean:
+        #       shutter_id = xcen + (ycen - 1) * 365
+        msa_y, msa_x = slit_nt.ycen, slit_nt.xcen
         full_array_flat = f_flat_model.quadrants[quadrant].data
         full_array_dq = f_flat_model.quadrants[quadrant].dq
         # Get the wavelength corresponding to each plane in the "image".
@@ -798,14 +787,12 @@ def spectrograph_flat(wl, s_flat_model,
         The flat field and associated data quality array.
     """
 
-    optical_path_part = S_FLAT
     quadrant = None
 
     if xstart >= xstop or ystart >= ystop:
         return (1., None)
 
-    (tab_wl, tab_flat) = read_flat_table(s_flat_model,
-                                         exposure_type, optical_path_part,
+    (tab_wl, tab_flat) = read_flat_table(s_flat_model, exposure_type,
                                          slit_name, quadrant)
     if tab_wl.max() < MICRONS_100:
         log.warning("Wavelengths in s_flat table appear to be in meters")
@@ -813,8 +800,8 @@ def spectrograph_flat(wl, s_flat_model,
     full_array_flat = s_flat_model.data
     full_array_dq = s_flat_model.dq
 
-    # Should this test be on len(full_array_dq.shape) instead?
-    if exposure_type == "NRS_MSASPEC":
+    if len(full_array_flat.shape) == 3:
+        # MSA data
         image_flat = full_array_flat[:, ystart:ystop, xstart:xstop]
         image_dq = full_array_dq[:, ystart:ystop, xstart:xstop]
         # Get the wavelength corresponding to each plane in the image.
@@ -868,14 +855,12 @@ def detector_flat(wl, d_flat_model,
         The flat field and associated data quality array.
     """
 
-    optical_path_part = D_FLAT
     quadrant = None
 
     if xstart >= xstop or ystart >= ystop:
         return (1., None)
 
-    (tab_wl, tab_flat) = read_flat_table(d_flat_model,
-                                         exposure_type, optical_path_part,
+    (tab_wl, tab_flat) = read_flat_table(d_flat_model, exposure_type,
                                          slit_name, quadrant)
     if tab_wl.max() < MICRONS_100:
         log.warning("Wavelengths in d_flat table appear to be in meters.")
@@ -991,8 +976,7 @@ def read_image_wl(flat_model, quadrant=None):
     return wavelength
 
 
-def read_flat_table(flat_model,
-                    exposure_type, optical_path_part,
+def read_flat_table(flat_model, exposure_type,
                     slit_name=None, quadrant=None):
     """Read the table (the "fast" variation).
 
@@ -1006,11 +990,6 @@ def read_flat_table(flat_model,
         The exposure type refers to fixed_slit, IFU, or using the
         micro-shutter array, identified by "NRS_FIXEDSLIT", "NRS_IFU",
         or "NRS_MSASPEC" respectively.
-
-    optical_path_part: str
-        Identifies the current reference table as being for the fore optics,
-        the spectrograph, or the detector.
-        xxx This is not currently used.
 
     slit_name: str
         The name of the slit.  This is only needed for fixed-slit data, in

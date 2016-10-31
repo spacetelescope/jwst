@@ -38,10 +38,11 @@ def ifu_extract1d(input_model, refname, source_type, smoothing_length):
         log.error("Expected an IFU cube.")
         raise RuntimeError("Expected an IFU cube.")
 
-    # xxx source_type = "extended"            # xxx test debug temporary
+    source_type = "extended"            # xxx test debug temporary
     if source_type != "point" and source_type != "extended":
         log.warning("source_type was '%s', setting to 'point'.", source_type)
         source_type = "point"
+    log.info("source_type = %s", source_type)
 
     output_model = datamodels.MultiSpecModel()
     output_model.update(input_model)
@@ -301,6 +302,30 @@ def extract_ifu(input_model, slitname, source_type, extract_params):
         ixh = int(xo_high)
         iyl = int(yo_low)
         iyh = int(yo_high)
+        truncated = False
+        if ixl < 0:
+            truncated = True
+            ixl = 0
+            xo_low = max(0., xo_low)
+            x_low = max(0., x_low)
+        if iyl < 0:
+            truncated = True
+            iyl = 0
+            yo_low = max(0., yo_low)
+            y_low = max(0., y_low)
+        if ixh > shape[2]:
+            truncated = True
+            ixh = shape[2]
+            xo_high = min(float(shape[2]), xo_high)
+            x_high = min(float(shape[2]), x_high)
+        if iyh > shape[1]:
+            truncated = True
+            iyh = shape[1]
+            yo_high = min(float(shape[1]), yo_high)
+            y_high = min(float(shape[1]), y_high)
+        if truncated:
+            log.warning("Extraction box was truncated to slice "
+                        "[%d:%d, %d:%d]", iy, iyh, ixl, ixh)
 
         # Partial weight for column or row of edge pixels.  x_low will be
         # greater than or equal to xo_low; if they're equal, the weight
