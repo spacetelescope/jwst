@@ -320,9 +320,9 @@ properties:
             #enum: [ALL OPEN, ALL CLOSED, CONFIGURED]
             fits_keyword: MSASTATE
           msa_configuration_file:
-            title: MSA configuration file name
+            title: MSA metadata file name
             type: string
-            fits_keyword: MSACONFL
+            fits_keyword: MSAMETFL
           msa_metadata_id:
             title: MSA metadata ID
             type: integer
