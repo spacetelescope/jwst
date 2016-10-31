@@ -136,7 +136,7 @@ def ifu(input_model, reference_files):
     det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 
     # GWA to SLIT
-    gwa2slit = gwa_to_ifuslit(slits, disperser, wrange, sporder, reference_files)
+    gwa2slit = gwa_to_ifuslit(slits, input_model, disperser, reference_files)
 
     # SLIT to MSA transform
     slit2msa = ifuslit_to_msa(slits, reference_files)
@@ -495,7 +495,7 @@ def slit_to_msa(open_slits, msafile):
     return Slit2Msa(open_slits, models)
 
 
-def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
+def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     """
     GWA to SLIT transform.
 
@@ -519,8 +519,16 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
    """
     ymin = -.55
     ymax = .55
-    agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
-    lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
+
+    wrange = (input_model.meta.wcsinfo.waverange_start,
+              input_model.meta.wcsinfo.waverange_end),
+    order = input_model.meta.wcsinfo.spectral_order
+    agreq = angle_from_disperser(disperser, input_model)
+    lgreq = wavelength_from_disperser(disperser, input_model)
+    # The wavelength units up to this point are
+    # meters as required by the pipeline but the desired output wavelength units is microns.
+    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
+    lgreq = lgreq | Scale(1e6)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     mask = mask_slit(ymin, ymax)
 
@@ -539,7 +547,7 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
                  Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                  Identity(1) & gwa2msa & Identity(2) | \
                  Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
-                 Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
+                 Mapping((0, 1, 2, 3, 5), n_inputs=7) | Identity(2) & lgreq | mask
 
         # msa to before_gwa
         msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
@@ -573,14 +581,24 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
     """
+<<<<<<< HEAD
 
     wrange, order = (input_model.meta.wcsinfo.waverange_start, input_model.meta.wcsinfo.waverange_end), \
         input_model.meta.wcsinfo.spectral_order
     #agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
+=======
+    wrange = (input_model.meta.wcsinfo.waverange_start,
+                     input_model.meta.wcsinfo.waverange_end),
+    order = input_model.meta.wcsinfo.spectral_order
+
+>>>>>>> 55d5ed6... add prism to ifu data
     agreq = angle_from_disperser(disperser, input_model)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
-    #lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
     lgreq = wavelength_from_disperser(disperser, input_model)
+    # The wavelength units up to this point are
+    # meters as required by the pipeline but the desired output wavelength units is microns.
+    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
+    lgreq = lgreq | Scale(1e6)
 
     msa = AsdfFile.open(reference_files['msa'])
     slit_models = []
