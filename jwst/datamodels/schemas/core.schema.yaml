@@ -322,7 +322,7 @@ properties:
           msa_configuration_file:
             title: MSA configuration file name
             type: string
-            fits_keyword: MSACONFL
+            fits_keyword: MSAMETFL
           msa_metadata_id:
             title: MSA metadata ID
             type: integer
