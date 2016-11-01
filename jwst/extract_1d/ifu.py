@@ -114,7 +114,7 @@ def ifu_extract_parameters(refname, slitname,
                 if source_type == "point":
                     extract_params['inner_bkg'] = aper.get('inner_bkg')
                     extract_params['outer_bkg'] = aper.get('outer_bkg')
-                    extract_params['method'] = aper.get('method', 'subpixel')
+                    extract_params['method'] = aper.get('method', 'exact')
             break
 
     missing = False
