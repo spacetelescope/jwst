@@ -109,15 +109,43 @@ class ModelContainer(model_base.DataModel):
 
     def assign_group_ids(self):
         for model in self._models:
-            model_attrs = [model.meta.observation.program_number,
-                           model.meta.observation.observation_number,
-                           model.meta.observation.visit_number,
-                           model.meta.observation.visit_group,
-                           model.meta.observation.sequence_id,
-                           model.meta.observation.activity_id,
-                           model.meta.observation.exposure_number,
-                           model.meta.instrument.name,
-                           model.meta.instrument.channel]
+            model_attrs = []
+            try:
+                model_attrs.append(model.meta.observation.program_number)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.observation.observation_number)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.observation.visit_number)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.observation.visit_group)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.observation.sequence_id)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.observation.activity_id)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.observation.exposure_number)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.instrument.name)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.instrument.channel)
+            except AttributeError:
+                model_attrs.append(None)
             if None not in model_attrs:
                 group_id = ('jw' + "_".join([
                                 ''.join(model_attrs[:3]),
@@ -125,8 +153,11 @@ class ModelContainer(model_base.DataModel):
                                 model_attrs[6], model_attrs[7].lower(),
                                 model_attrs[8].lower()]))
             else:
-                root, ext = os.path.splitext(model.meta.filename)
-                group_id = "_".join([root, 'group{}'.format(ext)])
+                try:
+                    root, ext = os.path.splitext(model.meta.filename)
+                    group_id = "_".join([root, 'group{}'.format(ext)])
+                except AttributeError:
+                    group_id = None
 
             model.meta.group_id = group_id
 
@@ -169,7 +200,7 @@ class ModelContainer(model_base.DataModel):
         model_base.properties.merge_tree(self.meta.asn_table._instance, asn_data)
 
         # populate the output metadata with the output file from the ASN file
-        # Should generalize this in the future
+        # Should remove the following lines eventually
         self.meta.resample.output = str(asn_data['products'][0]['name'])
         self.meta.table_name = str(filepath)
         self.meta.pool_name = str(asn_data['asn_pool'])
