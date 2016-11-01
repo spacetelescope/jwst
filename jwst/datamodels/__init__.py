@@ -61,6 +61,7 @@ from .linearity import LinearityModel
 from .mask import MaskModel
 from .miri_ramp import MIRIRampModel
 from .multiexposure import MultiExposureModel
+from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
 from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
