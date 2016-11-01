@@ -1,19 +1,32 @@
 Description
 ===========
-The extract_1d step extracts a 1-d signal from a 2-d dataset and writes a
-spectrum to a product.  This works on fixed-slit data (NIRSpec data through
-any one or more of the fixed slits, MIRI LRS data through the slit or in
-the slitless region, and NIRISS slitless data) as well as IFU data and
-NIRSpec MOS (micro-shutter array) data.
+The extract_1d step extracts a 1-d signal from a 2-d or 3-d dataset and
+writes a spectrum to a product.  This works on fixed-slit data (NIRSpec
+data through any one or more of the fixed slits, MIRI LRS data through
+the slit or in the slitless region, and NIRISS slitless data) as well as
+IFU data and NIRSpec MOS (micro-shutter array) data.
+
+For IFU data, the extraction options differ somewhat depending on
+whether the target is a point source or an extended source.  For a point
+source, the spectrum will be extracted using circular aperture photometry,
+optionally including background subtraction using a circular annulus.  The
+region of overlap between an aperture and a pixel can be calculated by
+one of three different methods:  "exact", limited only by finite precision
+arithmetic; "center", i.e. the full value in a pixel will be included if its
+center is within the aperture; or "subsample", which means pixels will be
+subsampled 5 x 5, and the "center" option will be used for each sub-pixel.
+For an extended source, exact square aperture photometry will be used, with
+no background subtraction.
+
 
 Input
 =====
-Level 2-b countrate data.  The format should be a CubeModel, an
-ImageModel, or a MultiSlitModel, with SCI, ERR, DQ, and possibly RELSENS
-extensions for each slit.  The SCI extensions should have keyword SLTNAME
-to specify which slit was extracted, though if there is only one slit
-(e.g. full-frame data), the slit name can be taken from the JSON
-reference file instead.
+Level 2-b countrate data, or level-3 data.  The format should be a
+CubeModel, an IFUCubeModel, an ImageModel, or a MultiSlitModel, with at
+least SCI and RELSENS extensions for each slit.  The SCI extensions should
+have keyword SLTNAME to specify which slit was extracted, though if there
+is only one slit (e.g. full-frame data), the slit name can be taken from
+the JSON reference file instead.
 
 Output
 ======
