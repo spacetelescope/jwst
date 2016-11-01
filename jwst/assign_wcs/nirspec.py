@@ -135,7 +135,7 @@ def ifu(input_model, reference_files):
     det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 
     # GWA to SLIT
-    gwa2slit = gwa_to_ifuslit(slits, disperser, wrange, sporder, reference_files)
+    gwa2slit = gwa_to_ifuslit(slits, disperser, wrange, input_model.meta.instrument.filter, sporder, reference_files)
 
     # SLIT to MSA transform
     slit2msa = ifuslit_to_msa(slits, reference_files)
@@ -210,7 +210,7 @@ def slits_wcs(input_model, reference_files):
     det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 
     # GWA to SLIT
-    gwa2slit = gwa_to_slit(open_slits_id, disperser, wrange, sporder, reference_files)
+    gwa2slit = gwa_to_slit(open_slits_id, disperser, wrange, input_model.meta.instrument.filter, sporder, reference_files)
 
     # SLIT to MSA transform
     slit2msa = slit_to_msa(open_slits_id, reference_files['msa'])
@@ -494,7 +494,7 @@ def slit_to_msa(open_slits, msafile):
     return Slit2Msa(open_slits, models)
 
 
-def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
+def gwa_to_ifuslit(slits, disperser, wrange, filter, order, reference_files):
     """
     GWA to SLIT transform.
 
@@ -520,6 +520,11 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
     ymax = .55
     agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
     lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
+    # The wavelength units up to this point are
+    # meters as required by the pipeline but the desired output wavelength units is microns.
+    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
+    if filter == 'OPAQUE':
+        lgreq = lgreq | Scale(1e6)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     mask = mask_slit(ymin, ymax)
 
@@ -550,7 +555,7 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
     return Gwa2Slit(slits, slit_models)
 
 
-def gwa_to_slit(open_slits, disperser, wrange, order, reference_files):
+def gwa_to_slit(open_slits, disperser, wrange, filter, order, reference_files):
     """
     GWA to SLIT transform.
 
@@ -574,6 +579,11 @@ def gwa_to_slit(open_slits, disperser, wrange, order, reference_files):
     """
     agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
     lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
+    # The wavelength units up to this point are
+    # meters as required by the pipeline but the desired output wavelength units is microns.
+    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
+    if filter == 'OPAQUE':
+        lgreq = lgreq | Scale(1e6)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
 
     msa = AsdfFile.open(reference_files['msa'])
@@ -889,10 +899,9 @@ def oteip_to_v23(reference_files):
         ote = f.tree['model'].copy()
     fore2ote_mapping = Identity(3, name='fore2ote_mapping')
     fore2ote_mapping.inverse = Mapping((0, 1, 2, 2))
-    # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
-    # meters as required by the pipeline but the desired output wavelength units is microns.
-    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    # The spatial units are currently in deg. Convertin to arcsec.
+    # The spatial units are currently in deg.
+    # The final scale is the meters to microns. This will be required for all non-OPAQUE filters
+    # but this will only be reached by non-OPAQUE filter datasets so we can apply this without checking.
     oteip_to_xyan = fore2ote_mapping | (ote & Scale(1e6))
     # Add a shift for the aperture.
     oteip2v23 = oteip_to_xyan | Identity(1) & (Shift(468 / 3600) | Scale(-1)) & Identity(1)
