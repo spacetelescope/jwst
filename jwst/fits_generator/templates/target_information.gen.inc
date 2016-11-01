@@ -9,5 +9,5 @@ TARG_DEC = 0.0 / target DEC computed at time of exposure
 TARRUDEC =  0.0  / target Dec uncertainty
 PROP_RA  =  0.0  / proposer specified RA for the target
 PROP_DEC =  0.0  / proposer specified Dec for the target
-PROPEPOC = 2000.0  / proposer specified epoch for RA and Dec
+PROPEPOC = '2000-01-01T00:00:00.000'  / proposer specified epoch for RA and Dec
 

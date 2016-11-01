@@ -3,6 +3,7 @@ from __future__ import division, print_function
 import os
 import numpy
 from astropy.io import fits
+from jwst import datamodels
 from . import input_file_types
 from . import main
 
@@ -633,6 +634,10 @@ def split_data_and_refout(hdulist):
     # in the raw data - they were fixed up in flip_rotate
     ncols = hdr['COLSTOP'] - hdr['COLSTART'] + 1
     nrows = hdr['ROWSTOP'] - hdr['ROWSTART'] + 1
+    #
+    # make sure they're integers with a nearest integer calculation
+    ncols = int(ncols + 0.5)
+    nrows = int(nrows + 0.5)
     fulldata = hdulist[0].data
     detectordata = fulldata[:, :nrows]
     refoutdata = fulldata[:, nrows:]
@@ -700,4 +705,9 @@ def create_dms(base_file, level="1b", parfile=None, subarray=None, exp_type='UNK
         hdulist.writeto(filename, output_verify='silentfix')
 
     base_hdulist.close()
+    #
+    # Try and open the file as a JWST datamodel
+    a = datamodels.open(filename)
+    print("%s opened as a %s" % (filename, a.__module__))
+    a.close()
     return

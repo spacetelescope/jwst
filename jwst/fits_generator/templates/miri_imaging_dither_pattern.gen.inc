@@ -1,9 +1,9 @@
 / MIRI imaging dither pattern (MIRI imaging only)
 
-PATTTYPE  = 'N/A'  /        primary dither pattern type
+PATTTYPE  = 'NONE'  /        primary dither pattern type
 PATT_NUM  =   1    /        position number within primary dither pattern
 PATTSTRT  =   1    /        starting point in the dither pattern
-NUMDTHPT  =   1    /        number of points in primary dither pattern
+NUMDTHPT  =  '1'   /        number of points in primary dither pattern
 PATTSIZE  =  0.0   /        primary dither pattern size
 SUBPIXEL  =   F    /        subpixel sampling performed (T/F)
 SUBPXNUM  =   1    /        subpixel sampling pattern number

@@ -80,7 +80,7 @@ allOf:
             fits_hdu: SCI
           catalog_id:
             title: Catalog ID
-            type: integer
+            type: string
             fits_keyword: CATLOGID
             fits_hdu: SCI
           stellarity:

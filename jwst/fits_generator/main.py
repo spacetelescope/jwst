@@ -83,9 +83,9 @@ def select_type(fitsfile, level):
             elif input_file_types.is_tfi(hdulist):
                 si = 'tfi'
             elif input_file_types.is_niriss(hdulist):
-                if is_niriss_spec_horiz(hdulist):
+                if input_file_types.is_niriss_spec_horiz(hdulist):
                     si = 'niriss_spec_horiz'
-                elif is_niriss_spec_vert(hdulist):
+                elif input_file_types.is_niriss_spec_vert(hdulist):
                     si = 'niriss_spec_vert'
                 else:
                     si = 'niriss'
