@@ -173,7 +173,7 @@ def FindFootPrintNIRSPEC(self, input):
     # based on regions mask (indexed by slice number) find all the detector
     # x,y values for slice. Then convert the x,y values to  v2,v3,lambda
     # return the min & max of spatial coords and wavelength  - these are of the pixel centers
- #   print('in find footprint NIRSPEC')
+    print('in find footprint NIRSPEC')
 
     start_slice = 0
     end_slice = 29
@@ -190,6 +190,7 @@ def FindFootPrintNIRSPEC(self, input):
 
     # for NIRSPEC there are 30 regions
     for i in regions:
+#        print('on slice',i)
         slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
         yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
@@ -207,8 +208,8 @@ def FindFootPrintNIRSPEC(self, input):
 #        print('dec',dec.shape,dec[20,0:20])
 #        print('coord2',coord2.shape,coord2[20,0:20])
 
-#        ra_ref = input.meta.wcsinfo.ra_ref # degrees
-#        dec_ref = input.meta.wcsinfo.dec_ref # degrees    
+        ra_ref = input.meta.wcsinfo.ra_ref # degrees
+        dec_ref = input.meta.wcsinfo.dec_ref # degrees    
 #        print('ra dec ref',ra_ref,dec_ref)
 
 #        sys.exit('STOP')
