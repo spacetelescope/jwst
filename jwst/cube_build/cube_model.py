@@ -79,6 +79,18 @@ def SetUpIFUCube(Cube):
 
 
     wcsobj = pointing.create_fitswcs(IFUCube)
+
+    
+#    print(wcsobj.forward_transform[2].matrix)
+#    print(wcsobj.forward_transform[2].translation)
+    #print(wcsobj.forward_transform[1])
+    #print(wcsobj.forward_transform[2])
+    #print(wcsobj.forward_transform[3])
+    #print(wcsobj.forward_transform[4])
+    #print(wcsobj.forward_transform[5])
+
+    #sys.exit('STOP')
+
     IFUCube.meta.wcs = wcsobj
     return IFUCube
 
@@ -122,7 +134,9 @@ def UpdateIFUCube(self, Cube,IFUCube, spaxel):
 #                IFUCube.weightmap[z, y, x] = len(spaxel[icube].ipointcloud)
 #                icube = icube + 1
 
-    IFUCube.meta.filename = Cube.output_name   
+# Remove setting meta.filename to Cube.output-name for now
+# TODO: figure out when to set IFUCube.meta.filename
+#    IFUCube.meta.filename = Cube.output_name   
 
 #    IFUCube.save(IFUCube.meta.filename)
 #    IFUCube.close()

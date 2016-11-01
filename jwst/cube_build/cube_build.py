@@ -173,7 +173,7 @@ def FindFootPrintNIRSPEC(self, input):
     # based on regions mask (indexed by slice number) find all the detector
     # x,y values for slice. Then convert the x,y values to  v2,v3,lambda
     # return the min & max of spatial coords and wavelength  - these are of the pixel centers
-
+#    print('in find footprint NIRSPEC')
 
     start_slice = 0
     end_slice = 29
@@ -187,10 +187,10 @@ def FindFootPrintNIRSPEC(self, input):
     regions = list(range(start_slice, end_slice + 1))
     k = 0
 
-
+    self.log.info('Looping over slices to determine cube size .. this takes a while')
     # for NIRSPEC there are 30 regions
     for i in regions:
-
+#        print('on slice',i)
         slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
         yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
@@ -202,7 +202,17 @@ def FindFootPrintNIRSPEC(self, input):
         v2, v3, lam = detector2v23(x, y) 
         coord1,coord2,lam = v23toworld(v2,v3,lam)
 
+#        print('ra',ra.shape,ra[20,0:20])
+#        print('coord1',coord1.shape,coord1[20,0:20])
 
+#        print('dec',dec.shape,dec[20,0:20])
+#        print('coord2',coord2.shape,coord2[20,0:20])
+
+        ra_ref = input.meta.wcsinfo.ra_ref # degrees
+        dec_ref = input.meta.wcsinfo.dec_ref # degrees    
+#        print('ra dec ref',ra_ref,dec_ref)
+
+#        sys.exit('STOP')
         a_slice[k] = np.nanmin(ra)
         a_slice[k + 1] = np.nanmax(ra)
 
@@ -212,6 +222,7 @@ def FindFootPrintNIRSPEC(self, input):
         lambda_slice[k] = np.nanmin(lam)
         lambda_slice[k + 1] = np.nanmax(lam)
 
+#        print(k,a_slice[k],a_slice[k+1],b_slice[k],b_slice[k+1])
         k = k + 2
 
     a_min = min(a_slice)
@@ -228,7 +239,6 @@ def FindFootPrintNIRSPEC(self, input):
 #          (a_max-a_min)*math.cos(b_min*math.pi/180)*3600.0)
 #    print('max b',b_min,b_max, (b_max-b_min)*3600.0)
 #    print('wave',lambda_min,lambda_max)
-
 #    ra_ref = input.meta.wcsinfo.ra_ref # degrees
 #    dec_ref = input.meta.wcsinfo.dec_ref # degrees    
 #    print('ra dec ref',ra_ref,dec_ref)
