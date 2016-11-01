@@ -173,7 +173,7 @@ def FindFootPrintNIRSPEC(self, input):
     # based on regions mask (indexed by slice number) find all the detector
     # x,y values for slice. Then convert the x,y values to  v2,v3,lambda
     # return the min & max of spatial coords and wavelength  - these are of the pixel centers
-    print('in find footprint NIRSPEC')
+#    print('in find footprint NIRSPEC')
 
     start_slice = 0
     end_slice = 29
@@ -187,7 +187,7 @@ def FindFootPrintNIRSPEC(self, input):
     regions = list(range(start_slice, end_slice + 1))
     k = 0
 
-
+    self.log.info('Looping over slices to determine cube size .. this takes a while')
     # for NIRSPEC there are 30 regions
     for i in regions:
 #        print('on slice',i)
