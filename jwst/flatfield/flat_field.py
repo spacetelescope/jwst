@@ -209,28 +209,39 @@ def ref_matches_sci(ref_model, sci_model):
     """
     # Get the science model subarray parameters
     try:
-        xstart = sci_model.xstart
-        xsize = sci_model.xsize
-        ystart = sci_model.ystart
-        ysize = sci_model.ysize
+        sxstart = sci_model.xstart
+        sxsize = sci_model.xsize
+        systart = sci_model.ystart
+        sysize = sci_model.ysize
     except:
-        xstart = sci_model.meta.subarray.xstart
-        xsize = sci_model.meta.subarray.xsize
-        ystart = sci_model.meta.subarray.ystart
-        ysize = sci_model.meta.subarray.ysize
+        sxstart = sci_model.meta.subarray.xstart
+        sxsize = sci_model.meta.subarray.xsize
+        systart = sci_model.meta.subarray.ystart
+        sysize = sci_model.meta.subarray.ysize
 
-    log.debug(' sci xstart=%d, xsize=%d', xstart, xsize)
-    log.debug(' sci ystart=%d, ysize=%d', ystart, ysize)
-    log.debug(' ref xstart=%d, xsize=%d', ref_model.meta.subarray.xstart,
-              ref_model.meta.subarray.xsize)
-    log.debug(' ref ystart=%d, ysize=%d', ref_model.meta.subarray.ystart,
-              ref_model.meta.subarray.ysize)
+    # Get the flat model subarray parameters
+    rxstart = ref_model.meta.subarray.xstart
+    rxsize = ref_model.meta.subarray.xsize
+    rystart = ref_model.meta.subarray.ystart
+    rysize = ref_model.meta.subarray.ysize
+
+    if rxstart is None:
+        rxstart = 1
+    if rxsize is None:
+        rxsize = ref_model.data.shape[-1]
+    if rystart is None:
+        rystart = 1
+    if rysize is None:
+        rysize = ref_model.data.shape[-2]
+        
+    log.debug(' sci xstart=%d, xsize=%d', sxstart, sxsize)
+    log.debug(' sci ystart=%d, ysize=%d', systart, sysize)
+    log.debug(' ref xstart=%d, xsize=%d', rxstart, rxsize)
+    log.debug(' ref ystart=%d, ysize=%d', rystart, rysize)
 
     # See if they match the reference model subarray parameters
-    if (ref_model.meta.subarray.xstart == xstart and
-        ref_model.meta.subarray.xsize == xsize and
-        ref_model.meta.subarray.ystart == ystart and
-        ref_model.meta.subarray.ysize == ysize):
+    if (rxstart == sxstart and rxsize == sxsize and
+        rystart == systart and rysize == sysize):
         return True
     else:
         return False
