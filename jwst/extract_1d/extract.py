@@ -74,11 +74,6 @@ def get_extract_parameters(refname, slitname, meta,
                 extract_params['ystop'] = aper.get('ystop')
                 extract_params['extract_width'] = aper.get('extract_width')
                 extract_params['nod_correction'] = get_nod_offset(aper, meta)
-
-                # These can be used later (for MultiSlitModel data), and
-                # if they are, they will be one-indexed values.
-                extract_params['slit_start1'] = None
-                extract_params['slit_start2'] = None
             break
     return extract_params
 
@@ -327,8 +322,7 @@ class ExtractModel(object):
                  independent_var="wavelength",
                  smoothing_length=0, bkg_order=0, nod_correction=0.,
                  x_center=None, y_center=None,
-                 inner_bkg=None, outer_bkg=None, method='subpixel',
-                 slit_start1=None, slit_start2=None):
+                 inner_bkg=None, outer_bkg=None, method='subpixel'):
 
         self.dispaxis = dispaxis
         # possibly override with src_coeff
@@ -348,9 +342,6 @@ class ExtractModel(object):
             self.ystop = None
         else:
             self.ystop = int(round(ystop))
-
-        self.slit_start1 = slit_start1
-        self.slit_start2 = slit_start2
 
         if extract_width is None:
             self.extract_width = None
@@ -560,10 +551,6 @@ class ExtractModel(object):
             x_array.fill((self.xstart + self.xstop) / 2.)
 
         if self.wcs is not None:
-            if self.slit_start1 is not None:
-                x_array += (self.slit_start1 - 1.)
-            if self.slit_start2 is not None:
-                y_array += (self.slit_start2 - 1.)
             _, _, wavelength = self.wcs(x_array, y_array)
 
         elif self._wave_model is not None:
@@ -690,8 +677,6 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
         for slit in input_model.slits:
             extract_params = get_extract_parameters(refname, slit.name,
                                 input_model.meta, smoothing_length, bkg_order)
-            extract_params['slit_start1'] = slit.xstart         # one indexed
-            extract_params['slit_start2'] = slit.ystart         # one indexed
             wavelength, net, background = \
                 extract_one_slit(slit, -1,
                                  input_model.meta,
