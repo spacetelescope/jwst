@@ -525,10 +525,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     order = input_model.meta.wcsinfo.spectral_order
     agreq = angle_from_disperser(disperser, input_model)
     lgreq = wavelength_from_disperser(disperser, input_model)
-    # The wavelength units up to this point are
-    # meters as required by the pipeline but the desired output wavelength units is microns.
-    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    lgreq = lgreq | Scale(1e6)
+
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     mask = mask_slit(ymin, ymax)
 
