@@ -1298,7 +1298,7 @@ properties:
               name:
                 title: Spectral distortion reference file name
                 type: string
-                fits_keyword: R_SPDIST
+                fits_keyword: R_SPCWCS
           regions:
             title: Regions reference file information
             type: object
