@@ -1,5 +1,9 @@
+.. _level3-associations:
+
+###################
 Level3 Associations
-````````````````````
+###################
+
 
 Level 3 associations associate which level2b files to process to
 create higher ordered Level 3 product3. Associations are used as the

@@ -1,11 +1,11 @@
-.. _pool:
+.. _generate:
 
 **********************************************************
-Association Pool
+Generator
 **********************************************************
 
-.. currentmodule:: pool
+.. currentmodule:: generate
 
-.. automodule:: jwst.associations.pool
+.. automodule:: jwst.associations.generate
    :members:
    :undoc-members:

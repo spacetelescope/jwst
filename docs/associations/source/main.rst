@@ -1,11 +1,11 @@
-.. _pool:
+.. _main:
 
 **********************************************************
-Association Pool
+Association Main
 **********************************************************
 
-.. currentmodule:: pool
+.. currentmodule:: main
 
-.. automodule:: jwst.associations.pool
+.. automodule:: jwst.associations.main
    :members:
    :undoc-members:

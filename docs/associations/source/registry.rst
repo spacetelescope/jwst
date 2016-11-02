@@ -1,11 +1,11 @@
-.. _pool:
+.. _registry:
 
 **********************************************************
-Association Pool
+Association Registry
 **********************************************************
 
-.. currentmodule:: pool
+.. currentmodule:: registry
 
-.. automodule:: jwst.associations.pool
+.. automodule:: jwst.associations.registry
    :members:
    :undoc-members:
