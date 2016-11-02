@@ -1,7 +1,7 @@
-.. _pool:
+.. _asn-pool:
 
 **********************************************************
-Association Pool
+AssociationPool Class
 **********************************************************
 
 .. currentmodule:: pool

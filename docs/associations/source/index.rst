@@ -3,6 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. _association-generator:
+
 #####################
 Association Generator
 #####################
@@ -16,22 +18,6 @@ Contents:
    overview
    design
    reference
-
-Rev1 Contents:
-
-.. toctree::
-   :name: firsttoc
-   :maxdepth: 2
-
-   asn_generate
-   level3_asn_index
-   level2_asn_index
-   ruleset
-   association
-   pool
-   registry
-   main
-   generate
 
 Indices and tables
 ==================

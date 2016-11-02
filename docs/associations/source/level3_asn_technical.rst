@@ -29,7 +29,7 @@ where:
     A timestamp provided the DMS workflow. Note:
     When used outside the workflow, this field is user-specifiable.
   * `ATYPE`: The type of association. See
-    :ref:`asn-association-types`
+    :ref:`level3-asn-association-types`
   * `MMM`: A counter for each type of association created.
       
 Logical Structure
@@ -141,7 +141,7 @@ target
   is no formal restrictions on value.
 
 asn_type
-  The type of association represented. See :ref:`asn-association-types`
+  The type of association represented. See :ref:`level3-asn-association-types`
 
 asn_id
   The association id. The id is what appears in the :ref:`asn-DMS-naming`

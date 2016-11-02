@@ -1,7 +1,7 @@
-.. _registry:
+.. _asn-registry:
 
 **********************************************************
-Association Registry
+AssociationRegistry Class
 **********************************************************
 
 .. currentmodule:: registry

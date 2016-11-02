@@ -1,7 +1,7 @@
 .. _association:
 
 ************************************
-Association: Rules and Data Products
+Association Class
 ************************************
 
 .. currentmodule:: association

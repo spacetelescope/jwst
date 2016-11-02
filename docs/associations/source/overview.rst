@@ -32,7 +32,7 @@ Usage
 
 Basic use of the association generator is done through two methods.
 From the command-line, the generator is invoked using the command
-:ref:`asn_generate <asn_generate>`. From Python, the generator\'s
+:ref:`asn_generate <asn-generate>`. From Python, the generator\'s
 :ref:`Main` class is instantiated.
 
 ********
