@@ -7,7 +7,7 @@ import logging
 import copy
 import numpy as np
 from astropy.io import fits
-from astropy.modeling import models as astmodels
+from astropy.modeling.models import Shift
 from .. import datamodels
 from asdf import AsdfFile
 from ..assign_wcs import nirspec
@@ -40,6 +40,11 @@ def extract2d(input_model, which_subarray=None):
             xlo, xhi = slit_wcs.domain[0]['lower'], slit_wcs.domain[0]['upper']
             ylo, yhi = slit_wcs.domain[1]['lower'], slit_wcs.domain[1]['upper']
 
+            # Add the slit offset to each slit WCS object
+            tr = slit_wcs.get_transform('detector', 'sca')
+            tr = tr | Shift(xlo) & Shift(ylo)
+            slit_wcs.set_transform('detector', 'sca', tr.rename('dms2sca'))
+
             log.info('Name of subarray extracted: %s', slit.name)
             log.info('Subarray x-extents are: %s %s', xlo, xhi)
             log.info('Subarray y-extents are: %s %s', ylo, yhi)
@@ -66,7 +71,7 @@ def extract2d(input_model, which_subarray=None):
                 output_model.slits[nslit].source_id = int(slit.source_id)
                 output_model.slits[nslit].source_name = slit.source_name
                 output_model.slits[nslit].source_alias = slit.source_alias
-                output_model.slits[nslit].catalog_id  = int(slit.catalog_id)
+                output_model.slits[nslit].catalog_id  = slit.catalog_id
                 output_model.slits[nslit].stellarity = float(slit.stellarity)
                 output_model.slits[nslit].source_xpos = float(slit.source_xpos)
                 output_model.slits[nslit].source_ypos = float(slit.source_ypos)

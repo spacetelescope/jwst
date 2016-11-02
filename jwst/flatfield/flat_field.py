@@ -65,19 +65,19 @@ def do_correction(input_model, flat_model,
         if flat_suffix is not None:
             log.warning("The flat_suffix parameter is not implemented"
                         " for this mode; will be ignored.")
-        do_slit_flat_field(output_model, flat_model)
+        do_flat_field(output_model, flat_model)
         interpolated_flats = None
 
     return (output_model, interpolated_flats)
 
 #
-# These functions are for slit (i.e. not MSA) flat fielding.
+# These functions are for non-NIRSpec flat fielding.
 #
-def do_slit_flat_field(output_model, flat_model):
+def do_flat_field(output_model, flat_model):
     """
     Short Summary
     -------------
-    Apply flat-fielding for the slit (not MSA) mode, updating the output model.
+    Apply flat-fielding for non-NIRSpec modes, updating the output model.
 
     Parameters
     ----------
@@ -92,96 +92,35 @@ def do_slit_flat_field(output_model, flat_model):
     None
     """
 
-    log.debug("Flat field correction for multi-slit mode.")
+    log.debug("Flat field correction for non-NIRSpec modes.")
 
     any_updated = False # will set True if any flats applied
 
-    # Check for a single image in the flat model
-    if len(flat_model.slits) == 1 and flat_model.slits[0].name is None:
-        # Populate slit attributes that will be needed later
-        flat_model.slits[0].name = flat_model.meta.subarray.name
-        flat_model.slits[0].xstart = flat_model.meta.subarray.xstart
-        flat_model.slits[0].ystart = flat_model.meta.subarray.ystart
-        flat_model.slits[0].xsize = flat_model.meta.subarray.xsize
-        flat_model.slits[0].ysize = flat_model.meta.subarray.ysize
-
     # Apply flat to simple ImageModels
     if isinstance(output_model, datamodels.ImageModel):
-        flat = get_flat(output_model, flat_model)
-        if flat is not None:
-            apply_flat_field(output_model, flat)
-            any_updated = True
+        log.debug('Applying flat to ImageModel ...')
+        apply_flat_field(output_model, flat_model)
+        any_updated = True
 
     # Apply flat to MultiSlits
     elif isinstance(output_model, datamodels.MultiSlitModel):
 
-        # Retrieve and apply flat to each slit contained in the input
+        # Apply flat to each slit contained in the input
         for slit in output_model.slits:
-            log.info('Retrieving flat for slit %s' % (slit.name))
-            flat = get_flat(slit, flat_model)
-            if flat is not None:
-                apply_flat_field(slit, flat)
-                any_updated = True
+            log.debug('Applying flat to slit %s' % (slit.name))
+            apply_flat_field(slit, flat_model)
+            any_updated = True
 
     # Apply flat to multiple-integration dataset
     elif isinstance(output_model, datamodels.CubeModel):
-        sci_data = output_model.data
-        nints = sci_data.shape[0]   # number of integrations
-
-        #  Loop over integrations to flat field each
-        for integ in range(nints):
-            data_slice = sci_data[integ, :, :]
-
-            # Create model for integration's data, w/needed subarray metadata
-            integ_model = datamodels.ImageModel(data_slice)
-            integ_model.update(output_model)
-
-            log.info('Retrieving flat for integration %s' % (integ))
-            flat = get_flat(integ_model, flat_model)
-            if flat is not None:
-                apply_flat_field(integ_model, flat)
-                any_updated = True
+        log.debug('Applying flat to CubeModel')
+        apply_flat_field(output_model, flat_model)
+        any_updated = True
 
     if any_updated:
         output_model.meta.cal_step.flat_field = 'COMPLETE'
     else:
         output_model.meta.cal_step.flat_field = 'SKIPPED'
-
-
-def get_flat(slit, flat_model):
-    """
-    Short Summary
-    -------------
-    For a simple ImageModel, get the single flat. Otherwise (for the multislit
-    model), get the flat having the same name as the specified slit.
-
-    Parameters
-    ----------
-    slit: JWST data model
-        output data model
-
-    flat_model: JWST data model
-        data model containing flat-field
-
-    Returns
-    -------
-    flat: 2D array
-        flat field array for output model
-    """
-
-    if len(flat_model.slits) == 1:
-        return flat_model.slits[0]
-    else:
-        found_one = False
-        for flat in flat_model.slits:
-            if flat.name == slit.name:
-                log.info('Found matching flat %s' % (flat.name))
-                found_one = True
-                return flat
-
-        if not found_one:
-            log.error("Couldn't find matching flat-field for slit %s" % (slit.name))
-            return None
 
 
 def apply_flat_field(science, flat):
@@ -228,12 +167,23 @@ def apply_flat_field(science, flat):
     wh_dq = np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD'])
     flat_data[wh_dq == dqflags.pixel['NO_FLAT_FIELD']] = 1.0
 
-    # Flatten data and error arrays
-    science.data /= flat_data
-    science.err /= flat_data
+    # For CubeModel science data, apply flat to each integration
+    if isinstance(science, datamodels.CubeModel):
+        for integ in range(science.data.shape[0]):
+            # Flatten data and error arrays
+            science.data[integ] /= flat_data
+            science.err[integ] /= flat_data
+            # Combine the science and flat DQ arrays
+            science.dq[integ] = np.bitwise_or(science.dq[integ], flat_dq)
 
-    # Combine the science and flat DQ arrays
-    science.dq = np.bitwise_or(science.dq, flat_dq)
+    else:
+
+        # Flatten data and error arrays
+        science.data /= flat_data
+        science.err /= flat_data
+
+        # Combine the science and flat DQ arrays
+        science.dq = np.bitwise_or(science.dq, flat_dq)
 
 
 def ref_matches_sci(ref_model, sci_model):
@@ -259,24 +209,39 @@ def ref_matches_sci(ref_model, sci_model):
     """
     # Get the science model subarray parameters
     try:
-        xstart = sci_model.xstart
-        xsize = sci_model.xsize
-        ystart = sci_model.ystart
-        ysize = sci_model.ysize
+        sxstart = sci_model.xstart
+        sxsize = sci_model.xsize
+        systart = sci_model.ystart
+        sysize = sci_model.ysize
     except:
-        xstart = sci_model.meta.subarray.xstart
-        xsize = sci_model.meta.subarray.xsize
-        ystart = sci_model.meta.subarray.ystart
-        ysize = sci_model.meta.subarray.ysize
+        sxstart = sci_model.meta.subarray.xstart
+        sxsize = sci_model.meta.subarray.xsize
+        systart = sci_model.meta.subarray.ystart
+        sysize = sci_model.meta.subarray.ysize
 
-    log.debug(' sci xstart=%d, xsize=%d', xstart, xsize)
-    log.debug(' sci ystart=%d, ysize=%d', ystart, ysize)
-    log.debug(' ref xstart=%d, xsize=%d', ref_model.xstart, ref_model.xsize)
-    log.debug(' ref ystart=%d, ysize=%d', ref_model.ystart, ref_model.ysize)
+    # Get the flat model subarray parameters
+    rxstart = ref_model.meta.subarray.xstart
+    rxsize = ref_model.meta.subarray.xsize
+    rystart = ref_model.meta.subarray.ystart
+    rysize = ref_model.meta.subarray.ysize
+
+    if rxstart is None:
+        rxstart = 1
+    if rxsize is None:
+        rxsize = ref_model.data.shape[-1]
+    if rystart is None:
+        rystart = 1
+    if rysize is None:
+        rysize = ref_model.data.shape[-2]
+        
+    log.debug(' sci xstart=%d, xsize=%d', sxstart, sxsize)
+    log.debug(' sci ystart=%d, ysize=%d', systart, sysize)
+    log.debug(' ref xstart=%d, xsize=%d', rxstart, rxsize)
+    log.debug(' ref ystart=%d, ysize=%d', rystart, rysize)
 
     # See if they match the reference model subarray parameters
-    if (ref_model.xstart == xstart and ref_model.xsize == xsize and
-        ref_model.ystart == ystart and ref_model.ysize == ysize):
+    if (rxstart == sxstart and rxsize == sxsize and
+        rystart == systart and rysize == sysize):
         return True
     else:
         return False

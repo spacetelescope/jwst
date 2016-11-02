@@ -82,16 +82,8 @@ class FlatFieldStep(Step):
             s_flat_model = datamodels.NirspecFlatModel(self.s_flat_filename)
             d_flat_model = datamodels.NirspecFlatModel(self.d_flat_filename)
         else:
-            # If datamodels.open() thinks it's a CubeModel, leave it as such
-            # (a multiple-integration dataset); otherwise, open it as a
-            # MultiSlitModel.
-            flat_model = datamodels.open(self.flat_filename)
-            if isinstance(flat_model, datamodels.CubeModel):
-                self.log.debug('Flatfield is a CubeModel')
-            else:
-                self.log.debug('Flatfield is an ImageModel or MultiSlitModel')
-                flat_model.close()
-                flat_model = datamodels.MultiSlitModel(self.flat_filename)
+            self.log.debug('Opening flat as FlatModel')
+            flat_model = datamodels.FlatModel(self.flat_filename)
             f_flat_model = None
             s_flat_model = None
             d_flat_model = None

@@ -153,8 +153,8 @@ def MakePointCloudNIRSPEC(self, input_model,
     y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
     ra, dec, lam = slice_wcs(x, y) # return v2,v3 are in degrees
 
-    print('yrange for slice',yrange,islice)
-    print('xrange for slice',xrange,islice)
+    #print('yrange for slice',yrange,islice)
+    #print('xrange for slice',xrange,islice)
 
     flux_all = input_model.data[y, x]
     error_all = input_model.err[y, x]
