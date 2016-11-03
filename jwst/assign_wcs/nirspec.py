@@ -19,7 +19,8 @@ from gwcs import coordinate_frames as cf
 
 from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  AngleFromGratingEquation, WavelengthFromGratingEquation,
-                                 Gwa2Slit, Unitless2DirCos, Logical, Slit)
+                                 Gwa2Slit, Unitless2DirCos, Logical, Slit, Snell,
+                                 RefractionIndexFromPrism)
 from .util import not_implemented_mode
 from . import pointing
 
@@ -135,7 +136,7 @@ def ifu(input_model, reference_files):
     det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 
     # GWA to SLIT
-    gwa2slit = gwa_to_ifuslit(slits, disperser, wrange, sporder, reference_files)
+    gwa2slit = gwa_to_ifuslit(slits, input_model, disperser, reference_files)
 
     # SLIT to MSA transform
     slit2msa = ifuslit_to_msa(slits, reference_files)
@@ -210,7 +211,7 @@ def slits_wcs(input_model, reference_files):
     det2gwa = Identity(2) & detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 
     # GWA to SLIT
-    gwa2slit = gwa_to_slit(open_slits_id, disperser, wrange, sporder, reference_files)
+    gwa2slit = gwa_to_slit(open_slits_id, input_model, disperser, reference_files)
 
     # SLIT to MSA transform
     slit2msa = slit_to_msa(open_slits_id, reference_files['msa'])
@@ -264,15 +265,15 @@ def get_open_slits(input_model):
 
 def get_open_fixed_slits(input_model):
     slits = []
-    slits.append(Slit('S200A1', 0, 0, 0, -.5, .5, 5, "", ""))
-    slits.append(Slit('S200A2', 1, 0, 0, -.5, .5, 5, "", ""))
-    slits.append(Slit('S400A1', 2, 0, 0, -.5, .5, 5, "", ""))
-    slits.append(Slit('S1600A1', 3, 0, 0, -.5, .5, 5, "", ""))
+    slits.append(Slit('S200A1', 0, 0, 0, -.5, .5, 5))
+    slits.append(Slit('S200A2', 1, 0, 0, -.5, .5, 5))
+    slits.append(Slit('S400A1', 2, 0, 0, -.5, .5, 5))
+    slits.append(Slit('S1600A1', 3, 0, 0, -.5, .5, 5))
 
     if input_model.meta.instrument.detector == 'NRS1':
         if input_model.meta.instrument.filter == 'F070LP' and \
                 input_model.meta.instrument.grating == 'G140H':
-            slits.append(Slit('S200B1', 4, 0, 0, -.5, .5, 5, "", ""))
+            slits.append(Slit('S200B1', 4, 0, 0, -.5, .5, 5))
     return slits
 
 
@@ -320,6 +321,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
     with fits.open(msa_file) as msa_file:
         # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
         msa_conf = msa_file[('SHUTTER_INFO', 1)]
+        msa_source = msa_file[("SOURCE_INFO", 1)].data
 
         # First we are going to filter the msa_file data on the msa_metadata_id
         # as that is all we are interested in for this function.
@@ -359,11 +361,15 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
                 quadrant = slitlets_sid[0]['shutter_quadrant']
                 ycen = j
                 xcen = slitlets_sid[0]['shutter_row']  # grab the first as they are all the same
-
+                source_xpos = 0.0
+                source_ypos = 0.0
             # There is 1 main shutter, phew, that makes it easier.
             elif n_main_shutter == 1:
-                xcen, ycen, quadrant = [(s['shutter_row'], s['shutter_column'], s['shutter_quadrant']) \
-                                        for s in slitlets_sid if s['background'] == 'N'][0]
+                xcen, ycen, quadrant, source_xpos, source_ypos = [
+                    (s['shutter_row'], s['shutter_column'], s['shutter_quadrant'],
+                     s['estimated_source_in_shutter_x'],
+                     s['estimated_source_in_shutter_y'])
+                    for s in slitlets_sid if s['background'] == 'N'][0]
 
                 # y-size
                 jmin = min([s['shutter_column'] for s in slitlets_sid])
@@ -377,12 +383,16 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
                 raise ValueError("MSA configuration file has more than 1 shutter with "
                                  "sources for metadata_id = {}".format(msa_metadata_id))
 
-            shutter_id = xcen + (ycen-1) * 365
+            shutter_id = xcen + (ycen - 1) * 365
             source_id = slitlets_sid[0]['source_id']
+            source_name, source_alias, catalog_id, stellarity = [
+                (s['source_name'], s['alias'], s['catalog_id'], s['stellarity']) \
+                for s in msa_source if s['source_id'] == source_id][0]
             # Create the output list of tuples that contain the required
             # data for further computations
             slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax,
-                                 quadrant, source_id, nshutters))
+                                 quadrant, source_id, nshutters, source_name, source_alias,
+                                 catalog_id, stellarity, source_xpos, source_ypos))
 
     return slitlets
 
@@ -485,7 +495,7 @@ def slit_to_msa(open_slits, msafile):
     return Slit2Msa(open_slits, models)
 
 
-def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
+def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     """
     GWA to SLIT transform.
 
@@ -509,8 +519,19 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
    """
     ymin = -.55
     ymax = .55
-    agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
-    lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
+
+    wrange = (input_model.meta.wcsinfo.waverange_start,
+              input_model.meta.wcsinfo.waverange_end),
+    order = input_model.meta.wcsinfo.spectral_order
+    agreq = angle_from_disperser(disperser, input_model)
+    lgreq = wavelength_from_disperser(disperser, input_model)
+
+    # The wavelength units up to this point are
+    # meters as required by the pipeline but the desired output wavelength units is microns.
+    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
+    if input_model.meta.instrument.filter == 'OPAQUE':
+        lgreq = lgreq | Scale(1e6)
+
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     mask = mask_slit(ymin, ymax)
 
@@ -529,7 +550,7 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
                  Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                  Identity(1) & gwa2msa & Identity(2) | \
                  Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
-                 Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
+                 Mapping((0, 1, 2, 3, 5), n_inputs=7) | Identity(2) & lgreq | mask
 
         # msa to before_gwa
         msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
@@ -541,7 +562,7 @@ def gwa_to_ifuslit(slits, disperser, wrange, order, reference_files):
     return Gwa2Slit(slits, slit_models)
 
 
-def gwa_to_slit(open_slits, disperser, wrange, order, reference_files):
+def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     """
     GWA to SLIT transform.
 
@@ -563,9 +584,20 @@ def gwa_to_slit(open_slits, disperser, wrange, order, reference_files):
     model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
     """
-    agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
-    lgreq = WavelengthFromGratingEquation(disperser['groove_density'], order, name='lambda_from_greq')
+
+    wrange = (input_model.meta.wcsinfo.waverange_start,
+                     input_model.meta.wcsinfo.waverange_end),
+    order = input_model.meta.wcsinfo.spectral_order
+
+    agreq = angle_from_disperser(disperser, input_model)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
+    lgreq = wavelength_from_disperser(disperser, input_model)
+
+    # The wavelength units up to this point are
+    # meters as required by the pipeline but the desired output wavelength units is microns.
+    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
+    if input_model.meta.instrument.filter == 'OPAQUE':
+        lgreq = lgreq | Scale(1e6)
 
     msa = AsdfFile.open(reference_files['msa'])
     slit_models = []
@@ -588,14 +620,60 @@ def gwa_to_slit(open_slits, disperser, wrange, order, reference_files):
                     Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                     Identity(1) & gwa2msa & Identity(2) | \
                     Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
-                    Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
-
+                    Mapping((0, 1, 2, 3, 5), n_inputs=7) | Identity(2) & lgreq | mask
+                    #Mapping((0, 1, 2, 5), n_inputs=7) | Identity(2) & lgreq | mask
+                    # and modify lgreq to accept alpha_in, beta_in, alpha_out
                 # msa to before_gwa
                 msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
                 bgwa2msa.inverse = msa2bgwa
                 slit_models.append(bgwa2msa)
     msa.close()
     return Gwa2Slit(open_slits, slit_models)
+
+
+def angle_from_disperser(disperser, input_model):
+    lmin = input_model.meta.wcsinfo.waverange_start
+    lmax = input_model.meta.wcsinfo.waverange_end
+    sporder = input_model.meta.wcsinfo.spectral_order
+    if input_model.meta.instrument.grating.lower() != 'prism':
+        agreq = AngleFromGratingEquation(disperser['groove_density'],
+                                         sporder, name='alpha_from_greq')
+        return agreq
+    else:
+        system_temperature = input_model.meta.instrument.gwa_tilt
+        system_pressure = disperser['pref']
+
+        snell = Snell(disperser['angle'], disperser['kcoef'], disperser['lcoef'],
+                      disperser['tcoef'], disperser['tref'], disperser['pref'],
+                      system_temperature, system_pressure, name="snell_law")
+        return snell
+
+def wavelength_from_disperser(disperser, input_model):
+    sporder = input_model.meta.wcsinfo.spectral_order
+    if input_model.meta.instrument.grating.lower() != 'prism':
+        lgreq = WavelengthFromGratingEquation(disperser['groove_density'],
+                                              sporder, name='lambda_from_gratingeq')
+        return lgreq
+    else:
+        lmin = input_model.meta.wcsinfo.waverange_start
+        lmax = input_model.meta.wcsinfo.waverange_end
+        lam = np.linspace(lmin, lmax, 10000)
+        system_temperature = input_model.meta.instrument.gwa_tilt
+        system_pressure = disperser['pref']
+        tref = disperser['tref']
+        pref = disperser['pref']
+        kcoef = disperser['kcoef'].copy()
+        lcoef = disperser['lcoef'].copy()
+        tcoef = disperser['tcoef'].copy()
+        n = Snell.compute_refraction_index(lam, system_temperature, tref, pref,
+                                           system_pressure, kcoef, lcoef, tcoef
+                                           )
+        poly = models.Polynomial1D(1)
+        fitter = fitting.LinearLSQFitter()
+        lam_of_n = fitter(poly, n, lam)
+        lam_of_n = lam_of_n.rename('n_interpolate')
+        n_from_prism = RefractionIndexFromPrism(disperser['angle'], name='n_prism')
+        return n_from_prism | lam_of_n
 
 
 def detector_to_gwa(reference_files, detector, disperser):
@@ -887,6 +965,7 @@ def oteip_to_v23(reference_files):
     oteip_to_xyan = fore2ote_mapping | (ote & Scale(1e6))
     # Add a shift for the aperture.
     oteip2v23 = oteip_to_xyan | Identity(1) & (Shift(468 / 3600) | Scale(-1)) & Identity(1)
+
     return oteip2v23
 
 

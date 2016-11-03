@@ -16,7 +16,8 @@ class SpecModel(model_base.DataModel):
         Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     spec_table : numpy array
-        A table with 3 columns: pixel number, wavelength, and count rate.
+        A table with at least four columns:  wavelength, flux, an error
+        estimate for the flux, and data quality flags.
     """
     schema_url = "spec.schema.yaml"
 

@@ -12,12 +12,13 @@ from astropy.modeling.core import Model
 from astropy.modeling.parameters import Parameter, InputParameterError
 from astropy.modeling.models import Polynomial2D
 from astropy.utils import isiterable
+from astropy import units as u
+
 
 __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
            'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa',
-           'Snell', 'RefractionIndex', 'Logical',
-           'NirissSOSSModel', 'V23ToSky', 'Slit']
+           'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit']
 
 
 # Number of shutters per quadrant
@@ -25,119 +26,155 @@ N_SHUTTERS_QUADRANT = 62415
 
 # Nirspec slit definition
 Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
-                           "ymin", "ymax", "quadrant", "source_id", "nshutters"])
+                           "ymin", "ymax", "quadrant", "source_id", "nshutters",
+                           "source_name", "source_alias", "catalog_id", "stellarity",
+                           "source_xpos", "source_ypos"])
+Slit.__new__.__defaults__= ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, "", "", "", 0.0, 0.0, 0.0)
 
 
-class RefractionIndex(Model):
-    """Calculate a refraction index given lamda and a reference file.
 
-    Referenced in NTN-2014-004/ESA-JWST-TN-20930
-    Requires  reference file information
+class Snell(Model):
+    """
+    Apply transforms, including Snell law, through the NIRSpec prism.
+
 
     Parameters
     ----------
-    temp: float
-        the instrument temperature in kelvins
-    pressure: float
-        local pressure in atmospheres
-    pref: float
-        the reference pressure
-    kcoef: list of floats
-        three items which are fit coefficients
-    lcoef: list of floats
-        three items which are fit coefficients
-    tref: float
-        the reference temperature in kelvins
+    angle : flaot
+        Prism angle in deg.
+    kcoef : list
+        K coefficients in Sellmeir equation.
+    lcoef : list
+        L coefficients in Sellmeir equation.
+    tcoef : list
+        Thermal coefficients of glass.
+    tref : float
+        Refernce temperature in K.
+    pref : float
+        Refernce pressure in ATM.
+    temperature : float
+        System temperature during observation in K
+    pressure : float
+        System pressure during observation in ATM.
+
     """
 
-    fittable = False
-    separable = False
+    standard_broadcasting = False
 
-    inputs = ("lam",)
-    outputs = ("n",)
+    inputs = ("lam", "alpha_in", "beta_in", "zin")
+    outputs = ("alpha_out", "beta_out", "zout")
 
-    temp = Parameter()
-    tref = Parameter()
-    pref = Parameter()
-    pressure = Parameter()
-    kcoef = Parameter()
-    lcoef = Parameter()
-    tcoef = Parameter()
 
-    def __init__(self, temp, tref, pref, pressure, kcoef, lcoef, tcoef,
-                 name=None):
-        super(RefractionIndex, self).__init__(temp=temp, tref=tref,
-                                              pref=pref, pressure=pressure,
-                                              kcoef=kcoef, lcoef=lcoef,
-                                              tcoef=tcoef, name=name)
+    def __init__(self, angle, kcoef, lcoef, tcoef, tref, pref,
+                 temperature, pressure, name=None):
+        self.prism_angle = angle
+        self.kcoef = np.array(kcoef, dtype=np.float)
+        self.lcoef = np.array(lcoef, dtype=np.float)
+        self.tcoef = np.array(tcoef, dtype=np.float)
+        self.tref = tref
+        self.pref = pref
+        self.temp = temperature
+        self.pressure = pref
+        super(Snell, self).__init__(name=name)
 
-    def evaluate(self, lam, temp, tref, pref, pressure, kcoef, lcoef, tcoef):
+    @staticmethod
+    def compute_refraction_index(lam, temp, tref, pref, pressure, kcoef, lcoef, tcoef):
         """Calculate and retrun the refraction index."""
 
-        # scale input wavelength to air at reference temp and
-        # pressure (T=35 K, P=1 atm)
         # convert the wavelength to microns
-        lam = lam * 1e6
+        lam = np.asarray(lam) * 1e6
         KtoC = 273.15  # kelvin to celcius conversion
 
+        # Derive the refractive index of air at the reference temperature and pressure
+        # and at the operational system's temperature and pressure.
         nref = 1. + (6432.8 + 2949810. * lam**2 /
                      (146.0 * lam**2 - 1.) + 25540.0 * lam**2 /
                      (41.0 * lam**2 - 1.)) * 1e-8
 
-        nair_obs = 1.0 + (nref - 1.0) * pressure / \
-            (1.0 + (temp - KtoC - 15.) * 2.4785e-3)
+        # T should be in C, P should be in ATM
+        nair_obs = 1.0 + ((nref - 1.0) * pressure) / (1.0 + (temp - KtoC - 15.) * 3.4785e-3)
+        nair_ref = 1.0 + (nref - 1.0) * pref / (1.0 + (tref - KtoC - 15) * 3.4785e-3)
 
-        nair_ref = 1.0 + (nref - 1.0) * pref / \
-            (1.0 + tref - KtoC)
-
+        # Compute the relative index of the glass at Tref and Pref using Sellmeier equation I.
         lamrel = lam * nair_obs / nair_ref
-        nrel = np.sqrt(1.0 + kcoef[0] * lamrel**2 /
-                       (lamrel**2 - lcoef[0]) +
-                       kcoef[1] * lamrel**2 / (lamrel**2 - lcoef[1]) +
-                       kcoef[2] * lamrel**2 / (lamrel**2 - lcoef[2]))
+
+        K1, K2, K3 = kcoef
+        L1, L2, L3 = lcoef
+        nrel = np.sqrt(1. +
+                       K1 * lamrel**2 / (lamrel ** 2 - L1) +
+                       K2 * lamrel **2 / (lamrel **2 - L2) +
+                       K3 * lamrel **2 / (lamrel ** 2 -L3)
+                       )
+        # Convert the relative index of refraction at the reference temperature and pressure
+        # to absolute.
         nabs_ref = nrel * nair_ref
 
-        # compute the absolute index of the glass
+        # Compute the absolute index of the glass
         delt = temp - tref
-        delnabs = 0.5 * (nrel**2 - 1.) / nrel * \
-            (tcoef[0] * delt + tcoef[1] * delt**2 + tcoef[2] * delt**2 +
-             (tcoef[3] * delt + tcoef[4] * delt**2) / (lamrel**2 - tcoef[5]**2))
+        D0, D1, D2, E0, E1, lam_tk = tcoef
+        delnabs = 0.5 * (nrel ** 2 - 1.) / nrel * \
+                (D0 * delt + D1 * delt**2 + D2 * delt**3 + \
+                 (E0 * delt + E1 * delt**2) / (lamrel**2  - lam_tk**2))
         nabs_obs = nabs_ref + delnabs
-        return nabs_obs / nair_obs
+
+        # Define the relative index at the system's operating T and P.
+        n = nabs_obs / nair_obs
+        return n
+
+    def evaluate(self, lam, alpha_in, beta_in, zin):
+        """Go through the prism"""
+        n = self.compute_refraction_index(lam, self.temp, self.tref, self.pref, self.pressure,
+                                          self.kcoef, self.lcoef, self.tcoef)
+        # Apply Snell's law through front surface, eq 5.3.3 II
+        xout = alpha_in / n
+        yout = beta_in / n
+        zout = np.sqrt(1.0 - xout**2 - yout**2)
+
+        # Go to back surface frame # eq 5.3.3 III
+        y_rotation = Rotation3DToGWA([self.prism_angle], "y")
+        xout, yout, zout = y_rotation(xout, yout, zout)
+
+        # Reflection on back surface
+        xout = -1 * xout
+        yout = -1 * yout
+
+        # Back to front surface
+        y_rotation = Rotation3DToGWA([-self.prism_angle], "y")
+        xout, yout, zout = y_rotation(xout, yout, zout)
+
+        # Snell's refraction law through front surface
+        xout = xout * n
+        yout = yout * n
+        zout = np.sqrt(1.0 - xout**2 - yout**2)
+        return xout, yout, zout
 
 
-class Snell(Model):
-    """Computes the Prism Snell refraction through a surface.
+class RefractionIndexFromPrism(Model):
+    """
+    Compute the refraction index of a prism (NIRSpec).
 
     Parameters
     ----------
-    n: float
-        refraction index as calculated for a given wavelenth
+    prism_angle : float
+        Prism angle in deg.
+
     """
+    standard_broadcasting = False
 
-    inputs = ("xin", "yin", "zin")
-    outputs = ("xout", "yout", "zout")
+    inputs = ("alpha_in", "beta_in", "alpha_out",)
+    outputs = ("n")
 
-    n = Parameter(default=1.0)
+    prism_angle = Parameter(setter=np.deg2rad, getter=np.rad2deg)
 
-    def __init__(self, n=n, name=None):
-        super(Snell, self).__init__(n=n, name=name)
+    def __init__(self, prism_angle, name=None):
+        super(RefractionIndexFromPrism, self).__init__(prism_angle=prism_angle, name=name)
 
-    def evaluate(self, x, y, z, n):
-        """Compute Snell's refraction law from the front surface."""
-
-        xout = x / n
-        yout = y / n
-        zout = np.sqrt(1.0 - xout**2 - yout**2)
-        return xout, yout, zout
-
-    def inverse(self, x, y, z, n):
-        """Compute Snell's refraction law from the back surface."""
-
-        xout = x * n
-        yout = y * n
-        zout = np.sqrt(1.0 - xout**2 - yout**2)
-        return xout, yout, zout
+    def evaluate(self, alpha_in, beta_in, alpha_out, prism_angle):
+        sangle = math.sin(prism_angle)
+        cangle = math.cos(prism_angle)
+        nsq = ((alpha_out + alpha_in * (1 - 2 * sangle**2)) / (2 * sangle * cangle)) **2 + \
+            alpha_in ** 2 + beta_in ** 2
+        return np.sqrt(nsq)
 
 
 class NRSChromaticCorrection(Polynomial2D):
@@ -196,13 +233,16 @@ class WavelengthFromGratingEquation(Model):
 
     separable = False
 
-    inputs = ("alpha_in", "alpha_out")
+    inputs = ("alpha_in", "beta_in", "alpha_out")
     outputs = ("lam",)
 
     groove_density = Parameter()
     order = Parameter(default=1)
 
-    def evaluate(self, alpha_in, alpha_out, groove_density, order):
+    def evaluate(self, alpha_in, beta_in, alpha_out, groove_density, order):
+        # beta_in is not used in this equation but is here because it's
+        # needed for the prism computation. Currently these two computations
+        # need to have the same interface.
         return -(alpha_in + alpha_out) / (groove_density * order)
 
 
