@@ -311,7 +311,6 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
             lmax = 0.0
             c1_offset = 0.0
             c2_offset = 0.0
-
             ifile = MasterTable.FileMap[instrument][this_a][this_b][k]
             ioffset = len(MasterTable.FileOffset[this_a][this_b]['C1'])
             if(ioffset == n):

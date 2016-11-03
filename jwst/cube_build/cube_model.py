@@ -21,7 +21,7 @@ log.setLevel(logging.DEBUG)
 
 #********************************************************************************
 
-def SetUpIFUCube(Cube):
+def SetUpIFUCube(self,Cube):
 
 #********************************************************************************
     """
@@ -49,7 +49,10 @@ def SetUpIFUCube(Cube):
 
     IFUCube = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
 
+    if self.CubeType =='Model':
+        IFUCube.update(self.input_model)
     IFUCube.meta.filename = Cube.output_name
+
     IFUCube.meta.wcsinfo.crval1 = Cube.Crval1
     IFUCube.meta.wcsinfo.crval2 = Cube.Crval2
     IFUCube.meta.wcsinfo.crval3 = Cube.Crval3
@@ -89,7 +92,7 @@ def SetUpIFUCube(Cube):
     #print(wcsobj.forward_transform[4])
     #print(wcsobj.forward_transform[5])
 
-    #sys.exit('STOP')
+
 
     IFUCube.meta.wcs = wcsobj
     return IFUCube
@@ -138,9 +141,7 @@ def UpdateIFUCube(self, Cube,IFUCube, spaxel):
 # TODO: figure out when to set IFUCube.meta.filename
 #    IFUCube.meta.filename = Cube.output_name   
 
-#    IFUCube.save(IFUCube.meta.filename)
-#    IFUCube.close()
-#    log.info('Wrote %s', IFUCube.meta.filename)
+
     return IFUCube
 
 #********************************************************************************
