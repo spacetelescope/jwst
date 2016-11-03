@@ -1,8 +1,7 @@
 from __future__ import absolute_import, unicode_literals, division, print_function
 
 from . import model_base
-from .image import ImageModel
-
+from .drizproduct import DrizProductModel
 
 __all__ = ['MultiProductModel']
 
@@ -40,7 +39,6 @@ class MultiProductModel(model_base.DataModel):
             self.products[0].wht = init.wht
             self.products[0].con = init.con
             self.products[0].relsens = init.relsens
-            self.products[0].hdrtab = init.hdrtab
             return
 
         super(MultiProductModel, self).__init__(init=init, **kwargs)
