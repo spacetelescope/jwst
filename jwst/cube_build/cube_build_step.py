@@ -125,6 +125,7 @@ class CubeBuildStep (Step):
         num, instrument, detector = cube_build_io.SetFileTable(self, input_table, 
                                                                MasterTable)
 
+
         self.metadata['number_files'] = num
         self.metadata['detector'] = detector            
         self.metadata['instrument'] = instrument
@@ -138,8 +139,11 @@ class CubeBuildStep (Step):
 
 
         self.output_name_base = input_table.asn_table['products'][0]['name']
-
-        self.output_name = cube_build_io.UpdateOutPutName(self)
+        
+        if self.CubeType == 'Model': # this is formed in cube_build_io.SetFileTable
+            pass
+        else: 
+            self.output_name = cube_build_io.UpdateOutPutName(self)
 
 #________________________________________________________________________________
 
@@ -161,7 +165,7 @@ class CubeBuildStep (Step):
 
         # for now InstrumentDefaults holds defaults on the two instruments
         InstrumentInfo = InstrumentDefaults.Info() 
-        self.log.info('Building Cube %s ', Cube.output_name)
+        if self.CubeType == 'File' or self.CubeType == 'ASN' : self.log.info('Building Cube %s ', Cube.output_name)
 
 
             # Scale is 3 dimensions and is determined from default values InstrumentInfo.GetScale
@@ -216,7 +220,9 @@ class CubeBuildStep (Step):
         self.power_z = 1
 
 
-        IFUCube = cube_model.SetUpIFUCube(Cube)
+        IFUCube = cube_model.SetUpIFUCube(self,Cube)
+
+        
 
         if(self.interpolation == 'pointcloud'):
             self.log.info('Region of interest %f %f %f', 
@@ -293,6 +299,11 @@ class CubeBuildStep (Step):
 
         IFUCube = cube_model.UpdateIFUCube(self, Cube,IFUCube, spaxel)
         self.output_file = IFUCube.meta.filename
+
+        if self.CubeType == 'File' or self.CubeType =='ASN' :
+            IFUCube.save(IFUCube.meta.filename)
+            IFUCube.close()
+#            self.log.info('Wrote %s', IFUCube.meta.filename)
         return IFUCube
 
 

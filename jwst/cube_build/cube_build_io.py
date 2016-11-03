@@ -41,7 +41,7 @@ def Read_User_Input(self):
 #________________________________________________________________________________
     # for MIRI we can set the channel
 # if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
-# self.channel = empty
+# self.channel to empty
     if self.channel == 'ALL':
         self.channel = ''
 
@@ -343,16 +343,29 @@ def SetFileTable(self, input_table, MasterTable):
 #    if len(input_table.input_models) > 0:  # this is a single file or a model
 #
 # this is a single file or a model  
+
+    if input_table.InputType == 'Model':
+        self.CubeType = 'Model'
+        self.input_model = input_table.input_model 
+
+    if input_table.InputType == 'File': 
+        self.CubeType = 'File'
+        self.input_model = input_table.input_model 
     if input_table.InputType == 'Model' or input_table.InputType == 'File':  
         input_models.append(input_table.input_model)
         input_filenames.append(input_table.filename)
+
         num = 1
     else: # read in assoication table and fill in input_models
+        self.CubeType = 'ASN'
+        self.input_model = 'None'
         for m in input_table.asn_table['products'][iproduct]['members']:
             input_filenames.append(m['expname'])
             input_models.append(datamodels.ImageModel(m['expname']))
 
     num = len(input_filenames)
+
+
 #________________________________________________________________________________
 # Loop over input list of files and assign fill in the MasterTable with filename
 # for the correct (channel-subchannel) or (grating-subchannel)
@@ -364,7 +377,9 @@ def SetFileTable(self, input_table, MasterTable):
         # Open the input data model & Fill in the FileMap information
         
         with datamodels.ImageModel(input) as input_model:
-#        with datamodels.ImageModel(ifile) as input_model:
+            # When call as a Model - i.e. CalSpec2 set up the output name
+            if(self.CubeType =='Model'):
+                self.output_name = input_model.meta.filename
 
             detector = input_model.meta.instrument.detector
             instrument = input_model.meta.instrument.name
