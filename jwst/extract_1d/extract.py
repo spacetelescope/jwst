@@ -10,8 +10,8 @@ import numpy as np
 import json
 from astropy.modeling import polynomial
 from .. import datamodels
-from gwcs import selector
 from . import extract1d
+from . import ifu
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -41,7 +41,7 @@ def get_extract_parameters(refname, slitname, meta,
         ref = json.load(f)
     for aper in ref['apertures']:
         if aper.has_key('id') and (aper['id'] == slitname or
-                                   slitname == "ANY"):
+                                   slitname == ANY):
             region_type = aper.get("region_type", "target")
             if region_type == "target":
                 disp = aper.get('dispaxis')
@@ -74,10 +74,6 @@ def get_extract_parameters(refname, slitname, meta,
                 extract_params['ystop'] = aper.get('ystop')
                 extract_params['extract_width'] = aper.get('extract_width')
                 extract_params['nod_correction'] = get_nod_offset(aper, meta)
-                # These can be used later (for MultiSlitModel data), and
-                # if they are, they will be one-indexed values.
-                extract_params['slit_start1'] = None
-                extract_params['slit_start2'] = None
             break
     return extract_params
 
@@ -176,48 +172,42 @@ def aperture_from_wcs(wcs, direction):
                           'upper' not in domain[1]:
         return None
 
+    # These are supposed to be integers.
     xstart = domain[0]['lower']
     xstop = domain[0]['upper']
     ystart = domain[1]['lower']
     ystop = domain[1]['upper']
-    # Convert limits in the dispersion direction to integer values.
+    # The limits should be the limits of a slice.  Possibly modify the limits,
+    # depending on domain[i]['includes_lower'] (but just in the dispersion
+    # direction).
     if direction == HORIZONTAL:
-        x_test = round(xstart)
-        if 'includes_lower' in domain[0] and domain[0]['includes_lower']:
-            if x_test < xstart:
-                x_test += 1.
+        x_test = int(round(xstart))     # just in case it's not an int
+        if 'includes_lower' in domain[0] and not domain[0]['includes_lower']:
+            # domain[0]['lower'] is not included, so increment it.
+            xstart = x_test + 1
         else:
-            if x_test <= xstart:
-                x_test += 1.
-        xstart = int(x_test)
-        x_test = round(xstop)
+            xstart = x_test
+        x_test = int(round(xstop))
         if 'includes_upper' in domain[0] and domain[0]['includes_upper']:
-            if x_test > xstop:
-                x_test -= 1.
+            # It is included, so add one to make it an upper limit of a slice.
+            xstop = x_test + 1
         else:
-            if x_test >= xstop:
-                x_test -= 1.
-        xstop = int(x_test)
-    else:                           # dispersion is vertical
-        y_test = round(ystart)
-        if 'includes_lower' in domain[1] and domain[1]['includes_lower']:
-            if y_test < ystart:
-                y_test += 1.
+            xstop = x_test
+    else:                               # dispersion is vertical
+        y_test = int(round(ystart))
+        if 'includes_lower' in domain[1] and not domain[1]['includes_lower']:
+            ystart = y_test + 1
         else:
-            if y_test <= ystart:
-                y_test += 1.
-        ystart = int(y_test)
-        y_test = round(ystop)
+            ystart = y_test
+        y_test = int(round(ystop))
         if 'includes_upper' in domain[1] and domain[1]['includes_upper']:
-            if y_test > ystop:
-                y_test -= 1.
+            ystop = y_test + 1
         else:
-            if y_test >= ystop:
-                y_test -= 1.
-        ystop = int(y_test)
+            ystop = y_test
 
     ap_wcs = Aperture(xstart, ystart, xstop, ystop)
     return ap_wcs
+
 
 def reconcile_ap_limits(ap_ref, ap_wcs, ap_shape):
 
@@ -295,6 +285,7 @@ def reconcile_ap_limits(ap_ref, ap_wcs, ap_shape):
 
     return Aperture(xstart, ystart, xstop, ystop)
 
+
 def create_poly(coeff):
     """Create a polynomial model from coefficients.
 
@@ -330,7 +321,8 @@ class ExtractModel(object):
                  extract_width=None, src_coeff=None, bkg_coeff=None,
                  independent_var="wavelength",
                  smoothing_length=0, bkg_order=0, nod_correction=0.,
-                 slit_start1=None, slit_start2=None):
+                 x_center=None, y_center=None,
+                 inner_bkg=None, outer_bkg=None, method='subpixel'):
 
         self.dispaxis = dispaxis
         # possibly override with src_coeff
@@ -350,9 +342,6 @@ class ExtractModel(object):
             self.ystop = None
         else:
             self.ystop = int(round(ystop))
-
-        self.slit_start1 = slit_start1
-        self.slit_start2 = slit_start2
 
         if extract_width is None:
             self.extract_width = None
@@ -541,13 +530,12 @@ class ExtractModel(object):
 
         Returns
         -------
-        (column, wavelength, background, countrate)
-            These are all 1-D arrays.  `column` is the column (or row)
-            number in the input data for each output pixel.  `wavelength`
-            is the wavelength in angstroms at each pixel.  `background`
-            is the background count rate that was subtracted from the
-            total source count rate to get `countrate`.  `countrate` is
-            the count rate (counts / s) at each pixel.
+        (wavelength, net, background)
+            These are all 1-D arrays.  `wavelength` is the wavelength in
+            micrometers at each pixel.  `net` is the count rate
+            (counts / s) minus the background at each pixel.  `background`
+            is the background count rate that was subtracted from the total
+            source count rate to get `net`.
         """
 
         log.debug('xstart=%g, xstop=%g, ystart=%g, ystop=%g' %
@@ -563,10 +551,6 @@ class ExtractModel(object):
             x_array.fill((self.xstart + self.xstop) / 2.)
 
         if self.wcs is not None:
-            if self.slit_start1 is not None:
-                x_array += (self.slit_start1 - 1.)
-            if self.slit_start2 is not None:
-                y_array += (self.slit_start2 - 1.)
             _, _, wavelength = self.wcs(x_array, y_array)
 
         elif self._wave_model is not None:
@@ -583,13 +567,15 @@ class ExtractModel(object):
             image = data
             # Range (slice) of pixel numbers in the dispersion direction.
             disp_range = [self.xstart, self.xstop]
-            column = np.arange(self.xstart, self.xstop, dtype=np.float64)
+            if wavelength is None:
+                wavelength = np.arange(self.xstart, self.xstop,
+                                       dtype=np.float64)
         else:
             image = np.transpose(data, (1, 0))
             disp_range = [self.ystart, self.ystop]
-            column = np.arange(self.ystart, self.ystop, dtype=np.float64)
-        if wavelength is None:
-            wavelength = column
+            if wavelength is None:
+                wavelength = np.arange(self.ystart, self.ystop,
+                                       dtype=np.float64)
 
         mask = np.isnan(wavelength)
         n_nan = mask.sum(dtype=np.float64)
@@ -599,13 +585,13 @@ class ExtractModel(object):
         del mask
 
         # src total flux, area, total weight
-        (countrate, background) = \
+        (net, background) = \
         extract1d.extract1d(image, wavelength, disp_range,
                             self.p_src, self.p_bkg, self.independent_var,
                             self.smoothing_length, self.bkg_order,
                             weights=None)
 
-        return (column, wavelength, background, countrate)
+        return (wavelength, net, background)
 
     def __del__(self):
         self.dispaxis = None
@@ -626,6 +612,60 @@ class ExtractModel(object):
         self._wave_model = None
 
 
+def interpolate_response(wavelength, relsens):
+    """Interpolate within the relative response table.
+
+    Parameters
+    ----------
+    wavelength: array_like, 1-D
+        Wavelengths in the science data
+
+    relsens: record array
+        Contains two columns, 'wavelength' and 'response'.
+
+    Returns
+    -------
+    r_factor: array_like
+        The response, interpolated at `wavelength`, with extrapolated
+        elements and zero or negative response values set to 1.  Divide
+        the net count rate by r_factor to obtain the flux.
+    """
+
+    # "_relsens" indicates that the values were read from the RELSENS table.
+    wl_relsens = relsens['wavelength']
+    resp_relsens = relsens['response']
+    MICRONS_100 = 1.e-4                 # 100 microns, in meters
+    if wl_relsens.max() > 0. and wl_relsens.max() < MICRONS_100:
+        log.warning("Converting RELSENS wavelengths to microns.")
+        wl_relsens *= 1.e6
+
+    bad = False
+    if np.any(np.isnan(wl_relsens)):
+        log.error("In RELSENS, the 'wavelength' column contains NaNs.")
+        bad = True
+    if np.any(np.isnan(resp_relsens)):
+        log.error("In RELSENS, the 'response' column contains NaNs.")
+        bad = True
+    if bad:
+        raise ValueError("Found NaNs in RELSENS table.")
+
+    # `r_factor` is the response, interpolated at the wavelengths in the
+    # science data.  -2048 is a flag value, to check for extrapolation.
+    r_factor = np.interp(wavelength, wl_relsens, resp_relsens, -2048., -2048.)
+    mask = np.where(r_factor == -2048.)
+    if len(mask[0]) > 0:
+        log.warning("Using RELSENS, %d elements were extrapolated; "
+                    "these values will be set to 1.", len(mask[0]))
+        r_factor[mask] = 1.
+    mask = np.where(r_factor <= 0.)
+    if len(mask[0]) > 0:
+        log.warning("Using RELSENS, %d interpolated response values "
+                    "were <= 0; these values will be set to 1.", len(mask[0]))
+        r_factor[mask] = 1.
+
+    return r_factor
+
+
 def do_extract1d(input_model, refname, smoothing_length, bkg_order):
 
     output_model = datamodels.MultiSpecModel()
@@ -637,36 +677,74 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
         for slit in input_model.slits:
             extract_params = get_extract_parameters(refname, slit.name,
                                 input_model.meta, smoothing_length, bkg_order)
-            extract_params['slit_start1'] = slit.xstart         # one indexed
-            extract_params['slit_start2'] = slit.ystart         # one indexed
-            column, wavelength, background, countrate = \
+            wavelength, net, background = \
                 extract_one_slit(slit, -1,
-                                 input_model.meta, refname,
+                                 input_model.meta,
                                  slit.name, **extract_params)
+            got_relsens = True
+            try:
+                relsens = slit.relsens
+            except AttributeError:
+                got_relsens = False
+            if got_relsens and len(relsens) == 0:
+                got_relsens = False
+            if got_relsens:
+                r_factor = interpolate_response(wavelength, relsens)
+                flux = net / r_factor
+            else:
+                log.warning("No relsens for current slit, "
+                            "so can't compute flux.")
+                flux = np.zeros_like(net)
+            dq = np.zeros(net.shape, dtype=np.int32)
+            fl_error = np.ones_like(net)
+            nerror = np.ones_like(net)
+            berror = np.ones_like(net)
             spec = datamodels.SpecModel()
-            otab = np.array(zip(column, wavelength, background, countrate),
+            otab = np.array(zip(wavelength, flux, fl_error, dq,
+                                net, nerror, background, berror),
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             output_model.spec.append(spec)
     else:
         slitname = input_model.meta.exposure.type
+        if slitname is None:
+            slitname = ANY
         if slitname == 'NIS_SOSS':
             slitname = input_model.meta.subarray.name
         log.debug('slitname=%s' % slitname)
 
-        if isinstance(input_model, datamodels.ImageModel):
+        if isinstance(input_model, datamodels.ImageModel) or \
+           isinstance(input_model, datamodels.DrizProductModel):
             extract_params = get_extract_parameters(refname, slitname,
                                 input_model.meta, smoothing_length, bkg_order)
             if extract_params:
-                column, wavelength, background, countrate = \
+                wavelength, net, background = \
                         extract_one_slit(input_model, -1,
-                                         input_model.meta, refname,
+                                         input_model.meta,
                                          slitname, **extract_params)
             else:
                 log.critical('Missing extraction parameters.')
                 raise ValueError('Missing extraction parameters.')
+            dq = np.zeros(net.shape, dtype=np.int32)
+            got_relsens = True
+            try:
+                relsens = input_model.relsens
+            except AttributeError:
+                got_relsens = False
+            if got_relsens and len(relsens) == 0:
+                got_relsens = False
+            if got_relsens:
+                r_factor = interpolate_response(wavelength, relsens)
+                flux = net / r_factor
+            else:
+                log.warning("No relsens for input file, "
+                            "so can't compute flux.")
+                flux = np.zeros_like(net)
+            fl_error = np.ones_like(net)
+            nerror = np.ones_like(net)
+            berror = np.ones_like(net)
             spec = datamodels.SpecModel()
-            otab = np.array(zip(column, wavelength, background, countrate),
+            otab = np.array(zip(column, wavelength, background, net),
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             output_model.spec.append(spec)
@@ -679,22 +757,58 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 log.critical('Missing extraction parameters.')
                 raise ValueError('Missing extraction parameters.')
 
+            got_relsens = True
+            try:
+                relsens = input_model.relsens
+            except AttributeError:
+                got_relsens = False
+            if got_relsens and len(relsens) == 0:
+                got_relsens = False
+            if not got_relsens:
+                log.warning("No relsens for input file, "
+                            "so can't compute flux.")
+
             # Loop over each integration in the input model
             for integ in range(input_model.data.shape[0]):
                 # Extract spectrum
-                column, wavelength, background, countrate = \
+                wavelength, net, background = \
                         extract_one_slit(input_model, integ,
-                                         input_model.meta, refname,
+                                         input_model.meta,
                                          slitname, **extract_params)
+                dq = np.zeros(net.shape, dtype=np.int32)
+                if got_relsens:
+                    r_factor = interpolate_response(wavelength,
+                                                    input_model.relsens)
+                    flux = net / r_factor
+                else:
+                    flux = np.zeros_like(net)
+                fl_error = np.ones_like(net)
+                nerror = np.ones_like(net)
+                berror = np.ones_like(net)
                 spec = datamodels.SpecModel()
-                otab = np.array(zip(column, wavelength, background, countrate),
+                otab = np.array(zip(wavelength, flux, fl_error, dq,
+                                    net, nerror, background, berror),
                                 dtype=spec.spec_table.dtype)
                 spec = datamodels.SpecModel(spec_table=otab)
                 output_model.spec.append(spec)
 
+        elif isinstance(input_model, datamodels.IFUCubeModel):
+
+            try:
+                source_type = input_model.meta.target.source_type
+            except AttributeError:
+                source_type = "unknown"
+            output_model = ifu.ifu_extract1d(input_model, refname,
+                                             source_type, smoothing_length)
+
+        else:
+            log.error("The input file is not supported for this step.")
+            raise RuntimeError("Can't extract a spectrum from this file.")
+
     return output_model
 
-def extract_one_slit(slit, integ, meta, refname, slitname=None,
+
+def extract_one_slit(slit, integ, meta, slitname=None,
                      **extract_params):
 
     extract_model = ExtractModel(slit, **extract_params)
@@ -704,7 +818,7 @@ def extract_one_slit(slit, integ, meta, refname, slitname=None,
     data = slit.data
     if integ > -1:
         data = slit.data[integ]
-    column, wavelength, background, countrate = extract_model.extract(data)
+    wavelength, net, background = extract_model.extract(data)
     del extract_model
 
-    return column, wavelength, background, countrate
+    return wavelength, net, background

@@ -1,7 +1,8 @@
 Step Arguments
 ==============
 
-The extract_1d step has two step-specific arguments:
+The extract_1d step has two step-specific arguments.  Currently neither of
+these is used for IFU data.
 
 *  ``--smoothing_length``
 
