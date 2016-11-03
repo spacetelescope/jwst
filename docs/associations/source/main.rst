@@ -1,11 +1,11 @@
-.. _asn-pool:
+.. _main:
 
 **********************************************************
-AssociationPool Class
+Main Class
 **********************************************************
 
-.. currentmodule:: pool
+.. currentmodule:: main
 
-.. automodule:: jwst.associations.pool
+.. automodule:: jwst.associations.main
    :members:
    :undoc-members:

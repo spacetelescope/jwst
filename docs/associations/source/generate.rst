@@ -1,11 +1,11 @@
-.. _asn-pool:
+.. _generate:
 
 **********************************************************
-AssociationPool Class
+Generator
 **********************************************************
 
-.. currentmodule:: pool
+.. currentmodule:: generate
 
-.. automodule:: jwst.associations.pool
+.. automodule:: jwst.associations.generate
    :members:
    :undoc-members:

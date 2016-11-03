@@ -1,11 +1,11 @@
-.. _asn-pool:
+.. _asn-registry:
 
 **********************************************************
-AssociationPool Class
+AssociationRegistry Class
 **********************************************************
 
-.. currentmodule:: pool
+.. currentmodule:: registry
 
-.. automodule:: jwst.associations.pool
+.. automodule:: jwst.associations.registry
    :members:
    :undoc-members:
