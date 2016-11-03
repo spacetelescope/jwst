@@ -526,6 +526,12 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     agreq = angle_from_disperser(disperser, input_model)
     lgreq = wavelength_from_disperser(disperser, input_model)
 
+    # The wavelength units up to this point are
+    # meters as required by the pipeline but the desired output wavelength units is microns.
+    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
+    if input_model.meta.instrument.filter == 'OPAQUE':
+        lgreq = lgreq | Scale(1e6)
+
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     mask = mask_slit(ymin, ymax)
 
@@ -586,6 +592,12 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     agreq = angle_from_disperser(disperser, input_model)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     lgreq = wavelength_from_disperser(disperser, input_model)
+
+    # The wavelength units up to this point are
+    # meters as required by the pipeline but the desired output wavelength units is microns.
+    # So we are going to Scale the spectral units by 1e6 (meters -> microns)
+    if input_model.meta.instrument.filter == 'OPAQUE':
+        lgreq = lgreq | Scale(1e6)
 
     msa = AsdfFile.open(reference_files['msa'])
     slit_models = []
