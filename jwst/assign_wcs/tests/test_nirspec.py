@@ -180,7 +180,11 @@ def test_nirspec_ifu_against_esa():
     x = x + cor[0] + 1
     sca2world = w0.get_transform('sca', 'msa_frame')
     _, slit_y, lp = sca2world(x, y)
-    assert_allclose(lp, lam[cond], atol=10**-13)
+
+    # The lp values are in units of microns and the lam[cond] are in units
+    # of meters. At this point, Nadia suggested we multiply, here, to get
+    # things into the same units.
+    assert_allclose(lp, lam[cond]*1e6, rtol=1e-4, atol=1e-4)
     ref.close()
 
 '''
