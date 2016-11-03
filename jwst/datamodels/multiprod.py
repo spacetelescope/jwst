@@ -4,7 +4,7 @@ from . import model_base
 from .image import ImageModel
 
 
-__all__ = ['MultiSlitModel']
+__all__ = ['MultiProductModel']
 
 
 class MultiProductModel(model_base.DataModel):
@@ -32,7 +32,7 @@ class MultiProductModel(model_base.DataModel):
     schema_url = "multiproduct.schema.yaml"
 
     def __init__(self, init=None, **kwargs):
-        if isinstance(init, ImageModel):
+        if isinstance(init, DrizProductModel):
             super(MultiProductModel, self).__init__(init=None, **kwargs)
             self.update(init)
             self.products.append(self.products.item())
