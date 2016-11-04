@@ -826,7 +826,7 @@ properties:
           vparity:
             title: V2-V3 coordinate frame parity
             type: integer
-            default: 1.0
+            default: 1
             fits_keyword: VPARITY
           v3yangle:
             title: V3 position angle (deg)
