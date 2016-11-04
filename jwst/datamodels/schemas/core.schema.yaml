@@ -824,12 +824,12 @@ properties:
             default: 0.0
             fits_keyword: V3_REF
           vparity:
-            title: V2-V3 coordinate frame parity
+            title: Relative sense of rotation between Ideal xy and V2V3
             type: integer
             default: 1
             fits_keyword: VPARITY
           v3yangle:
-            title: V3 position angle (deg)
+            title: Angle from V3 axis to Ideal y axis (deg)
             type: number
             default: 0.0
             fits_keyword: V3I_YANG
