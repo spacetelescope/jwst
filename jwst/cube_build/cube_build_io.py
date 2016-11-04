@@ -347,6 +347,7 @@ def SetFileTable(self, input_table, MasterTable):
     if input_table.InputType == 'Model':
         self.CubeType = 'Model'
         self.input_model = input_table.input_model 
+        self.output_name = self.input_model.meta.filename
 
     if input_table.InputType == 'File': 
         self.CubeType = 'File'
@@ -377,9 +378,6 @@ def SetFileTable(self, input_table, MasterTable):
         # Open the input data model & Fill in the FileMap information
         
         with datamodels.ImageModel(input) as input_model:
-            # When call as a Model - i.e. CalSpec2 set up the output name
-            if(self.CubeType =='Model'):
-                self.output_name = input_model.meta.filename
 
             detector = input_model.meta.instrument.detector
             instrument = input_model.meta.instrument.name
@@ -421,35 +419,41 @@ def SetFileTable(self, input_table, MasterTable):
 #********************************************************************************
 def UpdateOutPutName(self):
 
-    if self.metadata['instrument'] == 'MIRI':
-        channels = list(set(self.metadata['band_channel']))
-        number_channels = len(channels)
-        ch_name = '_ch'
-        for i in range(number_channels):
-            ch_name = ch_name + channels[i]
-            if i < number_channels-1:
-                ch_name = ch_name + '-'
+    if self.CubeType == 'Model':
+        #newname = self.output_name_base + '_cube_build.fits'
+        newname = self.output_name 
+    else: 
+        
+
+        if self.metadata['instrument'] == 'MIRI':
+            channels = list(set(self.metadata['band_channel']))
+            number_channels = len(channels)
+            ch_name = '_ch'
+            for i in range(number_channels):
+                ch_name = ch_name + channels[i]
+                if i < number_channels-1:
+                    ch_name = ch_name + '-'
 
         
-        subchannels = list(set(self.metadata['band_subchannel']))
-        number_subchannels = len(subchannels)
-        b_name = ''
-        for i in range(number_subchannels):
-            b_name = b_name + subchannels[i]
+            subchannels = list(set(self.metadata['band_subchannel']))
+            number_subchannels = len(subchannels)
+            b_name = ''
+            for i in range(number_subchannels):
+                b_name = b_name + subchannels[i]
 
-        b_name  = b_name.lower()
-        newname = self.output_name_base + ch_name+ '-' + b_name +  '_s3d.fits'
+            b_name  = b_name.lower()
+            newname = self.output_name_base + ch_name+ '-' + b_name +  '_s3d.fits'
 
-    elif self.metadata['instrument'] == 'NIRSPEC':
-        fg_name = '_'
+        elif self.metadata['instrument'] == 'NIRSPEC':
+            fg_name = '_'
 
-        for i in range(self.metadata['num_bands']):
-            fg_name = fg_name + self.metadata['band_grating'][i] + '-'+ self.metadata['band_filter'][i]
-            if(i < self.metadata['num_bands'] -1):
-                fg_name = fg_name + '-'
-        fg_name = fg_name.lower()
+            for i in range(self.metadata['num_bands']):
+                fg_name = fg_name + self.metadata['band_grating'][i] + '-'+ self.metadata['band_filter'][i]
+                if(i < self.metadata['num_bands'] -1):
+                    fg_name = fg_name + '-'
+            fg_name = fg_name.lower()
 
-        newname = self.output_name_base + fg_name+ '_s3d.fits'
+            newname = self.output_name_base + fg_name+ '_s3d.fits'
 
     return newname
 

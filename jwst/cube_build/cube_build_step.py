@@ -69,10 +69,10 @@ class CubeBuildStep (Step):
         if (self.coord_system == 'ra-dec'):
             self.interpolation = 'pointcloud'  # can not be area
 
-        self.log.info('Input interpolation %s', self.interpolation)
+        self.log.info('Input interpolation: %s', self.interpolation)
 
-        self.log.info('Coordinate system to use %s', self.coord_system)
-        self.log.info('Weighting method for point cloud %s',self.weighting)
+        self.log.info('Coordinate system to use: %s', self.coord_system)
+        self.log.info('Weighting method for point cloud: %s',self.weighting)
 #_________________________________________________________________________________________________
 # Set up the IFU cube basic parameters that define a cube
         self.metadata = {}
@@ -107,7 +107,7 @@ class CubeBuildStep (Step):
         if input_table.asn_table['asn_type'] == 'singleton':
             self.offset_list = 'NA'
 
-        self.log.debug('Output Base %s ', input_table.asn_table['products'][0]['name'])
+        self.log.info('Output Base %s ', input_table.asn_table['products'][0]['name'])
 
         # Check if there is an offset list (this ra,dec dither offset list will probably
         # only be used in testing) 
@@ -139,11 +139,7 @@ class CubeBuildStep (Step):
 
 
         self.output_name_base = input_table.asn_table['products'][0]['name']
-        
-        if self.CubeType == 'Model': # this is formed in cube_build_io.SetFileTable
-            pass
-        else: 
-            self.output_name = cube_build_io.UpdateOutPutName(self)
+        self.output_name = cube_build_io.UpdateOutPutName(self)
 
 #________________________________________________________________________________
 
@@ -164,7 +160,8 @@ class CubeBuildStep (Step):
 
 
         # for now InstrumentDefaults holds defaults on the two instruments
-        InstrumentInfo = InstrumentDefaults.Info() 
+        InstrumentInfo = InstrumentDefaults.Info()
+
         if self.CubeType == 'File' or self.CubeType == 'ASN' : self.log.info('Building Cube %s ', Cube.output_name)
 
 
@@ -222,7 +219,6 @@ class CubeBuildStep (Step):
 
         IFUCube = cube_model.SetUpIFUCube(self,Cube)
 
-        
 
         if(self.interpolation == 'pointcloud'):
             self.log.info('Region of interest %f %f %f', 
@@ -295,16 +291,17 @@ class CubeBuildStep (Step):
 
         t1 = time.time()
         self.log.info("Time find Cube Flux= %.1f.s" % (t1 - t0,))
+
+
+        result = cube_model.UpdateIFUCube(self, Cube,IFUCube, spaxel)
+
 # write out the IFU cube
-
-        IFUCube = cube_model.UpdateIFUCube(self, Cube,IFUCube, spaxel)
-        self.output_file = IFUCube.meta.filename
-
         if self.CubeType == 'File' or self.CubeType =='ASN' :
-            IFUCube.save(IFUCube.meta.filename)
-            IFUCube.close()
-#            self.log.info('Wrote %s', IFUCube.meta.filename)
-        return IFUCube
+            self.output_file = IFUCube.meta.filename
+#            IFUCube.save(IFUCube.meta.filename)
+        IFUCube.close()
+
+        return result
 
 
 

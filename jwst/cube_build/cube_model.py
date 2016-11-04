@@ -51,8 +51,8 @@ def SetUpIFUCube(self,Cube):
 
     if self.CubeType =='Model':
         IFUCube.update(self.input_model)
-    IFUCube.meta.filename = Cube.output_name
 
+    IFUCube.meta.filename = Cube.output_name
     IFUCube.meta.wcsinfo.crval1 = Cube.Crval1
     IFUCube.meta.wcsinfo.crval2 = Cube.Crval2
     IFUCube.meta.wcsinfo.crval3 = Cube.Crval3
@@ -137,12 +137,10 @@ def UpdateIFUCube(self, Cube,IFUCube, spaxel):
 #                IFUCube.weightmap[z, y, x] = len(spaxel[icube].ipointcloud)
 #                icube = icube + 1
 
-# Remove setting meta.filename to Cube.output-name for now
-# TODO: figure out when to set IFUCube.meta.filename
-#    IFUCube.meta.filename = Cube.output_name   
 
-
-    return IFUCube
+    output = IFUCube.copy()
+    
+    return output
 
 #********************************************************************************
 
