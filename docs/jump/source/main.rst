@@ -89,31 +89,6 @@ The Jump step has three optional arguments that can be set by the user:
 * ``--yint_threshold``: A floating-point value that sets the signal
   threshold for applying the y-intercept method to individual pixels.
 
-Reference Files
-===============
-The Jump step uses two reference files: Gain and Readnoise. The gain values
-are used to temporarily convert the pixel values from units of DN to
-electrons. The read noise values are used as part of the noise estimate for
-each pixel. Both are necessary for proper computation of noise estimates.
-
-Gain Reference File
--------------------
-The gain reference file is a FITS file with a single IMAGE extension, 
-labeled ``SCI``, which contains a 2-D floating-point array of gain values
-(in e/DN) per pixel.
-The gain reference files are selected from CRDS based on instrument, detector
-and, where necessary, subarray.
-
-Read Noise Reference File
--------------------------
-The read noise reference file is a FITS file with a single IMAGE extension,
-labeled ``SCI``, which contains a 2-D floating-point array of read noise values
-per pixel. The units of the read noise should be electrons and should be the
-CDS (Correlated Double Sampling) read noise, i.e. the effective noise between
-any pair of non-destructive detector reads. The read noise reference files are
-selected from CRDS based on instrument, detector and, where necessary,
-subarray.
-
 Subarrays
 ---------
 The use of the reference files is flexible. Full-frame reference

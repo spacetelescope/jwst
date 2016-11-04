@@ -1,16 +1,18 @@
 
 from __future__ import absolute_import, division, unicode_literals, print_function
-
+import numpy as np
 from asdf import yamlutil
 from asdf.tags.transform.basic import TransformType
 
 from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
                       NRSZCoord, Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA,
-                      LRSWavelength, Gwa2Slit, Slit2Msa, Logical, NirissSOSSModel, V23ToSky)
+                      LRSWavelength, Gwa2Slit, Slit2Msa, Logical, NirissSOSSModel, V23ToSky,
+                      RefractionIndexFromPrism, Snell)
 
 
 __all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
-           'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSky']
+           'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSky',
+           'RefractionIndexType', 'SnellType']
 
 
 class RotationSequenceType(TransformType):
@@ -152,18 +154,12 @@ class Gwa2SlitType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        models = dict(zip(node['slits'], node['models']))
-        return Gwa2Slit(models)
+        return Gwa2Slit(node['slits'], node['models'])
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
-        slits = []
-        models = []
-        for s, m in model.models.items():
-            slits.append(s)
-            models.append(m)
-        node = {'slits': slits,
-                'models': models}
+        node = {'slits': model._slits,
+                'models': model.models}
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
@@ -175,18 +171,12 @@ class Slit2MsaType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        models = dict(zip(node['slits'], node['models']))
-        return Slit2Msa(models)
+        return Slit2Msa(node['slits'], node['models'])
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
-        slits = []
-        models = []
-        for s, m in model.models.items():
-            slits.append(s)
-            models.append(m)
-        node = {'slits': slits,
-                'models': models}
+        node = {'slits': model._slits,
+                'models': model.models}
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
@@ -216,7 +206,6 @@ class NirissSOSSType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        #models = dict(zip(node['spectral_orders'], node['models']))
         return NirissSOSSModel(node['spectral_orders'], node['models'])
 
     @classmethod
@@ -225,3 +214,66 @@ class NirissSOSSType(TransformType):
                 'models': list(model.models.values())
                 }
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
+
+
+class RefractionIndexType(TransformType):
+    name = "refraction_index_from_prism"
+    types = [RefractionIndexFromPrism]
+    standard = "jwst_pipeline"
+    version = "0.1.0"
+
+    @classmethod
+    def from_tree_transform(cls, node, ctx):
+        return RefractionIndexFromPrism(node['prism_angle'])
+
+    @classmethod
+    def to_tree_transform(cls, model, ctx):
+        node = {'prism_angle': model.prism_angle.value
+                }
+        return yamlutil.custom_tree_to_tagged_tree(node, ctx)
+
+    @classmethod
+    def assert_equal(cls, a, b):
+        TransformType.assert_equal(a, b)
+        assert (isinstance(a, RefractionIndexFromPrism) and
+                isinstance(b, RefractionIndexFromPrism))
+        assert_array_equal(a.prism_angle, b.prism_angle)
+
+
+class SnellType(TransformType):
+    name = "snell"
+    types = [Snell]
+    standard = "jwst_pipeline"
+    version = "0.1.0"
+
+    @classmethod
+    def from_tree_transform(cls, node, ctx):
+        return Snell(node['prism_angle'], node['kcoef'], node['lcoef'], node['tcoef'],
+                     node['ref_temp'], node['ref_pressure'], node['temp'], node['pressure'])
+
+    @classmethod
+    def to_tree_transform(cls, model, ctx):
+        node = {'prism_angle': model.prism_angle,
+                'kcoef': model.kcoef.tolist(),
+                'lcoef': model.lcoef.tolist(),
+                'tcoef': model.tcoef.tolist(),
+                'ref_temp': model.tref,
+                'ref_pressure': model.pref,
+                'temp': model.temp,
+                'pressure': model.pressure
+                }
+        return yamlutil.custom_tree_to_tagged_tree(node, ctx)
+
+    @classmethod
+    def assert_equal(cls, a, b):
+        TransformType.assert_equal(a, b)
+        assert (isinstance(a, Snell) and
+                isinstance(b, Snell))
+        assert_array_equal(a.prism_angle, b.prism_angle)
+        assert_array_equal(a.kcoef, b.kcoef)
+        assert_array_equal(a.lcoef, b.lcoef)
+        assert_array_equal(a.tcoef, b.tcoef)
+        assert_array_equal(a.tref, b.tref)
+        assert_array_equal(a.pref, b.pref)
+        assert_array_equal(a.temp, b.temp)
+        assert_array_equal(a.pressure, b.pressure)

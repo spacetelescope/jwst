@@ -10,3 +10,4 @@ JWST Science Calibration Pipeline: Jump Detection
    :maxdepth: 2
 
    main.rst
+   reference_files.rst

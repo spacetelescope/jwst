@@ -44,7 +44,6 @@ class AssignWcsStep(Step):
 
     def process(self, input):
         reference_file_names = {}
-
         with datamodels.open(input) as input_model:
             # If input type is not supported, log warning, set to 'skipped', exit
             if not (isinstance(input_model, datamodels.ImageModel) or

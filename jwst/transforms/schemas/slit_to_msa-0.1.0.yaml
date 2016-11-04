@@ -14,14 +14,13 @@ allOf:
   - type: object
     properties:
       slits:
-        description: |
-          An array with slit numbers.
-          The slit number is computed from the quadrant and
-          the slit ID in this quadrant using
-
-          $P = quadrant * number_of_shutters_quadrant + slit_id$
-
-        type: array
+        anyOf:
+          - type: array
+            items:
+              anyOf:
+                - type: array
+                - type: number
+          - $ref: ../asdf/core/ndarray-1.0.0
       models:
         description: |
           A compound model transferring positions in the slit frame to

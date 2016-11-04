@@ -18,7 +18,7 @@ def v23tosky(input_model):
     roll_ref = input_model.meta.wcsinfo.roll_ref
     ra_ref = input_model.meta.wcsinfo.ra_ref
     dec_ref = input_model.meta.wcsinfo.dec_ref
-    
+
     angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
     sky_rotation = V23ToSky(angles, axes_order=axes, name="v23tosky")
@@ -114,7 +114,7 @@ def wcsinfo_from_model(input_model):
     wcsinfo["CTYPE"] = np.array(ctypes)
     wcsinfo["CUNIT"] = np.array(cunits)
 
-    pc = np.zeros((wcsaxes, 2))
+    pc = np.zeros((wcsaxes, wcsaxes))
 
     for i in range(1, wcsaxes + 1):
         for j in range(1, 3):
@@ -127,15 +127,29 @@ def wcsinfo_from_model(input_model):
 
 def fitswcs_transform_from_model(wcsinfo):
     """
-    Create a fits wcs from a datamodel.meta.wcsinfo.
+    Create a WCS object using from datamodel.meta.wcsinfo.
+    Transforms assume 0-based coordinates.
+
+    Parameters
+    ----------
+    wcsinfo : dict-like
+        `~jwst.meta.wcsinfo`` structure.
+
+    Return
+    ------
+    transform : `~astropy.modeling.core.Model`
+        WCS forward transform - from pixel to world coordinates.
+
     """
     spatial_axes, spectral_axes = gwutils.get_axes(wcsinfo)
+    sp_axis = spectral_axes[0]
 
     transform = gwutils.make_fitswcs_transform(wcsinfo)
     if wcsinfo['WCSAXES'] == 3:
-        spectral_transform = astmodels.Shift(-wcsinfo['CRPIX'][spectral_axes]) | \
-                           astmodels.Scale(wcsinfo['CDELT'][spectral_axes]) | \
-                           astmodels.Shift(wcsinfo['CRVAL'][spectral_axes])
+        # Subtract one from CRPIX which is 1-based.
+        spectral_transform = astmodels.Shift(-(wcsinfo['CRPIX'][sp_axis] - 1)) | \
+                           astmodels.Scale(wcsinfo['CDELT'][sp_axis]) | \
+                           astmodels.Shift(wcsinfo['CRVAL'][sp_axis])
         transform = transform & spectral_transform
 
     return transform
@@ -160,10 +174,10 @@ def frame_from_model(wcsinfo):
         world = cf.CompositeFrame([sky, spec], name='world')
         return world
     else:
-        raise ValueError("WCSAXES can be 2 or 3, git {0}".format(wcsaxes))
+        raise ValueError("WCSAXES can be 2 or 3, got {0}".format(wcsaxes))
 
 
-def create_fitswcs(inp):
+def create_fitswcs(inp, input_frame=None):
     if isinstance(inp, DataModel):
         wcsinfo = wcsinfo_from_model(inp)
         transform = fitswcs_transform_from_model(wcsinfo)
@@ -174,7 +188,9 @@ def create_fitswcs(inp):
     else:
         raise TypeError("Input is expected to be a DataModel instance or a FITS file.")
 
-    input_frame = cf.Frame2D(name='detector', axes_order=(0, 1))
+    n_input_axes = len(wcsinfo['CRPIX'])
+    if input_frame is None:
+        input_frame = "detector"
     pipeline = [(input_frame, transform),
                (output_frame, None)]
 
