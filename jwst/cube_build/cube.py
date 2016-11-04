@@ -46,9 +46,6 @@ class CubeInfo(object):
             self.filter = parameter1
             self.grating = parameter2
 
-
-            self.output_name = output_name
-
 #_______________________________________________________________________
     def SetScale(self, a_scale, b_scale, wscale):
         self.Cdelt1 = a_scale
