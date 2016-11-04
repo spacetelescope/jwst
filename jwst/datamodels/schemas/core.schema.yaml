@@ -813,16 +813,6 @@ properties:
             title: default spectral order
             type: number
             fits_keyword: SPORDER
-          ra_ref:
-            title: Right ascension of the reference point (deg)
-            type: number
-            default: 0.0
-            fits_keyword: RA_REF
-          dec_ref:
-            title: Declination of the reference point (deg)
-            type: number
-            default: 0.0
-            fits_keyword: DEC_REF
           v2_ref:
             title: Telescope v2 coordinate of the reference point (arcsec)
             type: number
@@ -833,6 +823,26 @@ properties:
             type: number
             default: 0.0
             fits_keyword: V3_REF
+          vparity:
+            title: Relative sense of rotation between Ideal xy and V2V3
+            type: integer
+            default: 1
+            fits_keyword: VPARITY
+          v3yangle:
+            title: Angle from V3 axis to Ideal y axis (deg)
+            type: number
+            default: 0.0
+            fits_keyword: V3I_YANG
+          ra_ref:
+            title: Right ascension of the reference point (deg)
+            type: number
+            default: 0.0
+            fits_keyword: RA_REF
+          dec_ref:
+            title: Declination of the reference point (deg)
+            type: number
+            default: 0.0
+            fits_keyword: DEC_REF
           roll_ref:
             title: Telescope roll angle of V3 measured from North over East at the ref. point (deg)
             type: number
