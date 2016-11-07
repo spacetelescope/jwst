@@ -132,7 +132,7 @@ class CubeSkyMatchStep(Step):
             if self.subtract2d:
                 self._apply_sky_2d(model2d, channel)
 
-        return cube_models
+        return cube_models, models2d
 
     def _set_cube_bkg_meta(self, model, sky_cube):
         _extend_cube_schema(model)
