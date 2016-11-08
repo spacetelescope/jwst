@@ -130,12 +130,6 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
 
         v2, v3, lam = detector2v23(x, y) 
         coord1,coord2,lam = v23toworld(v2,v3,lam)
-#        print('v2,v3 to world ',v2[0,15:20],v3[0,15:20])
-#        print('v2 min,max',np.nanmin(v2),np.nanmax(v2))
-#        print('v3 min max',np.nanmin(v3),np.nanmax(v3))
-#        print('coord1 world',coord1[0,15:20])
-#        print('coord2 world',coord2[0,15:20])
-#        sys.exit('STOP')
 
     else:
         # error the coordinate system is not defined
@@ -179,7 +173,7 @@ def FindFootPrintNIRSPEC(self, input):
     # based on regions mask (indexed by slice number) find all the detector
     # x,y values for slice. Then convert the x,y values to  v2,v3,lambda
     # return the min & max of spatial coords and wavelength  - these are of the pixel centers
-
+#    print('in find footprint NIRSPEC')
 
     start_slice = 0
     end_slice = 29
@@ -193,10 +187,10 @@ def FindFootPrintNIRSPEC(self, input):
     regions = list(range(start_slice, end_slice + 1))
     k = 0
 
-
+    self.log.info('Looping over slices to determine cube size .. this takes a while')
     # for NIRSPEC there are 30 regions
     for i in regions:
-
+#        print('on slice',i)
         slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
         yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
@@ -208,32 +202,17 @@ def FindFootPrintNIRSPEC(self, input):
         v2, v3, lam = detector2v23(x, y) 
         coord1,coord2,lam = v23toworld(v2,v3,lam)
 
-#        print('ra         ',ra[20,40:50])
-#        print('coord1     ',coord1[20,40:50])
-#        print('dec        ',dec[20,40:50])
-#        print('coord2     ',coord2[20,40:50])
+#        print('ra',ra.shape,ra[20,0:20])
+#        print('coord1',coord1.shape,coord1[20,0:20])
 
-#        print('min ra',np.nanmin(ra))
-#        print('max ra',np.nanmax(ra))
-#        range_ra = (np.nanmax(ra) - np.nanmin(ra))*3600.0
-#        print('ran ra',range_ra)
-#        decr = math.cos(np.nanmin(dec*math.pi/180))
+#        print('dec',dec.shape,dec[20,0:20])
+#        print('coord2',coord2.shape,coord2[20,0:20])
 
-#        print('ran ra',range_ra*decr)
-#        print('min v2',np.nanmin(v2))
-#        print('max v2',np.nanmax(v2))
-#        print('ran v2',np.nanmax(v2) - np.nanmin(v2))
+        ra_ref = input.meta.wcsinfo.ra_ref # degrees
+        dec_ref = input.meta.wcsinfo.dec_ref # degrees    
+#        print('ra dec ref',ra_ref,dec_ref)
 
-#        print('min dec',np.nanmin(dec))
-#        print('max dec',np.nanmax(dec))
-#        print('ran dec',(np.nanmax(dec) - np.nanmin(dec)* 3600.0))
-
-#        print('min v3',np.nanmin(v3))
-#        print('max v3',np.nanmax(v3))
-#        print('ran v3' ,np.nanmax(v3) - np.nanmin(v3))
-#        print('ra ',ra[30,0:10])
-#        print('dec ',dec[30,0:10])
-
+#        sys.exit('STOP')
         a_slice[k] = np.nanmin(ra)
         a_slice[k + 1] = np.nanmax(ra)
 
@@ -243,6 +222,7 @@ def FindFootPrintNIRSPEC(self, input):
         lambda_slice[k] = np.nanmin(lam)
         lambda_slice[k + 1] = np.nanmax(lam)
 
+#        print(k,a_slice[k],a_slice[k+1],b_slice[k],b_slice[k+1])
         k = k + 2
 
     a_min = min(a_slice)
@@ -254,15 +234,14 @@ def FindFootPrintNIRSPEC(self, input):
     lambda_min = min(lambda_slice)
     lambda_max = max(lambda_slice)
 
-    print('Size of NIRSPEC CUBE FOV: (arcseconds)')
-    print('max a',a_min,a_max, 
-          (a_max-a_min)*math.cos(b_min*math.pi/180)*3600.0)
-    print('max b',b_min,b_max, (b_max-b_min)*3600.0)
-    print('wave',lambda_min,lambda_max)
-
-    ra_ref = input.meta.wcsinfo.ra_ref # degrees
-    dec_ref = input.meta.wcsinfo.dec_ref # degrees    
-    print('ra dec ref',ra_ref,dec_ref)
+#    print('Size of NIRSPEC CUBE FOV: (arcseconds)')
+#    print('max a',a_min,a_max, 
+#          (a_max-a_min)*math.cos(b_min*math.pi/180)*3600.0)
+#    print('max b',b_min,b_max, (b_max-b_min)*3600.0)
+#    print('wave',lambda_min,lambda_max)
+#    ra_ref = input.meta.wcsinfo.ra_ref # degrees
+#    dec_ref = input.meta.wcsinfo.dec_ref # degrees    
+#    print('ra dec ref',ra_ref,dec_ref)
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
 
 #_______________________________________________________________________
@@ -303,13 +282,12 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
         parameter2 = self.metadata['band_filter']
 
 
-    a_min = list()
-    a_max = list()
-    b_min = list()
-    b_max = list()
-    lambda_min = list()
-    lambda_max = list()
-    print('Number of bands',self.metadata['num_bands'])
+    a_min = []
+    a_max = []
+    b_min = []
+    b_max = []
+    lambda_min = []
+    lambda_max = []
 
     self.log.info('Number of bands in cube  %i', 
                               self.metadata['num_bands'])
@@ -318,11 +296,11 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
  
         this_a = parameter1[i]
         this_b = parameter2[i]
-        self.log.info(' Creating cube from %s,%s',this_a,this_b)
+        self.log.info('Working on data  from %s,%s',this_a,this_b)
 
         n = len(MasterTable.FileMap[instrument][this_a][this_b])
         log.debug('number of files %d ', n)
-#        print('number of files',n)
+
     # each file find the min and max a and lambda (OFFSETS NEED TO BE APPLIED TO THESE VALUES)
         for k in range(n):
             amin = 0.0
@@ -333,7 +311,6 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
             lmax = 0.0
             c1_offset = 0.0
             c2_offset = 0.0
-
             ifile = MasterTable.FileMap[instrument][this_a][this_b][k]
             ioffset = len(MasterTable.FileOffset[this_a][this_b]['C1'])
             if(ioffset == n):
@@ -433,11 +410,9 @@ def MapDetectorToCube(self, this_par1, this_par2,
             c1_offset = MasterTable.FileOffset[this_par1][this_par2]['C1'][k]
             c2_offset = MasterTable.FileOffset[this_par1][this_par2]['C2'][k]
 
-        log.info('Mapping file to cube %s ', ifile)
-
 # Open the input data model
         with datamodels.ImageModel(ifile) as input_model:
-            #IFUCube.update(input_model) # do this for single file cubes
+
 #********************************************************************************
             if(instrument == 'MIRI'):
                 v2ab_transform = input_model.meta.wcs.get_transform('v2v3', 

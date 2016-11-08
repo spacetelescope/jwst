@@ -21,7 +21,7 @@ log.setLevel(logging.DEBUG)
 
 #********************************************************************************
 
-def SetUpIFUCube(Cube):
+def SetUpIFUCube(self,Cube):
 
 #********************************************************************************
     """
@@ -49,6 +49,9 @@ def SetUpIFUCube(Cube):
 
     IFUCube = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
 
+    if self.CubeType =='Model':
+        IFUCube.update(self.input_model)
+
     IFUCube.meta.filename = Cube.output_name
     IFUCube.meta.wcsinfo.crval1 = Cube.Crval1
     IFUCube.meta.wcsinfo.crval2 = Cube.Crval2
@@ -58,7 +61,7 @@ def SetUpIFUCube(Cube):
     IFUCube.meta.wcsinfo.crpix3 = Cube.Crpix3
     IFUCube.meta.wcsinfo.cdelt1 = Cube.Cdelt1/3600.0
     IFUCube.meta.wcsinfo.cdelt2 = Cube.Cdelt2/3600.0
-    IFUCube.meta.wcsinfo.cdelt3 = Cube.Cdelt3/3600.0
+    IFUCube.meta.wcsinfo.cdelt3 = Cube.Cdelt3
 
     IFUCube.meta.wcsinfo.ctype1 = 'RA---TAN'
     IFUCube.meta.wcsinfo.ctype2 = 'DEC--TAN'
@@ -79,8 +82,19 @@ def SetUpIFUCube(Cube):
 
 
     wcsobj = pointing.create_fitswcs(IFUCube)
-    IFUCube.meta.wcs = wcsobj
 
+    
+#    print(wcsobj.forward_transform[2].matrix)
+#    print(wcsobj.forward_transform[2].translation)
+    #print(wcsobj.forward_transform[1])
+    #print(wcsobj.forward_transform[2])
+    #print(wcsobj.forward_transform[3])
+    #print(wcsobj.forward_transform[4])
+    #print(wcsobj.forward_transform[5])
+
+
+
+    IFUCube.meta.wcs = wcsobj
     return IFUCube
 
 
@@ -107,24 +121,26 @@ def UpdateIFUCube(self, Cube,IFUCube, spaxel):
     #pull out data into array
 
 
-    icube = 0
-    for z in range(Cube.naxis3):
-        for y in range(Cube.naxis2):
-            for x in range(Cube.naxis1):
-                IFUCube.data[z, y, x] = spaxel[icube].flux
-                IFUCube.weightmap[z, y, x] = len(spaxel[icube].ipointcloud)
-                icube = icube + 1
+    temp_flux =np.reshape(np.array([s.flux for s in spaxel]),
+                          [Cube.naxis3,Cube.naxis2,Cube.naxis1])
+    temp_wmap =np.reshape(np.array([len(s.ipointcloud) for s in spaxel]),
+                          [Cube.naxis3,Cube.naxis2,Cube.naxis1])
+    
+    IFUCube.data = temp_flux
+    IFUCube.weightmap = temp_wmap
+    
+#    icube = 0
+#    for z in range(Cube.naxis3):
+#        for y in range(Cube.naxis2):
+#            for x in range(Cube.naxis1):
+#                IFUCube.data[z, y, x] = spaxel[icube].flux
+#                IFUCube.weightmap[z, y, x] = len(spaxel[icube].ipointcloud)
+#                icube = icube + 1
 
 
-
-    IFUCube.meta.filename = Cube.output_name   
-
-    IFUCube.save(IFUCube.meta.filename)
-    IFUCube.close()
-
-
-    log.info('Wrote %s', IFUCube.meta.filename)
-    return IFUCube
+    output = IFUCube.copy()
+    
+    return output
 
 #********************************************************************************
 

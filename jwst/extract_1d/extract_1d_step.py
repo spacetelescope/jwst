@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 
 import os
+from astropy.io import fits             # xxx temporary
 from ..stpipe import Step
 from .. import datamodels
 from . import extract
@@ -24,16 +25,34 @@ class Extract1dStep(Step):
 
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
+        # begin xxx temporary ...
+        fd = fits.open(input)
+        data_model_from_header = fd[0].header.get("datamodl", "missing")
+        self.log.debug("data_model_from_header = %s",
+                      data_model_from_header)
+        fd.close()
+        # ... end xxx temporary
+        if data_model_from_header == "IFUCubeModel" and \
+           not isinstance(input_model, datamodels.IFUCubeModel):
+            self.log.debug("Close and reopen as an IFUCubeModel")
+            input_model.close()
+            input_model = datamodels.IFUCubeModel(input)
 
         if isinstance(input_model, datamodels.CubeModel):
-           # It's a 3-D multi-integration model
+            # It's a 3-D multi-integration model
             self.log.debug('Input is a CubeModel for a multiple integ. file')
         elif isinstance(input_model, datamodels.ImageModel):
             # It's a single 2-D image
             self.log.debug('Input is an ImageModel')
         elif isinstance(input_model, datamodels.MultiSlitModel):
-            # It's a MultiSlitModel
             self.log.debug('Input is a MultiSlitModel')
+        elif isinstance(input_model, datamodels.IFUCubeModel):
+            self.log.debug('Input is an IFUCubeModel')
+        elif isinstance(input_model, datamodels.DrizProductModel):
+            # Resampled 2-D data
+            self.log.debug('Input is a DrizProductModel')
+        else:
+            self.log.warning('Input is not a recognized data model.')
 
         # Get the reference file name
         self.ref_file = self.get_reference_file(input_model, 'extract1d')

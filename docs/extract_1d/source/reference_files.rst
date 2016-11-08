@@ -16,7 +16,8 @@ that is supported by the given reference file.  The particular dictionary
 to use is found by matching the slit name in the science data with the
 value of key ``id``.
 
-The following keys are supported.  Key ``id`` is required for any element
+The following keys are supported (but for IFU data, see below).
+Key ``id`` is required for any element
 of the ``apertures`` list that may be used; the value of ``id`` is compared
 with the slit name (except for a full-frame input image) to select the
 appropriate aperture.  Key ``dispaxis`` is similarly required.  Key
@@ -40,6 +41,21 @@ is not used if ``src_coeff`` is given.
   the dispersion direction (odd int)
 * bkg_order: order of polynomial fit to background regions (int)
 * extract_width: number of pixels in cross-dispersion direction (int)
+
+For IFU data, these keys are used instead of most of the above:
+
+* x_center: X pixel coordinate of the target (pixels, float)
+* y_center: Y pixel coordinate of the target (pixels, float)
+* extract_width: for a point source, this is the diameter of the circular
+  extraction aperture; for an extended source, this is the width and height
+  of the square extraction aperture (pixels, float)
+* inner_bkg: (optional, and only for a point source) radius of the inner
+  edge of the background annulus (pixels, float)
+* outer_bkg: (optional, and only for a point source) radius of the outer
+  edge of the background annulus (pixels, float)
+* method: (optional, and only for a point source) one of "exact",
+  "subpixel", or "center", the method used by photutils for computing the
+  overlap between apertures and pixels (string, default is "exact")
 
 Even if the extraction limits are specified by ``src_coeff`` (see below),
 the limits in the dispersion direction can be specified by ``xstart`` and

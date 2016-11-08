@@ -46,9 +46,6 @@ class CubeInfo(object):
             self.filter = parameter1
             self.grating = parameter2
 
-
-            self.output_name = output_name
-
 #_______________________________________________________________________
     def SetScale(self, a_scale, b_scale, wscale):
         self.Cdelt1 = a_scale
@@ -214,9 +211,9 @@ class CubeInfo(object):
 
 #_______________________________________________________________________
     def PrintCubeGeometry(self, instrument):
-        log.info('Cube Geometry')
+        log.info('Cube Geometry:')
         blank = '  '
-        log.info('axis# Naxis  CRPIX    CRVAL      CDELT(arc sec)    MIN& Max (xi,eta arc sec)')
+        log.info('axis# Naxis  CRPIX    CRVAL      CDELT(arc sec)  MIN & Max (xi,eta arc sec)')
         log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
                  self.naxis1, self.Crpix1, self.Crval1, self.Cdelt1, self.a_min, self.a_max)
         log.info('Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 

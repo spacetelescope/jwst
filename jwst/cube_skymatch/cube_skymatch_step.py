@@ -53,7 +53,6 @@ class CubeSkyMatchStep(Step):
     def process(self, input1, input2):
         cube_models = datamodels.ModelContainer(input1)
         models2d = datamodels.ModelContainer(input2)
-
         dqbits = bitmask.interpret_bits_value(self.dqbits)
 
         # set sky stattistics:
@@ -124,12 +123,16 @@ class CubeSkyMatchStep(Step):
             if model2d is None:
                 continue
 
-            self._set_model2d_bkg_meta(c, model2d, channel)
+            self._set_model2d_bkg_meta(
+                c.meta['original_cube_model'],
+                model2d,
+                channel
+            )
 
             if self.subtract2d:
                 self._apply_sky_2d(model2d, channel)
 
-        return cube_models
+        return cube_models, models2d
 
     def _set_cube_bkg_meta(self, model, sky_cube):
         _extend_cube_schema(model)
@@ -137,8 +140,8 @@ class CubeSkyMatchStep(Step):
         cs_type = "image" if sky_cube.wcs is None else "world"
         coeffs = sky_cube.bkg_coeff.ravel().tolist()
 
-        model.meta.background.degree = sky_cube.bkg_degree
-        model.meta.background.refpoint = sky_cube.bkg_center
+        model.meta.background.degree = list(sky_cube.bkg_degree)
+        model.meta.background.refpoint = list(sky_cube.bkg_center)
         model.meta.background.cs_type = cs_type
         model.meta.background.coefficients = coeffs
 
@@ -152,11 +155,11 @@ class CubeSkyMatchStep(Step):
 
         cubebkg = model3d.meta.background
         bkgmeta = {
-            "degree": cubebkg.degree,
-            "refpoint": cubebkg.refpoint,
+            "degree": list(cubebkg.degree),
+            "refpoint": list(cubebkg.refpoint),
             "cs_type": cubebkg.cs_type,
             "wcs": cubebkg.wcs,
-            "coefficients": cubebkg.coefficients,
+            "coefficients": list(cubebkg.coefficients),
             "channel": channel
         }
 
@@ -176,10 +179,10 @@ class CubeSkyMatchStep(Step):
 
         # get may parameters of the background polynomial:
         bkgmeta = model2d.meta.background[index]
-        degree = bkgmeta.degree
+        degree = tuple(bkgmeta.degree)
         degree_p1 = tuple((i + 1 for i in degree))
-        c = np.reshape(bkgmeta.coefficients, degree_p1)
-        refpt = bkgmeta.refpoint
+        c = np.reshape(list(bkgmeta.coefficients), degree_p1)
+        refpt = tuple(bkgmeta.refpoint)
 
         cs_type = bkgmeta.cs_type
 
@@ -189,8 +192,8 @@ class CubeSkyMatchStep(Step):
         y = y.ravel()
 
         # convert to RA/DEC:
-        r, d, l = model2d.met.wcs(x.astype(dtype=np.float),
-                              y.astype(dtype=np.float))
+        r, d, l = model2d.meta.wcs(x.astype(dtype=np.float),
+                                   y.astype(dtype=np.float))
 
         # some pixels may be NaNs and so throw them out:
         m = np.logical_and(
@@ -268,7 +271,7 @@ def _find_channel_bkg_index(model2d, channel):
     return index
 
 
-def _extend_cube_schema(self, model):
+def _extend_cube_schema(model):
     bkg_schema = {
         "type": "object",
         "properties": {

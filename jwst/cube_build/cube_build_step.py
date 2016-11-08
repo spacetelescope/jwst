@@ -22,10 +22,10 @@ class CubeBuildStep (Step):
     """
 
     spec = """
-         channel = string(default='')
-         band   = string(default='')
-         grating   = string(default='')
-         filter   = string(default='')
+         channel = option('1','2','3','4','ALL',default='ALL')
+         band   = option('SHORT','MEDIUM','LONG','ALL',default='ALL')
+         grating   = option('PRISIM','G140M','G140H','G235M','G235H',G395M','G395H','ALL',default='ALL')
+         filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL',default='ALL')
          scale1 = float(default=0.0)
          scale2 = float(default =0.0)
          scalew = float(default = 0.0)
@@ -40,7 +40,7 @@ class CubeBuildStep (Step):
        """
 
     def process(self, input):
-        self.log.info('Starting IFU Cube Building Step 2...')
+        self.log.info('Starting IFU Cube Building Step')
 
         self.subchannel = self.band
 
@@ -50,10 +50,10 @@ class CubeBuildStep (Step):
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
         if(not self.interpolation.islower()): self.interpolation = self.interpolation.lower()
         if(not self.weighting.islower()): self.weighting = self.weighting.lower()
-        if(self.channel != ''): self.log.info('Input Channel %s', self.channel)
-        if(self.subchannel != ''): self.log.info('Input Channel %s', self.subchannel)
-        if(self.grating != ''): self.log.info('Input Channel %s', self.grating)
-        if(self.filter != ''): self.log.info('Input Channel %s', self.filter)
+#        if(self.channel != ''): self.log.info('Input Channel %s', self.channel)
+#        if(self.subchannel != ''): self.log.info('Input Subchannel %s', self.subchannel)
+#        if(self.grating != ''): self.log.info('Input grating %s', self.grating)
+#        if(self.filter != ''): self.log.info('Input filter %s', self.filter)
         if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
         if(self.scale2 != 0.0): self.log.info('Input Scale of axis 2 %f', self.scale2)
         if(self.scalew != 0.0): self.log.info('Input wavelength scale %f  ', self.scalew)
@@ -69,10 +69,10 @@ class CubeBuildStep (Step):
         if (self.coord_system == 'ra-dec'):
             self.interpolation = 'pointcloud'  # can not be area
 
-        self.log.info('Input interpolation %s', self.interpolation)
+        self.log.info('Input interpolation: %s', self.interpolation)
 
-        self.log.info('Coordinate system to use %s', self.coord_system)
-        self.log.info('Weighting method for point cloud %s',self.weighting)
+        self.log.info('Coordinate system to use: %s', self.coord_system)
+        self.log.info('Weighting method for point cloud: %s',self.weighting)
 #_________________________________________________________________________________________________
 # Set up the IFU cube basic parameters that define a cube
         self.metadata = {}
@@ -104,19 +104,17 @@ class CubeBuildStep (Step):
 
         input_table = cube_build_io.IFUCubeASN(input)
 
-        self.input_table_type = 'Association'
-        if(input_table.asn_table['asn_type'] == 'singleton'):
+        if input_table.asn_table['asn_type'] == 'singleton':
             self.offset_list = 'NA'
-            self.input_table_type = 'singleton'
 
-        self.log.debug('Output Base %s ', input_table.asn_table['products'][0]['name'])
+        self.log.info('Output Base %s ', input_table.asn_table['products'][0]['name'])
 
         # Check if there is an offset list (this ra,dec dither offset list will probably
         # only be used in testing) 
         self.ra_offset = list()  # units arc seconds
         self.dec_offset = list() # units arc seconds
-        if(self.offset_list != 'NA'):
-            print('Going to read in dither offset list')
+        if self.offset_list != 'NA':
+            self.log('Going to read in dither offset list')
             cube_build_io.ReadOffSetFile(self)
 
         # Read in the input data (association table or single file)
@@ -124,8 +122,9 @@ class CubeBuildStep (Step):
         # Also if there is an Offset list - fill in MasterTable.FileOffset
         MasterTable = cube_build_io.FileTable()
         
-        num, instrument,detector = cube_build_io.SetFileTable(self, input_table, 
-                                                              MasterTable)
+        num, instrument, detector = cube_build_io.SetFileTable(self, input_table, 
+                                                               MasterTable)
+
 
         self.metadata['number_files'] = num
         self.metadata['detector'] = detector            
@@ -140,7 +139,6 @@ class CubeBuildStep (Step):
 
 
         self.output_name_base = input_table.asn_table['products'][0]['name']
-
         self.output_name = cube_build_io.UpdateOutPutName(self)
 
 #________________________________________________________________________________
@@ -162,8 +160,9 @@ class CubeBuildStep (Step):
 
 
         # for now InstrumentDefaults holds defaults on the two instruments
-        InstrumentInfo = InstrumentDefaults.Info() 
-        self.log.info(' Building Cube %s ', Cube.output_name)
+        InstrumentInfo = InstrumentDefaults.Info()
+
+        if self.CubeType == 'File' or self.CubeType == 'ASN' : self.log.info('Building Cube %s ', Cube.output_name)
 
 
             # Scale is 3 dimensions and is determined from default values InstrumentInfo.GetScale
@@ -196,7 +195,7 @@ class CubeBuildStep (Step):
                                                          InstrumentInfo)
 
         t1 = time.time()
-        print("Time to determine size of cube = %.1f.s" % (t1 - t0,))
+#        print("Time to determine size of cube = %.1f.s" % (t1 - t0,))
 
             # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
             # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
@@ -218,7 +217,8 @@ class CubeBuildStep (Step):
         self.power_z = 1
 
 
-        IFUCube = cube_model.SetUpIFUCube(Cube)
+        IFUCube = cube_model.SetUpIFUCube(self,Cube)
+
 
         if(self.interpolation == 'pointcloud'):
             self.log.info('Region of interest %f %f %f', 
@@ -239,7 +239,7 @@ class CubeBuildStep (Step):
                                               Cube.ycoord[y], 
                                               Cube.zcoord[z]))                        
         t1 = time.time()
-        print("Time to create list of spaxel classes = %.1f.s" % (t1 - t0,))
+#        print("Time to create list of spaxel classes = %.1f.s" % (t1 - t0,))
 
         # create an empty Pixel Cloud array of 10 columns
         # if doing interpolation on point cloud this will become a matrix of  Pixel Point cloud values
@@ -291,10 +291,17 @@ class CubeBuildStep (Step):
 
         t1 = time.time()
         self.log.info("Time find Cube Flux= %.1f.s" % (t1 - t0,))
-# write out the IFU cube
-#        IFUcubeModel = cube_build_io.WriteCube(self, Cube, spaxel)
-        IFUCube = cube_model.UpdateIFUCube(self, Cube,IFUCube, spaxel)
 
+
+        result = cube_model.UpdateIFUCube(self, Cube,IFUCube, spaxel)
+
+# write out the IFU cube
+        if self.CubeType == 'File' or self.CubeType =='ASN' :
+            self.output_file = IFUCube.meta.filename
+#            IFUCube.save(IFUCube.meta.filename)
+        IFUCube.close()
+
+        return result
 
 
 
