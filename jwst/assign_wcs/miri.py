@@ -12,7 +12,7 @@ import gwcs.coordinate_frames as cf
 from gwcs import selector
 from . import pointing
 from ..transforms import models as jwmodels
-
+from .util import not_implemented_mode
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
