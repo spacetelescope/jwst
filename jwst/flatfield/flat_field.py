@@ -378,15 +378,16 @@ def do_NIRSpec_flat_field(output_model,
                           "skipping ...", slit.name)
                 continue
 
-        # Get the wavelength of each pixel in the extracted slit data.
+        # pixels with respect to the original image
         ysize, xsize = slit.data.shape
         xstart = slit.xstart - 1
         ystart = slit.ystart - 1
         xstop = xstart + xsize
         ystop = ystart + ysize
+
+        # Get the wavelength of each pixel in the extracted slit data.
+        # pixels with respect to the cutout
         grid = np.indices((ysize, xsize), dtype=np.float64)
-        grid[0] += ystart       # pixels with respect to the original image
-        grid[1] += xstart
         # The arguments are the X and Y pixel coordinates (in that order).
         (ra, dec, wl) = slit.meta.wcs(grid[1], grid[0])
         del ra, dec, grid
@@ -398,7 +399,7 @@ def do_NIRSpec_flat_field(output_model,
             log.info("Number of NaNs in sci wavelength array = %s out of %s",
                      sum_nan_mask, sum_nan_mask + sum_good_mask)
             if sum_good_mask < 1:
-                log.info("(all are NaN)")
+                log.warning("(all are NaN)")
             # Replace NaNs with a harmless but out-of-bounds value.
             wl[nan_mask] = -1000.
         if wl.max() > 0. and wl.max() < MICRONS_100:

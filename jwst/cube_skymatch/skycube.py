@@ -286,7 +286,15 @@ class SkyCube(object):
 
         z, y, x = np.indices(self._data.shape, dtype=np.float)
         if self._wcs is not None:
-            x, y, z = self.wcs(x, y, z)
+            # TODO: the need to use ravel/reshape is due to a bug in
+            # astropy.modeling that is affecting gwcs. In future, all the code
+            # in this "if"-block should be replaced directly with:
+            # x, y, z = self.wcs(x, y, z)
+            shape = z.shape
+            x, y, z = self.wcs(x.ravel(), y.ravel(), z.ravel())
+            x = x.reshape(shape)
+            y = y.reshape(shape)
+            z = z.reshape(shape)
         self._mgx = x - self._x0
         self._mgy = y - self._y0
         self._mgz = z - self._z0
