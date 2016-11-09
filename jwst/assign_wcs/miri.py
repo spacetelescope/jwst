@@ -310,5 +310,8 @@ exp_type2transform = {'mir_image': imaging,
                       'mir_coroncal': imaging,
                       'mir_lrs-fixedslit': lrs,
                       'mir_lrs-slitless': lrs,
-                      'mir_mrs': ifu
+                      'mir_mrs': ifu,
+                      'mir_flatmrs': not_implemented_mode,
+                      'mir_flatimage': not_implemented_mode,
+                      'mir_dark': not_implemented_mode
                       }
