@@ -132,8 +132,8 @@ def compute_fiducial(wcslist, domain=None):
 
     This function assumes all WCSs have the same output coordinate frame.
     """
-    output_frame = getattr(wcslist[0], 'output_frame')
-    axes_types = getattr(wcslist[0], output_frame).axes_type
+    output_frame = wcslist[0].output_frame
+    axes_types = wcslist[0].output_frame.axes_type
     spatial_axes = np.array(axes_types) == 'SPATIAL'
     spectral_axes = np.array(axes_types) == 'SPECTRAL'
     footprints = np.hstack([w.footprint(domain=domain) for w in wcslist])
@@ -154,7 +154,6 @@ def compute_fiducial(wcslist, domain=None):
     if (spectral_footprint).any():
         fiducial[spectral_axes] = spectral_footprint.min()
     return fiducial
-
 
 
 def is_fits(input):
