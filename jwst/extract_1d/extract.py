@@ -798,8 +798,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 source_type = input_model.meta.target.source_type
             except AttributeError:
                 source_type = "unknown"
-            output_model = ifu.ifu_extract1d(input_model, refname,
-                                             source_type, smoothing_length)
+            output_model = ifu.ifu_extract1d(input_model, refname, source_type)
 
         else:
             log.error("The input file is not supported for this step.")
