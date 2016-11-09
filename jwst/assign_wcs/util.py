@@ -92,7 +92,7 @@ def wcs_from_footprints(wcslist, refwcs=None, transform=None, domain=None):
         # Remove the work around this issues from here.
         prj = refwcs.forward_transform[int(prj[0])]
     else:
-        prj = None
+        prj = astmodels.Pix2Sky_TAN()
     trans = []
     scales = [m for m in refwcs.forward_transform if isinstance(m, astmodels.Scale)]
     if scales:
@@ -105,7 +105,7 @@ def wcs_from_footprints(wcslist, refwcs=None, transform=None, domain=None):
         tr = functools.reduce(lambda x, y: x | y, trans)
     else:
         tr = None
-    out_frame = getattr(refwcs, getattr(refwcs, 'output_frame'))
+    out_frame = refwcs.output_frame
     wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame,
                              projection=prj, transform=tr)
 
