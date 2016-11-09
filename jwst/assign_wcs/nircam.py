@@ -58,5 +58,4 @@ exp_type2transform = {'nrc_image': imaging,
                       'nrc_led': not_implemented_mode,
                       'nrc_dark': not_implemented_mode,
                       'nrc_flat': not_implemented_mode,
-                      'nrc_wfsc': not_implemented_mode,
                       }

@@ -71,6 +71,6 @@ def imaging_distortion(input_model, reference_files):
 exp_type2transform = {'fgs_image': imaging,
                       'fgs_focus': imaging,
                       'fgs_skyflat': imaging,
-                      'fgs_intflat': imaging,
+                      'fgs_intflat': not_implemented_mode,
                       'fgs_dark': not_implemented_mode
                       }
