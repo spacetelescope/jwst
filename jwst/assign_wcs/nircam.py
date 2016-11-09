@@ -49,10 +49,13 @@ def imaging_distortion(input_model, reference_files):
 
 exp_type2transform = {'nrc_image': imaging,
                       'nrc_slitless': not_implemented_mode, #WFSS mode
-                      'nrc_tacq': not_implemented_mode,#       ?? distortion
+                      'nrc_tacq': imaging,#       ?? distortion
+                      'nrc_taconfirm': imaging,
                       'nrc_coron': not_implemented_mode,#    ?? distortion
-                      'nrc_focus': not_implemented_mode,#       ?? distortion
+                      'nrc_focus': imaging,#       ?? distortion
                       'nrc_tss': not_implemented_mode,# custom SOSS like mode TBC
-                      'nrc_tsi': not_implemented_mode,# custom soss like mode (TBC
+                      'nrc_tsimage': imaging,# custom soss like mode (TBC
+                      'nrc_tsgrism': not_implemented_mode,
                       'nrc_led': not_implemented_mode,#    ?? WFSS mode
+                      'nrc_dark': not_implemented_mode
                       }
