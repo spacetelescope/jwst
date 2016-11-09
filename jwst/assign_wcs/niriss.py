@@ -143,5 +143,7 @@ exp_type2transform = {'nis_image': imaging,
                       'nis_ami': not_implemented_mode, #        ?? imaging
                       'nis_tacq': imaging,
                       'nis_taconfirm': imaging,
-                      'nis_focus': imaging
+                      'nis_focus': imaging,
+                      'nis_dark': not_implemented_mode,
+                      'nis_lamp': not_implemented_mode,
                       }

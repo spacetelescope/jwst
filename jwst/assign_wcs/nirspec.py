@@ -1227,5 +1227,6 @@ exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_autoflat': not_implemented_mode, #TBD
                       'nrs_autowave': not_implemented_mode, #TBD
                       'nrs_lamp': slits_wcs,
-                      'nrs_brightobj': slits_wcs
+                      'nrs_brightobj': slits_wcs,
+                      'nrs_dark': not_implemented_mode,
                       }
