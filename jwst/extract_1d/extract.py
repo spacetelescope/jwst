@@ -758,7 +758,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             nerror = np.ones_like(net)
             berror = np.ones_like(net)
             spec = datamodels.SpecModel()
-            otab = np.array(zip(column, wavelength, background, net),
+            otab = np.array(zip(wavelength, flux, fl_error, dq,
+                                net, nerror, background, berror),
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             output_model.spec.append(spec)
