@@ -96,6 +96,10 @@ class DMS_Level3_Base(Association):
         # Let us see if member belongs to us.
         super(DMS_Level3_Base, self).__init__(*args, **kwargs)
 
+        # Other presumptions on the association
+        if 'degraded_status' not in self.data:
+            self.data['degraded_status'] = _DEGRADED_STATUS_OK
+
     @property
     def is_valid(self):
         return all(test['validated'] for test in self.validity.values())
@@ -233,13 +237,12 @@ class DMS_Level3_Base(Association):
         self.update_validity(entry)
         members = self.current_product['members']
         members.append(entry)
-        self.data['degraded_status'] = _DEGRADED_STATUS_OK
         if exposerr not in _EMPTY:
-            self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
             logger.warn('Member {} has error "{}"'.format(
                 member['FILENAME'],
                 exposerr
             ))
+            self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
 
         # Add entry to the short list
         self.members.add(entry[KEY])
