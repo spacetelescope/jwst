@@ -1,3 +1,5 @@
+from __future__ import (absolute_import, unicode_literals, division)
+
 import json
 import logging
 import math
@@ -235,6 +237,26 @@ def extract_ifu(input_model, source_type, extract_params):
 
     if inner_bkg <= 0. or outer_bkg <= 0. or inner_bkg >= outer_bkg:
         subtract_background = False
+
+    log.info("IFU 1-D extraction parameters:")
+    log.info("  x_center = %s", str(x_center))
+    log.info("  y_center = %s", str(y_center))
+    if source_type == 'point':
+        log.info("  radius = %s", str(radius))
+        log.info("  subtract_background = %s", str(subtract_background))
+        log.info("  inner_bkg = %s", str(inner_bkg))
+        log.info("  outer_bkg = %s", str(outer_bkg))
+        log.info("  method = %s", method)
+        if method == "subpixel":
+            log.info("  subpixels = %s", str(subpixels))
+    else:
+        log.info("  width = %s", str(width))
+        log.info("  height = %s", str(height))
+        log.info("  theta = %s degrees", str(extract_params['theta']))
+        log.info("  subtract_background = %s", str(subtract_background))
+        log.info("  method = %s", method)
+        if method == "subpixel":
+            log.info("  subpixels = %s", str(subpixels))
 
     # Check for out of bounds.
     # The problem with having the background aperture extend beyond the
