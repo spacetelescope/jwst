@@ -134,9 +134,9 @@ def _override_config_from_args(config, args):
             set_value(config, key, val)
 
 
-def step_from_cmdline(args, cls=None):
+def just_the_step_from_cmdline(args, cls=None):
     """
-    Create a step from a configuration file.
+    Create a step from a configuration file and return it.  Don't run it.
 
     Parameters
     ----------
@@ -156,6 +156,8 @@ def step_from_cmdline(args, cls=None):
         Any parameters found in the config file or on the commandline
         will be set as member variables on the returned `Step`
         instance.
+
+    DOES NOT RUN THE STEP
     """
     import argparse
     parser1 = argparse.ArgumentParser(
@@ -266,6 +268,34 @@ def step_from_cmdline(args, cls=None):
     log.log.info("Hostname: {0}".format(os.uname()[1]))
     log.log.info("OS: {0}".format(os.uname()[0]))
 
+    return step
+
+def step_from_cmdline(args, cls=None):
+    """
+    Create a step from a configuration file and run it.
+
+    Parameters
+    ----------
+    args : list of str
+        Commandline arguments
+
+    cls : Step class
+        The step class to use.  If none is provided, the step
+
+    Returns
+    -------
+    step : Step instance
+        If the config file has a `class` parameter, or the commandline
+        specifies a class, the return value will be as instance of
+        that class.
+
+        Any parameters found in the config file or on the commandline
+        will be set as member variables on the returned `Step`
+        instance.
+    """
+
+    step = just_the_step_from_cmdline(args, cls)
+
     try:
         profile_path = os.environ.pop("JWST_PROFILE", None)
         if profile_path:
@@ -300,3 +330,23 @@ def step_script(cls):
     assert issubclass(cls, Step)
 
     return step_from_cmdline(sys.argv[1:], cls=cls)
+
+
+def reference_types_from_config(cfg):
+    """Return the reference type names associated with a pipeline config file
+    as a sorted list of strings.
+
+    If `cfg` does not have an explicit path, find it in the jwst.pipeline
+    installation directory.
+    """
+    path = os.path.dirname(cfg)
+    if not path:
+        from jwst import pipeline
+        path = os.path.dirname(pipeline.__file__)
+        cfg = os.path.join(path, os.path.basename(cfg))
+    reftypes = set()
+    step = just_the_step_from_cmdline([cfg])    
+    for sub in step.step_defs.values():
+        reftypes |= set(sub.reference_file_types)
+    return sorted(list(reftypes))
+
