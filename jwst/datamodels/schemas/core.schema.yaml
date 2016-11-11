@@ -43,6 +43,10 @@ properties:
         title: Calibration software revision number
         type: string
         fits_keyword: CAL_SVN
+      model_type:
+        title: Type of data model
+        type: string
+        fits_keyword: DATAMODL
       telescope:
         title: Telescope used to acquire the data
         type: string
