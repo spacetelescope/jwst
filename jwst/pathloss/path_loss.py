@@ -22,7 +22,7 @@ def getCenter(exp_type, input):
         #
         # Currently assume IFU sources are centered
         return (0.0, 0.0)
-    elif exp_type == "NRS_MSASPEC":
+    elif exp_type == "NRS_MSASPEC" or exp_type == "NRS_FIXEDSLIT":
         #
         # MSA centering specified in the MiltiSlit model
         # "input" treated as a slit object
@@ -40,28 +40,38 @@ def getCenter(exp_type, input):
         log.warning("Using (0.0, 0.0)")
         return (0.0, 0.0)
 
-def getApertureFromModel(input_model, nshutters):
-    """Figure out the correct aperture based on the number of shutters in the slit
+def getApertureFromModel(input_model, match):
+    """Figure out the correct aperture based on the value of the 'match'
+    parameter.  For MSA, match is the number of shutters, for fixed slit,
+    match is the name of the slit
     """
-    for aperture in input_model.apertures:
-        if aperture.shutters == nshutters: return aperture
+    if input_model.meta.exposure.type == 'NRS_MSASPEC':
+        for aperture in input_model.apertures:
+            if aperture.shutters == match: return aperture
+    elif input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
+        for aperture in input_model.apertures:
+            log.info(aperture.name)
+            if aperture.name == match: return aperture
+    else:
+        log.warn('Unable to get aperture from model type {0}'.format(input_model.meta.exposure.type))
     #
     # If nothing matches, return None
     return None
 
-def calculate_pathloss_vector(pathloss_model_type, xcenter, ycenter):
+def calculate_pathloss_vector(pathloss_refdata, pathloss_wcs, xcenter, ycenter):
     """
-    Calculate the pathloss vector from the pathloss model using the
+    Calculate the pathloss vectors from the pathloss model using the
     coordinates of the center of the target to interpolate the
     pathloss value as a function of wavelength at that location
 
     Parameters:
     -----------
 
-    pathloss_model_type: datamodel.PathlossModel.pointsource
-                      or datamodel.PathlossModel.uniformsource
+    pathloss_refdata:     numpy ndarray
 
-    The input pathloss model attribute
+    The input pathloss data array
+
+    pathloss_wcs:      wcs attribute from model
 
     xcenter: Float
 
@@ -72,37 +82,35 @@ def calculate_pathloss_vector(pathloss_model_type, xcenter, ycenter):
     The y-center of the target (-0.5 to 0.5)
 
     """
-
-    refdata = pathloss_model_type.data
-    pathwcs = pathloss_model_type.wcs
-    wavesize = refdata.shape[0]
+    
+    wavesize = pathloss_refdata.shape[0]
     wavelength = np.zeros(wavesize, dtype=np.float32)
     #
     # uniformsource.data is 1-d, we just return it, along with
     # a vector of wavelengths calculated using the WCS
-    if len(refdata.shape) == 1:
-        crpix1 = pathwcs.crpix1
-        crval1 = pathwcs.crval1
-        cdelt1 = pathwcs.cdelt1    
+    if len(pathloss_refdata.shape) == 1:
+        crpix1 = pathloss_wcs.crpix1
+        crval1 = pathloss_wcs.crval1
+        cdelt1 = pathloss_wcs.cdelt1    
         for i in np.arange(wavesize):
             wavelength[i] = crval1 +(float(i) - crpix1)*cdelt1
-        return wavelength, refdata
+        return wavelength, pathloss_refdata
     #
     # pointsource.data is 3-d, so we have to extract a wavelength vector
     # at the specified location.  We do this using bilinear interpolation
     else:
-        crpix3 = pathwcs.crpix3
-        crval3 = pathwcs.crval3
-        cdelt3 = pathwcs.cdelt3    
+        crpix3 = pathloss_wcs.crpix3
+        crval3 = pathloss_wcs.crval3
+        cdelt3 = pathloss_wcs.cdelt3    
         for i in np.arange(wavesize):
             wavelength[i] = crval3 +(float(i) - crpix3)*cdelt3
         # Calculate python index of object center
-        crpix1 = pathwcs.crpix1
-        crval1 = pathwcs.crval1
-        cdelt1 = pathwcs.cdelt1
-        crpix2 = pathwcs.crpix2
-        crval2 = pathwcs.crval2
-        cdelt2 = pathwcs.cdelt2
+        crpix1 = pathloss_wcs.crpix1
+        crval1 = pathloss_wcs.crval1
+        cdelt1 = pathloss_wcs.cdelt1
+        crpix2 = pathloss_wcs.crpix2
+        crval2 = pathloss_wcs.crval2
+        cdelt2 = pathloss_wcs.cdelt2
         object_colindex = crpix1 + (xcenter - crval1) / cdelt1 - 1
         object_rowindex = crpix2 + (ycenter - crval2) / cdelt2 - 1
         #
@@ -116,8 +124,8 @@ def calculate_pathloss_vector(pathloss_model_type, xcenter, ycenter):
         a21 = dx2*dy1
         a22 = dx2*dy2
         j, i = int(object_colindex), int(object_rowindex)
-        pathloss_vector = a22*refdata[:, i, j] + a12*refdata[:, i+1, j] + \
-            a21*refdata[:, i, j+1] + a11*refdata[:, i+1, j+1]
+        pathloss_vector = a22*pathloss_refdata[:, i, j] + a12*pathloss_refdata[:, i+1, j] + \
+            a21*pathloss_refdata[:, i, j+1] + a11*pathloss_refdata[:, i+1, j+1]
         return wavelength, pathloss_vector
 
 def do_correction(input_model, pathloss_model):
@@ -141,6 +149,7 @@ def do_correction(input_model, pathloss_model):
 
     """
     exp_type = input_model.meta.exposure.type
+    log.info(exp_type)
     if exp_type == 'NRS_MSASPEC':
         slit_number = 0
         # For each slit
@@ -158,9 +167,11 @@ def do_correction(input_model, pathloss_model):
                 if aperture is not None:
                     wavelength_pointsource, pathloss_pointsource_vector = \
                         calculate_pathloss_vector(aperture.pointsource_data,
+                                                  aperture.pointsource_wcs,
                                                   xcenter, ycenter)
                     wavelength_uniformsource, pathloss_uniform_vector = \
                         calculate_pathloss_vector(aperture.uniform_data,
+                                                  aperture.uniform_wcs,
                                                   xcenter, ycenter)
                     #
                     # Wavelengths in the reference file are in meters, need them to be
@@ -185,6 +196,51 @@ def do_correction(input_model, pathloss_model):
                 slit.pl_uniform = calculate_pathloss(wave_array,
                                                      wavelength_uniformsource,
                                                      pathloss_uniform_vector)
+    elif exp_type == 'NRS_FIXEDSLIT':
+        slit_number = 0
+        # For each slit
+        for slit in input_model.slits:
+            log.info(slit.name)
+            slit_number = slit_number + 1
+            # Get centering
+            xcenter, ycenter = getCenter(exp_type, slit)
+            # Calculate the 1-d wavelength and pathloss vectors
+            # for the source position
+            # Get the aperture from the reference file that matches the slit
+            aperture = getApertureFromModel(pathloss_model, slit.name)
+            if aperture is not None:
+                log.info("Using aperture {0}".format(aperture.name))
+                wavelength_pointsource, pathloss_pointsource_vector = \
+                    calculate_pathloss_vector(aperture.pointsource_data,
+                                              aperture.pointsource_wcs,
+                                              xcenter, ycenter)
+                wavelength_uniformsource, pathloss_uniform_vector = \
+                    calculate_pathloss_vector(aperture.uniform_data,
+                                              aperture.uniform_wcs,
+                                              xcenter, ycenter)
+                #
+                # Wavelengths in the reference file are in meters, need them to be
+                # in microns
+                wavelength_pointsource *= 1.0e6
+                wavelength_uniformsource *= 1.0e6
+            else:
+                print("Cannot find matching pathloss model for aperture %s" % slit.name)
+                continue
+            nrows, ncols = slit.data.shape
+            # Get wavelengths of each end
+            xstart = slit.xstart
+            xstop = xstart + ncols
+            ystart = slit.ystart
+            ystop = ystart + nrows
+            # For each pixel
+            y, x = np.mgrid[ystart:ystop, xstart:xstop]
+            ra, dec, wave_array = slit.meta.wcs(x, y)
+            slit.pl_point = calculate_pathloss(wave_array,
+                                               wavelength_pointsource,
+                                               pathloss_pointsource_vector)
+            slit.pl_uniform = calculate_pathloss(wave_array,
+                                                 wavelength_uniformsource,
+                                                 pathloss_uniform_vector)
     elif exp_type == 'NRS_IFU':
         #
         # Make empty pathloss arrays for point and uniform
@@ -302,7 +358,7 @@ def interpolated_lookup(value, array_in, array_out):
 
     subtracted = array_in - value
     shift_mult = subtracted[1:] * subtracted[:-1]
-    index_tuple = np.where(shift_mult[1:]*shift_mult[:-1] < 0.0)
+    index_tuple = np.where(shift_mult < 0.0)
     if len(index_tuple[0]) > 0:
         index = index_tuple[0][0]
         remainder = value - array_in[index]
