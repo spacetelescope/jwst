@@ -12,7 +12,7 @@ import gwcs.coordinate_frames as cf
 from gwcs import selector
 from . import pointing
 from ..transforms import models as jwmodels
-
+from .util import not_implemented_mode
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -310,5 +310,10 @@ exp_type2transform = {'mir_image': imaging,
                       'mir_coroncal': imaging,
                       'mir_lrs-fixedslit': lrs,
                       'mir_lrs-slitless': lrs,
-                      'mir_mrs': ifu
+                      'mir_mrs': ifu,
+                      'mir_flatmrs': not_implemented_mode,
+                      'mir_flatimage': not_implemented_mode,
+                      'mir_flat-mrs': not_implemented_mode,
+                      'mir_flat-image': not_implemented_mode,
+                      'mir_dark': not_implemented_mode,
                       }
