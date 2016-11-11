@@ -25,13 +25,10 @@ class Extract1dStep(Step):
 
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
-        # begin xxx temporary ...
-        fd = fits.open(input)
-        data_model_from_header = fd[0].header.get("datamodl", "missing")
+        data_model_from_header = input_model.meta.model_type
         self.log.debug("data_model_from_header = %s",
                       data_model_from_header)
-        fd.close()
-        # ... end xxx temporary
+
         if data_model_from_header == "IFUCubeModel" and \
            not isinstance(input_model, datamodels.IFUCubeModel):
             self.log.debug("Close and reopen as an IFUCubeModel")
