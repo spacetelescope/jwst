@@ -85,6 +85,9 @@ class DMS_Level3_Base(Association):
         # Initialize discovered association ID
         self.discovered_id = Counter(_DISCOVERED_ID_START)
 
+        # Set the validation schema
+        self.schema_file = ASN_SCHEMA
+
         # Initialize validity checks
         self.validity = {
             'has_science': {
@@ -199,7 +202,6 @@ class DMS_Level3_Base(Association):
         # Set which sequence counter should be used.
         self._sequence = self._sequences[self.data['asn_type']]
 
-        self.schema_file = ASN_SCHEMA
         self.data['target'] = member['TARGETID']
         self.data['program'] = str(member['PROGRAM'])
         self.data['asn_pool'] = basename(

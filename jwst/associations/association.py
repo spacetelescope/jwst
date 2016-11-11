@@ -406,6 +406,9 @@ class Association(MutableMapping):
             'Association._add must be implemented by a specific assocation rule.'
         )
 
+    # #################################################
+    # Methods required for implementing MutableMapping
+    # #################################################
     def __getitem__(self, key):
         return self.data[self.__keytransform__(key)]
 
@@ -423,6 +426,15 @@ class Association(MutableMapping):
 
     def __keytransform__(self, key):
         return key
+
+    def keys(self):
+        return self.data.keys()
+
+    def items(self):
+        return self.data.items()
+
+    def values(self):
+        return self.data.values()
 
 
 # User module level functions
