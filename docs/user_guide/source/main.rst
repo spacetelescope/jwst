@@ -5,75 +5,41 @@ This document provides instructions on running the JWST Science Calibration
 Pipeline (referred to as "the pipeline") and individual pipeline steps.
  
 The pipeline currently consists of ramps-to-slopes processing for all
-observing modes, Level-2b processing for all imaging modes, and Level-2b
-processing for some spectroscopic modes (mainly fixed slit and single
-object slitless).
+observing modes, Level-2b processing for all imaging modes, Level-2b
+processing for most spectroscopic modes (everything but Wide-Field
+Slitless Spectroscopy), and Level-3 imaging.
 
-The ramps-to-slopes (Level-2a) processing consists of
+The ramps-to-slopes (Level-2a) processing consists of detector-level
+corrections that are necessary to perform on a group-by-group basis
+before ramp fitting is applied. The output of Level-2a processing
+is a countrate image per exposure or per integration for some models.
+Details of this pipeline can be found at:
 
-* DQ initialization
-* saturation detection
-* Inter-Pixel Capacitance (IPC) correction
-* superbias subtraction
-* bias drift correction
-* reset correction (MIRI only)
-* last frame correction (MIRI only)
-* linearity correction
-* dark subtraction
-* jump (CR) detection
-* ramp fitting
+http://ssb.stsci.edu/doc/jwst_git/docs/pipeline/html/description.html#level-2a-pipelines-step-flow
 
-Level-2b processing consists of
+Level-2b processing consists of additional corrections and
+calibrations to produce a fully calibrated exposure. The details
+differ for imaging and spectroscopic exposures, and there are some
+corrections that are unique to certain instruments or modes.
+Details are at:
 
-* WCS and distortion model assignment
-* slit extraction (only for some spectroscopy modes)
-* flat fielding
-* persistence correction (currently a no-op)
-* straylight correction (only for MIRI MRS)
-* fringe correction (only for MIRI MRS)
-* telescope emission correction (currently a no-op)  
-* photometric calibration assignment
+http://ssb.stsci.edu/doc/jwst_git/docs/pipeline/html/description.html#level-2b-imaging-pipeline-step-flow
 
-Details of the available pipeline configurations can be found at:
+Level-3 processing consists of routines that combine the data from
+multiple exposures, for all observing modes. Level-3 processing is only
+available at this time for imaging observations. Details are at:
 
-http://ssb.stsci.edu/doc/jwst_dev/jwst.pipeline.doc/html/index.html
+http://ssb.stsci.edu/doc/jwst_git/docs/pipeline/html/description.html#level-3-imaging-pipeline-step-flow
 
-This document contains setup instructions, discussion of the pipeline 
-configuration files, and examples of running pipelines either as
-a whole or in individual steps.
+This document discusses pipeline configuration files and examples of running
+pipelines either as a whole or in individual steps.
 
 This document is a work in progress and will be updated frequently.  The most
-recent version of this document is built nightly from the subversion source
-code repository.  The most recent version of this document can be found on the
+recent version of this document is built nightly from the source
+code repository on git.  The most recent version of this document can be found on the
 site:
 
-http://ssb.stsci.edu/doc/jwst_dev/
-
-
-Software Access
-===============
-
-The JWST calibration pipeline software is pre-installed, along with the
-rest of the STScI SSB python-based software packages that are distributed
-via the Ureka system, on Linux cluster systems at STScI, such as "jwcalibdev"
-and "witserv."
-The jwst pipeline can be installed on a private or non-cluster system
-using the SSB Ureka installer and installing "jwst" as an add-on package.
-Instructions for installing and configuring the Ureka environment are at:
-
-http://ssb.stsci.edu/ssb_software.shtml
-
-We suggest the following procedures for setting up the environment and
-necessary working directories on your system:
-
-* type 'ssbx' (on Linux cluster systems) or 'ur_setup common ssbx' (on Macs and other private systems)
-* create a working directory in which to hold your test data files and pipeline configuration files, and 'cd' to it
-* type 'collect_pipeline_cfgs .' to copy all the pipeline configuration files to your current working directory
-* copy JWST data files into your working directory
-
-Sample JWST data files that are in the correct Level-1b format to use as
-input to the calibration pipeline can be found at 
-\/grp\/jwst\/ssb\/sample_jwst_data\/level1b_wcs\/.
+http://ssb.stsci.edu/doc/jwst_git/docs/
 
 
 CRDS Reference Files
@@ -88,7 +54,7 @@ accomplished by setting the environment variable 'CRDS_CONTEXT' to the
 desired project mapping version, e.g.
 ::
 
-$ setenv CRDS_CONTEXT jwst_0034.pmap
+$ export CRDS_CONTEXT='jwst_0234.pmap'
 
 The current storage location for all JWST CRDS reference files is:
 ::
@@ -119,8 +85,8 @@ For example, running the full ramps-to-slopes pipeline or an individual step by
 referencing their class names is done as follows:
 ::
 
-  $ strun jwst.pipeline.SloperPipeline jw00017001001_01101_00001_NRCA1_uncal.fits
-  $ strun jwst.dq_init.DQInitStep jw00017001001_01101_00001_NRCA1_uncal.fits
+  $ strun jwst.pipeline.SloperPipeline jw00017001001_01101_00001_nrca1_uncal.fits
+  $ strun jwst.dq_init.DQInitStep jw00017001001_01101_00001_nrca1_uncal.fits
 
 When a pipeline or step is executed in this manner (i.e. by referencing the 
 class name), it will be run using all default parameter values. The same thing
@@ -128,20 +94,21 @@ can be accomplished by using the default configuration file corresponding to
 each:
 ::
 
-  $ strun calwebb_sloper.cfg jw00017001001_01101_00001_NRCA1_uncal.fits
-  $ strun dq_init.cfg jw00017001001_01101_00001_NRCA1_uncal.fits
+  $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+  $ strun dq_init.cfg jw00017001001_01101_00001_nrca1_uncal.fits
 
 If you want to use non-default parameter values, you can specify them as
-keyword arguments on the command line.
+keyword arguments on the command line or set them in the appropriate
+cfg file.
 To specify parameter values for an individual step when running a pipeline
 use the syntax `--steps.<step_name>.<parameter>=value`.
 For example, to override the default selection of a dark current reference
 file from CRDS when running a pipeline:
 ::
 
-    $ strun jwst.pipeline.SloperPipeline jw00017001001_01101_00001_NRCA1_uncal.fits
+    $ strun jwst.pipeline.SloperPipeline jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.dark_current.override_dark='my_dark.fits'
-    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_NRCA1_uncal.fits
+    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.dark_current.override_dark='my_dark.fits'
 
 You can get a list of all the available arguments for a given pipeline or
@@ -173,7 +140,7 @@ run the step with all default parameters). In order to skip a step you must
 use the 'skip = True' argument for that step (see `Skip`_ below).
 
 Alternatively, you can specify arguments for individual steps within the
-step configuration file and then reference those step cfg files in the pipeline
+step's configuration file and then reference those step cfg files in the pipeline
 cfg file, such as:
 ::
 
@@ -200,17 +167,17 @@ You can execute a pipeline or a step from within python by using the
 ::
 
  from jwst.pipeline import SloperPipeline
- SloperPipeline.call('jw00017001001_01101_00001_NRCA1_uncal.fits')
+ result = SloperPipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits')
 
  from jwst.linearity import LinearityStep
- LinearityStep.call('jw00001001001_01101_00001_MIRIMAGE_uncal.fits')
+ result = LinearityStep.call('jw00001001001_01101_00001_mirimage_uncal.fits')
 
 The easiest way to use optional arguments when calling a pipeline from
 within python is to set those parameters in the pipeline cfg file and
 then supply the cfg file as a keyword argument:
 ::
 
- SloperPipeline.call('jw00017001001_01101_00001_NRCA1_uncal.fits', config_file='calwebb_sloper.cfg')
+ SloperPipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits', config_file='calwebb_sloper.cfg')
 
 
 Universal Parameters
@@ -226,7 +193,7 @@ individual steps, you can use the `output_file` argument for each step.
 For example, if you specify
 ::
 
-    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_NRCA1_uncal.fits
+    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --steps.dark_current.output_file='dark_sub.fits'
 
 the results at the end of the dark current subtraction step would be saved
@@ -250,7 +217,7 @@ To override the use of the default linearity file selection, for example,
 we would use:
 ::
 
-  $ strun calwebb_sloper.cfg jw00017001001_01101_00001_NRCA1_uncal.fits
+  $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.linearity.override_linearity='my_lin.fits'
 
 Skip
@@ -259,22 +226,21 @@ Skip
 Another argument available to all steps in a pipeline is `skip`.
 If 'skip=True' is set for any step, that step will be skipped, with the
 output of the previous step being automatically passed directly to the input
-of the step following the one that was skipped. For example, when
-applying Level-2b spectroscopic processing to MIRI LRS data we do not want
-to run the extract_2d step, which extracts a region of the image around the
-spectrum. So the cfg appears as:
+of the step following the one that was skipped. For example, if you want to
+skip the linearity correction step, edit the calwebb_sloper.cfg file to
+contain:
 ::
 
    [steps]
-      [[extract_2d]]
+      [[linearity]]
         skip = True
       ...
 
 Alternatively you can specify the `skip` argument on the command line:
 ::
 
-    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_NRCA1_uncal.fits
-        --steps.dark_current.skip=True
+    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+        --steps.linearity.skip=True
 
 Logging Configuration
 ---------------------
@@ -288,7 +254,7 @@ pipeline cfg file.
 For example:
 ::
 
-    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_NRCA1_uncal.fits
+    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --logcfg=pipeline-log.cfg
 
 and the file `pipeline-log.cfg` contains:
@@ -327,18 +293,19 @@ list of suffixes is shown in the following table.
 Product                                        Suffix
 =============================================  ========
 Uncalibrated Level-1b input                    uncal
-Partially calibrated Level-2a ramp data        ramp
-Partially calibrated Level-2a countrate image  rate
+Corrected Level-2a ramp data                   ramp
+Corrected Level-2a countrate image             rate
 Level-2a countrate per integration             rateints
 Optional fitting results from ramp_fit step    fitopt
 Level-2b background-subtracted image           bsub
 Per integration background-subtracted image    bsubints
-Fully-calibrated Level-2b image                cal
-Fully-calibrated per integration images        calints
-1D extracted spectrum                          spec
-1D extracted spectra per integration           specints
-Drizzled/combined image                        drz
-3D IFU cube                                    cube
+Calibrated Level-2b image                      cal
+Calibrated per integration images              calints
+1D extracted spectrum                          x1d 
+1D extracted spectra per integration           x1dints
+Resampled image                                i2d
+Resampled spectrum                             s2d
+Resampled 3D IFU cube                          s3d
 =============================================  ========
 
 Individual Step Outputs
@@ -351,10 +318,10 @@ and appends the name of the step as an additional suffix to the input file
 name. For example:
 ::
 
- $ strun dq_init.cfg jw00017001001_01101_00001_NRCA1_uncal.fits
+ $ strun dq_init.cfg jw00017001001_01101_00001_nrca1_uncal.fits
 
 produces an output file named 
-"jw00017001001_01101_00001_NRCA1_uncal_dq_init.fits."
+"jw00017001001_01101_00001_nrca1_uncal_dq_init.fits."
 
 Configuration Files
 ===================
@@ -414,7 +381,7 @@ which gives the usage, the positional arguments, and the optional arguments.
 More information on configuration files can be found in the `stpipe` User's
 Guide at:
 
-http://ssb.stsci.edu/doc/jwst_dev/jwst.stpipe.doc/html/index.html
+http://ssb.stsci.edu/doc/jwst_git/docs/stpipe/html/
 
 Available Pipelines
 ===================
@@ -423,7 +390,7 @@ There are currently several pre-defined pipelines available for processing
 the data from different instrument observing modes. For all of the details
 see:
 
-http://ssb.stsci.edu/doc/jwst_dev/jwst.pipeline.doc/html/index.html
+http://ssb.stsci.edu/doc/jwst_git/docs/pipeline/html/
 
 
 For More Information
@@ -432,12 +399,12 @@ For More Information
 More information on logging and running pipelines can be found in the `stpipe`
 User's Guide at:
 
-http://ssb.stsci.edu/doc/jwst_dev/jwst.stpipe.doc/html/user/index.html
+http://ssb.stsci.edu/doc/jwst_git/docs/stpipe/html/user/index.html
 
 More detailed information on writing pipelines can be found 
 in the `stpipe` Developer's Guide at:
 
-http://ssb.stsci.edu/doc/jwst_dev/jwst.stpipe.doc/html/devel/index.html
+http://ssb.stsci.edu/doc/jwst_git/docs/stpipe/html/devel/index.html
 
 
 Another Source of JWST Test Data
