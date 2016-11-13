@@ -84,6 +84,8 @@ def imaging_distortion(input_model, reference_files):
     """
 
     # Load the distortion and filter from the reference files.
+
+    # Load in the distortion file.
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
     filter_offset = AsdfFile.open(reference_files['filteroffset']).tree[input_model.meta.instrument.filter]
 
@@ -91,50 +93,126 @@ def imaging_distortion(input_model, reference_files):
     full_distortion = models.Shift(filter_offset['column_offset']) & models.Shift(
         filter_offset['row_offset']) | distortion | models.Scale(1/60) & models.Scale(1/60)
 
+
+    # ToDo: This will likely have to change in the future, but the "filteroffset" file we have
+    # ToDo: currently does not contain that key.
+    filter_offset = None
+    if input_model.meta.instrument.filter in  AsdfFile.open(reference_files['filteroffset']).tree:
+        filter_offset = AsdfFile.open(reference_files['filteroffset']).tree[input_model.meta.instrument.filter]
+        full_distortion = models.Shift(filter_offset['row_offset']) & models.Shift(
+            filter_offset['column_offset']) | distortion
+    else:
+        full_distortion = distortion
+
     full_distortion = full_distortion.rename('distortion')
 
     return full_distortion
 
 
+def is_number(s):
+
+    # Check, first, to make sure it is not None
+    if not s:
+        return False
+
+    # Now, check to see if it is a number
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
 def lrs(input_model, reference_files):
     """
     Create the WCS pipeline for a MIRI fixed slit observation.
 
-    reference_files = {"specwcs": 'MIRI_FM_MIRIMAGE_P750L_DISTORTION_04.02.00.fits'}
+    reference_files = {
+        "specwcs": 'MIRI_FM_MIRIMAGE_P750L_DISTORTION_04.02.00.fits'
+    }
     """
+
+    # TODO: Remove this as it is just for testing because the input dataset
+    # TODO: does not have these defined
+    input_model.meta.wcsinfo.v2_ref = 12.0
+    input_model.meta.wcsinfo.v3_ref = 12.0
+    input_model.meta.wcsinfo.roll_ref = 12.0
+    input_model.meta.wcsinfo.ra_ref = 12.0
+    input_model.meta.wcsinfo.dec_ref = 12.0
+
+    # Check the input values in the input_model
+    if not is_number(input_model.meta.wcsinfo.v2_ref) or \
+       not is_number(input_model.meta.wcsinfo.v3_ref) or \
+       not is_number(input_model.meta.wcsinfo.roll_ref) or \
+       not is_number(input_model.meta.wcsinfo.ra_ref) or \
+       not is_number(input_model.meta.wcsinfo.dec_ref):
+        raise ValueError('Input model must have v2_ref, v3_ref, roll_ref, ra_ref and dec_ref defined')
+
+    # Setup the frames.
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+
     focal_spatial = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
-    #sky = cf.CelestialFrame(reference_frame=coord.ICRS())
     spec = cf.SpectralFrame(name='wavelength', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     focal = cf.CompositeFrame([focal_spatial, spec])
 
-    ref = fits.open(reference_files['specwcs'])
-    ldata = ref[1].data
-    if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
-        zero_point = ref[1].header['imx'], ref[1].header['imy']
-    elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
-        #zero_point = ref[1].header['imysltl'], ref[1].header['imxsltl']
-        #zero point in reference file is wrong
-        # This should eb moved eventually to the reference file.
-        zero_point = [35, 442]#[35, 763] # account for subarray
-    lrsdata = np.array([l for l in ldata])
+    # Determine the distortion model.
+    distortion = imaging_distortion(input_model, reference_files)
+
+    # Load and process the reference data.
+    with fits.open(reference_files['specwcs']) as ref:
+        lrsdata = np.array([l for l in ref[1].data])
+
+        # Get the zero point from the reference data.
+        # The zero_point is X, Y  (which should be COLUMN, ROW)
+        if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
+            zero_point = ref[1].header['imx'], ref[1].header['imy']
+        elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
+            #zero_point = ref[1].header['imxsltl'], ref[1].header['imysltl']
+            zero_point = [35, 442]  # [35, 763] # account for subarray
+
+    # Create the domain
     x0 = lrsdata[:, 3]
-    x1 = lrsdata[:, 5]
     y0 = lrsdata[:, 4]
+    x1 = lrsdata[:, 5]
+
     domain = [{'lower': x0.min() + zero_point[0], 'upper': x1.max() + zero_point[0]},
               {'lower': (y0.min() + zero_point[1]), 'upper': (y0.max() + zero_point[1])}
               ]
-    log.info("Setting domain to {0}".format(domain))
+
+    # Find the ROW of the zero point which should be the [1] of zero_point
+    row_zero_point = zero_point[1]
+
+    # Compute the v2v3 to sky.
+    tel2sky = pointing.v23tosky(input_model)
+
+    # Compute the V2/V3 for each pixel in this row
+    # x.shape will be something like (1, 388)
+    y, x = np.mgrid[row_zero_point:row_zero_point+1, 0:input_model.data.shape[1]]
+
+    radec = distortion | tel2sky
+    radec = np.array(radec(x, y))[:, 0, :]
+
+    ra_full = np.matlib.repmat(radec[0], domain[1]['upper']+1-domain[1]['lower'], 1)
+    dec_full = np.matlib.repmat(radec[1], domain[1]['upper']+1-domain[1]['lower'], 1)
+
+    ra_t2d = models.Tabular2D(lookup_table=ra_full)
+    dec_t2d = models.Tabular2D(lookup_table=dec_full)
+
+    # Create the model transforms.
     lrs_wav_model = jwmodels.LRSWavelength(lrsdata, zero_point)
-    ref.close()
+
+    # Incorporate the small rotation
     angle = np.arctan(0.00421924)
     spatial = models.Rotation2D(angle)
-    det2focal = models.Mapping((0, 1, 0, 1)) | spatial & lrs_wav_model
+    radec_t2d = ra_t2d & dec_t2d | spatial
+
+    det2focal = models.Mapping((0, 1, 0, 1, 0, 1)) | radec_t2d & lrs_wav_model
     det2focal.meta['domain'] = domain
+
+    # Now the actual pipeline.
     pipeline = [(detector, det2focal),
-                (focal, None)]
-                #(sky, None)
-                #]
+                (focal, None)
+                ]
+
     return pipeline
 
 
