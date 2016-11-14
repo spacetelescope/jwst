@@ -180,8 +180,11 @@ class DataModel(properties.ObjectNode):
             self.meta.filename = os.path.basename(init)
 
         # store the data model type, if not already set
-        if self.meta.model_type is None:
-            self.meta.model_type = self.__class__.__name__
+        if hasattr(self.meta, 'model_type'):
+            if self.meta.model_type is None:
+                self.meta.model_type = self.__class__.__name__
+        else:
+            self.meta.model_type = None
 
         if is_array:
             primary_array_name = self.get_primary_array_name()
