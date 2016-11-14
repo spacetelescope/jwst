@@ -84,6 +84,15 @@ def open(init=None, extensions=None, **kwargs):
                 "init must be None, shape tuple, file path, "
                 "readable file object, or astropy.io.fits.HDUList")
 
+        # Try to get the datamodel class name from the header
+        model_type = None
+        try:
+            model_type = hdulist[0].header['DATAMODL']
+        except:
+            pass
+
+        # Try to get the data shape, to be used later to try to figure
+        # out the datamodel type
         shape = ()
         try:
             hdu = hdulist[(fits_header_name('SCI'), 1)]
@@ -92,9 +101,39 @@ def open(init=None, extensions=None, **kwargs):
         else:
             if hasattr(hdu, 'shape'):
                 shape = hdu.shape
+
     # Be clever about which type to return, otherwise, just return a new
     # instance of the requested class
-    if len(shape) == 0:
+    if model_type is not None:
+
+        # If the datamodel class name is given, then import and return
+        # that type of datamodel
+        model_dict = {"AmiLgModel": "amilg", "CombinedSpecModel": "combinedspec",
+            "ContrastModel": "contrast", "CubeModel": "cube", "CubeFlatModel": "cubeflat",
+            "DarkModel": "dark", "DarkMIRIModel": "darkMIRI", "DrizParsModel": "drizpars",
+            "DrizProductModel": "drizproduct", "FilterModel": "filter", "FlatModel": "flat",
+            "FringeModel": "fringe", "GainModel": "gain", "GLS_RampFitModel": "gls_rampfit",
+            "IFUCubeModel": "ifucube", "ImageModel": "image", "IPCModel": "ipc",
+            "IRS2Model": "irs2", "LastFrameModel": "lastframe", "LinearityModel": "linearity",
+            "MaskModel": "mask", "MIRIRampModel": "miri_ramp", "MultiExposureModel": "multiexposure",
+            "MultiSlitModel": "multislit", "MultiSpecModel": "multispec",
+            "OutlierParsModel": "outlierpars", "PhotomModel": "photom", "NircamPhotomModel": "photom",
+            "NirissPhotomModel": "photom", "NirspecPhotomModel": "photom",
+            "NirspecFSPhotomModel": "photom", "MiriImgPhotomModel": "photom",
+            "MiriMrsPhotomModel": "photom", "FgsPhotomModel": "photom", "PixelAreaModel": "pixelarea",
+            "QuadModel": "quad", "RampModel": "ramp", "RampFitOutputModel": "rampfitoutput",
+            "ReadnoiseModel": "readnoise", "ResetModel": "reset", "RSCDModel": "rscd",
+            "SaturationModel": "saturation", "SpecModel": "spec", "StrayLightModel": "straylight",
+            "SuperBiasModel": "superbias"}
+        module_name = model_dict[model_type]
+        class_name = ".".join(("jwst","datamodels",module_name,model_type))
+        name_parts = class_name.split('.')
+        module_name = ".".join(name_parts[:-1])
+        new_class = __import__(module_name)
+        for part in name_parts[1:]:
+            new_class = getattr(new_class, part)      
+
+    elif len(shape) == 0:
         new_class = model_base.DataModel
     elif len(shape) == 4:
         # It's a RampModel, MIRIRampModel, or QuadModel

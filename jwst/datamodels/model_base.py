@@ -179,8 +179,9 @@ class DataModel(properties.ObjectNode):
         if isinstance(init, six.string_types):
             self.meta.filename = os.path.basename(init)
 
-        # store the data model type
-        self.meta.model_type = self.__class__.__name__
+        # store the data model type, if not already set
+        if self.meta.model_type is None:
+            self.meta.model_type = self.__class__.__name__
 
         if is_array:
             primary_array_name = self.get_primary_array_name()
