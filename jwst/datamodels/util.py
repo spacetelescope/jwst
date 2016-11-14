@@ -51,6 +51,8 @@ def open(init=None, extensions=None, **kwargs):
 
     from . import model_base
 
+    model_type = None
+
     if init is None:
         return model_base.DataModel(None)
     # Send _asn.json files to ModelContainer; avoid shape "cleverness" below
@@ -85,7 +87,6 @@ def open(init=None, extensions=None, **kwargs):
                 "readable file object, or astropy.io.fits.HDUList")
 
         # Try to get the datamodel class name from the header
-        model_type = None
         try:
             model_type = hdulist[0].header['DATAMODL']
         except:
