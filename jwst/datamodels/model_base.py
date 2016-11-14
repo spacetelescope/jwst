@@ -179,6 +179,9 @@ class DataModel(properties.ObjectNode):
         if isinstance(init, six.string_types):
             self.meta.filename = os.path.basename(init)
 
+        # store the data model type
+        self.meta.model_type = self.__class__.__name__
+
         if is_array:
             primary_array_name = self.get_primary_array_name()
             if primary_array_name is None:
@@ -244,6 +247,7 @@ class DataModel(properties.ObjectNode):
         self.meta.date = Time(datetime.datetime.now())
         self.meta.date.format = 'isot'
         self.meta.date = self.meta.date.value
+        self.meta.model_type = self.__class__.__name__
 
     def save(self, path, *args, **kwargs):
         """
