@@ -138,7 +138,12 @@ def imaging_distortion(input_model, reference_files):
 
 
 exp_type2transform = {'nis_image': imaging,
-                      'nis_wfss': not_implemented_mode,#        ?? WFSS spec
+                      'nis_wfss': not_implemented_mode,
                       'nis_soss': niriss_soss,
-                      'nis_ami': not_implemented_mode#        ?? imaging
+                      'nis_ami': not_implemented_mode,
+                      'nis_tacq': imaging,
+                      'nis_taconfirm': imaging,
+                      'nis_focus': imaging,
+                      'nis_dark': not_implemented_mode,
+                      'nis_lamp': not_implemented_mode,
                       }

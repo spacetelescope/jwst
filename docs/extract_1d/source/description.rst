@@ -6,17 +6,17 @@ data through any one or more of the fixed slits, MIRI LRS data through
 the slit or in the slitless region, and NIRISS slitless data) as well as
 IFU data and NIRSpec MOS (micro-shutter array) data.
 
-For IFU data, the extraction options differ somewhat depending on
+For IFU data, the extraction options differ depending on
 whether the target is a point source or an extended source.  For a point
 source, the spectrum will be extracted using circular aperture photometry,
-optionally including background subtraction using a circular annulus.  The
-region of overlap between an aperture and a pixel can be calculated by
+optionally including background subtraction using a circular annulus.  
+For an extended source, rectangular aperture photometry will be used, with
+no background subtraction.  The photometry makes use of astropy photutils.
+The region of overlap between an aperture and a pixel can be calculated by
 one of three different methods:  "exact", limited only by finite precision
 arithmetic; "center", i.e. the full value in a pixel will be included if its
 center is within the aperture; or "subsample", which means pixels will be
-subsampled 5 x 5, and the "center" option will be used for each sub-pixel.
-For an extended source, exact square aperture photometry will be used, with
-no background subtraction.
+subsampled N x N, and the "center" option will be used for each sub-pixel.
 
 
 Input

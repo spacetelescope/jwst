@@ -1,9 +1,12 @@
+from __future__ import (absolute_import, unicode_literals, division)
+
 import json
 import logging
 import math
 
 import numpy as np
-from photutils import CircularAperture, CircularAnnulus, aperture_photometry
+from photutils import CircularAperture, CircularAnnulus, \
+                      RectangularAperture, aperture_photometry
 
 from .. import datamodels
 from .. datamodels import dqflags
@@ -11,7 +14,7 @@ from .. datamodels import dqflags
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-def ifu_extract1d(input_model, refname, source_type, smoothing_length):
+def ifu_extract1d(input_model, refname, source_type):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -24,10 +27,6 @@ def ifu_extract1d(input_model, refname, source_type, smoothing_length):
 
     source_type: string
         "point" or "extended"
-
-    smoothing_length: integer
-        Number of pixels in the wavelength direction for boxcar smoothing
-        of the background.  This is currently not implemented.
 
     Returns
     -------
@@ -52,8 +51,7 @@ def ifu_extract1d(input_model, refname, source_type, smoothing_length):
         slitname = "ANY"
     log.debug('slitname=%s' % slitname)
 
-    extract_params = ifu_extract_parameters(refname, slitname,
-                                            source_type, smoothing_length)
+    extract_params = ifu_extract_parameters(refname, slitname, source_type)
 
     if extract_params:
         (wavelength, net, background, dq) = extract_ifu(input_model,
@@ -90,45 +88,32 @@ def ifu_extract1d(input_model, refname, source_type, smoothing_length):
     return output_model
 
 
-def ifu_extract_parameters(refname, slitname,
-                           source_type, smoothing_length=None):
+def ifu_extract_parameters(refname, slitname, source_type):
+    """Read extraction parameters for an IFU."""
 
     extract_params = {}
     with open(refname) as f:
         ref = json.load(f)
     for aper in ref['apertures']:
         if aper.has_key('id') and aper['id'] != "dummy" and \
-           (aper['id'] == slitname or slitname == "ANY"):
+           (aper['id'] == slitname or aper['id'] == "ANY" or
+            slitname == "ANY"):
             region_type = aper.get("region_type", "target")
             if region_type == "target":
-                if smoothing_length is None:
-                    extract_params['smoothing_length'] = \
-                          aper.get('smoothing_length', 0)
-                else:
-                    # If the user supplied a value, use that value.
-                    extract_params['smoothing_length'] = smoothing_length
-
                 extract_params['x_center'] = aper.get('x_center')
                 extract_params['y_center'] = aper.get('y_center')
-                extract_params['extract_width'] = aper.get('extract_width')
-                if source_type == "point":
-                    extract_params['inner_bkg'] = aper.get('inner_bkg')
-                    extract_params['outer_bkg'] = aper.get('outer_bkg')
-                    extract_params['method'] = aper.get('method', 'exact')
+                extract_params['method'] = aper.get('method', 'exact')
+                extract_params['subpixels'] = aper.get('subpixels', 5)
+                extract_params['radius'] = aper.get('radius')
+                extract_params['subtract_background'] = \
+                      aper.get('subtract_background', False)
+                extract_params['inner_bkg'] = aper.get('inner_bkg')
+                extract_params['outer_bkg'] = aper.get('outer_bkg')
+                extract_params['width'] = aper.get('width')
+                extract_params['height'] = aper.get('height')
+                # theta is in degrees (converted to radians later)
+                extract_params['theta'] = aper.get('theta', 0.)
             break
-
-    missing = False
-    if extract_params["extract_width"] is None:
-        log.error("%s is missing from the reference file.", "extract_width")
-        missing = True
-    if extract_params["x_center"] is None:
-        log.error("%s is missing from the reference file.", "x_center")
-        missing = True
-    if extract_params["y_center"] is None:
-        log.error("%s is missing from the reference file.", "y_center")
-        missing = True
-    if missing:
-        raise ValueError('Missing extraction parameters.')
 
     return extract_params
 
@@ -201,40 +186,83 @@ def extract_ifu(input_model, source_type, extract_params):
         log.error("Expected a 3-D IFU cube; dimension is %d.", len(shape))
         raise RuntimeError("The IFU cube should be 3-D.")
 
+    # We need to allocate net, background, and dq arrays no matter what.
+    net = np.zeros(shape[0], dtype=np.float64)
+    background = np.zeros(shape[0], dtype=np.float64)
     dq = np.zeros(shape[0], dtype=np.int32)
 
     x_center = extract_params['x_center']
     y_center = extract_params['y_center']
-
-    # xxx not used yet
-    smoothing_length = extract_params['smoothing_length']
-
-    x_center = float(x_center)
-    y_center = float(y_center)
-    extract_width = float(extract_params['extract_width'])
-    if source_type == "point":
-        inner_bkg = extract_params['inner_bkg']
-        outer_bkg = extract_params['outer_bkg']
-        method = extract_params['method']
+    if x_center is None:
+        x_center = float(shape[2]) / 2.
     else:
+        x_center = float(x_center)
+    if y_center is None:
+        y_center = float(shape[1]) / 2.
+    else:
+        y_center = float(y_center)
+
+    method = extract_params['method']
+    # subpixels is only needed if method = 'subpixel'.
+    subpixels = extract_params['subpixels']
+
+    subtract_background = extract_params['subtract_background']
+    smaller_axis = float(min(shape[1], shape[2]))       # for defaults
+    if source_type == 'point':
+        radius = extract_params['radius']
+        if radius is None:
+            radius = smaller_axis / 4.
+        if subtract_background:
+            inner_bkg = extract_params['inner_bkg']
+            if inner_bkg is None:
+                inner_bkg = radius
+            outer_bkg = extract_params['outer_bkg']
+            if outer_bkg is None:
+                outer_bkg = min(inner_bkg * math.sqrt(2.),
+                                smaller_axis / 2. - 1.)
+        width = None
+        height = None
+        theta = None
+    else:
+        width = extract_params['width']
+        if width is None:
+            width = smaller_axis / 2.
+        height = extract_params['height']
+        if height is None:
+            height = smaller_axis / 2.
+        theta = extract_params['theta'] * math.pi / 180.
+        radius = None
         inner_bkg = None
         outer_bkg = None
-        method = "irrelevant"
 
-    if inner_bkg is None or outer_bkg is None:
+    if inner_bkg <= 0. or outer_bkg <= 0. or inner_bkg >= outer_bkg:
         subtract_background = False
-    elif inner_bkg <= 0. or outer_bkg <= 0.:
-        subtract_background = False
-    elif inner_bkg == outer_bkg:
-        subtract_background = False
+
+    log.debug("IFU 1-D extraction parameters:")
+    log.debug("  x_center = %s", str(x_center))
+    log.debug("  y_center = %s", str(y_center))
+    if source_type == 'point':
+        log.debug("  radius = %s", str(radius))
+        log.debug("  subtract_background = %s", str(subtract_background))
+        log.debug("  inner_bkg = %s", str(inner_bkg))
+        log.debug("  outer_bkg = %s", str(outer_bkg))
+        log.debug("  method = %s", method)
+        if method == "subpixel":
+            log.debug("  subpixels = %s", str(subpixels))
     else:
-        subtract_background = True
-        if inner_bkg > outer_bkg:
-            temp = outer_bkg
-            outer_bkg = inner_bkg
-            inner_bkg = temp
+        log.debug("  width = %s", str(width))
+        log.debug("  height = %s", str(height))
+        log.debug("  theta = %s degrees", str(extract_params['theta']))
+        log.debug("  subtract_background = %s", str(subtract_background))
+        log.debug("  method = %s", method)
+        if method == "subpixel":
+            log.debug("  subpixels = %s", str(subpixels))
 
-    # Check for out of bounds.  Return arrays of zeros if so.
+    # Check for out of bounds.
+    # The problem with having the background aperture extend beyond the
+    # image is that the normalization would not account for the resulting
+    # decrease in the area of the annulus, so the background subtraction
+    # would be systematically low.
     outside = False
     f_nx = float(shape[2])
     f_ny = float(shape[1])
@@ -242,23 +270,14 @@ def extract_ifu(input_model, source_type, extract_params):
        y_center < 0. or y_center >= f_ny - 1.:
         outside = True
         log.error("Target location is outside the image.")
-    elif source_type == "point":
-        radius = extract_width / 2.
-        if x_center - radius < 0. or x_center + radius >= f_nx - 1. or \
-           y_center - radius < 0. or y_center + radius >= f_ny - 1.:
+    if subtract_background and \
+       (x_center - outer_bkg < -0.5 or x_center + outer_bkg > f_nx - 0.5 or
+        y_center - outer_bkg < -0.5 or y_center + outer_bkg > f_ny - 0.5):
             outside = True
-            log.error("Extraction region extends outside the image.")
-        if subtract_background and \
-           (x_center - outer_bkg < 0. or
-            x_center + outer_bkg >= f_nx - 1. or
-            y_center - outer_bkg < 0. or
-            y_center + outer_bkg >= f_ny - 1.):
-                outside = True
-                log.error("Background region extends outside the image.")
+            log.error("Background region extends outside the image.")
+
     if outside:
         wavelength = np.zeros(shape[0], dtype=np.float64)
-        net = np.zeros(shape[0], dtype=np.float64)
-        background = np.zeros(shape[0], dtype=np.float64)
         dq[:] = dqflags.pixel['DO_NOT_USE']
         return (wavelength, net, background, dq)        # all bad
 
@@ -270,140 +289,25 @@ def extract_ifu(input_model, source_type, extract_params):
     z_array = np.arange(shape[0], dtype=np.float64) # for wavelengths
     _, _, wavelength = wcs(x_array, y_array, z_array)
 
-    if source_type == "point":
-        net = np.zeros(shape[0], dtype=np.float64)
-        background = np.zeros(shape[0], dtype=np.float64)
-
-        position = (x_center, y_center)
-        aperture = CircularAperture(position, r=extract_width / 2.)
+    position = (x_center, y_center)
+    if source_type == 'point':
+        aperture = CircularAperture(position, r=radius)
         if subtract_background:
             annulus = CircularAnnulus(position,
                                       r_in=inner_bkg, r_out=outer_bkg)
             normalization = aperture.area() / annulus.area()
-
-        for k in range(shape[0]):
-            phot_table = aperture_photometry(data[k, :, :], aperture,
-                                             method=method)
-            net[k] = float(phot_table['aperture_sum'][0])
-            if subtract_background:
-                bkg_table = aperture_photometry(data[k, :, :], annulus,
-                                                method=method)
-                background[k] = float(bkg_table['aperture_sum'][0])
-                net[k] = net[k] - background[k] * normalization
     else:
+        aperture = RectangularAperture(position, width, height, theta)
         # No background is computed for an extended source.
-        background = np.zeros(shape[0], dtype=np.float64)
-        (area, net) = rectangular_ap_phot(data, x_center, y_center,
-                                          extract_width)
+
+    for k in range(shape[0]):
+        phot_table = aperture_photometry(data[k, :, :], aperture,
+                                         method=method, subpixels=subpixels)
+        net[k] = float(phot_table['aperture_sum'][0])
+        if subtract_background:
+            bkg_table = aperture_photometry(data[k, :, :], annulus,
+                                            method=method, subpixels=subpixels)
+            background[k] = float(bkg_table['aperture_sum'][0])
+            net[k] = net[k] - background[k] * normalization
 
     return (wavelength, net, background, dq)
-
-
-def rectangular_ap_phot(data, x_center, y_center, extract_width):
-    """Aperture photometry for a rectangular aperture.
-
-    Parameters
-    ----------
-    data: array_like (3-D)
-        The first axis is wavelength, the second is Y, the third is X.
-
-    x_center, y_center: float
-        The X and Y pixel coordinates of the target.
-
-    extract_width: float
-        The full width and height (in pixels) of the extraction region,
-        which is nominally a square.  If one or more edges of the extraction
-        region extend beyond any edge of the data array, however, the
-        extraction region will be truncated, and the sum will be computed
-        only within the truncated region.
-
-    Returns
-    -------
-    (area, net)
-        area: float
-        net: array_like (1-D)
-            This is the gross count rate (because background is not
-            computed) at each wavelength, i.e. the length of `net` is the
-            same as `data.shape[0]`.
-    """
-
-    shape = data.shape
-
-    # Floating-point coordinates with zero point at lower left corner
-    # of a pixel, for convenience in handling fractions of a pixel.
-    x0 = x_center + 0.5
-    y0 = y_center + 0.5
-
-    # Actual lower and upper edges of extraction box.
-    x_low = x0 - extract_width / 2.
-    x_high = x0 + extract_width / 2.
-    y_low = y0 - extract_width / 2.
-    y_high = y0 + extract_width / 2.
-
-    # Outer limits of extraction box, integer pixels.
-    xo_low = math.floor(x_low)
-    xo_high = math.ceil(x_high)
-    yo_low = math.floor(y_low)
-    yo_high = math.ceil(y_high)
-    ixl = int(xo_low)
-    ixh = int(xo_high)
-    iyl = int(yo_low)
-    iyh = int(yo_high)
-
-    # Is the aperture truncated at an edge?
-    truncated = False                       # initial value
-    if ixl < 0:
-        truncated = True
-        ixl = 0
-        xo_low = max(0., xo_low)
-        x_low = max(0., x_low)
-    if iyl < 0:
-        truncated = True
-        iyl = 0
-        yo_low = max(0., yo_low)
-        y_low = max(0., y_low)
-    if ixh > shape[2]:
-        truncated = True
-        ixh = shape[2]
-        xo_high = min(float(shape[2]), xo_high)
-        x_high = min(float(shape[2]), x_high)
-    if iyh > shape[1]:
-        truncated = True
-        iyh = shape[1]
-        yo_high = min(float(shape[1]), yo_high)
-        y_high = min(float(shape[1]), y_high)
-    if truncated:
-        log.warning("Extraction box was truncated to slice "
-                    "[%d:%d, %d:%d]", iyl, iyh, ixl, ixh)
-
-    # Partial weight for column or row of edge pixels.  x_low will be
-    # greater than or equal to xo_low; if they're equal, the weight
-    # should be 1.  Note:  These values will only be used for the case
-    # that the lower and upper limits are in separate pixels.
-    xw_l = 1. - (x_low - xo_low)            # left edge
-    yw_l = 1. - (y_low - yo_low)            # lower edge
-    xw_h = 1. - (xo_high - x_high)          # right edge
-    yw_h = 1. - (yo_high - y_high)          # top edge
-
-    nx = int(xo_high) - int(xo_low)
-    ny = int(yo_high) - int(yo_low)
-    nx = max(nx, 1)
-    ny = max(ny, 1)
-    wgt = np.ones((1, ny, nx), dtype=np.float64)
-    if nx == 1:
-        wgt[0, :, 0] *= (x_high - x_low)
-    else: 
-        wgt[0, :, 0] *= xw_l
-        wgt[0, :, -1] *= xw_h
-    if ny == 1:
-        wgt[0, 0, :] *= (y_high - y_low)
-    else:
-        wgt[0, 0, :] *= yw_l
-        wgt[0, -1, :] *= yw_h
-
-    area = wgt.sum()
-
-    subset = data[:, iyl:iyh, ixl:ixh] * wgt
-    net = subset.sum(axis=(1, 2), dtype=np.float64)
-
-    return (area, net)

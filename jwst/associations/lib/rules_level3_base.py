@@ -85,6 +85,9 @@ class DMS_Level3_Base(Association):
         # Initialize discovered association ID
         self.discovered_id = Counter(_DISCOVERED_ID_START)
 
+        # Set the validation schema
+        self.schema_file = ASN_SCHEMA
+
         # Initialize validity checks
         self.validity = {
             'has_science': {
@@ -95,6 +98,10 @@ class DMS_Level3_Base(Association):
 
         # Let us see if member belongs to us.
         super(DMS_Level3_Base, self).__init__(*args, **kwargs)
+
+        # Other presumptions on the association
+        if 'degraded_status' not in self.data:
+            self.data['degraded_status'] = _DEGRADED_STATUS_OK
 
     @property
     def is_valid(self):
@@ -195,7 +202,6 @@ class DMS_Level3_Base(Association):
         # Set which sequence counter should be used.
         self._sequence = self._sequences[self.data['asn_type']]
 
-        self.schema_file = ASN_SCHEMA
         self.data['target'] = member['TARGETID']
         self.data['program'] = str(member['PROGRAM'])
         self.data['asn_pool'] = basename(
@@ -233,13 +239,12 @@ class DMS_Level3_Base(Association):
         self.update_validity(entry)
         members = self.current_product['members']
         members.append(entry)
-        self.data['degraded_status'] = _DEGRADED_STATUS_OK
         if exposerr not in _EMPTY:
-            self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
             logger.warn('Member {} has error "{}"'.format(
                 member['FILENAME'],
                 exposerr
             ))
+            self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
 
         # Add entry to the short list
         self.members.add(entry[KEY])
