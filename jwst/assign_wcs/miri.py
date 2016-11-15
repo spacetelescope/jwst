@@ -120,18 +120,16 @@ def lrs(input_model, reference_files):
 
     # Setup the frames.
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-
-    #v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg))
-    spec = cf.SpectralFrame(name='wavelength', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
-    #v2v3 = cf.CompositeFrame(name="v2v3", frames=[v2v3_spatial, spec])
+    spec = cf.SpectralFrame(name='wavelength', axes_order=(2,), unit=(u.micron,),
+                            axes_names=('lambda',))
     sky = cf.CelestialFrame(reference_frame=coord.ICRS(), name='sky')
     world = cf.CompositeFrame(name="world", frames=[sky, spec])
 
 
     # Determine the distortion model.
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    # Now apply each of the models.  The Scale(60) converts from arc-minutes to arc-seconds.
-    full_distortion = distortion | models.Scale(1/60) & models.Scale(1/60)
+    # Now apply each of the models.  The Scale(1/60) converts from arc-minutes to deg.
+    full_distortion = distortion | models.Scale(1 / 60) & models.Scale(1 / 60)
 
     # Load and process the reference data.
     with fits.open(reference_files['specwcs']) as ref:
@@ -162,16 +160,16 @@ def lrs(input_model, reference_files):
 
     # Compute the V2/V3 for each pixel in this row
     # x.shape will be something like (1, 388)
-    y, x = np.mgrid[row_zero_point:row_zero_point+1, 0:input_model.data.shape[1]]
+    y, x = np.mgrid[row_zero_point:row_zero_point + 1, 0:input_model.data.shape[1]]
 
     radec = distortion | tel2sky
     radec = np.array(radec(x, y))[:, 0, :]
 
-    ra_full = np.matlib.repmat(radec[0], domain[1]['upper']+1-domain[1]['lower'], 1)
-    dec_full = np.matlib.repmat(radec[1], domain[1]['upper']+1-domain[1]['lower'], 1)
+    ra_full = np.matlib.repmat(radec[0], domain[1]['upper'] + 1 - domain[1]['lower'], 1)
+    dec_full = np.matlib.repmat(radec[1], domain[1]['upper'] + 1 - domain[1]['lower'], 1)
 
-    ra_t2d = models.Tabular2D(lookup_table=ra_full)
-    dec_t2d = models.Tabular2D(lookup_table=dec_full)
+    ra_t2d = models.Tabular2D(lookup_table=ra_full, name='xtable')
+    dec_t2d = models.Tabular2D(lookup_table=dec_full, name='ytable')
 
     # Create the model transforms.
     lrs_wav_model = jwmodels.LRSWavelength(lrsdata, zero_point)
@@ -181,11 +179,13 @@ def lrs(input_model, reference_files):
     spatial = models.Rotation2D(angle)
     radec_t2d = ra_t2d & dec_t2d | spatial
 
+    # Account for the subarray when computing spatial coordinates.
     xshift = -domain[0]['lower']
     yshift = -domain[1]['lower']
-    det2world = models.Mapping((0, 1, 0, 1, 0, 1)) | models.Shift(xshift) & models.Shift(yshift) & \
-              models.Shift(xshift) & models.Shift(yshift) & models.Identity(2)| \
-              radec_t2d & lrs_wav_model
+    det2world = models.Mapping((1, 0, 1, 0, 0, 1)) | models.Shift(yshift, name='yshift1') & \
+              models.Shift(xshift, name='xshift1') & \
+              models.Shift(yshift, name='yshift2') & models.Shift(xshift, name='xshift2') & \
+              models.Identity(2) | radec_t2d & lrs_wav_model
     det2world.meta['domain'] = domain
 
     # Now the actual pipeline.
