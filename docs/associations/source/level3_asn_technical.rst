@@ -1,6 +1,6 @@
 Level 3 Associations: Technical Specifications
 ``````````````````````````````````````````````
-.. _asn-DMS-naming:
+.. _asn-level3-techspecs
 
 DMS Naming
 ==========

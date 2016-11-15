@@ -1,8 +1,8 @@
 .. _design:
 
-******************
+##################
 Association Design
-******************
+##################
 
 .. _figure-association-generator-overview:
 
@@ -23,6 +23,13 @@ using the class names involved.
 
    Association Class Relationship overview
 
-Starting with the most straightforward component, the input table.
-The generator uses astropy data tables. Hence anything file that the
-table I/O interface can read, the generator can read. 
+The Details
+===========
+
+.. toctree::
+   :maxdepth: 2
+
+   design_generator
+   design_association
+   design_registry
+   design_pool

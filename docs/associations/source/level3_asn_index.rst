@@ -10,6 +10,7 @@ Level3 Associations
    self
    level3_asn_technical
    level3_asn_rules
+   level3_asn_reference
 
 .. _level3-asn-jwst-overview:
 
@@ -52,3 +53,26 @@ In short, Level 3 associations are created running the
 :ref:`asn_generate <asn-generate>` task on an :ref:`Association Pool
 <asn-pool>` using the default :ref:`Level 3 Association Rules
 <level3-asn-rules>` to produce :ref:`level3-associations`.
+
+User Usage
+==========
+
+In general, the only use of associations is to create them from an
+association pool using :ref:`asn_generate` and then use them as input
+to the appropriate JWST Level3 pipeline step or steps.
+
+When there is need to modify an association, there are two ways of
+doing so, depending on the reason for modification. If there is an
+issue at the exposure level, either to add or remove an exposure, then
+the association pool itself should be modified. After pool
+modification, :ref:`asn_generate` is then re-run to create new
+associations. This ensures that all associations related to the
+exposure are modified.
+
+If there is an issue with a particular association, then one can
+simply edit that association as need be. The :ref:`technical
+specifications <asn-level3-techspecs>` describe the contents of Level3
+associations and how to modify them.
+
+For scripting usage, the high-level routines to use are described in
+the :ref:`design` section.

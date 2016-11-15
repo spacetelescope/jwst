@@ -133,7 +133,7 @@ class AssociationRegistry(dict):
 
         Returns
         -------
-        (associations, reprocess_list): 2-tuple where
+        (associations, reprocess_list): 2-tuple
             associations: [association,...]
                 List of associations member belongs to. Empty if none match
             reprocess_list: [AssociationReprocess, ...]
