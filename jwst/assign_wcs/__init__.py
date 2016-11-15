@@ -1,7 +1,8 @@
 from __future__ import absolute_import
 from .assign_wcs_step import AssignWcsStep
-#from .assign_wcs import nrs_set_inputs
-__version__ = '0.6.0'
+
+__version__ = '0.7.0'
+
 
 '''
 def test(verbose=False) :
