@@ -109,19 +109,6 @@ def imaging_distortion(input_model, reference_files):
     return full_distortion
 
 
-def is_number(s):
-
-    # Check, first, to make sure it is not None
-    if not s:
-        return False
-
-    # Now, check to see if it is a number
-    try:
-        float(s)
-        return True
-    except ValueError:
-        return False
-
 def lrs(input_model, reference_files):
     """
     Create the WCS pipeline for a MIRI fixed slit observation.
@@ -131,31 +118,20 @@ def lrs(input_model, reference_files):
     }
     """
 
-    # TODO: Remove this as it is just for testing because the input dataset
-    # TODO: does not have these defined
-    input_model.meta.wcsinfo.v2_ref = 12.0
-    input_model.meta.wcsinfo.v3_ref = 12.0
-    input_model.meta.wcsinfo.roll_ref = 12.0
-    input_model.meta.wcsinfo.ra_ref = 12.0
-    input_model.meta.wcsinfo.dec_ref = 12.0
-
-    # Check the input values in the input_model
-    if not is_number(input_model.meta.wcsinfo.v2_ref) or \
-       not is_number(input_model.meta.wcsinfo.v3_ref) or \
-       not is_number(input_model.meta.wcsinfo.roll_ref) or \
-       not is_number(input_model.meta.wcsinfo.ra_ref) or \
-       not is_number(input_model.meta.wcsinfo.dec_ref):
-        raise ValueError('Input model must have v2_ref, v3_ref, roll_ref, ra_ref and dec_ref defined')
-
     # Setup the frames.
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
 
-    focal_spatial = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
+    #v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg))
     spec = cf.SpectralFrame(name='wavelength', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
-    focal = cf.CompositeFrame([focal_spatial, spec])
+    #v2v3 = cf.CompositeFrame(name="v2v3", frames=[v2v3_spatial, spec])
+    sky = cf.CelestialFrame(reference_frame=coord.ICRS(), name='sky')
+    world = cf.CompositeFrame(name="world", frames=[sky, spec])
+
 
     # Determine the distortion model.
-    distortion = imaging_distortion(input_model, reference_files)
+    distortion = AsdfFile.open(reference_files['distortion']).tree['model']
+    # Now apply each of the models.  The Scale(60) converts from arc-minutes to arc-seconds.
+    full_distortion = distortion | models.Scale(1/60) & models.Scale(1/60)
 
     # Load and process the reference data.
     with fits.open(reference_files['specwcs']) as ref:
@@ -205,12 +181,16 @@ def lrs(input_model, reference_files):
     spatial = models.Rotation2D(angle)
     radec_t2d = ra_t2d & dec_t2d | spatial
 
-    det2focal = models.Mapping((0, 1, 0, 1, 0, 1)) | radec_t2d & lrs_wav_model
-    det2focal.meta['domain'] = domain
+    xshift = -domain[0]['lower']
+    yshift = -domain[1]['lower']
+    det2world = models.Mapping((0, 1, 0, 1, 0, 1)) | models.Shift(xshift) & models.Shift(yshift) & \
+              models.Shift(xshift) & models.Shift(yshift) & models.Identity(2)| \
+              radec_t2d & lrs_wav_model
+    det2world.meta['domain'] = domain
 
     # Now the actual pipeline.
-    pipeline = [(detector, det2focal),
-                (focal, None)
+    pipeline = [(detector, det2world),
+                (world, None)
                 ]
 
     return pipeline
