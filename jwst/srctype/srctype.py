@@ -60,7 +60,9 @@ def set_source_type(input_model):
             # Eventually the stellarity value will be compared against
             # a threshold value from a reference file. For now, the
             # threshold is hardwired.
-            if stellarity > 0.75:
+            if stellarity < 0.0:
+                slit.source_type = 'UNKNOWN'
+            elif stellarity > 0.75:
                 slit.source_type = 'POINT'
             else:
                 slit.source_type = 'EXTENDED'
