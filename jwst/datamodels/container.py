@@ -153,11 +153,8 @@ class ModelContainer(model_base.DataModel):
                                 model_attrs[6], model_attrs[7].lower(),
                                 model_attrs[8].lower()]))
             else:
-                try:
-                    root, ext = os.path.splitext(model.meta.filename)
-                    group_id = "_".join([root, 'group{}'.format(ext)])
-                except AttributeError:
-                    group_id = None
+                base, ext = os.path.splitext(model.meta.filename)
+                group_id = base[:base.rfind('_')]
 
             model.meta.group_id = group_id
 
@@ -214,7 +211,7 @@ class ModelContainer(model_base.DataModel):
         """
         Return a list of lists of DataModels grouped by exposure.
         """
-
+        self.assign_group_ids()
         group_dict = OrderedDict()
         for model in self._models:
             group_id = model.meta.group_id
@@ -228,16 +225,10 @@ class ModelContainer(model_base.DataModel):
     def group_names(self):
         """
         Return a list of names for the DataModel groups by exposure.
-
-        Note that this returns the DataModel "group_id"s appended with
-        "_resamp.fits".
         """
-
-        groups = self.models_grouped
         result = []
-        for group in groups:
-            filename = '{0}_resamp.fits'.format(group[0].meta.group_id)
-            result.append(filename)
+        for group in self.models_grouped:
+            result.append(group[0].meta.group_id)
         return result
 
     def save(self, filename_not_used, path=None, *args, **kwargs):
