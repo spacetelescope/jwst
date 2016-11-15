@@ -157,6 +157,12 @@ def just_the_step_from_cmdline(args, cls=None):
         will be set as member variables on the returned `Step`
         instance.
 
+    step_class: Step class 
+        As defined by `cls` parameter or .cfg file.
+
+    positional: list of strings
+        Positional parameters after arg parsing
+
     DOES NOT RUN THE STEP
     """
     import argparse
@@ -268,7 +274,7 @@ def just_the_step_from_cmdline(args, cls=None):
     log.log.info("Hostname: {0}".format(os.uname()[1]))
     log.log.info("OS: {0}".format(os.uname()[0]))
 
-    return step
+    return step, step_class, positional
 
 def step_from_cmdline(args, cls=None):
     """
@@ -294,7 +300,7 @@ def step_from_cmdline(args, cls=None):
         instance.
     """
 
-    step = just_the_step_from_cmdline(args, cls)
+    step, step_class, positional = just_the_step_from_cmdline(args, cls)
 
     try:
         profile_path = os.environ.pop("JWST_PROFILE", None)
@@ -345,7 +351,7 @@ def reference_types_from_config(cfg):
         path = os.path.dirname(pipeline.__file__)
         cfg = os.path.join(path, os.path.basename(cfg))
     reftypes = set()
-    step = just_the_step_from_cmdline([cfg])    
+    step, _step_class, _positional = just_the_step_from_cmdline([cfg])    
     for sub in step.step_defs.values():
         reftypes |= set(sub.reference_file_types)
     return sorted(list(reftypes))
