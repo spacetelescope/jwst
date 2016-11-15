@@ -92,22 +92,33 @@ exposures.
 
 The straylight and fringe steps are only applied to MIRI MRS exposures.
 
-================
-calwebb_spec2   
-================
-assign_wcs      
-bkg_subtract    
-imprint_subtract
-extract_2d      
-flat_field      
-srctype
-straylight      
-fringe          
-photom          
-resamp_spec
-cube_build
-extract_1d
-================
++------------------+
+| calwebb_spec2    |
++==================+
+| assign_wcs       |
++------------------+
+| bkg_subtract     |
++------------------+
+| imprint_subtract |
++------------------+
+| extract_2d       |
++------------------+
+| flat_field       |
++------------------+
+| srctype          |
++------------------+
+| straylight       |
++------------------+
+| fringe           |
++------------------+
+| photom           |
++------------------+
+| resamp_spec      |
++------------------+
+| cube_build       |
++------------------+
+| extract_1d       |
++------------------+
 
 Level-3 Imaging Pipeline Step Flow
 ==================================
