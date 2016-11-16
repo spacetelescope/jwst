@@ -86,12 +86,12 @@ def read_jwst_ephemeris(times):
     endtime = atime.Time(mdict['STOP_TIME']).jd
     interval = (time2 - time1) * 1440 # in minutes
     if interval > 10:
-        raise ValueException("time interval in JWST ephemeris file is too large")
+        raise ValueError("time interval in JWST ephemeris file is too large")
     # Determine min, max of times sought
     mintime = times.min()
     maxtime = times.max()
     if (mintime < starttime) or (maxtime > endtime):
-        raise ValueException(
+        raise ValueError(
             'Some of times provided are out of the range of times in the JWST ephemeris file')
     # Determine fractional locations
     minpos = int((mintime - starttime) / (endtime - starttime) * (end - start) + start - 5000)
@@ -161,7 +161,7 @@ def jwst_ephem_interp(t):
 
     etab = get_jwst_ephemeris()
     if t.min() < etab[:, 0].min() or t.max() > etab[:, 0].max():
-        raise ValueException(
+        raise ValueError(
             "One or more of the requested times extends beyond\n" + \
             "the range of the JWST ephemeris.")
     fx = sciint.interp1d(etab[:, 0], etab[:, 1], kind='cubic', assume_sorted=True)
