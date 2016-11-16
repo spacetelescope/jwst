@@ -40,8 +40,9 @@ def get_extract_parameters(refname, slitname, meta,
     with open(refname) as f:
         ref = json.load(f)
     for aper in ref['apertures']:
-        if aper.has_key('id') and (aper['id'] == slitname or
-                                   slitname == ANY):
+        if 'id' in aper and aper['id'] != "dummy" and \
+           (aper['id'] == slitname or aper['id'] == "ANY" or
+            slitname == "ANY"):
             region_type = aper.get("region_type", "target")
             if region_type == "target":
                 disp = aper.get('dispaxis')
@@ -75,6 +76,19 @@ def get_extract_parameters(refname, slitname, meta,
                 extract_params['extract_width'] = aper.get('extract_width')
                 extract_params['nod_correction'] = get_nod_offset(aper, meta)
             break
+    log.debug("dispaxis = %d", extract_params['dispaxis'])
+    log.debug("src_coeff = %s", str(extract_params['src_coeff']))
+    log.debug("bkg_coeff = %s", str(extract_params['bkg_coeff']))
+    log.debug("independent_var = %s", extract_params['independent_var'])
+    log.debug("smoothing_length = %d", extract_params['smoothing_length'])
+    log.debug("bkg_order = %d", extract_params['bkg_order'])
+    log.debug("xstart = %s", str(extract_params['xstart']))
+    log.debug("ystop = %s", str(extract_params['ystop']))
+    log.debug("xstart = %s", str(extract_params['xstart']))
+    log.debug("ystop = %s", str(extract_params['ystop']))
+    log.debug("extract_width = %s", str(extract_params['extract_width']))
+    log.debug("nod_correction = %s", str(extract_params['nod_correction']))
+
     return extract_params
 
 
@@ -700,8 +714,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             nerror = np.ones_like(net)
             berror = np.ones_like(net)
             spec = datamodels.SpecModel()
-            otab = np.array(zip(wavelength, flux, fl_error, dq,
-                                net, nerror, background, berror),
+            otab = np.array(list(zip(wavelength, flux, fl_error, dq,
+                                net, nerror, background, berror)),
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             output_model.spec.append(spec)
@@ -744,7 +758,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             nerror = np.ones_like(net)
             berror = np.ones_like(net)
             spec = datamodels.SpecModel()
-            otab = np.array(zip(column, wavelength, background, net),
+            otab = np.array(zip(wavelength, flux, fl_error, dq,
+                                net, nerror, background, berror),
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             output_model.spec.append(spec)
@@ -798,8 +813,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 source_type = input_model.meta.target.source_type
             except AttributeError:
                 source_type = "unknown"
-            output_model = ifu.ifu_extract1d(input_model, refname,
-                                             source_type, smoothing_length)
+            output_model = ifu.ifu_extract1d(input_model, refname, source_type)
 
         else:
             log.error("The input file is not supported for this step.")

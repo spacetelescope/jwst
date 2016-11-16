@@ -61,6 +61,7 @@ from .linearity import LinearityModel
 from .mask import MaskModel
 from .miri_ramp import MIRIRampModel
 from .multiexposure import MultiExposureModel
+from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
 from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
@@ -92,13 +93,17 @@ __all__ = [
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'LinearityModel',
     'MaskModel', 'MIRIRampModel', 'ModelContainer',
-    'MultiExposureModel', 'MultiSlitModel',
+    'MultiExposureModel', 'MultiProductModel', 'MultiSlitModel',
     'MultiSpecModel', 'IFUCubeModel', 'PhotomModel', 'NircamPhotomModel',
     'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
     'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'QuadModel', 'RampModel',
     'RampFitOutputModel', 'ReadnoiseModel', 'ResetModel', 'RSCDModel',
     'SaturationModel', 'SpecModel', 'StrayLightModel']
+
+_all_models = __all__[1:]
+_local_dict = dict(locals())
+_defined_models = { k: _local_dict[k] for k in _all_models }
 
 
 '''

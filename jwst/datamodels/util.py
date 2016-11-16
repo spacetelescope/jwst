@@ -50,6 +50,9 @@ def open(init=None, extensions=None, **kwargs):
     """
 
     from . import model_base
+    from . import _defined_models as defined_models # dict of model classes
+
+    model_type = None
 
     if init is None:
         return model_base.DataModel(None)
@@ -84,6 +87,14 @@ def open(init=None, extensions=None, **kwargs):
                 "init must be None, shape tuple, file path, "
                 "readable file object, or astropy.io.fits.HDUList")
 
+        # Try to get the datamodel class name from the header
+        try:
+            model_type = hdulist[0].header['DATAMODL']
+        except:
+            pass
+
+        # Try to get the data shape, to be used later to try to figure
+        # out the datamodel type
         shape = ()
         try:
             hdu = hdulist[(fits_header_name('SCI'), 1)]
@@ -92,8 +103,21 @@ def open(init=None, extensions=None, **kwargs):
         else:
             if hasattr(hdu, 'shape'):
                 shape = hdu.shape
-    # Be clever about which type to return, otherwise, just return a new
-    # instance of the requested class
+
+    # If the model_type has been given, return that type
+    if model_type is not None:
+        if model_type in defined_models:
+            new_class = defined_models[model_type]
+            if isinstance(init, (six.text_type, bytes)):
+                log.debug('Opening {0} as {1}'.format(basename(init), new_class))
+            else:
+                log.debug('Opening as {0}'.format(new_class))
+            return new_class(init, extensions=extensions, **kwargs)
+        else:
+            log.warning("Unknown datamodel type '{0}'".format(model_type))
+
+    # Try to figure out which type to return, otherwise, just return a
+    # new instance of the requested class
     if len(shape) == 0:
         new_class = model_base.DataModel
     elif len(shape) == 4:
@@ -133,6 +157,7 @@ def open(init=None, extensions=None, **kwargs):
             new_class = multislit.MultiSlitModel
     else:
         raise ValueError("Don't have a DataModel class to match the shape")
+
     if isinstance(init, (six.text_type, bytes)):
         log.debug('Opening {0} as {1}'.format(basename(init), new_class))
     else:

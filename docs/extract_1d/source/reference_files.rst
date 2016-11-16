@@ -42,20 +42,36 @@ is not used if ``src_coeff`` is given.
 * bkg_order: order of polynomial fit to background regions (int)
 * extract_width: number of pixels in cross-dispersion direction (int)
 
-For IFU data, these keys are used instead of most of the above:
+For IFU data, these keys are used instead of the above:
 
-* x_center: X pixel coordinate of the target (pixels, float)
-* y_center: Y pixel coordinate of the target (pixels, float)
-* extract_width: for a point source, this is the diameter of the circular
-  extraction aperture; for an extended source, this is the width and height
-  of the square extraction aperture (pixels, float)
-* inner_bkg: (optional, and only for a point source) radius of the inner
-  edge of the background annulus (pixels, float)
-* outer_bkg: (optional, and only for a point source) radius of the outer
-  edge of the background annulus (pixels, float)
-* method: (optional, and only for a point source) one of "exact",
-  "subpixel", or "center", the method used by photutils for computing the
-  overlap between apertures and pixels (string, default is "exact")
+* id: the slit name, but this can be "ANY" (string)
+* x_center: X pixel coordinate of the target (pixels, float, the default
+  is the center of the image along the X axis)
+* y_center: Y pixel coordinate of the target (pixels, float, the default
+  is the center of the image along the Y axis)
+* radius: (only used for a point source) the radius of the circular
+  extraction aperture (pixels, float, default is one quarter of the smaller
+  of the image axis lengths)
+* subtract_background: (only used for a point source) if true, subtract a
+  background determined from an annulus with inner and outer radii given
+  by ``inner_bkg`` and ``outer_bkg`` (boolean)
+* inner_bkg: (only for a point source) radius of the inner edge of the
+  background annulus (pixels, float, default = ``radius``)
+* outer_bkg: (only for a point source) radius of the outer edge of the
+  background annulus (pixels, float, default = ``inner_bkg * sqrt(2)``)
+* width: (only for an extended source) the width of the rectangular
+  extraction region; if ``theta = 0``, the width side is along the X axis
+  (pixels, float, default is half of the smaller image axis length)
+* height: (only for an extended source) the height of the rectangular
+  extraction region; if ``theta = 0``, the height side is along the Y axis
+  (pixels, float, default is half of the smaller image axis length)
+* angle: (only for an extended source) the counterclockwise rotation angle of
+  the ``width`` side from the positive X axis (degrees)
+* method: one of "exact", "subpixel", or "center", the method
+  used by photutils for computing the overlap between apertures and pixels
+  (string, default is "exact")
+* subpixels: if ``method`` is "subpixel", pixels will be resampled by this
+  factor in each dimension (int, the default is 5)
 
 Even if the extraction limits are specified by ``src_coeff`` (see below),
 the limits in the dispersion direction can be specified by ``xstart`` and
