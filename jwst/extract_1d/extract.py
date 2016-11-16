@@ -695,10 +695,16 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
     output_model = datamodels.MultiSpecModel()
     output_model.update(input_model)
 
-    if isinstance(input_model, datamodels.MultiSlitModel):
+    if isinstance(input_model, datamodels.MultiSlitModel) or \
+       isinstance(input_model, datamodels.MultiProductModel):
+
+        if isinstance(input_model, datamodels.MultiSlitModel):
+            slits = input_model.slits
+        else:                           # MultiProductModel
+            slits = input_model.products
 
         # Loop over the slits in the input model
-        for slit in input_model.slits:
+        for slit in slits:
             extract_params = get_extract_parameters(refname, slit.name,
                                 input_model.meta, smoothing_length, bkg_order)
             wavelength, net, background = \

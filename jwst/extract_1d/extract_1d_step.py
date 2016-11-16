@@ -36,6 +36,8 @@ class Extract1dStep(Step):
             self.log.debug('Input is an ImageModel')
         elif isinstance(input_model, datamodels.MultiSlitModel):
             self.log.debug('Input is a MultiSlitModel')
+        elif isinstance(input_model, datamodels.MultiProductModel):
+            self.log.debug('Input is a MultiProductModel')
         elif isinstance(input_model, datamodels.IFUCubeModel):
             self.log.debug('Input is an IFUCubeModel')
         elif isinstance(input_model, datamodels.DrizProductModel):
