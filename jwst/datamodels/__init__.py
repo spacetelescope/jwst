@@ -100,6 +100,10 @@ __all__ = [
     'RampFitOutputModel', 'ReadnoiseModel', 'ResetModel', 'RSCDModel',
     'SaturationModel', 'SpecModel', 'StrayLightModel']
 
+_all_models = __all__[1:]
+_local_dict = dict(locals())
+_defined_models = { k: _local_dict[k] for k in _all_models }
+
 
 '''
 def test(verbose=False) :
