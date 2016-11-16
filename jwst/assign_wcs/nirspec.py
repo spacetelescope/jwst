@@ -258,6 +258,8 @@ def get_open_slits(input_model):
         slits = get_open_msa_slits(msa_config, input_model.meta.instrument.msa_metadata_id)
     elif exp_type == "nrs_fixedslit":
         slits = get_open_fixed_slits(input_model)
+    elif exp_type == "nrs_brightobj":
+        slits = [Slit('S1600A1', 3, 0, 0, -.5, .5, 5)]
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
     return slits
