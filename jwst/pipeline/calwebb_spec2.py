@@ -16,6 +16,7 @@ from ..fringe import fringe_step
 from ..photom import photom_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
+from ..resample import resample_spec_step
 
 __version__ = "3.0"
 
@@ -51,6 +52,7 @@ class Spec2Pipeline(Pipeline):
                  'straylight': straylight_step.StraylightStep,
                  'fringe': fringe_step.FringeStep,
                  'photom': photom_step.PhotomStep,
+                 'resample_spec': resample_spec_step.ResampleSpecStep,
                  'cube_build': cube_build_step.CubeBuildStep,
                  'extract_1d': extract_1d_step.Extract1dStep
                 }
@@ -144,20 +146,16 @@ class Spec2Pipeline(Pipeline):
             if input.meta.exposure.type in ['MIR_LRS-FIXEDSLIT',
                 'NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NIS_WFSS', 'NRC_GRISM']:
 
-                # xxxx Remove the following 2 lines once resamp_spec is activated
-                log.warning('Skipping resample_spec for now ...')
-                x1d_input = input
-
                 # Call the resample_spec step
-                #resamp = self.resample_spec(input)
+                resamp = self.resample_spec(input)
 
                 # Save the resampled product
-                #self.save_model(resamp, 's2d')
-                #log.info('Saved resampled product to %s' % resamp.meta.filename)
+                self.save_model(resamp, 's2d')
+                log.info('Saved resampled product to %s' % resamp.meta.filename)
 
                 # Pass the resampled data to 1D extraction
-                #x1d_input = resamp.copy()
-                #resamp.close()
+                x1d_input = resamp.copy()
+                resamp.close()
 
             elif input.meta.exposure.type in ['MIR_MRS', 'NRS_IFU']:
 

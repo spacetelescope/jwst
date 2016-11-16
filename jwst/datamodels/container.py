@@ -109,15 +109,43 @@ class ModelContainer(model_base.DataModel):
 
     def assign_group_ids(self):
         for model in self._models:
-            model_attrs = [model.meta.observation.program_number,
-                           model.meta.observation.observation_number,
-                           model.meta.observation.visit_number,
-                           model.meta.observation.visit_group,
-                           model.meta.observation.sequence_id,
-                           model.meta.observation.activity_id,
-                           model.meta.observation.exposure_number,
-                           model.meta.instrument.name,
-                           model.meta.instrument.channel]
+            model_attrs = []
+            try:
+                model_attrs.append(model.meta.observation.program_number)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.observation.observation_number)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.observation.visit_number)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.observation.visit_group)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.observation.sequence_id)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.observation.activity_id)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.observation.exposure_number)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.instrument.name)
+            except AttributeError:
+                model_attrs.append(None)
+            try:
+                model_attrs.append(model.meta.instrument.channel)
+            except AttributeError:
+                model_attrs.append(None)
             if None not in model_attrs:
                 group_id = ('jw' + "_".join([
                                 ''.join(model_attrs[:3]),
@@ -125,8 +153,8 @@ class ModelContainer(model_base.DataModel):
                                 model_attrs[6], model_attrs[7].lower(),
                                 model_attrs[8].lower()]))
             else:
-                root, ext = os.path.splitext(model.meta.filename)
-                group_id = "_".join([root, 'group{}'.format(ext)])
+                base, ext = os.path.splitext(model.meta.filename)
+                group_id = base[:base.rfind('_')]
 
             model.meta.group_id = group_id
 
@@ -169,7 +197,7 @@ class ModelContainer(model_base.DataModel):
         model_base.properties.merge_tree(self.meta.asn_table._instance, asn_data)
 
         # populate the output metadata with the output file from the ASN file
-        # Should generalize this in the future
+        # Should remove the following lines eventually
         self.meta.resample.output = str(asn_data['products'][0]['name'])
         self.meta.table_name = str(filepath)
         self.meta.pool_name = str(asn_data['asn_pool'])
@@ -183,7 +211,7 @@ class ModelContainer(model_base.DataModel):
         """
         Return a list of lists of DataModels grouped by exposure.
         """
-
+        self.assign_group_ids()
         group_dict = OrderedDict()
         for model in self._models:
             group_id = model.meta.group_id
@@ -197,16 +225,10 @@ class ModelContainer(model_base.DataModel):
     def group_names(self):
         """
         Return a list of names for the DataModel groups by exposure.
-
-        Note that this returns the DataModel "group_id"s appended with
-        "_resamp.fits".
         """
-
-        groups = self.models_grouped
         result = []
-        for group in groups:
-            filename = '{0}_resamp.fits'.format(group[0].meta.group_id)
-            result.append(filename)
+        for group in self.models_grouped:
+            result.append(group[0].meta.group_id)
         return result
 
     def save(self, filename_not_used, path=None, *args, **kwargs):
