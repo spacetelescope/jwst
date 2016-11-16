@@ -338,21 +338,22 @@ def step_script(cls):
     return step_from_cmdline(sys.argv[1:], cls=cls)
 
 
-def reference_types_from_config(cfg):
+def steps_to_reftypes_from_config(cfg):
     """Return the reference type names associated with a pipeline config file
-    as a sorted list of strings.
+    as a sorted list of strings.   Also return a mapping from step name to
+    reference file types.
 
     If `cfg` does not have an explicit path, find it in the jwst.pipeline
     installation directory.
     """
-    path = os.path.dirname(cfg)
-    if not path:
+    if not os.path.dirname(cfg):
         from jwst import pipeline
-        path = os.path.dirname(pipeline.__file__)
-        cfg = os.path.join(path, os.path.basename(cfg))
-    reftypes = set()
-    step, _step_class, _positional = just_the_step_from_cmdline([cfg])    
-    for sub in step.step_defs.values():
-        reftypes |= set(sub.reference_file_types)
-    return sorted(list(reftypes))
-
+        pkgpath = os.path.dirname(pipeline.__file__)
+        cfgpath = os.path.join(pkgpath, os.path.basename(cfg))
+    else:
+        cfgpath = cfg
+    steps_to_reftypes = {}
+    step, _step_class, _positional = just_the_step_from_cmdline([cfgpath])
+    for name, substep in step.step_defs.items():
+        steps_to_reftypes[name] = sorted(list(substep.reference_file_types))
+    return steps_to_reftypes
