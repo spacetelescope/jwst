@@ -26,14 +26,7 @@ class Extract1dStep(Step):
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
         data_model_from_header = input_model.meta.model_type
-        self.log.debug("data_model_from_header = %s",
-                      data_model_from_header)
-
-        if data_model_from_header == "IFUCubeModel" and \
-           not isinstance(input_model, datamodels.IFUCubeModel):
-            self.log.debug("Close and reopen as an IFUCubeModel")
-            input_model.close()
-            input_model = datamodels.IFUCubeModel(input)
+        self.log.debug("Data model from header = %s", data_model_from_header)
 
         if isinstance(input_model, datamodels.CubeModel):
             # It's a 3-D multi-integration model
@@ -49,7 +42,8 @@ class Extract1dStep(Step):
             # Resampled 2-D data
             self.log.debug('Input is a DrizProductModel')
         else:
-            self.log.warning('Input is not a recognized data model.')
+            self.log.warning('Input is a %s,', str(type(input_model)))
+            self.log.warning('which was not expected for extract_1d.')
 
         # Get the reference file name
         self.ref_file = self.get_reference_file(input_model, 'extract1d')
