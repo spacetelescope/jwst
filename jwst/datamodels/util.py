@@ -50,6 +50,7 @@ def open(init=None, extensions=None, **kwargs):
     """
 
     from . import model_base
+    from . import _defined_models as defined_models # dict of model classes
 
     model_type = None
 
@@ -103,38 +104,21 @@ def open(init=None, extensions=None, **kwargs):
             if hasattr(hdu, 'shape'):
                 shape = hdu.shape
 
-    # Be clever about which type to return, otherwise, just return a new
-    # instance of the requested class
+    # If the model_type has been given, return that type
     if model_type is not None:
+        if model_type in defined_models:
+            new_class = defined_models[model_type]
+            if isinstance(init, (six.text_type, bytes)):
+                log.debug('Opening {0} as {1}'.format(basename(init), new_class))
+            else:
+                log.debug('Opening as {0}'.format(new_class))
+            return new_class(init, extensions=extensions, **kwargs)
+        else:
+            log.warning("Unknown datamodel type '{0}'".format(model_type))
 
-        # If the datamodel class name is given, then import and return
-        # that type of datamodel
-        model_dict = {"AmiLgModel": "amilg", "CombinedSpecModel": "combinedspec",
-            "ContrastModel": "contrast", "CubeModel": "cube", "CubeFlatModel": "cubeflat",
-            "DarkModel": "dark", "DarkMIRIModel": "darkMIRI", "DrizParsModel": "drizpars",
-            "DrizProductModel": "drizproduct", "FilterModel": "filter", "FlatModel": "flat",
-            "FringeModel": "fringe", "GainModel": "gain", "GLS_RampFitModel": "gls_rampfit",
-            "IFUCubeModel": "ifucube", "ImageModel": "image", "IPCModel": "ipc",
-            "IRS2Model": "irs2", "LastFrameModel": "lastframe", "LinearityModel": "linearity",
-            "MaskModel": "mask", "MIRIRampModel": "miri_ramp", "MultiExposureModel": "multiexposure",
-            "MultiSlitModel": "multislit", "MultiSpecModel": "multispec",
-            "OutlierParsModel": "outlierpars", "PhotomModel": "photom", "NircamPhotomModel": "photom",
-            "NirissPhotomModel": "photom", "NirspecPhotomModel": "photom",
-            "NirspecFSPhotomModel": "photom", "MiriImgPhotomModel": "photom",
-            "MiriMrsPhotomModel": "photom", "FgsPhotomModel": "photom", "PixelAreaModel": "pixelarea",
-            "QuadModel": "quad", "RampModel": "ramp", "RampFitOutputModel": "rampfitoutput",
-            "ReadnoiseModel": "readnoise", "ResetModel": "reset", "RSCDModel": "rscd",
-            "SaturationModel": "saturation", "SpecModel": "spec", "StrayLightModel": "straylight",
-            "SuperBiasModel": "superbias"}
-        module_name = model_dict[model_type]
-        class_name = ".".join(("jwst","datamodels",module_name,model_type))
-        name_parts = class_name.split('.')
-        module_name = ".".join(name_parts[:-1])
-        new_class = __import__(module_name)
-        for part in name_parts[1:]:
-            new_class = getattr(new_class, part)      
-
-    elif len(shape) == 0:
+    # Try to figure out which type to return, otherwise, just return a
+    # new instance of the requested class
+    if len(shape) == 0:
         new_class = model_base.DataModel
     elif len(shape) == 4:
         # It's a RampModel, MIRIRampModel, or QuadModel
@@ -173,6 +157,7 @@ def open(init=None, extensions=None, **kwargs):
             new_class = multislit.MultiSlitModel
     else:
         raise ValueError("Don't have a DataModel class to match the shape")
+
     if isinstance(init, (six.text_type, bytes)):
         log.debug('Opening {0} as {1}'.format(basename(init), new_class))
     else:
