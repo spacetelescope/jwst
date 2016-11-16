@@ -1,0 +1,29 @@
+allOf:
+- $ref: core.schema.yaml
+- type: object
+  properties:
+    products:
+      type: array
+      title: An array of DrizProducts
+      items:
+        type: object
+        properties:
+          data:
+            title: resampled science data
+            fits_hdu: SCI
+            default: 0.0
+            ndim: 2
+            datatype: float32
+          wht:
+            title: drizzle algorithm weight array
+            fits_hdu: WHT
+            default: 0.0
+            datatype: float32
+          con:
+            title: drizzle algorithm context array
+            fits_hdu: CON
+            default: 0
+            datatype: int32
+          relsens:
+            $ref: relsens.schema.yaml
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

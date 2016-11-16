@@ -63,6 +63,9 @@ class ResampleStep(Step):
             output_model = self.step.output_models[0]
         else:
             output_model = self.step.output_models
+            
+        output_model.meta.cal_step.resample = "COMPLETE"
+        
         return output_model
 
 
