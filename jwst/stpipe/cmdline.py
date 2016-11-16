@@ -339,12 +339,9 @@ def step_script(cls):
 
 
 def steps_to_reftypes_from_config(cfg):
-    """Return the reference type names associated with a pipeline config file
-    as a sorted list of strings.   Also return a mapping from step name to
-    reference file types.
+    """Based on a pipeline .cfg file
 
-    If `cfg` does not have an explicit path, find it in the jwst.pipeline
-    installation directory.
+    returns { step : [reftypes...], ... }
     """
     if not os.path.dirname(cfg):
         from jwst import pipeline
