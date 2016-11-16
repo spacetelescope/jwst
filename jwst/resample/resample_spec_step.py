@@ -49,8 +49,8 @@ class ResampleSpecStep(Step):
             if all([isinstance(i, datamodels.MultiSlitModel) for i in self.input_models]):
                 log.info('Converting MultiSlit to ModelContainer')
                 container_dict = multislit_to_container(self.input_models)
-                # output_product = datamodels.MultiProductModel()
-                # output_product.update(input_models[0])
+                output_product = datamodels.MultiProductModel()
+                output_product.update(self.input_models[0])
                 for k, v in container_dict.items():
                     self.input_models = v
 
@@ -63,10 +63,11 @@ class ResampleSpecStep(Step):
                     # Do the resampling
                     self.step.do_drizzle()
                     if len(self.step.output_models) == 1:
-                        result = self.step.output_models[0]
+                        out_slit = self.step.output_models[0]
+                        output_product.products.append(out_slit)
                     else:
-                        result = self.step.output_models
-                    # output_product.slits.append(result)
+                        out_slit = self.step.output_models
+                result = output_product
             else:
                 # Set up the resampling object as part of this step
                 self.step = resample_spec.ResampleSpecData(self.input_models,

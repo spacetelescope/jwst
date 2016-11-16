@@ -80,7 +80,6 @@ def build_size_from_spec_domain(domain):
         delta = axs['upper'] - axs['lower']
         #for i in [axs['includes_lower'], axs['includes_upper']]: delta += 1
         size.append(int(delta + 0.5))
-    print('DEBUG size_from_domain', size)
     return tuple(size)
 
 def calc_gwcs_pixmap(in_wcs, out_wcs):
@@ -260,96 +259,96 @@ def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None, domain=None):
     return wnew
 
 
-# def compute_spec_transform(fiducial, refwcs):
-#     """
-#     Compute a simple transform given a fidicial point in a spatial-spectral wcs.
-#     """
-#     cdelt1 = refwcs.wcsinfo.cdelt1 / 3600.
-#     cdelt2 = refwcs.wcsinfo.cdelt2 / 3600.
-#     cdelt3 = refwcs.wcsinfo.cdelt3
-#     roll_ref = refwcs.wcsinfo.roll_ref
-
-#     y, x = grid_from_spec_domain(w)       
-#     ra, dec, lam = refwcs(x, y)
-
-#     min_lam = np.nanmin(lam)
-
-#     offset = Shift(0.) & Shift(0.)
-#     rot = Rotation2D(roll_ref)
-#     scale = Scale(cdelt1) & Scale(cdelt2)
-#     tan = Pix2Sky_TAN()
-#     skyrot = RotateNative2Celestial(fiducial[0][0], fiducial[0][1], 180.0)
-#     spatial = offset | rot | scale | tan | skyrot
-#     spectral = Scale(cdelt3) | Shift(min_lam)
-#     mapping = Mapping((1, 1, 0),)
-#     mapping.inverse = Mapping((2, 1))
-#     transform = mapping | spatial & spectral
-#     transform.outputs = ('ra', 'dec', 'lamda')
-#     return transform
-
-
 def compute_spec_transform(fiducial, refwcs):
     """
     Compute a simple transform given a fidicial point in a spatial-spectral wcs.
     """
+    cdelt1 = refwcs.wcsinfo.cdelt1 / 3600.
+    cdelt2 = refwcs.wcsinfo.cdelt2 / 3600.
     cdelt3 = refwcs.wcsinfo.cdelt3
-    
-    # Build tabular lookup table model for the slit spatial transform
-    w = refwcs
-    y, x = grid_from_spec_domain(w)       
+    roll_ref = refwcs.wcsinfo.roll_ref
+
+    y, x = grid_from_spec_domain(refwcs)       
     ra, dec, lam = refwcs(x, y)
-    # Find dispersion axis
-    disp_axis = int(ra.shape[0] > ra.shape[1])
-    xdisp_axis = int(ra.shape[0] < ra.shape[1])
-    # Map dispersion axis to the x or y grids
-    if disp_axis == 0:
-        grid_disp = x
-        grid_xdisp = y
-    else:
-        grid_disp = y
-        grid_xdisp = x
-    # Find middle of dispersion by looking at the domain
-    mid_disp = int((w.domain[disp_axis]['upper'] - w.domain[disp_axis]['lower'])/2)
-    mid_xdisp = int((w.domain[xdisp_axis]['upper'] - w.domain[xdisp_axis]['lower'])/2)
-    # Make a cutout 4 pix in the dispersion range, of the full slit, trimming nans
-    lam_subarr = lam[:,mid_disp-2:mid_disp+2]
-    # lam_subarr = lam_subarr[~np.isnan(lam_subarr)]
-    # lam_subarr = lam_subarr.reshape(-1, 4)
-    # And use this midpoint to walk up the slit from bottom to top
-    # interpolating to find the input x,y that gives constant output lambda
-    fiducial_lambda = lam[mid_xdisp,mid_disp]
-    xpos = []
-    for row in lam_subarr:
-        if any(np.isnan(row)):
-            xpos.append(np.nan)
-        else:
-            f = interpolate.interp1d(row, x[0,mid_disp-2:mid_disp+2])
-            xpos.append(f(fiducial_lambda))
-    xpos = np.array(xpos)
-
-    # Now compute RA/DEC values for these new X positions; remove NaNs
-    ra_slit, dec_slit, lam_slit = w(xpos,y[:,mid_disp])
-    ra_slit, dec_slit = ra_slit[~np.isnan(ra_slit)], dec_slit[~np.isnan(dec_slit)]
-
-    # Build the tabular models now
-    points = (np.arange(len(ra_slit)).tolist())
-    ra_tabular = Tabular1D(points, lookup_table=ra_slit, bounds_error=False, fill_value=None)
-    dec_tabular = Tabular1D(points, lookup_table=dec_slit, bounds_error=False, fill_value=None)
-    ra_tabular.inverse = Tabular1D(ra_slit, lookup_table=points, bounds_error=False, fill_value=None)
-    dec_tabular.inverse = Tabular1D(np.flipud(dec_slit), lookup_table=np.flipud(points), bounds_error=False, fill_value=None)
-
-    # radec_tabular = Tabular2D(lookup_table='', bounds_error=False, fill_value=None)
-    # radec_tabular.inverse = Tabular2D(np.array(lookup_table='', bounds_error=False, fill_value=None)
 
     min_lam = np.nanmin(lam)
 
-    spatial = ra_tabular & dec_tabular
+    offset = Shift(0.) & Shift(0.)
+    rot = Rotation2D(roll_ref)
+    scale = Scale(cdelt1) & Scale(cdelt2)
+    tan = Pix2Sky_TAN()
+    skyrot = RotateNative2Celestial(fiducial[0][0], fiducial[0][1], 180.0)
+    spatial = offset | rot | scale | tan | skyrot
     spectral = Scale(cdelt3) | Shift(min_lam)
     mapping = Mapping((1, 1, 0),)
     mapping.inverse = Mapping((2, 1))
     transform = mapping | spatial & spectral
     transform.outputs = ('ra', 'dec', 'lamda')
     return transform
+
+
+# def compute_spec_transform(fiducial, refwcs):
+#     """
+#     Compute a simple transform given a fidicial point in a spatial-spectral wcs.
+#     """
+#     cdelt3 = refwcs.wcsinfo.cdelt3
+    
+#     # Build tabular lookup table model for the slit spatial transform
+#     w = refwcs
+#     y, x = grid_from_spec_domain(w)       
+#     ra, dec, lam = refwcs(x, y)
+#     # Find dispersion axis
+#     disp_axis = int(ra.shape[0] > ra.shape[1])
+#     xdisp_axis = int(ra.shape[0] < ra.shape[1])
+#     # Map dispersion axis to the x or y grids
+#     if disp_axis == 0:
+#         grid_disp = x
+#         grid_xdisp = y
+#     else:
+#         grid_disp = y
+#         grid_xdisp = x
+#     # Find middle of dispersion by looking at the domain
+#     mid_disp = int((w.domain[disp_axis]['upper'] - w.domain[disp_axis]['lower'])/2)
+#     mid_xdisp = int((w.domain[xdisp_axis]['upper'] - w.domain[xdisp_axis]['lower'])/2)
+#     # Make a cutout 4 pix in the dispersion range, of the full slit, trimming nans
+#     lam_subarr = lam[:,mid_disp-2:mid_disp+2]
+#     # lam_subarr = lam_subarr[~np.isnan(lam_subarr)]
+#     # lam_subarr = lam_subarr.reshape(-1, 4)
+#     # And use this midpoint to walk up the slit from bottom to top
+#     # interpolating to find the input x,y that gives constant output lambda
+#     fiducial_lambda = lam[mid_xdisp,mid_disp]
+#     xpos = []
+#     for row in lam_subarr:
+#         if any(np.isnan(row)):
+#             xpos.append(np.nan)
+#         else:
+#             f = interpolate.interp1d(row, x[0,mid_disp-2:mid_disp+2])
+#             xpos.append(f(fiducial_lambda))
+#     xpos = np.array(xpos)
+
+#     # Now compute RA/DEC values for these new X positions; remove NaNs
+#     ra_slit, dec_slit, lam_slit = w(xpos,y[:,mid_disp])
+#     ra_slit, dec_slit = ra_slit[~np.isnan(ra_slit)], dec_slit[~np.isnan(dec_slit)]
+
+#     # Build the tabular models now
+#     points = (np.arange(len(ra_slit)).tolist())
+#     ra_tabular = Tabular1D(points, lookup_table=ra_slit, bounds_error=False, fill_value=None)
+#     dec_tabular = Tabular1D(points, lookup_table=dec_slit, bounds_error=False, fill_value=None)
+#     ra_tabular.inverse = Tabular1D(ra_slit, lookup_table=points, bounds_error=False, fill_value=None)
+#     dec_tabular.inverse = Tabular1D(np.flipud(dec_slit), lookup_table=np.flipud(points), bounds_error=False, fill_value=None)
+
+#     # radec_tabular = Tabular2D(lookup_table='', bounds_error=False, fill_value=None)
+#     # radec_tabular.inverse = Tabular2D(np.array(lookup_table='', bounds_error=False, fill_value=None)
+
+#     min_lam = np.nanmin(lam)
+
+#     spatial = ra_tabular & dec_tabular
+#     spectral = Scale(cdelt3) | Shift(min_lam)
+#     mapping = Mapping((1, 1, 0),)
+#     mapping.inverse = Mapping((2, 1))
+#     transform = mapping | spatial & spectral
+#     transform.outputs = ('ra', 'dec', 'lamda')
+#     return transform
 
 
 def compute_spec_fiducial(wcslist, domain=None):

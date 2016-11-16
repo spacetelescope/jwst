@@ -73,14 +73,16 @@ class ResampleSpecData(object):
         wcslist[0].wcsinfo = input_models[0].meta.wcsinfo
         self.output_wcs = resample_utils.make_output_wcs(wcslist)
         self.blank_output = datamodels.DrizProductModel(self.output_wcs.data_size)
-        self.blank_output.assign_wcs(self.output_wcs)
+        # self.blank_output.assign_wcs(self.output_wcs)
 
         # Default to defining output models metadata as
         # a copy of the first input_model's metadata
         ### TO DO:
         ###    replace this with a call to a generalized version of fitsblender
         ###
-        self.blank_output.meta = self.input_models[0].meta
+        self.blank_output.update(self.input_models[0])
+        # print(self.blank_output.meta._instance)
+        # self.blank_output.meta.wcs = self.output_wcs
         self.output_models = datamodels.ModelContainer()
 
     def get_drizpars(self):
@@ -159,6 +161,7 @@ class ResampleSpecData(object):
         # Now, generate each output for all input_models
         for obs_product, group, texptime in zip(driz_outputs, model_groups, group_exptime):
             output_model = self.blank_output.copy()
+            output_model.meta.wcs = self.output_wcs
             output_model.meta.filename = obs_product
 
             output_model.meta.asn.pool_name = self.input_models.meta.pool_name
@@ -182,8 +185,8 @@ class ResampleSpecData(object):
 
                 inwht = build_driz_weight(img, wht_type=self.drizpars['wht_type'],
                                     good_bits=self.drizpars['good_bits'])
-                log.info('Resampling {0} "{1}" to output \
-                    frame.'.format(img.meta.filename, img.name))
+                log.info('Resampling slit {0}'.format(img.name))
+                log.info('Slit size {0}'.format(img.data.shape))
                 driz.add_image(img.data, img.meta.wcs, inwht=inwht,
                         expin=img.meta.exposure.exposure_time,
                         pscale_ratio=outwcs_pscale / wcslin_pscale)
@@ -204,6 +207,10 @@ class ResampleSpecData(object):
             output_model.meta.resample.resample_bits = self.drizpars['good_bits']
             output_model.meta.resample.weight_type = self.drizpars['wht_type']
             output_model.meta.resample.pointings = pointings
+            try:
+                del(output_model.meta.wcsinfo)
+            except AttributeError:
+                pass
 
             self.output_models.append(output_model)
         #self.output_models.save(None)  # DEBUG: Remove for production
