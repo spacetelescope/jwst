@@ -260,6 +260,9 @@ def get_open_slits(input_model):
         slits = get_open_fixed_slits(input_model)
     elif exp_type == "nrs_brightobj":
         slits = [Slit('S1600A1', 3, 0, 0, -.5, .5, 5)]
+    elif exp_type == "nrs_lamp":
+        # TODO: Confirm all fixed slits are opened in this mode and no MSA
+        slits = get_open_fixed_slits(input_model)
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
     return slits
