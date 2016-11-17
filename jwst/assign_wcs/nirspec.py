@@ -269,6 +269,8 @@ def get_open_slits(input_model):
 
 
 def get_open_fixed_slits(input_model):
+    if input_model.meta.subarray.name is None:
+        raise ValueError("Input file is missing SUBARRAY value/keyword.")
     slits = []
     s2a1 = Slit('S200A1', 0, 0, 0, -.5, .5, 5)
     s2a2 = Slit('S200A2', 1, 0, 0, -.5, .5, 5)
