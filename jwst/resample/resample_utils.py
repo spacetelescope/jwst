@@ -40,8 +40,8 @@ def make_output_wcs(wcslist):
     # for w, i in zip(wcslist, input_models):
     #     if w.domain is None:
     #         w.domain = create_domain(w, i.data.shape)
-    output_frame = getattr(wcslist[0], 'output_frame')
-    naxes = getattr(wcslist[0], output_frame).naxes
+    output_frame = wcslist[0].output_frame
+    naxes = wcslist[0].output_frame.naxes
     if naxes == 3:
         output_wcs = wcs_from_spec_footprints(wcslist)
         data_size = build_size_from_spec_domain(output_wcs.domain)
@@ -240,7 +240,7 @@ def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None, domain=None):
     fiducial = compute_spec_fiducial(wcslist, domain=domain)
     # Create transform for output frame
     transform = compute_spec_transform(fiducial, refwcs)
-    output_frame = getattr(refwcs, refwcs.output_frame)
+    output_frame = refwcs.output_frame
     wnew = WCS(output_frame=output_frame, forward_transform=transform)
 
     # Build the domain in the output frame wcs object by running the input wcs
@@ -248,7 +248,7 @@ def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None, domain=None):
     sky = [spec_footprint(w) for w in wcslist]
     domain_grid = [wnew.backward_transform(*f) for f in sky]
     domain = []
-    in_frame = getattr(refwcs, getattr(wnew, 'input_frame'))
+    in_frame = refwcs.input_frame
     for axis in in_frame.axes_order:
         axis_min = np.nanmin(domain_grid[0][axis])
         axis_max = np.nanmax(domain_grid[0][axis])
@@ -360,8 +360,8 @@ def compute_spec_fiducial(wcslist, domain=None):
 
     Build-7 workaround.
     """
-    output_frame = getattr(wcslist[0], 'output_frame')
-    axes_types = getattr(wcslist[0], output_frame).axes_type
+    output_frame = wcslist[0].output_frame
+    axes_types = wcslist[0].output_frame.axes_type
     spatial_axes = np.array(axes_types) == 'SPATIAL'
     spectral_axes = np.array(axes_types) == 'SPECTRAL'
     footprints = ma.hstack([spec_footprint(w,
