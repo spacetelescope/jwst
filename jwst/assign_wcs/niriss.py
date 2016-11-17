@@ -10,6 +10,7 @@ from astropy.modeling.models import Const1D, Mapping, Scale
 from gwcs import wcs
 import gwcs.coordinate_frames as cf
 from .util import not_implemented_mode
+from . import pointing
 from ..transforms.models import NirissSOSSModel
 
 log = logging.getLogger(__name__)
