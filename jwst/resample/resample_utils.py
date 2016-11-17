@@ -248,7 +248,7 @@ def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None, domain=None):
     sky = [spec_footprint(w) for w in wcslist]
     domain_grid = [wnew.backward_transform(*f) for f in sky]
     domain = []
-    in_frame = getattr(refwcs, getattr(wnew, 'input_frame'))
+    in_frame = refwcs.input_frame
     for axis in in_frame.axes_order:
         axis_min = np.nanmin(domain_grid[0][axis])
         axis_max = np.nanmax(domain_grid[0][axis])
