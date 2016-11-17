@@ -45,8 +45,9 @@ import astropy.units as u
 import astropy.constants
 import pymssql
 import scipy.interpolate as sciint
+import warnings
 
-__version__ = '0.1.0'
+__version__ = '0.2.0'
 
 # Find path to ephemeris from environmental variable.
 
@@ -152,22 +153,56 @@ def parse_jwst_ephem_line(line):
 
 #-------end of file based jwst ephem routines
 
-def jwst_ephem_interp(t):
+def jwst_ephem_interp(t, padding=3):
     '''
-    Given the values of time (ttab), x, y, z (xtab, ytab, ztab) obtained from an ephemeris,
+    Given the values of time (ttab),
+    x, y, z (xtab, ytab, ztab) obtained from an ephemeris,
     apply cubic interpolation to obtain x, y, z values for the
     requested time(s) t (t in MJD)
+
+    padding is the number of entries required before
+    and after the time range of interest.
     '''
 
     etab = get_jwst_ephemeris()
-    if t.min() < etab[:, 0].min() or t.max() > etab[:, 0].max():
+
+    '''
+    Select only the portion of the table with relevant times.
+    '''
+    mask = np.logical_and(
+        etab[:, 0] >= t.min(),
+        etab[:, 0] <= t.max()
+    )
+    mask_indicies = np.nonzero(mask)[0]
+    if not len(mask_indicies):
         raise ValueError(
-            "One or more of the requested times extends beyond\n" + \
-            "the range of the JWST ephemeris.")
-    fx = sciint.interp1d(etab[:, 0], etab[:, 1], kind='cubic', assume_sorted=True)
-    fy = sciint.interp1d(etab[:, 0], etab[:, 2], kind='cubic', assume_sorted=True)
-    fz = sciint.interp1d(etab[:, 0], etab[:, 3], kind='cubic', assume_sorted=True)
+            "One or more of the requested times extends beyond\n"
+            "the range of the JWST ephemeris."
+        )
+    first_idx = mask_indicies[0] - padding
+    last_idx = mask_indicies[-1] + padding
+    if first_idx < 0 or last_idx >= len(mask):
+        warnings.warn('Times extend outside range of ephemeris.'
+                      ' Extrapolation will be used')
+        first_idx = max(first_idx, 0)
+        last_idx = min(last_idx, len(mask) - 1)
+    for diff in range(padding):
+        mask[first_idx + diff] = True
+        mask[last_idx - diff] = True
+
+    roi = etab[mask]
+
+    fx = sciint.interp1d(
+        roi[:, 0], roi[:, 1], kind='cubic', assume_sorted=True
+    )
+    fy = sciint.interp1d(
+        roi[:, 0], roi[:, 2], kind='cubic', assume_sorted=True
+    )
+    fz = sciint.interp1d(
+        roi[:, 0], roi[:, 3], kind='cubic', assume_sorted=True
+    )
     return fx(t), fy(t), fz(t)
+
 
 # the following is only needed if obtaining from a file instead of DB, not used yet
 def get_jwst_ephemeris():
