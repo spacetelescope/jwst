@@ -245,34 +245,47 @@ def do_correction(input_model, pathloss_model):
         #
         # Make empty pathloss arrays for point and uniform
         nrows, ncols = input_model.data.shape
-        input_model.pl_point = np.ones((nrows, ncolumns), dtype=np.float32)
-        input_model.pl_uniform = np.ones((nrows, ncolumns), dtype=np.float32)
+        input_model.pathloss.point = 0.8*np.ones((nrows, ncols), dtype=np.float32)
+        input_model.pathloss.uniform = 0.8*np.ones((nrows, ncols), dtype=np.float32)
         #
         # Get the list of WCS objects for each IFU slice
         wcslist = nirspec.nrs_ifu_wcs(input_model)
-        for ifuslice in wcslist:
+        for i, ifuslice in enumerate(wcslist):
             # Get centering
             xcenter, ycenter = getCenter(exp_type, ifuslice)
             # Calculate the 1-d wavelength and pathloss vectors
             # for the source position
+            aperture = pathloss_model.apertures[0]
             wavelength_pointsource, pathloss_pointsource_vector = \
-                calculate_pathloss_vector(pathloss_model.pointsource,
+                calculate_pathloss_vector(aperture.pointsource_data,
+                                          aperture.pointsource_wcs,
                                           xcenter, ycenter)
             wavelength_uniformsource, pathloss_uniform_vector = \
-                calculate_pathloss_vector(pathloss_model.uniformsource,
+                calculate_pathloss_vector(aperture.uniform_data,
+                                          aperture.uniform_wcs,
                                           xcenter, ycenter)
-            xmin = ifuslice.domain[0]['lower']
-            xmax = ifuslice.domain[0]['upper']
-            ymin = ifuslice.domain[1]['lower']
-            ymax = ifuslice.domain[1]['upper']
-            y, x = np,mgrid[ymin:ymax, xmin:xmax]
-            ra, dec, wave_array = slit.meta.wcs(x, y)
-            input_model.pl_point[ymin:ymax, xmin:xmax] = calculate_pathloss(wave_array,
-                                                                            wavelength_pointsource,
-                                                                            pathloss_pointsource_vector)
-            input_model.pl_uniform[ymin:ymax, xmin:xmax] = calculate_pathloss(wave_array,
-                                                                              wavelength_uniformsource,
-                                                                              pathloss_uniform_vector)
+            xmin = max(ifuslice.domain[0]['lower'], 0)
+            xmax = min(ifuslice.domain[0]['upper'], ncols)
+            ymin = max(ifuslice.domain[1]['lower'], 0)
+            ymax = min(ifuslice.domain[1]['upper'], nrows)
+            y, x = np.mgrid[ymin:ymax, xmin:xmax]
+            ra, dec, wave_array = ifuslice(x, y)
+            point_slice = calculate_pathloss(wave_array,
+                                             wavelength_pointsource,
+                                             pathloss_pointsource_vector)
+            if point_slice.shape != wave_array.shape:
+                log.warn("Pathloss array for slice {0} has different shape from ifu slice".format(i))
+                log.warn(point_slice.shape)
+                log.warn(wave_array.shape)
+            uniform_slice = calculate_pathloss(wave_array,
+                                               wavelength_uniformsource,
+                                               pathloss_uniform_vector)
+            if uniform_slice.shape != wave_array.shape:
+                log.warn("Pathloss uniform array for slice {0} has different shape from ifu slice".format(i))
+                log.warn(uniform_slice.shape)
+                log.warn(wave_array.shape)
+            input_model.pathloss.point[ymin:ymax, xmin:xmax] = point_slice
+            input_model.pathloss.uniform[ymin:ymax, xmin:xmax] = uniform_slice
             
     return input_model.copy()
 
