@@ -252,8 +252,7 @@ def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None, domain=None):
     for axis in in_frame.axes_order:
         axis_min = np.nanmin(domain_grid[0][axis])
         axis_max = np.nanmax(domain_grid[0][axis])
-        domain.append({'lower': axis_min,
-            'upper': axis_max,
+        domain.append({'lower': axis_min, 'upper': axis_max,
             'includes_lower': True, 'includes_upper': True})
     wnew.domain = domain
     return wnew

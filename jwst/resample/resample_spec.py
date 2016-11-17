@@ -162,7 +162,11 @@ class ResampleSpecData(object):
         for obs_product, group, texptime in zip(driz_outputs, model_groups, group_exptime):
             output_model = self.blank_output.copy()
             output_model.meta.wcs = self.output_wcs
-            output_model.meta.wcs.domain = self.output_wcs.domain
+            # # TODO: do this properly in wcs_from_spec_footprints()
+            # output_model.meta.wcs.domain = self.output_wcs.domain
+            # # Instead we do a cludge below to get the domain to not be neg.
+            output_model.meta.wcs.domain = resample_utils.create_domain(
+                self.output_wcs, output_model.data.shape)
             output_model.meta.filename = obs_product
 
             output_model.meta.asn.pool_name = self.input_models.meta.pool_name
