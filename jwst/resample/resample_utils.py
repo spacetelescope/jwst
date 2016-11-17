@@ -55,7 +55,7 @@ def create_domain(wcs, shape):
     """ Create domain for WCS based on shape of model data.
     """
     wcs_domain = []
-    for s in shape:
+    for s in reversed(shape):
         domain = DEFAULT_DOMAIN.copy()
         domain['lower'] = 0
         domain['upper'] = s
@@ -251,9 +251,9 @@ def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None, domain=None):
     in_frame = refwcs.input_frame
     for axis in in_frame.axes_order:
         axis_min = np.nanmin(domain_grid[0][axis])
-        axis_max = np.nanmax(domain_grid[0][axis])
+        axis_max = np.nanmax(domain_grid[0][axis]) + 1
         domain.append({'lower': axis_min, 'upper': axis_max,
-            'includes_lower': True, 'includes_upper': True})
+            'includes_lower': True, 'includes_upper': False})
     wnew.domain = domain
     return wnew
 
