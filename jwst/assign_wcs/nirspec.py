@@ -258,22 +258,43 @@ def get_open_slits(input_model):
         slits = get_open_msa_slits(msa_config, input_model.meta.instrument.msa_metadata_id)
     elif exp_type == "nrs_fixedslit":
         slits = get_open_fixed_slits(input_model)
+    elif exp_type == "nrs_brightobj":
+        slits = [Slit('S1600A1', 3, 0, 0, -.5, .5, 5)]
+    elif exp_type == "nrs_lamp":
+        # TODO: Confirm all fixed slits are opened in this mode and no MSA
+        slits = get_open_fixed_slits(input_model)
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
     return slits
 
 
 def get_open_fixed_slits(input_model):
+    if input_model.meta.subarray.name is None:
+        raise ValueError("Input file is missing SUBARRAY value/keyword.")
     slits = []
-    slits.append(Slit('S200A1', 0, 0, 0, -.5, .5, 5))
-    slits.append(Slit('S200A2', 1, 0, 0, -.5, .5, 5))
-    slits.append(Slit('S400A1', 2, 0, 0, -.5, .5, 5))
-    slits.append(Slit('S1600A1', 3, 0, 0, -.5, .5, 5))
+    s2a1 = Slit('S200A1', 0, 0, 0, -.5, .5, 5)
+    s2a2 = Slit('S200A2', 1, 0, 0, -.5, .5, 5)
+    s4a1 = Slit('S400A1', 2, 0, 0, -.5, .5, 5)
+    s16a1 = Slit('S1600A1', 3, 0, 0, -.5, .5, 5)
+    s2b1 = Slit('S200B1', 4, 0, 0, -.5, .5, 5)
 
-    if input_model.meta.instrument.detector == 'NRS1':
-        if input_model.meta.instrument.filter == 'F070LP' and \
-                input_model.meta.instrument.grating == 'G140H':
-            slits.append(Slit('S200B1', 4, 0, 0, -.5, .5, 5))
+    subarray = input_model.meta.subarray.name.upper()
+    if  subarray == "S200A1":
+        slits.append(s2a1)
+    elif subarray == "S200A2":
+        slits.append(s2a2)
+    elif subarray == "S400A1":
+        slits.append(s4a1)
+    elif subarray == "S1600A1":
+        slits.append(s16a1)
+    if  subarray == "S200B1":
+        slits.append(s2b1)
+    else:
+        slits.extend([s2a1, s2a2, s4a1, s16a1])
+        if input_model.meta.instrument.detector == 'NRS1':
+            if input_model.meta.instrument.filter == 'F070LP' and \
+                    input_model.meta.instrument.grating == 'G140H':
+                slits.append(s2b1)
     return slits
 
 
