@@ -162,6 +162,7 @@ class ResampleSpecData(object):
         for obs_product, group, texptime in zip(driz_outputs, model_groups, group_exptime):
             output_model = self.blank_output.copy()
             output_model.meta.wcs = self.output_wcs
+            output_model.meta.wcs.domain = self.output_wcs.domain
             output_model.meta.filename = obs_product
 
             output_model.meta.asn.pool_name = self.input_models.meta.pool_name
@@ -180,13 +181,13 @@ class ResampleSpecData(object):
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
 
-                outwcs_pscale = output_model.meta.wcsinfo.cdelt1
-                wcslin_pscale = img.meta.wcsinfo.cdelt1
+                outwcs_pscale = output_model.meta.wcsinfo.cdelt3
+                wcslin_pscale = img.meta.wcsinfo.cdelt3
 
                 inwht = build_driz_weight(img, wht_type=self.drizpars['wht_type'],
                                     good_bits=self.drizpars['good_bits'])
-                log.info('Resampling slit {0}'.format(img.name))
-                log.info('Slit size {0}'.format(img.data.shape))
+                log.info('Resampling slit {0} {1}'.format(img.name,
+                    self.output_wcs.data_size))
                 driz.add_image(img.data, img.meta.wcs, inwht=inwht,
                         expin=img.meta.exposure.exposure_time,
                         pscale_ratio=outwcs_pscale / wcslin_pscale)
@@ -207,12 +208,18 @@ class ResampleSpecData(object):
             output_model.meta.resample.resample_bits = self.drizpars['good_bits']
             output_model.meta.resample.weight_type = self.drizpars['wht_type']
             output_model.meta.resample.pointings = pointings
-            try:
-                del(output_model.meta.wcsinfo)
-            except AttributeError:
-                pass
+
+            # Update mutlislit slit info on the output_model
+            del(output_model.meta.wcsinfo)
+            for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
+                'slitlet_id', 'source_id', 'source_name', 'source_alias',
+                'catalog_id', 'stellarity', 'source_type', 'source_xpos',
+                'source_ypos', 'nshutters', 'relsens']:
+                if hasattr(img, attr):
+                    setattr(output_model, attr, getattr(img, attr))
 
             self.output_models.append(output_model)
+
         #self.output_models.save(None)  # DEBUG: Remove for production
 
 

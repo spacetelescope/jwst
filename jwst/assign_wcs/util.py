@@ -6,7 +6,6 @@ Utility function for WCS
 import logging
 import functools
 import numpy as np
-import numpy.ma as ma
 
 from astropy.utils.misc import isiterable
 from astropy.io import fits
