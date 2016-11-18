@@ -79,8 +79,8 @@ def ifu_extract1d(input_model, refname, source_type):
     nerror = np.ones_like(net)
     berror = np.ones_like(net)
     spec = datamodels.SpecModel()
-    otab = np.array(zip(wavelength, flux, fl_error, dq,
-                        net, nerror, background, berror),
+    otab = np.array(list(zip(wavelength, flux, fl_error, dq,
+                         net, nerror, background, berror)),
                     dtype=spec.spec_table.dtype)
     spec = datamodels.SpecModel(spec_table=otab)
     output_model.spec.append(spec)
@@ -95,7 +95,7 @@ def ifu_extract_parameters(refname, slitname, source_type):
     with open(refname) as f:
         ref = json.load(f)
     for aper in ref['apertures']:
-        if aper.has_key('id') and aper['id'] != "dummy" and \
+        if 'id' in aper and aper['id'] != "dummy" and \
            (aper['id'] == slitname or aper['id'] == "ANY" or
             slitname == "ANY"):
             region_type = aper.get("region_type", "target")

@@ -25,11 +25,17 @@ class JumpStep(Step):
 
         with datamodels.open(input) as input_model:
 
-            # Check for an input model with NGROUPS <=2
-            if input_model.meta.exposure.ngroups <= 2:
+            # Check for consistency between keyword values and data shape
+            ngroups = input_model.data.shape[1]
+            ngroups_kwd = input_model.meta.exposure.ngroups
+            if ngroups != ngroups_kwd:
+                self.log.error("Keyword 'NGROUPS' value of '{0}' does not match data array size of '{1}'".format(ngroups_kwd,ngroups))
+                raise ValueError("Bad data dimensions")
+
+            # Check for an input model with NGROUPS<=2
+            if ngroups <= 2:
                 self.log.warn('Can not apply jump detection when NGROUPS<=2;')
                 self.log.warn('Jump step will be skipped')
-
                 result = input_model.copy()
                 result.meta.cal_step.jump = 'SKIPPED'
                 return result

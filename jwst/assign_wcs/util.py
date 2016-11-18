@@ -6,10 +6,12 @@ Utility function for WCS
 import logging
 import functools
 import numpy as np
+
 from astropy.utils.misc import isiterable
 from astropy.io import fits
 from astropy.modeling import projections
 from astropy.modeling import models as astmodels
+
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial
 
@@ -77,7 +79,7 @@ def wcs_from_footprints(wcslist, refwcs=None, transform=None, domain=None):
     if not isiterable(wcslist):
         raise ValueError("Expected 'wcslist' to be an iterable of WCS objects.")
     if not all([isinstance(w, WCS) for w in wcslist]):
-        raise TypeError("All items in wcslist are expected to be instances of gwcs.WCS.")
+        raise TypeError("All items in wcslist are to be instances of gwcs.WCS.")
     if refwcs is None:
         refwcs = wcslist[0]
     else:
@@ -88,9 +90,7 @@ def wcs_from_footprints(wcslist, refwcs=None, transform=None, domain=None):
     prj = np.array([isinstance(m, projections.Projection) for m \
                     in refwcs.forward_transform]).nonzero()[0]
     if prj:
-        # TODO: Fix the compound model indexing with numpy integers in astropy.
-        # Remove the work around this issues from here.
-        prj = refwcs.forward_transform[int(prj[0])]
+        prj = refwcs.forward_transform[prj[0]]
     else:
         prj = astmodels.Pix2Sky_TAN()
     trans = []
@@ -109,8 +109,6 @@ def wcs_from_footprints(wcslist, refwcs=None, transform=None, domain=None):
     wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame,
                              projection=prj, transform=tr)
 
-    #domain_bounds = np.hstack([gwutils._domain_to_bounds(d) for d in \
-    #[w.domain for w in wcslist]])
     domain_footprints = [w.footprint() for w in wcslist]
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in domain_footprints])
     for axs in domain_bounds:
@@ -148,8 +146,8 @@ def compute_fiducial(wcslist, domain=None):
         y_mean = np.mean(np.cos(lat) * np.sin(lon))
         z_mean = np.mean(np.sin(lat))
         lon_fiducial = np.rad2deg(np.arctan2(y_mean, x_mean)) % 360.0
-        lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean**2 + y_mean\
-** 2)))
+        lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean ** 2 +
+            y_mean ** 2)))
         fiducial[spatial_axes] = lon_fiducial, lat_fiducial
     if (spectral_footprint).any():
         fiducial[spectral_axes] = spectral_footprint.min()
