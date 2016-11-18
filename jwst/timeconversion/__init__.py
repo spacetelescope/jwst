@@ -32,7 +32,7 @@ This contains the functions that actually compute the time travel difference
 between two frames of reference.
 '''
 
-from __future__ import division, print_function
+from __future__ import division
 
 import re
 import os
@@ -45,15 +45,12 @@ import astropy.units as u
 import astropy.constants
 import pymssql
 import scipy.interpolate as sciint
-import warnings
 import logging
 
 __version__ = '0.2.0'
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-
 
 # Find path to ephemeris from environmental variable.
 
@@ -170,7 +167,7 @@ def jwst_ephem_interp(t, padding=3):
     and after the time range of interest.
     '''
 
-    print('times="{}"'.format(t))
+    logger.debug('times="{}"'.format(t))
     etab = get_jwst_ephemeris()
 
     '''
@@ -191,18 +188,18 @@ def jwst_ephem_interp(t, padding=3):
     last_idx += padding
     fit_type = 'cubic'
     if first_idx < 0 or last_idx >= len(mask):
-        warnings.warn('Times extend outside range of ephemeris.'
-                      ' Extrapolation will be used.')
+        logger.warn('Times extend outside range of ephemeris.'
+                    ' Extrapolation will be used.')
         fit_type = 'linear'
         first_idx = max(first_idx, 0)
         last_idx = min(last_idx, len(mask) - 1)
-    print('idxs = {} {}'.format(first_idx, last_idx))
+    logger.debug('idxs = {} {}'.format(first_idx, last_idx))
     for diff in range(padding):
         mask[first_idx + diff] = True
         mask[last_idx - diff] = True
 
     roi = etab[mask]
-    print('roi = {}'.format(roi.shape))
+    logger.debug('roi = {}'.format(roi.shape))
 
     extrapolate = 'extrapolate' if fit_type == 'linear' else None
     fx = sciint.interp1d(
@@ -239,7 +236,7 @@ def get_jwst_ephemeris():
         ' eserver={}'
         ' edb={}'.format(eserver, edb)
     )
-    print(
+    logger.debug(
         'Ephemeris connect info:'
         ' eserver={}'
         ' edb={}'.format(eserver, edb)
