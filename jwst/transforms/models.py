@@ -631,7 +631,8 @@ class NirissSOSSModel(Model):
         Spectral orders for which there is a wavelength solution.
     models : list of `~astropy.modeling.core.Model`
         A list of transforms representing the wavelength solution for
-        each order in spectral orders. It should match the order in ``spectral_orders``.
+        each order in spectral orders. It should match the order in
+        ``spectral_orders``.
     """
 
     inputs = ('x', 'y', 'spectral_order')
@@ -691,17 +692,20 @@ class Logical(Model):
 
     def evaluate(self, x):
         x = x.copy()
-        cond_result = self.conditions[self.condition](x, self.compareto)
+        m = ~np.isnan(x)
+        m_ind = np.flatnonzero(m)
         if isinstance(self.compareto, np.ndarray):
-            x[cond_result] = self.value[cond_result]
+            cond = self.conditions[self.condition](x[m], self.compareto[m])
+            x.flat[m_ind[cond]] = self.value.flat[m_ind[cond]]
         else:
-            x[cond_result] = self.value
+            cond = self.conditions[self.condition](x[m], self.compareto)
+            x.flat[m_ind[cond]] = self.value
         return x
 
     def __repr__(self):
-        return "{0}(condition={1}, compareto={2}, value={3})".format(self.__class__.__name__,
-                                                                     self.condition, self.compareto,
-                                                                     self.value)
+        txt = "{0}(condition={1}, compareto={2}, value={3})"
+        return txt.format(self.__class__.__name__, self.condition,
+            self.compareto, self.value)
 
 
 class V23ToSky(Rotation3D):
