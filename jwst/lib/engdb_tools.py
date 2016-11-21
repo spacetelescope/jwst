@@ -27,6 +27,9 @@ ENGDB_DATA_XML = 'xml/Data/'
 ENGDB_METADATA = 'MetaData/TlmMnemonics/'
 ENGDB_METADATA_XML = 'xml/MetaData/TlmMnemonics/'
 
+__all__ = [
+    'ENGDB_Service'
+]
 
 class ENGDB_Service(object):
     """
@@ -183,6 +186,9 @@ class ENGDB_Service(object):
         ------
         requests.exceptions.HTTPError
             Either a bad URL or non-existant mnemonic.
+
+        ValueError
+            Mnemonic is found but has no data.
         """
         records = self.get_records(
             mnemonic=mnemonic,
@@ -196,6 +202,8 @@ class ENGDB_Service(object):
         db_starttime = extract_db_time(records['ReqSTime'])
         db_endttime = extract_db_time(records['ReqETime'])
         results = []
+        if records['Data'] is None:
+            raise ValueError('Mnemonic {} has no data'.format(mnemonic))
         for record in records['Data']:
             obstime = extract_db_time(record['ObsTime'])
             if obstime >= db_starttime and obstime <= db_endttime:

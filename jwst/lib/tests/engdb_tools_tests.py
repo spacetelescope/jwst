@@ -13,7 +13,7 @@ from __future__ import absolute_import
 
 import pytest
 
-from . import engdb_tools
+from .. import engdb_tools
 
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
 GOOD_STARTTIME = '2016-01-01'
@@ -33,7 +33,9 @@ def test_basic():
 def test_bad_server():
     engdb = engdb_tools.ENGDB_Service(BAD_SERVER)
     with pytest.raises(Exception):
-        r = engdb.get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
+        records = engdb.get_records(
+            GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME
+        )
 
 
 def test_db_time():
@@ -46,6 +48,7 @@ def test_db_time():
     ])
     result = engdb_tools.extract_db_time(stime)
     assert result == time
+
 
 def test_values():
     engdb = engdb_tools.ENGDB_Service()
