@@ -32,7 +32,7 @@ This contains the functions that actually compute the time travel difference
 between two frames of reference.
 '''
 
-from __future__ import division, print_function
+from __future__ import division
 
 import re
 import os
@@ -45,9 +45,12 @@ import astropy.units as u
 import astropy.constants
 import pymssql
 import scipy.interpolate as sciint
-import warnings
+import logging
 
 __version__ = '0.2.0'
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Find path to ephemeris from environmental variable.
 
@@ -164,42 +167,52 @@ def jwst_ephem_interp(t, padding=3):
     and after the time range of interest.
     '''
 
+    logger.debug('times="{}"'.format(t))
     etab = get_jwst_ephemeris()
 
     '''
     Select only the portion of the table with relevant times.
     '''
-    mask = np.logical_and(
-        etab[:, 0] >= t.min(),
-        etab[:, 0] <= t.max()
-    )
-    mask_indicies = np.nonzero(mask)[0]
-    if not len(mask_indicies):
-        raise ValueError(
-            "One or more of the requested times extends beyond\n"
-            "the range of the JWST ephemeris."
-        )
-    first_idx = mask_indicies[0] - padding
-    last_idx = mask_indicies[-1] + padding
+    mask_min = etab[:, 0] >= t.min()
+    mask_max = etab[:, 0] <= t.max()
+    mask = np.logical_and(mask_min, mask_max)
+    try:
+        first_idx = np.nonzero(mask_min)[0][0]
+    except IndexError:
+        first_idx = len(mask_min) - 1
+    try:
+        last_idx = np.nonzero(mask_max)[0][-1]
+    except IndexError:
+        last_idx = 0
+    first_idx -= padding
+    last_idx += padding
+    fit_type = 'cubic'
     if first_idx < 0 or last_idx >= len(mask):
-        warnings.warn('Times extend outside range of ephemeris.'
-                      ' Extrapolation will be used')
+        logger.warn('Times extend outside range of ephemeris.'
+                    ' Extrapolation will be used.')
+        fit_type = 'linear'
         first_idx = max(first_idx, 0)
         last_idx = min(last_idx, len(mask) - 1)
+    logger.debug('idxs = {} {}'.format(first_idx, last_idx))
     for diff in range(padding):
         mask[first_idx + diff] = True
         mask[last_idx - diff] = True
 
     roi = etab[mask]
+    logger.debug('roi = {}'.format(roi.shape))
 
+    extrapolate = 'extrapolate' if fit_type == 'linear' else None
     fx = sciint.interp1d(
-        roi[:, 0], roi[:, 1], kind='cubic', assume_sorted=True
+        roi[:, 0], roi[:, 1], kind=fit_type,
+        assume_sorted=True, fill_value=extrapolate
     )
     fy = sciint.interp1d(
-        roi[:, 0], roi[:, 2], kind='cubic', assume_sorted=True
+        roi[:, 0], roi[:, 2], kind=fit_type,
+        assume_sorted=True, fill_value=extrapolate
     )
     fz = sciint.interp1d(
-        roi[:, 0], roi[:, 3], kind='cubic', assume_sorted=True
+        roi[:, 0], roi[:, 3], kind=fit_type,
+        assume_sorted=True, fill_value=extrapolate
     )
     return fx(t), fy(t), fz(t)
 
@@ -218,6 +231,16 @@ def get_jwst_ephemeris():
         edb = os.environ['METRICS_DB']
     else:
         edb = 'jwdpmetrics5'
+    logger.info(
+        'Ephemeris connect info:'
+        ' eserver={}'
+        ' edb={}'.format(eserver, edb)
+    )
+    logger.debug(
+        'Ephemeris connect info:'
+        ' eserver={}'
+        ' edb={}'.format(eserver, edb)
+    )
     conn = pymssql.connect(server=eserver, database=edb)
     cur = conn.cursor()
     cur.execute('select * from predictephemeris')
