@@ -699,9 +699,9 @@ def wavelength_from_disperser(disperser, input_model):
         system_pressure = disperser['pref']
         tref = disperser['tref']
         pref = disperser['pref']
-        kcoef = disperser['kcoef'].copy()
-        lcoef = disperser['lcoef'].copy()
-        tcoef = disperser['tcoef'].copy()
+        kcoef = disperser['kcoef'][:]
+        lcoef = disperser['lcoef'][:]
+        tcoef = disperser['tcoef'][:]
         n = Snell.compute_refraction_index(lam, system_temperature, tref, pref,
                                            system_pressure, kcoef, lcoef, tcoef
                                            )
