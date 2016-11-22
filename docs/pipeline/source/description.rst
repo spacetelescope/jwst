@@ -66,7 +66,8 @@ Level-2b Spectroscopic Pipelines Step Flow
 ==========================================
 
 The list of correction steps invoked by the level-2b spectroscopic
-pipeline configurations is shown below.
+pipeline configurations is shown below. Some steps are only applied to
+certain instruments or instrument modes, as noted in the table below.
 
 The calwebb_spec2 pipeline is able to apply background subtraction operations
 via either nodded source exposures or dedicated background exposures.
@@ -87,38 +88,44 @@ imprint exposure to be used in the step. This step will be skipped when
 processing a single input product.
 
 The resamp_spec step produces a resampled product for non-IFU modes of
-spectroscopic data. Cube_build produces a resampled cube for IFU
-exposures.
+some kinds of spectroscopic exposures. If the resample_spec step is not applied
+to a given exposure type, the extract_1d operation will be performed on the
+unresampled data.
+Cube_build produces a resampled cube for IFU exposures.
 
-The straylight and fringe steps are only applied to MIRI MRS exposures.
 
-+------------------+
-| calwebb_spec2    |
-+==================+
-| assign_wcs       |
-+------------------+
-| bkg_subtract     |
-+------------------+
-| imprint_subtract |
-+------------------+
-| extract_2d       |
-+------------------+
-| flat_field       |
-+------------------+
-| srctype          |
-+------------------+
-| straylight       |
-+------------------+
-| fringe           |
-+------------------+
-| photom           |
-+------------------+
-| resamp_spec      |
-+------------------+
-| cube_build       |
-+------------------+
-| extract_1d       |
-+------------------+
+Note that level-2b processing for NIRCam and NIRISS Wide-Field Slitless (grism)
+Spectroscopy modes is not yet implemented.
+
++------------------+----+-----+-----+----+----+-----+--------+
+| Instrument Mode  |     NIRSpec    |     MIRI      | NIRISS |
++------------------+----+-----+-----+----+----+-----+--------+
+| Step             | FS | MOS | IFU | FS | SL | MRS |  SOSS  |
++==================+====+=====+=====+====+====+=====+========+
+| assign_wcs       | X  |  X  |  X  | X  | X  |  X  |   X    |
++------------------+----+-----+-----+----+----+-----+--------+
+| bkg_subtract     | X  |  X  |  X  | X  | X  |  X  |   X    |
++------------------+----+-----+-----+----+----+-----+--------+
+| imprint_subtract |    |  X  |  X  |    |    |     |        |
++------------------+----+-----+-----+----+----+-----+--------+
+| extract_2d       | X  |  X  |     |    |    |     |        |
++------------------+----+-----+-----+----+----+-----+--------+
+| flat_field       | X  |  X  |  X  | X  | X  |  X  |   X    |
++------------------+----+-----+-----+----+----+-----+--------+
+| srctype          | X  |  X  |  X  | X  | X  |  X  |   X    |
++------------------+----+-----+-----+----+----+-----+--------+
+| straylight       |    |     |     |    |    |  X  |        |
++------------------+----+-----+-----+----+----+-----+--------+
+| fringe           |    |     |     |    |    |  X  |        |
++------------------+----+-----+-----+----+----+-----+--------+
+| photom           | X  |  X  |  X  | X  | X  |  X  |   X    |
++------------------+----+-----+-----+----+----+-----+--------+
+| resamp_spec      | X  |  X  |     | X  |    |     |        |
++------------------+----+-----+-----+----+----+-----+--------+
+| cube_build       |    |     |  X  |    |    |  X  |        |
++------------------+----+-----+-----+----+----+-----+--------+
+| extract_1d       | X  |  X  |  X  | X  | X  |  X  |   X    |
++------------------+----+-----+-----+----+----+-----+--------+
 
 Level-3 Imaging Pipeline Step Flow
 ==================================
