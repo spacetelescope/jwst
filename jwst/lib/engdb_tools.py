@@ -31,6 +31,7 @@ __all__ = [
     'ENGDB_Service'
 ]
 
+
 class ENGDB_Service(object):
     """
     Set of various utilities to access the JWST
@@ -66,6 +67,14 @@ class ENGDB_Service(object):
     def __init__(self, base_url=ENGDB_BASE_URL, default_format='dict'):
         self.base_url = base_url
         self.default_format = default_format
+
+        # Check for aliveness
+        response = requests.get(''.join([
+            self.base_url,
+            self.default_format,
+            ENGDB_METADATA
+        ]))
+        response.raise_for_status()
 
     @property
     def default_format(self):
