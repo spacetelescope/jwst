@@ -90,7 +90,8 @@ setup(
             define_macros=[('NUMPY', '1')]),
     ],
     tests_require=[
-        'pytest'
+        'pytest',
+        'requests_mock'
     ],
     cmdclass={
         'test': PyTest
