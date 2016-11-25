@@ -90,6 +90,7 @@ setup(
             define_macros=[('NUMPY', '1')]),
     ],
     tests_require=[
+        'backports.tempfile',
         'pytest',
         'requests_mock'
     ],

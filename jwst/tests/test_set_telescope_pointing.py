@@ -19,7 +19,7 @@ import os
 import pytest
 import requests_mock
 import sys
-from tempfile import TemporaryDirectory
+from backports.tempfile import TemporaryDirectory
 
 from jwst.lib import engdb_tools
 
