@@ -308,6 +308,8 @@ def get_open_fixed_slits(input_model):
             if input_model.meta.instrument.filter == 'F070LP' and \
                     input_model.meta.instrument.grating == 'G140H':
                 slits.append(s2b1)
+        elif input_model.meta.instrument.detector == 'NRS2':
+            slits.append(s2b1)
     return slits
 
 
@@ -815,8 +817,7 @@ def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5)
         The wavelength range for the combination of grating and filter.
 
     """
-    lam_min = wavelength_range[0]
-    lam_max = wavelength_range[1]
+    lam_min, lam_max = wavelength_range
 
     step = 1e-10
     nsteps = int((lam_max - lam_min) / step)
