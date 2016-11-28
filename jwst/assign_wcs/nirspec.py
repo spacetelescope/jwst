@@ -193,9 +193,10 @@ def slits_wcs(input_model, reference_files):
         Dictionary with reference files supplied by CRDS.
 
     """
-    open_slits_id = get_open_slits(input_model)
+    open_slits_id = get_open_slits(input_model, reference_files)
     n_slits = len(open_slits_id)
     log.info("Computing WCS for {0} open slitlets".format(n_slits))
+
     # Get the corrected disperser model
     disperser = get_disperser(input_model, reference_files['disperser'])
 
@@ -251,7 +252,7 @@ def slits_wcs(input_model, reference_files):
     return msa_pipeline
 
 
-def get_open_slits(input_model):
+def get_open_slits(input_model, reference_files=None):
     exp_type = input_model.meta.exposure.type.lower()
     if exp_type == "nrs_msaspec":
         msa_config = input_model.meta.instrument.msa_configuration_file
@@ -266,12 +267,11 @@ def get_open_slits(input_model):
             raise KeyError(message)
         slits = get_open_msa_slits(msa_config, msa_metadata_id)
     elif exp_type == "nrs_fixedslit":
-        slits = get_open_fixed_slits(input_model)
+        slits = get_open_fixed_slits(input_model, reference_files)
     elif exp_type == "nrs_brightobj":
         slits = [Slit('S1600A1', 3, 0, 0, -.5, .5, 5)]
     elif exp_type == "nrs_lamp":
-        # TODO: Confirm all fixed slits are opened in this mode and no MSA
-        slits = get_open_fixed_slits(input_model)
+        slits = get_open_fixed_slits(input_model, reference_files)
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
     if not slits:
@@ -281,7 +281,7 @@ def get_open_slits(input_model):
     return slits
 
 
-def get_open_fixed_slits(input_model):
+def get_open_fixed_slits(input_model, reference_files=None):
     if input_model.meta.subarray.name is None:
         raise ValueError("Input file is missing SUBARRAY value/keyword.")
     slits = []
@@ -300,7 +300,7 @@ def get_open_fixed_slits(input_model):
         slits.append(s4a1)
     elif subarray == "S1600A1":
         slits.append(s16a1)
-    if  subarray == "S200B1":
+    elif  subarray == "S200B1":
         slits.append(s2b1)
     else:
         slits.extend([s2a1, s2a2, s4a1, s16a1])
@@ -310,6 +310,8 @@ def get_open_fixed_slits(input_model):
                 slits.append(s2b1)
         elif input_model.meta.instrument.detector == 'NRS2':
             slits.append(s2b1)
+    if reference_files is not None:
+        slits = validate_open_slits(input_model, reference_files)
     return slits
 
 
@@ -1147,76 +1149,82 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     slit_wcs.domain = domain
     return slit_wcs
 
+### todo
+def validate_open_slits(input_model, reference_files):
+    """
+    For each slit computes the transform from the slit to the detector.
 
-#def slit_to_detector(input_model, slits_id, lam, reference_files):
-    #"""
-    #For each slit computes the transform from the MSA to the detector.
+    Parameters
+    ----------
+    input_model : jwst.datamodels.DataModel
+        Input data model
 
-    #Used to flag stuck open shutters.
-    #Reftypes needed:
-    #reftypes = ['fpa', 'camera', 'disperser', 'collimator', 'msa', 'wavelengthrange']
+    Returns
+    -------
+    slit2det : dict
+        A dictionary with the slit to detector transform for each slit,
+        {slit_id: astropy.modeling.Model}
+    """
+    def _is_valid_slit(domain):
+        xlow, xhigh = domain[0]['lower'], domain[0]['upper']
+        ylow, yhigh = domain[1]['lower'], domain[1]['upper']
+        if xlow >= 2048 or ylow >= 2048 or xhigh <= 0 or yhigh <= 0:
+            return False
+        else:
+            return True
 
-    #Parameters
-    #----------
-    #input_model : jwst.datamodels.DataModel
-        #Input data model
-    #slits : list
-        #A list of slit IDs. A slit ID is a tuple of (quadrant, slit_nimber)
-    #lam : float
-        #wavelength, in meters
-    #reference_files : dict
-        #A dictionary with WCS reference_files, {reftype: refname}
+    det2dms = dms_to_sca(input_model).inverse
+    # read models from reference files
+    with AsdfFile.open(reference_files['fpa']) as f:
+        fpa = f.tree[input_model.meta.instrument.detector].copy()
+    with AsdfFile.open(reference_files['camera']) as f:
+        camera = f.tree['model'].copy()
+    with AsdfFile.open(reference_files['disperser']) as f:
+        disperser = f.tree
 
-    #Returns
-    #-------
-    #msa2det : dict
-        #A dictionary with the MSA to detector transform for each slit, {slit_id: astropy.modeling.Model}
-    #"""
-    #slits_msa2det = {}
-    ## read models from reference files
-    #with AsdfFile.open(reference_files['fpa']) as f:
-        #fpa = f.tree[input_model.meta.instrument.detector].copy()
-    #with AsdfFile.open(reference_files['camera']) as f:
-        #camera = f.tree['model'].copy()
-    #with AsdfFile.open(reference_files['disperser']) as f:
-        #disperser = f.tree
+    dircos2u = DirCos2Unitless(name='directional2unitless_cosines')
+    disperser = correct_tilt(disperser, input_model.meta.instrument.gwa_xtilt,
+                             input_model.meta.instrument.gwa_ytilt)
+    angles = [disperser['theta_x'], disperser['theta_y'],
+              disperser['theta_z'], disperser['tilt_y']]
+    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
 
-    #dircos2u = DirCos2Unitless(name='directional2unitless_cosines')
-    #disperser = correct_tilt(disperser, input_model.meta.instrument.gwa_xtilt,
-                             #input_model.meta.instrument.gwa_ytilt)
-    #angles = [disperser['theta_x'], disperser['theta_y'],
-               #disperser['theta_z'], disperser['tilt_y']]
-    #rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
+    order, wrange = get_spectral_order_wrange(input_model, reference_files['wavelengthrange'])
 
-    #order, wrange = get_spectral_order_wrange(input_model, reference_files['wavelengthrange'])
-    #input_model.meta.wcsinfo.waverange_start = wrange[0]
-    #input_model.meta.wcsinfo.waverange_end = wrange[1]
-    #input_model.meta.wcsinfo.spectral_order = order
+    agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
+    # GWA to detector
+    gwa2det = rotation.inverse | dircos2u | camera.inverse | fpa.inverse
+    # collimator to GWA
+    collimator2gwa = collimator_to_gwa(reference_files, disperser)
 
-    #agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
-    ## GWA to detector
-    #gwa2det = rotation.inverse | dircos2u | camera.inverse | fpa.inverse
-    ## collimator to GWA
-    #collimator2gwa = collimator_to_gwa(reference_files, disperser)
+    msa = AsdfFile.open(reference_files['msa'])
+    col2det = collimator2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq | \
+            gwa2det | det2dms
+    open_slits = get_open_slits(input_model)
+    for quadrant in range(1, 6):
+        slits_in_quadrant = [s for s in open_slits if s.quadrant==quadrant]
+        if any(slits_in_quadrant):
+            msa_model = msa.tree[quadrant]['model']
+            msa_data = msa.tree[quadrant]['data']
+            for slit in slits_in_quadrant:
+                slit_id = slit.shutter_id
+                slitdata = msa_data[slit_id]
+                slitdata_model = get_slit_location_model(slitdata)
+                msa_transform = slitdata_model | msa_model
+                #msa2gwa = (msa_transform | collimator2gwa)
+                #msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq | \
+                #         gwa2det | det2dms
+                msa2det = msa_transform & Identity(1) | col2det
+                domain = compute_domain(msa2det, wrange, slit.ymin, slit.ymax)
+                valid = _is_valid_slit(domain)
+                if not valid:
+                    log.info("Removing slit {0} from the list of open slits because the"
+                             "WCS domain is completely outside the detector.".format(slit.name))
+                    idx = np.nonzero([s.name==slit.name for s in open_slits])[0][0]
+                    open_slits.pop(idx)
 
-
-    #msa = AsdfFile.open(reference_files['msa'])
-    #for i in range(1, 5):
-        #slit_names = slits_id[slits_id[:, 0] == i]
-        #if slit_names.any():
-            #msa_model = msa.tree[i]['model']
-            #for slit in slit_names:
-                #index = slit[1] - 1
-                #slitdata = msa.tree[slit[0]]['data'][index]
-                #slitdata_model = get_slit_location_model(slitdata)
-                ## absolute positions of the slit on the MSA
-                #msa_transform = slitdata_model | msa_model
-                #s = slitid_to_slit(np.array([slit]))[0]
-                #msa2gwa = (msa_transform | collimator2gwa) & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
-                #slits_msa2det[s] = msa2gwa | gwa2det
-    #msa.close()
-
-    #return slits_msa2det
+    msa.close()
+    return open_slits
 
 
 def spectral_order_wrange_from_model(input_model):
