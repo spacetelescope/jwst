@@ -89,7 +89,7 @@ def imaging_distortion(input_model, reference_files):
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
     filter_offset = AsdfFile.open(reference_files['filteroffset']).tree[input_model.meta.instrument.filter]
 
-    # Now apply each of the models.  The Scale(60) converts from arc-minutes to arc-seconds.
+    # Now apply each of the models.  The Scale(60) converts from arc-minutes to deg.
     full_distortion = models.Shift(filter_offset['column_offset']) & models.Shift(
         filter_offset['row_offset']) | distortion | models.Scale(1/60) & models.Scale(1/60)
 
