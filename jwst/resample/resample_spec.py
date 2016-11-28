@@ -2,14 +2,22 @@ from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
 import time
-import numpy as np
 from collections import OrderedDict
+import numpy as np
+from scipy import interpolate
+
+from astropy.coordinates import SkyCoord
+from astropy import units as u
+from astropy.modeling.models import (Shift, Scale, Mapping, Rotation2D,
+    Pix2Sky_TAN, RotateNative2Celestial)
 
 from .. import datamodels
 from ..assign_wcs import util
 from . import gwcs_drizzle
 from . import bitmask
 from . import resample_utils
+from gwcs import wcstools, WCS
+from gwcs.utils import _compute_lon_pole
 
 import logging
 log = logging.getLogger(__name__)
@@ -60,6 +68,9 @@ class ResampleSpecData(object):
         self.output_filename = output
         self.ref_filename = ref_filename
 
+        self.output_spatial_scale = None
+        self.output_spectral_scale = None
+        self.output_wcs = None
 
         # If user specifies use of drizpars ref file (default for pipeline use)
         # update input parameters with default values from ref file
@@ -69,11 +80,10 @@ class ResampleSpecData(object):
 
         # Define output WCS based on all inputs, including a reference WCS
         wcslist = [m.meta.wcs for m in self.input_models]
-        # Attach wcsinfo to the first wcs object
-        wcslist[0].wcsinfo = input_models[0].meta.wcsinfo
-        self.output_wcs = resample_utils.make_output_wcs(wcslist)
-        self.blank_output = datamodels.DrizProductModel(self.output_wcs.data_size)
-        # self.blank_output.assign_wcs(self.output_wcs)
+        self.build_output_wcs()
+        self.build_size_from_domain()
+        self.blank_output = datamodels.DrizProductModel(self.data_size)
+        self.blank_output.assign_wcs(self.output_wcs)
 
         # Default to defining output models metadata as
         # a copy of the first input_model's metadata
@@ -81,9 +91,8 @@ class ResampleSpecData(object):
         ###    replace this with a call to a generalized version of fitsblender
         ###
         self.blank_output.update(self.input_models[0])
-        # print(self.blank_output.meta._instance)
-        # self.blank_output.meta.wcs = self.output_wcs
         self.output_models = datamodels.ModelContainer()
+
 
     def get_drizpars(self):
         """ Extract drizzle parameters from reference file
@@ -118,7 +127,8 @@ class ResampleSpecData(object):
 
         # With presence of wild-card rows, code should never trigger this logic
         if row is None:
-            log.error("No row found in %s that matches input data.", self.ref_filename)
+            txt = "No row found in {0} that matches input data."
+            log.error(txt.format(self.ref_filename))
             raise ValueError
 
         # read in values from that row for each parameter
@@ -126,10 +136,127 @@ class ResampleSpecData(object):
             if kw in drizpars.names:
                 self.drizpars[kw] = ref_model['drizpars_table.{0}'.format(kw)][row]
 
+
     def create_output_metadata(self):
         """ Create new output metadata based on blending all input metadata
         """
+        # TODO: Modify API for fitsblender
         pass
+
+
+    def build_output_wcs(self, refwcs=None):
+        """
+        Create a simple output wcs covering footprint of the input datamodels
+        """
+        # TODO: generalize this for more than one input datamodel
+        # TODO: generalize this for imaging modes with distorted wcs
+        input_model = self.input_models[0]
+        if refwcs == None:
+            refwcs = input_model.meta.wcs
+
+        # Generate grid of sky coordinates for area within domain
+        det = x, y = wcstools.grid_from_domain(refwcs.domain)
+        sky = ra, dec, lam = refwcs(*det)
+        domain_xsize = refwcs.domain[0]['upper'] - refwcs.domain[0]['lower']
+        domain_ysize = refwcs.domain[1]['upper'] - refwcs.domain[1]['lower']
+        x_center, y_center = int(domain_xsize / 2), int(domain_ysize / 2)
+
+        # Compute slit angular size, slit center sky coords
+        xpos = []
+        sz = 3
+        for row in lam:
+            if np.isnan(row[x_center]):
+                xpos.append(np.nan)
+            else:
+                f = interpolate.interp1d(row[x_center-sz+1:x_center+sz],
+                    x[y_center, x_center-sz+1:x_center+sz])
+                xpos.append(f(lam[y_center, x_center]))
+        x_arg = np.array(xpos)[~np.isnan(lam[:,x_center])]
+        y_arg = y[~np.isnan(lam[:,x_center]),x_center]
+        # slit_coords, spect0 = refwcs(x_arg, y_arg, output='numericals_plus')
+        slit_ra, slit_dec, slit_spec_ref = refwcs(x_arg, y_arg)
+        slit_coords = SkyCoord(ra=slit_ra, dec=slit_dec, unit=u.deg)
+        pix_num = np.flipud(np.arange(len(slit_ra)))
+        # pix_num = np.arange(len(slit_ra))
+        interpol_ra = interpolate.interp1d(pix_num, slit_ra)
+        interpol_dec = interpolate.interp1d(pix_num, slit_dec)
+        slit_center_pix = len(slit_spec_ref) / 2. - 1
+        log.debug('Slit center pix: {0}'.format(slit_center_pix))
+        slit_center_sky = SkyCoord(ra=interpol_ra(slit_center_pix),
+            dec=interpol_dec(slit_center_pix), unit=u.deg)
+        log.debug('Slit center: {0}'.format(slit_center_sky))
+        log.debug('Fiducial: {0}'.format(resample_utils.compute_spec_fiducial([refwcs])))
+        angular_slit_size = np.abs(slit_coords[0].separation(slit_coords[-1]))
+        log.debug('Slit angular size: {0}'.format(angular_slit_size.arcsec))
+        dra, ddec = slit_coords[0].spherical_offsets_to(slit_coords[-1])
+        offset_up_slit = (dra.to(u.arcsec), ddec.to(u.arcsec))
+        log.debug('Offset up the slit: {0}'.format(offset_up_slit))
+
+        # Compute spatial and spectral scales
+        xposn = np.array(xpos)[~np.isnan(xpos)]
+        dx = xposn[-1] - xposn[0]
+        slit_npix = np.sqrt(dx**2 + np.array(len(xposn) - 1)**2)
+        spatial_scale = angular_slit_size / slit_npix
+        log.debug('Spatial scale: {0}'.format(spatial_scale.arcsec))
+        spectral_scale = lam[y_center, x_center] - lam[y_center, x_center - 1]
+
+        # Compute slit angle relative (clockwise) to y axis
+        slit_rot_angle = (np.arcsin(dx / slit_npix) * u.radian).to(u.degree)
+        log.debug('Slit rotation angle: {0}'.format(slit_rot_angle))
+
+        # Compute transform for output frame
+        roll_ref = input_model.meta.wcsinfo.roll_ref * u.deg
+        min_lam = np.nanmin(lam)
+        offset = Shift(0.) & Shift(slit_center_pix * -1.)
+        # TODO: double-check the signs on the following rotation angles
+        # rot = Rotation2D(roll_ref)
+        rot = Rotation2D(roll_ref + slit_rot_angle)
+        scale = Scale(spatial_scale) & Scale(spatial_scale)
+        tan = Pix2Sky_TAN()
+        lon_pole = _compute_lon_pole(slit_center_sky, tan)
+        skyrot = RotateNative2Celestial(slit_center_sky.ra, slit_center_sky.dec,
+            lon_pole)
+        spatial_trans = offset | rot | scale | tan | skyrot
+        spectral_trans = Scale(spectral_scale) | Shift(min_lam)
+        mapping = Mapping((1, 1, 0),)
+        mapping.inverse = Mapping((2, 1))
+        transform = mapping | spatial_trans & spectral_trans
+        transform.outputs = ('ra', 'dec', 'lamda')
+
+        # Build the output wcs
+        input_frame = refwcs.input_frame
+        output_frame = refwcs.output_frame
+        wnew = WCS(output_frame=output_frame, forward_transform=transform)
+
+        # Build the domain in the output frame wcs object
+        domain_grid = wnew.backward_transform(*sky)
+        domain = []
+        for axis in input_frame.axes_order:
+            axis_min = np.nanmin(domain_grid[axis])
+            axis_max = np.nanmax(domain_grid[axis]) + 1
+            domain.append({'lower': axis_min, 'upper': axis_max,
+                'includes_lower': True, 'includes_upper': False})
+        log.debug('Domain: {0} {1}'.format(domain[1]['lower'], domain[1]['upper']))
+        wnew.domain = domain
+
+        # Update class properties
+        self.output_spatial_scale = spatial_scale
+        self.output_spectral_scale = spectral_scale
+        self.output_wcs = wnew
+
+
+    def build_size_from_domain(self, refwcs=None):
+        """ Compute the size of the output frame based on the domain
+        """
+        if refwcs == None:
+            refwcs = self.output_wcs
+        size = []
+        for axis in refwcs.domain:
+            delta = axis['upper'] - axis['lower']
+            size.append(int(delta + 0.5))
+        self.data_size = tuple(reversed(size))
+        log.debug('DATA SIZE {0}'.format(self.data_size))
+
 
     def do_drizzle(self, **pars):
         """ Perform drizzling operation on input images's to create a new output
@@ -185,16 +312,19 @@ class ResampleSpecData(object):
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
 
-                outwcs_pscale = output_model.meta.wcsinfo.cdelt3
-                wcslin_pscale = img.meta.wcsinfo.cdelt3
+                # outwcs_pscale = output_model.meta.wcsinfo.cdelt3
+                # wcslin_pscale = img.meta.wcsinfo.cdelt3
+                outwcs_pixel_scale = self.output_spatial_scale
+                inwcs_pixel_scale = self.output_spatial_scale
+                pscale_ratio = outwcs_pixel_scale / inwcs_pixel_scale
 
                 inwht = build_driz_weight(img, wht_type=self.drizpars['wht_type'],
                                     good_bits=self.drizpars['good_bits'])
                 log.info('Resampling slit {0} {1}'.format(img.name,
-                    self.output_wcs.data_size))
+                    self.data_size))
                 driz.add_image(img.data, img.meta.wcs, inwht=inwht,
                         expin=img.meta.exposure.exposure_time,
-                        pscale_ratio=outwcs_pscale / wcslin_pscale)
+                        pscale_ratio=pscale_ratio)
 
             # Update some basic exposure time values based on all the inputs
             output_model.meta.exposure.exposure_time = texptime
@@ -214,7 +344,6 @@ class ResampleSpecData(object):
             output_model.meta.resample.pointings = pointings
 
             # Update mutlislit slit info on the output_model
-            del(output_model.meta.wcsinfo)
             for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
                 'slitlet_id', 'source_id', 'source_name', 'source_alias',
                 'catalog_id', 'stellarity', 'source_type', 'source_xpos',
