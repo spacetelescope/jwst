@@ -30,14 +30,14 @@ def getCenter(exp_type, input):
             xcenter = input.source_xcent
             ycenter = input.source_ycent
         except AttributeError:
-            log.warning("Unable to get source center from model")
-            log.warning("Using 0.0, 0.0")
+            log.warn("Unable to get source center from model")
+            log.warn("Using 0.0, 0.0")
             xcenter = 0.0
             ycenter = 0.0
         return (xcenter, ycenter)
     else:
-        log.warning("No method to get centering for exp_type %s" % exp_type)
-        log.warning("Using (0.0, 0.0)")
+        log.warn("No method to get centering for exp_type %s" % exp_type)
+        log.warn("Using (0.0, 0.0)")
         return (0.0, 0.0)
 
 def getApertureFromModel(input_model, match):
@@ -178,24 +178,13 @@ def do_correction(input_model, pathloss_model):
                     # in microns
                     wavelength_pointsource *= 1.0e6
                     wavelength_uniformsource *= 1.0e6
+                    slit.pathloss_pointsource = pathloss_pointsource_vector
+                    slit.wavelength_pointsource =  wavelength_pointsource
+                    slit.pathloss_uniformsource = pathloss_uniform_vector
+                    slit.wavelength_uniformsource = wavelength_uniformsource
                 else:
                     print("Cannot find matching pathloss model for slit with size %d" % slit.nshutters)
                     continue
-                nrows, ncols = slit.data.shape
-                # Get wavelengths of each end
-                xstart = slit.xstart
-                xstop = xstart + ncols
-                ystart = slit.ystart
-                ystop = ystart + nrows
-                # For each pixel
-                y, x = np.mgrid[ystart:ystop, xstart:xstop]
-                ra, dec, wave_array = slit.meta.wcs(x, y)
-                slit.pl_point = calculate_pathloss(wave_array,
-                                                   wavelength_pointsource,
-                                                   pathloss_pointsource_vector)
-                slit.pl_uniform = calculate_pathloss(wave_array,
-                                                     wavelength_uniformsource,
-                                                     pathloss_uniform_vector)
     elif exp_type == 'NRS_FIXEDSLIT':
         slit_number = 0
         # For each slit
@@ -223,198 +212,34 @@ def do_correction(input_model, pathloss_model):
                 # in microns
                 wavelength_pointsource *= 1.0e6
                 wavelength_uniformsource *= 1.0e6
+                slit.pathloss_pointsource = pathloss_pointsource_vector
+                slit.wavelength_pointsource =  wavelength_pointsource
+                slit.pathloss_uniformsource = pathloss_uniform_vector
+                slit.wavelength_uniformsource = wavelength_uniformsource
             else:
                 print("Cannot find matching pathloss model for aperture %s" % slit.name)
                 continue
-            nrows, ncols = slit.data.shape
-            # Get wavelengths of each end
-            xstart = slit.xstart
-            xstop = xstart + ncols
-            ystart = slit.ystart
-            ystop = ystart + nrows
-            # For each pixel
-            y, x = np.mgrid[ystart:ystop, xstart:xstop]
-            ra, dec, wave_array = slit.meta.wcs(x, y)
-            slit.pl_point = calculate_pathloss(wave_array,
-                                               wavelength_pointsource,
-                                               pathloss_pointsource_vector)
-            slit.pl_uniform = calculate_pathloss(wave_array,
-                                                 wavelength_uniformsource,
-                                                 pathloss_uniform_vector)
     elif exp_type == 'NRS_IFU':
-        #
-        # Make empty pathloss arrays for point and uniform
-        nrows, ncols = input_model.data.shape
-        input_model.pathloss.point = 0.8*np.ones((nrows, ncols), dtype=np.float32)
-        input_model.pathloss.uniform = 0.8*np.ones((nrows, ncols), dtype=np.float32)
-        #
-        # Get the list of WCS objects for each IFU slice
-        wcslist = nirspec.nrs_ifu_wcs(input_model)
-        for i, ifuslice in enumerate(wcslist):
-            # Get centering
-            xcenter, ycenter = getCenter(exp_type, ifuslice)
-            # Calculate the 1-d wavelength and pathloss vectors
-            # for the source position
-            aperture = pathloss_model.apertures[0]
-            wavelength_pointsource, pathloss_pointsource_vector = \
-                calculate_pathloss_vector(aperture.pointsource_data,
-                                          aperture.pointsource_wcs,
-                                          xcenter, ycenter)
-            wavelength_uniformsource, pathloss_uniform_vector = \
-                calculate_pathloss_vector(aperture.uniform_data,
-                                          aperture.uniform_wcs,
-                                          xcenter, ycenter)
-            xmin = max(ifuslice.domain[0]['lower'], 0)
-            xmax = min(ifuslice.domain[0]['upper'], ncols)
-            ymin = max(ifuslice.domain[1]['lower'], 0)
-            ymax = min(ifuslice.domain[1]['upper'], nrows)
-            y, x = np.mgrid[ymin:ymax, xmin:xmax]
-            ra, dec, wave_array = ifuslice(x, y)
-            point_slice = calculate_pathloss(wave_array,
-                                             wavelength_pointsource,
-                                             pathloss_pointsource_vector)
-            if point_slice.shape != wave_array.shape:
-                log.warn("Pathloss array for slice {0} has different shape from ifu slice".format(i))
-                log.warn(point_slice.shape)
-                log.warn(wave_array.shape)
-            uniform_slice = calculate_pathloss(wave_array,
-                                               wavelength_uniformsource,
-                                               pathloss_uniform_vector)
-            if uniform_slice.shape != wave_array.shape:
-                log.warn("Pathloss uniform array for slice {0} has different shape from ifu slice".format(i))
-                log.warn(uniform_slice.shape)
-                log.warn(wave_array.shape)
-            input_model.pathloss.point[ymin:ymax, xmin:xmax] = point_slice
-            input_model.pathloss.uniform[ymin:ymax, xmin:xmax] = uniform_slice
+        # Get centering
+        xcenter, ycenter = getCenter(exp_type, None)
+        # Calculate the 1-d wavelength and pathloss vectors
+        # for the source position
+        aperture = pathloss_model.apertures[0]
+        wavelength_pointsource, pathloss_pointsource_vector = \
+            calculate_pathloss_vector(aperture.pointsource_data,
+                                      aperture.pointsource_wcs,
+                                      xcenter, ycenter)
+        wavelength_uniformsource, pathloss_uniform_vector = \
+            calculate_pathloss_vector(aperture.uniform_data,
+                                      aperture.uniform_wcs,
+                                      xcenter, ycenter)
+        # Wavelengths in the reference file are in meters, need them to be
+        # in microns
+        wavelength_pointsource *= 1.0e6
+        wavelength_uniformsource *= 1.0e6
+        input_model.wavelength_pointsource = wavelength_pointsource
+        input_model.pathloss_pointsource = pathloss_pointsource_vector
+        input_model.wavelength_uniformsource = wavelength_uniformsource
+        input_model.pathloss_uniformsource = pathloss_uniform_vector
             
     return input_model.copy()
-
-def calculate_pathloss(wave_array, wavelength, pathloss):
-    """
-    Short Summary
-    -------------
-    
-    Calculate pathloss given wavelength of each pixel in a 2-d array, and
-    1-d arrays of wavelength and pathloss
-
-    Parameters
-    ----------
-
-    wave_array: numpy ndarray
-        Input array of wavelength values at each pixel
-
-    wavelength: numpy ndarray
-        1-d array of wavelength values
-
-    pathloss: numpy ndarray
-        1-d array of corresponding pathloss values
-
-    Returns:
-    --------
-
-    pathloss_array: 2-d array of pathloss values
-
-    """
-
-    #
-    # Make sure wavelength and pathloss arrays have the same length
-    if wavelength.shape[0] != pathloss.shape[0]:
-        log.warning("Wavelength and pathloss arrays have different dimensions")
-        log.info("wavelength shape = %s, pathloss shape = %s" % (wavelength.shape[0],
-                                                                 pathloss.shape[0]))
-        return None
-
-    nrows, ncols = wave_array.shape
-
-    #
-    # Make an array of ones for the pathloss
-    pathloss_array = np.ones((nrows, ncols), dtype=np.float32)
-    
-    for i in range(nrows):
-        for j in range(ncols):
-            array_value = wave_array[i, j]
-            pathloss_value = interpolated_lookup(array_value, wavelength,
-                                                 pathloss)
-            pathloss_array[i, j] = pathloss_value
-
-    return pathloss_array
-
-def interpolated_lookup(value, array_in, array_out):
-    """
-    Short Summary
-    -------------
-    
-    Given two 1-d arrays of corresponding (x, y) values, use the input
-    value to find the location in the first array using linear
-    interpolation, then linearly interpolate at that location in the
-    second array
-
-    Parameters
-    ----------
-
-    value: float
-        Input value the be used to calculate index in array_in
-
-    array_in: numpy ndarray
-        1-d array of input values
-
-    array_out: numpy ndarray
-        1-d array of corresponding output values
-
-    Returns:
-    --------
-
-    output: float
-        Value interpolated at the corresponding location of array_out
-
-    """
-
-    subtracted = array_in - value
-    shift_mult = subtracted[1:] * subtracted[:-1]
-    index_tuple = np.where(shift_mult < 0.0)
-    if len(index_tuple[0]) > 0:
-        index = index_tuple[0][0]
-        remainder = value - array_in[index]
-        partial = remainder/(array_in[index+1] - array_in[index])
-        returned = array_out[index] + \
-                   partial*(array_out[index+1] - array_out[index])
-        return returned
-    else:
-        if subtracted[0] >= 0:
-            return array_out[0]
-        else:
-            return array_out[-1]
-
-def get_extension(hdulist, filter):
-    """Return the first extension that meets the criteria specified
-    in the dictionary 'filter'
-
-    Parameters:
-    -----------
-    hdulist: fits HDUList
-        The fits HDUList to be searched.
-
-    filter: dict
-        A dictionary specifying the conditions to be met by an extension.  The
-        conditions are a (key, value) pair with 'key' being the string containing
-        the name of a FITS keyword, and 'value' being the required keyword value.
-        For example, filter could be {'EXTNAME': 'SCI', 'APERTURE': 'A1600'}, and
-        the routine will return the index of the first extension that matches the
-        filter.
-
-    Returns
-    -------
-    integer
-        The index of the first extension that matches the filter.
-    """
-    matched_index = None
-    for index, hdu in enumerate(hdulist):
-        for key in filter.keys():
-            if hdu.header.get(key) == filter[key]:
-                matched_index = index
-            else:
-                matched_index = None
-                break
-        if matched_index is not None:
-            return matched_index
-    return None

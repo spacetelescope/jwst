@@ -105,14 +105,6 @@ allOf:
             default: 0.0
             fits_keyword: SRCYPOS
             fits_hdu: SCI
-          pl_point:
-            fits_hdu: PATHLOSS_POINT
-            default: 1.0
-            datatype: float32
-          pl_uniform:
-            fits_hdu: PATHLOSS_UNIFORM
-            default: 1.0
-            datatype: float32
           nshutters:
             title: Number of open shutters
             type: integer
