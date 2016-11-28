@@ -79,7 +79,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     if do_yint:
 
         # Set up the ramp time array for the y-intercept method
-        group_time = output_model.meta.exposure.group_integration_time
+        group_time = output_model.meta.exposure.group_time
         times = np.array([(k+1)*group_time for k in range(ngroups)])
         median_slopes /= group_time
 

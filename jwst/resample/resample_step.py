@@ -1,4 +1,5 @@
-#! /usr/bin/env python
+from __future__ import (division, print_function, unicode_literals,
+    absolute_import)
 
 from ..stpipe import Step, cmdline
 from .. import datamodels
@@ -63,6 +64,9 @@ class ResampleStep(Step):
             output_model = self.step.output_models[0]
         else:
             output_model = self.step.output_models
+            
+        output_model.meta.cal_step.resample = "COMPLETE"
+        
         return output_model
 
 

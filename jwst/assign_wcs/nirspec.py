@@ -255,25 +255,59 @@ def get_open_slits(input_model):
     exp_type = input_model.meta.exposure.type.lower()
     if exp_type == "nrs_msaspec":
         msa_config = input_model.meta.instrument.msa_configuration_file
-        slits = get_open_msa_slits(msa_config, input_model.meta.instrument.msa_metadata_id)
+        if msa_config is None:
+            message = "MSA metadata file is not available (keyword MSAMETFL)."
+            log.critical(message)
+            raise KeyError(message)
+        msa_metadata_id = input_model.meta.instrument.msa_metadata_id
+        if msa_metadata_id is None:
+            message = "MSA metadata ID is not available (keyword MSAMETID)."
+            log.critical(message)
+            raise KeyError(message)
+        slits = get_open_msa_slits(msa_config, msa_metadata_id)
     elif exp_type == "nrs_fixedslit":
+        slits = get_open_fixed_slits(input_model)
+    elif exp_type == "nrs_brightobj":
+        slits = [Slit('S1600A1', 3, 0, 0, -.5, .5, 5)]
+    elif exp_type == "nrs_lamp":
+        # TODO: Confirm all fixed slits are opened in this mode and no MSA
         slits = get_open_fixed_slits(input_model)
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
+    if not slits:
+        message = "There are no open slits in this file."
+        log.critical(message)
+        raise ValueError(message)
     return slits
 
 
 def get_open_fixed_slits(input_model):
+    if input_model.meta.subarray.name is None:
+        raise ValueError("Input file is missing SUBARRAY value/keyword.")
     slits = []
-    slits.append(Slit('S200A1', 0, 0, 0, -.5, .5, 5))
-    slits.append(Slit('S200A2', 1, 0, 0, -.5, .5, 5))
-    slits.append(Slit('S400A1', 2, 0, 0, -.5, .5, 5))
-    slits.append(Slit('S1600A1', 3, 0, 0, -.5, .5, 5))
+    s2a1 = Slit('S200A1', 0, 0, 0, -.5, .5, 5)
+    s2a2 = Slit('S200A2', 1, 0, 0, -.5, .5, 5)
+    s4a1 = Slit('S400A1', 2, 0, 0, -.5, .5, 5)
+    s16a1 = Slit('S1600A1', 3, 0, 0, -.5, .5, 5)
+    s2b1 = Slit('S200B1', 4, 0, 0, -.5, .5, 5)
 
-    if input_model.meta.instrument.detector == 'NRS1':
-        if input_model.meta.instrument.filter == 'F070LP' and \
-                input_model.meta.instrument.grating == 'G140H':
-            slits.append(Slit('S200B1', 4, 0, 0, -.5, .5, 5))
+    subarray = input_model.meta.subarray.name.upper()
+    if  subarray == "S200A1":
+        slits.append(s2a1)
+    elif subarray == "S200A2":
+        slits.append(s2a2)
+    elif subarray == "S400A1":
+        slits.append(s4a1)
+    elif subarray == "S1600A1":
+        slits.append(s16a1)
+    if  subarray == "S200B1":
+        slits.append(s2b1)
+    else:
+        slits.extend([s2a1, s2a2, s4a1, s16a1])
+        if input_model.meta.instrument.detector == 'NRS1':
+            if input_model.meta.instrument.filter == 'F070LP' and \
+                    input_model.meta.instrument.grating == 'G140H':
+                slits.append(s2b1)
     return slits
 
 
@@ -584,7 +618,6 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
     """
-
     wrange = (input_model.meta.wcsinfo.waverange_start,
                      input_model.meta.wcsinfo.waverange_end),
     order = input_model.meta.wcsinfo.spectral_order
@@ -659,12 +692,16 @@ def wavelength_from_disperser(disperser, input_model):
         lmax = input_model.meta.wcsinfo.waverange_end
         lam = np.linspace(lmin, lmax, 10000)
         system_temperature = input_model.meta.instrument.gwa_tilt
+        if system_temperature is None:
+            message = "Missing reference temperature (keyword GWA_TTIL)."
+            log.critical(message)
+            raise KeyError(message)
         system_pressure = disperser['pref']
         tref = disperser['tref']
         pref = disperser['pref']
-        kcoef = disperser['kcoef'].copy()
-        lcoef = disperser['lcoef'].copy()
-        tcoef = disperser['tcoef'].copy()
+        kcoef = disperser['kcoef'][:]
+        lcoef = disperser['lcoef'][:]
+        tcoef = disperser['tcoef'][:]
         n = Snell.compute_refraction_index(lam, system_temperature, tref, pref,
                                            system_pressure, kcoef, lcoef, tcoef
                                            )
@@ -1224,8 +1261,9 @@ exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_focus': imaging,
                       'nrs_mimf': imaging,
                       'nrs_bota': imaging,
-                      'nrs_autoflat': not_implemented_mode, #TBD
-                      'nrs_autowave': not_implemented_mode, #TBD
+                      'nrs_autoflat': not_implemented_mode,
+                      'nrs_autowave': not_implemented_mode,
                       'nrs_lamp': slits_wcs,
-                      'nrs_brightobj': slits_wcs
+                      'nrs_brightobj': slits_wcs,
+                      'nrs_dark': not_implemented_mode,
                       }

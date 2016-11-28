@@ -23,4 +23,8 @@ datatype:
   datatype: int16
 - name: completion_code_text
   datatype: [ascii, 36]
+- name: bary_end_time
+  datatype: float64
+- name: helio_end_time
+  datatype: float64
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

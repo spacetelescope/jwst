@@ -129,6 +129,7 @@ def create_nirspec_fs_file():
     image[0].header['GWA_XTIL'] = 3.5896975e-001
     image[0].header['GWA_YTIL'] = 1.3438272e-001
     image[0].header['GWA_TTIL'] = 3.9555361e+001
+    image[0].header['SUBARRAY'] = "ALLSLITS"
     return image
 
 

@@ -50,7 +50,13 @@ def open(init=None, extensions=None, **kwargs):
     """
 
     from . import model_base
+    from . import _defined_models as defined_models # dict of model classes
 
+    model_type = None
+
+    # Get three special cases for opening a model out of the way
+    # all three cases return a model if they match
+    
     if init is None:
         return model_base.DataModel(None)
     # Send _asn.json files to ModelContainer; avoid shape "cleverness" below
@@ -67,7 +73,9 @@ def open(init=None, extensions=None, **kwargs):
     elif isinstance(init, model_base.DataModel):
         # Copy the object so it knows not to close here
         return init.__class__(init)
-    elif isinstance(init, tuple):
+    
+    # Get the shape from the input argument where possible
+    if isinstance(init, tuple):
         for item in init:
             if not isinstance(item, int):
                 raise ValueError("shape must be a tuple of ints")
@@ -75,16 +83,69 @@ def open(init=None, extensions=None, **kwargs):
     elif isinstance(init, np.ndarray):
         shape = init.shape
     else:
-        if isinstance(init, (six.text_type, bytes)) or hasattr(init, "read"):
-            hdulist = fits.open(init)
-        elif isinstance(init, fits.HDUList):
-            hdulist = init
-        else:
-            raise TypeError(
-                "init must be None, shape tuple, file path, "
-                "readable file object, or astropy.io.fits.HDUList")
-
         shape = ()
+
+    # Get the list of hdus where possible
+    if isinstance(init, (six.text_type, bytes)) or hasattr(init, "read"):
+        hdulist = fits.open(init)
+    elif isinstance(init, fits.HDUList):
+        hdulist = init
+    else:
+        hdulist = {}
+        
+    # First try to get the class name from the primary header
+    if hdulist:
+        # Can also return None if no header keyword
+        new_class = _class_from_model_type(hdulist)
+    else:
+        new_class = None
+
+    # Get the class name from the shape and other header keywords
+    if new_class is None:
+        new_class = _class_from_shape(hdulist, shape)
+
+    # Throw an error if these attempts were unsuccessful
+    if new_class is None:
+        raise TypeError("Can't determine datamodel class from argument to open")
+        
+    # Log a message about how the model was opened
+    if isinstance(init, (six.text_type, bytes)):
+        log.debug('Opening {0} as {1}'.format(basename(init), new_class))
+    else:
+        log.debug('Opening as {0}'.format(new_class))
+
+    # Actually open the model
+    model = new_class(init, extensions=extensions, **kwargs)
+    return model
+
+
+def _class_from_model_type(hdulist):
+    """
+    Get the model type from the primary header, lookup to get class
+    """
+    from . import _defined_models as defined_models
+
+    try:
+        primary = hdulist[0]
+    except KeyError:
+        model_type = None
+    else:
+        model_type = primary.header.get('DATAMODL')
+
+    if model_type is None:
+        new_class = None
+    else:
+        new_class = defined_models.get(model_type)
+
+    return new_class
+
+
+def _class_from_shape(hdulist, shape):
+    """
+    Get the class name from the shape and other header keywords
+    """
+    # If we do not have it, determine the shape from the science hdu
+    if len(shape) == 0:
         try:
             hdu = hdulist[(fits_header_name('SCI'), 1)]
         except KeyError:
@@ -92,9 +153,11 @@ def open(init=None, extensions=None, **kwargs):
         else:
             if hasattr(hdu, 'shape'):
                 shape = hdu.shape
-    # Be clever about which type to return, otherwise, just return a new
-    # instance of the requested class
+
+    # Try to figure out which type to return, otherwise, just return a
+    # new instance of the requested class
     if len(shape) == 0:
+        from . import model_base
         new_class = model_base.DataModel
     elif len(shape) == 4:
         # It's a RampModel, MIRIRampModel, or QuadModel
@@ -132,12 +195,9 @@ def open(init=None, extensions=None, **kwargs):
             from . import multislit
             new_class = multislit.MultiSlitModel
     else:
-        raise ValueError("Don't have a DataModel class to match the shape")
-    if isinstance(init, (six.text_type, bytes)):
-        log.debug('Opening {0} as {1}'.format(basename(init), new_class))
-    else:
-        log.debug('Opening as {0}'.format(new_class))
-    return new_class(init, extensions=extensions, **kwargs)
+        new_class = None
+        
+    return new_class
 
 
 def can_broadcast(a, b):

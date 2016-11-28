@@ -14,8 +14,11 @@ from ..srctype import srctype_step
 from ..straylight import straylight_step
 from ..fringe import fringe_step
 from ..photom import photom_step
+from ..cube_build import cube_build_step
+from ..extract_1d import extract_1d_step
+from ..resample import resample_spec_step
 
-__version__ = "2.0"
+__version__ = "3.0"
 
 # Define logging
 import logging
@@ -30,7 +33,8 @@ class Spec2Pipeline(Pipeline):
     Included steps are:
     assign_wcs, background subtraction, NIRSpec MSA imprint subtraction,
     NIRSpec MSA bad shutter flagging, 2-D subwindow extraction, flat field,
-    source type decision, straylight, fringe, and photom.
+    source type decision, straylight, fringe, photom, resample_spec,
+    cube_build, and extract_1d.
     """
 
     spec = """
@@ -47,7 +51,10 @@ class Spec2Pipeline(Pipeline):
                  'srctype': srctype_step.SourceTypeStep,
                  'straylight': straylight_step.StraylightStep,
                  'fringe': fringe_step.FringeStep,
-                 'photom': photom_step.PhotomStep
+                 'photom': photom_step.PhotomStep,
+                 'resample_spec': resample_spec_step.ResampleSpecStep,
+                 'cube_build': cube_build_step.CubeBuildStep,
+                 'extract_1d': extract_1d_step.Extract1dStep
                 }
 
     # The main process method
@@ -118,7 +125,7 @@ class Spec2Pipeline(Pipeline):
             # Apply flux calibration
             input = self.photom(input)
 
-            # Save the calibrated exposure
+            # Record ASN pool and table names in output
             if input_table.poolname:
                 input.meta.asn.pool_name = input_table.poolname
                 input.meta.asn.table_name = input_table.filename
@@ -126,13 +133,57 @@ class Spec2Pipeline(Pipeline):
                 input.meta.asn.pool_name = ' '
                 input.meta.asn.table_name = ' '
 
+            # Save the calibrated exposure
             if isinstance(input, datamodels.CubeModel):
                 self.save_model(input, 'calints')
             else:
                 self.save_model(input, "cal")
-            log.info('Save calibrated product to %s' % input.meta.filename)
+            log.info('Saved calibrated product to %s' % input.meta.filename)
+
+            # Produce a resampled product, either via resample_spec for
+            # "regular" spectra or cube_build for IFU data. No resampled
+            # product is produced for time-series modes.
+            if input.meta.exposure.type in ['MIR_LRS-FIXEDSLIT',
+                'NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NIS_WFSS', 'NRC_GRISM']:
+
+                # Call the resample_spec step
+                resamp = self.resample_spec(input)
+
+                # Save the resampled product
+                self.save_model(resamp, 's2d')
+                log.info('Saved resampled product to %s' % resamp.meta.filename)
+
+                # Pass the resampled data to 1D extraction
+                x1d_input = resamp.copy()
+                resamp.close()
+
+            elif input.meta.exposure.type in ['MIR_MRS', 'NRS_IFU']:
+
+                # Call the cube_build step for IFU data
+                cube = self.cube_build(input)
+
+                # Save the cube product
+                self.save_model(cube, 's3d')
+                log.info('Saved IFU cube product to %s' % cube.meta.filename)
+
+                # Pass the cube along for input to 1D extraction
+                x1d_input = cube.copy()
+                cube.close()
+
+            else:
+                # Pass the unresampled cal product to 1D extraction
+                x1d_input = input
+
+            # Extract a 1D spectrum from the 2D/3D data
+            x1d_output = self.extract_1d(x1d_input)
+            x1d_input.close()
+
+            # Save the extracted spectrum
+            self.save_model(x1d_output, 'x1d')
+            log.info('Saved extracted spectrum to %s' % x1d_output.meta.filename)
 
             input.close()
+            x1d_output.close()
 
         # We're done
         log.info('... ending calwebb_spec2')

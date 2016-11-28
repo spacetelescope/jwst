@@ -15,7 +15,13 @@ class FlatFieldStep(Step):
         flat_suffix = string(default=None)
     """
 
-    reference_file_types = ["flat", "fflat", "sflat", "dflat"]
+    # NIRSpec image data is currently not supported.  There's a check for
+    # this case in the `process` method, which will then log a warning and
+    # set the step switch to SKIPPED.  The line for reference_file_types
+    # is commented out to prevent CRDS from raising an exception before
+    # we can handle this case ourselves.  This is a temporary workaround
+    # until we get actual reference files for NIRSpec image data.
+    # xxx reference_file_types = ["flat", "fflat", "sflat", "dflat"]
 
     def process(self, input):
 
@@ -34,6 +40,15 @@ class FlatFieldStep(Step):
 
         # Retrieve the reference file name or names
         if is_NIRSpec:
+            exp_type = input_model.meta.exposure.type
+            if exp_type not in ["NRS_FIXEDSLIT", "NRS_IFU", "NRS_MSASPEC"]:
+                self.log.warning("Exposure type is %s; flat-fielding will be "
+                                 "skipped because it is not currently "
+                                 "supported for this mode.", exp_type)
+                result = input_model.copy()
+                result.meta.cal_step.flat_field = "SKIPPED"
+                input_model.close()
+                return result
             self.f_flat_filename = self.get_reference_file(input_model,
                                         'fflat')
             self.s_flat_filename = self.get_reference_file(input_model,

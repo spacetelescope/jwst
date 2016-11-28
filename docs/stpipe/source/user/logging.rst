@@ -27,7 +27,7 @@ A logging configuration file is searched for in the following places.
 The first one found is used *in its entirety* and all others are
 ignored:
 
-    - The file specified with the ``--log-cfg`` option to the
+    - The file specified with the ``--logcfg`` option to the
       ``strun`` script.
 
     - A file called ``stpipe-log.cfg`` in the current working
@@ -84,12 +84,14 @@ In each section, the following may be configured:
 Examples
 ========
 
-The following configuration turns on all log messages:
+The following configuration turns on all log messages and saves them
+in the file myrun.log:
 
 .. code-block:: ini
 
     [*]
     level = INFO
+    handler = file:myrun.log
 
 In a scenario where the user is debugging a particular Step, they may
 want to hide all logging messages except for that Step, and stop when

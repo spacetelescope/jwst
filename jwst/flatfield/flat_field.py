@@ -233,7 +233,7 @@ def ref_matches_sci(ref_model, sci_model):
         rystart = 1
     if rysize is None:
         rysize = ref_model.data.shape[-2]
-        
+
     log.debug(' sci xstart=%d, xsize=%d', sxstart, sxsize)
     log.debug(' sci ystart=%d, ysize=%d', systart, sysize)
     log.debug(' ref xstart=%d, xsize=%d', rxstart, rxsize)
@@ -477,7 +477,7 @@ def NIRSpec_IFU(output_model,
     ImageModel or None
         If not None, the value will be the interpolated flat field.
     """
-
+    any_updated = False
     exposure_type = output_model.meta.exposure.type
     flat = np.ones_like(output_model.data)
     flat_dq = np.zeros_like(output_model.dq)
@@ -546,9 +546,8 @@ def NIRSpec_IFU(output_model,
 
         any_updated = True
 
-    output_model.dq |= flat_dq
-
     if any_updated:
+        output_model.dq |= flat_dq
         output_model.data /= flat
         output_model.err /= flat
         output_model.meta.cal_step.flat_field = 'COMPLETE'
@@ -560,6 +559,7 @@ def NIRSpec_IFU(output_model,
             interpolated_flats.update(output_model, only="PRIMARY")
     else:
         output_model.meta.cal_step.flat_field = 'SKIPPED'
+        interpolated_flats = None
 
     return interpolated_flats
 
