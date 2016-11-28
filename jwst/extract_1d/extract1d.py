@@ -109,18 +109,11 @@ def extract1d(image, lambdas, disp_range,
     # Sanity check:  check for extraction limits that are out of bounds,
     # or a lower limit that's above the upper limit (limit curves just
     # swapped, or crossing each other).
+    # Truncate extraction limits that are out of bounds, but log an error.
     shape = image.shape
     for i in range(n_srclim):
         lower = srclim[i][0]
         upper = srclim[i][1]
-        if np.any(lower < -0.5) or np.any(upper < -0.5):
-            log.error("Source extraction limit extends below 0")
-            raise ValueError("Source extraction limit extends below 0")
-        if np.any(lower > shape[0] - 0.5) or np.any(upper > shape[0] - 0.5):
-            log.error("Source extraction limit extends above %d",
-                      shape[0] - 1)
-            raise ValueError("Source extraction limit extends above {}"
-                             .format(shape[0] - 1))
         diff = upper - lower
         if diff.min() < 0.:
             if diff.max() < 0.:
@@ -134,17 +127,18 @@ def extract1d(image, lambdas, disp_range,
                 raise ValueError("Lower and upper source extraction limits"
                                  " cross each other.")
         del diff
+        if np.any(lower < 0.) or np.any(upper < 0.):
+            log.error("Source extraction limit extends below 0")
+            srclim[i][0][:] = np.where(lower < 0., 0., lower)
+            srclim[i][1][:] = np.where(upper < 0., 0., upper)
+        upper_limit = float(shape[0] - 1)
+        if np.any(lower > upper_limit) or np.any(upper > upper_limit):
+            log.error("Source extraction limit extends above %d", shape[0] - 1)
+            srclim[i][0][:] = np.where(lower > upper_limit, upper_limit, lower)
+            srclim[i][1][:] = np.where(upper > upper_limit, upper_limit, upper)
     for i in range(nbkglim):
         lower = bkglim[i][0]
         upper = bkglim[i][1]
-        if np.any(lower < -0.5) or np.any(upper < -0.5):
-            log.error("Background limit extends below 0")
-            raise ValueError("Background limit extends below 0")
-        if np.any(lower > shape[0] - 0.5) or np.any(upper > shape[0] - 0.5):
-            log.error("Background limit extends above %d",
-                      shape[0] - 1)
-            raise ValueError("Background limit extends above {}"
-                             .format(shape[0] - 1))
         diff = upper - lower
         if diff.min() < 0.:
             if diff.max() < 0.:
@@ -157,6 +151,17 @@ def extract1d(image, lambdas, disp_range,
                           " cross each other.")
                 raise ValueError("Lower and upper background extraction limits"
                                  " cross each other.")
+        if np.any(lower < 0.) or np.any(upper < 0.):
+            log.error("Background limit extends below 0")
+            bkglim[i][0][:] = np.where(lower < 0., 0., lower)
+            bkglim[i][1][:] = np.where(upper < 0., 0., upper)
+        upper_limit = float(shape[0] - 1)
+        if np.any(lower > upper_limit) or np.any(upper > upper_limit):
+            log.error("Background limit extends above %d",
+                      shape[0] - 1)
+            upper_limit = float(shape[0] - 1)
+            bkglim[i][0][:] = np.where(lower > upper_limit, upper_limit, lower)
+            bkglim[i][1][:] = np.where(upper > upper_limit, upper_limit, upper)
 
     # Smooth the input image, and use the smoothed image for extracting
     # the background.  temp_image is only needed for background data.
