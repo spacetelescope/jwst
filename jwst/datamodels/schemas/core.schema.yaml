@@ -366,7 +366,7 @@ properties:
           gwa_tilt:
             title: GWA TILT (avg/calib) temperature [K]
             type: number
-            fits_keyword: GWA_TTIL
+            fits_keyword: GWA_TILT
       exposure:
         title: Exposure parameters
         type: object

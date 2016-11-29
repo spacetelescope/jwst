@@ -255,7 +255,16 @@ def get_open_slits(input_model):
     exp_type = input_model.meta.exposure.type.lower()
     if exp_type == "nrs_msaspec":
         msa_config = input_model.meta.instrument.msa_configuration_file
-        slits = get_open_msa_slits(msa_config, input_model.meta.instrument.msa_metadata_id)
+        if msa_config is None:
+            message = "MSA metadata file is not available (keyword MSAMETFL)."
+            log.critical(message)
+            raise KeyError(message)
+        msa_metadata_id = input_model.meta.instrument.msa_metadata_id
+        if msa_metadata_id is None:
+            message = "MSA metadata ID is not available (keyword MSAMETID)."
+            log.critical(message)
+            raise KeyError(message)
+        slits = get_open_msa_slits(msa_config, msa_metadata_id)
     elif exp_type == "nrs_fixedslit":
         slits = get_open_fixed_slits(input_model)
     elif exp_type == "nrs_brightobj":
@@ -265,6 +274,10 @@ def get_open_slits(input_model):
         slits = get_open_fixed_slits(input_model)
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
+    if not slits:
+        message = "There are no open slits in this file."
+        log.critical(message)
+        raise ValueError(message)
     return slits
 
 
@@ -295,6 +308,8 @@ def get_open_fixed_slits(input_model):
             if input_model.meta.instrument.filter == 'F070LP' and \
                     input_model.meta.instrument.grating == 'G140H':
                 slits.append(s2b1)
+        elif input_model.meta.instrument.detector == 'NRS2':
+            slits.append(s2b1)
     return slits
 
 
@@ -605,7 +620,6 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
     """
-
     wrange = (input_model.meta.wcsinfo.waverange_start,
                      input_model.meta.wcsinfo.waverange_end),
     order = input_model.meta.wcsinfo.spectral_order
@@ -680,12 +694,16 @@ def wavelength_from_disperser(disperser, input_model):
         lmax = input_model.meta.wcsinfo.waverange_end
         lam = np.linspace(lmin, lmax, 10000)
         system_temperature = input_model.meta.instrument.gwa_tilt
+        if system_temperature is None:
+            message = "Missing reference temperature (keyword GWA_TTIL)."
+            log.critical(message)
+            raise KeyError(message)
         system_pressure = disperser['pref']
         tref = disperser['tref']
         pref = disperser['pref']
-        kcoef = disperser['kcoef'].copy()
-        lcoef = disperser['lcoef'].copy()
-        tcoef = disperser['tcoef'].copy()
+        kcoef = disperser['kcoef'][:]
+        lcoef = disperser['lcoef'][:]
+        tcoef = disperser['tcoef'][:]
         n = Snell.compute_refraction_index(lam, system_temperature, tref, pref,
                                            system_pressure, kcoef, lcoef, tcoef
                                            )
@@ -799,8 +817,7 @@ def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5)
         The wavelength range for the combination of grating and filter.
 
     """
-    lam_min = wavelength_range[0]
-    lam_max = wavelength_range[1]
+    lam_min, lam_max = wavelength_range
 
     step = 1e-10
     nsteps = int((lam_max - lam_min) / step)

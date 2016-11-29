@@ -93,7 +93,7 @@ class DataSet(object):
 
         # Handle fixed-slit exposures separately
         if (isinstance(self.input, datamodels.MultiSlitModel) and
-            self.exptype == 'NRS_FIXEDSLIT'):
+            self.exptype in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']):
 
             # We have to find and attach a separate set of flux cal
             # data for each of the fixed slits in the input
@@ -424,6 +424,12 @@ class DataSet(object):
             waves = tabdata['wavelength'][:nelem]
             relresps = tabdata['relresponse'][:nelem]
 
+            # Convert wavelengths from meters to microns, if necessary
+            MICRONS_100 = 1.e-4         # 100 microns, in meters
+            if waves.max() > 0. and waves.max() < MICRONS_100:
+                waves *= 1.e+6
+            wl_unit = 'microns'
+                
             # Set the relative sensitivity table for the correct Model type
             if isinstance(self.input, datamodels.MultiSlitModel):
                 otab = np.array(list(zip(waves, relresps)),
@@ -535,7 +541,7 @@ class DataSet(object):
             conv_factor = self.calc_niriss(ftab)
 
         if self.instrument == 'NIRSPEC':
-            if self.exptype == 'NRS_FIXEDSLIT':
+            if self.exptype in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
                 ftab = datamodels.NirspecFSPhotomModel(photom_fname)
             else:
                 ftab = datamodels.NirspecPhotomModel(photom_fname)
