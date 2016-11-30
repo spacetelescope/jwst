@@ -177,7 +177,6 @@ def ifu(input_model, reference_files):
                     (world, None)]
     else:
         # convert to microns if the pipeline ends earlier
-        #slit2msa = (Mapping((0, 1, 2, 3, 4)) | slit2msa | Identity(2) & Scale(10**6)).rename('slit2msa')
         slit2msa = (Mapping((0, 1, 2, 3)) | slit2msa).rename('slit2msa')
         pipeline = [(det, dms2detector),
                     (sca, det2gwa.rename('detector2gwa')),
@@ -250,7 +249,6 @@ def slits_wcs(input_model, reference_files):
                         (world, None)]
     else:
         # convert to microns if the pipeline ends earlier
-        #gwa2slit = (gwa2slit | Identity(2) & Scale(10**6)).rename('gwa2slit')
         gwa2slit = (gwa2slit).rename('gwa2slit')
         msa_pipeline = [(det, dms2detector),
                         (sca, det2gwa),
@@ -264,21 +262,26 @@ def slits_wcs(input_model, reference_files):
 def get_open_slits(input_model, reference_files=None):
     exp_type = input_model.meta.exposure.type.lower()
     if exp_type == "nrs_msaspec":
-        slits = get_open_msa_slits(input_model, reference_files)
+        msa_metadata_file, msa_metadata_id = get_msa_metadata(input_model)
+        slits = get_open_msa_slits(msa_metadata_file, msa_metadata_id)
     elif exp_type == "nrs_fixedslit":
-        slits = get_open_fixed_slits(input_model, reference_files)
+        slits = get_open_fixed_slits(input_model)
     elif exp_type == "nrs_brightobj":
         slits = [Slit('S1600A1', 3, 0, 0, -.5, .5, 5)]
     elif exp_type == "nrs_lamp":
-        slits = get_open_fixed_slits(input_model, reference_files)
+        slits = get_open_fixed_slits(input_model)
     else:
         raise ValueError("EXP_TYPE {0} is not supported".format(exp_type.upper()))
+    if reference_files is not None:
+        slits = validate_open_slits(input_model, slits, reference_files)
+        log.info("Slits projected on detector {0}: {1}".format(input_model.meta.instrument.detector,
+                                                             [sl.name for sl in slits]))
     if not slits:
         log.critical("No open slits fall on detector {0}.".format(input_model.meta.instrument.detector))
     return slits
 
 
-def get_open_fixed_slits(input_model, reference_files=None):
+def get_open_fixed_slits(input_model):
     if input_model.meta.subarray.name is None:
         raise ValueError("Input file is missing SUBARRAY value/keyword.")
     slits = []
@@ -301,14 +304,27 @@ def get_open_fixed_slits(input_model, reference_files=None):
         slits.append(s2b1)
     else:
         slits.extend([s2a1, s2a2, s4a1, s16a1, s2b1])
-        if reference_files is not None:
-            slits = validate_open_slits(input_model, slits, reference_files)
-        log.info("Slits falling on detector {0}:".format(input_model.meta.instrument.detector))
-        log.info("{0}".format(slits))
     return slits
 
 
-def get_open_msa_slits(input_model, reference_files):
+def get_msa_metadata(input_model):
+    """
+    Get the MSA metadata file (MSAMTFL) and the msa metadata id (MSAMETID).
+
+    """
+    msa_config = input_model.meta.instrument.msa_configuration_file
+    if msa_config is None:
+        message = "MSA metadata file is not available (keyword MSAMETFL)."
+        log.critical(message)
+        raise KeyError(message)
+    msa_metadata_id = input_model.meta.instrument.msa_metadata_id
+    if msa_metadata_id is None:
+        message = "MSA metadata ID is not available (keyword MSAMETID)."
+        log.critical(message)
+    return msa_config, msa_metadata_id
+
+
+def get_open_msa_slits(msa_file, msa_metadata_id):
     """
     Computes (ymin, ymax) of open slitlets.
 
@@ -344,20 +360,11 @@ def get_open_msa_slits(input_model, reference_files):
         ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax", "quadrant", "source_id", "nshutters")
 
     """
-    msa_config = input_model.meta.instrument.msa_configuration_file                                 
-    if msa_config is None:                                                                          
-        message = "MSA metadata file is not available (keyword MSAMETFL)."                          
-        log.critical(message)                                                                       
-        raise KeyError(message)                                                                     
-    msa_metadata_id = input_model.meta.instrument.msa_metadata_id                                   
-    if msa_metadata_id is None:                                                                     
-        message = "MSA metadata ID is not available (keyword MSAMETID)."                            
-        log.critical(message)      
     slitlets = []
 
     # If they passed in a string then we shall assume it is the filename
     # of the configuration file.
-    with fits.open(msa_config) as msa_file:
+    with fits.open(msa_file) as msa_file:
         # Get the configuration header from teh _msa.fits file.  The EXTNAME should be 'SHUTTER_INFO'
         msa_conf = msa_file[('SHUTTER_INFO', 1)]
         msa_source = msa_file[("SOURCE_INFO", 1)].data
@@ -432,7 +439,6 @@ def get_open_msa_slits(input_model, reference_files):
             slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax,
                                  quadrant, source_id, nshutters, source_name, source_alias,
                                  catalog_id, stellarity, source_xpos, source_ypos))
-    slitlets = validate_open_slits(input_model, slitlets, reference_files)
     return slitlets
 
 
@@ -1166,7 +1172,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
         A dictionary with the slit to detector transform for each slit,
         {slit_id: astropy.modeling.Model}
     """
-    
+
     def _is_valid_slit(domain):
         xlow, xhigh = domain[0]['lower'], domain[0]['upper']
         ylow, yhigh = domain[1]['lower'], domain[1]['upper']
@@ -1212,9 +1218,6 @@ def validate_open_slits(input_model, open_slits, reference_files):
                 slitdata = msa_data[slit_id]
                 slitdata_model = get_slit_location_model(slitdata)
                 msa_transform = slitdata_model | msa_model
-                #msa2gwa = (msa_transform | collimator2gwa)
-                #msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq | \
-                #         gwa2det | det2dms
                 msa2det = msa_transform & Identity(1) | col2det
                 domain = compute_domain(msa2det, wrange, slit.ymin, slit.ymax)
                 valid = _is_valid_slit(domain)

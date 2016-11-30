@@ -31,6 +31,8 @@ def extract2d(input_model, which_subarray=None):
 
     if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
         slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
+        # This is a cludge but will work for now.
+        # This model keeps open_slits as an attribute.
         open_slits = slit2msa[1].slits[:]
         if which_subarray is not None:
             open_slits = [sub for sub in open_slits if sub.name==which_subarray]
