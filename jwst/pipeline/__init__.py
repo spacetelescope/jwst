@@ -10,5 +10,4 @@ from .calwebb_coron3 import Coron3Pipeline
 from .calwebb_ami3 import Ami3Pipeline
 from .linear_pipeline import TestLinearPipeline
 
-__version__ = '0.7.0'
-
+__version__ = '0.7.4'
