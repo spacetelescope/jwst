@@ -342,7 +342,7 @@ def get_pointing(obstart, obsend):
         try:
             params[param] = engdb.get_values(
                 param, obstart, obsend, time_format='mjd'
-            )[0]
+            )
         except Exception as exception:
             raise ValueError(
                 'Cannot retrive {} from engineering.'
@@ -352,28 +352,41 @@ def get_pointing(obstart, obsend):
                 )
             )
 
+    # Find the first set of non-zero values
+    for idx in range(len(params['SA_ZATTEST1'])):
+        values = [
+            params[param][idx]
+            for param in params
+        ]
+        if any(values):
+            break
+    else:
+        raise ValueError(
+            'No non-zero quanternion found in the DB for observation range given.'
+        )
+
     q = np.array([
-        params['SA_ZATTEST1'],
-        params['SA_ZATTEST2'],
-        params['SA_ZATTEST3'],
-        params['SA_ZATTEST4'],
+        params['SA_ZATTEST1'][idx],
+        params['SA_ZATTEST2'][idx],
+        params['SA_ZATTEST3'][idx],
+        params['SA_ZATTEST4'][idx],
     ])
 
     j2fgs_matrix = np.array([
-        params['SA_ZRFGS2J11'],
-        params['SA_ZRFGS2J21'],
-        params['SA_ZRFGS2J31'],
-        params['SA_ZRFGS2J12'],
-        params['SA_ZRFGS2J22'],
-        params['SA_ZRFGS2J32'],
-        params['SA_ZRFGS2J13'],
-        params['SA_ZRFGS2J23'],
-        params['SA_ZRFGS2J33'],
+        params['SA_ZRFGS2J11'][idx],
+        params['SA_ZRFGS2J21'][idx],
+        params['SA_ZRFGS2J31'][idx],
+        params['SA_ZRFGS2J12'][idx],
+        params['SA_ZRFGS2J22'][idx],
+        params['SA_ZRFGS2J32'][idx],
+        params['SA_ZRFGS2J13'][idx],
+        params['SA_ZRFGS2J23'][idx],
+        params['SA_ZRFGS2J33'][idx],
     ])
 
     fsmcorr = np.array([
-        params['SA_ZADUCMDX'],
-        params['SA_ZADUCMDY'],
+        params['SA_ZADUCMDX'][idx],
+        params['SA_ZADUCMDY'][idx],
 
     ])
 
