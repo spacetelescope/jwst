@@ -205,6 +205,10 @@ properties:
             title: Type of target (fixed, moving, generic)
             type: string
             fits_keyword: TARGTYPE
+          id:
+            title: Target id used in PPS DB queries
+            type: string
+            fits_keyword: TARGID
           ra:
             title: Target RA at mid time of exposure
             type: number
@@ -366,7 +370,7 @@ properties:
           gwa_tilt:
             title: GWA TILT (avg/calib) temperature [K]
             type: number
-            fits_keyword: GWA_TTIL
+            fits_keyword: GWA_TILT
       exposure:
         title: Exposure parameters
         type: object
@@ -1017,7 +1021,7 @@ properties:
             fits_keyword: RMA_POS
           rma_step:
             title: Refocus Mechanism Assembly relative position
-            type: integer
+            type: string
             fits_keyword: FCSRLPOS
       guide_star:
         title: Guide star information

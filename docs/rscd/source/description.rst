@@ -5,7 +5,7 @@ Assumptions
 -----------
 This correction is currently only implemented for MIRI data and is only for integrations
 after the first integration (i.e. this step does not correct the first integration).
-It is assumed this step occurs before the dark subtraction.
+It is assumed this step occurs before the dark subtraction, but after linearity.
 
 Background
 __________
@@ -18,72 +18,45 @@ shown to be the source of the reset offsets and nonlinearities at the start of t
 The reset offset, also described as the zero-point offset, are easily seen in multiple integration data, where the
 first integration starts at a lower DN level than subsequent integrations. The ampitude of this offset is proporational
 to the singnal level in the previous integration. Fortunately this offset is constant for all the groups in the integration, 
-thus have no impact on the slopes determined for each integration.  
+thus has no impact on the slopes determined for each integration.  
 
 The readout electronics have also been shown to be the source of the nonlinearities at the start of the integration.
-Basically the MIRI reset electronis use field effect transisitors (FETs) in their operation.  The FET acts a switch to allow
-charge to build up and to also initialize (clear) the charge. However, the reset FETS do not instanteously reset the level, instead
-the expontenail adjustment of the  FET after a reset causes the initial frames in an integration to be offset from their expected values. 
-
-
-The MIRI reset electroncis use a number of field effect transistors (FETs) in their operation. It has been shown that the 
-slow adjustment of the FET output 
-The Reset Switch Charge Decay (RSCD) step corrects for the slow adjustment of the FET output to its asymptotic level after a reset. This correction is made for integration > 1 and is based on the signal level in the last frame of the previous integration in the exposure.
-Currently this step is only implemented for MIRI data. For MIRI data
-the initial groups  in an integration suffer from effects related 
-to the resetting of the detectors. The first effect is that the
-first few samples starting an integration after a reset do not fall
-on the expected linear accumulation of signal. 
-The most significant deviations ocurr in groups 1 and 2. 
-This behavior is relatively uniform detector-wide. The second effect, 
-on the other hand, is the appearance of 
-significant extra spatial structure that appears on in these initial
-groups, before fading out by later groups.  
-
-The time constant associated with the reset anomaly is
-roughly a minute so for full array data the effect has faded out
-by ~group 20. On subarray data, where the read time  depends on
-the size of the subarray, the reset anomaly affects more 
-groups in an integration.
+Basically the MIRI reset electronis use field effect transisitors (FETs) in their operation.  The FET acts as switch 
+to allow charge to build up and to also initialize (clear) the charge. However, the reset FETS do not instanteously 
+reset the level, instead the expontenial adjustment of the  FET after a reset causes the initial frames in an integration 
+to be offset from their expected values.  The Reset Switch Charge Decay (RSCD) step corrects for the slow adjustment of the 
+FET output to its asymptotic level after a reset. This correction is made for integrations > 1 and is based on the signal 
+level in the last frame of the previous integration in the exposure. Between exposures the MIRI detectors 
+are conintually reset; however for a multiple integration exposure there is a single reset between integrations. 
+The reset switch charge decay has an e-folding time scale ~ 1.7 * frame time so the affects of this decay are 
+not measureable in the first integration  because a number of resets have occurred from the last exposure and 
+the effect has decayed away by the time it takes to  readout out the last exposure, set up the next exposure and begin
+exposuring. There are low level reset effects in the first integration that are related to the strength of the dark
+current and can be removed with an integration dependent dark. 
  
-For multiple integration data the reset anomaly also varies in amplitude
-for the first set of integrations before settling down to a relatively
-constant correction for integrations greater than four for full array
-data. Because of the shorter readout time, the subarray data requires a few
-more integrations before the effect is relatively stable from integration
-to integration.
+
+For MIRI multiple integration data, the reset switch decay causes the 
+the initial groups  in  integrations after the first one  to be offset from 
+their expected  linear accumulation of signal. 
+The most significant deviations ocurr in groups 1 and 2. The amplitude of the different between the expected value
+and the measured value varies for even and odd rows and is related to the signal in the last frame of the last integration. 
 
 Algorithm
 _________
-The reset correction step applies the reset reference file.
-The reset reference file contains an integration dependent
-correction for the first N groups, where N is defined by the reset
-correction reference file. 
+The rscd correction step applies the reset switch charge decay reference file. Based on READOUT pattern 
+(FAST or SLOW) and  Subarray type (FULL or one of MIRI defined subarray types) the reference file contains 
+the scale factor and decay time (tau)  for even and odd rows to corrected for the reset effects. The 
+accumulated DN of the pixel  from the previous integration is estimated from the linear fit of the ramp. 
+For each pixel the group values are corrected according the formula:
 
-The format of the reset reference file is NCols X NRows X NGroups X NInts.
-The current implementation uses a reset anomaly reference file for
-full array data  containing a correction for the first 30 groups for 
-integrations 1-4. The reference file
-was determined so that the correction is forced to be zero on the last
-group for each integration.  For each integration in the input science data, 
-the reset corrections are subtracted, group-by-group, integration-by-
-integration. If the input science data contains more groups than the
-reset correction, then correction for those groups is zero. If the 
-input science data contains more integrations than the reset correction 
-then the correction corresponding to the last intergration in the reset file 
-is used. 
-
-There is a single, NCols X NRowss, DQ flag image for all the integrations. 
-The reset DQ flag array  are combined with the science PIXELDQ array using
-numpy's bitwise_or function. The ERR arrays of the science data are
-currently not modified at all.
+    corrected value = input vaule + dn_accumulated * scale * exp(-T / tau),
+where T is the time since the last frame in the last integration. 
+  
 
 Subarrays
 ----------
 
-The reset correction is  subarray-dependent, therefore this
-step makes no attempt to extract subarrays from the reset reference file to
-match input subarrays. It instead relies on the presence of matching subarray
-reset reference files in the CRDS. In addition, the number of NGROUPS and NINTS
-for subarray data varies from the full array data as well as from each other.
+Currently the rscd correction for subarray data is the same as it is for full array data. However,
+we anticipate a seperate set of correction coefficients in the future. 
+
 

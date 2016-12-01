@@ -42,8 +42,8 @@ def imaging(input_model, reference_files):
 
 def imaging_distortion(input_model, reference_files):
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    # Convert to arcsec
-    transform = distortion | Scale(1/60) & Scale(1/60)
+    # Convert to deg - output of distortion models is in arcsec.
+    transform = distortion | Scale(1/3600) & Scale(1/3600)
     return transform
 
 
