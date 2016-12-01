@@ -2,22 +2,26 @@ from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
 import time
+import functools
 from collections import OrderedDict
+
 import numpy as np
 from scipy import interpolate
 
+from astropy.io import fits
 from astropy.coordinates import SkyCoord
 from astropy import units as u
-from astropy.modeling.models import (Shift, Scale, Mapping, Rotation2D,
-    Pix2Sky_TAN, RotateNative2Celestial)
+from astropy.modeling.models import (Shift, Scale, Mapping, Identity,
+    Rotation2D, Pix2Sky_TAN, RotateNative2Celestial)
+from gwcs import wcstools, WCS
+from gwcs.utils import _compute_lon_pole
 
+from ..stpipe import crds_client
 from .. import datamodels
 from ..assign_wcs import util
 from . import gwcs_drizzle
 from . import bitmask
 from . import resample_utils
-from gwcs import wcstools, WCS
-from gwcs.utils import _compute_lon_pole
 
 import logging
 log = logging.getLogger(__name__)
@@ -80,7 +84,13 @@ class ResampleSpecData(object):
 
         # Define output WCS based on all inputs, including a reference WCS
         wcslist = [m.meta.wcs for m in self.input_models]
-        self.build_output_wcs()
+        instr_name = self.input_models[0].meta.instrument.name
+        if instr_name in ['NIRSPEC']:
+            self.build_nirspec_output_wcs()
+        elif instr_name in ['MIRI']:
+            self.build_miri_output_wcs()
+        else:
+            raise NotImplementedError('Only NIRSPEC and MIRI are supported.')
         self.build_size_from_domain()
         self.blank_output = datamodels.DrizProductModel(self.data_size)
         self.blank_output.assign_wcs(self.output_wcs)
@@ -144,7 +154,7 @@ class ResampleSpecData(object):
         pass
 
 
-    def build_output_wcs(self, refwcs=None):
+    def build_nirspec_output_wcs(self, refwcs=None):
         """
         Create a simple output wcs covering footprint of the input datamodels
         """
@@ -199,6 +209,124 @@ class ResampleSpecData(object):
         spatial_scale = angular_slit_size / slit_npix
         log.debug('Spatial scale: {0}'.format(spatial_scale.arcsec))
         spectral_scale = lam[y_center, x_center] - lam[y_center, x_center - 1]
+
+        # Compute slit angle relative (clockwise) to y axis
+        slit_rot_angle = (np.arcsin(dx / slit_npix) * u.radian).to(u.degree)
+        log.debug('Slit rotation angle: {0}'.format(slit_rot_angle))
+
+        # Compute transform for output frame
+        roll_ref = input_model.meta.wcsinfo.roll_ref * u.deg
+        min_lam = np.nanmin(lam)
+        offset = Shift(0.) & Shift(slit_center_pix * -1.)
+        # TODO: double-check the signs on the following rotation angles
+        # rot = Rotation2D(roll_ref)
+        rot = Rotation2D(roll_ref + slit_rot_angle)
+        scale = Scale(spatial_scale) & Scale(spatial_scale)
+        tan = Pix2Sky_TAN()
+        lon_pole = _compute_lon_pole(slit_center_sky, tan)
+        skyrot = RotateNative2Celestial(slit_center_sky.ra, slit_center_sky.dec,
+            lon_pole)
+        spatial_trans = offset | rot | scale | tan | skyrot
+        spectral_trans = Scale(spectral_scale) | Shift(min_lam)
+        mapping = Mapping((1, 1, 0),)
+        mapping.inverse = Mapping((2, 1))
+        transform = mapping | spatial_trans & spectral_trans
+        transform.outputs = ('ra', 'dec', 'lamda')
+
+        # Build the output wcs
+        input_frame = refwcs.input_frame
+        output_frame = refwcs.output_frame
+        wnew = WCS(output_frame=output_frame, forward_transform=transform)
+
+        # Build the domain in the output frame wcs object
+        domain_grid = wnew.backward_transform(*sky)
+        domain = []
+        for axis in input_frame.axes_order:
+            axis_min = np.nanmin(domain_grid[axis])
+            axis_max = np.nanmax(domain_grid[axis]) + 1
+            domain.append({'lower': axis_min, 'upper': axis_max,
+                'includes_lower': True, 'includes_upper': False})
+        log.debug('Domain: {0} {1}'.format(domain[1]['lower'], domain[1]['upper']))
+        wnew.domain = domain
+
+        # Update class properties
+        self.output_spatial_scale = spatial_scale
+        self.output_spectral_scale = spectral_scale
+        self.output_wcs = wnew
+
+
+    def build_miri_output_wcs(self, refwcs=None):
+        """
+        Create a simple output wcs covering footprint of the input datamodels
+        """
+        # TODO: generalize this for more than one input datamodel
+        # TODO: generalize this for imaging modes with distorted wcs
+        input_model = self.input_models[0]
+        if refwcs == None:
+            refwcs = input_model.meta.wcs
+
+        # Generate grid of sky coordinates for area within domain
+        det = x, y = wcstools.grid_from_domain(refwcs.domain)
+        sky = ra, dec, lam = refwcs(x.flatten(), y.flatten())
+        # TODO: once astropy.modeling._Tabular is fixed, take out the
+        # flatten() and reshape() code above and below
+        ra = ra.reshape(x.shape)
+        dec = dec.reshape(x.shape)
+        lam = lam.reshape(x.shape)
+
+        # Get the reference file zeropoint, as in jwst.assign_wcs.miri.lrs
+        reference_name = crds_client.get_reference_file(input_model, 'specwcs')
+        with fits.open(reference_name) as ref:
+            ref_pix = ref[1].header['imx'], ref[1].header['imy']
+
+        log.debug('reference point: {0}'.format(ref_pix))
+        domain_xsize = refwcs.domain[0]['upper'] - refwcs.domain[0]['lower']
+        domain_ysize = refwcs.domain[1]['upper'] - refwcs.domain[1]['lower']
+        x_center, y_center = int(domain_xsize / 2), int(domain_ysize / 2)
+        log.debug('x center, y center: ({0},{1})'.format(
+            refwcs.domain[0]['lower'] + x_center, refwcs.domain[1]['lower']
+            + y_center))
+        log.debug('Domain ({0},{1}) ({2},{3})'.format(refwcs.domain[0]['lower'],
+            refwcs.domain[0]['upper'], refwcs.domain[1]['lower'],
+            refwcs.domain[1]['upper']))
+
+        # Find rotation of the slit from y axis from the wcs forward transform
+        # TODO: figure out if angle is necessary.  See for discussion
+        # https://github.com/STScI-JWST/jwst/pull/347
+        rotation = [m for m in refwcs.forward_transform if \
+            isinstance(m, Rotation2D)]
+        if rotation:
+            rot = functools.reduce(lambda x, y: x | y, rotation)
+            log.debug('Rotation: {0}'.format(rot.inverse.angle.value))
+            rot_angle = rot.inverse.angle.value
+            unrotate = rot.inverse
+            refwcs_forward_transform_minus_angle = refwcs.forward_transform | \
+                unrotate & Identity(1)
+
+        # Compute slit footprint on the sky using domain
+        dx0 = refwcs.domain[0]['lower']
+        dx1 = refwcs.domain[0]['upper']
+        dy0 = refwcs.domain[1]['lower']
+        dy1 = refwcs.domain[1]['upper']
+
+        # Compute slit angular size, slit center sky coords
+        slit_center_pix = ref_pix[0] - 1
+        log.debug('Slit center pix: {0}'.format(slit_center_pix))
+        log.debug('Slit center: {0}'.format(slit_center_sky))
+        log.debug('Fiducial: {0}'.format(resample_utils.compute_spec_fiducial([refwcs])))
+
+        slit_ra, slit_dec, slit_lam = refwcs_forward_transform_minus_angle([ref_pix[0], ref_pix[0]+1], [ref_pix[1], ref_pix[1]])
+        slit_coords = SkyCoord(ra=slit_ra, dec=slit_dec, unit=u.deg)
+        angular_slit_size = np.abs(slit_coords[0].separation(slit_coords[-1]))
+        log.debug('Slit angular size: {0}'.format(angular_slit_size.arcsec))
+        dra, ddec = slit_coords[0].spherical_offsets_to(slit_coords[-1])
+        offset_up_slit = (dra.to(u.arcsec), ddec.to(u.arcsec))
+        log.debug('Offset up the slit: {0}'.format(offset_up_slit))
+
+        # Compute spatial and spectral scales
+        spatial_scale = angular_slit_size / slit_npix
+        log.debug('Spatial scale: {0}'.format(spatial_scale.arcsec))
+        spectral_scale = lam[y_center, x_center] - lam[y_center - 1, x_center]
 
         # Compute slit angle relative (clockwise) to y axis
         slit_rot_angle = (np.arcsin(dx / slit_npix) * u.radian).to(u.degree)
@@ -320,8 +448,11 @@ class ResampleSpecData(object):
 
                 inwht = build_driz_weight(img, wht_type=self.drizpars['wht_type'],
                                     good_bits=self.drizpars['good_bits'])
-                log.info('Resampling slit {0} {1}'.format(img.name,
-                    self.data_size))
+                try:
+                    log.info('Resampling slit {0} {1}'.format(img.name,
+                        self.data_size))
+                except:
+                    log.info('Resampling slit {0}'.format(self.data_size))
                 driz.add_image(img.data, img.meta.wcs, inwht=inwht,
                         expin=img.meta.exposure.exposure_time,
                         pscale_ratio=pscale_ratio)
@@ -344,12 +475,15 @@ class ResampleSpecData(object):
             output_model.meta.resample.pointings = pointings
 
             # Update mutlislit slit info on the output_model
-            for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
-                'slitlet_id', 'source_id', 'source_name', 'source_alias',
-                'catalog_id', 'stellarity', 'source_type', 'source_xpos',
-                'source_ypos', 'nshutters', 'relsens']:
-                if hasattr(img, attr):
-                    setattr(output_model, attr, getattr(img, attr))
+            try:
+                for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
+                    'slitlet_id', 'source_id', 'source_name', 'source_alias',
+                    'catalog_id', 'stellarity', 'source_type', 'source_xpos',
+                    'source_ypos', 'nshutters', 'relsens']:
+                    if hasattr(img, attr):
+                        setattr(output_model, attr, getattr(img, attr))
+            except:
+                pass
 
             self.output_models.append(output_model)
 
