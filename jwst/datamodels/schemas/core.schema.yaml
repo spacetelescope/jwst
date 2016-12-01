@@ -1021,7 +1021,7 @@ properties:
             fits_keyword: RMA_POS
           rma_step:
             title: Refocus Mechanism Assembly relative position
-            type: integer
+            type: string
             fits_keyword: FCSRLPOS
       guide_star:
         title: Guide star information
