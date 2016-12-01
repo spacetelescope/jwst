@@ -61,12 +61,19 @@ in the header other than what is required by the standard.
 
 from __future__ import print_function, division
 
+import logging
+import sys
+
+import astropy.io.fits as fits
 import numpy as np
 from numpy import cos, sin
-import sys
-import astropy.io.fits as fits
 from jwst.lib.engdb_tools import ENGDB_Service
-import warnings
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 
 def m_v_to_siaf(ya, v3, v2, vidlparity):  # This is a 321 rotation
@@ -241,10 +248,10 @@ def add_wcs(filename):
     try:
         q, j2fgs_matrix, fsmcorr = get_pointing(obsstart, obsend)
     except ValueError as exception:
-        warnings.warn(
+        logger.warning(
             'Cannot retrieve telescope pointing.'
             '\nUsing proposal values.'
-            'Failure {}'.format(exception)
+            '\nFailure {}'.format(exception)
         )
         ra = pheader['TARG_RA']
         dec = pheader['TARG_DEC']
@@ -253,6 +260,7 @@ def add_wcs(filename):
         vinfo = (ra, dec, roll)
     else:
         # compute relevant WCS information
+        logger.info('Successful read of Engineering Quaternions.')
         wcsinfo, vinfo = calc_wcs(v2ref, v3ref, v3idlyang, vparity,
                                   q, j2fgs_matrix, fsmcorr)
 
@@ -276,6 +284,7 @@ def add_wcs(filename):
     pheader['WCSAXES'] = len(pheader['CTYPE*'])
     hdulist.flush()
     hdulist.close()
+    logger.info('WCS info for {} complete.'.format(filename))
 
 
 def get_pointing(obstart, obsend):
@@ -303,7 +312,15 @@ def get_pointing(obstart, obsend):
     This will need be re-examined when more information is
     available.
     """
-    engdb = ENGDB_Service()
+    try:
+        engdb = ENGDB_Service()
+    except Exception as exception:
+        raise ValueError(
+            'Cannot open engineering DB connection'
+            '\nFailure is {}'.format(
+                exception
+            )
+        )
     params = {
         'SA_ZATTEST1':  None,
         'SA_ZATTEST2':  None,
@@ -440,4 +457,5 @@ if __name__ == '__main__':
     if len(sys.argv) <= 1:
         raise ValueError('missing filename argument(s)')
     for filename in sys.argv[1:]:
+        logger.info('Setting pointing for {}'.format(filename))
         add_wcs(filename)
