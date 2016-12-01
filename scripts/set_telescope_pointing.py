@@ -61,12 +61,19 @@ in the header other than what is required by the standard.
 
 from __future__ import print_function, division
 
+import logging
+import sys
+
+import astropy.io.fits as fits
 import numpy as np
 from numpy import cos, sin
-import sys
-import astropy.io.fits as fits
 from jwst.lib.engdb_tools import ENGDB_Service
-import warnings
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 
 def m_v_to_siaf(ya, v3, v2, vidlparity):  # This is a 321 rotation
@@ -241,10 +248,10 @@ def add_wcs(filename):
     try:
         q, j2fgs_matrix, fsmcorr = get_pointing(obsstart, obsend)
     except ValueError as exception:
-        warnings.warn(
+        logger.warning(
             'Cannot retrieve telescope pointing.'
             '\nUsing proposal values.'
-            'Failure {}'.format(exception)
+            '\nFailure {}'.format(exception)
         )
         ra = pheader['TARG_RA']
         dec = pheader['TARG_DEC']
@@ -253,6 +260,7 @@ def add_wcs(filename):
         vinfo = (ra, dec, roll)
     else:
         # compute relevant WCS information
+        logger.info('Successful read of Engineering Quaternions.')
         wcsinfo, vinfo = calc_wcs(v2ref, v3ref, v3idlyang, vparity,
                                   q, j2fgs_matrix, fsmcorr)
 
@@ -276,6 +284,7 @@ def add_wcs(filename):
     pheader['WCSAXES'] = len(pheader['CTYPE*'])
     hdulist.flush()
     hdulist.close()
+    logger.info('WCS info for {} complete.'.format(filename))
 
 
 def get_pointing(obstart, obsend):
@@ -303,7 +312,15 @@ def get_pointing(obstart, obsend):
     This will need be re-examined when more information is
     available.
     """
-    engdb = ENGDB_Service()
+    try:
+        engdb = ENGDB_Service()
+    except Exception as exception:
+        raise ValueError(
+            'Cannot open engineering DB connection'
+            '\nFailure is {}'.format(
+                exception
+            )
+        )
     params = {
         'SA_ZATTEST1':  None,
         'SA_ZATTEST2':  None,
@@ -325,7 +342,7 @@ def get_pointing(obstart, obsend):
         try:
             params[param] = engdb.get_values(
                 param, obstart, obsend, time_format='mjd'
-            )[0]
+            )
         except Exception as exception:
             raise ValueError(
                 'Cannot retrive {} from engineering.'
@@ -335,28 +352,41 @@ def get_pointing(obstart, obsend):
                 )
             )
 
+    # Find the first set of non-zero values
+    for idx in range(len(params['SA_ZATTEST1'])):
+        values = [
+            params[param][idx]
+            for param in params
+        ]
+        if any(values):
+            break
+    else:
+        raise ValueError(
+            'No non-zero quanternion found in the DB for observation range given.'
+        )
+
     q = np.array([
-        params['SA_ZATTEST1'],
-        params['SA_ZATTEST2'],
-        params['SA_ZATTEST3'],
-        params['SA_ZATTEST4'],
+        params['SA_ZATTEST1'][idx],
+        params['SA_ZATTEST2'][idx],
+        params['SA_ZATTEST3'][idx],
+        params['SA_ZATTEST4'][idx],
     ])
 
     j2fgs_matrix = np.array([
-        params['SA_ZRFGS2J11'],
-        params['SA_ZRFGS2J21'],
-        params['SA_ZRFGS2J31'],
-        params['SA_ZRFGS2J12'],
-        params['SA_ZRFGS2J22'],
-        params['SA_ZRFGS2J32'],
-        params['SA_ZRFGS2J13'],
-        params['SA_ZRFGS2J23'],
-        params['SA_ZRFGS2J33'],
+        params['SA_ZRFGS2J11'][idx],
+        params['SA_ZRFGS2J21'][idx],
+        params['SA_ZRFGS2J31'][idx],
+        params['SA_ZRFGS2J12'][idx],
+        params['SA_ZRFGS2J22'][idx],
+        params['SA_ZRFGS2J32'][idx],
+        params['SA_ZRFGS2J13'][idx],
+        params['SA_ZRFGS2J23'][idx],
+        params['SA_ZRFGS2J33'][idx],
     ])
 
     fsmcorr = np.array([
-        params['SA_ZADUCMDX'],
-        params['SA_ZADUCMDY'],
+        params['SA_ZADUCMDX'][idx],
+        params['SA_ZADUCMDY'][idx],
 
     ])
 
@@ -440,4 +470,5 @@ if __name__ == '__main__':
     if len(sys.argv) <= 1:
         raise ValueError('missing filename argument(s)')
     for filename in sys.argv[1:]:
+        logger.info('Setting pointing for {}'.format(filename))
         add_wcs(filename)

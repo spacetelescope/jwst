@@ -12,6 +12,7 @@ which is generally not available.
 from __future__ import absolute_import
 
 from astropy.io import fits
+from astropy.table import Table
 from astropy.time import Time
 import copy
 import numpy as np
@@ -30,30 +31,12 @@ sys.path.insert(
 
 import set_telescope_pointing as stp
 
-
 # Setup mock engineering service
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
-STARTTIME = Time('2014-01-01')
+STARTTIME = Time('2014-01-03')
 ENDTIME = Time('2014-01-04')
-
-# DB population
-POINTING_MNEMONICS = {
-    'SA_ZATTEST1':  -3.691528614E-01,
-    'SA_ZATTEST2':   3.376328232E-01,
-    'SA_ZATTEST3':   5.758532642E-02,
-    'SA_ZATTEST4':   8.639526444E-01,
-    'SA_ZRFGS2J11': -1.004440003E-03,
-    'SA_ZRFGS2J21':  3.381458357E-03,
-    'SA_ZRFGS2J31':  9.999937784E-01,
-    'SA_ZRFGS2J12':  9.999994955E-01,
-    'SA_ZRFGS2J22': -3.900000000E-14,
-    'SA_ZRFGS2J32':  1.004445746E-03,
-    'SA_ZRFGS2J13':  3.396491461E-06,
-    'SA_ZRFGS2J23':  9.999942829E-01,
-    'SA_ZRFGS2J33': -3.381456651E-03,
-    'SA_ZADUCMDX':   0.000000000E+00,
-    'SA_ZADUCMDY':   0.000000000E+00,
-}
+ZEROTIME_START = Time('2014-01-01')
+ZEROTIME_END = Time('2014-01-02')
 
 # Header defaults
 TARG_RA = 345.0
@@ -63,8 +46,12 @@ V3_REF = -350.0
 V3I_YANG = 42.0
 VPARITY = -1
 
+# Get the mock DB
+db_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_mock.csv')
+mock_db = Table.read(db_path)
 
-def register_responses(mocker, mnemonics, starttime, endtime):
+
+def register_responses(mocker, response_db, starttime, endtime):
     request_url = ''.join([
         engdb_tools.ENGDB_BASE_URL,
         'Data/',
@@ -75,30 +62,28 @@ def register_responses(mocker, mnemonics, starttime, endtime):
 
     starttime_mil = int(starttime.unix * 1000)
     endtime_mil = int(endtime.unix * 1000)
+    time_increment = (endtime_mil - starttime_mil) // len(response_db)
+
     response_generic = {
         'AllPoints': 1,
         'Count': 2,
         'ReqSTime': '/Date({:013d}+0000)/'.format(starttime_mil),
         'ReqETime': '/Date({:013d}+0000)/'.format(endtime_mil),
         'TlmMnemonic': None,
-        'Data': [
-            {
-                'EUValue': 0.1968553,
-                'ObsTime': '/Date({:013d}+0000)/'.format(starttime_mil)
-            },
-            {
-                'EUValue': 0.1968553,
-                'ObsTime': '/Date({:013d}+0000)/'.format(endtime_mil)
-            }
-        ],
+        'Data': [],
     }
 
     responses = {}
-    for mnemonic, value in mnemonics.items():
+    for mnemonic in response_db.colnames:
         response = copy.deepcopy(response_generic)
         response['TlmMnemonic'] = mnemonic
-        response['Data'][0]['EUValue'] = value
-        response['Data'][1]['EUValue'] = value
+        current_time = starttime_mil - time_increment
+        for row in response_db:
+            current_time += time_increment
+            data = {}
+            data['ObsTime'] = '/Date({:013d}+0000)/'.format(current_time)
+            data['EUValue'] = row[mnemonic]
+            response['Data'].append(data)
         mocker.get(
             request_url.format(
                 mnemonic=mnemonic,
@@ -123,17 +108,34 @@ def eng_db():
         ])
         rm.get(url, text='Success')
 
-        # Define required DB responses.
-        responses = register_responses(
+        # Define good responses
+        good_responses = register_responses(
             rm,
-            POINTING_MNEMONICS,
+            mock_db[1:2],
             STARTTIME,
             ENDTIME
         )
+
+        # Define with zeros in the first row
+        zero_responses = register_responses(
+            rm,
+            mock_db,
+            ZEROTIME_START,
+            ENDTIME
+        )
+
         edb = engdb_tools.ENGDB_Service()
-        for mnemonic in POINTING_MNEMONICS:
+
+        # Test for good responses.
+        for mnemonic in mock_db.colnames:
             r = edb.get_records(mnemonic, STARTTIME, ENDTIME)
-            assert r == responses[mnemonic]
+            assert r == good_responses[mnemonic]
+
+        # Test for zeros.
+        for mnemonic in mock_db.colnames:
+            r = edb.get_records(mnemonic, ZEROTIME_START, ENDTIME)
+            assert r == zero_responses[mnemonic]
+
         yield edb
 
 
@@ -164,6 +166,17 @@ def test_get_pointing_fail():
 
 def test_get_pointing(eng_db):
         assert stp.get_pointing(STARTTIME, ENDTIME)
+
+
+def test_get_pointing_with_zeros(eng_db):
+    q, j2fgs_matrix, fsmcorr = stp.get_pointing(ZEROTIME_START, ENDTIME)
+    assert j2fgs_matrix.any()
+    (q_desired,
+     j2fgs_matrix_desired,
+     fsmcorr_desired) = stp.get_pointing(STARTTIME, ENDTIME)
+    assert np.array_equal(q, q_desired)
+    assert np.array_equal(j2fgs_matrix, j2fgs_matrix_desired)
+    assert np.array_equal(fsmcorr, fsmcorr_desired)
 
 
 def test_add_wcs_default(fits_file):
