@@ -185,6 +185,7 @@ def do_correction(input_model, pathloss_model):
                 else:
                     print("Cannot find matching pathloss model for slit with size %d" % slit.nshutters)
                     continue
+        input_model.meta.cal_step.pathloss = 'COMPLETE'
     elif exp_type == 'NRS_FIXEDSLIT':
         slit_number = 0
         # For each slit
@@ -219,6 +220,7 @@ def do_correction(input_model, pathloss_model):
             else:
                 print("Cannot find matching pathloss model for aperture %s" % slit.name)
                 continue
+        input_model.meta.cal_step.pathloss = 'COMPLETE'
     elif exp_type == 'NRS_IFU':
         # Get centering
         xcenter, ycenter = getCenter(exp_type, None)
@@ -241,5 +243,6 @@ def do_correction(input_model, pathloss_model):
         input_model.pathloss_pointsource = pathloss_pointsource_vector
         input_model.wavelength_uniformsource = wavelength_uniformsource
         input_model.pathloss_uniformsource = pathloss_uniform_vector
+        input_model.meta.cal_step.pathloss = 'COMPLETE'
             
     return input_model.copy()

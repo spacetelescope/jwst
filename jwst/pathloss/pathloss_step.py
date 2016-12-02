@@ -5,8 +5,27 @@ from . import path_loss
 
 class PathLossStep(Step):
     """
-    PathLossStep: Performs path loss correction by interpolating
-    path loss reference data over wavlength for each region.
+    PathLossStep: Inserts the pathloss and wavelength arrays
+    into the data.  Pathloss depends on the centering of the
+    source in the aperture if the source is a point source.
+    This step fills the following attributes in the datamodel:
+
+    NRS_IFU
+    -------
+
+    The 1-d arrays .wavelength_pointsource, .pathloss_pointsource,
+    .wavelength_uniformsource and .pathloss_uniformsource
+
+    NRS_FIXEDSLIT and NRS_MSASPEC
+    -----------------------------
+
+    The 1-d arrays .slits[n].wavelength_pointsource,
+    .slits[n].pathloss_pointsource,
+    .slits[n].wavelength_uniformsource and 
+    .slits[n].pathloss_uniformsource
+
+    In both of these EXP_TYPES, these arrays are added to each
+    member of the slits[] array.
     """
 
     spec = """
