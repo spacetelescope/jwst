@@ -1232,6 +1232,14 @@ properties:
                 title: Mask reference file name
                 type: string
                 fits_keyword: R_MASK
+          pathloss:
+            title: Pathloss reference file information
+            type: object
+            properties:
+              name:
+                title: Pathloss reference file name
+                type: string
+                fits_keyword: R_PTHLOS
           photom:
             title: Photometric reference file information
             type: object
@@ -1528,6 +1536,10 @@ properties:
             title: NIRSpec MSA Stuck Shutter Flagging
             type: string
             fits_keyword: S_MSAFLG
+          pathloss:
+            title: Pathloss step
+            type: string
+            fits_keyword: S_PTHLOS
           stack_psfs:
             title: Coronagraphic PSF Stacking
             type: string
