@@ -75,6 +75,14 @@ class Spec2Pipeline(Pipeline):
             # Apply WCS info
             input = self.assign_wcs(input)
 
+            # If assign_wcs was skipped, abort the rest of processing,
+            # because so many downstream steps depend on the WCS
+            if input.meta.cal_step.assign_wcs == 'SKIPPED':
+                log.error('Assign_wcs processing was skipped')
+                log.error('Aborting remaining processing for this exposure')
+                log.error('No output product will be created')
+                continue
+
             # Do background processing
             if len(member['bkgexps']) > 0:
 
@@ -143,8 +151,10 @@ class Spec2Pipeline(Pipeline):
             # Produce a resampled product, either via resample_spec for
             # "regular" spectra or cube_build for IFU data. No resampled
             # product is produced for time-series modes.
-            if input.meta.exposure.type in ['MIR_LRS-FIXEDSLIT',
-                'NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NIS_WFSS', 'NRC_GRISM']:
+            if input.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC',
+                'NIS_WFSS', 'NRC_GRISM']:
+            # if input.meta.exposure.type in ['MIR_LRS-FIXEDSLIT',
+            #     'NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NIS_WFSS', 'NRC_GRISM']:
 
                 # Call the resample_spec step
                 resamp = self.resample_spec(input)

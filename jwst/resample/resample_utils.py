@@ -70,7 +70,7 @@ def build_size_from_domain(domain):
         delta = axs['upper'] - axs['lower']
         #for i in [axs['includes_lower'], axs['includes_upper']]: delta += 1
         size.append(int(delta + 0.5))
-    return tuple(size)
+    return tuple(reversed(size))
 
 def build_size_from_spec_domain(domain):
     """ Return the size of the frame based on the provided domain
@@ -247,9 +247,20 @@ def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None, domain=None):
     # footprints through the backward transform of the output wcs
     sky = [spec_footprint(w) for w in wcslist]
     domain_grid = [wnew.backward_transform(*f) for f in sky]
+
+    sky0 = sky[0]
+    det = domain_grid[0]
+    offsets = []
+    input_frame = refwcs.input_frame
+    for axis in input_frame.axes_order:
+        axis_min = np.nanmin(det[axis])
+        offsets.append(axis_min)
+    transform = Shift(offsets[0]) & Shift(offsets[1]) | transform
+    wnew = WCS(output_frame=output_frame, input_frame=input_frame,
+        forward_transform=transform)
+
     domain = []
-    in_frame = refwcs.input_frame
-    for axis in in_frame.axes_order:
+    for axis in input_frame.axes_order:
         axis_min = np.nanmin(domain_grid[0][axis])
         axis_max = np.nanmax(domain_grid[0][axis]) + 1
         domain.append({'lower': axis_min, 'upper': axis_max,
@@ -311,8 +322,6 @@ def compute_spec_transform(fiducial, refwcs):
 #     mid_xdisp = int((w.domain[xdisp_axis]['upper'] - w.domain[xdisp_axis]['lower'])/2)
 #     # Make a cutout 4 pix in the dispersion range, of the full slit, trimming nans
 #     lam_subarr = lam[:,mid_disp-2:mid_disp+2]
-#     # lam_subarr = lam_subarr[~np.isnan(lam_subarr)]
-#     # lam_subarr = lam_subarr.reshape(-1, 4)
 #     # And use this midpoint to walk up the slit from bottom to top
 #     # interpolating to find the input x,y that gives constant output lambda
 #     fiducial_lambda = lam[mid_xdisp,mid_disp]
@@ -384,5 +393,3 @@ def compute_spec_fiducial(wcslist, domain=None):
         fiducial[spectral_axes] = spectral_footprint.min()
     return ((fiducial[spatial_axes]), fiducial[spectral_axes])
     #return (c, spectral_footprint.min())
-
-

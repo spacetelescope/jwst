@@ -30,7 +30,7 @@ class DQInitStep(Step):
             if ngroups != ngroups_kwd:
                 self.log.error("Keyword 'NGROUPS' value of '{0}' does not match data array size of '{1}'".format(ngroups_kwd,ngroups))
                 raise ValueError("Bad data dimensions")
-            if ysize != ysize_kwd:
+            if ysize != ysize_kwd and 'IRS2' not in input_model.meta.exposure.readpatt.upper():
                 self.log.error("Keyword 'SUBSIZE2' value of '{0}' does not match data array size of '{1}'".format(ysize_kwd,ysize))
                 raise ValueError("Bad data dimensions")
             if xsize != xsize_kwd:
