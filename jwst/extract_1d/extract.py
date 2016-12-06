@@ -104,13 +104,10 @@ def get_aperture(slit, meta, extract_params):
         ap_wcs = aperture_from_wcs(slit.meta.wcs, direction)
     else:
         ap_wcs = None
-    print("xxx ap_wcs = {}".format(ap_wcs))
 
     ap_shape = Aperture(0, 0, slit.data.shape[-1], slit.data.shape[-2])
-    print("xxx ap_shape = {}".format(ap_shape))
 
     ap = reconcile_ap_limits(ap_wcs, ap_shape)
-    print("xxx ap = {}".format(ap))
 
     return ap
 
@@ -199,23 +196,16 @@ def reconcile_ap_limits(ap_wcs, ap_shape):
             log.info("Current image is outside the WCS domain")
 
     if wcs_ok:
-        truncated = False                       # just for info
         # ap_wcs has the limits over which the WCS transformation is
         # defined; take those as the outer limits over which we will extract.
         if wcs_xstart is not None and ap_wcs.xstart > xstart:
             xstart = ap_wcs.xstart
-            truncated = True
         if wcs_xstop is not None and ap_wcs.xstop < xstop:
             xstop = ap_wcs.xstop
-            truncated = True
         if wcs_ystart is not None and ap_wcs.ystart > ystart:
             ystart = ap_wcs.ystart
-            truncated = True
         if wcs_ystop is not None and ap_wcs.ystop < ystop:
             ystop = ap_wcs.ystop
-            truncated = True
-        if truncated:
-            log.info("Aperture limit(s) truncated due to WCS domain")
 
     return Aperture(xstart, ystart, xstop, ystop)
 
@@ -259,23 +249,47 @@ class ExtractModel(object):
                  inner_bkg=None, outer_bkg=None, method='subpixel'):
 
         self.dispaxis = dispaxis
-        # possibly override with src_coeff
+        # xstart, xstop, ystart, or ystop may be overridden with src_coeff.
         if xstart is None:
             self.xstart = None
         else:
-            self.xstart = int(round(xstart))
+            r = round(xstart)
+            if xstart == r:
+                self.xstart = xstart
+            else:
+                log.warning("xstart %s should have been an integer; "
+                            "rounding to %s", str(xstart), str(r))
+                self.xstart = r
         if xstop is None:
             self.xstop = None
         else:
-            self.xstop = int(round(xstop))
+            r = round(xstop)
+            if xstop == r:
+                self.xstop = xstop
+            else:
+                log.warning("xstop %s should have been an integer; "
+                            "rounding to %s", str(xstop), str(r))
+                self.xstop = r
         if ystart is None:
             self.ystart = None
         else:
-            self.ystart = int(round(ystart))
+            r = round(ystart)
+            if ystart == r:
+                self.ystart = ystart
+            else:
+                log.warning("ystart %s should have been an integer; "
+                            "rounding to %s", str(ystart), str(r))
+                self.ystart = r
         if ystop is None:
             self.ystop = None
         else:
-            self.ystop = int(round(ystop))
+            r = round(ystop)
+            if ystop == r:
+                self.ystop = ystop
+            else:
+                log.warning("ystop %s should have been an integer; "
+                            "rounding to %s", str(ystop), str(r))
+                self.ystop = r
 
         if extract_width is None:
             self.extract_width = None
@@ -350,13 +364,19 @@ class ExtractModel(object):
         log.debug("dispaxis = %d", self.dispaxis)
         log.debug("independent_var = %s", self.independent_var)
         log.debug("smoothing_length = %d", self.smoothing_length)
+        log.debug("provisional xstart = %s", str(self.xstart))
+        log.debug("provisional xstop = %s", str(self.xstop))
+        log.debug("provisional ystart = %s", str(self.ystart))
+        log.debug("provisional ystop = %s", str(self.ystop))
+        log.debug("extract_width = %s", str(self.extract_width))
         log.debug("bkg_order = %d", self.bkg_order)
         log.debug("nod_correction = %s", str(self.nod_correction))
-        log.debug("extract_width = %s", str(self.extract_width))
+        log.debug("src_coeff = %s", str(self.src_coeff))
+        log.debug("bkg_coeff = %s", str(self.bkg_coeff))
 
-        # The following parameters are printed in assign_polynomial_limits,
-        # because they can be modified there:
-        # xstart, xstop, ystart, ystop, src_coeff, bkg_coeff.
+        # The following values are printed in assign_polynomial_limits,
+        # because they can be assigned or modified there:
+        # lower & upper, and either xstart & xstop or ystart & ystop.
 
     def assign_polynomial_limits(self):
         """Create polynomial functions for extraction limits.
@@ -393,10 +413,11 @@ class ExtractModel(object):
         if self.src_coeff is None:
             # Create constant functions.
             if self.extract_width is None:
+                # These limits are inclusive, and we expect integer values.
                 if self.dispaxis == HORIZONTAL:
-                    width = round(self.ystop - self.ystart)
+                    width = float(round(self.ystop - self.ystart + 1))
                 else:
-                    width = round(self.xstop - self.xstart)
+                    width = float(round(self.xstop - self.xstart + 1))
             else:
                 width = float(self.extract_width)
             # If extract_width was specified, that value should override
@@ -407,7 +428,7 @@ class ExtractModel(object):
                          .format(self.nod_correction))
             if self.dispaxis == HORIZONTAL:
                 ystart = float(self.ystart)
-                ystop = float(self.ystop - 1)           # inclusive limit
+                ystop = float(self.ystop)
                 if self.nod_correction != 0.:
                     ystart += self.nod_correction
                     ystop += self.nod_correction
@@ -415,24 +436,23 @@ class ExtractModel(object):
                 upper = lower + width
                 log.debug("xstart = %s", str(self.xstart))
                 log.debug("xstop = %s", str(self.xstop))
-                log.debug("ystart = %s", str(lower))
-                log.debug("ystop = %s", str(upper))
+                log.debug("lower = %s", str(lower))
+                log.debug("upper = %s", str(upper))
             else:
                 xstart = float(self.xstart)
-                xstop = float(self.xstop - 1)
+                xstop = float(self.xstop)
                 if self.nod_correction != 0.:
                     xstart += self.nod_correction
                     xstop += self.nod_correction
                 lower = (xstart + xstop) / 2. - width / 2.
                 upper = lower + width
-                log.debug("xstart = %s", str(lower))
-                log.debug("xstop = %s", str(upper))
+                log.debug("lower = %s", str(lower))
+                log.debug("upper = %s", str(upper))
                 log.debug("ystart = %s", str(self.ystart))
                 log.debug("ystop = %s", str(self.ystop))
             self.p_src = [[create_poly([lower]), create_poly([upper])]]
         else:
             # The source extraction can include more than one region.
-            log.debug("src_coeff = %s", str(self.src_coeff))
             n_lists = len(self.src_coeff)
             if n_lists // 2 * 2 != n_lists:
                 raise RuntimeError("src_coeff must contain alternating lists"
@@ -448,7 +468,6 @@ class ExtractModel(object):
                 expect_lower = not expect_lower
 
         if self.bkg_coeff is not None:
-            log.debug("bkg_coeff = %s", str(self.bkg_coeff))
             n_lists = len(self.bkg_coeff)
             if n_lists // 2 * 2 != n_lists:
                 raise RuntimeError("bkg_coeff must contain alternating lists"

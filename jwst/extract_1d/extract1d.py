@@ -27,6 +27,14 @@ __author__ = 'Mihai Cara'
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+def p2_round(x):
+    """Round to the nearest integer.
+
+    This gives the same result as the Python 2 version of round(x, 0),
+    except that p2_round returns an int.
+    This is based on http://python3porting.com/differences.html
+    """
+    return math.floor(x + math.copysign(0.5, x))
 
 def extract1d(image, lambdas, disp_range,
               p_src, p_bkg=None, independent_var="wavelength",
@@ -151,15 +159,14 @@ def extract1d(image, lambdas, disp_range,
                           " cross each other.")
                 raise ValueError("Lower and upper background extraction limits"
                                  " cross each other.")
+        del diff
         if np.any(lower < 0.) or np.any(upper < 0.):
             log.error("Background limit extends below 0")
             bkglim[i][0][:] = np.where(lower < 0., 0., lower)
             bkglim[i][1][:] = np.where(upper < 0., 0., upper)
         upper_limit = float(shape[0] - 1)
         if np.any(lower > upper_limit) or np.any(upper > upper_limit):
-            log.error("Background limit extends above %d",
-                      shape[0] - 1)
-            upper_limit = float(shape[0] - 1)
+            log.error("Background limit extends above %d", shape[0] - 1)
             bkglim[i][0][:] = np.where(lower > upper_limit, upper_limit, lower)
             bkglim[i][1][:] = np.where(upper > upper_limit, upper_limit, upper)
 
@@ -332,7 +339,7 @@ def _extract_colpix(image_data, x, j, limits):
     ns = image_data.shape[0] - 1
     ns12 = ns + 0.5
 
-    npts = sum(map(lambda x: min(ns, int(round(x[1]))) - \
+    npts = sum(map(lambda x: min(ns, int(p2_round(x[1]))) - \
                    max(0, int(math.floor(x[0] + 0.5))) + 1,
                    intervals))
 
@@ -348,7 +355,7 @@ def _extract_colpix(image_data, x, j, limits):
         i2 = i[1] if i[1] <= ns12 else ns12
 
         ii1 = max(0, int(math.floor(i1 + 0.5)))
-        ii2 = min(ns, int(round(i2)))
+        ii2 = min(ns, int(p2_round(i2)))
 
         # special case: ii1 == ii2:
         if ii1 == ii2:

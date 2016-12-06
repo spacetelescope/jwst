@@ -23,8 +23,8 @@ with the slit name (except for a full-frame input image) to select the
 appropriate aperture.  Key ``dispaxis`` is similarly required.  Key
 ``region_type`` can be omitted, but if it is specified, its value must be
 "target".  The source extraction region can be specified with ``ystart``,
-``ystop``, etc., but a better alternative is to use ``src_coeff``.  If
-background is to be subtracted, this should be specified by giving
+``ystop``, etc., but a more flexible alternative is to use ``src_coeff``.
+If background is to be subtracted, this should be specified by giving
 ``bkg_coeff``.  These are described in more detail below.  ``extract_width``
 is not used if ``src_coeff`` is given.
 
@@ -42,7 +42,17 @@ is not used if ``src_coeff`` is given.
 * bkg_order: order of polynomial fit to background regions (int)
 * extract_width: number of pixels in cross-dispersion direction (int)
 
-For IFU data, these keys are used instead of the above:
+If ``src_coeff`` is given, those coefficients are taken to define the
+extraction region.  If ``src_coeff`` was not given but ``extract_width``
+was, the latter will be used for the number of pixels to extract in the
+cross-dispersion direction, and the middle of the extraction region will
+be the average of ``ystart`` and ``ystop`` (or ``xstart`` and ``xstop``
+if ``dispaxis`` is 2).  If neither ``src_coeff`` nor ``extract_width`` was
+given, the extraction region in the cross-dispersion direction will be from
+``ystart`` to ``ystop`` (or ``xstart`` to ``xstop``) inclusive, as long as
+those values are within the input image and are within the WCS domain.
+
+For IFU cube data, these keys are used instead of the above:
 
 * id: the slit name, but this can be "ANY" (string)
 * x_center: X pixel coordinate of the target (pixels, float, the default
