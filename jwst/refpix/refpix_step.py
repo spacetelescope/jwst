@@ -28,11 +28,12 @@ class RefPixStep(Step):
             if input_model.meta.exposure.readpatt is not None and \
                input_model.meta.exposure.readpatt.find("IRS2") >= 0:
                 self.irs2_name = self.get_reference_file(input_model, 'refpix')
-                self.log.info('Using IRS2 reference file: %s' % self.irs2_name)
+                self.log.info('Using refpix reference file: %s' %
+                              self.irs2_name)
 
                 # Check for a valid reference file
                 if self.irs2_name == 'N/A':
-                    self.log.warning('No IRS2 reference file found')
+                    self.log.warning('No refpix reference file found')
                     self.log.warning('RefPix step will be skipped')
                     result = input_model.copy()
                     result.meta.cal_step.refpix = 'SKIPPED'
