@@ -161,19 +161,34 @@ def fits_file():
 
 def test_get_pointing_fail():
     with pytest.raises(Exception):
-        q, j2fgs_matrix, fmscorr = stp.get_pointing(47892.0, 48256.0)
+        q, j2fgs_matrix, fmscorr, obstime = stp.get_pointing(47892.0, 48256.0)
 
 
 def test_get_pointing(eng_db):
-        assert stp.get_pointing(STARTTIME, ENDTIME)
+        q, j2fgs_matrix, fsmcorr, obstime = stp.get_pointing(STARTTIME, ENDTIME)
+        assert isinstance(q, np.ndarray)
+        assert isinstance(j2fgs_matrix, np.ndarray)
+        assert isinstance(fsmcorr, np.ndarray)
+        assert obstime
+
+
+def test_get_pointing_list(eng_db):
+        results = stp.get_pointing(STARTTIME, ENDTIME, result_type='all')
+        assert isinstance(results, list)
+        assert len(results) > 0
+        assert isinstance(results[0].q, np.ndarray)
+        assert isinstance(results[0].j2fgs_matrix, np.ndarray)
+        assert isinstance(results[0].fsmcorr, np.ndarray)
+        assert results[0].obstime
 
 
 def test_get_pointing_with_zeros(eng_db):
-    q, j2fgs_matrix, fsmcorr = stp.get_pointing(ZEROTIME_START, ENDTIME)
+    q, j2fgs_matrix, fsmcorr, obstime = stp.get_pointing(ZEROTIME_START, ENDTIME)
     assert j2fgs_matrix.any()
     (q_desired,
      j2fgs_matrix_desired,
-     fsmcorr_desired) = stp.get_pointing(STARTTIME, ENDTIME)
+     fsmcorr_desired,
+     obstime) = stp.get_pointing(STARTTIME, ENDTIME)
     assert np.array_equal(q, q_desired)
     assert np.array_equal(j2fgs_matrix, j2fgs_matrix_desired)
     assert np.array_equal(fsmcorr, fsmcorr_desired)

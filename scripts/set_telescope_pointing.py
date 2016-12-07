@@ -61,6 +61,7 @@ in the header other than what is required by the standard.
 
 from __future__ import print_function, division
 
+from collections import namedtuple
 import logging
 import sys
 
@@ -75,6 +76,12 @@ handler = logging.StreamHandler()
 handler.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 
+
+# Define the return from get_pointing
+Pointing_Quaternions = namedtuple(
+    'Pointing_Quaternions',
+    ['q', 'j2fgs_matrix', 'fsmcorr', 'obstime']
+)
 
 def m_v_to_siaf(ya, v3, v2, vidlparity):  # This is a 321 rotation
     mat = np.array([[cos(v3)*cos(v2),
@@ -246,7 +253,7 @@ def add_wcs(filename):
     # this should fail.
     # However, for prelaunch, we'll dummy out.
     try:
-        q, j2fgs_matrix, fsmcorr = get_pointing(obsstart, obsend)
+        q, j2fgs_matrix, fsmcorr, obstime = get_pointing(obsstart, obsend)
     except ValueError as exception:
         logger.warning(
             'Cannot retrieve telescope pointing.'
@@ -290,7 +297,7 @@ def add_wcs(filename):
     logger.info('WCS info for {} complete.'.format(filename))
 
 
-def get_pointing(obstart, obsend):
+def get_pointing(obstart, obsend, result_type='first'):
     """
     Get telescope pointing engineering data.
 
@@ -299,10 +306,18 @@ def get_pointing(obstart, obsend):
     obstart, obsend: float
         MJD observation start/end times
 
+    result_type: str
+        What to return. Possible options are:
+            `first`: Return the first non-zero matricies
+            `all`: Return all non-zero matricies within
+                   the given range.
+
     Returns
     -------
-    q, j2fgs_matrix, fsmcorr
-        The engineering pointing parameters
+    q, j2fgs_matrix, fsmcorr, obstime
+        The engineering pointing parameters.
+        If the `result_type` returns multiple values, what is returned
+        will be a list of 4-tuples.
 
     Raises
     ------
@@ -344,7 +359,7 @@ def get_pointing(obstart, obsend):
     for param in params:
         try:
             params[param] = engdb.get_values(
-                param, obstart, obsend, time_format='mjd'
+                param, obstart, obsend, time_format='mjd', include_obstime=True
             )
         except Exception as exception:
             raise ValueError(
@@ -356,44 +371,60 @@ def get_pointing(obstart, obsend):
             )
 
     # Find the first set of non-zero values
+    results = []
     for idx in range(len(params['SA_ZATTEST1'])):
         values = [
-            params[param][idx]
+            params[param][idx].value
             for param in params
         ]
         if any(values):
-            break
-    else:
+
+            # The tagged obstime will come from the SA_ZATTEST1 mneunonic
+            obstime = params['SA_ZATTEST1'][idx].obstime
+
+            # Fill out the matricies
+            q = np.array([
+                params['SA_ZATTEST1'][idx].value,
+                params['SA_ZATTEST2'][idx].value,
+                params['SA_ZATTEST3'][idx].value,
+                params['SA_ZATTEST4'][idx].value,
+            ])
+
+            j2fgs_matrix = np.array([
+                params['SA_ZRFGS2J11'][idx].value,
+                params['SA_ZRFGS2J21'][idx].value,
+                params['SA_ZRFGS2J31'][idx].value,
+                params['SA_ZRFGS2J12'][idx].value,
+                params['SA_ZRFGS2J22'][idx].value,
+                params['SA_ZRFGS2J32'][idx].value,
+                params['SA_ZRFGS2J13'][idx].value,
+                params['SA_ZRFGS2J23'][idx].value,
+                params['SA_ZRFGS2J33'][idx].value,
+            ])
+
+            fsmcorr = np.array([
+                params['SA_ZADUCMDX'][idx].value,
+                params['SA_ZADUCMDY'][idx].value,
+
+            ])
+
+            results.append(Pointing_Quaternions(
+                q=q,
+                j2fgs_matrix=j2fgs_matrix,
+                fsmcorr=fsmcorr,
+                obstime=obstime
+            ))
+
+    if not len(results):
         raise ValueError(
-            'No non-zero quanternion found in the DB for observation range given.'
-        )
+                'No non-zero quanternion found'
+                'in the DB for observation range given.'
+            )
 
-    q = np.array([
-        params['SA_ZATTEST1'][idx],
-        params['SA_ZATTEST2'][idx],
-        params['SA_ZATTEST3'][idx],
-        params['SA_ZATTEST4'][idx],
-    ])
-
-    j2fgs_matrix = np.array([
-        params['SA_ZRFGS2J11'][idx],
-        params['SA_ZRFGS2J21'][idx],
-        params['SA_ZRFGS2J31'][idx],
-        params['SA_ZRFGS2J12'][idx],
-        params['SA_ZRFGS2J22'][idx],
-        params['SA_ZRFGS2J32'][idx],
-        params['SA_ZRFGS2J13'][idx],
-        params['SA_ZRFGS2J23'][idx],
-        params['SA_ZRFGS2J33'][idx],
-    ])
-
-    fsmcorr = np.array([
-        params['SA_ZADUCMDX'][idx],
-        params['SA_ZADUCMDY'][idx],
-
-    ])
-
-    return q, j2fgs_matrix, fsmcorr
+    if result_type == 'first':
+        return results[0]
+    else:
+        return results
 
 
 def get_pointing_stub(obstart, obsend):
