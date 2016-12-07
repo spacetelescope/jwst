@@ -415,6 +415,10 @@ def get_pointing(obstart, obsend, result_type='first'):
                 obstime=obstime
             ))
 
+            # Short circuit if all we're looking for is the first.
+            if result_type == 'first':
+                break
+
     if not len(results):
         raise ValueError(
                 'No non-zero quanternion found'
