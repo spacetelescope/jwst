@@ -112,6 +112,15 @@ def test_values(engdb):
     assert values[0] == 0.1968553
 
 
+def test_values_with_time(engdb):
+    values = engdb.get_values(
+        GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
+        include_obstime=True
+    )
+    assert len(values) >= 1
+    assert isinstance(values[0], tuple)
+
+
 def test_values_mock(engdb_mock, engdb):
     records = engdb.get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME

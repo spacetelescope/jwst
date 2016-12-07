@@ -166,7 +166,8 @@ class ENGDB_Service(object):
             mnemonic,
             starttime,
             endtime,
-            time_format=None
+            time_format=None,
+            include_obstime=False
     ):
         """
         Retrieve all results for a mnemonic in the requested time range.
@@ -186,10 +187,16 @@ class ENGDB_Service(object):
             The format of the input time used if the input times
             are strings. If None, a guess is made.
 
+        include_obstime: bool
+            If True, the return values will be a 2-tuple of
+            (astropy.time.Time, value)
+
         Returns
         -------
         values: list
-            Returns the list of values
+            Returns the list of values. If `include_obstime` is True
+            the values will be a 2-tuple of (astropy.time.Time, value)
+            instead of just value.
 
         Raises
         ------
@@ -216,7 +223,15 @@ class ENGDB_Service(object):
         for record in records['Data']:
             obstime = extract_db_time(record['ObsTime'])
             if obstime >= db_starttime and obstime <= db_endttime:
-                results.append(record['EUValue'])
+                value = record['EUValue']
+                if include_obstime:
+                    result = (
+                        Time(obstime / 1000., format='unix'),
+                        value
+                    )
+                else:
+                    result = value
+                results.append(result)
 
         return results
 
