@@ -72,7 +72,7 @@ from jwst.lib.engdb_tools import ENGDB_Service
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = logging.StreamHandler()
-handler.setLevel(logging.INFO)
+handler.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 
 
@@ -261,6 +261,9 @@ def add_wcs(filename):
     else:
         # compute relevant WCS information
         logger.info('Successful read of Engineering Quaternions.')
+        logger.debug('q={}'.format(q))
+        logger.debug('j2fgs_matrix={}'.format(j2fgs_matrix))
+        logger.debug('fsmcorr={}'.format(fsmcorr))
         wcsinfo, vinfo = calc_wcs(v2ref, v3ref, v3idlyang, vparity,
                                   q, j2fgs_matrix, fsmcorr)
 
