@@ -1,11 +1,12 @@
 Step Arguments
 ==============
-A single run of cube building program produces a single IFU cubes.  The input data to the cube program can be a
+A single run of cube building program produces a single IFU cube.  The input data to the cube program can be a
 single exposure, a data model passed from another pipeline step,  or a list of exposures contained in an association table.  
-The output cube can contain data from a single exposure, list of dither exposures either with in the same wavelength band or
+The output cube can contain data from a single band (for MIRI that is a single channel and single sub-channel and for NIRSPEC that 
+is a single grating and single filter) or  a list of [dithered]  exposures either with in the same wavelength band or
 covering several wavelength bands. The arguments controlling the  types of output cubes are: 
 
-* ``--channel #``
+* ``--channel [integer]``
 
 The only valid values for # are 1,2,3,4 or ALL .
 This argument is only valid for MIRI data. If the ``--channel`` argument is given, then only data corresponding to that channel 
@@ -14,19 +15,22 @@ then all the values are contained in the string with a comma between each channe
 to create a cube with channel 1 and 2 the argument list is ``--channel='1, 2'``. If this value is not specified then all the 
 channels contained in the input list of files will be used in constructing the cube. 
 
-* ``--band ``, this is a MIRI option and the  only valid values  are SHORT,MEDIUM,LONG, or ALL.
+* ``--band [string]`` 
+This is a MIRI option and the  only valid values  are SHORT,MEDIUM,LONG, or ALL.
   If the ``--subchannel`` argument is given, then only data corresponding 
   to that subchannel will be used in  constructing the cube. Only one option is possible, so IFU cubes are created either
   per subchannel or using all the subchannels the input data cover.  If this value is not specified then all the 
   subchannels contained in the input list of files will be used in constructing the cube.
 
-* ``--grating``, this is a NIRSPEC option and only valid values are PRISM, G140M, G140H, G235M, G235H, G395M, G395H, or ALL. 
+* ``--grating [string] ``
+This is a NIRSPEC option and only valid values are PRISM, G140M, G140H, G235M, G235H, G395M, G395H, or ALL. 
   If the option ALL is used then all the gratings in the assocation are used.
   Since association tables will only contain exposures of the same resolution, the use of ALL, will at most combine
   data from grating G140M, G235M & G395M or G140H, G235H & G395H together. The user can supply a comma separated string 
   containing the gratings to use. 
 
-* ``-filter ``, this is a NIRSPEC  option and the only valid options are Clear, F100LP, F070LP, F170LP, F290LP, or ALL. To
+* ``--filter [string] ``
+This is a NIRSPEC  option and the only valid options are Clear, F100LP, F070LP, F170LP, F290LP, or ALL. To
 cover the full wavelength range of NIRSPEC the option ALL can be used (provided the exposures in the association table 
 contain all the filters). The user can supply a comma separated string containing the filters to use. 
 
