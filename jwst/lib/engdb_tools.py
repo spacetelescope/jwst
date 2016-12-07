@@ -4,6 +4,7 @@ Engineering Database
 """
 
 from astropy.time import Time
+from collections import namedtuple
 import logging
 import re
 import requests
@@ -28,8 +29,12 @@ ENGDB_METADATA = 'MetaData/TlmMnemonics/'
 ENGDB_METADATA_XML = 'xml/MetaData/TlmMnemonics/'
 
 __all__ = [
-    'ENGDB_Service'
+    'ENGDB_Service',
+    'EngDB_Value'
 ]
+
+# Define the returned value tuple.
+EngDB_Value = namedtuple('EngDB_Value', ['obstime', 'value'])
 
 
 class ENGDB_Service(object):
@@ -225,9 +230,9 @@ class ENGDB_Service(object):
             if obstime >= db_starttime and obstime <= db_endttime:
                 value = record['EUValue']
                 if include_obstime:
-                    result = (
-                        Time(obstime / 1000., format='unix'),
-                        value
+                    result = EngDB_Value(
+                        obstime=Time(obstime / 1000., format='unix'),
+                        value=value
                     )
                 else:
                     result = value
