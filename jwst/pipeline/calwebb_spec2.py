@@ -13,6 +13,7 @@ from ..flatfield import flat_field_step
 from ..srctype import srctype_step
 from ..straylight import straylight_step
 from ..fringe import fringe_step
+from ..pathloss import pathloss_step
 from ..photom import photom_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
@@ -33,7 +34,7 @@ class Spec2Pipeline(Pipeline):
     Included steps are:
     assign_wcs, background subtraction, NIRSpec MSA imprint subtraction,
     NIRSpec MSA bad shutter flagging, 2-D subwindow extraction, flat field,
-    source type decision, straylight, fringe, photom, resample_spec,
+    source type decision, straylight, fringe, pathloss, photom, resample_spec,
     cube_build, and extract_1d.
     """
 
@@ -51,6 +52,7 @@ class Spec2Pipeline(Pipeline):
                  'srctype': srctype_step.SourceTypeStep,
                  'straylight': straylight_step.StraylightStep,
                  'fringe': fringe_step.FringeStep,
+                 'pathloss': pathloss_step.PathLossStep,
                  'photom': photom_step.PhotomStep,
                  'resample_spec': resample_spec_step.ResampleSpecStep,
                  'cube_build': cube_build_step.CubeBuildStep,
@@ -71,9 +73,18 @@ class Spec2Pipeline(Pipeline):
             input_file = member['expname']
             self.log.debug(' Working on %s ...', input_file)
             input = datamodels.open(input_file)
+            exp_type = input.meta.exposure.type
 
             # Apply WCS info
             input = self.assign_wcs(input)
+
+            # If assign_wcs was skipped, abort the rest of processing,
+            # because so many downstream steps depend on the WCS
+            if input.meta.cal_step.assign_wcs == 'SKIPPED':
+                log.error('Assign_wcs processing was skipped')
+                log.error('Aborting remaining processing for this exposure')
+                log.error('No output product will be created')
+                continue
 
             # Do background processing
             if len(member['bkgexps']) > 0:
@@ -94,18 +105,18 @@ class Spec2Pipeline(Pipeline):
                         self.save_model(input, "bsub")
 
             # Apply NIRSpec MSA imprint subtraction
-            if input.meta.exposure.type in ['NRS_MSASPEC', 'NRS_IFU']:
+            if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
                 if len(member['imprint']) > 0:
                     imprint_filename = member['imprint'][0]['expname']
                     input = self.imprint_subtract(input, imprint_filename)
 
             # Apply NIRSpec MSA bad shutter flagging
             # Stubbed out as placeholder until step module is created
-            #if input.meta.exposure.type in ['NRS_MSASPEC', 'NRS_IFU']:
+            #if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
             #    input = self.msa_flagging(input)
 
             # Extract 2D sub-windows for NIRSpec slit and MSA
-            if input.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
+            if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
                 input = self.extract_2d(input)
 
             # Apply flat-field correction
@@ -115,12 +126,16 @@ class Spec2Pipeline(Pipeline):
             input = self.srctype(input)
 
             # Apply the straylight correction for MIRI MRS
-            if input.meta.exposure.type == 'MIR_MRS':
+            if exp_type == 'MIR_MRS':
                 input = self.straylight(input)
 
             # Apply the fringe correction for MIRI MRS
-            if input.meta.exposure.type == 'MIR_MRS':
+            if exp_type == 'MIR_MRS':
                 input = self.fringe(input)
+
+            # Apply pathloss correction to NIRSpec exposures
+            if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU']:
+                input = self.pathloss(input)
 
             # Apply flux calibration
             input = self.photom(input)
@@ -150,21 +165,23 @@ class Spec2Pipeline(Pipeline):
                 resamp = self.resample_spec(input)
 
                 # Save the resampled product
-                self.save_model(resamp, 's2d')
-                log.info('Saved resampled product to %s' % resamp.meta.filename)
+                if self.resample_spec.skip != True:
+                    self.save_model(resamp, 's2d')
+                    log.info('Saved resampled product to %s' % resamp.meta.filename)
 
                 # Pass the resampled data to 1D extraction
                 x1d_input = resamp.copy()
                 resamp.close()
 
-            elif input.meta.exposure.type in ['MIR_MRS', 'NRS_IFU']:
+            elif exp_type in ['MIR_MRS', 'NRS_IFU']:
 
                 # Call the cube_build step for IFU data
                 cube = self.cube_build(input)
 
                 # Save the cube product
-                self.save_model(cube, 's3d')
-                log.info('Saved IFU cube product to %s' % cube.meta.filename)
+                if self.cube_build.skip != True:
+                    self.save_model(cube, 's3d')
+                    log.info('Saved IFU cube product to %s' % cube.meta.filename)
 
                 # Pass the cube along for input to 1D extraction
                 x1d_input = cube.copy()
@@ -179,8 +196,9 @@ class Spec2Pipeline(Pipeline):
             x1d_input.close()
 
             # Save the extracted spectrum
-            self.save_model(x1d_output, 'x1d')
-            log.info('Saved extracted spectrum to %s' % x1d_output.meta.filename)
+            if self.extract_1d.skip != True:
+                self.save_model(x1d_output, 'x1d')
+                log.info('Saved extracted spectrum to %s' % x1d_output.meta.filename)
 
             input.close()
             x1d_output.close()
