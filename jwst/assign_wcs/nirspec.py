@@ -1198,8 +1198,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
 
     order, wrange = get_spectral_order_wrange(input_model, reference_files['wavelengthrange'])
-
-    agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
+    agreq = angle_from_disperser(disperser, input_model)
     # GWA to detector
     gwa2det = rotation.inverse | dircos2u | camera.inverse | fpa.inverse
     # collimator to GWA
