@@ -116,7 +116,7 @@ class Spec2Pipeline(Pipeline):
             #    input = self.msa_flagging(input)
 
             # Extract 2D sub-windows for NIRSpec slit and MSA
-            if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
+            if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC']:
                 input = self.extract_2d(input)
 
             # Apply flat-field correction
@@ -134,7 +134,8 @@ class Spec2Pipeline(Pipeline):
                 input = self.fringe(input)
 
             # Apply pathloss correction to NIRSpec exposures
-            if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU']:
+            if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC',
+                            'NRS_IFU']:
                 input = self.pathloss(input)
 
             # Apply flux calibration
@@ -159,7 +160,8 @@ class Spec2Pipeline(Pipeline):
             # "regular" spectra or cube_build for IFU data. No resampled
             # product is produced for time-series modes.
             if input.meta.exposure.type in ['MIR_LRS-FIXEDSLIT',
-                'NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NIS_WFSS', 'NRC_GRISM']:
+                'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC', 'NIS_WFSS',
+                'NRC_GRISM']:
 
                 # Call the resample_spec step
                 resamp = self.resample_spec(input)

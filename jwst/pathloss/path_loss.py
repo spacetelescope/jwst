@@ -22,7 +22,7 @@ def getCenter(exp_type, input):
         #
         # Currently assume IFU sources are centered
         return (0.0, 0.0)
-    elif exp_type == "NRS_MSASPEC" or exp_type == "NRS_FIXEDSLIT":
+    elif exp_type in ["NRS_MSASPEC", "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
         #
         # MSA centering specified in the MiltiSlit model
         # "input" treated as a slit object
@@ -48,7 +48,7 @@ def getApertureFromModel(input_model, match):
     if input_model.meta.exposure.type == 'NRS_MSASPEC':
         for aperture in input_model.apertures:
             if aperture.shutters == match: return aperture
-    elif input_model.meta.exposure.type == 'NRS_FIXEDSLIT':
+    elif input_model.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
         for aperture in input_model.apertures:
             log.info(aperture.name)
             if aperture.name == match: return aperture
@@ -186,7 +186,7 @@ def do_correction(input_model, pathloss_model):
                     print("Cannot find matching pathloss model for slit with size %d" % slit.nshutters)
                     continue
         input_model.meta.cal_step.pathloss = 'COMPLETE'
-    elif exp_type == 'NRS_FIXEDSLIT':
+    elif exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
         slit_number = 0
         # For each slit
         for slit in input_model.slits:
