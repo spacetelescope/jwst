@@ -4,6 +4,11 @@ from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import flat_field
 
+# For the following types of data, it is OK -- and in some cases
+# required -- for the extract_2d step to have been run.  For all
+# other types of data, the extract_2d step must not have been run.
+EXTRACT_2D_IS_OK = ["NRS_LAMP", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT",
+                    "NRS_MSASPEC"]
 
 class FlatFieldStep(Step):
     """
@@ -21,11 +26,16 @@ class FlatFieldStep(Step):
     # is commented out to prevent CRDS from raising an exception before
     # we can handle this case ourselves.  This is a temporary workaround
     # until we get actual reference files for NIRSpec image data.
+
     # xxx reference_file_types = ["flat", "fflat", "sflat", "dflat"]
 
     def process(self, input):
 
+        if self.flat_suffix == "None" or len(self.flat_suffix) == 0:
+            self.flat_suffix = None
+
         input_model = datamodels.open(input)
+        exposure_type = input_model.meta.exposure.type
 
         # Figure out what kind of input data model is in use.
         if isinstance(input_model, datamodels.CubeModel):
@@ -36,19 +46,22 @@ class FlatFieldStep(Step):
         elif isinstance(input_model, datamodels.MultiSlitModel):
             self.log.debug('Input is a MultiSlitModel')
 
+        # Check whether extract_2d has been run.
+        if (input_model.meta.cal_step.extract_2d == 'COMPLETE' and
+            not exposure_type in EXTRACT_2D_IS_OK):
+            self.log.warning("The extract_2d step has been run, but for "
+                             "%s data it should not have been run, so ...",
+                             exposure_type)
+            self.log.warning("flat fielding will be skipped.")
+            result = input_model.copy()
+            result.meta.cal_step.flat_field = "SKIPPED"
+            input_model.close()
+            return result
+
         is_NIRSpec = (input_model.meta.instrument.name == "NIRSPEC")
 
         # Retrieve the reference file name or names
         if is_NIRSpec:
-            exp_type = input_model.meta.exposure.type
-            if exp_type not in ["NRS_FIXEDSLIT", "NRS_IFU", "NRS_MSASPEC"]:
-                self.log.warning("Exposure type is %s; flat-fielding will be "
-                                 "skipped because it is not currently "
-                                 "supported for this mode.", exp_type)
-                result = input_model.copy()
-                result.meta.cal_step.flat_field = "SKIPPED"
-                input_model.close()
-                return result
             self.f_flat_filename = self.get_reference_file(input_model,
                                         'fflat')
             self.s_flat_filename = self.get_reference_file(input_model,
@@ -88,7 +101,7 @@ class FlatFieldStep(Step):
         # Find out what model to use for the flat field reference file(s).
         if is_NIRSpec:
             flat_model = None
-            if input_model.meta.exposure.type == "NRS_MSASPEC":
+            if exposure_type == "NRS_MSASPEC":
                 f_flat_model = \
                     datamodels.NirspecQuadFlatModel(self.f_flat_filename)
             else:
