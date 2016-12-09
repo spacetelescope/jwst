@@ -148,6 +148,11 @@ Below is a list of the user options that can be used to select the type of data 
   subchannels contained in the input list of files will be used in constructing the cube. Note we used ``band`` instead of 
   ``subchannel``, because the keyword ``band`` in the science fits is used to denote which MIRI subchannel the data covers.
 
+* ``weighting ['string]'', the is for MIRI data and the only valid values are STANDARD and MIRPSF. This option defines 
+how the distances between the point cloud members and spaxel centers are determined. The default value is STANDARD and the distances
+are determined in the cube output coordinate system. If this paramter is set to MIRIPSF then the distances are determined in
+the alpha-beta coordinate system of the point cloud member and are normalized by the PSF and LSF.  
+
 * ``--grating [string]``, this is a NIRSPEC option and only valid values are PRISM, G140M, G140H, G235M, G235H, G395M, G395H, or ALL. 
   If the option ALL is used then all the gratings in the assocation are used.
   Since association tables will only contain exposures of the same resolution, the use of ALL, will at most combine
@@ -231,8 +236,8 @@ determined in the final cube coordinate system.
 * ydistance = distance between point in the cloud and spaxel center in units of arc seconds
 * zdistance = distance between point cloud and spaxel center in the lambda dimension in units of microns
 
-Additional constraints for MIRI: 
-These distances are determined in the **alpha** - **beta** system from where the point cloud value orginated. We want to combine
+Additional constraints for MIRI (if the --weighting=MIRIPSF) 
+If the These distances are determined in the **alpha** - **beta** system from where the point cloud value orginated. We want to combine
 many points -possibly coming from a variety of bands- together. To apply the correct weighting to these points we
 normalize the distance between the cube spaxel and point cloud value by the PSF and the LSF which where defined 
 in the **alpha**-**beta** coordinate system.  We therefore, transform the cube spaxel coordinates to each **alpha-beta** system
@@ -246,7 +251,7 @@ that is found within the region of interset.
 * yn = ydistance/ynorm
 * zn = zdistance/znorm
 
-For NIRSPEC 
+For NIRSPEC  (and for MIRI data when --weight='STANDARD'  the distances are determined in the output cube coordinate system) 
 
 * xn = xdistance
 * yn = ydistance

@@ -22,16 +22,16 @@ class CubeBuildStep (Step):
     """
 
     spec = """
-         channel = option('1','2','3','4','ALL',default='ALL')
-         band   = option('SHORT','MEDIUM','LONG','ALL',default='ALL')
-         grating   = option('PRISIM','G140M','G140H','G235M','G235H',G395M','G395H','ALL',default='ALL')
-         filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL',default='ALL')
+         channel = option('1','2','3','4','ALL','all',default='ALL')
+         band = option('SHORT','MEDIUM','LONG','ALL','short','medium','long','all',default='ALL')
+         grating   = option('PRISIM','G140M','G140H','G235M','G235H',G395M','G395H','ALL','all',default='ALL')
+         filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL','all',default='ALL')
          scale1 = float(default=0.0)
          scale2 = float(default =0.0)
          scalew = float(default = 0.0)
-         interpolation = option(,'pointcloud','area',default='pointcloud')
-         weighting = option('standard','miripsf',default = 'standard')
-         coord_system = option('ra-dec','alpha-beta',default='ra-dec')
+         interpolation = option(,'pointcloud','area','POINTCLOUD','AREA',default='pointcloud')
+         weighting = option('standard','miripsf','STANDARD','MIRIPSF',default = 'standard')
+         coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec')
          roi1 = float(default=1.0)
          roi2 = float(default=1.0)
          roiw = float(default=1.0)
