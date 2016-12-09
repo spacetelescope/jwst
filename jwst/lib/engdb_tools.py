@@ -16,11 +16,12 @@ logger.addHandler(logging.NullHandler())
 # #############################################
 # Where is the engineering service? Its HERE!!!
 # #############################################
-ENGDB_BASE_URL = (
-    'http://iwjwdmsdemwebv.stsci.edu/'
-    'JWDMSEngFqAccB7_testFITSw/'
-    'TlmMnemonicDataSrv.svc/'
-)
+ENGDB_HOST = 'http://iwjwdmsdemwebv.stsci.edu/'
+ENGDB_BASE_URL = ''.join([
+    ENGDB_HOST,
+    'JWDMSEngFqAccB7_testFITSw/',
+    'TlmMnemonicDataSrv.svc/',
+])
 
 # URI paths necessary to access the db
 ENGDB_DATA = 'Data/'
@@ -239,6 +240,38 @@ class ENGDB_Service(object):
                 results.append(result)
 
         return results
+
+    def get_meta(self, mnemonic, result_format=None):
+        """Get the menonics meta info
+
+        Parameters
+        ----------
+        mnemonic: str
+            The engineering mnemonic to retrieve
+
+        result_format: str
+            The format to request from the service.
+            If None, the `default_format` is used.
+        """
+        if result_format is None:
+            result_format = self.default_format
+
+        query = ''.join([
+            self.base_url,
+            result_format,
+            ENGDB_METADATA,
+            mnemonic
+        ])
+        logger.debug('Query URL="{}"'.format(query))
+
+        # Make our request
+        response = requests.get(query)
+        logger.debug('Response="{}"'.format(response))
+        response.raise_for_status()
+
+        # That's all folks
+        self.response = response
+        return response.json()
 
 
 # #########
