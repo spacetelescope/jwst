@@ -16,15 +16,15 @@ class PathLossStep(Step):
     The 1-d arrays .wavelength_pointsource, .pathloss_pointsource,
     .wavelength_uniformsource and .pathloss_uniformsource
 
-    NRS_FIXEDSLIT and NRS_MSASPEC
-    -----------------------------
+    NRS_FIXEDSLIT, NRS_BRIGHTOBJ, and NRS_MSASPEC
+    ---------------------------------------------
 
     The 1-d arrays .slits[n].wavelength_pointsource,
     .slits[n].pathloss_pointsource,
     .slits[n].wavelength_uniformsource and 
     .slits[n].pathloss_uniformsource
 
-    In both of these EXP_TYPES, these arrays are added to each
+    In all of these EXP_TYPES, these arrays are added to each
     member of the slits[] array.
     """
 
