@@ -148,7 +148,7 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
 
 #********************************************************************************
-def FindFootPrintNIRSPEC(self, input):
+def FindFootPrintNIRSPEC(self, input,flag_data):
 #********************************************************************************
 
     """
@@ -194,34 +194,34 @@ def FindFootPrintNIRSPEC(self, input):
         slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
         yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
-        #print ('yrange 0,1 xrange 0,1',yrange[0],yrange[1],xrange[0],xrange[1])
-        y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
-        ra,dec,lam = slice_wcs(x,y)
+#        print ('yrange 0,1 xrange 0,1',yrange[0],yrange[1],xrange[0],xrange[1])
+        if(xrange[0] > 0 and xrange[1] > 0): 
 
-        detector2v23 = slice_wcs.get_transform('detector','v2v3')
-        v23toworld = slice_wcs.get_transform("v2v3","world")
-        v2, v3, lam = detector2v23(x, y) 
-        coord1,coord2,lam = v23toworld(v2,v3,lam)
+            y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
+            ra,dec,lam = slice_wcs(x,y)
 
-#        print('ra',ra.shape,ra[20,0:20])
-#        print('coord1',coord1.shape,coord1[20,0:20])
+            detector2v23 = slice_wcs.get_transform('detector','v2v3')
+            v23toworld = slice_wcs.get_transform("v2v3","world")
+            v2, v3, lam = detector2v23(x, y) 
+            coord1,coord2,lam = v23toworld(v2,v3,lam)
 
-#        print('dec',dec.shape,dec[20,0:20])
-#        print('coord2',coord2.shape,coord2[20,0:20])
+            #        print('ra',ra.shape,ra[20,0:20])
+            #        print('coord1',coord1.shape,coord1[20,0:20])
 
-        ra_ref = input.meta.wcsinfo.ra_ref # degrees
-        dec_ref = input.meta.wcsinfo.dec_ref # degrees    
-#        print('ra dec ref',ra_ref,dec_ref)
+            #        print('dec',dec.shape,dec[20,0:20])
+            #        print('coord2',coord2.shape,coord2[20,0:20])
 
-#        sys.exit('STOP')
-        a_slice[k] = np.nanmin(ra)
-        a_slice[k + 1] = np.nanmax(ra)
+            ra_ref = input.meta.wcsinfo.ra_ref # degrees
+            dec_ref = input.meta.wcsinfo.dec_ref # degrees    
 
-        b_slice[k] = np.nanmin(dec)
-        b_slice[k + 1] = np.nanmax(dec)
+            a_slice[k] = np.nanmin(ra)
+            a_slice[k + 1] = np.nanmax(ra)
 
-        lambda_slice[k] = np.nanmin(lam)
-        lambda_slice[k + 1] = np.nanmax(lam)
+            b_slice[k] = np.nanmin(dec)
+            b_slice[k + 1] = np.nanmax(dec)
+
+            lambda_slice[k] = np.nanmin(lam)
+            lambda_slice[k + 1] = np.nanmax(lam)
 
 #        print(k,a_slice[k],a_slice[k+1],b_slice[k],b_slice[k+1])
         k = k + 2
@@ -240,6 +240,10 @@ def FindFootPrintNIRSPEC(self, input):
 #          (a_max-a_min)*math.cos(b_min*math.pi/180)*3600.0)
 #    print('max b',b_min,b_max, (b_max-b_min)*3600.0)
 #    print('wave',lambda_min,lambda_max)
+    if(a_min == 0.0 and a_max == 0.0 and b_min ==0.0 and b_max == 0.0):
+        self.log.info('This NIRSPEC exposure has not IFU data on it - skipping file')
+        flag_data = -1
+
 #    ra_ref = input.meta.wcsinfo.ra_ref # degrees
 #    dec_ref = input.meta.wcsinfo.dec_ref # degrees    
 #    print('ra dec ref',ra_ref,dec_ref)
@@ -323,7 +327,8 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
             with datamodels.ImageModel(ifile) as input_model:
                 t0 = time.time()
                 if(instrument == 'NIRSPEC'):
-                    ChannelFootPrint = FindFootPrintNIRSPEC(self, input_model)
+                    flag_data = 0 
+                    ChannelFootPrint = FindFootPrintNIRSPEC(self, input_model,flag_data)
                     amin, amax, bmin, bmax, lmin, lmax = ChannelFootPrint
                     t1 = time.time()
 #________________________________________________________________________________
@@ -357,7 +362,18 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
     final_b_max = max(b_max)
     final_lambda_min = min(lambda_min)
     final_lambda_max = max(lambda_max)
+#________________________________________________________________________________
+# Test that we have data (NIRSPEC NRS2 only has IFU data for 3 configurations) 
 
+    test_a = final_a_max - final_a_min
+    test_b = final_b_max - final_b_min
+    test_w = final_lambda_max - final_lambda_min
+    tolerance1 = 0.01
+    tolerance2 = 1.0
+    if(test_a < tolerance1 or test_b < tolerance1 or test_w < tolerance2):
+        
+        raise ErrorNoIFUData(" NO Valid IFU slice data found ")
+#________________________________________________________________________________
     CubeFootPrint = (final_a_min, final_a_max, final_b_min, final_b_max,
                      final_lambda_min, final_lambda_max)
     
@@ -626,4 +642,7 @@ class IncorrectInput(Exception):
     pass
 
 class NoCoordSystem(Exception):
+    pass
+
+class ErrorNoIFUData(Exception):
     pass
