@@ -293,7 +293,7 @@ def detector_to_alpha_beta(input_model, reference_files):
     ch_dict = {}
     for c in channels:
         ch_dict.update({tuple(wr[c]): selector.LabelMapperDict(('alpha', 'beta', 'lam'), slice_model[c],
-                                                   models.Mapping([1, ], n_inputs=3))})
+                                                   models.Mapping([1, ], n_inputs=3), atol=10**-2)})
     alpha_beta_mapper = selector.LabelMapperRange(('alpha', 'beta', 'lam'), ch_dict,
                                                   models.Mapping((2,)))
     label_mapper.inverse = alpha_beta_mapper

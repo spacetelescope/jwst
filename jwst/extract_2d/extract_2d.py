@@ -18,7 +18,7 @@ log.setLevel(logging.INFO)
 
 
 def extract2d(input_model, which_subarray=None):
-    supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC']
+    supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ', 'NRS_LAMP']
     exp_type = input_model.meta.exposure.type.upper()
     log.info('EXP_TYPE is {0}'.format(exp_type))
 
@@ -29,7 +29,7 @@ def extract2d(input_model, which_subarray=None):
         output_model = datamodels.MultiSlitModel()
         output_model.update(input_model)
 
-    if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
+    if exp_type in supported_modes:
         slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
         # This is a cludge but will work for now.
         # This model keeps open_slits as an attribute.

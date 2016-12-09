@@ -194,6 +194,7 @@ def FindFootPrintNIRSPEC(self, input):
         slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
         yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
+        #print ('yrange 0,1 xrange 0,1',yrange[0],yrange[1],xrange[0],xrange[1])
         y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
         ra,dec,lam = slice_wcs(x,y)
 
