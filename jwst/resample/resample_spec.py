@@ -321,37 +321,18 @@ class ResampleSpecData(object):
         spectral_scale = np.abs((trace[-1] - trace[0]) / trace.shape[0])
         log.debug('spectral scale: {0}'.format(spectral_scale))
 
-        # # Fit a 2nd order polynomial for the spectral scale
-        # poly = Polynomial1D(degree=2)
-        # fit = fitting.LinearLSQFitter()
-        # x_in = np.arange(lam.shape[0])
-        # lam_in = lam[:,tcenter]
-        # spectral_poly_fit = fit(poly, x_in, lam_in)
-        # # See how well we are doing the fit
-        # plt.figure(figsize=(8,5))
-        # plt.plot(x_in, lam_in, 'ko')
-        # plt.plot(x_in, spectral_poly_fit(x_in))
-        # plt.show()
-
         # Compute transform for output frame
         log.debug('Slit center %s' % slit_center_pix)
         offset = Shift(-slit_center_pix) & Shift(-slit_center_pix)
         # TODO: double-check the signs on the following rotation angles
         roll_ref = input_model.meta.wcsinfo.roll_ref * u.deg
         rot = Rotation2D(roll_ref)
-        # scale = Scale(spatial_scale) & Scale(spatial_scale)
         tan = Pix2Sky_TAN()
         lon_pole = _compute_lon_pole(slit_center_sky, tan)
         skyrot = RotateNative2Celestial(slit_center_sky.ra, slit_center_sky.dec,
             lon_pole)
-        # spatial_trans = offset | rot | scale | tan | skyrot
         min_lam = np.nanmin(lam)
-        # spectral_trans = Shift(min_lam) | Scale(spectral_scale)
         mapping = Mapping((0, 0, 1))
-        print(mapping)
-        print(mapping.inverse)
-        # mapping.inverse = Mapping((0, 2))
-        # transform = mapping | spatial_trans & spectral_trans
 
         transform = Shift(-slit_center_pix) & Identity(1) | \
             Scale(spatial_scale) & Scale(spectral_scale) | \
@@ -368,16 +349,6 @@ class ResampleSpecData(object):
 
         # Build the domain in the output frame wcs object
         domain_grid = wnew.backward_transform(ra, dec, lam)
-        # print('domain grid x:', domain_grid[0])
-        # print('domain grid y:', domain_grid[1])
-        # plt.figure(1)
-        # plt.subplot(121)
-        # plt.title('x')
-        # plt.imshow(domain_grid[0])
-        # plt.subplot(122)
-        # plt.title('y')
-        # plt.imshow(domain_grid[1])
-        # plt.show()
 
         domain = []
         for axis in input_frame.axes_order:
@@ -508,8 +479,6 @@ class ResampleSpecData(object):
                 pass
 
             self.output_models.append(output_model)
-
-        #self.output_models.save(None)  # DEBUG: Remove for production
 
 
 def build_mask(dqarr, bitvalue):
