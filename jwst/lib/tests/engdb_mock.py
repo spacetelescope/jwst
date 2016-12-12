@@ -35,6 +35,7 @@ MNEMONICS_TO_CACHE = [
     'SA_ZRFGS2J33',
     'SA_ZADUCMDX',
     'SA_ZADUCMDY',
+    'INRSI_GWA_Y_TILT_AVGED',
 ]
 
 # Path templates
@@ -53,39 +54,75 @@ class EngDB_Mocker(requests_mock.Mocker):
         # Setup the local engineering cache
         self.cache = EngDB_Local(db_path)
 
-        # Setup aliveness response
-        url = ''.join([
+        # Setup from meta query
+        meta_query = re.compile(''.join([
             engdb_tools.ENGDB_BASE_URL,
-            engdb_tools.ENGDB_METADATA
-        ])
-        self.get(url, text=self.response_alive)
+            engdb_tools.ENGDB_METADATA,
+            '.*'
+        ]))
+        self.get(meta_query, json=self.response_meta)
 
         # Setup to return a general data query
         data_query = re.compile(''.join([
             engdb_tools.ENGDB_BASE_URL,
-            'Data/.+?sTime=.+&eTime=.+'
+            engdb_tools.ENGDB_DATA,
+            '.+\?sTime=.+\&eTime=.+'
         ]))
         self.get(data_query, json=self.response_data)
 
-    def response_alive(self, request, context):
-        """Respond with the basic aliveness"""
+    def response_meta(self, request, context):
+        """
+        Respond with the meta data
+
+        Parameters
+        ----------
+        request, context:
+            request-mock parameters
+
+        Returns
+        -------
+        response: json
+            The expected JSON response
+
+        Modifies
+        --------
+        context
+            `Update status_code` with the HTTP expected status
+        """
+
+        # Get the mnemonic substring.
+        mnemonic = os.path.basename(request.path)
+        results = self.cache.fetch_meta(mnemonic)
         context.status_code = 200
-        return 'Success'
+        return results
 
     def response_data(self, request, context):
-        try:
-            data = self.cache.fetch_data(
-                'SA_ZATTEST1',
-                '2016-01-01',
-                '2016-12-31'
+        """
+        Respond with the mnemonic data
+
+        Parameters
+        ----------
+        request, context:
+            request-mock parameters
+
+        Returns
+        -------
+        response: json
+            The expected JSON response
+
+        Modifies
+        --------
+        context
+            `Update status_code` with the HTTP expected status
+        """
+        mnemonic = os.path.basename(request.path)
+        data = self.cache.fetch_data(
+            mnemonic,
+            request.qs['stime'][0],
+            request.qs['etime'][0]
             )
-        except Exception as exception:
-            print('Exception="{}"'.format(exception))
-            context.status_code = 404
-            return
-        else:
-            context.status_code = 200
-            return data
+        context.status_code = 200
+        return data
 
 
 class EngDB_Local(object):
@@ -185,10 +222,11 @@ class EngDB_Local(object):
         tlmmnemonics = meta['TlmMnemonics']
 
         # Now look for only the requested mnemonic substring
+        mnemonic_substr = mnemonic_substr.lower()
         results = [
             tlmmnemonics[idx]
             for idx, mnemonic in enumerate(tlmmnemonics)
-            if mnemonic_substr in mnemonic['TlmMnemonic']
+            if mnemonic_substr in mnemonic['TlmMnemonic'].lower()
         ]
 
         # Construct the return structure

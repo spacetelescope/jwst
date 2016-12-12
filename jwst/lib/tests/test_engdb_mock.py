@@ -5,11 +5,12 @@ from astropy.time import Time
 from backports.tempfile import TemporaryDirectory
 import os
 import pytest
+import requests
 
 from . import engdb_mock
 from .. import engdb_tools
 
-GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
+GOOD_MNEMONIC = 'inrsi_gwa_y_tilt_avged'
 GOOD_STARTTIME = '2016-01-23 00:00:00'
 GOOD_ENDTIME = '2016-01-23 00:03:00'
 EARLY_STARTTIME = '2014-01-01'
@@ -60,7 +61,7 @@ def test_cache_engdb(engdb):
         ''
     ]
 )
-def test_meta(db_cache, engdb, mnemonic):
+def test_cache_meta(db_cache, engdb, mnemonic):
     """
     Test read of the meta information
     """
@@ -69,7 +70,7 @@ def test_meta(db_cache, engdb, mnemonic):
     assert meta == live_meta
 
 
-def test_data(db_cache, engdb):
+def test_cache_data(db_cache, engdb):
     """
     Test read of the data information
     """
@@ -78,7 +79,7 @@ def test_data(db_cache, engdb):
     assert data == live_data
 
 
-def test_partial_data(db_cache, engdb):
+def test_cache_partial_data(db_cache, engdb):
     """
     Test read of some data.
     """
@@ -102,7 +103,7 @@ def test_partial_data(db_cache, engdb):
     assert data_short == live_data_short
 
 
-def test_end_data(db_cache, engdb):
+def test_cache_end_data(db_cache, engdb):
     """
     Test read of some data.
     """
@@ -138,6 +139,54 @@ def test_end_data(db_cache, engdb):
     assert data_short['Count'] == live_data_short['Count']
 
 
+def test_mocker_alive(db_cache):
+    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path) as mocker:
+        query = ''.join([
+            engdb_tools.ENGDB_BASE_URL,
+            engdb_tools.ENGDB_METADATA
+        ])
+        response = requests.get(query)
+        assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
+    'mnemonic, count',
+    [
+        (GOOD_MNEMONIC, 1),
+        ('CAL', 44),
+        ('', 2133),
+    ]
+)
+def test_mocker_meta(db_cache, mnemonic, count):
+    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path) as mocker:
+        query = ''.join([
+            engdb_tools.ENGDB_BASE_URL,
+            engdb_tools.ENGDB_METADATA,
+            mnemonic
+        ])
+        response = requests.get(query)
+        assert response.status_code == 200
+        meta = response.json()
+        assert meta['Count'] == count
+
+
+def test_mocker_data(db_cache, engdb):
+    with engdb_mock.EngDB_Mocker(db_path=db_cache.db_path) as mocker:
+        query = ''.join([
+            engdb_tools.ENGDB_BASE_URL,
+            engdb_tools.ENGDB_DATA,
+            GOOD_MNEMONIC,
+            '?sTime=',
+            GOOD_STARTTIME,
+            '&eTime=',
+            GOOD_ENDTIME
+        ])
+        response = requests.get(query)
+
+    live_data = engdb.get_records(GOOD_MNEMONIC, GOOD_STARTTIME, GOOD_ENDTIME)
+    assert response.json() == live_data
+
+
 # #########
 # Utilities
 # #########
@@ -155,7 +204,7 @@ def engdb(scope='module'):
 
 
 @pytest.fixture
-def db_path(engdb):
+def db_path():
     """
     Provide a local cache directory
     """
