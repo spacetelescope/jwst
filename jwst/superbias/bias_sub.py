@@ -98,11 +98,32 @@ def ref_matches_sci(ref_model, sci_model):
 
 def get_subarray(ref_model, sci_model):
 
+    sci_x1 = sci_model.meta.subarray.xstart
+    sci_x2 = sci_model.meta.subarray.xsize
+    sci_y1 = sci_model.meta.subarray.ystart
+    sci_y2 = sci_model.meta.subarray.ysize
+    log.debug("sci xstart=%d, xsize=%d, ystart=%d, ysize=%d" % (sci_x1, sci_x2,
+               sci_y1, sci_y2))
+    ref_x1 = ref_model.meta.subarray.xstart
+    ref_x2 = ref_model.meta.subarray.xsize
+    ref_y1 = ref_model.meta.subarray.ystart
+    ref_y2 = ref_model.meta.subarray.ysize
+    log.debug("ref xstart=%d, xsize=%d, ystart=%d, ysize=%d" % (ref_x1, ref_x2,
+               ref_y1, ref_y2))
+
     # Compute the slicing indexes
-    xstart = sci_model.meta.subarray.xstart - 1
-    ystart = sci_model.meta.subarray.ystart - 1
+    xstart = sci_x1 - ref_x1
+    ystart = sci_y1 - ref_y1
     xstop = xstart + sci_model.meta.subarray.xsize
     ystop = ystart + sci_model.meta.subarray.ysize
+    log.debug("slice xstart=%d, xstop=%d, ystart=%d, ystop=%d" % (xstart, xstop, ystart, ystop))
+
+    # Check for errors in the slice indexes
+    if (xstart < 0) or (ystart < 0) or \
+       ((xstop-1) > ref_model.data.shape[-1]) or \
+       ((ystop-1) > ref_model.data.shape[-2]):
+        log.error("Science and reference file arrays not compatible")
+        raise ValueError("Can't extract matching subarray from reference data")
 
     # Slice the reference model arrays
     sub_data = ref_model.data[ystart:ystop, xstart:xstop]
