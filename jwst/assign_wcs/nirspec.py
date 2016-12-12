@@ -123,7 +123,11 @@ def ifu(input_model, reference_files):
     """
     detector = input_model.meta.instrument.detector
     grating = input_model.meta.instrument.grating
+    filter = input_model.meta.instrument.filter
     if detector == "NRS2" and grating.endswith('M'):
+        log.critical("No IFU slices fall on detector {0}".format(detector))
+        return None
+    if detector == "NRS2" and grating == "G140H" and filter == "F070LP":
         log.critical("No IFU slices fall on detector {0}".format(detector))
         return None
 
