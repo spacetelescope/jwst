@@ -241,7 +241,7 @@ class ENGDB_Service(object):
 
         return results
 
-    def get_meta(self, mnemonic, result_format=None):
+    def get_meta(self, mnemonic='', result_format=None):
         """Get the menonics meta info
 
         Parameters
