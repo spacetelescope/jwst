@@ -368,8 +368,10 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
     test_a = final_a_max - final_a_min
     test_b = final_b_max - final_b_min
     test_w = final_lambda_max - final_lambda_min
-    tolerance1 = 0.01
+    tolerance1 = 0.00001
     tolerance2 = 1.0
+    print( test_a,  test_b, test_w)
+    
     if(test_a < tolerance1 or test_b < tolerance1 or test_w < tolerance2):
         
         raise ErrorNoIFUData(" NO Valid IFU slice data found ")
