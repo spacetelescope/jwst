@@ -135,9 +135,9 @@ def get_hdu(hdulist, hdu_name, index=None):
         hdu = hdulist[pair]
     except (KeyError, IndexError, AttributeError):
         try:
-            if index is None:
+            if isinstance(pair, six.string_types):
                 hdu = hdulist[(pair, 1)]
-            elif index == 0:
+            elif isinstance(pair, tuple) and index == 0:
                 hdu = hdulist[pair[0]]
             else:
                 raise
