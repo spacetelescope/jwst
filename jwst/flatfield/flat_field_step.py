@@ -31,8 +31,9 @@ class FlatFieldStep(Step):
 
     def process(self, input):
 
-        if self.flat_suffix == "None" or len(self.flat_suffix) == 0:
-            self.flat_suffix = None
+        if self.flat_suffix is not None:
+            if self.flat_suffix == "None" or len(self.flat_suffix) == 0:
+                self.flat_suffix = None
 
         input_model = datamodels.open(input)
         exposure_type = input_model.meta.exposure.type
