@@ -241,7 +241,7 @@ def FindFootPrintNIRSPEC(self, input,flag_data):
 #    print('max b',b_min,b_max, (b_max-b_min)*3600.0)
 #    print('wave',lambda_min,lambda_max)
     if(a_min == 0.0 and a_max == 0.0 and b_min ==0.0 and b_max == 0.0):
-        self.log.info('This NIRSPEC exposure has not IFU data on it - skipping file')
+        self.log.info('This NIRSPEC exposure has no IFU data on it - skipping file')
         flag_data = -1
 
 #    ra_ref = input.meta.wcsinfo.ra_ref # degrees
@@ -369,12 +369,12 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
     test_b = final_b_max - final_b_min
     test_w = final_lambda_max - final_lambda_min
     tolerance1 = 0.00001
-    tolerance2 = 0.5
-#    print( test_a,  test_b, test_w)
+    tolerance2 = 0.1
     
     if(test_a < tolerance1 or test_b < tolerance1 or test_w < tolerance2):
         
-        raise ErrorNoIFUData(" NO Valid IFU slice data found ")
+        self.log.info('No Valid IFU slice data found %f %f %f ',test_a,test_b,test_w)
+        raise ErrorNoIFUData(" NO Valid IFU slice data found on exposure ")
 #________________________________________________________________________________
     CubeFootPrint = (final_a_min, final_a_max, final_b_min, final_b_max,
                      final_lambda_min, final_lambda_max)
