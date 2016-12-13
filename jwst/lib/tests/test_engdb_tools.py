@@ -59,6 +59,19 @@ def test_values(engdb):
     assert values[0] == 0.19687812
 
 
+def test_values_with_bracket(engdb):
+    records = engdb.get_records(
+        GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
+    )
+    assert records['Count'] == 3
+    values = engdb.get_values(
+        GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
+        include_bracket_values=True
+    )
+    assert len(values) == 3
+    assert values[1] == 0.19687812
+
+
 def test_values_with_time(engdb):
     values = engdb.get_values(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,

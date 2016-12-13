@@ -134,6 +134,11 @@ class ENGDB_Service(object):
         ------
         requests.exceptions.HTTPError
             Either a bad URL or non-existant mnemonic.
+
+        Notes
+        -----
+        The engineering service always returns the bracketing entries
+        before and after the requested time range.
         """
         if result_format is None:
             result_format = self.default_format
@@ -173,7 +178,8 @@ class ENGDB_Service(object):
             starttime,
             endtime,
             time_format=None,
-            include_obstime=False
+            include_obstime=False,
+            include_bracket_values=False
     ):
         """
         Retrieve all results for a mnemonic in the requested time range.
@@ -196,6 +202,11 @@ class ENGDB_Service(object):
         include_obstime: bool
             If True, the return values will be a 2-tuple of
             (astropy.time.Time, value)
+
+        include_bracket_values: bool
+            The DB service, by default, returns the bracketing
+            values outside of the requested time. If True, include
+            these values.
 
         Returns
         -------
@@ -228,16 +239,18 @@ class ENGDB_Service(object):
             raise ValueError('Mnemonic {} has no data'.format(mnemonic))
         for record in records['Data']:
             obstime = extract_db_time(record['ObsTime'])
-            if obstime >= db_starttime and obstime <= db_endttime:
-                value = record['EUValue']
-                if include_obstime:
-                    result = EngDB_Value(
-                        obstime=Time(obstime / 1000., format='unix'),
-                        value=value
-                    )
-                else:
-                    result = value
-                results.append(result)
+            if not include_bracket_values:
+                if obstime < db_starttime or obstime > db_endttime:
+                    continue
+            value = record['EUValue']
+            if include_obstime:
+                result = EngDB_Value(
+                    obstime=Time(obstime / 1000., format='unix'),
+                    value=value
+                )
+            else:
+                result = value
+            results.append(result)
 
         return results
 
