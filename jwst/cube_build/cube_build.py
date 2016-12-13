@@ -321,7 +321,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
             if(ioffset == n):
                 c1_offset = MasterTable.FileOffset[this_a][this_b]['C1'][k]
                 c2_offset = MasterTable.FileOffset[this_a][this_b]['C2'][k]
-                print('offset to apply in arcseonds (ra,dec) ', c1_offset, c2_offset)
+#                print('offset to apply in arcseonds (ra,dec) ', c1_offset, c2_offset)
 #________________________________________________________________________________
 # Open the input data model
             with datamodels.ImageModel(ifile) as input_model:
@@ -370,7 +370,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
     test_w = final_lambda_max - final_lambda_min
     tolerance1 = 0.00001
     tolerance2 = 0.5
-    print( test_a,  test_b, test_w)
+#    print( test_a,  test_b, test_w)
     
     if(test_a < tolerance1 or test_b < tolerance1 or test_w < tolerance2):
         
