@@ -374,7 +374,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
     if(test_a < tolerance1 or test_b < tolerance1 or test_w < tolerance2):
         
         self.log.info('No Valid IFU slice data found %f %f %f ',test_a,test_b,test_w)
-        raise ErrorNoIFUData(" NO Valid IFU slice data found on exposure ")
+        #raise ErrorNoIFUData(" NO Valid IFU slice data found on exposure ")
 #________________________________________________________________________________
     CubeFootPrint = (final_a_min, final_a_max, final_b_min, final_b_max,
                      final_lambda_min, final_lambda_max)
