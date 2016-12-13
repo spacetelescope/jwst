@@ -11,72 +11,19 @@ which is generally not available.
 
 from __future__ import absolute_import
 
-from astropy.time import Time
 import pytest
-import requests_mock
 
 from .. import engdb_tools
+from .engdb_mock import EngDB_Mocker
 
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
-GOOD_STARTTIME = '2016-01-01'
-GOOD_ENDTIME = '2016-12-31'
+GOOD_STARTTIME = '2016-01-18'
+GOOD_ENDTIME = '2016-01-19'
 
-SHORT_STARTTIME = '2016-01-14'
+SHORT_STARTTIME = '2016-01-18 15:30:00'
 
 BAD_SERVER = 'https://www.stsci.edu'
 BAD_MNEMONIC = 'No_Such_MNEMONIC'
-
-
-@pytest.fixture
-def engdb():
-    try:
-        engdb = engdb_tools.ENGDB_Service()
-    except:
-        pytest.skip('ENGDB service is not accessible.')
-    else:
-        return engdb
-
-
-@pytest.fixture
-def engdb_mock():
-    with requests_mock.Mocker() as rm:
-
-        # Define response for aliveness
-        url = ''.join([
-            engdb_tools.ENGDB_BASE_URL,
-            engdb_tools.ENGDB_METADATA
-        ])
-        rm.get(url, text='Success')
-
-        # Define response for a mneunonic query
-        url = ''.join([
-            engdb_tools.ENGDB_BASE_URL,
-            'Data/',
-            GOOD_MNEMONIC,
-            '?sTime=',
-            Time(SHORT_STARTTIME).iso,
-            '&eTime=',
-            Time(SHORT_STARTTIME).iso
-        ])
-        response = {
-            "TlmMnemonic": "INRSI_GWA_Y_TILT_AVGED",
-            "AllPoints": 1,
-            "ReqSTime": "/Date(1452729600000+0000)/",
-            "ReqETime": "/Date(1452729600000+0000)/",
-            "Count": 2,
-            "Data": [
-                {
-                    "ObsTime": "/Date(1452729600000+0000)/",
-                    "EUValue": 0.1968553
-                }, {
-                    "ObsTime": "/Date(1452731400000+0000)/",
-                    "EUValue": 0.1968553
-                }
-            ]
-        }
-        rm.get(url, json=response)
-
-        yield rm
 
 
 def test_basic(engdb):
@@ -104,21 +51,47 @@ def test_values(engdb):
     records = engdb.get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
-    assert records['Count'] == 2
+    assert records['Count'] == 3
     values = engdb.get_values(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
     assert len(values) == 1
-    assert values[0] == 0.1968553
+    assert values[0] == 0.19687812
 
 
-def test_values_mock(engdb_mock, engdb):
+def test_values_with_bracket(engdb):
     records = engdb.get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
-    assert records['Count'] == 2
+    assert records['Count'] == 3
     values = engdb.get_values(
-        GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
+        GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
+        include_bracket_values=True
     )
-    assert len(values) == 1
-    assert values[0] == 0.1968553
+    assert len(values) == 3
+    assert values[1] == 0.19687812
+
+
+def test_values_with_time(engdb):
+    values = engdb.get_values(
+        GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
+        include_obstime=True
+    )
+    assert len(values) >= 1
+    assert isinstance(values[0], tuple)
+
+
+def test_meta(engdb):
+    response = engdb.get_meta(GOOD_MNEMONIC)
+    assert response['Count'] == 1
+    assert response['TlmMnemonics'][0]['TlmMnemonic'] == GOOD_MNEMONIC
+
+
+# #####################
+# Utilities for testing
+# #####################
+@pytest.fixture
+def engdb():
+    with EngDB_Mocker() as mocker:
+        engdb = engdb_tools.ENGDB_Service()
+        yield engdb
