@@ -23,7 +23,7 @@ def set_source_type(input_model):
     # For exposure types that use a single source, get the user-supplied
     # source type from the selection they provided in the APT
     if exptype in ['MIR_LRS-FIXEDSLIT', 'MIR_LRS-SLITLESS', 'MIR_MRS',
-                   'NIS_SOSS', 'NRS_FIXEDSLIT', 'NRS_IFU']:
+                   'NIS_SOSS', 'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_IFU']:
 
         # Get the value the user specified (if any)
         user_type = input_model.meta.target.source_type

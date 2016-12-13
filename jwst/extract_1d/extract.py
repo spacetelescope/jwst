@@ -76,18 +76,6 @@ def get_extract_parameters(refname, slitname, meta,
                 extract_params['extract_width'] = aper.get('extract_width')
                 extract_params['nod_correction'] = get_nod_offset(aper, meta)
             break
-    log.debug("dispaxis = %d", extract_params['dispaxis'])
-    log.debug("src_coeff = %s", str(extract_params['src_coeff']))
-    log.debug("bkg_coeff = %s", str(extract_params['bkg_coeff']))
-    log.debug("independent_var = %s", extract_params['independent_var'])
-    log.debug("smoothing_length = %d", extract_params['smoothing_length'])
-    log.debug("bkg_order = %d", extract_params['bkg_order'])
-    log.debug("xstart = %s", str(extract_params['xstart']))
-    log.debug("ystop = %s", str(extract_params['ystop']))
-    log.debug("xstart = %s", str(extract_params['xstart']))
-    log.debug("ystop = %s", str(extract_params['ystop']))
-    log.debug("extract_width = %s", str(extract_params['extract_width']))
-    log.debug("nod_correction = %s", str(extract_params['nod_correction']))
 
     return extract_params
 
@@ -419,6 +407,20 @@ class ExtractModel(object):
                 coeff_list[0] += self.nod_correction
                 self.bkg_coeff[i] = copy.copy(coeff_list)
 
+    def log_extraction_parameters(self):
+        """Log some of the extraction parameters."""
+
+        log.debug("dispaxis = %d", self.dispaxis)
+        log.debug("independent_var = %s", self.independent_var)
+        log.debug("smoothing_length = %d", self.smoothing_length)
+        log.debug("bkg_order = %d", self.bkg_order)
+        log.debug("nod_correction = %s", str(self.nod_correction))
+        log.debug("extract_width = %s", str(self.extract_width))
+
+        # The following parameters are printed in assign_polynomial_limits,
+        # because they can be modified there:
+        # xstart, xstop, ystart, ystop, src_coeff, bkg_coeff.
+
     def assign_polynomial_limits(self):
         """Create polynomial functions for extraction limits.
 
@@ -464,14 +466,23 @@ class ExtractModel(object):
                 ystop = float(self.ystop - 1)           # inclusive limit
                 lower = (ystart + ystop) / 2. - width / 2.
                 upper = lower + width
+                log.debug("xstart = %s", str(self.xstart))
+                log.debug("xstop = %s", str(self.xstop))
+                log.debug("ystart = %s", str(lower))
+                log.debug("ystop = %s", str(upper))
             else:
                 xstart = float(self.xstart)
                 xstop = float(self.xstop - 1)
                 lower = (xstart + xstop) / 2. - width / 2.
                 upper = lower + width
+                log.debug("xstart = %s", str(lower))
+                log.debug("xstop = %s", str(upper))
+                log.debug("ystart = %s", str(self.ystart))
+                log.debug("ystop = %s", str(self.ystop))
             self.p_src = [[create_poly([lower]), create_poly([upper])]]
         else:
             # The source extraction can include more than one region.
+            log.debug("src_coeff = %s", str(self.src_coeff))
             n_lists = len(self.src_coeff)
             if n_lists // 2 * 2 != n_lists:
                 raise RuntimeError("src_coeff must contain alternating lists"
@@ -487,6 +498,7 @@ class ExtractModel(object):
                 expect_lower = not expect_lower
 
         if self.bkg_coeff is not None:
+            log.debug("bkg_coeff = %s", str(self.bkg_coeff))
             n_lists = len(self.bkg_coeff)
             if n_lists // 2 * 2 != n_lists:
                 raise RuntimeError("bkg_coeff must contain alternating lists"
@@ -552,8 +564,6 @@ class ExtractModel(object):
             source count rate to get `net`.
         """
 
-        log.debug('xstart=%g, xstop=%g, ystart=%g, ystop=%g' %
-                  (self.xstart, self.xstop, self.ystart, self.ystop))
         # x_array and y_array are just used for computing the wavelengths.
         if self.dispaxis == HORIZONTAL:
             x_array = np.arange(self.xstart, self.xstop, dtype=np.float64)
@@ -685,10 +695,16 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
     output_model = datamodels.MultiSpecModel()
     output_model.update(input_model)
 
-    if isinstance(input_model, datamodels.MultiSlitModel):
+    if isinstance(input_model, datamodels.MultiSlitModel) or \
+       isinstance(input_model, datamodels.MultiProductModel):
+
+        if isinstance(input_model, datamodels.MultiSlitModel):
+            slits = input_model.slits
+        else:                           # MultiProductModel
+            slits = input_model.products
 
         # Loop over the slits in the input model
-        for slit in input_model.slits:
+        for slit in slits:
             extract_params = get_extract_parameters(refname, slit.name,
                                 input_model.meta, smoothing_length, bkg_order)
             wavelength, net, background = \
@@ -715,7 +731,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             berror = np.ones_like(net)
             spec = datamodels.SpecModel()
             otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                                net, nerror, background, berror)),
+                                 net, nerror, background, berror)),
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             output_model.spec.append(spec)
@@ -758,8 +774,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             nerror = np.ones_like(net)
             berror = np.ones_like(net)
             spec = datamodels.SpecModel()
-            otab = np.array(zip(wavelength, flux, fl_error, dq,
-                                net, nerror, background, berror),
+            otab = np.array(list(zip(wavelength, flux, fl_error, dq,
+                                 net, nerror, background, berror)),
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             output_model.spec.append(spec)
@@ -801,8 +817,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 nerror = np.ones_like(net)
                 berror = np.ones_like(net)
                 spec = datamodels.SpecModel()
-                otab = np.array(zip(wavelength, flux, fl_error, dq,
-                                    net, nerror, background, berror),
+                otab = np.array(list(zip(wavelength, flux, fl_error, dq,
+                                     net, nerror, background, berror)),
                                 dtype=spec.spec_table.dtype)
                 spec = datamodels.SpecModel(spec_table=otab)
                 output_model.spec.append(spec)
@@ -828,6 +844,7 @@ def extract_one_slit(slit, integ, meta, slitname=None,
     extract_model = ExtractModel(slit, **extract_params)
     ap = get_aperture(slit, meta, extract_params)
     extract_model.update_extraction_limits(ap)
+    extract_model.log_extraction_parameters()
     extract_model.assign_polynomial_limits()
     data = slit.data
     if integ > -1:

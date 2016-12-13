@@ -1,19 +1,8 @@
-# -*- coding: utf-8 -*-
+from __future__ import (division, print_function, unicode_literals, 
+    absolute_import)
 
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-
-"""
-The `drizzle` module defines the `Drizzle` class, for combining input
-images into a single output image using the drizzle algorithm.
-"""
-
-from __future__ import division, print_function, unicode_literals, absolute_import
-
-# SYSTEM
 import os
 import os.path
-
-# THIRD-PARTY
 
 import numpy as np
 from astropy import wcs
@@ -21,8 +10,6 @@ from astropy.io import fits
 
 from gwcs import wcs
 
-
-# LOCAL
 from drizzle import util
 from drizzle import doblot
 from drizzle import cdrizzle
@@ -135,9 +122,8 @@ class GWCSDrizzle(object):
             pass
 
         else:
-            msg = ("Drizzle context image has wrong dimensions: " +
-                   product)
-            raise ValueError(msg)
+            raise ValueError("Drizzle context image has wrong dimensions: \
+                {0}".format(product))
 
 
         # Check field values
@@ -145,7 +131,7 @@ class GWCSDrizzle(object):
         if self.outwcs:
             pass
         else:
-            raise ValueError("Either an existing file or wcs must be supplied to Drizzle")
+            raise ValueError("Either an existing file or wcs must be supplied")
 
         if util.is_blank(self.wt_scl):
             self.wt_scl = ''
@@ -349,7 +335,7 @@ def dodrizzle(insci, input_wcs, inwht,
               xmin=0, xmax=0, ymin=0, ymax=0,
               pixfrac=1.0, kernel='square', fillval="INDEF"):
     """
-    Low level routine for performing 'drizzle' operation.on one image.
+    Low level routine for performing 'drizzle' operation on one image.
 
     The interface is compatible with STScI code. All images are Python
     ndarrays, instead of filenames. File handling (input and output) is
@@ -362,7 +348,7 @@ def dodrizzle(insci, input_wcs, inwht,
         A 2d numpy array containing the input image to be drizzled.
         it is an error to not supply an image.
 
-    input_wcs : 2d array
+    input_wcs : gwcs.WCS object
         The world coordinate system of the input image.
 
     inwht : 2d array
@@ -370,7 +356,7 @@ def dodrizzle(insci, input_wcs, inwht,
         Must have the same dimensions as insci. If none is supplied,
         the weghting is set to one.
 
-    output_wcs : wcs
+    output_wcs : gwcs.WCS object
         The world coordinate system of the output image.
 
     outsci : 2d array
@@ -507,6 +493,7 @@ def dodrizzle(insci, input_wcs, inwht,
 
     # Compute the mapping between the input and output pixel coordinates
     pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs)
+    pixmap[np.isnan(pixmap)] = -1
 
     #
     # Call 'drizzle' to perform image combination

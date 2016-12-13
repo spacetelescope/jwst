@@ -16,6 +16,9 @@ log.setLevel(logging.DEBUG)
 
 MICRONS_100 = 1.e-4                     # 100 microns, in meters
 
+# This is for NIRSpec.  These exposure types are all fixed-slit modes.
+FIXED_SLIT_TYPES = ["NRS_LAMP", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT"]
+
 def do_correction(input_model, flat_model,
                   f_flat_model, s_flat_model,
                   d_flat_model, flat_suffix=None):
@@ -233,7 +236,7 @@ def ref_matches_sci(ref_model, sci_model):
         rystart = 1
     if rysize is None:
         rysize = ref_model.data.shape[-2]
-        
+
     log.debug(' sci xstart=%d, xsize=%d', sxstart, sxsize)
     log.debug(' sci ystart=%d, ysize=%d', systart, sysize)
     log.debug(' ref xstart=%d, xsize=%d', rxstart, rxsize)
@@ -324,26 +327,16 @@ def do_NIRSpec_flat_field(output_model,
     -------
     MultiSlitModel, ImageModel (for IFU data), or None
         If not None, the value will be the interpolated flat fields.
-
     """
 
     log.debug("Flat field correction for NIRSpec data.")
 
     exposure_type = output_model.meta.exposure.type
-    valid_types = ["NRS_FIXEDSLIT", "NRS_IFU", "NRS_MSASPEC"]
-    if exposure_type not in valid_types:
-        log.error("Exposure type is %s; expected %s, %s, or %s" %
-                  (exposure_type,
-                   valid_types[0], valid_types[1], valid_types[2]))
-        raise ValueError("Invalid exposure type (EXP_TYPE)")
-    del valid_types
 
     # We expect NIRSpec IFU data to be an ImageModel, but it's conceivable
     # that the slices have been copied out into a MultiSlitModel, so
     # check for that case.
-    try:
-        dummy = output_model.slits[0]
-    except AttributeError:
+    if not hasattr(output_model, "slits"):
         if exposure_type == "NRS_IFU":
             if not isinstance(output_model, datamodels.ImageModel):
                 log.error("NIRSpec IFU data is not an ImageModel;"
@@ -384,6 +377,15 @@ def do_NIRSpec_flat_field(output_model,
         ystart = slit.ystart - 1
         xstop = xstart + xsize
         ystop = ystart + ysize
+
+        # Make sure there is a WCS.
+        if not hasattr(slit.meta, "wcs") or slit.meta.wcs is None:
+            log.error("Slit %s does not have a 'wcs' attribute.", slit.name)
+            if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
+                raise RuntimeError("WCS was not found, but it isn't clear "
+                                   "why not.")
+            else:
+                raise RuntimeError("The assign_wcs step has not been run.")
 
         # Get the wavelength of each pixel in the extracted slit data.
         # pixels with respect to the cutout
@@ -477,24 +479,39 @@ def NIRSpec_IFU(output_model,
     ImageModel or None
         If not None, the value will be the interpolated flat field.
     """
-
+    any_updated = False
     exposure_type = output_model.meta.exposure.type
     flat = np.ones_like(output_model.data)
     flat_dq = np.zeros_like(output_model.dq)
 
-    list_of_wcs = nirspec.nrs_ifu_wcs(output_model)
+    try:
+        list_of_wcs = nirspec.nrs_ifu_wcs(output_model)
+    except (KeyError, AttributeError):
+        if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
+            log.error("The input file does not appear to have WCS info.")
+            raise RuntimeError("Problem accessing WCS information.")
+        else:
+            log.error("This mode %s requires WCS information.", exposure_type)
+            raise RuntimeError("The assign_wcs step has not been run.")
     for (k, ifu_wcs) in enumerate(list_of_wcs):
+
         # example:  domain = [{u'lower': 1601, u'upper': 2048},   # X
         #                     {u'lower': 1887, u'upper': 1925}]   # Y
         truncated = False
         xstart = ifu_wcs.domain[0]['lower']
-        xstop = ifu_wcs.domain[0]['upper']      # Python slice notation
+        xstop = ifu_wcs.domain[0]['upper']
         ystart = ifu_wcs.domain[1]['lower']
         ystop = ifu_wcs.domain[1]['upper']
-        if xstart >= 2048 or ystart >= 2048 or xstop <= 0 or ystop <= 0:
-            log.info("WCS domain for stripe %d is completely outside"
-                     " the image; this stripe will be skipped.", k)
-            continue
+        # We want to use xstart and xstop as Python slice limits.
+# xxx These lines are currently commented out because 'includes_upper' was
+# not in the domain (but it should have been).
+        #if ifu_wcs.domain[0]['includes_upper']:
+        #    print("xxx {}".format(ifu_wcs.domain[0]['includes_upper']))
+        xstop += 1              # for the time being, just do this
+        #if ifu_wcs.domain[1]['includes_upper']:
+        #    print("xxx {}".format(ifu_wcs.domain[1]['includes_upper']))
+        ystop += 1              # for the time being, just do this
+
         if xstart < 0:
             truncated = True
             log.info("WCS domain xstart was %d; set to 0" % xstart)
@@ -512,8 +529,8 @@ def NIRSpec_IFU(output_model,
             log.info("WCS domain ystop was %d; set to 2048" % ystop)
             ystop = 2048
         if truncated:
-            log.info("WCS domain for stripe %d extended beyond image edges,"
-                     " has been truncated.", k)
+            log.info("WCS domain for stripe %d extended beyond image edges, "
+                     "has been truncated.", k)
         dx = xstop - xstart
         dy = ystop - ystart
         ind = np.indices((dy, dx))
@@ -546,9 +563,8 @@ def NIRSpec_IFU(output_model,
 
         any_updated = True
 
-    output_model.dq |= flat_dq
-
     if any_updated:
+        output_model.dq |= flat_dq
         output_model.data /= flat
         output_model.err /= flat
         output_model.meta.cal_step.flat_field = 'COMPLETE'
@@ -560,6 +576,7 @@ def NIRSpec_IFU(output_model,
             interpolated_flats.update(output_model, only="PRIMARY")
     else:
         output_model.meta.cal_step.flat_field = 'SKIPPED'
+        interpolated_flats = None
 
     return interpolated_flats
 
@@ -594,8 +611,7 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
 
     exposure_type: str
         The exposure type refers to fixed_slit, IFU, or using the
-        micro-shutter array, identified by "NRS_FIXEDSLIT", "NRS_IFU",
-        or "NRS_MSASPEC" respectively.
+        micro-shutter array.
 
     slit_name: str
         The name of the slit currently being processed.
@@ -647,8 +663,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
 
     exposure_type: str
         The exposure type refers to fixed_slit, IFU, or using the
-        micro-shutter array, identified by "NRS_FIXEDSLIT", "NRS_IFU",
-        or "NRS_MSASPEC" respectively.
+        micro-shutter array.
 
     slit_name: str
         The name of the slit currently being processed.
@@ -741,8 +756,7 @@ def spectrograph_flat(wl, s_flat_model,
 
     exposure_type: str
         The exposure type refers to fixed_slit, IFU, or using the
-        micro-shutter array, identified by "NRS_FIXEDSLIT", "NRS_IFU",
-        or "NRS_MSASPEC" respectively.
+        micro-shutter array.
 
     slit_name: str
         The name of the slit currently being processed.
@@ -809,8 +823,7 @@ def detector_flat(wl, d_flat_model,
 
     exposure_type: str
         The exposure type refers to fixed_slit, IFU, or using the
-        micro-shutter array, identified by "NRS_FIXEDSLIT", "NRS_IFU",
-        or "NRS_MSASPEC" respectively.
+        micro-shutter array.
 
     slit_name: str
         The name of the slit currently being processed.
@@ -954,8 +967,8 @@ def read_flat_table(flat_model, exposure_type,
 
     exposure_type: str
         The exposure type refers to fixed_slit, IFU, or using the
-        micro-shutter array, identified by "NRS_FIXEDSLIT", "NRS_IFU",
-        or "NRS_MSASPEC" respectively.
+        micro-shutter array.  In this function we just need to check for
+        fixed-slit types.
 
     slit_name: str
         The name of the slit.  This is only needed for fixed-slit data, in
@@ -992,7 +1005,7 @@ def read_flat_table(flat_model, exposure_type,
     row = None
     # Note that it's only for fixed-slit data that we need to select the
     # row based on the slit name.
-    if exposure_type == "NRS_FIXEDSLIT" and slit_col is not None:
+    if exposure_type in FIXED_SLIT_TYPES and slit_col is not None:
         slit_name_lc = slit_name.lower()
         for i in range(nrows):
             # Note:  The .strip() is a workaround.  As of the time of

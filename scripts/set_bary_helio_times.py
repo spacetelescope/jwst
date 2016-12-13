@@ -45,6 +45,7 @@ import numpy as np
 import astropy.time
 import astropy.coordinates
 import astropy.units as u
+import warnings
 
 def set_bary_helio_times(filename, jwstpos=None):
     '''
@@ -81,10 +82,20 @@ def set_bary_helio_times(filename, jwstpos=None):
     tendtimeslist = [item[:10] + 'T' + item[11:] for item in tendtimes]
     astropy_endtimes = astropy.time.Time(tendtimeslist, format='isot', scale='utc')
     mjdtimes = astropy_endtimes.tt.mjd
-    btimes, htimes = timeconversion.compute_bary_helio_time(
-        targetcoord=(targcoord.ra.degree, targcoord.dec.degree), times=mjdtimes)
-    bcol = fits.Column(name='bary_end_time', format='D', unit='MJD', array=btimes)
-    hcol = fits.Column(name='helio_end_time', format='D', unit='MJD', array=htimes)
+    try:
+        btimes, htimes = timeconversion.compute_bary_helio_time(
+            targetcoord=(targcoord.ra.degree, targcoord.dec.degree), times=mjdtimes)
+    except Exception as exception:
+        warnings.warn(
+            'Error in calculating times. Filling with invalid dates.'
+            '\nError is "{}"'.format(exception)
+        )
+        nulls = -1.0 * np.ones(len(tendtimeslist), dtype=np.float)
+        bcol = fits.Column(name='bary_end_time', format='D', unit='MJD', array=nulls)
+        hcol = fits.Column(name='helio_end_time', format='D', unit='MJD', array=nulls)
+    else:
+        bcol = fits.Column(name='bary_end_time', format='D', unit='MJD', array=btimes)
+        hcol = fits.Column(name='helio_end_time', format='D', unit='MJD', array=htimes)
     binhdu = fits.BinTableHDU.from_columns(tabhdu.columns + fits.ColDefs([bcol, hcol]))
     binhdu.header['EXTNAME'] = 'GROUP'
     hdul['GROUP'] = binhdu

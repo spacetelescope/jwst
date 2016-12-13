@@ -89,7 +89,7 @@ def imaging_distortion(input_model, reference_files):
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
     filter_offset = AsdfFile.open(reference_files['filteroffset']).tree[input_model.meta.instrument.filter]
 
-    # Now apply each of the models.  The Scale(60) converts from arc-minutes to arc-seconds.
+    # Now apply each of the models.  The Scale(60) converts from arc-minutes to deg.
     full_distortion = models.Shift(filter_offset['column_offset']) & models.Shift(
         filter_offset['row_offset']) | distortion | models.Scale(1/60) & models.Scale(1/60)
 
@@ -128,8 +128,8 @@ def lrs(input_model, reference_files):
 
     # Determine the distortion model.
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    # Now apply each of the models.  The Scale(1/60) converts from arc-minutes to deg.
-    full_distortion = distortion | models.Scale(1 / 60) & models.Scale(1 / 60)
+    # Distortion is in arcmin.  Convert to degrees
+    full_distortion = distortion | models.Scale(1 / 60.) & models.Scale(1 / 60.)
 
     # Load and process the reference data.
     with fits.open(reference_files['specwcs']) as ref:
@@ -137,6 +137,8 @@ def lrs(input_model, reference_files):
 
         # Get the zero point from the reference data.
         # The zero_point is X, Y  (which should be COLUMN, ROW)
+        # TODO: Are imx, imy 0- or 1-indexed?  We are treating them here as
+        # 0-indexed.  Since they are FITS, they are probably 1-indexed.
         if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
             zero_point = ref[1].header['imx'], ref[1].header['imy']
         elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
@@ -162,22 +164,24 @@ def lrs(input_model, reference_files):
     # x.shape will be something like (1, 388)
     y, x = np.mgrid[row_zero_point:row_zero_point + 1, 0:input_model.data.shape[1]]
 
-    radec = distortion | tel2sky
-    radec = np.array(radec(x, y))[:, 0, :]
+    spatial_transform = full_distortion | tel2sky
+    radec = np.array(spatial_transform(x, y))[:, 0, :]
 
     ra_full = np.matlib.repmat(radec[0], domain[1]['upper'] + 1 - domain[1]['lower'], 1)
     dec_full = np.matlib.repmat(radec[1], domain[1]['upper'] + 1 - domain[1]['lower'], 1)
 
-    ra_t2d = models.Tabular2D(lookup_table=ra_full, name='xtable')
-    dec_t2d = models.Tabular2D(lookup_table=dec_full, name='ytable')
+    ra_t2d = models.Tabular2D(lookup_table=ra_full, name='xtable',
+        bounds_error=False, fill_value=np.nan)
+    dec_t2d = models.Tabular2D(lookup_table=dec_full, name='ytable',
+        bounds_error=False, fill_value=np.nan)
 
     # Create the model transforms.
     lrs_wav_model = jwmodels.LRSWavelength(lrsdata, zero_point)
 
     # Incorporate the small rotation
     angle = np.arctan(0.00421924)
-    spatial = models.Rotation2D(angle)
-    radec_t2d = ra_t2d & dec_t2d | spatial
+    rot = models.Rotation2D(angle)
+    radec_t2d = ra_t2d & dec_t2d | rot
 
     # Account for the subarray when computing spatial coordinates.
     xshift = -domain[0]['lower']
@@ -289,7 +293,7 @@ def detector_to_alpha_beta(input_model, reference_files):
     ch_dict = {}
     for c in channels:
         ch_dict.update({tuple(wr[c]): selector.LabelMapperDict(('alpha', 'beta', 'lam'), slice_model[c],
-                                                   models.Mapping([1, ], n_inputs=3))})
+                                                   models.Mapping([1, ], n_inputs=3), atol=10**-2)})
     alpha_beta_mapper = selector.LabelMapperRange(('alpha', 'beta', 'lam'), ch_dict,
                                                   models.Mapping((2,)))
     label_mapper.inverse = alpha_beta_mapper

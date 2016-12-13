@@ -32,7 +32,7 @@ This contains the functions that actually compute the time travel difference
 between two frames of reference.
 '''
 
-from __future__ import division, print_function
+from __future__ import division
 
 import re
 import os
@@ -45,8 +45,12 @@ import astropy.units as u
 import astropy.constants
 import pymssql
 import scipy.interpolate as sciint
+import logging
 
-__version__ = '0.1.0'
+__version__ = '0.7.0'
+
+# Configure logging
+logger = logging.getLogger(__name__)
 
 # Find path to ephemeris from environmental variable.
 
@@ -86,12 +90,12 @@ def read_jwst_ephemeris(times):
     endtime = atime.Time(mdict['STOP_TIME']).jd
     interval = (time2 - time1) * 1440 # in minutes
     if interval > 10:
-        raise ValueException("time interval in JWST ephemeris file is too large")
+        raise ValueError("time interval in JWST ephemeris file is too large")
     # Determine min, max of times sought
     mintime = times.min()
     maxtime = times.max()
     if (mintime < starttime) or (maxtime > endtime):
-        raise ValueException(
+        raise ValueError(
             'Some of times provided are out of the range of times in the JWST ephemeris file')
     # Determine fractional locations
     minpos = int((mintime - starttime) / (endtime - starttime) * (end - start) + start - 5000)
@@ -152,22 +156,66 @@ def parse_jwst_ephem_line(line):
 
 #-------end of file based jwst ephem routines
 
-def jwst_ephem_interp(t):
+def jwst_ephem_interp(t, padding=3):
     '''
-    Given the values of time (ttab), x, y, z (xtab, ytab, ztab) obtained from an ephemeris,
+    Given the values of time (ttab),
+    x, y, z (xtab, ytab, ztab) obtained from an ephemeris,
     apply cubic interpolation to obtain x, y, z values for the
     requested time(s) t (t in MJD)
+
+    padding is the number of entries required before
+    and after the time range of interest.
     '''
 
+    logger.debug('times="{}"'.format(t))
     etab = get_jwst_ephemeris()
-    if t.min() < etab[:, 0].min() or t.max() > etab[:, 0].max():
-        raise ValueException(
-            "One or more of the requested times extends beyond\n" + \
-            "the range of the JWST ephemeris.")
-    fx = sciint.interp1d(etab[:, 0], etab[:, 1], kind='cubic', assume_sorted=True)
-    fy = sciint.interp1d(etab[:, 0], etab[:, 2], kind='cubic', assume_sorted=True)
-    fz = sciint.interp1d(etab[:, 0], etab[:, 3], kind='cubic', assume_sorted=True)
+
+    '''
+    Select only the portion of the table with relevant times.
+    '''
+    mask_min = etab[:, 0] >= t.min()
+    mask_max = etab[:, 0] <= t.max()
+    mask = np.logical_and(mask_min, mask_max)
+    try:
+        first_idx = np.nonzero(mask_min)[0][0]
+    except IndexError:
+        first_idx = len(mask_min) - 1
+    try:
+        last_idx = np.nonzero(mask_max)[0][-1]
+    except IndexError:
+        last_idx = 0
+    first_idx -= padding
+    last_idx += padding
+    fit_type = 'cubic'
+    if first_idx < 0 or last_idx >= len(mask):
+        logger.warn('Times extend outside range of ephemeris.'
+                    ' Extrapolation will be used.')
+        fit_type = 'linear'
+        first_idx = max(first_idx, 0)
+        last_idx = min(last_idx, len(mask) - 1)
+    logger.debug('idxs = {} {}'.format(first_idx, last_idx))
+    for diff in range(padding):
+        mask[first_idx + diff] = True
+        mask[last_idx - diff] = True
+
+    roi = etab[mask]
+    logger.debug('roi = {}'.format(roi.shape))
+
+    extrapolate = 'extrapolate' if fit_type == 'linear' else None
+    fx = sciint.interp1d(
+        roi[:, 0], roi[:, 1], kind=fit_type,
+        assume_sorted=True, fill_value=extrapolate
+    )
+    fy = sciint.interp1d(
+        roi[:, 0], roi[:, 2], kind=fit_type,
+        assume_sorted=True, fill_value=extrapolate
+    )
+    fz = sciint.interp1d(
+        roi[:, 0], roi[:, 3], kind=fit_type,
+        assume_sorted=True, fill_value=extrapolate
+    )
     return fx(t), fy(t), fz(t)
+
 
 # the following is only needed if obtaining from a file instead of DB, not used yet
 def get_jwst_ephemeris():
@@ -183,6 +231,16 @@ def get_jwst_ephemeris():
         edb = os.environ['METRICS_DB']
     else:
         edb = 'jwdpmetrics5'
+    logger.info(
+        'Ephemeris connect info:'
+        ' eserver={}'
+        ' edb={}'.format(eserver, edb)
+    )
+    logger.debug(
+        'Ephemeris connect info:'
+        ' eserver={}'
+        ' edb={}'.format(eserver, edb)
+    )
     conn = pymssql.connect(server=eserver, database=edb)
     cur = conn.cursor()
     cur.execute('select * from predictephemeris')

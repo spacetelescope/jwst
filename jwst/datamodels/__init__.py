@@ -29,7 +29,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-__version__ = '1.1.0'
+__version__ = '0.7.4'
 
 import numpy as np
 from os.path import basename
@@ -67,6 +67,7 @@ from .multispec import MultiSpecModel
 from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
 from .ifucube import IFUCubeModel
 from .pixelarea import PixelAreaModel
+from .pathloss import PathlossModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
 from .photom import NirspecPhotomModel, NirspecFSPhotomModel
 from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
@@ -104,7 +105,6 @@ __all__ = [
 _all_models = __all__[1:]
 _local_dict = dict(locals())
 _defined_models = { k: _local_dict[k] for k in _all_models }
-
 
 '''
 def test(verbose=False) :

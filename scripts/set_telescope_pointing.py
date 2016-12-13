@@ -61,10 +61,19 @@ in the header other than what is required by the standard.
 
 from __future__ import print_function, division
 
+import logging
+import sys
+
+import astropy.io.fits as fits
 import numpy as np
 from numpy import cos, sin
-import sys
-import astropy.io.fits as fits
+from jwst.lib.engdb_tools import ENGDB_Service
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 
 def m_v_to_siaf(ya, v3, v2, vidlparity):  # This is a 321 rotation
@@ -224,15 +233,37 @@ def add_wcs(filename):
     pheader = hdulist[0].header
     obsstart = float(pheader['EXPSTART'])
     obsend = float(pheader['EXPEND'])
-    q, j2fgs_matrix, fsmcorr = get_pointing(obsstart, obsend)
     v2ref = float(pheader['V2_REF'])
     v3ref = float(pheader['V3_REF'])
     v3idlyang = float(pheader['V3I_YANG'])
     vparity = int(pheader['VPARITY'])
 
-    # compute relevant WCS information
-    wcsinfo, vinfo = calc_wcs(v2ref, v3ref, v3idlyang, vparity,
-                              q, j2fgs_matrix, fsmcorr)
+    # ##########################################
+    # WARNINGWARNINGWARNINGWARNINGWARNINGWARNING
+    #
+    # Get engineering parameters about scope pointing.
+    # In normal operations, if the paramters cannot be found
+    # this should fail.
+    # However, for prelaunch, we'll dummy out.
+    try:
+        q, j2fgs_matrix, fsmcorr = get_pointing(obsstart, obsend)
+    except ValueError as exception:
+        logger.warning(
+            'Cannot retrieve telescope pointing.'
+            '\nUsing proposal values.'
+            '\nFailure {}'.format(exception)
+        )
+        ra = pheader['TARG_RA']
+        dec = pheader['TARG_DEC']
+        roll = 0
+        wcsinfo = (ra, dec, roll)
+        vinfo = (ra, dec, roll)
+    else:
+        # compute relevant WCS information
+        logger.info('Successful read of Engineering Quaternions.')
+        wcsinfo, vinfo = calc_wcs(v2ref, v3ref, v3idlyang, vparity,
+                                  q, j2fgs_matrix, fsmcorr)
+
     crval1, crval2, pa_aper_deg = wcsinfo
     v1_ra_deg, v1_dec_deg, v3_pa_deg = vinfo
     # update header
@@ -247,13 +278,122 @@ def add_wcs(filename):
     pheader['PC2_2'] = np.cos(pa_aper_deg * D2R)
     pheader['RA_REF'] = crval1
     pheader['DEC_REF'] = crval2
-    pheader['ROLL_REF'] = compute_local_roll(v3_pa_deg, crval1, crval2, v2ref, v3ref)
+    pheader['ROLL_REF'] = compute_local_roll(
+        v3_pa_deg, crval1, crval2, v2ref, v3ref
+    )
     pheader['WCSAXES'] = len(pheader['CTYPE*'])
     hdulist.flush()
     hdulist.close()
+    logger.info('WCS info for {} complete.'.format(filename))
 
 
 def get_pointing(obstart, obsend):
+    """
+    Get telescope pointing engineering data.
+
+    Parameters
+    ----------
+    obstart, obsend: float
+        MJD observation start/end times
+
+    Returns
+    -------
+    q, j2fgs_matrix, fsmcorr
+        The engineering pointing parameters
+
+    Raises
+    ------
+    ValueError
+        Cannot retrieve engineering information
+
+    Notes
+    -----
+    For the moment, the first found values will be used.
+    This will need be re-examined when more information is
+    available.
+    """
+    try:
+        engdb = ENGDB_Service()
+    except Exception as exception:
+        raise ValueError(
+            'Cannot open engineering DB connection'
+            '\nFailure is {}'.format(
+                exception
+            )
+        )
+    params = {
+        'SA_ZATTEST1':  None,
+        'SA_ZATTEST2':  None,
+        'SA_ZATTEST3':  None,
+        'SA_ZATTEST4':  None,
+        'SA_ZRFGS2J11': None,
+        'SA_ZRFGS2J21': None,
+        'SA_ZRFGS2J31': None,
+        'SA_ZRFGS2J12': None,
+        'SA_ZRFGS2J22': None,
+        'SA_ZRFGS2J32': None,
+        'SA_ZRFGS2J13': None,
+        'SA_ZRFGS2J23': None,
+        'SA_ZRFGS2J33': None,
+        'SA_ZADUCMDX':  None,
+        'SA_ZADUCMDY':  None,
+    }
+    for param in params:
+        try:
+            params[param] = engdb.get_values(
+                param, obstart, obsend, time_format='mjd'
+            )
+        except Exception as exception:
+            raise ValueError(
+                'Cannot retrive {} from engineering.'
+                '\nFailure was {}'.format(
+                    param,
+                    exception
+                )
+            )
+
+    # Find the first set of non-zero values
+    for idx in range(len(params['SA_ZATTEST1'])):
+        values = [
+            params[param][idx]
+            for param in params
+        ]
+        if any(values):
+            break
+    else:
+        raise ValueError(
+            'No non-zero quanternion found in the DB for observation range given.'
+        )
+
+    q = np.array([
+        params['SA_ZATTEST1'][idx],
+        params['SA_ZATTEST2'][idx],
+        params['SA_ZATTEST3'][idx],
+        params['SA_ZATTEST4'][idx],
+    ])
+
+    j2fgs_matrix = np.array([
+        params['SA_ZRFGS2J11'][idx],
+        params['SA_ZRFGS2J21'][idx],
+        params['SA_ZRFGS2J31'][idx],
+        params['SA_ZRFGS2J12'][idx],
+        params['SA_ZRFGS2J22'][idx],
+        params['SA_ZRFGS2J32'][idx],
+        params['SA_ZRFGS2J13'][idx],
+        params['SA_ZRFGS2J23'][idx],
+        params['SA_ZRFGS2J33'][idx],
+    ])
+
+    fsmcorr = np.array([
+        params['SA_ZADUCMDX'][idx],
+        params['SA_ZADUCMDY'][idx],
+
+    ])
+
+    return q, j2fgs_matrix, fsmcorr
+
+
+def get_pointing_stub(obstart, obsend):
     '''
     For the time being this simply returns the same damn values regardless of
     the input time (awaiting the time that these parameters are actually
@@ -330,4 +470,5 @@ if __name__ == '__main__':
     if len(sys.argv) <= 1:
         raise ValueError('missing filename argument(s)')
     for filename in sys.argv[1:]:
+        logger.info('Setting pointing for {}'.format(filename))
         add_wcs(filename)
