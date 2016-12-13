@@ -12,10 +12,10 @@ Reference File Format for MIRI 
 MIRI Imaging Mode 
 ::::::::::::::::: 
 
- There are two reference files required: distortion and filteroffset.
+There are two reference files required: distortion and filteroffset.
 
-  Distortion
- ~~~~~~~~~~ 
+Distortion
+~~~~~~~~~~
 
 Required Fields:      model  
 
@@ -47,23 +47,23 @@ MIRI IFU 
 
 There are 5 reference files required: disortion, specwcs, regions, wavelengthrange and v2v3.
 
-  Distortion
- ~~~~~~~~~~ 
+Distortion
+~~~~~~~~~~
 
 alpha_model             beta_model             x_model             y_model             slice-model  
 
 specwcs
- ~~~~~~~ 
+~~~~~~~
 
 model  / lambda_model
 
-  regions
- ~~~~~~~ 
+regions
+~~~~~~~
 
 regions 
 
- wavelengthrange
- ~~~~~~~~~~~~~~~ 
+wavelengthrange
+~~~~~~~~~~~~~~~
 
 wavelengthrange 
 
@@ -74,52 +74,53 @@ v2v3 
 
 model / v2v3 model
 
-   Reference File Format for NIRISS 
+Reference File Format for NIRISS 
 --------------------------------  
 
 NIRISS Imaging Mode
- :::::::::::::::::::  
+:::::::::::::::::::
 
 There is one reference file required: distortion.  
 
 distortion
- ~~~~~~~~~~ 
+~~~~~~~~~~
 
 model  
 
 NIRISS SOSS Mode
- ::::::::::::::::  
+::::::::::::::::
 
 Thre is one reference file required: specwcs.  
 
 specwcs
- ~~~~~~~  
+~~~~~~~
 
 wl / 1             wl / 2             wl / 3 
 
- Reference File Format for NIRCAM
- --------------------------------
 
-  NIRCAM Imaging Mode
- :::::::::::::::::::  
+Reference File Format for NIRCAM
+--------------------------------
+
+NIRCAM Imaging Mode
+:::::::::::::::::::
 
 There is one reference file required: distortion. 
 
- distortion 
+distortion 
 ~~~~~~~~~~  
 
 model 
 
- Reference File Format for NIRSPEC
- ---------------------------------  
+Reference File Format for NIRSPEC
+---------------------------------
 
 NIRSPEC Imaging Mode
- ::::::::::::::::::::
+::::::::::::::::::::
 
-  There are five reference files required: disperser, fpa, camera, wavelengthrange and ote.  
+There are five reference files required: disperser, fpa, camera, wavelengthrange and ote.  
 
 disperser
- ~~~~~~~~~ 
+~~~~~~~~~
 
 disperser  
 
@@ -138,40 +139,43 @@ wavelengthrange 
 
 filter_grating
 
-  ote
- ~~~ 
+ote
+~~~ 
 
 model
 
-  NIRSPEC IFU Mode
- :::::::::::::::: 
+
+NIRSPEC IFU Mode
+::::::::::::::::
 
  There are five reference files required: disperser, wavelengthrange, fpa, camera and ifuslicer.
 
-  disperser 
+disperser 
 ~~~~~~~~~ 
 
 disperser
 
-  wavelengthrange 
+wavelengthrange 
 ~~~~~~~~~~~~~~~ 
 
 filter_grating 
 
- fpa
- ~~~ 
+fpa
+~~~ 
 
 fpa  
 
 camera
- ~~~~~~ 
+~~~~~~
 
 camera  
 
 ifuslicer
- ~~~~~~~~~ 
+~~~~~~~~~
 
 model 
 
- ifupost 
+ifupost 
 ~~~~~~~  
+
+
