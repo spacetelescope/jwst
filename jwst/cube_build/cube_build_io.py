@@ -412,7 +412,7 @@ def SetFileTable(self, input_table, MasterTable):
                 MasterTable.FileMap['NIRSPEC'][gwa][fwa].append(input_model)
             else:
 
-#                print('Instrument not valid for cube')
+                log.info('Instrument not valid for cube')
 
     return num, instrument,detector
 
