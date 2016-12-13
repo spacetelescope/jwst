@@ -1,146 +1,177 @@
-Reference files and WCS keywords
-================================
+Reference Files 
+=============== 
 
-This documents describes the reference files used by jwst.assign_wcs in
-build 7.
+ .. contents::  
 
-In general the basic WCS keywords are in the primary header and the distortion
-and spectral models are stored in reference files. All files (with one exception) are in
-`ASDF <http://asdf-standard.readthedocs.org/en/latest/>`__  format.
+ CRDS Selection Criterion
+ ------------------------  
 
-For each observing mode, determined by the value of EXP_TYPE in the science header,
-assign_wcs retrieves reference files from CRDS and creates a pipeline of transforms from
-input frame `detector` to a frame `v2v3`. This part of the WCS pipeline may include
-intermediate coordinate frames. The basic WCS keywords are used to create
-the transforms from frame `v2v3` to frame `world`.
+Reference File Format for MIRI 
+------------------------------  
 
-Basic WCS keywords and the transform from `v2v3` to `world`
------------------------------------------------------------
+MIRI Imaging Mode 
+::::::::::::::::: 
 
-All JWST instruments use the following FITS header keywords to define the transform from `v2v3` to `world`:
+ There are two reference files required: distortion and filteroffset.
 
-`RA_REF`, `DEC_REF` - a fiducial point on the sky, ICRS, [deg]
-`V2_REF`, `V3_REF` - a point in the V2V3 system which maps to `RA_REF`, `DEC_REF`, [arcsec]
-`ROLL_REF` - local roll angle associated with each aperture, [deg]
+  Distortion
+ ~~~~~~~~~~ 
 
-These quantities are used to create a 3D Euler angle rotation between the V2V3 spherical system,
-associated with the telescope, and a standard celestial system.
-
-Reference files used in build 7
--------------------------------
-
-The first section lists all reference types used by assign_wcs. This corresponds to the
-REFTYPE property in CRDS and the reference file. Different observing modes use different
-reference types. 
-The following sections list the reference types used by each observing mode
-and how they are used.
-
-List of reference types used by assign_wcs
-------------------------------------------
+Required Fields:      model  
 
 
+Filter Offset 
+~~~~~~~~~~~~~  
 
-===================    ==========================================================
-reftype                                     description
-===================    ==========================================================
-**camera**             NIRSPEC Camera model
-**collimator**         NIRSPEC Collimator Model
-**disperser**          Disperser parameters
-**distortion**         Spatial distortion model
-**filteroffset**       MIRI Imager fiter offsets
-**fore**               Transform through the NIRSPEC FORE optics
-**fpa**                Transform in the NIRSPEC FPA plane
-**ifufore**            Transform from the IFU slicer to the IFU entrance
-**ifupost**            Transform from the IFU slicer to the back of the IFU
-**ifuslicer**          FU Slicer geometric description
-**msa**                Transformin the NIRSPEC MSA plane
-**ote**                Transform through the Optical Telescope Element
-**specwcs**            Wavelength calibration models
-**regions**            Stores location of the regions on the detector
-**v2v3**               Transform from MIRI instrument focal plane to V2V3 plane
-**wavelengthrange**    Typical wavelength ranges
-===================    ==========================================================
+The filter offset reference file must be an ASDF file that contains a dictionary of row and column offsets for the MIRI imaging dataset. The filter offset reference file must contain a dictionary in the tree that is indexed by the instrument filter.  The dictionary must contain two fields needed from the filter offset reference file: row_offset and column_offset and must be in units of mm.  
 
+Required Fields:      row_offset     column_offset  
 
+MIRI LRS Mode 
+:::::::::::::  
 
+There are two reference files required: distortion and specwcs.  
 
-Observing modes supported in build 7
-------------------------------------
+Distortion 
+~~~~~~~~~~ 
 
-:FGS_IMAGE:
+ model  
 
-  | reftypes: *distortion*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, v2v3, world
-  | Implements: reference file provided by NIRISS team
+SpecWCS 
+~~~~~~~ 
 
-:MIR_IMAGE:
+"data"             imx  /  imxsltl             imy  /  imysltl  
 
-  | reftypes: *distortion*, *filteroffset*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, v2v3, world
-  | Implements: CDP6 reference data delivery, MIRI-TN-00070-ATC_Imager_distortion_CDP_Iss5.pdf
+MIRI IFU 
+::::::::  
 
+There are 5 reference files required: disortion, specwcs, regions, wavelengthrange and v2v3.
 
-:MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS:
+  Distortion
+ ~~~~~~~~~~ 
 
-  | reftypes: *specwcs*, *distortion*
-  | CRDS rmap rules: SUBARRAY.name: GENERIC
-  | WCS pipeline coordinate frames: detector, v2v3, world
-  | Implements: CDP6 reference data delivery, MIRI-TR-10020-MPI-Calibration-Data-Description_LRSPSFDistWave_v4.0.pdf
+alpha_model             beta_model             x_model             y_model             slice-model  
 
+specwcs
+ ~~~~~~~ 
 
-:MIR_MRS:
+model  / lambda_model
 
-  | reftypes: *distortion*, *specwcs*, *v2v3*, *wavelengthrange*, *regions*
-  | CRDS rmap rules: EXP_TYPE, DETECTOR, CHANNEL, BAND
-  | WCS pipeline coordinate frames: detector, miri_focal, xyan, v2v3, world
-  | Implements: CDP4 reference data delivery, MIRI-TN-00001-ETH_Iss1-3_Calibrationproduct_MRS_d2c.pdf
+  regions
+ ~~~~~~~ 
 
-:NRC_IMAGE:
+regions 
 
-  | reftypes: *distortion*
-  | CRDS rmap rules: EXP_TYPE, DETECTOR, CHANNEL, BAND
-  | WCS pipeline coordinate frames: detector, v2v3, world
-  | Implements: Distortion file created from TEL team data.
+ wavelengthrange
+ ~~~~~~~~~~~~~~~ 
 
-:NIS_IMAGE:
+wavelengthrange 
 
-  | reftypes: *distortion*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, v2v3, world
-  | Implements: reference file provided by NIRISS team
+channels  
 
-:NIS_SOSS:
+v2v3 
+~~~~ 
 
-  | reftypes: *distortion*, *specwcs*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, v2v3, world
-  | Implements: reference files provided by NIRISS team
+model / v2v3 model
 
-:NRS_FIXEDSLIT:
-:NRS_MSASPEC:
+   Reference File Format for NIRISS 
+--------------------------------  
 
-  | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, sca, bgwa, slit_frame, msa_frame, ote, v2v3, world
-  | Implements: CDP 2 delivery
+NIRISS Imaging Mode
+ :::::::::::::::::::  
 
-:NRS_IFU:
+There is one reference file required: distortion.  
 
-  | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*,
-  | *ifufore*, *ifuslicer*, *ifupost*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, sca, bgwa, slit_frame, msa_frame, ote, v2v3, world
-  | Implements: CDP 2 delivery
+distortion
+ ~~~~~~~~~~ 
 
-:NRS_IMAGING:
+model  
 
-  | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, sca, bgwa, slit_frame, msa_frame, ote, v2v3, world
-  | Implements: CDP 2 delivery
+NIRISS SOSS Mode
+ ::::::::::::::::  
 
+Thre is one reference file required: specwcs.  
 
+specwcs
+ ~~~~~~~  
 
+wl / 1             wl / 2             wl / 3 
 
+ Reference File Format for NIRCAM
+ --------------------------------
+
+  NIRCAM Imaging Mode
+ :::::::::::::::::::  
+
+There is one reference file required: distortion. 
+
+ distortion 
+~~~~~~~~~~  
+
+model 
+
+ Reference File Format for NIRSPEC
+ ---------------------------------  
+
+NIRSPEC Imaging Mode
+ ::::::::::::::::::::
+
+  There are five reference files required: disperser, fpa, camera, wavelengthrange and ote.  
+
+disperser
+ ~~~~~~~~~ 
+
+disperser  
+
+fpa 
+~~~ 
+
+fpa  
+
+camera 
+~~~~~~ 
+
+camera  
+
+wavelengthrange 
+~~~~~~~~~~~~~~~  
+
+filter_grating
+
+  ote
+ ~~~ 
+
+model
+
+  NIRSPEC IFU Mode
+ :::::::::::::::: 
+
+ There are five reference files required: disperser, wavelengthrange, fpa, camera and ifuslicer.
+
+  disperser 
+~~~~~~~~~ 
+
+disperser
+
+  wavelengthrange 
+~~~~~~~~~~~~~~~ 
+
+filter_grating 
+
+ fpa
+ ~~~ 
+
+fpa  
+
+camera
+ ~~~~~~ 
+
+camera  
+
+ifuslicer
+ ~~~~~~~~~ 
+
+model 
+
+ ifupost 
+~~~~~~~  
