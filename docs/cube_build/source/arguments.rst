@@ -17,32 +17,30 @@ channels contained in the input list of files will be used in constructing the c
 
 * ``--band [string]`` 
 This is a MIRI option and the  only valid values  are SHORT,MEDIUM,LONG, or ALL.
-  If the ``--subchannel`` argument is given, then only data corresponding 
-  to that subchannel will be used in  constructing the cube. Only one option is possible, so IFU cubes are created either
-  per subchannel or using all the subchannels the input data cover.  If this value is not specified then all the 
-  subchannels contained in the input list of files will be used in constructing the cube.
+If the ``--subchannel`` argument is given, then only data corresponding 
+to that subchannel will be used in  constructing the cube. Only one option is possible, so IFU cubes are created either
+per subchannel or using all the subchannels the input data cover.  If this value is not specified then all the 
+subchannels contained in the input list of files will be used in constructing the cube.
 
-* ``--grating [string] ``
+* ``--grating [string]``
 This is a NIRSPEC option and only valid values are PRISM, G140M, G140H, G235M, G235H, G395M, G395H, or ALL. 
-  If the option ALL is used then all the gratings in the assocation are used.
-  Since association tables will only contain exposures of the same resolution, the use of ALL, will at most combine
-  data from grating G140M, G235M & G395M or G140H, G235H & G395H together. The user can supply a comma separated string 
-  containing the gratings to use. 
+If the option ALL is used then all the gratings in the assocation are used.
+Since association tables will only contain exposures of the same resolution, the use of ALL, will at most combine
+data from grating G140M, G235M & G395M or G140H, G235H & G395H together. The user can supply a comma separated string 
+containing the gratings to use. 
 
-* ``--filter [string] ``
+* ``--filter [string]``
 This is a NIRSPEC  option and the only valid options are Clear, F100LP, F070LP, F170LP, F290LP, or ALL. To
 cover the full wavelength range of NIRSPEC the option ALL can be used (provided the exposures in the association table 
 contain all the filters). The user can supply a comma separated string containing the filters to use. 
 
-* ``weighting ['string]'', is the type of weighting to use when combining point cloud fluxes to represent the spaxel flux.
+* ``weighting ['string]``, is the type of weighting to use when combining point cloud fluxes to represent the spaxel flux.
 This option is for MIRI data and the only valid values are STANDARD and MIRPSF. This parameter defines
 how the distances between the point cloud members and spaxel centers are determined.  The default value is STANDARD and the distances
 are determined in the cube output coordinate system. If this paramter is set to MIRIPSF then the distances are determined in
 the alpha-beta coordinate system of the point cloud member and are normalized by the PSF and LSF. The only valid method for NIRSPEC 
 data is STANDARD.   
 
-
-If Standard is used then: 
 
 
 * ``--scale1 #``
@@ -87,10 +85,10 @@ The spaxel flux K =
 Where 
 * N = the number of point cloud points within the region of interest of spaxel flux K
 
-:math:`w_i = (\frac{xdistance})^p + (\frac{ydistance})^q + (\frac{zdistance})^r`
+:math:`w_i = (d_i)^-p`
+:math:'d = (xdistance^2 + ydistance^2 + zdistance^2)`
 
-where the currently p=q=r=2, but future deliveries may allow the use to change those
-parameters. 
+where the currently p=2, but future deliveries may allow the user to change this parameter. 
 
 If --weight = STANDARD (default) :
 
@@ -117,22 +115,25 @@ that assign_wcs has been run on the data.
 IFU Cube building for MIRI data
 -------------------------------
 
-* To run cube_build on a single MIRI exposure (containing channel 1 and 2) but only creating an IFU cube for channel 1:
+* To run cube_build on a single MIRI exposure (containing channel 1 and 2) but only creating an IFU cube for channel 1
 ::
 	strun cube_build.cfg MIRM103-Q0-SHORT_495_rate_assign_wcs.fits --ch=1 --band=SHORT
-The output 3D spectral cube will be: MIRM103-Q0-SHORT_495_rate_assign_wcs_ch1-short_s3d.fits
+
+	The output 3D spectral cube will be: MIRM103-Q0-SHORT_495_rate_assign_wcs_ch1-short_s3d.fits
 
 
-* To run cube_build on a single MIRI exposure (containing channel 1 and 2) but only creating an IFU cube for channel 1:
+* To run cube_build on a single MIRI exposure (containing channel 1 and 2) but only creating an IFU cube for channel 1
 ::
 	strun cube_build.cfg MIRM103-Q0-SHORT_495_rate_assign_wcs.fits --ch=1 --band=SHORT
-The output 3D spectral cube will be: MIRM103-Q0-SHORT_495_rate_assign_wcs_ch1-short_s3d.fits
 
-* To run cube_build using an association table containing 4 dithered images, which is defined as follows:
+	The output 3D spectral cube will be: MIRM103-Q0-SHORT_495_rate_assign_wcs_ch1-short_s3d.fits
+
+* To run cube_build using an association table containing 4 dithered images, which is defined as follows
 ::
 	strun cube_build.cfg cube_build_4dither_asn.json
 
 	where  cube_build_4dither_asn.json is defined as: 
+
 	{"asn_rule": "Asn_MIRIFU_Dither", "targname": "MYTarget", 
 	"asn_pool": "jw00024_001_01_pool", "program": "00024","asn_type":"dither",
 	"products": [
@@ -146,8 +147,8 @@ The output 3D spectral cube will be: MIRM103-Q0-SHORT_495_rate_assign_wcs_ch1-sh
             }
 
   	 
-The output file will be an IFU cube for 4 dithers and two channels for the SHORT wavelength band of the short 
-wavelength MIRI IFU detector. Its root name was defined in the association table as MIRM103-Q0-Q3_ch1-2-short_s3d.fits
+	 The output file will be an IFU cube for 4 dithers and two channels for the SHORT wavelength band of the short 
+	 wavelength MIRI IFU detector. Its root name was defined in the association table as MIRM103-Q0-Q3_ch1-2-short_s3d.fits
 
 
 * To use the same association table but only combine channel 1 data in the cube  you need to add the --ch 
@@ -161,15 +162,16 @@ you must also use the -band option.
 IFU Cube building for NIRSPEC data
 ----------------------------------
 
-* To run cube_build on a single NIRSPEC exposure with grating = G140H and filter =F100LP:  
+* To run cube_build on a single NIRSPEC exposure with grating = G140H and filter =F100LP
 ::
 	strun cube_build.cfg jwtest1004001_01101_00001_NRS2_uncal_rate_updated_assign_wcs.fits
 The output IFU cube will be jwtest1004001_01101_00001_NRS2_uncal_rate_updated_assign_wcs_g140h-f100lp_s3d.fits
 
 *  To run cube_build using an association table containing data from twos dithers of G140H, F100LP and 
-G140H, F070LP:
+G140H, F070LP
 ::
 	strun cube_build.cfg nirspec_multi_asn.json
+
 	Where the assocation table looks like:
 	{"asn_rule": "Asn_NIRSPECFU_Dither", "targname": "MYTarget", 
 	"asn_pool": "jw00024_001_01_pool", "program": "00024","asn_type":"NRSIFU",
