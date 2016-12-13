@@ -17,10 +17,10 @@ from .. import engdb_tools
 from .engdb_mock import EngDB_Mocker
 
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
-GOOD_STARTTIME = '2016-01-01'
-GOOD_ENDTIME = '2016-12-31'
+GOOD_STARTTIME = '2016-01-18'
+GOOD_ENDTIME = '2016-01-19'
 
-SHORT_STARTTIME = '2016-01-14'
+SHORT_STARTTIME = '2016-01-18 15:30:00'
 
 BAD_SERVER = 'https://www.stsci.edu'
 BAD_MNEMONIC = 'No_Such_MNEMONIC'
@@ -51,12 +51,12 @@ def test_values(engdb):
     records = engdb.get_records(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
-    assert records['Count'] == 2
+    assert records['Count'] == 3
     values = engdb.get_values(
         GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME
     )
     assert len(values) == 1
-    assert values[0] == 0.1968553
+    assert values[0] == 0.19687812
 
 
 def test_values_with_time(engdb):
