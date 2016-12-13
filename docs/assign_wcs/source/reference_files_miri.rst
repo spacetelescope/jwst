@@ -1,48 +1,47 @@
-Reference File Format for MIRI 
-------------------------------  
+Reference File Format for MIRI
+------------------------------
 
-MIRI Imaging Mode 
-::::::::::::::::: 
+MIRI Imaging Mode
+:::::::::::::::::
 
 There are two reference files required: distortion and filteroffset.
 
 Distortion
 ~~~~~~~~~~
 
-Required Fields:      model  
+The distortion model contains one field indexed by the key "model" and returns a distortion model.  
 
 
-Filter Offset 
-~~~~~~~~~~~~~  
+Filter Offset
+~~~~~~~~~~~~~
 
-The filter offset reference file must be an ASDF file that contains a dictionary of row and column offsets for the MIRI imaging dataset. The filter offset reference file must contain a dictionary in the tree that is indexed by the instrument filter.  The dictionary must contain two fields needed from the filter offset reference file: row_offset and column_offset and must be in units of mm.  
+The filter offset reference file must be an ASDF file that contains a dictionary of row and column offsets for the MIRI imaging dataset. The filter offset reference file must contain a dictionary in the tree that is indexed by the instrument filter.  The dictionary must contain two fields needed from the filter offset reference file: row_offset and column_offset and must be in units of mm.
 
-Required Fields:      row_offset     column_offset  
 
-MIRI LRS Mode 
-:::::::::::::  
+MIRI LRS Mode
+:::::::::::::
 
-There are two reference files required: distortion and specwcs.  
+There are two reference files required: distortion and specwcs.
 
-Distortion 
-~~~~~~~~~~ 
+Distortion
+~~~~~~~~~~
 
- model  
+model
 
-SpecWCS 
-~~~~~~~ 
+SpecWCS
+~~~~~~~
 
-"data"             imx  /  imxsltl             imy  /  imysltl  
+"data"            imx  /  imxsltl             imy  /  imysltl  
 
-MIRI IFU 
-::::::::  
+MIRI IFU
+::::::::
 
 There are 5 reference files required: disortion, specwcs, regions, wavelengthrange and v2v3.
 
 Distortion
 ~~~~~~~~~~
 
-alpha_model             beta_model             x_model             y_model             slice-model  
+alpha_model            beta_model            x_model            y_model            slice-model
 
 specwcs
 ~~~~~~~
@@ -52,16 +51,16 @@ model  / lambda_model
 regions
 ~~~~~~~
 
-regions 
+regions
 
 wavelengthrange
 ~~~~~~~~~~~~~~~
 
-wavelengthrange 
+wavelengthrange
 
-channels  
+channels
 
-v2v3 
-~~~~ 
+v2v3
+~~~~
 
 model / v2v3 model
