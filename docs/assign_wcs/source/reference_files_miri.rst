@@ -55,10 +55,12 @@ model  / lambda_model
 regions
 ~~~~~~~
 
-regions
+The IFU takes a region reference file that defines the region over which the WCS is valid. The reference file should define a polygon and may consist of a set of X,Y coordinates that define the polygon.
 
 wavelengthrange
 ~~~~~~~~~~~~~~~
+
+The wavelengthrange reference file consists of two models, one that defines the wavelength range and is indexed by 'wavelengthrange' and the second is a set of channels indexed in the file by 'channels'. 
 
 wavelengthrange
 
