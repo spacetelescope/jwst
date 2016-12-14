@@ -42,7 +42,10 @@ There are 5 reference files required: disortion, specwcs, regions, wavelengthran
 Distortion
 ~~~~~~~~~~
 
-alpha_model            beta_model            x_model            y_model            slice-model
+Five models: alpha_model, beta_model, x_model, y_model, slice-model
+
+The distortion reference file contains 5 models in order to transform the detector coordinates to sky coordinates.  The alpha and beta models convert the detector coordinates first to alpha / beta (MIRI-DD-10001-STSCI_v1.pdf) which is then the MRS-FOV.  The x_model and y_model convert the coordinates from alpha and beta to XAN and YAN (JWST-FOV, similar to V2/V3). The final slice model contains linear transformations that involve scaling, rotation and shift. 
+
 
 specwcs
 ~~~~~~~
