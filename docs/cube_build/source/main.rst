@@ -70,30 +70,30 @@ Terminology
 
 - *Channel* the spectral range covered by each MIRI IFU. The channels are labeled as 1, 2, 3 or 4.
 - *Sub-Channel* each of the 3 sub-ranges that a channel is divided into. We  will designate these as *Short*, *Medium*, or *Long*.
-- *Band*  is one of the 12 sub-ranges the spectral range of the MRS can be divided, each band has unique channel/sub-channel combination, i.e., 
-  the shortest wavelength range on MIRI is covered by Band 1-SHORT and the longest is covered by Band 4-LONG.  
+- *Band*  
+::
+  for MIRI band is one of the 12 sub-ranges the spectral range of the MRS can be divided, each band has unique
+  channel/sub-channel combination, i.e., the shortest wavelength range on MIRI is covered by Band 1-SHORT and the 
+  longest is covered by Band 4-LONG.  
+:: 
+   for NIRSPEC is defined by a single grating-filter combination, i.e. G140M-F070LP
 
 **NIRSPEC Optical Element and Filter possibilities for IFU mode:**
  
 =======  ======  ====================
 Grating  Filter  Wavelength (microns)
 =======  ======  ====================
-
 Prism    Clear   0.6 -5.3
-
 G140M    F070LP  0.7 - 1.2
 G140M    F100LP  1 - 1.8
 G235M    F170LP  1.7 - 3.1
 G395M    F290LP  2.9 - 5.2
- 
 G140H    F070LP  0.7 - 1.2
 G140H    F100LP  1 - 1.8
 G235H    F170LP  1.7 - 3.1
 G395H    F290LP  2.9 - 5.2
-
 =====    ======  ====================
 
-In the terminology developed for MIRI a ** band for NIRSPEC**  is defined by a single grating-filter combination. 
 
 **Coordinate Systems:**
 
@@ -148,7 +148,7 @@ Below is a list of the user options that can be used to select the type of data 
   subchannels contained in the input list of files will be used in constructing the cube. Note we used ``band`` instead of 
   ``subchannel``, because the keyword ``band`` in the science fits is used to denote which MIRI subchannel the data covers.
 
-* ``weighting ['string]'', the is for MIRI data and the only valid values are STANDARD and MIRPSF. This option defines 
+* ``--weighting ['string]``, the is for MIRI data and the only valid values are STANDARD and MIRPSF. This option defines 
 how the distances between the point cloud members and spaxel centers are determined. The default value is STANDARD and the distances
 are determined in the cube output coordinate system. If this paramter is set to MIRIPSF then the distances are determined in
 the alpha-beta coordinate system of the point cloud member and are normalized by the PSF and LSF.  

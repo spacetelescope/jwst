@@ -108,6 +108,15 @@ def get_subarray(ref_model, sci_model):
     ref_x2 = ref_model.meta.subarray.xsize
     ref_y1 = ref_model.meta.subarray.ystart
     ref_y2 = ref_model.meta.subarray.ysize
+    if ref_x1 is None or ref_x2 is None or ref_y1 is None or ref_y2 is None:
+        if ref_model.data.shape[-1] == 2048 and ref_model.data.shape[-2] == 2048:
+            ref_x1 = 1
+            ref_x2 = 2048
+            ref_y1 = 1
+            ref_y2 = 2048
+        else:
+            log.error("Missing subarray corner/size keywords in ref file")
+            raise ValueError("Can't determine ref file readout properties")
     log.debug("ref xstart=%d, xsize=%d, ystart=%d, ysize=%d" % (ref_x1, ref_x2,
                ref_y1, ref_y2))
 

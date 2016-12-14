@@ -4,6 +4,7 @@ Engineering Database
 """
 
 from astropy.time import Time
+from collections import namedtuple
 import logging
 import re
 import requests
@@ -15,11 +16,12 @@ logger.addHandler(logging.NullHandler())
 # #############################################
 # Where is the engineering service? Its HERE!!!
 # #############################################
-ENGDB_BASE_URL = (
-    'http://iwjwdmsdemwebv.stsci.edu/'
-    'JWDMSEngFqAccB7_testFITSw/'
-    'TlmMnemonicDataSrv.svc/'
-)
+ENGDB_HOST = 'http://iwjwdmsdemwebv.stsci.edu/'
+ENGDB_BASE_URL = ''.join([
+    ENGDB_HOST,
+    'JWDMSEngFqAccB7_testFITSw/',
+    'TlmMnemonicDataSrv.svc/',
+])
 
 # URI paths necessary to access the db
 ENGDB_DATA = 'Data/'
@@ -28,8 +30,12 @@ ENGDB_METADATA = 'MetaData/TlmMnemonics/'
 ENGDB_METADATA_XML = 'xml/MetaData/TlmMnemonics/'
 
 __all__ = [
-    'ENGDB_Service'
+    'ENGDB_Service',
+    'EngDB_Value'
 ]
+
+# Define the returned value tuple.
+EngDB_Value = namedtuple('EngDB_Value', ['obstime', 'value'])
 
 
 class ENGDB_Service(object):
@@ -128,6 +134,11 @@ class ENGDB_Service(object):
         ------
         requests.exceptions.HTTPError
             Either a bad URL or non-existant mnemonic.
+
+        Notes
+        -----
+        The engineering service always returns the bracketing entries
+        before and after the requested time range.
         """
         if result_format is None:
             result_format = self.default_format
@@ -166,7 +177,9 @@ class ENGDB_Service(object):
             mnemonic,
             starttime,
             endtime,
-            time_format=None
+            time_format=None,
+            include_obstime=False,
+            include_bracket_values=False
     ):
         """
         Retrieve all results for a mnemonic in the requested time range.
@@ -186,10 +199,21 @@ class ENGDB_Service(object):
             The format of the input time used if the input times
             are strings. If None, a guess is made.
 
+        include_obstime: bool
+            If True, the return values will be a 2-tuple of
+            (astropy.time.Time, value)
+
+        include_bracket_values: bool
+            The DB service, by default, returns the bracketing
+            values outside of the requested time. If True, include
+            these values.
+
         Returns
         -------
         values: list
-            Returns the list of values
+            Returns the list of values. If `include_obstime` is True
+            the values will be a 2-tuple of (astropy.time.Time, value)
+            instead of just value.
 
         Raises
         ------
@@ -215,10 +239,52 @@ class ENGDB_Service(object):
             raise ValueError('Mnemonic {} has no data'.format(mnemonic))
         for record in records['Data']:
             obstime = extract_db_time(record['ObsTime'])
-            if obstime >= db_starttime and obstime <= db_endttime:
-                results.append(record['EUValue'])
+            if not include_bracket_values:
+                if obstime < db_starttime or obstime > db_endttime:
+                    continue
+            value = record['EUValue']
+            if include_obstime:
+                result = EngDB_Value(
+                    obstime=Time(obstime / 1000., format='unix'),
+                    value=value
+                )
+            else:
+                result = value
+            results.append(result)
 
         return results
+
+    def get_meta(self, mnemonic='', result_format=None):
+        """Get the menonics meta info
+
+        Parameters
+        ----------
+        mnemonic: str
+            The engineering mnemonic to retrieve
+
+        result_format: str
+            The format to request from the service.
+            If None, the `default_format` is used.
+        """
+        if result_format is None:
+            result_format = self.default_format
+
+        query = ''.join([
+            self.base_url,
+            result_format,
+            ENGDB_METADATA,
+            mnemonic
+        ])
+        logger.debug('Query URL="{}"'.format(query))
+
+        # Make our request
+        response = requests.get(query)
+        logger.debug('Response="{}"'.format(response))
+        response.raise_for_status()
+
+        # That's all folks
+        self.response = response
+        return response.json()
 
 
 # #########

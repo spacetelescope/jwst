@@ -63,6 +63,16 @@ class FlatFieldStep(Step):
 
         # Retrieve the reference file name or names
         if is_NIRSpec:
+            exp_type = input_model.meta.exposure.type
+            if exp_type not in ["NRS_BRIGHTOBJ", "NRS_FIXEDSLIT",
+                                "NRS_IFU", "NRS_MSASPEC"]:
+                self.log.warning("Exposure type is %s; flat-fielding will be "
+                                 "skipped because it is not currently "
+                                 "supported for this mode.", exp_type)
+                result = input_model.copy()
+                result.meta.cal_step.flat_field = "SKIPPED"
+                input_model.close()
+                return result
             self.f_flat_filename = self.get_reference_file(input_model,
                                         'fflat')
             self.s_flat_filename = self.get_reference_file(input_model,
