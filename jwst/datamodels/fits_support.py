@@ -450,10 +450,17 @@ def _fits_array_loader(hdulist, schema, hdu_index, known_datas):
         return None
 
     known_datas.add(hdu)
-
     data = hdu.data
-    data = properties._cast(data, schema)
-    return data
+    
+    data2 = properties._cast(data, schema)
+
+    # Casting a table loses the listeners, so restore them
+    if isinstance(hdu, fits.BinTableHDU):
+        coldefs = data._coldefs
+        coldefs2 = data2._coldefs
+        coldefs2._listeners = coldefs._listeners
+
+    return data2
 
 
 def _schema_has_fits_hdu(schema):
