@@ -51,6 +51,7 @@ specwcs
 ~~~~~~~
 
 model  / lambda_model
+The specwcs reference file contains a model that maps the detector coordinates to wavelength coordinates indexed by slice up to the alpha and beta process.
 
 regions
 ~~~~~~~
@@ -60,13 +61,14 @@ The IFU takes a region reference file that defines the region over which the WCS
 wavelengthrange
 ~~~~~~~~~~~~~~~
 
-The wavelengthrange reference file consists of two models, one that defines the wavelength range and is indexed by 'wavelengthrange' and the second is a set of channels indexed in the file by 'channels'. 
+Fields: wavelengthrange, channels
 
-wavelengthrange
-
-channels
+The wavelengthrange reference file consists of two models, one that defines the wavelength range and is indexed by 'wavelengthrange' and the second is a set of channels indexed in the file by 'channels'. The model defines, per channel, the wavelength mapping in going from alpha, beta to XAN, YAN. 
 
 v2v3
 ~~~~
 
+FIeld: model in v2v3
+
+The model field in the tree contains N models, one per channel, that map the spatial coordinates from alpha, beta to V2, V3.
 model / v2v3 model
