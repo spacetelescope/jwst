@@ -31,7 +31,7 @@ Reference files used in build 7
 
 The first section lists all reference types used by assign_wcs. This corresponds to the
 REFTYPE property in CRDS and the reference file. Different observing modes use different
-reference types. 
+reference types.
 The following sections list the reference types used by each observing mode
 and how they are used.
 
@@ -40,26 +40,26 @@ List of reference types used by assign_wcs
 
 
 
-===================    ==========================================================
-reftype                                     description
-===================    ==========================================================
-**camera**             NIRSPEC Camera model
-**collimator**         NIRSPEC Collimator Model
-**disperser**          Disperser parameters
-**distortion**         Spatial distortion model
-**filteroffset**       MIRI Imager fiter offsets
-**fore**               Transform through the NIRSPEC FORE optics
-**fpa**                Transform in the NIRSPEC FPA plane
-**ifufore**            Transform from the IFU slicer to the IFU entrance
-**ifupost**            Transform from the IFU slicer to the back of the IFU
-**ifuslicer**          FU Slicer geometric description
-**msa**                Transformin the NIRSPEC MSA plane
-**ote**                Transform through the Optical Telescope Element
-**specwcs**            Wavelength calibration models
-**regions**            Stores location of the regions on the detector
-**v2v3**               Transform from MIRI instrument focal plane to V2V3 plane
-**wavelengthrange**    Typical wavelength ranges
-===================    ==========================================================
+===================    ==========================================================   ============================
+reftype                                     description                              Instrument
+===================    ==========================================================   ============================
+**camera**             NIRSPEC Camera model                                          NIRSPEC
+**collimator**         NIRSPEC Collimator Model                                      NIRSPEC
+**disperser**          Disperser parameters                                          NIRSPEC
+**distortion**         Spatial distortion model                                      MIRI, FGS, NIRCAM, NIRISS
+**filteroffset**       MIRI Imager fiter offsets                                     MIRI
+**fore**               Transform through the NIRSPEC FORE optics                     NIRSPEC
+**fpa**                Transform in the NIRSPEC FPA plane                            NIRSPEC
+**ifufore**            Transform from the IFU slicer to the IFU entrance             NIRSPEC
+**ifupost**            Transform from the IFU slicer to the back of the IFU          NIRSPEC
+**ifuslicer**          FU Slicer geometric description                               NIRSPEC
+**msa**                Transformin the NIRSPEC MSA plane                             NIRSPEC
+**ote**                Transform through the Optical Telescope Element               NIRSPEC
+**specwcs**            Wavelength calibration models                                 MIRI, NIRCAM, NIRISS
+**regions**            Stores location of the regions on the detector                MIRI
+**v2v3**               Transform from MIRI instrument focal plane to V2V3 plane      MIRI
+**wavelengthrange**    Typical wavelength ranges                                     MIRI, NIRSPEC
+===================    ==========================================================   ============================
 
 
 
