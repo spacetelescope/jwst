@@ -71,12 +71,12 @@ Terminology
 - *Channel* the spectral range covered by each MIRI IFU. The channels are labeled as 1, 2, 3 or 4.
 - *Sub-Channel* each of the 3 sub-ranges that a channel is divided into. We  will designate these as *Short*, *Medium*, or *Long*.
 - *Band*  
-::
-  for MIRI band is one of the 12 sub-ranges the spectral range of the MRS can be divided, each band has unique
+
+  For **MIRI** band is one of the 12 sub-ranges the spectral range of the MRS can be divided, each band has unique
   channel/sub-channel combination, i.e., the shortest wavelength range on MIRI is covered by Band 1-SHORT and the 
   longest is covered by Band 4-LONG.  
-:: 
-   for NIRSPEC is defined by a single grating-filter combination, i.e. G140M-F070LP
+
+  For **NIRSPEC** is defined by a single grating-filter combination, i.e. G140M-F070LP
 
 **NIRSPEC Optical Element and Filter possibilities for IFU mode:**
  

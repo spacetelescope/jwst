@@ -35,6 +35,7 @@ class CubeBuildStep (Step):
          roi1 = float(default=1.0)
          roi2 = float(default=1.0)
          roiw = float(default=1.0)
+         weight_power(default=2.0)
          offset_list = string(default='NA')
 
        """
@@ -50,10 +51,7 @@ class CubeBuildStep (Step):
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
         if(not self.interpolation.islower()): self.interpolation = self.interpolation.lower()
         if(not self.weighting.islower()): self.weighting = self.weighting.lower()
-#        if(self.channel != ''): self.log.info('Input Channel %s', self.channel)
-#        if(self.subchannel != ''): self.log.info('Input Subchannel %s', self.subchannel)
-#        if(self.grating != ''): self.log.info('Input grating %s', self.grating)
-#        if(self.filter != ''): self.log.info('Input filter %s', self.filter)
+
         if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
         if(self.scale2 != 0.0): self.log.info('Input Scale of axis 2 %f', self.scale2)
         if(self.scalew != 0.0): self.log.info('Input wavelength scale %f  ', self.scalew)
@@ -73,6 +71,7 @@ class CubeBuildStep (Step):
 
         self.log.info('Coordinate system to use: %s', self.coord_system)
         self.log.info('Weighting method for point cloud: %s',self.weighting)
+        self.log.info('Weighting distance to Power: %f',self.weight_power) 
 #_________________________________________________________________________________________________
 # Set up the IFU cube basic parameters that define a cube
         self.metadata = {}

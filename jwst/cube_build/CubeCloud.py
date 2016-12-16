@@ -1,4 +1,4 @@
-# Routines used in Spectral Cube Building
+ # Routines used in Spectral Cube Building
 from __future__ import absolute_import, print_function
 
 import sys
@@ -97,9 +97,6 @@ def MakePointCloudMIRI(self, input_model,
         lam_use = lam[good_data]
 
         ra,dec,wave = v23toworld(v2_use,v3_use,lam_use)
-
-#        print('ra     ',ra[15:20])
-#        print('dec     ',dec[15:20])
 
         ra = ra - c1_offset/3600.0
         dec = dec - c2_offset/3600.0
@@ -244,13 +241,16 @@ def FindROI(self, Cube, spaxel, PointCloud):
     nyc = len(Cube.ycoord)
 
     nplane = Cube.naxis1 * Cube.naxis2
-    lower_limit = 0.0001
+    lower_limit = 0.01
 
     iprint = 0
     nn = len(PointCloud[0])
 #    nn = 100
 
     self.log.info('number of elements in PT %i',nn)
+
+
+    weight_power = 2
     
 # loop over each point cloud member - might want to change this to looping
 # over spaxels but for now just keep it point cloud elements because it
@@ -328,18 +328,21 @@ def FindROI(self, Cube, spaxel, PointCloud):
                     # for NIRSPEC find distance between PT and Spaxel Center 
                     # in xi,eta coordinate system
                     if(Cube.instrument == 'NIRSPEC'):
-                        d1 = xi[ix] - coord1
-                        d2 = eta[iy] - coord2
-                        weight_distance = d1*d1 + d2*d2 
-
+                        d1 = (xi[ix] - coord1)/self.scale1
+                        d2 = (eta[iy] - coord2)/self.scale2
+                        d3 = (zlam[iz] - wave)/self.scalew
+                        weight_distance = math.sqrt(d1*d1 + d2*d2 + d3*d3)  
+                        weight_distance = math.pow(weight_distance,weight_power)
 #________________________________________________________________________________
 # MIRI instrument
                     elif(Cube.instrument == 'MIRI'):
                         # weighting - standard - distance based on xi,eta distance
                         if(self.weighting =='standard'):
-                            d1 = xi[ix] - coord1
-                            d2 = eta[iy] - coord2
-                            weight_distance = d1*d1 + d2*d2 
+                            d1 = (xi[ix] - coord1)/self.scale1
+                            d2 = (eta[iy] - coord2)/self.scale2
+                            d3 = (zlam[iz] - wave)/self.scalew
+                            weight_distance = math.sqrt(d1*d1 + d2*d2 + d3*d3) 
+                            weight_distance = math.pow(weight_distance,weight_power)
 
                         # For MIRI the distance between PT and Spaxel Center is
                         # in the alpha - beta cooridate system
@@ -357,15 +360,15 @@ def FindROI(self, Cube, spaxel, PointCloud):
                                                                               zlam[iz])                    
                             alpha_distance =alpha-alpha_spaxel
                             beta_distance = beta-beta_spaxel
-#                            wave_distance  = abs(wave-wave_spaxel)
+                            wave_distance  = abs(wave-wave_spaxel)
 
                             xn = alpha_distance/weight_alpha
                             yn = beta_distance/weight_beta
-#                            wn = wave_distance/weight_wave
+                            wn = wave_distance/weight_wave
                                                          
                         # only included the spatial dimensions
-                            weight_distance = xn*xn + yn*yn  
-                                                          
+                            weight_distance = math.sqrt(xn*xn + yn*yn + wn*wn)  
+                            weight_distance = math.pow(weight_distance,weight_power)
 #________________________________________________________________________________
 # We have found the weight_distance based on instrument type
 

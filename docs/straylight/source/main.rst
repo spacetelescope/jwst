@@ -14,10 +14,10 @@ because no known algorithm exists yet for performing this correction.
 Overview
 --------
 This routine removes and/or otherwise corrects for stray-light that may
-contaminate a MIRI MRS spectrum, due a bright source in the MRS slice 
+contaminate a MIRI MRS short-wavelength spectrum, due a bright source 
+in the MRS slice 
 gaps. The current routine determines the stray-light by using signal
-in-between slices and linearly interpolates over the slice. On MIRI MRS
-data straylight has only been detected on the  short wavelength IFU detector.
+in-between slices and linearly interpolates over the slice. 
  
 The source of the MIRI MRS stray-light has been identified as being caused 
 by scattering in optical components within the SMO. The stray-light is 
