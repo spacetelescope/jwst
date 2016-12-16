@@ -143,4 +143,3 @@ Observing modes supported in build 7
 
 
 
-
