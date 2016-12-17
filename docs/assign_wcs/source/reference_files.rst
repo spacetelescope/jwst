@@ -80,7 +80,7 @@ The disperser reference file contains reference data about the NIRSPEC disperser
 The following fields are common for all gratings and the prism:
 
 :grating: Name of grating
-:gwa_tiltx: Sensor data
+:gwa_tiltx:
     :temperatures: Temperatures measured where the GWA sensor is
     :zeroreadings: Value of GWA sensor reading which corresponds to disperser model parameters
     :tilt_model: Model of the relation between THETA_Y vs GWA_X reading
@@ -110,10 +110,10 @@ DISTORTION
 CRDS Selection Criteria
 :::::::::::::::::::::::
 
-MIRI: DETECTOR, EXP_TYPE. CHANNEL, BAND
-FGS: DETECTOR, EXP_TYPE
-NIRCAM: DETECTOR, EXP_TYPE. CHANNEL.
-NIRISS: EXP_TYPE
+:MIRI: DETECTOR, EXP_TYPE. CHANNEL, BAND
+:FGS: DETECTOR, EXP_TYPE
+:NIRCAM: DETECTOR, EXP_TYPE. CHANNEL.
+:NIRISS: EXP_TYPE
 
 Reference File Formats
 ::::::::::::::::::::::
@@ -173,7 +173,7 @@ Reference File Formats
 ::::::::::::::::::::::
 
 This file provides the parameters (Paraxial and distortions coefficients)
-for the coordinate transforms from the MSA plane (in) to the plane of the IFU slicer.
+for the coordinate transforms from the MSA plane to the plane of the IFU slicer.
 
 
 IFUPOST
@@ -232,35 +232,47 @@ And the absolute position of each quadrant within the MSA.
 
 The MSA reference file has 5 fields, named
 
-1 - stores reference data for Quadrant 1
-2 - stores reference data for Quadrant 2
-3 - stores reference data for Quadrant 3
-4 - stores reference data for Quadrant 4
-5 - stores reference data for the fixed slits and the IFU
-
-Each of these fields has two fields:
-
-Data - an array with 5 columns
-
-NO - For the MSA quadrants it contains the shutter number - [1 - 62415).
-         Hence the data array for the quadrants has as many rows.
-
-            For field 5 the mapping is
-
-                1 - S200A1
-                2 - S200A2
-                3 - S400A1
-                4 - S200B1
-                5 - S1600A1
-                6 - IFU
-            The data array for field 5 has 6 rows.
-
-x center - in meters
-y center - in meters
-x size - in meters
-y size - in meters
-
-Model - The “model” field stores the model transforming positions from the relative frame within each aperture to the absolute position within the MSA.
+:1:
+   :data: Array with reference data for each shutter in Quadrant 1.
+          It has 5 columns
+          
+          NO 
+            Shutter number (1- 62415)
+          x_center
+            X coordinate of the center (in meters)
+          y_center
+            Y coordinate of the center (in meters)
+          x_size
+            X size of teh aperture (in meters)
+          y_size
+            Y size of the aperture (in meters)
+   :model: Transform from relative positions within Quadrant 1 to absolute positions within the MSA
+:2:
+   :data: Array with reference data for shutters in Quadrant 2, same as in 1 above
+   :model: Transform from relative positions within Quadrant 2 to absolute positions within the MSA
+:3: 
+   :data: Array with reference data for shutters in Quadrant 3, same as in 1 above
+   :model: Transform from relative positions within Quadrant 3 to absolute positions within the MSA
+:4: 
+   :data: Array with reference data for shutters in Quadrant 4, same as in 1 above
+   :model: Transform from relative positions within Quadrant 4 to absolute positions within the MSA
+:5: 
+   :data: Reference data for the fixed slits and the IFU, same as in 1, exceppt NO for which the maping is
+   
+           1
+             S200A1
+           2
+             S200A2
+           3
+             S400A1
+           4
+             S200B1
+           5
+             S1600A1
+           6
+             IFU
+   
+   :model: Transform from relative positions within eac aperture to absolute positions within the MSA
 
 
 OTE
