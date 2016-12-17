@@ -79,24 +79,30 @@ The disperser reference file contains reference data about the NIRSPEC disperser
 
 The following fields are common for all gratings and the prism:
 
-grating
-gwa_tiltx
-tilt_x
-tilt_y
-theta_x
-theta_y
-theta_z
-tilt_y
+:grating: Name of grating
+:gwa_tiltx: Sensor data
+    :temperatures: Temperatures measured where the GWA sensor is
+    :zeroreadings: Value of GWA sensor reading which corresponds to disperser model parameters
+    :tilt_model: Model of the relation between THETA_Y vs GWA_X reading
+:gwa_tilty: 
+    :temperatures: Temperatures measured where the GWA sensor is
+    :zeroreadings: Value of GWA sensor reading which corresponds to disperser model parameters
+    :tilt_model: Model of the relation between THETA_X vs GWA_Y reading
+:tilt_x: Angle (in degrees) between the grating surface and the reference surface (the mirror)
+:tilt_y: Angle (in degrees) between the grating surface and the reference surface (the mirror)
+:theta_x: Element alignment angle in x-axis (in degrees)
+:theta_y: Element alignment angle in y-axis (in degrees)
+:theta_z: Element alignment angle in z-axis (in degrees)
 
 The prism reference file has in addition the following fields:
 
-angle
-kcoef
-lcoef
-tcoef
-tref
-pref
-wbound
+:angle: Angle between the front and back surface of the prosm (in degrees)
+:kcoef: K coefficients of Selmeir equation, describing the material
+:lcoef: L coeffficients describing the material
+:tcoef: Thermal coefficients describing the properties of the glass
+:tref: Reference temperature (in K)
+:pref: Reference pressure (in ATM)
+:wbound: Min and Max wavelength (in meters) for which the model is valid
 
 DISTORTION
 ----------
