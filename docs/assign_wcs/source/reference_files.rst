@@ -85,7 +85,7 @@ The following fields are common for all gratings and the prism:
     :temperatures: Temperatures measured where the GWA sensor is
     :zeroreadings: Value of GWA sensor reading which corresponds to disperser model parameters
     :tilt_model: Model of the relation between THETA_Y vs GWA_X reading
-:gwa_tilty: 
+:gwa_tilty:
     :temperatures: Temperatures measured where the GWA sensor is
     :zeroreadings: Value of GWA sensor reading which corresponds to disperser model parameters
     :tilt_model: Model of the relation between THETA_X vs GWA_Y reading
@@ -119,7 +119,7 @@ CRDS Selection Criteria
 Reference File Formats
 ::::::::::::::::::::::
 
-The distortion model is an astropy compound model. 
+The distortion model is an astropy compound model.
 
 :model: Transform from detector to an intermediate frame (instrument dependent).
 
@@ -136,7 +136,7 @@ Reference File Formats
 
 The filter offset reference file is an ASDF file that contains a dictionary of row and column offsets for the MIRI imaging dataset. The filter offset reference file contains a dictionary in the tree that is indexed by the instrument filter. Each filter points to two fields - row_offset and column_offset. The format is
 
-:miri_filter_name: 
+:miri_filter_name:
     :column_offset: Offset in x (in arcmin)
     :row_offset: Offset in y (in arcmin)
 
@@ -205,9 +205,9 @@ The IFUPOST reference file provides the parameters (Paraxial and distortions coe
 
 The reference file contains models made up based on an offset and a polynomial. There is a model for each of the slits and is indexed by the slit number. The models is used as part of the conversion from the GWA to slit.
 
-:ifu_slice_number: 
+:ifu_slice_number:
     :model: Polynomial and rotation models.
-    
+
 IFUSLICER
 ---------
 
@@ -225,8 +225,8 @@ The reference file contains two fields - “data” and “model”.
 The “data” field is an array with 30 rows pertaining to the 30 slices and the columns are
 
 :data: Array with reference data for each slicer. It has 5 columns
-          
-          NO 
+
+          NO
             Slice number (0 - 29)
           x_center
             X coordinate of the center (in meters)
@@ -257,8 +257,8 @@ The MSA reference file has 5 fields, named
 :1:
    :data: Array with reference data for each shutter in Quadrant 1.
           It has 5 columns
-          
-          NO 
+
+          NO
             Shutter number (1- 62415)
           x_center
             X coordinate of the center (in meters)
@@ -272,13 +272,13 @@ The MSA reference file has 5 fields, named
 :2:
    :data: Array with reference data for shutters in Quadrant 2, same as in 1 above
    :model: Transform from relative positions within Quadrant 2 to absolute positions within the MSA
-:3: 
+:3:
    :data: Array with reference data for shutters in Quadrant 3, same as in 1 above
    :model: Transform from relative positions within Quadrant 3 to absolute positions within the MSA
-:4: 
+:4:
    :data: Array with reference data for shutters in Quadrant 4, same as in 1 above
    :model: Transform from relative positions within Quadrant 4 to absolute positions within the MSA
-:5: 
+:5:
    :data: Reference data for the fixed slits and the IFU, same as in 1, except NO is 6 rows (1-6)
           and the mapping is 1 - S200A1, 2 - S200A1, 3 - S400A1, 4 - S200B1, 5 - S1600A1, 6 - IFU
    :model: Transform from relative positions within eac aperture to absolute positions within the MSA
@@ -311,7 +311,7 @@ Reference File Formats
 ::::::::::::::::::::::
 
 For the MIRI LRS mode the file is in FITS format.
-The reference file contains the zero point offset for the slit relative to the full field of view. 
+The reference file contains the zero point offset for the slit relative to the full field of view.
 For the Fixed Slit exposure type the zero points in X and Y are stored in the header of the second HDU in the
 'IMX' and 'IMY' keywords. For the Slitless exposure type they are stored in the header of the second HDU in
 FITS keywords 'IMXSLTl' and 'IMYSLTl'. For both of the exposure types, the zero point offset is 1 based and the
@@ -324,7 +324,7 @@ For the MIRI MRS the file is in ASDF format with the following structure.
 :model:
         :slice_number: The wavelength solution for each slice.
                        <slice_number> is the actual slice number (s), computed by s = channel * 100 + slice
-        
+
 For NIRISS SOSS mode the file is in ASDF format with the following structure.
 
 :model: A tabular model with the wavelength solution.
@@ -360,7 +360,7 @@ The model field in the tree contains N models, one per channel, that map the spa
 
 :channel: The MIRI channels in the observation, e.g. "12".
 :band: The band for the observation (one of "LONG", "MEDIUM", "SHORT").
-:model: 
+:model:
         :channel_band: Transform from alpha, beta to XAN, YAN for this channel.
 
 WAVELENGTHRANGE
@@ -382,84 +382,8 @@ FOR MIRI MRS the wavelengthrange file consists of two fields which define te wav
 
 For NIRSPEC the file is a dictionary storing information about default wavelength range and spectral order for each combination of filter and grating.
 
-:filter_grating: 
+:filter_grating:
                  :order: Default spectral order
                  :range: Default wavelength range
 
-Observing modes supported in build 7
-------------------------------------
-
-:FGS_IMAGE:
-
-  | reftypes: *distortion*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, v2v3, world
-  | Implements: reference file provided by NIRISS team
-
-:MIR_IMAGE:
-
-  | reftypes: *distortion*, *filteroffset*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, v2v3, world
-  | Implements: CDP6 reference data delivery, MIRI-TN-00070-ATC_Imager_distortion_CDP_Iss5.pdf
-
-
-:MIR_LRS-FIXEDSLIT, MIR_LRS-SLITLESS:
-
-  | reftypes: *specwcs*, *distortion*
-  | CRDS rmap rules: SUBARRAY.name: GENERIC
-  | WCS pipeline coordinate frames: detector, v2v3, world
-  | Implements: CDP6 reference data delivery, MIRI-TR-10020-MPI-Calibration-Data-Description_LRSPSFDistWave_v4.0.pdf
-
-
-:MIR_MRS:
-
-  | reftypes: *distortion*, *specwcs*, *v2v3*, *wavelengthrange*, *regions*
-  | CRDS rmap rules: EXP_TYPE, DETECTOR, CHANNEL, BAND
-  | WCS pipeline coordinate frames: detector, miri_focal, xyan, v2v3, world
-  | Implements: CDP4 reference data delivery, MIRI-TN-00001-ETH_Iss1-3_Calibrationproduct_MRS_d2c.pdf
-
-:NRC_IMAGE:
-
-  | reftypes: *distortion*
-  | CRDS rmap rules: EXP_TYPE, DETECTOR, CHANNEL, BAND
-  | WCS pipeline coordinate frames: detector, v2v3, world
-  | Implements: Distortion file created from TEL team data.
-
-:NIS_IMAGE:
-
-  | reftypes: *distortion*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, v2v3, world
-  | Implements: reference file provided by NIRISS team
-
-:NIS_SOSS:
-
-  | reftypes: *distortion*, *specwcs*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, v2v3, world
-  | Implements: reference files provided by NIRISS team
-
-:NRS_FIXEDSLIT:
-:NRS_MSASPEC:
-
-  | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, sca, bgwa, slit_frame, msa_frame, ote, v2v3, world
-  | Implements: CDP 2 delivery
-
-:NRS_IFU:
-
-  | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*,
-  | *ifufore*, *ifuslicer*, *ifupost*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, sca, bgwa, slit_frame, msa_frame, ote, v2v3, world
-  | Implements: CDP 2 delivery
-
-:NRS_IMAGING:
-
-  | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*
-  | CRDS rmap rules: EXP_TYPE
-  | WCS pipeline coordinate frames: detector, sca, bgwa, slit_frame, msa_frame, ote, v2v3, world
-  | Implements: CDP 2 delivery
 
