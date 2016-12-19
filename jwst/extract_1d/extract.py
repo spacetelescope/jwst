@@ -19,8 +19,6 @@ log.setLevel(logging.DEBUG)
 # For full-frame input data, keyword SLTNAME may not be populated, so use
 # the following string to indicate that the first slit in the reference
 # file should be used.
-# A slit name in the reference file can also be ANY, in which case that
-# slit can be used with any slit name from the input data.
 ANY = "ANY"
 
 # Dispersion direction, predominantly horizontal or vertical.  These values
@@ -96,9 +94,40 @@ def get_nod_offset(aper, meta):
     return nod_correction
 
 
+def apply_nod_offset(aperture, nod_correction, dispaxis):
+    """Add the nod offset (if non-zero) to the aperture location.
+
+    Note that if the source and background regions were specified with
+    the src_coeff and bkg_coeff keys, the nod correction also needs to be
+    added to those locations.  This will be done by calling method
+    add_nod_correction in the __init__ for ExtractModel.
+    """
+
+    if aperture is None:
+        return aperture
+
+    if nod_correction != 0.:
+        log.debug("Applying nod offset of {0}".format(nod_correction))
+        if dispaxis == HORIZONTAL:
+            aperture = Aperture(aperture.xstart,
+                                aperture.ystart + nod_correction,
+                                aperture.xstop,
+                                aperture.ystop + nod_correction)
+        else:
+            aperture = Aperture(aperture.xstart + nod_correction,
+                                aperture.ystart,
+                                aperture.xstop + nod_correction,
+                                aperture.ystop)
+    return aperture
+
+
 def get_aperture(slit, meta, extract_params):
 
     direction = extract_params['dispaxis']
+
+    # Copy out the values of xstart, ystart, etc., that were previously
+    # read from the reference file.
+    ap_ref = aperture_from_ref(extract_params)
 
     if hasattr(slit.meta, 'wcs'):
         ap_wcs = aperture_from_wcs(slit.meta.wcs, direction)
@@ -107,9 +136,26 @@ def get_aperture(slit, meta, extract_params):
 
     ap_shape = Aperture(0, 0, slit.data.shape[-1], slit.data.shape[-2])
 
-    ap = reconcile_ap_limits(ap_wcs, ap_shape)
+    ap = reconcile_ap_limits(ap_ref, ap_wcs, ap_shape)
+
+    ap = apply_nod_offset(ap, extract_params['nod_correction'], direction)
 
     return ap
+
+
+def aperture_from_ref(extract_params):
+
+    xstart = extract_params.get('xstart', None)
+    xstop = extract_params.get('xstop', None)
+    ystart = extract_params.get('ystart', None)
+    ystop = extract_params.get('ystop', None)
+
+    if xstart is None and ystart is None and xstop is None and ystop is None:
+        return None
+    else:
+        # Individual values can be None, just not all of them.
+        ap_ref = Aperture(xstart, ystart, xstop, ystop)
+        return ap_ref
 
 
 def aperture_from_wcs(wcs, direction):
@@ -165,8 +211,9 @@ def aperture_from_wcs(wcs, direction):
     return ap_wcs
 
 
-def reconcile_ap_limits(ap_wcs, ap_shape):
+def reconcile_ap_limits(ap_ref, ap_wcs, ap_shape):
 
+    ref_ok = (ap_ref is not None)       # But individual elements can be None
     wcs_ok = (ap_wcs is not None)       # May be reset below
 
     # These values are always defined, based on the input image shape.
@@ -174,6 +221,30 @@ def reconcile_ap_limits(ap_wcs, ap_shape):
     xstop = ap_shape.xstop
     ystart = ap_shape.ystart
     ystop = ap_shape.ystop
+
+    # If ap_ref is populated, use it in preference to the image size, but
+    # truncate at image borders, and later compare with ap_wcs as well.
+    if ref_ok:
+        truncated = False                       # just for info
+        if ap_ref.xstart is not None:
+            if ap_ref.xstart < xstart:
+                truncated = True
+            xstart = max(xstart, ap_ref.xstart)
+        if ap_ref.xstop is not None:
+            if ap_ref.xstop > xstop:
+                truncated = True
+            xstop = min(xstop, ap_ref.xstop)
+        if ap_ref.ystart is not None:
+            if ap_ref.ystart < ystart:
+                truncated = True
+            ystart = max(ystart, ap_ref.ystart)
+        if ap_ref.ystop is not None:
+            if ap_ref.ystop > ystop:
+                truncated = True
+            ystop = min(ystop, ap_ref.ystop)
+        if truncated:
+            log.info("Aperture limit(s) in reference file extended beyond"
+                     " image size.")
 
     if wcs_ok:
         # Copy these so we can assign to them.
@@ -196,16 +267,23 @@ def reconcile_ap_limits(ap_wcs, ap_shape):
             log.info("Current image is outside the WCS domain")
 
     if wcs_ok:
+        truncated = False                       # just for info
         # ap_wcs has the limits over which the WCS transformation is
         # defined; take those as the outer limits over which we will extract.
         if wcs_xstart is not None and ap_wcs.xstart > xstart:
             xstart = ap_wcs.xstart
+            truncated = True
         if wcs_xstop is not None and ap_wcs.xstop < xstop:
             xstop = ap_wcs.xstop
+            truncated = True
         if wcs_ystart is not None and ap_wcs.ystart > ystart:
             ystart = ap_wcs.ystart
+            truncated = True
         if wcs_ystop is not None and ap_wcs.ystop < ystop:
             ystop = ap_wcs.ystop
+            truncated = True
+        if truncated:
+            log.info("Aperture limit(s) truncated due to WCS domain")
 
     return Aperture(xstart, ystart, xstop, ystop)
 
@@ -249,47 +327,23 @@ class ExtractModel(object):
                  inner_bkg=None, outer_bkg=None, method='subpixel'):
 
         self.dispaxis = dispaxis
-        # xstart, xstop, ystart, or ystop may be overridden with src_coeff.
+        # possibly override with src_coeff
         if xstart is None:
             self.xstart = None
         else:
-            r = round(xstart)
-            if xstart == r:
-                self.xstart = xstart
-            else:
-                log.warning("xstart %s should have been an integer; "
-                            "rounding to %s", str(xstart), str(r))
-                self.xstart = r
+            self.xstart = int(round(xstart))
         if xstop is None:
             self.xstop = None
         else:
-            r = round(xstop)
-            if xstop == r:
-                self.xstop = xstop
-            else:
-                log.warning("xstop %s should have been an integer; "
-                            "rounding to %s", str(xstop), str(r))
-                self.xstop = r
+            self.xstop = int(round(xstop))
         if ystart is None:
             self.ystart = None
         else:
-            r = round(ystart)
-            if ystart == r:
-                self.ystart = ystart
-            else:
-                log.warning("ystart %s should have been an integer; "
-                            "rounding to %s", str(ystart), str(r))
-                self.ystart = r
+            self.ystart = int(round(ystart))
         if ystop is None:
             self.ystop = None
         else:
-            r = round(ystop)
-            if ystop == r:
-                self.ystop = ystop
-            else:
-                log.warning("ystop %s should have been an integer; "
-                            "rounding to %s", str(ystop), str(r))
-                self.ystop = r
+            self.ystop = int(round(ystop))
 
         if extract_width is None:
             self.extract_width = None
@@ -325,14 +379,9 @@ class ExtractModel(object):
             self.wcs = None
         self._wave_model = None
 
-        # If source extraction coefficients src_coeff were specified, this
-        # method will add the nod offset correction to the first coefficient
-        # of every coefficient list; otherwise, the nod offset will be added
-        # to xstart & xstop or ystart & ystop in assign_polynomial_limits.
-        # If background extraction coefficients bkg_coeff were specified,
-        # this method will add the nod offset to the first coefficients.
-        # Note that background coefficients are handled independently of
-        # src_coeff.
+        # If src_coeff and/or bkg_coeff have been specified, add the
+        # nod offset correction to the first coefficient of every
+        # coefficient list.
         self.add_nod_correction()
 
     def add_nod_correction(self):
@@ -364,19 +413,13 @@ class ExtractModel(object):
         log.debug("dispaxis = %d", self.dispaxis)
         log.debug("independent_var = %s", self.independent_var)
         log.debug("smoothing_length = %d", self.smoothing_length)
-        log.debug("provisional xstart = %s", str(self.xstart))
-        log.debug("provisional xstop = %s", str(self.xstop))
-        log.debug("provisional ystart = %s", str(self.ystart))
-        log.debug("provisional ystop = %s", str(self.ystop))
-        log.debug("extract_width = %s", str(self.extract_width))
         log.debug("bkg_order = %d", self.bkg_order)
         log.debug("nod_correction = %s", str(self.nod_correction))
-        log.debug("src_coeff = %s", str(self.src_coeff))
-        log.debug("bkg_coeff = %s", str(self.bkg_coeff))
+        log.debug("extract_width = %s", str(self.extract_width))
 
-        # The following values are printed in assign_polynomial_limits,
-        # because they can be assigned or modified there:
-        # lower & upper, and either xstart & xstop or ystart & ystop.
+        # The following parameters are printed in assign_polynomial_limits,
+        # because they can be modified there:
+        # xstart, xstop, ystart, ystop, src_coeff, bkg_coeff.
 
     def assign_polynomial_limits(self):
         """Create polynomial functions for extraction limits.
@@ -405,54 +448,41 @@ class ExtractModel(object):
             fcn_upper1 is 3 + 4 * x + 5 * x**2
             fcn_lower2 is 6
             fcn_upper2 is 7 + 8 * x
-
-        If src_coeff was not specified, the nod offset correction
-        will be added to xstart & xstop or ystart & ystop.
         """
 
         if self.src_coeff is None:
             # Create constant functions.
             if self.extract_width is None:
-                # These limits are inclusive, and we expect integer values.
                 if self.dispaxis == HORIZONTAL:
-                    width = float(round(self.ystop - self.ystart + 1))
+                    width = round(self.ystop - self.ystart)
                 else:
-                    width = float(round(self.xstop - self.xstart + 1))
+                    width = round(self.xstop - self.xstart)
             else:
                 width = float(self.extract_width)
             # If extract_width was specified, that value should override
             # ystop - ystart (or xstop - xstart), in case of disagreement.
-
-            if self.nod_correction != 0.:
-                log.info("Applying nod offset of {0}"
-                         .format(self.nod_correction))
             if self.dispaxis == HORIZONTAL:
                 ystart = float(self.ystart)
-                ystop = float(self.ystop)
-                if self.nod_correction != 0.:
-                    ystart += self.nod_correction
-                    ystop += self.nod_correction
+                ystop = float(self.ystop - 1)           # inclusive limit
                 lower = (ystart + ystop) / 2. - width / 2.
                 upper = lower + width
                 log.debug("xstart = %s", str(self.xstart))
                 log.debug("xstop = %s", str(self.xstop))
-                log.debug("lower = %s", str(lower))
-                log.debug("upper = %s", str(upper))
+                log.debug("ystart = %s", str(lower))
+                log.debug("ystop = %s", str(upper))
             else:
                 xstart = float(self.xstart)
-                xstop = float(self.xstop)
-                if self.nod_correction != 0.:
-                    xstart += self.nod_correction
-                    xstop += self.nod_correction
+                xstop = float(self.xstop - 1)
                 lower = (xstart + xstop) / 2. - width / 2.
                 upper = lower + width
-                log.debug("lower = %s", str(lower))
-                log.debug("upper = %s", str(upper))
+                log.debug("xstart = %s", str(lower))
+                log.debug("xstop = %s", str(upper))
                 log.debug("ystart = %s", str(self.ystart))
                 log.debug("ystop = %s", str(self.ystop))
             self.p_src = [[create_poly([lower]), create_poly([upper])]]
         else:
             # The source extraction can include more than one region.
+            log.debug("src_coeff = %s", str(self.src_coeff))
             n_lists = len(self.src_coeff)
             if n_lists // 2 * 2 != n_lists:
                 raise RuntimeError("src_coeff must contain alternating lists"
@@ -468,6 +498,7 @@ class ExtractModel(object):
                 expect_lower = not expect_lower
 
         if self.bkg_coeff is not None:
+            log.debug("bkg_coeff = %s", str(self.bkg_coeff))
             n_lists = len(self.bkg_coeff)
             if n_lists // 2 * 2 != n_lists:
                 raise RuntimeError("bkg_coeff must contain alternating lists"
@@ -674,7 +705,6 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
 
         # Loop over the slits in the input model
         for slit in slits:
-            log.debug('slit name = %s' % slit.name)
             extract_params = get_extract_parameters(refname, slit.name,
                                 input_model.meta, smoothing_length, bkg_order)
             wavelength, net, background = \
