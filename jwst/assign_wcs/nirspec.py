@@ -708,7 +708,7 @@ def wavelength_from_disperser(disperser, input_model):
         lam = np.linspace(lmin, lmax, 10000)
         system_temperature = input_model.meta.instrument.gwa_tilt
         if system_temperature is None:
-            message = "Missing reference temperature (keyword GWA_TTIL)."
+            message = "Missing reference temperature (keyword GWA_TILT)."
             log.critical(message)
             raise KeyError(message)
         system_pressure = disperser['pref']
