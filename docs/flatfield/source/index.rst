@@ -12,3 +12,4 @@ JWST Science Calibration Pipeline: Flat Field Correction
 
    main.rst
    reference_files.rst
+   arguments.rst
