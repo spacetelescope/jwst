@@ -60,9 +60,9 @@ CRDS Selection Criteria
 Reference File Formats
 ::::::::::::::::::::::
 
-The camera reference file contains an astropy compound model made up of a polynomial models, rotation and translations. The forward direction is from the GWA to the MSA.
+This reference file contains an astropy compound model made up of a polynomial models, rotation and translations. The forward direction is from the GWA to the MSA.
 
-:model: Transform through the CAMERA.
+:model: Transform through the COLLIMATOR.
 
 DISPERSER
 ---------
@@ -119,7 +119,9 @@ CRDS Selection Criteria
 Reference File Formats
 ::::::::::::::::::::::
 
-The distortion model is an astropy compound model.
+The distortion reference file contains a combination of astropy models.
+For the MIRI Imager this file contains a polynomial and filter dependent offsets.
+For the MIRI MRS, NIRCAM, NIRISS and FGS the model is a combination of polynomials.
 
 :model: Transform from detector to an intermediate frame (instrument dependent).
 
@@ -294,6 +296,8 @@ CRDS Selection Criteria
 
 Reference File Formats
 ::::::::::::::::::::::
+
+This reference file contains a combination of astropy models - polynomial, shift, rotation and scaling.
 
 :model: Transform through the Telescope Optical Element (OTE), from the FWA to XAN, YAN telescope frame. The
         output units are in arcsec.
