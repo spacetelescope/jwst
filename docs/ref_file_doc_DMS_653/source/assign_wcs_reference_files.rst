@@ -18,13 +18,13 @@ reftype                                     description                         
 **collimator**         NIRSPEC Collimator Model                                      NIRSPEC
 **disperser**          Disperser parameters                                          NIRSPEC
 **distortion**         Spatial distortion model                                      MIRI, FGS, NIRCAM, NIRISS
-**filteroffset**       MIRI Imager fiter offsets                                     MIRI
+**filteroffset**       MIRI Imager filter offsets                                    MIRI
 **fore**               Transform through the NIRSPEC FORE optics                     NIRSPEC
 **fpa**                Transform in the NIRSPEC FPA plane                            NIRSPEC
 **ifufore**            Transform from the IFU slicer to the IFU entrance             NIRSPEC
 **ifupost**            Transform from the IFU slicer to the back of the IFU          NIRSPEC
-**ifuslicer**          FU Slicer geometric description                               NIRSPEC
-**msa**                Transformin the NIRSPEC MSA plane                             NIRSPEC
+**ifuslicer**          IFU Slicer geometric description                              NIRSPEC
+**msa**                Transform in the NIRSPEC MSA plane                            NIRSPEC
 **ote**                Transform through the Optical Telescope Element               NIRSPEC
 **specwcs**            Wavelength calibration models                                 MIRI, NIRCAM, NIRISS
 **regions**            Stores location of the regions on the detector                MIRI
@@ -129,7 +129,7 @@ Reference File Formats For Each Reference File Type
 CAMERA
 ::::::
 
-The camera reference file contains an astropy compound model made up of a polynomial models, rotation and translations. The forward direction is from the FPA to the GWA.
+This reference file contains an astropy compound model made up of a polynomial models, rotation and translations. The forward direction is from the FPA to the GWA.
 :model: Transform through the CAMERA.
 
 COLLIMATOR
@@ -137,7 +137,7 @@ COLLIMATOR
 
 The collimator reference file contains an astropy compound model made up of a polynomial models, rotation and translations. The forward direction is from the GWA to the MSA.
 
-:model: Transform through the CAMERA.
+:model: Transform through the COLLIMATOR.
 
 
 DISPERSER
@@ -163,9 +163,9 @@ The following fields are common for all gratings and the prism:
 
 The prism reference file has in addition the following fields:
 
-:angle: Angle between the front and back surface of the prosm (in degrees)
+:angle: Angle between the front and back surface of the prism (in degrees)
 :kcoef: K coefficients of Selmeir equation, describing the material
-:lcoef: L coeffficients describing the material
+:lcoef: L coefficients describing the material
 :tcoef: Thermal coefficients describing the properties of the glass
 :tref: Reference temperature (in K)
 :pref: Reference pressure (in ATM)
@@ -174,7 +174,7 @@ The prism reference file has in addition the following fields:
 DISTORTION
 ::::::::::
 
-The distortion reference file contains an astropy compound model. 
+The distortion reference file contains a combination of astropy models. For the MIRI Imager this file contains a polynomial and filter-dependent offsets.  For the MIRI MRS, NIRCAM, NIRISS, and FGS the model is a combination of polynomials. 
 :model: Transform from detector to an intermediate frame (instrument dependent).
 
 
@@ -238,7 +238,7 @@ The “data” field is an array with 30 rows pertaining to the 30 slices and th
           y_center
             Y coordinate of the center (in meters)
           x_size
-            X size of teh aperture (in meters)
+            X size of the aperture (in meters)
           y_size
             Y size of the aperture (in meters)
 :model: Transform from relative positions within the IFU slicer to absolute positions within the field of view. It's a combination of shifts and rotation.
@@ -263,7 +263,7 @@ The MSA reference file has 5 fields, named
           y_center
             Y coordinate of the center (in meters)
           x_size
-            X size of teh aperture (in meters)
+            X size of the aperture (in meters)
           y_size
             Y size of the aperture (in meters)
    :model: Transform from relative positions within Quadrant 1 to absolute positions within the MSA
@@ -279,14 +279,15 @@ The MSA reference file has 5 fields, named
 :5:
    :data: Reference data for the fixed slits and the IFU, same as in 1, except NO is 6 rows (1-6)
           and the mapping is 1 - S200A1, 2 - S200A1, 3 - S400A1, 4 - S200B1, 5 - S1600A1, 6 - IFU
-   :model: Transform from relative positions within eac aperture to absolute positions within the MSA
+   :model: Transform from relative positions within each aperture to absolute positions within the MSA
 
 
 OTE
 :::
+This reference file contains a combination of astropy models - polynomial, shift, rotation and scaling.
 
-:model: Transform through the Telescope Optical Element (OTE), from the FWA to XAN, YAN telescope frame. The
-        output units are in arcsec.
+
+:model: Transform through the Telescope Optical Element (OTE), from the FWA to XAN, YAN telescope frame. The output units are in arcsec.
 
 
 SPECWCS

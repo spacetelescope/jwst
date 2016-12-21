@@ -35,7 +35,7 @@ If background is to be subtracted, this should be specified by giving
 * ystop: last pixel in the vertical direction, Y (int)
 * src_coeff: this takes priority for specifying the source extraction region
   (list of lists of float)
-* bkg_coeff: for specifying background subraction regions
+* bkg_coeff: for specifying background subtraction regions
   (list of lists of float)
 * independent_var: "wavelength" or "pixel" (string)
 * smoothing_length: width of boxcar for smoothing background regions along

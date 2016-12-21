@@ -1,6 +1,6 @@
 Reference File Types
 --------------------
-Cal_Ver uses a CALVER refence file.
+Cal_Ver uses a CALVER reference file.
 
 
 CRDS Selection Criteria
