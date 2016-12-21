@@ -1,5 +1,5 @@
-Reference File
-==============
+Reference File Types
+--------------------
 
 The linearity correction step uses a LINEARITY reference file.
 

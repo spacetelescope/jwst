@@ -1,14 +1,14 @@
-Reference File
-==============
+Reference File Types
+--------------------
 The saturation step uses a SATURATION reference file.
 
 CRDS Selection Criteria
 -----------------------
 Saturation reference files are selected on the basis of INSTRUME, DETECTOR, and 
-SUBARRAY values for the input science data set.
+SUBARRAY values from the input science data set.
 
-DARK Reference File Format
---------------------------
+SATURATION Reference File Format
+--------------------------------
 Saturation reference files are FITS format with
 with 2 IMAGE extensions: ``SCI`` and ``DQ``, which are both 2-D integer arrays,
 and 1 BINTABLE extension.
