@@ -35,8 +35,11 @@ class CubeBuildStep (Step):
          roi1 = float(default=1.0)
          roi2 = float(default=1.0)
          roiw = float(default=1.0)
+         weight_power = float(default=2.0)
          offset_list = string(default='NA')
-
+         waveslice = float(default=0.0)
+         xdebug = integer(default=0)
+         ydebug = integer(default=0) 
        """
 
     def process(self, input):
@@ -50,15 +53,16 @@ class CubeBuildStep (Step):
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
         if(not self.interpolation.islower()): self.interpolation = self.interpolation.lower()
         if(not self.weighting.islower()): self.weighting = self.weighting.lower()
-#        if(self.channel != ''): self.log.info('Input Channel %s', self.channel)
-#        if(self.subchannel != ''): self.log.info('Input Subchannel %s', self.subchannel)
-#        if(self.grating != ''): self.log.info('Input grating %s', self.grating)
-#        if(self.filter != ''): self.log.info('Input filter %s', self.filter)
+
         if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
         if(self.scale2 != 0.0): self.log.info('Input Scale of axis 2 %f', self.scale2)
         if(self.scalew != 0.0): self.log.info('Input wavelength scale %f  ', self.scalew)
         if(self.offset_list != 'NA'): self.log.info('Offset Dither list %s', self.offset_list)
 
+        if(self.waveslice !=0): self.log.info('Creating only a single wavelength slice at',
+                                              self.waveslice)
+
+            
         # valid coord_system:
         # 1. alpha-beta (only valid for MIRI Single Cubes)
         # 2. ra-dec
@@ -73,6 +77,7 @@ class CubeBuildStep (Step):
 
         self.log.info('Coordinate system to use: %s', self.coord_system)
         self.log.info('Weighting method for point cloud: %s',self.weighting)
+        self.log.info('Power Weighting distance : %f',self.weight_power) 
 #_________________________________________________________________________________________________
 # Set up the IFU cube basic parameters that define a cube
         self.metadata = {}
@@ -211,20 +216,13 @@ class CubeBuildStep (Step):
         if(self.roi2 == 1): self.roi2 = Cube.Cdelt2* 1.0
         if(self.roiw == 1): self.roiw = Cube.Cdelt3* 1.0
 
-            # for now keep these values - may not use them in the future
-        self.power_x = 1
-        self.power_y = 1
-        self.power_z = 1
-
-
         IFUCube = cube_model.SetUpIFUCube(self,Cube)
 
 
         if(self.interpolation == 'pointcloud'):
             self.log.info('Region of interest %f %f %f', 
                               self.roi1, self.roi2, self.roiw)
-            self.log.info('Power parameters for weighting %5.1f %5.1f %5.1f', 
-                              self.power_x, self.power_y, self.power_z)
+
 
             # now you have the size of cube - create an instance for each spaxel
             # create an empty spaxel list - this will become a list of Spaxel classses
