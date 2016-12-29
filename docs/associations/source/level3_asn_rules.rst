@@ -91,3 +91,23 @@ The current association types are:
 
 Rules
 =====
+
+All rules have as their base class :class:`DMS_Level3_Base
+<jwst.associations.lib.rules_level3_base.DMS_Level3_Base>` This class
+defines the association structure, enforces the DMS naming
+conventions, and defines the basic validity checks on the Level3
+associations.
+
+Along with the base class, a number of mixin classes are defined.
+These mixins define some basic constraints that are found in a number
+of rules. An example is the :class:`AsnMixin_Base
+<jwst.associations.lib.rules_level3_base.AsnMixin_Base>`, which
+provides the constraints that ensure that the program identificaiton
+and instrument are the same in each association.
+
+The rules themselves are subclasses of :class:`AsnMixin_Base
+<jwst.associations.lib.rules_level3_base.AsnMixin_Base>` and whatever
+other mixin classes are necessary to build the rule. Conforming to the
+:ref:`association rule naming scheme <design-rules>`, all the final
+Level3 association rules begin with `Asn_`. An example is the
+:class:`Asn_Image <jwst.associations.lib.rules_level3.Asn_Image>` rule.
