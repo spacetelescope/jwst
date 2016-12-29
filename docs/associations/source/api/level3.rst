@@ -1,9 +1,7 @@
-.. _level3_asn_reference
+.. _level3_asn_api:
 
-
-***********************************
-Reference: JWST Level3 Associations
-***********************************
+JWST Level3 Associations API
+****************************
 
 .. automodule:: jwst.associations.lib.rules_level3_base
    :members:

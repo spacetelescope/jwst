@@ -18,6 +18,7 @@ Contents:
    overview
    design
    reference
+   api/api
 
 Indices and tables
 ==================
