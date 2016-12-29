@@ -1,6 +1,7 @@
+.. _asn-level3-techspecs:
+
 Level 3 Associations: Technical Specifications
 ``````````````````````````````````````````````
-.. _asn-level3-techspecs
 
 DMS Naming
 ==========
@@ -50,6 +51,8 @@ the Level 3 schema
       * Errors from the observatory log
       * Association Candidates this exposure belongs to
 
+.. _asn-level3-example:
+   
 Example Association
 ===================
 
