@@ -59,6 +59,30 @@ routine. For example::
   
   % strun calwebb_image3.cfg  jw12345_xxxx_asn.json
 
+Programmatically, to read in an Association, one uses the
+:ref:`Association.load` method::
+
+   from jwst.associations import Association
+
+   with open('jw12345_xxxx_asn.json') as fp:
+       asn = Association.load(fp)
+
+What exactly is returned depends on what the association is. However,
+for all Level2 and Level3 associations, a Python `dict` is returned,
+whose structure matches that of the `JSON` or `YAML` file. Continuing
+from the above example, the following shows how to access the first
+exposure file name of a Level3 assocations::
+
+  exposure = asn['products'][0]['members'][0]['expname']
+
+Since the JWST pipeline uses associations extensively, higher-level
+access is gained by opening an association as a :ref:`JWST Data
+Model`::
+
+  from jwst.datamodels import open as dm_open
+  container_model = dm_open('jw12345_xxxx_asn.json')
+  
+
 Generator Usage
 ---------------
 
