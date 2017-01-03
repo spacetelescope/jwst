@@ -5,6 +5,8 @@
 Overview
 ********
 
+.. _what-are-associations:
+
 What are Associations?
 ======================
 
@@ -60,7 +62,7 @@ routine. For example::
   % strun calwebb_image3.cfg  jw12345_xxxx_asn.json
 
 Programmatically, to read in an Association, one uses the
-:ref:`Association.load` method::
+:meth:`~jwst.associations.association.Association.load` method::
 
    from jwst.associations import Association
 

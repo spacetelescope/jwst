@@ -1,15 +1,15 @@
 .. _design-generator:
 
-*****************
-Design: Generator
-*****************
+*********
+Generator
+*********
 
 Algorithm
 =========
 
 The generator conceptual workflow is show below:
 
-.. figure:: graphics/generator_flow_concept.png
+.. figure:: ../graphics/generator_flow_concept.png
    :scale: 50%
 
    Generator Conceptual Workflow
@@ -79,7 +79,7 @@ of the list is considered separately because association membership
 may depend on what those individual values are. The figure below
 demonstrates the member replication.
 
-.. figure:: graphics/generator_list_processing.png
+.. figure:: ../graphics/generator_list_processing.png
    :scale: 50%
 
    Member list expansion

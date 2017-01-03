@@ -1,10 +1,10 @@
 .. currentmodule:: jwst.associations.association
                    
-.. _design-rules:
+.. _reference-association:
 
-===========================
- Design: Association Rules
-===========================
+*****************
+Association Rules
+*****************
 
 Association definitions, or `rules`, are Python classes, all based on
 the :ref:`association`. The base class provides only a framework, much
@@ -17,8 +17,8 @@ string `Asn_`. This is to ensure that any other classes involved in
 defining the definition of the rule classes do not get used as rules
 themselves, such as the :ref:`association` itself.
 
-Association Hybrid Definition
-=============================
+Association Dynamic Definition
+==============================
 
 Associations are created by matching members to rules. However, an
 important concept to remember is that an association is defined by
@@ -41,12 +41,9 @@ Now, when other members are attempted to be added to the association,
 the filter of the new members must match exactly with what the
 association is expecting.
 
-This hybrid definition allows rules to be written where each value of
+This dynamic definition allows rules to be written where each value of
 a specific attribute of a member does not have to be explicitly
 stated. This provides for very robust, yet concise, rules.
-
-This self-definition of associations does give rise to some complexity
-in association instantiation. Keep this in mind as one reads on.
 
 User-level API
 --------------
@@ -76,7 +73,9 @@ These keys are accessed in the same way any dict key is accessed::
   print(asn['asn_rule'])
   
   #--> MyAssociation
-  
+
+.. _ref-asn-core-methods:
+
 Core Methods
 ============
 
@@ -151,23 +150,6 @@ To retrieve an association, one uses the :meth:`Association.load
 Creating versus Using Associations
 ==================================
 
-At this point, emphasis must be made to highlight the difference
-between associations that are generated and associations that have
-been saved and are used by other modules and tasks.
-
-Associations created from rule classes have the type of the class they
-are created from and have all the methods and attributes of those
-classes. Such instances are used to populate the created associations
-with new members and check the validity of said associations.
-
-However, once an association has been saved, or serialized, through
-the :meth:`Association.dump
-<jwst.associations.association.Association.dump>` method, then reload
-through the corresponding :meth:`Association.load
-<jwst.associations.association.Association.load>` method, the restored
-association is only the basic list or dict. The whole instance of the
-originating association is not serialized with the basic membership
-information.
 
 Defining New Associations
 -------------------------

@@ -1,8 +1,8 @@
 .. _design-pool:
 
-************************
-Design: Association Pool
-************************
+****************
+Association Pool
+****************
 
 .. _astropy Table:
    http://docs.astropy.org/en/stable/table/index.html
