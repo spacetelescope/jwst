@@ -1537,9 +1537,13 @@ properties:
             type: string
             fits_keyword: S_MSAFLG
           pathloss:
-            title: Pathloss step
+            title: Pathloss Correction
             type: string
             fits_keyword: S_PTHLOS
+          srctype:
+            title: Source Type Determination
+            type: string
+            fits_keyword: S_SRCTYP
           stack_psfs:
             title: Coronagraphic PSF Stacking
             type: string

@@ -154,9 +154,15 @@ class Node(object):
         instance = yamlutil.custom_tree_to_tagged_tree(
             self._instance, self._ctx._asdf)
         try:
+            previously_invalid = self._ctx._has_invalid_values
+        except AttributeError:
+            previously_invalid = False
+        try:
             schema.validate(instance, schema=self._schema)
+            self._ctx._has_invalid_values = False
         except jsonschema.ValidationError:
-            if self._ctx._pass_invalid_values:
+            self._ctx._has_invalid_values = True
+            if  previously_invalid or self._ctx._pass_invalid_values:
                 pass
             else:
                 raise
@@ -208,6 +214,7 @@ class ObjectNode(Node):
                 # Revert the transaction
                 msgfmt = "'{0}' is not valid to write to '{1}'"
                 warnings.warn(msgfmt.format(val, attr))
+                self._ctx._has_invalid_values = False
                 if old_val is None:
                     del self._instance[attr]
                 else:
@@ -228,6 +235,7 @@ class ObjectNode(Node):
                 self._validate()
             except jsonschema.ValidationError:
                 # Revert the transaction
+                self._ctx._has_invalid_values = False
                 if old_val is not None:
                     self._instance[attr] = old_val
                 raise

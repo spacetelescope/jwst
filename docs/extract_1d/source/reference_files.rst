@@ -23,26 +23,34 @@ with the slit name (except for a full-frame input image) to select the
 appropriate aperture.  Key ``dispaxis`` is similarly required.  Key
 ``region_type`` can be omitted, but if it is specified, its value must be
 "target".  The source extraction region can be specified with ``ystart``,
-``ystop``, etc., but a better alternative is to use ``src_coeff``.  If
-background is to be subtracted, this should be specified by giving
-``bkg_coeff``.  These are described in more detail below.  ``extract_width``
-is not used if ``src_coeff`` is given.
+``ystop``, etc., but a more flexible alternative is to use ``src_coeff``.
+If background is to be subtracted, this should be specified by giving
+``bkg_coeff``.  These are described in more detail below.
 
 * id: the slit name, e.g. "S200A1" (string)
 * dispaxis: dispersion direction, 1 for X, 2 for Y (int)
-* xstart: first pixel in X (int)
-* xstop: last pixel in X (int)
-* ystart: first pixel in Y (int)
-* ystop: last pixel in Y (int)
-* src_coeff: list of lists of float
-* bkg_coeff: list of lists of float
+* xstart: first pixel in the horizontal direction, X (int)
+* xstop: last pixel in the horizontal direction, X (int)
+* ystart: first pixel in the vertical direction, Y (int)
+* ystop: last pixel in the vertical direction, Y (int)
+* src_coeff: this takes priority for specifying the source extraction region
+  (list of lists of float)
+* bkg_coeff: for specifying background subraction regions
+  (list of lists of float)
 * independent_var: "wavelength" or "pixel" (string)
-* smoothing_width: width of boxcar for smoothing background regions along
+* smoothing_length: width of boxcar for smoothing background regions along
   the dispersion direction (odd int)
 * bkg_order: order of polynomial fit to background regions (int)
 * extract_width: number of pixels in cross-dispersion direction (int)
 
-For IFU data, these keys are used instead of the above:
+If ``src_coeff`` is given, those coefficients take priority for specifying
+the source extraction region in the cross-dispersion direction.  ``xstart``
+and ``xstop`` (or ``ystart`` and ``ystop`` if ``dispaxis`` is 2) will
+still be used for the limits in the dispersion direction.  Background
+subtraction will be done if and only if ``bkg_coeff`` is given.  See below
+for further details.
+
+For IFU cube data, these keys are used instead of the above:
 
 * id: the slit name, but this can be "ANY" (string)
 * x_center: X pixel coordinate of the target (pixels, float, the default
@@ -73,22 +81,39 @@ For IFU data, these keys are used instead of the above:
 * subpixels: if ``method`` is "subpixel", pixels will be resampled by this
   factor in each dimension (int, the default is 5)
 
-Even if the extraction limits are specified by ``src_coeff`` (see below),
-the limits in the dispersion direction can be specified by ``xstart`` and
-``xstop`` (or ``ystart`` and ``ystop`` if ``dispaxis`` is 2).  These values
-are zero-indexed pixel numbers within the subimage for a given "slit"; the
-default is the size of the image in the dispersion direction.  The step
-code may modify these values if, for example, the WCS information in the
-input file has a more limited domain.
+The rest of this description pertains to the parameters for non-IFU data.
 
-The source extraction region can be specified by giving ``src_coeff``,
-coefficients for polynomial functions for the lower and upper limits of
-the source extraction region.  Using this key will override the values
+If ``src_coeff`` is not given, the extraction limits can be specified by
+``xstart``, ``xstop``, ``ystart``, ``ystop``, and ``extract_width``.  Note
+that all of these values are integers.  (It was intended that the start and
+stop limits be inclusive; the current code may not be consistent in this
+regard, but it will be so in the next release.  To specify the
+cross-dispersion limits precisely, use ``src_coeff``.)  If ``dispaxis``
+is 1, the zero-indexed limits in the dispersion direction are ``xstart``
+and ``xstop``; if ``dispaxis`` is 2, the dispersion limits are ``ystart``
+and ``ystop``.  (The dispersion limits can be given even if ``src_coeff``
+has been used for defining the cross-dispersion limits.)  The limits in
+the cross-dispersion direction can be given by ``ystart`` and ``ystop``
+(or ``xstart`` and ``xstop`` if ``dispaxis`` is 2).  If ``extract_width``
+is also given, that takes priority over ``ystart`` to ``ystop`` (for
+``dispaxis`` = 1) for the extraction width, but ``ystart`` and ``ystop``
+(for ``dispaxis`` = 1) will still be used to define the middle in the
+cross-dispersion direction.  Any of these parameters can be modified
+by the step code if the extraction region would extend outside the input
+image, or outside the domain specified by the WCS.
+
+The source extraction region can be specified more precisely by giving
+``src_coeff``, coefficients for polynomial functions for the lower and
+upper limits of the source extraction region.  As described in the previous
+paragraph, using this key will override the values
 of ``ystart`` and ``ystop`` (if ``dispaxis`` is 1) or ``xstart`` and
 ``xstop`` (if ``dispaxis`` is 2), and ``extract_width``.  These polynomials
 are functions of either wavelength (in microns) or pixel number (pixels in
 the dispersion direction, with respect to the input 2-D slit image),
-specified by the key ``independent_var`` (the default is "wavelength").
+specified by the key ``independent_var``.  The current default is
+"wavelength", but this may change to "pixel" in the future, so if the
+order of the polynomials for source or background is greater than zero,
+``independent_var`` should be specified explicitly.
 The values of these polynomial functions are pixel numbers in the
 direction perpendicular to dispersion.  More than one source extraction
 region may be specified, though this is not expected to be a typical case.
@@ -99,12 +124,12 @@ Background subtraction will be done only if ``bkg_coeff`` is given in the
 reference file.  See below for an example.  See also ``bkg_order`` below.
 
 The coefficients are specified as a list of an even number of lists (an
-even number because both lower and upper limits must be specified).
-The source extraction coefficients will normally be a list of just two
-lists, the coefficients for the lower limit function and the coefficients
-for the upper limit function of one extraction region.  The limits could
-just be constant values, e.g. \[\[324.5\], \[335.5\]\].  Straight but tilted
-lines are linear functions:
+even number because both the lower and upper limits of each extraction region
+must be specified).  The source extraction coefficients will normally be
+a list of just two lists, the coefficients for the lower limit function
+and the coefficients for the upper limit function of one extraction
+region.  The limits could just be constant values,
+e.g. \[\[324.5\], \[335.5\]\].  Straight but tilted lines are linear functions:
 
 \[\[324.5, 0.0137\], \[335.5, 0.0137\]\]
 
@@ -130,7 +155,7 @@ is that the pixel number at the center of a pixel is a whole number.  Thus,
 if a lower or upper limit is a whole number, that limit splits the pixel
 in two, so the weight for that pixel will be 0.5.  To include all the
 pixels between 325 and 335 inclusive, for example, the lower and upper
-limits should be given as 324.5 and 335.5 respectively.
+limits would be given as 324.5 and 335.5 respectively.
 
 The order of a polynomial is specified implicitly to be one less than the
 number of coefficients (this should not be confused with ``bkg_order``,
@@ -138,8 +163,9 @@ described below).  The number of coefficients must be at least one, and
 there is no predefined upper limit.  The various polynomials (lower limits,
 upper limits, possibly multiple regions) do not need to have the same
 number of coefficients; each of the inner lists specifies a separate
-polynomial.  However, the independent variable does need to be the same
-for all polynomials for a given slit image (identified by key ``id``).
+polynomial.  However, the independent variable (wavelength or pixel)
+does need to be the same for all polynomials for a given slit image
+(identified by key ``id``).
 
 The background is determined independently for each column (or row, if
 ``dispaxis`` is 2) of the spectrum.  The ``smoothing_length`` parameter

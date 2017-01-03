@@ -17,6 +17,7 @@ from . import cube
 from . import CubeOverlap
 from . import CubeCloud
 from . import coord
+from gwcs import wcstools
 
 import logging
 log = logging.getLogger(__name__)
@@ -192,27 +193,18 @@ def FindFootPrintNIRSPEC(self, input,flag_data):
     for i in regions:
 #        print('on slice',i)
         slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
-        yrange = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
-        xrange = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
+        yrange_slice = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
+        xrange_slice = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
 #        print ('yrange 0,1 xrange 0,1',yrange[0],yrange[1],xrange[0],xrange[1])
-        if(xrange[0] > 0 and xrange[1] > 0): 
+        if(xrange_slice[0] >= 0 and xrange_slice[1] > 0): 
 
-            y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
+            x,y = wcstools.grid_from_domain(slice_wcs.domain)
+
+#            y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
             ra,dec,lam = slice_wcs(x,y)
 
-            detector2v23 = slice_wcs.get_transform('detector','v2v3')
-            v23toworld = slice_wcs.get_transform("v2v3","world")
-            v2, v3, lam = detector2v23(x, y) 
-            coord1,coord2,lam = v23toworld(v2,v3,lam)
-
             #        print('ra',ra.shape,ra[20,0:20])
-            #        print('coord1',coord1.shape,coord1[20,0:20])
-
             #        print('dec',dec.shape,dec[20,0:20])
-            #        print('coord2',coord2.shape,coord2[20,0:20])
-
-            ra_ref = input.meta.wcsinfo.ra_ref # degrees
-            dec_ref = input.meta.wcsinfo.dec_ref # degrees    
 
             a_slice[k] = np.nanmin(ra)
             a_slice[k + 1] = np.nanmax(ra)
@@ -241,14 +233,10 @@ def FindFootPrintNIRSPEC(self, input,flag_data):
 #    print('max b',b_min,b_max, (b_max-b_min)*3600.0)
 #    print('wave',lambda_min,lambda_max)
     if(a_min == 0.0 and a_max == 0.0 and b_min ==0.0 and b_max == 0.0):
-        self.log.info('This NIRSPEC exposure has not IFU data on it - skipping file')
+        self.log.info('This NIRSPEC exposure has no IFU data on it - skipping file')
         flag_data = -1
 
-#    ra_ref = input.meta.wcsinfo.ra_ref # degrees
-#    dec_ref = input.meta.wcsinfo.dec_ref # degrees    
-#    print('ra dec ref',ra_ref,dec_ref)
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
-
 #_______________________________________________________________________
 #********************************************************************************
 def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
@@ -321,7 +309,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
             if(ioffset == n):
                 c1_offset = MasterTable.FileOffset[this_a][this_b]['C1'][k]
                 c2_offset = MasterTable.FileOffset[this_a][this_b]['C2'][k]
-                print('offset to apply in arcseonds (ra,dec) ', c1_offset, c2_offset)
+#                print('offset to apply in arcseonds (ra,dec) ', c1_offset, c2_offset)
 #________________________________________________________________________________
 # Open the input data model
             with datamodels.ImageModel(ifile) as input_model:
@@ -369,12 +357,12 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
     test_b = final_b_max - final_b_min
     test_w = final_lambda_max - final_lambda_min
     tolerance1 = 0.00001
-    tolerance2 = 0.5
-    print( test_a,  test_b, test_w)
+    tolerance2 = 0.1
     
     if(test_a < tolerance1 or test_b < tolerance1 or test_w < tolerance2):
         
-        raise ErrorNoIFUData(" NO Valid IFU slice data found ")
+        self.log.info('No Valid IFU slice data found %f %f %f ',test_a,test_b,test_w)
+        #raise ErrorNoIFUData(" NO Valid IFU slice data found on exposure ")
 #________________________________________________________________________________
     CubeFootPrint = (final_a_min, final_a_max, final_b_min, final_b_max,
                      final_lambda_min, final_lambda_max)
@@ -564,6 +552,8 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
     if(interpolation = pointcloud) flux determined for each spaxel based on interpolation of PixelCloud
     """
 
+
+
     if self.interpolation == 'area':
         nspaxel = len(spaxel)
 
@@ -593,7 +583,7 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
                         value = 0
                         for j in range(num):
                             weight = weight + weightpt[j]
-                            value = value + weightpt[j] * pixelflux[j]
+                            value = value + (weightpt[j] * pixelflux[j])
 
 #                            if(iz == 39 or iz == 40 ):
 #                                if(ix == 14 and iy == 16): 

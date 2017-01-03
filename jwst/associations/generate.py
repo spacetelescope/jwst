@@ -110,9 +110,10 @@ def generate_from_member(
     rules: AssociationRegistry
         List of rules to create new associations
 
-    allwed_rules: [rule, ...]
+    allowed_rules: [rule, ...]
         Only compare existing associations and rules if the
-        the rule is in this list. If none, all rules are valid.
+        rule is in this list. If none,
+        all existing associations and rules will be checked.
 
     Returns
     -------
