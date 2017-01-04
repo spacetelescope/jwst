@@ -103,6 +103,7 @@ def MakePointCloudMIRI(self, input_model,
         xi,eta = coord.radec2std(Cube.Crval1, Cube.Crval2,ra,dec) # xi,eta in arc seconds
         coord1 = xi
         coord2 = eta
+        #print('xi eta',coord1,coord2,wave,xpix,ypix)
 
     ifile = np.zeros(flux.shape, dtype='int') + int(file_no)
 
@@ -245,7 +246,6 @@ def FindROI(self, Cube, spaxel, PointCloud):
 
     iprint = 0
     nn = len(PointCloud[0])
-#    nn = 100
 
     self.log.info('number of elements in PT %i',nn)
 
@@ -323,9 +323,9 @@ def FindROI(self, Cube, spaxel, PointCloud):
                     # for NIRSPEC find distance between PT and Spaxel Center 
                     # in xi,eta coordinate system
                     if(Cube.instrument == 'NIRSPEC'):
-                        d1 = (xi[ix] - coord1)/self.scale1
-                        d2 = (eta[iy] - coord2)/self.scale2
-                        d3 = (zlam[iz] - wave)/self.scalew
+                        d1 = (xi[ix] - coord1)/Cube.Cdelt1
+                        d2 = (eta[iy] - coord2)/Cube.Cdelt2
+                        d3 = (zlam[iz] - wave)/Cube.Cdelt3
                         weight_distance = math.sqrt(d1*d1 + d2*d2 + d3*d3)  
                         weight_distance = math.pow(weight_distance,self.weight_power)
 #________________________________________________________________________________
@@ -334,11 +334,11 @@ def FindROI(self, Cube, spaxel, PointCloud):
                         
                         # weighting - standard - distance based on xi,eta distance
                         if(self.weighting =='standard'):
-                            d1 = (xi[ix] - coord1)/self.scale1
-                            d2 = (eta[iy] - coord2)/self.scale2
-                            d3 = (zlam[iz] - wave)/self.scalew
-                            weight_distance = math.sqrt(d1*d1 + d2*d2 + d3*d3)
-                            weight_distance = math.pow(weight_distance,self.weight_power)
+                            d1 = (xi[ix] - coord1)/Cube.Cdelt1
+                            d2 = (eta[iy] - coord2)/Cube.Cdelt2
+                            d3 = (zlam[iz] - wave)/Cube.Cdelt3
+                            weight_distance_abs = math.sqrt(d1*d1 + d2*d2 + d3*d3)
+                            weight_distance = math.pow(weight_distance_abs,self.weight_power)
 
                         # For MIRI the distance between PT and Spaxel Center is
                         # in the alpha - beta cooridate system
