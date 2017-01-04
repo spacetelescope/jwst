@@ -89,4 +89,11 @@ demonstrates the member replication.
 For JWST, this is used to filter through the various types of
 association candidates. Since an exposure can belong to more than one
 association candidate, the exposure can belong to different
-associations depending on the candidates. 
+associations depending on the candidates.
+
+.. _design-candidates:
+
+Association Candidates
+----------------------
+
+TBD
