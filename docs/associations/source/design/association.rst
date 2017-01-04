@@ -1,11 +1,10 @@
 .. _design-association:
 
-**********************
 Associations and Rules
-**********************
+======================
 
 Terminology
-===========
+-----------
 
 As :ref:`has been described <what-are-associations>`, an `Association`
 is a Python dict or list that is a list of things that belong together
@@ -36,7 +35,7 @@ This relationship is shown in the following figure:
    Rule vs. Association Relationship
 
 Rules
-=====
+-----
 
 Association rules are Python classes which must inherit from the
 :class:`~jwst.associations.association.Association` base class. What
@@ -50,7 +49,7 @@ behave as a list. Otherwise, any other methods and attributes the
 rules need for association creation may be added.
 
 Rule Sets
-=========
+---------
 
 In general, because a set of rules will share much the same
 functionality, for example how to save the association and how to

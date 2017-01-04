@@ -1,8 +1,7 @@
 .. _design-registry:
 
-********************
 Association Registry
-********************
+====================
 
 The :class:`~jwst.associations.registry.AssociationRegistry` is the
 rule organizer. An `AssociationRegistry` is instantiated with the

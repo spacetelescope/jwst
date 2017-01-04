@@ -2,9 +2,8 @@
                    
 .. _reference-association:
 
-*****************
 Association Rules
-*****************
+=================
 
 Association definitions, or `rules`, are Python classes, all based on
 the :ref:`association`. The base class provides only a framework, much
@@ -18,7 +17,7 @@ defining the definition of the rule classes do not get used as rules
 themselves, such as the :ref:`association` itself.
 
 Association Dynamic Definition
-==============================
+------------------------------
 
 Associations are created by matching members to rules. However, an
 important concept to remember is that an association is defined by
@@ -49,7 +48,7 @@ User-level API
 --------------
 
 Core Keys
-=========
+^^^^^^^^^
 
 To be repetitive, the basic association is simply a dict (default) or
 list. The structure of the dict is compeletly determined by the rules.
@@ -77,7 +76,7 @@ These keys are accessed in the same way any dict key is accessed::
 .. _ref-asn-core-methods:
 
 Core Methods
-============
+^^^^^^^^^^^^
 
 All methods of an association rule deal with creation or returning the
 created association.
@@ -98,7 +97,7 @@ There are other methods that deal with the details of association
 creation and rule definition.
 
 Creation
-========
+--------
 
 To create an association based on a member, one simply attempts to
 instantiate the rule using the member as an argument::
@@ -126,7 +125,8 @@ compared against. Associaton registries provide extra functionality to
 deal with a large and varied set of association rules.
 
 Saving and Loading
-==================
+------------------
+
 Once created, an association can be serialized using its
 :meth:`Association.dump <jwst.associations.association.Association.dump>` method.
 Serialization creates a string representation of the association which
@@ -147,10 +147,6 @@ To retrieve an association, one uses the :meth:`Association.load
   with open(file_name, 'r') as file_handle:
       association = Association.load(file_handle)
 
-Creating versus Using Associations
-==================================
-
-
 Defining New Associations
 -------------------------
 
@@ -164,7 +160,7 @@ will discuss the minimum functionality that a subclass needs to
 implement in order to create an association.
 
 Class Naming
-============
+^^^^^^^^^^^^
 
 The :ref:`generate` machinery uses :ref:`AssociationRegistry` to store
 the association rules. Since rules are defined by Python classes, a
@@ -173,7 +169,7 @@ definition, rule classes are classes that begin with the string `Asn_`.
 Only these classes are used to produce associations.
 
 Core Attributes
-===============
+^^^^^^^^^^^^^^^
 
 Since rule classes will potentially have a large number of attributes
 and methods, the base :class:`Association
@@ -184,7 +180,7 @@ creation. Subclasses may redfine these attributes as they see fit.
 However, it is suggested that they be used as conceptually defined here.
 
 `data` Attribute
-~~~~~~~~~~~~~~~~
+""""""""""""""""
 
 `data` contains the association itself. Currently, the base class
 predefines `data` as a dict. The base class itself is a subclass of
@@ -202,7 +198,7 @@ dict is the contents of the `data` attribute. For example::
   # True
 
 Initialization
-==============
+^^^^^^^^^^^^^^
 
 When overriding the `__init__()` function, the base classes ultimately
 call `add()` to confirm that the given member actually belongs to the
@@ -212,6 +208,6 @@ the member can actually be added should be done before calling
 afterwards, noting that if the `add()` fails, an `AssociationError` is raised.
 
 Implementing `add()`
-====================
+^^^^^^^^^^^^^^^^^^^^
 
 *TBD*

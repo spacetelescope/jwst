@@ -1,13 +1,12 @@
 .. _level3-asn-rules:
 
-##########################
 Level3 Associations: Rules
-##########################
+==========================
 
 .. _level3-asn-data-grouping:
 
 Data Grouping
-=============
+-------------
 
 JWST exposures are identified and grouped in a specific order, as
 follows:
@@ -60,7 +59,7 @@ follows:
 .. _level3-asn-association-types:
 
 Association Types
-=================
+-----------------
 
 Each Level3 association is intended to make a specific science
 product. The type of science product is indicated by the `ATYPE` field
@@ -90,7 +89,7 @@ The current association types are:
 .. _level3-asn-rule-definitions:
 
 Rules
-=====
+-----
 
 All rules have as their base class :class:`DMS_Level3_Base
 <jwst.associations.lib.rules_level3_base.DMS_Level3_Base>` This class

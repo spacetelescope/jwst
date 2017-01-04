@@ -2,6 +2,7 @@
 
 .. _pipeline modules: http://ssb.stsci.edu/doc/jwst_git/docs/stpipe/html/
 
+********
 Overview
 ********
 

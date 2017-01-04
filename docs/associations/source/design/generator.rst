@@ -1,11 +1,10 @@
 .. _design-generator:
 
-*********
 Generator
-*********
+=========
 
 Algorithm
-=========
+---------
 
 The generator conceptual workflow is show below:
 
@@ -44,7 +43,7 @@ instance. Otherwise an exception is raised. The generator uses
 to loop through its list of existing associations.
 
 Output
-======
+------
 
 Before exiting, the :ref:`generate` checks the :meth:`Association.is_valid
 <jwst.associations.association.Association.is_valid>` property of each
@@ -61,7 +60,7 @@ another :ref:`AssociationPool` containing all the members that did not
 get added to any association.
 
 Member Attributes that are Lists
-================================
+--------------------------------
 
 As mentioned in :ref:`design-pool`, most member attributes are simply
 treated as strings. The exception is when an attribute value looks

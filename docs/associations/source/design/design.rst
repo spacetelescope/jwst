@@ -1,8 +1,8 @@
 .. _design:
 
-##################
+******************
 Association Design
-##################
+******************
 
 .. _figure-association-generator-overview:
 
