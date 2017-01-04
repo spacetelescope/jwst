@@ -74,6 +74,7 @@ from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
 from .quad import QuadModel
 from .ramp import RampModel
 from .rampfitoutput import RampFitOutputModel
+from .referencefile import ReferencefileModel
 from .readnoise import ReadnoiseModel
 from .reset import ResetModel
 from .rscd import RSCDModel
@@ -99,8 +100,8 @@ __all__ = [
     'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
     'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'QuadModel', 'RampModel',
-    'RampFitOutputModel', 'ReadnoiseModel', 'ResetModel', 'RSCDModel',
-    'SaturationModel', 'SpecModel', 'StrayLightModel']
+    'RampFitOutputModel', 'ReadnoiseModel', 'ReferencefileModel', 'ResetModel', 
+    'RSCDModel', 'SaturationModel', 'SpecModel', 'StrayLightModel']
 
 _all_models = __all__[1:]
 _local_dict = dict(locals())

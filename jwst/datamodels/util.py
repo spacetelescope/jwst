@@ -52,8 +52,6 @@ def open(init=None, extensions=None, **kwargs):
     from . import model_base
     from . import _defined_models as defined_models # dict of model classes
 
-    model_type = None
-
     # Get three special cases for opening a model out of the way
     # all three cases return a model if they match
     
@@ -95,12 +93,16 @@ def open(init=None, extensions=None, **kwargs):
         
     # First try to get the class name from the primary header
     if hdulist:
-        # Can also return None if no header keyword
+        shape = _get_shape(hdulist, shape)
         new_class = _class_from_model_type(hdulist)
     else:
         new_class = None
 
-    # Get the class name from the shape and other header keywords
+    # Get the class from the reference file type and other header keywords
+    if new_class is None:
+        new_class = _class_from_reftype(hdulist, shape)
+
+    # Get the class name from the shape
     if new_class is None:
         new_class = _class_from_shape(hdulist, shape)
 
@@ -140,27 +142,11 @@ def _class_from_model_type(hdulist):
     return new_class
 
 
-def _class_from_shape(hdulist, shape):
+def _class_from_reftype(hdulist, shape):
     """
-    Get the class name from the shape and other header keywords
+    Get the class name from the reftype and other header keywords
     """
-    # If we do not have it, determine the shape from the science hdu
-    if len(shape) == 0:
-        try:
-            hdu = hdulist[(fits_header_name('SCI'), 1)]
-        except KeyError:
-            pass
-        else:
-            if hasattr(hdu, 'shape'):
-                shape = hdu.shape
-
-    # Try to figure out which type to return, otherwise, just return a
-    # new instance of the requested class
-    if len(shape) == 0:
-        from . import model_base
-        new_class = model_base.DataModel
-    elif len(shape) == 4:
-        # It's a RampModel, MIRIRampModel, or QuadModel
+    if len(shape) == 4:
         try:
             dqhdu = hdulist[fits_header_name('DQ')]
         except KeyError:
@@ -176,11 +162,33 @@ def _class_from_shape(hdulist, shape):
                 from . import miri_ramp
                 new_class = miri_ramp.MIRIRampModel
         else:
-            # It's a QuadModel
-            from . import quad
-            new_class = quad.QuadModel
+            new_class = None            
+    else:
+        try:
+            primary = hdulist[0]
+            reftype = primary.header.get('REFTYPE')
+        except (KeyError, AttributeError):
+            reftype = None     
+        if reftype is None:
+            new_class = None
+        else:
+            from . import referencefile
+            new_class = referencefile.ReferencefileModel
+
+    return new_class
+
+
+def _class_from_shape(hdulist, shape):
+    """
+    Get the class name from the shape
+    """
+    if len(shape) == 0:
+        from . import model_base
+        new_class = model_base.DataModel
+    elif len(shape) == 4:
+        from . import quad
+        new_class = quad.QuadModel
     elif len(shape) == 3:
-        # It's a CubeModel
         from . import cube
         new_class = cube.CubeModel
     elif len(shape) == 2:
@@ -198,6 +206,21 @@ def _class_from_shape(hdulist, shape):
         new_class = None
         
     return new_class
+
+
+def _get_shape(hdulist, shape):
+    """
+    If we do not have it, determine the shape from the science hdu
+    """
+    if len(shape) == 0:
+        try:
+            hdu = hdulist[(fits_header_name('SCI'), 1)]
+        except KeyError:
+            pass
+        else:
+            if hasattr(hdu, 'shape'):
+                shape = hdu.shape
+    return shape
 
 
 def can_broadcast(a, b):
