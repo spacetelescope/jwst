@@ -52,6 +52,8 @@ class DataSet(object):
         self.pupil = None
         if model.meta.instrument.pupil is not None:
             self.pupil = model.meta.instrument.pupil.upper()
+        if model.meta.instrument.grating is not None:
+            self.grating = model.meta.instrument.grating.upper()
         self.slitnum = -1
 
         log.debug('Using instrument: %s', self.instrument)
@@ -61,6 +63,8 @@ class DataSet(object):
             log.debug(' filter: %s', self.filter)
         if self.pupil is not None:
             log.debug(' pupil: %s', self.pupil)
+        if self.grating is not None:
+            log.debug(' grating: %s', self.grating)
 
 
     def calc_nirspec(self, ftab):
@@ -137,7 +141,19 @@ class DataSet(object):
 
                 # Match on filter and grating only
                 if self.filter == ref_filter and grating == ref_grating:
-                    conv_factor = self.photom_io(tabdata)
+
+                    # Check for MSA data
+                    if (isinstance(self.input, datamodels.MultiSlitModel) and
+                        self.exptype == 'NRS_MSASPEC'):
+
+                        # Loop over the MSA slits, applying the same photom
+                        # ref data to all slits
+                        for slit in self.input.slits:
+                            log.info('Working on slit %s' % slit.name)
+                            self.slitnum += 1
+                            conv_factor = self.photom_io(tabdata)
+                    else:
+                        conv_factor = self.photom_io(tabdata)
                     break
 
             if conv_factor is not None:
