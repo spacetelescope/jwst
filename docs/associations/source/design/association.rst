@@ -34,6 +34,8 @@ This relationship is shown in the following figure:
 
    Rule vs. Association Relationship
 
+.. _asn-design-rules:
+
 Rules
 -----
 
@@ -41,7 +43,7 @@ Association rules are Python classes which must inherit from the
 :class:`~jwst.associations.association.Association` base class. What
 the rules do and what they create are completely up to the rules
 themselves. Except for a few :ref:`core methods
-<ref-asn-core_methods>`, the only other requirement is that any
+<ref-asn-core-methods>`, the only other requirement is that any
 instance of an association rule must behave as the association it
 creates. If the association is a dict, the rule instance must behave
 as the dict. If the association is a list, the rule instance must

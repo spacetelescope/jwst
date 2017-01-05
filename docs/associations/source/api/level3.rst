@@ -7,8 +7,3 @@ JWST Level3 Associations API
    :members:
    :undoc-members:
    :member-order: bysource
-
-.. automodule:: jwst.associations.lib.rules_level3
-   :members:
-   :undoc-members:
-   :member-order: bysource

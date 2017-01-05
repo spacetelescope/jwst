@@ -158,6 +158,8 @@ framework required to create associations. The rest of this section
 will discuss the minimum functionality that a subclass needs to
 implement in order to create an association.
 
+.. _class-naming:
+
 Class Naming
 ^^^^^^^^^^^^
 

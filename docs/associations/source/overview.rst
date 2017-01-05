@@ -1,6 +1,6 @@
-.. _overview:
-
 .. _pipeline modules: http://ssb.stsci.edu/doc/jwst_git/docs/stpipe/html/
+
+.. _overview:
 
 ********
 Overview
@@ -25,7 +25,7 @@ Level3 JWST `pipeline modules`_.
 
 In DMS, associations are created by the :ref:`association generator
 <asn-generate>`. The association generator is basically a classifier.
-The generator takes, as input, a table and one or more :ref:`rules`.
+The generator takes, as input, a table and one or more :ref:`rules <asn-design-rules>`.
 Based on the rules, the generator takes each row of the table and
 classifies it, placing that row into one or more associations. These
 relationships are show in the figure below.
