@@ -85,10 +85,9 @@ The rest of this description pertains to the parameters for non-IFU data.
 
 If ``src_coeff`` is not given, the extraction limits can be specified by
 ``xstart``, ``xstop``, ``ystart``, ``ystop``, and ``extract_width``.  Note
-that all of these values are integers.  (It was intended that the start and
-stop limits be inclusive; the current code may not be consistent in this
-regard, but it will be so in the next release.  To specify the
-cross-dispersion limits precisely, use ``src_coeff``.)  If ``dispaxis``
+that all of these values are integers, and that the start and stop limits
+are inclusive.
+If ``dispaxis``
 is 1, the zero-indexed limits in the dispersion direction are ``xstart``
 and ``xstop``; if ``dispaxis`` is 2, the dispersion limits are ``ystart``
 and ``ystop``.  (The dispersion limits can be given even if ``src_coeff``
