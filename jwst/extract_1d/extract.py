@@ -19,6 +19,8 @@ log.setLevel(logging.DEBUG)
 # For full-frame input data, keyword SLTNAME may not be populated, so use
 # the following string to indicate that the first slit in the reference
 # file should be used.
+# A slit name in the reference file can also be ANY, in which case that
+# slit can be used with any slit name from the input data.
 ANY = "ANY"
 
 # Dispersion direction, predominantly horizontal or vertical.  These values
@@ -57,7 +59,7 @@ def get_extract_parameters(refname, slitname, meta,
                 extract_params['src_coeff'] = aper.get('src_coeff')
                 extract_params['bkg_coeff'] = aper.get('bkg_coeff')
                 extract_params['independent_var'] = \
-                      aper.get('independent_var', 'wavelength').lower()
+                      aper.get('independent_var', 'pixel').lower()
                 if smoothing_length is None:
                     extract_params['smoothing_length'] = \
                           aper.get('smoothing_length', 0)
@@ -94,198 +96,404 @@ def get_nod_offset(aper, meta):
     return nod_correction
 
 
-def apply_nod_offset(aperture, nod_correction, dispaxis):
-    """Add the nod offset (if non-zero) to the aperture location.
+def log_initial_parameters(extract_params):
+    """Log some of the initial extraction parameters."""
 
-    Note that if the source and background regions were specified with
-    the src_coeff and bkg_coeff keys, the nod correction also needs to be
-    added to those locations.  This will be done by calling method
-    add_nod_correction in the __init__ for ExtractModel.
+    log.debug("dispaxis = %d", extract_params["dispaxis"])
+    log.debug("independent_var = %s", extract_params["independent_var"])
+    log.debug("smoothing_length = %d", extract_params["smoothing_length"])
+    log.debug("initial xstart = %s", str(extract_params["xstart"]))
+    log.debug("initial xstop = %s", str(extract_params["xstop"]))
+    log.debug("initial ystart = %s", str(extract_params["ystart"]))
+    log.debug("initial ystop = %s", str(extract_params["ystop"]))
+    log.debug("extract_width = %s", str(extract_params["extract_width"]))
+    log.debug("initial src_coeff = %s", str(extract_params["src_coeff"]))
+    log.debug("initial bkg_coeff = %s", str(extract_params["bkg_coeff"]))
+    log.debug("bkg_order = %d", extract_params["bkg_order"])
+    log.debug("nod_correction = %s", str(extract_params["nod_correction"]))
+
+
+def get_aperture(slit, extract_params):
+    """Get the extraction limits xstart, xstop, ystart, ystop.
+
+    Parameters
+    ----------
+    slit: data model
+        The input slit, or image.
+
+    extract_params: dictionary
+        Parameters read from the reference file.
+
+    Returns
+    -------
+    ap: namedtuple
+        Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.
     """
 
-    if aperture is None:
-        return aperture
+    ap_ref = aperture_from_ref(extract_params, slit.data.shape)
+    ap_ref = update_from_width(ap_ref, extract_params["extract_width"],
+                               extract_params["dispaxis"])
+    ap_ref = apply_nod_offset(ap_ref, extract_params["nod_correction"],
+                              extract_params["dispaxis"])
 
-    if nod_correction != 0.:
-        log.debug("Applying nod offset of {0}".format(nod_correction))
-        if dispaxis == HORIZONTAL:
-            aperture = Aperture(aperture.xstart,
-                                aperture.ystart + nod_correction,
-                                aperture.xstop,
-                                aperture.ystop + nod_correction)
-        else:
-            aperture = Aperture(aperture.xstart + nod_correction,
-                                aperture.ystart,
-                                aperture.xstop + nod_correction,
-                                aperture.ystop)
-    return aperture
-
-
-def get_aperture(slit, meta, extract_params):
-
-    direction = extract_params['dispaxis']
-
-    # Copy out the values of xstart, ystart, etc., that were previously
-    # read from the reference file.
-    ap_ref = aperture_from_ref(extract_params)
+    (ap_ref, truncated) = update_from_shape(ap_ref, slit.data.shape)
+    if truncated:
+        log.warning("Extraction limits extended outside the input image "
+                    "borders; limits have been truncated.")
 
     if hasattr(slit.meta, 'wcs'):
-        ap_wcs = aperture_from_wcs(slit.meta.wcs, direction)
+        (ap_wcs, lu_flags) = aperture_from_wcs(slit.meta.wcs,
+                                               extract_params["dispaxis"])
     else:
         ap_wcs = None
+        log.debug("no wcs info")
 
-    ap_shape = Aperture(0, 0, slit.data.shape[-1], slit.data.shape[-2])
-
-    ap = reconcile_ap_limits(ap_ref, ap_wcs, ap_shape)
-
-    ap = apply_nod_offset(ap, extract_params['nod_correction'], direction)
+    ap = update_from_wcs(ap_ref, ap_wcs, lu_flags)
 
     return ap
 
 
-def aperture_from_ref(extract_params):
+def aperture_from_ref(extract_params, im_shape):
+    """Get extraction region from reference file or image shape.
+
+    Parameters
+    ----------
+    extract_params: dictionary
+        Parameters read from the reference file.
+
+    im_shape: tuple of int
+        The last two elements are the height and width of the input image
+        (slit).
+
+    Returns
+    -------
+    ap_ref: namedtuple
+        Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.
+    """
+
+    nx = im_shape[-1]
+    ny = im_shape[-2]
 
     xstart = extract_params.get('xstart', None)
     xstop = extract_params.get('xstop', None)
     ystart = extract_params.get('ystart', None)
     ystop = extract_params.get('ystop', None)
 
-    if xstart is None and ystart is None and xstop is None and ystop is None:
-        return None
-    else:
-        # Individual values can be None, just not all of them.
-        ap_ref = Aperture(xstart, ystart, xstop, ystop)
+    if xstart is None:
+        xstart = 0
+    if xstop is None:
+        xstop = nx - 1                  # limits are inclusive
+    if ystart is None:
+        ystart = 0
+    if ystop is None:
+        ystop = ny - 1
+
+    ap_ref = Aperture(xstart=xstart, xstop=xstop, ystart=ystart, ystop=ystop)
+
+    return ap_ref
+
+
+def update_from_width(ap_ref, extract_width, direction):
+    """Update XD extraction limits based on extract_width.
+
+    If extract_width was specified, that value should override
+    ystop - ystart (or xstop - xstart, depending on dispersion direction).
+
+    Parameters
+    ----------
+    ap_ref: namedtuple
+        Contains xstart, xstop, ystart, ystop.  These are the initial
+        values as read from the reference file, except that they may
+        have been truncated at the image borders.
+
+    extract_width: int
+        The number of pixels in the cross-dispersion direction to add
+        together to make a 1-D spectrum from a 2-D image.
+
+    direction: int
+        HORIZONTAL (1) if the dispersion direction is predominantly
+        horizontal.  VERTICAL (2) if the dispersion direction is
+        predominantly vertical.
+
+    Returns
+    -------
+    ap_width: namedtuple
+        Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.
+    """
+
+    if extract_width is None:
         return ap_ref
+
+    if direction == HORIZONTAL:
+        temp_width = ap_ref.ystop - ap_ref.ystart + 1
+    else:
+        temp_width = ap_ref.xstop - ap_ref.xstart + 1
+
+    if extract_width == temp_width:
+        return ap_ref                                   # OK as is
+
+    width = float(extract_width)
+    if direction == HORIZONTAL:
+        lower = float(ap_ref.ystart)
+        upper = float(ap_ref.ystop)
+        lower = (lower + upper) / 2. - (width - 1.) / 2.
+        upper = lower + (width - 1.)
+        ap_width = Aperture(xstart=ap_ref.xstart, xstop=ap_ref.xstop,
+                            ystart=lower, ystop=upper)
+    else:
+        lower = float(ap_ref.xstart)
+        upper = float(ap_ref.xstop)
+        lower = (lower + upper) / 2. - (width - 1.) / 2.
+        upper = lower + (width - 1.)
+        ap_width = Aperture(xstart=lower, xstop=upper,
+                            ystart=ap_ref.ystart, ystop=ap_ref.ystop)
+
+    return ap_width
+
+
+def apply_nod_offset(ap, nod_correction, direction):
+    """Add the nod offset to the aperture location.
+
+    This function only applies the nod offset correction to the limits
+    in the cross-dispersion direction that were specified with
+    ystart and ystop (or xstart and xstop, depending on the dispersion
+    direction).
+
+    If the source and/or background regions were instead specified with
+    src_coeff and bkg_coeff, those will need to be corrected separately.
+    """
+
+    if direction == HORIZONTAL:
+        ap_corr = Aperture(xstart=ap.xstart,
+                           xstop=ap.xstop,
+                           ystart=ap.ystart + nod_correction,
+                           ystop=ap.ystop + nod_correction)
+    else:
+        ap_corr = Aperture(xstart=ap.xstart + nod_correction,
+                           xstop=ap.xstop + nod_correction,
+                           ystart=ap.ystart,
+                           ystop=ap.ystop)
+
+    return ap_corr
+
+
+def update_from_shape(ap, im_shape):
+    """Truncate extraction region based on input image shape.
+
+    Parameters
+    ----------
+    ap: namedtuple
+        Extraction region.
+
+    im_shape: tuple of int
+        The last two elements are the height and width of the input image.
+
+    Returns
+    -------
+    tuple: (ap_shape, truncated)
+        ap_shape is a namedtuple with keys 'xstart', 'xstop', 'ystart',
+        and 'ystop'.
+        truncated is a boolean, True if any value was truncated at an
+        image edge.
+    """
+
+    nx = im_shape[-1]
+    ny = im_shape[-2]
+
+    xstart = ap.xstart
+    xstop = ap.xstop
+    ystart = ap.ystart
+    ystop = ap.ystop
+
+    truncated = False
+    if ap.xstart < 0:
+        xstart = 0
+        truncated = True
+    if ap.xstop >= nx:
+        xstop = nx - 1                          # limits are inclusive
+        truncated = True
+    if ap.ystart < 0:
+        ystart = 0
+        truncated = True
+    if ap.ystop >= ny:
+        ystop = ny - 1
+        truncated = True
+
+    ap_shape = Aperture(xstart=xstart, xstop=xstop,
+                        ystart=ystart, ystop=ystop)
+
+    return (ap_shape, truncated)
 
 
 def aperture_from_wcs(wcs, direction):
+    """Get the limits over which the WCS is defined.
+
+    Parameters
+    ----------
+    wcs: data model
+        The world coordinate system interface.
+
+    direction: int
+        HORIZONTAL (1) if the dispersion is generally along the X axis;
+        VERTICAL (2) if the dispersion is generally along the Y axis.
+
+    Returns
+    -------
+    tuple (ap_wcs, lu_flags)
+        ap_wcs: namedtuple or None
+            Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.  These are
+            the limits copied directly from wcs.domain.  If 'lower' or
+            'upper' is not a key in wcs.domain, ap_wcs will be None.
+        lu_flags: two-element list, each element is a dictionary
+            This is just the 'includes_lower' and 'includes_upper' values
+            from wcs.domain, except that default values are used for
+            missing values.  The defaults are what the WCS interface uses
+            for defaults, namely:
+            'includes_lower': True, 'includes_upper': False.
+    """
+
+    # Boolean flags for keys 'includes_lower' and 'includes_upper'.
+    # These are default values, based on Python slice notation.
+    lu_flags = [{'includes_lower': True, 'includes_upper': False},
+                {'includes_lower': True, 'includes_upper': False}]
 
     try:
         domain = wcs.domain
     except AttributeError:
-        return None
+        return (None, lu_flags)
 
     if domain is None:
-        return None
+        return (None, lu_flags)
 
-    if len(domain) < 2 or 'lower' not in domain[0] or \
-                          'upper' not in domain[0] or \
-                          'lower' not in domain[1] or \
-                          'upper' not in domain[1]:
-        return None
+    if (len(domain) < 2 or
+        'lower' not in domain[0] or 'upper' not in domain[0] or
+        'lower' not in domain[1] or 'upper' not in domain[1]):
+        return (None, lu_flags)
 
-    # These are supposed to be integers.
     xstart = domain[0]['lower']
     xstop = domain[0]['upper']
     ystart = domain[1]['lower']
     ystop = domain[1]['upper']
-    # The limits should be the limits of a slice.  Possibly modify the limits,
-    # depending on domain[i]['includes_lower'] (but just in the dispersion
-    # direction).
-    if direction == HORIZONTAL:
-        x_test = int(round(xstart))     # just in case it's not an int
-        if 'includes_lower' in domain[0] and not domain[0]['includes_lower']:
-            # domain[0]['lower'] is not included, so increment it.
-            xstart = x_test + 1
+
+    # Update the default values from `domain`.
+    if 'includes_lower' in domain[0]:
+        lu_flags[0]['includes_lower'] = domain[0]['includes_lower']
+    if 'includes_upper' in domain[0]:
+        lu_flags[0]['includes_upper'] = domain[0]['includes_upper']
+    if 'includes_lower' in domain[1]:
+        lu_flags[1]['includes_lower'] = domain[1]['includes_lower']
+    if 'includes_upper' in domain[1]:
+        lu_flags[1]['includes_upper'] = domain[1]['includes_upper']
+
+    ap_wcs = Aperture(xstart=xstart, xstop=xstop, ystart=ystart, ystop=ystop)
+    return (ap_wcs, lu_flags)
+
+
+def update_from_wcs(ap_ref, ap_wcs, lu_flags):
+    """Limit the extraction region to the WCS domain.
+
+    Parameters
+    ----------
+    ap_ref: namedtuple
+        Contains xstart, xstop, ystart, ystop.  These are the values of
+        the extraction region as specified by the reference file or the
+        image size.  The cross-dispersion limits have been shifted by the
+        nod offset correction.
+
+    ap_wcs: namedtuple
+        These are the domain limits, but rounded to int and possibly
+        incremented or decremented so they can be compared directly with
+        the values in `ap_ref`.
+
+    Returns
+    -------
+    ap: namedtuple
+        Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.
+    """
+
+    if ap_wcs is None:
+        return ap_ref
+
+    # ap_wcs has the limits over which the WCS transformation is defined;
+    # take those as the outer limits over which we will extract.
+    xstart = compare_start(ap_ref.xstart, ap_wcs.xstart,
+                           lu_flags[0]['includes_lower'])
+    ystart = compare_start(ap_ref.ystart, ap_wcs.ystart,
+                           lu_flags[1]['includes_lower'])
+    xstop = compare_stop(ap_ref.xstop, ap_wcs.xstop,
+                         lu_flags[0]['includes_upper'])
+    ystop = compare_stop(ap_ref.ystop, ap_wcs.ystop,
+                         lu_flags[1]['includes_upper'])
+
+    ap = Aperture(xstart=xstart, xstop=xstop, ystart=ystart, ystop=ystop)
+
+    return ap
+
+def compare_start(start_ref, start_wcs, includes_lower):
+    """Compare the start limit from the aperture with the WCS lower limit.
+
+    Parameters
+    ----------
+    start_ref: int or float
+        xstart or ystart, as specified by the reference file or the image
+        size, possibly shifted by the nod offset correction.
+
+    start_wcs: int or float
+        The value of 'lower' from the WCS domain limits.
+
+    includes_lower: boolean
+        The value of 'includes_lower' from the WCS domain.
+
+    Returns
+    -------
+    value: int or float
+        The start limit, possibly constrained by the WCS start limit.
+    """
+
+    if start_ref > start_wcs:           # inside WCS limit
+        value = start_ref
+    elif start_ref == start_wcs:
+        if includes_lower:
+            value = start_wcs
         else:
-            xstart = x_test
-        x_test = int(round(xstop))
-        if 'includes_upper' in domain[0] and domain[0]['includes_upper']:
-            # It is included, so add one to make it an upper limit of a slice.
-            xstop = x_test + 1
+            value = start_wcs + 1
+    else:                               # outside WCS limit
+        value = math.ceil(start_wcs)
+
+    return value
+
+def compare_stop(stop_ref, stop_wcs, includes_upper):
+    """Compare the stop limit from the aperture with the WCS upper limit.
+
+    Parameters
+    ----------
+    stop_ref: int or float
+        xstop or ystop, as specified by the reference file or the image
+        size, possibly shifted by the nod offset correction.
+
+    stop_wcs: int or float
+        The value of 'upper' from the WCS domain limits.
+
+    includes_upper: boolean
+        The value of 'includes_upper' from the WCS domain.
+
+    Returns
+    -------
+    value: int or float
+        The stop limit, possibly constrained by the WCS stop limit.
+    """
+
+    if stop_ref < stop_wcs:             # inside WCS limit
+        value = stop_ref
+    elif stop_ref == stop_wcs:
+        if includes_upper:
+            value = stop_wcs
         else:
-            xstop = x_test
-    else:                               # dispersion is vertical
-        y_test = int(round(ystart))
-        if 'includes_lower' in domain[1] and not domain[1]['includes_lower']:
-            ystart = y_test + 1
-        else:
-            ystart = y_test
-        y_test = int(round(ystop))
-        if 'includes_upper' in domain[1] and domain[1]['includes_upper']:
-            ystop = y_test + 1
-        else:
-            ystop = y_test
+            value = stop_wcs - 1
+    else:                               # outside WCS limit
+        value = math.floor(stop_wcs)
 
-    ap_wcs = Aperture(xstart, ystart, xstop, ystop)
-    return ap_wcs
-
-
-def reconcile_ap_limits(ap_ref, ap_wcs, ap_shape):
-
-    ref_ok = (ap_ref is not None)       # But individual elements can be None
-    wcs_ok = (ap_wcs is not None)       # May be reset below
-
-    # These values are always defined, based on the input image shape.
-    xstart = ap_shape.xstart
-    xstop = ap_shape.xstop
-    ystart = ap_shape.ystart
-    ystop = ap_shape.ystop
-
-    # If ap_ref is populated, use it in preference to the image size, but
-    # truncate at image borders, and later compare with ap_wcs as well.
-    if ref_ok:
-        truncated = False                       # just for info
-        if ap_ref.xstart is not None:
-            if ap_ref.xstart < xstart:
-                truncated = True
-            xstart = max(xstart, ap_ref.xstart)
-        if ap_ref.xstop is not None:
-            if ap_ref.xstop > xstop:
-                truncated = True
-            xstop = min(xstop, ap_ref.xstop)
-        if ap_ref.ystart is not None:
-            if ap_ref.ystart < ystart:
-                truncated = True
-            ystart = max(ystart, ap_ref.ystart)
-        if ap_ref.ystop is not None:
-            if ap_ref.ystop > ystop:
-                truncated = True
-            ystop = min(ystop, ap_ref.ystop)
-        if truncated:
-            log.info("Aperture limit(s) in reference file extended beyond"
-                     " image size.")
-
-    if wcs_ok:
-        # Copy these so we can assign to them.
-        wcs_xstart = ap_wcs.xstart
-        wcs_xstop = ap_wcs.xstop
-        wcs_ystart = ap_wcs.ystart
-        wcs_ystop = ap_wcs.ystop
-        # The limits in ap_wcs are with respect to the original, full-size
-        # image.  If the current input image is a cutout and is outside the
-        # WCS domain, flag ap_wcs as not valid.
-        if ap_wcs.xstart > xstop or ap_wcs.xstop < xstart:
-            wcs_xstart = None
-            wcs_xstop = None
-        if ap_wcs.ystart > ystop or ap_wcs.ystop < ystart:
-            wcs_ystart = None
-            wcs_ystop = None
-        if wcs_xstart is None and wcs_xstop is None and \
-           wcs_ystart is None and wcs_ystop is None:
-            wcs_ok = False
-            log.info("Current image is outside the WCS domain")
-
-    if wcs_ok:
-        truncated = False                       # just for info
-        # ap_wcs has the limits over which the WCS transformation is
-        # defined; take those as the outer limits over which we will extract.
-        if wcs_xstart is not None and ap_wcs.xstart > xstart:
-            xstart = ap_wcs.xstart
-            truncated = True
-        if wcs_xstop is not None and ap_wcs.xstop < xstop:
-            xstop = ap_wcs.xstop
-            truncated = True
-        if wcs_ystart is not None and ap_wcs.ystart > ystart:
-            ystart = ap_wcs.ystart
-            truncated = True
-        if wcs_ystop is not None and ap_wcs.ystop < ystop:
-            ystop = ap_wcs.ystop
-            truncated = True
-        if truncated:
-            log.info("Aperture limit(s) truncated due to WCS domain")
-
-    return Aperture(xstart, ystart, xstop, ystop)
+    return value
 
 
 def create_poly(coeff):
@@ -321,29 +529,72 @@ class ExtractModel(object):
                  dispaxis=HORIZONTAL,
                  xstart=None, xstop=None, ystart=None, ystop=None,
                  extract_width=None, src_coeff=None, bkg_coeff=None,
-                 independent_var="wavelength",
+                 independent_var="pixel",
                  smoothing_length=0, bkg_order=0, nod_correction=0.,
                  x_center=None, y_center=None,
                  inner_bkg=None, outer_bkg=None, method='subpixel'):
 
         self.dispaxis = dispaxis
-        # possibly override with src_coeff
+
+        # xstart, xstop, ystart, or ystop may be overridden with src_coeff,
+        # they may be limited by the input image size or by the WCS domain,
+        # or they may be modified if extract_width was specified.
+        # If these values are specified, the limits in the cross-dispersion
+        # direction should be integers, but they may later be replaced with
+        # fractional values, depending on extract_width, in order to center
+        # the extraction window in the originally specified xstart to xstop
+        # (or ystart to ystop).
         if xstart is None:
             self.xstart = None
-        else:
-            self.xstart = int(round(xstart))
+        elif self.dispaxis == VERTICAL:
+            r = round(xstart)
+            if xstart == r:
+                self.xstart = xstart
+            else:
+                log.warning("xstart %s should have been an integer; "
+                            "rounding to %s", str(xstart), str(r))
+                self.xstart = r
+        else:                           # dispaxis is HORIZONTAL
+            self.xstart = xstart
+
         if xstop is None:
             self.xstop = None
+        elif self.dispaxis == VERTICAL:
+            r = round(xstop)
+            if xstop == r:
+                self.xstop = xstop
+            else:
+                log.warning("xstop %s should have been an integer; "
+                            "rounding to %s", str(xstop), str(r))
+                self.xstop = r
         else:
-            self.xstop = int(round(xstop))
+            self.xstop = xstop
+
         if ystart is None:
             self.ystart = None
+        elif self.dispaxis == HORIZONTAL:
+            r = round(ystart)
+            if ystart == r:
+                self.ystart = ystart
+            else:
+                log.warning("ystart %s should have been an integer; "
+                            "rounding to %s", str(ystart), str(r))
+                self.ystart = r
         else:
-            self.ystart = int(round(ystart))
+            self.ystart = ystart
+
         if ystop is None:
             self.ystop = None
+        elif self.dispaxis == HORIZONTAL:
+            r = round(ystop)
+            if ystop == r:
+                self.ystop = ystop
+            else:
+                log.warning("ystop %s should have been an integer; "
+                            "rounding to %s", str(ystop), str(r))
+                self.ystop = r
         else:
-            self.ystop = int(round(ystop))
+            self.ystop = ystop
 
         if extract_width is None:
             self.extract_width = None
@@ -351,7 +602,13 @@ class ExtractModel(object):
             self.extract_width = int(round(extract_width))
         # 'wavelength' or 'pixel', the independent variable for functions
         # for lower and upper limits of source and background regions.
-        self.independent_var = independent_var
+        self.independent_var = independent_var.lower()
+        if (self.independent_var != "wavelength" and
+            self.independent_var != "pixel" and
+            self.independent_var != "pixels"):
+            log.error("independent_var = '%s'; "
+                      "specify 'wavelength' or 'pixel'", self.independent_var)
+            raise RuntimeError("Invalid value for independent_var")
 
         # Coefficients for source (i.e. target) and background limits and
         # corresponding polynomial functions.
@@ -379,9 +636,14 @@ class ExtractModel(object):
             self.wcs = None
         self._wave_model = None
 
-        # If src_coeff and/or bkg_coeff have been specified, add the
-        # nod offset correction to the first coefficient of every
-        # coefficient list.
+        # If source extraction coefficients src_coeff were specified, this
+        # method will add the nod offset correction to the first coefficient
+        # of every coefficient list; otherwise, the nod offset will be added
+        # to xstart & xstop or ystart & ystop in get_aperture.
+        # If background extraction coefficients bkg_coeff were specified,
+        # this method will add the nod offset to the first coefficients.
+        # Note that background coefficients are handled independently of
+        # src_coeff.
         self.add_nod_correction()
 
     def add_nod_correction(self):
@@ -407,19 +669,47 @@ class ExtractModel(object):
                 coeff_list[0] += self.nod_correction
                 self.bkg_coeff[i] = copy.copy(coeff_list)
 
+    def update_extraction_limits(self, ap):
+        """Update start and stop limits.
+
+        Copy the values of xstart, etc., to the attributes.  Note, however,
+        that if src_coeff was specified, that will override the values
+        given by xstart, etc.
+        The limits in the dispersion direction will be rounded to integer.
+        """
+
+        self.xstart = ap.xstart
+        self.xstop = ap.xstop
+        self.ystart = ap.ystart
+        self.ystop = ap.ystop
+
+        if self.dispaxis == HORIZONTAL:
+            self.xstart = int(round(self.xstart))
+            self.xstop = int(round(self.xstop))
+        else:                           # vertical
+            self.ystart = int(round(self.ystart))
+            self.ystop = int(round(self.ystop))
+
     def log_extraction_parameters(self):
-        """Log some of the extraction parameters."""
+        """Log the updated extraction parameters."""
 
-        log.debug("dispaxis = %d", self.dispaxis)
-        log.debug("independent_var = %s", self.independent_var)
-        log.debug("smoothing_length = %d", self.smoothing_length)
-        log.debug("bkg_order = %d", self.bkg_order)
-        log.debug("nod_correction = %s", str(self.nod_correction))
-        log.debug("extract_width = %s", str(self.extract_width))
-
-        # The following parameters are printed in assign_polynomial_limits,
-        # because they can be modified there:
-        # xstart, xstop, ystart, ystop, src_coeff, bkg_coeff.
+        note_x = ""
+        note_y = ""
+        if self.src_coeff is not None:
+            # Since src_coeff was specified, that will be used instead of
+            # xstart & xstop (or ystart & ystop).
+            if self.dispaxis == HORIZONTAL:
+                note_y = " (not actually used)"
+            else:
+                note_x = " (not actually used)"
+        log.debug("xstart = %s%s", str(self.xstart), note_x)
+        log.debug("xstop = %s%s", str(self.xstop), note_x)
+        log.debug("ystart = %s%s", str(self.ystart), note_y)
+        log.debug("ystop = %s%s", str(self.ystop), note_y)
+        if self.src_coeff is not None:
+            log.debug("src_coeff = %s", str(self.src_coeff))
+        if self.bkg_coeff is not None:
+            log.debug("bkg_coeff = %s", str(self.bkg_coeff))
 
     def assign_polynomial_limits(self):
         """Create polynomial functions for extraction limits.
@@ -452,37 +742,18 @@ class ExtractModel(object):
 
         if self.src_coeff is None:
             # Create constant functions.
-            if self.extract_width is None:
-                if self.dispaxis == HORIZONTAL:
-                    width = round(self.ystop - self.ystart)
-                else:
-                    width = round(self.xstop - self.xstart)
-            else:
-                width = float(self.extract_width)
-            # If extract_width was specified, that value should override
-            # ystop - ystart (or xstop - xstart), in case of disagreement.
+
             if self.dispaxis == HORIZONTAL:
-                ystart = float(self.ystart)
-                ystop = float(self.ystop - 1)           # inclusive limit
-                lower = (ystart + ystop) / 2. - width / 2.
-                upper = lower + width
-                log.debug("xstart = %s", str(self.xstart))
-                log.debug("xstop = %s", str(self.xstop))
-                log.debug("ystart = %s", str(lower))
-                log.debug("ystop = %s", str(upper))
+                lower = float(self.ystart) - 0.5
+                upper = float(self.ystop) + 0.5
             else:
-                xstart = float(self.xstart)
-                xstop = float(self.xstop - 1)
-                lower = (xstart + xstop) / 2. - width / 2.
-                upper = lower + width
-                log.debug("xstart = %s", str(lower))
-                log.debug("xstop = %s", str(upper))
-                log.debug("ystart = %s", str(self.ystart))
-                log.debug("ystop = %s", str(self.ystop))
+                lower = float(self.xstart) - 0.5
+                upper = float(self.xstop) + 0.5
+            log.debug("Converting extraction limits to [[%g], [%g]]",
+                      lower, upper)
             self.p_src = [[create_poly([lower]), create_poly([upper])]]
         else:
             # The source extraction can include more than one region.
-            log.debug("src_coeff = %s", str(self.src_coeff))
             n_lists = len(self.src_coeff)
             if n_lists // 2 * 2 != n_lists:
                 raise RuntimeError("src_coeff must contain alternating lists"
@@ -498,7 +769,6 @@ class ExtractModel(object):
                 expect_lower = not expect_lower
 
         if self.bkg_coeff is not None:
-            log.debug("bkg_coeff = %s", str(self.bkg_coeff))
             n_lists = len(self.bkg_coeff)
             if n_lists // 2 * 2 != n_lists:
                 raise RuntimeError("bkg_coeff must contain alternating lists"
@@ -512,38 +782,6 @@ class ExtractModel(object):
                     upper = create_poly(coeff_list)
                     self.p_bkg.append([lower, upper])
                 expect_lower = not expect_lower
-
-    def update_extraction_limits(self, ap):
-        """Possibly update start and stop limits.
-
-        If attributes self.xstart, self.xstop, self.ystart, or self.ystop
-        have not been assigned values yet, update them from `ap` (a
-        named tuple).  The actual lower and upper extraction limits may be
-        set to different values than these by using extract_width, or by
-        assign_polynomial_limits() if src_coeff was specified.
-
-        The limits in the dispersion direction will be rounded to integer.
-        """
-
-        if self.xstart is None:
-            self.xstart = ap.xstart
-        if self.xstop is None:
-            self.xstop = ap.xstop
-        if self.ystart is None:
-            self.ystart = ap.ystart
-        if self.ystop is None:
-            self.ystop = ap.ystop
-
-        if self.dispaxis == HORIZONTAL:
-            self.xstart = max(self.xstart, ap.xstart)
-            self.xstop = min(self.xstop, ap.xstop)
-            self.xstart = int(round(self.xstart))
-            self.xstop = int(round(self.xstop))
-        else:                           # vertical
-            self.ystart = max(self.ystart, ap.ystart)
-            self.ystop = min(self.ystop, ap.ystop)
-            self.ystart = int(round(self.ystart))
-            self.ystop = int(round(self.ystop))
 
     def extract(self, data):
         """
@@ -564,13 +802,22 @@ class ExtractModel(object):
             source count rate to get `net`.
         """
 
+        # We need integer values that are the limits of a slice in the
+        # dispersion direction.
+        if self.dispaxis == HORIZONTAL:
+            slice0 = int(round(self.xstart))
+            slice1 = int(round(self.xstop)) + 1
+        else:
+            slice0 = int(round(self.ystart))
+            slice1 = int(round(self.ystop)) + 1
+
         # x_array and y_array are just used for computing the wavelengths.
         if self.dispaxis == HORIZONTAL:
-            x_array = np.arange(self.xstart, self.xstop, dtype=np.float64)
+            x_array = np.arange(slice0, slice1, dtype=np.float64)
             y_array = np.empty(x_array.shape, dtype=np.float64)
             y_array.fill((self.ystart + self.ystop) / 2.)
         else:
-            y_array = np.arange(self.ystart, self.ystop, dtype=np.float64)
+            y_array = np.arange(slice0, slice1, dtype=np.float64)
             x_array = np.empty(y_array.shape, dtype=np.float64)
             x_array.fill((self.xstart + self.xstop) / 2.)
 
@@ -587,19 +834,16 @@ class ExtractModel(object):
             wavelength = None
         del x_array, y_array
 
+        # Range (slice) of pixel numbers in the dispersion direction.
+        disp_range = [slice0, slice1]
         if self.dispaxis == HORIZONTAL:
             image = data
-            # Range (slice) of pixel numbers in the dispersion direction.
-            disp_range = [self.xstart, self.xstop]
             if wavelength is None:
-                wavelength = np.arange(self.xstart, self.xstop,
-                                       dtype=np.float64)
+                wavelength = np.arange(slice0, slice1, dtype=np.float64)
         else:
             image = np.transpose(data, (1, 0))
-            disp_range = [self.ystart, self.ystop]
             if wavelength is None:
-                wavelength = np.arange(self.ystart, self.ystop,
-                                       dtype=np.float64)
+                wavelength = np.arange(slice0, slice1, dtype=np.float64)
 
         mask = np.isnan(wavelength)
         n_nan = mask.sum(dtype=np.float64)
@@ -705,6 +949,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
 
         # Loop over the slits in the input model
         for slit in slits:
+            log.debug('slit name = %s' % slit.name)
             extract_params = get_extract_parameters(refname, slit.name,
                                 input_model.meta, smoothing_length, bkg_order)
             wavelength, net, background = \
@@ -838,13 +1083,15 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
     return output_model
 
 
-def extract_one_slit(slit, integ, meta, slitname=None,
-                     **extract_params):
+def extract_one_slit(slit, integ, meta, slitname=None, **extract_params):
+
+    log_initial_parameters(extract_params)
+    ap = get_aperture(slit, extract_params)
 
     extract_model = ExtractModel(slit, **extract_params)
-    ap = get_aperture(slit, meta, extract_params)
     extract_model.update_extraction_limits(ap)
     extract_model.log_extraction_parameters()
+
     extract_model.assign_polynomial_limits()
     data = slit.data
     if integ > -1:
