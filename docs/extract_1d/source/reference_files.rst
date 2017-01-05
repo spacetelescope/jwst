@@ -109,10 +109,7 @@ of ``ystart`` and ``ystop`` (if ``dispaxis`` is 1) or ``xstart`` and
 ``xstop`` (if ``dispaxis`` is 2), and ``extract_width``.  These polynomials
 are functions of either wavelength (in microns) or pixel number (pixels in
 the dispersion direction, with respect to the input 2-D slit image),
-specified by the key ``independent_var``.  The current default is
-"wavelength", but this may change to "pixel" in the future, so if the
-order of the polynomials for source or background is greater than zero,
-``independent_var`` should be specified explicitly.
+specified by the key ``independent_var``.  The default is "pixel".
 The values of these polynomial functions are pixel numbers in the
 direction perpendicular to dispersion.  More than one source extraction
 region may be specified, though this is not expected to be a typical case.
