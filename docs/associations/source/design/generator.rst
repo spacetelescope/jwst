@@ -1,15 +1,14 @@
 .. _design-generator:
 
-*****************
-Design: Generator
-*****************
+Generator
+=========
 
 Algorithm
-=========
+---------
 
 The generator conceptual workflow is show below:
 
-.. figure:: graphics/generator_flow_concept.png
+.. figure:: ../graphics/generator_flow_concept.png
    :scale: 50%
 
    Generator Conceptual Workflow
@@ -44,7 +43,7 @@ instance. Otherwise an exception is raised. The generator uses
 to loop through its list of existing associations.
 
 Output
-======
+------
 
 Before exiting, the :ref:`generate` checks the :meth:`Association.is_valid
 <jwst.associations.association.Association.is_valid>` property of each
@@ -61,7 +60,7 @@ another :ref:`AssociationPool` containing all the members that did not
 get added to any association.
 
 Member Attributes that are Lists
-================================
+--------------------------------
 
 As mentioned in :ref:`design-pool`, most member attributes are simply
 treated as strings. The exception is when an attribute value looks
@@ -79,7 +78,7 @@ of the list is considered separately because association membership
 may depend on what those individual values are. The figure below
 demonstrates the member replication.
 
-.. figure:: graphics/generator_list_processing.png
+.. figure:: ../graphics/generator_list_processing.png
    :scale: 50%
 
    Member list expansion
@@ -90,4 +89,11 @@ demonstrates the member replication.
 For JWST, this is used to filter through the various types of
 association candidates. Since an exposure can belong to more than one
 association candidate, the exposure can belong to different
-associations depending on the candidates. 
+associations depending on the candidates.
+
+.. _design-candidates:
+
+Association Candidates
+----------------------
+
+TBD

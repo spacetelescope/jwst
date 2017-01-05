@@ -1,10 +1,10 @@
 .. _asn-level3-techspecs:
 
 Level 3 Associations: Technical Specifications
-``````````````````````````````````````````````
+==============================================
 
 DMS Naming
-==========
+----------
 
 When produced through the DMS workflow, all association files are
 named according to the following scheme::
@@ -34,7 +34,7 @@ where:
   * `MMM`: A counter for each type of association created.
       
 Logical Structure
-=================
+-----------------
 
 Independent of the actual format, all Level 3 associations have the
 following structure. Again, the structure is defined and enforced by
@@ -54,7 +54,7 @@ the Level 3 schema
 .. _asn-level3-example:
    
 Example Association
-===================
+-------------------
 
 The following example will be used to explain the contents of an association::
   
@@ -89,7 +89,7 @@ The following example will be used to explain the contents of an association::
     }
 
 JSON Format
------------
+^^^^^^^^^^^
 
 As with any JSON file, the basic unit of information is the key/value
 pair::
@@ -113,7 +113,7 @@ The `json.org <http://www.json.org/>`_ website has a full description
 of the format.
 
 Ordering and Indention
-^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""
 
 Neither JSON or the logical layout of the associations themselves
 define or require that key/values appear in a particular order. It is
@@ -171,7 +171,7 @@ constraints
 
 
 `products` Keyword
-------------------
+^^^^^^^^^^^^^^^^^^
 
 Association products have to components:
 
@@ -193,7 +193,7 @@ members
   tasks. This keyword is explained in detail in the next section.
 
 `members` Keyword
------------------
+^^^^^^^^^^^^^^^^^
 
 `members` is a list of objects, each consisting of the following
 keywords
@@ -217,7 +217,7 @@ asn_candidate *optional*
   to.
 
 Editing the member list
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 As discussed previously, a member is made up of a number of keywords,
 formatted as follows::
