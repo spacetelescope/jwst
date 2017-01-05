@@ -72,17 +72,6 @@ def open(init=None, extensions=None, **kwargs):
         # Copy the object so it knows not to close here
         return init.__class__(init)
     
-    # Get the shape from the input argument where possible
-    if isinstance(init, tuple):
-        for item in init:
-            if not isinstance(item, int):
-                raise ValueError("shape must be a tuple of ints")
-        shape = init
-    elif isinstance(init, np.ndarray):
-        shape = init.shape
-    else:
-        shape = ()
-
     # Get the list of hdus where possible
     if isinstance(init, (six.text_type, bytes)) or hasattr(init, "read"):
         hdulist = fits.open(init)
@@ -91,18 +80,38 @@ def open(init=None, extensions=None, **kwargs):
     else:
         hdulist = {}
         
-    # First try to get the class name from the primary header
-    if hdulist:
-        shape = _get_shape(hdulist, shape)
-        new_class = _class_from_model_type(hdulist)
-    else:
-        new_class = None
+    # Get the shape from the input argument where possible
+    if isinstance(init, tuple):
+        for item in init:
+            if not isinstance(item, int):
+                raise ValueError("shape must be a tuple of ints")
+        shape = init
 
-    # Get the class from the reference file type and other header keywords
+    elif isinstance(init, np.ndarray):
+        shape = init.shape
+
+    elif hdulist:
+        # If we have it, determine the shape from the science hdu
+        try:
+            hdu = hdulist[(fits_header_name('SCI'), 1)]
+        except (KeyError, NameError):
+            shape = ()
+        else:
+            if hasattr(hdu, 'shape'):
+                shape = hdu.shape
+            else:
+                shape = ()
+    else:
+        shape = ()
+
+    # First try to get the class name from the primary header
+    new_class = _class_from_model_type(hdulist)
+
+    # Or get the class from the reference file type and other header keywords
     if new_class is None:
         new_class = _class_from_reftype(hdulist, shape)
 
-    # Get the class name from the shape
+    # Or Get the class from the shape
     if new_class is None:
         new_class = _class_from_shape(hdulist, shape)
 
@@ -127,18 +136,17 @@ def _class_from_model_type(hdulist):
     """
     from . import _defined_models as defined_models
 
-    try:
+    if hdulist:
         primary = hdulist[0]
-    except KeyError:
-        model_type = None
-    else:
-        model_type = primary.header.get('DATAMODL')
+        model_type = primary.header.get(fits_header_name('DATAMODL'))
 
-    if model_type is None:
+        if model_type is None:
+            new_class = None
+        else:
+            new_class = defined_models.get(model_type)
+    else:
         new_class = None
-    else:
-        new_class = defined_models.get(model_type)
-
+        
     return new_class
 
 
@@ -146,34 +154,34 @@ def _class_from_reftype(hdulist, shape):
     """
     Get the class name from the reftype and other header keywords
     """
-    if len(shape) == 4:
-        try:
-            dqhdu = hdulist[fits_header_name('DQ')]
-        except KeyError:
-            # It's a RampModel or MIRIRampModel
+    if hdulist:
+        if len(shape) == 4:
             try:
-                refouthdu = hdulist[fits_header_name('REFOUT')]
+                dqhdu = hdulist[fits_header_name('DQ')]
             except KeyError:
-                # It's a RampModel
-                from . import ramp
-                new_class = ramp.RampModel
+                # It's a RampModel or MIRIRampModel
+                try:
+                    refouthdu = hdulist[fits_header_name('REFOUT')]
+                except KeyError:
+                    # It's a RampModel
+                    from . import ramp
+                    new_class = ramp.RampModel
+                else:
+                    # It's a MIRIRampModel
+                    from . import miri_ramp
+                    new_class = miri_ramp.MIRIRampModel
             else:
-                # It's a MIRIRampModel
-                from . import miri_ramp
-                new_class = miri_ramp.MIRIRampModel
+                new_class = None            
         else:
-            new_class = None            
-    else:
-        try:
             primary = hdulist[0]
-            reftype = primary.header.get('REFTYPE')
-        except (KeyError, AttributeError):
-            reftype = None     
-        if reftype is None:
-            new_class = None
-        else:
-            from . import referencefile
-            new_class = referencefile.ReferencefileModel
+            reftype = primary.header.get(fits_header_name('REFTYPE'))
+            if reftype is None:
+                new_class = None
+            else:
+                from . import referencefile
+                new_class = referencefile.ReferencefileModel
+    else:
+        new_class = None
 
     return new_class
 
@@ -206,21 +214,6 @@ def _class_from_shape(hdulist, shape):
         new_class = None
         
     return new_class
-
-
-def _get_shape(hdulist, shape):
-    """
-    If we do not have it, determine the shape from the science hdu
-    """
-    if len(shape) == 0:
-        try:
-            hdu = hdulist[(fits_header_name('SCI'), 1)]
-        except KeyError:
-            pass
-        else:
-            if hasattr(hdu, 'shape'):
-                shape = hdu.shape
-    return shape
 
 
 def can_broadcast(a, b):
