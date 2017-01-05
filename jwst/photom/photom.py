@@ -52,6 +52,7 @@ class DataSet(object):
         self.pupil = None
         if model.meta.instrument.pupil is not None:
             self.pupil = model.meta.instrument.pupil.upper()
+        self.grating = None
         if model.meta.instrument.grating is not None:
             self.grating = model.meta.instrument.grating.upper()
         self.slitnum = -1
