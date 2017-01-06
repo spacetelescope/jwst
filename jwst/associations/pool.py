@@ -1,57 +1,27 @@
-"""Association Pool, Assocation Rule, and Data product generator.
-
-For JWST, associations are groups of exposures that are in one way
-or another related scientifically or calibration-wise. Examples are:
-
-- Dithers of the same target
-- Time-separated visits of the same area
-- Filter-separated visits of the same area
-- Overlapping observations
-- Calibration observations that may be shared among different exposures
-
-The ultimate goal is to be able to say: For this target, deliver a
-single product of calibrated data, potentially based on restricting criteria.
-
-To this end, "association pools" will be created of general potential
-exposures that may be relatable. The "association generator" will take
-as primary input a target and the association pool that target is in,
-and the association generator will produce, the list of exposures to
-be calibrated and, if possible, combined to create a single product of
-the science for the target.
-
-The initial goal will be limited to a common proposal and common RA/DEC.
-The main goal of development will be to produce a framework in which
-different types of associations can be later built, possibly by
-trained users, to define further filters to create associations.
-
-Routine Listings
-----------------
-
-Notes
------
-
-`Project home <https://trac.stsci.edu/trac/DMS/wiki/WebbDMSDataProcessing/Associations>`_
-
+"""
+Association Pools
 """
 from astropy.io.ascii import convert_numpy
 
 from astropy.table import Table
 
+__all__ = ['AssociationPool']
+
 
 class AssociationPool(Table):
     """Association Pool
 
-    Parameters
-    ----------
-    See superclass for initial paramters.
+    An AssociationPool is essentially and astropy Table with the
+    following default behaviors:
 
-    Notes
-    -----
-     `Project home <https://trac.stsci.edu/trac/DMS/wiki/WebbDMSDataProcessing/Associations>`_
+    - ASCII tables with a default delimiater of `|`
+    - All values are read in as strings
     """
 
     @classmethod
     def read(cls, filename, delimiter='|', format='ascii', **kwargs):
+        """Read in a Pool file
+        """
         table = Table.read(filename, delimiter=delimiter,
                            format=format,
                            converters=_ConvertToStr(), **kwargs)
