@@ -154,34 +154,42 @@ def _class_from_reftype(hdulist, shape):
     """
     Get the class name from the reftype and other header keywords
     """
-    if hdulist:
-        if len(shape) == 4:
-            try:
-                dqhdu = hdulist[fits_header_name('DQ')]
-            except KeyError:
-                # It's a RampModel or MIRIRampModel
-                try:
-                    refouthdu = hdulist[fits_header_name('REFOUT')]
-                except KeyError:
-                    # It's a RampModel
-                    from . import ramp
-                    new_class = ramp.RampModel
-                else:
-                    # It's a MIRIRampModel
-                    from . import miri_ramp
-                    new_class = miri_ramp.MIRIRampModel
-            else:
-                new_class = None            
-        else:
-            primary = hdulist[0]
-            reftype = primary.header.get(fits_header_name('REFTYPE'))
-            if reftype is None:
-                new_class = None
-            else:
-                from . import referencefile
-                new_class = referencefile.ReferencefileModel
-    else:
+    if not hdulist:
         new_class = None
+
+    else:
+        primary = hdulist[0]
+        reftype = primary.header.get(fits_header_name('REFTYPE'))
+        if reftype is None:
+            new_class = None
+
+        else:
+            from . import reference
+            if len(shape) == 0:
+                new_class = reference.ReferenceFileModel    
+            elif len(shape) == 2:
+                new_class = reference.ReferenceImageModel
+            elif len(shape) == 3:
+                new_class = reference.ReferenceCubeModel
+            elif len(shape) == 4:
+                try:
+                    dqhdu = hdulist[fits_header_name('DQ')]
+                except KeyError:
+                    # It's a RampModel or MIRIRampModel
+                    try:
+                        refouthdu = hdulist[fits_header_name('REFOUT')]
+                    except KeyError:
+                        # It's a RampModel
+                        from . import ramp
+                        new_class = ramp.RampModel
+                    else:
+                        # It's a MIRIRampModel
+                        from . import miri_ramp
+                        new_class = miri_ramp.MIRIRampModel
+                else:
+                    new_class = reference.ReferenceQuadModel
+            else:
+                new_class = None
 
     return new_class
 
