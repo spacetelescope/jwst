@@ -126,15 +126,11 @@ def get_aperture(slit, extract_params):
 
     Returns
     -------
-    ap: namedtuple
+    ap_ref: namedtuple
         Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.
     """
 
     ap_ref = aperture_from_ref(extract_params, slit.data.shape)
-    ap_ref = update_from_width(ap_ref, extract_params["extract_width"],
-                               extract_params["dispaxis"])
-    ap_ref = apply_nod_offset(ap_ref, extract_params["nod_correction"],
-                              extract_params["dispaxis"])
 
     (ap_ref, truncated) = update_from_shape(ap_ref, slit.data.shape)
     if truncated:
@@ -146,11 +142,23 @@ def get_aperture(slit, extract_params):
                                                extract_params["dispaxis"])
     else:
         ap_wcs = None
-        log.debug("no wcs info")
+        lu_flags = [{}, {}]
 
-    ap = update_from_wcs(ap_ref, ap_wcs, lu_flags)
+    # If the xstart, etc., values were not specified for the dispersion
+    # direction, the extraction region should be centered within the
+    # WCS domain.
+    ap_ref = update_from_wcs(ap_ref, ap_wcs, lu_flags)
+    ap_ref = update_from_width(ap_ref, extract_params["extract_width"],
+                               extract_params["dispaxis"])
 
-    return ap
+    ap_ref = apply_nod_offset(ap_ref, extract_params["nod_correction"],
+                              extract_params["dispaxis"])
+
+    # Do this again, in case the nod offset correction was so large that
+    # the extraction region would extend outside the WCS domain.
+    ap_ref = update_from_wcs(ap_ref, ap_wcs, lu_flags)
+
+    return ap_ref
 
 
 def aperture_from_ref(extract_params, im_shape):
@@ -404,6 +412,11 @@ def update_from_wcs(ap_ref, ap_wcs, lu_flags):
         These are the domain limits, but rounded to int and possibly
         incremented or decremented so they can be compared directly with
         the values in `ap_ref`.
+
+    lu_flags: two-element list, each element is a dictionary
+        This is just the 'includes_lower' and 'includes_upper' values
+        from wcs.domain, except that default values are used for
+        missing values.
 
     Returns
     -------
