@@ -56,8 +56,10 @@ processing would fail.
 
 Once validation is complete, :ref:`generate` returns a 2-tuple. The
 first item is a list of the associations created. The second item is
-another :ref:`AssociationPool` containing all the members that did not
+another :ref:`AssociationPool <asn-pool>` containing all the members that did not
 get added to any association.
+
+.. _member-with-lists:
 
 Member Attributes that are Lists
 --------------------------------
