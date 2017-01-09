@@ -3,6 +3,7 @@
 import sys
 import time
 import json
+import os
 import numpy as np
 from ..stpipe import Step, cmdline
 from .. import datamodels
@@ -37,7 +38,7 @@ class CubeBuildStep (Step):
          roiw = float(default=1.0)
          weight_power = float(default=2.0)
          offset_list = string(default='NA')
-         waveslice = float(default=0.0)
+         iwaveslice = integer(default=-1)
          xdebug = integer(default=0)
          ydebug = integer(default=0) 
        """
@@ -59,10 +60,10 @@ class CubeBuildStep (Step):
         if(self.scalew != 0.0): self.log.info('Input wavelength scale %f  ', self.scalew)
         if(self.offset_list != 'NA'): self.log.info('Offset Dither list %s', self.offset_list)
 
-        if(self.waveslice !=0): self.log.info('Creating only a single wavelength slice at',
-                                              self.waveslice)
+        if(self.iwaveslice !=-1): self.log.info('Creating only a single wavelength slice at cube index',
+                                              self.iwaveslice)
 
-            
+
         # valid coord_system:
         # 1. alpha-beta (only valid for MIRI Single Cubes)
         # 2. ra-dec
@@ -85,17 +86,17 @@ class CubeBuildStep (Step):
         self.metadata['detector'] = ''
         self.metadata['num_bands'] = 0 
 
-        self.metadata['channel'] = list()     # input parameter or determined from reading in files
-        self.metadata['subchannel'] = list()  # inputparameter or determined from reading in files 
+        self.metadata['channel'] = []     # input parameter or determined from reading in files
+        self.metadata['subchannel'] = []  # inputparameter or determined from reading in files 
 
-        self.metadata['band_channel'] = list()     # band channel: 1-1 pairing with band_subchannel
-        self.metadata['band_subchannel'] = list()  # band subchannel: 1-1 pairing with band_channel
+        self.metadata['band_channel'] = []     # band channel: 1-1 pairing with band_subchannel
+        self.metadata['band_subchannel'] = []  # band subchannel: 1-1 pairing with band_channel
  
-        self.metadata['filter'] = list()   # input parameter
-        self.metadata['grating'] = list()  # input parameter
+        self.metadata['filter'] = []   # input parameter
+        self.metadata['grating'] = []  # input parameter
 
-        self.metadata['band_filter'] = list()   # band filter: 1-1 pairing with band_grating 
-        self.metadata['band_grating'] = list()  # band grating: 1-1 pairing with band_filter
+        self.metadata['band_filter'] = []   # band filter: 1-1 pairing with band_grating 
+        self.metadata['band_grating'] = []  # band grating: 1-1 pairing with band_filter
 
         self.metadata['output_name'] = ''
         self.metadata['number_files'] = 0
@@ -116,8 +117,8 @@ class CubeBuildStep (Step):
 
         # Check if there is an offset list (this ra,dec dither offset list will probably
         # only be used in testing) 
-        self.ra_offset = list()  # units arc seconds
-        self.dec_offset = list() # units arc seconds
+        self.ra_offset = []  # units arc seconds
+        self.dec_offset = [] # units arc seconds
         if self.offset_list != 'NA':
             self.log('Going to read in dither offset list')
             cube_build_io.ReadOffSetFile(self)
@@ -249,7 +250,7 @@ class CubeBuildStep (Step):
         # each row holds information for a single pixel
 
         # Initialize the PixelCloud to 10   columns of zeros (1 row)
-        PixelCloud = np.zeros(shape=(10, 1))
+#        PixelCloud = np.zeros(shape=(10, 1))
         t0 = time.time()
         # now need to loop over every file that covers this channel/subchannel (MIRI) or Grating/filter(NIRSPEC)
         #and map the detector pixels to the cube spaxel.
@@ -267,13 +268,20 @@ class CubeBuildStep (Step):
             
             self.log.info("Working on Band defined by:%s %s " ,this_par1,this_par2)
 
-            PixelCloud = cube_build.MapDetectorToCube(self, 
-                                                      this_par1, this_par2, 
-                                                      Cube, spaxel, 
-                                                      PixelCloud,
-                                                      MasterTable, 
-                                                      InstrumentInfo,
-                                                      IFUCube)
+
+            Cloud = cube_build.MapDetectorToCube(self, 
+                                                 this_par1, this_par2, 
+                                                 Cube, spaxel, 
+                                                 MasterTable, 
+                                                 InstrumentInfo,
+                                                 IFUCube)
+            if(i==0):  # If first time
+                PixelCloud = Cloud
+            else:    #  add information for another slice  to the  PixelCloud
+                PixelCloud = np.hstack((PixelCloud, Cloud))
+
+            print(Cloud.shape,PixelCloud.shape)
+
 
         t1 = time.time()
         self.log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
@@ -300,8 +308,14 @@ class CubeBuildStep (Step):
 
 # write out the IFU cube
         if self.CubeType == 'File' or self.CubeType =='ASN' :
-            self.output_file = IFUCube.meta.filename
+            print('Default output file name',self.output_file)
+            root, ext = os.path.splitext(self.output_file)
+            default = root.find('cube_build') # the user has not provided a name
+            print('found default',default)
+            if(default != -1):
+                self.output_file = IFUCube.meta.filename
 #            IFUCube.save(IFUCube.meta.filename)
+            print('Output name',self.output_file)
         IFUCube.close()
 
         return result

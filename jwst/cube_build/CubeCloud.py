@@ -250,7 +250,7 @@ def FindROI(self, Cube, spaxel, PointCloud):
     self.log.info('number of elements in PT %i',nn)
 
 
-    weight_power = 2
+#    weight_power = 2
     
 # loop over each point cloud member - might want to change this to looping
 # over spaxels but for now just keep it point cloud elements because it

@@ -19,20 +19,20 @@ class CubeInfo(object):
 
     def __init__(self, instrument,detector, parameter1, parameter2, output_name):
 
-        self.channel = list()
-        self.subchannel = list()
+        self.channel = []
+        self.subchannel = []
 
-        self.file = list()
-        self.a_wave = list()
-        self.c_wave = list()
+        self.file = []
+        self.a_wave = []
+        self.c_wave = []
 
-        self.a_weight = list()
-        self.c_weight = list()
-        self.transform_v23toab = list()
-        self.transform_worldtov23 = list()
+        self.a_weight = []
+        self.c_weight = []
+        self.transform_v23toab = []
+        self.transform_worldtov23 = []
 
-        self.filter = list()
-        self.grating = list()
+        self.filter = []
+        self.grating = []
 
         self.output_name = ''
         self.detector = detector
@@ -259,13 +259,13 @@ class Spaxel(object):
         self.flux = 0
         self.error = 0
 
-        self.ipointcloud = list()         # appended to in CubeCloud.MakePointCloud
-        self.pointcloud_weight = list()   # appended to in CubeCloud.MakePointCloud
+        self.ipointcloud = []         # appended to in CubeCloud.MakePointCloud
+        self.pointcloud_weight = []   # appended to in CubeCloud.MakePointCloud
 
-        self.pixel_flux = list()
-        self.pixel_error = list()
-        self.pixel_overlap = list()
-        self.pixel_beta = list()
+        self.pixel_flux = []
+        self.pixel_error = []
+        self.pixel_overlap = []
+        self.pixel_beta = []
 
 
 

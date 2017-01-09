@@ -46,20 +46,24 @@ def DetermineScale(Cube, InstrumentInfo):
 
     if(Cube.instrument == 'MIRI'):
         number_channels = len(Cube.channel)
+        number_sub = len(Cube.subchannel)
         min_a = 1000.00
         min_b = 1000.00
         min_w = 1000.00
 
         for i in range(number_channels):
             this_channel = Cube.channel[i]
-            a_scale, b_scale, wscale = InstrumentInfo.GetScale(this_channel)
+            for j in range(number_sub):
+                this_sub = Cube.subchannel[j]
 
-            if(a_scale < min_a):
-                min_a = a_scale
-            if(b_scale < min_b):
-                min_b = b_scale
-            if(wscale < min_w):
-                min_w = wscale
+                a_scale, b_scale, wscale = InstrumentInfo.GetScale(this_channel,this_sub)
+
+                if(a_scale < min_a):
+                    min_a = a_scale
+                if(b_scale < min_b):
+                    min_b = b_scale
+                if(wscale < min_w):
+                    min_w = wscale
 
         scale = [min_a, min_b, min_w]
 
@@ -372,9 +376,8 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 
 
 #********************************************************************************
-def MapDetectorToCube(self, this_par1, this_par2, 
+def MapDetectorToCube(self,this_par1, this_par2, 
                       Cube, spaxel, 
-                      PixelCloud, 
                       MasterTable, 
                       InstrumentInfo,
                       IFUCube):
@@ -448,17 +451,18 @@ def MapDetectorToCube(self, this_par1, this_par2,
                     x = np.reshape(x, x.size)
                     
                     t0 = time.time()
+                    
                     cloud = CubeCloud.MakePointCloudMIRI(self,input_model,
                                                          x, y, k, 
                                                          Cube,
                                                         c1_offset, c2_offset)
-                    n = PixelCloud.size
-                    if(n == 10):  # If first time
-                        PixelCloud = cloud
+
+                    if(k == 0):  # If first time
+                        Cloud = cloud
                     else:    #  add information for another slice  to the  PixelCloud
+                        Cloud = np.hstack((Cloud, cloud))
 
-                        PixelCloud = np.hstack((PixelCloud, cloud))
-
+                    print('in MapDetector2Cube',cloud.shape,Cloud.shape)
                     t1 = time.time()
                     log.debug("Time Map one Channel from 1 file  to Cloud = %.1f.s" 
                               % (t1 - t0,))
@@ -505,10 +509,7 @@ def MapDetectorToCube(self, this_par1, this_par2,
                 end_slice = 29
                 nslices = end_slice - start_slice + 1
                 regions = list(range(start_slice, end_slice + 1))
-
                 for i in regions:
-
-
                     t0 = time.time()
                     cloud = CubeCloud.MakePointCloudNIRSPEC(self,input_model,
                                                             k,
@@ -516,19 +517,19 @@ def MapDetectorToCube(self, this_par1, this_par2,
                                                             Cube,
                                                             c1_offset, c2_offset)
 
-
-                    n = PixelCloud.size
-                    if(n == 10):  # If first time
-                        PixelCloud = cloud
+                    if(i == start_slice and k == 0  ):  # If first time
+                        Cloud = cloud
                     else:    #  add information for another slice  to the  PixelCloud
-                        PixelCloud = np.hstack((PixelCloud, cloud))
+                        Cloud = np.hstack((Cloud, cloud))
+
+                    print(cloud.shape,Cloud.shape)
 
                     t1 = time.time()
                     log.debug("Time Map one NIRSPEC slice  to Cloud = %.1f.s" % (t1 - t0,))
 
 #________________________________________________________________________________
 
-    return PixelCloud
+    return Cloud
 
 
 #********************************************************************************
@@ -565,14 +566,15 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
     elif self.interpolation == 'pointcloud':
         icube = 0
         t0 = time.time()
-        iz = 0
-
-        for z in Cube.zcoord:
-            iy = 0
-
-            for y in Cube.ycoord:
-                ix = 0
-                for x in Cube.xcoord:
+#        iz = 0
+#        for z in Cube.zcoord:
+        for iz, x in enumerate(Cube.zcoord):
+            for iy, y in enumerate(Cube.ycoord):
+                for ix, x in enumerate(Cube.xcoord):
+#            iy = 0
+#            for y in Cube.ycoord:
+#                ix = 0
+#                for x in Cube.xcoord:
                     num = len(spaxel[icube].ipointcloud)
 
                     if(num > 0):
