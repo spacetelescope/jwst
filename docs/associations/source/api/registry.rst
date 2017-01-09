@@ -8,4 +8,3 @@ AssociationRegistry Class
 
 .. automodule:: jwst.associations.registry
    :members:
-   :undoc-members:

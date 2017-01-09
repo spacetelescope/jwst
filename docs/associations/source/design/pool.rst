@@ -1,14 +1,13 @@
 .. _design-pool:
 
-************************
-Design: Association Pool
-************************
+Association Pool
+================
 
 .. _astropy Table:
    http://docs.astropy.org/en/stable/table/index.html
    
 Association pools are simply tables. Pools are instantiated using the
-:ref:`AssociationPool`. This class is simply a subclass of `astropy
+:ref:`AssociationPool <asn-pool>`. This class is simply a subclass of `astropy
 Table`_. As such, any file that is supported by  astropy I/O can be
 used as an association pool.
 
@@ -27,4 +26,4 @@ attribute has a value that is equivalent to a Python list::
   [element, ...]
 
 the list will be expanded by the Level2/Level3 associations. This
-expansion is explained in :ref:`design-generator-reprocessing`.
+expansion is explained in :ref:`member-with-lists`

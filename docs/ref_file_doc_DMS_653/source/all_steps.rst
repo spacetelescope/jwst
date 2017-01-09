@@ -17,7 +17,6 @@ Calibration Steps Using Reference Files
    fringe
    jump
    linearity
-   MSA_failed_open
    path_loss
    photom
    ramp_fitting

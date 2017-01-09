@@ -173,20 +173,25 @@ class CubeBuildStep (Step):
             # Scale is 3 dimensions and is determined from default values InstrumentInfo.GetScale
         scale = cube_build.DetermineScale(Cube, InstrumentInfo)
 
+
             # if the user has set the scale of output cube use those values instead
         a_scale = scale[0]
-        if self.scale1 != 0:
+        if self.scale1 != 0.0:
             a_scale = self.scale1
 
         b_scale = scale[1]
-        if self.scale2 != 0:
+        if self.scale2 != 0.0:
             b_scale = self.scale2
 
         wscale = scale[2]
-        if self.scalew != 0:
+        if self.scalew != 0.0:
             wscale = self.scalew
 
+
         Cube.SetScale(a_scale, b_scale, wscale)
+        self.scale1 = Cube.Cdelt1
+        self.scale2 = Cube.Cdelt2
+        self.scalew = Cube.Cdelt3
 
         t0 = time.time()
 #________________________________________________________________________________

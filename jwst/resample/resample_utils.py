@@ -25,7 +25,7 @@ DEFAULT_DOMAIN = {'lower': None,
                   'includes_upper': False}
 
 
-def make_output_wcs(wcslist):
+def make_output_wcs(input_models):
     """ Generate output WCS here based on footprints of all input WCS objects
     Parameters
     ----------
@@ -37,10 +37,18 @@ def make_output_wcs(wcslist):
         WCS object, with defined domain, covering entire set of input frames
 
     """
-    # wcslist = [i.meta.wcs for i in input_models]
-    # for w, i in zip(wcslist, input_models):
-    #     if w.domain is None:
-    #         w.domain = create_domain(w, i.data.shape)
+
+    # The API needing input_models instead of just wcslist is because
+    # currently the domain is not defined in any of imaging modes for NIRCam
+    # or NIRISS
+    #
+    # TODO: change the API to take wcslist instead of input_models and
+    #       remove the following block
+    wcslist = [i.meta.wcs for i in input_models]
+    for w, i in zip(wcslist, input_models):
+        if w.domain is None:
+            w.domain = create_domain(w, i.data.shape)
+
     output_frame = wcslist[0].output_frame
     naxes = wcslist[0].output_frame.naxes
     if naxes == 3:

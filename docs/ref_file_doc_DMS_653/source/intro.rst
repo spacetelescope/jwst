@@ -6,7 +6,8 @@ Purpose and Scope
 This document specifies the format of each calibration reference file used by the 
 JWST Calibration pipeline for DMS Build 7, satisfying requirement DMS-653
 ("The format of each calibration reference file shall be specified in the JWST 
-Calibration Reference File Specification Document.")  Many calibration steps in 
+Calibration Reference File Specification Document.") The corresponding code
+internal delivery was packaged as Release Candidate 7 of Build 7. Many calibration steps in 
 the DMS Build 7 Calibration Pipeline require reference files retrieved from CRDS.  
 This document is intended to be a reference guide to the formats of reference 
 files for steps requiring them, and is not intended to be a detailed description of each of 

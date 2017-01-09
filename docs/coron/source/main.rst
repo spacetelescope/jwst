@@ -1,10 +1,122 @@
 Tasks in the package
 ====================
 
-The coronagraphic package currently consists of two prototype tasks: klip and
-hlsp. The klip step applies the Karhunen-Loe`ve Image Plane (KLIP) algorithm to
-a coronagraphic image to fit and subtract a PSF. The hlsp task produces
-high-level science products (HLSP's) for a KLIP-subtracted images.
+The coronagraphic package currently consists of the following tasks:
+
+* stack_refs
+* align_refs
+* klip
+* hlsp
+
+Briefly, the stack_refs step is used to load images of reference PSF
+targets, as listed in an Association file, and stack the images into
+a data cube in a single file to be used in subsequent processing steps.
+The align_refs step is then used to align the stacked reference PSF
+images with the images contained in a science target exposure.
+The klip step applies the Karhunen-Loe`ve Image Plane (KLIP) algorithm to
+the aligned reference PSF and science target images and produces
+PSF-subtracted science target images. The hlsp task produces
+high-level science products (HLSP's) from a KLIP-subtracted image.
+
+CALWEBB_CORON3
+==============
+
+Currently the individual steps can only be run in a convenient way by
+running the calwebb_coron3 pipeline, which calls the individual steps
+and takes care of all the necessary loading and passing of data
+models for the input and output products of each step. The input to
+the calwebb_coron3 pipeline is expected to be an ASN file. The ASN file
+should define a single output product, which will be the combined image
+formed from the PSF-subtracted results of all the input science target
+data. That output product should then define, as its members, the
+various input reference PSF and science target files to be used in the
+processing. An example ASN file is shown below.
+
+::
+
+{"asn_rule": "CORON", "target": "NGC-3603", "asn_pool": "jw00017_001_01_pool", "program": "00017", 
+"products": [
+    {"prodtype": "coroncmb", "name": "jw89001-c1001_t001_nircam_f160w",
+        "members": [
+            {"exptype": "science", "expname": "test_targ1_calints.fits"}, 
+            {"exptype": "science", "expname": "test_targ2_calints.fits"},
+            {"exptype": "psf", "expname": "test_psf1_calints.fits"},
+            {"exptype": "psf", "expname": "test_psf2_calints.fits"},
+            {"exptype": "psf", "expname": "test_psf3_calints.fits"}]}],
+"asn_type": "coron",
+"asn_id": "c1001"}
+
+In this example the output product ``jw89001-c1001_t001_nircam_f160w``
+is defined to consist of 2 science target inputs and 3 reference psf
+inputs. Note that the values of the ``exptype`` attribute for each
+member are very important and used by the calwebb_coron3 pipeline to
+know which members are to be used as reference PSF data and which are
+data for the science target. The output product name listed in the ASN
+file is used as the root name for some of the products created by the
+calwebb_coron3 pipeline. This includes:
+
+- rootname_psfstack: the output of the stack_refs step
+- rootname_coroncmb: the final combined target image
+
+Other products will be created for each individual science target
+member, in which case the root names of the original input science
+target products will be used as a basis for the output products.
+These products include:
+
+- targetname_psfalign: the output of the align_refs step
+- targetname_psfsub: the output of the klip step
+
+STACK_REFS
+==========
+
+Overview
+--------
+
+The stack_refs step takes a list of reference PSF products and stacks all
+of the images in the PSF products into a single 3D data cube. It is
+assumed that the reference PSF products are in the form of a data cube
+(jwst CubeModel type data model) to begin with, in which images from
+individual integrations are stacked along the 3rd axis of the data cube.
+Each data cube from an input reference PSF file will be appended to a
+new output 3D data cube (again a CubeModel), such that the dimension of
+the 3rd axis of the output data cube will be equal to the total number
+of integrations contained in all of the input files.
+
+Inputs and Outputs
+------------------
+
+The stack_refs step is called from the calwebb_coron3 pipeline module.
+The calwebb_coron3 pipeline will find all of the ``psf`` members listed
+in the input ASN file, load each one into a CubeModel data model, and
+construct a ModelContainer that is the list of all psf CubeModels. The
+ModelContainer is passed as input to the stack_refs step. The output
+of stack_refs will be a single CubeModel containing all of the
+concatenated data cubes from the input psf files.
+
+ALIGN_REFS
+==========
+
+Overview
+--------
+
+The align_refs step is used to compute offsets between science target
+images and the reference PSF images and shift the PSF images into
+alignment. Each integration contained in the stacked PSF data is
+aligned to each integration within a given science target product.
+The calwebb_coron3 pipeline applies the align_refs step to each input
+science target product individually, resulting in a set of PSF images
+that are aligned to the images in that science target product.
+
+Inputs and Outputs
+------------------
+
+The align_refs step takes 2 inputs: a science target product, in the
+form of a CubeModel data model, and the stacked PSF product, also in
+the form of a CubeModel data model. The resulting output is a 4D data
+model (QuadModel), where the 3rd axis has length equal to the total
+number of reference PSF images in the input PSF stack and the 4th
+axis has length equal to the number of integrations in the input
+science target product.
 
 KLIP
 ====
@@ -12,7 +124,7 @@ KLIP
 Overview
 --------
 
-The klip task applies the KLIP algorithm to a coronagraphic image, using an
+The klip task applies the KLIP algorithm to coronagraphic images, using an
 accompanying set of reference PSF images, in order to
 fit and subtract an optimal PSF from the source. The KLIP algorithm uses a KL
 decomposition of the set of reference PSF's, and generates a model PSF from the
@@ -32,26 +144,24 @@ The KLIP algorithm consists of the following steps:
    target image on the KL eigenvectors
 5) Calculate the PSF-subtracted target image
 
-Input Arguments
----------------
+Inputs and Outputs
+------------------
 
-The klip task takes two input file names, the first being the name of the
-target image and the second being the file containing the reference PSF images.
-The target image must be in the form of a regular 2-D ImageModel and the
-reference PSF file must be in the form of a 3-D CubeModel, where each plane of
-the data cube contains an individual 2-D PSF image.
+The klip task takes two inputs: a science target product, in the form of a 3D
+CubeModel data model, and a set of aligned PSF images, in the form of a 4D
+QuadModel data model. Each ``layer`` in the 4th dimension of the PSF data
+contains all of the aligned PSF images corresponding to a given integration
+(3rd dimension) in the science target cube. The output from the klip step is
+a 3D CubeModel data model, having the same dimensions as the input science
+target product, and contains the PSF-subtracted images for every integration
+of the science target product.
 
-The task takes one optional argument, "truncate", which is used to specify the
+Arguments
+---------
+
+The task takes one optional argument, ``truncate``, which is used to specify the
 number of KL transform rows to keep when computing the PSF fit to the target.
 The default value is 50.
-
-Outputs
--------
-
-The klip task produces two output images, the first being the best-fit target
-PSF (file name suffix "_psf") and the second being the PSF-subtracted target
-image (file name suffix "_klip"). Both are in the form of a simple 2-D 
-ImageModel.
 
 HLSP
 ====
@@ -72,8 +182,8 @@ Input Arguments
 ---------------
 
 The hlsp task takes one input file name argument, which is the name of the
-KLIP-processed target image to be analyzed. One optional argument is available,
-"annuli_width", which specifies the width (in pixels) of the annuli to use in
+KLIP-processed target product to be analyzed. One optional argument is available,
+``annuli_width``, which specifies the width (in pixels) of the annuli to use in
 calculating the contrast data. The default value is 2 pixels.
 
 Outputs

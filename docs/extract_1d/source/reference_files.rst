@@ -85,10 +85,9 @@ The rest of this description pertains to the parameters for non-IFU data.
 
 If ``src_coeff`` is not given, the extraction limits can be specified by
 ``xstart``, ``xstop``, ``ystart``, ``ystop``, and ``extract_width``.  Note
-that all of these values are integers.  (It was intended that the start and
-stop limits be inclusive; the current code may not be consistent in this
-regard, but it will be so in the next release.  To specify the
-cross-dispersion limits precisely, use ``src_coeff``.)  If ``dispaxis``
+that all of these values are integers, and that the start and stop limits
+are inclusive.
+If ``dispaxis``
 is 1, the zero-indexed limits in the dispersion direction are ``xstart``
 and ``xstop``; if ``dispaxis`` is 2, the dispersion limits are ``ystart``
 and ``ystop``.  (The dispersion limits can be given even if ``src_coeff``
@@ -110,10 +109,7 @@ of ``ystart`` and ``ystop`` (if ``dispaxis`` is 1) or ``xstart`` and
 ``xstop`` (if ``dispaxis`` is 2), and ``extract_width``.  These polynomials
 are functions of either wavelength (in microns) or pixel number (pixels in
 the dispersion direction, with respect to the input 2-D slit image),
-specified by the key ``independent_var``.  The current default is
-"wavelength", but this may change to "pixel" in the future, so if the
-order of the polynomials for source or background is greater than zero,
-``independent_var`` should be specified explicitly.
+specified by the key ``independent_var``.  The default is "pixel".
 The values of these polynomial functions are pixel numbers in the
 direction perpendicular to dispersion.  More than one source extraction
 region may be specified, though this is not expected to be a typical case.

@@ -1,15 +1,14 @@
 .. currentmodule:: jwst.associations.association
                    
-.. _design-rules:
+.. _reference-association:
 
-===========================
- Design: Association Rules
-===========================
+Association Rules
+=================
 
 Association definitions, or `rules`, are Python classes, all based on
 the :ref:`association`. The base class provides only a framework, much
 like an abstract base class; all functionality must be implemented in
-subclasses.
+sub-classes.
 
 Any subclass that is intended to produce an association is referred to
 as a `rule`. Any rule subclass must have a name that begins with the
@@ -17,13 +16,13 @@ string `Asn_`. This is to ensure that any other classes involved in
 defining the definition of the rule classes do not get used as rules
 themselves, such as the :ref:`association` itself.
 
-Association Hybrid Definition
-=============================
+Association Dynamic Definition
+------------------------------
 
 Associations are created by matching members to rules. However, an
 important concept to remember is that an association is defined by
 both the rule matched, and by the initial member that matched it.
-Below is an example of what this means.
+The following example will illustrate this concept.
 
 For JWST :ref:`level3-associations`, many associations created must
 have members that all share the same filter. To avoid writing rules
@@ -36,26 +35,23 @@ must have a valid value, but can be any valid value. When the
 association is first attempted to be instantiated with a member, and
 that member has a valid filter, the association is created. However,
 the constraint on filter value in the newly created association is
-modified to match exacly the filter value that the first member had.
+modified to match exactly the filter value that the first member had.
 Now, when other members are attempted to be added to the association,
 the filter of the new members must match exactly with what the
 association is expecting.
 
-This hybrid definition allows rules to be written where each value of
+This dynamic definition allows rules to be written where each value of
 a specific attribute of a member does not have to be explicitly
-stated. This provides for very robust, yet concise, rules.
-
-This self-definition of associations does give rise to some complexity
-in association instantiation. Keep this in mind as one reads on.
+stated. This provides for very robust, yet concise, set of rule definitions.
 
 User-level API
 --------------
 
 Core Keys
-=========
+^^^^^^^^^
 
 To be repetitive, the basic association is simply a dict (default) or
-list. The structure of the dict is compeletly determined by the rules.
+list. The structure of the dict is completely determined by the rules.
 However, the base class defines the following keys:
 
     `asn_type`
@@ -76,12 +72,15 @@ These keys are accessed in the same way any dict key is accessed::
   print(asn['asn_rule'])
   
   #--> MyAssociation
-  
-Core Methods
-============
 
-All methods of an association rule deal with creation or returning the
-created association.
+.. _ref-asn-core-methods:
+
+Core Methods
+^^^^^^^^^^^^
+
+These are the methods of an association rule deal with creation or returning the
+created association. A rule may define other methods, but the
+following are required to be implemented.
 
     :meth:`Association`
           Create an association.
@@ -95,11 +94,9 @@ created association.
     :meth:`load() <Association.load>`
           Return the association from its serialization.
 
-There are other methods that deal with the details of association
-creation and rule definition.
 
 Creation
-========
+^^^^^^^^
 
 To create an association based on a member, one simply attempts to
 instantiate the rule using the member as an argument::
@@ -122,12 +119,13 @@ the member does not belong in the association, again, an
 
 Typically, one does not deal with a single rule, but a collection of
 rules. For association creation, one typically uses an
-:ref:`AssociationRegistry` to collect all the rules a pool will be
-compared against. Associaton registries provide extra functionality to
+:ref:`AssociationRegistry <asn-registry>` to collect all the rules a pool will be
+compared against. Association registries provide extra functionality to
 deal with a large and varied set of association rules.
 
 Saving and Loading
-==================
+^^^^^^^^^^^^^^^^^^
+
 Once created, an association can be serialized using its
 :meth:`Association.dump <jwst.associations.association.Association.dump>` method.
 Serialization creates a string representation of the association which
@@ -148,32 +146,11 @@ To retrieve an association, one uses the :meth:`Association.load
   with open(file_name, 'r') as file_handle:
       association = Association.load(file_handle)
 
-Creating versus Using Associations
-==================================
-
-At this point, emphasis must be made to highlight the difference
-between associations that are generated and associations that have
-been saved and are used by other modules and tasks.
-
-Associations created from rule classes have the type of the class they
-are created from and have all the methods and attributes of those
-classes. Such instances are used to populate the created associations
-with new members and check the validity of said associations.
-
-However, once an association has been saved, or serialized, through
-the :meth:`Association.dump
-<jwst.associations.association.Association.dump>` method, then reload
-through the corresponding :meth:`Association.load
-<jwst.associations.association.Association.load>` method, the restored
-association is only the basic list or dict. The whole instance of the
-originating association is not serialized with the basic membership
-information.
-
 Defining New Associations
 -------------------------
 
 All association rules are based on the
-:class:`Association <jwst.associations.association.Association>` base class. This
+:class:`~jwst.associations.association.Association` base class. This
 class will not create associations on its own; subclasses must be
 defined. What an association is and how it is later used is completely
 left to the subclasses. The base class itself only defines the
@@ -181,36 +158,38 @@ framework required to create associations. The rest of this section
 will discuss the minimum functionality that a subclass needs to
 implement in order to create an association.
 
-Class Naming
-============
+.. _class-naming:
 
-The :ref:`generate` machinery uses :ref:`AssociationRegistry` to store
+Class Naming
+^^^^^^^^^^^^
+
+The :ref:`AssociationRegistry <asn-registry>` is used to store
 the association rules. Since rules are defined by Python classes, a
 way of indicating what the final rule classes are is needed. By
 definition, rule classes are classes that begin with the string `Asn_`.
 Only these classes are used to produce associations.
 
 Core Attributes
-===============
+^^^^^^^^^^^^^^^
 
 Since rule classes will potentially have a large number of attributes
 and methods, the base :class:`Association
 <jwst.associations.association.Association>` class defines two
 attributes: `data`, which contains the actual association, and `meta`,
 the structure that holds auxiliary information needed for association
-creation. Subclasses may redfine these attributes as they see fit.
+creation. Subclasses may redefine these attributes as they see fit.
 However, it is suggested that they be used as conceptually defined here.
 
 `data` Attribute
-~~~~~~~~~~~~~~~~
+""""""""""""""""
 
 `data` contains the association itself. Currently, the base class
 predefines `data` as a dict. The base class itself is a subclass of
-`MutableMapping`. Any instance behaves as a dict. The contents of that
+`~py3:collections.abc.MutableMapping`. Any instance behaves as a dict. The contents of that
 dict is the contents of the `data` attribute. For example::
 
   asn = Asn_MyAssociation()
-  asn.dict['value'] = 'a value'
+  asn.data['value'] = 'a value'
   
   assert asn['value'] == 'a value'
   # True
@@ -220,7 +199,7 @@ dict is the contents of the `data` attribute. For example::
   # True
 
 Initialization
-==============
+^^^^^^^^^^^^^^
 
 When overriding the `__init__()` function, the base classes ultimately
 call `add()` to confirm that the given member actually belongs to the
@@ -230,6 +209,38 @@ the member can actually be added should be done before calling
 afterwards, noting that if the `add()` fails, an `AssociationError` is raised.
 
 Implementing `add()`
-====================
+^^^^^^^^^^^^^^^^^^^^
 
-*TBD*
+The :meth:`~jwst.associations.association.Association.add` method adds
+members to an association. If a member does not belong, an
+`AssociationError` is raised.
+
+If a member does belong to the association, the following events
+occur:
+
+Constraint Modification
+    Any wildcard constraints are modified so that any further matching
+    must match exactly the value provided by the current member.
+
+`self._init_hook()` is executed
+    If a new association is being created, the
+    rule's `_init_hook` method is executed, if defined. This allows a
+    rule to do further initialization before the member is
+    officially added to the association.
+
+`self._add()` is executed
+    The rule class must define `_add()`. This method officially adds
+    the member to the association.
+
+Implementing `dump()` and `load()`
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The base `Association` class defines the
+:meth:`~jwst.associations.association.Association.dump` and
+:meth:`~jwst.associations.association.Association.load` methods to
+serialize the data structured pointing to by the `data` attribute. If
+the new rule uses the `data` attribute for storing the association
+information, no further overriding of these methods is necessary.
+
+However, if the new rule does not define `data`, then these methods
+will need be overridden.
