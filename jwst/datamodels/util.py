@@ -3,15 +3,17 @@ Various utility functions and data types
 """
 from __future__ import absolute_import, unicode_literals, division, print_function
 
-import sys
 from os.path import basename
 import numpy as np
 from astropy.extern import six
 from astropy.io import fits
 
+from jwst.associations import AssociationError
+
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
 
 def open(init=None, extensions=None, **kwargs):
     """
@@ -50,36 +52,37 @@ def open(init=None, extensions=None, **kwargs):
     """
 
     from . import model_base
-    from . import _defined_models as defined_models # dict of model classes
 
     # Get three special cases for opening a model out of the way
     # all three cases return a model if they match
-    
+
     if init is None:
         return model_base.DataModel(None)
-    # Send _asn.json files to ModelContainer; avoid shape "cleverness" below
-    elif (isinstance(init, six.string_types) and
-            basename(init).split('.')[0].split('_')[-1] == 'asn'):
-        try:
-            from . import container
-            return container.ModelContainer(init, extensions=extensions, 
-                **kwargs)
-        except:
-            raise TypeError(
-                "init ASN not valid for ModelContainer"
-                )
     elif isinstance(init, model_base.DataModel):
         # Copy the object so it knows not to close here
         return init.__class__(init)
-    
+
+    # If given a string, presume its a file path.
     # Get the list of hdus where possible
     if isinstance(init, (six.text_type, bytes)) or hasattr(init, "read"):
+
+        # Try to read as an association.
+        try:
+            from . import container
+            return container.ModelContainer(init, extensions=extensions,
+                                            **kwargs)
+        except (AssociationError, ValueError):
+            pass
+
+        # Try as a FITS file.
+        # If this fails, we fail.
         hdulist = fits.open(init)
+
     elif isinstance(init, fits.HDUList):
         hdulist = init
     else:
         hdulist = {}
-        
+
     # Get the shape from the input argument where possible
     if isinstance(init, tuple):
         for item in init:
@@ -118,7 +121,7 @@ def open(init=None, extensions=None, **kwargs):
     # Throw an error if these attempts were unsuccessful
     if new_class is None:
         raise TypeError("Can't determine datamodel class from argument to open")
-        
+
     # Log a message about how the model was opened
     if isinstance(init, (six.text_type, bytes)):
         log.debug('Opening {0} as {1}'.format(basename(init), new_class))
@@ -146,7 +149,7 @@ def _class_from_model_type(hdulist):
             new_class = defined_models.get(model_type)
     else:
         new_class = None
-        
+
     return new_class
 
 
@@ -166,7 +169,7 @@ def _class_from_reftype(hdulist, shape):
         else:
             from . import reference
             if len(shape) == 0:
-                new_class = reference.ReferenceFileModel    
+                new_class = reference.ReferenceFileModel
             elif len(shape) == 2:
                 new_class = reference.ReferenceImageModel
             elif len(shape) == 3:
@@ -220,7 +223,7 @@ def _class_from_shape(hdulist, shape):
             new_class = multislit.MultiSlitModel
     else:
         new_class = None
-        
+
     return new_class
 
 
@@ -312,6 +315,7 @@ def gentle_asarray(a, dtype):
         except:
             raise ValueError("Can't convert {0!s} to ndarray".format(type(a)))
         return a
+
 
 def get_short_doc(schema):
     title = schema.get('title', None)
