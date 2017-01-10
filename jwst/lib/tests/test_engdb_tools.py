@@ -87,6 +87,17 @@ def test_meta(engdb):
     assert response['TlmMnemonics'][0]['TlmMnemonic'] == GOOD_MNEMONIC
 
 
+def test_unzip(engdb):
+    """Test forunzipped versions of content"""
+    values = engdb.get_values(
+        GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
+        include_obstime=True,
+        zip=False
+    )
+    assert isinstance(values, tuple)
+    assert len(values.obstime) == len(values.value)
+
+
 # #####################
 # Utilities for testing
 # #####################
