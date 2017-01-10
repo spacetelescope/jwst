@@ -67,8 +67,23 @@ class _Value_Collection(object):
             self.collection = _EngDB_Value([], [])
 
     def append(self, obstime, value):
-        """Append value to collection"""
+        """Append value to collection
+
+        Parameters
+        ----------
+        obstime: int(milliseconds)
+            Observation time as returned from the engineering
+            db, in milliseconds
+
+        value: numeric
+            Value from db.
+
+        Notes
+        -----
+        The `obstime` is converted to an `astropy.time.Time`
+        """
         if self._include_obstime:
+            obstime = Time(obstime / 1000., format='unix')
             if self._zip:
                 self.collection.append(
                     _EngDB_Value(obstime, value)

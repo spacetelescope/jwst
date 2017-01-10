@@ -13,6 +13,8 @@ from __future__ import absolute_import
 
 import pytest
 
+from astropy.time import Time
+
 from .. import engdb_tools
 from .engdb_mock import EngDB_Mocker
 
@@ -79,7 +81,7 @@ def test_values_with_time(engdb):
     )
     assert len(values) >= 1
     assert isinstance(values[0], tuple)
-
+    assert isinstance(values[0].obstime, Time)
 
 def test_meta(engdb):
     response = engdb.get_meta(GOOD_MNEMONIC)
