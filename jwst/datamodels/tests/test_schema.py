@@ -28,7 +28,7 @@ TMP_DIR = None
 
 def setup():
     global FITS_FILE, MASK_FILE, TMP_DIR, TMP_FITS, TMP_YAML, TMP_ASDF, TMP_FITS2
-    ROOT_DIR = os.path.dirname(__file__)
+    ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
     FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
     MASK_FILE = os.path.join(ROOT_DIR, 'mask.fits')
 

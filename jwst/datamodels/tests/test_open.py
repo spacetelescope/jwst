@@ -71,8 +71,7 @@ def test_open_hdulist():
     model.close()
 
 def test_open_image():
-    base_name = 'jwst_image.fits'
-    image_name = os.path.join(ROOT_DIR, base_name)
+    image_name = t_path('jwst_image.fits')
     model = jwst.datamodels.open(image_name)
     assert type(model) == jwst.datamodels.image.ImageModel
     model.close()
@@ -86,7 +85,7 @@ def test_open_reference_files():
              'nircam_readnoise.fits' : ReadnoiseModel}
     
     for base_name, klass in files.items():
-        file = os.path.join(ROOT_DIR, base_name)
+        file = t_path(base_name)
         model = jwst.datamodels.open(file)
         if model.shape:
             ndim = len(model.shape)
@@ -114,5 +113,5 @@ def test_open_reference_files():
 # Utilities
 def t_path(partial_path):
     """Construction the full path for test files"""
-    test_dir = os.path.dirname(__file__)
+    test_dir = os.path.join(os.path.dirname(__file__), 'data')
     return os.path.join(test_dir, partial_path)

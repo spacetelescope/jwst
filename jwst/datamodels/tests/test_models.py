@@ -33,7 +33,7 @@ TMP_FITS2 = None
 
 def setup():
     global FITS_FILE, TMP_DIR, TMP_FITS, TMP_YAML, TMP_JSON, TMP_FITS2
-    ROOT_DIR = os.path.dirname(__file__)
+    ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
     FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
 
     TMP_DIR = tempfile.mkdtemp()
@@ -322,7 +322,7 @@ def test_multislit_copy():
 
 
 def test_model_with_nonstandard_primary_array():
-    ROOT_DIR = os.path.dirname(__file__)
+    ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
     class NonstandardPrimaryArrayModel(DataModel):
         schema_url = os.path.join(

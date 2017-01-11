@@ -1,0 +1,30 @@
+{
+    "allOf": [
+        {"$ref": "http://jwst_lib.stsci.edu/schemas/core.schema.json"},
+        {
+            "type" : "object",
+            "title": "Test schema - demonstrate infinite recursion loop",
+            "properties" : {
+                "wavelength" : {
+                    "type" : "data",
+                    "title" : "Wavelength at each pixel coordinate",
+                    "fits_hdu" : "WAVELENGTH",
+                    "default" : 0.0,
+                    "ndim" : 2,
+                    "units" : "micron",
+                    "dtype" : "float32"
+                },
+
+                "alpha" : {
+                    "type" : "data",
+                    "title" : "Alpha at a each pixel coordinate",
+                    "fits_hdu" : "ALPHA",
+                    "default" : 0.0,
+                    "ndim" : 2,
+                    "units" : "arcsec",
+                    "dtype" : "float32"
+                }
+            }
+        }
+    ]
+}
