@@ -110,6 +110,10 @@ def open(init=None, extensions=None, **kwargs):
     # First try to get the class name from the primary header
     new_class = _class_from_model_type(hdulist)
 
+    # Special handling for ramp files for backwards compatibility
+    if new_class is None:
+        new_class = _class_from_ramp_type(hdulist, shape)
+
     # Or get the class from the reference file type and other header keywords
     if new_class is None:
         new_class = _class_from_reftype(hdulist, shape)
@@ -153,6 +157,36 @@ def _class_from_model_type(hdulist):
     return new_class
 
 
+def _class_from_ramp_type(hdulist, shape):
+    """
+    Special check to see if file is ramp file
+    """
+    if not hdulist:
+        new_class = None
+    else:
+        if len(shape) == 4:
+            try:
+                dqhdu = hdulist[fits_header_name('DQ')]
+            except KeyError:
+                # It's a RampModel or MIRIRampModel
+                try:
+                    refouthdu = hdulist[fits_header_name('REFOUT')]
+                except KeyError:
+                    # It's a RampModel
+                    from . import ramp
+                    new_class = ramp.RampModel
+                else:
+                    # It's a MIRIRampModel
+                    from . import miri_ramp
+                    new_class = miri_ramp.MIRIRampModel
+            else:
+                new_class = None
+        else:
+            new_class = None
+
+    return new_class
+
+
 def _class_from_reftype(hdulist, shape):
     """
     Get the class name from the reftype and other header keywords
@@ -175,22 +209,7 @@ def _class_from_reftype(hdulist, shape):
             elif len(shape) == 3:
                 new_class = reference.ReferenceCubeModel
             elif len(shape) == 4:
-                try:
-                    dqhdu = hdulist[fits_header_name('DQ')]
-                except KeyError:
-                    # It's a RampModel or MIRIRampModel
-                    try:
-                        refouthdu = hdulist[fits_header_name('REFOUT')]
-                    except KeyError:
-                        # It's a RampModel
-                        from . import ramp
-                        new_class = ramp.RampModel
-                    else:
-                        # It's a MIRIRampModel
-                        from . import miri_ramp
-                        new_class = miri_ramp.MIRIRampModel
-                else:
-                    new_class = reference.ReferenceQuadModel
+                new_class = reference.ReferenceQuadModel
             else:
                 new_class = None
 
