@@ -1,6 +1,5 @@
 Tasks in the Package
 ====================
-
 The Aperture Masking Interferometry (AMI) pipeline package currently consists
 of three tasks:
 

@@ -1,6 +1,5 @@
 Tasks in the package
 ====================
-
 The coronagraphic package currently consists of the following tasks:
 
 * stack_refs
