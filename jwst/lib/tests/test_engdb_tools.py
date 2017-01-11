@@ -13,6 +13,8 @@ from __future__ import absolute_import
 
 import pytest
 
+from astropy.time import Time
+
 from .. import engdb_tools
 from .engdb_mock import EngDB_Mocker
 
@@ -79,12 +81,23 @@ def test_values_with_time(engdb):
     )
     assert len(values) >= 1
     assert isinstance(values[0], tuple)
-
+    assert isinstance(values[0].obstime, Time)
 
 def test_meta(engdb):
     response = engdb.get_meta(GOOD_MNEMONIC)
     assert response['Count'] == 1
     assert response['TlmMnemonics'][0]['TlmMnemonic'] == GOOD_MNEMONIC
+
+
+def test_unzip(engdb):
+    """Test forunzipped versions of content"""
+    values = engdb.get_values(
+        GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
+        include_obstime=True,
+        zip=False
+    )
+    assert isinstance(values, tuple)
+    assert len(values.obstime) == len(values.value)
 
 
 # #####################
