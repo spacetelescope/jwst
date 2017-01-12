@@ -16,8 +16,9 @@ Contents:
    :maxdepth: 2
 
    overview
-   design
-   reference
+   design/design
+   reference/reference
+   api/api
 
 Indices and tables
 ==================

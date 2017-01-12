@@ -10,10 +10,6 @@ Contents:
    :maxdepth: 2
 
    asn_generate
-   main
+   association
    level3_asn_index
    level2_asn_index
-   association
-   pool
-   registry
-   generate

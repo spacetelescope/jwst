@@ -20,35 +20,40 @@ CANDIDATE_RULESET = 'candidate'
 
 
 class Main(object):
-    """Generate Associations from an Association Pool
-    Docs from the source.
+    """
+    Generate Associations from an Association Pool
 
     Parameters
     ----------
     args: [str, ...], or None
         The command line arguments. Can be one of
-            - None: `sys.argv` is then used.
-            - [str, ...]: A list of strings which create the command line
+            - `None`: `sys.argv` is then used.
+            - `[str, ...]`: A list of strings which create the command line
               with the similar structure as `sys.argv`
 
     pool: None or AssociationPool
-        If None, a pool file must be specified in the `args`.
-        Otherwise, an AssociationPool
+        If `None`, a pool file must be specified in the `args`.
+        Otherwise, an `AssociationPool`
 
     Attributes
     ----------
-    pool: AssociationPool
+    pool: `AssociationPool`
         The pool read in, or passed in through the parameter `pool`
 
-    rules: AssociationRegistry
-        The ruleset used.
+    rules: `AssociationRegistry`
+        The rules used for association creation.
 
-    associations: [Association, ...]
+    associations: [`Association`, ...]
         The list of generated associations.
 
-    orphaned: AssociationPool
+    orphaned: `AssociationPool`
         The pool of exposures that do not belong
         to any association.
+
+    Notes
+    -----
+    Refer to the :ref:`Association Generator <association-generator>`
+    documentation for a full description.
     """
 
     def __init__(self, args=None, pool=None):

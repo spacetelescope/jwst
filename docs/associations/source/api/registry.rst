@@ -1,11 +1,10 @@
-.. _main:
+.. _asn-registry:
 
 **********************************************************
-Main Class
+AssociationRegistry Class
 **********************************************************
 
-.. currentmodule:: main
+.. currentmodule:: registry
 
-.. automodule:: jwst.associations.main
+.. automodule:: jwst.associations.registry
    :members:
-   :undoc-members:

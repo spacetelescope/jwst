@@ -35,11 +35,17 @@ def generate(pool, rules, version_id=None):
 
     Returns
     -------
-    ([association,], orphans)
+    ([association,...], orphans)
         A 2-tuple consisting of:
-           * List of associations
-           * Table of members from the pool that
-             do not belong to any association.
+
+        * List of associations
+        * Table of members from the pool that
+          do not belong to any association.
+
+    Notes
+    -----
+    Refer to the :ref:`Association Generator <association-generator>`
+    documentation for a full description.
     """
     logger.debug('Starting...')
 
@@ -110,9 +116,10 @@ def generate_from_member(
     rules: AssociationRegistry
         List of rules to create new associations
 
-    allwed_rules: [rule, ...]
+    allowed_rules: [rule, ...]
         Only compare existing associations and rules if the
-        the rule is in this list. If none, all rules are valid.
+        rule is in this list. If none,
+        all existing associations and rules will be checked.
 
     Returns
     -------

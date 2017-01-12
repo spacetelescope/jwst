@@ -1,5 +1,5 @@
-Reference File
-==============
+Reference File Types
+--------------------
 There are four reference file types for the flat_field step.  Reftype
 FLAT is used for all data except NIRSpec.  NIRSpec data use three
 reftypes:  FFLAT (fore optics), SFLAT (spectrograph optics), and 
@@ -8,20 +8,22 @@ DFLAT (detector).
 
 CRDS Selection Criteria
 -----------------------
-Flat-field reference files are selected by the following criteria:
 
-- MIRI Imager: Match INSTRUME, DETECTOR, FILTER, READPATT, and
-  SUBARRAY of the science data file.  
+For MIRI Imaging, flat-field reference files are selected based on the values of
+INSTRUME, DETECTOR, FILTER, READPATT, and SUBARRAY in the science data file.  
 
-- MIRI MRS: Match INSTRUME, DETECTOR, BAND, READPATT, and
-  SUBARRAY of the science data file.  
+For MIRI MRS, flat-field reference files are selected based on the values of
+INSTRUME, DETECTOR, BAND, READPATT, and SUBARRAY of the science data file.  
 
-- NIRCam: Match INSTRUME, DETECTOR, FILTER, and PUPIL.
+For NIRCam, flat-field reference files are selected based on the values of
+INSTRUME, DETECTOR, FILTER, and PUPIL of the science data file.  
 
-- NIRISS: Match INSTRUME, DETECTOR, and FILTER.
+For NIRISS, flat-field reference files are selected based on the values of 
+INSTRUME, DETECTOR, and FILTER of the science data file.  
 
-- NIRSpec: Match INSTRUME, DETECTOR, FILTER, GRATING, and
-  EXP_TYPE.
+For NIRSpec, flat-field reference files are selected based on the values of 
+INSTRUME, DETECTOR, FILTER, GRATING, and
+EXP_TYPE of the science data file.  
 
 Reference File Formats for MIRI, NIRCAM, and NIRISS
 ---------------------------------------------------
@@ -56,7 +58,7 @@ DQ arrays, which must use the same coding scheme.  The DQ_DEF table contains
 the bit assignments used in the DQ array, and contains 4 columns:
 
 * BIT: integer value giving the bit number, starting at zero
-* VALUE: the equivalent base-10 integer value of BIT
+* VALUE: the value of 2^BIT 
 * NAME: the string mnemonic name of the data quality condition
 * DESCRIPTION: a string description of the condition
 
@@ -143,7 +145,7 @@ extension, labeled FAST_VARIATION.
 The table contains four columns:
 
 * slit_name: string, name of slit
-* nelem: integer, maximum number of wavelengths
+* nelem: integer, number of the initial values of the wavelength and data arrays to use
 * wavelength: float 1-D array, values of wavelength
 * data: float 1-D array, flat field values for each wavelength
 
@@ -155,7 +157,7 @@ The number of rows in the table is given by NAXIS2, and each row corresponds to 
 The MSA Spec references files have EXP_TYPE=NRS_MSASPEC, and contain data pertaining
 to each of the 4 quadrants.  For each quadrant, there are 3 IMAGE extensions, a BINTABLE extension 
 labeled WAVELENGTH, and a BINTABLE extension labeled FAST_VARIATION.  The file also contains 
-one BINTABLE labeled DQ_DEF.
+one BINTABLE extension labeled DQ_DEF.
 
 The IMAGE extensions have the following characteristics:
 
@@ -168,10 +170,8 @@ DQ        3      ncols x nrows x nelem  integer
 =======   =====  =====================  =========
 
 For all 3 of these extensions, the EXTVER keyword indicates the quadrant number, 1 to 4.
-Each plane of the SCI array gives the flat_field value for every pixel in the quadrant for
-the corresponding wavelength, which is specified in the WAVELENGTH table.
-
-
+Each plane of the SCI array gives the flat_field value for each aperture (slitlet) in the 
+quadrant for the corresponding wavelength, which is specified in the WAVELENGTH table.
 
 The WAVELENGTH table contains a single column:
 
@@ -183,7 +183,7 @@ Each of these wavelength values corresponds to a single plane of the IMAGE array
 The FAST_VARIATION table contains four columns:
 
 * slit_name: the string "ANY"
-* nelem: integer, maximum number of wavelengths
+* nelem: integer, number of the initial values of the wavelength and data arrays to use
 * wavelength: float 1-D array, values of wavelength
 * data: float 1-D array, flat field values for each wavelength
 
@@ -196,7 +196,7 @@ as the same wavelength-dependent value is applied to all pixels in the quadrant.
 The DQ_DEF table contains the bit assignments used in the DQ array, and contains 4 columns:
 
 * BIT: integer value giving the bit number, starting at zero
-* VALUE: the equivalent base-10 integer value of BIT
+* VALUE: the value of 2^BIT
 * NAME: the string mnemonic name of the data quality condition
 * DESCRIPTION: a string description of the condition
 
@@ -204,12 +204,12 @@ The DQ_DEF table contains the bit assignments used in the DQ array, and contains
 *IFU*
 ~~~~~
 The IFU reference files have EXP_TYPE=NRS_IFU, a BINTABLE
-extension labeled FAST_VARIATION, and a BINTABLE labeled DQ_DEF.
+extension labeled FAST_VARIATION, and a BINTABLE extension labeled DQ_DEF.
 
 The FAST_VARIATION table contains four columns:
 
 * slit_name: the string "ANY"
-* nelem: integer, maximum number of wavelengths
+* nelem: integer, number of the initial values of the wavelength and data arrays to use
 * wavelength: float 1-D array, values of wavelength
 * data: float 1-D array, flat field values for each wavelength
 
@@ -218,7 +218,7 @@ There is a single row in the table.
 The DQ_DEF table contains the bit assignments used in the DQ arrays. The table contains the 4 columns:
 
 * BIT: integer value giving the bit number, starting at zero
-* VALUE: the equivalent base-10 integer value of BIT
+* VALUE: the value of 2^BIT
 * NAME: the string mnemonic name of the data quality condition
 * DESCRIPTION: a string description of the condition
 
@@ -236,8 +236,8 @@ The fixed slit references files have EXP_TYPE=NRS_FIXEDSLIT, and have a BINTABLE
 extension labeled FAST_VARIATION. The table contains four columns:
 
 * slit_name: string, name of slit
-* nelem: integer, maximum number of wavelengths
-* wavelength: float 1-D array, values of wavelength
+* nelem: integer, number of the initial values of the wavelength and data arrays to use
+* wavelength: float 1-D array, values of wavelength 
 * data: float 1-D array, flat field values for each wavelength
 
 The number of rows in the table is given by NAXIS2, and each row corresponds to a separate slit.
@@ -246,7 +246,7 @@ The number of rows in the table is given by NAXIS2, and each row corresponds to 
 *MSA Spec*
 ~~~~~~~~~~
 The MSA Spec references files have EXP_TYPE=NRS_MSASPEC. There are 3 IMAGE extensions, a BINTABLE extension 
-labeled WAVELENGTH, a BINTABLE extension labeled FAST_VARIATION, and a BINTABLE labeled DQ_DEF.
+labeled WAVELENGTH, a BINTABLE extension labeled FAST_VARIATION, and a BINTABLE extension labeled DQ_DEF.
 
 The IMAGE extensions have the following characteristics:
 
@@ -273,7 +273,7 @@ Each of these wavelength values corresponds to a single plane of the IMAGE array
 The FAST_VARIATION table contains four columns:
 
 * slit_name: the string "ANY"
-* nelem: integer, maximum number of wavelengths
+* nelem: integer, number of the initial values of the wavelength and data arrays to use
 * wavelength: float 1-D array, values of wavelength
 * data: float 1-D array, flat field values for each wavelength
 
@@ -288,7 +288,52 @@ table.
 The DQ_DEF table contains the bit assignments used in the DQ array, and contains 4 columns:
 
 * BIT: integer value giving the bit number, starting at zero
-* VALUE: the equivalent base-10 integer value of BIT
+* VALUE: the value of 2^BIT 
+* NAME: the string mnemonic name of the data quality condition
+* DESCRIPTION: a string description of the condition
+
+
+*IFU*
+~~~~~
+The IFU reference files have EXP_TYPE=NRS_IFU, and has a BINTABLE extension labeled FAST_VARIATION,
+and a BINTABLE extension labeled DQ_DEF.
+
+The IMAGE extensions have the following characteristics:
+
+=======   =====  =============  =========
+EXTNAME   NAXIS  Dimensions     Data type
+=======   =====  =============  =========
+SCI       3      ncols x nrows  float
+ERR       3      ncols x nrows  float
+DQ        3      ncols x nrows  integer
+=======   =====  =============  =========
+
+
+The FAST_VARIATION table contains four columns:
+
+* slit_name: the string "ANY"
+* nelem: integer, number of the initial values of the wavelength and data arrays to use
+* wavelength: float 1-D array, values of wavelength
+* data: float 1-D array, flat field values for each wavelength
+
+
+The flat field values in this table are used to account for a wavelength-dependence on a much
+finer scale than given by the values in the SCI array.  There is a single row in this table, 
+as the same wavelength-dependent value is applied to all pixels in the quadrant.
+
+(Is this paragraph true - I copied it from above)
+The flat field values in this table are used to account for a wavelength-dependence on a much
+finer scale than given by the values in the SCI array.  For each pixel in the science data, 
+the wavelength of the light that fell on that pixel will be determined by using the WCS
+interface.  The flat-field value for that pixel will then be obtained by
+interpolating within the wavelength and data arrays from the FAST_VARIATION
+table.
+
+ 
+The DQ_DEF table contains the bit assignments used in the DQ array, and contains 4 columns:
+
+* BIT: integer value giving the bit number, starting at zero
+* VALUE: the value of 2^BIT 
 * NAME: the string mnemonic name of the data quality condition
 * DESCRIPTION: a string description of the condition
 
@@ -297,7 +342,7 @@ Detector (DFLAT)
 ::::::::::::::::
 
 There is only one type of DFLAT reference file, and it contains 3 IMAGE extensions, a BINTABLE extension 
-labeled WAVELENGTH, a BINTABLE extension labeled FAST_VARIATION, and a BINTABLE labeled DQ_DEF.
+labeled WAVELENGTH, a BINTABLE extension labeled FAST_VARIATION, and a BINTABLE extension labeled DQ_DEF.
 
 The IMAGE extensions have the following characteristics:
 
@@ -323,7 +368,7 @@ Each of these wavelength values corresponds to a single plane of the SCI IMAGE a
 The FAST_VARIATION table contains four columns:
 
 * slit_name: the string "ANY"
-* nelem: integer, maximum number of wavelengths
+* nelem: integer, number of the initial values of the wavelength and data arrays to use
 * wavelength: float 1-D array, values of wavelength
 * data: float 1-D array, flat field values for each wavelength
 
@@ -335,6 +380,6 @@ as the same wavelength-dependent value is applied to all pixels.
 The DQ_DEF table contains the bit assignments used in the DQ array, and contains 4 columns:
 
 * BIT: integer value giving the bit number, starting at zero
-* VALUE: the equivalent base-10 integer value of BIT
+* VALUE: the value of 2^BIT   
 * NAME: the string mnemonic name of the data quality condition
 * DESCRIPTION: a string description of the condition

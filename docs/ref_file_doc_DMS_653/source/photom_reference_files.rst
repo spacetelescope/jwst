@@ -1,19 +1,28 @@
-Reference Files
-===============
+Reference File Types
+--------------------
 The photom step uses a photom reference file and a pixel area map reference
 file. The pixel area map reference file is only used when processing
 imaging-mode observations.
 
-PHOTOM CRDS Selection Criteria
-------------------------------
-Selection criteria for photom reference files varies a bit from instrument
-to instrument:
+CRDS Selection Criteria
+-----------------------
 
-* FGS: Instrument and Detector
-* MIRI: Instrument and Detector
-* NIRCam: Instrument and Detector
-* NIRISS: Instrument and Detector
-* NIRSpec: Instrument and EXP_TYPE
+PHOTOM Reference Files
+======================
+For FGS, photom reference files are selected based on the values of INSTRUME and DETECTOR
+in the science data file.
+
+For MIRI photom reference files are selected based on the values of INSTRUME and DETECTOR
+in the science data file.
+
+For NIRCam, photom reference files are selected based on the values of INSTRUME and DETECTOR
+in the science data file.
+
+For NIRISS, photom reference files are selected based on the values of INSTRUME and DETECTOR
+in the science data file.
+
+For NIRSpec, photom reference files are selected based on the values of INSTRUME and EXP_TYPE
+in the science data file.
 
 A row of data within the table that matches the mode of the science exposure
 is selected by the photom step based on criteria that are instrument mode
@@ -29,8 +38,30 @@ dependent. The current row selection criteria are:
    - Fixed Slits: Filter, Grating, and Slit name
    - IFU and MSA: Filter and Grating
 
-PHOTOM Reference File Format
-----------------------------
+
+AREA map Reference Files
+========================
+For FGS, photom reference files are selected based on the values of INSTRUME and DETECTOR
+in the science data file.
+
+For MIRI photom reference files are selected based on the values of INSTRUME, DETECTOR, and EXP_TYPE
+in the science data file.
+
+For NIRCam, photom reference files are selected based on the values of INSTRUME, DETECTOR, and EXP_TYPE
+in the science data file.
+
+For NIRISS, photom reference files are selected based on the values of INSTRUME, DETECTOR, and EXP_TYPE
+in the science data file.
+
+For NIRSpec, photom reference files are selected based on the values of INSTRUME, DETECTOR, and EXP_TYPE
+in the science data file.
+
+
+Reference File Formats
+----------------------
+
+PHOTOM Reference Files
+======================
 Photom reference files are FITS format with a single BINTABLE extension.  The
 primary data unit is always empty.  The columns of the table vary with 
 instrument according to the selection criteria listed above. The first few
@@ -57,19 +88,11 @@ The primary header of the photom reference file contains the keywords PIXAR_SR
 and PIXAR_A2, which give the average pixel area in units of steradians and
 square arcseconds, respectively.
 
-AREA CRDS Selection Criteria
-------------------------------
-Selection criteria for AREA reference files vary a bit from instrument to
-instrument:
 
-* FGS: Instrument and Detector
-* MIRI: Instrument, Detector, and Exp_Type
-* NIRCam: Instrument, Detector, and Exp_Type
-* NIRISS: Instrument, Detector, and Exp_Type
-* NIRSpec: Instrument, Detector, and Exp_Type
 
-AREA Reference File Format
------------------------------
+AREA Reference Files
+====================
+
 Pixel area map reference files are FITS format with a single image extension
 with 'EXTNAME=SCI', which contains a 2-D floating-point array of values. The FITS
 primary data array is always empty. The primary header contains the keywords

@@ -1,13 +1,12 @@
 .. _level3-asn-rules:
 
-##########################
 Level3 Associations: Rules
-##########################
+==========================
 
 .. _level3-asn-data-grouping:
 
 Data Grouping
-=============
+-------------
 
 JWST exposures are identified and grouped in a specific order, as
 follows:
@@ -60,7 +59,7 @@ follows:
 .. _level3-asn-association-types:
 
 Association Types
-=================
+-----------------
 
 Each Level3 association is intended to make a specific science
 product. The type of science product is indicated by the `ATYPE` field
@@ -90,4 +89,39 @@ The current association types are:
 .. _level3-asn-rule-definitions:
 
 Rules
-=====
+-----
+
+All rules have as their base class :class:`DMS_Level3_Base
+<jwst.associations.lib.rules_level3_base.DMS_Level3_Base>` This class
+defines the association structure, enforces the DMS naming
+conventions, and defines the basic validity checks on the Level3
+associations.
+
+Along with the base class, a number of mixin classes are defined.
+These mixins define some basic constraints that are found in a number
+of rules. An example is the :class:`AsnMixin_Base
+<jwst.associations.lib.rules_level3_base.AsnMixin_Base>`, which
+provides the constraints that ensure that the program identificaiton
+and instrument are the same in each association.
+
+The rules themselves are subclasses of :class:`AsnMixin_Base
+<jwst.associations.lib.rules_level3_base.AsnMixin_Base>` and whatever
+other mixin classes are necessary to build the rule. Conforming to the
+:ref:`class-naming` scheme, all the final
+Level3 association rules begin with `Asn_`. An example is the
+:class:`Asn_Image <jwst.associations.lib.rules_level3.Asn_Image>` rule.
+
+The following figure shows the above relationships. Note that this
+diagram is not meant to be a complete listing.
+
+.. figure:: ../graphics/level3_rule_inheritance.png
+   :scale: 50%
+
+   Level3 Rule Class Inheritance
+
+Level3 Rules
+------------
+
+.. automodule:: jwst.associations.lib.rules_level3
+   :members:
+   :member-order: bysource
