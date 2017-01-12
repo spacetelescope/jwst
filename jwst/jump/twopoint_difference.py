@@ -1,4 +1,4 @@
-'''
+"""
 Two-Point Difference method for finding outliers in a 3-d ramp data cube.
 
 The scheme used in this variation of the method uses numpy array methods
@@ -9,7 +9,7 @@ that are already known to contain an outlier, to look for any additional
 outliers and set the appropriate DQ mask for all outliers in the pixel.
 
 This is MUCH faster than doing all the work on a pixel-by-pixel basis.
-'''
+"""
 
 import logging
 import numpy as np
@@ -23,6 +23,7 @@ log.setLevel(logging.DEBUG)
 HUGE_NUM = np.finfo(np.float32).max
 
 def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
+
     """
     Find CRs/Jumps in each integration within the input data array.
 
@@ -30,10 +31,8 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
     multiplied by the gain. We also assume that the read noise is in units of
     electrons.
     """
-
     # Get data characteristics
     (nints, ngroups, nrows, ncols) = data.shape
-
     # Create array for output median slope images
     median_slopes = np.zeros((nints, nrows, ncols), dtype=np.float32)
 
@@ -53,18 +52,21 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
 
         # Compute first differences of adjacent groups up the ramp
         first_diffs = np.diff(rdata, axis=2)
-
-        # Compute median of the first differences for all pixels
-        med_diffs = np.nanmedian(first_diffs, axis=2)
-
-        # Zero-out results for pixels that have NaN's in all groups so they
-        # don't cause trouble in later calculations
-        nans = np.where(np.isnan(med_diffs))
-        med_diffs[nans] = 0.
-        first_diffs[nans] = 0.
-
         nans = np.where(np.isnan(first_diffs))
-        first_diffs[nans] = 0.
+        first_diffs[nans] = 100000.
+
+        positive_first_diffs = np.abs(first_diffs)
+        diffsum= positive_first_diffs.sum
+        #make all the first diffs for saturated groups be equal to 100,000 to put them above the good values in the
+        #sorted index
+        matching_array = np.ones(shape=(positive_first_diffs.shape[0],
+                                        positive_first_diffs.shape[1],
+                                        positive_first_diffs.shape[2]))*100000
+        sat_groups =(positive_first_diffs == matching_array)
+        number_sat_groups = (sat_groups*1).sum(axis=2)
+        ndiffs = ngroups - 1
+        sort_index = np.argsort(positive_first_diffs)
+        med_diffs = return_clipped_median(ndiffs, number_sat_groups, positive_first_diffs, sort_index)
 
         # Save initial estimate of the median slope for all pixels
         median_slopes[integration] = med_diffs
@@ -90,108 +92,77 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
         # negative outliers
         ratio = np.abs(first_diffs - med_diffs[:,:,np.newaxis])/sigma[:,:,np.newaxis]
 
-        # Sort the ratios, as they will be checked against the threshold
-        # from greatest->least
-        sortindx = np.argsort(ratio)
-
         # Find the group index of the max outlier in each pixel
         # (the RHS is identical to the previous versions:
         #  max_index = np.nanargmax (ratio, axis=2)
-        max_index1 = sortindx[:,:,ngroups-2]
+        max_index1 = sort_index[:,:,ngroups-2]
 
         # Get indices of highest values (may be outliers) that are above the
         # rejection threshold
         r, c = np.indices(max_index1.shape)
-        r1, c1 = np.where(ratio[r, c, max_index1] > rej_threshold)
-        total_1 = len(r1)
-
-        log.debug('From highest outlier Twopt found %d pixels with at least one CR' % (len(r1)))
-
-        # Find the group index of the 2nd highest outlier in each pixel
-        max_index2 = sortindx[:,:,ngroups-3]
-
-        # Get indices of the 2nd highest values above the rejection threshold
-        r2, c2 = np.where(ratio[r,c,max_index2] > rej_threshold)
-
-        if nframes>1:  # Use 2nd highest outliers if nframes>1
-            # Combine both sets of rows,columns for outliers above threshold
-            rboth = np.concatenate((r1,r2))
-            cboth = np.concatenate((c1,c2))
-            log.debug('From 2nd highest outlier Twopt found %d pixels with at least one CR' % (len(r2)))
-        else:
-            rboth = r1.copy()
-            cboth = c1.copy()
-
-        total_both = len(rboth)  
-
-        # Loop over pixels that have an outlier, checking to see if they have
-        # more than 1 outlier
-        for j in range(total_both):
-            # Get the row/col indexes of current pixel with an outlier.
-            # From the concatenate() above, the initial total_1 values (r1,c1)
-            # correspond to the highest outlier, and the remaining values
-            # (r2,c2) correspond to the 2nd highest outlier.
-            row, col = rboth[j], cboth[j]
-            masked_diffs = first_diffs[row, col]
-            rn2 = read_noise_2[row, col]
-
-            # Create a saturation mask based on NaN's in the first_diffs
-            sat_mask = np.isfinite(masked_diffs)
-
-            # Create a CR mask and initialize with the max outlier;
+        row1, col1 = np.where(ratio[r, c, max_index1 - number_sat_groups] > rej_threshold)
+        log.debug('From highest outlier Twopt found %d pixels with at least one CR' % (len(row1)))
+        number_pixels_with_cr = len(row1)
+        for j in range(number_pixels_with_cr):
+            pixel_masked_diffs = first_diffs[row1[j], col1[j]]
+            pixel_rn2 = read_noise_2[row1[j], col1[j]]
+            pixel_sat_groups = number_sat_groups[row1[j], col1[j]]
+            sorted_index_of_cr = max_index1[row1[j],col1[j]] - pixel_sat_groups
+            # Create a CR mask and set 1st CR to be found
             # cr_mask=0 designates a CR
-            cr_mask = np.ones(masked_diffs.shape, dtype=bool)
+            pixel_cr_mask = np.ones(pixel_masked_diffs.shape, dtype=bool)
+            number_CRs_found = 1
+            pixel_sorted_index = sort_index[row1[j], col1[j], :]
+            pixel_cr_mask[pixel_sorted_index[ndiffs - pixel_sat_groups - 1]] = 0
+            new_CR_found = True
 
-            if j < total_1:   # Set mask for the highest outlier
-                cr_mask[ max_index1[row, col]] = 0
-            else:  # It's the 2nd highest
-                cr_mask[ max_index2[row, col]] = 0
+            #loop over all the found CRs and see if there is more than one CR setting the mask as you go
+            while new_CR_found and ((ndiffs - number_CRs_found - pixel_sat_groups) > 1):
+                new_CR_found = False
+                pixel_med_diff = return_clipped_median(ndiffs, number_CRs_found + pixel_sat_groups,
+                                                       pixel_masked_diffs, pixel_sorted_index)
+                poisson_noise = np.sqrt(np.abs(pixel_med_diff))
+                sigma = np.sqrt(poisson_noise * poisson_noise + pixel_rn2 / nframes)
+                ratio = np.abs(pixel_masked_diffs - pixel_med_diff) / sigma
+                pixel_sorted_ratio = ratio[pixel_sorted_index[:]]
 
-            # Now iteratively search for and reject additional outliers for
-            # this pixel
-            iter = 1
-            while iter:
-                # Recompute the masked median, noise, and ratios for this pixel
-                med = np.median(masked_diffs[cr_mask*sat_mask])
-                poisson_noise = np.sqrt(np.abs(med))
-                sigma = np.sqrt(poisson_noise*poisson_noise + rn2/nframes)
+                #check if largest remaining difference is above threshold
+                if ratio[pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]] > rej_threshold:
+                    new_CR_found = True
+                    pixel_cr_mask[pixel_sorted_index[ndiffs - number_CRs_found-pixel_sat_groups-1]]=0
+                    number_CRs_found += 1
+            # Found all CRs. Set CR flags in input DQ array for this pixel
+            gdq[integration, 1:, row1[j], col1[j]] = np.bitwise_or \
+                (gdq[integration, 1:, row1[j], col1[j]],
+                 dqflags.group['JUMP_DET'] * np.invert(pixel_cr_mask))
 
-                ratio = np.abs(masked_diffs - med)/sigma
- 
-                # Get a list of group indexes sorted from largest to smallest
-                # deviation from the median
-                sortindx = np.argsort(ratio)[::-1]
-
-                # Check through the list to see if any qualify as an outlier.
-                # (since they are sorted, once these don't exceed the threshold
-                # you are done with this pixel)
-                
-                for i in sortindx:
-                    # If already masked, continue to next index
-                    if not cr_mask[i]*sat_mask[i]:
-                        continue
-
-                    # If above threshold, set a CR mask and iterate on this pixel
-                    elif ratio[i] > rej_threshold:
-                        cr_mask[i] = 0
-                        iter = 1
-                        break
-
-                    # If not above threshold, we're done with this pixel
-                    else:
-                        iter = 0
-                        break
-
-            # Set CR flags in input DQ array for this pixel
-            gdq[integration, 1:, row, col] = np.bitwise_or \
-                              (gdq[integration, 1:, row, col],
-                               dqflags.group['JUMP_DET']*np.invert(cr_mask))
-            
             # Save the CR-cleaned median slope for this pixel
-            median_slopes[integration, row, col] = med
-
+            if not new_CR_found: # the loop ran at least one time
+                median_slopes[integration, row1[j], col1[j]] = pixel_med_diff
         # Next pixel with an outlier (j loop)
-
     # Next integration (integration loop)
-
     return median_slopes
+
+
+#This routine will return the clipped median for the input array or pixel. It will ignore the input number of largest
+#differences. At a minimum this is at least one plus the number of saturated values to avoid the median being biased
+# by a cosmic ray. As cosmic rays are found the diffs_to_ignore will increase.
+def return_clipped_median(num_differences, diffs_to_ignore, differences, sorted_index):
+    # ignore largest value and number of CRs found when finding new median
+
+    if sorted_index.ndim > 1:
+        # always exclude the highest value
+        pixel_med_index = sorted_index[:, :, int((num_differences - 1) / 2)] # always exclude the highest value
+        row, col = np.indices(pixel_med_index.shape)
+        # in addition decrease the index by 1 for every two diffs_to_ignore, these will be saturated values in this case
+        pixel_med_diff = differences[row, col, pixel_med_index - ((diffs_to_ignore) / 2).astype(int)]
+        if (num_differences - 1) % 2 == 0:  # even
+            pixel_med_index2 = sorted_index[:, :, int((num_differences - 1) / 2 ) - 1]
+            pixel_med_diff = (pixel_med_diff + differences[row, col, pixel_med_index2- ((diffs_to_ignore) / 2).astype(int)]) / 2.0
+    else:
+        pixel_med_index = sorted_index[int(((num_differences - 1  - diffs_to_ignore )/ 2))]
+        pixel_med_diff = differences[pixel_med_index]
+        if (num_differences - diffs_to_ignore - 1) % 2 == 0:  # even
+            pixel_med_index2 = sorted_index[int((num_differences - 1 - diffs_to_ignore) / 2) - 1]
+            pixel_med_diff = (pixel_med_diff + differences[pixel_med_index2]) / 2.0
+    return pixel_med_diff
