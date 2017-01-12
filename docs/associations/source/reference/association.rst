@@ -119,7 +119,7 @@ the member does not belong in the association, again, an
 
 Typically, one does not deal with a single rule, but a collection of
 rules. For association creation, one typically uses an
-:ref:`AssociationRegistry` to collect all the rules a pool will be
+:ref:`AssociationRegistry <asn-registry>` to collect all the rules a pool will be
 compared against. Association registries provide extra functionality to
 deal with a large and varied set of association rules.
 
@@ -158,10 +158,12 @@ framework required to create associations. The rest of this section
 will discuss the minimum functionality that a subclass needs to
 implement in order to create an association.
 
+.. _class-naming:
+
 Class Naming
 ^^^^^^^^^^^^
 
-The :ref:`AssociationRegistry <reference-registry>` is used to store
+The :ref:`AssociationRegistry <asn-registry>` is used to store
 the association rules. Since rules are defined by Python classes, a
 way of indicating what the final rule classes are is needed. By
 definition, rule classes are classes that begin with the string `Asn_`.

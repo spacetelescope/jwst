@@ -3,6 +3,10 @@
 asn_generate
 ============
 
+Association generation is done either using the command line tool
+`asn_generate` or through the Python API using either
+`Main` or `generate`
+
 Command Line
 ------------
 

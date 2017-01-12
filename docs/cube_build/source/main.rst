@@ -92,7 +92,7 @@ G140H    F070LP  0.7 - 1.2
 G140H    F100LP  1 - 1.8
 G235H    F170LP  1.7 - 3.1
 G395H    F290LP  2.9 - 5.2
-=====    ======  ====================
+=======  ======  ====================
 
 
 **Coordinate Systems:**
@@ -134,33 +134,43 @@ will contain NIRSPEC IFU exposures of the same resolution.
   
 Below is a list of the user options that can be used to select the type of data to be used to create the IFU Cube:
 
-* ``--channel #``, this is a MIRI only option and the only valid values for # are 1,2,3,4, or ALL.
-  If the ``channel`` argument is given, then only data corresponding to that channel  will be used in 
-  constructing the cube.  If the user wants more than one  channel to make cube, then all the values are 
-  contained in a comma separated string string. For example, to create a cube with channel 1 and 2 the argument list is 
-  ``--channel='1, 2'``. If this value is not specified then all the  channels contained in the input 
-   will be used  in constructing the cube. 
+- ``--channel #`` 
 
-* ``--band [string]``, this is a MIRI option and the  only valid values  are SHORT,MEDIUM,LONG, or ALL.
-  If the ``band`` argument is given, then only data corresponding 
-  to that subchannel will be used in  constructing the cube. Only one option is possible, so IFU cubes are created either
-  per subchannel or using all the subchannels the input data cover.  If this value is not specified then all the 
-  subchannels contained in the input list of files will be used in constructing the cube. Note we used ``band`` instead of 
-  ``subchannel``, because the keyword ``band`` in the science fits is used to denote which MIRI subchannel the data covers.
+This is a MIRI only option and the only valid values for # are 1,2,3,4, or ALL.
+If the ``channel`` argument is given, then only data corresponding to that channel  will be used in 
+constructing the cube.  If the user wants more than one  channel to make cube, then all the values are 
+contained in a comma separated string string. For example, to create a cube with channel 1 and 2 the argument list is 
+``--channel='1, 2'``. If this value is not specified then all the  channels contained in the input 
+will be used  in constructing the cube. 
 
-* ``--weighting ['string]``, the is for MIRI data and the only valid values are STANDARD and MIRPSF. This option defines 
+- ``--band [string]``
+
+This is a MIRI option and the  only valid values  are SHORT,MEDIUM,LONG, or ALL.
+If the ``band`` argument is given, then only data corresponding 
+to that subchannel will be used in  constructing the cube. Only one option is possible, so IFU cubes are created either
+per subchannel or using all the subchannels the input data cover.  If this value is not specified then all the 
+subchannels contained in the input list of files will be used in constructing the cube. Note we used ``band`` instead of 
+``subchannel``, because the keyword ``band`` in the science fits is used to denote which MIRI subchannel the data covers.
+
+- ``--weighting ['string]``
+
+This is for MIRI data and the only valid values are STANDARD and MIRPSF. This option defines 
 how the distances between the point cloud members and spaxel centers are determined. The default value is STANDARD and the distances
 are determined in the cube output coordinate system. If this paramter is set to MIRIPSF then the distances are determined in
 the alpha-beta coordinate system of the point cloud member and are normalized by the PSF and LSF.  
 
-* ``--grating [string]``, this is a NIRSPEC option and only valid values are PRISM, G140M, G140H, G235M, G235H, G395M, G395H, or ALL. 
-  If the option ALL is used then all the gratings in the assocation are used.
-  Since association tables will only contain exposures of the same resolution, the use of ALL, will at most combine
-  data from grating G140M, G235M & G395M or G140H, G235H & G395H together. The user can supply a comma separated string 
-  containing the gratings to use. 
+* ``--grating [string]``
 
-* ``--filter [string]``, this is a NIRSPEC  option and the only valid options are Clear, F100LP, F070LP, F170LP, F290LP, or ALL.
- To cover the full wavelength range of NIRSPEC the option ALL can be used (provided the exposures in the association table 
+This is a NIRSPEC option and only valid values are PRISM, G140M, G140H, G235M, G235H, G395M, G395H, or ALL. 
+If the option ALL is used then all the gratings in the assocation are used.
+Since association tables will only contain exposures of the same resolution, the use of ALL, will at most combine
+data from grating G140M, G235M & G395M or G140H, G235H & G395H together. The user can supply a comma separated string 
+containing the gratings to use. 
+
+- ``--filter [string]``
+
+This is a NIRSPEC  option and the only valid options are Clear, F100LP, F070LP, F170LP, F290LP, or ALL.
+To cover the full wavelength range of NIRSPEC the option ALL can be used (provided the exposures in the association table 
 contain all the filters). The user can supply a comma separated string containing the filters to use. 
 
 
@@ -174,15 +184,15 @@ is formed from the input filename; while if the input is an association table th
 table. 
 The string defining the type of IFU is created according to the following rules: 
 
-* for MIRI the string is determined from the  channels and subchannels used. 
-The  IFU string for MIRI is 'ch'+ channel numbers used plus a string for the subchannel. For example if the IFU cube 
-contains channel 1 and 2 data for the short subchannel, the output name would be, rootname_ch1-2_SHORT_s3d.fits. 
-If all the subchannels were used then the output name would be rootname_ch-1-2_ALL_s3d.fits.
+- for MIRI the string is determined from the  channels and subchannels used. 
+  The  IFU string for MIRI is 'ch'+ channel numbers used plus a string for the subchannel. For example if the IFU cube 
+  contains channel 1 and 2 data for the short subchannel, the output name would be, rootname_ch1-2_SHORT_s3d.fits. 
+  If all the subchannels were used then the output name would be rootname_ch-1-2_ALL_s3d.fits.
 
-* for NIRSPEC the string is determined from the gratings and filters used. The gratings are grouped together in a dash (-) 
-separted string and likewize for the gratings. For example if the IFU cube contains data from 
-grating G140M and G235M and from filter F070LP and F100LP,  the output name would be, 
-rootname_G140M-G225_F070LP-F100LP_s3d.fits
+- for NIRSPEC the string is determined from the gratings and filters used. The gratings are grouped together in a dash (-) 
+  separted string and likewize for the gratings. For example if the IFU cube contains data from 
+  grating G140M and G235M and from filter F070LP and F100LP,  the output name would be, 
+  rootname_G140M-G225_F070LP-F100LP_s3d.fits
   
 
 
@@ -232,16 +242,16 @@ then normalized by the width of the PSF and the LSF. For NIRSPEC the distances b
 determined in the final cube coordinate system. 
 
 
-* xdistance = distance between point in the cloud and spaxel center  in units of arc seconds
-* ydistance = distance between point in the cloud and spaxel center in units of arc seconds
-* zdistance = distance between point cloud and spaxel center in the lambda dimension in units of microns
+* xdistance = distance between point in the cloud and spaxel center  in units of arc seconds along the x axis
+* ydistance = distance between point in the cloud and spaxel center in units of arc seconds along the y axis
+* zdistance = distance between point cloud and spaxel center in the lambda dimension in units of microns along the wavelength axis
 
 Additional constraints for MIRI (if the --weighting=MIRIPSF) 
 If the These distances are determined in the **alpha** - **beta** system from where the point cloud value orginated. We want to combine
 many points -possibly coming from a variety of bands- together. To apply the correct weighting to these points we
 normalize the distance between the cube spaxel and point cloud value by the PSF and the LSF which where defined 
 in the **alpha**-**beta** coordinate system.  We therefore, transform the cube spaxel coordinates to each **alpha-beta** system
-that is found within the region of interset. 
+that is found within the region of interset. The xdistance is the distance between the point cloud and spaxel center in the alpha dimension and the ydistance is determined in the beta dimension.
 
 * xnorm  width of the PSF in the alpha dimension in units of arc seconds
 * ynorm  width of the PSF in the beta dimension  in units of arc seconds
@@ -253,9 +263,9 @@ that is found within the region of interset.
 
 For NIRSPEC  (and for MIRI data when --weight='STANDARD'  the distances are determined in the output cube coordinate system) 
 
-* xn = xdistance
-* yn = ydistance
-* zn = zdistance
+* xn = xdistance/spaxel size along axis 1
+* yn = ydistance/spaxel size along axis 2
+* zn = zdistance/spaxel size along the wavelenght axis. 
  
 Define n  to be the number of point cloud members within the region of interest of a given spaxel.
 
@@ -268,9 +278,11 @@ The spaxel flux K =
 
 Where 
 
-:math:`w_i = \frac{xn}^p + \frac{yn}^q + \frac{zn}^r`
+:math:`w_i = \sqrt{({xn}^2 + {yn}^2 + {zn}^2)}`
 
-The default values for the p,q,r and 2, 2 and 2 respectively. The optiminal choice of these values is still TBD, but 
+:math:`w_i = {w_i}^{-p}`
+
+The default value for the p is  2. The optiminal choice of this value is still TBD, but 
 one should consider the degree of smoothing desired in the interpolation, the density of the point cloud elements,
-and the region of interest when chosing these values. 
+and the region of interest when chosing the value. 
 

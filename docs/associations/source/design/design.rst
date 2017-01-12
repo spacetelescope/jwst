@@ -16,7 +16,7 @@ major players used in generating associations. Since this section will
 be describing the code design, the figure below is the overview but
 using the class names involved.
 
-.. _figure-class-overivew:
+.. _figure-class-overview:
 
 .. figure:: ../graphics/overview_classes.png
    :scale: 50%

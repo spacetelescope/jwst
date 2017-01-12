@@ -4,8 +4,10 @@
 Association Class
 ************************************
 
-.. currentmodule:: association
+.. currentmodule:: jwst.associations.association
+   
+.. autoclass:: Association
+   :members: add, dump, load, test_and_set_constraints,
+             add_constraints
 
-.. automodule:: jwst.associations.association
-   :members:
-   :undoc-members:
+.. autofunction:: validate

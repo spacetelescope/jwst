@@ -1,6 +1,5 @@
 title: Photometric flux conversion data model
 allOf:
-- $ref: core.schema.yaml
 - $ref: referencefile.schema.yaml
 - type: object
   properties:
