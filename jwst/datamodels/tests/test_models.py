@@ -271,8 +271,8 @@ def test_multislit_metadata():
             ms.slits.append(ms.slits.item())
             ms.slits[-1].data = im.data
         im = ms.slits[0]
-        im.subarray.name = "FOO"
-        assert ms.slits[0].subarray.name == "FOO"
+        im.subarray.name = "FULL"
+        assert ms.slits[0].subarray.name == "FULL"
 
 
 def test_multislit_metadata():

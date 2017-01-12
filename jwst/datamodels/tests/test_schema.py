@@ -50,13 +50,10 @@ def test_choice():
             dm.meta.instrument.name = 'FOO'
 
 
-def test_get_na_ra():
+def test_set_na_ra():
     with pytest.raises(jsonschema.ValidationError):
         with DataModel(FITS_FILE) as dm:
-            # It's invalid in the file, so we should get the default of None
-            assert dm.meta.target.ra is None
-
-            # But this should raise a ValueError
+            # Setting an invalid value should raise a ValueError
             dm.meta.target.ra = "FOO"
 
 '''
