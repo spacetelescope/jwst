@@ -1,17 +1,16 @@
-
-from twopoint_difference import find_CRs
+from ..twopoint_difference import find_CRs
 import numpy as np
 import pytest
-import dqflags
+from ...datamodels import dqflags
 from astropy.io import fits
 
-@pytest.mark.skip(reason="testing skipping")
+#@pytest.mark.skip(reason="testing skipping")
 def test_noCRs_NoFlux():
     ngroups=5
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
     assert(0 == np.max(find_CRs(data,gdq,read_noise,rej_threshold,nframes))) # no CR found
 
-@pytest.mark.skip
+#@pytest.mark.skip
 def test_5grps_cr3_NoFlux():
     ngroups=5
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -22,7 +21,7 @@ def test_5grps_cr3_NoFlux():
     assert(4 == np.max(gdq)) #a CR was found
     assert(2 == np.argmax(gdq[0,:,100,100])) #find the CR in the expected group
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_5grps_cr2_NoFlux():
     ngroups=5
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -33,7 +32,7 @@ def test_5grps_cr2_NoFlux():
     assert(4 == np.max(gdq)) #a CR was found
     assert(1 == np.argmax(gdq[0,:,100,100])) #find the CR in the expected group
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_5grps_cr2_NegJumpFlux():
     ngroups=5
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -44,7 +43,7 @@ def test_5grps_cr2_NegJumpFlux():
     assert(4 == np.max(gdq)) #a CR was found
     assert(1 == np.argmax(gdq[0,:,100,100])) #find the CR in the expected group
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_3grps_cr2_NoFlux():
     ngroups=3
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -59,7 +58,7 @@ def test_3grps_cr2_NoFlux():
     assert(np.array_equal([0, 4, 0], gdq[0, :, 100, 100]))
 
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_4grps_cr2_NoFlux():
     ngroups=4
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -69,7 +68,7 @@ def test_4grps_cr2_NoFlux():
     assert(4 == np.max(gdq)) #a CR was found
     assert(1 == np.argmax(gdq[0,:,100,100])) #find the CR in the expected group
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_5grps_cr2_nframe2():
     ngroups=5
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -100,7 +99,7 @@ def test_4grps_twocrs_2nd_4th():
     assert(4 == np.max(gdq)) #a CR was found
     assert(np.array_equal([0,4,0,4] , gdq[0, :, 100, 100]) )
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_5grps_twocrs_2nd_5th():
     ngroups=5
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -115,7 +114,7 @@ def test_5grps_twocrs_2nd_5th():
     assert(4 == np.max(gdq)) #a CR was found
     assert(np.array_equal([0,4,0,0,4] ,gdq[0, :, 100, 100]) )
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_5grps_twocrs_2nd_5thbig():
     ngroups=5
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -130,7 +129,7 @@ def test_5grps_twocrs_2nd_5thbig():
     assert(4 == np.max(gdq)) #a CR was found
     assert(np.array_equal([0,4,0,0,4] , gdq[0, :, 100, 100]) )
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_10grps_twocrs_2nd_8th_big():
     ngroups=10
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -150,7 +149,7 @@ def test_10grps_twocrs_2nd_8th_big():
     assert(4 == np.max(gdq)) #a CR was found
     assert(np.array_equal([0,4,0,0,0,0,0,4,0,0] , gdq[0, :, 100, 100]) )
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_10grps_twocrs_10percenthit():
     ngroups=10
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -170,7 +169,7 @@ def test_10grps_twocrs_10percenthit():
     assert(4 == np.max(gdq)) #a CR was found
     assert(np.array_equal([0,4,0,0,0,0,0,4,0,0] , gdq[0, :, 100, 100]) )
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_5grps_twocrs_2nd_5thbig_nframes2():
     ngroups=5
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=10*np.sqrt(2))
@@ -186,7 +185,7 @@ def test_5grps_twocrs_2nd_5thbig_nframes2():
     assert(np.array_equal([0,4,0,0,4] , gdq[0, :, 100, 100]) )
 
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_6grps_twocrs_2nd_5th():
     ngroups=6
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -202,7 +201,7 @@ def test_6grps_twocrs_2nd_5th():
     assert(4 == np.max(gdq)) #a CR was found
     assert(np.array_equal([0,4,0,0,4,0] , gdq[0, :, 100, 100]) )
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_6grps_twocrs_2nd_5th_nframes2():
     ngroups=6
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=10*np.sqrt(2))
@@ -217,7 +216,7 @@ def test_6grps_twocrs_2nd_5th_nframes2():
     assert(4 == np.max(gdq)) #a CR was found
     assert(np.array_equal([0,4,0,0,4,0] , gdq[0, :, 100, 100]) )
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_6grps_twocrs_twopixels_nframes2():
     ngroups=6
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=10*np.sqrt(2))
@@ -241,7 +240,7 @@ def test_6grps_twocrs_twopixels_nframes2():
     assert(np.array_equal([0,4,0,0,4,0] , gdq[0, :, 100, 100]) )
     assert(np.array_equal([0, 0, 4, 0, 4, 0] , gdq[0, :, 200, 100]))
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_5grps_cr2_negslope():
     ngroups = 5
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -313,7 +312,7 @@ def test_6grps_noCR():
     assert(11.5 == medianDiff[0, 100, 100])
 
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_10grps_cr2_gt3sigma():
     ngroups = 10
     crmag=16
@@ -325,7 +324,7 @@ def test_10grps_cr2_gt3sigma():
     assert(4 == np.max(gdq))  # a CR was found
     assert(np.array_equal([0, 4, 0, 0, 0,0,0,0,0,0] , gdq[0, :, 100, 100]))
 
-@pytest.mark.skip(reason="testing skipping")
+#@pytest.mark.skip(reason="testing skipping")
 def test_10grps_cr2_3sigma_noCR():
     ngroups = 10
     crmag=15
@@ -337,7 +336,7 @@ def test_10grps_cr2_3sigma_noCR():
     assert(0 == np.max(gdq))  # a CR was found
     assert(np.array_equal([0, 0, 0, 0, 0,0,0,0,0,0] , gdq[0, :, 100, 100]))
 
-@pytest.mark.skip(reason="testing skipping")
+#@pytest.mark.skip(reason="testing skipping")
 def test_10grps_cr2_gt3sigma_2frames():
     ngroups = 10
     crmag=16
@@ -349,7 +348,7 @@ def test_10grps_cr2_gt3sigma_2frames():
     assert(4 == np.max(gdq))  # a CR was found
     assert(np.array_equal([0, 4, 0, 0, 0,0,0,0,0,0] , gdq[0, :, 100, 100]))
 
-@pytest.mark.skip("testing skipping")
+#@pytest.mark.skip("testing skipping")
 def test_10grps_cr2_3sigma_2frames_noCR():
     ngroups = 10
     crmag=15
@@ -361,7 +360,7 @@ def test_10grps_cr2_3sigma_2frames_noCR():
     assert(0 == np.max(gdq))  # a CR was found
     assert(np.array_equal([0, 0, 0, 0, 0, 0, 0, 0, 0, 0] , gdq[0, :, 100, 100]))
 
-@pytest.mark.skip(reason="testing skipping")
+#@pytest.mark.skip(reason="testing skipping")
 def test_10grps_noCR_2pixels_sigma0():
     ngroups = 10
     crmag = 15
@@ -391,7 +390,7 @@ def test_5grps_Satat4_CRat3():
     assert (np.array_equal([0, 0, dqflags.group['JUMP_DET'],dqflags.group['SATURATED'], dqflags.group['SATURATED']], gdq[0, :, 100, 100]))
 
 
-@pytest.mark.skip
+#@pytest.mark.skip
 def test_10grps_Satat8_CRsat3and6():
     ngroups = 10
     crmag = 1000
@@ -428,4 +427,4 @@ def setup_cube(ngroups,readnoise=10):
 
 if __name__ == '__main__':
     pytest.main(['-x', 'test_find_CRs_mwr.py'])
-   # pytest.main(['test_find_CRs_mwr.py'])
+#   # pytest.main(['test_find_CRs_mwr.py'])
