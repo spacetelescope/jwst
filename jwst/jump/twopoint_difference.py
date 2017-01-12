@@ -14,8 +14,8 @@ This is MUCH faster than doing all the work on a pixel-by-pixel basis.
 import logging
 import numpy as np
 
-import dqflags
-#from .. import datamodels
+from ..datamodels import dqflags
+from .. import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -55,7 +55,6 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
         nans = np.where(np.isnan(first_diffs))
         first_diffs[nans] = 100000.
 
-        print(repr(first_diffs[100,100,:]))
         positive_first_diffs = np.abs(first_diffs)
         diffsum= positive_first_diffs.sum
         #make all the first diffs for saturated groups be equal to 100,000 to put them above the good values in the
@@ -130,8 +129,6 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
                 #check if largest remaining difference is above threshold
                 if ratio[pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]] > rej_threshold:
                     new_CR_found = True
-                    print("another CR found")
-                    print("ratio",repr(ratio))
                     pixel_cr_mask[pixel_sorted_index[ndiffs - number_CRs_found-pixel_sat_groups-1]]=0
                     number_CRs_found += 1
             # Found all CRs. Set CR flags in input DQ array for this pixel
@@ -156,26 +153,16 @@ def return_clipped_median(num_differences, diffs_to_ignore, differences, sorted_
     if sorted_index.ndim > 1:
         # always exclude the highest value
         pixel_med_index = sorted_index[:, :, int((num_differences - 1) / 2)] # always exclude the highest value
-        print("pixel med 100, 100",repr(pixel_med_index[100,100]))
-        print("num differences ",repr(num_differences))
-        print("sorted index 100, 100",repr(sorted_index[100,100,:]))
         row, col = np.indices(pixel_med_index.shape)
         # in addition decrease the index by 1 for every two diffs_to_ignore, these will be saturated values in this case
         pixel_med_diff = differences[row, col, pixel_med_index - ((diffs_to_ignore) / 2).astype(int)]
         if (num_differences - 1) % 2 == 0:  # even
             pixel_med_index2 = sorted_index[:, :, int((num_differences - 1) / 2 ) - 1]
-            print("pixel med2 100, 100", repr(pixel_med_index2[100, 100]))
             pixel_med_diff = (pixel_med_diff + differences[row, col, pixel_med_index2- ((diffs_to_ignore) / 2).astype(int)]) / 2.0
     else:
         pixel_med_index = sorted_index[int(((num_differences - 1  - diffs_to_ignore )/ 2))]
         pixel_med_diff = differences[pixel_med_index]
-        print("pixel med ", repr(pixel_med_index))
-        print("num differences ", repr(num_differences))
-        print("sorted index", repr(sorted_index))
-        print("pixel med diff v1",repr(pixel_med_diff))
         if (num_differences - diffs_to_ignore - 1) % 2 == 0:  # even
             pixel_med_index2 = sorted_index[int((num_differences - 1 - diffs_to_ignore) / 2) - 1]
-            print("pixel med2", repr(pixel_med_index2))
             pixel_med_diff = (pixel_med_diff + differences[pixel_med_index2]) / 2.0
-            print("averaged diff ",repr(pixel_med_diff))
     return pixel_med_diff
