@@ -50,7 +50,7 @@ consumed::
 
   # Print out the data array.  It is allocated here on first access
   # and defaults to being filled with zeros.
-  print im.data
+  print(im.data)
 
 If you already have data in a numpy array, you can also create a model
 using that array by passing it in as a data keyword argument::
@@ -80,17 +80,17 @@ exiting the `with` block.
 
 ::
 
-    from jwst import models
-    with models.open("myimage.fits") as im:
-        assert isinstance(im, models.ImageModel)
+    from jwst import datamodels
+    with datamodels.open("myimage.fits") as im:
+        assert isinstance(im, datamodels.ImageModel)
 
 If you know the type of data stored in the file, or you want to ensure
 that what is being loaded is of a particular type, use the constructor
 of the desired concrete class.  For example, if you want to ensure
 that the file being opened contains 2-dimensional image data::
 
-    from jwst.datamodels import ImageData
-    with ImageData("myimage.fits") as im:
+    from jwst.datamodels import ImageModel
+    with ImageModel("myimage.fits") as im:
         # raises exception if myimage.fits is not an image file
         pass
 
@@ -172,6 +172,17 @@ the file.  For example, if spectrographic data is expected, use
 `SpecModel`.  If it doesn't matter (perhaps the application is only
 sorting FITS files into categories) use the base class `DataModel`.
 
+An alternative is to use::
+
+    from jwst import datamodels
+    with datamodels.open("myfile.fits") as model:
+        ...
+
+The `datamodels.open()` method checks if the `DATAMODL` FITS keyword has
+been set, which records the DataModel that was used to create the file.
+If the keyword is not set, then `datamodels.open()` does its best to
+guess the best DataModel to use.
+
 Accessing data
 --------------
 
@@ -204,20 +215,20 @@ FITS keyword is used in the metadata tree::
 
 This information shows that instead of::
 
-    print hdulist[0].header['DATE-OBS']
+    print(hdulist[0].header['DATE-OBS'])
 
 use::
 
-    print model.meta.observation.date
+    print(model.meta.observation.date)
 
 Extra FITS keywords
 -------------------
 
-When loading arbitrary FITS files, there will inevitably be keywords
-that the schema doesn't know about.  These "extra" FITS keywords are
-put under the model in the `extra_fits` namespace.
+When loading arbitrary FITS files, there may be keywords that are not
+listed in the schema for that data model.  These "extra" FITS keywords
+are put under the model in the `_extra_fits` namespace.
 
-Under the `extra_fits` namespace is a section for each header data
+Under the `_extra_fits` namespace is a section for each header data
 unit, and under those are the extra FITS keywords.  For example, if
 the FITS file contains a keyword `FOO` in the primary header, its
 value can be obtained using::
@@ -226,3 +237,12 @@ value can be obtained using::
 
 This feature is useful to retain any extra keywords from input files
 to output products.
+
+To get a list of everything in `_extra_fits`::
+
+    model._extra_fits._instance
+
+returns a dictionary of of the instance at the model._extra_fits node.
+
+`_instance` can be used at any node in the tree to return a dictionary
+of rest of the tree structure at that node.
