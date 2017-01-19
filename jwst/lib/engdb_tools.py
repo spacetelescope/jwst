@@ -6,6 +6,7 @@ Engineering Database
 from astropy.time import Time
 from collections import namedtuple
 import logging
+from os import getenv
 import re
 import requests
 
@@ -22,6 +23,8 @@ ENGDB_BASE_URL = ''.join([
     'JWDMSEngFqAccB7_testFITSw/',
     'TlmMnemonicDataSrv.svc/',
 ])
+ENGDB_BASE_URL = getenv('ENGDB_BASE_URL', ENGDB_BASE_URL)
+
 
 # URI paths necessary to access the db
 ENGDB_DATA = 'Data/'
