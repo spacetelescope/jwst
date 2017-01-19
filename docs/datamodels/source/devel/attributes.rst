@@ -46,8 +46,9 @@ input data array is 4-D data.  Pixel coordinates in the data extensions are
 
     - ``input_model.data.shape[0]``: number of integrations
     - ``input_model.data.shape[1]``: number of groups
-    - ``input_model.meta.exposure.nframes``: number of frames
-    - ``input_model.meta.exposure.groupgap``: group gap
+    - ``input_model.meta.exposure.nframes``: number of frames per group
+    - ``input_model.meta.exposure.groupgap``: number of frames dropped 
+        between groups
     - ``input_model.meta.subarray.xstart``: starting pixel in X (1-based)
     - ``input_model.meta.subarray.ystart``: starting pixel in Y (1-based)
     - ``input_model.meta.subarray.xsize``: number of columns

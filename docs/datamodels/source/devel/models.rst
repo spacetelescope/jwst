@@ -82,7 +82,7 @@ exiting the `with` block.
 
     from jwst import datamodels
     with datamodels.open("myimage.fits") as im:
-        assert isinstance(im, models.ImageModel)
+        assert isinstance(im, datamodels.ImageModel)
 
 If you know the type of data stored in the file, or you want to ensure
 that what is being loaded is of a particular type, use the constructor
@@ -171,6 +171,17 @@ In place of `ImageModel`, use the type of data one expects to find in
 the file.  For example, if spectrographic data is expected, use
 `SpecModel`.  If it doesn't matter (perhaps the application is only
 sorting FITS files into categories) use the base class `DataModel`.
+
+An alternative is to use::
+
+    from jwst import datamodels
+    with datamodels.open("myfile.fits") as model:
+        ...
+
+The `datamodels.open()` method checks if the `DATAMODL` FITS keyword has
+been set, which records the DataModel that was used to create the file.
+If the keyword is not set, then `datamodels.open()` does its best to
+guess the best DataModel to use.
 
 Accessing data
 --------------
