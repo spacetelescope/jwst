@@ -23,7 +23,7 @@ ENGDB_BASE_URL = ''.join([
     'JWDMSEngFqAccB7_testFITSw/',
     'TlmMnemonicDataSrv.svc/',
 ])
-ENGDB_BASE_URL = getenv('ENGDB_BASE_URL', ENGDB_BASE_URL)
+ENGDB_BASE_URL = getenv('ENG_RESTFUL_URL', ENGDB_BASE_URL)
 
 
 # URI paths necessary to access the db
