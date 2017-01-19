@@ -22,12 +22,14 @@ the instrument modes to which they can be applied.
 +----------------------+------------------------+------------------------------------------+
 | Image3Pipeline       | calwebb_image3.cfg     | Level-3 processing: imaging modes        |
 +----------------------+------------------------+------------------------------------------+
+| Ami3Pipeline         | calwebb_ami3.cfg       | Level-3 processing: NIRISS AMI mode      |
++----------------------+------------------------+------------------------------------------+
 
 Level-2a Pipelines Step Flow
 ============================
 
-The list of correction steps invoked by the Build 6 level-2a (ramps-to-slopes)
-pipeline configurations is as follows.
+The list of correction steps applied by the Build 7 calwebb_sloper level-2a (ramps-to-slopes)
+pipeline is as follows.
 
 ==============  ==============
 calwebb_sloper  calwebb_sloper
@@ -48,8 +50,8 @@ ramp_fit        ramp_fit
 Level-2b Imaging Pipeline Step Flow
 ===================================
 
-The list of correction steps invoked by the level-2b imaging pipeline
-configuration is as follows.
+The list of correction steps applied by the calwebb_image2 level-2b imaging pipeline
+is as follows.
 
 +----------------+
 | calwebb_image2 |
@@ -92,7 +94,6 @@ some kinds of spectroscopic exposures. If the resample_spec step is not applied
 to a given exposure type, the extract_1d operation will be performed on the
 unresampled data.
 Cube_build produces a resampled cube for IFU exposures.
-
 
 Note that level-2b processing for NIRCam and NIRISS Wide-Field Slitless (grism)
 Spectroscopy modes is not yet implemented.
@@ -151,4 +152,20 @@ source_catalog steps will be applied.
 +-------------------+
 | source_catalog    |
 +-------------------+
+
+Level-3 Aperture Masking Interferometry (AMI) Pipeline Step Flow
+================================================================
+
+The correction steps applied by the calwebb_ami3 pipeline are shown
+below.
+
++---------------+
+| calwebb_ami3  |
++===============+
+| ami_analyze   |
++---------------+
+| ami_average   |
++---------------+
+| ami_normalize |
++---------------+
 

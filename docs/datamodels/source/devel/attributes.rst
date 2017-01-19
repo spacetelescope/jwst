@@ -17,34 +17,42 @@ List of current models
 The current models are as follows:
 
     `AmiLgModel`, `AsnModel`, `ContrastModel`,
-    `CubeModel`, `DarkModel`, `DrizParsModel`, `NircamDrizParsModel`,
-    `MiriImgDrizParsModel`, `DrizProductModel`, `FilterModel`,
+    `CubeModel`, `CubeFlatModel`, `DarkModel`, `DarkMIRIModel`,
+    `DrizParsModel`, `NircamDrizParsModel`, `MiriImgDrizParsModel`,
+    `DrizProductModel`, `FgsPhotomModel`, `FilterModel`,
     `FlatModel`, `FringeModel`, `GainModel`, `GLS_RampFitModel`,
-    `ImageModel`, `IPCModel`, `LastFrameModel`, `LinearityModel`,
-    `MaskModel`, `MIRIRampModel`, `MultiSlitModel`, `MultiSpecModel`,
-    `PhotomModel`, `NircamPhotomModel`, `NirissPhotomModel`,
-    `NirspecPhotomModel`, `MiriImgPhotomModel`, `MiriMrsPhotomModel`,
-    `RampModel`, `RampFitOutputModel`, `ReadnoiseModel`, `ResetModel`,
-    `SaturationModel`, `SpecModel`, `StrayLightModel`
+    `ImageModel`, `IPCModel`, `IRS2Model`, `LastFrameModel`, `LinearityModel`,
+    `MaskModel`, `MIRIRampModel`, `ModelContainer`,
+    `MultiExposureModel`, `MultiProductModel`, `MultiSlitModel`,
+    `MultiSpecModel`, `IFUCubeModel`, `PhotomModel`, `NircamPhotomModel`,
+    `NirissPhotomModel`, `NirspecPhotomModel`, `NirspecFSPhotomModel`,
+    `NRSFlatModel`, `NirspecFlatModel`, `NirspecQuadFlatModel`,
+    `MiriImgPhotomModel`, `MiriMrsPhotomModel`, `QuadModel`, `RampModel`,
+    `RampFitOutputModel`, `ReadnoiseModel`, `ReferenceCubeModel`,
+    `ReferenceFileModel`, `ReferenceImageModel`, `ReferenceQuadModel`,
+    `ResetModel`, `RSCDModel`, `SaturationModel`, `SpecModel`,
+    `StrayLightModel`
 
 Commonly used attributes
 ------------------------
 
-Here are a few model attributes that are used by many of the pipeline
-steps.  Note that, following FORTRAN and FITS conventions, the
-starting pixel numbers in X and Y are one-indexed.  Getting the number
-of integrations and the number of groups from the first and second
-axes assumes that the input data array is 4-D data.  Much of the
-jwst step code assumes that the data array is 4-D.
+Here are a few model attributes that are used by some of the pipeline
+steps.
 
-    - number of integrations = input_model.data.shape[0]
-    - number of groups = input_model.data.shape[1]
-    - number of frames = input_model.meta.exposure.nframes
-    - group gap = input_model.meta.exposure.groupgap
-    - starting pixel in X = input_model.meta.subarray.xstart
-    - starting pixel in Y = input_model.meta.subarray.ystart
-    - number of columns = input_model.meta.subarray.xsize
-    - number of rows = input_model.meta.subarray.ysize
+For uncalibrated data `_uncal.fits`.  Getting the number of integrations
+and the number of groups from the first and second axes assumes that the
+input data array is 4-D data.  Pixel coordinates in the data extensions are
+1-indexed as in FORTRAN and FITS headers, not 0-indexed as in Python.
+
+    - ``input_model.data.shape[0]``: number of integrations
+    - ``input_model.data.shape[1]``: number of groups
+    - ``input_model.meta.exposure.nframes``: number of frames per group
+    - ``input_model.meta.exposure.groupgap``: number of frames dropped 
+        between groups
+    - ``input_model.meta.subarray.xstart``: starting pixel in X (1-based)
+    - ``input_model.meta.subarray.ystart``: starting pixel in Y (1-based)
+    - ``input_model.meta.subarray.xsize``: number of columns
+    - ``input_model.meta.subarray.ysize``: number of rows
 
 The `data`, `err`, `dq`, etc., attributes of most models are assumed to be
 numpy.ndarray arrays, or at least objects that have some of the attributes
@@ -61,26 +69,29 @@ is stored in a separate image extension).  Full-frame data for all other
 instruments have four columns or rows of reference pixels on each edge
 of the image.
 
-Model classes
--------------
-
-Base class
-''''''''''
+DataModel Base Class
+--------------------
 
 .. autoclass:: jwst.datamodels.DataModel
    :members:
 
-Concrete model classes
-''''''''''''''''''''''
+Specific Model Classes
+----------------------
 
 .. automodule:: jwst.datamodels
    :members: AmiLgModel, AsnModel, ContrastModel,
-    CubeModel, DarkModel, DrizParsModel, NircamDrizParsModel,
-    MiriImgDrizParsModel, DrizProductModel, FilterModel,
+    CubeModel, CubeFlatModel, DarkModel, DarkMIRIModel, DrizParsModel,
+    NircamDrizParsModel, MiriImgDrizParsModel,
+    DrizProductModel, FgsPhotomModel, FilterModel,
     FlatModel, FringeModel, GainModel, GLS_RampFitModel,
-    ImageModel, IPCModel, LastFrameModel, LinearityModel,
-    MaskModel, MIRIRampModel, MultiSlitModel, MultiSpecModel,
-    NircamPhotomModel, NirissPhotomModel,
-    NirspecPhotomModel, MiriImgPhotomModel, MiriMrsPhotomModel,
-    RampModel, RampFitOutputModel, ReadnoiseModel, ResetModel,
-    SaturationModel, SpecModel, StrayLightModel
+    ImageModel, IPCModel, IRS2Model, LastFrameModel, LinearityModel,
+    MaskModel, MIRIRampModel, ModelContainer,
+    MultiExposureModel, MultiProductModel, MultiSlitModel,
+    MultiSpecModel, IFUCubeModel, PhotomModel, NircamPhotomModel,
+    NirissPhotomModel, NirspecPhotomModel, NirspecFSPhotomModel,
+    NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel,
+    MiriImgPhotomModel, MiriMrsPhotomModel, QuadModel, RampModel,
+    RampFitOutputModel, ReadnoiseModel, ReferenceCubeModel,
+    ReferenceFileModel, ReferenceImageModel, ReferenceQuadModel,
+    ResetModel, RSCDModel, SaturationModel, SpecModel,
+    StrayLightModel
