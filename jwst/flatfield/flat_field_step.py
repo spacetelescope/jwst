@@ -11,10 +11,12 @@ EXTRACT_2D_IS_OK = ["NRS_LAMP", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT",
                     "NRS_MSASPEC"]
 
 # NIRSpec imaging types (see exp_type2transform in assign_wcs/nirspec.py).
-IMAGING_MODES = ["NRS_IMAGE", "NRS_FOCUS",
-                 "NRS_TACQ", "NRS_BOTA", "NRS_TASLIT",
-                 "NRS_CONFIRM", "NRS_TACONFIRM",
-                 "NRS_MIMF"]
+NRS_IMAGING_MODES = ["NRS_IMAGE", "NRS_FOCUS",
+                     "NRS_TACQ", "NRS_BOTA", "NRS_TASLIT",
+                     "NRS_CONFIRM", "NRS_TACONFIRM",
+                     "NRS_MIMF"]
+# Supported NIRSpec spectrographic types.
+NRS_SPEC_MODES = ["NRS_BRIGHTOBJ", "NRS_FIXEDSLIT", "NRS_MSASPEC", "NRS_IFU"]
 
 class FlatFieldStep(Step):
     """
@@ -47,6 +49,14 @@ class FlatFieldStep(Step):
         elif isinstance(input_model, datamodels.MultiSlitModel):
             self.log.debug('Input is a MultiSlitModel')
 
+        if input_model.meta.instrument.name.upper() == "NIRSPEC":
+            if (exposure_type not in NRS_SPEC_MODES and
+                exposure_type not in NRS_IMAGING_MODES):
+                self.log.warning("Exposure type is %s; flat-fielding will be "
+                                 "skipped because it is not currently "
+                                 "supported for this mode.", exposure_type)
+                return self.skip_step(input_model)
+
         # Check whether extract_2d has been run.
         if (input_model.meta.cal_step.extract_2d == 'COMPLETE' and
             not exposure_type in EXTRACT_2D_IS_OK):
@@ -54,14 +64,11 @@ class FlatFieldStep(Step):
                              "%s data it should not have been run, so ...",
                              exposure_type)
             self.log.warning("flat fielding will be skipped.")
-            result = input_model.copy()
-            result.meta.cal_step.flat_field = "SKIPPED"
-            input_model.close()
-            return result
+            return self.skip_step(input_model)
 
         # NIRSpec spectrographic mode?
         if input_model.meta.instrument.name.upper() == "NIRSPEC":
-            if exposure_type in IMAGING_MODES:
+            if exposure_type in NRS_IMAGING_MODES:
                 is_NRS_spectrographic = False
             else:
                 is_NRS_spectrographic = True
@@ -96,8 +103,8 @@ class FlatFieldStep(Step):
             if (self.f_flat_filename == 'N/A' or
                 self.s_flat_filename == 'N/A' or
                 self.d_flat_filename == 'N/A'):
-                self.log.warning('One or more flat-field reference files'
-                                 ' were missing')
+                self.log.warning('One or more flat-field reference files '
+                                 'were missing')
                 missing = True
         else:
             if self.flat_filename == 'N/A':
@@ -105,10 +112,7 @@ class FlatFieldStep(Step):
                 missing = True
         if missing:
             self.log.warning('Flat-field step will be skipped')
-            result = input_model.copy()
-            result.meta.cal_step.flat_field = 'SKIPPED'
-            input_model.close()
-            return result
+            return self.skip_step(input_model)
 
         # Find out what model to use for the flat field reference file(s).
         if is_NRS_spectrographic:
@@ -150,6 +154,19 @@ class FlatFieldStep(Step):
             interpolated_flats.close()
 
         return output_model
+
+    def skip_step(self, input_model):
+        """Set the calibration switch to SKIPPED.
+
+        This method makes a copy of input_model, sets the calibration
+        switch for the flat_field step to SKIPPED in the copy, closes
+        input_model, and returns the copy.
+        """
+
+        result = input_model.copy()
+        result.meta.cal_step.flat_field = "SKIPPED"
+        input_model.close()
+        return result
 
 if __name__ == '__main__':
     cmdline.step_script(flat_field_step)
