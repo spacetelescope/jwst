@@ -68,7 +68,7 @@ Outputs
   The output file will be of type ``_rate``, e.g.
   ``jw80600012001_02101_00003_mirimage_rate.fits``.
 
-* 3D Countrate product: If the input exposure contains more than one inegration
+* 3D Countrate product: If the input exposure contains more than one integration
   (NINTS>1), a 3D countrate product is created that contains the individual
   results of each integration. The 2D countrate images for each integration are
   stacked along the 3rd axis of the data cubes (ncols x nrows x nints). This
