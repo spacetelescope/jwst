@@ -84,7 +84,7 @@ def ifu_coords(fname, output=None):
     else:
         root = model.meta.filename.split('_')
         output = "".join([root[0], '_world_coordinates', '.fits'])
-    hdulist.writeto(output, clobber=True)
+    hdulist.writeto(output, overwrite=True)
     del hdulist
     model.close()
 
@@ -154,7 +154,7 @@ def compute_world_coordinates(fname, output=None):
     else:
         root = model.meta.filename.split('_')
         output = "".join([root[0], '_world_coordinates', '.fits'])
-    hdulist.writeto(output, clobber=True)
+    hdulist.writeto(output, overwrite=True)
     del hdulist
     model.close()
 
@@ -215,7 +215,7 @@ def imaging_coords(fname, output=None):
     else:
         root = model.meta.filename.split('_')
         output = "".join([root[0], '_world_coordinates', '.fits'])
-    hdulist.writeto(output, clobber=True)
+    hdulist.writeto(output, overwrite=True)
     del hdulist
     model.close()
 

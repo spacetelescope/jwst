@@ -386,7 +386,7 @@ class Step(object):
                             output_file_name = join(self.output_dir, filename)
 
                         self.log.info('Saving file {0}'.format(output_file_name))
-                        result.save(output_file_name, clobber=True)
+                        result.save(output_file_name, overwrite=True)
 
             self.log.info(
                 'Step {0} done'.format(self.name))

@@ -267,7 +267,7 @@ class DataModel(properties.ObjectNode):
 
         # TODO: Support gzip-compressed fits
         if ext == '.fits':
-            kwargs.setdefault('clobber', True)
+            kwargs.setdefault('overwrite', True)
             self.to_fits(path, *args, **kwargs)
         elif ext == '.asdf':
             self.to_asdf(path, *args, **kwargs)
