@@ -5,6 +5,8 @@ This package provides support for image alignment.
 """
 from __future__ import (absolute_import, division, unicode_literals,
                         print_function)
+from .tweakreg_step import TweakRegStep
+
 import os
 import logging
 
