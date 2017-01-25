@@ -67,7 +67,7 @@ def test_history_from_fits():
     header = fits.Header()
     header['HISTORY'] = "First entry"
     header['HISTORY'] = "Second entry"
-    fits.writeto(TMP_FITS, np.array([]), header, clobber=True)
+    fits.writeto(TMP_FITS, np.array([]), header, overwrite=True)
 
     m = DataModel(TMP_FITS)
     assert m.history == [{'description': 'First entry'},
