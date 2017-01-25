@@ -1,16 +1,11 @@
 """Helpers for tests."""
+from backports.tempfile import TemporaryDirectory
 from collections import namedtuple
 from contextlib import contextmanager
-from functools import wraps
 from glob import glob
 import os
 import pytest
 import re
-
-try:
-    from tempfile import TemporaryDirectory
-except ImportError:
-    from .tempfile_py2 import TemporaryDirectory
 
 from astropy.table import (Table, vstack)
 
@@ -21,14 +16,15 @@ from ..lib.counter import Counter
 
 # Define how to setup initial conditions with pools.
 class PoolParams(
-        namedtuple('PoolParams',
-                   [
-                       'path',
-                       'n_asns',
-                       'n_orphaned',
-                       'candidates',
-                       'kwargs'
-                   ]
+        namedtuple(
+            'PoolParams',
+            [
+                'path',
+                'n_asns',
+                'n_orphaned',
+                'candidates',
+                'kwargs'
+            ]
         )
 ):
     def __new__(cls, path='',
