@@ -68,17 +68,17 @@ class BasePoolRule(object):
         assert len(rules) >= len(self.valid_rules)
         rule_names = get_rule_names(rules)
         for rule in self.valid_rules:
-            yield check_in_list, rule, rule_names
+            assert rule in rule_names
 
     def test_run_generate(self):
         rules = AssociationRegistry()
         for ppars in self.pools:
             pool = combine_pools(ppars.path, **ppars.kwargs)
             (asns, orphaned) = generate(pool, rules)
-            yield check_equal, len(asns), ppars.n_asns
-            yield check_equal, len(orphaned), ppars.n_orphaned
+            assert len(asns) == ppars.n_asns
+            assert len(orphaned) == ppars.n_orphaned
             for asn, candidates in zip(asns, ppars.candidates):
-                yield check_equal, set(asn.candidates), set(candidates)
+                assert set(asn.candidates) == set(candidates)
 
 
 @pytest.fixture(scope='session')
