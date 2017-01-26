@@ -28,8 +28,8 @@ class CubeBuildStep (Step):
          grating   = option('PRISIM','G140M','G140H','G235M','G235H',G395M','G395H','ALL','all',default='ALL')
          filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL','all',default='ALL')
          scale1 = float(default=0.0)
-         scale2 = float(default =0.0)
-         scalew = float(default = 0.0)
+         scale2 = float(default=0.0)
+         scalew = float(default=0.0)
          interpolation = option(,'pointcloud','area','POINTCLOUD','AREA',default='pointcloud')
          weighting = option('standard','miripsf','STANDARD','MIRIPSF',default = 'standard')
          coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec')
@@ -38,9 +38,11 @@ class CubeBuildStep (Step):
          roiw = float(default=1.0)
          weight_power = float(default=2.0)
          offset_list = string(default='NA')
-         iwaveslice = integer(default=-1)
-         xdebug = integer(default=0)
-         ydebug = integer(default=0) 
+         wavemin = float(default=None)
+         wavemax = float(default=None)
+         xdebug = integer(default=None)
+         ydebug = integer(default=None) 
+         zdebug = integer(default=None)
        """
 
     def process(self, input):
@@ -60,10 +62,26 @@ class CubeBuildStep (Step):
         if(self.scalew != 0.0): self.log.info('Input wavelength scale %f  ', self.scalew)
         if(self.offset_list != 'NA'): self.log.info('Offset Dither list %s', self.offset_list)
 
-        if(self.iwaveslice !=-1): self.log.info('Creating only a single wavelength slice at cube index',
-                                              self.iwaveslice)
+        if(self.wavemin !=None): self.log.info('Setting Minimum wavelength of spectral cube to: %f',
+                                              self.wavemin)
+        if(self.wavemax !=None): self.log.info('Setting Maximum wavelength of spectral cube to: %f',
+                                              self.wavemax)
 
 
+        self.debug_pixel = 0
+        if(self.xdebug !=None and self.ydebug !=None and self.zdebug !=None):
+            self.debug_pixel = 1
+
+            self.log.info('Writing debug information for spaxel %i %i %i',self.xdebug,self.ydebug,
+                          self.zdebug)
+
+            self.log.debug('Writing debug information for spaxel %i %i %i',self.xdebug,self.ydebug,
+                          self.zdebug)
+            self.xdebug = self.xdebug -1
+            self.ydebug = self.ydebug -1
+            self.zdebug = self.zdebug -1
+
+        print('write debug results',self.debug_pixel)
         # valid coord_system:
         # 1. alpha-beta (only valid for MIRI Single Cubes)
         # 2. ra-dec
@@ -232,25 +250,29 @@ class CubeBuildStep (Step):
 
             # now you have the size of cube - create an instance for each spaxel
             # create an empty spaxel list - this will become a list of Spaxel classses
-        spaxel = []
-
-            # set up center of the corner cube spaxel
-        t0 = time.time()
-        for z in range(Cube.naxis3):
-            for y in range(Cube.naxis2):
-                for x in range(Cube.naxis1):
-                    spaxel.append(cube.Spaxel(Cube.xcoord[x], 
-                                              Cube.ycoord[y], 
-                                              Cube.zcoord[z]))                        
-        t1 = time.time()
+#        spaxel = []
+#        t0 = time.time()
+#        for z in range(Cube.naxis3):
+#            for y in range(Cube.naxis2):
+#                for x in range(Cube.naxis1):
+#                    spaxel.append(cube.Spaxel())                        
+#        t1 = time.time()
 #        print("Time to create list of spaxel classes = %.1f.s" % (t1 - t0,))
+        t0 = time.time()
+        spaxel = []
+        total_num = Cube.naxis1*Cube.naxis2*Cube.naxis3
 
-        # create an empty Pixel Cloud array of 10 columns
-        # if doing interpolation on point cloud this will become a matrix of  Pixel Point cloud values
-        # each row holds information for a single pixel
+        if(self.interpolation == 'pointcloud'):
+            for t in range(total_num):
+                spaxel.append(cube.Spaxel())
+        else:
+            for t in range(total_num):
+                spaxel.append(cube.SpaxelAB())
 
-        # Initialize the PixelCloud to 10   columns of zeros (1 row)
-#        PixelCloud = np.zeros(shape=(10, 1))
+        t1 = time.time()
+        print("Time to create list of spaxel classes = %.1f.s" % (t1 - t0,))
+
+
         t0 = time.time()
         # now need to loop over every file that covers this channel/subchannel (MIRI) or Grating/filter(NIRSPEC)
         #and map the detector pixels to the cube spaxel.
@@ -280,7 +302,11 @@ class CubeBuildStep (Step):
             else:    #  add information for another slice  to the  PixelCloud
                 PixelCloud = np.hstack((PixelCloud, Cloud))
 
-            print(Cloud.shape,PixelCloud.shape)
+#             if i == 0:
+#                 PixelCloud = np.zeros((Cloud.shape[0], Cloud.shape[1]*number_bands))
+#             PixelCloud[:, i*Cloud.shape[1]] = Cloud
+
+#            print(Cloud.shape,PixelCloud.shape)
 
 
         t1 = time.time()
@@ -311,7 +337,6 @@ class CubeBuildStep (Step):
             print('Default output file name',self.output_file)
             root, ext = os.path.splitext(self.output_file)
             default = root.find('cube_build') # the user has not provided a name
-            print('found default',default)
             if(default != -1):
                 self.output_file = IFUCube.meta.filename
 #            IFUCube.save(IFUCube.meta.filename)

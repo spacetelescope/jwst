@@ -423,7 +423,6 @@ def UpdateOutPutName(self):
         #newname = self.output_name_base + '_cube_build.fits'
         newname = self.output_name 
     else: 
-        
 
         if self.metadata['instrument'] == 'MIRI':
             channels = list(set(self.metadata['band_channel']))

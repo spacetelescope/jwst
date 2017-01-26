@@ -152,10 +152,16 @@ class Info(object):
         self.Info['G395H']['bscale'] = 0.1
         self.Info['G395H']['nslices'] = 30
 
-    def GetScale(self, parameter1,parameter2):
-        scale = (self.Info[parameter1][parameter2]['ascale'], 
-                 self.Info[parameter1][parameter2]['bscale'], 
-                 self.Info[parameter1][parameter2]['wscale'])
+    def GetScale(self, parameter1,j = None):
+        if j is None:
+            
+            scale = (self.Info[parameter1]['ascale'], 
+                     self.Info[parameter1]['bscale'], 
+                     self.Info[parameter1]['wscale'])
+        else: 
+            scale = (self.Info[parameter1][parameter2]['ascale'], 
+                     self.Info[parameter1][parameter2]['bscale'], 
+                     self.Info[parameter1][parameter2]['wscale'])
         return scale
 
 
