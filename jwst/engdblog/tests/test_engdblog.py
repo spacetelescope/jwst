@@ -33,9 +33,17 @@ def test_barestring(caplog, engdb):
     assert 'Step EngDBLogStep done' in caplog.text
 
 
-def test_novalue(caplog, engdb):
+def test_badmnemonic(caplog, engdb):
     mnemonic = 'NOSUCHMNEMONIC'
     result = EngDBLogStep.call([mnemonic])
+    assert isinstance(result, dict)
+    assert len(result) == 0
+    assert 'Cannot retrieve info for {}'.format(mnemonic) in caplog.text
+
+
+def test_novalues(caplog, engdb):
+    mnemonic = 'INRSI_GWA_Y_TILT_AVGED'
+    result = EngDBLogStep.call([mnemonic], etime='2016-01-02')
     assert isinstance(result, dict)
     assert len(result) == 0
     assert '{} has no entries in time range'.format(mnemonic) in caplog.text

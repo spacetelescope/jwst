@@ -283,9 +283,6 @@ class ENGDB_Service(object):
         ------
         requests.exceptions.HTTPError
             Either a bad URL or non-existant mnemonic.
-
-        ValueError
-            Mnemonic is found but has no data.
         """
         records = self.get_records(
             mnemonic=mnemonic,
@@ -302,15 +299,14 @@ class ENGDB_Service(object):
             include_obstime=include_obstime,
             zip=zip
         )
-        if records['Data'] is None:
-            raise ValueError('Mnemonic {} has no data'.format(mnemonic))
-        for record in records['Data']:
-            obstime = extract_db_time(record['ObsTime'])
-            if not include_bracket_values:
-                if obstime < db_starttime or obstime > db_endttime:
-                    continue
-            value = record['EUValue']
-            results.append(obstime, value)
+        if records['Data'] is not None:
+            for record in records['Data']:
+                obstime = extract_db_time(record['ObsTime'])
+                if not include_bracket_values:
+                    if obstime < db_starttime or obstime > db_endttime:
+                        continue
+                value = record['EUValue']
+                results.append(obstime, value)
 
         return results.collection
 

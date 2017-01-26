@@ -56,11 +56,20 @@ class EngDBLogStep(Step):
                 values = edb.get_values(mnemonic, stime, etime)
             except:
                 self.log.info(
+                    'Cannot retrieve info for {}'.format(
+                        mnemonic
+                    )
+                )
+                continue
+
+            if len(values) < 1:
+                self.log.info(
                     '{} has no entries in time range {}:{}'.format(
                         mnemonic, stime, etime
                     )
                 )
                 continue
+
             if verbosity == 'initial':
                 result[mnemonic] = values[0]
                 self.log.info(
