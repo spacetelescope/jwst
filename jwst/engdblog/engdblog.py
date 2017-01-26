@@ -1,3 +1,4 @@
+import six
 
 from ..lib.engdb_tools import ENGDB_Service
 from ..stpipe import Step
@@ -33,7 +34,7 @@ class EngDBLogStep(Step):
 
         Parameters
         ----------
-        mnemonics: [str (, ...)]
+        mnemonics: str or [str (, ...)]
             The list of mnemonics to retrieve
 
         Returns
@@ -48,6 +49,8 @@ class EngDBLogStep(Step):
         verbosity = self.verbosity
         edb = ENGDB_Service()
 
+        if isinstance(mnemonics, six.string_types):
+            mnemonics = [mnemonics]
         for mnemonic in mnemonics:
             try:
                 values = edb.get_values(mnemonic, stime, etime)

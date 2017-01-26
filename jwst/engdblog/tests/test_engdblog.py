@@ -21,6 +21,18 @@ def test_engdblogstep(caplog, engdb):
     assert 'Step EngDBLogStep done' in caplog.text
 
 
+def test_barestring(caplog, engdb):
+    mnemonic = 'INRSI_GWA_Y_TILT_AVGED'
+    result = EngDBLogStep.call(mnemonic)
+    assert isinstance(result, dict)
+    assert mnemonic in result
+    assert 'EngDBLogStep instance created' in caplog.text
+    assert mnemonic in caplog.text
+    assert "Step EngDBLogStep running with args ('INRSI_GWA_Y_TILT_AVGED',).".format(mnemonic) in caplog.text
+    assert '{}[2016-01-01:2016-01-31] = '.format(mnemonic) in caplog.text
+    assert 'Step EngDBLogStep done' in caplog.text
+
+
 def test_novalue(caplog, engdb):
     mnemonic = 'NOSUCHMNEMONIC'
     result = EngDBLogStep.call([mnemonic])
