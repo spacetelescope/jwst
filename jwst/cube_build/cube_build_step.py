@@ -333,10 +333,12 @@ class CubeBuildStep (Step):
         result = cube_model.UpdateIFUCube(self, Cube,IFUCube, spaxel)
 
 # write out the IFU cube
+        print(self.CubeType) 
         if self.CubeType == 'File' or self.CubeType =='ASN' :
             print('Default output file name',self.output_file)
             root, ext = os.path.splitext(self.output_file)
             default = root.find('cube_build') # the user has not provided a name
+            print('default',default)
             if(default != -1):
                 self.output_file = IFUCube.meta.filename
 #            IFUCube.save(IFUCube.meta.filename)

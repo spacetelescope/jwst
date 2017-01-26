@@ -55,6 +55,7 @@ def DetermineScale(Cube, InstrumentInfo):
             this_channel = Cube.channel[i]
             for j in range(number_sub):
                 this_sub = Cube.subchannel[j]
+                print('channel and subch',this_channel,this_sub)
 
                 a_scale, b_scale, wscale = InstrumentInfo.GetScale(this_channel,this_sub)
 
