@@ -56,6 +56,15 @@ class Step(object):
 
     @classmethod
     def print_configspec(cls, stream=sys.stdout):
+
+        # Python2/3 issue: Python3 doesn't like bytes
+        # going to stdout directly.
+        if stream == sys.stdout:
+            try:
+                stream = sys.stdout.buffer
+            except AttributeError:
+                pass
+
         specfile = cls.load_spec_file(preserve_comments=True)
         specfile.write(stream)
 
