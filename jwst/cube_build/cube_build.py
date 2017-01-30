@@ -199,11 +199,10 @@ def FindFootPrintNIRSPEC(self, input,flag_data):
         slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
         yrange_slice = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange_slice = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
-        print ('yrange 0,1 xrange 0,1',yrange[0],yrange[1],xrange[0],xrange[1])
+
         if(xrange_slice[0] >= 0 and xrange_slice[1] > 0): 
 
             x,y = wcstools.grid_from_domain(slice_wcs.domain)
-
 #            y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
             ra,dec,lam = slice_wcs(x,y)
 
@@ -531,7 +530,7 @@ def MapDetectorToCube(self,this_par1, this_par2,
                     else:    #  add information for another slice  to the  PixelCloud
                         Cloud = np.hstack((Cloud, cloud))
 
-                    print("cloud, Cloud Shape",cloud.shape,Cloud.shape)
+#                    print("cloud, Cloud Shape",cloud.shape,Cloud.shape)
 
                     t1 = time.time()
                     log.debug("Time Map one NIRSPEC slice  to Cloud = %.1f.s" % (t1 - t0,))
