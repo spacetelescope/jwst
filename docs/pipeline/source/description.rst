@@ -297,10 +297,10 @@ Inputs
 Outputs
 -------
 
-* Resampled 2D Image product: A resampled/rectified 2D image product of type
+* Resampled 2D Image product (``DrizProductModel``): A resampled/rectified 2D image product of type
   ``_i2d`` is created containing the rectified single exposure or the rectified
   and combined association of exposures, which is the direct output of the
-  ``resample`` step.
+  ``resample`` step. This is the 
 
 * Source catalog: A source catalog produced from the ``_i2d`` product is saved
   as an ASCII file in ``ecsv`` format, with a product type of ``_cat``.
@@ -342,17 +342,17 @@ Inputs
 Outputs
 -------
 
-* LG product: For every input exposure, the fringe parameters and closure phases
-  caculated by the ``ami_analyze`` step are saved to an ``_lg`` product type
-  file.
+* LG product (``AmiLgModel``): For every input exposure, the fringe
+  parameters and closure phases caculated by the ``ami_analyze`` step
+  are saved to an ``_lg`` product type file.
 
-* Averaged LG product: The LG results averaged over all science or reference
+* Averaged LG product (``AmiLgModel``): The LG results averaged over all science or reference
   exposures, calculated by the ``ami_average`` step, are saved to an ``_lgavgt``
   (for the science target) or ``_lgavgr`` (for the reference target) file. Note
   that these output products are only created if the pipeline argument
-  ``save_averages`` (see below) is set to ``True``.
+  ``save_averages`` (see below) is set to ``True``. 
 
-* Normalized LG product: If reference target exposures are included in the input
+* Normalized LG product (``AmiLgModel``): If reference target exposures are included in the input
   ASN, the LG results for the science target will be normalized by the LG
   results for the reference target, via the ``ami_normalize`` step, and will be
   saved to an ``_lgnorm`` product file.
