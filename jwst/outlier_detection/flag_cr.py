@@ -275,7 +275,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     # outfilename = sci_image.meta.filename.split('.')[0] + '_dq.fits'
     # out_dq = datamodels.ImageModel()
     # out_dq.data = result_dq
-    # out_dq.to_fits(outfilename, clobber=True)
+    # out_dq.to_fits(outfilename, overwrite=True)
 
     # ######## Save the cosmic ray mask file to disk
     # _cr_file = np.zeros(input_image.shape, np.uint32)

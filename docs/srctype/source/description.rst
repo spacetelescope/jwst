@@ -24,29 +24,30 @@ the exposure.
 The default values set by the step, as a function of exposure type (the value
 of the ``EXP_TYPE`` keyword) is shown in the table below.
 
-+-------------------+------------------------+-----------------------+
-| EXP_TYPE          | Exposure Type          | Default SRCTYPE Value |
-+===================+========================+=======================+
-| MIR_LRS-FIXEDSLIT | MIRI LRS fixed-slit    | Point                 |
-+-------------------+------------------------+-----------------------+
-| MIR_LRS-SLISTLESS | MIRI LRS slitless      | Point                 |
-+-------------------+------------------------+-----------------------+
-| MIR_MRS           | MIRI MRS (IFU)         | Extended              |
-+-------------------+------------------------+-----------------------+
-| NIS_SOSS          | NIRISS SOSS            | Point                 |
-+-------------------+------------------------+-----------------------+
-| NRS_FIXEDSLIT     | NIRSpec fixed-slit     | Point                 |
-+-------------------+------------------------+-----------------------+
-| NRS_BRIGHTOBJ     | NIRSpec bright object  | Point                 |
-+-------------------+------------------------+-----------------------+
-| NRS_IFU           | NIRSpec IFU            | Point                 |
-+-------------------+------------------------+-----------------------+
++-------------------+------------------------+-----------------+
+| EXP_TYPE          | Exposure Type          | Default SRCTYPE |
++===================+========================+=================+
+| MIR_LRS-FIXEDSLIT | MIRI LRS fixed-slit    | Point           |
++-------------------+------------------------+-----------------+
+| MIR_LRS-SLISTLESS | MIRI LRS slitless      | Point           |
++-------------------+------------------------+-----------------+
+| MIR_MRS           | MIRI MRS (IFU)         | Extended        |
++-------------------+------------------------+-----------------+
+| NIS_SOSS          | NIRISS SOSS            | Point           |
++-------------------+------------------------+-----------------+
+| NRS_FIXEDSLIT     | NIRSpec fixed-slit     | Point           |
++-------------------+------------------------+-----------------+
+| NRS_BRIGHTOBJ     | NIRSpec bright object  | Point           |
++-------------------+------------------------+-----------------+
+| NRS_IFU           | NIRSpec IFU            | Point           |
++-------------------+------------------------+-----------------+
 
-For NIRSpec MOS exposures (EXP_TYPE="NRS_MSA"), there are multiple
-sources per exposure and hence a single parameter in APT, nor a single
-keyword in the science product can be used to record the type of each
-source. For these exposures, a stellarity value may be given for each
-source used in the MSA Planning Tool (MPT). The stellarity values are
+For NIRSpec MOS exposures (EXP_TYPE="NRS_MSASPEC"), there are multiple
+sources per exposure and hence a single parameter can't be used in the
+APT, nor a single keyword in the science product, to record the type of
+each source. For these exposures, a stellarity value can be supplied by
+the observer for each source used in the MSA Planning Tool (MPT). The
+stellarity values are
 in turn passed from the MPT to the MSA metadata (_msa.fits) file
 created by DMS and used in the calibration pipeline. The stellarity
 values from the MSA metadata file are loaded for each source/slitlet

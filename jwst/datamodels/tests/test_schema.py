@@ -146,7 +146,7 @@ def test_ad_hoc_fits():
     with DataModel() as dm:
         dm.meta.foo = {'a': 42, 'b': ['a', 'b', 'c']}
 
-        dm.to_fits(TMP_FITS, clobber=True)
+        dm.to_fits(TMP_FITS, overwrite=True)
 
     with DataModel.from_fits(TMP_FITS) as dm2:
         assert dm2.meta.foo == {'a': 42, 'b': ['a', 'b', 'c']}
@@ -285,7 +285,7 @@ def test_table_array():
             (str('my_string'), str('S64'))
             ]
 
-        x.to_fits(TMP_FITS, clobber=True)
+        x.to_fits(TMP_FITS, overwrite=True)
 
     with DataModel(TMP_FITS, schema=table_schema) as x:
         table = x.table
@@ -421,7 +421,7 @@ def test_data_array():
         x.arr[2].data = array3
         del x.arr[1]
         assert len(x.arr) == 2
-        x.to_fits(TMP_FITS, clobber=True)
+        x.to_fits(TMP_FITS, overwrite=True)
 
     with DataModel(TMP_FITS, schema=data_array_schema) as x:
         assert len(x.arr) == 2
@@ -442,7 +442,7 @@ def test_data_array():
         assert len(x.arr) == 3
         del x.arr[1]
         assert len(x.arr) == 2
-        x.to_fits(TMP_FITS2, clobber=True)
+        x.to_fits(TMP_FITS2, overwrite=True)
 
     from astropy.io import fits
     with fits.open(TMP_FITS2) as hdulist:
@@ -535,7 +535,7 @@ def test_multislit_move_from_fits():
         hdu.ver = i + 1
         hdulist.append(hdu)
 
-    hdulist.writeto(TMP_FITS, clobber=True)
+    hdulist.writeto(TMP_FITS, overwrite=True)
 
     n = MultiSlitModel()
     with MultiSlitModel(TMP_FITS) as m:

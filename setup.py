@@ -92,7 +92,8 @@ setup(
     tests_require=[
         'backports.tempfile',
         'pytest',
-        'requests_mock'
+        'requests_mock',
+        'pytest-catchlog'
     ],
     cmdclass={
         'test': PyTest

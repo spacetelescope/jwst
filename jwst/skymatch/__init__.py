@@ -6,6 +6,8 @@ This package provides support for sky background subtraction and equalization
 """
 from __future__ import (absolute_import, division, unicode_literals,
                         print_function)
+from .skymatch_step import SkyMatchStep
+
 import os
 import logging
 
