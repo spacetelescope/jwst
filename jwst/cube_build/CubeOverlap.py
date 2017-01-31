@@ -54,8 +54,8 @@ def FindAreaQuad(MinX, MinY, Xcorner, Ycorner):
     -------
     Area
     """
-    PX = list()
-    PY = list()
+    PX = []
+    PY = []
 
     PX.append(Xcorner[0] - MinX)
     PX.append(Xcorner[1] - MinX)
@@ -270,11 +270,11 @@ def SH_FindOverlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
     # xPixel,yPixel will become the clipped polygon vertices inside the cube pixel
     # xnew,ynew xpixel and ypixel of size MaxVertices
 
-    xPixel = list()
-    yPixel = list()
+    xPixel = []
+    yPixel = []
 
-    xnew = list()
-    ynew = list()
+    xnew = []
+    ynew = []
 
     for j in range(0, 9):
         xnew.append(0.0)
@@ -415,8 +415,8 @@ def SpaxelOverlap(self, x, y, sliceno, start_slice, input_model, transform, beta
         # In alpha,wave space
         # in beta space: beta center + width
 
-        alpha_corner = list()
-        wave_corner = list()
+        alpha_corner = []
+        wave_corner = []
 
         alpha_corner.append(alpha1[ipixel])
         alpha_corner.append(alpha2[ipixel])

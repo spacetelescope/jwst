@@ -132,7 +132,7 @@ def std2radec(crval1,crval2,xi,eta):
   # tangent projection
     xi = xi/ rad2arcsec
     eta = eta/rad2arcsec;
-    # it back to float64 - ?!
+    # TODO: check back to float64
 
     ra0 = crval1 * deg2rad
     dec0 = crval2 * deg2rad

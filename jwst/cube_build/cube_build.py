@@ -46,20 +46,25 @@ def DetermineScale(Cube, InstrumentInfo):
 
     if(Cube.instrument == 'MIRI'):
         number_channels = len(Cube.channel)
+        number_sub = len(Cube.subchannel)
         min_a = 1000.00
         min_b = 1000.00
         min_w = 1000.00
 
         for i in range(number_channels):
             this_channel = Cube.channel[i]
-            a_scale, b_scale, wscale = InstrumentInfo.GetScale(this_channel)
+            for j in range(number_sub):
+                this_sub = Cube.subchannel[j]
+                print('channel and subch',this_channel,this_sub)
 
-            if(a_scale < min_a):
-                min_a = a_scale
-            if(b_scale < min_b):
-                min_b = b_scale
-            if(wscale < min_w):
-                min_w = wscale
+                a_scale, b_scale, wscale = InstrumentInfo.GetScale(this_channel,this_sub)
+
+                if(a_scale < min_a):
+                    min_a = a_scale
+                if(b_scale < min_b):
+                    min_b = b_scale
+                if(wscale < min_w):
+                    min_w = wscale
 
         scale = [min_a, min_b, min_w]
 
@@ -145,7 +150,6 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
     lambda_min = np.nanmin(lam)
     lambda_max = np.nanmax(lam)
 
-    
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
 
 #********************************************************************************
@@ -195,11 +199,10 @@ def FindFootPrintNIRSPEC(self, input,flag_data):
         slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
         yrange_slice = slice_wcs.domain[1]['lower'],slice_wcs.domain[1]['upper']
         xrange_slice = slice_wcs.domain[0]['lower'],slice_wcs.domain[0]['upper']
-#        print ('yrange 0,1 xrange 0,1',yrange[0],yrange[1],xrange[0],xrange[1])
+
         if(xrange_slice[0] >= 0 and xrange_slice[1] > 0): 
 
             x,y = wcstools.grid_from_domain(slice_wcs.domain)
-
 #            y, x = np.mgrid[yrange[0]:yrange[1], xrange[0]:xrange[1]]
             ra,dec,lam = slice_wcs(x,y)
 
@@ -215,7 +218,6 @@ def FindFootPrintNIRSPEC(self, input,flag_data):
             lambda_slice[k] = np.nanmin(lam)
             lambda_slice[k + 1] = np.nanmax(lam)
 
-#        print(k,a_slice[k],a_slice[k+1],b_slice[k],b_slice[k+1])
         k = k + 2
 
     a_min = min(a_slice)
@@ -292,7 +294,7 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
         self.log.info('Working on data  from %s,%s',this_a,this_b)
 
         n = len(MasterTable.FileMap[instrument][this_a][this_b])
-        log.debug('number of files %d ', n)
+        self.log.info('number of files %d ', n)
 
     # each file find the min and max a and lambda (OFFSETS NEED TO BE APPLIED TO THESE VALUES)
         for k in range(n):
@@ -309,7 +311,6 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
             if(ioffset == n):
                 c1_offset = MasterTable.FileOffset[this_a][this_b]['C1'][k]
                 c2_offset = MasterTable.FileOffset[this_a][this_b]['C2'][k]
-#                print('offset to apply in arcseonds (ra,dec) ', c1_offset, c2_offset)
 #________________________________________________________________________________
 # Open the input data model
             with datamodels.ImageModel(ifile) as input_model:
@@ -350,6 +351,15 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
     final_b_max = max(b_max)
     final_lambda_min = min(lambda_min)
     final_lambda_max = max(lambda_max)
+
+#    print('Final wavelength ',final_lambda_min,final_lambda_max)
+    if(self.wavemin != None and self.wavemin > final_lambda_min):
+        final_lambda_min = self.wavemin
+        self.log.info('Changed min wavelength of cube to %f ',final_lambda_min)
+
+    if(self.wavemax != None and self.wavemax < final_lambda_max):
+        final_lambda_max = self.wavemax
+        self.log.info('Changed max wavelength of cube to %f ',final_lambda_max)
 #________________________________________________________________________________
 # Test that we have data (NIRSPEC NRS2 only has IFU data for 3 configurations) 
 
@@ -372,9 +382,8 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
 
 
 #********************************************************************************
-def MapDetectorToCube(self, this_par1, this_par2, 
+def MapDetectorToCube(self,this_par1, this_par2, 
                       Cube, spaxel, 
-                      PixelCloud, 
                       MasterTable, 
                       InstrumentInfo,
                       IFUCube):
@@ -448,17 +457,20 @@ def MapDetectorToCube(self, this_par1, this_par2,
                     x = np.reshape(x, x.size)
                     
                     t0 = time.time()
+                    
                     cloud = CubeCloud.MakePointCloudMIRI(self,input_model,
                                                          x, y, k, 
                                                          Cube,
                                                         c1_offset, c2_offset)
-                    n = PixelCloud.size
-                    if(n == 10):  # If first time
-                        PixelCloud = cloud
+
+                    if(k == 0):  # If first time
+                        Cloud = cloud
                     else:    #  add information for another slice  to the  PixelCloud
+                        Cloud = np.hstack((Cloud, cloud))
 
-                        PixelCloud = np.hstack((PixelCloud, cloud))
+                                       
 
+                    print('in MapDetector2Cube',cloud.shape,Cloud.shape)
                     t1 = time.time()
                     log.debug("Time Map one Channel from 1 file  to Cloud = %.1f.s" 
                               % (t1 - t0,))
@@ -505,10 +517,7 @@ def MapDetectorToCube(self, this_par1, this_par2,
                 end_slice = 29
                 nslices = end_slice - start_slice + 1
                 regions = list(range(start_slice, end_slice + 1))
-
                 for i in regions:
-
-
                     t0 = time.time()
                     cloud = CubeCloud.MakePointCloudNIRSPEC(self,input_model,
                                                             k,
@@ -516,19 +525,19 @@ def MapDetectorToCube(self, this_par1, this_par2,
                                                             Cube,
                                                             c1_offset, c2_offset)
 
-
-                    n = PixelCloud.size
-                    if(n == 10):  # If first time
-                        PixelCloud = cloud
+                    if(i == start_slice and k == 0  ):  # If first time
+                        Cloud = cloud
                     else:    #  add information for another slice  to the  PixelCloud
-                        PixelCloud = np.hstack((PixelCloud, cloud))
+                        Cloud = np.hstack((Cloud, cloud))
+
+#                    print("cloud, Cloud Shape",cloud.shape,Cloud.shape)
 
                     t1 = time.time()
                     log.debug("Time Map one NIRSPEC slice  to Cloud = %.1f.s" % (t1 - t0,))
 
 #________________________________________________________________________________
 
-    return PixelCloud
+    return Cloud
 
 
 #********************************************************************************
@@ -565,14 +574,9 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
     elif self.interpolation == 'pointcloud':
         icube = 0
         t0 = time.time()
-        iz = 0
-
-        for z in Cube.zcoord:
-            iy = 0
-
-            for y in Cube.ycoord:
-                ix = 0
-                for x in Cube.xcoord:
+        for iz, z in enumerate(Cube.zcoord):
+            for iy, y in enumerate(Cube.ycoord):
+                for ix, x in enumerate(Cube.xcoord):
                     num = len(spaxel[icube].ipointcloud)
 
                     if(num > 0):
@@ -605,9 +609,9 @@ def FindCubeFlux(self, Cube, spaxel, PixelCloud):
 
 
                     icube = icube + 1
-                    ix = ix + 1
-                iy = iy + 1
-            iz = iz + 1
+#                    ix = ix + 1
+#                iy = iy + 1
+#            iz = iz + 1
 
         t1 = time.time()
         log.info("Time to interpolate at spaxel values = %.1f.s" % (t1 - t0,))

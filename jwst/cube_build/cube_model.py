@@ -84,16 +84,6 @@ def SetUpIFUCube(self,Cube):
     wcsobj = pointing.create_fitswcs(IFUCube)
 
     
-#    print(wcsobj.forward_transform[2].matrix)
-#    print(wcsobj.forward_transform[2].translation)
-    #print(wcsobj.forward_transform[1])
-    #print(wcsobj.forward_transform[2])
-    #print(wcsobj.forward_transform[3])
-    #print(wcsobj.forward_transform[4])
-    #print(wcsobj.forward_transform[5])
-
-
-
     IFUCube.meta.wcs = wcsobj
     return IFUCube
 
