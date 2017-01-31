@@ -66,47 +66,31 @@ def imaging_distortion(input_model, reference_files):
     reference_files : dict
         reference files from CRDS
 
-
-    using CDP 3 Reference distortion file
-        Old one: ~~MIRI_FM_MIRIMAGE_F1000W_PSF_03.01.00.fits~~
-    Current one: MIRI_FM_MIRIMAGE_DISTORTION_06.03.00.fits
-
-    reference files/corrections needed (pixel to sky):
-
-    1. Filter dependent shift in (x,y) (!with an oposite sign to that delievred by the IT)
+    1. Filter dependent shift in (x,y) (!with an oposite sign to that delivered by the IT)
     2. Apply MI
     3. Apply Ai and BI matrices
-    4. Apply the TI matrix (this gives V2/V3 coordinates)
-    5. Apply V2/V3 to sky transformation
+    4. Apply the TI matrix (this gives Xan/Yan coordinates)
+    5. Aply the XanYan --> V2V3 transform
+    5. Apply V2V3 --> sky transform
 
     ref_file: filter_offset.asdf - (1)
     ref_file: distortion.asdf -(2,3,4)
     """
-
-    # Load the distortion and filter from the reference files.
-
-    # Load in the distortion file.
+    # Read in the distortion.
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    filter_offset = AsdfFile.open(reference_files['filteroffset']).tree[input_model.meta.instrument.filter]
+    obsfilter = input_model.meta.instrument.filter
 
-    # Now apply each of the models.  The Scale(60) converts from arc-minutes to deg.
-    full_distortion = models.Shift(filter_offset['column_offset']) & models.Shift(
-        filter_offset['row_offset']) | distortion | models.Scale(1/60) & models.Scale(1/60)
+    # Add an offset for the filter
+    with AsdfFile.open(reference_files['filteroffset']) as filter_offset:
+        if obsfilter in filter_offset.tree:
+            filter_corr = filter_offset.tree[obsfilter]
+            distortion = models.Shift(filter_corr['column_offset']) & models.Shift(
+                filter_corr['row_offset']) | distortion
 
-
-    # ToDo: This will likely have to change in the future, but the "filteroffset" file we have
-    # ToDo: currently does not contain that key.
-    filter_offset = None
-    if input_model.meta.instrument.filter in  AsdfFile.open(reference_files['filteroffset']).tree:
-        filter_offset = AsdfFile.open(reference_files['filteroffset']).tree[input_model.meta.instrument.filter]
-        full_distortion = models.Shift(filter_offset['row_offset']) & models.Shift(
-            filter_offset['column_offset']) | distortion
-    else:
-        full_distortion = distortion
-
-    full_distortion = full_distortion.rename('distortion')
-
-    return full_distortion
+    # Apply XanYan --> V2V3 and scale to degrees
+    distortion = distortion | models.Identity(1) & (models.Scale(-1) | models.Shift(-7.8)) | \
+               models.Scale(1/60) & models.Scale(1/60)
+    return distortion
 
 
 def lrs(input_model, reference_files):
