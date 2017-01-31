@@ -1,7 +1,7 @@
 """
 Test script for set_velocity_aberration.py
 """
-from math import isclose
+from numpy import isclose
 import os
 import sys
 
