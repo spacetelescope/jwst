@@ -274,7 +274,7 @@ def just_the_step_from_cmdline(args, cls=None):
     log.log.info("Hostname: {0}".format(os.uname()[1]))
     log.log.info("OS: {0}".format(os.uname()[0]))
 
-    return step, step_class, positional
+    return step, step_class, positional, debug_on_exception
 
 def step_from_cmdline(args, cls=None):
     """
@@ -300,7 +300,8 @@ def step_from_cmdline(args, cls=None):
         instance.
     """
 
-    step, step_class, positional = just_the_step_from_cmdline(args, cls)
+    step, step_class, positional, debug_on_exception = \
+        just_the_step_from_cmdline(args, cls)
 
     try:
         profile_path = os.environ.pop("JWST_PROFILE", None)
@@ -350,7 +351,8 @@ def steps_to_reftypes_from_config(cfg):
     else:
         cfgpath = cfg
     steps_to_reftypes = {}
-    step, _step_class, _positional = just_the_step_from_cmdline([cfgpath])
+    step, _step_class, _positional, _debug_on_exception = \
+        just_the_step_from_cmdline([cfgpath])
     for name, substep in step.step_defs.items():
         steps_to_reftypes[name] = sorted(list(substep.reference_file_types))
     return steps_to_reftypes
