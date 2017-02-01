@@ -45,67 +45,65 @@ def reproject(wcs1, wcs2, origin=0):
     return _reproject
 
 
-def wcs_from_footprints(wcslist, refwcs=None, transform=None, domain=None):
+def wcs_from_footprints(dmodels, refmodel=None, transform=None, domain=None):
     """
-    Create a WCS from a list of WCS objects.
+    Create a WCS from a list of input models.
 
     A fiducial point in the output coordinate frame is created from  the
     footprints of all WCS objects. For a spatial frame this is the center
     of the union of the footprints. For a spectral frame the fiducial is in
     the beginning of the footprint range.
-    If ``refwcs`` is not specified, the first WCS object in the list is considered
+    If ``refmodel`` is None, the first WCS object in the list is considered
     a reference. The output coordinate frame and projection (for celestial frames)
-    is taken from ``refwcs``.
-    If ``transform`` is not suplied, a compound transform comprised of
-    scaling and rotation is copied from ``refwcs``.
+    is taken from ``refmodel``.
+    If ``transform`` is not suplied, a compound transform is made using
+    CDELTs and rotation by ROLL_REF.
     If ``domain`` is not supplied, the domain of the new WCS is computed
-    from the domains of all input WCSs
+    from the domains of all input WCSs.
 
     Parameters
     ----------
-    wcslist : list of `~gwcs.wcs.WCS`
-        A list of WCS objects.
-    refwcs : `~gwcs.wcs.WCS`, optional
-        Reference WCS. The output coordinate frame, the projection and a
+    dmodels : list of `~jwst.datamodels.DataModel`
+        A list of data models.
+    refmodel : `~jwst.datamodels.DataModel`, optional
+        This model's WCS is used as a reference.
+        WCS. The output coordinate frame, the projection and a
         scaling and rotation transform is created from it. If not supplied
-        the first WCS in the list is used as ``refwcs``.
+        the first model in the list is used as ``refmodel``.
     transform : `~astropy.modeling.core.Model`, optional
         A transform, passed to :class_method:`~gwcs.WCS.wcs_from_fiducial`
-        If not supplied Scaling | Rotation is computed from ``refwcs``.
+        If not supplied Scaling | Rotation is computed from ``refmodel``.
     domain : list of dicts, optional
         Domain of the new WCS.
         If not supplied it is computed from the domain of all inputs.
     """
+    wcslist = [im.meta.wcs for im in dmodels]
     if not isiterable(wcslist):
         raise ValueError("Expected 'wcslist' to be an iterable of WCS objects.")
     if not all([isinstance(w, WCS) for w in wcslist]):
         raise TypeError("All items in wcslist are to be instances of gwcs.WCS.")
-    if refwcs is None:
-        refwcs = wcslist[0]
+    if refmodel is None:
+        refmodel = dmodels[0]
     else:
-        if not isinstance(refwcs, WCS):
-            raise TypeError("Expected refwcs to be an instance of gwcs.WCS.")
+        if not isinstance(refmodel, DataModel):
+            raise TypeError("Expected refmodel to be an instance of DataModel.")
 
     fiducial = compute_fiducial(wcslist, domain)
-    prj = np.array([isinstance(m, projections.Projection) for m \
-                    in refwcs.forward_transform]).nonzero()[0]
-    if prj:
-        prj = refwcs.forward_transform[prj[0]]
-    else:
-        prj = astmodels.Pix2Sky_TAN()
+
+    prj = astmodels.Pix2Sky_TAN()
     trans = []
-    scales = [m for m in refwcs.forward_transform if isinstance(m, astmodels.Scale)]
-    if scales:
-        trans.append(functools.reduce(lambda x, y: x & y, scales))
-    rotation = [m for m in refwcs.forward_transform if \
-                isinstance(m, astmodels.AffineTransformation2D)]
-    if rotation:
-        trans.append(rotation[0])
+
+    scales = astmodels.Scale(refmodel.meta.wcsinfo.cdelt1) & \
+        astmodels.Scale(refmodel.meta.wcsinfo.cdelt2)
+    trans.append(scales)
+
     if trans:
         tr = functools.reduce(lambda x, y: x | y, trans)
     else:
         tr = None
-    out_frame = refwcs.output_frame
+    rotation = astmodels.Rotation2D._compute_matrix(np.deg2rad(refmodel.meta.wcsinfo.roll_ref))
+    trans.append(rotation)
+    out_frame = refmodel.meta.wcs.output_frame
     wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame,
                              projection=prj, transform=tr)
 
