@@ -45,7 +45,7 @@ def reproject(wcs1, wcs2, origin=0):
     return _reproject
 
 
-def wcs_from_footprints(model_list, refmodel=None, transform=None, domain=None):
+def wcs_from_footprints(dmodels, refmodel=None, transform=None, domain=None):
     """
     Create a WCS from a list of input models.
 
@@ -63,7 +63,7 @@ def wcs_from_footprints(model_list, refmodel=None, transform=None, domain=None):
 
     Parameters
     ----------
-    model_list : list of `~jwst.datamodels.DataModel`
+    dmodels : list of `~jwst.datamodels.DataModel`
         A list of data models.
     refmodel : `~jwst.datamodels.DataModel`, optional
         This model's WCS is used as a reference.
@@ -77,13 +77,13 @@ def wcs_from_footprints(model_list, refmodel=None, transform=None, domain=None):
         Domain of the new WCS.
         If not supplied it is computed from the domain of all inputs.
     """
-    wcslist = [im.meta.wcs for im in model_list]
+    wcslist = [im.meta.wcs for im in dmodels]
     if not isiterable(wcslist):
         raise ValueError("Expected 'wcslist' to be an iterable of WCS objects.")
     if not all([isinstance(w, WCS) for w in wcslist]):
         raise TypeError("All items in wcslist are to be instances of gwcs.WCS.")
     if refmodel is None:
-        refmodel = model_list[0]
+        refmodel = dmodels[0]
     else:
         if not isinstance(refmodel, DataModel):
             raise TypeError("Expected refmodel to be an instance of DataModel.")
