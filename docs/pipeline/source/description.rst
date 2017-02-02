@@ -24,6 +24,18 @@ the instrument modes to which they can be applied.
 | Ami3Pipeline         | calwebb_ami3.cfg       | Level-3 processing: NIRISS AMI mode      |
 +----------------------+------------------------+------------------------------------------+
 
+Input Files, Output Files and Data Models
+=========================================
+An important concept used throughout the JWST pipeline is the :ref:`Data
+Model`. Nearly all data used by any of the pipeline code is
+encapsulated in a data model. Most input is read into a data model and
+all output is produced by a data model. When possible, this document
+will indicate the data model associated with a file type, usually as a
+parenthetical link to the data model in question. For some steps, the
+output file may represent different data models depending on the input
+to those steps. As a result, the data models listed here will not be
+an exhaustive list.
+
 Level-2a Pipeline Step Flow (calwebb_sloper)
 =============================================
 Level-2a processing applies basic detector-level corrections to all exposure
@@ -297,7 +309,7 @@ Inputs
 Outputs
 -------
 
-* Resampled 2D Image product (``DrizProductModel``): A resampled/rectified 2D image product of type
+* Resampled 2D Image product (:ref:`DrizProductModel`): A resampled/rectified 2D image product of type
   ``_i2d`` is created containing the rectified single exposure or the rectified
   and combined association of exposures, which is the direct output of the
   ``resample`` step. This is the 
@@ -342,17 +354,17 @@ Inputs
 Outputs
 -------
 
-* LG product (``AmiLgModel``): For every input exposure, the fringe
+* LG product (:ref:`AmiLgModel`): For every input exposure, the fringe
   parameters and closure phases caculated by the ``ami_analyze`` step
   are saved to an ``_lg`` product type file.
 
-* Averaged LG product (``AmiLgModel``): The LG results averaged over all science or reference
+* Averaged LG product (:ref:`AmiLgModel`): The LG results averaged over all science or reference
   exposures, calculated by the ``ami_average`` step, are saved to an ``_lgavgt``
   (for the science target) or ``_lgavgr`` (for the reference target) file. Note
   that these output products are only created if the pipeline argument
   ``save_averages`` (see below) is set to ``True``. 
 
-* Normalized LG product (``AmiLgModel``): If reference target exposures are included in the input
+* Normalized LG product (:ref:`AmiLgModel`): If reference target exposures are included in the input
   ASN, the LG results for the science target will be normalized by the LG
   results for the reference target, via the ``ami_normalize`` step, and will be
   saved to an ``_lgnorm`` product file.
