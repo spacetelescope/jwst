@@ -15,6 +15,8 @@ from astropy.modeling import models as astmodels
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial
 
+from . import pointing
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -56,8 +58,8 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, domain=None):
     If ``refmodel`` is None, the first WCS object in the list is considered
     a reference. The output coordinate frame and projection (for celestial frames)
     is taken from ``refmodel``.
-    If ``transform`` is not suplied, a compound transform is made using
-    CDELTs and rotation by ROLL_REF.
+    If ``transform`` is not suplied, a compound transform is created using
+    CDELTs and PC.
     If ``domain`` is not supplied, the domain of the new WCS is computed
     from the domains of all input WCSs.
 
@@ -90,18 +92,19 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, domain=None):
 
     fiducial = compute_fiducial(wcslist, domain)
 
+    wcsinfo = pointing.wcsinfo_from_model(refmodel)
+
     prj = astmodels.Pix2Sky_TAN()
     trans = []
 
-    scales = astmodels.Scale(refmodel.meta.wcsinfo.cdelt1) & \
-        astmodels.Scale(refmodel.meta.wcsinfo.cdelt2)
+    scales = astmodels.Scale(wcsinfo['CDELT'][0]) & astmodels.Scale(wcsinfo['CDELT'][1])
     trans.append(scales)
 
     if trans:
         tr = functools.reduce(lambda x, y: x | y, trans)
     else:
         tr = None
-    rotation = astmodels.Rotation2D._compute_matrix(np.deg2rad(refmodel.meta.wcsinfo.roll_ref))
+    rotation = astmodels.AffineTransformation2D(np.array(wcsinfo['PC']))
     trans.append(rotation)
     out_frame = refmodel.meta.wcs.output_frame
     wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame,
