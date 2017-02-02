@@ -439,7 +439,7 @@ def gls_ramp_fit(model,
         ampl_err_int = np.zeros(shape_ampl, dtype=np.float32)
 
     # Used for flagging pixels with UNRELIABLE_SLOPE.
-    temp_dq = np.zeros(imshape, dtype=np.int32)
+    temp_dq = np.zeros(imshape, dtype=np.uint32)
 
     # Get Pixel DQ array from input file. The incoming RampModel has uint8
     # PIXELDQ, but ramp fitting will update this array here by flagging
