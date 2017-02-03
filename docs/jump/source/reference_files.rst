@@ -24,10 +24,10 @@ with ``EXTNAME=SCI``, which contains a 2-D floating-point array of gain values
 Read Noise Reference File Format
 --------------------------------
 The read noise reference file is a FITS file with a single IMAGE extension,
-with ``EXTNAME=SCI``, which contains a 2-D floating-point array of read noise values
-per pixel. The units of the read noise should be electrons and should be the
+with ``EXTNAME=SCI``, which contains a 2-D floating-point array of read noise 
+values per pixel. The units of the read noise should be DN and should be the
 CDS (Correlated Double Sampling) read noise, i.e. the effective noise between
-any pair of non-destructive detector reads. The REFTYPE value is
-``READNOISE``.
+any pair of non-destructive detector reads. The REFTYPE value is ``READNOISE``.
+
 
 
