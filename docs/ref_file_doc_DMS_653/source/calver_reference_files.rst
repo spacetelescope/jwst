@@ -1,11 +1,11 @@
-Reference File
-==============
-Cal_Ver uses a CALVER refence file.
+Reference File Types
+--------------------
+Cal_Ver uses a CALVER reference file.
 
 
 CRDS Selection Criteria
 -----------------------
-The CALVER reference files are selected by matchin a dataset header against a 
+The CALVER reference files are selected by matching a dataset header against a 
 tuple which defines multiple parameter values whose names are specified in the 
 rmap header parkey.
 

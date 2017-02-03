@@ -66,7 +66,7 @@ def imaging(input_model, reference_files):
 
     angles = [disperser['theta_x'], disperser['theta_y'],
                disperser['theta_z'], disperser['tilt_y']]
-    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton').inverse
+    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation').inverse
     dircos2unitless = DirCos2Unitless(name='directional_cosines2unitless')
 
     col = AsdfFile.open(reference_files['collimator']).tree['model']
@@ -123,7 +123,11 @@ def ifu(input_model, reference_files):
     """
     detector = input_model.meta.instrument.detector
     grating = input_model.meta.instrument.grating
+    filter = input_model.meta.instrument.filter
     if detector == "NRS2" and grating.endswith('M'):
+        log.critical("No IFU slices fall on detector {0}".format(detector))
+        return None
+    if detector == "NRS2" and grating == "G140H" and filter == "F070LP":
         log.critical("No IFU slices fall on detector {0}".format(detector))
         return None
 
@@ -704,7 +708,7 @@ def wavelength_from_disperser(disperser, input_model):
         lam = np.linspace(lmin, lmax, 10000)
         system_temperature = input_model.meta.instrument.gwa_tilt
         if system_temperature is None:
-            message = "Missing reference temperature (keyword GWA_TTIL)."
+            message = "Missing reference temperature (keyword GWA_TILT)."
             log.critical(message)
             raise KeyError(message)
         system_pressure = disperser['pref']
@@ -750,7 +754,7 @@ def detector_to_gwa(reference_files, detector, disperser):
 
     angles = [disperser['theta_x'], disperser['theta_y'],
                disperser['theta_z'], disperser['tilt_y']]
-    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
+    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
     model = (models.Shift(-1) & models.Shift(-1) | fpa | camera | u2dircos | rotation)
     return model
@@ -868,7 +872,7 @@ def collimator_to_gwa(reference_files, disperser):
         collimator = f.tree['model'].copy()
     angles = [disperser['theta_x'], disperser['theta_y'],
               disperser['theta_z'], disperser['tilt_y']]
-    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
+    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
 
     return collimator.inverse | u2dircos | rotation
@@ -1195,11 +1199,10 @@ def validate_open_slits(input_model, open_slits, reference_files):
                              input_model.meta.instrument.gwa_ytilt)
     angles = [disperser['theta_x'], disperser['theta_y'],
               disperser['theta_z'], disperser['tilt_y']]
-    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
+    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
 
     order, wrange = get_spectral_order_wrange(input_model, reference_files['wavelengthrange'])
-
-    agreq = AngleFromGratingEquation(disperser['groove_density'], order, name='alpha_from_greq')
+    agreq = angle_from_disperser(disperser, input_model)
     # GWA to detector
     gwa2det = rotation.inverse | dircos2u | camera.inverse | fpa.inverse
     # collimator to GWA

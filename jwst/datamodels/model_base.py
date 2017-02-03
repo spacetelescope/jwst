@@ -168,16 +168,16 @@ class DataModel(properties.ObjectNode):
         self._asdf = asdf
         self._ctx = self
 
+        # if the input is from a file, set the filename attribute
+        if isinstance(init, six.string_types):
+            self.meta.filename = os.path.basename(init)
+
         # if the input model doesn't have a date set, use the current date/time
         if self.meta.date is None:
             self.meta.date = Time(datetime.datetime.now())
             if hasattr(self.meta.date, 'value'):
                 self.meta.date.format = 'isot'
                 self.meta.date = str(self.meta.date.value)
-
-        # if the input is from a file, set the filename attribute
-        if isinstance(init, six.string_types):
-            self.meta.filename = os.path.basename(init)
 
         # store the data model type, if not already set
         if hasattr(self.meta, 'model_type'):
@@ -267,7 +267,9 @@ class DataModel(properties.ObjectNode):
 
         # TODO: Support gzip-compressed fits
         if ext == '.fits':
-            kwargs.setdefault('clobber', True)
+            # TODO: remove 'clobber' check once depreciated fully in astropy
+            if 'clobber' not in kwargs:
+                kwargs.setdefault('overwrite', True)
             self.to_fits(path, *args, **kwargs)
         elif ext == '.asdf':
             self.to_asdf(path, *args, **kwargs)

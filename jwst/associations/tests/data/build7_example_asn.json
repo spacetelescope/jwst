@@ -1,0 +1,31 @@
+{
+    "asn_rule": "candidate_Asn_Image",
+    "asn_pool": "pool",
+    "target": "1",
+    "asn_id": "o001",
+    "constraints": "Constraints:\n    opt_elem2: None\n    instrument: MIRI\n    target: 1\n    wfsvisit: Is Invalid\n    opt_elem: F2550W\n    exp_type: MIR_IMAGE\n    program: 80600\n    asn_candidate: \\(\\'o001\\'\\,\\ \\'OBSERVATION\\'\\)",
+    "degraded_status": "No known degraded exposures in association.",
+    "code_version": "0.7.0",
+    "program": "80600",
+    "asn_type": "image",
+    "products": [
+        {
+            "members": [
+                {
+                    "expname": "jw80600001001_02103_00001_mirimage_cal.fits",
+                    "asn_candidate": "('o001', 'OBSERVATION')",
+                    "exposerr": "NULL",
+                    "exptype": "SCIENCE"
+                },
+                {
+                    "expname": "jw80600001001_02102_00001_mirimage_cal.fits",
+                    "asn_candidate": "('o001', 'OBSERVATION')",
+                    "exposerr": "NULL",
+                    "exptype": "SCIENCE"
+                }
+            ],
+            "name": "jw80600-o001_t001_miri_f2550w"
+        }
+    ],
+    "version_id": null
+}

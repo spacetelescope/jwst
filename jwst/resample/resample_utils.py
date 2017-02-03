@@ -12,6 +12,7 @@ from astropy.modeling.models import (Shift, Scale, Mapping, Rotation2D,
     Pix2Sky_TAN, RotateNative2Celestial, Tabular1D)
 from gwcs import WCS, utils, wcstools
 
+
 from .. import assign_wcs
 
 log = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ DEFAULT_DOMAIN = {'lower': None,
                   'includes_upper': False}
 
 
-def make_output_wcs(wcslist):
+def make_output_wcs(input_models):
     """ Generate output WCS here based on footprints of all input WCS objects
     Parameters
     ----------
@@ -36,10 +37,18 @@ def make_output_wcs(wcslist):
         WCS object, with defined domain, covering entire set of input frames
 
     """
-    # wcslist = [i.meta.wcs for i in input_models]
-    # for w, i in zip(wcslist, input_models):
-    #     if w.domain is None:
-    #         w.domain = create_domain(w, i.data.shape)
+
+    # The API needing input_models instead of just wcslist is because
+    # currently the domain is not defined in any of imaging modes for NIRCam
+    # or NIRISS
+    #
+    # TODO: change the API to take wcslist instead of input_models and
+    #       remove the following block
+    wcslist = [i.meta.wcs for i in input_models]
+    for w, i in zip(wcslist, input_models):
+        if w.domain is None:
+            w.domain = create_domain(w, i.data.shape)
+
     output_frame = wcslist[0].output_frame
     naxes = wcslist[0].output_frame.naxes
     if naxes == 3:
@@ -70,7 +79,7 @@ def build_size_from_domain(domain):
         delta = axs['upper'] - axs['lower']
         #for i in [axs['includes_lower'], axs['includes_upper']]: delta += 1
         size.append(int(delta + 0.5))
-    return tuple(size)
+    return tuple(reversed(size))
 
 def build_size_from_spec_domain(domain):
     """ Return the size of the frame based on the provided domain
@@ -85,17 +94,15 @@ def build_size_from_spec_domain(domain):
 def calc_gwcs_pixmap(in_wcs, out_wcs):
     """ Return a pixel grid map from input frame to output frame.
     """
-    if in_wcs.forward_transform.n_outputs == 3:
-        # Spectral wcs with ra, dec, lamda
-        grid = grid_from_spec_domain(in_wcs)
-    else:
-        grid = wcstools.grid_from_domain(in_wcs.domain)
+    # TODO: Is the following 1-indexed or 0-indexed?  Check.
+    grid = wcstools.grid_from_domain(in_wcs.domain)
 
-    pixmap_tuple = reproject(in_wcs, out_wcs)(grid[1], grid[0])
+    # pixmap_tuple = reproject(in_wcs, out_wcs)(grid[1], grid[0])
+    pixmap_tuple = reproject(in_wcs, out_wcs)(grid[0], grid[1])
     pixmap = np.dstack(pixmap_tuple)
     return pixmap
 
-def reproject(wcs1, wcs2, origin=0):
+def reproject(wcs1, wcs2):
     """
     Given two WCSs return a function which takes pixel coordinates in
     the first WCS and computes them in the second one.
@@ -122,27 +129,30 @@ def reproject(wcs1, wcs2, origin=0):
 
     args = []
     if isinstance(wcs1, fitswcs.WCS):
-        forward = wcs1.all_pix2world
-        args = [origin]
+        forward_transform = wcs1.all_pix2world
     elif isinstance(wcs2, WCS):
-        forward = wcs1.forward_transform
+        forward_transform = wcs1.forward_transform
     else:
         raise ValueError("Expected astropy.wcs.WCS or gwcs.WCS object.")
 
     if isinstance(wcs2, fitswcs.WCS):
-        args = [origin]
-        inverse = wcs2.all_world2pix
+        backward_transform = wcs2.all_world2pix
     elif isinstance(wcs2, WCS):
         #inverse = wcs2.forward_transform.inverse
-        inverse = wcs2.backward_transform
+        backward_transform = wcs2.backward_transform
     else:
         raise ValueError("Expected astropy.wcs.WCS or gwcs.WCS object.")
 
     def _reproject(x, y):
-        forward_args = [x, y] + args
-        sky = forward(*forward_args)
-        inverse_args = list(sky) + args
-        return inverse(*inverse_args)
+        sky = forward_transform(x, y)
+        flat_sky = []
+        for axis in sky:
+            flat_sky.append(axis.flatten())
+        det = backward_transform(*tuple(flat_sky))
+        det_reshaped = []
+        for axis in det:
+            det_reshaped.append(axis.reshape(x.shape))
+        return tuple(det_reshaped)
     return _reproject
 
 
@@ -200,10 +210,7 @@ def grid_from_spec_domain(inwcs, domain=None, domain_mask=None):
         domain = inwcs.domain
     xstart, xend = domain[0]['lower'], domain[0]['upper']
     ystart, yend = domain[1]['lower'], domain[1]['upper']
-    return np.mgrid[ystart: yend, xstart: xend]
-    # y, x = np.mgrid[ystart: yend, xstart: xend]
-    # m = domain_mask
-    # return ma.array([y, x], mask=[m, m])
+    return np.mgrid[xstart: xend, ystart: yend]
 
 
 def spec_footprint(wcs, domain_mask=None, domain=None):
@@ -247,9 +254,20 @@ def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None, domain=None):
     # footprints through the backward transform of the output wcs
     sky = [spec_footprint(w) for w in wcslist]
     domain_grid = [wnew.backward_transform(*f) for f in sky]
+
+    sky0 = sky[0]
+    det = domain_grid[0]
+    offsets = []
+    input_frame = refwcs.input_frame
+    for axis in input_frame.axes_order:
+        axis_min = np.nanmin(det[axis])
+        offsets.append(axis_min)
+    transform = Shift(offsets[0]) & Shift(offsets[1]) | transform
+    wnew = WCS(output_frame=output_frame, input_frame=input_frame,
+        forward_transform=transform)
+
     domain = []
-    in_frame = refwcs.input_frame
-    for axis in in_frame.axes_order:
+    for axis in input_frame.axes_order:
         axis_min = np.nanmin(domain_grid[0][axis])
         axis_max = np.nanmax(domain_grid[0][axis]) + 1
         domain.append({'lower': axis_min, 'upper': axis_max,
@@ -286,70 +304,6 @@ def compute_spec_transform(fiducial, refwcs):
     return transform
 
 
-# def compute_spec_transform(fiducial, refwcs):
-#     """
-#     Compute a simple transform given a fidicial point in a spatial-spectral wcs.
-#     """
-#     cdelt3 = refwcs.wcsinfo.cdelt3
-    
-#     # Build tabular lookup table model for the slit spatial transform
-#     w = refwcs
-#     y, x = grid_from_spec_domain(w)       
-#     ra, dec, lam = refwcs(x, y)
-#     # Find dispersion axis
-#     disp_axis = int(ra.shape[0] > ra.shape[1])
-#     xdisp_axis = int(ra.shape[0] < ra.shape[1])
-#     # Map dispersion axis to the x or y grids
-#     if disp_axis == 0:
-#         grid_disp = x
-#         grid_xdisp = y
-#     else:
-#         grid_disp = y
-#         grid_xdisp = x
-#     # Find middle of dispersion by looking at the domain
-#     mid_disp = int((w.domain[disp_axis]['upper'] - w.domain[disp_axis]['lower'])/2)
-#     mid_xdisp = int((w.domain[xdisp_axis]['upper'] - w.domain[xdisp_axis]['lower'])/2)
-#     # Make a cutout 4 pix in the dispersion range, of the full slit, trimming nans
-#     lam_subarr = lam[:,mid_disp-2:mid_disp+2]
-#     # lam_subarr = lam_subarr[~np.isnan(lam_subarr)]
-#     # lam_subarr = lam_subarr.reshape(-1, 4)
-#     # And use this midpoint to walk up the slit from bottom to top
-#     # interpolating to find the input x,y that gives constant output lambda
-#     fiducial_lambda = lam[mid_xdisp,mid_disp]
-#     xpos = []
-#     for row in lam_subarr:
-#         if any(np.isnan(row)):
-#             xpos.append(np.nan)
-#         else:
-#             f = interpolate.interp1d(row, x[0,mid_disp-2:mid_disp+2])
-#             xpos.append(f(fiducial_lambda))
-#     xpos = np.array(xpos)
-
-#     # Now compute RA/DEC values for these new X positions; remove NaNs
-#     ra_slit, dec_slit, lam_slit = w(xpos,y[:,mid_disp])
-#     ra_slit, dec_slit = ra_slit[~np.isnan(ra_slit)], dec_slit[~np.isnan(dec_slit)]
-
-#     # Build the tabular models now
-#     points = (np.arange(len(ra_slit)).tolist())
-#     ra_tabular = Tabular1D(points, lookup_table=ra_slit, bounds_error=False, fill_value=None)
-#     dec_tabular = Tabular1D(points, lookup_table=dec_slit, bounds_error=False, fill_value=None)
-#     ra_tabular.inverse = Tabular1D(ra_slit, lookup_table=points, bounds_error=False, fill_value=None)
-#     dec_tabular.inverse = Tabular1D(np.flipud(dec_slit), lookup_table=np.flipud(points), bounds_error=False, fill_value=None)
-
-#     # radec_tabular = Tabular2D(lookup_table='', bounds_error=False, fill_value=None)
-#     # radec_tabular.inverse = Tabular2D(np.array(lookup_table='', bounds_error=False, fill_value=None)
-
-#     min_lam = np.nanmin(lam)
-
-#     spatial = ra_tabular & dec_tabular
-#     spectral = Scale(cdelt3) | Shift(min_lam)
-#     mapping = Mapping((1, 1, 0),)
-#     mapping.inverse = Mapping((2, 1))
-#     transform = mapping | spatial & spectral
-#     transform.outputs = ('ra', 'dec', 'lamda')
-#     return transform
-
-
 def compute_spec_fiducial(wcslist, domain=None):
     """
     For a celestial footprint this is the center.
@@ -384,5 +338,3 @@ def compute_spec_fiducial(wcslist, domain=None):
         fiducial[spectral_axes] = spectral_footprint.min()
     return ((fiducial[spatial_axes]), fiducial[spectral_axes])
     #return (c, spectral_footprint.min())
-
-

@@ -4,6 +4,19 @@ import logging
 
 from jwst.associations.lib.rules_level3_base import *
 
+__all__ = [
+    'Asn_Image',
+    'Asn_MIRI_IFU',
+    'Asn_MIRI_LRS_FIXEDSLIT',
+    'Asn_MIRI_LRS_SLITLESS',
+    'Asn_NRS_FIXEDSLIT',
+    'Asn_NRS_IFU',
+    'Asn_NRS_MSA',
+    'Asn_NIR_SO_SLITLESS',
+    'Asn_WFSCMB',
+
+]
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

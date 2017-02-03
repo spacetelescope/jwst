@@ -66,8 +66,8 @@ def do_correction(input_model, ref_model):
 
     detector = input_model.meta.instrument.detector
     flagarray = np.zeros(ramparr.shape[-2:], dtype=groupdq.dtype)
-    for ints in xrange(nints):
-        for plane in xrange(ngroups):
+    for ints in range(nints):
+        for plane in range(ngroups):
             # Update the 4D groupdq array with the saturation flag. The
             # flag is set in the current plane and all following planes.
             if is_irs2_format:

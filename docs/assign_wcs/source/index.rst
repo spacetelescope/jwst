@@ -12,3 +12,4 @@ JWST Science Calibration Pipeline: Assign WCS
    main.rst
    reference_files.rst
    asdf-howto.rst
+   exp_types.rst

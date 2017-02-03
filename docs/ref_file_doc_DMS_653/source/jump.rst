@@ -2,6 +2,10 @@
 Jump Detection
 ==============
 
+The jump step routine detects jumps in an exposure by looking for outliers in the up-the-ramp signal for each pixel in each
+integration within an input exposure.
+
+
 The Jump Detection step uses two reference files: Gain and Readnoise. Both are 
 necessary for proper computation of noise estimates.
 

@@ -18,12 +18,7 @@ from .exceptions import (AssociationError, AssociationProcessMembers)
 from .lib.counter import Counter
 from .registry import AssociationRegistry
 
-__all__ = [
-    'Association',
-    'getattr_from_list',
-    'SERIALIZATION_PROTOCOLS',
-    'validate',
-]
+__all__ = ['Association']
 
 
 # Configure logging
@@ -35,7 +30,7 @@ _TIMESTAMP_TEMPLATE = '%Y%m%dt%H%M%S'
 
 
 class Association(MutableMapping):
-    """An Association
+    """Association Base Class
 
     Parameters
     ----------
@@ -69,8 +64,14 @@ class Association(MutableMapping):
         The name of the output schema that an association
         must adhere to.
 
-    registry: AssocitionRegistry
+    registry: AssociationRegistry
         The registry this association came from.
+
+    asn_name: str
+        The suggested file name of association
+
+    asn_rule: str
+        The name of the rule
     """
 
     # Assume no registry
@@ -561,19 +562,6 @@ def getattr_from_list(adict, attributes, invalid_values=None):
         raise KeyError
 
 
-# Available serialization protocols
-ProtocolFuncs = namedtuple('ProtocolFuncs', ['serialize', 'unserialize'])
-SERIALIZATION_PROTOCOLS = {
-    'json': ProtocolFuncs(
-        serialize=Association.to_json,
-        unserialize=Association.from_json),
-    'yaml': ProtocolFuncs(
-        serialize=Association.to_yaml,
-        unserialize=Association.from_yaml)
-}
-
-
-# Utility
 def evaluate(value):
     """Evaluate a value
 
@@ -600,8 +588,20 @@ def is_iterable(obj):
         not isinstance(obj, tuple) and \
         hasattr(obj, '__iter__')
 
+
 # Register YAML representers
 def np_str_representer(dumper, data):
     """Convert numpy.str_ into standard YAML string"""
     return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
 yaml.add_representer(np.str_, np_str_representer)
+
+# Available serialization protocols
+ProtocolFuncs = namedtuple('ProtocolFuncs', ['serialize', 'unserialize'])
+SERIALIZATION_PROTOCOLS = {
+    'json': ProtocolFuncs(
+        serialize=Association.to_json,
+        unserialize=Association.from_json),
+    'yaml': ProtocolFuncs(
+        serialize=Association.to_yaml,
+        unserialize=Association.from_yaml)
+}

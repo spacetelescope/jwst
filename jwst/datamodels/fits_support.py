@@ -135,9 +135,9 @@ def get_hdu(hdulist, hdu_name, index=None):
         hdu = hdulist[pair]
     except (KeyError, IndexError, AttributeError):
         try:
-            if index is None:
+            if isinstance(pair, six.string_types):
                 hdu = hdulist[(pair, 1)]
-            elif index == 0:
+            elif isinstance(pair, tuple) and index == 0:
                 hdu = hdulist[pair[0]]
             else:
                 raise
@@ -450,10 +450,17 @@ def _fits_array_loader(hdulist, schema, hdu_index, known_datas):
         return None
 
     known_datas.add(hdu)
-
     data = hdu.data
-    data = properties._cast(data, schema)
-    return data
+    
+    data2 = properties._cast(data, schema)
+
+    # Casting a table loses the listeners, so restore them
+    if isinstance(hdu, fits.BinTableHDU):
+        coldefs = data._coldefs
+        coldefs2 = data2._coldefs
+        coldefs2._listeners = coldefs._listeners
+
+    return data2
 
 
 def _schema_has_fits_hdu(schema):

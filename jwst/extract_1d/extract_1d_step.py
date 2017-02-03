@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 import os
-from astropy.io import fits             # xxx temporary
 from ..stpipe import Step
 from .. import datamodels
 from . import extract

@@ -493,6 +493,7 @@ def dodrizzle(insci, input_wcs, inwht,
 
     # Compute the mapping between the input and output pixel coordinates
     pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs)
+    pixmap[np.isnan(pixmap)] = -1
 
     #
     # Call 'drizzle' to perform image combination

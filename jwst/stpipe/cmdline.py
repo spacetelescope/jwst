@@ -134,9 +134,9 @@ def _override_config_from_args(config, args):
             set_value(config, key, val)
 
 
-def step_from_cmdline(args, cls=None):
+def just_the_step_from_cmdline(args, cls=None):
     """
-    Create a step from a configuration file.
+    Create a step from a configuration file and return it.  Don't run it.
 
     Parameters
     ----------
@@ -156,6 +156,14 @@ def step_from_cmdline(args, cls=None):
         Any parameters found in the config file or on the commandline
         will be set as member variables on the returned `Step`
         instance.
+
+    step_class: Step class 
+        As defined by `cls` parameter or .cfg file.
+
+    positional: list of strings
+        Positional parameters after arg parsing
+
+    DOES NOT RUN THE STEP
     """
     import argparse
     parser1 = argparse.ArgumentParser(
@@ -266,6 +274,35 @@ def step_from_cmdline(args, cls=None):
     log.log.info("Hostname: {0}".format(os.uname()[1]))
     log.log.info("OS: {0}".format(os.uname()[0]))
 
+    return step, step_class, positional, debug_on_exception
+
+def step_from_cmdline(args, cls=None):
+    """
+    Create a step from a configuration file and run it.
+
+    Parameters
+    ----------
+    args : list of str
+        Commandline arguments
+
+    cls : Step class
+        The step class to use.  If none is provided, the step
+
+    Returns
+    -------
+    step : Step instance
+        If the config file has a `class` parameter, or the commandline
+        specifies a class, the return value will be as instance of
+        that class.
+
+        Any parameters found in the config file or on the commandline
+        will be set as member variables on the returned `Step`
+        instance.
+    """
+
+    step, step_class, positional, debug_on_exception = \
+        just_the_step_from_cmdline(args, cls)
+
     try:
         profile_path = os.environ.pop("JWST_PROFILE", None)
         if profile_path:
@@ -300,3 +337,22 @@ def step_script(cls):
     assert issubclass(cls, Step)
 
     return step_from_cmdline(sys.argv[1:], cls=cls)
+
+
+def steps_to_reftypes_from_config(cfg):
+    """Based on a pipeline .cfg file
+
+    returns { step : [reftypes...], ... }
+    """
+    if not os.path.dirname(cfg):
+        from jwst import pipeline
+        pkgpath = os.path.dirname(pipeline.__file__)
+        cfgpath = os.path.join(pkgpath, os.path.basename(cfg))
+    else:
+        cfgpath = cfg
+    steps_to_reftypes = {}
+    step, _step_class, _positional, _debug_on_exception = \
+        just_the_step_from_cmdline([cfgpath])
+    for name, substep in step.step_defs.items():
+        steps_to_reftypes[name] = sorted(list(substep.reference_file_types))
+    return steps_to_reftypes
