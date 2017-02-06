@@ -7,6 +7,9 @@ from astropy.table import Table
 
 __all__ = ['AssociationPool']
 
+DEFAULT_DELIMITER = '|'
+DEFAULT_FORMAT = 'ascii'
+
 
 class AssociationPool(Table):
     """Association Pool
@@ -19,14 +22,35 @@ class AssociationPool(Table):
     """
 
     @classmethod
-    def read(cls, filename, delimiter='|', format='ascii', **kwargs):
+    def read(
+            cls,
+            filename,
+            delimiter=DEFAULT_DELIMITER,
+            format=DEFAULT_FORMAT,
+            **kwargs
+    ):
         """Read in a Pool file
         """
-        table = Table.read(filename, delimiter=delimiter,
-                           format=format,
-                           converters=_ConvertToStr(), **kwargs)
+        table = super(AssociationPool, cls).read(
+            filename, delimiter=delimiter,
+            format=format,
+            converters=_ConvertToStr(), **kwargs
+        )
         table.meta['pool_file'] = filename
         return table
+
+    def write(
+            self,
+            *args,
+            delimiter=DEFAULT_DELIMITER,
+            format=DEFAULT_FORMAT,
+            **kwargs
+    ):
+        """Write the pool to a file.
+        """
+        super(AssociationPool, self).write(
+            *args, delimiter=delimiter, format=format, **kwargs
+        )
 
 
 class _ConvertToStr(dict):
