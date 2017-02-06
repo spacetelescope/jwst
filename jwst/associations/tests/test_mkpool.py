@@ -30,6 +30,15 @@ def test_mkpool(env):
     assert isinstance(pool, AssociationPool)
     assert REQUIRED_PARAMS.issubset(pool.colnames)
     assert len(pool) == len(exposures)
+    filenames = [
+        filename
+        for filename in pool['FILENAME']
+    ]
+    basenames = [
+        os.path.basename(exposure)
+        for exposure in exposures
+    ]
+    assert set(basenames) == set(filenames)
 
 
 @pytest.mark.xfail

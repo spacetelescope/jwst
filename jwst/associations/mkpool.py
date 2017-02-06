@@ -1,8 +1,11 @@
 """
 Tools for pool creation
 """
+from os.path import basename
 
 from astropy.io.fits import getheader
+import numpy as np
+
 from . import AssociationPool
 
 IGNORE_KEYS = ('', 'COMMENT', 'HISTORY')
@@ -28,7 +31,7 @@ def mkpool(data, *kwargs):
 
     params = params.difference(IGNORE_KEYS)
 
-    pool = AssociationPool(names=params, dtype=['S20'] * len(params))
+    pool = AssociationPool(names=params, dtype=[(np.str_, 20)] * len(params))
 
     for datum in data:
         valid_params = {
@@ -36,6 +39,7 @@ def mkpool(data, *kwargs):
             for keyword, value in getheader(datum).items()
             if keyword not in IGNORE_KEYS
         }
+        valid_params['FILENAME'] = basename(datum)
         pool.add_row(valid_params)
 
     return pool
