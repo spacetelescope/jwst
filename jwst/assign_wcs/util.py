@@ -14,6 +14,7 @@ from astropy.modeling import models as astmodels
 
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial
+from gwcs import utils as gwutils
 
 from . import pointing
 
@@ -49,7 +50,7 @@ def reproject(wcs1, wcs2, origin=0):
 
 def wcs_from_footprints(dmodels, refmodel=None, transform=None, domain=None):
     """
-    Create a WCS from a list of input models.
+    Create a WCS from a list of input data models.
 
     A fiducial point in the output coordinate frame is created from  the
     footprints of all WCS objects. For a spatial frame this is the center
@@ -92,26 +93,28 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, domain=None):
 
     fiducial = compute_fiducial(wcslist, domain)
 
-    wcsinfo = pointing.wcsinfo_from_model(refmodel)
-
     prj = astmodels.Pix2Sky_TAN()
-    trans = []
 
-    scales = astmodels.Scale(wcsinfo['CDELT'][0]) & astmodels.Scale(wcsinfo['CDELT'][1])
-    trans.append(scales)
+    if transform is None:
+        transform = []
+        wcsinfo = pointing.wcsinfo_from_model(refmodel)
+        sky_axes, _ = gwutils.get_axes(wcsinfo)
+        rotation = astmodels.AffineTransformation2D(np.array(wcsinfo['PC']))
+        transform.append(rotation)
+        if sky_axes:
+            scale = wcsinfo['CDELT'][sky_axes].mean()
+            scales = astmodels.Scale(scale) & astmodels.Scale(scale)
+            transform.append(scales)
 
-    if trans:
-        tr = functools.reduce(lambda x, y: x | y, trans)
-    else:
-        tr = None
-    rotation = astmodels.AffineTransformation2D(np.array(wcsinfo['PC']))
-    trans.append(rotation)
+        if transform:
+            transform = functools.reduce(lambda x, y: x | y, transform)
+
     out_frame = refmodel.meta.wcs.output_frame
     wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame,
-                             projection=prj, transform=tr)
+                             projection=prj, transform=transform)
 
-    domain_footprints = [w.footprint() for w in wcslist]
-    domain_bounds = np.hstack([wnew.backward_transform(*f) for f in domain_footprints])
+    footprints = [w.footprint() for w in wcslist]
+    domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
     for axs in domain_bounds:
         axs -= axs.min()
     domain = []
@@ -119,7 +122,13 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, domain=None):
         axis_min, axis_max = domain_bounds[axis].min(), domain_bounds[axis].max()
         domain.append({'lower': axis_min, 'upper': axis_max,
                        'includes_lower': True, 'includes_upper': True})
+    #ax1, ax2 = domain[sky_axes] # change when domain is a bounding_box
+    ax1, ax2 = domain
+    offset1 = (ax1['upper'] - ax1['lower']) / 2
+    offset2 = (ax2['upper'] - ax2['lower']) / 2
+    offsets = astmodels.Shift(-offset1) & astmodels.Shift(-offset2)
 
+    wnew.insert_transform('detector', offsets, after=True)
     wnew.domain = domain
     return wnew
 
