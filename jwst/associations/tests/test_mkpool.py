@@ -34,14 +34,9 @@ def test_mkpool(env):
         filename
         for filename in pool['FILENAME']
     ]
-    basenames = [
-        os.path.basename(exposure)
-        for exposure in exposures
-    ]
-    assert set(basenames) == set(filenames)
+    assert set(exposures) == set(filenames)
 
 
-@pytest.mark.xfail
 def test_hdulist(env):
     rules, exposures = env
     hduls = [
@@ -54,7 +49,6 @@ def test_hdulist(env):
     assert len(pool) == len(exposures)
 
 
-@pytest.mark.xfail
 def test_hdu(env):
     rules, exposures = env
     hdus = [

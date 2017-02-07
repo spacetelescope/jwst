@@ -1,9 +1,7 @@
 """
 Tools for pool creation
 """
-from os.path import basename
-
-from astropy.io.fits import getheader
+from astropy.io.fits import getheader as fits_getheader
 import numpy as np
 
 from . import AssociationPool
@@ -11,7 +9,7 @@ from . import AssociationPool
 IGNORE_KEYS = ('', 'COMMENT', 'HISTORY')
 
 
-def mkpool(data, *kwargs):
+def mkpool(data, **kwargs):
     """Make a pool from data
 
     Parameters
@@ -31,15 +29,55 @@ def mkpool(data, *kwargs):
 
     params = params.difference(IGNORE_KEYS)
 
-    pool = AssociationPool(names=params, dtype=[(np.str_, 20)] * len(params))
+    pool = AssociationPool(names=params, dtype=[object] * len(params))
 
     for datum in data:
         valid_params = {
             keyword: value
-            for keyword, value in getheader(datum).items()
+            for keyword, value in getheader(datum, **kwargs).items()
             if keyword not in IGNORE_KEYS
         }
-        valid_params['FILENAME'] = basename(datum)
         pool.add_row(valid_params)
 
     return pool
+
+
+def getheader(datum, **kwargs):
+    """Get header from the data item
+
+    Parameters
+    ----------
+    datum: str or HDUList or HDU
+        Source of the header information
+
+    kwargs: dict
+        Keyword arguments passed to `astropy.io.fits.getheader`.
+        Relevant ones are `ext`, `extname`, or `extver`
+    """
+
+    # Parse out HDU key
+    try:
+        key = kwargs['ext']
+    except KeyError:
+        try:
+            key = (kwargs['extname'], kwargs.get('extver', 0))
+        except KeyError:
+            key = 0
+
+    # Attempt to get an HDU
+    try:
+        hdu = datum[key]
+    except TypeError:
+        hdu = datum
+
+    try:
+        header = hdu.header
+    except AttributeError:
+        pass
+    else:
+        header['FILENAME'] = hdu.fileinfo()['file'].name
+        return header
+
+    header = fits_getheader(datum, **kwargs)
+    header['FILENAME'] = datum
+    return header
