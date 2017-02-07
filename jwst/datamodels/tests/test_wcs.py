@@ -56,7 +56,7 @@ def test_wcs():
     wcs2 = dm2.get_fits_wcs()
     assert wcs2.wcs.crpix[0] == 42.0
 
-    dm2.to_fits(TMP_FITS, clobber=True)
+    dm2.to_fits(TMP_FITS, overwrite=True)
 
     with ImageModel(TMP_FITS) as dm3:
         wcs3 = dm3.get_fits_wcs()
@@ -69,7 +69,7 @@ def test_wcs():
 
     dm4 = ImageModel()
     dm4.set_fits_wcs(wcs3)
-    dm4.to_fits(TMP_FITS, clobber=True)
+    dm4.to_fits(TMP_FITS, overwrite=True)
 
     with ImageModel(TMP_FITS) as dm5:
         wcs5 = dm5.get_fits_wcs()

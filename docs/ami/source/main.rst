@@ -1,12 +1,11 @@
 Tasks in the Package
 ====================
-
 The Aperture Masking Interferometry (AMI) pipeline package currently consists
 of three tasks:
 
-1) ami_analyze: apply the LG algorithm to a NIRISS AMI exposure
-2) ami_average: average the results of LG processing for multiple exposures
-3) ami_normalize: normalize the LG results for a science target using LG
+1) ``ami_analyze``: apply the LG algorithm to a NIRISS AMI exposure
+2) ``ami_average``: average the results of LG processing for multiple exposures
+3) ``ami_normalize``: normalize the LG results for a science target using LG
    results from a reference target
 
 The three tasks can be applied to an association of AMI exposures using the
@@ -21,18 +20,18 @@ The ``calwebb_ami3`` pipeline module can be used to apply all 3 steps of AMI
 processing to an association of AMI exposures. The processing flow through the
 pipeline is as follows:
 
-1) Apply the 'ami_analyze' step to all products listed in the input
+1) Apply the ``ami_analyze`` step to all products listed in the input
    association table. Output files will have a file name suffix of ``lg``.
 
-2) Apply the 'ami_average' step to combine the above results for reference
+2) Apply the ``ami_average`` step to combine the above results for reference
    target exposures contained in the association. The output file will have a
    file name suffix of ``lgavgr``.
 
-3) Apply the 'ami_average' step to combine the above results for science
+3) Apply the ``ami_average`` step to combine the above results for science
    target exposures contained in the association. The output file will have
    a file name suffix of ``lgavgt``.
 
-4) If reference target results exist, apply the 'ami_normalize' step to the
+4) If reference target results exist, apply the ``ami_normalize`` step to the
    averaged science target result (``lgavgt``), using the averaged reference
    target result (``lgavgr``) to do the normalization.
    The output file will have a file name suffix of ``lgnorm``.
@@ -46,18 +45,18 @@ member file names. An example ASN file is shown below.
 
 ::
 
-{"asn_rule": "AMI", "targname": "NGC-3603", "asn_pool": "jw00017_001_01_pool", "program": "00017", 
-"products": [
-    {"prodtype": "ami", "name": "jw87003-c1001_t001_niriss_f277w-nrm",
-        "members": [
-            {"exptype": "science", "expname": "test_targ14_cal.fits"}, 
-            {"exptype": "science", "expname": "test_targ15_cal.fits"}, 
-            {"exptype": "science", "expname": "test_targ16_cal.fits"},
-            {"exptype": "psf", "expname": "test_ref1_cal.fits"}, 
-            {"exptype": "psf", "expname": "test_ref2_cal.fits"}, 
-            {"exptype": "psf", "expname": "test_ref3_cal.fits"}]}],
-"asn_type": "ami",
-"asn_id": "c1001"}
+ {"asn_rule": "AMI", "targname": "NGC-3603", "asn_pool": "jw00017_001_01_pool", "program": "00017", 
+ "products": [
+     {"prodtype": "ami", "name": "jw87003-c1001_t001_niriss_f277w-nrm",
+      "members": [
+         {"exptype": "science", "expname": "test_targ14_cal.fits"}, 
+         {"exptype": "science", "expname": "test_targ15_cal.fits"}, 
+         {"exptype": "science", "expname": "test_targ16_cal.fits"},
+         {"exptype": "psf", "expname": "test_ref1_cal.fits"}, 
+         {"exptype": "psf", "expname": "test_ref2_cal.fits"}, 
+         {"exptype": "psf", "expname": "test_ref3_cal.fits"}]}],
+ "asn_type": "ami",
+ "asn_id": "c1001"}
 
 Note that the ``exptype`` attribute value for each input member is used to
 indicate which files contain science target data and which contain reference
@@ -76,17 +75,17 @@ and amplitudes.
 
 Inputs
 ------
-The ami_analyze step takes a single input image, in the form of a simple 2D
+The ``ami_analyze`` step takes a single input image, in the form of a simple 2D
 ImageModel. Their are two optional parameters:
 
-1) oversample: specifies the oversampling factor to be used in the model fit
+1) ``oversample``: specifies the oversampling factor to be used in the model fit
    (default value = 3)
-2) rotation: specifies an initial guess, in degrees, for the rotation of the
+2) ``rotation``: specifies an initial guess, in degrees, for the rotation of the
    PSF in the input image (default value = 0.0)
 
 Output
 ------
-The ami_analyze step produces a single output file, which contains the
+The ``ami_analyze`` step produces a single output file, which contains the
 following list of extensions:
 
 1) ``FIT``: a 2-D image of the fitted model

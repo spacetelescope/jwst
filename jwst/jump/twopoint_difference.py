@@ -63,9 +63,6 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
         med_diffs[nans] = 0.
         first_diffs[nans] = 0.
 
-        nans = np.where(np.isnan(first_diffs))
-        first_diffs[nans] = 0.
-
         # Save initial estimate of the median slope for all pixels
         median_slopes[integration] = med_diffs
 

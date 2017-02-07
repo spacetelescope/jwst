@@ -113,7 +113,7 @@ def roundtrip(func):
 
 @roundtrip
 def test_from_fits_write(dm):
-    dm.to_fits(TMP_FITS, clobber=True)
+    dm.to_fits(TMP_FITS, overwrite=True)
     return DataModel.from_fits(TMP_FITS)
 
 
@@ -251,7 +251,7 @@ def test_multislit_from_image():
 
 def test_multislit_from_fits_image():
     with ImageModel((64, 64)) as im:
-        im.save(TMP_FITS, clobber=True)
+        im.save(TMP_FITS, overwrite=True)
 
     with MultiSlitModel(TMP_FITS) as ms:
         assert len(ms.slits) == 1
@@ -353,7 +353,7 @@ def test_relsens():
 
 def test_image_with_extra_keyword_to_multislit():
     with ImageModel(data=np.empty((32, 32))) as im:
-        im.save(TMP_FITS, clobber=True)
+        im.save(TMP_FITS, overwrite=True)
 
     from astropy.io import fits
     with fits.open(TMP_FITS, mode="update") as hdulist:
@@ -366,7 +366,7 @@ def test_image_with_extra_keyword_to_multislit():
                 ms.slits.append(ImageModel(data=np.empty((4, 4))))
             assert len(ms.slits) == 3
 
-            ms.save(TMP_FITS2, clobber=True)
+            ms.save(TMP_FITS2, overwrite=True)
 
     with MultiSlitModel(TMP_FITS2) as ms:
         assert len(ms.slits) == 3

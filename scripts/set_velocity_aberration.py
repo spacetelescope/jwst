@@ -51,12 +51,18 @@ in the header other than what is required by the standard.
 
 from __future__ import print_function, division
 
-import sys
 import astropy.io.fits as fits
+import logging
 import math
+import sys
+
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 SPEED_OF_LIGHT = 299792.458     # km / s
 d_to_r = math.pi / 180.
+
 
 def aberration_scale(velocity_x, velocity_y, velocity_z,
                      targ_ra, targ_dec):
@@ -84,6 +90,10 @@ def aberration_scale(velocity_x, velocity_y, velocity_z,
     """
 
     speed = math.sqrt(velocity_x**2 + velocity_y**2 + velocity_z**2)
+    if speed == 0.0:
+        logger.warning('Speed is zero. Forcing scale to 1.0')
+        return 1.0
+
     beta = speed / SPEED_OF_LIGHT
     gamma = 1. / math.sqrt(1. - beta**2)
 
@@ -105,9 +115,10 @@ def aberration_scale(velocity_x, velocity_y, velocity_z,
     theta_p = math.atan(tan_theta_p)
 
     scale_factor = gamma * (cos_theta + beta)**2 / \
-                        (math.cos(theta_p)**2 * (1. + beta * cos_theta))
+                   (math.cos(theta_p)**2 * (1. + beta * cos_theta))
 
     return scale_factor
+
 
 def aberration_offset(velocity_x, velocity_y, velocity_z,
                       targ_ra, targ_dec):
@@ -143,10 +154,11 @@ def aberration_offset(velocity_x, velocity_y, velocity_z,
 
     delta_ra = (-xdot * sin_alpha + ydot * cos_alpha) / cos_delta
     delta_dec = -xdot * cos_alpha * sin_delta - \
-                 ydot * sin_alpha * sin_delta + \
-                 zdot * cos_delta
+                ydot * sin_alpha * sin_delta + \
+                zdot * cos_delta
 
     return delta_ra, delta_dec
+
 
 def add_dva(filename):
     '''

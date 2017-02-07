@@ -6,6 +6,7 @@ Engineering Database
 from astropy.time import Time
 from collections import namedtuple
 import logging
+from os import getenv
 import re
 import requests
 
@@ -22,6 +23,8 @@ ENGDB_BASE_URL = ''.join([
     'JWDMSEngFqAccB7_testFITSw/',
     'TlmMnemonicDataSrv.svc/',
 ])
+ENGDB_BASE_URL = getenv('ENG_RESTFUL_URL', ENGDB_BASE_URL)
+
 
 # URI paths necessary to access the db
 ENGDB_DATA = 'Data/'
@@ -30,12 +33,69 @@ ENGDB_METADATA = 'MetaData/TlmMnemonics/'
 ENGDB_METADATA_XML = 'xml/MetaData/TlmMnemonics/'
 
 __all__ = [
-    'ENGDB_Service',
-    'EngDB_Value'
+    'ENGDB_Service'
 ]
 
 # Define the returned value tuple.
-EngDB_Value = namedtuple('EngDB_Value', ['obstime', 'value'])
+_EngDB_Value = namedtuple('EngDB_Value', ['obstime', 'value'])
+
+
+class _Value_Collection(object):
+    """Engineering Value Collection
+
+    Parameters
+    ----------
+    include_obstime: bool
+        If `True`, the return values will include observation
+        time as `astropy.time.Time`. See `zip` for further details.
+
+    zip: bool
+        If `True` and `include_obstime` is `True`, the return values
+        will be a list of 2-tuples. If false, the return will
+        be a single 2-tuple, where each element is a list.
+
+
+    Attributes
+    ----------
+    collection: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
+        Returns the list of values.
+        See `include_obstime` and `zip` for modifications.
+    """
+    def __init__(self, include_obstime=False, zip=True):
+        self._include_obstime = include_obstime
+        self._zip = zip
+        if zip:
+            self.collection = []
+        else:
+            self.collection = _EngDB_Value([], [])
+
+    def append(self, obstime, value):
+        """Append value to collection
+
+        Parameters
+        ----------
+        obstime: int(milliseconds)
+            Observation time as returned from the engineering
+            db, in milliseconds
+
+        value: numeric
+            Value from db.
+
+        Notes
+        -----
+        The `obstime` is converted to an `astropy.time.Time`
+        """
+        if self._include_obstime:
+            obstime = Time(obstime / 1000., format='unix')
+            if self._zip:
+                self.collection.append(
+                    _EngDB_Value(obstime, value)
+                )
+            else:
+                self.collection.obstime.append(obstime)
+                self.collection.value.append(value)
+        else:
+            self.collection.append(value)
 
 
 class ENGDB_Service(object):
@@ -179,7 +239,8 @@ class ENGDB_Service(object):
             endtime,
             time_format=None,
             include_obstime=False,
-            include_bracket_values=False
+            include_bracket_values=False,
+            zip=True
     ):
         """
         Retrieve all results for a mnemonic in the requested time range.
@@ -189,10 +250,10 @@ class ENGDB_Service(object):
         mnemonic: str
             The engineering mnemonic to retrieve
 
-        starttime: str or astropy.time.Time
+        starttime: str or `astropy.time.Time`
             The, inclusive, start time to retireve from.
 
-        endttime: str or astropy.time.Time
+        endttime: str or `astropy.time.Time`
             The, inclusive, end time to retireve from.
 
         time_format: str
@@ -200,28 +261,28 @@ class ENGDB_Service(object):
             are strings. If None, a guess is made.
 
         include_obstime: bool
-            If True, the return values will be a 2-tuple of
-            (astropy.time.Time, value)
+            If `True`, the return values will include observation
+            time as `astropy.time.Time`. See `zip` for further details.
 
         include_bracket_values: bool
             The DB service, by default, returns the bracketing
-            values outside of the requested time. If True, include
+            values outside of the requested time. If `True`, include
             these values.
+
+        zip: bool
+            If `True` and `include_obstime` is `True`, the return values
+            will be a list of 2-tuples. If false, the return will
+            be a single 2-tuple, where each element is a list.
 
         Returns
         -------
-        values: list
-            Returns the list of values. If `include_obstime` is True
-            the values will be a 2-tuple of (astropy.time.Time, value)
-            instead of just value.
+        values: [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
+            Returns the list of values. See `include_obstime` and `zip` for modifications.
 
         Raises
         ------
         requests.exceptions.HTTPError
             Either a bad URL or non-existant mnemonic.
-
-        ValueError
-            Mnemonic is found but has no data.
         """
         records = self.get_records(
             mnemonic=mnemonic,
@@ -234,25 +295,20 @@ class ENGDB_Service(object):
         # observation time. So, need to filter further.
         db_starttime = extract_db_time(records['ReqSTime'])
         db_endttime = extract_db_time(records['ReqETime'])
-        results = []
-        if records['Data'] is None:
-            raise ValueError('Mnemonic {} has no data'.format(mnemonic))
-        for record in records['Data']:
-            obstime = extract_db_time(record['ObsTime'])
-            if not include_bracket_values:
-                if obstime < db_starttime or obstime > db_endttime:
-                    continue
-            value = record['EUValue']
-            if include_obstime:
-                result = EngDB_Value(
-                    obstime=Time(obstime / 1000., format='unix'),
-                    value=value
-                )
-            else:
-                result = value
-            results.append(result)
+        results = _Value_Collection(
+            include_obstime=include_obstime,
+            zip=zip
+        )
+        if records['Data'] is not None:
+            for record in records['Data']:
+                obstime = extract_db_time(record['ObsTime'])
+                if not include_bracket_values:
+                    if obstime < db_starttime or obstime > db_endttime:
+                        continue
+                value = record['EUValue']
+                results.append(obstime, value)
 
-        return results
+        return results.collection
 
     def get_meta(self, mnemonic='', result_format=None):
         """Get the menonics meta info

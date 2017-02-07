@@ -13,6 +13,8 @@ from __future__ import absolute_import
 
 import pytest
 
+from astropy.time import Time
+
 from .. import engdb_tools
 from .engdb_mock import EngDB_Mocker
 
@@ -24,6 +26,8 @@ SHORT_STARTTIME = '2016-01-18 15:30:00'
 
 BAD_SERVER = 'https://www.stsci.edu'
 BAD_MNEMONIC = 'No_Such_MNEMONIC'
+NODATA_STARTIME = '2014-01-01'
+NODATA_ENDTIME = '2014-01-02'
 
 
 def test_basic(engdb):
@@ -79,12 +83,29 @@ def test_values_with_time(engdb):
     )
     assert len(values) >= 1
     assert isinstance(values[0], tuple)
+    assert isinstance(values[0].obstime, Time)
 
+
+def test_novalues(engdb):
+    values = engdb.get_values(
+        GOOD_MNEMONIC, NODATA_STARTIME, NODATA_ENDTIME)
+    assert len(values) == 0
 
 def test_meta(engdb):
     response = engdb.get_meta(GOOD_MNEMONIC)
     assert response['Count'] == 1
     assert response['TlmMnemonics'][0]['TlmMnemonic'] == GOOD_MNEMONIC
+
+
+def test_unzip(engdb):
+    """Test forunzipped versions of content"""
+    values = engdb.get_values(
+        GOOD_MNEMONIC, SHORT_STARTTIME, SHORT_STARTTIME,
+        include_obstime=True,
+        zip=False
+    )
+    assert isinstance(values, tuple)
+    assert len(values.obstime) == len(values.value)
 
 
 # #####################

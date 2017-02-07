@@ -56,6 +56,15 @@ class Step(object):
 
     @classmethod
     def print_configspec(cls, stream=sys.stdout):
+
+        # Python2/3 issue: Python3 doesn't like bytes
+        # going to stdout directly.
+        if stream == sys.stdout:
+            try:
+                stream = sys.stdout.buffer
+            except AttributeError:
+                pass
+
         specfile = cls.load_spec_file(preserve_comments=True)
         specfile.write(stream)
 
@@ -342,7 +351,7 @@ class Step(object):
                 try:
                     result = self.process(*args)
                 except TypeError as e:
-                    if "process() takes exactly" in e.message:
+                    if "process() takes exactly" in str(e):
                         raise TypeError("Incorrect number of arguments to step")
                     raise
 
@@ -386,7 +395,7 @@ class Step(object):
                             output_file_name = join(self.output_dir, filename)
 
                         self.log.info('Saving file {0}'.format(output_file_name))
-                        result.save(output_file_name, clobber=True)
+                        result.save(output_file_name, overwrite=True)
 
             self.log.info(
                 'Step {0} done'.format(self.name))
