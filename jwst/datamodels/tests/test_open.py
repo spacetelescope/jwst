@@ -88,7 +88,7 @@ def test_open_reference_files():
         elif ndim == 4:
             my_klass = ReferenceQuadModel
         else:
-            my_class = None
+            my_klass = None
             
         assert isinstance(model, my_klass)
         model.close()
