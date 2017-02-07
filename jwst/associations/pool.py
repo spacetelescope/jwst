@@ -39,15 +39,11 @@ class AssociationPool(Table):
         table.meta['pool_file'] = filename
         return table
 
-    def write(
-            self,
-            *args,
-            delimiter=DEFAULT_DELIMITER,
-            format=DEFAULT_FORMAT,
-            **kwargs
-    ):
+    def write(self, *args, **kwargs):
         """Write the pool to a file.
         """
+        delimiter = kwargs.pop('delimiter', DEFAULT_DELIMITER)
+        format = kwargs.pop('format', DEFAULT_FORMAT)
         super(AssociationPool, self).write(
             *args, delimiter=delimiter, format=format, **kwargs
         )
