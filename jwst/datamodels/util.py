@@ -71,7 +71,7 @@ def open(init=None, extensions=None, **kwargs):
             from . import container
             return container.ModelContainer(init, extensions=extensions,
                                             **kwargs)
-        except (AssociationError, ValueError):
+        except (AssociationError, IOError):
             pass
 
         # Try as a FITS file.
