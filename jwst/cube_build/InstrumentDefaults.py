@@ -27,9 +27,21 @@ class Info(object):
         self.Info['1']['end_slice'] = 121
         self.Info['1']['xstart'] = 0
         self.Info['1']['xend'] = 512
-        self.Info['1']['ascale'] = 0.1774905
-        self.Info['1']['bscale'] = 0.177204176691
-        self.Info['1']['wscale'] = 0.00086975
+
+        self.Info['1']['SHORT'] = {}
+        self.Info['1']['SHORT']['ascale'] = 0.13
+        self.Info['1']['SHORT']['bscale'] = 0.13
+        self.Info['1']['SHORT']['wscale'] = 0.00086975
+
+        self.Info['1']['MEDIUM'] = {}
+        self.Info['1']['MEDIUM']['ascale'] = 0.17
+        self.Info['1']['MEDIUM']['bscale'] = 0.17
+        self.Info['1']['MEDIUM']['wscale'] = 0.00086975
+
+        self.Info['1']['LONG'] = {}
+        self.Info['1']['LONG']['ascale'] = 0.17
+        self.Info['1']['LONG']['bscale'] = 0.17
+        self.Info['1']['LONG']['wscale'] = 0.00086975
 
         self.Info['2'] = {}
         self.Info['2']['nslices'] = 17
@@ -37,9 +49,21 @@ class Info(object):
         self.Info['2']['end_slice'] = 217
         self.Info['2']['xstart'] = 513
         self.Info['2']['xend'] = 1031
-        self.Info['2']['ascale'] = 0.172001
-        self.Info['2']['bscale'] = 0.279726052230
-        self.Info['2']['wscale'] = 0.00154972
+
+        self.Info['2']['SHORT'] = {}
+        self.Info['2']['SHORT']['ascale'] = 0.13
+        self.Info['2']['SHORT']['bscale'] = 0.13
+        self.Info['2']['SHORT']['wscale'] = 0.00154972
+
+        self.Info['2']['MEDIUM'] = {}
+        self.Info['2']['MEDIUM']['ascale'] = 0.13
+        self.Info['2']['MEDIUM']['bscale'] = 0.13
+        self.Info['2']['MEDIUM']['wscale'] = 0.00154972
+
+        self.Info['2']['LONG'] = {}
+        self.Info['2']['LONG']['ascale'] = 0.17
+        self.Info['2']['LONG']['bscale'] = 0.17
+        self.Info['2']['LONG']['wscale'] = 0.00154972
 
         self.Info['3'] = {}
         self.Info['3']['nslices'] = 16
@@ -47,9 +71,21 @@ class Info(object):
         self.Info['3']['end_slice'] = 316
         self.Info['3']['xstart'] = 513
         self.Info['3']['xend'] = 1031
-        self.Info['3']['ascale'] = 0.22414
-        self.Info['3']['bscale'] = 0.42113
-        self.Info['3']['wscale'] = 0.002
+
+        self.Info['3']['SHORT'] = {}
+        self.Info['3']['SHORT']['ascale'] = 0.20
+        self.Info['3']['SHORT']['bscale'] = 0.20
+        self.Info['3']['SHORT']['wscale'] = 0.002
+
+        self.Info['3']['MEDIUM'] = {}
+        self.Info['3']['MEDIUM']['ascale'] = 0.20
+        self.Info['3']['MEDIUM']['bscale'] = 0.20
+        self.Info['3']['MEDIUM']['wscale'] = 0.002
+
+        self.Info['3']['LONG'] = {}
+        self.Info['3']['LONG']['ascale'] = 0.25
+        self.Info['3']['LONG']['bscale'] = 0.25
+        self.Info['3']['LONG']['wscale'] = 0.002
 
         self.Info['4'] = {}
         self.Info['4']['nslices'] = 12
@@ -57,9 +93,21 @@ class Info(object):
         self.Info['4']['end_slice'] = 412
         self.Info['4']['xstart'] = 0
         self.Info['4']['xend'] = 512
-        self.Info['4']['ascale'] = 0.24892
-        self.Info['4']['bscale'] = 0.666791
-        self.Info['4']['wscale'] = 0.003
+
+        self.Info['4']['SHORT'] = {}
+        self.Info['4']['SHORT']['ascale'] = 0.35
+        self.Info['4']['SHORT']['bscale'] = 0.35
+        self.Info['4']['SHORT']['wscale'] = 0.003
+
+        self.Info['4']['MEDIUM'] = {}
+        self.Info['4']['MEDIUM']['ascale'] = 0.30
+        self.Info['4']['MEDIUM']['bscale'] = 0.30
+        self.Info['4']['MEDIUM']['wscale'] = 0.003
+
+        self.Info['4']['LONG'] = {}
+        self.Info['4']['LONG']['ascale'] = 0.35
+        self.Info['4']['LONG']['bscale'] = 0.35
+        self.Info['4']['LONG']['wscale'] = 0.003
 
         self.Info['PRISM'] = {}
         self.Info['PRISM']['wscale'] = 0.005
@@ -104,8 +152,16 @@ class Info(object):
         self.Info['G395H']['bscale'] = 0.1
         self.Info['G395H']['nslices'] = 30
 
-    def GetScale(self, parameter):
-        scale = (self.Info[parameter]['ascale'], self.Info[parameter]['bscale'], self.Info[parameter]['wscale'])
+    def GetScale(self, parameter1,parameter2 = None):
+        if parameter2 is None:
+            
+            scale = (self.Info[parameter1]['ascale'], 
+                     self.Info[parameter1]['bscale'], 
+                     self.Info[parameter1]['wscale'])
+        else: 
+            scale = (self.Info[parameter1][parameter2]['ascale'], 
+                     self.Info[parameter1][parameter2]['bscale'], 
+                     self.Info[parameter1][parameter2]['wscale'])
         return scale
 
 

@@ -423,7 +423,6 @@ def UpdateOutPutName(self):
         #newname = self.output_name_base + '_cube_build.fits'
         newname = self.output_name 
     else: 
-        
 
         if self.metadata['instrument'] == 'MIRI':
             channels = list(set(self.metadata['band_channel']))
@@ -585,146 +584,146 @@ class FileTable(object):
         self.FileMap['MIRI'] = {}
 
         self.FileMap['MIRI']['1'] = {}
-        self.FileMap['MIRI']['1']['SHORT'] = list()
-        self.FileMap['MIRI']['1']['MEDIUM'] = list()
-        self.FileMap['MIRI']['1']['LONG'] = list()
+        self.FileMap['MIRI']['1']['SHORT'] = []
+        self.FileMap['MIRI']['1']['MEDIUM'] = []
+        self.FileMap['MIRI']['1']['LONG'] = []
 
         self.FileMap['MIRI']['2'] = {}
-        self.FileMap['MIRI']['2']['SHORT'] = list()
-        self.FileMap['MIRI']['2']['MEDIUM'] = list()
-        self.FileMap['MIRI']['2']['LONG'] = list()
+        self.FileMap['MIRI']['2']['SHORT'] = []
+        self.FileMap['MIRI']['2']['MEDIUM'] = []
+        self.FileMap['MIRI']['2']['LONG'] = []
 
         self.FileMap['MIRI']['3'] = {}
-        self.FileMap['MIRI']['3']['SHORT'] = list()
-        self.FileMap['MIRI']['3']['MEDIUM'] = list()
-        self.FileMap['MIRI']['3']['LONG'] = list()
+        self.FileMap['MIRI']['3']['SHORT'] = []
+        self.FileMap['MIRI']['3']['MEDIUM'] = []
+        self.FileMap['MIRI']['3']['LONG'] = []
 
         self.FileMap['MIRI']['4'] = {}
-        self.FileMap['MIRI']['4']['SHORT'] = list()
-        self.FileMap['MIRI']['4']['MEDIUM'] = list()
-        self.FileMap['MIRI']['4']['LONG'] = list()
+        self.FileMap['MIRI']['4']['SHORT'] = []
+        self.FileMap['MIRI']['4']['MEDIUM'] = []
+        self.FileMap['MIRI']['4']['LONG'] = []
 
         self.FileMap['NIRSPEC'] = {}
         self.FileMap['NIRSPEC']['PRISM'] = {}
-        self.FileMap['NIRSPEC']['PRISM']['CLEAR'] = list()
+        self.FileMap['NIRSPEC']['PRISM']['CLEAR'] = []
 
         self.FileMap['NIRSPEC']['G140M'] = {}
-        self.FileMap['NIRSPEC']['G140M']['F070LP'] = list()
-        self.FileMap['NIRSPEC']['G140M']['F100LP'] = list()
+        self.FileMap['NIRSPEC']['G140M']['F070LP'] = []
+        self.FileMap['NIRSPEC']['G140M']['F100LP'] = []
 
         self.FileMap['NIRSPEC']['G140H'] = {}
-        self.FileMap['NIRSPEC']['G140H']['F070LP'] = list()
-        self.FileMap['NIRSPEC']['G140H']['F100LP'] = list()
+        self.FileMap['NIRSPEC']['G140H']['F070LP'] = []
+        self.FileMap['NIRSPEC']['G140H']['F100LP'] = []
 
         self.FileMap['NIRSPEC']['G235M'] = {}
-        self.FileMap['NIRSPEC']['G235M']['F170LP'] = list()
+        self.FileMap['NIRSPEC']['G235M']['F170LP'] = []
 
         self.FileMap['NIRSPEC']['G235H'] = {}
-        self.FileMap['NIRSPEC']['G235H']['F170LP'] = list()
+        self.FileMap['NIRSPEC']['G235H']['F170LP'] = []
 
         self.FileMap['NIRSPEC']['G395M'] = {}
-        self.FileMap['NIRSPEC']['G395M']['F290LP'] = list()
+        self.FileMap['NIRSPEC']['G395M']['F290LP'] = []
 
         self.FileMap['NIRSPEC']['G395H'] = {}
-        self.FileMap['NIRSPEC']['G395H']['F290LP'] = list()
+        self.FileMap['NIRSPEC']['G395H']['F290LP'] = []
 
 
 
         self.FileOffset = {}
         self.FileOffset['1'] = {}
         self.FileOffset['1']['SHORT'] = {}
-        self.FileOffset['1']['SHORT']['C1'] = list()
-        self.FileOffset['1']['SHORT']['C2'] = list()
+        self.FileOffset['1']['SHORT']['C1'] = []
+        self.FileOffset['1']['SHORT']['C2'] = []
         self.FileOffset['1']['MEDIUM'] = {}
-        self.FileOffset['1']['MEDIUM']['C1'] = list()
-        self.FileOffset['1']['MEDIUM']['C2'] = list()
+        self.FileOffset['1']['MEDIUM']['C1'] = []
+        self.FileOffset['1']['MEDIUM']['C2'] = []
         self.FileOffset['1']['LONG'] = {}
-        self.FileOffset['1']['LONG']['C1'] = list()
-        self.FileOffset['1']['LONG']['C2'] = list()
+        self.FileOffset['1']['LONG']['C1'] = []
+        self.FileOffset['1']['LONG']['C2'] = []
 
         self.FileOffset['2'] = {}
         self.FileOffset['2']['SHORT'] = {}
-        self.FileOffset['2']['SHORT']['C1'] = list()
-        self.FileOffset['2']['SHORT']['C2'] = list()
+        self.FileOffset['2']['SHORT']['C1'] = []
+        self.FileOffset['2']['SHORT']['C2'] = []
 
         self.FileOffset['2']['MEDIUM'] = {}
-        self.FileOffset['2']['MEDIUM']['C1'] = list()
-        self.FileOffset['2']['MEDIUM']['C2'] = list()
+        self.FileOffset['2']['MEDIUM']['C1'] = []
+        self.FileOffset['2']['MEDIUM']['C2'] = []
 
         self.FileOffset['2']['LONG'] = {}
-        self.FileOffset['2']['LONG']['C1'] = list()
-        self.FileOffset['2']['LONG']['C2'] = list()
+        self.FileOffset['2']['LONG']['C1'] = []
+        self.FileOffset['2']['LONG']['C2'] = []
 
 
         self.FileOffset['3'] = {}
         self.FileOffset['3']['SHORT'] = {}
-        self.FileOffset['3']['SHORT']['C1'] = list()
-        self.FileOffset['3']['SHORT']['C2'] = list()
+        self.FileOffset['3']['SHORT']['C1'] = []
+        self.FileOffset['3']['SHORT']['C2'] = []
 
         self.FileOffset['3']['MEDIUM'] = {}
-        self.FileOffset['3']['MEDIUM']['C1'] = list()
-        self.FileOffset['3']['MEDIUM']['C2'] = list()
+        self.FileOffset['3']['MEDIUM']['C1'] = []
+        self.FileOffset['3']['MEDIUM']['C2'] = []
 
         self.FileOffset['3']['LONG'] = {}
-        self.FileOffset['3']['LONG']['C1'] = list()
-        self.FileOffset['3']['LONG']['C2'] = list()
+        self.FileOffset['3']['LONG']['C1'] = []
+        self.FileOffset['3']['LONG']['C2'] = []
 
 
         self.FileOffset['4'] = {}
         self.FileOffset['4']['SHORT'] = {}
-        self.FileOffset['4']['SHORT']['C1'] = list()
-        self.FileOffset['4']['SHORT']['C2'] = list()
+        self.FileOffset['4']['SHORT']['C1'] = []
+        self.FileOffset['4']['SHORT']['C2'] = []
 
         self.FileOffset['4']['MEDIUM'] = {}
-        self.FileOffset['4']['MEDIUM']['C1'] = list()
-        self.FileOffset['4']['MEDIUM']['C2'] = list()
+        self.FileOffset['4']['MEDIUM']['C1'] = []
+        self.FileOffset['4']['MEDIUM']['C2'] = []
 
         self.FileOffset['4']['LONG'] = {}
-        self.FileOffset['4']['LONG']['C1'] = list()
-        self.FileOffset['4']['LONG']['C2'] = list()
+        self.FileOffset['4']['LONG']['C1'] = []
+        self.FileOffset['4']['LONG']['C2'] = []
 
         self.FileOffset['PRISM'] = {}
         self.FileOffset['PRISM']['CLEAR'] = {}
-        self.FileOffset['PRISM']['CLEAR']['C1'] = list()
-        self.FileOffset['PRISM']['CLEAR']['C2'] = list()
+        self.FileOffset['PRISM']['CLEAR']['C1'] = []
+        self.FileOffset['PRISM']['CLEAR']['C2'] = []
 
         self.FileOffset['G140M'] = {}
         self.FileOffset['G140M']['F070LP'] = {}
-        self.FileOffset['G140M']['F070LP']['C1'] = list()
-        self.FileOffset['G140M']['F070LP']['C2'] = list()
+        self.FileOffset['G140M']['F070LP']['C1'] = []
+        self.FileOffset['G140M']['F070LP']['C2'] = []
 
         self.FileOffset['G140M']['F100LP'] = {}
-        self.FileOffset['G140M']['F100LP']['C1'] = list()
-        self.FileOffset['G140M']['F100LP']['C2'] = list()
+        self.FileOffset['G140M']['F100LP']['C1'] = []
+        self.FileOffset['G140M']['F100LP']['C2'] = []
 
         self.FileOffset['G140H'] = {}
         self.FileOffset['G140H']['F070LP'] = {}
-        self.FileOffset['G140H']['F070LP']['C1'] = list()
-        self.FileOffset['G140H']['F070LP']['C2'] = list()
+        self.FileOffset['G140H']['F070LP']['C1'] = []
+        self.FileOffset['G140H']['F070LP']['C2'] = []
 
         self.FileOffset['G140H']['F100LP'] = {}
-        self.FileOffset['G140H']['F100LP']['C1'] = list()
-        self.FileOffset['G140H']['F100LP']['C2'] = list()
+        self.FileOffset['G140H']['F100LP']['C1'] = []
+        self.FileOffset['G140H']['F100LP']['C2'] = []
 
 
         self.FileOffset['G235M'] = {}
         self.FileOffset['G235M']['F170LP'] = {}
-        self.FileOffset['G235M']['F170LP']['C1'] = list()
-        self.FileOffset['G235M']['F170LP']['C2'] = list()
+        self.FileOffset['G235M']['F170LP']['C1'] = []
+        self.FileOffset['G235M']['F170LP']['C2'] = []
 
         self.FileOffset['G235H'] = {}
         self.FileOffset['G235H']['F170LP'] = {}
-        self.FileOffset['G235H']['F170LP']['C1'] = list()
-        self.FileOffset['G235H']['F170LP']['C2'] = list()
+        self.FileOffset['G235H']['F170LP']['C1'] = []
+        self.FileOffset['G235H']['F170LP']['C2'] = []
 
 
         self.FileOffset['G395M'] = {}
         self.FileOffset['G395M']['F290LP'] = {}
-        self.FileOffset['G395M']['F290LP']['C1'] = list()
-        self.FileOffset['G395M']['F290LP']['C2'] = list()
+        self.FileOffset['G395M']['F290LP']['C1'] = []
+        self.FileOffset['G395M']['F290LP']['C2'] = []
 
         self.FileOffset['G395H'] = {}
         self.FileOffset['G395H']['F290LP'] = {}
-        self.FileOffset['G395H']['F290LP']['C1'] = list()
-        self.FileOffset['G395H']['F290LP']['C2'] = list()
+        self.FileOffset['G395H']['F290LP']['C1'] = []
+        self.FileOffset['G395H']['F290LP']['C2'] = []
 

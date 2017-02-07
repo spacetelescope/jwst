@@ -6,6 +6,7 @@ Engineering Database
 from astropy.time import Time
 from collections import namedtuple
 import logging
+from os import getenv
 import re
 import requests
 
@@ -22,6 +23,8 @@ ENGDB_BASE_URL = ''.join([
     'JWDMSEngFqAccB7_testFITSw/',
     'TlmMnemonicDataSrv.svc/',
 ])
+ENGDB_BASE_URL = getenv('ENG_RESTFUL_URL', ENGDB_BASE_URL)
+
 
 # URI paths necessary to access the db
 ENGDB_DATA = 'Data/'
@@ -280,9 +283,6 @@ class ENGDB_Service(object):
         ------
         requests.exceptions.HTTPError
             Either a bad URL or non-existant mnemonic.
-
-        ValueError
-            Mnemonic is found but has no data.
         """
         records = self.get_records(
             mnemonic=mnemonic,
@@ -299,15 +299,14 @@ class ENGDB_Service(object):
             include_obstime=include_obstime,
             zip=zip
         )
-        if records['Data'] is None:
-            raise ValueError('Mnemonic {} has no data'.format(mnemonic))
-        for record in records['Data']:
-            obstime = extract_db_time(record['ObsTime'])
-            if not include_bracket_values:
-                if obstime < db_starttime or obstime > db_endttime:
-                    continue
-            value = record['EUValue']
-            results.append(obstime, value)
+        if records['Data'] is not None:
+            for record in records['Data']:
+                obstime = extract_db_time(record['ObsTime'])
+                if not include_bracket_values:
+                    if obstime < db_starttime or obstime > db_endttime:
+                        continue
+                value = record['EUValue']
+                results.append(obstime, value)
 
         return results.collection
 

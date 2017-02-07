@@ -34,7 +34,7 @@ def do_correction(input_model, flat_model,
 
     flat_model: JWST data model
         Data model containing flat-field for all instruments other than
-        NIRSpec.
+        NIRSpec spectrographic data.
 
     f_flat_model: NirspecFlatModel or NirspecQuadFlatModel object
         Flat field for the fore optics.  Used only for NIRSpec data.
@@ -47,7 +47,7 @@ def do_correction(input_model, flat_model,
 
     flat_suffix: str or None
         Filename suffix for optional output file to save flat field images.
-        Note that this is only supported for NIRSpec data.
+        Note that this is only supported for NIRSpec spectrographic data.
 
     Returns
     -------
@@ -60,21 +60,26 @@ def do_correction(input_model, flat_model,
     # Initialize the output model as a copy of the input
     output_model = input_model.copy()
 
-    if input_model.meta.instrument.name == 'NIRSPEC':
+    # NIRSpec spectrographic data are processed differently from other
+    # types of data (including NIRSpec imaging).
+    is_NRS_spectrographic = (input_model.meta.instrument.name == 'NIRSPEC' and
+                             f_flat_model is not None)
+
+    if is_NRS_spectrographic:
         interpolated_flats = do_NIRSpec_flat_field(output_model,
                                                    f_flat_model, s_flat_model,
                                                    d_flat_model, flat_suffix)
     else:
         if flat_suffix is not None:
-            log.warning("The flat_suffix parameter is not implemented"
-                        " for this mode; will be ignored.")
+            log.warning("The flat_suffix parameter is not implemented "
+                        "for this mode; will be ignored.")
         do_flat_field(output_model, flat_model)
         interpolated_flats = None
 
     return (output_model, interpolated_flats)
 
 #
-# These functions are for non-NIRSpec flat fielding.
+# These functions are for non-NIRSpec flat fielding, or for NIRSpec imaging.
 #
 def do_flat_field(output_model, flat_model):
     """
@@ -95,7 +100,10 @@ def do_flat_field(output_model, flat_model):
     None
     """
 
-    log.debug("Flat field correction for non-NIRSpec modes.")
+    if output_model.meta.instrument.name == "NIRSPEC":
+        log.debug("Flat field correction for NIRSpec imaging data.")
+    else:
+        log.debug("Flat field correction for non-NIRSpec modes.")
 
     any_updated = False # will set True if any flats applied
 
@@ -294,7 +302,7 @@ def get_subarray(input_array, sci_model):
 
 
 #
-# The following functions are for NIRSpec.
+# The following functions are for NIRSpec spectrographic data.
 #
 def do_NIRSpec_flat_field(output_model,
                           f_flat_model, s_flat_model,
@@ -329,7 +337,7 @@ def do_NIRSpec_flat_field(output_model,
         If not None, the value will be the interpolated flat fields.
     """
 
-    log.debug("Flat field correction for NIRSpec data.")
+    log.debug("Flat field correction for NIRSpec spectrographic data.")
 
     exposure_type = output_model.meta.exposure.type
 
@@ -339,8 +347,8 @@ def do_NIRSpec_flat_field(output_model,
     if not hasattr(output_model, "slits"):
         if exposure_type == "NRS_IFU":
             if not isinstance(output_model, datamodels.ImageModel):
-                log.error("NIRSpec IFU data is not an ImageModel;"
-                          " don't know how to process it.")
+                log.error("NIRSpec IFU data is not an ImageModel; "
+                          "don't know how to process it.")
                 raise RuntimeError("Input is {}; expected ImageModel"
                                    .format(type(output_model)))
             return NIRSpec_IFU(output_model,
@@ -502,31 +510,28 @@ def NIRSpec_IFU(output_model,
         xstop = ifu_wcs.domain[0]['upper']
         ystart = ifu_wcs.domain[1]['lower']
         ystop = ifu_wcs.domain[1]['upper']
-        # We want to use xstart and xstop as Python slice limits.
-# xxx These lines are currently commented out because 'includes_upper' was
-# not in the domain (but it should have been).
-        #if ifu_wcs.domain[0]['includes_upper']:
-        #    print("xxx {}".format(ifu_wcs.domain[0]['includes_upper']))
-        xstop += 1              # for the time being, just do this
-        #if ifu_wcs.domain[1]['includes_upper']:
-        #    print("xxx {}".format(ifu_wcs.domain[1]['includes_upper']))
-        ystop += 1              # for the time being, just do this
+        # Make sure these are integers, and add one to the upper limits,
+        # because we want to use these as slice limits.
+        xstart = int(round(xstart))
+        xstop = int(round(xstop)) + 1
+        ystart = int(round(ystart))
+        ystop = int(round(ystop)) + 1
 
         if xstart < 0:
             truncated = True
-            log.info("WCS domain xstart was %d; set to 0" % xstart)
+            log.info("xstart from WCS domain was %d; set to 0" % xstart)
             xstart = 0
         if ystart < 0:
             truncated = True
-            log.info("WCS domain ystart was %d; set to 0" % ystart)
+            log.info("ystart from WCS domain was %d; set to 0" % ystart)
             ystart = 0
         if xstop > 2048:
             truncated = True
-            log.info("WCS domain xstop was %d; set to 2048" % xstop)
+            log.info("xstop from WCS domain was %d; set to 2048" % xstop)
             xstop = 2048
         if ystop > 2048:
             truncated = True
-            log.info("WCS domain ystop was %d; set to 2048" % ystop)
+            log.info("ystop from WCS domain was %d; set to 2048" % ystop)
             ystop = 2048
         if truncated:
             log.info("WCS domain for stripe %d extended beyond image edges, "
@@ -589,7 +594,8 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     Parameters
     ----------
     wl: 2-D ndarray
-        Wavelength at each pixel of the 2-D slit array.
+        Wavelength at each pixel of the 2-D slit array.  This array has
+        shape (ystop - ystart, xstop - xstart).
 
     f_flat_model: NirspecFlatModel or NirspecQuadFlatModel object
         Flat field for the fore optics.
@@ -936,8 +942,8 @@ def read_image_wl(flat_model, quadrant=None):
         try:
             wl = wavelength.reshape((n,))
         except ValueError:
-            log.error("Image wavelength array has shape %s;"
-                      " don't know how to interpret that.",
+            log.error("Image wavelength array has shape %s; "
+                      "don't know how to interpret that.",
                       str(wavelength.shape))
             raise ValueError("Expected either a scalar column or just one row.")
         wavelength = wl
@@ -1043,9 +1049,9 @@ def read_flat_table(flat_model, exposure_type,
                 nelem = nelem_col[0]            # arbitrary choice of row
     if nelem is not None:
         if len(tab_wl) < nelem:
-            log.error("The fast_variation array size %d in"
-                      " the data model is too small, and table data were"
-                      " truncated.", len(tab_wl))
+            log.error("The fast_variation array size %d in "
+                      "the data model is too small, and table data were "
+                      "truncated.", len(tab_wl))
             nelem = len(tab_wl)                 # truncated!
         else:
             tab_wl = tab_wl[:nelem]
@@ -1060,8 +1066,8 @@ def read_flat_table(flat_model, exposure_type,
     filter = np.logical_and(filter1, filter2)
     n1 = filter.sum(dtype=np.intp)
     if n1 != nelem:
-        log.debug("The table wavelength or flat-field data array contained"
-                  " %d NaNs; these have been skipped.", nelem - n1)
+        log.debug("The table wavelength or flat-field data array contained "
+                  "%d NaNs; these have been skipped.", nelem - n1)
         tab_wl = tab_wl[filter]
         tab_flat = tab_flat[filter]
     del filter1, filter2, filter
@@ -1071,9 +1077,9 @@ def read_flat_table(flat_model, exposure_type,
     filter = np.logical_and(filter1, filter2)
     n2 = filter.sum(dtype=np.intp)
     if n2 != n1:
-        log.debug("The table wavelength or flat-field data array contained"
-                  " %d zero or negative values; these have been skipped.",
-                    n1 - n2)
+        log.debug("The table wavelength or flat-field data array contained "
+                  "%d zero or negative values; these have been skipped.",
+                  n1 - n2)
         tab_wl = tab_wl[filter]
         tab_flat = tab_flat[filter]
     del filter1, filter2, filter

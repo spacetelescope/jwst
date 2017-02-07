@@ -23,8 +23,8 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     Note that the detection methods are currently setup on the assumption
     that the input science and error data arrays will be in units of
     electrons, hence this routine scales those input arrays by the detector
-    gain. The methods assume that the read noise values will also be in units
-    of electrons.
+    gain. The methods assume that the read noise values will be in units
+    of DN.
 
     The gain is applied to the science data and error arrays using the
     appropriate instrument- and detector-dependent values for each pixel of an
@@ -75,7 +75,9 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
         pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] ) 
 
-    # Apply gain to the SCI and ERR arrays so they're in units of electrons
+    # Apply gain to the SCI, ERR, and readnoise arrays so they're in units 
+    #   of electrons
+
     data *= gain_2d
     err  *= gain_2d
     readnoise_2d *= gain_2d

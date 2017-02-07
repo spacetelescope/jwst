@@ -66,7 +66,7 @@ def imaging(input_model, reference_files):
 
     angles = [disperser['theta_x'], disperser['theta_y'],
                disperser['theta_z'], disperser['tilt_y']]
-    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton').inverse
+    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation').inverse
     dircos2unitless = DirCos2Unitless(name='directional_cosines2unitless')
 
     col = AsdfFile.open(reference_files['collimator']).tree['model']
@@ -754,7 +754,7 @@ def detector_to_gwa(reference_files, detector, disperser):
 
     angles = [disperser['theta_x'], disperser['theta_y'],
                disperser['theta_z'], disperser['tilt_y']]
-    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
+    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
     model = (models.Shift(-1) & models.Shift(-1) | fpa | camera | u2dircos | rotation)
     return model
@@ -872,7 +872,7 @@ def collimator_to_gwa(reference_files, disperser):
         collimator = f.tree['model'].copy()
     angles = [disperser['theta_x'], disperser['theta_y'],
               disperser['theta_z'], disperser['tilt_y']]
-    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
+    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
 
     return collimator.inverse | u2dircos | rotation
@@ -1199,7 +1199,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
                              input_model.meta.instrument.gwa_ytilt)
     angles = [disperser['theta_x'], disperser['theta_y'],
               disperser['theta_z'], disperser['tilt_y']]
-    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotaton')
+    rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
 
     order, wrange = get_spectral_order_wrange(input_model, reference_files['wavelengthrange'])
     agreq = angle_from_disperser(disperser, input_model)

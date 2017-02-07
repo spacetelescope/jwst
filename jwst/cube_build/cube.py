@@ -19,20 +19,20 @@ class CubeInfo(object):
 
     def __init__(self, instrument,detector, parameter1, parameter2, output_name):
 
-        self.channel = list()
-        self.subchannel = list()
+        self.channel = []
+        self.subchannel = []
 
-        self.file = list()
-        self.a_wave = list()
-        self.c_wave = list()
+        self.file = []
+        self.a_wave = []
+        self.c_wave = []
 
-        self.a_weight = list()
-        self.c_weight = list()
-        self.transform_v23toab = list()
-        self.transform_worldtov23 = list()
+        self.a_weight = []
+        self.c_weight = []
+        self.transform_v23toab = []
+        self.transform_worldtov23 = []
 
-        self.filter = list()
-        self.grating = list()
+        self.filter = []
+        self.grating = []
 
         self.output_name = ''
         self.detector = detector
@@ -120,24 +120,17 @@ class CubeInfo(object):
 # Values are given in degrees 
 
     def SetGeometry(self, footprint):
-        padfactor = 1.1 # a padding on the size of cube 
-                        # to make sure the spatial dimensions are large enough
+
         deg2rad = math.pi/180.0
         ra_min, ra_max, dec_min, dec_max,lambda_min, lambda_max = footprint # in degrees
         dec_ave = (dec_min + dec_max)/2.0
 
         # actually this is hard due to converenge of hour angle
-        # improve determining ra_ave in the future
+        # improve determining ra_ave in the future - do not just average (BAD) 
         ra_ave = ((ra_min + ra_max)/2.0 )#* math.cos(dec_ave*deg2rad) 
 
         range_ra = (ra_max - ra_min) * 3600.0 * math.cos(dec_ave*deg2rad)
-
-        self.naxis1 = int(math.ceil(range_ra / self.Cdelt1)) 
-        #print('ra range, ave,naxis1',range_ra,ra_ave,self.naxis1)
-
         range_dec = (dec_max - dec_min) * 3600.0
-        self.naxis2 = int(math.ceil(range_dec / self.Cdelt2)) 
-        #print('dec range,ave,naxis2', range_dec,dec_ave,self.naxis2)
 
         self.Crval1 = ra_ave 
         self.Crval2 = dec_ave
@@ -148,24 +141,20 @@ class CubeInfo(object):
         
         xi_min = xi_min - self.Cdelt1/2.0
         xi_max = xi_max + self.Cdelt1/2.0
-
         eta_min = eta_min - self.Cdelt2/2.0
         eta_max = eta_max + self.Cdelt2/2.0
 
         n1a = int(math.ceil(math.fabs(xi_min) / self.Cdelt1)) 
         n1b = int(math.ceil(math.fabs(xi_max) / self.Cdelt1)) 
-
         n2a = int(math.ceil(math.fabs(eta_min) / self.Cdelt2)) 
         n2b = int(math.ceil(math.fabs(eta_max) / self.Cdelt2)) 
 
         self.naxis1 = n1a + n1b
         self.naxis2 = n2a + n2b 
-
         self.a_min  = xi_min
         self.a_max = xi_max
         self.b_min = eta_min
         self.b_max = eta_max
-
 
         self.xcoord = np.zeros(self.naxis1)
 
@@ -188,16 +177,12 @@ class CubeInfo(object):
 
         self.lambda_min = lambda_min
         self.lambda_max = lambda_max
-
         range_lambda = self.lambda_max - self.lambda_min
         self.naxis3 = int(math.ceil(range_lambda / self.Cdelt3))
 
          # adjust max based on integer value of naxis3
         lambda_center = (self.lambda_max + self.lambda_min) / 2.0
-
         self.lambda_min = lambda_center - (self.naxis3 / 2.0) * self.Cdelt3
-        self.lambda_max = lambda_center + (self.naxis3 / 2.0) * self.Cdelt3
-
         self.lambda_max = self.lambda_min + (self.naxis3) * self.Cdelt3
 
         self.zcoord = np.zeros(self.naxis3)
@@ -246,26 +231,25 @@ class CubeInfo(object):
 ##################################################################################
 class Spaxel(object):
 
-    __slots__ = ['xcenter', 'ycenter', 'zcenter', 'v2center','v3center',
-                 'flux', 'error', 'pixel_flux', 'pixel_error', 'pixel_overlap',
-                 'pixel_beta', 'ipointcloud', 'pointcloud_weight']
 
-    def __init__(self, xcenter, ycenter, zcenter):
-        self.xcenter = xcenter    # set in cube_build_step, default xi
-        self.ycenter = ycenter    # set in cube_build_step, default eta
-        self.zcenter = zcenter    # set in cube build step, defailt lambda
-        self.v2center  = 0
-        self.v3center = 0
+    __slots__ = ['flux', 'error','ipointcloud', 'pointcloud_weight']
+
+    def __init__(self):
         self.flux = 0
         self.error = 0
 
-        self.ipointcloud = list()         # appended to in CubeCloud.MakePointCloud
-        self.pointcloud_weight = list()   # appended to in CubeCloud.MakePointCloud
-
-        self.pixel_flux = list()
-        self.pixel_error = list()
-        self.pixel_overlap = list()
-        self.pixel_beta = list()
+        self.ipointcloud = []         # appended to in CubeCloud.MakePointCloud
+        self.pointcloud_weight = []   # appended to in CubeCloud.MakePointCloud
 
 
+class SpaxelAB(object):
 
+    __slots__ = ['flux', 'error', 'pixel_flux', 'pixel_error', 'pixel_overlap']
+
+    def __init__(self):
+
+        self.flux = 0
+        self.error = 0
+        self.pixel_flux = []
+        self.pixel_error = []
+        self.pixel_overlap = []

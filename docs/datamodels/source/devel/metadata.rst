@@ -9,13 +9,13 @@ observation was made::
 
     print(model.meta.observation.date)
 
-Metadata values are automatically type-checked when they are set.
-Therefore, setting a value that expects a number to a string will
-raise an exception::
+Metadata values are automatically type-checked against the schema when
+they are set. Therefore, setting a keyword which expects a number to a
+string will raise an exception::
 
     >>> from jwst.datamodels import ImageModel
-    >>> dm = ImageModel()
-    >>> dm.meta.target.ra = "foo"
+    >>> model = ImageModel()
+    >>> model.meta.target.ra = "foo"
     Traceback (most recent call last):
       File "<stdin>", line 1, in <module>
       File "site-packages/jwst.datamodels/schema.py", line 672, in __setattr__
@@ -26,7 +26,7 @@ raise an exception::
         raise ValueError(e.message)
     ValueError: 'foo' is not of type u'number'
 
-The set of available metadata elements is defined in a JSON Schema
+The set of available metadata elements is defined in a YAML Schema
 that ships with `jwst.datamodels`.
 
 There is also a utility method for finding elements in the metadata
@@ -52,8 +52,8 @@ databases, such as CRDS, where the path to the metadata element is
 most conveniently stored as a string.  The following two lines are
 equivalent::
 
-    print model['meta.observation.date']
-    print model.meta.observation.date
+    print(model['meta.observation.date'])
+    print(model.meta.observation.date)
 
 Working with lists
 ==================
@@ -69,20 +69,20 @@ list of transformation objects, each of which has a `type` (string)
 and a `coeff` (number) member.  We can assign elements to the list in
 the following equivalent ways::
 
-    >>> trans = dm.meta.transformations.item()
+    >>> trans = model.meta.transformations.item()
     >>> trans.type = 'SIN'
     >>> trans.coeff = 42.0
-    >>> dm.meta.transformations.append(trans)
+    >>> model.meta.transformations.append(trans)
 
-    >>> dm.meta.transformations.append({'type': 'SIN', 'coeff': 42.0})
+    >>> model.meta.transformations.append({'type': 'SIN', 'coeff': 42.0})
 
 When accessing the items of the list, the result is a normal metadata
 object where the attributes are type-checked::
 
-    >>> trans = dm.meta.transformations[0]
-    >>> print trans
+    >>> trans = model.meta.transformations[0]
+    >>> print(trans)
     <jwst.datamodels.schema.Transformations object at 0x123a810>
-    >>> print trans.type
+    >>> print(trans.type)
     SIN
     >>> trans.type = 42.0
     Traceback (most recent call last):
@@ -120,10 +120,10 @@ The following keywords have to do with validating n-dimensional arrays:
 - ``max_ndim``: The maximum number of dimensions of the array.
 
 - ``datatype``: For defining an array, ``datatype`` should be a string.
-For defining a table, it should be a list.
+  For defining a table, it should be a list.
 
 - **array**: ``datatype`` should be one of the following strings,
-representing fixed-length datatypes::
+  representing fixed-length datatypes::
 
   bool8, int8, int16, int32, int64, uint8, uint16, uint32,
   uint64, float16, float32, float64, float128, complex64,
@@ -136,8 +136,7 @@ Or, for fixed-length strings, an array ``[ascii, XX]`` where
 since this would make files less portable).
 
 - **table**: ``datatype`` should be a list of dictionaries.  Each
-element in the list defines a column and has the following
-keys:
+  element in the list defines a column and has the following keys:
 
   - ``datatype``: A string to select the type of the column.
     This is the same as the ``datatype`` for an array (as
