@@ -77,6 +77,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
 
     # Apply gain to the SCI, ERR, and readnoise arrays so they're in units 
     #   of electrons
+
     data *= gain_2d
     err  *= gain_2d
     readnoise_2d *= gain_2d
