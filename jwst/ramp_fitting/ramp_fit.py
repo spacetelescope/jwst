@@ -208,7 +208,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     #   gain array in case optimal weighting is to be done
     readnoise_2d, gain_2d = utils.get_ref_subs(model, readnoise_model, 
                             gain_model)
-
+    
     # Flag any bad pixels in the gain
     pixeldq = utils.reset_bad_gain( pixeldq, gain_2d )
 
@@ -1170,7 +1170,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
                 # Append results to arrays
                 opt_res.append_arr(num_seg, g_pix, intercept, slope,\
                                 sig_intercept, sig_slope, inv_var)
-
+                
             num_seg[g_pix] += 1
 
     # CASE F) - full-length ramp has 2 good reads not at array end, followed 
@@ -1292,7 +1292,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
     # CASE J) - Update arrays for all semiramps that are not covered by the
     #    previous cases. This includes semiramps that are a (bad) single read
-    #    (either saturated or flagged as a cosmic ray)..
+    #    (either saturated or flagged as a cosmic ray)
     #    - increment start
     #    - remove current end from end stack
     wh_check = np.asarray( np.where( ~pixel_done & ~got_case ))
@@ -1599,7 +1599,6 @@ def fit_double_group(mask_2d, data_masked, slope_s, intercept_s, \
 
     sig_intercept_s: float, 1D array
         sigma of y-intercepts from fit for data section
-
     """
     wh_2grp = np.where((mask_2d[:, :].sum(axis=0) == 2)) 
 
@@ -1678,7 +1677,7 @@ def calc_unwtd_fit(xvalues, nreads_1d, sumxx, sumx, sumxy, sumy):
 
     return slope, intercept, sig_slope, sig_intercept, line_fit
 
-
+  
 def calc_opt_fit(nreads_wtd, sumxx, sumx, sumxy, sumy):
     """
     Extended Summary
