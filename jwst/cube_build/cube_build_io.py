@@ -425,7 +425,14 @@ def UpdateOutPutName(self):
     else: 
 
         if self.metadata['instrument'] == 'MIRI':
-            channels = list(set(self.metadata['band_channel']))
+            #channels = list(set(self.metadata['band_channel']))
+            # set does not preserve order so when forming name numbers out of order
+
+            channels = []
+            for ch in self.metadata['band_channel']:
+                if ch not in channels:
+                       channels.append(ch)
+            
             number_channels = len(channels)
             ch_name = '_ch'
             for i in range(number_channels):
@@ -438,7 +445,7 @@ def UpdateOutPutName(self):
             number_subchannels = len(subchannels)
             b_name = ''
             for i in range(number_subchannels):
-                b_name = b_name + subchannels[i]
+                b_name = b_name + subchannels[i] + '-'
 
             b_name  = b_name.lower()
             newname = self.output_name_base + ch_name+ '-' + b_name +  '_s3d.fits'
