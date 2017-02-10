@@ -68,14 +68,17 @@ class Image3Pipeline(Pipeline):
             
             # Now clean up intermediate products which no are no longer needed
             for i in input_models:
-                if hasattr(i.meta,'tweakreg_catalog'):
-                    cname = i.meta.tweakreg_catalog.filename
-                    if os.path.exists(cname):
-                        os.remove(cname)
+                try:
+                    catalog_name = i.meta.tweakreg_catalog.filename
+                    os.remove(catalog_name)
+                except:
+                    pass
 
             log.info("Resampling ASN to create combined product: {}".format(input_models.meta.resample.output))
 
         # Setup output file name for subsequent use
+        # TODO: fix single resample to do what outlier detection does
+        # in updating meta.resample.*
         output_file = mk_prodname(self.output_dir,
             input_models.meta.resample.output, 'i2d')
         input_models.meta.resample.output = output_file

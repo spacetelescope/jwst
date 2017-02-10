@@ -1,19 +1,7 @@
-# -*- coding: utf-8 -*-
-
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-
-"""
-The `drizzle` module defines the `Drizzle` class, for combining input
-images into a single output image using the drizzle algorithm.
-"""
-
 from __future__ import division, print_function, unicode_literals, absolute_import
 
-# SYSTEM
 import os
 import os.path
-
-# THIRD-PARTY
 
 import numpy as np
 from astropy import wcs
@@ -23,8 +11,6 @@ from astropy import wcs as fitswcs
 from gwcs import wcs
 from gwcs import wcstools
 
-
-# LOCAL
 from drizzle import util
 from drizzle import doblot
 from drizzle import cdrizzle
@@ -60,7 +46,7 @@ class GWCSBlot(object):
         self.source_wcs = product.meta.wcs
         self.source = product.data
 
-    def extract_image(self, blot_wcs, interp='poly5', sinscl=1.0):
+    def extract_image(self, blot_img, interp='poly5', sinscl=1.0):
         """
         Resample the output/resampled image to recreate an input image based on
         the input image's world coordinate system
@@ -68,8 +54,8 @@ class GWCSBlot(object):
         Parameters
         ----------
 
-        blot_wcs : wcs
-            The world coordinate system to be used to define the 'blotted' image
+        blot_img : datamodel
+            Datamodel containing header and WCS to define the 'blotted' image
 
         interp : str, optional
             The type of interpolation used in the resampling. The
@@ -82,19 +68,20 @@ class GWCSBlot(object):
         sincscl : float, optional
             The scaling factor for sinc interpolation.
         """
+        blot_wcs = blot_img.meta.wcs
         blot_shape = resample_utils.build_size_from_domain(blot_wcs.domain)
-        _outsci = np.zeros((blot_shape[1], blot_shape[0]), dtype=np.float32)
+        outsci = np.zeros((blot_shape[0], blot_shape[1]), dtype=np.float32)
 
         # Compute the mapping between the input and output pixel coordinates
         #log.info("Creating PIXMAP for blotted image...")
         pixmap = resample_utils.calc_gwcs_pixmap(self.source_wcs, blot_wcs)
 
-        source_pscale = self.source_wcs.forward_transform['cdelt1'].factor.value
-        blot_pscale = blot_wcs.forward_transform['cdelt1'].factor.value
+        source_pscale = self.source_model.meta.wcsinfo.cdelt1
+        blot_pscale = blot_img.meta.wcsinfo.cdelt1
 
         pix_ratio = source_pscale / blot_pscale
         #log.info("Starting blot...")
-        cdrizzle.tblot(self.source, pixmap, _outsci, scale=pix_ratio, kscale=1.0,
+        cdrizzle.tblot(self.source, pixmap, outsci, scale=pix_ratio, kscale=1.0,
                        interp=interp, exptime=1.0, misval=0.0, sinscl=sinscl)
 
-        return _outsci
+        return outsci

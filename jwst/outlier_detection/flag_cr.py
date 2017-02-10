@@ -50,47 +50,6 @@ def do_detection(input_models, blot_models, ref_filename, **pars):
         flag_cr(image, blot, gain, rn, **pars)
 
 
-#def build_reffile_container_func(input_models, reftype):
-#    """
-#    Return a ModelContainer of reference file datamodels.
-#
-#    Parameters
-#    ----------
-#
-#    input_models: ModelContainer
-#        the science data, ImageModels in a ModelContainer
-#
-#    reftype: string
-#        type of reference file
-#
-#    Returns
-#    -------
-#
-#    a ModelContainer with corresponding reference files for each input model
-#    """
-#
-#    """
-#    model_mapping = {'gain':'GainModel', 'readnoise':'ReadnoiseModel'}
-#    module = importlib.import_module('..datamodels')
-#    model_name = model_mapping[reftype]
-#    ref_model = getattr(module, model_name)
-#    print("ref_model defined as: {} of type {}".format(ref_model, type(ref_model)))
-#    """
-#    q = Step()
-#    reffiles = [q.get_reference_file(im, reftype) for im in input_models]
-#
-#    # Check if all the ref files are the same.  If so build it by reading
-#    # the reference file just once.
-#    if len(set(reffiles)) <= 1:
-#        length = len(input_models)
-#        ref_list = [datamodels.open(reffiles[0])] * length
-#        #ref_list = [ref_model(reffiles[0])] * length
-#    else:
-#        ref_list = [datamodels.open(ref) for ref in reffiles]
-#        #ref_list = [ref_model(ref) for ref in reffiles]
-#    return datamodels.ModelContainer(ref_list)
-
-
 def buildMask(dqarr, bitvalue):
     """ Builds a bit-mask from an input DQ array and a bitvalue flag"""
 
