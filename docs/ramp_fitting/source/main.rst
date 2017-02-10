@@ -33,7 +33,9 @@ for all intervals for a given pixel, the final slope is determined as a weighted
 average from all intervals and is written to a file as the primary output 
 product.  In this output product, the 4-D GROUPDQ from all integrations is 
 compressed into 2-D, which is then merged (using a bitwise OR) with the input 
-2-D PIXELDQ to create the output PIXELDQ.
+2-D PIXELDQ to create the output PIXELDQ.  In addition, the output PIXELDQ array 
+is updated to have DQ flags set to NO_GAIN_VALUE and DO_NOT_USE for all pixels 
+that are non-positive or NaN in the gain array. 
 
 If the input exposure contains more than one integration, the resulting slope
 images from each integration are stored as a data cube in a second output data
