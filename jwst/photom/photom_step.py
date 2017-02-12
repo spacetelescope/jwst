@@ -7,8 +7,9 @@ from .. import datamodels
 
 class PhotomStep(Step):
     """
-    PhotomStep: Module for extraction photom conversion factor(s)
-        and writing them to input header
+    PhotomStep: Module for loading photometric conversion infomation from
+        reference files and attaching or applying them to the input science
+        data model
     """
 
     reference_file_types = ['photom', 'area']
@@ -20,8 +21,8 @@ class PhotomStep(Step):
         except IOError:
             self.log.error('Input can not be opened as a Model.')
 
-        # Open input as correct type
-        if isinstance(dm, datamodels.CubeModel): # _integ.fits product: 3D array
+        # Report the detected type of input model
+        if isinstance(dm, datamodels.CubeModel): # integration product: 3D array
             self.log.debug('Input is a CubeModel for a multiple integ file.')
         elif isinstance(dm, datamodels.ImageModel):  # standard product: 2D array
             self.log.debug('Input is an ImageModel.')
@@ -45,8 +46,8 @@ class PhotomStep(Step):
             return result
 
         # Do the correction
-        ff_a = photom.DataSet(dm, phot_filename, area_filename)
-        output_obj = ff_a.do_all()
+        phot = photom.DataSet(dm, phot_filename, area_filename)
+        output_obj = phot.do_all()
 
         output_obj.meta.cal_step.photom = 'COMPLETE'
 

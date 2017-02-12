@@ -5,6 +5,7 @@
 import logging
 import numpy as np
 from .. import datamodels
+from .. datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -13,8 +14,7 @@ PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
 
 class DataSet(object):
     """
-    Input dataset whose SCI header will have photom factor
-        written to as PHOTMJSR
+    Input dataset to which the photom information will be attached
 
     Parameters
     ----------
@@ -55,6 +55,9 @@ class DataSet(object):
         self.grating = None
         if model.meta.instrument.grating is not None:
             self.grating = model.meta.instrument.grating.upper()
+        self.band = None
+        if model.meta.instrument.band is not None:
+            self.band = model.meta.instrument.band.upper()
         self.slitnum = -1
 
         log.debug('Using instrument: %s', self.instrument)
@@ -66,6 +69,8 @@ class DataSet(object):
             log.debug(' pupil: %s', self.pupil)
         if self.grating is not None:
             log.debug(' grating: %s', self.grating)
+        if self.band is not None:
+            log.debug(' band: %s', self.band)
 
 
     def calc_nirspec(self, ftab):
@@ -309,17 +314,38 @@ class DataSet(object):
         # MRS detectors
         elif self.detector == 'MIRIFUSHORT' or self.detector == 'MIRIFULONG':
 
-            # Get the BAND value of the input data model
-            band = self.input.meta.instrument.band.strip().upper()
-            log.debug(' band: %s', band)
+            # Reset conversion and pixel size values with DQ=NON_SCIENCE to 1,
+            # so no conversion is applied
+            where_bad = np.bitwise_and(ftab.dq, dqflags.pixel['NON_SCIENCE'])
+            ftab.data[where_bad] = 1.0
+            ftab.pixsiz[where_bad] = 1.0
 
-            # Find the matching row in reference file
-            for tabdata in ftab.phot_table:
+            # Reset NaN's in conversion array to 1
+            where_nan = np.isnan(ftab.data)
+            ftab.data[where_nan] = 1.0
 
-                ref_band = tabdata['band'].strip().upper()
-                if band == ref_band:
-                    conv_factor = self.photom_io(tabdata)
-                    break
+            # Reset zeros in pixsiz array to 1
+            where_zero = np.where(ftab.pixsiz == 0.0)
+            ftab.pixsiz[where_zero] = 1.0
+
+            # Make sure all NaN's and zeros have DQ flags set
+            ftab.dq[where_nan] = np.bitwise_or(ftab.dq[where_nan],
+                                               dqflags.pixel['NON_SCIENCE'])
+            ftab.dq[where_zero] = np.bitwise_or(ftab.dq[where_zero],
+                                                dqflags.pixel['NON_SCIENCE'])
+
+            # Divide the science data and err by the conversion factors
+            self.input.data /= ftab.data*ftab.pixsiz
+            self.input.err /= ftab.data*ftab.pixsiz
+
+            # Update the science dq
+            self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
+
+            # Store the 2D sensitivity factors
+            self.input.relsens2d = ftab.data*ftab.pixsiz
+
+            # Retrieve the scalar conversion factor from the reference data
+            conv_factor = ftab.meta.photometry.conversion_megajanskys
 
         if conv_factor is not None:
             return float(conv_factor)
@@ -607,7 +633,7 @@ class DataSet(object):
         Returns
         -------
         self.input: DM object
-            input DM object with photom key word PHOTMJSR updated
+            input DM object with conversion factors attached/applied
 
         """
         photom_fname = self.phot_file
