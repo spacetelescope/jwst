@@ -8,7 +8,7 @@ from collections import OrderedDict
 from asdf import AsdfFile
 from astropy.extern import six
 
-from ..associations import Association
+from ..associations import Association, AssociationError
 from . import model_base
 from .util import open as datamodel_open
 
@@ -67,8 +67,8 @@ class ModelContainer(model_base.DataModel):
                 self.from_asn(init, **kwargs)
             except (IOError):
                 raise IOError('Cannot open files.')
-            except ValueError:
-                raise ValueError('{0} must be an ASN file'.format(init))
+            except AssociationError:
+                raise AssociationError('{0} must be an ASN file'.format(init))
         else:
             raise TypeError('Input {0!r} is not a list of DataModels or '
                             'an ASN file'.format(init))
