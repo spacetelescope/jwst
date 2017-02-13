@@ -4,6 +4,14 @@ from collections import UserDict
 import pytest
 
 
+__all__ = [
+    'KeyValueRegistry',
+    'KeyValueRegistryError',
+    'KeyValueRegistryNoKeyFound',
+    'KeyValueRegistryNotSingleItemError'
+]
+
+
 class KeyValueRegistry(UserDict):
     """Provide a dict-like registry
 

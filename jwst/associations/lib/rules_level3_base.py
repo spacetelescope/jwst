@@ -121,6 +121,8 @@ class DMS_Level3_Base(Association):
 
     @property
     def is_valid(self):
+        if not super(DMS_Level3_Base, self).is_valid:
+            return False
         return all(test['validated'] for test in self.validity.values())
 
     @property
@@ -348,7 +350,7 @@ class DMS_Level3_Base(Association):
         return exposure
 
     def __repr__(self):
-        file_name, json_repr = self.to_json()
+        file_name, json_repr = self.ioregistry['json'].dump(self)
         return json_repr
 
     def __str__(self):
@@ -701,7 +703,10 @@ class AsnMixin_Spectrum(DMS_Level3_Base):
 class AsnMixin_CrossCandidate(DMS_Level3_Base):
     """Basic constraints for Cross-Candidate associations"""
 
+    @property
     def is_valid(self):
+        if not super(AsnMixin_CrossCandidate, self).is_valid:
+            return False
         candidates = set(
             member['asn_candidate_id']
             for product in self.data['products']

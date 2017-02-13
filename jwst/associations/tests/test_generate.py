@@ -4,7 +4,7 @@ from . import helpers
 from .helpers import full_pool_rules
 
 from .. import (Association, generate)
-from ..association import SERIALIZATION_PROTOCOLS, validate
+from ..association import validate
 
 
 def test_generate(full_pool_rules):
@@ -24,9 +24,9 @@ def test_generate(full_pool_rules):
 def test_serialize(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
     (asns, orphaned) = generate(pool, rules)
-    for protocol in SERIALIZATION_PROTOCOLS:
-        for asn in asns:
-            fname, serialized = asn.dump(protocol=protocol)
+    for asn in asns:
+        for format in asn.ioregistry:
+            fname, serialized = asn.dump(format=format)
             assert serialized is not None
             recovered = Association.load(serialized)
             assert recovered is not None

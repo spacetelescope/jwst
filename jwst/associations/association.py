@@ -1,5 +1,5 @@
 from ast import literal_eval
-from collections import namedtuple, MutableMapping
+from collections import MutableMapping
 from copy import deepcopy
 from datetime import datetime
 import json
@@ -7,16 +7,19 @@ import jsonschema
 import logging
 from nose.tools import nottest
 import re
-import yaml
 
 from astropy.extern import six
-import numpy as np
 from numpy.ma import masked
 
 from . import __version__
-from .exceptions import (AssociationError, AssociationProcessMembers)
+from .exceptions import (
+    AssociationError,
+    AssociationNotValidError,
+    AssociationProcessMembers
+)
 from .lib.counter import Counter
 from .registry import AssociationRegistry
+from .lib.ioregistry import IORegistry
 
 __all__ = ['Association']
 
@@ -52,7 +55,7 @@ class Association(MutableMapping):
         The instance is the association data structure.
         See `data` below
 
-    meta: dict
+    mgeta: dict
         Information about the association.
 
     data: dict
@@ -90,6 +93,9 @@ class Association(MutableMapping):
     # Attribute values that are indicate the
     # attribute is not specified.
     INVALID_VALUES = None
+
+    # Initialize a global IO registry
+    ioregistry = IORegistry()
 
     # Associations of the same type are sequenced.
     _sequence = Counter(start=1)
@@ -130,13 +136,51 @@ class Association(MutableMapping):
     def asn_rule(self):
         return self._asn_rule()
 
-    def dump(self, protocol='json'):
+    @classmethod
+    def validate(cls, asn):
+        """Validate an association against this rule
+
+        Parameters
+        ----------
+        asn: Association or association-like
+            The association structure to examine
+
+        Returns
+        -------
+        valid: bool
+            If valid, returns True
+
+        Notes
+        -----
+        The base method checks against the rule class' schema
+        If the rule class does not define a schema, a warning is issued
+        but the routine will return True.
+        """
+        if not hasattr(cls, 'schema_file'):
+            logger.warning(
+                'Cannot validate: {} has no schema. Presuming OK.'.format(cls)
+            )
+            return True
+
+        with open(cls.schema_file, 'r') as schema_file:
+            asn_schema = json.load(schema_file)
+        try:
+            jsonschema.validate(asn.data, asn_schema)
+        except jsonschema.ValidationError:
+            return False
+        return True
+
+    def dump(self, format='json', **kwargs):
         """Serialize the association
 
         Parameters
         ----------
-        protocol: ('json',)
-            The format to use for serialization.
+        format: str
+            The format to use to dump the association into.
+
+        kwargs: dict
+            List of arguments to pass to the registered
+            routines for the current association type.
 
         Returns
         -------
@@ -144,11 +188,22 @@ class Association(MutableMapping):
             Tuple where the first item is the suggested
             base name for the file.
             Second item is the serialization.
+
+        Raises
+        ------
+        AssociationError
+            If the operation cannot be done
+
+        AssociationNotValidError
+            If the given association does not validate.
         """
-        return SERIALIZATION_PROTOCOLS[protocol].serialize(self)
+        if self.is_valid:
+            return self.ioregistry[format].dump(self, **kwargs)
+        else:
+            raise AssociationNotValidError
 
     @classmethod
-    def load(cls, serialized):
+    def load(cls, serialized, format=None, validate=True, **kwargs):
         """Marshall a previously serialized association
 
         Parameters
@@ -156,117 +211,61 @@ class Association(MutableMapping):
         serialized: object
             The serialized form of the association.
 
+        format: str or None
+            The format to force. If None, try all available.
+
+        validate: bool
+            Validate against the class' defined schema, if any.
+
+        kwargs: dict
+            Other arguments to pass to the `load` method
+
         Returns
         -------
         The Association object
+
+        Raises
+        ------
+        AssociationError
+            Cannot create or validate the association.
         """
-        asn = None
         if not isinstance(serialized, six.string_types):
             serialized = serialized.read()
-        for protocol in SERIALIZATION_PROTOCOLS:
+
+        if format is None:
+            formats = [
+                format
+                for format_name, format in cls.ioregistry.items()
+            ]
+        else:
+            formats = [cls.ioregistry[format]]
+
+        for format in formats:
             try:
-                asn = SERIALIZATION_PROTOCOLS[protocol].unserialize(serialized)
+                asn = format.load(
+                    cls, serialized, **kwargs
+                )
             except AssociationError:
                 continue
             else:
-                return asn
+                break
         else:
             raise AssociationError(
                 'Cannot translate "{}" to an association'.format(serialized)
             )
 
-    def to_yaml(self):
-        """Create JSON representation.
-
-        Returns
-        -------
-        (name, str):
-            Tuple where the first item is the suggested
-            base name for the JSON file.
-            Second item is the string containing the JSON serialization.
-        """
         # Validate
-        with open(self.schema_file, 'r') as schema_file:
-            asn_schema = json.load(schema_file)
-        jsonschema.validate(self.data, asn_schema)
-
-        return (
-            self.asn_name,
-            yaml.dump(self.data, default_flow_style=False)
-        )
-
-    @classmethod
-    def from_yaml(cls, serialized):
-        """Unserialize an assocation from JSON
-
-        Parameters
-        ----------
-        serialized: str or file object
-            The YAML to read
-
-        Returns
-        -------
-        association: dict
-            The association
-        """
-        try:
-            asn = yaml.load(serialized)
-        except Exception as err:
-            logger.debug('Error unserializing: "{}"'.format(err))
+        if validate and not cls.validate(asn):
             raise AssociationError(
-                'Container is not YAML: "{}"'.format(serialized)
+                'Given structure is not a valid association.'
             )
-        else:
-            return asn
 
-    def to_json(self):
-        """Create JSON representation.
+        return asn
 
-        Returns
-        -------
-        (name, str):
-            Tuple where the first item is the suggested
-            base name for the JSON file.
-            Second item is the string containing the JSON serialization.
-        """
-
-        # Validate
-        with open(self.schema_file, 'r') as schema_file:
-            asn_schema = json.load(schema_file)
-        jsonschema.validate(self.data, asn_schema)
-
-        return (
-            self.asn_name,
-            json.dumps(self.data, indent=4, separators=(',', ': '))
-        )
-
-    @classmethod
-    def from_json(cls, serialized):
-        """Unserialize an assocation from JSON
-
-        Parameters
-        ----------
-        serialized: str or file object
-            The JSON to read
-
-        Returns
-        -------
-        association: dict
-            The association
-        """
-        if isinstance(serialized, six.string_types):
-            loader = json.loads
-        else:
-            loader = json.load
-        try:
-            asn = loader(serialized)
-        except Exception as err:
-            logger.debug('Error unserializing: "{}"'.format(err))
-            raise AssociationError(
-                'Containter is not JSON: "{}"'.format(serialized)
-            )
-        else:
-            return asn
+    @property
+    def is_valid(self):
+        """Check if association is valid"""
+        return self.__class__.validate(self)
 
     def add(self, member, check_constraints=True):
         """Add the member to the association
@@ -438,7 +437,15 @@ class Association(MutableMapping):
         return self.data.values()
 
 
+# #########################
+# Read in basic IO routines
+# #########################
+from . import association_io
+
+
+# ###########################
 # User module level functions
+# ###########################
 def validate(
         association,
         definition_files=None,
@@ -479,7 +486,9 @@ def validate(
     return rules.validate(association)
 
 
+# #########
 # Utilities
+# #########
 def meets_conditions(value, conditions):
     """Check whether value meets any of the provided conditions
 
@@ -587,21 +596,3 @@ def is_iterable(obj):
     return not isinstance(obj, six.string_types) and \
         not isinstance(obj, tuple) and \
         hasattr(obj, '__iter__')
-
-
-# Register YAML representers
-def np_str_representer(dumper, data):
-    """Convert numpy.str_ into standard YAML string"""
-    return dumper.represent_scalar('tag:yaml.org,2002:str', str(data))
-yaml.add_representer(np.str_, np_str_representer)
-
-# Available serialization protocols
-ProtocolFuncs = namedtuple('ProtocolFuncs', ['serialize', 'unserialize'])
-SERIALIZATION_PROTOCOLS = {
-    'json': ProtocolFuncs(
-        serialize=Association.to_json,
-        unserialize=Association.from_json),
-    'yaml': ProtocolFuncs(
-        serialize=Association.to_yaml,
-        unserialize=Association.from_yaml)
-}
