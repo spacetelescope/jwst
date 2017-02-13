@@ -347,6 +347,10 @@ class DataSet(object):
             # Retrieve the scalar conversion factor from the reference data
             conv_factor = ftab.meta.photometry.conversion_megajanskys
 
+            # Update BUNIT values for the science data and err
+            self.input.meta.bunit_data = 'mJy/arcsec^2'
+            self.input.meta.bunit_err = 'mJy/arcsec^2'
+
         if conv_factor is not None:
             return float(conv_factor)
         else:
