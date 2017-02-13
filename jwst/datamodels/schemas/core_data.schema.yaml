@@ -1,10 +1,14 @@
+title: Core JWST Data Model Schema
+description: |
+  Base schema for JWST data files.
 allOf:
 - $ref: core.schema.yaml
+#- $ref: exposure.schema.yaml
 - type: object
   properties:
     meta:
       type: object
-      properties: 
+      properties:
         time_sys:
           title: principal time system for time-related keywords
           type: string
@@ -1353,4 +1357,4 @@ allOf:
               title: Coronagraphic PSF Subtraction
               type: string
               fits_keyword: S_KLIP
-  $schema: http://stsci.edu/schemas/fits-schema/fits-schema
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

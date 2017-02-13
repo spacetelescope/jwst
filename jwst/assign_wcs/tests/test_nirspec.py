@@ -58,6 +58,7 @@ def create_hdul():
     phdu.header['detector'] = 'NRS1'
     phdu.header['time-obs'] = '8:59:37'
     phdu.header['date-obs'] = '2014-09-05'
+    phdu.header['date'] = '2015-08-01T17:15:21'
 
     for item in wcs_kw.items():
         phdu.header[item[0]] = item[1]

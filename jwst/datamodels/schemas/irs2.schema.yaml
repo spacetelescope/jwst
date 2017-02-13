@@ -1,6 +1,6 @@
 title: IRS2 reference file model
 allOf:
-- $ref: core.schema.yaml
+- $ref: core_data.schema.yaml
 - type: object
   properties:
     irs2_table:

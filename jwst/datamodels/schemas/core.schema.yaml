@@ -1,3 +1,6 @@
+title: Core JWST Schema
+description: |
+  Base schema for JWST data and reference files.
 type: object
 properties:
   meta:
@@ -15,10 +18,10 @@ properties:
         title: Organization responsible for creating file
         type: string
         fits_keyword: ORIGIN
-      #time_sys:
-      #  title: principal time system for time-related keywords
-      #  type: string
-      #  fits_keyword: TIMESYS
+      time_sys:
+        title: principal time system for time-related keywords
+        type: string
+        fits_keyword: TIMESYS
       filename:
         title: Name of the file
         type: string
@@ -184,7 +187,6 @@ properties:
               NRS_IFU, NRS_IMAGE, NRS_LAMP, NRS_MIMF, NRS_MSASPEC, NRS_TACONFIRM,
               NRS_TACQ, NRS_TASLIT]
             fits_keyword: EXP_TYPE
-        additionalProperties: true    
       subarray:
         title: Subarray parameters
         type: object
@@ -232,4 +234,5 @@ properties:
             type: integer
             fits_keyword: SLOWAXIS
         additionalProperties: false
+    additionalProperties: true
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
