@@ -38,7 +38,7 @@ class DataModel(properties.ObjectNode):
     """
     Base class of all of the data models.
     """
-    schema_url = "core.schema.yaml"
+    schema_url = "core_data.schema.yaml"
 
     def __init__(self, init=None, schema=None, extensions=None,
                  pass_invalid_values=False):
@@ -88,7 +88,7 @@ class DataModel(properties.ObjectNode):
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
             extension_list = asdf_extension.AsdfExtensionList(self._extensions)
-            schema = asdf_schema.load_schema(schema_path, 
+            schema = asdf_schema.load_schema(schema_path,
                 resolver=extension_list.url_mapping, resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
