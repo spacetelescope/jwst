@@ -119,11 +119,11 @@ class DMS_Level3_Base(Association):
         if 'degraded_status' not in self.data:
             self.data['degraded_status'] = _DEGRADED_STATUS_OK
 
-    @property
-    def is_valid(self):
-        if not super(DMS_Level3_Base, self).is_valid:
+    @classmethod
+    def validate(cls, asn):
+        if not super(DMS_Level3_Base, cls).validate(asn):
             return False
-        return all(test['validated'] for test in self.validity.values())
+        return all(test['validated'] for test in asn.validity.values())
 
     @property
     def acid(self):
@@ -703,13 +703,13 @@ class AsnMixin_Spectrum(DMS_Level3_Base):
 class AsnMixin_CrossCandidate(DMS_Level3_Base):
     """Basic constraints for Cross-Candidate associations"""
 
-    @property
-    def is_valid(self):
-        if not super(AsnMixin_CrossCandidate, self).is_valid:
+    @classmethod
+    def validate(cls, asn):
+        if not super(AsnMixin_CrossCandidate, cls).validate(asn):
             return False
         candidates = set(
             member['asn_candidate_id']
-            for product in self.data['products']
+            for product in asn.data['products']
             for member in product['members']
         )
         return len(candidates) > 1
