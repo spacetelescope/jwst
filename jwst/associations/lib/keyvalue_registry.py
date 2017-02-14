@@ -1,8 +1,13 @@
 """Key/Value Registry"""
 
-from collections import UserDict
 import pytest
 
+try:
+    from collections import UserDict
+except ImportError:
+    from UserDict import IterableUserDict
+    class UserDict(IterableUserDict, object):
+        pass
 
 __all__ = [
     'KeyValueRegistry',
@@ -128,7 +133,7 @@ def test_dict_like():
     assert kvr.get('c', 3) == 3
 
     keys, values = zip(*kvr.items())
-    assert data.keys() == set(keys)
+    assert set(data.keys()) == set(keys)
     assert set(data.values()) == set(values)
 
     kvr_copy = kvr.copy()

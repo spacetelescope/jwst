@@ -5,8 +5,6 @@ from inspect import (
     isclass,
     ismodule
 )
-import json
-import jsonschema
 import logging
 from os.path import (
     basename,
@@ -164,29 +162,24 @@ class AssociationRegistry(dict):
 
         Parameters
         ----------
-        association: dict
+        association: association-like
             The data to validate
 
         Returns
         -------
-        schemas: list
-            List of schemas which validated
+        rules: list
+            List of rules that validated
 
         Raises
         ------
         AssociationNotValidError
             Association did not validate
         """
-        results = []
-        for schema_file in self.schemas:
-            with open(schema_file, 'r') as handle:
-                schema = json.load(handle)
-            try:
-                jsonschema.validate(association, schema)
-            except jsonschema.ValidationError:
-                continue
-            else:
-                results.append(schema)
+        results = [
+            rule
+            for rule_name, rule in self.items()
+            if rule.validate(association)
+        ]
 
         if len(results) == 0:
             raise AssociationNotValidError(

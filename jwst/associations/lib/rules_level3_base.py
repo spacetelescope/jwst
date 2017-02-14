@@ -34,7 +34,12 @@ __all__ = [
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+#logger.addHandler(logging.NullHandler())
+logger.setLevel(logging.DEBUG)
+handler = logging.StreamHandler()
+handler.setLevel(logging.DEBUG)
+logger.addHandler(handler)
+logger.debug('Loading level3 base')
 
 # Start of the discovered association ids.
 _DISCOVERED_ID_START = 3001
@@ -86,6 +91,9 @@ _EXPTYPE_MAP = {
 class DMS_Level3_Base(Association):
     """Basic class for DMS Level3 associations."""
 
+    # Set the validation schema
+    schema_file = ASN_SCHEMA
+
     # Attribute values that are indicate the
     # attribute is not specified.
     INVALID_VALUES = _EMPTY
@@ -100,9 +108,6 @@ class DMS_Level3_Base(Association):
 
         # Initialize discovered association ID
         self.discovered_id = Counter(_DISCOVERED_ID_START)
-
-        # Set the validation schema
-        self.schema_file = ASN_SCHEMA
 
         # Initialize validity checks
         self.validity = {
@@ -123,7 +128,20 @@ class DMS_Level3_Base(Association):
     def validate(cls, asn):
         if not super(DMS_Level3_Base, cls).validate(asn):
             return False
-        return all(test['validated'] for test in asn.validity.values())
+
+        result = True
+        if isinstance(asn, DMS_Level3_Base):
+            try:
+                result = all(
+                    test['validated']
+                    for test in asn.validity.values()
+                )
+            except (AttributeError, KeyError) as err:
+                logger.debug('Validation failed: "{}"'.format(err))
+                result = False
+            if not result:
+                logger.debug('Validation failed validity tests.')
+        return result
 
     @property
     def acid(self):
@@ -707,9 +725,19 @@ class AsnMixin_CrossCandidate(DMS_Level3_Base):
     def validate(cls, asn):
         if not super(AsnMixin_CrossCandidate, cls).validate(asn):
             return False
-        candidates = set(
-            member['asn_candidate_id']
-            for product in asn.data['products']
-            for member in product['members']
-        )
-        return len(candidates) > 1
+
+        result = True
+        if isinstance(asn, DMS_Level3_Base):
+            try:
+                candidates = set(
+                    member['asn_candidate_id']
+                    for product in asn.data['products']
+                    for member in product['members']
+                )
+            except (AttributeError, KeyError) as err:
+                logger.debug('Validation failed: "{}"'.format(err))
+                result = False
+            result = len(candidates) > 1
+            if not result:
+                logger.debug('Validation failed: No candidates found.')
+        return result

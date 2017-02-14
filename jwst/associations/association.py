@@ -27,6 +27,10 @@ __all__ = ['Association']
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+handler = logging.StreamHandler()
+logger.addHandler(handler)
+logger.setLevel(logging.DEBUG)
+handler.setLevel(logging.DEBUG)
 
 # Timestamp template
 _TIMESTAMP_TEMPLATE = '%Y%m%dt%H%M%S'
@@ -162,11 +166,18 @@ class Association(MutableMapping):
             )
             return True
 
+        if isinstance(asn, cls):
+            asn_data = asn.data
+        else:
+            asn_data = asn
+
         with open(cls.schema_file, 'r') as schema_file:
             asn_schema = json.load(schema_file)
+
         try:
-            jsonschema.validate(asn.data, asn_schema)
-        except jsonschema.ValidationError:
+            jsonschema.validate(asn_data, asn_schema)
+        except (AttributeError, jsonschema.ValidationError) as err:
+            logger.debug('Validation failed. Error:"{}"'.format(err))
             return False
         return True
 
@@ -203,7 +214,13 @@ class Association(MutableMapping):
             raise AssociationNotValidError
 
     @classmethod
-    def load(cls, serialized, format=None, validate=True, **kwargs):
+    def load(
+            cls,
+            serialized,
+            format=None,
+            validate=True,
+            **kwargs
+    ):
         """Marshall a previously serialized association
 
         Parameters
