@@ -4,7 +4,6 @@ from . import helpers
 from .helpers import full_pool_rules
 
 from .. import (Association, generate)
-from ..association import validate
 
 
 def test_generate(full_pool_rules):
@@ -16,8 +15,6 @@ def test_generate(full_pool_rules):
         asn_name, asn_store = asn.dump()
         asn_table = Association.load(asn_store)
         schemas = rules.validate(asn_table)
-        assert len(schemas) > 0
-        schemas = validate(asn_table)
         assert len(schemas) > 0
 
 

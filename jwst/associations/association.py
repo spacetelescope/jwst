@@ -460,49 +460,6 @@ class Association(MutableMapping):
 from . import association_io
 
 
-# ###########################
-# User module level functions
-# ###########################
-def validate(
-        association,
-        definition_files=None,
-        include_default=True,
-        global_constraints=None
-):
-    """Validate an association against know schema
-
-    Parameters
-    ----------
-    association: dict-like
-        The association to validate
-
-    definition_files: [str,]
-        The files to find the association definitions in.
-
-    include_default: bool
-        True to include the default definitions.
-
-    global_constraints: dict
-        Constraints to be added to each rule.
-
-    Returns
-    -------
-    schemas: list
-        List of schemas which validated
-
-    Raises
-    ------
-    AssociationNotValidError
-        Association did not validate
-    """
-    rules = AssociationRegistry(
-        definition_files=definition_files,
-        include_default=include_default,
-        global_constraints=global_constraints
-    )
-    return rules.validate(association)
-
-
 # #########
 # Utilities
 # #########
