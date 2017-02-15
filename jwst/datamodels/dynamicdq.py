@@ -5,6 +5,7 @@ from . import dqflags
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 def dynamic_mask(input_model):
     #
