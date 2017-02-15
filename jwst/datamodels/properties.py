@@ -20,6 +20,7 @@ from . import util
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 __all__ = ['ObjectNode', 'ListNode']
 

@@ -14,6 +14,7 @@ from jwst.associations import AssociationError
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 
 def open(init=None, extensions=None, **kwargs):
