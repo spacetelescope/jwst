@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from ..associations import Association
+from ..associations import load_asn
 from ..stpipe import Pipeline
 from .. import datamodels
 
@@ -239,7 +239,7 @@ class Lvl2Input(object):
             try:
                 # The name of an association table
                 with open(input, 'r') as input_fh:
-                    self.asn = Association.load(input_fh)
+                    self.asn = load_asn(input_fh)
             except:
                 # The name of a single image file
                 self.interpret_image_model(datamodels.open(input))

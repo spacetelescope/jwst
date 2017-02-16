@@ -5,10 +5,12 @@ import sys
 import argparse
 import logging
 
-from jwst.associations import __version__
-from jwst.associations.association import AssociationRegistry
-from jwst.associations.generate import generate
-from jwst.associations.pool import AssociationPool
+from jwst.associations import (
+    __version__,
+    AssociationPool,
+    AssociationRegistry,
+    generate,
+)
 from jwst.associations.lib.log_config import (log_config, DMS_config)
 
 # Configure logging

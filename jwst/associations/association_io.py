@@ -2,18 +2,19 @@
 Define the I/O methods for Level 3 associations
 """
 import json as json_lib
-import jsonschema
 import logging
 import numpy as np
 import six
 import yaml as yaml_lib
 
 from .association import Association
-from .exceptions import AssociationError
+from .exceptions import AssociationNotValidError
 
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
+
+__all__ = []
 
 
 @Association.ioregistry
@@ -21,7 +22,7 @@ class json(object):
 
     @staticmethod
     def load(cls, serialized):
-        """Unserialize an assocation from JSON
+        """Unserialize an association from JSON
 
         Parameters
         ----------
@@ -36,16 +37,23 @@ class json(object):
         -------
         association: dict
             The association
+
+        Raises
+        ------
+        AssociationNotValidError
+            Cannot create or validate the association.
         """
         if isinstance(serialized, six.string_types):
             loader = json_lib.loads
         else:
+            # Presume a file object
+            serialized.seek(0)
             loader = json_lib.load
         try:
             asn = loader(serialized)
         except Exception as err:
             logger.debug('Error unserializing: "{}"'.format(err))
-            raise AssociationError(
+            raise AssociationNotValidError(
                 'Containter is not JSON: "{}"'.format(serialized)
             )
 
@@ -79,7 +87,7 @@ class yaml(object):
 
     @staticmethod
     def load(cls, serialized):
-        """Unserialize an assocation from YAML
+        """Unserialize an association from YAML
 
         Parameters
         ----------
@@ -94,12 +102,21 @@ class yaml(object):
         -------
         association: dict
             The association
+
+        Raises
+        ------
+        AssociationNotValidError
+            Cannot create or validate the association.
         """
+        try:
+            serialized.seek(0)
+        except AttributeError:
+            pass
         try:
             asn = yaml_lib.load(serialized)
         except Exception as err:
             logger.debug('Error unserializing: "{}"'.format(err))
-            raise AssociationError(
+            raise AssociationNotValidError(
                 'Container is not YAML: "{}"'.format(serialized)
             )
         return asn

@@ -18,7 +18,6 @@ from .exceptions import (
     AssociationProcessMembers
 )
 from .lib.counter import Counter
-from .registry import AssociationRegistry
 from .lib.ioregistry import IORegistry
 
 __all__ = ['Association']
@@ -27,10 +26,6 @@ __all__ = ['Association']
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-handler = logging.StreamHandler()
-logger.addHandler(handler)
-logger.setLevel(logging.DEBUG)
-handler.setLevel(logging.DEBUG)
 
 # Timestamp template
 _TIMESTAMP_TEMPLATE = '%Y%m%dt%H%M%S'
@@ -152,7 +147,12 @@ class Association(MutableMapping):
         Returns
         -------
         valid: bool
-            If valid, returns True
+            True if valid. Otherwise the `AssociationNotValidError` is raised
+
+        Raises
+        ------
+        AssociationNotValidError
+            If there is some reason validation failed.
 
         Notes
         -----
@@ -177,8 +177,7 @@ class Association(MutableMapping):
         try:
             jsonschema.validate(asn_data, asn_schema)
         except (AttributeError, jsonschema.ValidationError) as err:
-            logger.debug('Validation failed. Error:"{}"'.format(err))
-            return False
+            raise AssociationNotValidError('Validation failed')
         return True
 
     def dump(self, format='json', **kwargs):
@@ -211,7 +210,9 @@ class Association(MutableMapping):
         if self.is_valid:
             return self.ioregistry[format].dump(self, **kwargs)
         else:
-            raise AssociationNotValidError
+            raise AssociationNotValidError(
+                'Association {} is not valid'.format(self)
+            )
 
     @classmethod
     def load(
@@ -243,12 +244,16 @@ class Association(MutableMapping):
 
         Raises
         ------
-        AssociationError
+        AssociationNotValidError
             Cannot create or validate the association.
-        """
-        if not isinstance(serialized, six.string_types):
-            serialized = serialized.read()
 
+        Notes
+        -----
+        The `serialized` object can be in any format
+        supported by the registered I/O routines. For example, for
+        `json` and `yaml` formats, the input can be either a string or
+        a file object containing the string.
+        """
         if format is None:
             formats = [
                 format
@@ -262,18 +267,18 @@ class Association(MutableMapping):
                 asn = format.load(
                     cls, serialized, **kwargs
                 )
-            except AssociationError:
+            except AssociationNotValidError:
                 continue
             else:
                 break
         else:
-            raise AssociationError(
+            raise AssociationNotValidError(
                 'Cannot translate "{}" to an association'.format(serialized)
             )
 
         # Validate
         if validate and not cls.validate(asn):
-            raise AssociationError(
+            raise AssociationNotValidError(
                 'Given structure is not a valid association.'
             )
 
@@ -282,7 +287,11 @@ class Association(MutableMapping):
     @property
     def is_valid(self):
         """Check if association is valid"""
-        return self.__class__.validate(self)
+        try:
+            self.__class__.validate(self)
+        except AssociationNotValidError:
+            return False
+        return True
 
     def add(self, member, check_constraints=True):
         """Add the member to the association
@@ -452,12 +461,6 @@ class Association(MutableMapping):
 
     def values(self):
         return self.data.values()
-
-
-# #########################
-# Read in basic IO routines
-# #########################
-from . import association_io
 
 
 # #########

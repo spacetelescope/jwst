@@ -6,6 +6,7 @@ try:
     from collections import UserDict
 except ImportError:
     from UserDict import IterableUserDict
+
     class UserDict(IterableUserDict, object):
         pass
 
@@ -180,6 +181,7 @@ def test_fn():
     kvr = KeyValueRegistry(default=fn)
     assert kvr[fn.__name__] == fn
     assert kvr[None] == fn
+
 
 def test_decorator():
     kvr = KeyValueRegistry()

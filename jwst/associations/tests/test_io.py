@@ -12,7 +12,7 @@ from .helpers import (
 )
 
 from ..main import Main
-from .. import Association
+from .. import load_asn
 
 
 @pytest.yield_fixture(
@@ -39,9 +39,7 @@ def test_roundtrip(make_asns):
 
     for asn_file in asn_files:
         with open(asn_file, 'r') as asn_fp:
-            asn = Association.load(asn_fp)
-        valid_schemas = generated.rules.validate(asn)
-        assert isinstance(valid_schemas, list)
+            asn = load_asn(asn_fp)
 
     orphaned_files = glob(os.path.join(path, '*.csv'))
     assert len(orphaned_files) == 1
@@ -51,3 +49,14 @@ def test_roundtrip(make_asns):
         delimiter='|'
     )
     assert len(orphaned) == len(generated.orphaned)
+
+
+def test_load_asn_all(make_asns):
+    generated, path, asn_format = make_asns
+    asn_files = glob(os.path.join(path, '*.' + asn_format))
+    assert len(asn_files) == len(generated.associations)
+
+    for asn_file in asn_files:
+        with open(asn_file, 'r') as asn_fp:
+            asns = load_asn(asn_fp, registry=generated.rules, first=False)
+        assert len(asns) == len(generated.rules) - 2

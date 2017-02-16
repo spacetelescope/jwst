@@ -175,10 +175,21 @@ class AssociationRegistry(dict):
         AssociationNotValidError
             Association did not validate
         """
+
+        # Change rule validation from an exception
+        # to a boolean
+        def is_valid(rule, association):
+            try:
+                rule.validate(association)
+            except AssociationNotValidError:
+                return False
+            else:
+                return True
+
         results = [
             rule
             for rule_name, rule in self.items()
-            if rule.validate(association)
+            if is_valid(rule, association)
         ]
 
         if len(results) == 0:
@@ -186,6 +197,65 @@ class AssociationRegistry(dict):
                 'Structure did not validate: "{}"'.format(association)
             )
         return results
+
+    def load(
+            self,
+            serialized,
+            format=None,
+            validate=True,
+            first=True,
+            **kwargs
+    ):
+        """Marshall a previously serialized association
+
+        Parameters
+        ----------
+        serialized: object
+            The serialized form of the association.
+
+        format: str or None
+            The format to force. If None, try all available.
+
+        validate: bool
+            Validate against the class' defined schema, if any.
+
+        first: bool
+            A serialization potentially matches many rules.
+            Only return the first succesful load.
+
+        kwargs: dict
+            Other arguments to pass to the `load` method
+
+        Returns
+        -------
+        The Association object, or the list of association objects.
+
+        Raises
+        ------
+        AssociationError
+            Cannot create or validate the association.
+        """
+        results = []
+        for rule_name, rule in self.items():
+            try:
+                results.append(
+                    rule.load(
+                        serialized,
+                        format=format,
+                        validate=validate,
+                        **kwargs
+                    )
+                )
+            except AssociationError as err:
+                lasterr = err
+            if first:
+                break
+        if len(results) == 0:
+            raise lasterr
+        if first:
+            return results[0]
+        else:
+            return results
 
 
 # Utilities

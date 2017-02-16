@@ -12,7 +12,10 @@ from jwst.associations.association import (
     evaluate,
     is_iterable
 )
-from jwst.associations.exceptions import AssociationNotAConstraint
+from jwst.associations.exceptions import (
+    AssociationNotAConstraint,
+    AssociationNotValidError,
+)
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.counter import Counter
 
@@ -34,12 +37,7 @@ __all__ = [
 
 # Configure logging
 logger = logging.getLogger(__name__)
-#logger.addHandler(logging.NullHandler())
-logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler()
-handler.setLevel(logging.DEBUG)
-logger.addHandler(handler)
-logger.debug('Loading level3 base')
+logger.addHandler(logging.NullHandler())
 
 # Start of the discovered association ids.
 _DISCOVERED_ID_START = 3001
@@ -126,22 +124,23 @@ class DMS_Level3_Base(Association):
 
     @classmethod
     def validate(cls, asn):
-        if not super(DMS_Level3_Base, cls).validate(asn):
-            return False
+        super(DMS_Level3_Base, cls).validate(asn)
 
-        result = True
         if isinstance(asn, DMS_Level3_Base):
+            result = False
             try:
                 result = all(
                     test['validated']
                     for test in asn.validity.values()
                 )
-            except (AttributeError, KeyError) as err:
-                logger.debug('Validation failed: "{}"'.format(err))
-                result = False
+            except (AttributeError, KeyError):
+                raise AssociationNotValidError('Validation failed')
             if not result:
-                logger.debug('Validation failed validity tests.')
-        return result
+                raise AssociationNotValidError(
+                    'Validation failed validity tests.'
+                )
+
+        return True
 
     @property
     def acid(self):
@@ -723,10 +722,8 @@ class AsnMixin_CrossCandidate(DMS_Level3_Base):
 
     @classmethod
     def validate(cls, asn):
-        if not super(AsnMixin_CrossCandidate, cls).validate(asn):
-            return False
+        super(AsnMixin_CrossCandidate, cls).validate(asn)
 
-        result = True
         if isinstance(asn, DMS_Level3_Base):
             try:
                 candidates = set(
@@ -735,9 +732,9 @@ class AsnMixin_CrossCandidate(DMS_Level3_Base):
                     for member in product['members']
                 )
             except (AttributeError, KeyError) as err:
-                logger.debug('Validation failed: "{}"'.format(err))
-                result = False
-            result = len(candidates) > 1
-            if not result:
-                logger.debug('Validation failed: No candidates found.')
-        return result
+                raise AssociationNotValidError('Validation failed')
+            if not len(candidates) > 1:
+                raise AssociationNotValidError(
+                    'Validation failed: No candidates found.'
+                )
+        return True
