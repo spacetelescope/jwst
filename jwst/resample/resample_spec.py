@@ -96,7 +96,7 @@ class ResampleSpecData(object):
             raise NotImplementedError('Only NIRSPEC and MIRI are supported.')
         self.build_size_from_domain()
         self.blank_output = datamodels.DrizProductModel(self.data_size)
-        self.blank_output.assign_wcs(self.output_wcs)
+        self.blank_output.wcs = self.output_wcs
 
         # Default to defining output models metadata as
         # a copy of the first input_model's metadata
