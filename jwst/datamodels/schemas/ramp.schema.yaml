@@ -1,5 +1,6 @@
 allOf:
 - $ref: core.schema.yaml
+- $ref: bunit.schema.yaml
 - type: object
   properties:
     data:

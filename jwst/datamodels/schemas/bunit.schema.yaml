@@ -1,0 +1,17 @@
+allOf:
+- type: object
+  properties:
+    meta:
+      type: object
+      properties:
+        bunit_data:
+          title: physical units of the array values
+          type: string
+          fits_hdu: SCI
+          fits_keyword: BUNIT
+        bunit_err:
+          title: physical units of the array values
+          type: string
+          fits_hdu: ERR
+          fits_keyword: BUNIT
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema
