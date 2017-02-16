@@ -3,7 +3,6 @@ description: |
   Base schema for JWST data files.
 allOf:
 - $ref: core.schema.yaml
-#- $ref: exposure.schema.yaml
 - type: object
   properties:
     meta:
