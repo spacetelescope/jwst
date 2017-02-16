@@ -208,6 +208,9 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     #   gain array in case optimal weighting is to be done
     readnoise_2d, gain_2d = utils.get_ref_subs(model, readnoise_model, 
                             gain_model)
+    
+    # Flag any bad pixels in the gain
+    pixeldq = utils.reset_bad_gain( pixeldq, gain_2d )
 
     if save_opt:
         # get max number of segments fit in all integrations
@@ -449,40 +452,13 @@ def gls_ramp_fit(model,
     # calculate number of (contiguous) rows per data section
     nrows = calc_nrows(model, buffsize, cubeshape, nreads)
 
-    # These parameters will be compared with both the readnoise and
-    # gain models.
-    xstart = model.meta.subarray.xstart
-    xsize = model.meta.subarray.xsize
-    ystart = model.meta.subarray.ystart
-    ysize = model.meta.subarray.ysize
+    # Get readnoise array for calculation of variance of noiseless ramps, and
+    #   gain array in case optimal weighting is to be done
+    readnoise_2d, gain_2d = utils.get_ref_subs(model, readnoise_model,
+                            gain_model)
 
-    # Get readnoise array.
-    if (readnoise_model.meta.subarray.xstart == xstart and
-        readnoise_model.meta.subarray.xsize == xsize and
-        readnoise_model.meta.subarray.ystart == ystart and
-        readnoise_model.meta.subarray.ysize == ysize):
-
-        log.debug('Readnoise subarray matches science data')
-        readnoise_2d = readnoise_model.data
-    else:
-        log.debug('Extracting readnoise subarray to match science data')
-        xstop = xstart + xsize - 1
-        ystop = ystart + ysize - 1
-        readnoise_2d = readnoise_model.data[ystart - 1:ystop, xstart - 1:xstop]
-
-    # Get gain array.
-    if (gain_model.meta.subarray.xstart == xstart and
-        gain_model.meta.subarray.xsize == xsize and
-        gain_model.meta.subarray.ystart == ystart and
-        gain_model.meta.subarray.ysize == ysize):
-
-        log.debug('Gain subarray matches science data')
-        gain_2d = gain_model.data
-    else:
-        log.debug('Extracting gain subarray to match science data')
-        xstop = xstart + xsize - 1
-        ystop = ystart + ysize - 1
-        gain_2d = gain_model.data[ystart - 1:ystop, xstart - 1:xstop]
+    # Flag any bad pixels in the gain
+    pixeldq = utils.reset_bad_gain( pixeldq, gain_2d )
 
     # loop over data integrations
     for num_int in range(n_int):
@@ -1194,7 +1170,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
                 # Append results to arrays
                 opt_res.append_arr(num_seg, g_pix, intercept, slope,\
                                 sig_intercept, sig_slope, inv_var)
-
+                
             num_seg[g_pix] += 1
 
     # CASE F) - full-length ramp has 2 good reads not at array end, followed 
@@ -1316,7 +1292,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
     # CASE J) - Update arrays for all semiramps that are not covered by the
     #    previous cases. This includes semiramps that are a (bad) single read
-    #    (either saturated or flagged as a cosmic ra)..
+    #    (either saturated or flagged as a cosmic ray)
     #    - increment start
     #    - remove current end from end stack
     wh_check = np.asarray( np.where( ~pixel_done & ~got_case ))
@@ -1623,7 +1599,6 @@ def fit_double_group(mask_2d, data_masked, slope_s, intercept_s, \
 
     sig_intercept_s: float, 1D array
         sigma of y-intercepts from fit for data section
-
     """
     wh_2grp = np.where((mask_2d[:, :].sum(axis=0) == 2)) 
 
@@ -1702,7 +1677,7 @@ def calc_unwtd_fit(xvalues, nreads_1d, sumxx, sumx, sumxy, sumy):
 
     return slope, intercept, sig_slope, sig_intercept, line_fit
 
-
+  
 def calc_opt_fit(nreads_wtd, sumxx, sumx, sumxy, sumy):
     """
     Extended Summary

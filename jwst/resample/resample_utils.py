@@ -1,4 +1,4 @@
-from __future__ import (division, print_function, unicode_literals, 
+from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
 import logging
@@ -8,8 +8,9 @@ from scipy import interpolate
 
 from astropy.utils.misc import isiterable
 from astropy import wcs as fitswcs
+from astropy.coordinates import SkyCoord
 from astropy.modeling.models import (Shift, Scale, Mapping, Rotation2D,
-    Pix2Sky_TAN, RotateNative2Celestial, Tabular1D)
+    Pix2Sky_TAN, RotateNative2Celestial, Tabular1D, AffineTransformation2D)
 from gwcs import WCS, utils, wcstools
 
 
@@ -40,7 +41,7 @@ def make_output_wcs(input_models):
 
     # The API needing input_models instead of just wcslist is because
     # currently the domain is not defined in any of imaging modes for NIRCam
-    # or NIRISS
+    # NIRISS or MIRI
     #
     # TODO: change the API to take wcslist instead of input_models and
     #       remove the following block
@@ -55,10 +56,46 @@ def make_output_wcs(input_models):
         output_wcs = wcs_from_spec_footprints(wcslist)
         data_size = build_size_from_spec_domain(output_wcs.domain)
     else:
-        output_wcs = assign_wcs.util.wcs_from_footprints(wcslist)
+        output_wcs = assign_wcs.util.wcs_from_footprints(input_models)
         data_size = build_size_from_domain(output_wcs.domain)
     output_wcs.data_size = (data_size[1], data_size[0])
     return output_wcs
+
+
+def compute_output_transform(refwcs, filename, fiducial):
+    """Compute a simple FITS-type WCS transform
+    """
+    x0, y0 = refwcs.backward_transform(*fiducial)
+    print(x0, y0)
+    x1 = x0 + 1
+    y1 = y0 + 1
+    ra0, dec0 = refwcs(x0, y0)
+    ra_xdir, dec_xdir = refwcs(x1, y0)
+    ra_ydir, dec_ydir = refwcs(x0, y1)
+
+    position0 = SkyCoord(ra=ra0, dec=dec0, unit='deg')
+    position_xdir = SkyCoord(ra=ra_xdir, dec=dec_xdir, unit='deg')
+    position_ydir = SkyCoord(ra=ra_ydir, dec=dec_ydir, unit='deg')
+    offset_xdir = position0.spherical_offsets_to(position_xdir)
+    offset_ydir = position0.spherical_offsets_to(position_ydir)
+    print('x offset:', offset_xdir)
+    print('y offset:', offset_ydir)
+    #coeff_x = np.mean([np.abs(offset_x[1].value), np.abs(offset_y[0].value)])
+    #coeff_y = np.mean([np.abs(offset_x[0].value), np.abs(offset_y[1].value)])
+
+    xscale = np.abs(position0.separation(position_xdir).value)
+    yscale = np.abs(position0.separation(position_ydir).value)
+    scale = np.mean([xscale, yscale])
+
+    c00 = offset_xdir[0].value - scale
+    c01 = offset_xdir[1].value - scale
+    c10 = offset_ydir[0].value - scale
+    c11 = offset_ydir[1].value - scale
+    pc_matrix = AffineTransformation2D(matrix=[[c00, c01], [c10, c11]])
+    cdelt = Scale(scale) & Scale(scale)
+
+    return pc_matrix | cdelt
+
 
 def create_domain(wcs, shape):
     """ Create domain for WCS based on shape of model data.
@@ -71,6 +108,7 @@ def create_domain(wcs, shape):
         wcs_domain.append(domain)
     return wcs_domain
 
+
 def build_size_from_domain(domain):
     """ Return the size of the frame based on the provided domain
     """
@@ -81,6 +119,7 @@ def build_size_from_domain(domain):
         size.append(int(delta + 0.5))
     return tuple(reversed(size))
 
+
 def build_size_from_spec_domain(domain):
     """ Return the size of the frame based on the provided domain
     """
@@ -90,6 +129,7 @@ def build_size_from_spec_domain(domain):
         #for i in [axs['includes_lower'], axs['includes_upper']]: delta += 1
         size.append(int(delta + 0.5))
     return tuple(size)
+
 
 def calc_gwcs_pixmap(in_wcs, out_wcs):
     """ Return a pixel grid map from input frame to output frame.
@@ -170,7 +210,7 @@ def spec_domain(inwcs, domain=None):
 
     Returns
     -------
-    Boolean mask where pixels in the input that produced NaNs in the output 
+    Boolean mask where pixels in the input that produced NaNs in the output
     are set to True.  Valid wcs transform pixels are set to False.
     """
     if not domain:
@@ -240,7 +280,7 @@ def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None, domain=None):
     else:
         if not isinstance(refwcs, WCS):
             raise TypeError("Expected refwcs to be an instance of gwcs.WCS.")
-    
+
     # TODO: generalize an approach to do this for more than one wcs.  For
     # now, we just do it for one, using the api for a list of wcs.
     # Compute a fiducial point for the output frame at center of input data
@@ -285,7 +325,7 @@ def compute_spec_transform(fiducial, refwcs):
     cdelt3 = refwcs.wcsinfo.cdelt3
     roll_ref = refwcs.wcsinfo.roll_ref
 
-    y, x = grid_from_spec_domain(refwcs)       
+    y, x = grid_from_spec_domain(refwcs)
     ra, dec, lam = refwcs(x, y)
 
     min_lam = np.nanmin(lam)
@@ -333,8 +373,6 @@ def compute_spec_fiducial(wcslist, domain=None):
         lat_fiducial = np.rad2deg(np.arctan2(z_mean, np.sqrt(x_mean ** 2 +
             y_mean ** 2)))
         fiducial[spatial_axes] = lon_fiducial, lat_fiducial
-    #    c = coord.SkyCoord(lon_fiducial, lat_fiducial, unit='deg')
     if (spectral_footprint).any():
         fiducial[spectral_axes] = spectral_footprint.min()
     return ((fiducial[spatial_axes]), fiducial[spectral_axes])
-    #return (c, spectral_footprint.min())

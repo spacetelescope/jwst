@@ -5,7 +5,6 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 import datetime
 import os
 import re
-import warnings
 
 import numpy as np
 
@@ -28,6 +27,11 @@ from jsonschema import validators
 from . import properties
 from . import schema as mschema
 from . import util
+
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 
 __all__ = ['to_fits', 'from_fits', 'fits_hdu_name', 'get_hdu']
@@ -498,7 +502,7 @@ def _load_from_schema(hdulist, schema, tree, validate=True,
                         raise
                     else:
                         msgfmt = "'{0}' is not valid in keyword '{1}'"
-                        warnings.warn(msgfmt.format(result, fits_keyword))
+                        log.warning(msgfmt.format(result, fits_keyword))
                         if pass_invalid_values:
                             properties.put_value(path, result, tree)
                 else:

@@ -47,11 +47,11 @@ class OptRes(object):
             number of reads in an integration
         """
 
-        self.yint_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
-        self.slope_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
-        self.sigyint_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
-        self.sigslope_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
-        self.inv_var_seg = np.zeros((n_int,) + (max_seg,) + imshape, dtype=np.float32)
+        self.yint_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+        self.slope_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+        self.sigyint_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+        self.sigslope_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+        self.inv_var_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
         self.firstf_int = np.zeros((n_int,) + imshape, dtype=np.float32)
         self.ped_int = np.zeros((n_int,) + imshape, dtype=np.float32)
         self.cr_mag_seg = np.zeros((n_int,) + (nreads,) + imshape, dtype=np.int16)
@@ -435,6 +435,7 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_cube):
 
     return ped
 
+
 def output_integ(model, slope_int, err_int, dq_int, effintim):
 
     """
@@ -464,9 +465,7 @@ def output_integ(model, slope_int, err_int, dq_int, effintim):
     cubemod: Data Model object
 
     """
-
     cubemod = datamodels.CubeModel()
-
     cubemod.data = slope_int / effintim
     cubemod.err = err_int / effintim
     cubemod.dq = dq_int
@@ -651,7 +650,6 @@ def get_effintim(model):
     return effintim
 
 
-
 def get_dataset_info(model):
     """
     Short Summary
@@ -769,6 +767,41 @@ def get_max_num_cr(gdq_cube, jump_flag):
     return max_num_cr
 
 
+def reset_bad_gain(pdq, gain):
+    """
+    Short Summary
+    -------------
+    For pixels in the gain array that are either non-positive or NaN, reset the
+    the corresponding pixels in the pixel DQ array to NO_GAIN_VALUE and
+    DO_NOT_USE so that they will be ignored.
+
+    Parameters
+    ----------
+    pdq: int, 2D array
+        pixel dq array of input model
+
+    gain: float32, 2D array
+        grain array from reference file
+
+    Returns
+    -------
+    pdq: int, 2D array
+        pixleldq array of input model, reset to NO_GAIN_VALUE and DO_NOT_USE for
+        pixels in the gain array that are either non-positive or NaN.
+    """
+    wh_g = np.where( gain <= 0.)
+    if len(wh_g[0] > 0):
+        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
+        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
+
+    wh_g = np.where( np.isnan( gain ))
+    if len(wh_g[0] > 0):
+        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
+        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] )
+
+    return pdq
+
+
 def get_ref_subs(model, readnoise_model, gain_model):
     """
     Short Summary
@@ -789,7 +822,7 @@ def get_ref_subs(model, readnoise_model, gain_model):
 
     Returns
     -------
-    readnoise_2d: float, 2D array
+    readnoise_2d: float, 2D array; multiplied by gain
         readnoise subarray
 
     gain_2d: float, 2D array
@@ -825,5 +858,7 @@ def get_ref_subs(model, readnoise_model, gain_model):
         xstop = xstart + xsize - 1
         ystop = ystart + ysize - 1
         gain_2d = gain_model.data[ystart - 1:ystop, xstart - 1:xstop]
+
+    readnoise_2d *= gain_2d # convert read noise to correct units
 
     return readnoise_2d, gain_2d

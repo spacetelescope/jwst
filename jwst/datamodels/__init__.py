@@ -74,7 +74,7 @@ from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
 from .quad import QuadModel
 from .ramp import RampModel
 from .rampfitoutput import RampFitOutputModel
-from .reference import ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel 
+from .reference import ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel
 from .readnoise import ReadnoiseModel
 from .reset import ResetModel
 from .rscd import RSCDModel
@@ -88,9 +88,12 @@ from .util import open
 
 __all__ = [
     'open',
+    'CombinedSpecModel',
     'DataModel', 'AmiLgModel', 'AsnModel', 'ContrastModel',
     'CubeModel', 'CubeFlatModel', 'DarkModel', 'DarkMIRIModel', 'DrizParsModel',
     'NircamDrizParsModel', 'MiriImgDrizParsModel',
+    'MiriImgOutlierParsModel', 'NircamOutlierParsModel', 'OutlierParsModel',
+    'PathlossModel', 'PixelAreaModel',
     'DrizProductModel', 'FgsPhotomModel', 'FilterModel',
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'LinearityModel',
@@ -100,10 +103,10 @@ __all__ = [
     'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
     'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'QuadModel', 'RampModel',
-    'RampFitOutputModel', 'ReadnoiseModel', 'ReferenceCubeModel', 
-    'ReferenceFileModel','ReferenceImageModel', 'ReferenceQuadModel', 
+    'RampFitOutputModel', 'ReadnoiseModel', 'ReferenceCubeModel',
+    'ReferenceFileModel', 'ReferenceImageModel', 'ReferenceQuadModel',
     'ResetModel', 'RSCDModel', 'SaturationModel', 'SpecModel',
-    'StrayLightModel']
+    'StrayLightModel', 'SuperBiasModel']
 
 _all_models = __all__[1:]
 _local_dict = dict(locals())

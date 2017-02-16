@@ -4,10 +4,7 @@
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 import copy
-import warnings
-
 import numpy as np
-
 import jsonschema
 
 from astropy.extern import six
@@ -20,6 +17,10 @@ from asdf import tagged
 
 from . import util
 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 __all__ = ['ObjectNode', 'ListNode']
 
@@ -213,7 +214,7 @@ class ObjectNode(Node):
             except jsonschema.ValidationError:
                 # Revert the transaction
                 msgfmt = "'{0}' is not valid to write to '{1}'"
-                warnings.warn(msgfmt.format(val, attr))
+                log.warning(msgfmt.format(val, attr))
                 self._ctx._has_invalid_values = False
                 if old_val is None:
                     del self._instance[attr]
