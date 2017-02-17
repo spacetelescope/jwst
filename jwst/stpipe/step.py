@@ -447,13 +447,13 @@ class Step(object):
     @classmethod
     def _is_association_file(cls, input_file):
         """Return True IFF `input_file` is an association file."""
-        from ..associations import Association
+        from ..associations import load_asn
         from .. import datamodels
         if isinstance(input_file, datamodels.ModelContainer):
             return True
         try:
             with open(input_file, 'r') as input_file_fh:
-                asn = Association.load(input_file_fh)
+                asn = load_asn(input_file_fh)
         except:
             return False
         return True

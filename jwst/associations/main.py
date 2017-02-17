@@ -5,10 +5,12 @@ import sys
 import argparse
 import logging
 
-from jwst.associations import __version__
-from jwst.associations.association import AssociationRegistry
-from jwst.associations.generate import generate
-from jwst.associations.pool import AssociationPool
+from jwst.associations import (
+    __version__,
+    AssociationPool,
+    AssociationRegistry,
+    generate,
+)
 from jwst.associations.lib.log_config import (log_config, DMS_config)
 
 # Configure logging
@@ -281,7 +283,7 @@ class Main(object):
             If true, save the orphans to an astropy.table.Table
         """
         for asn in self.associations:
-            (fname, serialized) = asn.dump(protocol=format)
+            (fname, serialized) = asn.dump(format=format)
             with open(os.path.join(path, fname + '.' + format), 'w') as f:
                 f.write(serialized)
 

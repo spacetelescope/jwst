@@ -5,8 +5,6 @@ from inspect import (
     isclass,
     ismodule
 )
-import json
-import jsonschema
 import logging
 from os.path import (
     basename,
@@ -164,35 +162,102 @@ class AssociationRegistry(dict):
 
         Parameters
         ----------
-        association: dict
+        association: association-like
             The data to validate
 
         Returns
         -------
-        schemas: list
-            List of schemas which validated
+        rules: list
+            List of rules that validated
 
         Raises
         ------
         AssociationNotValidError
             Association did not validate
         """
-        results = []
-        for schema_file in self.schemas:
-            with open(schema_file, 'r') as handle:
-                schema = json.load(handle)
+
+        # Change rule validation from an exception
+        # to a boolean
+        def is_valid(rule, association):
             try:
-                jsonschema.validate(association, schema)
-            except jsonschema.ValidationError:
-                continue
+                rule.validate(association)
+            except AssociationNotValidError:
+                return False
             else:
-                results.append(schema)
+                return True
+
+        results = [
+            rule
+            for rule_name, rule in self.items()
+            if is_valid(rule, association)
+        ]
 
         if len(results) == 0:
             raise AssociationNotValidError(
                 'Structure did not validate: "{}"'.format(association)
             )
         return results
+
+    def load(
+            self,
+            serialized,
+            format=None,
+            validate=True,
+            first=True,
+            **kwargs
+    ):
+        """Marshall a previously serialized association
+
+        Parameters
+        ----------
+        serialized: object
+            The serialized form of the association.
+
+        format: str or None
+            The format to force. If None, try all available.
+
+        validate: bool
+            Validate against the class' defined schema, if any.
+
+        first: bool
+            A serialization potentially matches many rules.
+            Only return the first succesful load.
+
+        kwargs: dict
+            Other arguments to pass to the `load` method
+
+        Returns
+        -------
+        The Association object, or the list of association objects.
+
+        Raises
+        ------
+        AssociationError
+            Cannot create or validate the association.
+        """
+        results = []
+        for rule_name, rule in self.items():
+            try:
+                results.append(
+                    rule.load(
+                        serialized,
+                        format=format,
+                        validate=validate,
+                        **kwargs
+                    )
+                )
+            except AssociationError as err:
+                lasterr = err
+                continue
+            if first:
+                break
+        if len(results) == 0:
+            logger.error('Data did not validate against any rule.')
+            raise lasterr
+        if first:
+            return results[0]
+        else:
+            return results
 
 
 # Utilities

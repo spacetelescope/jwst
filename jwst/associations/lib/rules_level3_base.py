@@ -12,7 +12,10 @@ from jwst.associations.association import (
     evaluate,
     is_iterable
 )
-from jwst.associations.exceptions import AssociationNotAConstraint
+from jwst.associations.exceptions import (
+    AssociationNotAConstraint,
+    AssociationNotValidError,
+)
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.counter import Counter
 
@@ -86,6 +89,9 @@ _EXPTYPE_MAP = {
 class DMS_Level3_Base(Association):
     """Basic class for DMS Level3 associations."""
 
+    # Set the validation schema
+    schema_file = ASN_SCHEMA
+
     # Attribute values that are indicate the
     # attribute is not specified.
     INVALID_VALUES = _EMPTY
@@ -100,9 +106,6 @@ class DMS_Level3_Base(Association):
 
         # Initialize discovered association ID
         self.discovered_id = Counter(_DISCOVERED_ID_START)
-
-        # Set the validation schema
-        self.schema_file = ASN_SCHEMA
 
         # Initialize validity checks
         self.validity = {
@@ -119,9 +122,25 @@ class DMS_Level3_Base(Association):
         if 'degraded_status' not in self.data:
             self.data['degraded_status'] = _DEGRADED_STATUS_OK
 
-    @property
-    def is_valid(self):
-        return all(test['validated'] for test in self.validity.values())
+    @classmethod
+    def validate(cls, asn):
+        super(DMS_Level3_Base, cls).validate(asn)
+
+        if isinstance(asn, DMS_Level3_Base):
+            result = False
+            try:
+                result = all(
+                    test['validated']
+                    for test in asn.validity.values()
+                )
+            except (AttributeError, KeyError):
+                raise AssociationNotValidError('Validation failed')
+            if not result:
+                raise AssociationNotValidError(
+                    'Validation failed validity tests.'
+                )
+
+        return True
 
     @property
     def acid(self):
@@ -348,7 +367,7 @@ class DMS_Level3_Base(Association):
         return exposure
 
     def __repr__(self):
-        file_name, json_repr = self.to_json()
+        file_name, json_repr = self.ioregistry['json'].dump(self)
         return json_repr
 
     def __str__(self):
@@ -701,10 +720,21 @@ class AsnMixin_Spectrum(DMS_Level3_Base):
 class AsnMixin_CrossCandidate(DMS_Level3_Base):
     """Basic constraints for Cross-Candidate associations"""
 
-    def is_valid(self):
-        candidates = set(
-            member['asn_candidate_id']
-            for product in self.data['products']
-            for member in product['members']
-        )
-        return len(candidates) > 1
+    @classmethod
+    def validate(cls, asn):
+        super(AsnMixin_CrossCandidate, cls).validate(asn)
+
+        if isinstance(asn, DMS_Level3_Base):
+            try:
+                candidates = set(
+                    member['asn_candidate_id']
+                    for product in asn.data['products']
+                    for member in product['members']
+                )
+            except (AttributeError, KeyError) as err:
+                raise AssociationNotValidError('Validation failed')
+            if not len(candidates) > 1:
+                raise AssociationNotValidError(
+                    'Validation failed: No candidates found.'
+                )
+        return True

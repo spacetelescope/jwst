@@ -23,7 +23,10 @@ _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 
 
 class DMS_Level2b_Base(Association):
-    """Basic class for DMS Level3 associations."""
+    """Basic class for DMS Level2 associations."""
+
+    # Set the validation schema
+    schema_file = ASN_SCHEMA
 
     def __init__(self, *args, **kwargs):
 
@@ -77,7 +80,6 @@ class DMS_Level2b_Base(Association):
 
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
-        self.schema_file = ASN_SCHEMA
         self.data['target'] = member['TARGETID']
         self.data['program'] = str(member['PROGRAM'])
         self.data['asn_pool'] = basename(member.meta['pool_file']).split('.')[0]

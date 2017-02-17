@@ -9,8 +9,6 @@ import numpy as np
 from astropy.extern import six
 from astropy.io import fits
 
-from jwst.associations import AssociationError
-
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -57,7 +55,7 @@ def open(init=None, extensions=None, **kwargs):
     from . import filetype
 
     # Initialize variables used to select model class
-    
+
     hdulist = {}
     shape = ()
 

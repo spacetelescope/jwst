@@ -63,12 +63,12 @@ routine. For example::
   % strun calwebb_image3.cfg  jw12345_xxxx_asn.json
 
 Programmatically, to read in an Association, one uses the
-:meth:`~jwst.associations.association.Association.load` method::
+:func:`~jwst.associations.load_asn.load_asn` function::
 
-   from jwst.associations import Association
+   from jwst.associations import load_asn
 
    with open('jw12345_xxxx_asn.json') as fp:
-       asn = Association.load(fp)
+       asn = load_asn(fp)
 
 What exactly is returned depends on what the association is. However,
 for all Level2 and Level3 associations, a Python `dict` is returned,

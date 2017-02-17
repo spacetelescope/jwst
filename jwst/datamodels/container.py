@@ -8,7 +8,9 @@ from collections import OrderedDict
 from asdf import AsdfFile
 from astropy.extern import six
 
-from ..associations import Association, AssociationError
+from ..associations import (
+    AssociationError,
+    AssociationNotValidError, load_asn)
 from . import model_base
 from .util import open as datamodel_open
 
@@ -74,7 +76,6 @@ class ModelContainer(model_base.DataModel):
                             'an ASN file'.format(init))
 
         self.assign_group_ids()
-
 
     def __len__(self):
         return len(self._models)
@@ -180,8 +181,8 @@ class ModelContainer(model_base.DataModel):
         basedir = op.dirname(filepath)
         try:
             with open(filepath) as asn_file:
-                asn_data = Association.load(asn_file)
-        except IOError:
+                asn_data = load_asn(asn_file)
+        except AssociationNotValidError:
             raise IOError("Cannot read ASN file.")
 
         # make a list of all the input FITS files
