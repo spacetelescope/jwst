@@ -248,9 +248,11 @@ class AssociationRegistry(dict):
                 )
             except AssociationError as err:
                 lasterr = err
+                continue
             if first:
                 break
         if len(results) == 0:
+            logger.error('Data did not validate against any rule.')
             raise lasterr
         if first:
             return results[0]

@@ -277,10 +277,8 @@ class Association(MutableMapping):
             )
 
         # Validate
-        if validate and not cls.validate(asn):
-            raise AssociationNotValidError(
-                'Given structure is not a valid association.'
-            )
+        if validate:
+            cls.validate(asn)
 
         return asn
 
