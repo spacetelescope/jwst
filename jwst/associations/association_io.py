@@ -19,6 +19,7 @@ __all__ = []
 
 @Association.ioregistry
 class json(object):
+    """Load and store associations as JSON"""
 
     @staticmethod
     def load(cls, serialized):
