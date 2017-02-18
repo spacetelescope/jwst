@@ -252,7 +252,7 @@ class AssociationRegistry(dict):
             if first:
                 break
         if len(results) == 0:
-            logger.error('Data did not validate against any rule.')
+            logger.debug('Data did not validate against any rule.')
             raise lasterr
         if first:
             return results[0]
