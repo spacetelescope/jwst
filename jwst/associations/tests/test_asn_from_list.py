@@ -6,13 +6,22 @@ from .. import (Association, load_asn)
 from ..asn_from_list import asn_from_list
 
 
-@pytest.mark.xfail
 def test_base_association():
     items = ['a', 'b', 'c']
     asn = asn_from_list(items, rule=Association)
-    assert asn['asn_rule'] == 'Assocation'
+    assert asn['asn_rule'] == 'Association'
     assert asn['asn_type'] == 'None'
     assert asn['members'] == items
+
+
+def test_base_roundtrip():
+    items = ['a', 'b', 'c']
+    asn = asn_from_list(items, rule=Association)
+    name, serialized = asn.dump()
+    reloaded = load_asn(serialized, registry=None)
+    assert asn['asn_rule'] == reloaded['asn_rule']
+    assert asn['asn_type'] == reloaded['asn_type']
+    assert asn['members'] == reloaded['members']
 
 
 def test_default_simple():

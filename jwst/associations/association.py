@@ -430,6 +430,25 @@ class Association(MutableMapping):
             'Association._add must be implemented by a specific assocation rule.'
         )
 
+    def _add_items(self, items, **kwargs):
+        """ Force adding items to the association
+
+        Parameters
+        ----------
+        items: [object[, ...]]
+            A list of items to make members of the association.
+
+        Notes
+        -----
+        This is a low-level shortcut into adding members, such as file names,
+        to an association. All defined shortcuts and other initializations are
+        by-passed, resulting in a potentially unusable association.
+        """
+        try:
+            self['members'].update(items)
+        except KeyError:
+            self['members'] = items
+
     # #################################################
     # Methods required for implementing MutableMapping
     # #################################################

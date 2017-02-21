@@ -1,5 +1,10 @@
 """Load an Association from a file or object"""
-from . import AssociationRegistry
+from inspect import isclass
+
+from . import (
+    Association,
+    AssociationRegistry
+)
 
 
 def load_asn(
@@ -7,7 +12,7 @@ def load_asn(
         format=None,
         first=True,
         validate=True,
-        registry=None,
+        registry=AssociationRegistry,
         **kwargs
 ):
     """Load an Association from a file or object
@@ -29,7 +34,8 @@ def load_asn(
 
     registry: AssociationRegistry or None
         The `AssociationRegistry` to use.
-        If None, the default registry is used.
+        If None, no registry is used.
+        Can be passed just a registry class instead of instance.
 
     kwargs: dict
         Other arguments to pass to the `load` methods defined
@@ -50,9 +56,15 @@ def load_asn(
     supported by the registered I/O routines. For example, for
     `json` and `yaml` formats, the input can be either a string or
     a file object containing the string.
+
+    If no registry is specified, the default `Association.load`
+    method is used.
     """
     if registry is None:
-        registry = AssociationRegistry()
+        return Association.load(serialized, format=format, validate=validate)
+
+    if isclass(registry):
+        registry = registry()
     return registry.load(
         serialized,
         format=format,
