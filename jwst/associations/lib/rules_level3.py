@@ -288,7 +288,7 @@ class Asn_MIRI_IFU(
         # Check and continue initialization.
         super(Asn_MIRI_IFU, self).__init__(*args, **kwargs)
 
-    def product_name(self):
+    def dms_product_name(self):
         """Define product name."""
         target = self._get_target()
 

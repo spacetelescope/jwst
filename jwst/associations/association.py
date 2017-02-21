@@ -54,7 +54,7 @@ class Association(MutableMapping):
         The instance is the association data structure.
         See `data` below
 
-    mgeta: dict
+    meta: dict
         Information about the association.
 
     data: dict
