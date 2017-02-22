@@ -316,9 +316,9 @@ class DataSet(object):
 
             # Reset conversion and pixel size values with DQ=NON_SCIENCE to 1,
             # so no conversion is applied
-            where_bad = np.where(ftab.dq == dqflags.pixel['NON_SCIENCE'])
-            ftab.data[where_bad] = 1.0
-            ftab.pixsiz[where_bad] = 1.0
+            where_dq = np.bitwise_and(ftab.dq, dqflags.pixel['NON_SCIENCE'])
+            ftab.data[where_dq > 0] = 1.0
+            ftab.pixsiz[where_dq > 0] = 1.0
 
             # Reset NaN's in conversion array to 1
             where_nan = np.isnan(ftab.data)
