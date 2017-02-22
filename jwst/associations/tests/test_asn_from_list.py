@@ -2,7 +2,7 @@
 
 import pytest
 
-from .. import (Association, load_asn)
+from .. import (Association, AssociationRegistry, load_asn)
 from ..asn_from_list import (Main, asn_from_list)
 
 
@@ -100,7 +100,7 @@ def test_cmdline_fails():
 
     # Only the association file argument
     with pytest.raises(SystemExit):
-        Main(['-a', 'test_asn.json'])
+        Main(['-o', 'test_asn.json'])
 
 
 @pytest.mark.parametrize(
@@ -112,7 +112,7 @@ def test_cmdline_success(format, tmpdir):
     product_name = 'test_product'
     inlist = ['a', 'b', 'c']
     args = [
-        '-a', path.strpath,
+        '-o', path.strpath,
         '--product-name', product_name,
         '--format', format
     ]
@@ -128,3 +128,19 @@ def test_cmdline_success(format, tmpdir):
         for member in members
     ]
     assert inlist == expnames
+
+
+def test_cmdline_change_rules(tmpdir):
+    rule = 'Association'
+    path = tmpdir.join('test_asn.json')
+    inlist = ['a', 'b', 'c']
+    args = [
+        '-o', path.strpath,
+        '-r', rule,
+    ]
+    args = args + inlist
+    Main(args)
+    with open(path.strpath, 'r') as fp:
+        asn = load_asn(fp, registry=AssociationRegistry(include_bases=True))
+    assert inlist == asn['members']
+    

@@ -2,6 +2,7 @@
 import argparse
 import sys
 
+from . import AssociationRegistry
 from .lib.rules_level3_base import DMS_Level3_Base
 
 __all__ = ['asn_from_list']
@@ -63,7 +64,7 @@ class Main(object):
         )
 
         parser.add_argument(
-            '-a', '--asn_file',
+            '-o', '--output-file',
             type=str,
             required=True,
             help='File to write association to'
@@ -83,6 +84,23 @@ class Main(object):
         )
 
         parser.add_argument(
+            '-r', '--rule',
+            type=str,
+            default='DMS_Level3_Base',
+            help=(
+                'The rule to base the association structure on.'
+                ' Default: "%(default)s"'
+            )
+        )
+        parser.add_argument(
+            '--ruledefs', action='append',
+            help=(
+                'Association rules definition file(s)'
+                ' If not specified, the default rules will be searched.'
+            )
+        )
+
+        parser.add_argument(
             'filelist',
             type=str,
             nargs='+',
@@ -91,9 +109,13 @@ class Main(object):
 
         parsed = parser.parse_args(args=args)
 
-        with open(parsed.asn_file, 'w') as outfile:
+        # Get the rule
+        rule = AssociationRegistry(parsed.ruledefs, include_bases=True)[parsed.rule]
+
+        with open(parsed.output_file, 'w') as outfile:
             asn = asn_from_list(
                 parsed.filelist,
+                rule=rule,
                 product_name=parsed.product_name
             )
             name, serialized = asn.dump(format=parsed.format)

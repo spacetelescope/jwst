@@ -50,13 +50,18 @@ class AssociationRegistry(dict):
 
     name: str
         An identifying string, used to prefix rule names.
+
+    include_bases: bool
+        If True, include base classes not considered
+        rules.
     """
 
     def __init__(self,
                  definition_files=None,
                  include_default=True,
                  global_constraints=None,
-                 name=None):
+                 name=None,
+                 include_bases=False):
         super(AssociationRegistry, self).__init__()
 
         # Generate a UUID for this instance. Used to modify rule
@@ -90,7 +95,7 @@ class AssociationRegistry(dict):
             ]
             for class_name, class_object in get_classes(module):
                 logger.debug('class_name="{}"'.format(class_name))
-                if class_name.startswith(USER_ASN):
+                if include_bases or class_name.startswith(USER_ASN):
                     try:
                         rule_name = '_'.join([self.name, class_name])
                     except TypeError:
@@ -246,7 +251,7 @@ class AssociationRegistry(dict):
                         **kwargs
                     )
                 )
-            except AssociationError as err:
+            except (AssociationError, AttributeError) as err:
                 lasterr = err
                 continue
             if first:
