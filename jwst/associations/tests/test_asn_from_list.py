@@ -3,7 +3,7 @@
 import pytest
 
 from .. import (Association, load_asn)
-from ..asn_from_list import asn_from_list
+from ..asn_from_list import (Main, asn_from_list)
 
 
 def test_base_association():
@@ -89,3 +89,42 @@ def test_default_roundtrip():
     assert asn['asn_rule'] == reloaded['asn_rule']
     assert asn['asn_type'] == reloaded['asn_type']
     assert len(asn['products']) == len(reloaded['products'])
+
+
+def test_cmdline_fails():
+    """Exercise the command line interface"""
+
+    # No arguments
+    with pytest.raises(SystemExit):
+        Main([])
+
+    # Only the association file argument
+    with pytest.raises(SystemExit):
+        Main(['-a', 'test_asn.json'])
+
+
+@pytest.mark.parametrize(
+    "format",
+    ['json', 'yaml']
+)
+def test_cmdline_success(format, tmpdir):
+    path = tmpdir.join('test_asn.json')
+    product_name = 'test_product'
+    inlist = ['a', 'b', 'c']
+    args = [
+        '-a', path.strpath,
+        '--product-name', product_name,
+        '--format', format
+    ]
+    args = args + inlist
+    Main(args)
+    with open(path.strpath, 'r') as fp:
+        asn = load_asn(fp, format=format)
+    assert len(asn['products']) == 1
+    assert asn['products'][0]['name'] == product_name
+    members = asn['products'][0]['members']
+    expnames = [
+        member['expname']
+        for member in members
+    ]
+    assert inlist == expnames
