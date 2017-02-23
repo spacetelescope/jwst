@@ -10,10 +10,10 @@ Selection criteria for photom reference files varies a bit from instrument
 to instrument:
 
 * FGS: Instrument and Detector
-* MIRI: Instrument and Detector
+* MIRI: Instrument, Detector, and Band
 * NIRCam: Instrument and Detector
 * NIRISS: Instrument and Detector
-* NIRSpec: Instrument and EXP_TYPE
+* NIRSpec: Instrument and Exp_type
 
 A row of data within the table that matches the mode of the science exposure
 is selected by the photom step based on criteria that are instrument mode
@@ -21,23 +21,28 @@ dependent. The current row selection criteria are:
 
 * FGS: No selection criteria (table contains a single row)
 * MIRI:
-   - Imager: Filter and Subarray
-   - IFUs: Band
+   - Imager (includes LRS): Filter and Subarray
+   - MRS: Does not use table-based reference file
 * NIRCam: Filter and Pupil
-* NIRISS: Filter, Pupil, and Order number
+* NIRISS:
+   - Imaging: Filter and Pupil
+   - Spectroscopic: Filter, Pupil, and Order number
 * NIRSpec:
    - Fixed Slits: Filter, Grating, and Slit name
    - IFU and MSA: Filter and Grating
 
 PHOTOM Reference File Format
 ----------------------------
-Photom reference files are FITS format with a single BINTABLE extension.  The
-primary data unit is always empty.  The columns of the table vary with 
-instrument according to the selection criteria listed above. The first few
-columns always correspond to the selection criteria, such as Filter and
+Photom reference files are FITS format with an empty primary data unit.
+The table-based photom files used for all instruments modes other than
+MIRI MRS have a single TABLE extension.
+The columns of the table vary with 
+instrument mode according to the selection criteria listed above. The first few
+columns always correspond to the row selection criteria, such as Filter and
 Pupil, or Filter and Grating. The remaining columns contain the data relevant
 to the photometric conversion and consist of PHOTMJSR, UNCERTAINTY, NELEM,
-WAVELENGTH, and RELRESPONSE.
+WAVELENGTH, and RELRESPONSE. The table column names and data types are
+listed below.
 
 * FILTER (string) - MIRI, NIRCam, NIRISS, NIRSpec
 * PUPIL (string) - NIRCam, NIRISS
@@ -45,17 +50,40 @@ WAVELENGTH, and RELRESPONSE.
 * GRATING (string) - NIRSpec
 * SLIT (string) - NIRSpec Fixed-Slit
 * SUBARRAY (string) - MIRI Imager/LRS
-* BAND (string) - MIRI MRS
 * PHOTMJSR (float) - all instruments
 * UNCERTAINTY (float) - all instruments
 * NELEM (int) - if NELEM > 0, then NELEM entries are read from each of the
   WAVELENGTH and RELRESPONSE arrays
-* WAVELENGTH (float 1-D array)
-* RELRESPONSE (float 1-D array)
+* WAVELENGTH (float 1D array)
+* RELRESPONSE (float 1D array)
 
 The primary header of the photom reference file contains the keywords PIXAR_SR
 and PIXAR_A2, which give the average pixel area in units of steradians and
 square arcseconds, respectively.
+
+The MIRI MRS photom reference files contain the following FITS extensions:
+
+* SCI  IMAGE  2D float
+* ERR  IMAGE  2D float
+* DQ   IMAGE  2D unsigned-integer
+* DQ_DEF  TABLE
+* PIXSIZ  IMAGE  2D float
+
+The SCI extension contains a 2D array of spectral sensitivity factors
+corresponding to each pixel in a 2D MRS slice image. The sensitivity factors
+are in units of DN/sec/mJy/pixel. The ERR extension contains a 2D array of
+uncertainties for the SCI values, in the same units. The DQ extension
+contains a 2D array of bit-encoded data quality flags for the SCI values.
+The DQ_DEF extension contains a table listing the definitions of the values
+used in the DQ array. The PIXSIZ extension contains a 2D array of pixel
+sizes, in units of square-arcsec.
+
+The SCI and PIXSIZ array values are both divided into the science product
+SCI and ERR arrays, yielding image pixels that are units of mJy/sq-arcsec.
+
+Scalar PHOTMJSR and PHOTUJA2 values are stored in primary header keywords
+in the MIRI MRS photom reference files and are copied into the science
+product header by the photom step.
 
 AREA CRDS Selection Criteria
 ------------------------------

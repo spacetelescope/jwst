@@ -237,20 +237,32 @@ class DataSet(object):
 
         # Simple ImageModels
         else:
+
+            # Hardwire the science data order number to 1 for now
             order = 1
 
             # Locate matching row in reference file
             for tabdata in ftab.phot_table:
-
                 ref_filter = tabdata['filter'].strip().upper()
                 ref_pupil = tabdata['pupil'].strip().upper()
                 ref_order = tabdata['order']
 
-                # Find matching values of FILTER, PUPIL, ORDER
-                if (self.filter == ref_filter and self.pupil == ref_pupil
-                    and order == ref_order):
-                    conv_factor = self.photom_io(tabdata)
-                    break
+                # Spectroscopic mode
+                if self.exptype in ['NIS_SOSS', 'NIS_WFSS']:
+
+                    # Find matching values of FILTER, PUPIL, and ORDER
+                    if (self.filter == ref_filter and self.pupil == ref_pupil
+                        and order == ref_order):
+                        conv_factor = self.photom_io(tabdata)
+                        break
+
+                # Imaging mode
+                else:
+
+                    # Find matching values of FILTER and PUPIL
+                    if (self.filter == ref_filter and self.pupil == ref_pupil):
+                        conv_factor = self.photom_io(tabdata)
+                        break
 
             if conv_factor is not None:
                 return float(conv_factor)
