@@ -424,13 +424,19 @@ class Step(object):
     @classmethod
     def call(cls, *args, **kwargs):
         """
-        Make the step more conveniently callable from Python.
+        Creates and runs a new instance of the class.
 
         To set configuration parameters, pass a `config_file` path or
         keyword arguments.
 
         Any positional `*args` will be passed along to the step's
         `process` method.
+
+        Note: this method creates a new instance of `Step` with the given
+        `*args` and `**kwargs`.  If not used with a `config_file` or specific
+        `*args` and `**kwargs`, it would be better to use the `run` method,
+        which does not create a new instance but simply runs
+        the existing instance of the `Step` class.
         """
         if 'config_file' in kwargs:
             config_file = kwargs['config_file']
