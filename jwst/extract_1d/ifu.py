@@ -220,6 +220,10 @@ def extract_ifu(input_model, source_type, extract_params):
             if outer_bkg is None:
                 outer_bkg = min(inner_bkg * math.sqrt(2.),
                                 smaller_axis / 2. - 1.)
+            if inner_bkg <= 0. or outer_bkg <= 0. or inner_bkg >= outer_bkg:
+                log.debug("Turning background subtraction off, due to "
+                          "the values of inner_bkg and outer_bkg.")
+                subtract_background = False
         width = None
         height = None
         theta = None
@@ -232,11 +236,9 @@ def extract_ifu(input_model, source_type, extract_params):
             height = smaller_axis / 2.
         theta = extract_params['theta'] * math.pi / 180.
         radius = None
+        subtract_background = False
         inner_bkg = None
         outer_bkg = None
-
-    if inner_bkg <= 0. or outer_bkg <= 0. or inner_bkg >= outer_bkg:
-        subtract_background = False
 
     log.debug("IFU 1-D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))
