@@ -1,32 +1,203 @@
-allOf:
-- $ref: core.schema.yaml
-- type: object
-  properties:
-    meta:
-      type: object
-      properties:
-        reffile:
-          title: Information about the reference file
-          type: object
-          properties:
-            type:
-              title: Reference file type
-              type: string
-              fits_keyword: REFTYPE
-            pedigree:
-              title: The pedigree of the reference file
-              type: string
-              fits_keyword: PEDIGREE
-            description:
-              title: Description of the reference file
-              type: string
-              fits_keyword: DESCRIP
-            author:
-              title: Author of the reference file
-              type: string
-              fits_keyword: AUTHOR
-            useafter:
-              title: Use after date of the reference file
-              type: string
-              fits_keyword: USEAFTER
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      date:
+        allOf:
+        title: Date this file was created (UTC)
+        type: string
+        fits_keyword: DATE
+      origin:
+        title: Organization responsible for creating file
+        type: string
+        fits_keyword: ORIGIN
+      time_sys:
+        title: principal time system for time-related keywords
+        type: string
+        fits_keyword: TIMESYS
+      filename:
+        title: Name of the file
+        type: string
+        fits_keyword: FILENAME
+      filetype:
+        title: Type of data in the file
+        type: string
+        fits_keyword: FILETYPE
+      data_processing_software_version:
+        title: Data processing software version number
+        type: string
+        fits_keyword: SDP_VER
+      model_type:
+        title: Type of data model
+        type: string
+        fits_keyword: DATAMODL
+      telescope:
+        title: Telescope used to acquire the data
+        type: string
+        default: JWST
+        fits_keyword: TELESCOP
+      reffile:
+        title: Information about the reference file
+        type: object
+        properties:
+          type:
+            title: Reference file type
+            type: string
+            fits_keyword: REFTYPE
+          pedigree:
+            title: The pedigree of the reference file
+            type: string
+            fits_keyword: PEDIGREE
+          description:
+            title: Description of the reference file
+            type: string
+            fits_keyword: DESCRIP
+          author:
+            title: Author of the reference file
+            type: string
+            fits_keyword: AUTHOR
+          useafter:
+            title: Use after date of the reference file
+            type: string
+            fits_keyword: USEAFTER
+        required: [author, pedigree, description, useafter]
+      instrument:
+        title: Instrument configuration information
+        type: object
+        properties:
+          name:
+            title: Instrument used to acquire the data
+            type: string
+            enum: [NIRCAM, NIRSPEC, MIRI, TFI, FGS, NIRISS, ANY, N/A]
+            fits_keyword: INSTRUME
+          detector:
+            title: Name of detector used to acquire the data
+            type: string
+            enum: [NRCA1, NRCA2, NRCA3, NRCA4, NRCALONG, NRCB1, NRCB2, NRCB3, NRCB4,
+              NRCBLONG, NRS1, NRS2, ANY, MIRIMAGE, MIRIFULONG, MIRIFUSHORT, NIRISS,
+              NIS, GUIDER1, GUIDER2, N/A]
+            description: '''NIRISS'' is deprecated in favor of ''NIS'''
+            fits_keyword: DETECTOR
+          module:
+            title: 'NIRCam module: A or B'
+            type: string
+            fits_keyword: MODULE
+          channel:
+            title: 'NIRCam channel: long or short'
+            type: string
+            enum: [LONG, SHORT, '12', '34', '1', '2', '3', '4', ANY, N/A]
+            fits_keyword: CHANNEL
+          filter:
+            title: Name of the filter element used
+            type: string
+            enum: [ANY, CLEAR, F070LP, F070W, F090W, F1000W, F100LP, F1065C,
+              F110W, F1130W, F1140C, F115W, F1280W, F140M, F140X, F1500W, F150W,
+              F150W2, F1550C, F170LP, F1800W, F182M, F187N, F200W, F2100W, F210M,
+              F212N, F227W, F2300C, F250M, F2550W, F2550WR, F277W, F290LP, F300M,
+              F322W2, F335M, F356W, F360M, F380M, F410M, F430M, F444W,
+              F460M, F480M, F560W, F770W, FLENS, FND, FNDP750L, GR150C,
+              GR150R, OPAQUE, P750L, WL3, WLP4, N/A]
+            fits_keyword: FILTER
+          pupil:
+            title: Name of the pupil element used
+            type: string
+            pattern: "|\
+              ANY|CLEAR|CLEARP|F090W|F115W|F140M|F150W|F158M|F162M|F164N|\
+              F200W|F323N|F405N|F466N|F470N|FLAT|GDHS|GDHS0|GDHS60|GR700XD|\
+              GRISMC|GRISMR|GRISMV2|GRISMV3|MASKBAR|MASKIPR|MASKRND|NRM|PINHOLES|\
+              WLM8|WLP4|WLP8|N/A"
+            fits_keyword: P_PUPIL
+          pupil_imaging_lens:
+            title: Pupil imaging lens in the optical path?
+            type: boolean
+            fits_keyword: PILIN
+          grating:
+            title: Name of the grating element used
+            type: string
+            enum: [G140M, G235M, G395M, G140H, G235H, G395H, PRISM, MIRROR, N/A, ANY]
+            fits_keyword: GRATING
+          band:
+            title: MRS wavelength band
+            type: string
+            enum: [SHORT, MEDIUM, LONG, N/A, ANY]
+            fits_keyword: BAND
+          fixed_slit:
+            title: Name of fixed slit aperture used
+            type: string
+            fits_keyword: FXD_SLIT
+          focus_position:
+            title: Focus position
+            type: number
+            fits_keyword: FOCUSPOS
+          coronagraph:
+            title: coronagraph mask used
+            type: string
+            enum: [4QPM, LYOT, MASK210R, MASKSWB, MASK335R, MASK430R, MASKLWB, NONE]
+            fits_keyword: CORONMSK
+      exposure:
+        title: Exposure parameters
+        type: object
+        properties:
+          p_type:
+            title: Type of data in the exposure
+            type: string
+            pattern: "|\
+              ^FGS_(?=IMAGE|DARK|FOCUS|INTFLAT|SKYFLAT)|\
+              ^MIR_(?=IMAGE|TACQ|LYOT|4QPM|LRS-FIXEDSLIT|LRS-SLITLESS|MRS|DARK|FLAT-IMAGE|FLATIMAGE|FLAT-MRS|FLATMRS|CORONCAL)|\
+              ^NIS_(?=AMI|DARK|FOCUS|IMAGE|LAMP|SOSS|TACQ|TACONFIRM|WFSS)|\
+              ^NRC_(?=IMAGE|GRISM|TACQ|CORON|FOCUS|DARK|FLAT|LED|WFSC|TACONFIRM|TSIMAGE|TSGRISM)|\
+              ^NRS_(?=AUTOFLAT|AUTOWAVE|BOTA|BRIGHTOBJ|CONFIRM|DARK|FIXEDSLIT|FOCUS|IFU|IMAGE|LAMP|MIMF|MSASPEC|TACONFIRM|TACQ|TASLIT)|\
+              ANY|N//A"
+            fits_keyword: P_EXPTYP
+      subarray:
+        title: Subarray parameters
+        type: object
+        properties:
+          name:
+            title: Subarray used
+            type: string
+            pattern: "|\
+              1024X16|128X128|128X2048|2048X128|2048X64|32X32|\
+              64X2048|8X8|ALLSLITS|BRIGHTSKY|FULL|GENERIC|\
+              MASKA210R|MASKA335R|MASKA430R|MASKBLWB|MASKBSWB|MASK1065|\
+              MASK1140|MASK1550|MASKLYOT|\
+              S1600A1|S200A1|S200A2|S200B1|S400A1|SLITLESSPRISM|STRIPE|\
+              SUB1024A|SUB1024B|SUB128|SUB128LLCORNER|SUB128DIAGONAL|\
+              SUB128CENTER|SUB16|SUB160|SUB160P|SUB1A|SUB1B|\
+              SUB2048|SUB256|SUB32|SUB32LLCORNER|SUB32DIAGONAL|SUB32CENTER|\
+              SUB320|SUB400P|SUB512|SUB64|SUB640|\
+              SUB64P|SUB80|SUB8LLCORNER|SUB8DIAGONAL|SUB8CENTER|SUB96|\
+              SUBAMPCAL|SUBFP1A|SUBFP1B|SUBGRISM128|\
+              SUBGRISM256|SUBGRISM64|SUBSTRIP256|SUBSTRIPE256|SUBSTRIP96|\
+              SUBPRISM|SUBSTRIP80|SUBTASOSS|SUBTAAMI|\
+              WFSS128C|WFSS128R|WFSS64C|WFSS64R|N/A
+              "
+            fits_keyword: P_SUBARR
+          xstart:
+            title: Starting pixel in axis 1 direction
+            type: integer
+            fits_keyword: SUBSTRT1
+          ystart:
+            title: Starting pixel in axis 2 direction
+            type: integer
+            fits_keyword: SUBSTRT2
+          xsize:
+            title: Number of pixels in axis 1 direction
+            type: integer
+            fits_keyword: SUBSIZE1
+          ysize:
+            title: Number of pixels in axis 2 direction
+            type: integer
+            fits_keyword: SUBSIZE2
+          fastaxis:
+            title: Fast readout axis direction
+            type: integer
+            fits_keyword: FASTAXIS
+          slowaxis:
+            title: Slow readout axis direction
+            type: integer
+            fits_keyword: SLOWAXIS
+        additionalProperties: false
+    required: [reffile]
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

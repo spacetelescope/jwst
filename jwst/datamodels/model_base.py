@@ -77,6 +77,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         pass_invalid_values: If true, values that do not validate the schema can
             be read and written and only a warning will be generated
         """
+        filename = os.path.abspath(inspect.getfile(self.__class__))
+        base_url = os.path.join(
+            os.path.dirname(filename), 'schemas', '')
+
         # Set the extensions
         if extensions is None:
             extensions = jwst_extensions[:]
@@ -103,7 +107,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
             extension_list = asdf_extension.AsdfExtensionList(self._extensions)
-            schema = asdf_schema.load_schema(schema_path, 
+            schema = asdf_schema.load_schema(schema_path,
                 resolver=extension_list.url_mapping, resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
@@ -155,7 +159,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 hdulist = fits.open(init)
             except IOError:
                 try:
-                    asdf = AsdfFile.open(init, extensions=self._extensions)
+                    asdf = AsdfFile.open(init, extensions=jwst_extensions)
                     # TODO: Add json support
                 except ValueError:
                     raise IOError(
@@ -258,7 +262,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         self.meta.date = Time(datetime.datetime.now())
         self.meta.date.format = 'isot'
-        self.meta.date = self.meta.date.value
+        self.meta.date = self.meta.date
         self.meta.model_type = self.__class__.__name__
 
     def save(self, path, *args, **kwargs):
@@ -304,7 +308,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         -------
         model : DataModel instance
         """
-        return cls(init, schema=schema, extensions=self._extensions)
+        return cls(init, schema=schema, extensions=jwst_extensions)
 
     def to_asdf(self, init, *args, **kwargs):
         """
