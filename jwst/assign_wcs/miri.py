@@ -21,7 +21,14 @@ log.setLevel(logging.DEBUG)
 
 def create_pipeline(input_model, reference_files):
     '''
-    get reference files from crds
+    Create the WCS pipeline for MIRI modes.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
+    reference_files : dict
+        Dictionary {reftype: reference file name}.
 
     '''
     exp_type = input_model.meta.exposure.type.lower()
@@ -32,6 +39,15 @@ def create_pipeline(input_model, reference_files):
 
 def imaging(input_model, reference_files):
     """
+    Create MIRI Imagng WCS.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
+    reference_files : dict
+        Dictionary {reftype: reference file name}.
+
     The MIRI imaging pipeline includes 3 coordinate frames - detector,
     focal plane and sky
 
@@ -62,10 +78,10 @@ def imaging_distortion(input_model, reference_files):
 
     Parameters
     ----------
-    model : jwst.datamodels.ImagingModel
-        input model
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
     reference_files : dict
-        reference files from CRDS
+        Dictionary {reftype: reference file name}.
 
     1. Filter dependent shift in (x,y) (!with an oposite sign to that delivered by the IT)
     2. Apply MI
@@ -97,6 +113,13 @@ def imaging_distortion(input_model, reference_files):
 def lrs(input_model, reference_files):
     """
     Create the WCS pipeline for a MIRI fixed slit observation.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
+    reference_files : dict
+        Dictionary {reftype: reference file name}.
 
     reference_files = {
         "specwcs": 'MIRI_FM_MIRIMAGE_P750L_DISTORTION_04.02.00.fits'
@@ -188,6 +211,13 @@ def lrs(input_model, reference_files):
 def ifu(input_model, reference_files):
     """
     Create the WCS pipeline for a MIRI IFU observation.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
+    reference_files : dict
+        Dictionary {reftype: reference file name}.
     """
 
     #reference_files = {'distortion': 'jwst_miri_distortion_00001.asdf', #files must hold 2 channels each
@@ -225,6 +255,13 @@ def ifu(input_model, reference_files):
 def detector_to_alpha_beta(input_model, reference_files):
     """
     Create the transform from detector to alpha, beta frame.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
+    reference_files : dict
+        Dictionary {reftype: reference file name}.
 
     forward transform:
       RegionsSelector
@@ -292,6 +329,13 @@ def detector_to_alpha_beta(input_model, reference_files):
 def alpha_beta2XanYan(input_model, reference_files):
     """
     Create the transform from detector to Xan, Yan frame.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
+    reference_files : dict
+        Dictionary {reftype: reference file name}.
 
     forward transform:
       RegionsSelector
@@ -366,9 +410,16 @@ exp_type2transform = {'mir_image': imaging,
 
 def get_wavelength_range(input_model, path=None):
     """
-    Return the wavelength range used for computing the WCS/
+    Return the wavelength range used for computing the WCS.
 
     Needs access to the reference file used to construct the WCS object.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model after assign_wcs has been run.
+    path : str
+        Directory where the reference file is. (optional)
     """
     fname = input_model.meta.ref_file.wavelengthrange.name.split('/')[-1]
     if path is None and not os.path.exists(fname):
