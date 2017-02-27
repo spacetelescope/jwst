@@ -4,13 +4,13 @@ properties:
     type: object
     properties:
       date:
-        allOf:
-        - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
-        - title: Date this file was created (UTC)
-          fits_keyword: DATE
-        #title: Date this file was created (UTC)
-        #type: string
-        #fits_keyword: DATE
+        #allOf:
+        #- $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
+        #- title: Date this file was created (UTC)
+        #  fits_keyword: DATE
+        title: Date this file was created (UTC)
+        type: string
+        fits_keyword: DATE
       origin:
         title: Organization responsible for creating file
         type: string

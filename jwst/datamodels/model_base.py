@@ -262,7 +262,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         self.meta.date = Time(datetime.datetime.now())
         self.meta.date.format = 'isot'
-        self.meta.date = self.meta.date
+        self.meta.date = self.meta.date.value
         self.meta.model_type = self.__class__.__name__
 
     def save(self, path, *args, **kwargs):

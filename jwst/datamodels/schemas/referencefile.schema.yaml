@@ -4,7 +4,6 @@ properties:
     type: object
     properties:
       date:
-        allOf:
         title: Date this file was created (UTC)
         type: string
         fits_keyword: DATE
@@ -61,7 +60,6 @@ properties:
             title: Use after date of the reference file
             type: string
             fits_keyword: USEAFTER
-        required: [author, pedigree, description, useafter]
       instrument:
         title: Instrument configuration information
         type: object
@@ -199,5 +197,4 @@ properties:
             type: integer
             fits_keyword: SLOWAXIS
         additionalProperties: false
-    required: [reffile]
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
