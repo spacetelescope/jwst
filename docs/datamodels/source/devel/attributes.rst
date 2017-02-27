@@ -5,8 +5,8 @@ Data model attributes
 
 The purpose of the data model is to abstract away the peculiarities of
 the underlying file format.  The same data model may be used for data
-created from scratch in memory, or loaded from FITS files or some
-future FITS-replacement format.
+created from scratch in memory, loaded from FITS or ASDF files, or from
+some other future format.
 
 Calling sequences of models
 ===========================
@@ -16,22 +16,27 @@ List of current models
 
 The current models are as follows:
 
-    `AmiLgModel`, `AsnModel`, `ContrastModel`,
-    `CubeModel`, `CubeFlatModel`, `DarkModel`, `DarkMIRIModel`,
+    `AmiLgModel`, `AsnModel`, `ContrastModel`, `CubeModel`, `CubeFlatModel`,
+    `DarkModel`, `DarkMIRIModel`,
     `DrizParsModel`, `NircamDrizParsModel`, `MiriImgDrizParsModel`,
-    `DrizProductModel`, `FgsPhotomModel`, `FilterModel`,
-    `FlatModel`, `FringeModel`, `GainModel`, `GLS_RampFitModel`,
+    `DrizProductModel`, `FilterModel`, `FlatModel`,
+    `FringeModel`, `GainModel`, `GLS_RampFitModel`, `IFUCubeModel`,
     `ImageModel`, `IPCModel`, `IRS2Model`, `LastFrameModel`, `LinearityModel`,
     `MaskModel`, `MIRIRampModel`, `ModelContainer`,
     `MultiExposureModel`, `MultiProductModel`, `MultiSlitModel`,
-    `MultiSpecModel`, `IFUCubeModel`, `PhotomModel`, `NircamPhotomModel`,
-    `NirissPhotomModel`, `NirspecPhotomModel`, `NirspecFSPhotomModel`,
+    `MultiSpecModel`,
     `NRSFlatModel`, `NirspecFlatModel`, `NirspecQuadFlatModel`,
-    `MiriImgPhotomModel`, `MiriMrsPhotomModel`, `QuadModel`, `RampModel`,
-    `RampFitOutputModel`, `ReadnoiseModel`, `ReferenceCubeModel`,
-    `ReferenceFileModel`, `ReferenceImageModel`, `ReferenceQuadModel`,
+    `PathlossModel`,
+    `PhotomModel`, `FgsPhotomModel`, `MiriImgPhotomModel`,
+    `MiriMrsPhotomModel`, `NircamPhotomModel`, `NirissPhotomModel`,
+    `NirspecPhotomModel`, `NirspecFSPhotomModel`, 
+    `PixelAreaModel`,
+    `QuadModel`, `RampModel`,
+    `RampFitOutputModel`, `ReadnoiseModel`,
+    `ReferenceFileModel`, `ReferenceImageModel`, `ReferenceCubeModel`,
+    `ReferenceQuadModel`,
     `ResetModel`, `RSCDModel`, `SaturationModel`, `SpecModel`,
-    `StrayLightModel`
+    `StrayLightModel`, `SuperBiasModel`
 
 Commonly used attributes
 ------------------------
@@ -80,18 +85,31 @@ Specific Model Classes
 
 .. automodule:: jwst.datamodels
    :members: AmiLgModel, AsnModel, ContrastModel,
-    CubeModel, CubeFlatModel, DarkModel, DarkMIRIModel, DrizParsModel,
-    NircamDrizParsModel, MiriImgDrizParsModel,
-    DrizProductModel, FgsPhotomModel, FilterModel,
-    FlatModel, FringeModel, GainModel, GLS_RampFitModel,
-    ImageModel, IPCModel, IRS2Model, LastFrameModel, LinearityModel,
-    MaskModel, MIRIRampModel, ModelContainer,
-    MultiExposureModel, MultiProductModel, MultiSlitModel,
-    MultiSpecModel, IFUCubeModel, PhotomModel, NircamPhotomModel,
-    NirissPhotomModel, NirspecPhotomModel, NirspecFSPhotomModel,
-    NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel,
-    MiriImgPhotomModel, MiriMrsPhotomModel, QuadModel, RampModel,
-    RampFitOutputModel, ReadnoiseModel, ReferenceCubeModel,
-    ReferenceFileModel, ReferenceImageModel, ReferenceQuadModel,
+    CubeModel, IFUCubeModel,
+    DarkModel, DarkMIRIModel,
+    DrizParsModel, NircamDrizParsModel, MiriImgDrizParsModel,
+    DrizProductModel,
+    FilterModel,
+    FlatModel,
+    CubeFlatModel, NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel,
+    FringeModel, GainModel, GLS_RampFitModel, ImageModel, IPCModel,
+    IRS2Model, LastFrameModel, LinearityModel, MaskModel,
+    ModelContainer,
+    MultiExposureModel, MultiProductModel, MultiSlitModel, MultiSpecModel,
+    PathlossModel,
+    PhotomModel,
+    FgsPhotomModel,
+    MiriImgPhotomModel,
+    MiriMrsPhotomModel,
+    NircamPhotomModel,
+    NirissPhotomModel,
+    NirspecPhotomModel,
+    NirspecFSPhotomModel,
+    PixelAreaModel,
+    QuadModel,
+    RampModel, MIRIRampModel, RampFitOutputModel,
+    ReadnoiseModel,
+    ReferenceFileModel, ReferenceImageModel,
+    ReferenceCubeModel, ReferenceQuadModel,
     ResetModel, RSCDModel, SaturationModel, SpecModel,
-    StrayLightModel
+    StrayLightModel, SuperBiasModel
