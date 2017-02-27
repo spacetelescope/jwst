@@ -1,5 +1,6 @@
 from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
+import os.path
 import logging
 import numpy as np
 from asdf import AsdfFile
@@ -315,9 +316,7 @@ def alpha_beta2XanYan(input_model, reference_files):
     # the following should go in the asdf reader
     wave_range = f.tree['wavelengthrange'].copy()
     wave_channels = f.tree['channels']
-    wr = {}
-    for ch, r in zip(wave_channels, wave_range):
-        wr[ch] = r
+    wr = dict(zip(wave_channels, wave_range))
     f.close()
 
     dict_mapper = {}
@@ -363,3 +362,27 @@ exp_type2transform = {'mir_image': imaging,
                       'mir_flat-image': not_implemented_mode,
                       'mir_dark': not_implemented_mode,
                       }
+
+
+def get_wavelength_range(input_model, path=None):
+    """
+    Return the wavelength range used for computing the WCS/
+
+    Needs access to the reference file used to construct the WCS object.
+    """
+    fname = input_model.meta.ref_file.wavelengthrange.name.split('/')[-1]
+    if path is None and not os.path.exists(fname):
+        raise IOError("Reference file {0} not found. Please specify a path.".format(fname))
+    else:
+        fname = os.path.join(path, fname)
+        f = AsdfFile.open(fname)
+
+    wave_range = f.tree['wavelengthrange'].copy()
+    wave_channels = f.tree['channels']
+    f.close()
+
+    wr = dict(zip(wave_channels, wave_range))
+    channel = input_model.meta.instrument.channel
+    band = input_model.meta.instrument.band
+
+    return dict([(ch+band, wr[ch+band]) for ch in channel ])
