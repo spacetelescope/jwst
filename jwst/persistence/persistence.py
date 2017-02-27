@@ -113,6 +113,10 @@ class DataSet():
             skipped = True
             return (self.output_obj, None, skipped)
 
+        # Read the table of capture and decay parameters.
+        par = self.get_parameters()
+        nfamilies = len(par[0])
+
         # Note that this might be a subarray.
         persistence = self.output_obj.data[0, 0, :, :] * 0.
         (nints, ngroups, ny, nx) = shape
@@ -133,30 +137,21 @@ class DataSet():
                                       dtype=self.output_obj.data.dtype))
         else:
             have_traps_filled = True
-        # Set meta.filename to the name of the input file, so that the
-        # save_model() method of PersistenceStep will use that name (but
-        # with a different suffix) as the output traps_filled file name,
-        # to (hopefully clearly) link them.
-        self.traps_filled.meta.filename = self.output_obj.meta.filename
 
         self.traps_filled = no_NaN(self.traps_filled, 0., zap_nan=True)
         self.gain = no_NaN(self.gain, 1., zap_nan=True, zap_zero=True)
         self.saturation = no_NaN(self.saturation, 1.e7, zap_nan=True)
-        log.info("xxx do_all:  self.traps_filled.mean = %g",
-                 self.traps_filled.data[1].mean())
-        log.info("xxx do_all:  self.gain.mean = %g", self.gain.data[1].mean())
-        log.info("xxx do_all:  self.saturation.mean = %g",
-                 self.saturation.data[1].mean())
+        log.debug("xxx do_all:  self.traps_filled.mean = %g",
+                  self.traps_filled.data[1].mean())
+        log.debug("xxx do_all:  self.gain.mean = %g", self.gain.data[1].mean())
+        log.debug("xxx do_all:  self.saturation.mean = %g",
+                  self.saturation.data[1].mean())
 
-        log.info("xxx do_all:  self.trap_density.data.mean = %g",
-                 self.trap_density.data.mean())
-
-        # Read the table of capture and decay parameters.
-        par = self.get_parameters()
-        nfamilies = len(par[0])
+        log.debug("xxx do_all:  self.trap_density.data.mean = %g",
+                  self.trap_density.data.mean())
 
         if have_traps_filled:   # was there an actual traps_filled file?
-            log.info("xxx do_all:  yes, we have a traps_filled file")
+            log.debug("xxx do_all:  yes, we have a traps_filled file")
             # Update traps_filled to the start of the exposure.  to_start
             # is the time difference in seconds from the traps_filled file
             # to the current exposure.
@@ -164,15 +159,15 @@ class DataSet():
                         self.traps_filled.meta.exposure.end_time) * 86400.
             # xxx test debug Convert to units of group time.
             to_start /= self.output_obj.meta.exposure.group_time  # xxx test debug
-            log.info("xxx do_all:  to_start = %g 'groups'", to_start)
+            log.debug("xxx do_all:  to_start = %g 'groups'", to_start)
             for k in range(nfamilies):
                 decay = self.compute_decay(self.traps_filled.data[k],
                                            par[3][k], to_start)
-                log.info("xxx do_all:  k = %d, decay.mean = %g",
-                         k, decay.mean())
+                log.debug("xxx do_all:  k = %d, decay.mean = %g",
+                          k, decay.mean())
                 self.traps_filled.data[k, :, :] -= decay
-                log.info("xxx do_all:  traps_filled.data.mean = %g",
-                         self.traps_filled.data[k, :, :].mean())
+                log.debug("xxx do_all:  traps_filled.data.mean = %g",
+                          self.traps_filled.data[k, :, :].mean())
 
         # If the input is a subarray, extract matching sections of
         # reference images.
@@ -185,7 +180,7 @@ class DataSet():
             (tr_filled, save_slice) = self.get_subarray(self.traps_filled,
                                                         self.output_obj)
             is_subarray = True
-        log.info("xxx is_subarray = %s", str(is_subarray))
+        log.debug("xxx is_subarray = %s", str(is_subarray))
         # self.traps_filled and tr_filled are 3-D arrays, one image plane
         # for each trap family.
         # self.traps_filled is the size of the full detector.
@@ -229,12 +224,12 @@ class DataSet():
                     filled = self.compute_capture(capture_param_k,
                                                   self.trap_density.data,
                                                   slope, t_group)
-                    log.info("yyy k = %d:  %g, %g, %g, %g, %g, %g --> %g",
-                             k, capture_param_k[0], capture_param_k[1],
-                             capture_param_k[2],
-                             self.trap_density.data[900, 900],
-                             slope[900, 900], t_group,
-                             filled[900, 900])
+                    log.debug("yyy k = %d:  %g, %g, %g, %g, %g, %g --> %g",
+                              k, capture_param_k[0], capture_param_k[1],
+                              capture_param_k[2],
+                              self.trap_density.data[900, 900],
+                              slope[900, 900], t_group,
+                              filled[900, 900])
                     # This will be the size of the full detector.
                     decayed = self.compute_decay(self.traps_filled.data[k],
                                                  decay_param_k, t_group)
@@ -272,7 +267,26 @@ class DataSet():
                 self.traps_filled.data[k, :, :] += \
                         tr_filled.data[k, :, :].copy()
 
+        # Update the start and end times (and other stuff) in the
+        # traps_filled image to the times for the current exposure.
+        self.traps_filled.update(self.output_obj, only="PRIMARY")
+
+        # The file name of traps_filled is now the name of the science file
+        # that was passed as input to this step.  This is good, since we're
+        # going to write traps_filled out, and the output name should be
+        # related to the output science file name.  However, let's append
+        # a dummy suffix, to preserve the real last suffix.
+        n = len(self.traps_filled.meta.filename)
+        self.traps_filled.meta.filename = \
+                self.traps_filled.meta.filename[0:n - 5] + "_zzzz.fits"
+
         return (self.output_obj, self.traps_filled, skipped)
+
+        # Set meta.filename to the name of the input file, so that the
+        # save_model() method of PersistenceStep will use that name (but
+        # with a different suffix) as the output traps_filled file name,
+        # to (hopefully clearly) link them.
+        self.traps_filled.meta.filename = self.output_obj.meta.filename
 
 
     def ref_matches_sci(self, ref, sci):
@@ -385,10 +399,10 @@ class DataSet():
         """
 
         data = self.traps_model.traps_table
-        par0 = data.field("capture0").copy()
-        par1 = data.field("capture1").copy()
-        par2 = data.field("capture2").copy()
-        par3 = data.field("decay_param").copy()
+        par0 = data["capture0"].copy()
+        par1 = data["capture1"].copy()
+        par2 = data["capture2"].copy()
+        par3 = data["decay_param"].copy()
 
         return (par0, par1, par2, par3)
 
@@ -439,8 +453,8 @@ class DataSet():
         # persistencesaturationlimit should be a 2-D reference file.
         slope = (accumulatedEl / persistencesaturationlimit) / \
                 goodindex.astype(np.float64)
-        log.info("xxx compute_slope:  slope.mean = %g",
-                 slope.mean())
+        log.debug("xxx compute_slope:  slope.mean = %g",
+                  slope.mean())
 
         return slope
 
@@ -568,6 +582,6 @@ class DataSet():
             for the current trap family.
         """
 
-        log.info("xxx compute_decay:  traps_filled.mean = %g",
-                 traps_filled.mean())
+        log.debug("xxx compute_decay:  traps_filled.mean = %g",
+                  traps_filled.mean())
         return traps_filled * (1. - np.exp(decay_param * t_int))
