@@ -74,8 +74,8 @@ class ModelContainer(model_base.DataModel):
         else:
             raise TypeError('Input {0!r} is not a list of DataModels or '
                             'an ASN file'.format(init))
+        self._assign_group_ids()
 
-        self.assign_group_ids()
 
     def __len__(self):
         return len(self._models)
@@ -108,56 +108,28 @@ class ModelContainer(model_base.DataModel):
         else:
             self._models.pop(index)
 
-    def assign_group_ids(self):
+    def _assign_group_ids(self):
         for model in self._models:
             model_attrs = []
+            model_attrs.append(model.meta.observation.program_number)
+            model_attrs.append(model.meta.observation.observation_number)
+            model_attrs.append(model.meta.observation.visit_number)
+            model_attrs.append(model.meta.observation.visit_group)
+            model_attrs.append(model.meta.observation.sequence_id)
+            model_attrs.append(model.meta.observation.activity_id)
+            model_attrs.append(model.meta.observation.exposure_number)
+            model_attrs.append(model.meta.instrument.name)
+            model_attrs.append(model.meta.instrument.channel)
             try:
-                model_attrs.append(model.meta.observation.program_number)
-            except AttributeError:
-                model_attrs.append(None)
-            try:
-                model_attrs.append(model.meta.observation.observation_number)
-            except AttributeError:
-                model_attrs.append(None)
-            try:
-                model_attrs.append(model.meta.observation.visit_number)
-            except AttributeError:
-                model_attrs.append(None)
-            try:
-                model_attrs.append(model.meta.observation.visit_group)
-            except AttributeError:
-                model_attrs.append(None)
-            try:
-                model_attrs.append(model.meta.observation.sequence_id)
-            except AttributeError:
-                model_attrs.append(None)
-            try:
-                model_attrs.append(model.meta.observation.activity_id)
-            except AttributeError:
-                model_attrs.append(None)
-            try:
-                model_attrs.append(model.meta.observation.exposure_number)
-            except AttributeError:
-                model_attrs.append(None)
-            try:
-                model_attrs.append(model.meta.instrument.name)
-            except AttributeError:
-                model_attrs.append(None)
-            try:
-                model_attrs.append(model.meta.instrument.channel)
-            except AttributeError:
-                model_attrs.append(None)
-            if None not in model_attrs:
                 group_id = ('jw' + "_".join([
                                 ''.join(model_attrs[:3]),
                                 ''.join(model_attrs[3:6]),
                                 model_attrs[6], model_attrs[7].lower(),
                                 model_attrs[8].lower()]))
-            else:
-                base, ext = os.path.splitext(model.meta.filename)
-                group_id = base[:base.rfind('_')]
+            except:
+                group_id, ext = os.path.splitext(self._models[0].meta.filename)
+            model.meta.group_id = os.path.join(group_id, "_grp")
 
-            model.meta.group_id = group_id
 
     def copy(self):
         """
@@ -191,7 +163,7 @@ class ModelContainer(model_base.DataModel):
         try:
             self._models = [datamodel_open(infile, **kwargs) for infile in infiles]
         except IOError:
-            raise IOError('Cannot open data models.')
+            raise IOError('Cannot open data models {}'.format(infiles))
 
         # Pull the whole association table into meta.asn_table
         self.meta.asn_table = {}
@@ -212,7 +184,6 @@ class ModelContainer(model_base.DataModel):
         """
         Return a list of lists of DataModels grouped by exposure.
         """
-        self.assign_group_ids()
         group_dict = OrderedDict()
         for model in self._models:
             group_id = model.meta.group_id
