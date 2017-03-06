@@ -424,13 +424,26 @@ class Step(object):
     @classmethod
     def call(cls, *args, **kwargs):
         """
-        Make the step more conveniently callable from Python.
+        Creates and runs a new instance of the class.
 
         To set configuration parameters, pass a `config_file` path or
-        keyword arguments.
+        keyword arguments.  Keyword arguments override those in the
+        specified `config_file`.
 
         Any positional `*args` will be passed along to the step's
         `process` method.
+
+        Note: this method creates a new instance of `Step` with the given
+        `config_file` if supplied, plus any extra `*args` and `**kwargs`.
+        If you create an instance of a Step, set parameters, and then use
+        this `call()` method, it will ignore previously-set parameters, as
+        it creates a new instance of the class with only the `config_file`,
+        `*args` and `**kwargs` passed to the `call()` method.
+
+        If not used with a `config_file` or specific `*args` and `**kwargs`,
+        it would be better to use the `run` method, which does not create
+        a new instance but simply runs the existing instance of the `Step`
+        class.
         """
         if 'config_file' in kwargs:
             config_file = kwargs['config_file']
@@ -527,9 +540,11 @@ class Step(object):
 
     def get_reference_file(self, input_file, reference_file_type):
         """
-        Get a reference file from CRDS.  If the configuration file or
-        commandline parameters override the reference file, it will be
-        automatically used when calling this function.
+        Get a reference file from CRDS.
+
+        If the configuration file or commandline parameters override the
+        reference file, it will be automatically used when calling this
+        function.
 
         Parameters
         ----------

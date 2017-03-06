@@ -56,7 +56,7 @@ this section is a subsection for each step in the pipeline.  To figure
 out what configuration parameters are available, use the `stspec`
 script (just as with a regular step):
 
-.. code-block:: ini
+.. code-block:: python
 
     > stspec stpipe.test.test_pipeline.TestPipeline
     start_step = string(default=None)# Start the pipeline at this step
