@@ -10,5 +10,6 @@ dist/
 */version.py
 docs/*/source/*.txt.rst
 docs/fits_generator/source/templates.rst
+docs/jwst_git/
 RELIC-INFO
 relic/
