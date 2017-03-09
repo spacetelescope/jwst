@@ -237,20 +237,32 @@ class DataSet(object):
 
         # Simple ImageModels
         else:
+
+            # Hardwire the science data order number to 1 for now
             order = 1
 
             # Locate matching row in reference file
             for tabdata in ftab.phot_table:
-
                 ref_filter = tabdata['filter'].strip().upper()
                 ref_pupil = tabdata['pupil'].strip().upper()
                 ref_order = tabdata['order']
 
-                # Find matching values of FILTER, PUPIL, ORDER
-                if (self.filter == ref_filter and self.pupil == ref_pupil
-                    and order == ref_order):
-                    conv_factor = self.photom_io(tabdata)
-                    break
+                # Spectroscopic mode
+                if self.exptype in ['NIS_SOSS', 'NIS_WFSS']:
+
+                    # Find matching values of FILTER, PUPIL, and ORDER
+                    if (self.filter == ref_filter and self.pupil == ref_pupil
+                        and order == ref_order):
+                        conv_factor = self.photom_io(tabdata)
+                        break
+
+                # Imaging mode
+                else:
+
+                    # Find matching values of FILTER and PUPIL
+                    if (self.filter == ref_filter and self.pupil == ref_pupil):
+                        conv_factor = self.photom_io(tabdata)
+                        break
 
             if conv_factor is not None:
                 return float(conv_factor)
@@ -316,9 +328,9 @@ class DataSet(object):
 
             # Reset conversion and pixel size values with DQ=NON_SCIENCE to 1,
             # so no conversion is applied
-            where_bad = np.bitwise_and(ftab.dq, dqflags.pixel['NON_SCIENCE'])
-            ftab.data[where_bad] = 1.0
-            ftab.pixsiz[where_bad] = 1.0
+            where_dq = np.bitwise_and(ftab.dq, dqflags.pixel['NON_SCIENCE'])
+            ftab.data[where_dq > 0] = 1.0
+            ftab.pixsiz[where_dq > 0] = 1.0
 
             # Reset NaN's in conversion array to 1
             where_nan = np.isnan(ftab.data)

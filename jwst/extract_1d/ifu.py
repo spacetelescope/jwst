@@ -60,20 +60,32 @@ def ifu_extract1d(input_model, refname, source_type):
         log.critical('Missing extraction parameters.')
         raise ValueError('Missing extraction parameters.')
 
-    do_fluxcorr = True                          # default, and initial value
+    # Check whether the data have been converted to flux density.
+    fluxcorr_complete = True                    # initial values
+    missing = False
     try:
-        relsens = input_model.relsens
+        bunit = input_model.meta.bunit_data
     except AttributeError:
-        do_fluxcorr = False
-        log.warning("No relsens for input file.")
+        bunit = None
+    if bunit is None:
+        fluxcorr_complete = False
+        missing = True
+    elif (bunit.find("Jy") < 0 and
+          bunit.find("jansky") < 0 and bunit.find("Jansky") < 0):
+        fluxcorr_complete = False
+    if missing:
+        log.warning("No BUNIT found in input science data header.")
 
-    # If there is no relsens table, copy net to flux, under the assumption
-    # that the IFU cube is already in flux units.
-    if do_fluxcorr:
-        r_factor = ifu_interpolate_response(wavelength, relsens)
-        flux = net / r_factor
-    else:
+    # If the data have already been converted to flux density, `net`
+    # contains fluxes, so move that column to `flux`.  If not, it's
+    # too late to do flux correction.
+    if fluxcorr_complete:
         flux = net.copy()
+        net[:] = 0.
+        log.info("Data have been flux calibrated; setting net to 0.")
+    else:
+        flux = np.zeros_like(net)
+        log.info("Data have NOT been flux calibrated; setting flux to 0.")
 
     fl_error = np.ones_like(net)
     nerror = np.ones_like(net)
@@ -116,49 +128,6 @@ def ifu_extract_parameters(refname, slitname, source_type):
             break
 
     return extract_params
-
-
-def ifu_interpolate_response(wavelength, relsens):
-    """Interpolate within the relative response table.
-
-    Parameters
-    ----------
-    wavelength: array_like, 1-D
-        Wavelengths in the science data
-
-    relsens: record array
-        Contains two columns, 'wavelength' and 'response'.
-
-    Returns
-    -------
-    r_factor: array_like
-        The response, interpolated at `wavelength`, with extrapolated
-        elements and zero or negative response values set to 1.  Divide
-        the net count rate by r_factor to obtain the flux.
-    """
-
-    # "_relsens" indicates that the values were read from the RELSENS table.
-    wl_relsens = relsens['wavelength']
-    resp_relsens = relsens['response']
-
-    if np.any(np.isnan(wl_relsens)) or np.any(np.isnan(resp_relsens)):
-        raise ValueError("Found NaNs in RELSENS table.")
-
-    # `r_factor` is the response, interpolated at the wavelengths in the
-    # science data.  -2048 is a flag value, to check for extrapolation.
-    r_factor = np.interp(wavelength, wl_relsens, resp_relsens, -2048., -2048.)
-    mask = np.where(r_factor == -2048.)
-    if len(mask[0]) > 0:
-        log.warning("Using RELSENS, %d elements were extrapolated; "
-                    "these values will be set to 1.", len(mask[0]))
-        r_factor[mask] = 1.
-    mask = np.where(r_factor <= 0.)
-    if len(mask[0]) > 0:
-        log.warning("Using RELSENS, %d interpolated response values "
-                    "were <= 0; these values will be set to 1.", len(mask[0]))
-        r_factor[mask] = 1.
-
-    return r_factor
 
 
 def extract_ifu(input_model, source_type, extract_params):
@@ -220,6 +189,10 @@ def extract_ifu(input_model, source_type, extract_params):
             if outer_bkg is None:
                 outer_bkg = min(inner_bkg * math.sqrt(2.),
                                 smaller_axis / 2. - 1.)
+            if inner_bkg <= 0. or outer_bkg <= 0. or inner_bkg >= outer_bkg:
+                log.debug("Turning background subtraction off, due to "
+                          "the values of inner_bkg and outer_bkg.")
+                subtract_background = False
         width = None
         height = None
         theta = None
@@ -232,11 +205,9 @@ def extract_ifu(input_model, source_type, extract_params):
             height = smaller_axis / 2.
         theta = extract_params['theta'] * math.pi / 180.
         radius = None
+        subtract_background = False
         inner_bkg = None
         outer_bkg = None
-
-    if inner_bkg <= 0. or outer_bkg <= 0. or inner_bkg >= outer_bkg:
-        subtract_background = False
 
     log.debug("IFU 1-D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))

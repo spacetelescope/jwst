@@ -1084,7 +1084,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
         elif isinstance(input_model, datamodels.IFUCubeModel):
 
             try:
-                source_type = input_model.meta.target.source_type
+                source_type = input_model.meta.target.source_type.lower()
             except AttributeError:
                 source_type = "unknown"
             output_model = ifu.ifu_extract1d(input_model, refname, source_type)

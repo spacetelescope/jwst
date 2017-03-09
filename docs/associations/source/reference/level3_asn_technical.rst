@@ -64,6 +64,7 @@ The following example will be used to explain the contents of an association::
         "degraded_status": "No known degraded exposures in association.",
         "version_id": "20160826t131159",
         "asn_type": "image",
+        "asn_id": "c3001",
         "constraints": "Constraints:\n    opt_elem2: CLEAR\n    pointing_type: SCIENCE\n    detector: (?!NULL).+\n    target_name: 1\n    exp_type: NRC_IMAGE\n    wfsvisit: NULL\n    instrument: NIRCAM\n    opt_elem: F090W\n    program: 99009",
         "asn_pool": "mega_pool",
         "asn_rule": "Asn_Image",
