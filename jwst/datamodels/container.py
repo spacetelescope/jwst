@@ -22,20 +22,26 @@ class ModelContainer(model_base.DataModel):
     """
     A container for holding DataModels.
 
+    This functions like a list for holding DataModel objects.  It can be
+    iterated through like a list, DataModels within the container can be
+    addressed by index, and the datamodels can be grouped into a list of
+    lists for grouped looping, useful for NIRCam where grouping together
+    all detectors of a given exposure is useful for some pipeline steps.
+
     Parameters
     ----------
     init : file path, list of DataModels, or None
 
         - file path: initialize from an association table
 
-        - list: a list of any DataModel models
+        - list: a list of DataModels of any type
 
         - None: initializes an empty `ModelContainer` instance, to which
-          DataModel models can added via the ``append()`` method.
+          DataModels can added via the ``append()`` method.
 
     Examples
     --------
-    >>> c = ModelContainer('example_asn.json')
+    >>> c = datamodels.ModelContainer('example_asn.json')
     >>> c[0]    # the first DataModel in the container
     >>> c.models_grouped    # a list of the DataModels grouped by exposure
     """
@@ -146,7 +152,7 @@ class ModelContainer(model_base.DataModel):
         Parameters
         ----------
         filepath : str
-            The path to an ASN file.
+            The path to an association file.
         """
 
         filepath = op.abspath(op.expanduser(op.expandvars(filepath)))
@@ -203,23 +209,17 @@ class ModelContainer(model_base.DataModel):
             result.append(group[0].meta.group_id)
         return result
 
-    def save(self, filename_not_used, path=None, *args, **kwargs):
+    def save(self, path=None, *args, **kwargs):
         """
         Write out models in container to FITS or ASDF.
 
         Parameters
         ----------
 
-        filename_not_used : string
-            this first argument is ignored in this implementation of the
-            save method.  It is used by the pipeline steps to save individual
-            files, but that is not applicable here.  Instead, we use the path
-            arg below and read the filename output from the meta tag in each
-            file in the container.
-
         path : string
-            directory to write out files.  Defaults to current working dir.
-            If directory does not exist, it creates it.
+            Directory to write out files.  Defaults to current working dir.
+            If directory does not exist, it creates it.  Filenames are pulled
+            from `.meta.filename` of each datamodel in the container.
         """
         if path is None:
             path = os.getcwd()
