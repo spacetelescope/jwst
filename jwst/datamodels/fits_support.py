@@ -454,17 +454,7 @@ def _fits_array_loader(hdulist, schema, hdu_index, known_datas):
         return None
 
     known_datas.add(hdu)
-    data = hdu.data
-    
-    data2 = properties._cast(data, schema)
-
-    # Casting a table loses the listeners, so restore them
-    if isinstance(hdu, fits.BinTableHDU):
-        coldefs = data._coldefs
-        coldefs2 = data2._coldefs
-        coldefs2._listeners = coldefs._listeners
-
-    return data2
+    return from_fits_hdu(hdu, schema)
 
 
 def _schema_has_fits_hdu(schema):
@@ -582,3 +572,18 @@ def from_fits(hdulist, schema, extensions=None, validate=True,
     _load_history(hdulist, ff.tree)
 
     return ff
+
+def from_fits_hdu(hdu, schema):
+    """
+    Read the data from a fits hdu into a numpy ndarray
+    """
+    data = hdu.data    
+    data2 = properties._cast(data, schema)
+
+    # Casting a table loses the listeners, so restore them
+    if isinstance(hdu, fits.BinTableHDU):
+        coldefs = data._coldefs
+        coldefs2 = data2._coldefs
+        coldefs2._listeners = coldefs._listeners
+
+    return data2
