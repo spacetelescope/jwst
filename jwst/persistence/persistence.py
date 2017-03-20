@@ -3,9 +3,11 @@ from __future__ import (absolute_import, unicode_literals, division,
 #
 #  Module for correcting for persistence
 
+import math
 import numpy as np
 import logging
 from .. import datamodels
+from .. datamodels import dqflags
 
 from astropy.io import fits             # xxx test debug
 
@@ -43,8 +45,9 @@ class DataSet():
     Parameters
    ----------
     """
-    def __init__(self, output_obj, traps_filled_model, trap_density_model,
-                 traps_model, gain_model, sat_model):
+    def __init__(self, output_obj, traps_filled_model,
+                 trap_density_model, traps_model,
+                 pers_sat_model):
         """
         Short Summary
         -------------
@@ -66,24 +69,17 @@ class DataSet():
             Image of the total number of traps per pixel.
 
         traps_model: traps model
-            Table giving parameters for traps
+            Table giving parameters for traps.
 
-        gain_model: image model
-            Gain reference file
-
-        sat_model: image model
-            Saturation reference file
+        pers_sat_model: saturation model
+            Persistence saturation limit reference file.
         """
 
         self.output_obj = output_obj
         self.traps_filled = traps_filled_model
         self.trap_density = trap_density_model
         self.traps_model = traps_model
-        self.gain = gain_model
-        self.saturation = sat_model
-
-        # Initial values.
-        self.save_section = None
+        self.persistencesat = pers_sat_model
 
 
     def do_all(self):
@@ -120,13 +116,12 @@ class DataSet():
         # Note that this might be a subarray.
         persistence = self.output_obj.data[0, 0, :, :] * 0.
         (nints, ngroups, ny, nx) = shape
-        # xxx test debug t_group = self.output_obj.meta.exposure.group_time
-        t_group = 1.
+        t_group = self.output_obj.meta.exposure.group_time
         # Time of one integration, in seconds.  This is the duration,
         # not necessarily the effective integration time.
         t_int = t_group * float(ngroups)
 
-        if self.traps_filled is None:
+        if not self.traps_filled:
             have_traps_filled = False
             if detector == "MIRI":
                 (det_ny, det_nx) = (1024, 1032)
@@ -139,133 +134,152 @@ class DataSet():
             have_traps_filled = True
 
         self.traps_filled = no_NaN(self.traps_filled, 0., zap_nan=True)
-        self.gain = no_NaN(self.gain, 1., zap_nan=True, zap_zero=True)
-        self.saturation = no_NaN(self.saturation, 1.e7, zap_nan=True)
-        log.debug("xxx do_all:  self.traps_filled.mean = %g",
-                  self.traps_filled.data[1].mean())
-        log.debug("xxx do_all:  self.gain.mean = %g", self.gain.data[1].mean())
-        log.debug("xxx do_all:  self.saturation.mean = %g",
-                  self.saturation.data[1].mean())
+        self.trap_density = no_NaN(self.trap_density, 0., zap_nan=True)
+        self.persistencesat = no_NaN(self.persistencesat, 1.e7, zap_nan=True)
+        log.debug("xxx do_all:  k = 1, traps_filled:  %g %g %g",
+                  self.traps_filled.data[1].min(),
+                  self.traps_filled.data[1].mean(),
+                  self.traps_filled.data[1].max())
+        log.debug("xxx do_all:  persistencesat.mean = %g",
+                  self.persistencesat.data.mean())
 
-        log.debug("xxx do_all:  self.trap_density.data.mean = %g",
-                  self.trap_density.data.mean())
+        log.debug("xxx do_all:  trap_density:  %g %g %g",
+                  self.trap_density.data.min(),
+                  self.trap_density.data.mean(),
+                  self.trap_density.data.max())
 
         if have_traps_filled:   # was there an actual traps_filled file?
             log.debug("xxx do_all:  yes, we have a traps_filled file")
-            # Update traps_filled to the start of the exposure.  to_start
-            # is the time difference in seconds from the traps_filled file
-            # to the current exposure.
+            # Decrease traps_filled by the number of traps that decayed
+            # in the time (to_start) from the end of the traps_filled file
+            # to the start of the current exposure.
             to_start = (self.output_obj.meta.exposure.start_time -
                         self.traps_filled.meta.exposure.end_time) * 86400.
-            # xxx test debug Convert to units of group time.
-            to_start /= self.output_obj.meta.exposure.group_time  # xxx test debug
-            log.debug("xxx do_all:  to_start = %g 'groups'", to_start)
+            log.debug("xxx do_all:  to_start = %g seconds", to_start)
             for k in range(nfamilies):
+                log.debug("xxx do_all:  k = %d, traps_filled:  %g %g %g",
+                          k, self.traps_filled.data[k].min(),
+                             self.traps_filled.data[k].mean(),
+                             self.traps_filled.data[k].max())
+                decay_param_k = self.get_decay_param(par, k)
                 decay = self.compute_decay(self.traps_filled.data[k],
-                                           par[3][k], to_start)
-                log.debug("xxx do_all:  k = %d, decay.mean = %g",
-                          k, decay.mean())
+                                           decay_param_k, to_start)
+                log.debug("xxx do_all:  k = %d, decay:  %g %g %g",
+                          k, decay.min(), decay.mean(), decay.max())
                 self.traps_filled.data[k, :, :] -= decay
-                log.debug("xxx do_all:  traps_filled.data.mean = %g",
-                          self.traps_filled.data[k, :, :].mean())
+                log.debug("xxx do_all:  traps_filled:  %g %g %g",
+                          self.traps_filled.data[k, :, :].min(),
+                          self.traps_filled.data[k, :, :].mean(),
+                          self.traps_filled.data[k, :, :].max())
 
-        # If the input is a subarray, extract matching sections of
+        # If the science image is a subarray, extract matching sections of
         # reference images.
-        if self.ref_matches_sci(self.traps_filled, self.output_obj):
+        # We don't need to extract a subarray from self.traps_filled (which
+        # is full-frame and 3-D, one image plane for each trap family), but
+        # we can use this tuple of slice objects later, to update the
+        # self.traps_filled data.
+        save_slice = self.get_slice(self.traps_filled, self.output_obj)
+        if self.ref_matches_sci(self.traps_filled, save_slice):
             is_subarray = False
             save_slice = None
-            tr_filled = self.traps_filled.copy()
         else:
-            # save_slice is the location of the subarray.
-            (tr_filled, save_slice) = self.get_subarray(self.traps_filled,
-                                                        self.output_obj)
             is_subarray = True
         log.debug("xxx is_subarray = %s", str(is_subarray))
-        # self.traps_filled and tr_filled are 3-D arrays, one image plane
-        # for each trap family.
-        # self.traps_filled is the size of the full detector.
-        # tr_filled is the size of the science image, so it may be either
-        # the full detector or a subarray.
 
-        if not self.ref_matches_sci(self.trap_density, self.output_obj):
-            (self.trap_density, _) = self.get_subarray(self.trap_density,
-                                                       self.output_obj)
+        slc = self.get_slice(self.trap_density, self.output_obj)
+        if not self.ref_matches_sci(self.trap_density, slc):
+            self.trap_density = self.get_subarray(self.trap_density, slc)
 
-        if not self.ref_matches_sci(self.gain, self.output_obj):
-            (self.gain, _) = self.get_subarray(self.gain, self.output_obj)
+        slc = self.get_slice(self.persistencesat, self.output_obj)
+        if not self.ref_matches_sci(self.persistencesat, slc):
+            self.persistencesat = self.get_subarray(self.persistencesat, slc)
 
-        if not self.ref_matches_sci(self.saturation, self.output_obj):
-            (self.saturation, _) = self.get_subarray(self.saturation,
-                                                     self.output_obj)
+        # These are for saving info in output files for testing, and
+        # save_decayed is also used for temporary storage (it's populated
+        # in the loop over groups and used in the loop over integrations).
+        # They're 3-D arrays, one plane for each trap family.  If the
+        # input is a subarray, so are these.
+        save_filled = np.zeros((nfamilies, shape[-2], shape[-1]),
+                               dtype=self.output_obj.data.dtype)
+        save_cr_filled = save_filled.copy()
+        save_decayed = save_filled.copy()
 
-        # xxx These are for saving info in output files.  They're
-        # 3-D arrays, one plane for each trap family.  If the input is a
-        # subarray, so are these.
-        temp_filled = tr_filled.data * 0.       # xxx test debug
-        temp_decayed = temp_filled.copy()       # xxx test debug
-
-        # self.traps_filled will be decreased with each group, to account
-        # for the decay of traps.
-        # tr_filled will be increased each group, to account for the
-        # capture of charge by traps.
-        # After processing all integrations, tr_filled will be added to
-        # self.traps_filled, at the appropriate location if the science
-        # image is a subarray.
+        # self.traps_filled will be updated with each integration, to
+        # account for charge capture and decay of traps.
         for integ in range(nints):
-            slope = self.compute_slope(integ)
-            temp_filled[:, :, :] = 0.           # xxx
-            temp_decayed[:, :, :] = 0.          # xxx
+            delta_t = 0.
+            # slope has to be computed early in the loop over integrations,
+            # before the data are modified by subtracting persistence.
+            # The slope is needed for computing charge captures.
+            (grp_slope, slope) = self.compute_slope(integ)
             for group in range(ngroups):
+                # Time from beginning of integration to end of current group.
+                delta_t += t_group
                 persistence[:, :] = 0.          # initialize
                 for k in range(nfamilies):
-                    capture_param_k = self.get_capture_param(par, k)
                     decay_param_k = self.get_decay_param(par, k)
-                    # This may be a subarray.
-                    filled = self.compute_capture(capture_param_k,
-                                                  self.trap_density.data,
-                                                  slope, t_group)
-                    log.debug("yyy k = %d:  %g, %g, %g, %g, %g, %g --> %g",
-                              k, capture_param_k[0], capture_param_k[1],
-                              capture_param_k[2],
-                              self.trap_density.data[900, 900],
-                              slope[900, 900], t_group,
-                              filled[900, 900])
                     # This will be the size of the full detector.
+                    if group == 0:              # xxx test debug
+                        log.debug("xxx do_all/compute_decay:  "
+                                  "k = %d, traps_filled:  %g %g %g",
+                                  k, self.traps_filled.data[k].min(),
+                                     self.traps_filled.data[k].mean(),
+                                     self.traps_filled.data[k].max())
                     decayed = self.compute_decay(self.traps_filled.data[k],
-                                                 decay_param_k, t_group)
-                    self.traps_filled.data[k, :, :] -= decayed
+                                                 decay_param_k, delta_t)
+                    if group == 0:              # xxx test debug
+                        log.debug("xxx do_all/compute_decay:  "
+                                  "decayed:  %g %g %g",
+                                  decayed.min(), decayed.mean(), decayed.max())
                     if is_subarray:
                         persistence += decayed[save_slice[0], save_slice[1]]
                     else:
                         persistence += decayed
-                    # tr_filled accumulates throughout the entire exposure.
-                    tr_filled.data[k, :, :] += filled
-                    # These accumulate throughout each integration.
-                    temp_filled[k, :, :] += filled              # xxx
-                    if is_subarray:                             # xxx
-                        temp_decayed[k, :, :] += decayed[save_slice[0],
-                                                         save_slice[1]]
-                    else:
-                        temp_decayed[k, :, :] += decayed        # xxx
-                # Persistence was computed in electrons, so convert to DN.
-                self.output_obj.data[integ, group, :, :] -= \
-                        persistence / self.gain.data
-            # save for testing and debugging                    # xxx
-            fits.writeto("filled_{}.fits".format(integ),        # xxx
-                         data=temp_filled, overwrite=True)      # xxx
-            fits.writeto("decayed_{}.fits".format(integ),       # xxx
-                         data=temp_decayed, overwrite=True)     # xxx
+                    if group == ngroups - 1:
+                        if is_subarray:
+                            save_decayed[k, :, :] = decayed[save_slice[0],
+                                                            save_slice[1]]
+                        else:
+                            save_decayed[k, :, :] = decayed
+                # Persistence was computed in DN.
+                self.output_obj.data[integ, group, :, :] -= persistence
 
-        # Update self.traps_filled to include traps that have captured
-        # charge during the current exposure.
-        if is_subarray:
+            # Update traps_filled with the number of traps that captured
+            # a charge or decayed during the current integration.
             for k in range(nfamilies):
-                self.traps_filled.data[k, save_slice[0], save_slice[1]] += \
-                        tr_filled.data[k, :, :].copy()
-        else:
-            for k in range(nfamilies):
-                self.traps_filled.data[k, :, :] += \
-                        tr_filled.data[k, :, :].copy()
+                capture_param_k = self.get_capture_param(par, k)
+                # This may be a subarray.
+                filled = self.compute_capture(capture_param_k,
+                                              self.trap_density.data,
+                                              slope, t_int)
+                cr_filled = self.delta_fcn_capture(capture_param_k,
+                                                   self.trap_density.data,
+                                                   grp_slope,
+                                                   integ, ngroups, t_group)
+                save_filled[k, :, :] = filled.copy()
+                save_cr_filled[k, :, :] = cr_filled.copy()
+                filled += cr_filled
+                del cr_filled
+                if is_subarray:
+                    self.traps_filled.data[k, save_slice[0], save_slice[1]] += \
+                                (filled - save_decayed[k, :, :])
+                else:
+                    self.traps_filled.data[k, :, :] += \
+                                (filled - save_decayed[k, :, :])
+                log.debug("yyy k = %d:  %g, %g, %g, %g, %g, %g --> %g",
+                          k, capture_param_k[0], capture_param_k[1],
+                          capture_param_k[2],
+                          self.trap_density.data[900, 900],
+                          slope[900, 900], t_int,
+                          filled[900, 900])
+
+            # Write to files for testing and debugging.         # xxx
+            fits.writeto("filled_{}.fits".format(integ),
+                         data=save_filled, overwrite=True)
+            fits.writeto("cr_filled_{}.fits".format(integ),
+                         data=save_cr_filled, overwrite=True)
+            fits.writeto("decayed_{}.fits".format(integ),
+                         data=save_decayed, overwrite=True)
 
         # Update the start and end times (and other stuff) in the
         # traps_filled image to the times for the current exposure.
@@ -289,30 +303,8 @@ class DataSet():
         self.traps_filled.meta.filename = self.output_obj.meta.filename
 
 
-    def ref_matches_sci(self, ref, sci):
-        """Test whether ref and sci are the same subarray."""
-
-        # For the time being, just compare shapes.      xxx not finished
-        if ref.shape[-2:] == sci.shape[-2:]:
-            return True
-        else:
-            return False
-
-        """
-        xxx maybe use later
-        # See if the reference and science model subarray parameters match
-        if (ref.meta.subarray.xstart == sci.meta.subarray.xstart and
-            ref.meta.subarray.xsize == sci.meta.subarray.xsize and
-            ref.meta.subarray.ystart == sci.meta.subarray.ystart and
-            ref.meta.subarray.ysize == sci.meta.subarray.ysize):
-            return True
-        else:
-            return False
-        """
-
-
-    def get_subarray(self, ref, sci):
-        """Extract a subarray from a reference file.
+    def get_slice(self, ref, sci):
+        """Find the 2-D slice for a reference file.
 
         Parameters
         ----------
@@ -324,11 +316,9 @@ class DataSet():
 
         Returns
         -------
-        tuple (sub, s)
-            `sub` is the subarray extracted from `ref`.  `sub` will
-            sometimes be 2-D and other times 3-D.
-            `s` is a two-element tuple, the Y and X slices that were used
-            to extract the subarray.
+        tuple
+            A two-element tuple of slice objects, the Y and X slices that
+            can be used to extract a subarray from the reference file.
         """
 
         ref_shape = ref.shape
@@ -339,15 +329,15 @@ class DataSet():
         sci_ny = sci_shape[-2]
 
         # These are limits of slices.
-        sci_x1 = sci.meta.subarray.xstart
+        sci_x1 = sci.meta.subarray.xstart - 1
         sci_x2 = sci_x1 + sci_nx
-        sci_y1 = sci.meta.subarray.ystart
+        sci_y1 = sci.meta.subarray.ystart - 1
         sci_y2 = sci_y1 + sci_ny
         log.debug("sci xstart=%d, xstop=%d, ystart=%d, ystop=%d",
-                  (sci_x1, sci_x2 - 1, sci_y1, sci_y2 - 1))
+                  sci_x1, sci_x2, sci_y1, sci_y2)
 
-        ref_x1 = ref.meta.subarray.xstart
-        ref_y1 = ref.meta.subarray.ystart
+        ref_x1 = ref.meta.subarray.xstart - 1
+        ref_y1 = ref.meta.subarray.ystart - 1
         if ref_x1 is None:
             ref_x1 = sci_x1
         if ref_y1 is None:
@@ -355,7 +345,7 @@ class DataSet():
         ref_x2 = ref_x1 + ref_nx
         ref_y2 = ref_y1 + ref_ny
         log.debug("ref xstart=%d, xstop=%d, ystart=%d, ystop=%d",
-                  (ref_x1, ref_x2 - 1, ref_y1, ref_y2 - 1))
+                  ref_x1, ref_x2, ref_y1, ref_y2)
 
         # Compute the slicing indexes
         xstart = sci_x1 - ref_x1
@@ -366,23 +356,67 @@ class DataSet():
 
         # Check for errors in the slice indexes
         if (xstart < 0 or ystart < 0 or
-            xstop >= ref.data.shape[-1] or ystop >= ref.data.shape[-2]):
+            xstop > ref.data.shape[-1] or ystop > ref.data.shape[-2]):
             log.error("Science and reference file arrays not compatible")
             raise ValueError("Can't extract matching subarray from "
                              "reference data")
 
-        s = (slice(ystart, ystop), slice(xstart, xstop))
+        return (slice(ystart, ystop), slice(xstart, xstop))
 
-        # Slice the reference model arrays
-        sub = ref.copy()
-        sub.data = ref.data[..., s[0], s[1]].copy()
+
+    def ref_matches_sci(self, ref, slc):
+        """Test whether ref and sci are full-frame or the same subarray.
+
+        Parameters
+        ----------
+        ref: data model
+            A reference image.
+
+        slc: tuple of two slice objects
+            The Y and X slices that can be used to extract a subarray from
+            the reference file.  This is returned by function get_slice.
+
+        Returns
+        -------
+        """
+
+        slc_test_y = slice(0, ref.shape[-2])
+        slc_test_x = slice(0, ref.shape[-1])
+
+        if slc[0] == slc_test_y and slc[1] == slc_test_x:
+            return True
+        else:
+            return False
+
+
+    def get_subarray(self, ref, slc):
+        """Extract a subarray from a reference file.
+
+        Parameters
+        ----------
+        ref: data model
+            A reference image.
+
+        slc: tuple of two slice objects
+            The Y and X slices that can be used to extract a subarray from
+            the reference file.  This is returned by function get_slice.
+
+        Returns
+        -------
+        refsub: data model
+            `refsub` is the subarray extracted from `ref`.  `refsub` will
+            sometimes be 2-D and other times 3-D.
+        """
+
+        # The xxx
+        refsub = ref.copy()
+        refsub.data = ref.data[..., slc[0], slc[1]].copy()
         if ref.__hasattr__(err):
-            sub.err = ref.err[..., s[0], s[1]].copy()
+            refsub.err = ref.err[..., slc[0], slc[1]].copy()
         if ref.__hasattr__(dq):
-            sub.dq = ref.dq[..., s[0], s[1]].copy()
+            refsub.dq = ref.dq[..., slc[0], slc[1]].copy()
 
-        # Return the sliced reference model and the y and x slices
-        return (sub, s)
+        return refsub
 
 
     def get_parameters(self):
@@ -408,7 +442,20 @@ class DataSet():
 
 
     def compute_slope(self, integ):
-        """Compute the slope of the ramp at each pixel.
+        """Compute an estimate of the slope of the ramp for each pixel.
+
+        We need a value for the slope that will not include cosmic-ray
+        jumps, and groups that are flagged as saturated must also not
+        contribute to the slope.  The approach will be to find the
+        difference between adjacent groups, set the difference to a very
+        large value if the group was saturated, then sort the differences
+        along the axis for the ramp.  All the saturated groups will then
+        be at the (high) end.  Cosmic-ray-affected groups should be just
+        below the saturated groups (unless the effect of a CR was very
+        small, in which case it won't matter where it is).  We can therefore
+        ignore all the CR jumps and saturated values just by knowing how
+        many of them there are.  The average of the remaining differences
+        is the slope.
 
         Parameters
         ----------
@@ -417,46 +464,90 @@ class DataSet():
 
         Returns
         -------
-        2-D ndarray
-            The array of ramp slopes; the unit is fraction of the
-            persistence saturation limit per group.
-            xxx Are these the right units?
+        (grp_slope, slope): tuple of 2-D ndarrays
+            Both arrays give the ramp slope at each pixel, but the units
+            differ.  `grp_slope` is the ramp slope in units of counts per
+            group, while `slope` is the ramp slope in units of (counts per
+            persistence saturation limit) per second.  The reason for
+            keeping both arrays is that the persistence saturation limit
+            (which could be, for example, of order 90000) can differ from
+            one pixel to another.
         """
 
-        # This is based on Michael Regan's trapcapturemodel.pro.
-
-        # xxx This is a workaround, because we don't have such a reference
-        # file.  Should we create one?
-        persistencesaturationlimit = 90000.
-
         (_, ngroups, ny, nx) = self.output_obj.shape
-        index = (self.output_obj.data[integ, :, :, :] > self.saturation.data)
-        satcount = index.sum(axis=0, dtype=np.int32)
-        goodindex = ngroups - satcount - 1
-        del index
-        # If goodindex is -1, the code below will index out of bounds, and
-        # if goodindex is 0, we'll divide by zero; so modify it if it's < 1.
-        mask = np.where(goodindex < 1)
-        if len(mask[0]) > 0:
-            log.warning("%d ramps were saturated in the first or "
-                        "second group.", len(mask[0]))
-            goodindex[mask] = 1
-        del mask
+        if ngroups < 2:
+            # These values are supposed to be arrays, but the way they're
+            # used (in compute_capture and delta_fcn_capture), they will
+            # either broadcast to the array shape (in compute_capture) or
+            # they will not actually be referenced when ngroups < 2.
+            return (0., 0.)
 
-        # We need the science data in units of electrons.  (no, maybe not)
-        # xxx data = self.output_obj.data * self.gain.data
-        data = self.output_obj.data
+        gdqflags = dqflags.group
 
-        (iy, ix) = np.indices((ny, nx), dtype=np.int32)
-        accumulatedEl = data[integ, goodindex, iy, ix].astype(np.float64) - \
-                        data[integ, 0, :, :].astype(np.float64)
-        # persistencesaturationlimit should be a 2-D reference file.
-        slope = (accumulatedEl / persistencesaturationlimit) / \
-                goodindex.astype(np.float64)
-        log.debug("xxx compute_slope:  slope.mean = %g",
-                  slope.mean())
+        data = self.output_obj.data[integ, :, :, :]
+        gdq = self.output_obj.groupdq[integ, :, :, :]
 
-        return slope
+        # This assumes that the jump step has already been run, so that
+        # CR jumps will have been flagged in the groupdq extension.
+        # n_cr is a 2-D array of the number of cosmic-ray hits per pixel.
+        cr = (np.bitwise_and(gdq, gdqflags["JUMP_DET"]) > 0).astype(np.int32)
+        n_cr = cr.sum(axis=0)
+        del cr
+
+        # In the absence of saturation and jumps, these differences would
+        # be approximately constant for a given pixel.
+        diff = data[1:, :, :] - data[0:-1, :, :]
+        max_diff = diff.max()
+        # Larger than any actual data value
+        huge_diff = max(2. * max_diff, 1.e5)
+        del max_diff
+
+        # This assumes that the saturation step has already been run.
+        # n_sat is a 2-D array of the number of saturated groups per pixel.
+        s_mask = (np.bitwise_and(gdq[1:, :, :], gdqflags["SATURATED"]) > 0)
+        diff[s_mask] = huge_diff
+        sat = s_mask.astype(np.int32)
+        n_sat = sat.sum(axis=0)
+        del s_mask, sat
+
+        sdiff = np.sort(diff, axis=0)
+        # Upper limit of good data (slice notation, i.e. exclusive).
+        upper = diff.shape[0] - (n_cr + n_sat)
+        really_bad = np.where(upper < 0)
+        upper[really_bad] = 0           # for the comparison with indx below
+        del really_bad
+        temp = np.arange(ngroups - 1, dtype=np.int32)
+        temp2 = np.repeat(temp, nx * ny)
+        indx = temp2.reshape((ngroups - 1, ny, nx))
+        mask = np.where(indx >= upper)
+        sdiff[mask] = 0.                # zero values won't affect the sum
+        del temp, temp2, indx, mask
+        bad = np.where(upper <= 0)
+        upper[bad] = 1                  # so we can divide by upper
+        # xxx begin test debug
+        print("xxx sdiff:", flush=True)
+        for j in range(944, 949):
+            for i in range(940, 945):
+                print("{} {}  {}".format(j, i, sdiff[0:5, j, i]), flush=True)
+        # xxx end test debug
+        # grp_slope has units of DN / group
+        grp_slope = np.sum(sdiff, axis=0) / upper.astype(np.float32)
+        grp_slope[bad] = 0.
+        del bad
+        print("xxx slope[944:949, 940:945]:", flush=True)       # xxx debug
+        print(grp_slope[944:949, 940:945], flush=True)      # xxx test debug
+
+        # units = (DN / persistence_saturation_limit) / second
+        slope = grp_slope / (self.persistencesat.data *
+                             self.output_obj.meta.exposure.group_time)
+        log.debug("xxx compute_slope:  grp_slope = %g %g %g",
+                  grp_slope.min(), grp_slope.mean(), grp_slope.max())
+        log.debug("xxx compute_slope:  slope = %g %g %g",
+                  slope.min(), slope.mean(), slope.max())
+        fits.writeto("slope_{}.fits".format(integ),
+                     data=slope, overwrite=True)
+
+        return (grp_slope, slope)
 
 
     def get_capture_param(self, par, k):
@@ -509,16 +600,16 @@ class DataSet():
         return par3[k]
 
 
-    def compute_capture(self, capture_param_k, trap_density, slope, t_int):
-        """Compute the number of traps that will be filled in time t_int.
+    def compute_capture(self, capture_param_k, trap_density, slope, delta_t):
+        """Compute the number of traps that will be filled in time delta_t.
 
         This is based on Michael Regan's predictrampcapture3.pro.
 
         Parameters
         ----------
         capture_param_k: tuple
-            Three values read from a reference table.  These will be
-            from three separate columns but one row; the row corresponds
+            Three values read from a reference table.  These will be from
+            three separate columns but just one row; the row corresponds
             to the current trap family.  (The _k in the variable name
             refers to the index of the trap family.)
 
@@ -526,37 +617,111 @@ class DataSet():
             Image of the total number of traps per pixel.
 
         slope: 2-D ndarray
-            Image of the slope of the ramp per pixel.  The slope is
-            computed from the non-saturated pixel values.  This value is
-            not precise; it's based on the first and last (non-saturated)
-            values, which includes cosmic-ray hits but treats them as if
-            they were not discontinuous jumps but were instead spread
-            uniformly along the ramp.
+            Array of the slope of the ramp at each pixel.  The slope was
+            computed from the pixel values that were not saturated and were
+            not affected by jumps, based on flags in the groupdq extension.
+            The unit is (fraction of the persistence saturation limit)
+            per second.
 
-        t_int: float
-            The time interval (unit = group count) over which the charge
-            capture is to be computed.  (t_int implies integration time,
-            but that is not necessarily the actual time interval.)
+        delta_t: float
+            The time interval (unit = second) over which the charge
+            capture is to be computed.
 
         Returns
         -------
         2-D ndarray
-            The computed traps_filled at the end of the exposure.
+            The computed traps_filled at the end of the integration.
         """
 
         (par0, par1, par2) = capture_param_k
 
-        t1 = t_int**2 / 2.
-        t2 = (-t_int / par1) * np.exp(par1 * t_int)
-        t3 = (1.0 / par1**2) * np.exp(par1 * t_int)
+        t1 = delta_t**2 / 2.
+        t2 = (-delta_t / par1) * math.exp(par1 * delta_t)
+        t3 = (1.0 / par1**2) * math.exp(par1 * delta_t)
         t4 = -1.0 / par1**2
         traps_filled = (trap_density * slope**2 *
-                        (par0 * (t1 + t2 + t3 + t4) + t_int**2 * par2 / 2.))
+                        (par0 * (t1 + t2 + t3 + t4) + delta_t**2 * par2 / 2.))
 
         return traps_filled
 
 
-    def compute_decay(self, traps_filled, decay_param, t_int):
+    def delta_fcn_capture(self, capture_param_k, trap_density,
+                          grp_slope, integ, ngroups, t_group):
+        """Compute capture due to cosmic-ray jumps.
+
+        If a cosmic-ray hit was in group number g (meaning that
+        data[integ, g, y, x] was higher than expected), then
+        delta_t = (ngroups - g - 0.5) * t_group
+        is the time from the CR-affected group to the end of the
+        integration, assuming that the CR hit in the middle (timewise)
+        of the group.
+        cr_filled = trap_density * par0 * jump * (1. - exp(par1 * delta_t))
+
+        Parameters
+        ----------
+        capture_param_k: tuple
+            Three values read from a reference table.  These will be from
+            three separate columns but just one row; the row corresponds
+            to the current trap family.  (The _k in the variable name
+            refers to the index of the trap family.)
+
+        trap_density: 2-D ndarray
+            Image of the total number of traps per pixel.
+
+        grp_slope: 2-D ndarray
+            Array of the slope of the ramp at each pixel.  The slope was
+            computed from the pixel values that were not saturated and were
+            not affected by jumps, based on flags in the groupdq extension.
+            The unit is counts (DN) per group.
+
+        integ: int
+            Integration number.
+
+        ngroups: int
+            Total number of groups in the integration.
+
+        t_group: float
+            The time (seconds) from the start of one group to the start
+            of the next group.
+
+        Returns
+        -------
+        2-D ndarray
+            The computed cr_filled at the end of the integration.
+        """
+
+        (par0, par1, _) = capture_param_k
+        # cr_filled will be incremented group-by-group, depending on
+        # where cosmic rays were found in each group.
+        cr_filled = np.zeros_like(trap_density)
+        data = self.output_obj.data[integ, :, :, :]
+        gdq = self.output_obj.groupdq[integ, :, :, :]
+        gdqflags = dqflags.group
+
+        # If there's a CR hit in the first group, we can't determine its
+        # amplitude, so skip the first group.  Loop over all subsequent
+        # groups, checking (via the groupdq extension) for cosmic-ray hits.
+        for group in range(1, ngroups):
+            cr_flag = np.where(np.bitwise_and(gdq[group, :, :],
+                                              gdqflags['JUMP_DET']) > 0)
+            if len(cr_flag[0]) > 0:
+                delta_t = (float(ngroups - group) - 0.5) * t_group
+                # z and z_prev are index arrays.
+                z = np.empty(len(cr_flag[0]), dtype=np.intp)
+                z[:] = group
+                z_prev = z - 1
+                # jump is a 1-D array, just for the CRs in the current group.
+                jump = ((data[z, cr_flag[0], cr_flag[1]] -
+                         data[z_prev, cr_flag[0], cr_flag[1]]) -
+                        grp_slope[cr_flag])
+                jump = np.where(jump < 0., 0., jump)
+                cr_filled[cr_flag] += (trap_density[cr_flag] * par0 * jump *
+                                       (1. - math.exp(par1 * delta_t)))
+
+        return cr_filled
+
+
+    def compute_decay(self, traps_filled, decay_param, delta_t):
         """Compute the number of trap decays.
 
         This is based on Michael Regan's trapdecay.pro.
@@ -571,17 +736,24 @@ class DataSet():
             The decay parameter.  This is negative, but otherwise it's
             the e-folding time for trap decay for the current trap family.
 
-        t_int: float
-            The time interval (unit = group count) over which the trap
-            decay is to be computed.
+        delta_t: float
+            The time interval (unit = second) over which the trap decay
+            is to be computed.
 
         Returns
         -------
-        decay: 2-D ndarray
+        decayed: 2-D ndarray
             Image of the computed number of trap decays for each pixel,
             for the current trap family.
         """
 
-        log.debug("xxx compute_decay:  traps_filled.mean = %g",
-                  traps_filled.mean())
-        return traps_filled * (1. - np.exp(decay_param * t_int))
+        if decay_param > 0.:
+            log.warning("compute_decay:  decay_param is %g; "
+                        "a negative value was expected.", decay_param)
+            decay_param = -decay_param
+            log.warning("compute_decay:  Using decay_param = %g instead.",
+                        decay_param)
+        decayed = np.where(traps_filled > 0.,
+                           traps_filled * (1. - math.exp(decay_param * delta_t)),
+                           0.)
+        return decayed
