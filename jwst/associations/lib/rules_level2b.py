@@ -162,6 +162,10 @@ class Utility(object):
     def get_exposure_type(*args, **kwargs):
         return Utility_Level3.get_exposure_type(*args, **kwargs)
 
+    @staticmethod
+    def resequence(*args, **kwargs):
+        return Utility_Level3.resequence(*args, **kwargs)
+
 
 class Asn_MIRI_LRS_BKGNOD(DMS_Level2b_Base):
     """MIRI Background Nodding for LRS Fixed-slit"""
