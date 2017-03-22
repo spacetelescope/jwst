@@ -7,6 +7,7 @@ from jwst.associations import (
     Association,
     libpath
 )
+from jwst.associations.lib.acid import ACIDMixin
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 
 # Configure logging
@@ -21,7 +22,7 @@ _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 
 
-class DMS_Level2b_Base(Association):
+class DMS_Level2b_Base(ACIDMixin, Association):
     """Basic class for DMS Level2 associations."""
 
     # Set the validation schema
@@ -34,18 +35,6 @@ class DMS_Level2b_Base(Association):
             'program': {
                 'value': None,
                 'inputs': ['PROGRAM']
-            },
-            'opt_elem': {
-                'value': None,
-                'inputs': ['FILTER']
-            },
-            'detector': {
-                'value': '(?!NULL).+',
-                'inputs': ['DETECTOR']
-            },
-            'target': {
-                'value': None,
-                'inputs': ['TARGETID']
             },
         })
 
@@ -64,26 +53,37 @@ class DMS_Level2b_Base(Association):
         return name.lower()
 
     @property
-    def current_group(self):
-        return self.data['groups'][-1]
+    def acid(self):
+        return self.acid_from_constraints()
 
-    def new_group(self, member):
-        """Start a new product"""
-        group = {
-            'members': []
-        }
-        try:
-            self.data['groups'].append(group)
-        except KeyError:
-            self.data['groups'] = [group]
+    def __eq__(self, other):
+        """Compare equality of two assocaitions"""
+        if isinstance(other, self.__class__):
+            result = self.data['asn_type'] == other.data['asn_type']
+            result = result and (self.data['members'] == other.data['members'])
+            return result
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        """Compare inequality of two associations"""
+        if isinstance(other, self.__class__):
+            return not self.__eq__(other)
+        else:
+            return NotImplemented
 
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
         self.data['target'] = member['TARGETID']
         self.data['program'] = str(member['PROGRAM'])
-        self.data['asn_pool'] = basename(member.meta['pool_file']).split('.')[0]
-        self.data['constraints'] = '\n'.join([cc for cc in self.constraints_to_text()])
-        self.new_group(member)
+        self.data['asn_pool'] = basename(
+            member.meta['pool_file']
+        ).split('.')[0]
+        self.data['constraints'] = '\n'.join(
+            [cc for cc in self.constraints_to_text()]
+        )
+        self.data['asn_id'] = self.acid.id
+        self.data['members'] = []
 
     def _add(self, member):
         """Add member to this association."""
@@ -91,8 +91,7 @@ class DMS_Level2b_Base(Association):
             'expname': Utility.rename_to_level2a(member['FILENAME']),
             'exptype': Utility.get_exposure_type(member, default='SCIENCE')
         }
-        members = self.current_group['members']
-        members.append(entry)
+        self.data['members'].append(entry)
 
     def __str__(self):
         """Create human readable version of the association
@@ -112,11 +111,11 @@ class DMS_Level2b_Base(Association):
             result.append('        {:s}'.format(cc))
 
         # Products of the assocation
-        result.append('\n    Groups:')
-        for group in self.data['groups']:
-            result.append('        Group:')
-            for member in group['members']:
-                result.append('            {:s}: {:s}'.format(member['expname'], member['exptype']))
+        result.append('\n    Members:')
+        for member in self.data['members']:
+                result.append('        {:s}: {:s}'.format(
+                    member['expname'], member['exptype'])
+                )
 
         # That's all folks
         result.append('\n')
@@ -138,7 +137,7 @@ class Utility(object):
         Returns
         -------
         str
-            The Level 2b name
+            The Level 2a name
         """
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group('type') != '_uncal':

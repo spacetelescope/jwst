@@ -5,8 +5,8 @@ import pytest
 from .helpers import (
     generate_params,
     generate_pool_paths,
-    mkstemp_pool_file,
-    t_path
+    level3_rule_path,
+    t_path,
 )
 
 from ..main import Main
@@ -57,11 +57,14 @@ pool_params = pytest.fixture(
 )(generate_params)
 
 
-class TestLevel3Candidates(object):
-
-    def test_candidate_observation(self, pool_path, pool_params):
-        partial_args, n_asns = pool_params
-        cmd_args = [pool_path, '--dry-run']
-        cmd_args.extend(partial_args)
-        generated = Main(cmd_args)
-        assert len(generated.associations) == n_asns
+def test_candidate_observation(pool_path, pool_params):
+    partial_args, n_asns = pool_params
+    cmd_args = [
+        pool_path,
+        '--dry-run',
+        '-r', level3_rule_path(),
+        '--ignore-default',
+    ]
+    cmd_args.extend(partial_args)
+    generated = Main(cmd_args)
+    assert len(generated.associations) == n_asns

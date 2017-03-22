@@ -5,7 +5,7 @@ import re
 
 from . import helpers
 
-from .. import (AssociationRegistry, AssociationPool, generate)
+from .. import generate
 
 LEVEL3_ASN_ACID_NAME_REGEX = (
     'jw'
@@ -48,7 +48,7 @@ class TestASNtNames():
     def test_level3_asn_names(self, pool_params):
         pool_path = helpers.t_path(pool_params)
         pool = helpers.combine_pools(pool_path)
-        rules = AssociationRegistry()
+        rules = helpers.registry_level3_only()
         asns, orphaned = generate(pool, rules)
         assert len(asns) > 0
         for asn in asns:
@@ -65,7 +65,7 @@ class TestASNtNames():
     def test_level3_asn_names_with_version(self, pool_params):
         pool_path = helpers.t_path(pool_params)
         pool = helpers.combine_pools(pool_path)
-        rules = AssociationRegistry()
+        rules = helpers.registry_level3_only()
         asns, orphaned = generate(pool, rules, version_id=True)
         assert len(asns) > 0
         for asn in asns:

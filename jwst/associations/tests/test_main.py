@@ -13,7 +13,7 @@ def test_script(full_pool_rules):
 
     generated = Main([pool_fname, '--dry-run'])
     asns = generated.associations
-    assert len(asns) == 37
+    assert len(asns) == 44
     assert len(generated.orphaned) == 2
     found_rules = set(
         asn['asn_rule']

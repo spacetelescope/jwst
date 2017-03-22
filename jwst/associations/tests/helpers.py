@@ -64,14 +64,14 @@ class BasePoolRule(object):
         """You tear me down..."""
 
     def test_rules_exist(self):
-        rules = AssociationRegistry()
+        rules = registry_level3_only()
         assert len(rules) >= len(self.valid_rules)
         rule_names = get_rule_names(rules)
         for rule in self.valid_rules:
             assert rule in rule_names
 
     def test_run_generate(self):
-        rules = AssociationRegistry()
+        rules = registry_level3_only()
         for ppars in self.pools:
             pool = combine_pools(ppars.path, **ppars.kwargs)
             (asns, orphaned) = generate(pool, rules)
@@ -300,3 +300,31 @@ def get_rule_names(rules):
         rule._asn_rule()
         for rule_name, rule in rules.items()
     ]
+
+
+def level3_rule_path():
+    """Return the path to the level 3 rules"""
+    return t_path('../lib/rules_level3.py')
+
+
+def level2_rule_path():
+    """Return the path to the level 2 rules"""
+    return t_path('../lib/rules_level2b.py')
+
+
+def registry_level3_only(global_constraints=None):
+    """Get registry with only Level3 rules"""
+    return AssociationRegistry(
+        definition_files=[level3_rule_path()],
+        include_default=False,
+        global_constraints=global_constraints
+    )
+
+
+def registry_level2_only(global_constraints=None):
+    """Get registry with only Level2 rules"""
+    return AssociationRegistry(
+        definition_files=[level2_rule_path()],
+        include_default=False,
+        global_constraints=global_constraints
+    )
