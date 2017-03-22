@@ -247,8 +247,8 @@ class ModelContainer(model_base.DataModel):
                                 model_attrs[8].lower()]))
                 model.meta.group_id = group_id
             except:
-                w = 'One or more datamodels is missing correct metadata. ' + \
-                    'Grouping will not be correct.'
+                w = '`{}` is missing'.format(model.meta.filename) + \
+                    ' metadata. Grouping by exposure may not be correct.'
                 warnings.warn(w, RuntimeWarning, stacklevel=2)
                 model.meta.group_id = None
 
