@@ -1,5 +1,5 @@
 ***************************************************************
-SkyImage (chip outline on the sky) management for image mosaic.
+SkyImage (chip outline on the sky) management for image mosaic
 ***************************************************************
 
 .. moduleauthor:: Mihai Cara <help@stsci.edu>

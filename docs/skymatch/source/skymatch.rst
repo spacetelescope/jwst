@@ -1,6 +1,6 @@
-******************************
-Sky matching for image mosaic.
-******************************
+********************************
+Sky matching for an image mosaic
+********************************
 
 .. moduleauthor:: Mihai Cara <help@stsci.edu>
 

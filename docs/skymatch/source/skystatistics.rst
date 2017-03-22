@@ -1,6 +1,6 @@
-************************************
-Sky statistics functions for skypac.
-************************************
+*************************************
+Sky statistics functions for skymatch
+*************************************
 
 .. moduleauthor:: Mihai Cara <help@stsci.edu>
 
