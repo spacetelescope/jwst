@@ -156,7 +156,7 @@ class DataModel(properties.ObjectNode):
             else:
                 asdf = fits_support.from_fits(hdulist, self._schema,
                                               extensions=self._extensions,
-                                              validate=False,
+                                              validate=True,
                                               pass_invalid_values=self._pass_invalid_values)
                 self._files_to_close.append(hdulist)
         else:
