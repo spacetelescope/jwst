@@ -375,11 +375,11 @@ def test_image_with_extra_keyword_to_multislit():
 def container():
     with ModelContainer(ASN_FILE) as c:
         for m in c:
-            m.meta.observation.program_number = '1'
+            m.meta.observation.program_number = '0001'
             m.meta.observation.observation_number = '1'
             m.meta.observation.visit_number = '1'
             m.meta.observation.visit_group = '1'
-            m.meta.observation.sequence_id = '1'
+            m.meta.observation.sequence_id = '01'
             m.meta.observation.activity_id = '1'
             m.meta.observation.exposure_number = '1'
             m.meta.instrument.name = 'NIRCAM'
@@ -396,11 +396,24 @@ def test_modelcontainer_indexing(container):
     assert isinstance(container[0], DataModel)
 
 
-def test_modelcontainer_grouping(container):
+def test_modelcontainer_group1(container):
     for group in container.models_grouped:
+        assert len(group) == 2
         for model in group:
-            assert isinstance(model, DataModel)
+            pass
+
+
+def test_modelcontainer_group2(container):
+    container[0].meta.observation.exposure_number = '2'
+    for group in container.models_grouped:
+        assert len(group) == 1
+        for model in group:
+            pass
+    container[0].meta.observation.exposure_number = '1'
 
 
 def test_modelcontainer_group_names(container):
-    pass
+    assert len(container.group_names) == 1
+    container[0].meta.observation.exposure_number = '2'
+    assert len(container.group_names) == 2
+    container[0].meta.observation.exposure_number = '1'

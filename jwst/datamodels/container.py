@@ -3,6 +3,7 @@ from __future__ import (absolute_import, unicode_literals, division,
 import os.path as op
 import os
 import copy
+import warnings
 from collections import OrderedDict
 
 from asdf import AsdfFile
@@ -37,13 +38,26 @@ class ModelContainer(model_base.DataModel):
         - list: a list of DataModels of any type
 
         - None: initializes an empty `ModelContainer` instance, to which
-          DataModels can added via the ``append()`` method.
+          DataModels can be added via the ``append()`` method.
 
     Examples
     --------
-    >>> c = datamodels.ModelContainer('example_asn.json')
-    >>> c[0]    # the first DataModel in the container
-    >>> c.models_grouped    # a list of the DataModels grouped by exposure
+    >>> container = datamodels.ModelContainer('example_asn.json')
+    >>> for dm in container:
+    ...     print(dm.meta.filename)
+
+    Say the association was a NIRCam dithered dataset. The `models_grouped`
+    attribute is a list of lists, the first index giving the list of exposure
+    groups, with the second giving the individual datamodels representing
+    each detector in the exposure (2 or 8 in the case of NIRCam).
+
+    >>> total_exposure_time = 0.0
+    >>> for group in container.models_grouped:
+    ...     total_exposure_time += group[0].meta.exposure.exposure_time
+
+    >>> c = datamodels.ModelContainer()
+    >>> m = datamodels.open('myfile.fits')
+    >>> c.append(m)
     """
 
     # This schema merely extends the 'meta' part of the datamodel, and
@@ -80,61 +94,48 @@ class ModelContainer(model_base.DataModel):
         else:
             raise TypeError('Input {0!r} is not a list of DataModels or '
                             'an ASN file'.format(init))
-        self._assign_group_ids()
+
+        self.__assign_group_ids()
 
 
     def __len__(self):
         return len(self._models)
 
+
     def __getitem__(self, index):
         return self._models[index]
+
 
     def __setitem__(self, index, model):
         self._models[index] = model
 
+
     def __delitem__(self, index):
         del self._models[index]
+
 
     def __iter__(self):
         for model in self._models:
             yield model
 
+
     def insert(self, index, model):
         self._models.insert(index, model)
+
 
     def append(self, model):
         self._models.append(model)
 
+
     def extend(self, model):
         self._models.extend(model)
+
 
     def pop(self, index=None):
         if not index:
             self._models.pop(-1)
         else:
             self._models.pop(index)
-
-    def _assign_group_ids(self):
-        for model in self._models:
-            model_attrs = []
-            model_attrs.append(model.meta.observation.program_number)
-            model_attrs.append(model.meta.observation.observation_number)
-            model_attrs.append(model.meta.observation.visit_number)
-            model_attrs.append(model.meta.observation.visit_group)
-            model_attrs.append(model.meta.observation.sequence_id)
-            model_attrs.append(model.meta.observation.activity_id)
-            model_attrs.append(model.meta.observation.exposure_number)
-            model_attrs.append(model.meta.instrument.name)
-            model_attrs.append(model.meta.instrument.channel)
-            try:
-                group_id = ('jw' + "_".join([
-                                ''.join(model_attrs[:3]),
-                                ''.join(model_attrs[3:6]),
-                                model_attrs[6], model_attrs[7].lower(),
-                                model_attrs[8].lower()]))
-            except:
-                group_id, ext = os.path.splitext(self._models[0].meta.filename)
-            model.meta.group_id = os.path.join(group_id, "_grp")
 
 
     def copy(self):
@@ -144,6 +145,7 @@ class ModelContainer(model_base.DataModel):
 
         models_copy = [m.copy() for m in self._models]
         return self.__class__(init=models_copy)
+
 
     def from_asn(self, filepath, **kwargs):
         """
@@ -169,7 +171,7 @@ class ModelContainer(model_base.DataModel):
         try:
             self._models = [datamodel_open(infile, **kwargs) for infile in infiles]
         except IOError:
-            raise IOError('Cannot open data models {}'.format(infiles))
+            raise IOError('Cannot open {}'.format(infiles))
 
         # Pull the whole association table into meta.asn_table
         self.meta.asn_table = {}
@@ -185,29 +187,6 @@ class ModelContainer(model_base.DataModel):
         self.meta.asn_type = str(asn_data['asn_type'])
         self.meta.asn_rule = str(asn_data['asn_rule'])
 
-    @property
-    def models_grouped(self):
-        """
-        Return a list of lists of DataModels grouped by exposure.
-        """
-        group_dict = OrderedDict()
-        for model in self._models:
-            group_id = model.meta.group_id
-            if group_id in group_dict:
-                group_dict[group_id].append(model)
-            else:
-                group_dict[group_id] = [model]
-        return group_dict.values()
-
-    @property
-    def group_names(self):
-        """
-        Return a list of names for the DataModel groups by exposure.
-        """
-        result = []
-        for group in self.models_grouped:
-            result.append(group[0].meta.group_id)
-        return result
 
     def save(self, path=None, *args, **kwargs):
         """
@@ -230,7 +209,78 @@ class ModelContainer(model_base.DataModel):
         except IOError as err:
             raise err
 
-    def _get_recursively(self, field, search_dict):
+
+    def __assign_group_ids(self):
+        """
+        Assign an ID grouping by exposure.
+
+        Data from different detectors of the same exposure will have the
+        same group id, which allows grouping by exposure.  The following
+        metadata is used for grouping:
+
+        meta.observation.program_number
+        meta.observation.observation_number
+        meta.observation.visit_number
+        meta.observation.visit_group
+        meta.observation.sequence_id
+        meta.observation.activity_id
+        meta.observation.exposure_number
+        meta.instrument.name
+        meta.instrument.channel
+        """
+        for model in self._models:
+            try:
+                model_attrs = []
+                model_attrs.append(model.meta.observation.program_number)
+                model_attrs.append(model.meta.observation.observation_number)
+                model_attrs.append(model.meta.observation.visit_number)
+                model_attrs.append(model.meta.observation.visit_group)
+                model_attrs.append(model.meta.observation.sequence_id)
+                model_attrs.append(model.meta.observation.activity_id)
+                model_attrs.append(model.meta.observation.exposure_number)
+                model_attrs.append(model.meta.instrument.name)
+                model_attrs.append(model.meta.instrument.channel)
+                group_id = ('jw' + '_'.join([
+                                ''.join(model_attrs[:3]),
+                                ''.join(model_attrs[3:6]),
+                                model_attrs[6], model_attrs[7].lower(),
+                                model_attrs[8].lower()]))
+                model.meta.group_id = group_id
+            except:
+                w = 'One or more datamodels is missing correct metadata. ' + \
+                    'Grouping will not be correct.'
+                warnings.warn(w, RuntimeWarning, stacklevel=2)
+                model.meta.group_id = None
+
+
+    @property
+    def models_grouped(self):
+        """
+        Returns a list of a list of datamodels grouped by exposure.
+        """
+        self.__assign_group_ids()
+        group_dict = OrderedDict()
+        for model in self._models:
+            group_id = model.meta.group_id
+            if group_id in group_dict:
+                group_dict[group_id].append(model)
+            else:
+                group_dict[group_id] = [model]
+        return group_dict.values()
+
+
+    @property
+    def group_names(self):
+        """
+        Return list of names for the DataModel groups by exposure.
+        """
+        result = []
+        for group in self.models_grouped:
+            result.append(group[0].meta.group_id)
+        return result
+
+
+    def __get_recursively(self, field, search_dict):
         """
         Takes a dict with nested lists and dicts, and searches all dicts for
         a key of the field provided.
@@ -240,19 +290,20 @@ class ModelContainer(model_base.DataModel):
             if key == field:
                 values_found.append(value)
             elif isinstance(value, dict):
-                results = self._get_recursively(field, value)
+                results = self.__get_recursively(field, value)
                 for result in results:
                     values_found.append(result)
             elif isinstance(value, list):
                 for item in value:
                     if isinstance(item, dict):
-                        more_results = self._get_recursively(field, item)
+                        more_results = self.__get_recursively(field, item)
                         for another_result in more_results:
                             values_found.append(another_result)
         return values_found
+
 
     def get_recursively(self, field):
         """
         Returns a list of values of the specified field from meta.
         """
-        return self._get_recursively(field, self.meta._instance)
+        return self.__get_recursively(field, self.meta._instance)
