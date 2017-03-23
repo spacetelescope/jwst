@@ -7,7 +7,7 @@ from jwst.associations import (
     Association,
     libpath
 )
-from jwst.associations.lib.acid import ACIDMixin
+from jwst.associations.lib.dms_base import DMSBaseMixin
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 
 # Configure logging
@@ -22,7 +22,7 @@ _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 
 
-class DMS_Level2b_Base(ACIDMixin, Association):
+class DMS_Level2b_Base(DMSBaseMixin, Association):
     """Basic class for DMS Level2 associations."""
 
     # Set the validation schema
@@ -41,34 +41,12 @@ class DMS_Level2b_Base(ACIDMixin, Association):
         # Now, lets see if member belongs to us.
         super(DMS_Level2b_Base, self).__init__(*args, **kwargs)
 
-    @property
-    def asn_name(self):
-        template = 'jw_level2b_{}-{:03d}_{}_{}_asn'
-        name = template.format(
-            self.data['program'],
-            self.sequence,
-            self.data['asn_type'],
-            self.version_id
-        )
-        return name.lower()
-
-    @property
-    def acid(self):
-        return self.acid_from_constraints()
-
     def __eq__(self, other):
         """Compare equality of two assocaitions"""
         if isinstance(other, self.__class__):
             result = self.data['asn_type'] == other.data['asn_type']
             result = result and (self.data['members'] == other.data['members'])
             return result
-        else:
-            return NotImplemented
-
-    def __ne__(self, other):
-        """Compare inequality of two associations"""
-        if isinstance(other, self.__class__):
-            return not self.__eq__(other)
         else:
             return NotImplemented
 

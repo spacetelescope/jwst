@@ -16,8 +16,9 @@ from jwst.associations.exceptions import (
     AssociationNotAConstraint,
     AssociationNotValidError,
 )
-from jwst.associations.lib.acid import (ACID, ACIDMixin)
+from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.counter import Counter
+from jwst.associations.lib.dms_base import DMSBaseMixin
 
 __all__ = [
     'AsnMixin_Base',
@@ -55,8 +56,6 @@ _DEGRADED_STATUS_NOTOK = (
 )
 
 # DMS file name templates
-_ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
-_ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
@@ -83,7 +82,7 @@ _EXPTYPE_MAP = {
 }
 
 
-class DMS_Level3_Base(ACIDMixin, Association):
+class DMS_Level3_Base(DMSBaseMixin, Association):
     """Basic class for DMS Level3 associations."""
 
     # Set the validation schema
@@ -149,35 +148,6 @@ class DMS_Level3_Base(ACIDMixin, Association):
         return True
 
     @property
-    def acid(self):
-        """Association ID"""
-        return self.acid_from_constraints()
-
-    @property
-    def asn_name(self):
-        program = self.data['program']
-        version_id = self.version_id
-        asn_type = self.data['asn_type']
-        sequence = self.sequence
-
-        if version_id:
-            name = _ASN_NAME_TEMPLATE_STAMP.format(
-                program=program,
-                acid=self.acid.id,
-                stamp=version_id,
-                type=asn_type,
-                sequence=sequence,
-            )
-        else:
-            name = _ASN_NAME_TEMPLATE.format(
-                program=program,
-                acid=self.acid.id,
-                type=asn_type,
-                sequence=sequence,
-            )
-        return name.lower()
-
-    @property
     def current_product(self):
         return self.data['products'][-1]
 
@@ -187,13 +157,6 @@ class DMS_Level3_Base(ACIDMixin, Association):
             result = self.data['asn_type'] == other.data['asn_type']
             result = result and (self.members == other.members)
             return result
-        else:
-            return NotImplemented
-
-    def __ne__(self, other):
-        """Compare inequality of two associations"""
-        if isinstance(other, self.__class__):
-            return not self.__eq__(other)
         else:
             return NotImplemented
 
