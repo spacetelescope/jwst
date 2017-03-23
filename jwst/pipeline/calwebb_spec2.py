@@ -71,7 +71,13 @@ class Spec2Pipeline(Pipeline):
         for member in input_table.asn['members']:
 
             input_file = member['expname']
-            self.log.info(' Working on input %s ...', input_file)
+
+            # Skip processing of non-science members
+            if member['exptype'].upper() != 'SCIENCE':
+                self.log.info('Skipping non-science input %s', input_file)
+                continue
+
+            self.log.info('Working on input %s ...', input_file)
             input = datamodels.open(input_file)
             exp_type = input.meta.exposure.type
 
@@ -208,7 +214,7 @@ class Spec2Pipeline(Pipeline):
             x1d_output.close()
 
         # We're done
-        log.info('... ending calwebb_spec2')
+        log.info('Ending calwebb_spec2')
 
         return
 
