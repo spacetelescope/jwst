@@ -8,11 +8,11 @@ from .helpers import (
     BasePoolRule,
     PoolParams,
     combine_pools,
-    generate_params,
+    registry_level3_only,
     t_path
 )
 
-from .. import (AssociationRegistry, generate)
+from .. import generate
 from ..main import constrain_on_candidates
 
 
@@ -68,7 +68,7 @@ def nirspec_params(request):
     gc = {
         'asn_candidate': constrain_on_candidates((cid,))
     }
-    rules = AssociationRegistry(global_constraints=gc)
+    rules = registry_level3_only(global_constraints=gc)
     asns, orphaned = generate(pool, rules)
     return asns, asn_type, asn_name, product_name, exptypes
 
@@ -130,7 +130,7 @@ def miri_params(request):
     gc = {
         'asn_candidate': constrain_on_candidates((cid,))
     }
-    rules = AssociationRegistry(global_constraints=gc)
+    rules = registry_level3_only(global_constraints=gc)
     asns, orphaned = generate(pool, rules)
     return asns, asn_type, asn_name, product_name
 
