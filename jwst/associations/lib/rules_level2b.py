@@ -15,7 +15,7 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 
 
-class Asn_Lv2_Image(DMS_Level2b_Base):
+class Asn_Lv2Image(DMS_Level2b_Base):
     """Level 2 Image association"""
 
     def __init__(self, *args, **kwargs):
@@ -28,4 +28,10 @@ class Asn_Lv2_Image(DMS_Level2b_Base):
             }
         })
 
-        super(Asn_Lv2_Image, self).__init__(*args, **kwargs)
+        super(Asn_Lv2Image, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, member):
+        """Post-check and pre-add initialization"""
+
+        super(Asn_Lv2Image, self)._init_hook(member)
+        self.data['asn_type'] = 'image2'

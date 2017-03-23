@@ -1,9 +1,13 @@
 """Test basic usage of Level2 associations"""
 from __future__ import absolute_import
 
-from .helpers import (combine_pools, t_path)
+from .helpers import (
+    combine_pools,
+    registry_level2_only,
+    t_path
+)
+
 from .. import (
-    AssociationRegistry,
     generate,
     load_asn
 )
@@ -23,10 +27,17 @@ def test_level2_schema():
 
 def test_level2_image():
     """Test creation of a Level 2 image association"""
-    rules = AssociationRegistry(
-        definition_files=[t_path('../lib/rules_level2b.py')],
-        include_default=False
-    )
+    rules = registry_level2_only()
     pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
     asns, orphaned = generate(pool, rules)
-    assert len(asns) > 0
+    assert len(asns) == 1
+    len(orphaned) == 0
+    asn = asns[0]
+    assert asn['asn_rule'] == 'Asn_Lv2Image'
+    assert asn['asn_type'] == 'image2'
+    assert len(asn['members']) == 8
+    member = asn['members'][0]
+    base_keys = {'expname', 'exptype'}
+    assert base_keys.issubset(member.keys())
+    assert member['expname'] == 'jw_00001_rate.fits'
+    assert member['exptype'] == 'SCIENCE'
