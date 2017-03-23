@@ -15,7 +15,7 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 
 
-class Asn_Lv2Image(DMS_Level2b_Base):
+class Asn_Lv2Image(DMSLevel2bBase):
     """Level 2 Image association"""
 
     def __init__(self, *args, **kwargs):

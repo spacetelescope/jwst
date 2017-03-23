@@ -160,6 +160,13 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         else:
             return NotImplemented
 
+    def __ne__(self, other):
+        """Compare inequality of two associations"""
+        if isinstance(other, DMS_Level3_Base):
+            return not self.__eq__(other)
+        else:
+            return NotImplemented
+
     def new_product(self, product_name=None):
         """Start a new product"""
         self.product_name = product_name

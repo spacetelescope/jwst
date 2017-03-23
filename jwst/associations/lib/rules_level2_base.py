@@ -14,6 +14,12 @@ from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+__all__ = [
+    'ASN_SCHEMA',
+    'DMSLevel2bBase',
+    'Utility'
+]
+
 # The schema that these associations must adhere to.
 ASN_SCHEMA = libpath('asn_schema_jw_level2b.json')
 
@@ -22,7 +28,7 @@ _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 
 
-class DMS_Level2b_Base(DMSBaseMixin, Association):
+class DMSLevel2bBase(DMSBaseMixin, Association):
     """Basic class for DMS Level2 associations."""
 
     # Set the validation schema
@@ -39,17 +45,24 @@ class DMS_Level2b_Base(DMSBaseMixin, Association):
         })
 
         # Now, lets see if member belongs to us.
-        super(DMS_Level2b_Base, self).__init__(*args, **kwargs)
+        super(DMSLevel2bBase, self).__init__(*args, **kwargs)
 
     def __eq__(self, other):
         """Compare equality of two assocaitions"""
-        if isinstance(other, self.__class__):
+        if isinstance(other, DMSLevel2bBase):
             result = self.data['asn_type'] == other.data['asn_type']
             result = result and (self.data['members'] == other.data['members'])
             return result
         else:
             return NotImplemented
 
+    def __ne__(self, other):
+        """Compare inequality of two associations"""
+        if isinstance(other, DMSLevel2bBase):
+            return not self.__eq__(other)
+        else:
+            return NotImplemented
+        
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
         self.data['target'] = member['TARGETID']

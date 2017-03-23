@@ -1,9 +1,9 @@
-"""test_level3_dithers: Test of dither rules."""
+"""Test Level2 candidate operation"""
 from __future__ import absolute_import
 import pytest
 
 from .helpers import (
-    level3_rule_path,
+    level2_rule_path,
     mkstemp_pool_file,
     t_path,
 )
@@ -21,35 +21,22 @@ from ..main import Main
         # Basic observation ACIDs
         (
             ['-i', 'o001'],
-            2
-        ),
-        (
-            ['-i', 'o002'],
-            2
-        ),
-        # Specifying multiple ACIDs
-        (
-            ['-i', 'o001', 'o002'],
-            4
-        ),
-        # Candidate ID's
-        (
-            ['-i', 'c1000'],
-            2
-        ),
-        (
-            ['-i', 'c1000', 'c1001'],
-            4
+            1
         ),
         # Whole program
         (
             [],
-            20
+            11
         ),
         # Discovered only
         (
             ['--discover'],
-            0
+            1
+        ),
+        # Candidates only
+        (
+            ['--all-candidates'],
+            10
         ),
     ]
 )
@@ -58,7 +45,7 @@ def test_candidate_observation(partial_args, n_asns):
         cmd_args = [
             pool_path,
             '--dry-run',
-            '-r', level3_rule_path(),
+            '-r', level2_rule_path(),
             '--ignore-default',
         ]
         cmd_args.extend(partial_args)

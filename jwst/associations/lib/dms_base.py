@@ -40,10 +40,3 @@ class DMSBaseMixin(ACIDMixin):
                 sequence=sequence,
             )
         return name.lower()
-
-    def __ne__(self, other):
-        """Compare inequality of two associations"""
-        if isinstance(other, self.__class__):
-            return not self.__eq__(other)
-        else:
-            return NotImplemented
