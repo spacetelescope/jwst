@@ -24,7 +24,7 @@ class Asn_Lv2Image(DMS_Level2b_Base):
             'exp_type': {
                 'value': 'NRC_IMAGE|MIR_IMAGE|NIS_IMAGE|FGS_IMAGE',
                 'inputs': ['EXP_TYPE'],
-                'force_unique': True,
+                'force_unique': False,
             }
         })
 
