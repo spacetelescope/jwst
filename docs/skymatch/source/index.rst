@@ -1,16 +1,11 @@
 JWST Science Calibration Pipeline: Sky Matching
 ================================================
 
-Contents:
-
 .. toctree::
    :maxdepth: 2
 
-   skymatch_step
-   skymatch
-   skyimage
-   skystatistics
-   region
+   description.rst
+   functions.rst
 
 Indices and tables
 ==================
