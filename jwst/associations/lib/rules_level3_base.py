@@ -18,6 +18,7 @@ from jwst.associations.exceptions import (
 )
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.counter import Counter
+from jwst.associations.lib.dms_base import DMSBaseMixin
 
 __all__ = [
     'AsnMixin_Base',
@@ -39,9 +40,6 @@ __all__ = [
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-# Start of the discovered association ids.
-_DISCOVERED_ID_START = 3001
-
 # Non-specified values found in DMS Association Pools
 _EMPTY = (None, 'NULL')
 
@@ -58,8 +56,6 @@ _DEGRADED_STATUS_NOTOK = (
 )
 
 # DMS file name templates
-_ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
-_ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
@@ -86,7 +82,7 @@ _EXPTYPE_MAP = {
 }
 
 
-class DMS_Level3_Base(Association):
+class DMS_Level3_Base(DMSBaseMixin, Association):
     """Basic class for DMS Level3 associations."""
 
     # Set the validation schema
@@ -103,9 +99,6 @@ class DMS_Level3_Base(Association):
 
         # Keep the set of members included in this association
         self.members = set()
-
-        # Initialize discovered association ID
-        self.discovered_id = Counter(_DISCOVERED_ID_START)
 
         # Initialize validity checks
         self.validity = {
@@ -155,50 +148,24 @@ class DMS_Level3_Base(Association):
         return True
 
     @property
-    def acid(self):
-        """Association ID"""
-        for _, constraint in self.constraints.items():
-            if constraint.get('is_acid', False):
-                value = re.sub('\\\\', '', constraint['value'])
-                try:
-                    acid = ACID(value)
-                except ValueError:
-                    pass
-                else:
-                    break
-        else:
-            id = 'a{:0>3}'.format(self.discovered_id.value)
-            acid = ACID((id, 'DISCOVERED'))
-
-        return acid
-
-    @property
-    def asn_name(self):
-        program = self.data['program']
-        version_id = self.version_id
-        asn_type = self.data['asn_type']
-        sequence = self.sequence
-
-        if version_id:
-            name = _ASN_NAME_TEMPLATE_STAMP.format(
-                program=program,
-                acid=self.acid.id,
-                stamp=version_id,
-                type=asn_type,
-                sequence=sequence,
-            )
-        else:
-            name = _ASN_NAME_TEMPLATE.format(
-                program=program,
-                acid=self.acid.id,
-                type=asn_type,
-                sequence=sequence,
-            )
-        return name.lower()
-
-    @property
     def current_product(self):
         return self.data['products'][-1]
+
+    def __eq__(self, other):
+        """Compare equality of two assocaitions"""
+        if isinstance(other, self.__class__):
+            result = self.data['asn_type'] == other.data['asn_type']
+            result = result and (self.members == other.members)
+            return result
+        else:
+            return NotImplemented
+
+    def __ne__(self, other):
+        """Compare inequality of two associations"""
+        if isinstance(other, DMS_Level3_Base):
+            return not self.__eq__(other)
+        else:
+            return NotImplemented
 
     def new_product(self, product_name=None):
         """Start a new product"""
@@ -468,72 +435,6 @@ class Utility(object):
             asn.sequence = next(
                 counters[asn.data['asn_id']][asn.data['asn_type']]
             )
-
-    @staticmethod
-    def filter_discovered_only(
-            associations,
-            discover_ruleset,
-            candidate_ruleset,
-            keep_candidates=True,
-    ):
-        """Return only those associations that have multiple candidates
-
-        Parameters
-        ----------
-        associations: iterable
-            The list of associations to check. The list
-            is that returned by the `generate` function.
-
-        discover_ruleset: str
-            The name of the ruleset that has the discover rules
-
-        candidate_ruleset: str
-            The name of the ruleset that finds just candidates
-
-        keep_candidates: bool
-            Keep explicit candidate associations in the list.
-
-        Returns
-        -------
-        iterable
-            The new list of just cross candidate associations.
-
-        Notes
-        -----
-        This utility is only meant to run on associations that have
-        been constructed. Associations that have been Association.dump
-        and then Association.load will not return proper results.
-        """
-        # Split the associations along discovered/not discovered lines
-        asn_by_ruleset = {
-            candidate_ruleset: [],
-            discover_ruleset: []
-        }
-        for asn in associations:
-            asn_by_ruleset[asn.registry.name].append(asn)
-        candidate_list = asn_by_ruleset[candidate_ruleset]
-        discover_list = asn_by_ruleset[discover_ruleset]
-
-        # Filter out the non-unique discovereds.
-        for candidate in candidate_list:
-            if len(discover_list) == 0:
-                break
-            unique_list = []
-            for discover in discover_list:
-                if discover.data['asn_type'] == candidate.data['asn_type'] and \
-                   discover.members == candidate.members:
-                    # This association is not unique. Ignore
-                    pass
-                else:
-                    unique_list.append(discover)
-
-            # Reset the discovered list to the new unique list
-            # and try the next candidate.
-            discover_list = unique_list
-
-        if keep_candidates:
-            discover_list.extend(candidate_list)
-        return discover_list
 
     @staticmethod
     def rename_to_level2b(level1b_name):

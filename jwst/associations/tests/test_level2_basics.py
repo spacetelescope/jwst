@@ -1,8 +1,16 @@
 """Test basic usage of Level2 associations"""
 from __future__ import absolute_import
 
-from .helpers import t_path
-from .. import load_asn
+from .helpers import (
+    combine_pools,
+    registry_level2_only,
+    t_path
+)
+
+from .. import (
+    generate,
+    load_asn
+)
 
 
 def test_level2_schema():
@@ -15,3 +23,39 @@ def test_level2_schema():
     assert isinstance(member['bkgexps'], list)
     bkg = member['bkgexps'][0]
     assert bkg['expname'] == 'test_lrsbkg_rate.fits'
+
+
+def test_level2_image():
+    """Test creation of a Level 2 image association"""
+    rules = registry_level2_only()
+    pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
+    asns, orphaned = generate(pool, rules)
+    assert len(asns) == 1
+    len(orphaned) == 0
+    asn = asns[0]
+    assert asn['asn_rule'] == 'Asn_Lv2Image'
+    assert asn['asn_type'] == 'image2'
+    assert len(asn['members']) == 8
+    member = asn['members'][0]
+    base_keys = {'expname', 'exptype'}
+    assert base_keys.issubset(member.keys())
+    assert member['expname'] == 'jw_00001_rate.fits'
+    assert member['exptype'] == 'SCIENCE'
+
+
+def test_level2_spec():
+    """Test creation of a Level 2 spectral association"""
+    rules = registry_level2_only()
+    pool = combine_pools(t_path('data/pool_007_spec_miri.csv'))
+    asns, orphaned = generate(pool, rules)
+    assert len(asns) == 1
+    len(orphaned) == 0
+    asn = asns[0]
+    assert asn['asn_rule'] == 'Asn_Lv2Spec'
+    assert asn['asn_type'] == 'spec2'
+    assert len(asn['members']) == 5
+    member = asn['members'][0]
+    base_keys = {'expname', 'exptype'}
+    assert base_keys.issubset(member.keys())
+    assert member['expname'] == 'jw_00001_rate.fits'
+    assert member['exptype'] == 'SCIENCE'
