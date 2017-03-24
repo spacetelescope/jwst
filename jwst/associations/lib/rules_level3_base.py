@@ -672,6 +672,12 @@ class AsnMixin_Image(DMS_Level3_Base):
 
         super(AsnMixin_Image, self).__init__(*args, **kwargs)
 
+    def _init_hook(self, member):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'image3'
+        super(AsnMixin_Image, self)._init_hook(member)
+
 
 class AsnMixin_Spectrum(DMS_Level3_Base):
     """All things that are spectrum"""
@@ -679,7 +685,7 @@ class AsnMixin_Spectrum(DMS_Level3_Base):
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
 
-        self.data['asn_type'] = 'spec'
+        self.data['asn_type'] = 'spec3'
         super(AsnMixin_Spectrum, self)._init_hook(member)
 
 
