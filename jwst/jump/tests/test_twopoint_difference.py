@@ -424,6 +424,6 @@ def setup_cube(ngroups,readnoise=10):
     return data, gdq, nframes, read_noise, rej_threshold
 
 
-if __name__ == '__main__':
-    pytest.main(['-x', 'test_find_CRs_mwr.py'])
+#if __name__ == '__main__':
+#    pytest.main(['-x', 'test_find_CRs_mwr.py'])
 #   # pytest.main(['test_find_CRs_mwr.py'])
