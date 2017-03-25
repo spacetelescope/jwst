@@ -19,7 +19,7 @@ def test_meta():
     data = asn.data
     assert data['program'] == '99009'
     assert data['target'] == '1'
-    assert data['asn_type'] == 'image'
+    assert data['asn_type'] == 'image3'
     assert data['asn_id'] == 'a3001'
     assert data['asn_pool'] == 'pool_002_image_miri'
     assert data['asn_rule'] == 'Asn_Image'

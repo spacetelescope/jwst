@@ -41,22 +41,22 @@ class TestLevel3Spectrographic(BasePoolRule):
     params=[
         (
             'o001',
-            'spec',
-            'jw99009-o001_spec_\d{3}_asn',
+            'spec3',
+            'jw99009-o001_spec3_\d{3}_asn',
             'jw99009-o001_t001_nirspec_f100lp-g140m',
             set(('SCIENCE', 'TARGET_ACQUISTION', 'AUTOWAVE'))
         ),
         (
             'o002',
-            'spec',
-            'jw99009-o002_spec_\d{3}_asn',
+            'spec3',
+            'jw99009-o002_spec3_\d{3}_asn',
             'jw99009-o002_t003_nirspec_f100lp-g140h',
             set(('SCIENCE', 'TARGET_ACQUISTION', 'AUTOFLAT', 'AUTOWAVE'))
         ),
         (
             'o003',
-            'nrsifu',
-            'jw99009-o003_nrsifu_\d{3}_asn',
+            'spec3',
+            'jw99009-o003_spec3_\d{3}_asn',
             'jw99009-o003_t002_nirspec_clear',
             set(('SCIENCE', 'TARGET_ACQUISTION', 'AUTOWAVE'))
         ),
@@ -94,32 +94,32 @@ def test_nirspec_modes(nirspec_params):
     params=[
         (
             'o007',
-            'mirifu',
-            'jw99009-o007_mirifu_\d{3}_asn',
+            'spec3',
+            'jw99009-o007_spec3_\d{3}_asn',
             'jw99009-o007_t001_miri',
         ),
         (
             'o008',
-            'mirifu',
-            'jw99009-o008_mirifu_\d{3}_asn',
+            'spec3',
+            'jw99009-o008_spec3_\d{3}_asn',
             'jw99009-o008_t001_miri',
         ),
         (
             'o009',
-            'mirifu',
-            'jw99009-o009_mirifu_\d{3}_asn',
+            'spec3',
+            'jw99009-o009_spec3_\d{3}_asn',
             'jw99009-o009_t001_miri'
         ),
         (
             'o010',
-            'mirifu',
-            'jw99009-o010_mirifu_\d{3}_asn',
+            'spec3',
+            'jw99009-o010_spec3_\d{3}_asn',
             'jw99009-o010_t001_miri'
         ),
         (
             'o011',
-            'mirifu',
-            'jw99009-o011_mirifu_\d{3}_asn',
+            'spec3',
+            'jw99009-o011_spec3_\d{3}_asn',
             'jw99009-o011_t001_miri'
         ),
     ]
