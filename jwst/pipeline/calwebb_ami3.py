@@ -2,7 +2,7 @@
 import os
 
 from ..stpipe import Pipeline
-from ..associations import Association
+from ..associations import load_asn
 from .. import datamodels
 
 
@@ -44,7 +44,7 @@ class Ami3Pipeline(Pipeline):
 
         # Load the input association table
         with open(input, 'r') as input_fh:
-            asn = Association.load(input_fh)
+            asn = load_asn(input_fh)
 
         # We assume there's one final product defined by the association
         prod = asn['products'][0]
@@ -179,7 +179,7 @@ def mk_prodname(output_dir, filename, suffix):
     The input ASN product name is used as a template. A user-specified
     output directory path is prepended to the root of the product name.
     The input product type suffix is appended to the root of the input
-    product name, preserving any existing file name extension 
+    product name, preserving any existing file name extension
     (e.g. ".fits").
 
     Args:

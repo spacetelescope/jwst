@@ -207,23 +207,22 @@ class CubeInfo(object):
                  self.naxis3, self.Crpix3, self.Crval3, self.Cdelt3, self.lambda_min, self.lambda_max)
 
         if(instrument == 'MIRI'):
-            number_channels = len(self.channel)
-            number_subchannels = len(self.subchannel)
-            for i in range(number_channels):
+            # length of channel and subchannel are the same 
+            number_bands = len(self.channel)
+
+            for i in range(number_bands):
                 this_channel = self.channel[i]
-                log.info('Cube covers channel: %s', this_channel)
-            for j in range(number_subchannels):
-                this_subchannel = self.subchannel[j]
-                log.info('Cube covers subchannel: %s', this_subchannel)
+                this_subchannel = self.subchannel[i]
+                log.info('Cube covers channel, subchannel: %s %s ', this_channel,this_subchannel)
         elif(instrument == 'NIRSPEC'):
-            number_fwa = len(self.filter)
-            number_gwa = len(self.grating)
-            for i in range(number_fwa):
+            # number of filters and gratings are the same
+            number_bands = len(self.filter)
+
+            for i in range(number_bands):
                 this_fwa = self.filter[i]
-                log.info('Cube covers filter: %s', this_fwa)
-            for j in range(number_gwa):
-                this_gwa = self.grating[j]
-                log.info('Cube covers grating: %s', this_gwa)
+                this_gwa = self.grating[i]
+                log.info('Cube covers grating, filter: %s %s ', this_gwa,this_fwa)
+
 #_______________________________________________________________________
 
 
@@ -232,15 +231,13 @@ class CubeInfo(object):
 class Spaxel(object):
 
 
-    __slots__ = ['flux', 'error','ipointcloud', 'pointcloud_weight']
+    __slots__ = ['flux', 'error','flux_weight','iflux']
 
     def __init__(self):
-        self.flux = 0
+        self.flux = 0.0
+        self.flux_weight = 0.0
+        self.iflux = 0
         self.error = 0
-
-        self.ipointcloud = []         # appended to in CubeCloud.MakePointCloud
-        self.pointcloud_weight = []   # appended to in CubeCloud.MakePointCloud
-
 
 class SpaxelAB(object):
 

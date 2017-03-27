@@ -3,16 +3,16 @@ Various utility functions and data types
 """
 from __future__ import absolute_import, unicode_literals, division, print_function
 
+import sys
 from os.path import basename
 import numpy as np
 from astropy.extern import six
 from astropy.io import fits
 
-from jwst.associations import AssociationError
-
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 
 def open(init=None, extensions=None, **kwargs):
@@ -52,39 +52,47 @@ def open(init=None, extensions=None, **kwargs):
     """
 
     from . import model_base
+    from . import filetype
 
-    # Get three special cases for opening a model out of the way
-    # all three cases return a model if they match
+    # Initialize variables used to select model class
+
+    hdulist = {}
+    shape = ()
+
+    # Get special cases for opening a model out of the way
+    # all special cases return a model if they match
 
     if init is None:
         return model_base.DataModel(None)
+
     elif isinstance(init, model_base.DataModel):
         # Copy the object so it knows not to close here
         return init.__class__(init)
 
-    # If given a string, presume its a file path.
-    # Get the list of hdus where possible
-    if isinstance(init, (six.text_type, bytes)) or hasattr(init, "read"):
+    elif isinstance(init, (six.text_type, bytes)) or hasattr(init, "read"):
+        # If given a string, presume its a file path.
+        # if it has a read method, assume a file descriptor
 
-        # Try to read as an association.
-        try:
+        if isinstance(init, (bytes)):
+            init = init.decode(sys.getfilesystemencoding())
+
+        file_type = filetype.check(init)
+
+        if file_type == "fits":
+            hdulist = fits.open(init)
+
+        elif file_type == "asn":
+            # Read the file as an association / model container
             from . import container
             return container.ModelContainer(init, extensions=extensions,
                                             **kwargs)
-        except (AssociationError, ValueError):
-            pass
 
-        # Try as a FITS file.
-        # If this fails, we fail.
-        hdulist = fits.open(init)
+        elif file_type == "asdf":
+            # Read the file as asdf, no need for a special class
+            return model_base.DataModel(init, extensions=extensions,
+                                        **kwargs)
 
-    elif isinstance(init, fits.HDUList):
-        hdulist = init
-    else:
-        hdulist = {}
-
-    # Get the shape from the input argument where possible
-    if isinstance(init, tuple):
+    elif isinstance(init, tuple):
         for item in init:
             if not isinstance(item, int):
                 raise ValueError("shape must be a tuple of ints")
@@ -93,8 +101,11 @@ def open(init=None, extensions=None, **kwargs):
     elif isinstance(init, np.ndarray):
         shape = init.shape
 
-    elif hdulist:
-        # If we have it, determine the shape from the science hdu
+    elif isinstance(init, fits.HDUList):
+        hdulist = init
+
+    # If we have it, determine the shape from the science hdu
+    if hdulist:
         try:
             hdu = hdulist[(fits_header_name('SCI'), 1)]
         except (KeyError, NameError):
@@ -104,8 +115,6 @@ def open(init=None, extensions=None, **kwargs):
                 shape = hdu.shape
             else:
                 shape = ()
-    else:
-        shape = ()
 
     # First try to get the class name from the primary header
     new_class = _class_from_model_type(hdulist)
@@ -127,7 +136,7 @@ def open(init=None, extensions=None, **kwargs):
         raise TypeError("Can't determine datamodel class from argument to open")
 
     # Log a message about how the model was opened
-    if isinstance(init, (six.text_type, bytes)):
+    if isinstance(init, six.text_type):
         log.debug('Opening {0} as {1}'.format(basename(init), new_class))
     else:
         log.debug('Opening as {0}'.format(new_class))
@@ -334,7 +343,6 @@ def gentle_asarray(a, dtype):
         except:
             raise ValueError("Can't convert {0!s} to ndarray".format(type(a)))
         return a
-
 
 def get_short_doc(schema):
     title = schema.get('title', None)

@@ -34,6 +34,16 @@ This relationship is shown in the following figure:
 
    Rule vs. Association Relationship
 
+Note About Loading
+^^^^^^^^^^^^^^^^^^
+
+:meth:`Association.load
+<jwst.associations.association.Association.load>` will only validate
+the incoming data against whatever schema or other validation checks
+the particular subclass calls for. The generally preferred method for
+loading an association is through the
+:func:`jwst.associations.load_asn` function.
+
 .. _asn-design-rules:
 
 Rules
@@ -68,3 +78,12 @@ themselves.
    :scale: 50%
 
    Rule Inheritance
+
+Where Rules Live: The AssociationRegistry
+-----------------------------------------
+
+In order to be used, rules are loaded into an
+:ref:`design-registry`. The registry is used by the
+:ref:`generate` to produce the associations. The registry is
+also used by the :func:`jwst.associations.load_asn` function to
+validate a potential association data against list of rules.

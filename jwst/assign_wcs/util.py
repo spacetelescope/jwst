@@ -14,6 +14,9 @@ from astropy.modeling import models as astmodels
 
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial
+from gwcs import utils as gwutils
+
+from . import pointing
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -45,72 +48,73 @@ def reproject(wcs1, wcs2, origin=0):
     return _reproject
 
 
-def wcs_from_footprints(wcslist, refwcs=None, transform=None, domain=None):
+def wcs_from_footprints(dmodels, refmodel=None, transform=None, domain=None):
     """
-    Create a WCS from a list of WCS objects.
+    Create a WCS from a list of input data models.
 
     A fiducial point in the output coordinate frame is created from  the
     footprints of all WCS objects. For a spatial frame this is the center
     of the union of the footprints. For a spectral frame the fiducial is in
     the beginning of the footprint range.
-    If ``refwcs`` is not specified, the first WCS object in the list is considered
+    If ``refmodel`` is None, the first WCS object in the list is considered
     a reference. The output coordinate frame and projection (for celestial frames)
-    is taken from ``refwcs``.
-    If ``transform`` is not suplied, a compound transform comprised of
-    scaling and rotation is copied from ``refwcs``.
+    is taken from ``refmodel``.
+    If ``transform`` is not suplied, a compound transform is created using
+    CDELTs and PC.
     If ``domain`` is not supplied, the domain of the new WCS is computed
-    from the domains of all input WCSs
+    from the domains of all input WCSs.
 
     Parameters
     ----------
-    wcslist : list of `~gwcs.wcs.WCS`
-        A list of WCS objects.
-    refwcs : `~gwcs.wcs.WCS`, optional
-        Reference WCS. The output coordinate frame, the projection and a
+    dmodels : list of `~jwst.datamodels.DataModel`
+        A list of data models.
+    refmodel : `~jwst.datamodels.DataModel`, optional
+        This model's WCS is used as a reference.
+        WCS. The output coordinate frame, the projection and a
         scaling and rotation transform is created from it. If not supplied
-        the first WCS in the list is used as ``refwcs``.
+        the first model in the list is used as ``refmodel``.
     transform : `~astropy.modeling.core.Model`, optional
         A transform, passed to :class_method:`~gwcs.WCS.wcs_from_fiducial`
-        If not supplied Scaling | Rotation is computed from ``refwcs``.
+        If not supplied Scaling | Rotation is computed from ``refmodel``.
     domain : list of dicts, optional
         Domain of the new WCS.
         If not supplied it is computed from the domain of all inputs.
     """
+    wcslist = [im.meta.wcs for im in dmodels]
     if not isiterable(wcslist):
         raise ValueError("Expected 'wcslist' to be an iterable of WCS objects.")
     if not all([isinstance(w, WCS) for w in wcslist]):
         raise TypeError("All items in wcslist are to be instances of gwcs.WCS.")
-    if refwcs is None:
-        refwcs = wcslist[0]
+    if refmodel is None:
+        refmodel = dmodels[0]
     else:
-        if not isinstance(refwcs, WCS):
-            raise TypeError("Expected refwcs to be an instance of gwcs.WCS.")
+        if not isinstance(refmodel, DataModel):
+            raise TypeError("Expected refmodel to be an instance of DataModel.")
 
     fiducial = compute_fiducial(wcslist, domain)
-    prj = np.array([isinstance(m, projections.Projection) for m \
-                    in refwcs.forward_transform]).nonzero()[0]
-    if prj:
-        prj = refwcs.forward_transform[prj[0]]
-    else:
-        prj = astmodels.Pix2Sky_TAN()
-    trans = []
-    scales = [m for m in refwcs.forward_transform if isinstance(m, astmodels.Scale)]
-    if scales:
-        trans.append(functools.reduce(lambda x, y: x & y, scales))
-    rotation = [m for m in refwcs.forward_transform if \
-                isinstance(m, astmodels.AffineTransformation2D)]
-    if rotation:
-        trans.append(rotation[0])
-    if trans:
-        tr = functools.reduce(lambda x, y: x | y, trans)
-    else:
-        tr = None
-    out_frame = refwcs.output_frame
-    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame,
-                             projection=prj, transform=tr)
 
-    domain_footprints = [w.footprint() for w in wcslist]
-    domain_bounds = np.hstack([wnew.backward_transform(*f) for f in domain_footprints])
+    prj = astmodels.Pix2Sky_TAN()
+
+    if transform is None:
+        transform = []
+        wcsinfo = pointing.wcsinfo_from_model(refmodel)
+        sky_axes, _ = gwutils.get_axes(wcsinfo)
+        rotation = astmodels.AffineTransformation2D(np.array(wcsinfo['PC']))
+        transform.append(rotation)
+        if sky_axes:
+            scale = wcsinfo['CDELT'][sky_axes].mean()
+            scales = astmodels.Scale(scale) & astmodels.Scale(scale)
+            transform.append(scales)
+
+        if transform:
+            transform = functools.reduce(lambda x, y: x | y, transform)
+
+    out_frame = refmodel.meta.wcs.output_frame
+    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame,
+                             projection=prj, transform=transform)
+
+    footprints = [w.footprint() for w in wcslist]
+    domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
     for axs in domain_bounds:
         axs -= axs.min()
     domain = []
@@ -118,7 +122,13 @@ def wcs_from_footprints(wcslist, refwcs=None, transform=None, domain=None):
         axis_min, axis_max = domain_bounds[axis].min(), domain_bounds[axis].max()
         domain.append({'lower': axis_min, 'upper': axis_max,
                        'includes_lower': True, 'includes_upper': True})
+    #ax1, ax2 = domain[sky_axes] # change when domain is a bounding_box
+    ax1, ax2 = domain
+    offset1 = (ax1['upper'] - ax1['lower']) / 2
+    offset2 = (ax2['upper'] - ax2['lower']) / 2
+    offsets = astmodels.Shift(-offset1) & astmodels.Shift(-offset2)
 
+    wnew.insert_transform('detector', offsets, after=True)
     wnew.domain = domain
     return wnew
 

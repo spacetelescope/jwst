@@ -96,7 +96,7 @@ class ResampleSpecData(object):
             raise NotImplementedError('Only NIRSPEC and MIRI are supported.')
         self.build_size_from_domain()
         self.blank_output = datamodels.DrizProductModel(self.data_size)
-        self.blank_output.assign_wcs(self.output_wcs)
+        self.blank_output.wcs = self.output_wcs
 
         # Default to defining output models metadata as
         # a copy of the first input_model's metadata
@@ -119,13 +119,13 @@ class ResampleSpecData(object):
         ref_model = datamodels.DrizParsModel(self.ref_filename)
         # look for row that applies to this set of input data models
         # NOTE:
-        # This logic could be replaced by a method added to the DrizParsModel 
+        # This logic could be replaced by a method added to the DrizParsModel
         # object to select the correct row based on a set of selection params
         row = None
         drizpars = ref_model.drizpars_table
 
         filter_match = False # flag to support wild-card rows in drizpars table
-        for n, filt, num in zip(range(1, drizpars.numimages.shape[0] + 1), 
+        for n, filt, num in zip(range(1, drizpars.numimages.shape[0] + 1),
             drizpars.filter, drizpars.numimages):
             # only remember this row if no exact match has already been made for
             # the filter. This allows the wild-card row to be anywhere in the
@@ -181,11 +181,11 @@ class ResampleSpecData(object):
             if np.isnan(row[x_center]):
                 xpos.append(np.nan)
             else:
-                f = interpolate.interp1d(row[x_center-sz+1:x_center+sz],
-                    x[y_center, x_center-sz+1:x_center+sz])
+                f = interpolate.interp1d(row[x_center - sz + 1:x_center + sz],
+                    x[y_center, x_center - sz + 1:x_center + sz])
                 xpos.append(f(lam[y_center, x_center]))
-        x_arg = np.array(xpos)[~np.isnan(lam[:,x_center])]
-        y_arg = y[~np.isnan(lam[:,x_center]),x_center]
+        x_arg = np.array(xpos)[~np.isnan(lam[:, x_center])]
+        y_arg = y[~np.isnan(lam[:,x_center]), x_center]
         # slit_coords, spect0 = refwcs(x_arg, y_arg, output='numericals_plus')
         slit_ra, slit_dec, slit_spec_ref = refwcs(x_arg, y_arg)
         slit_coords = SkyCoord(ra=slit_ra, dec=slit_dec, unit=u.deg)
@@ -295,7 +295,7 @@ class ResampleSpecData(object):
 
         # Get the slit size at the center of the dispersion
         sky_coords = SkyCoord(ra=ra, dec=dec, unit=u.deg)
-        slit_coords = sky_coords[int(sky_coords.shape[0]/2)]
+        slit_coords = sky_coords[int(sky_coords.shape[0] / 2)]
         slit_angular_size = slit_coords[0].separation(slit_coords[-1])
         log.debug('Slit angular size: {0}'.format(slit_angular_size.arcsec))
 
@@ -316,7 +316,7 @@ class ResampleSpecData(object):
         spatial_scale = slit_angular_size / slit_coords.shape[0]
         log.debug('Spatial scale: {0}'.format(spatial_scale.arcsec))
         tcenter = int((dx1 - dx0) / 2)
-        trace = lam[:,tcenter]
+        trace = lam[:, tcenter]
         trace = trace[~np.isnan(trace)]
         spectral_scale = np.abs((trace[-1] - trace[0]) / trace.shape[0])
         log.debug('spectral scale: {0}'.format(spectral_scale))

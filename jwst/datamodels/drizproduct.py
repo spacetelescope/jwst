@@ -30,6 +30,3 @@ class DrizProductModel(model_base.DataModel):
 
         if relsens is not None:
             self.relsens = relsens
-
-    def assign_wcs(self, wcs):
-        self.meta.wcs = wcs

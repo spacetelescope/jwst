@@ -71,20 +71,14 @@ pipeline module to use to process this association.
 
 The current association types are:
 
-  * `image`: suitable for CALIMAGE3 processing
-  * `spec`: suitable for CALSPECE3 processing
+  * `image3`: Intended for `calwebb_image3` processing
+  * `spec3`: Intended for `calwebb_spec3` processing
   * `wfs`: Wave front sensing data, used by `wfs_combine`
-  * `ami`: Aperture Mask Interferometry
-  * `coron`: Coronography
-  * `tso`: Time-series Observations
-  * `wfss`: Wide-Field Slitless Spectroscopy
-  * `nrsifu`: NIRSpec IFU Spectroscopy
-    
-    This is different from just spectroscopy because of how NIRSpec
-    is arranged. The wavelength/dispersion is determined by the
-    Prism/Grating wheel. The Filter wheel does not modified
-    wavelength/dispersion, thus allowing exposures in multiple
-    wavelengths to be combined.
+  * `ami3`: Intended for `calwebb_ami3` processing
+  * `coron3`: Intended for `calwebb_coron3` processing
+  * `tso3`: Intended for `calwebb_tso3` processing
+  * `image2`: Intended for `calwebb_image2` processing
+  * `spec2`: Intended for `calwebb_spec2` processing
 
 .. _level3-asn-rule-definitions:
 

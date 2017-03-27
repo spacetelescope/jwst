@@ -5,9 +5,9 @@ import pytest
 from . import helpers
 
 from .. import (
-    Association,
     AssociationRegistry,
-    AssociationNotValidError
+    AssociationNotValidError,
+    load_asn
 )
 
 
@@ -23,6 +23,6 @@ def test_valid():
         'data/test_image_asn.json'
     )
     with open(asn_file, 'r') as asn_fp:
-        asn = Association.load(asn_fp)
+        asn = load_asn(asn_fp)
     valid_schema_list = rules.validate(asn)
     assert isinstance(valid_schema_list, list)

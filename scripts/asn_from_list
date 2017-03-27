@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+
+from jwst.associations.asn_from_list import Main
+
+if __name__ == '__main__':
+    Main()

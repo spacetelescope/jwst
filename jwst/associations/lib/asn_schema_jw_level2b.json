@@ -3,6 +3,7 @@
     "title": "Association: JWST DMS Level2a->Level2b",
     "description": "The data structure that, within the JWST DMS processing system, defines how to group level2a exposures to produce Level2b data products.",
     "type": "object",
+    "required": ["asn_type", "asn_rule", "asn_pool", "members"],
     "properties": {
         "asn_type": {
             "description": "The type of association represented.",
@@ -20,34 +21,37 @@
             "description": "The observing program identifier",
             "type": "string"
         },
-        "groups": {
-            "description": "Array of groups of Level2a exposures which are needed to be processed together to produce their Level 2b versions. What these groups represent and how they should be processed is encoded by the asn_type.",
+        "members": {
+            "description": "List of level2a exposures",
             "type": "array",
             "items": {
                 "type": "object",
+                "required": ["expname", "exptype"],
                 "properties": {
-                    "members": {
-                        "description": "Array of input members.",
+                    "expname": {
+                        "description": "Level2a exposure name",
+                        "type": "string"
+                    },
+                    "exptype": {
+                        "description": "Type of exposure",
+                        "type": "string"
+                    },
+                    "bkgexps": {
+                        "description": "List of background exposure",
                         "type": "array",
                         "items": {
                             "type": "object",
+                            "required": ["expname"],
                             "properties": {
                                 "expname": {
-                                    "description": "Name of the input member.",
-                                    "type": "string"
-                                },
-                                "exptype": {
-                                    "description": "Type of member.",
+                                    "description": "Level2a background exposure name",
                                     "type": "string"
                                 }
-                            },
-                            "required": ["expname", "exptype"]
+                            }
                         }
                     }
-                },
-                "required": ["members"]
+                }
             }
         }
-    },
-    "required": ["asn_type", "asn_rule", "asn_pool", "groups"]
+    }
 }

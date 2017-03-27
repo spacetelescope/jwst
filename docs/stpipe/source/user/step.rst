@@ -18,8 +18,8 @@ Steps can be configured by either:
 
     - Instantiating the Step directly from Python
 
-From a configuration file
--------------------------
+Running a Step from a configuration file
+========================================
 
 A Step configuration file is in the well-known ini-file format.
 stpipe uses the `ConfigObj
@@ -52,7 +52,7 @@ the Step’s spec member.  You can print out a Step’s configspec using
 the ``stspec`` commandline utility.  For example, to print the
 configspec for an imaginary step called `stpipe.cleanup`::
 
-    > stspec stpipe.cleanup
+    $ stspec stpipe.cleanup
     # The threshold below which to apply cleanup
     threshold = float()
 
@@ -87,15 +87,13 @@ that runs the ``stpipe.cleanup`` step to clean up an image.
     threshold = 42.0
     scale = 0.01
 
-Running a Step
-==============
 
 .. _strun:
 
-From the commandline
---------------------
+Running a Step rom the commandline
+----------------------------------
 
-The ``strun`` script can be used to run Steps from the commandline.
+The ``strun`` command can be used to run Steps from the commandline.
 
 The first argument may be either:
 
@@ -111,13 +109,13 @@ to the step's process method.  This will often be input filenames.
 For example, to use an existing configuration file from above, but
 override it so the threshold parameter is different::
 
-    > strun --threshold=86 do_cleanup.cfg input.fits
+    $ strun do_cleanup.cfg input.fits --threshold=86
 
 To display a list of the parameters that are accepted for a given Step
 class, pass the ``-h`` parameter, and the name of a Step class or
 configuration file::
 
-    >strun -h do_cleanup.cfg
+    $ strun -h do_cleanup.cfg
     usage: strun [--logcfg LOGCFG] cfg_file_or_class [-h] [--pre_hooks]
                  [--post_hooks] [--skip] [--scale] [--extname]
 
@@ -148,15 +146,58 @@ required, see :ref:`user-logging`).
 To start the Python debugger if the step itself raises an exception,
 pass the `--debug` option to the commandline.
 
-From Python
------------
+Running a Step in Python
+------------------------
 
-Running a step from Python is as simple as calling its `call`
-classmethod.  Configuration parameters may be passed to the step by
-setting the `config_file` kwarg (which takes a path to a configuration
-file) or as keyword arguments.  Any remaining positional arguments are
-passed along to the step's `process` method::
+Running a step can also be done inside the Python interpreter and is as simple
+as calling its `run()` or `call()` classmethods.
+
+run()
+`````
+
+The `run()` classmethod will run a previously instantiated step class. This is
+very useful if one wants to setup the step's attributes first, then run it::
+
+    from jwst.flatfield import FlatFieldStep
+
+    mystep = FlatFieldStep()
+    mystep.override_sflat = ‘sflat.fits’
+    output = mystep.run(input)
+
+Using the `.run()` method is the same as calling the instance or class directly.
+They are equivalent::
+
+    output = mystep(input)
+
+call()
+``````
+
+If one has all the configuration in a configuration file or can pass the
+arguments directly to the step, one can use call(), which creates a new
+instance of the class every time you use the `call()` method.  So::
+
+    output = mystep.call(input)
+
+makes a new instance of `FlatFieldStep` and then runs. Because it is a new
+instance, it ignores any attributes of `mystep` that one may have set earlier,
+such overriding the sflat.
+
+The nice thing about call() is that it can take a configuration file, so::
+
+    output = mystep.call(input, config_file=’my_flatfield.cfg’)
+
+and it will take all the configuration from the config file.
+
+Configuration parameters may be passed to the step by setting the `config_file`
+kwarg in `call` (which takes a path to a configuration file) or as keyword
+arguments.  Any remaining positional arguments are passed along to the step's
+`process()` method::
 
     from jwst.stpipe import cleanup
 
     cleanup.call('image.fits', config_file='do_cleanup.cfg', threshold=42.0)
+
+So use call() if you’re passing a config file or passing along args or kwargs.
+Otherwise use run().
+
+

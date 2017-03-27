@@ -1,4 +1,4 @@
-from __future__ import (division, print_function, unicode_literals, 
+from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
 from ..stpipe import Step, cmdline
@@ -34,9 +34,9 @@ class ResampleSpecStep(Step):
     reference_file_types = ['drizpars']
 
     def process(self, input):
-        
+
         with datamodels.open(input) as self.input_models:
-            
+
             # Single input model, single resample output
             if not isinstance(self.input_models, datamodels.ModelContainer):
                 s = datamodels.ModelContainer()
@@ -44,7 +44,7 @@ class ResampleSpecStep(Step):
                 self.input_models = s
 
             self.driz_filename = self.get_reference_file(self.input_models[0], 'drizpars')
-            
+
             # Multislits get converted to a ModelContainer per slit
             if all([isinstance(i, datamodels.MultiSlitModel) for i in self.input_models]):
                 log.info('Converting MultiSlit to ModelContainer')
@@ -83,7 +83,7 @@ class ResampleSpecStep(Step):
                     result = self.step.output_models[0]
                 else:
                     result = self.step.output_models
-        
+
         result.meta.cal_step.resample = 'COMPLETE'
         return result
 

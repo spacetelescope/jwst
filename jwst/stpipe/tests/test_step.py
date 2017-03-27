@@ -1,5 +1,6 @@
 from __future__ import absolute_import, division, print_function
 
+import os
 from os.path import dirname, join, abspath, isfile
 import shutil
 import tempfile
@@ -196,3 +197,5 @@ def test_save_model():
     Step.from_cmdline(args)
     fname = join(tempdir, 'flat_FOO_SaveStep.fits')
     assert isfile(fname)
+    # The following file is produced in __init__.py SaveStep class.  Cleanup.
+    os.remove('flat_processed.fits')

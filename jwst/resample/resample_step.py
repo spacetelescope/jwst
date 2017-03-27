@@ -32,7 +32,8 @@ class ResampleStep(Step):
     def process(self, input):
 
         input_models = datamodels.open(input)
-        if type(input_models) != type(datamodels.ModelContainer()): # single exposure
+        # If single input, insert into a ModelContainer
+        if input_models.__class__ is not datamodels.ModelContainer:
             s = datamodels.ModelContainer()
             s.append(input_models)
             s.assign_group_ids()
@@ -64,9 +65,9 @@ class ResampleStep(Step):
             output_model = self.step.output_models[0]
         else:
             output_model = self.step.output_models
-            
+
         output_model.meta.cal_step.resample = "COMPLETE"
-        
+
         return output_model
 
 

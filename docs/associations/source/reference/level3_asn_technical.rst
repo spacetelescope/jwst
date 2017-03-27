@@ -63,7 +63,8 @@ The following example will be used to explain the contents of an association::
     {
         "degraded_status": "No known degraded exposures in association.",
         "version_id": "20160826t131159",
-        "asn_type": "image",
+        "asn_type": "image3",
+        "asn_id": "c3001",
         "constraints": "Constraints:\n    opt_elem2: CLEAR\n    pointing_type: SCIENCE\n    detector: (?!NULL).+\n    target_name: 1\n    exp_type: NRC_IMAGE\n    wfsvisit: NULL\n    instrument: NIRCAM\n    opt_elem: F090W\n    program: 99009",
         "asn_pool": "mega_pool",
         "asn_rule": "Asn_Image",
@@ -71,7 +72,7 @@ The following example will be used to explain the contents of an association::
         "program": "99009",
         "products": [
             {
-                "name": "jw99009-a3001_t001_nircam_f090w_{product_type}.fits",
+                "name": "jw99009-a3001_t001_nircam_f090w_",
                 "members": [
                     {
                         "exposerr": null,
@@ -179,16 +180,9 @@ Association products have to components:
 
 name
   The string template to be used by Level 3 processing tasks to create
-  the output file names. The template has one, or more, replacement
-  fields to be used by downstream tasks to fill in task-specific
-  information. All templates have one replacement field,
-  `product_type`. For example, CALIMAGE3 will fill this with the value
-  `i2d`.
-
-  Associations of type `spec` will have an extra replacement field,
-  `source_id`. This is meant for the number of multi-object modes that
-  exist, since target/source information is not known until Level 3
-  processing.
+  the output file names. The product name, in general, is a prefix on
+  which the individual pipeline and step modules will append whatever
+  suffix information is needed.
 
 members
   This is a list of the exposures to be used by the Level 3 processing

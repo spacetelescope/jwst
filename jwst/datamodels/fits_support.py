@@ -5,7 +5,6 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 import datetime
 import os
 import re
-import warnings
 
 import numpy as np
 
@@ -28,6 +27,11 @@ from jsonschema import validators
 from . import properties
 from . import schema as mschema
 from . import util
+
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 
 __all__ = ['to_fits', 'from_fits', 'fits_hdu_name', 'get_hdu']
@@ -450,17 +454,7 @@ def _fits_array_loader(hdulist, schema, hdu_index, known_datas):
         return None
 
     known_datas.add(hdu)
-    data = hdu.data
-    
-    data2 = properties._cast(data, schema)
-
-    # Casting a table loses the listeners, so restore them
-    if isinstance(hdu, fits.BinTableHDU):
-        coldefs = data._coldefs
-        coldefs2 = data2._coldefs
-        coldefs2._listeners = coldefs._listeners
-
-    return data2
+    return from_fits_hdu(hdu, schema)
 
 
 def _schema_has_fits_hdu(schema):
@@ -498,7 +492,7 @@ def _load_from_schema(hdulist, schema, tree, validate=True,
                         raise
                     else:
                         msgfmt = "'{0}' is not valid in keyword '{1}'"
-                        warnings.warn(msgfmt.format(result, fits_keyword))
+                        log.warning(msgfmt.format(result, fits_keyword))
                         if pass_invalid_values:
                             properties.put_value(path, result, tree)
                 else:
@@ -578,3 +572,18 @@ def from_fits(hdulist, schema, extensions=None, validate=True,
     _load_history(hdulist, ff.tree)
 
     return ff
+
+def from_fits_hdu(hdu, schema):
+    """
+    Read the data from a fits hdu into a numpy ndarray
+    """
+    data = hdu.data    
+    data2 = properties._cast(data, schema)
+
+    # Casting a table loses the listeners, so restore them
+    if isinstance(hdu, fits.BinTableHDU):
+        coldefs = data._coldefs
+        coldefs2 = data2._coldefs
+        coldefs2._listeners = coldefs._listeners
+
+    return data2
