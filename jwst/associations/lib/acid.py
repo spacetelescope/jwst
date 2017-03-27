@@ -1,9 +1,15 @@
 """Association Candidate Identifier"""
 from ast import literal_eval
+import re
+
+from jwst.associations.lib.counter import Counter
 
 __all__ = [
     'ACID'
 ]
+
+# Start of the discovered association ids.
+_DISCOVERED_ID_START = 3001
 
 
 class ACID(object):
@@ -43,3 +49,30 @@ class ACID(object):
 
     def __str__(self):
         return self.id
+
+
+class ACIDMixin(object):
+    """Enable ACID for rules"""
+    def __init__(self, *args, **kwargs):
+
+        # Initialize discovered association ID
+        self.discovered_id = Counter(_DISCOVERED_ID_START)
+
+        super(ACIDMixin, self).__init__(*args, **kwargs)
+
+    def acid_from_constraints(self):
+        """Determine ACID from constraints"""
+        for _, constraint in self.constraints.items():
+            if constraint.get('is_acid', False):
+                value = re.sub('\\\\', '', constraint['value'])
+                try:
+                    acid = ACID(value)
+                except ValueError:
+                    pass
+                else:
+                    break
+        else:
+            id = 'a{:0>3}'.format(self.discovered_id.value)
+            acid = ACID((id, 'DISCOVERED'))
+
+        return acid
