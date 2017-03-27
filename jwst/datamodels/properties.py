@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 import copy
 import numpy as np
 import jsonschema
+import collections
 
 from astropy.extern import six
 from astropy.utils.compat.misc import override__dir__
@@ -197,7 +198,18 @@ class ObjectNode(Node):
             val = _make_default(attr, schema, self._ctx)
             self._instance[attr] = val
 
-        return _make_node(val, schema, self._ctx)
+        if isinstance(val, dict):
+            # Meta is special cased to support NDData interface
+            if attr == 'meta':
+                node = MetaNode(val, schema, self._ctx)
+            else:
+                node = ObjectNode(val, schema, self._ctx)
+        elif isinstance(val, list):
+            node = ListNode(val, schema, self._ctx)
+        else:
+            node = val
+
+        return node
 
     def __setattr__(self, attr, val):
         if attr.startswith('_'):
@@ -244,7 +256,6 @@ class ObjectNode(Node):
     def __hasattr__(self, attr):
         return (attr in self._instance or
                 _find_property(self._schema, attr))
-
 
 class ListNode(Node):
     def __cast(self, other):
@@ -346,7 +357,6 @@ class ListNode(Node):
         obj._validate()
         return obj
 
-
 def put_value(path, value, tree):
     """
     Put a value at the given path into tree, replacing it if it is
@@ -396,3 +406,94 @@ def merge_tree(a, b):
 
     recurse(a, b)
     return a
+
+#---------------------------------------------
+# The following classes provide support
+# for the NDData interface to Datamodels
+#---------------------------------------------
+
+class MetaNode(ObjectNode, collections.MutableMapping):
+    """
+    NDData compatibility class for meta node
+    """
+    def __init__(self, instance, schema, ctx):
+        ObjectNode.__init__(self, instance, schema, ctx)
+
+    def _find(self, path):
+        if not path:
+            return self
+        
+        cursor = self._instance
+        schema = self._schema
+        for attr in path:
+            try:
+                cursor = cursor[attr]
+            except KeyError:
+                raise KeyError("'%s'" % '.'.join(path))
+            schema = _get_schema_for_property(schema, attr)
+            
+        return _make_node(cursor, schema, self._ctx)
+
+    def __delitem__(self, key):
+        path = key.split('.')
+        parent = self._find(path[:-1])
+        try:
+            parent.__delattr__(path[-1])
+        except KeyError:
+            raise KeyError("'%s'" % key)
+
+    def __getitem__(self, key):
+        path = key.split('.')
+        return self._find(path)
+    
+    def __iter__(self):
+        return MetaNodeIterator(self)
+
+    def __len__(self):
+        def recurse(val):
+            n = 0
+            for subval in six.itervalues(val):
+                if isinstance(subval, dict):
+                    n += recurse(subval)
+                else:
+                    n += 1
+            return n
+
+        return recurse(self._instance)
+
+    def __setitem__(self, key, value):
+        path = key.split('.')
+        parent = self._find(path[:-1])
+        try:
+            parent.__setattr__(path[-1], value)
+        except KeyError:
+            raise KeyError("'%s'" % key)
+
+class MetaNodeIterator(six.Iterator):
+    """
+    An iterator for the meta node which flattens the hierachical structure
+    """
+    def __init__(self, node):
+        self.key_stack = []
+        self.iter_stack = [six.iteritems(node._instance)]
+    
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        while self.iter_stack:
+            try:
+                key, val = six.next(self.iter_stack[-1])
+            except StopIteration:
+                self.iter_stack.pop()
+                if self.iter_stack:
+                    self.key_stack.pop()
+                continue
+                
+            if isinstance(val, dict):
+                self.key_stack.append(key)
+                self.iter_stack.append(six.iteritems(val))
+            else:
+                return '.'.join(self.key_stack + [key])
+                
+        raise StopIteration
