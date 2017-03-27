@@ -626,7 +626,7 @@ class DataSet(object):
             conv_factor = 0.0
 
         if area_fname is not None: # Load and save the pixel area info
-            if 'IMAGE' in self.exptype:
+            if 'IMAGE' in self.exptype and area_fname != 'N/A':
                 result = self.save_area_info(ftab, area_fname)
 
         # Store the conversion factors in the meta data

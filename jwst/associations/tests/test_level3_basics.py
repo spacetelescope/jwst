@@ -1,13 +1,17 @@
 """Test general Level 3 rules environment"""
 from __future__ import absolute_import
 
-from .helpers import (combine_pools, t_path)
+from .helpers import (
+    combine_pools,
+    registry_level3_only,
+    t_path
+)
 
 from .. import (AssociationRegistry, generate)
 
 
 def test_meta():
-    rules = AssociationRegistry()
+    rules = registry_level3_only()
     pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
     asns, orphaned = generate(pool, rules)
     assert len(asns) > 0
@@ -15,7 +19,7 @@ def test_meta():
     data = asn.data
     assert data['program'] == '99009'
     assert data['target'] == '1'
-    assert data['asn_type'] == 'image'
+    assert data['asn_type'] == 'image3'
     assert data['asn_id'] == 'a3001'
     assert data['asn_pool'] == 'pool_002_image_miri'
     assert data['asn_rule'] == 'Asn_Image'

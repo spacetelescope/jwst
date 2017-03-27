@@ -19,22 +19,19 @@ import numpy as np
 from numpy.testing.decorators import knownfailureif
 from numpy.testing import assert_array_equal
 
-from .. import DataModel, ImageModel, QuadModel, MultiSlitModel, open
+from .. import (DataModel, ImageModel, QuadModel, MultiSlitModel,
+                ModelContainer)
+from ..util import open
 from .. import schema
 
 
-FITS_FILE = None
-TMP_FITS = None
-TMP_YAML = None
-TMP_JSON = None
-TMP_DIR = None
-TMP_FITS2 = None
+ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
+FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
+ASN_FILE = os.path.join(ROOT_DIR, 'association.json')
 
 
 def setup():
     global FITS_FILE, TMP_DIR, TMP_FITS, TMP_YAML, TMP_JSON, TMP_FITS2
-    ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
-    FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
 
     TMP_DIR = tempfile.mkdtemp()
     TMP_FITS = os.path.join(TMP_DIR, 'tmp.fits')
@@ -372,3 +369,51 @@ def test_image_with_extra_keyword_to_multislit():
         assert len(ms.slits) == 3
         for slit in ms.slits:
             assert slit.data.shape == (4, 4)
+
+
+@pytest.fixture(scope="module")
+def container():
+    with ModelContainer(ASN_FILE) as c:
+        for m in c:
+            m.meta.observation.program_number = '0001'
+            m.meta.observation.observation_number = '1'
+            m.meta.observation.visit_number = '1'
+            m.meta.observation.visit_group = '1'
+            m.meta.observation.sequence_id = '01'
+            m.meta.observation.activity_id = '1'
+            m.meta.observation.exposure_number = '1'
+            m.meta.instrument.name = 'NIRCAM'
+            m.meta.instrument.channel = 'SHORT'
+        yield c
+
+
+def test_modelcontainer_iteration(container):
+    for model in container:
+        assert model.meta.filename == 'test.fits'
+
+
+def test_modelcontainer_indexing(container):
+    assert isinstance(container[0], DataModel)
+
+
+def test_modelcontainer_group1(container):
+    for group in container.models_grouped:
+        assert len(group) == 2
+        for model in group:
+            pass
+
+
+def test_modelcontainer_group2(container):
+    container[0].meta.observation.exposure_number = '2'
+    for group in container.models_grouped:
+        assert len(group) == 1
+        for model in group:
+            pass
+    container[0].meta.observation.exposure_number = '1'
+
+
+def test_modelcontainer_group_names(container):
+    assert len(container.group_names) == 1
+    container[0].meta.observation.exposure_number = '2'
+    assert len(container.group_names) == 2
+    container[0].meta.observation.exposure_number = '1'
