@@ -793,6 +793,11 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
 
+    # The following two methods are only here to generate the 
+    # astropy.io.registry documentation and should not be called
+    read = __init__
+    write = save
+
     #---------------------------------------
     # Nddata interface compatibility methods
     #---------------------------------------

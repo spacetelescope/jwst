@@ -8,6 +8,7 @@ from os.path import basename
 import numpy as np
 from astropy.extern import six
 from astropy.io import fits
+from astropy.units import Quantity
 
 import logging
 log = logging.getLogger(__name__)
@@ -106,6 +107,9 @@ def open(init=None, extensions=None, **kwargs):
 
     # If we have it, determine the shape from the science hdu
     if hdulist:
+        # So we don't need to open the image twice
+        init = hdulist
+
         try:
             hdu = hdulist[(fits_header_name('SCI'), 1)]
         except (KeyError, NameError):
@@ -361,3 +365,70 @@ def ensure_ascii(s):
         if six.PY3:
             s = s.decode('ascii')
     return s
+
+#---------------------------------------
+# astropy.io.registry compatibility
+#---------------------------------------
+ 
+def read(data, *args, **kwargs):
+    """
+    Astropy.io registry compatibility function to wrap util.open
+    """
+    
+    # Translate keyword arguments to those expected by ImageModel
+    xargs = {}
+    if kwargs.get("mask"):
+        xargs["dq"] = kwargs["mask"]
+        
+    uncertainty = kwargs.get("uncertainty")
+    if uncertainty:
+        if isinstance(uncertainty, Quantity):
+            uncertainty_type = uncertainty.unit
+            uncertainty = uncertainty.data
+        else:
+            uncertainty_type = None
+        xargs["err"] = uncertainty
+    else:
+        uncertainty_type = None
+
+    if hasattr(data, 'mask') and hasattr(data, 'data'):
+        xargs["dq"] = data.mask
+        data = data.data
+
+    if isinstance(data, Quantity):
+        unit = data.unit
+        data = data.value
+    else:
+        unit = kwargs.get("unit")
+        
+    # Create the model using the transformed arguments
+    model = open(data, **xargs)
+
+    # Add attributes passed as keyword arguments to model
+    if unit:
+        model.meta.bunit_data = unit
+
+    wcs = kwargs.get("wcs")
+    if wcs:
+        model.wcs = wcs
+
+    if uncertainty_type:
+        model.meta.bunit_err = uncertainty_type
+    
+    return model
+
+def write(data, path, *args, **kwargs):
+    """
+    Astropy.io registry compatabilty function to wrap datamodel.savw
+    """
+    from .model_base import DataModel
+
+    if not isinstance(data, DataModel):
+        model = DataModel(hdulist)
+    else:
+        model = data
+    
+    if isinstance(path, six.string_types): 
+        model.save(path, *args, **kwargs)
+    else:
+        raise ValueError("Path to write DataModel was not found")
