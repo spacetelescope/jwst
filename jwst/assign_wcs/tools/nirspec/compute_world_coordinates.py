@@ -54,10 +54,11 @@ def ifu_coords(fname, output=None):
     output_frame = ifu_slits[0].available_frames[-1]
     for i, slit in enumerate(ifu_slits):
         x, y = wcstools.grid_from_domain(slit.domain)
-        # 1-based coordinates expected
-        ra, dec, lam = slit(x + 1, y + 1)
+        ## 1-based coordinates expected
+        # ra, dec, lam = slit(x + 1, y + 1)
+        ra, dec, lam = slit(x, y)
         detector2slit = slit.get_transform('detector', 'slit_frame')
-        sx, sy, ls = detector2slit(x + 1, y + 1)
+        sx, sy, ls = detector2slit(x, y)
         world_coordinates = np.array([lam, ra, dec, sy])
         imhdu = fits.ImageHDU(data=world_coordinates)
         imhdu.header['PLANE1'] = 'lambda, microns'
@@ -121,9 +122,10 @@ def compute_world_coordinates(fname, output=None):
     output_frame = model.slits[0].meta.wcs.available_frames[-1]
     for slit in model.slits:
         # slit.x(y)start are 1-based, turn them to 0-based for extraction
-        xstart, xend = slit.xstart - 1, slit.xstart -1 + slit.xsize
-        ystart, yend = slit.ystart - 1, slit.ystart -1 + slit.ysize
-        y, x = np.mgrid[ystart: yend, xstart: xend]
+        # xstart, xend = slit.xstart - 1, slit.xstart -1 + slit.xsize
+        # ystart, yend = slit.ystart - 1, slit.ystart -1 + slit.ysize
+        # y, x = np.mgrid[ystart: yend, xstart: xend]
+        x, y = wcstools.grid_from_domain(slit.domain)
         ra, dec, lam = slit.meta.wcs(x, y)
         detector2slit = slit.meta.wcs.get_transform('detector', 'slit_frame')
 
