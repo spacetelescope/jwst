@@ -90,7 +90,7 @@ def test_global_constraints(full_pool_rules):
                 }
             },
             'pool': full_pool,
-            'n_asns': 1,
+            'n_asns': 2,
         },
         'empty': {
             'constraints': {
@@ -111,7 +111,7 @@ def test_global_constraints(full_pool_rules):
                 }
             },
             'pool': helpers.t_path('data/pool_001_candidates.csv'),
-            'n_asns': 2,
+            'n_asns': 3,
         },
         'exclusive_candidates': {
             'constraints': {
@@ -122,7 +122,7 @@ def test_global_constraints(full_pool_rules):
                 }
             },
             'pool': helpers.t_path('data/pool_001_candidates.csv'),
-            'n_asns': 4,
+            'n_asns': 6,
         },
     }
 

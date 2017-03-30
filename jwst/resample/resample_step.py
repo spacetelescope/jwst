@@ -32,7 +32,8 @@ class ResampleStep(Step):
     def process(self, input):
 
         input_models = datamodels.open(input)
-        if type(input_models) != type(datamodels.ModelContainer()): # single exposure
+        # If single input, insert into a ModelContainer
+        if input_models.__class__ is not datamodels.ModelContainer:
             s = datamodels.ModelContainer()
             s.append(input_models)
             s.assign_group_ids()
