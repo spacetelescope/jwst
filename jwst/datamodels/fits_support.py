@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 import datetime
 import os
 import re
+import warnings
 
 import numpy as np
 
@@ -232,7 +233,7 @@ def _fits_comment_section_handler(validator, properties, instance, schema):
 
 def _fits_element_writer(validator, fits_keyword, instance, schema):
     if schema.get('type', 'object') == 'array':
-        raise ValueError("'fits_keyword' not valid with type of 'array'")
+        raise ValueError("'fits_keyword' is not valid with type of 'array'")
 
     hdu_name = _get_hdu_name(schema)
     index = getattr(validator, 'sequence_index', None)
@@ -467,8 +468,8 @@ def _schema_has_fits_hdu(schema):
     return has_fits_hdu[0]
 
 
-def _load_from_schema(hdulist, schema, tree, validate=True,
-                      pass_invalid_values=False):
+def _load_from_schema(hdulist, schema, tree, warn_if_invalid,
+                      pass_invalid_values):
     known_keywords = {}
     known_datas = set()
 
@@ -488,13 +489,17 @@ def _load_from_schema(hdulist, schema, tree, validate=True,
                 try:
                     asdf_schema.validate(result, schema=temp_schema)
                 except jsonschema.ValidationError:
-                    if validate:
-                        raise
+                    result = str(result)
+                    if len(result) > 55:
+                        result = result[0:56] + " ..."
+                    msgfmt = "'{0}' is not valid in '{1}'"
+                    msg = msgfmt.format(result, fits_keyword)
+                    if warn_if_invalid:
+                        warnings.warn(msg, properties.ValidationWarning)
                     else:
-                        msgfmt = "'{0}' is not valid in keyword '{1}'"
-                        log.warning(msgfmt.format(result, fits_keyword))
-                        if pass_invalid_values:
-                            properties.put_value(path, result, tree)
+                        log.warning(msg)
+                    if pass_invalid_values:
+                        properties.put_value(path, result, tree)
                 else:
                     properties.put_value(path, result, tree)
 
@@ -561,13 +566,11 @@ def _load_history(hdulist, tree):
         history.append(HistoryEntry({'description': entry}))
 
 
-def from_fits(hdulist, schema, extensions=None, validate=True,
-              pass_invalid_values=False):
+def from_fits(hdulist, schema, extensions, warn_if_invalid, pass_invalid_values):
     ff = fits_embed.AsdfInFits.open(hdulist, extensions=extensions)
 
     known_keywords, known_datas = _load_from_schema(
-        hdulist, schema, ff.tree, validate,
-        pass_invalid_values=pass_invalid_values)
+        hdulist, schema, ff.tree, warn_if_invalid, pass_invalid_values)
     _load_extra_fits(hdulist, known_keywords, known_datas, ff.tree)
     _load_history(hdulist, ff.tree)
 
