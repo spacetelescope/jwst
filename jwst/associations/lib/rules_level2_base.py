@@ -8,6 +8,7 @@ from jwst.associations import (
     libpath
 )
 from jwst.associations.lib.dms_base import DMSBaseMixin
+from jwst.associations.lib.rules_level3_base import _EMPTY
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 
 # Configure logging
@@ -16,6 +17,9 @@ logger.addHandler(logging.NullHandler())
 
 __all__ = [
     'ASN_SCHEMA',
+    'AsnMixin_Lv2Image',
+    'AsnMixin_Lv2Mode',
+    'AsnMixin_Lv2Spec',
     'DMSLevel2bBase',
     'Utility'
 ]
@@ -33,6 +37,10 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
     # Set the validation schema
     schema_file = ASN_SCHEMA
+
+    # Attribute values that are indicate the
+    # attribute is not specified.
+    INVALID_VALUES = _EMPTY
 
     def __init__(self, *args, **kwargs):
 
@@ -62,7 +70,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             return not self.__eq__(other)
         else:
             return NotImplemented
-        
+
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
         self.data['target'] = member['TARGETID']
@@ -83,6 +91,10 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             'exptype': Utility.get_exposure_type(member, default='SCIENCE')
         }
         self.data['members'].append(entry)
+
+    def __repr__(self):
+        file_name, json_repr = self.ioregistry['json'].dump(self)
+        return json_repr
 
     def __str__(self):
         """Create human readable version of the association
@@ -154,3 +166,103 @@ class Utility(object):
     @staticmethod
     def resequence(*args, **kwargs):
         return Utility_Level3.resequence(*args, **kwargs)
+
+
+# ---------------------------------------------
+# Mixins to define the broad category of rules.
+# ---------------------------------------------
+class AsnMixin_Lv2Image(DMSLevel2bBase):
+    """Level 2 Image association base"""
+
+    def __init__(self, *args, **kwargs):
+
+        self.add_constraints({
+            'exp_type': {
+                'value': 'NRC_IMAGE|MIR_IMAGE|NIS_IMAGE|FGS_IMAGE',
+                'inputs': ['EXP_TYPE'],
+                'force_unique': True,
+            }
+        })
+
+        super(AsnMixin_Lv2Image, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, member):
+        """Post-check and pre-add initialization"""
+
+        super(AsnMixin_Lv2Image, self)._init_hook(member)
+        self.data['asn_type'] = 'image2'
+
+
+class AsnMixin_Lv2Spec(DMSLevel2bBase):
+    """Level 2 Spectral association base"""
+
+    def __init__(self, *args, **kwargs):
+
+        self.add_constraints({
+            'exp_type': {
+                'value': (
+                    'NRC_GRISM'
+                    '|NRC_TSGRISM'
+                    '|MIR_LRS-FIXEDSLIT'
+                    '|MIR_LRS-SLITLESS'
+                    '|NRS_FIXEDSLIT'
+                    '|NRS_IFU'
+                    '|NRS_MSASPEC'
+                    '|NRS_BRIGHTOBJ'
+                    '|NIS_WFSS'
+                    '|NIS_SOSS'
+                ),
+                'inputs': ['EXP_TYPE'],
+                'force_unique': True,
+            }
+        })
+
+        super(AsnMixin_Lv2Spec, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, member):
+        """Post-check and pre-add initialization"""
+
+        super(AsnMixin_Lv2Spec, self)._init_hook(member)
+        self.data['asn_type'] = 'spec2'
+
+
+class AsnMixin_Lv2Mode(DMSLevel2bBase):
+    """Fix the instrument configuration"""
+    def __init__(self, *args, **kwargs):
+
+        # I am defined by the following constraints
+        self.add_constraints({
+            'program': {
+                'value': None,
+                'inputs': ['PROGRAM']
+            },
+            'instrument': {
+                'value': None,
+                'inputs': ['INSTRUME']
+            },
+            'detector': {
+                'value': None,
+                'inputs': ['DETECTOR']
+            },
+            'opt_elem': {
+                'value': None,
+                'inputs': ['FILTER']
+            },
+            'opt_elem2': {
+                'value': None,
+                'inputs': ['PUPIL', 'GRATING'],
+                'required': False,
+            },
+            'subarray': {
+                'value': None,
+                'inputs': ['SUBARRAY'],
+                'required': False,
+            },
+            'channel': {
+                'value': None,
+                'inputs': ['CHANNEL'],
+                'required': False,
+            }
+        })
+
+        super(AsnMixin_Lv2Mode, self).__init__(*args, **kwargs)
