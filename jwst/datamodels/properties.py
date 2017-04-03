@@ -145,6 +145,9 @@ def _get_schema_for_index(schema, i):
     else:
         return items
 
+class ValidationError(Exception):
+    pass
+
 class ValidationWarning(Warning):
     pass
 
@@ -174,10 +177,11 @@ class Node(object):
                 msgfmt = "'{0}' is not valid in '{1}'"
                 msg = msgfmt.format(value, attr)
                 
-        if self._ctx._warn_if_invalid:
-            warnings.warn(msg, ValidationWarning)
-        else:
-            log.warning(msg)
+            if self._ctx._error_if_invalid:
+                raise ValidationError(msg)
+            else:
+                warnings.warn(msg, ValidationWarning)
+
 
     def _validate(self):
         instance = yamlutil.custom_tree_to_tagged_tree(
@@ -186,8 +190,7 @@ class Node(object):
             schema.validate(instance, schema=self._schema)
             valid = True
         except jsonschema.ValidationError:
-            valid = False
-        self._ctx._has_invalid_values = not valid          
+            valid = False     
         return valid
 
     @property
@@ -241,31 +244,23 @@ class ObjectNode(Node):
                 val = _make_default(attr, schema, self._ctx)
             val = _cast(val, schema)
             old_val = self._instance.get(attr, None)
-            try:
-                previously_invalid = self._ctx._has_invalid_values
-            except AttributeError:
-                previously_invalid = False
 
             self._instance[attr] = val
             if not self._validate():
-                self._report(val, attr)
                 # Revert the transaction 
-                if not self._ctx._pass_invalid_values and not previously_invalid:
-                    self._ctx._has_invalid_values = False
+                if not self._ctx._pass_invalid_values:
                     if old_val is None:
                         del self._instance[attr]
                     else:
                         self._instance[attr] = old_val
 
+                self._report(val, attr)
+                
     def __delattr__(self, attr):
         if attr.startswith('_'):
             del self.__dict__[attr]
         else:
             old_val = self._instance.get(attr, None)
-            try:
-                previously_invalid = self._ctx._has_invalid_values
-            except AttributeError:
-                previously_invalid = False
 
             try:
                 del self._instance[attr]
@@ -273,12 +268,12 @@ class ObjectNode(Node):
                 raise AttributeError(
                     "Attribute '{0}' missing".format(attr))
             if not self._validate():
-                self._report(None, attr)
                 # Revert the transaction
-                if not self._ctx._pass_invalid_values and not previously_invalid:
-                    self._ctx._has_invalid_values = False
+                if not self._ctx._pass_invalid_values:
                     if old_val is not None:
                         self._instance[attr] = old_val
+                        
+                self._report(None, attr)
 
     def __hasattr__(self, attr):
         return (attr in self._instance or

@@ -40,8 +40,8 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
     """
     schema_url = "core.schema.yaml"
 
-    def __init__(self, init=None, schema=None, extensions=None, 
-                 warn_if_invalid=True, pass_invalid_values=False):
+    def __init__(self, init=None, schema=None, extensions=None,
+                 error_if_invalid=False, pass_invalid_values=False):
         """
         Parameters
         ----------
@@ -72,9 +72,6 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         extensions: classes extending the standard set of extensions, optional.
             If an extension is defined, the prefix used should be 'url'.
 
-        warn_if_invalid: If true, a value that does not validate against the 
-            schema generates a warning message. If false, the message is logged.
-            
         pass_invalid_values: If true, values that do not validate the schema can
             be read and written.
         """
@@ -96,7 +93,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         # Set model properties to hold paramaters controlling 
         # validation error handling
         self._pass_invalid_values = pass_invalid_values
-        self._warn_if_invalid = warn_if_invalid
+        self._error_if_invalid = error_if_invalid
 
         # Construct the path to the schema files
         filename = os.path.abspath(inspect.getfile(self.__class__))
@@ -150,7 +147,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
             is_shape = True
         elif isinstance(init, fits.HDUList):
             asdf = fits_support.from_fits(init, self._schema, extensions,
-                                          warn_if_invalid, pass_invalid_values)
+                                          error_if_invalid, pass_invalid_values)
                                           
         elif isinstance(init, six.string_types):
             if isinstance(init, bytes):
@@ -166,7 +163,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
                         "File does not appear to be a FITS or ASDF file.")
             else:
                 asdf = fits_support.from_fits(hdulist, self._schema, 
-                                              extensions, warn_if_invalid,
+                                              extensions, error_if_invalid,
                                               pass_invalid_values)
                 self._files_to_close.append(hdulist)
         else:

@@ -468,8 +468,9 @@ def _schema_has_fits_hdu(schema):
     return has_fits_hdu[0]
 
 
-def _load_from_schema(hdulist, schema, tree, warn_if_invalid,
+def _load_from_schema(hdulist, schema, tree, error_if_invalid,
                       pass_invalid_values):
+    invalid_keywords = set()
     known_keywords = {}
     known_datas = set()
 
@@ -494,12 +495,11 @@ def _load_from_schema(hdulist, schema, tree, warn_if_invalid,
                         result = result[0:56] + " ..."
                     msgfmt = "'{0}' is not valid in '{1}'"
                     msg = msgfmt.format(result, fits_keyword)
-                    if warn_if_invalid:
-                        warnings.warn(msg, properties.ValidationWarning)
-                    else:
-                        log.warning(msg)
+                    warnings.warn(msg, properties.ValidationWarning)
                     if pass_invalid_values:
                         properties.put_value(path, result, tree)
+                    else:
+                        invalid_keywords.add(fits_keyword)
                 else:
                     properties.put_value(path, result, tree)
 
@@ -526,6 +526,10 @@ def _load_from_schema(hdulist, schema, tree, warn_if_invalid,
                 return True
 
     mschema.walk_schema(schema, callback)
+    if error_if_invalid and invalid_keywords:
+        msgfmt = "fits keywords are not valid: {0}"
+        msg = msgfmt.format(','.join(list(invalid_keywords)))
+        raise properties.ValidationError(msg)
     return known_keywords, known_datas
 
 
@@ -566,11 +570,12 @@ def _load_history(hdulist, tree):
         history.append(HistoryEntry({'description': entry}))
 
 
-def from_fits(hdulist, schema, extensions, warn_if_invalid, pass_invalid_values):
+def from_fits(hdulist, schema, extensions, error_if_invalid,
+              pass_invalid_values):
     ff = fits_embed.AsdfInFits.open(hdulist, extensions=extensions)
 
     known_keywords, known_datas = _load_from_schema(
-        hdulist, schema, ff.tree, warn_if_invalid, pass_invalid_values)
+        hdulist, schema, ff.tree, error_if_invalid, pass_invalid_values)
     _load_extra_fits(hdulist, known_keywords, known_datas, ff.tree)
     _load_history(hdulist, ff.tree)
 
