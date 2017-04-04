@@ -1,0 +1,13 @@
+allOf:
+- $ref: referencefile.schema.yaml
+- type: object
+  properties:
+    model:
+          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.0.0
+    meta:
+      type: object
+      properties:
+        output_units:
+          type: string
+        input_units:
+          type: string
