@@ -41,7 +41,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
     schema_url = "core.schema.yaml"
 
     def __init__(self, init=None, schema=None, extensions=None,
-                 error_if_invalid=False, pass_invalid_values=False):
+                 error_if_invalid=True, pass_invalid_values=False):
         """
         Parameters
         ----------
@@ -72,6 +72,9 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         extensions: classes extending the standard set of extensions, optional.
             If an extension is defined, the prefix used should be 'url'.
 
+        error_if_invalid: If true, throw an error when model does not validate
+            against the schema. If false, generate a warning message instead.
+            
         pass_invalid_values: If true, values that do not validate the schema can
             be read and written.
         """

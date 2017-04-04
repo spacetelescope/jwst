@@ -145,9 +145,6 @@ def _get_schema_for_index(schema, i):
     else:
         return items
 
-class ValidationError(Exception):
-    pass
-
 class ValidationWarning(Warning):
     pass
 
@@ -177,10 +174,10 @@ class Node(object):
                 msgfmt = "'{0}' is not valid in '{1}'"
                 msg = msgfmt.format(value, attr)
                 
-            if self._ctx._error_if_invalid:
-                raise ValidationError(msg)
-            else:
-                warnings.warn(msg, ValidationWarning)
+        if self._ctx._error_if_invalid:
+            raise jsonschema.ValidationError(msg)
+        else:
+            warnings.warn(msg, ValidationWarning)
 
 
     def _validate(self):

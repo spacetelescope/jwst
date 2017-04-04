@@ -529,7 +529,7 @@ def _load_from_schema(hdulist, schema, tree, error_if_invalid,
     if error_if_invalid and invalid_keywords:
         msgfmt = "fits keywords are not valid: {0}"
         msg = msgfmt.format(','.join(list(invalid_keywords)))
-        raise properties.ValidationError(msg)
+        raise jsonschema.ValidationError(msg)
     return known_keywords, known_datas
 
 
