@@ -25,6 +25,7 @@ import warnings
 
 
 def _domain_to_bounding_box(domain):
+    # TODO: remove this when domain is completely removed
     bb = tuple([(item['lower'], item['upper']) for item in domain])
     if len(bb) == 1:
         bb = bb[0]
@@ -135,11 +136,8 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     bounding_box = []
     for axis in out_frame.axes_order:
         axis_min, axis_max = domain_bounds[axis].min(), domain_bounds[axis].max()
-        #domain.append({'lower': axis_min, 'upper': axis_max,
-                       #'includes_lower': True, 'includes_upper': True})
         bounding_box.append((axis_min, axis_max))
-    #ax1, ax2 = domain[sky_axes] # change when domain is a bounding_box
-    ax1, ax2 = bounding_box
+    ax1, ax2 = bounding_box[sky_axes]
     offset1 = (ax1['upper'] - ax1['lower']) / 2
     offset2 = (ax2['upper'] - ax2['lower']) / 2
     offsets = astmodels.Shift(-offset1) & astmodels.Shift(-offset2)

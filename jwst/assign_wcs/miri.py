@@ -158,9 +158,6 @@ def lrs(input_model, reference_files):
     y0 = lrsdata[:, 4]
     x1 = lrsdata[:, 5]
 
-    #domain = [{'lower': x0.min() + zero_point[0], 'upper': x1.max() + zero_point[0]},
-              #{'lower': (y0.min() + zero_point[1]), 'upper': (y0.max() + zero_point[1])}
-              #]
     bb = ((x0.min() + zero_point[0], x1.max() + zero_point[0]),
           (y0.min() + zero_point[1], y0.max() + zero_point[1]))
     # Find the ROW of the zero point which should be the [1] of zero_point
@@ -199,7 +196,6 @@ def lrs(input_model, reference_files):
               models.Shift(xshift, name='xshift1') & \
               models.Shift(yshift, name='yshift2') & models.Shift(xshift, name='xshift2') & \
               models.Identity(2) | radec_t2d & lrs_wav_model
-    #det2world.meta['domain'] = domain
     det2world.bounding_box = bb
     # Now the actual pipeline.
     pipeline = [(detector, det2world),
