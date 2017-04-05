@@ -174,10 +174,10 @@ class Node(object):
                 msgfmt = "'{0}' is not valid in '{1}'"
                 msg = msgfmt.format(value, attr)
                 
-        if self._ctx._error_if_invalid:
-            raise jsonschema.ValidationError(msg)
-        else:
+        if self._ctx._pass_invalid_values:
             warnings.warn(msg, ValidationWarning)
+        else:
+            raise jsonschema.ValidationError(msg)
 
 
     def _validate(self):
@@ -244,12 +244,11 @@ class ObjectNode(Node):
 
             self._instance[attr] = val
             if not self._validate():
-                # Revert the transaction 
-                if not self._ctx._pass_invalid_values:
-                    if old_val is None:
-                        del self._instance[attr]
-                    else:
-                        self._instance[attr] = old_val
+                # Revert the change
+                if old_val is None:
+                    del self._instance[attr]
+                else:
+                    self._instance[attr] = old_val
 
                 self._report(val, attr)
                 
@@ -265,10 +264,9 @@ class ObjectNode(Node):
                 raise AttributeError(
                     "Attribute '{0}' missing".format(attr))
             if not self._validate():
-                # Revert the transaction
-                if not self._ctx._pass_invalid_values:
-                    if old_val is not None:
-                        self._instance[attr] = old_val
+                # Revert the change
+                if old_val is not None:
+                    self._instance[attr] = old_val
                         
                 self._report(None, attr)
 

@@ -11,6 +11,7 @@ import os
 import sys
 
 import numpy as np
+import jsonschema
 
 from astropy.extern import six
 from astropy.io import fits
@@ -41,7 +42,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
     schema_url = "core.schema.yaml"
 
     def __init__(self, init=None, schema=None, extensions=None,
-                 error_if_invalid=True, pass_invalid_values=False):
+                 pass_invalid_values=False):
         """
         Parameters
         ----------
@@ -72,11 +73,8 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         extensions: classes extending the standard set of extensions, optional.
             If an extension is defined, the prefix used should be 'url'.
 
-        error_if_invalid: If true, throw an error when model does not validate
-            against the schema. If false, generate a warning message instead.
-            
         pass_invalid_values: If true, values that do not validate the schema can
-            be read and written.
+            be read and written and only a warning will be generated
         """
         # Set the extensions
         if extensions is None:
@@ -93,10 +91,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
             except ValueError:
                 pass_invalid_values = False
     
-        # Set model properties to hold paramaters controlling 
-        # validation error handling
         self._pass_invalid_values = pass_invalid_values
-        self._error_if_invalid = error_if_invalid
 
         # Construct the path to the schema files
         filename = os.path.abspath(inspect.getfile(self.__class__))
@@ -150,8 +145,8 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
             is_shape = True
         elif isinstance(init, fits.HDUList):
             asdf = fits_support.from_fits(init, self._schema, extensions,
-                                          error_if_invalid, pass_invalid_values)
-                                          
+                                          pass_invalid_values)
+
         elif isinstance(init, six.string_types):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
@@ -166,8 +161,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
                         "File does not appear to be a FITS or ASDF file.")
             else:
                 asdf = fits_support.from_fits(hdulist, self._schema, 
-                                              extensions, error_if_invalid,
-                                              pass_invalid_values)
+                                              extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
         else:
             raise ValueError(
