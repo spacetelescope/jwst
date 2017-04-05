@@ -63,6 +63,14 @@ def imaging(input_model, reference_files):
     distortion = imaging_distortion(input_model, reference_files)
     tel2sky = pointing.v23tosky(input_model)
 
+    # TODO: remove setting the bounding box when it is set in the new ref file.
+    try:
+        bb = distortion.bounding_box
+    except NotImplementedError:
+        shape = input_model.data.shape
+        # Note: Since bounding_box is attached to the model here it's in reverse order.
+        distortion.bounding_box = ((-0.5, shape[0] - 0.5), (3.5, shape[0] - 0.5))
+
     # Create the pipeline
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),
@@ -104,9 +112,8 @@ def imaging_distortion(input_model, reference_files):
             distortion = models.Shift(filter_corr['column_offset']) & models.Shift(
                 filter_corr['row_offset']) | distortion
 
-    # Apply XanYan --> V2V3 and scale to degrees
-    distortion = distortion | models.Identity(1) & (models.Scale(-1) | models.Shift(-7.8)) | \
-               models.Scale(1/60) & models.Scale(1/60)
+    # scale to degrees
+    distortion = distortion | models.Scale(1 / 3600) & models.Scale(1 / 3600)
     return distortion
 
 
