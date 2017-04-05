@@ -841,11 +841,11 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.5, slit_ym
     y_range = np.hstack((y_range_low, y_range_high))
     # add 10 px margin
     # The -1 is technically because the output of slit2detector is 1-based coordinates.
-    x0 = int(max(0, x_range.min() -1 -10))
-    x1 = int(min(2047, x_range.max() -1 + 10))
+    x0 = max(0, x_range.min() -1 -10)
+    x1 = min(2047, x_range.max() -1 + 10)
     # add 2 px margin
-    y0 = int(y_range.min() -1 -2)
-    y1 = int(y_range.max() -1 + 2)
+    y0 = y_range.min() -1 -2
+    y1 = y_range.max() -1 + 2
 
     bounding_box = ((x0, x1), (y0, y1))
     return bounding_box
