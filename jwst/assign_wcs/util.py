@@ -21,6 +21,16 @@ from . import pointing
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+import warnings
+
+
+def _domain_to_bounding_box(domain):
+    # TODO: remove this when domain is completely removed
+    bb = tuple([(item['lower'], item['upper']) for item in domain])
+    if len(bb) == 1:
+        bb = bb[0]
+    return bb
+
 
 def reproject(wcs1, wcs2, origin=0):
     """
@@ -48,7 +58,7 @@ def reproject(wcs1, wcs2, origin=0):
     return _reproject
 
 
-def wcs_from_footprints(dmodels, refmodel=None, transform=None, domain=None):
+def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=None, domain=None):
     """
     Create a WCS from a list of input data models.
 
@@ -61,8 +71,8 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, domain=None):
     is taken from ``refmodel``.
     If ``transform`` is not suplied, a compound transform is created using
     CDELTs and PC.
-    If ``domain`` is not supplied, the domain of the new WCS is computed
-    from the domains of all input WCSs.
+    If ``bounding_box`` is not supplied, the bounding_box of the new WCS is computed
+    from bounding_box of all input WCSs.
 
     Parameters
     ----------
@@ -76,10 +86,16 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, domain=None):
     transform : `~astropy.modeling.core.Model`, optional
         A transform, passed to :class_method:`~gwcs.WCS.wcs_from_fiducial`
         If not supplied Scaling | Rotation is computed from ``refmodel``.
-    domain : list of dicts, optional
-        Domain of the new WCS.
-        If not supplied it is computed from the domain of all inputs.
+    bounding_box : tuple, optional
+        Bounding_box of the new WCS.
+        If not supplied it is computed from the bounding_box of all inputs.
     """
+    if domain is not None:
+        warnings.warning("'domain' was deprecated in 0.8 and will be removed from next"
+                         "version. Use 'bounding_box' instead.")
+        bb = _domain_to_bounding_box(domain)
+    else:
+        bb = bounding_box
     wcslist = [im.meta.wcs for im in dmodels]
     if not isiterable(wcslist):
         raise ValueError("Expected 'wcslist' to be an iterable of WCS objects.")
@@ -91,7 +107,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, domain=None):
         if not isinstance(refmodel, DataModel):
             raise TypeError("Expected refmodel to be an instance of DataModel.")
 
-    fiducial = compute_fiducial(wcslist, domain)
+    fiducial = compute_fiducial(wcslist, bb)
 
     prj = astmodels.Pix2Sky_TAN()
 
@@ -117,34 +133,35 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, domain=None):
     domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
     for axs in domain_bounds:
         axs -= axs.min()
-    domain = []
+    bounding_box = []
     for axis in out_frame.axes_order:
         axis_min, axis_max = domain_bounds[axis].min(), domain_bounds[axis].max()
-        domain.append({'lower': axis_min, 'upper': axis_max,
-                       'includes_lower': True, 'includes_upper': True})
-    #ax1, ax2 = domain[sky_axes] # change when domain is a bounding_box
-    ax1, ax2 = domain
+        bounding_box.append((axis_min, axis_max))
+    ax1, ax2 = bounding_box[sky_axes]
     offset1 = (ax1['upper'] - ax1['lower']) / 2
     offset2 = (ax2['upper'] - ax2['lower']) / 2
     offsets = astmodels.Shift(-offset1) & astmodels.Shift(-offset2)
 
     wnew.insert_transform('detector', offsets, after=True)
-    wnew.domain = domain
+    wnew.bounding_box = bounding_box
     return wnew
 
 
-def compute_fiducial(wcslist, domain=None):
+def compute_fiducial(wcslist, bounding_box=None, domain=None):
     """
     For a celestial footprint this is the center.
     For a spectral footprint, it is the beginning of the range.
 
     This function assumes all WCSs have the same output coordinate frame.
     """
+    if domain is not None:
+        warnings.warning("'domain' was deprecated in 0.8 and will be removed from next"
+                         "version. Use 'bounding_box' instead.")
     output_frame = wcslist[0].output_frame
     axes_types = wcslist[0].output_frame.axes_type
     spatial_axes = np.array(axes_types) == 'SPATIAL'
     spectral_axes = np.array(axes_types) == 'SPECTRAL'
-    footprints = np.hstack([w.footprint(domain=domain) for w in wcslist])
+    footprints = np.hstack([w.footprint(bounding_box=bounding_box) for w in wcslist])
     spatial_footprint = footprints[spatial_axes]
     spectral_footprint = footprints[spectral_axes]
 
