@@ -8,6 +8,8 @@ import copy
 import numpy as np
 from astropy.io import fits
 from astropy.modeling.models import Shift
+from gwcs.utils import _toindex
+
 from .. import datamodels
 from asdf import AsdfFile
 from ..assign_wcs import nirspec
@@ -57,18 +59,19 @@ def extract2d(input_model, which_subarray=None):
             ext_dq = input_model.dq[ylo: yhi, xlo: xhi].copy()
             new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
             shape = ext_data.shape
-            bounding_box= ((0, shape[1] -1), (0, shape[0]) - 1)
+            bounding_box= ((0, shape[1] - 1), (0, shape[0] - 1))
             slit_wcs.bounding_box = bounding_box
             new_model.meta.wcs = slit_wcs
             output_model.slits.append(new_model)
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
             nslit = len(output_model.slits) - 1
+            xlo_ind, xhi_ind, ylo_ind, yhi_ind = _toind((xlo, xhi, ylo, yhi)).astype(np.int)
             output_model.slits[nslit].name = str(slit.name)
-            output_model.slits[nslit].xstart = xlo + 1
-            output_model.slits[nslit].xsize = xhi - xlo
-            output_model.slits[nslit].ystart = ylo + 1
-            output_model.slits[nslit].ysize = yhi - ylo
+            output_model.slits[nslit].xstart = xlo_ind + 1
+            output_model.slits[nslit].xsize = xhi_ind - xloind
+            output_model.slits[nslit].ystart = ylo_ind + 1
+            output_model.slits[nslit].ysize = yhi_ind - ylo_ind
             if exp_type.lower() == 'nrs_msaspec':
                 output_model.slits[nslit].source_id = int(slit.source_id)
                 output_model.slits[nslit].source_name = slit.source_name
