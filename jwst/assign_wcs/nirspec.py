@@ -812,7 +812,7 @@ def mask_slit(ymin=-.5, ymax=.5):
     return model
 
 
-def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5):
+def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5):
     """
     Compute the projection of a slit/slice on the detector.
 
@@ -847,8 +847,8 @@ def compute_domain(slit2detector, wavelength_range, slit_ymin=-.5, slit_ymax=.5)
     y0 = int(y_range.min() -1 -2)
     y1 = int(y_range.max() -1 + 2)
 
-    domain = [{'lower': x0, 'upper': x1}, {'lower': y0, 'upper': y1}]
-    return domain
+    bounding_box = ((x0, x1), (y0, y1))
+    return bounding_box
 
 
 def collimator_to_gwa(reference_files, disperser):
@@ -1154,10 +1154,10 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
 
     if input_model.meta.exposure.type.lower() != 'nrs_ifu':
         slit = [s for s in open_slits if s.name == slit_name][0]
-        domain = compute_domain(slit2detector, wrange, slit_ymin=slit.ymin, slit_ymax=slit.ymax)
+        bb = compute_bounding_box(slit2detector, wrange, slit_ymin=slit.ymin, slit_ymax=slit.ymax)
     else:
-        domain = compute_domain(slit2detector, wrange)
-    slit_wcs.domain = domain
+        bb = compute_bounding_box(slit2detector, wrange)
+    slit_wcs.bounding_box = bb
     return slit_wcs
 
 
@@ -1178,8 +1178,8 @@ def validate_open_slits(input_model, open_slits, reference_files):
     """
 
     def _is_valid_slit(domain):
-        xlow, xhigh = domain[0]['lower'], domain[0]['upper']
-        ylow, yhigh = domain[1]['lower'], domain[1]['upper']
+        xlow, xhigh = domain[0]
+        ylow, yhigh = domain[1]
         if xlow >= 2048 or ylow >= 2048 or xhigh <= 0 or yhigh <= 0:
             return False
         else:
@@ -1222,12 +1222,12 @@ def validate_open_slits(input_model, open_slits, reference_files):
                 slitdata_model = get_slit_location_model(slitdata)
                 msa_transform = slitdata_model | msa_model
                 msa2det = msa_transform & Identity(1) | col2det
-                domain = compute_domain(msa2det, wrange, slit.ymin, slit.ymax)
-                valid = _is_valid_slit(domain)
+                bb = compute_bounding_box(msa2det, wrange, slit.ymin, slit.ymax)
+                valid = _is_valid_slit(bb)
                 if not valid:
                     log.info("Removing slit {0} from the list of open slits because the"
-                             "WCS domain is completely outside the detector.".format(slit.name))
-                    log.debug("Slit domain is {0}".format(domain))
+                             "WCS bounding_box is completely outside the detector.".format(slit.name))
+                    log.debug("Slit bounding_box is {0}".format(bb))
                     idx = np.nonzero([s.name==slit.name for s in open_slits])[0][0]
                     open_slits.pop(idx)
 

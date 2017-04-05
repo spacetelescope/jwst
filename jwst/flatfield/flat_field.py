@@ -503,39 +503,51 @@ def NIRSpec_IFU(output_model,
             raise RuntimeError("The assign_wcs step has not been run.")
     for (k, ifu_wcs) in enumerate(list_of_wcs):
 
-        # example:  domain = [{u'lower': 1601, u'upper': 2048},   # X
-        #                     {u'lower': 1887, u'upper': 1925}]   # Y
+        # example:  bounding_box = ((1600.5, 2048.5),   # X
+        #                           (1886.5, 1925.5))   # Y
         truncated = False
-        xstart = ifu_wcs.domain[0]['lower']
-        xstop = ifu_wcs.domain[0]['upper']
-        ystart = ifu_wcs.domain[1]['lower']
-        ystop = ifu_wcs.domain[1]['upper']
-        # Make sure these are integers, and add one to the upper limits,
-        # because we want to use these as slice limits.
-        xstart = int(round(xstart))
-        xstop = int(round(xstop)) + 1
-        ystart = int(round(ystart))
-        ystop = int(round(ystop)) + 1
+        try:
+            xstart = ifu_wcs.bounding_box[0][0]
+            xstop = ifu_wcs.bounding_box[0][1]
+            ystart = ifu_wcs.bounding_box[1][0]
+            ystop = ifu_wcs.bounding_box[1][1]
+            log.debug("Using ifu_wcs.bounding_box.")
+        except AttributeError:
+            log.info("ifu_wcs.bounding_box not found; using domain instead.")
+            xstart = ifu_wcs.domain[0]['lower']
+            xstop = ifu_wcs.domain[0]['upper']
+            ystart = ifu_wcs.domain[1]['lower']
+            ystop = ifu_wcs.domain[1]['upper']
 
-        if xstart < 0:
+        if xstart < -0.5:
             truncated = True
-            log.info("xstart from WCS domain was %d; set to 0" % xstart)
-            xstart = 0
-        if ystart < 0:
+            log.info("xstart from WCS bounding_box was %g" % xstart)
+            xstart = 0.
+        if ystart < -0.5:
             truncated = True
-            log.info("ystart from WCS domain was %d; set to 0" % ystart)
-            ystart = 0
-        if xstop > 2048:
+            log.info("ystart from WCS bounding_box was %g" % ystart)
+            ystart = 0.
+        if xstop > 2047.5:
             truncated = True
-            log.info("xstop from WCS domain was %d; set to 2048" % xstop)
-            xstop = 2048
-        if ystop > 2048:
+            log.info("xstop from WCS bounding_box was %g" % xstop)
+            xstop = 2047.
+        if ystop > 2047.5:
             truncated = True
-            log.info("ystop from WCS domain was %d; set to 2048" % ystop)
-            ystop = 2048
+            log.info("ystop from WCS bounding_box was %g" % ystop)
+            ystop = 2047.
         if truncated:
-            log.info("WCS domain for stripe %d extended beyond image edges, "
-                     "has been truncated.", k)
+            log.info("WCS bounding_box for stripe %d extended beyond image "
+                     "edges, has been truncated to ...", k)
+            log.info('  xstart=%g, xstop=%g, ystart=%g, ystop=%g',
+                     xstart, xstop, ystart, ystop)
+
+        # Convert these to integers, and add one to the upper limits,
+        # because we want to use these as slice limits.
+        xstart = int(math.ceil(xstart))
+        xstop = int(math.floor(xstop)) + 1
+        ystart = int(math.ceil(ystart))
+        ystop = int(math.floor(ystop)) + 1
+
         dx = xstop - xstart
         dy = ystop - ystart
         ind = np.indices((dy, dx))

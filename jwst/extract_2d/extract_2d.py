@@ -40,8 +40,8 @@ def extract2d(input_model, which_subarray=None):
 
         for slit in open_slits:
             slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
-            xlo, xhi = slit_wcs.domain[0]['lower'], slit_wcs.domain[0]['upper']
-            ylo, yhi = slit_wcs.domain[1]['lower'], slit_wcs.domain[1]['upper']
+            xlo, xhi = slit_wcs.bounding_box[0]
+            ylo, yhi = slit_wcs.bounding_box[1]
 
             # Add the slit offset to each slit WCS object
             tr = slit_wcs.get_transform('detector', 'sca')
@@ -57,9 +57,8 @@ def extract2d(input_model, which_subarray=None):
             ext_dq = input_model.dq[ylo: yhi, xlo: xhi].copy()
             new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
             shape = ext_data.shape
-            domain = [{'lower': 0, 'upper': shape[1], 'includes_lower': True, 'includes_upper': False},
-                      {'lower':0, 'upper': shape[0], 'includes_lower': True, 'includes_upper': False}]
-            slit_wcs.domain = domain
+            bounding_box= ((0, shape[1] -1), (0, shape[0]) - 1)
+            slit_wcs.bounding_box = bounding_box
             new_model.meta.wcs = slit_wcs
             output_model.slits.append(new_model)
             # set x/ystart values relative to the image (screen) frame.
