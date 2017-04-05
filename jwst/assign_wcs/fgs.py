@@ -63,8 +63,16 @@ def imaging(input_model, reference_files):
 
 def imaging_distortion(input_model, reference_files):
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    # Convert to arcsec
-    transform = distortion | models.Scale(1/60) & models.Scale(1/60)
+    # Convert to deg
+    transform = distortion | models.Scale(1 / 3600) & models.Scale(1 / 3600)
+
+    try:
+        bb = transform.bounding_box
+    except NotImplementedError:
+        shape = input_model.data.shape
+        # Note: Since bounding_box is attached to the model here it's in reverse order.
+        transform.bounding_box = ((shape[1] - 0.5, shape[0] - 0.5),
+                                  (shape[1] - 0.5 , shape[0] - 0.5))
     return transform
 
 
