@@ -338,7 +338,7 @@ class Association(MutableMapping):
             logger.debug('Constraint="{}" Conditions="{}"'.format(
                 constraint, conditions
             ))
-            test = getattr(conditions, 'test', self.match_member)
+            test = conditions.get('test', self.match_member)
             test(member, constraint, conditions)
         self.constraints = constraints
 
@@ -431,6 +431,43 @@ class Association(MutableMapping):
            conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
             conditions['value'] = re.escape(evaled_str)
             conditions['inputs'] = [input]
+            conditions['force_unique'] = False
+
+    def match_constraint(self, member, constraint, conditions):
+        """Generic constraint checking
+
+        Parameters
+        ----------
+        member: dict
+            The member to retrieve the values from
+
+        constraint: str
+            The name of the constraint
+
+        conditions: dict
+            The conditions structure
+
+        Raises
+        ------
+        AssociationError
+            If the match fails
+        """
+        evaled_str = conditions['inputs']()
+        if conditions['value'] is not None:
+            if not meets_conditions(
+                    evaled_str, conditions['value']
+            ):
+                raise AssociationError(
+                    'Constraint {}'
+                    ' does not match association.'.format(constraint)
+                )
+
+        # At this point, the constraint has passed.
+        # Fix the conditions.
+        logger.debug('Success Input="{}" Value="{}"'.format(input, evaled_str))
+        if conditions['value'] is None or \
+           conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
+            conditions['value'] = re.escape(evaled_str)
             conditions['force_unique'] = False
 
     def add_constraints(self, new_constraints):

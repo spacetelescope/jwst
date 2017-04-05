@@ -546,7 +546,6 @@ class AsnMixin_Base(DMS_Level3_Base):
         # I am defined by the following constraints
         self.add_constraints({
             'program': {
-                'test': self.match_member,
                 'value': None,
                 'inputs': ['PROGRAM'],
             },

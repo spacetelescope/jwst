@@ -50,10 +50,38 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 'value': None,
                 'inputs': ['PROGRAM']
             },
+            'n_members': {
+                'test': self.match_constraint,
+                'value': '0',
+                'inputs': lambda: str(len(self.data.get('members', [])))
+            }
         })
 
         # Now, lets see if member belongs to us.
         super(DMSLevel2bBase, self).__init__(*args, **kwargs)
+
+    def match_member_count(self, member, constraint, conditions):
+        """
+        Test for number of members currently in the association
+        Parameters
+        ----------
+        member: dict
+            The member to retrieve the values from
+
+        constraint: str
+            The name of the constraint
+
+        conditions: dict
+            The conditions structure
+
+        Raises
+        ------
+        AssociationError
+            If the match fails
+
+        AssociationProcessMembers
+            If more members need to be reprocessed.
+        """
 
     def __eq__(self, other):
         """Compare equality of two assocaitions"""
@@ -93,7 +121,10 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self.data['members'].append(entry)
 
     def __repr__(self):
-        file_name, json_repr = self.ioregistry['json'].dump(self)
+        try:
+            file_name, json_repr = self.ioregistry['json'].dump(self)
+        except:
+            return str(self.__class__)
         return json_repr
 
     def __str__(self):
