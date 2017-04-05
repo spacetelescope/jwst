@@ -11,6 +11,8 @@ allOf:
         datatype: [ascii, 12]
       - name: pupil
         datatype: [ascii, 12]
+      - name: order
+        datatype: int16
       - name: photmjsr
         datatype: float32
       - name: uncertainty
@@ -18,9 +20,9 @@ allOf:
       - name: nelem
         datatype: int16
       - name: wavelength
-        shape: [50]
+        shape: [3000]
         datatype: float32
       - name: relresponse
-        shape: [50]
+        shape: [3000]
         datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
