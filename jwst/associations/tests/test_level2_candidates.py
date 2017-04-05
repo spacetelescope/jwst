@@ -21,22 +21,22 @@ from ..main import Main
         # Basic observation ACIDs
         (
             ['-i', 'o001'],
-            1
+            10
         ),
         # Whole program
         (
             [],
-            11
+            140
         ),
         # Discovered only
         (
             ['--discover'],
-            1
+            0
         ),
         # Candidates only
         (
             ['--all-candidates'],
-            10
+            140
         ),
     ]
 )
