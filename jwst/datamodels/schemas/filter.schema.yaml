@@ -1,6 +1,6 @@
 title: Filter data model
 allOf:
-- $ref: core.schema.yaml
+- $ref: core_data.schema.yaml
 - type: object
   properties:
     filter_table:

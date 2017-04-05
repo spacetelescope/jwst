@@ -51,7 +51,8 @@ def create_hdul(detector, channel, band):
     phdu.header['CHANNEL'] = channel
     phdu.header['BAND'] = band
     phdu.header['time-obs'] = '8:59:37'
-    phdu.header['date-obs'] = '2014-09-05'
+    phdu.header['date-obs'] = '2015-08-02'
+    phdu.header['date'] = '2015-08-01T17:15:21'
     phdu.header['exp_type'] = 'MIR_MRS'
     phdu.header.update(wcs_kw)
     hdul.append(phdu)

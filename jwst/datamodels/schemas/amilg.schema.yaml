@@ -1,6 +1,6 @@
 title: AMI LG analysis data model
 allOf:
-- $ref: core.schema.yaml
+- $ref: core_data.schema.yaml
 - type: object
   properties:
     fit_image:

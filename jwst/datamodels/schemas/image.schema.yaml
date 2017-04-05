@@ -1,5 +1,8 @@
+title: JWST Image Data Model
+description: |
+  Schema for JWST image data files.
 allOf:
-- $ref: core.schema.yaml
+- $ref: core_data.schema.yaml
 - $ref: bunit.schema.yaml
 - type: object
   properties:

@@ -1,7 +1,7 @@
 {
     "title" : "Combined spectrum data model",
     "allOf" : [
-        {"$ref" : "core.schema.json"},
+        {"$ref" : "core_data.schema.json"},
         {
             "type" : "object",
             "properties" : {
