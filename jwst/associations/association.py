@@ -335,67 +335,103 @@ class Association(MutableMapping):
         """
         constraints = deepcopy(self.constraints)
         for constraint, conditions in constraints.items():
-            logger.debug('Constraint="{}" Conditions="{}"'.format(constraint, conditions))
-            try:
-                input, value = getattr_from_list(
-                    member,
-                    conditions['inputs'],
-                    invalid_values=self.INVALID_VALUES
-                )
-            except KeyError:
-                if conditions.get('is_invalid', False) or \
-                   not conditions.get(
-                       'required',
-                       self.DEFAULT_REQUIRE_CONSTRAINT
-                   ):
-                    continue
-                else:
-                    raise AssociationError(
-                        'Constraint {} not present in member.'.format(constraint)
-                    )
-            else:
-                if conditions.get('is_invalid', False):
-                    raise AssociationError(
-                        'Constraint {} present when it should not be'.format(constraint)
-                    )
-
-            # If the value is a list, signal that a reprocess
-            # needs to be done.
-            logger.debug('To check: Input="{}" Value="{}"'.format(input, value))
-            evaled = evaluate(value)
-
-            if is_iterable(evaled):
-                process_members = []
-                for avalue in evaled:
-                    new_member = deepcopy(member)
-                    new_member[input] = str(avalue)
-                    process_members.append(new_member)
-                raise AssociationProcessMembers(
-                    process_members,
-                    [type(self)]
-                )
-
-            evaled_str = str(evaled)
-            if conditions['value'] is not None:
-                if not meets_conditions(
-                        evaled_str, conditions['value']
-                ):
-                    raise AssociationError(
-                        'Constraint {} does not match association.'.format(constraint)
-                    )
-
-            # At this point, the constraint has passed.
-            # Fix the conditions.
-            logger.debug('Success Input="{}" Value="{}"'.format(input, evaled_str))
-            if conditions['value'] is None or \
-               conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
-                conditions['value'] = re.escape(evaled_str)
-                conditions['inputs'] = [input]
-                conditions['force_unique'] = False
-
-        # At this point, all constraints have passed
-        # Update the constraints.
+            logger.debug('Constraint="{}" Conditions="{}"'.format(
+                constraint, conditions
+            ))
+            test = getattr(conditions, 'test', self.match_member)
+            test(member, constraint, conditions)
         self.constraints = constraints
+
+    def match_member(self, member, constraint, conditions):
+        """Use member info to match to the conditions
+
+        Parameters
+        ----------
+        member: dict
+            The member to retrieve the values from
+
+        constraint: str
+            The name of the constraint
+
+        conditions: dict
+            The conditions structure
+
+        Raises
+        ------
+        AssociationError
+            If the match fails
+
+        AssociationProcessMembers
+            If more members need to be reprocessed.
+        """
+        logger.debug(
+            'Called with:\n'
+            '\tmember="{}"\n'
+            '\tconstraint="{}"\n'
+            '\tconditions={}\n'.format(
+                member,
+                constraint,
+                conditions
+            )
+        )
+        try:
+            input, value = getattr_from_list(
+                member,
+                conditions['inputs'],
+                invalid_values=self.INVALID_VALUES
+            )
+        except KeyError:
+            if not conditions.get('force_undefined', False) and \
+               conditions.get(
+                   'required',
+                   self.DEFAULT_REQUIRE_CONSTRAINT
+               ):
+                raise AssociationError(
+                    'Constraint {} not present in member.'.format(constraint)
+                )
+            else:
+                return
+        else:
+            if conditions.get('force_undefined', False):
+                raise AssociationError(
+                    'Constraint {} present'
+                    ' when it should not be'.format(constraint)
+                )
+
+        # If the value is a list, signal that a reprocess
+        # needs to be done.
+        logger.debug('To check: Input="{}" Value="{}"'.format(input, value))
+        evaled = evaluate(value)
+
+        if is_iterable(evaled):
+            process_members = []
+            for avalue in evaled:
+                new_member = deepcopy(member)
+                new_member[input] = str(avalue)
+                process_members.append(new_member)
+            raise AssociationProcessMembers(
+                process_members,
+                [type(self)]
+            )
+
+        evaled_str = str(evaled)
+        if conditions['value'] is not None:
+            if not meets_conditions(
+                    evaled_str, conditions['value']
+            ):
+                raise AssociationError(
+                    'Constraint {}'
+                    ' does not match association.'.format(constraint)
+                )
+
+        # At this point, the constraint has passed.
+        # Fix the conditions.
+        logger.debug('Success Input="{}" Value="{}"'.format(input, evaled_str))
+        if conditions['value'] is None or \
+           conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
+            conditions['value'] = re.escape(evaled_str)
+            conditions['inputs'] = [input]
+            conditions['force_unique'] = False
 
     def add_constraints(self, new_constraints):
         """Add a set of constraints to the current constraints."""
@@ -411,7 +447,7 @@ class Association(MutableMapping):
     def constraints_to_text(self):
         yield 'Constraints:'
         for name, conditions in self.constraints.items():
-            if conditions.get('is_invalid', False):
+            if conditions.get('force_undefined', False):
                 yield '    {:s}: Is Invalid'.format(name)
             else:
                 yield '    {:s}: {}'.format(name, conditions['value'])
