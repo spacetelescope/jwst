@@ -165,8 +165,8 @@ def lrs(input_model, reference_files):
     y0 = lrsdata[:, 4]
     x1 = lrsdata[:, 5]
 
-    bb = ((x0.min() + zero_point[0], x1.max() + zero_point[0]),
-          (y0.min() + zero_point[1], y0.max() + zero_point[1]))
+    bb = ((x0.min() - 0.5 + zero_point[0], x1.max() + 0.5 + zero_point[0]),
+          (y0.min() - 0.5 + zero_point[1], y0.max() + 0.5 + zero_point[1]))
     # Find the ROW of the zero point which should be the [1] of zero_point
     row_zero_point = zero_point[1]
 
