@@ -1014,8 +1014,9 @@ def oteip_to_v23(reference_files):
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
     # The spatial units are currently in deg. Convertin to arcsec.
     oteip_to_xyan = fore2ote_mapping | (ote & Scale(1e6))
-    # Add a shift for the aperture.
-    oteip2v23 = oteip_to_xyan | Identity(1) & (Shift(468 / 3600) | Scale(-1)) & Identity(1)
+    # TODO: The scaling arcsec --> deg should be added with the next CDP delivery.
+    # In CDP3 the units are still deg.
+    oteip2v23 = oteip_to_xyan #| Scale(1 / 3600) & Scale(1 / 3600)  & Identity(1)
 
     return oteip2v23
 
