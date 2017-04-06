@@ -841,11 +841,11 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.5, slit_ym
     y_range = np.hstack((y_range_low, y_range_high))
     # add 10 px margin
     # The -1 is technically because the output of slit2detector is 1-based coordinates.
-    x0 = int(max(0, x_range.min() -1 -10))
-    x1 = int(min(2047, x_range.max() -1 + 10))
+    x0 = max(0, x_range.min() -1 -10)
+    x1 = min(2047, x_range.max() -1 + 10)
     # add 2 px margin
-    y0 = int(y_range.min() -1 -2)
-    y1 = int(y_range.max() -1 + 2)
+    y0 = y_range.min() -1 -2
+    y1 = y_range.max() -1 + 2
 
     bounding_box = ((x0, x1), (y0, y1))
     return bounding_box
@@ -1014,8 +1014,9 @@ def oteip_to_v23(reference_files):
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
     # The spatial units are currently in deg. Convertin to arcsec.
     oteip_to_xyan = fore2ote_mapping | (ote & Scale(1e6))
-    # Add a shift for the aperture.
-    oteip2v23 = oteip_to_xyan | Identity(1) & (Shift(468 / 3600) | Scale(-1)) & Identity(1)
+    # TODO: The scaling arcsec --> deg should be added with the next CDP delivery.
+    # In CDP3 the units are still deg.
+    oteip2v23 = oteip_to_xyan #| Scale(1 / 3600) & Scale(1 / 3600)  & Identity(1)
 
     return oteip2v23
 
