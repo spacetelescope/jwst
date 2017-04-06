@@ -249,6 +249,7 @@ class AsnMixin_Lv2Spec(DMSLevel2bBase):
                     '|NRC_TSGRISM'
                     '|MIR_LRS-FIXEDSLIT'
                     '|MIR_LRS-SLITLESS'
+                    '|MIR_MRS'
                     '|NRS_FIXEDSLIT'
                     '|NRS_IFU'
                     '|NRS_MSASPEC'
@@ -290,7 +291,7 @@ class AsnMixin_Lv2Mode(DMSLevel2bBase):
             },
             'opt_elem': {
                 'value': None,
-                'inputs': ['FILTER']
+                'inputs': ['FILTER', 'BAND']
             },
             'opt_elem2': {
                 'value': None,
