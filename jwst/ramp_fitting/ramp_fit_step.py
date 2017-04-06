@@ -19,7 +19,7 @@ class RampFitStep (Step):
 
     spec = """
         int_name = string(default='')
-        save_opt = boolean(default=False) # Save optional output (Boolean)
+        save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
         algorithm = option('OLS', 'GLS', default='OLS')
         weighting = option('unweighted', 'optimal', default='unweighted')
