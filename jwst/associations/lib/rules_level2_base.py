@@ -222,7 +222,12 @@ class AsnMixin_Lv2Image(DMSLevel2bBase):
 
         self.add_constraints({
             'exp_type': {
-                'value': 'NRC_IMAGE|MIR_IMAGE|NIS_IMAGE|FGS_IMAGE',
+                'value': (
+                    'FGS_IMAGE'
+                    '|MIR_IMAGE'
+                    '|NIS_IMAGE'
+                    '|NRC_IMAGE'
+                ),
                 'inputs': ['EXP_TYPE'],
                 'force_unique': True,
             }
