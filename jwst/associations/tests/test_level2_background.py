@@ -18,14 +18,18 @@ def test_level2_background_candidate():
         )
     )
     asns, orphaned = generate(pool, rules)
-    assert len(asns) == 1
-    members = asns[0]['members']
-    assert len(members) == 2
-    n_bkgs = 0
-    for member in members:
-        if 'bkgexps' in members:
-            n_bkgs += 1
-    assert n_bkgs == 1
+    assert len(asns) == 3
+    for asn in asns:
+        members = asn['members']
+        if asn['asn_type'] == 'Asn_Lv2Spec':
+            assert len(members) == 1
+        elif asn['asn_type'] == 'AsnLv2SpecBkg':
+            assert len(members) == 2
+            exptypes = set(
+                member['exptype']
+                for member in members
+            )
+            assert exptypes.issuperset('SCIENCE', 'BACKGROUND')
 
 
 @pytest.mark.xfail(reason='No determined yet')
