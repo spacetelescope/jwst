@@ -203,7 +203,7 @@ def lrs(input_model, reference_files):
               models.Shift(xshift, name='xshift1') & \
               models.Shift(yshift, name='yshift2') & models.Shift(xshift, name='xshift2') & \
               models.Identity(2) | radec_t2d & lrs_wav_model
-    det2world.bounding_box = bb
+    det2world.bounding_box = bb[::-1]
     # Now the actual pipeline.
     pipeline = [(detector, det2world),
                 (world, None)
