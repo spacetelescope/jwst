@@ -95,8 +95,6 @@ class ModelContainer(model_base.DataModel):
             raise TypeError('Input {0!r} is not a list of DataModels or '
                             'an ASN file'.format(init))
 
-        self.__assign_group_ids()
-
 
     def __len__(self):
         return len(self._models)
@@ -228,7 +226,7 @@ class ModelContainer(model_base.DataModel):
         meta.instrument.name
         meta.instrument.channel
         """
-        for model in self._models:
+        for i, model in enumerate(self._models):
             try:
                 model_attrs = []
                 model_attrs.append(model.meta.observation.program_number)
@@ -247,10 +245,7 @@ class ModelContainer(model_base.DataModel):
                                 model_attrs[8].lower()]))
                 model.meta.group_id = group_id
             except:
-                w = '`{}` is missing'.format(model.meta.filename) + \
-                    ' metadata. Grouping by exposure may not be correct.'
-                warnings.warn(w, RuntimeWarning, stacklevel=2)
-                model.meta.group_id = None
+                model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
 
     @property
