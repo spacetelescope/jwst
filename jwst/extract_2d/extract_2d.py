@@ -69,7 +69,7 @@ def extract2d(input_model, which_subarray=None):
             xlo_ind, xhi_ind, ylo_ind, yhi_ind = _toindex((xlo, xhi, ylo, yhi)).astype(np.int)
             output_model.slits[nslit].name = str(slit.name)
             output_model.slits[nslit].xstart = xlo_ind + 1
-            output_model.slits[nslit].xsize = xhi_ind - xloind
+            output_model.slits[nslit].xsize = xhi_ind - xlo_ind
             output_model.slits[nslit].ystart = ylo_ind + 1
             output_model.slits[nslit].ysize = yhi_ind - ylo_ind
             if exp_type.lower() == 'nrs_msaspec':
