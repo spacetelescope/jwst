@@ -69,7 +69,7 @@ def imaging(input_model, reference_files):
     except NotImplementedError:
         shape = input_model.data.shape
         # Note: Since bounding_box is attached to the model here it's in reverse order.
-        distortion.bounding_box = ((-0.5, shape[1] - 0.5), (3.5, shape[0] - 0.5))
+        distortion.bounding_box = ((-0.5, shape[0] - 0.5), (3.5, shape[1] - 0.5))
 
     # Create the pipeline
     pipeline = [(detector, distortion),
@@ -203,7 +203,7 @@ def lrs(input_model, reference_files):
               models.Shift(xshift, name='xshift1') & \
               models.Shift(yshift, name='yshift2') & models.Shift(xshift, name='xshift2') & \
               models.Identity(2) | radec_t2d & lrs_wav_model
-    det2world.bounding_box = bb
+    det2world.bounding_box = bb[::-1]
     # Now the actual pipeline.
     pipeline = [(detector, det2world),
                 (world, None)
