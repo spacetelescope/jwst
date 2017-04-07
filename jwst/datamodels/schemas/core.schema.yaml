@@ -1552,4 +1552,8 @@ properties:
             title: Coronagraphic PSF Subtraction
             type: string
             fits_keyword: S_KLIP
+      bkglevel:
+        title: Computed/Matched background level
+        type: float
+        fits_keyword: BKGLEVEL
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
