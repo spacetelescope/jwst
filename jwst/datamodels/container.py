@@ -227,6 +227,8 @@ class ModelContainer(model_base.DataModel):
         meta.instrument.channel
         """
         for i, model in enumerate(self._models):
+            if hasattr(model.meta, 'group_id'):
+                continue
             try:
                 model_attrs = []
                 model_attrs.append(model.meta.observation.program_number)
