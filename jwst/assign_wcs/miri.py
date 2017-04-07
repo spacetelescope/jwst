@@ -143,8 +143,8 @@ def lrs(input_model, reference_files):
 
     # Determine the distortion model.
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    # Distortion is in arcmin.  Convert to degrees
-    full_distortion = distortion | models.Scale(1 / 60.) & models.Scale(1 / 60.)
+    # Distortion is in arcsec.  Convert to degrees
+    full_distortion = distortion | models.Scale(1 / 3600.) & models.Scale(1 / 3600.)
 
     # Load and process the reference data.
     with fits.open(reference_files['specwcs']) as ref:
