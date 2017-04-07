@@ -364,6 +364,8 @@ def do_NIRSpec_flat_field(output_model,
 
     any_updated = False
     if exposure_type == "NRS_MSASPEC":
+        # This is not the same as output_model.slits; `slits` will be
+        # used a few lines farther down.
         slits = nirspec.get_open_slits(output_model)
     for (k, slit) in enumerate(output_model.slits):
         log.debug("Processing slit %s", slit.name)
@@ -718,6 +720,8 @@ def fore_optics_flat(wl, f_flat_model, exposure_type,
         # This is an example to show what xcen and ycen mean:
         #       shutter_id = xcen + (ycen - 1) * 365
         msa_y, msa_x = slit_nt.ycen, slit_nt.xcen
+        msa_y -= 1              # convert to zero indexed
+        msa_x -= 1
         full_array_flat = f_flat_model.quadrants[quadrant].data
         full_array_dq = f_flat_model.quadrants[quadrant].dq
         # Get the wavelength corresponding to each plane in the "image".
