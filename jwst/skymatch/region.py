@@ -238,8 +238,8 @@ class Polygon(Region):
                 continue
 
             for i, j in zip(xnew[::2], xnew[1::2]):
-                xstart = max(0, i + self._shiftx)
-                xend = min(j + self._shiftx, nx - 1)
+                xstart = max(0, int(i) + self._shiftx)
+                xend = min(int(j) + self._shiftx, nx - 1)
                 data[ysh][xstart:xend + 1] = self._rid
 
             y += 1

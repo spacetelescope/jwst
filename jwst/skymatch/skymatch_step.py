@@ -12,6 +12,7 @@ from __future__ import (absolute_import, division, unicode_literals,
 
 import collections
 import numpy as np
+import logging
 
 from ..stpipe import Step, cmdline
 from .. import datamodels
@@ -41,7 +42,7 @@ class SkyMatchStep(Step):
         stepsize = integer(default=None) # Max vertex separation
 
         # Sky statistics parameters:
-        skystat = option('mode', 'median', 'mode', 'midpt', default='mode') # sky statistics
+        skystat = option('median', 'midpt', 'mean', 'mode', default='mode') # sky statistics
         dqbits = string(default=None) # "good" DQ bits
         lower = float(default=None) # Lower limit of "good" pixel values
         upper = float(default=None) # Upper limit of "good" pixel values
@@ -54,9 +55,10 @@ class SkyMatchStep(Step):
     reference_file_types = []
 
     def process(self, input):
+        self.log.setLevel(logging.DEBUG)
         img = datamodels.ModelContainer(input)
 
-        self._dqbits = bitmask.interpret_bits_value(self.dqbits)
+        self._dqbits = bitmask.interpret_bit_flags(self.dqbits)
 
         # set sky stattistics:
         self._skystat = SkyStats(
@@ -74,22 +76,33 @@ class SkyMatchStep(Step):
 
         # create a list of "Sky" Images and/or Groups:
         images = []
+        grp_id = 1
 
         for g in grp_img:
             if len(g) > 1:
-                images.append(SkyGroup(list(map(self._imodel2skyim, g))))
+                images.append(
+                    SkyGroup(
+                        list(map(self._imodel2skyim, g)),
+                        id=grp_id
+                    )
+                )
+                grp_id += 1
             elif len(g) == 1:
                 images.append(self._imodel2skyim(g[0]))
             else:
                 raise AssertionError("Logical error in the pipeline code.")
 
+        # match/compute sky values:
         match(images, skymethod=self.skymethod, match_down=self.match_down,
               subtract=self.subtract)
 
         # set sky background value in each image's meta:
         for im in images:
             if isinstance(im, SkyImage):
-                pass
+                self._set_sky_background(im.meta['imagemodel'], im.sky)
+            else:
+                for gim in im:
+                    self._set_sky_background(gim.meta['imagemodel'], gim.sky)
 
         return img
 
@@ -116,10 +129,12 @@ class SkyMatchStep(Step):
         if self._dqbits is None:
             dqmask = None
         else:
-            dqmask = bitmask.bitmask2mask(bitmask=image_model.dq,
-                                          ignore_bits=self._dqbits,
-                                          good_mask_value=1,
-                                          dtype=np.uint8)
+            dqmask = bitmask.bitmask2mask(
+                bitmask=image_model.dq,
+                ignore_bits=self._dqbits,
+                good_mask_value=1,
+                dtype=np.uint8
+            )
 
         sky_im = SkyImage(
             image=image_model.data,
@@ -128,25 +143,29 @@ class SkyMatchStep(Step):
             pix_area=1.0, #TODO: pixel area
             convf=1.0,    #TODO: conv. factor to brightness
             mask=dqmask,
-            id=None, # file name?
+            id=image_model.meta.filename, # file name?
             skystat=self._skystat,
             stepsize=self.stepsize,
             meta={'imagemodel': image_model}
         )
 
+        if self.subtract:
+            if hasattr(image_model.meta, 'bkglevel'):
+                sky_im.sky = image_model.meta.bkglevel
+
         return sky_im
 
     def _set_sky_background(self, image, sky):
-        skybg_schema = (
-            "meta.skybg",
-            {
-                "title": "Computed sky background value",
-                "type": "float",
-                "fits_keyword": "SKYBG"
-            }
-        )
-        image.extend_schema([skybg_schema])
-        image.meta.skybg = sky
+        #skybg_schema = {
+            #"meta.bkglevel":
+            #{
+                #"title": "Computed sky background value",
+                #"type": "float",
+                #"fits_keyword": "BKGLEVEL"
+            #}
+        #}
+        #image.extend_schema(skybg_schema)
+        image.meta.bkglevel = sky
 
 if __name__ == '__main__':
     cmdline.step_script(SkyMatchStep)
