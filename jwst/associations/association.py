@@ -452,7 +452,7 @@ class Association(MutableMapping):
         AssociationError
             If the match fails
         """
-        evaled_str = conditions['inputs']()
+        evaled_str = conditions['inputs'](member)
         if conditions['value'] is not None:
             if not meets_conditions(
                     evaled_str, conditions['value']

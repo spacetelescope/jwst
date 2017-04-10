@@ -48,7 +48,7 @@ def test_level2_spec():
     rules = registry_level2_only()
     pool = combine_pools(t_path('data/pool_007_spec_miri.csv'))
     asns, orphaned = generate(pool, rules)
-    assert len(asns) == 5
+    assert len(asns) == 11
     len(orphaned) == 0
     asn = asns[0]
     assert asn['asn_rule'] == 'Asn_Lv2Spec'

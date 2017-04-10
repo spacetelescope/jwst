@@ -10,48 +10,33 @@ from .helpers import (
 from .. import generate
 
 
-def test_level2_bkg_cand_miri():
+@pytest.mark.parametrize(
+    'pool_name, n_asns',
+    [
+        (t_path('data/pool_011_spec_miri_lv2bkg_lrs.csv'), 3),
+        (t_path('data/pool_009_spec_miri_lv2bkg.csv'), 16),
+        (t_path('data/pool_010_spec_nirspec_lv2bkg.csv'), 12),
+    ]
+)
+def test_level2_bkg_cand(pool_name, n_asns):
     rules = registry_level2_only()
-    pool = combine_pools(
-        t_path(
-            'data/pool_009_spec_miri_lv2bkg.csv'
-        )
-    )
+    pool = combine_pools(pool_name)
     asns, orphaned = generate(pool, rules)
-    assert len(asns) == 2
+    assert len(asns) == n_asns
     for asn in asns:
+        assert asn['asn_type'] == 'spec2'
+        assert asn['asn_rule'] in ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg']
+
         members = asn['members']
-        if asn['asn_type'] == 'Asn_Lv2Spec':
-            assert len(members) == 1
-        elif asn['asn_type'] == 'AsnLv2SpecBkg':
-            assert len(members) == 2
-            exptypes = set(
+        if len(members) == 1:
+            assert members[0]['exptype'] == 'SCIENCE'
+        else:
+            exptypes = [
                 member['exptype']
                 for member in members
-            )
-            assert exptypes.issuperset('SCIENCE', 'BACKGROUND')
-
-
-def test_level2_bkg_cand_nrs():
-    rules = registry_level2_only()
-    pool = combine_pools(
-        t_path(
-            'data/pool_010_spec_nirspec_lv2bkg.csv'
-        )
-    )
-    asns, orphaned = generate(pool, rules)
-    assert len(asns) == 6
-    for asn in asns:
-        members = asn['members']
-        if asn['asn_type'] == 'Asn_Lv2Spec':
-            assert len(members) >= 2
-        elif asn['asn_type'] == 'AsnLv2SpecBkg':
-            assert len(members) == 2
-            exptypes = set(
-                member['exptype']
-                for member in members
-            )
-            assert exptypes.issuperset('SCIENCE', 'BACKGROUND')
+            ]
+            assert exptypes.count('SCIENCE') == 1
+            assert exptypes.count('BACKGROUND') >= 1
 
 
 @pytest.mark.xfail(reason='No determined yet')
