@@ -18,7 +18,8 @@ from astropy import units as u
 __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
            'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa',
-           'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit']
+           'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit', 
+           'MIRI_AB2DET']
 
 
 # Number of shutters per quadrant
@@ -33,6 +34,31 @@ Slit.__new__.__defaults__= ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, "", "", "", 0.0,
 
 
 
+class MIRI_AB2Slice(Model):
+    """
+    MIRI MRS alpha, beta to slice transform
+
+    Parameters
+    ----------
+    b_zero : float
+    b_del : float
+    """
+    standard_broadcastnig = False
+
+    inputs = ("beta",)
+    outputs = ("slice",)
+
+    def __init__(self, b_zero, b_del, **kwargs):
+        super(MIRI_AB2Slice, self).__init__(**kwargs)
+        self.b_zero = b_zero
+        self.b_del = b_del
+
+    @staticmethod
+    def evaluate(beta, b_zero, b_del):
+        return (beta - b_zero) / b_del
+    
+
+    
 class Snell(Model):
     """
     Apply transforms, including Snell law, through the NIRSpec prism.
