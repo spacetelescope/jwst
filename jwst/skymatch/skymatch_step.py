@@ -166,6 +166,7 @@ class SkyMatchStep(Step):
         #}
         #image.extend_schema(skybg_schema)
         image.meta.bkglevel = sky
+        image.meta.bkgsub = self.subtract
 
 if __name__ == '__main__':
     cmdline.step_script(SkyMatchStep)
