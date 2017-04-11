@@ -10,3 +10,4 @@ Contents:
    attributes
    metadata
    new_model
+   fits_files
