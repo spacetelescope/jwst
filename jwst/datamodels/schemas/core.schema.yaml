@@ -1556,4 +1556,8 @@ properties:
         title: Computed/Matched background level
         type: float
         fits_keyword: BKGLEVEL
+      bkgsub:
+        title: Has background level been subtracted from data?
+        type: boolean
+        fits_keyword: BKGSUB
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
