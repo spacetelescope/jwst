@@ -238,7 +238,7 @@ class OptRes(object):
                         end_cr[y, x] += 1
 
         max_num_crs = end_cr.max()
-        self.cr_mag_seg = cr_com [:,:max_num_crs,:,:] 
+        self.cr_mag_seg = cr_com [:,:max_num_crs,:,:]
 
 
     def output_optional(self, model, effintim):
@@ -400,13 +400,14 @@ def calc_slope_int(slope_int, m_by_var_int, inv_var_int, num_int):
     return slope_slice
 
 
-def calc_pedestal(num_int, slope_int, firstf_int, dq_cube):
+def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap):
     """
     Short Summary
     -------------
     The pedestal is calculated by extrapolating the final slope for
     each pixel from its value at the first sample in the integration to
-    an exposure time of zero; any pixel that is saturated on the 1st
+    an exposure time of zero; this calculation accounts for the values of
+    nframes andg groupgap.  Any pixel that is saturated on the 1st
     read is given a pedestal value of 0.
 
     Parameters
@@ -423,15 +424,21 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_cube):
     dq_cube: int, 4D array
         hypercube of DQ array
 
+    nframes: int
+        number of frames per group; from the NFRAMES keyword.
+
+    groupgap: int
+        number of frames dropped between groups, from the GROUPGAP keyword.
+
     Returns
     -------
     ped: float, 2D array
         pedestal image
     """
     ff_all = firstf_int[num_int, :, :].astype(np.float32)
-    ped = ff_all - slope_int[num_int, :, :]
     dq_first = dq_cube[num_int, 0, :, :]
 
+    ped = ff_all - slope_int[num_int, : :] * (nframes-groupgap+1.)/(2.*nframes)
     ped[dq_first == dqflags.group['SATURATED']] = 0
 
     return ped
@@ -616,22 +623,28 @@ def shift_z(a, off):
     return b
 
 
-def get_effintim(model):
+def get_efftim_ped(model):
     """
     Short Summary
     -------------
-    Calculate the effective integration time for a single read
+    Calculate the effective integration time for a single read, and return the
+    number of frames per group, and the number of frames dropped between groups.
 
     Parameters
     ----------
     model: instance of Data Model
-       DM object for input
+        DM object for input
 
     Returns
     -------
     effintim: float
         effective integration time for a single read
 
+    nframes: int
+        number of frames per group; from the NFRAMES keyword.
+
+    groupgap: int
+        number of frames dropped between groups; from the GROUPGAP keyword.
     """
     groupgap = model.meta.exposure.groupgap
     nframes = model.meta.exposure.nframes
@@ -648,7 +661,8 @@ def get_effintim(model):
     log.debug(' frame_time: %s' % (frame_time))
     log.info('Effective integration time per group: %s' % (effintim))
 
-    return effintim
+
+    return effintim, nframes, groupgap
 
 
 def get_dataset_info(model):
@@ -787,7 +801,7 @@ def reset_bad_gain(pdq, gain):
     Returns
     -------
     pdq: int, 2D array
-        pixleldq array of input model, reset to NO_GAIN_VALUE and DO_NOT_USE 
+        pixleldq array of input model, reset to NO_GAIN_VALUE and DO_NOT_USE
         for pixels in the gain array that are either non-positive or NaN.
     """
     wh_g = np.where( gain <= 0.)
