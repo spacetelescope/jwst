@@ -40,20 +40,3 @@ def check(init):
         file_type = "asn"
 
     return file_type
-
-def identify(origin, path, fileobj, *args, **kwargs):
-    """
-    Identify if file is a DataModel for atropy.io.registry
-    """
-    if fileobj:
-        file_type = check(fileobj)
-    elif path:
-        if os.path.isfile(path):
-            file_type = check(path)
-        else:
-            file_type = path.lower().split(".")[1]
-    else:
-        file_type = None
-
-    flag = file_type and (file_type == "asdf" or file_type == "fits")
-    return flag

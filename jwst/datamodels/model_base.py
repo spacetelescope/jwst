@@ -24,6 +24,7 @@ from asdf import yamlutil
 from asdf import schema as asdf_schema
 from asdf import extension as asdf_extension
 
+from . import ndmodel
 from . import fits_support
 from . import properties
 from . import schema as mschema
@@ -35,7 +36,7 @@ from gwcs.extension import GWCSExtension
 
 jwst_extensions = [GWCSExtension(), JWSTExtension(), BaseExtension()]
 
-class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
+class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     Base class of all of the data models.
     """
@@ -364,11 +365,17 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
                 return None
         return self._shape
 
+    def my_attribute(self, attr):
+        properties = frozenset(("shape", "history", "_extra_fits", "schema"))
+        return attr in properties
+
     def __setattr__(self, attr, value):
-        if attr == 'shape':
+        if self.my_attribute(attr):
             object.__setattr__(self, attr, value)
+        elif ndmodel.NDModel.my_attribute(self, attr):
+            ndmodel.NDModel.__setattr__(self, attr, value)
         else:
-            super(DataModel, self).__setattr__(attr, value)
+            properties.ObjectNode.__setattr__(self, attr, value)
 
     def extend_schema(self, new_schema):
         """
@@ -793,76 +800,10 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
 
-    # The following two methods are only here to generate the 
-    # astropy.io.registry documentation and should not be called
+    #--------------------------------------------------------
+    # These two method aliases are here for astropy.registry
+    # compatibility and should not be called directly
+    #--------------------------------------------------------
+    
     read = __init__
     write = save
-
-    #---------------------------------------
-    # Nddata interface compatibility methods
-    #---------------------------------------
-
-    @property
-    def data(self):
-        """The stored dataset.
-        """
-        return self.__getattr__('data')
-
-    @property
-    def mask(self):
-        """Mask for the dataset.
-        """
-        return self.dq
-
-    @property
-    def unit(self):
-        """Unit for the dataset.
-        """
-        try:
-            val = self.meta.bunit_data
-        except AttributeError:
-            val = None
-        return val
-
-    @property
-    def wcs(self):
-        """World coordinate system (WCS) for the dataset.
-        """
-        return self.__getattr__('wcs')
-
-
-    @property
-    def meta(self):
-        """Additional meta information about the dataset.
-        """
-        return self.__getattr__('meta')
-
-
-    @property
-    def uncertainty(self):
-        """Uncertainty in the dataset.
-        """
-        err = self.err
-        try:
-            val = self.meta.bunit_err
-        except AttributeError:
-            val = None
-        return Uncertainty(err, uncertainty_type=val)
-
-
-class Uncertainty(np.ndarray):
-    """
-    Subclass ndarray to include an additional property, uncertainty_type
-    """
-    def __new__(cls, err, uncertainty_type=None):
-        # info on how to subclass np.ndarray is at
-        # https://docs.scipy.org/doc/numpy/user/basics.subclassing.html
-        # this code is taken from there
-        obj = np.asarray(err).view(cls)
-        obj.uncertainty_type = uncertainty_type
-        return obj
-
-    def __array_finalize__(self, obj):
-        if obj is None:
-            return
-        self.uncertainty_type = getattr(obj, 'uncertainty_type', None)

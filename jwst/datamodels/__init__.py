@@ -35,8 +35,8 @@ import numpy as np
 from os.path import basename
 from astropy.extern import six
 from astropy.io import registry
-from . import util
-from . import filetype
+
+from . import ndmodel
 
 from .model_base import DataModel
 from .amilg import AmiLgModel
@@ -117,9 +117,9 @@ _defined_models = { k: _local_dict[k] for k in _all_models }
 
 # Initialize the astropy.io registry
 with registry.delay_doc_updates(DataModel):
-    registry.register_reader('datamodel', DataModel, util.read)
-    registry.register_writer('datamodel', DataModel, util.write)
-    registry.register_identifier('datamodel', DataModel, filetype.identify)
+    registry.register_reader('datamodel', DataModel, ndmodel.read)
+    registry.register_writer('datamodel', DataModel, ndmodel.write)
+    registry.register_identifier('datamodel', DataModel, ndmodel.identify)
 
 
 '''
