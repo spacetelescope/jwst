@@ -32,6 +32,16 @@ class NircamPhotomModel(PhotomModel):
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
+
+        filter: str[12]
+        pupil: str[12]
+        order: int16
+        photmjsr: float32
+        uncertainty: float32
+        nelem: int16
+        wavelength: float32[3000]
+        relresponse: float32[3000]
+
     """
     schema_url = "nircam_photom.schema.yaml"
 
@@ -55,6 +65,16 @@ class NirissPhotomModel(PhotomModel):
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
+
+        filter: str[12]
+        pupil: str[12]
+        order: int16
+        photmjsr: float32
+        uncertainty: float32
+        nelem: int16
+        wavelength: float32[5000]
+        relresponse: float32[5000]
+
     """
     schema_url = "niriss_photom.schema.yaml"
 
@@ -78,6 +98,16 @@ class NirspecPhotomModel(PhotomModel):
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
+
+        filter: str[12]
+        grating: str[12]
+        photmjsr: float32
+        uncertainty: float32
+        nelem: int16
+        wavelength: float32[150]
+        relresponse: float32[150]
+        reluncertainty: float32[150]
+
     """
     schema_url = "nirspec_photom.schema.yaml"
 
@@ -101,6 +131,17 @@ class NirspecFSPhotomModel(PhotomModel):
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
+
+        filter: str[12]
+        grating: str[12]
+        slit: str[12]
+        photmjsr: float32
+        uncertainty: float32
+        nelem: int16
+        wavelength: float32[150]
+        relresponse: float32[150]
+        reluncertainty: float32[150]
+
     """
     schema_url = "nirspecfs_photom.schema.yaml"
 
@@ -124,6 +165,15 @@ class MiriImgPhotomModel(PhotomModel):
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
+
+        filter: str[12]
+        subarray: str[15]
+        photmjsr: float32
+        uncertainty: float32
+        nelem: int16
+        wavelength: float32[500]
+        relresponse: float32[500]
+
     """
     schema_url = "mirimg_photom.schema.yaml"
 
@@ -198,6 +248,13 @@ class FgsPhotomModel(PhotomModel):
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
+
+        photmjsr: float32
+        uncertainty: float32
+        nelem: int16
+        wavelength: float32[5000]
+        relresponse: float32[5000]
+
     """
     schema_url = "fgs_photom.schema.yaml"
 

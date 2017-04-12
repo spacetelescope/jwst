@@ -24,8 +24,8 @@ from . skyimage import *
 
 __all__ = ['match']
 
-__version__ = '0.1.0'
-__vdate__ = '09-March-2016'
+__version__ = '0.2.0'
+__vdate__ = '07-April-2017'
 __author__ = 'Mihai Cara'
 
 
@@ -262,6 +262,7 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
                          "'local', 'global', 'match', or 'global+match'")
     do_match = 'match' in skymethod
     do_global = 'global' in skymethod
+    show_old = subtract
 
     log.info("Sky computation method: '{}'".format(skymethod))
     if do_match:
@@ -335,7 +336,8 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
             float(skd) if np.isfinite(skd) else None for skd in sky_deltas
         ]
 
-        _apply_sky(images, sky_deltas, False, subtract)
+        _apply_sky(images, sky_deltas, False, subtract, show_old)
+        show_old = True
 
     ###############################################################
     ## 2. Method: "local". Compute the minimum sky background    ##
@@ -355,14 +357,14 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
         if do_global:
             minsky = None
             log.info("----  Computing \"global\" sky - smallest sky value "
-                     "across all input images.")
+                     "across *all* input images.")
         else:
             log.info("----  Sky values computed per image and/or image "
                      "groups.")
 
         sky_deltas = []
         for img in images:
-            sky = img.calc_sky(delta=True)[0]
+            sky = img.calc_sky(delta=not subtract)[0]
             sky_deltas.append(sky)
             if do_global and (minsky is None or sky < minsky):
                 minsky = sky
@@ -372,6 +374,8 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
             if minsky is None:
                 log.warning("   Unable to compute \"global\" sky value")
                 sky_deltas = len(sky_deltas) * [0.0]
+            else:
+                sky_deltas = len(sky_deltas) * [minsky]
             log.info("   \"Global\" sky value correction: {} "
                      "[not converted]".format(minsky))
 
@@ -379,7 +383,7 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
             log.info(" ")
             log.info("----  Final (match+global) sky for:")
 
-        _apply_sky(images, sky_deltas, do_global, subtract)
+        _apply_sky(images, sky_deltas, do_global, subtract, show_old)
 
     # log running time:
     runtime_end = datetime.now()
@@ -391,8 +395,7 @@ stsci_python_sphinxdocs_2.13/drizzlepac/astrodrizzle.html>`_\ .
     log.info(" ")
 
 
-def _apply_sky(images, sky_deltas, do_global, do_skysub):
-
+def _apply_sky(images, sky_deltas, do_global, do_skysub, show_old):
     for img, sky in zip(images, sky_deltas):
         img_type = 'Image' if isinstance(img, SkyImage) else 'Group'
 
@@ -405,7 +408,8 @@ def _apply_sky(images, sky_deltas, do_global, do_skysub):
             # apply sky change:
             old_img_sky = [im.sky for im in img]
             if do_skysub:
-                img.image -= sky
+                for im in img:
+                    im.image -= sky
             img.sky += sky
             new_img_sky = [im.sky for im in img]
 
@@ -415,9 +419,13 @@ def _apply_sky(images, sky_deltas, do_global, do_skysub):
 
             for im, old_sky, new_sky in zip(img, old_img_sky, new_img_sky):
                 c = 1.0 / im.convf
-                log.info("      - Image ID={}. Sky background: {:G} "
-                         "(old={:G}, delta={:G})"
-                         .format(im.id, c * new_sky, c * old_sky, c * sky))
+                if show_old:
+                    log.info("      - Image ID={}. Sky background: {:G} "
+                             "(old={:G}, delta={:G})"
+                             .format(im.id, c * new_sky, c * old_sky, c * sky))
+                else:
+                    log.info("      - Image ID={}. Sky background: {:G}"
+                             .format(im.id, c * new_sky))
 
         else:
             # apply sky change:
@@ -429,9 +437,14 @@ def _apply_sky(images, sky_deltas, do_global, do_skysub):
 
             # log sky values:
             c = 1.0 / img.convf
-            log.info("   *  Image ID={}. Sky background: {:G} "
-                     "(old={:G}, delta={:G})"
-                     .format(img.id, c * new_sky, c * old_sky, c * sky))
+            if show_old:
+                log.info("   *  Image ID={}. Sky background: {:G} "
+                         "(old={:G}, delta={:G})"
+                         .format(img.id, c * new_sky, c * old_sky, c * sky))
+            else:
+                log.info("   *  Image ID={}. Sky background: {:G}"
+                         .format(img.id, c * new_sky))
+
 
 # TODO: due to a bug in the sphere package, see
 #       https://github.com/spacetelescope/sphere/issues/74

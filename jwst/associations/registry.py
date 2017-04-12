@@ -145,6 +145,8 @@ class AssociationRegistry(dict):
         logger.debug('Starting...')
         if allow is None:
             allow = self.rule_set
+        if ignore is None:
+            ignore = []
         associations = []
         process_list = []
         for name, rule in self.items():
