@@ -82,6 +82,7 @@ from .saturation import SaturationModel
 from .spec import SpecModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
+from .traps import TrapsModel
 from .util import open
 
 
@@ -106,7 +107,7 @@ __all__ = [
     'RampFitOutputModel', 'ReadnoiseModel', 'ReferenceCubeModel',
     'ReferenceFileModel', 'ReferenceImageModel', 'ReferenceQuadModel',
     'ResetModel', 'RSCDModel', 'SaturationModel', 'SpecModel',
-    'StrayLightModel', 'SuperBiasModel']
+    'StrayLightModel', 'SuperBiasModel', 'TrapsModel']
 
 _all_models = __all__[1:]
 _local_dict = dict(locals())
