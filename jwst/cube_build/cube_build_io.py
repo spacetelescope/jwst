@@ -9,7 +9,6 @@ import json
 
 from astropy.io import fits
 
-from gwcs.utils import _domain_to_bounds
 from ..associations import load_asn
 from .. import datamodels
 from ..assign_wcs import nirspec
