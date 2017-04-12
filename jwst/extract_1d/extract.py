@@ -145,7 +145,8 @@ def get_aperture(slit, extract_params):
     # If the xstart, etc., values were not specified for the dispersion
     # direction, the extraction region should be centered within the
     # WCS bounding box (domain).
-    ap_ref = update_from_wcs(ap_ref, ap_wcs)
+    ap_ref = update_from_wcs(ap_ref, ap_wcs, extract_params["extract_width"],
+                             extract_params["dispaxis"])
     ap_ref = update_from_width(ap_ref, extract_params["extract_width"],
                                extract_params["dispaxis"])
 
@@ -154,7 +155,8 @@ def get_aperture(slit, extract_params):
 
     # Do this again, in case the nod offset correction was so large that
     # the extraction region would extend outside the WCS bounding box.
-    ap_ref = update_from_wcs(ap_ref, ap_wcs)
+    ap_ref = update_from_wcs(ap_ref, ap_wcs, extract_params["extract_width"],
+                             extract_params["dispaxis"])
 
     return ap_ref
 
@@ -380,10 +382,11 @@ def aperture_from_wcs(wcs):
     ystop = bounding_box[1][1]
 
     ap_wcs = Aperture(xstart=xstart, xstop=xstop, ystart=ystart, ystop=ystop)
+
     return ap_wcs
 
 
-def update_from_wcs(ap_ref, ap_wcs):
+def update_from_wcs(ap_ref, ap_wcs, extract_width, direction):
     """Limit the extraction region to the WCS bounding box.
 
     Parameters
@@ -397,6 +400,15 @@ def update_from_wcs(ap_ref, ap_wcs):
     ap_wcs: namedtuple
         These are the bounding box limits.
 
+    extract_width: int
+        The number of pixels in the cross-dispersion direction to add
+        together to make a 1-D spectrum from a 2-D image.
+
+    direction: int
+        HORIZONTAL (1) if the dispersion direction is predominantly
+        horizontal.  VERTICAL (2) if the dispersion direction is
+        predominantly vertical.
+
     Returns
     -------
     ap: namedtuple
@@ -406,6 +418,10 @@ def update_from_wcs(ap_ref, ap_wcs):
     if ap_wcs is None:
         return ap_ref
 
+    # If the wcs limits don't pass the sanity test, ignore the bounding box.
+    if not sanity_check_limits(ap_ref, ap_wcs):
+        return ap_ref
+
     # ap_wcs has the limits over which the WCS transformation is defined;
     # take those as the outer limits over which we will extract.
     xstart = compare_start(ap_ref.xstart, ap_wcs.xstart)
@@ -413,9 +429,54 @@ def update_from_wcs(ap_ref, ap_wcs):
     xstop = compare_stop(ap_ref.xstop, ap_wcs.xstop)
     ystop = compare_stop(ap_ref.ystop, ap_wcs.ystop)
 
+    if extract_width is not None:
+        if direction == HORIZONTAL:
+            width = ystop - ystart + 1
+        else:
+            width = xstop - xstart + 1
+        if width < extract_width:
+            log.warning("extract_width was truncated from %g to %g",
+                        extract_width, width)
+
     ap = Aperture(xstart=xstart, xstop=xstop, ystart=ystart, ystop=ystop)
 
     return ap
+
+
+def sanity_check_limits(ap_ref, ap_wcs):
+    """Sanity check.
+
+    Parameters
+    ----------
+    ap_ref: namedtuple
+        Contains xstart, xstop, ystart, ystop.  These are the values of
+        the extraction region as specified by the reference file or the
+        image size.
+
+    ap_wcs: namedtuple
+        These are the bounding box limits.
+
+    Returns
+    -------
+    flag: boolean
+        True if ap_ref and ap_wcs do overlap, i.e. if the sanity test passes.
+    """
+
+    if (ap_wcs.xstart >= ap_ref.xstop or ap_wcs.xstop <= ap_ref.xstart or
+        ap_wcs.ystart >= ap_ref.ystop or ap_wcs.ystop <= ap_ref.ystart):
+        log.warning("The WCS bounding box is outside the aperture:")
+        log.warning("  aperture:  %s, %s, %s, %s",
+                    str(ap_ref.xstart), str(ap_ref.xstop),
+                    str(ap_ref.ystart), str(ap_ref.ystop))
+        log.warning("  wcs:       %s, %s, %s, %s",
+                    str(ap_wcs.xstart), str(ap_wcs.xstop),
+                    str(ap_wcs.ystart), str(ap_wcs.ystop))
+        log.warning(" so the wcs bounding box will be ignored.")
+        flag = False
+    else:
+        flag = True
+
+    return flag
 
 
 def compare_start(start_ref, start_wcs):
