@@ -1,6 +1,8 @@
 """Test basic usage of Level2 associations"""
 from __future__ import absolute_import
 
+import pytest
+
 from .helpers import (
     combine_pools,
     registry_level2_only,
@@ -13,6 +15,7 @@ from .. import (
 )
 
 
+@pytest.mark.xfail(reason='Temporarily removed Level2 associations')
 def test_level2_schema():
     with open(t_path('data/asn_level2.json')) as asn_file:
         asn = load_asn(asn_file)
