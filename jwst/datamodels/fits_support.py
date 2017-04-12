@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 import datetime
 import os
 import re
+import warnings
 
 import numpy as np
 
@@ -232,7 +233,7 @@ def _fits_comment_section_handler(validator, properties, instance, schema):
 
 def _fits_element_writer(validator, fits_keyword, instance, schema):
     if schema.get('type', 'object') == 'array':
-        raise ValueError("'fits_keyword' not valid with type of 'array'")
+        raise ValueError("'fits_keyword' is not valid with type of 'array'")
 
     hdu_name = _get_hdu_name(schema)
     index = getattr(validator, 'sequence_index', None)
@@ -467,14 +468,13 @@ def _schema_has_fits_hdu(schema):
     return has_fits_hdu[0]
 
 
-def _load_from_schema(hdulist, schema, tree, validate=True,
-                      pass_invalid_values=False):
+def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
     known_keywords = {}
     known_datas = set()
+    invalid_values = set()
 
     def callback(schema, path, combiner, ctx, recurse):
         result = None
-
         if 'fits_keyword' in schema:
             fits_keyword = schema['fits_keyword']
             result = _fits_keyword_loader(
@@ -488,16 +488,16 @@ def _load_from_schema(hdulist, schema, tree, validate=True,
                 try:
                     asdf_schema.validate(result, schema=temp_schema)
                 except jsonschema.ValidationError:
-                    if validate:
-                        raise
-                    else:
-                        msgfmt = "'{0}' is not valid in keyword '{1}'"
-                        log.warning(msgfmt.format(result, fits_keyword))
-                        if pass_invalid_values:
-                            properties.put_value(path, result, tree)
+                    result = str(result)
+                    msgfmt = "'{0}' is not valid in '{1}'"
+                    msg = msgfmt.format(result, fits_keyword)
+                    warnings.warn(msg, properties.ValidationWarning)
+                    if not pass_invalid_values:
+                        invalid_values.add(fits_keyword)
+                        
                 else:
                     properties.put_value(path, result, tree)
-
+                    
         elif 'fits_hdu' in schema and (
                 'max_ndim' in schema or 'ndim' in schema or 'datatype' in schema):
             result = _fits_array_loader(
@@ -507,8 +507,17 @@ def _load_from_schema(hdulist, schema, tree, validate=True,
                     '$schema':
                     'http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema'}
                 temp_schema.update(schema)
-                asdf_schema.validate(result, schema=temp_schema)
-                properties.put_value(path, result, tree)
+                try:
+                    asdf_schema.validate(result, schema=temp_schema)
+                except jsonschema.ValidationError:
+                    fits_hdu = schema['fits_hdu']
+                    msgfmt = "'{0}' is not valid"
+                    msg = msgfmt.format(fits_hdu)
+                    warnings.warn(msg, properties.ValidationWarning)
+                    if not pass_invalid_values:
+                        invalid_values.add(fits_keyword)
+                else:
+                    properties.put_value(path, result, tree)
 
         if schema.get('type') == 'array':
             has_fits_hdu = _schema_has_fits_hdu(schema)
@@ -521,6 +530,10 @@ def _load_from_schema(hdulist, schema, tree, validate=True,
                 return True
 
     mschema.walk_schema(schema, callback)
+    if len(invalid_values) > 0:
+        msgfmt = "fits data is not valid: {0}"
+        msg = msgfmt.format(','.join(list(invalid_values)))
+        raise jsonschema.ValidationError(msg)
     return known_keywords, known_datas
 
 
@@ -561,13 +574,11 @@ def _load_history(hdulist, tree):
         history.append(HistoryEntry({'description': entry}))
 
 
-def from_fits(hdulist, schema, extensions=None, validate=True,
-              pass_invalid_values=False):
+def from_fits(hdulist, schema, extensions, pass_invalid_values):
     ff = fits_embed.AsdfInFits.open(hdulist, extensions=extensions)
 
     known_keywords, known_datas = _load_from_schema(
-        hdulist, schema, ff.tree, validate,
-        pass_invalid_values=pass_invalid_values)
+        hdulist, schema, ff.tree, pass_invalid_values)
     _load_extra_fits(hdulist, known_keywords, known_datas, ff.tree)
     _load_history(hdulist, ff.tree)
 

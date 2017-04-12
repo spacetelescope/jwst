@@ -205,10 +205,6 @@ properties:
             title: Type of target (fixed, moving, generic)
             type: string
             fits_keyword: TARGTYPE
-          id:
-            title: Target id used in PPS DB queries
-            type: string
-            fits_keyword: TARGID
           ra:
             title: Target RA at mid time of exposure
             type: number

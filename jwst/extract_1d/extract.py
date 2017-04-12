@@ -138,16 +138,14 @@ def get_aperture(slit, extract_params):
                     "borders; limits have been truncated.")
 
     if hasattr(slit.meta, 'wcs'):
-        (ap_wcs, lu_flags) = aperture_from_wcs(slit.meta.wcs,
-                                               extract_params["dispaxis"])
+        ap_wcs = aperture_from_wcs(slit.meta.wcs)
     else:
         ap_wcs = None
-        lu_flags = [{}, {}]
 
     # If the xstart, etc., values were not specified for the dispersion
     # direction, the extraction region should be centered within the
-    # WCS domain.
-    ap_ref = update_from_wcs(ap_ref, ap_wcs, lu_flags)
+    # WCS bounding box (domain).
+    ap_ref = update_from_wcs(ap_ref, ap_wcs)
     ap_ref = update_from_width(ap_ref, extract_params["extract_width"],
                                extract_params["dispaxis"])
 
@@ -155,8 +153,8 @@ def get_aperture(slit, extract_params):
                               extract_params["dispaxis"])
 
     # Do this again, in case the nod offset correction was so large that
-    # the extraction region would extend outside the WCS domain.
-    ap_ref = update_from_wcs(ap_ref, ap_wcs, lu_flags)
+    # the extraction region would extend outside the WCS bounding box.
+    ap_ref = update_from_wcs(ap_ref, ap_wcs)
 
     return ap_ref
 
@@ -240,6 +238,12 @@ def update_from_width(ap_ref, extract_width, direction):
     if extract_width == temp_width:
         return ap_ref                                   # OK as is
 
+    # An integral value corresponds to the center of a pixel.  If the
+    # extraction limits were not specified via polynomial coefficients,
+    # assign_polynomial_limits will create polynomial functions using
+    # values from an Aperture, and these lower and upper limits will be
+    # expanded by 0.5 to give polynomials (constant functions) for the
+    # lower and upper edges of the bounding pixels.
     width = float(extract_width)
     if direction == HORIZONTAL:
         lower = float(ap_ref.ystart)
@@ -301,7 +305,7 @@ def update_from_shape(ap, im_shape):
     tuple: (ap_shape, truncated)
         ap_shape is a namedtuple with keys 'xstart', 'xstop', 'ystart',
         and 'ystop'.
-        truncated is a boolean, True if any value was truncated at an
+        `truncated` is a boolean, True if any value was truncated at an
         image edge.
     """
 
@@ -333,7 +337,7 @@ def update_from_shape(ap, im_shape):
     return (ap_shape, truncated)
 
 
-def aperture_from_wcs(wcs, direction):
+def aperture_from_wcs(wcs):
     """Get the limits over which the WCS is defined.
 
     Parameters
@@ -341,64 +345,46 @@ def aperture_from_wcs(wcs, direction):
     wcs: data model
         The world coordinate system interface.
 
-    direction: int
-        HORIZONTAL (1) if the dispersion is generally along the X axis;
-        VERTICAL (2) if the dispersion is generally along the Y axis.
-
     Returns
     -------
-    tuple (ap_wcs, lu_flags)
-        ap_wcs: namedtuple or None
-            Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.  These are
-            the limits copied directly from wcs.domain.  If 'lower' or
-            'upper' is not a key in wcs.domain, ap_wcs will be None.
-        lu_flags: two-element list, each element is a dictionary
-            This is just the 'includes_lower' and 'includes_upper' values
-            from wcs.domain, except that default values are used for
-            missing values.  The defaults are what the WCS interface uses
-            for defaults, namely:
-            'includes_lower': True, 'includes_upper': False.
+    tuple ap_wcs
+        namedtuple or None
+        Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.  These are the
+        limits copied directly from wcs.bounding_box.
     """
 
-    # Boolean flags for keys 'includes_lower' and 'includes_upper'.
-    # These are default values, based on Python slice notation.
-    lu_flags = [{'includes_lower': True, 'includes_upper': False},
-                {'includes_lower': True, 'includes_upper': False}]
-
+    got_bounding_box = False
     try:
-        domain = wcs.domain
+        bounding_box = wcs.bounding_box
+        got_bounding_box = True
+        log.debug("Using wcs.bounding_box.")
     except AttributeError:
-        return (None, lu_flags)
+        log.info("wcs.bounding_box not found; using wcs.domain instead.")
+        bounding_box = ((wcs.domain[0]['lower'], wcs.domain[0]['upper']),
+                        (wcs.domain[1]['lower'], wcs.domain[1]['upper']))
 
-    if domain is None:
-        return (None, lu_flags)
+    if got_bounding_box and bounding_box is None:
+        log.warning("wcs.bounding_box is None")
+        return None
 
-    if (len(domain) < 2 or
-        'lower' not in domain[0] or 'upper' not in domain[0] or
-        'lower' not in domain[1] or 'upper' not in domain[1]):
-        return (None, lu_flags)
+    # bounding_box should be a tuple of tuples, each of the latter
+    # consisting of (lower, upper) limits.
+    if len(bounding_box) < 2:
+        log.warning("wcs.bounding_box has the wrong shape")
+        return None
 
-    xstart = domain[0]['lower']
-    xstop = domain[0]['upper']
-    ystart = domain[1]['lower']
-    ystop = domain[1]['upper']
-
-    # Update the default values from `domain`.
-    if 'includes_lower' in domain[0]:
-        lu_flags[0]['includes_lower'] = domain[0]['includes_lower']
-    if 'includes_upper' in domain[0]:
-        lu_flags[0]['includes_upper'] = domain[0]['includes_upper']
-    if 'includes_lower' in domain[1]:
-        lu_flags[1]['includes_lower'] = domain[1]['includes_lower']
-    if 'includes_upper' in domain[1]:
-        lu_flags[1]['includes_upper'] = domain[1]['includes_upper']
+    # These limits are float, and they are inclusive.
+    xstart = bounding_box[0][0]
+    xstop = bounding_box[0][1]
+    ystart = bounding_box[1][0]
+    ystop = bounding_box[1][1]
 
     ap_wcs = Aperture(xstart=xstart, xstop=xstop, ystart=ystart, ystop=ystop)
-    return (ap_wcs, lu_flags)
+    return ap_wcs
 
 
-def update_from_wcs(ap_ref, ap_wcs, lu_flags):
-    """Limit the extraction region to the WCS domain.
+def update_from_wcs(ap_ref, ap_wcs):
+    """Limit the extraction region to the WCS bounding box.
 
     Parameters
     ----------
@@ -409,14 +395,7 @@ def update_from_wcs(ap_ref, ap_wcs, lu_flags):
         nod offset correction.
 
     ap_wcs: namedtuple
-        These are the domain limits, but rounded to int and possibly
-        incremented or decremented so they can be compared directly with
-        the values in `ap_ref`.
-
-    lu_flags: two-element list, each element is a dictionary
-        This is just the 'includes_lower' and 'includes_upper' values
-        from wcs.domain, except that default values are used for
-        missing values.
+        These are the bounding box limits.
 
     Returns
     -------
@@ -429,21 +408,28 @@ def update_from_wcs(ap_ref, ap_wcs, lu_flags):
 
     # ap_wcs has the limits over which the WCS transformation is defined;
     # take those as the outer limits over which we will extract.
-    xstart = compare_start(ap_ref.xstart, ap_wcs.xstart,
-                           lu_flags[0]['includes_lower'])
-    ystart = compare_start(ap_ref.ystart, ap_wcs.ystart,
-                           lu_flags[1]['includes_lower'])
-    xstop = compare_stop(ap_ref.xstop, ap_wcs.xstop,
-                         lu_flags[0]['includes_upper'])
-    ystop = compare_stop(ap_ref.ystop, ap_wcs.ystop,
-                         lu_flags[1]['includes_upper'])
+    xstart = compare_start(ap_ref.xstart, ap_wcs.xstart)
+    ystart = compare_start(ap_ref.ystart, ap_wcs.ystart)
+    xstop = compare_stop(ap_ref.xstop, ap_wcs.xstop)
+    ystop = compare_stop(ap_ref.ystop, ap_wcs.ystop)
 
     ap = Aperture(xstart=xstart, xstop=xstop, ystart=ystart, ystop=ystop)
 
     return ap
 
-def compare_start(start_ref, start_wcs, includes_lower):
+
+def compare_start(start_ref, start_wcs):
     """Compare the start limit from the aperture with the WCS lower limit.
+
+    The more restrictive (i.e. larger) limit is the one upon which the
+    output value will be based.  If the WCS limit is larger, the value will
+    be increased to an integer, on the assumption that WCS lower limits
+    correspond to the lower edge of the bounding pixel.  If this value
+    will actually be used for an extraction limit (i.e. if the limits were
+    not already specified by polynomial coefficients), then
+    assign_polynomial_limits will create a polynomial function using this
+    value, except that it will be decreased by 0.5 to correspond to the
+    lower edge of the bounding pixels.
 
     Parameters
     ----------
@@ -452,10 +438,7 @@ def compare_start(start_ref, start_wcs, includes_lower):
         size, possibly shifted by the nod offset correction.
 
     start_wcs: int or float
-        The value of 'lower' from the WCS domain limits.
-
-    includes_lower: boolean
-        The value of 'includes_lower' from the WCS domain.
+        The lower limit from the WCS bounding box.
 
     Returns
     -------
@@ -463,20 +446,26 @@ def compare_start(start_ref, start_wcs, includes_lower):
         The start limit, possibly constrained by the WCS start limit.
     """
 
-    if start_ref > start_wcs:           # inside WCS limit
+    if start_ref >= start_wcs:          # ref is inside WCS limit
         value = start_ref
-    elif start_ref == start_wcs:
-        if includes_lower:
-            value = start_wcs
-        else:
-            value = start_wcs + 1
-    else:                               # outside WCS limit
+    else:                               # outside (below) WCS limit
         value = math.ceil(start_wcs)
 
     return value
 
-def compare_stop(stop_ref, stop_wcs, includes_upper):
+
+def compare_stop(stop_ref, stop_wcs):
     """Compare the stop limit from the aperture with the WCS upper limit.
+
+    The more restrictive (i.e. smaller) limit is the one upon which the
+    output value will be based.  If the WCS limit is smaller, the value
+    will be truncated to an integer, on the assumption that WCS upper
+    limits correspond to the upper edge of the bounding pixel.  If this
+    value will actually be used for an extraction limit (i.e. if the
+    limits were not already specified by polynomial coefficients), then
+    assign_polynomial_limits will create a polynomial function using this
+    value, except that it will be increased by 0.5 to correspond to the
+    upper edge of the bounding pixels.
 
     Parameters
     ----------
@@ -485,10 +474,7 @@ def compare_stop(stop_ref, stop_wcs, includes_upper):
         size, possibly shifted by the nod offset correction.
 
     stop_wcs: int or float
-        The value of 'upper' from the WCS domain limits.
-
-    includes_upper: boolean
-        The value of 'includes_upper' from the WCS domain.
+        The upper limit from the WCS bounding box.
 
     Returns
     -------
@@ -496,14 +482,9 @@ def compare_stop(stop_ref, stop_wcs, includes_upper):
         The stop limit, possibly constrained by the WCS stop limit.
     """
 
-    if stop_ref < stop_wcs:             # inside WCS limit
+    if stop_ref <= stop_wcs:            # ref is inside WCS limit
         value = stop_ref
-    elif stop_ref == stop_wcs:
-        if includes_upper:
-            value = stop_wcs
-        else:
-            value = stop_wcs - 1
-    else:                               # outside WCS limit
+    else:                               # outside (above) WCS limit
         value = math.floor(stop_wcs)
 
     return value
@@ -550,8 +531,9 @@ class ExtractModel(object):
         self.dispaxis = dispaxis
 
         # xstart, xstop, ystart, or ystop may be overridden with src_coeff,
-        # they may be limited by the input image size or by the WCS domain,
-        # or they may be modified if extract_width was specified.
+        # they may be limited by the input image size or by the WCS bounding
+        # box, or they may be modified if extract_width was specified
+        # (because extract_width takes precedence).
         # If these values are specified, the limits in the cross-dispersion
         # direction should be integers, but they may later be replaced with
         # fractional values, depending on extract_width, in order to center
@@ -659,6 +641,7 @@ class ExtractModel(object):
         # src_coeff.
         self.add_nod_correction()
 
+
     def add_nod_correction(self):
         """Add the nod offset to src_coeff and bkg_coeff (in-place)."""
 
@@ -682,6 +665,7 @@ class ExtractModel(object):
                 coeff_list[0] += self.nod_correction
                 self.bkg_coeff[i] = copy.copy(coeff_list)
 
+
     def update_extraction_limits(self, ap):
         """Update start and stop limits.
 
@@ -703,6 +687,7 @@ class ExtractModel(object):
             self.ystart = int(round(self.ystart))
             self.ystop = int(round(self.ystop))
 
+
     def log_extraction_parameters(self):
         """Log the updated extraction parameters."""
 
@@ -723,6 +708,7 @@ class ExtractModel(object):
             log.debug("src_coeff = %s", str(self.src_coeff))
         if self.bkg_coeff is not None:
             log.debug("bkg_coeff = %s", str(self.bkg_coeff))
+
 
     def assign_polynomial_limits(self):
         """Create polynomial functions for extraction limits.
@@ -795,6 +781,7 @@ class ExtractModel(object):
                     upper = create_poly(coeff_list)
                     self.p_bkg.append([lower, upper])
                 expect_lower = not expect_lower
+
 
     def extract(self, data):
         """
@@ -873,6 +860,7 @@ class ExtractModel(object):
                             weights=None)
 
         return (wavelength, net, background)
+
 
     def __del__(self):
         self.dispaxis = None

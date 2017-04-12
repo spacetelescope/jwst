@@ -138,7 +138,7 @@ class OptRes(object):
 
         Parameters
         ----------
-        num_seg: int
+        num_seg: int, 1D array
             counter for segment number within the section
 
         g_pix: int, 1D array
@@ -226,7 +226,7 @@ class OptRes(object):
             cr_int_has_cr = np.where(cr_mag_int.sum(axis=0) != 0)
 
             # Initialize number of crs for each image pixel for this integration
-            end_cr = np.zeros(imshape, dtype=np.int8)
+            end_cr = np.zeros(imshape, dtype=np.int16)
 
             for k_rd in range(nreads):
                 # loop over pixels having a CR
@@ -237,7 +237,8 @@ class OptRes(object):
                         cr_com[ii_int, end_cr[y, x], y, x] = cr_mag_int[k_rd, y, x]
                         end_cr[y, x] += 1
 
-        self.cr_mag_seg = cr_com
+        max_num_crs = end_cr.max()
+        self.cr_mag_seg = cr_com [:,:max_num_crs,:,:] 
 
 
     def output_optional(self, model, effintim):
@@ -273,7 +274,7 @@ class OptRes(object):
             yint=self.yint_seg.astype(np.float32),
             sigyint=self.sigyint_seg.astype(np.float32),
             pedestal=self.ped_int.astype(np.float32),
-            weights=(self.inv_var_seg**2).astype(np.float32),
+            weights=self.weights.astype(np.float32),
             crmag=self.cr_mag_seg)
         rfo_model.meta.filename = model.meta.filename
 
@@ -786,8 +787,8 @@ def reset_bad_gain(pdq, gain):
     Returns
     -------
     pdq: int, 2D array
-        pixleldq array of input model, reset to NO_GAIN_VALUE and DO_NOT_USE for
-        pixels in the gain array that are either non-positive or NaN.
+        pixleldq array of input model, reset to NO_GAIN_VALUE and DO_NOT_USE 
+        for pixels in the gain array that are either non-positive or NaN.
     """
     wh_g = np.where( gain <= 0.)
     if len(wh_g[0] > 0):
