@@ -191,8 +191,11 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     # Calculate effective integration time (once EFFINTIM has been populated
     #   and accessible, will use that instead), and other keywords that will
-    #   needed if the pedestal calculation is requested
-    effintim, nframes, groupgap= utils.get_efftim_ped(model)
+    #   needed if the pedestal calculation is requested. Note 'nframes'
+    #   is the number of given by the NFRAMES keyword, and is the number of 
+    #   frames averaged on-board for a group, i.e., it does not include the
+    #   groupgap. 
+    effintim, nframes, groupgap, dropframes1= utils.get_efftim_ped(model)
 
     # Get GROUP DQ and ERR arrays from input file
     gdq_cube = model.groupdq
@@ -289,7 +292,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
         if save_opt: # collect optional pedestal results for output
             opt_res.ped_int[num_int, :, :] = \
                    utils.calc_pedestal(num_int, slope_int, opt_res.firstf_int,
-                                       gdq_cube, nframes, groupgap)
+                                       gdq_cube, nframes, groupgap, dropframes1)
 
     wh_non_zero = (var_sum_2d != 0.0)
 

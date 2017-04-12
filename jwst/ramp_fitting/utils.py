@@ -375,7 +375,6 @@ def calc_slope_int(slope_int, m_by_var_int, inv_var_int, num_int):
     ----------
     slope_int: float, 3D array
         cube of integration-specific slopes
-
     m_by_var_int: float, 3D array
         cube of integration-specific slopes divided by variance
 
@@ -400,14 +399,15 @@ def calc_slope_int(slope_int, m_by_var_int, inv_var_int, num_int):
     return slope_slice
 
 
-def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap):
+def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap, 
+                  dropframes1):
     """
     Short Summary
     -------------
     The pedestal is calculated by extrapolating the final slope for
     each pixel from its value at the first sample in the integration to
     an exposure time of zero; this calculation accounts for the values of
-    nframes andg groupgap.  Any pixel that is saturated on the 1st
+    nframes and groupgap.  Any pixel that is saturated on the 1st
     read is given a pedestal value of 0.
 
     Parameters
@@ -425,10 +425,16 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap):
         hypercube of DQ array
 
     nframes: int
-        number of frames per group; from the NFRAMES keyword.
+        number of frames averaged per group; from the NFRAMES keyword. Does
+        not contain the groupgap.
 
     groupgap: int
         number of frames dropped between groups, from the GROUPGAP keyword.
+
+    dropframes1: int
+        number of frames dropped at the beginning of every integration. 
+        Currently this is not stored as an available keyword, so the value
+        is hardcoded to be 0.
 
     Returns
     -------
@@ -437,8 +443,9 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap):
     """
     ff_all = firstf_int[num_int, :, :].astype(np.float32)
     dq_first = dq_cube[num_int, 0, :, :]
+    ped = ff_all - slope_int[num_int, : :] * \
+             (((nframes + 1.)/2. + dropframes1)/(nframes+groupgap))
 
-    ped = ff_all - slope_int[num_int, : :] * (nframes-groupgap+1.)/(2.*nframes)
     ped[dq_first == dqflags.group['SATURATED']] = 0
 
     return ped
@@ -538,6 +545,7 @@ def gls_output_optional(model, intercept_int, intercept_err_int,
 
 def gls_pedestal(first_group, slope_int, s_mask,
                  frame_time, nframes_used):
+
     """Calculate the pedestal for the GLS case.
 
     The pedestal is the first group, but extrapolated back to zero time
@@ -571,6 +579,7 @@ def gls_pedestal(first_group, slope_int, s_mask,
 
     nframes_used: int
         Number of frames that were averaged together to make a group.
+        Exludes the groupgap.
 
     Returns
     -------
@@ -641,14 +650,20 @@ def get_efftim_ped(model):
         effective integration time for a single read
 
     nframes: int
-        number of frames per group; from the NFRAMES keyword.
+        number of frames averaged per group; from the NFRAMES keyword.
 
     groupgap: int
         number of frames dropped between groups; from the GROUPGAP keyword.
+
+    dropframes1: int
+        number of frames dropped at the beginning of every integration. 
+        Currently this is not stored as an available keyword, so the value
+        returned is 0.
     """
     groupgap = model.meta.exposure.groupgap
     nframes = model.meta.exposure.nframes
     frame_time = model.meta.exposure.frame_time
+    dropframes1 = 0
 
     try:
         effintim = (nframes + groupgap) * frame_time
@@ -659,10 +674,11 @@ def get_efftim_ped(model):
     log.debug(' groupgap: %s' % (groupgap))
     log.debug(' nframes: %s' % (nframes))
     log.debug(' frame_time: %s' % (frame_time))
+    log.debug(' dropframes1: %s' % (dropframes1))
     log.info('Effective integration time per group: %s' % (effintim))
 
 
-    return effintim, nframes, groupgap
+    return effintim, nframes, groupgap, dropframes1
 
 
 def get_dataset_info(model):
@@ -747,7 +763,7 @@ def get_more_info(model):
     """
 
     group_time = model.meta.exposure.group_time
-    nframes_used = model.meta.exposure.nframes - model.meta.exposure.groupgap
+    nframes_used = model.meta.exposure.nframes
     saturated_flag = dqflags.group['SATURATED']
     jump_flag = dqflags.group['JUMP_DET']
 
