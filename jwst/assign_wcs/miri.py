@@ -63,6 +63,14 @@ def imaging(input_model, reference_files):
     distortion = imaging_distortion(input_model, reference_files)
     tel2sky = pointing.v23tosky(input_model)
 
+    # TODO: remove setting the bounding box when it is set in the new ref file.
+    try:
+        bb = distortion.bounding_box
+    except NotImplementedError:
+        shape = input_model.data.shape
+        # Note: Since bounding_box is attached to the model here it's in reverse order.
+        distortion.bounding_box = ((-0.5, shape[0] - 0.5), (3.5, shape[1] - 0.5))
+
     # Create the pipeline
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),
@@ -104,9 +112,8 @@ def imaging_distortion(input_model, reference_files):
             distortion = models.Shift(filter_corr['column_offset']) & models.Shift(
                 filter_corr['row_offset']) | distortion
 
-    # Apply XanYan --> V2V3 and scale to degrees
-    distortion = distortion | models.Identity(1) & (models.Scale(-1) | models.Shift(-7.8)) | \
-               models.Scale(1/60) & models.Scale(1/60)
+    # scale to degrees
+    distortion = distortion | models.Scale(1 / 3600) & models.Scale(1 / 3600)
     return distortion
 
 
@@ -136,8 +143,8 @@ def lrs(input_model, reference_files):
 
     # Determine the distortion model.
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    # Distortion is in arcmin.  Convert to degrees
-    full_distortion = distortion | models.Scale(1 / 60.) & models.Scale(1 / 60.)
+    # Distortion is in arcsec.  Convert to degrees
+    full_distortion = distortion | models.Scale(1 / 3600.) & models.Scale(1 / 3600.)
 
     # Load and process the reference data.
     with fits.open(reference_files['specwcs']) as ref:
@@ -153,15 +160,13 @@ def lrs(input_model, reference_files):
             #zero_point = ref[1].header['imxsltl'], ref[1].header['imysltl']
             zero_point = [35, 442]  # [35, 763] # account for subarray
 
-    # Create the domain
+    # Create the bounding_box
     x0 = lrsdata[:, 3]
     y0 = lrsdata[:, 4]
     x1 = lrsdata[:, 5]
 
-    domain = [{'lower': x0.min() + zero_point[0], 'upper': x1.max() + zero_point[0]},
-              {'lower': (y0.min() + zero_point[1]), 'upper': (y0.max() + zero_point[1])}
-              ]
-
+    bb = ((x0.min() - 0.5 + zero_point[0], x1.max() + 0.5 + zero_point[0]),
+          (y0.min() - 0.5 + zero_point[1], y0.max() + 0.5 + zero_point[1]))
     # Find the ROW of the zero point which should be the [1] of zero_point
     row_zero_point = zero_point[1]
 
@@ -175,8 +180,8 @@ def lrs(input_model, reference_files):
     spatial_transform = full_distortion | tel2sky
     radec = np.array(spatial_transform(x, y))[:, 0, :]
 
-    ra_full = np.matlib.repmat(radec[0], domain[1]['upper'] + 1 - domain[1]['lower'], 1)
-    dec_full = np.matlib.repmat(radec[1], domain[1]['upper'] + 1 - domain[1]['lower'], 1)
+    ra_full = np.matlib.repmat(radec[0], bb[1][1] + 1 - bb[1][0], 1)
+    dec_full = np.matlib.repmat(radec[1], bb[1][1] + 1 - bb[1][0], 1)
 
     ra_t2d = models.Tabular2D(lookup_table=ra_full, name='xtable',
         bounds_error=False, fill_value=np.nan)
@@ -192,14 +197,13 @@ def lrs(input_model, reference_files):
     radec_t2d = ra_t2d & dec_t2d | rot
 
     # Account for the subarray when computing spatial coordinates.
-    xshift = -domain[0]['lower']
-    yshift = -domain[1]['lower']
+    xshift = -bb[0][0]
+    yshift = -bb[1][0]
     det2world = models.Mapping((1, 0, 1, 0, 0, 1)) | models.Shift(yshift, name='yshift1') & \
               models.Shift(xshift, name='xshift1') & \
               models.Shift(yshift, name='yshift2') & models.Shift(xshift, name='xshift2') & \
               models.Identity(2) | radec_t2d & lrs_wav_model
-    det2world.meta['domain'] = domain
-
+    det2world.bounding_box = bb[::-1]
     # Now the actual pipeline.
     pipeline = [(detector, det2world),
                 (world, None)

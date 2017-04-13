@@ -19,7 +19,7 @@ class RotationSequenceType(TransformType):
     name = "rotation_sequence"
     types = [Rotation3DToGWA]
     standard = "jwst_pipeline"
-    version = "0.1.0"
+    version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
@@ -38,7 +38,7 @@ class V23ToSkyType(TransformType):
     name = "v23tosky"
     types = [V23ToSky]
     standard = "jwst_pipeline"
-    version = "0.1.0"
+    version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
@@ -57,7 +57,7 @@ class CoordsType(TransformType):
     name = "coords"
     types = [Unitless2DirCos, DirCos2Unitless, NRSZCoord]
     standard = "jwst_pipeline"
-    version = "0.1.0"
+    version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
@@ -89,7 +89,7 @@ class GratingEquationType(TransformType):
     name = "grating_equation"
     types = [WavelengthFromGratingEquation, AngleFromGratingEquation]
     standard = "jwst_pipeline"
-    version = "0.1.0"
+    version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
@@ -131,7 +131,7 @@ class LRSWavelengthType(TransformType):
     name = "lrs_wavelength"
     types = [LRSWavelength]
     standard = "jwst_pipeline"
-    version = "0.1.0"
+    version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
@@ -150,7 +150,7 @@ class Gwa2SlitType(TransformType):
     name = "gwa_to_slit"
     types = [Gwa2Slit]
     standard = "jwst_pipeline"
-    version = "0.1.0"
+    version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
@@ -167,7 +167,7 @@ class Slit2MsaType(TransformType):
     name = "slit_to_msa"
     types = [Slit2Msa]
     standard = "jwst_pipeline"
-    version = "0.1.0"
+    version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
@@ -184,7 +184,7 @@ class LogicalType(TransformType):
     name = "logical"
     types = [Logical]
     standard = "jwst_pipeline"
-    version = "0.1.0"
+    version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
@@ -202,7 +202,7 @@ class NirissSOSSType(TransformType):
     name = "niriss_soss"
     types = [NirissSOSSModel]
     standard = "jwst_pipeline"
-    version = "0.1.0"
+    version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
@@ -220,7 +220,7 @@ class RefractionIndexType(TransformType):
     name = "refraction_index_from_prism"
     types = [RefractionIndexFromPrism]
     standard = "jwst_pipeline"
-    version = "0.1.0"
+    version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
@@ -244,7 +244,7 @@ class SnellType(TransformType):
     name = "snell"
     types = [Snell]
     standard = "jwst_pipeline"
-    version = "0.1.0"
+    version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):

@@ -15,12 +15,14 @@ allOf:
         datatype: float32
       - name: uncertainty
         datatype: float32
+      - name: order
+        datatype: int16
       - name: nelem
         datatype: int16
       - name: wavelength
-        shape: [50]
+        shape: [3000]
         datatype: float32
       - name: relresponse
-        shape: [50]
+        shape: [3000]
         datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

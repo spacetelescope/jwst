@@ -229,7 +229,8 @@ class Lvl2Input(object):
 
     template = {"asn_pool": "",
                 "members": [
-                  {"expname": ""}
+                  {"expname": "",
+                   "exptype": ""}
                  ]
                 }
 
@@ -263,3 +264,4 @@ class Lvl2Input(object):
         self.asn = self.template
         self.asn['asn_pool'] = ''
         self.asn['members'][0]['expname'] = self.filename
+        self.asn['members'][0]['exptype'] = 'science'

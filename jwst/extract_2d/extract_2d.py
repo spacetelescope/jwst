@@ -8,13 +8,15 @@ import copy
 import numpy as np
 from astropy.io import fits
 from astropy.modeling.models import Shift
+from gwcs.utils import _toindex
+
 from .. import datamodels
 from asdf import AsdfFile
 from ..assign_wcs import nirspec
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 
 def extract2d(input_model, which_subarray=None):
@@ -40,8 +42,13 @@ def extract2d(input_model, which_subarray=None):
 
         for slit in open_slits:
             slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
-            xlo, xhi = slit_wcs.domain[0]['lower'], slit_wcs.domain[0]['upper']
-            ylo, yhi = slit_wcs.domain[1]['lower'], slit_wcs.domain[1]['upper']
+            log.debug("xxx bounding box:  %s   %s",
+                      str(slit_wcs.bounding_box[0]),
+                      str(slit_wcs.bounding_box[1]))
+            xlo, xhi = _toindex(slit_wcs.bounding_box[0])
+            ylo, yhi = _toindex(slit_wcs.bounding_box[1])
+            log.debug("xxx xlo, xhi; ylo, yhi:  %g %g   %g %g",
+                      xlo, xhi, ylo, yhi)
 
             # Add the slit offset to each slit WCS object
             tr = slit_wcs.get_transform('detector', 'sca')
@@ -52,24 +59,24 @@ def extract2d(input_model, which_subarray=None):
             log.info('Subarray x-extents are: %s %s', xlo, xhi)
             log.info('Subarray y-extents are: %s %s', ylo, yhi)
 
-            ext_data = input_model.data[ylo: yhi, xlo: xhi].copy()
-            ext_err = input_model.err[ylo: yhi, xlo: xhi].copy()
-            ext_dq = input_model.dq[ylo: yhi, xlo: xhi].copy()
+            ext_data = input_model.data[ylo: yhi + 1, xlo: xhi + 1].copy()
+            ext_err = input_model.err[ylo: yhi + 1, xlo: xhi + 1].copy()
+            ext_dq = input_model.dq[ylo: yhi + 1, xlo: xhi + 1].copy()
             new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
             shape = ext_data.shape
-            domain = [{'lower': 0, 'upper': shape[1], 'includes_lower': True, 'includes_upper': False},
-                      {'lower':0, 'upper': shape[0], 'includes_lower': True, 'includes_upper': False}]
-            slit_wcs.domain = domain
+            bounding_box= ((0, shape[1] - 1), (0, shape[0] - 1))
+            slit_wcs.bounding_box = bounding_box
             new_model.meta.wcs = slit_wcs
             output_model.slits.append(new_model)
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
             nslit = len(output_model.slits) - 1
+            xlo_ind, xhi_ind, ylo_ind, yhi_ind = _toindex((xlo, xhi, ylo, yhi)).astype(np.int)
             output_model.slits[nslit].name = str(slit.name)
-            output_model.slits[nslit].xstart = xlo + 1
-            output_model.slits[nslit].xsize = xhi - xlo
-            output_model.slits[nslit].ystart = ylo + 1
-            output_model.slits[nslit].ysize = yhi - ylo
+            output_model.slits[nslit].xstart = xlo_ind + 1
+            output_model.slits[nslit].xsize = xhi_ind - xlo_ind
+            output_model.slits[nslit].ystart = ylo_ind + 1
+            output_model.slits[nslit].ysize = yhi_ind - ylo_ind
             if exp_type.lower() == 'nrs_msaspec':
                 output_model.slits[nslit].source_id = int(slit.source_id)
                 output_model.slits[nslit].source_name = slit.source_name
