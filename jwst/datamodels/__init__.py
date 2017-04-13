@@ -34,6 +34,9 @@ __version__ = '0.7.4'
 import numpy as np
 from os.path import basename
 from astropy.extern import six
+from astropy.io import registry
+
+from . import ndmodel
 
 from .model_base import DataModel
 from .amilg import AmiLgModel
@@ -112,6 +115,13 @@ __all__ = [
 _all_models = __all__[1:]
 _local_dict = dict(locals())
 _defined_models = { k: _local_dict[k] for k in _all_models }
+
+# Initialize the astropy.io registry
+with registry.delay_doc_updates(DataModel):
+    registry.register_reader('datamodel', DataModel, ndmodel.read)
+    registry.register_writer('datamodel', DataModel, ndmodel.write)
+    registry.register_identifier('datamodel', DataModel, ndmodel.identify)
+
 
 '''
 def test(verbose=False) :
