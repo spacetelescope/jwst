@@ -1,6 +1,5 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
-from functools import partial
 import logging
 from os.path import basename
 import re
@@ -12,7 +11,6 @@ from jwst.associations import (
 )
 from jwst.associations.association import (
     evaluate,
-    getattr_from_list,
     is_iterable
 )
 from jwst.associations.exceptions import (
@@ -103,16 +101,16 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         # Keep the set of members included in this association
         self.members = set()
 
+        # Let us see if member belongs to us.
+        super(DMS_Level3_Base, self).__init__(*args, **kwargs)
+
         # Initialize validity checks
-        self.validity = {
+        self.validity.update({
             'has_science': {
                 'validated': False,
                 'check': lambda entry: entry['exptype'] == 'SCIENCE'
             }
-        }
-
-        # Let us see if member belongs to us.
-        super(DMS_Level3_Base, self).__init__(*args, **kwargs)
+        })
 
         # Other presumptions on the association
         if 'degraded_status' not in self.data:
@@ -129,26 +127,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             self.data['target'] = 'none'
         if 'asn_pool' not in self.data:
             self.data['asn_pool'] = 'none'
-
-    @classmethod
-    def validate(cls, asn):
-        super(DMS_Level3_Base, cls).validate(asn)
-
-        if isinstance(asn, DMS_Level3_Base):
-            result = False
-            try:
-                result = all(
-                    test['validated']
-                    for test in asn.validity.values()
-                )
-            except (AttributeError, KeyError):
-                raise AssociationNotValidError('Validation failed')
-            if not result:
-                raise AssociationNotValidError(
-                    'Validation failed validity tests.'
-                )
-
-        return True
 
     @property
     def current_product(self):
@@ -219,11 +197,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         )
 
         return product_name.lower()
-
-    def update_validity(self, entry):
-        for test in self.validity.values():
-            if not test['validated']:
-                test['validated'] = test['check'](entry)
 
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
@@ -736,7 +709,7 @@ class AsnMixin_CrossCandidate(DMS_Level3_Base):
     def validate(cls, asn):
         super(AsnMixin_CrossCandidate, cls).validate(asn)
 
-        if isinstance(asn, DMS_Level3_Base):
+        if isinstance(asn, AsnMixin_CrossCandidate):
             try:
                 candidates = set(
                     member['asn_candidate_id']

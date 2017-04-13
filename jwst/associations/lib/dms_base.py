@@ -1,5 +1,8 @@
 """Association attributes common to DMS-based Rules"""
 
+from jwst.associations.exceptions import (
+    AssociationNotValidError,
+)
 from jwst.associations.lib.acid import ACIDMixin
 
 # DMS file name templates
@@ -40,3 +43,43 @@ class DMSBaseMixin(ACIDMixin):
                 sequence=sequence,
             )
         return name.lower()
+
+    @property
+    def validity(self):
+        """Keeper of the validity tests"""
+        try:
+            validity = self._validity
+        except AttributeError:
+            self._validity = {}
+            validity = self._validity
+        return validity
+
+    @validity.setter
+    def validity(self, item):
+        """Set validity dict"""
+        self._validity = item
+
+    def update_validity(self, entry):
+        for test in self.validity.values():
+            if not test['validated']:
+                test['validated'] = test['check'](entry)
+
+    @classmethod
+    def validate(cls, asn):
+        super(DMSBaseMixin, cls).validate(asn)
+
+        if isinstance(asn, DMSBaseMixin):
+            result = False
+            try:
+                result = all(
+                    test['validated']
+                    for test in asn.validity.values()
+                )
+            except (AttributeError, KeyError):
+                raise AssociationNotValidError('Validation failed')
+            if not result:
+                raise AssociationNotValidError(
+                    'Validation failed validity tests.'
+                )
+
+        return True
