@@ -14,7 +14,7 @@ from .. import generate
     'pool_name, n_asns',
     [
         (t_path('data/pool_011_spec_miri_lv2bkg_lrs.csv'), 3),
-        (t_path('data/pool_009_spec_miri_lv2bkg.csv'), 16),
+        (t_path('data/pool_009_spec_miri_lv2bkg.csv'), 13),
         (t_path('data/pool_010_spec_nirspec_lv2bkg.csv'), 12),
     ]
 )
