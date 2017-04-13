@@ -1,13 +1,17 @@
 """Base classes which define the Level2 Associations"""
 import logging
 from os.path import basename
+
 import re
 
 from jwst.associations import (
     Association,
+    AssociationRegistry,
     libpath
 )
+from jwst.associations.association import getattr_from_list
 from jwst.associations.lib.dms_base import DMSBaseMixin
+from jwst.associations.lib.rules_level3_base import _EMPTY
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 
 # Configure logging
@@ -16,12 +20,22 @@ logger.addHandler(logging.NullHandler())
 
 __all__ = [
     'ASN_SCHEMA',
+    'AsnMixin_Lv2Bkg',
+    'AsnMixin_Lv2Image',
+    'AsnMixin_Lv2Mode',
+    'AsnMixin_Lv2Singleton',
+    'AsnMixin_Lv2Spec',
     'DMSLevel2bBase',
     'Utility'
 ]
 
 # The schema that these associations must adhere to.
 ASN_SCHEMA = libpath('asn_schema_jw_level2b.json')
+
+# Flag to exposure type
+FLAG_TO_EXPTYPE = {
+    'BACKGROUND': 'BACKGROUND',
+}
 
 # File templates
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
@@ -33,6 +47,10 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
     # Set the validation schema
     schema_file = ASN_SCHEMA
+
+    # Attribute values that are indicate the
+    # attribute is not specified.
+    INVALID_VALUES = _EMPTY
 
     def __init__(self, *args, **kwargs):
 
@@ -46,6 +64,70 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         # Now, lets see if member belongs to us.
         super(DMSLevel2bBase, self).__init__(*args, **kwargs)
+
+    def members_by_type(self, member_type):
+        """Get list of members by their exposure type"""
+        member_type = member_type.lower()
+        try:
+            members = self.data['members']
+        except KeyError:
+            result = []
+        else:
+            result = [
+                member
+                for member in members
+                if member_type == member['exptype'].lower()
+            ]
+
+        return result
+
+    def has_science(self, member, check_flags=None):
+        """Only allow a single science in the association
+
+        Parameters
+        ----------
+        member: dict
+            The member in question
+
+        check_flags: None or [key[, ...]]
+            A list of extra keys to check for truthness in the member
+
+        Returns
+        -------
+        bool
+            True if member can be added
+        """
+        exptype = self.get_exptype(member, check_flags=check_flags)
+        limit_reached = len(self.members_by_type('SCIENCE')) >= 1
+        limit_reached = limit_reached and exptype == 'SCIENCE'
+        return limit_reached
+
+    def get_exptype(self, member, check_flags=None):
+        """Get the exposure type for member
+
+        Parameters
+        ----------
+        member: dict
+            The member to be adding.
+
+
+        check_flags: None or [key[, ...]]
+            A list of extra keys to check for truthness in the member
+
+        Returns
+        -------
+        exptype: str
+        """
+        exptype = Utility.get_exposure_type(member, default='SCIENCE')
+        if check_flags:
+            for flag in check_flags:
+                try:
+                    getattr_from_list(member, [flag], self.INVALID_VALUES)
+                except KeyError:
+                    continue
+                else:
+                    exptype = FLAG_TO_EXPTYPE[flag]
+        return exptype
 
     def __eq__(self, other):
         """Compare equality of two assocaitions"""
@@ -62,7 +144,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             return not self.__eq__(other)
         else:
             return NotImplemented
-        
+
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
         self.data['target'] = member['TARGETID']
@@ -76,13 +158,29 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self.data['asn_id'] = self.acid.id
         self.data['members'] = []
 
-    def _add(self, member):
-        """Add member to this association."""
+    def _add(self, member, check_flags=None):
+        """Add member to this association.
+
+        Parameters
+        ----------
+        member: dict
+            The member to be adding.
+
+        check_flags: None or [key[, ...]]
+            A list of extra keys to check for truthness in the member
+        """
         entry = {
             'expname': Utility.rename_to_level2a(member['FILENAME']),
-            'exptype': Utility.get_exposure_type(member, default='SCIENCE')
+            'exptype': self.get_exptype(member, check_flags=check_flags)
         }
         self.data['members'].append(entry)
+
+    def __repr__(self):
+        try:
+            file_name, json_repr = self.ioregistry['json'].dump(self)
+        except:
+            return str(self.__class__)
+        return json_repr
 
     def __str__(self):
         """Create human readable version of the association
@@ -154,3 +252,191 @@ class Utility(object):
     @staticmethod
     def resequence(*args, **kwargs):
         return Utility_Level3.resequence(*args, **kwargs)
+
+    @staticmethod
+    @AssociationRegistry.callback('finalize')
+    def finalize(associations):
+        """Check validity and duplications in an association list
+
+        Parameters
+        ----------
+        associations:[association[, ...]]
+            List of associations
+
+        Returns
+        -------
+        finalized_associations: [association[, ...]]
+            The validated list of associations
+        """
+        finalized = []
+        lv2_asns = []
+        for asn in associations:
+            if isinstance(asn, DMSLevel2bBase):
+
+                # Check validity
+                if asn.is_valid:
+                    lv2_asns.append(asn)
+
+            else:
+                finalized.append(asn)
+
+        # Merge lists and return
+        return finalized + lv2_asns
+
+
+# ---------------------------------------------
+# Mixins to define the broad category of rules.
+# ---------------------------------------------
+class AsnMixin_Lv2Image(DMSLevel2bBase):
+    """Level 2 Image association base"""
+
+    def __init__(self, *args, **kwargs):
+
+        self.add_constraints({
+            'exp_type': {
+                'value': (
+                    'FGS_IMAGE'
+                    '|MIR_IMAGE'
+                    '|NIS_IMAGE'
+                    '|NRC_IMAGE'
+                ),
+                'inputs': ['EXP_TYPE'],
+                'force_unique': True,
+            }
+        })
+
+        super(AsnMixin_Lv2Image, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, member):
+        """Post-check and pre-add initialization"""
+
+        super(AsnMixin_Lv2Image, self)._init_hook(member)
+        self.data['asn_type'] = 'image2'
+
+
+class AsnMixin_Lv2Spec(DMSLevel2bBase):
+    """Level 2 Spectral association base"""
+
+    def __init__(self, *args, **kwargs):
+
+        self.add_constraints({
+            'exp_type': {
+                'value': (
+                    'NRC_GRISM'
+                    '|NRC_TSGRISM'
+                    '|MIR_LRS-FIXEDSLIT'
+                    '|MIR_LRS-SLITLESS'
+                    '|MIR_MRS'
+                    '|NRS_FIXEDSLIT'
+                    '|NRS_IFU'
+                    '|NRS_MSASPEC'
+                    '|NRS_BRIGHTOBJ'
+                    '|NIS_WFSS'
+                    '|NIS_SOSS'
+                ),
+                'inputs': ['EXP_TYPE'],
+                'force_unique': True,
+            }
+        })
+
+        super(AsnMixin_Lv2Spec, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, member):
+        """Post-check and pre-add initialization"""
+
+        super(AsnMixin_Lv2Spec, self)._init_hook(member)
+        self.data['asn_type'] = 'spec2'
+
+
+class AsnMixin_Lv2Mode(DMSLevel2bBase):
+    """Fix the instrument configuration"""
+    def __init__(self, *args, **kwargs):
+
+        # I am defined by the following constraints
+        self.add_constraints({
+            'program': {
+                'value': None,
+                'inputs': ['PROGRAM']
+            },
+            'instrument': {
+                'value': None,
+                'inputs': ['INSTRUME']
+            },
+            'detector': {
+                'value': None,
+                'inputs': ['DETECTOR']
+            },
+            'opt_elem': {
+                'value': None,
+                'inputs': ['FILTER', 'BAND']
+            },
+            'opt_elem2': {
+                'value': None,
+                'inputs': ['PUPIL', 'GRATING'],
+                'required': False,
+            },
+            'subarray': {
+                'value': None,
+                'inputs': ['SUBARRAY'],
+                'required': False,
+            },
+            'channel': {
+                'value': None,
+                'inputs': ['CHANNEL'],
+                'required': False,
+            }
+        })
+
+        super(AsnMixin_Lv2Mode, self).__init__(*args, **kwargs)
+
+
+class AsnMixin_Lv2Singleton(DMSLevel2bBase):
+    """Allow only single science exposure"""
+
+    def __init__(self, *args, **kwargs):
+        # I am defined by the following constraints
+        self.add_constraints({
+            'single_science': {
+                'test': self.match_constraint,
+                'value': 'False',
+                'inputs': lambda member: str(
+                    self.has_science(member)
+                ),
+            }
+        })
+
+        # Now, lets see if member belongs to us.
+        super(AsnMixin_Lv2Singleton, self).__init__(*args, **kwargs)
+
+
+class AsnMixin_Lv2Bkg(DMSLevel2bBase):
+    """Acquire backgrounds"""
+
+    def __init__(self, *args, **kwargs):
+
+        # I am defined by the following constraints
+        self.add_constraints({
+            'background': {
+                'inputs': ['ASN_CANDIDATE'],
+                'value': '.+BACKGROUND.+',
+                'force_unique': True,
+                'is_acid': False,
+                'required': False,
+            },
+            'single_science': {
+                'test': self.match_constraint,
+                'value': 'False',
+                'inputs': lambda member: str(
+                    self.has_science(member, check_flags=['BACKGROUND'])
+                ),
+            },
+        })
+
+        # Now, lets see if member belongs to us.
+        super(AsnMixin_Lv2Bkg, self).__init__(*args, **kwargs)
+
+    def _add(self, member, check_flags=None):
+        if not check_flags:
+            check_flags = []
+        check_flags.append('BACKGROUND')
+        super(AsnMixin_Lv2Bkg, self)._add(member, check_flags)

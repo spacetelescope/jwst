@@ -14,7 +14,7 @@ def test_meta():
     rules = registry_level3_only()
     pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
     asns, orphaned = generate(pool, rules)
-    assert len(asns) > 0
+    assert len(asns) == 1
     asn = asns[0]
     data = asn.data
     assert data['program'] == '99009'
