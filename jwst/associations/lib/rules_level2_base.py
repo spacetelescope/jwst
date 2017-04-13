@@ -62,6 +62,14 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             },
         })
 
+        # Initialize validity checks
+        self.validity.update({
+            'has_science': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'SCIENCE'
+            }
+        })
+
         # Now, lets see if member belongs to us.
         super(DMSLevel2bBase, self).__init__(*args, **kwargs)
 
@@ -173,6 +181,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             'expname': Utility.rename_to_level2a(member['FILENAME']),
             'exptype': self.get_exptype(member, check_flags=check_flags)
         }
+        self.update_validity(entry)
         self.data['members'].append(entry)
 
     def __repr__(self):

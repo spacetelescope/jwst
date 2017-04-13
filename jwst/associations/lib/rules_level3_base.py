@@ -101,9 +101,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         # Keep the set of members included in this association
         self.members = set()
 
-        # Let us see if member belongs to us.
-        super(DMS_Level3_Base, self).__init__(*args, **kwargs)
-
         # Initialize validity checks
         self.validity.update({
             'has_science': {
@@ -111,6 +108,9 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 'check': lambda entry: entry['exptype'] == 'SCIENCE'
             }
         })
+
+        # Let us see if member belongs to us.
+        super(DMS_Level3_Base, self).__init__(*args, **kwargs)
 
         # Other presumptions on the association
         if 'degraded_status' not in self.data:
