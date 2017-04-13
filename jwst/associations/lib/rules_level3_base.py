@@ -1,15 +1,18 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
+from functools import partial
 import logging
 from os.path import basename
 import re
 
 from jwst.associations import (
     Association,
+    AssociationRegistry,
     libpath
 )
 from jwst.associations.association import (
     evaluate,
+    getattr_from_list,
     is_iterable
 )
 from jwst.associations.exceptions import (
@@ -41,7 +44,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # Non-specified values found in DMS Association Pools
-_EMPTY = (None, 'NULL')
+_EMPTY = (None, 'NULL', '--')
 
 # The schema that these associations must adhere to.
 ASN_SCHEMA = libpath('asn_schema_jw_level3.json')
@@ -397,7 +400,10 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             members.append(entry)
 
     def __repr__(self):
-        file_name, json_repr = self.ioregistry['json'].dump(self)
+        try:
+            file_name, json_repr = self.ioregistry['json'].dump(self)
+        except:
+            return str(self.__class__)
         return json_repr
 
     def __str__(self):
@@ -527,6 +533,40 @@ class Utility(object):
         result = _EXPTYPE_MAP.get(exp_type, default)
         return result
 
+    @staticmethod
+    @AssociationRegistry.callback('finalize')
+    def finalize(associations):
+        """Check validity and duplications in an association list
+
+        Parameters
+        ----------
+        associations:[association[, ...]]
+            List of associations
+
+        Returns
+        -------
+        finalized_associations: [association[, ...]]
+            The validated list of associations
+        """
+        finalized = []
+        lv3_asns = []
+        for asn in associations:
+            if isinstance(asn, DMS_Level3_Base):
+
+                # Check validity
+                if asn.is_valid:
+                    lv3_asns.append(asn)
+
+            else:
+                finalized.append(asn)
+
+        # Ensure sequencing is correct.
+        Utility.resequence(lv3_asns)
+
+        # Merge lists and return
+        return finalized + lv3_asns
+
+
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
 # ---------------------------------------------
@@ -541,7 +581,7 @@ class AsnMixin_Base(DMS_Level3_Base):
         self.add_constraints({
             'program': {
                 'value': None,
-                'inputs': ['PROGRAM']
+                'inputs': ['PROGRAM'],
             },
             'instrument': {
                 'value': None,

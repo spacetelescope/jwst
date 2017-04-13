@@ -42,7 +42,7 @@ class Asn_Image(
         self.add_constraints({
             'wfsvisit': {
                 'inputs': ['WFSVISIT'],
-                'is_invalid': True,
+                'force_undefined': True,
             },
         })
 

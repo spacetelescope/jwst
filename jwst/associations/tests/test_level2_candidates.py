@@ -1,5 +1,7 @@
 """Test Level2 candidate operation"""
 from __future__ import absolute_import
+
+import os
 import pytest
 
 from .helpers import (
@@ -9,6 +11,13 @@ from .helpers import (
 )
 
 from ..main import Main
+
+# Temporarily skip if running under Travis
+pytestmark = pytest.mark.skipif(
+    "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
+    reason='Temporarily disable due to performance issues'
+)
+
 
 @pytest.mark.parametrize(
     "partial_args, n_asns",
@@ -21,22 +30,22 @@ from ..main import Main
         # Basic observation ACIDs
         (
             ['-i', 'o001'],
-            1
+            10
         ),
         # Whole program
         (
             [],
-            11
+            140
         ),
         # Discovered only
         (
             ['--discover'],
-            1
+            0
         ),
         # Candidates only
         (
             ['--all-candidates'],
-            10
+            140
         ),
     ]
 )

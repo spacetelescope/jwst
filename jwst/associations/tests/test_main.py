@@ -1,5 +1,7 @@
 """test_associations: Test of general Association functionality."""
 from __future__ import absolute_import
+
+import os
 import pytest
 import re
 
@@ -7,13 +9,19 @@ from .helpers import full_pool_rules
 
 from ..main import Main
 
+# Temporarily skip if running under Travis
+pytestmark = pytest.mark.skipif(
+    "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
+    reason='Temporarily disable due to performance issues'
+)
+
 
 def test_script(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
     generated = Main([pool_fname, '--dry-run'])
     asns = generated.associations
-    assert len(asns) == 58
+    assert len(asns) == 33
     assert len(generated.orphaned) == 2
     found_rules = set(
         asn['asn_rule']
@@ -27,9 +35,9 @@ def test_asn_candidates(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
     generated = Main([pool_fname, '--dry-run', '-i', 'o001'])
-    assert len(generated.associations) == 3
+    assert len(generated.associations) == 2
     generated = Main([pool_fname, '--dry-run', '-i', 'o001', 'o002'])
-    assert len(generated.associations) == 6
+    assert len(generated.associations) == 4
 
 
 def test_toomanyoptions(full_pool_rules):
