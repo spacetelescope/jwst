@@ -9,7 +9,7 @@ from astropy import units as u
 from astropy.modeling.models import Const1D, Mapping, Scale
 from gwcs import wcs
 import gwcs.coordinate_frames as cf
-from .util import not_implemented_mode
+from .util import not_implemented_mode, subarray_transform
 from . import pointing
 from ..transforms.models import NirissSOSSModel
 
@@ -98,12 +98,24 @@ def niriss_soss(input_model, reference_files):
     except Exception as e:
         raise IOError('Error reading wavelength correction from {}'.format(reference_files['specwcs']))
 
-    cm_order1 = (Mapping((0, 1, 0, 1)) | (Const1D(target_ra) & Const1D(target_dec) & wl1)).rename('Order1')
-    cm_order2 = (Mapping((0, 1, 0, 1)) | (Const1D(target_ra) & Const1D(target_dec) & wl2)).rename('Order2')
-    cm_order3 = (Mapping((0, 1, 0, 1)) | (Const1D(target_ra) & Const1D(target_dec) & wl3)).rename('Order3')
+    subarray2full = subarray_transform(input_model)
+
+    # Reverse the order of inputs passed to Tabular because it's in python order in modeling.
+    # Consider changing it in modelng ?
+    cm_order1 = subarray2full | (Mapping((0, 1, 1, 0)) | \
+                                 (Const1D(target_ra) & Const1D(target_dec) & wl1)
+                                 ).rename('Order1')
+    cm_order2 = subarray2full | (Mapping((0, 1, 1, 0)) | \
+                                 (Const1D(target_ra) & Const1D(target_dec) & wl2)
+                                 ).rename('Order2')
+    cm_order3 = subarray2full | (Mapping((0, 1, 1, 0)) | \
+                                 (Const1D(target_ra) & Const1D(target_dec) & wl3)
+                                 ).rename('Order3')
 
     # Define the transforms, they should accept (x,y) and return (ra, dec, lambda)
-    soss_model = NirissSOSSModel([1, 2, 3], [cm_order1, cm_order2, cm_order3]).rename('3-order SOSS Model')
+    soss_model = NirissSOSSModel([1, 2, 3],
+                                 [cm_order1, cm_order2, cm_order3]
+                                 ).rename('3-order SOSS Model')
 
     # Define the pipeline based on the frames and models above.
     pipeline = [(detector, soss_model),
@@ -123,7 +135,12 @@ def imaging(input_model, reference_files):
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
-    distortion = imaging_distortion(input_model, reference_files)
+
+    subarray2full = subarray_transform(input_model)
+    imdistortion = imaging_distortion(input_model, reference_files)
+    distortion = subarray2full | imdistortion
+    distortion.bounding_box = imdistortion.bounding_box
+    del imdistortion.bounding_box
     tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),
