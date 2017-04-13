@@ -6,6 +6,7 @@ import re
 
 from jwst.associations import (
     Association,
+    AssociationRegistry,
     libpath
 )
 from jwst.associations.association import getattr_from_list
@@ -251,6 +252,36 @@ class Utility(object):
     @staticmethod
     def resequence(*args, **kwargs):
         return Utility_Level3.resequence(*args, **kwargs)
+
+    @staticmethod
+    @AssociationRegistry.callback('finalize')
+    def finalize(associations):
+        """Check validity and duplications in an association list
+
+        Parameters
+        ----------
+        associations:[association[, ...]]
+            List of associations
+
+        Returns
+        -------
+        finalized_associations: [association[, ...]]
+            The validated list of associations
+        """
+        finalized = []
+        lv2_asns = []
+        for asn in associations:
+            if isinstance(asn, DMSLevel2bBase):
+
+                # Check validity
+                if asn.is_valid:
+                    lv2_asns.append(asn)
+
+            else:
+                finalized.append(asn)
+
+        # Merge lists and return
+        return finalized + lv2_asns
 
 
 # ---------------------------------------------

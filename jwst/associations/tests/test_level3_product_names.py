@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import os
+import pytest
 import re
 
 from .helpers import (
@@ -11,6 +13,12 @@ from .helpers import (
 )
 
 from .. import (AssociationPool, generate)
+
+# Temporarily skip if running under Travis
+pytestmark = pytest.mark.skipif(
+    "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
+    reason='Temporarily disable due to performance issues'
+)
 
 LEVEL3_PRODUCT_NAME_REGEX = (
     'jw'

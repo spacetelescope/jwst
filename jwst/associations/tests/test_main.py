@@ -9,7 +9,6 @@ from .helpers import full_pool_rules
 
 from ..main import Main
 
-
 # Temporarily skip if running under Travis
 pytestmark = pytest.mark.skipif(
     "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",

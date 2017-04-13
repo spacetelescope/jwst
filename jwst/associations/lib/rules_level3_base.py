@@ -7,6 +7,7 @@ import re
 
 from jwst.associations import (
     Association,
+    AssociationRegistry,
     libpath
 )
 from jwst.associations.association import (
@@ -531,6 +532,39 @@ class Utility(object):
 
         result = _EXPTYPE_MAP.get(exp_type, default)
         return result
+
+    @staticmethod
+    @AssociationRegistry.callback('finalize')
+    def finalize(associations):
+        """Check validity and duplications in an association list
+
+        Parameters
+        ----------
+        associations:[association[, ...]]
+            List of associations
+
+        Returns
+        -------
+        finalized_associations: [association[, ...]]
+            The validated list of associations
+        """
+        finalized = []
+        lv3_asns = []
+        for asn in associations:
+            if isinstance(asn, DMS_Level3_Base):
+
+                # Check validity
+                if asn.is_valid:
+                    lv3_asns.append(asn)
+
+            else:
+                finalized.append(asn)
+
+        # Ensure sequencing is correct.
+        Utility.resequence(lv3_asns)
+
+        # Merge lists and return
+        return finalized + lv3_asns
 
 
 # ---------------------------------------------
