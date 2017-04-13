@@ -242,6 +242,22 @@ def is_fits(input):
     return isfits, fitstype
 
 
+def subarray_transform(input_model):
+    """
+    Inputs are in full frame coordinates.
+    If a subarray observation - shift the inputs.
+
+    """
+    xstart = input_model.meta.subarray.xstart
+    ystart = input_model.meta.subarray.ystart
+    if xstart is None:
+        xstart = 1
+    if ystart is None:
+        ystart = 1
+    subarray2full = astmodels.Shift(xstart - 1) & astmodels.Shift(ystart - 1)
+    return subarray2full
+
+
 def not_implemented_mode(input_model, ref):
     exp_type = input_model.meta.exposure.type
     message = "WCS for EXP_TYPE of {0} is not implemented.".format(exp_type)

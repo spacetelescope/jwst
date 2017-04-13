@@ -13,7 +13,7 @@ import gwcs.coordinate_frames as cf
 from gwcs import selector
 from . import pointing
 from ..transforms import models as jwmodels
-from .util import not_implemented_mode
+from .util import not_implemented_mode, subarray_transform
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -60,7 +60,9 @@ def imaging(input_model, reference_files):
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     # Create the transforms
-    distortion = imaging_distortion(input_model, reference_files)
+    subarray2full = subarray_transform(input_model)
+    imdistortion = imaging_distortion(input_model, reference_files)
+    distortion = subarray2full | imdistortion
     tel2sky = pointing.v23tosky(input_model)
 
     # TODO: remove setting the bounding box when it is set in the new ref file.
@@ -142,9 +144,10 @@ def lrs(input_model, reference_files):
 
 
     # Determine the distortion model.
+    subarray2full = subarray_transform(input_model)
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
     # Distortion is in arcsec.  Convert to degrees
-    full_distortion = distortion | models.Scale(1 / 3600.) & models.Scale(1 / 3600.)
+    full_distortion = subarray2full | distortion | models.Scale(1 / 3600.) & models.Scale(1 / 3600.)
 
     # Load and process the reference data.
     with fits.open(reference_files['specwcs']) as ref:
