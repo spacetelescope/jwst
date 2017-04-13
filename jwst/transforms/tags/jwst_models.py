@@ -7,12 +7,12 @@ from asdf.tags.transform.basic import TransformType
 from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
                       NRSZCoord, Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA,
                       LRSWavelength, Gwa2Slit, Slit2Msa, Logical, NirissSOSSModel, V23ToSky,
-                      RefractionIndexFromPrism, Snell)
+                      RefractionIndexFromPrism, Snell, MIRI_AB2Slice)
 
 
 __all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
            'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSky',
-           'RefractionIndexType', 'SnellType']
+           'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType']
 
 
 class RotationSequenceType(TransformType):
@@ -277,3 +277,27 @@ class SnellType(TransformType):
         assert_array_equal(a.pref, b.pref)
         assert_array_equal(a.temp, b.temp)
         assert_array_equal(a.pressure, b.pressure)
+
+
+class MIRI_AB2SliceType(TransformType):
+    name = "miri_ab2slice"
+    types = [MIRI_AB2Slice]
+    standard = "jwst_pipeline"
+    version = "0.7.0"
+
+    @classmethod
+    def from_tree_transform(cls, node, ctx):
+        return MIRI_AB2Slice(node['beta_zero'], node['beta_del'])
+
+    @classmethod
+    def to_tree_transform(cls, model, ctx):
+        node = {'beta_zero': model.beta_zero.value, 'beta_del': model.beta_del.value}
+        return yamlutil.custom_tree_to_tagged_tree(node, ctx)
+
+    @classmethod
+    def assert_equal(cls, a, b):
+        TransformType.assert_equal(a, b)
+        assert (isinstance(a, MIRI_AB2Slice) and
+                isinstance(b, MIRI_AB2Slice))
+        assert_array_equal(a.beta_zero, b.beta_zero)
+        assert_array_equal(a.beta_del, b.beta_del)

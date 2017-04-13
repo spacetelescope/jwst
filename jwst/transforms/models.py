@@ -18,8 +18,8 @@ from astropy import units as u
 __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
            'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa',
-           'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit', 
-           'MIRI_AB2DET']
+           'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit',
+           'MIRI_AB2Slice']
 
 
 # Number of shutters per quadrant
@@ -33,6 +33,30 @@ Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
 Slit.__new__.__defaults__= ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, "", "", "", 0.0, 0.0, 0.0)
 
 
+class MIRISelector(Model):
+    """
+    """
+    inputs = ('x' , 'y', 'slice')
+    outputs = ('alpha', 'beta')
+
+    def __init__(self, selector, **kwargs):
+        #self._inputs = inputs
+        #self._outputs = outputs
+        self._selector = selector
+        super(MIRISelector, self).__init__(**kwargs)
+
+    def evaluate(x, y, slice_id):
+        slice_id = np.unique(slice_id)
+        # remove 0
+        res = np.zeros(x.shape) + np.nan
+        for sid in slice_id:
+            if sid != 0:
+                sid_ind = slice_id == sid
+                res[sid_ind] = self._selector[sid](x[sid_ind], y[sid_ind])
+            else:
+                pass
+        return res
+
 
 class MIRI_AB2Slice(Model):
     """
@@ -40,25 +64,22 @@ class MIRI_AB2Slice(Model):
 
     Parameters
     ----------
-    b_zero : float
-    b_del : float
+    beta_zero : float
+    beta_del : float
     """
     standard_broadcastnig = False
 
     inputs = ("beta",)
     outputs = ("slice",)
 
-    def __init__(self, b_zero, b_del, **kwargs):
-        super(MIRI_AB2Slice, self).__init__(**kwargs)
-        self.b_zero = b_zero
-        self.b_del = b_del
+    beta_zero = Parameter('beta_zero', default=0)
+    beta_del = Parameter('beta_del', default=1)
 
     @staticmethod
-    def evaluate(beta, b_zero, b_del):
-        return (beta - b_zero) / b_del
-    
+    def evaluate(beta, beta_zero, beta_del):
+        return (beta - beta_zero) / beta_del
 
-    
+
 class Snell(Model):
     """
     Apply transforms, including Snell law, through the NIRSpec prism.
