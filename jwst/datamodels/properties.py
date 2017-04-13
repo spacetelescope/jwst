@@ -160,20 +160,31 @@ class Node(object):
             if attr is None:
                 msg = "is not valid list operation"
             else:
-                msgfmt = "'{0}' is not valid to delete"
+                msgfmt = "{0} is not valid to delete"
                 msg = msgfmt.format(attr)
         else:
-            value = str(value)
-            if len(value) > 55:
-                value = value[:56] + " ..."
+            if isinstance(value, six.string_types):
+                value = "'{0}'".format(value)
+            else:
+                value = str(value)
+                if len(value) > 55:
+                    value = value[:56] + " ..."
 
             if attr is None:
-                msgfmt = "'{0}' is not valid"
+                msgfmt = "{0} is not valid"
                 msg = msgfmt.format(value)
             else:
-                msgfmt = "'{0}' is not valid in '{1}'"
+                msgfmt = "{0} is not valid in {1}"
                 msg = msgfmt.format(value, attr)
                 
+        try:
+            filename = self._ctx.meta.filename
+        except AttributeError:
+            filename = None
+        
+        if filename is not None:
+            msg = "In {0} {1}".format(filename, msg)
+
         if self._ctx._pass_invalid_values:
             warnings.warn(msg, ValidationWarning)
         else:
