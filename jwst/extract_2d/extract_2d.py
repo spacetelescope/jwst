@@ -16,7 +16,7 @@ from ..assign_wcs import nirspec
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 
 def extract2d(input_model, which_subarray=None):
@@ -42,13 +42,10 @@ def extract2d(input_model, which_subarray=None):
 
         for slit in open_slits:
             slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
-            log.debug("xxx bounding box:  %s   %s",
                       str(slit_wcs.bounding_box[0]),
                       str(slit_wcs.bounding_box[1]))
             xlo, xhi = _toindex(slit_wcs.bounding_box[0])
             ylo, yhi = _toindex(slit_wcs.bounding_box[1])
-            log.debug("xxx xlo, xhi; ylo, yhi:  %g %g   %g %g",
-                      xlo, xhi, ylo, yhi)
 
             # Add the slit offset to each slit WCS object
             tr = slit_wcs.get_transform('detector', 'sca')
