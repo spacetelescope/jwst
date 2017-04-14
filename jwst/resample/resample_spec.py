@@ -94,7 +94,7 @@ class ResampleSpecData(object):
             self.build_miri_output_wcs()
         self.build_size_from_bounding_box()
         self.blank_output = datamodels.DrizProductModel(self.data_size)
-        self.blank_output.wcs = self.output_wcs
+        self.blank_output.meta.wcs = self.output_wcs
 
         # Default to defining output models metadata as
         # a copy of the first input_model's metadata
@@ -165,11 +165,14 @@ class ResampleSpecData(object):
         if refwcs == None:
             refwcs = input_model.meta.wcs
 
-        # Generate grid of sky coordinates for area within domain
+        # Generate grid of sky coordinates for area within bounding box
         bb = refwcs.bounding_box
-        det = x, y = wcstools.grid_from_bounding_box(bb, step=(1, 1))
+        det = x, y = wcstools.grid_from_bounding_box(bb, step=(1, 1),
+            center=True)
         sky = ra, dec, lam = refwcs(*det)
-        x_center, y_center = int(bb[0][1] - bb[0][0]), int(bb[1][1] - bb[1][0])
+        x_center = int((bb[0][1] - bb[0][0]) / 2)
+        y_center = int((bb[1][1] - bb[1][0]) / 2)
+        log.debug("Center of bounding box: {}  {}".format(x_center, y_center))
 
         # Compute slit angular size, slit center sky coords
         xpos = []
@@ -212,10 +215,11 @@ class ResampleSpecData(object):
 
         # Compute slit angle relative (clockwise) to y axis
         slit_rot_angle = (np.arcsin(dx / slit_npix) * u.radian).to(u.degree)
+        slit_rot_angle = slit_rot_angle.value
         log.debug('Slit rotation angle: {0}'.format(slit_rot_angle))
 
         # Compute transform for output frame
-        roll_ref = input_model.meta.wcsinfo.roll_ref * u.deg
+        roll_ref = input_model.meta.wcsinfo.roll_ref
         min_lam = np.nanmin(lam)
         offset = Shift(-slit_center_pix) & Shift(-slit_center_pix)
         # TODO: double-check the signs on the following rotation angles
@@ -262,7 +266,8 @@ class ResampleSpecData(object):
         if refwcs == None:
             refwcs = input_model.meta.wcs
 
-        x, y = wcstools.grid_from_bounding_box(refwcs.bounding_box, step=(1, 1))
+        x, y = wcstools.grid_from_bounding_box(refwcs.bounding_box, step=(1, 1),
+            center=True)
         ra, dec, lam = refwcs(x.flatten(), y.flatten())
         # TODO: once astropy.modeling._Tabular is fixed, take out the
         # flatten() and reshape() code above and below
@@ -403,7 +408,7 @@ class ResampleSpecData(object):
             # # TODO: do this properly in wcs_from_spec_footprints()
             # output_model.meta.wcs.domain = self.output_wcs.domain
             # # Instead we do a cludge below to get the domain to not be neg.
-            output_model.meta.wcs.domain = resample_utils.create_domain(
+            output_model.meta.wcs.bounding_box = resample_utils.create_bounding_box(
                 self.output_wcs, output_model.data.shape)
             output_model.meta.filename = obs_product
 
