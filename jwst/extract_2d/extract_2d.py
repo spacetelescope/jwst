@@ -71,7 +71,7 @@ def extract2d(input_model, which_subarray=None):
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
             nslit = len(output_model.slits) - 1
-            xlo_ind, xhi_ind, ylo_ind, yhi_ind = _toindex((xlo, xhi, ylo, yhi)).astype(np.int)
+            xlo_ind, xhi_ind, ylo_ind, yhi_ind = _toindex((xlo, xhi, ylo, yhi)).astype(np.int16)
             output_model.slits[nslit].name = str(slit.name)
             output_model.slits[nslit].xstart = xlo_ind + 1
             output_model.slits[nslit].xsize = (xhi_ind - xlo_ind) + 1
