@@ -47,15 +47,15 @@ def make_output_wcs(input_models):
     #       remove the following block
     wcslist = [i.meta.wcs for i in input_models]
     for w, i in zip(wcslist, input_models):
-        if w.domain is None:
-            w.domain = create_domain(w, i.data.shape)
+        if w.bounding_box is None:
+            w.bounding_box = create_bounding_box(w, i.data.shape)
 
     output_frame = wcslist[0].output_frame
     naxes = wcslist[0].output_frame.naxes
 
     if naxes == 3:
         output_wcs = wcs_from_spec_footprints(wcslist)
-        data_size = build_size_from_spec_domain(output_wcs.domain)
+        data_size = build_size_from_spec_bounding_box(output_wcs.bounding_box)
     elif naxes == 2:
         output_wcs = assign_wcs.util.wcs_from_footprints(input_models)
         data_size = build_size_from_bounding_box(output_wcs.bounding_box)
@@ -96,16 +96,13 @@ def compute_output_transform(refwcs, filename, fiducial):
     return pc_matrix | cdelt
 
 
-def create_domain(wcs, shape):
-    """ Create domain for WCS based on shape of model data.
+def create_bounding_box(wcs, shape):
+    """ Create bounding_box for WCS based on shape of model data.
     """
-    wcs_domain = []
+    bb = []
     for s in reversed(shape):
-        domain = DEFAULT_DOMAIN.copy()
-        domain['lower'] = 0
-        domain['upper'] = s
-        wcs_domain.append(domain)
-    return wcs_domain
+        bb.append((0, s))
+    return bb
 
 
 def build_size_from_bounding_box(bounding_box):
@@ -119,13 +116,12 @@ def build_size_from_bounding_box(bounding_box):
     return tuple(reversed(size))
 
 
-def build_size_from_spec_domain(domain):
-    """ Return the size of the frame based on the provided domain
+def build_size_from_spec_bounding_box(bounding_box):
+    """ Return the size of the frame based on the provided bounding_box
     """
     size = []
-    for axs in domain:
-        delta = axs['upper'] - axs['lower']
-        #for i in [axs['includes_lower'], axs['includes_upper']]: delta += 1
+    for axis in bounding_box:
+        delta = axis[1] - axis[0]
         size.append(int(delta + 0.5))
     return tuple(size)
 
@@ -134,7 +130,8 @@ def calc_gwcs_pixmap(in_wcs, out_wcs):
     """ Return a pixel grid map from input frame to output frame.
     """
     # TODO: Is the following 1-indexed or 0-indexed?  Check.
-    grid = wcstools.grid_from_bounding_box(in_wcs.bounding_box, step=(1, 1))
+    grid = wcstools.grid_from_bounding_box(in_wcs.bounding_box, step=(1, 1),
+        center=True)
 
     # pixmap_tuple = reproject(in_wcs, out_wcs)(grid[1], grid[0])
     pixmap_tuple = reproject(in_wcs, out_wcs)(grid[0], grid[1])
@@ -194,8 +191,8 @@ def reproject(wcs1, wcs2):
         return tuple(det_reshaped)
     return _reproject
 
-
-def spec_domain(inwcs, domain=None):
+# Following function can be deprecated
+def spec_bounding_box(inwcs, bounding_box=None):
     """
     Returns a boolean mask of the pixels where the wcs is defined.
 
@@ -205,25 +202,24 @@ def spec_domain(inwcs, domain=None):
     ----------
     inwcs : gwcs.WCS object
 
-    domain : optional domain
+    bounding_box : optional bounding_box
 
     Returns
     -------
     Boolean mask where pixels in the input that produced NaNs in the output
     are set to True.  Valid wcs transform pixels are set to False.
     """
-    if not domain:
-        domain = inwcs.domain
-    xstart, xend = domain[0]['lower'], domain[0]['upper']
-    ystart, yend = domain[1]['lower'], domain[1]['upper']
-    y, x = np.mgrid[ystart: yend, xstart: xend]
+    if not bounding_box:
+        bounding_box = inwcs.bounding_box
+    x, y = wcstools.grid_from_bounding_box(in_wcs.bounding_box, step=(1, 1),
+        center=True)
     ra, dec, lam = inwcs(x, y)
     return np.isnan(lam)
 
-
-def grid_from_spec_domain(inwcs, domain=None, domain_mask=None):
+# Following function can be deprecated
+def grid_from_spec_bounding_box(inwcs, bounding_box=None, mask=None):
     """
-    Returns grid of x, y coordinates using a domain or domain mask.
+    Returns grid of x, y coordinates using a bounding_box or mask.
 
     Build-7 workaround.
 
@@ -231,40 +227,42 @@ def grid_from_spec_domain(inwcs, domain=None, domain_mask=None):
     ----------
     inwcs : gwcs.WCS object
 
-    domain : optional domain
+    bounding_box : optional bounding_box
 
-    domain_mask : option Boolean domain mask
+    mask : option Boolean bounding_box mask
 
     Returns
     -------
     ndarray
     Grid array if y, x inputs for the included or specified domain mask.
     """
-    if not domain_mask:
+    if not mask:
         try:
-            domain_mask = inwcs.domain_mask
+            mask = inwcs.bounding_box_mask
         except AttributeError:
-            domain_mask = spec_domain(inwcs)
-    if not domain:
-        domain = inwcs.domain
-    xstart, xend = domain[0]['lower'], domain[0]['upper']
-    ystart, yend = domain[1]['lower'], domain[1]['upper']
-    return np.mgrid[xstart: xend, ystart: yend]
+            mask = spec_bounding_box(inwcs)
+    if not bounding_box:
+        bounding_box = inwcs.bounding_box
+    x, y = wcstools.grid_from_bounding_box(in_wcs.bounding_box, step=(1, 1),
+        center=True)
+    return x, y
 
 
-def spec_footprint(wcs, domain_mask=None, domain=None):
+def spec_footprint(in_wcs, bounding_box=None, mask=None):
     """
     Returns wcs footprint grid coordinates where NaNs are masked.
 
     Build-7 workaround.
     """
-    y, x = grid_from_spec_domain(wcs, domain_mask=domain_mask)
-    ra, dec, lam = wcs(x, y)
+    x, y = wcstools.grid_from_bounding_box(in_wcs.bounding_box, step=(1, 1),
+        center=True)
+    ra, dec, lam = in_wcs(x, y)
     m = np.isnan(lam)
     return ma.array([ra, dec, lam], mask=[m, m, m])
 
 
-def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None, domain=None):
+def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None,
+    bounding_box=None):
     """
     Create a WCS from a list of spatial/spectral WCS.
 
@@ -283,19 +281,19 @@ def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None, domain=None):
     # TODO: generalize an approach to do this for more than one wcs.  For
     # now, we just do it for one, using the api for a list of wcs.
     # Compute a fiducial point for the output frame at center of input data
-    fiducial = compute_spec_fiducial(wcslist, domain=domain)
+    fiducial = compute_spec_fiducial(wcslist, bounding_box=bounding_box)
     # Create transform for output frame
     transform = compute_spec_transform(fiducial, refwcs)
     output_frame = refwcs.output_frame
     wnew = WCS(output_frame=output_frame, forward_transform=transform)
 
-    # Build the domain in the output frame wcs object by running the input wcs
-    # footprints through the backward transform of the output wcs
+    # Build the bounding_box in the output frame wcs object by running the
+    # input wcs footprints through the backward transform of the output wcs
     sky = [spec_footprint(w) for w in wcslist]
-    domain_grid = [wnew.backward_transform(*f) for f in sky]
+    bounding_box_grid = [wnew.backward_transform(*f) for f in sky]
 
     sky0 = sky[0]
-    det = domain_grid[0]
+    det = bounding_box_grid[0]
     offsets = []
     input_frame = refwcs.input_frame
     for axis in input_frame.axes_order:
@@ -305,13 +303,13 @@ def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None, domain=None):
     wnew = WCS(output_frame=output_frame, input_frame=input_frame,
         forward_transform=transform)
 
-    domain = []
+    # Build the bounding_box in the output frame wcs object
+    bounding_box = []
     for axis in input_frame.axes_order:
-        axis_min = np.nanmin(domain_grid[0][axis])
-        axis_max = np.nanmax(domain_grid[0][axis]) + 1
-        domain.append({'lower': axis_min, 'upper': axis_max,
-            'includes_lower': True, 'includes_upper': False})
-    wnew.domain = domain
+        axis_min = np.nanmin(bounding_box_grid[axis])
+        axis_max = np.nanmax(bounding_box_grid[axis])
+        bounding_box.append((axis_min, axis_max))
+    wnew.bounding_box = tuple(bounding_box)
     return wnew
 
 
@@ -343,7 +341,7 @@ def compute_spec_transform(fiducial, refwcs):
     return transform
 
 
-def compute_spec_fiducial(wcslist, domain=None):
+def compute_spec_fiducial(wcslist):
     """
     For a celestial footprint this is the center.
     For a spectral footprint, it is the beginning of the range.
@@ -357,7 +355,7 @@ def compute_spec_fiducial(wcslist, domain=None):
     spatial_axes = np.array(axes_types) == 'SPATIAL'
     spectral_axes = np.array(axes_types) == 'SPECTRAL'
     footprints = ma.hstack([spec_footprint(w,
-        domain=domain) for w in wcslist])
+        bounding_box=w.bounding_box) for w in wcslist])
     spatial_footprint = footprints[spatial_axes]
     spectral_footprint = footprints[spectral_axes]
     # Compute center of footprint

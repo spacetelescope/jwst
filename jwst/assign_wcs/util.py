@@ -118,7 +118,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         rotation = astmodels.AffineTransformation2D(np.array(wcsinfo['PC']))
         transform.append(rotation)
         if sky_axes:
-            cdelt1, cdelt2 = wcsinfo['CDELT']
+            cdelt1, cdelt2 = wcsinfo['CDELT'][sky_axes]
             scale = np.sqrt(np.abs(cdelt1 * cdelt2))
             scales = astmodels.Scale(scale) & astmodels.Scale(scale)
             transform.append(scales)
