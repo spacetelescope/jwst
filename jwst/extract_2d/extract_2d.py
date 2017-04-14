@@ -42,13 +42,8 @@ def extract2d(input_model, which_subarray=None):
 
         for slit in open_slits:
             slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
-            log.debug("xxx bounding box:  %s   %s",
-                      str(slit_wcs.bounding_box[0]),
-                      str(slit_wcs.bounding_box[1]))
             xlo, xhi = _toindex(slit_wcs.bounding_box[0])
             ylo, yhi = _toindex(slit_wcs.bounding_box[1])
-            log.debug("xxx xlo, xhi; ylo, yhi:  %g %g   %g %g",
-                      xlo, xhi, ylo, yhi)
 
             # Add the slit offset to each slit WCS object
             tr = slit_wcs.get_transform('detector', 'sca')
@@ -71,12 +66,12 @@ def extract2d(input_model, which_subarray=None):
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
             nslit = len(output_model.slits) - 1
-            xlo_ind, xhi_ind, ylo_ind, yhi_ind = _toindex((xlo, xhi, ylo, yhi)).astype(np.int)
+            xlo_ind, xhi_ind, ylo_ind, yhi_ind = _toindex((xlo, xhi, ylo, yhi)).astype(np.int16)
             output_model.slits[nslit].name = str(slit.name)
             output_model.slits[nslit].xstart = xlo_ind + 1
-            output_model.slits[nslit].xsize = xhi_ind - xlo_ind
+            output_model.slits[nslit].xsize = (xhi_ind - xlo_ind) + 1
             output_model.slits[nslit].ystart = ylo_ind + 1
-            output_model.slits[nslit].ysize = yhi_ind - ylo_ind
+            output_model.slits[nslit].ysize = (yhi_ind - ylo_ind) + 1
             if exp_type.lower() == 'nrs_msaspec':
                 output_model.slits[nslit].source_id = int(slit.source_id)
                 output_model.slits[nslit].source_name = slit.source_name
