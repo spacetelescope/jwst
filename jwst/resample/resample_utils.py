@@ -52,12 +52,14 @@ def make_output_wcs(input_models):
 
     output_frame = wcslist[0].output_frame
     naxes = wcslist[0].output_frame.naxes
+
     if naxes == 3:
         output_wcs = wcs_from_spec_footprints(wcslist)
         data_size = build_size_from_spec_domain(output_wcs.domain)
-    else:
+    elif naxes == 2:
         output_wcs = assign_wcs.util.wcs_from_footprints(input_models)
-        data_size = build_size_from_domain(output_wcs.domain)
+        data_size = build_size_from_bounding_box(output_wcs.bounding_box)
+
     output_wcs.data_size = (data_size[1], data_size[0])
     return output_wcs
 
@@ -66,7 +68,6 @@ def compute_output_transform(refwcs, filename, fiducial):
     """Compute a simple FITS-type WCS transform
     """
     x0, y0 = refwcs.backward_transform(*fiducial)
-    print(x0, y0)
     x1 = x0 + 1
     y1 = y0 + 1
     ra0, dec0 = refwcs(x0, y0)
@@ -78,8 +79,6 @@ def compute_output_transform(refwcs, filename, fiducial):
     position_ydir = SkyCoord(ra=ra_ydir, dec=dec_ydir, unit='deg')
     offset_xdir = position0.spherical_offsets_to(position_xdir)
     offset_ydir = position0.spherical_offsets_to(position_ydir)
-    print('x offset:', offset_xdir)
-    print('y offset:', offset_ydir)
     #coeff_x = np.mean([np.abs(offset_x[1].value), np.abs(offset_y[0].value)])
     #coeff_y = np.mean([np.abs(offset_x[0].value), np.abs(offset_y[1].value)])
 
@@ -109,12 +108,12 @@ def create_domain(wcs, shape):
     return wcs_domain
 
 
-def build_size_from_domain(domain):
+def build_size_from_bounding_box(bounding_box):
     """ Return the size of the frame based on the provided domain
     """
     size = []
-    for axs in domain:
-        delta = axs['upper'] - axs['lower']
+    for axs in bounding_box:
+        delta = axs[1] - axs[0]
         #for i in [axs['includes_lower'], axs['includes_upper']]: delta += 1
         size.append(int(delta + 0.5))
     return tuple(reversed(size))
@@ -135,7 +134,7 @@ def calc_gwcs_pixmap(in_wcs, out_wcs):
     """ Return a pixel grid map from input frame to output frame.
     """
     # TODO: Is the following 1-indexed or 0-indexed?  Check.
-    grid = wcstools.grid_from_domain(in_wcs.domain)
+    grid = wcstools.grid_from_bounding_box(in_wcs.bounding_box, step=(1, 1))
 
     # pixmap_tuple = reproject(in_wcs, out_wcs)(grid[1], grid[0])
     pixmap_tuple = reproject(in_wcs, out_wcs)(grid[0], grid[1])

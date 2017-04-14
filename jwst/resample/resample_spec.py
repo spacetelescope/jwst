@@ -92,9 +92,7 @@ class ResampleSpecData(object):
             self.build_nirspec_output_wcs()
         elif instr_name in ['MIRI']:
             self.build_miri_output_wcs()
-        else:
-            raise NotImplementedError('Only NIRSPEC and MIRI are supported.')
-        self.build_size_from_domain()
+        self.build_size_from_bounding_box()
         self.blank_output = datamodels.DrizProductModel(self.data_size)
         self.blank_output.wcs = self.output_wcs
 
@@ -366,14 +364,14 @@ class ResampleSpecData(object):
         self.output_wcs = wnew
 
 
-    def build_size_from_domain(self, refwcs=None):
+    def build_size_from_bounding_box(self, refwcs=None):
         """ Compute the size of the output frame based on the domain
         """
         if refwcs == None:
             refwcs = self.output_wcs
         size = []
-        for axis in refwcs.domain:
-            delta = axis['upper'] - axis['lower']
+        for axis in refwcs.bounding_box:
+            delta = axis[1] - axis[0]
             size.append(int(delta + 0.5))
         self.data_size = tuple(reversed(size))
 

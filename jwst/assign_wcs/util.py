@@ -118,7 +118,8 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         rotation = astmodels.AffineTransformation2D(np.array(wcsinfo['PC']))
         transform.append(rotation)
         if sky_axes:
-            scale = wcsinfo['CDELT'][sky_axes].mean()
+            cdelt1, cdelt2 = wcsinfo['CDELT']
+            scale = np.sqrt(np.abs(cdelt1 * cdelt2))
             scales = astmodels.Scale(scale) & astmodels.Scale(scale)
             transform.append(scales)
 
@@ -137,9 +138,10 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     for axis in out_frame.axes_order:
         axis_min, axis_max = domain_bounds[axis].min(), domain_bounds[axis].max()
         bounding_box.append((axis_min, axis_max))
-    ax1, ax2 = bounding_box[sky_axes]
-    offset1 = (ax1['upper'] - ax1['lower']) / 2
-    offset2 = (ax2['upper'] - ax2['lower']) / 2
+    bounding_box = tuple(bounding_box)
+    ax1, ax2 = np.array(bounding_box)[sky_axes]
+    offset1 = (ax1[1] - ax1[0]) / 2
+    offset2 = (ax2[1] - ax2[0]) / 2
     offsets = astmodels.Shift(-offset1) & astmodels.Shift(-offset2)
 
     wnew.insert_transform('detector', offsets, after=True)
