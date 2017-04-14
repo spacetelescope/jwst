@@ -42,8 +42,6 @@ def extract2d(input_model, which_subarray=None):
 
         for slit in open_slits:
             slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
-                      str(slit_wcs.bounding_box[0]),
-                      str(slit_wcs.bounding_box[1]))
             xlo, xhi = _toindex(slit_wcs.bounding_box[0])
             ylo, yhi = _toindex(slit_wcs.bounding_box[1])
 
