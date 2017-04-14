@@ -324,8 +324,50 @@ class Utility(object):
             else:
                 finalized.append(asn)
 
+        # Merge all the associations into common types
+        merged_asns = Utility.merge_asns(lv2_asns)
+
         # Merge lists and return
-        return finalized + lv2_asns
+        return finalized + merged_asns
+
+    @staticmethod
+    def merge_asns(asns):
+        # Merge all the associations into common types
+        merged_by_type = {}
+        for asn in asns:
+            try:
+                current_asn = merged_by_type[asn['asn_type']]
+            except KeyError:
+                merged_by_type[asn['asn_type']] = asn
+                current_asn = asn
+            for product in asn['products']:
+                merge_occured = False
+                for current_product in current_asn['products']:
+                    if product['name'] == current_product['name']:
+                        member_names = set([
+                            member['expname']
+                            for member in product['members']
+                        ])
+                        current_member_names = [
+                            member['expname']
+                            for member in current_product['members']
+                        ]
+                        new_names = member_names.difference(current_member_names)
+                        new_members = [
+                            member
+                            for member in product['members']
+                            if member['expname'] in new_names
+                        ]
+                        current_product['members'].extend(new_members)
+                        merge_occured = True
+                if not merge_occured:
+                    current_asn['products'].append(product)
+
+        merged_asns = [
+            asn
+            for asn_type, asn in merged_by_type.items()
+        ]
+        return merged_asns
 
 
 # ---------------------------------------------
