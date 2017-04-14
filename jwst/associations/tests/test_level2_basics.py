@@ -2,6 +2,7 @@
 from __future__ import absolute_import
 
 import pytest
+import re
 
 from .helpers import (
     combine_pools,
@@ -15,6 +16,7 @@ from .. import (
 )
 
 NONSSCIENCE = ['BACKGROUND']
+REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)'
 
 
 def from_level2_schema():
@@ -75,3 +77,14 @@ def test_level2_basics(asns, n_asns, n_products, asn_type, asn_rule):
                     for member in nonscience
                 )
                 assert exptypes.issubset(NONSSCIENCE)
+
+
+def test_level2_productname():
+    asns = from_level2_image()
+    assert len(asns) > 0
+    for asn in asns:
+        for product in asn['products']:
+            science = asn.members_by_type('SCIENCE')
+            assert len(science) == 1
+            match = re.match(REGEX_LEVEL2A, science[0]['expname'])
+            assert match.groupdict()['path'] == product['name']

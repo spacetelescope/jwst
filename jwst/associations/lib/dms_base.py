@@ -59,6 +59,34 @@ class DMSBaseMixin(ACIDMixin):
         """Set validity dict"""
         self._validity = item
 
+    @property
+    def current_product(self):
+        return self.data['products'][-1]
+
+    def new_product(self, product_name=None):
+        """Start a new product"""
+        self.product_name = product_name
+        product = {
+            'name': self.product_name,
+            'members': []
+        }
+        try:
+            self.data['products'].append(product)
+        except KeyError:
+            self.data['products'] = [product]
+
+    @property
+    def product_name(self):
+        if self._product_name is None:
+            product_name = self.dms_product_name()
+        else:
+            product_name = self._product_name
+        return product_name
+
+    @product_name.setter
+    def product_name(self, value):
+        self._product_name = value
+
     def update_validity(self, entry):
         for test in self.validity.values():
             if not test['validated']:

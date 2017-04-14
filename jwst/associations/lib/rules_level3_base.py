@@ -63,7 +63,6 @@ _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 # Product name regex's
 _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
 
-
 # Key that uniquely identfies members.
 KEY = 'expname'
 
@@ -147,30 +146,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             return not self.__eq__(other)
         else:
             return NotImplemented
-
-    def new_product(self, product_name=None):
-        """Start a new product"""
-        self.product_name = product_name
-        product = {
-            'name': self.product_name,
-            'members': []
-        }
-        try:
-            self.data['products'].append(product)
-        except KeyError:
-            self.data['products'] = [product]
-
-    @property
-    def product_name(self):
-        if self._product_name is None:
-            product_name = self.dms_product_name()
-        else:
-            product_name = self._product_name
-        return product_name
-
-    @product_name.setter
-    def product_name(self, value):
-        self._product_name = value
 
     def dms_product_name(self):
         """Define product name."""
