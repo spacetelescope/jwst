@@ -16,7 +16,7 @@ from ..assign_wcs import nirspec
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log.setLevel(logging.INFO)
 
 
 def extract2d(input_model, which_subarray=None):
