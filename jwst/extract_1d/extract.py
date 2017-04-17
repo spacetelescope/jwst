@@ -707,19 +707,21 @@ class ExtractModel(object):
         self.bkg_order = bkg_order
         self.nod_correction = nod_correction
 
+        self.wcs = None                         # initial value
         if input_model.meta.exposure.type == "NIS_SOSS":
-            spectral_order = 1
-            log.info("NIRISS SOSS data, extracting spectral order %d",
-                     spectral_order)
-            self.wcs = niriss.niriss_soss_set_input(input_model,
-                                                    spectral_order)
+            if hasattr(input_model.meta, 'wcs'):
+                spectral_order = 1
+                log.info("NIRISS SOSS data, extracting spectral order %d",
+                         spectral_order)
+                self.wcs = niriss.niriss_soss_set_input(input_model,
+                                                        spectral_order)
         elif slit == DUMMY:
-            self.wcs = input_model.meta.wcs
+            if hasattr(input_model.meta, 'wcs'):
+                self.wcs = input_model.meta.wcs
         elif hasattr(slit, 'meta') and hasattr(slit.meta, 'wcs'):
             self.wcs = slit.meta.wcs
-        else:
+        if self.wcs is None:
             log.warning("WCS function not found in input.")
-            self.wcs = None
         self._wave_model = None
 
         # If source extraction coefficients src_coeff were specified, this
@@ -929,11 +931,13 @@ class ExtractModel(object):
         disp_range = [slice0, slice1]
         if self.dispaxis == HORIZONTAL:
             image = data
-            if wavelength is None:
-                wavelength = np.arange(slice0, slice1, dtype=np.float64)
         else:
             image = np.transpose(data, (1, 0))
-            if wavelength is None:
+        if wavelength is None:
+            if slice0 <= 0:
+                wavelength = np.arange(1, slice1 - slice0 + 1,
+                                       dtype=np.float64)
+            else:
                 wavelength = np.arange(slice0, slice1, dtype=np.float64)
 
         mask = np.isnan(wavelength)
