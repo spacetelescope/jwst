@@ -476,9 +476,9 @@ def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
     """
     v2 = np.deg2rad(v2_ref / 3600)
     v3 = np.deg2rad(v3_ref / 3600)
-
-    angles = [-pa_v3, -dec_ref, ra_ref]
-    axes = "xyz"
+    ra_ref = np.deg2rad(ra_ref)
+    dec_ref = np.deg2rad(dec_ref)
+    pa_v3 = np.deg2rad(pa_v3)
 
     M = np.array([[cos(ra_ref) * cos(dec_ref),
                    -sin(ra_ref) * cos(pa_v3) + cos(ra_ref) * sin(dec_ref) * sin(pa_v3),

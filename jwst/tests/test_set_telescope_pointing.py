@@ -213,7 +213,7 @@ def test_add_wcs_default(fits_file):
     assert header['PC2_2'] == 1.0
     assert header['RA_REF'] == TARG_RA
     assert header['DEC_REF'] == TARG_DEC
-    assert np.isclose(header['ROLL_REF'], 0.07993869)
+    assert np.isclose(header['ROLL_REF'], 358.9045979379)
     assert header['WCSAXES'] == 0.
 
 
@@ -233,5 +233,5 @@ def test_add_wcs_with_db(eng_db, fits_file):
         assert np.isclose(header['PC2_2'], -0.0385309)
         assert np.isclose(header['RA_REF'], 348.8776709)
         assert np.isclose(header['DEC_REF'], -38.854159)
-        assert np.isclose(header['ROLL_REF'], 354.76818)
+        assert np.isclose(header['ROLL_REF'], 50.20832726650)
         assert header['WCSAXES'] == 0.
