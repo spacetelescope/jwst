@@ -71,11 +71,18 @@ class CubeSkyMatchStep(Step):
             binwidth=self.binwidth
         )
 
+        # At this moment running 'cube_skymatch' on images whose
+        # background has been previously subtracted is not supported.
+        # Raise an exception if background was subtracted:
+        self._check_background(cube_models)
+        self._check_background(models2d)
+        self._reset_background(cube_models)
+        self._reset_background(models2d)
+
         # create a list of SkyCubes:
         skycubes = []
 
         for cm in cube_models:
-
             # process weights and combine with DQ:
             if not hasattr(cm, 'weightmap') or cm.weightmap is None:
                 weights = np.ones_like(cm.data, dtype=np.float64)
@@ -115,8 +122,8 @@ class CubeSkyMatchStep(Step):
         skymatch_cubes, nsubspace = match(skycubes, subtract=self.subtract)
 
         if nsubspace > 1:
-                self.log.warning("Not all cubes have been sky matched as "
-                                 "some of them do not overlap.")
+            self.log.warning("Not all cubes have been sky matched as "
+                             "some of them do not overlap.")
 
         # save background info in 'meta' and subtract sky from 2D images
         # if requested:
@@ -141,6 +148,27 @@ class CubeSkyMatchStep(Step):
                 self._apply_sky_2d(model2d, channel)
 
         return cube_models, models2d
+
+    def _check_background(self, models):
+        # see if 'cube_skymatch' step was previously run and raise
+        # an exception as 'cube_skymatch' cannot be run twice on the
+        # same data:
+        for m in models:
+            if m.meta.background.subtracted is None:
+                if m.meta.background.level is not None:
+                    # report inconsistency:
+                    raise ValueError("Background level was set but the "
+                                     "'subtracted' property is undefined "
+                                     "(None).")
+
+            elif m.meta.background.subtracted:
+                raise ValueError("'cube_skymatch' step cannot be run on "
+                                 "data whose background has been previously "
+                                 "subtracted.")
+
+    def _reset_background(self, models):
+        for m in models:
+            del m.meta.background
 
     def _set_cube_bkg_meta(self, model, sky_cube):
         np = len(meta.background.polynomial_info)
