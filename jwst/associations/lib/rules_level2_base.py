@@ -202,15 +202,55 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             'expname': Utility.rename_to_level2a(member['FILENAME']),
             'exptype': self.get_exptype(member, check_flags=check_flags)
         }
-        self.update_validity(entry)
         members = self.current_product['members']
         members.append(entry)
+        self.update_validity(entry)
 
         # Add entry to the short list
         self.members.add(entry[KEY])
 
         # Update meta information
         self.update_meta()
+
+    def _add_items(self, items, meta=None):
+        """ Force adding items to the association
+
+        Parameters
+        ----------
+        items: [object[, ...]]
+            A list of items to make members of the association.
+
+        meta: dict
+            A dict to be merged into the association meta information.
+            The following are suggested to be assigned:
+                - `asn_type`
+                    The type of association.
+                - `asn_rule`
+                    The rule which created this association.
+                - `asn_pool`
+                    The pool from which the exposures came from
+                - `program`
+                    Originating observing program
+
+        Notes
+        -----
+        This is a low-level shortcut into adding members, such as file names,
+        to an association. All defined shortcuts and other initializations are
+        by-passed, resulting in a potentially unusable association.
+        """
+        if meta is None:
+            meta = {}
+        for item in items:
+            self.new_product()
+            members = self.current_product['members']
+            entry = {
+                'expname': item,
+                'exptype': 'SCIENCE'
+            }
+            members.append(entry)
+            self.update_validity(entry)
+            self.update_meta()
+        self.data.update(meta)
 
     def update_meta(self):
         """Update meta information"""
