@@ -252,13 +252,21 @@ def extract_ifu(input_model, source_type, extract_params):
         dq[:] = dqflags.pixel['DO_NOT_USE']
         return (wavelength, net, background, dq)        # all bad
 
-    wcs = input_model.meta.wcs
-    x_array = np.empty(shape[0], dtype=np.float64)
-    x_array.fill(float(shape[2]) / 2.)
-    y_array = np.empty(shape[0], dtype=np.float64)
-    y_array.fill(float(shape[1]) / 2.)
-    z_array = np.arange(shape[0], dtype=np.float64) # for wavelengths
-    _, _, wavelength = wcs(x_array, y_array, z_array)
+    if hasattr(input_model.meta, 'wcs'):
+        wcs = input_model.meta.wcs
+    else:
+        log.warning("WCS function not found in input.")
+        wcs = None
+
+    if wcs is not None:
+        x_array = np.empty(shape[0], dtype=np.float64)
+        x_array.fill(float(shape[2]) / 2.)
+        y_array = np.empty(shape[0], dtype=np.float64)
+        y_array.fill(float(shape[1]) / 2.)
+        z_array = np.arange(shape[0], dtype=np.float64) # for wavelengths
+        _, _, wavelength = wcs(x_array, y_array, z_array)
+    else:
+        wavelength = np.arange(1, shape[0] + 1, dtype=np.float64)
 
     position = (x_center, y_center)
     if source_type == 'point':
