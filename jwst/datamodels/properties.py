@@ -45,6 +45,8 @@ def _cast(val, schema):
         tag = schema.get('tag')
         if tag is not None:
             val = tagged.tag_object(tag, val)
+        if isinstance(val, np.generic) and np.isscalar(val):
+            val = np.asscalar(val)
 
     return val
 
