@@ -367,6 +367,14 @@ properties:
             title: GWA TILT (avg/calib) temperature [K]
             type: number
             fits_keyword: GWA_TILT
+          filter_position:
+            title: NIRISS filter wheel position
+            type: number
+            fits_keyword: FWCPOS
+          pupil_position:
+            title: NIRISS pupil wheel position
+            type: number
+            fits_keyword: PWCPOS
       exposure:
         title: Exposure parameters
         type: object
