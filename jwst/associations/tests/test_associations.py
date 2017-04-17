@@ -1,5 +1,6 @@
 """test_associations: Test of general Association functionality."""
 from __future__ import absolute_import
+import os
 import pytest
 
 from . import helpers
@@ -12,6 +13,12 @@ from .. import (
 from ..registry import (
     import_from_file,
     find_member
+)
+
+# Temporarily skip if running under Travis
+pytestmark = pytest.mark.skipif(
+    "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
+    reason='Temporarily disable due to performance issues'
 )
 
 

@@ -473,6 +473,16 @@ def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
     known_datas = set()
     invalid_values = set()
 
+    def prefix_filename(msg):
+        # Prefix filename to message where it can be found
+        try:
+            filename = hdulist._file.name
+        except AttributeError:
+            filename = None
+        if filename is not None:
+            msg = "In {0} {1}".format(filename, msg)
+        return msg
+                        
     def callback(schema, path, combiner, ctx, recurse):
         result = None
         if 'fits_keyword' in schema:
@@ -488,9 +498,15 @@ def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
                 try:
                     asdf_schema.validate(result, schema=temp_schema)
                 except jsonschema.ValidationError:
-                    result = str(result)
-                    msgfmt = "'{0}' is not valid in '{1}'"
+                    if isinstance(result, six.string_types):
+                        result = "'{0}'".format(result)
+                    else:
+                        result = str(result)
+
+                    msgfmt = "{0} is not valid in {1}"
                     msg = msgfmt.format(result, fits_keyword)
+                    msg = prefix_filename(msg)
+
                     warnings.warn(msg, properties.ValidationWarning)
                     if not pass_invalid_values:
                         invalid_values.add(fits_keyword)
@@ -511,8 +527,11 @@ def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
                     asdf_schema.validate(result, schema=temp_schema)
                 except jsonschema.ValidationError:
                     fits_hdu = schema['fits_hdu']
-                    msgfmt = "'{0}' is not valid"
+                    
+                    msgfmt = "{0} is not valid"
                     msg = msgfmt.format(fits_hdu)
+                    msg = prefix_filename(msg)
+
                     warnings.warn(msg, properties.ValidationWarning)
                     if not pass_invalid_values:
                         invalid_values.add(fits_keyword)
@@ -533,6 +552,7 @@ def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
     if len(invalid_values) > 0:
         msgfmt = "fits data is not valid: {0}"
         msg = msgfmt.format(','.join(list(invalid_values)))
+        msg = prefix_filename(msg)
         raise jsonschema.ValidationError(msg)
     return known_keywords, known_datas
 
