@@ -320,16 +320,25 @@ def detector_to_alpha_beta(input_model, reference_files):
         wr[ch] = r
     f.close()
     ch_dict = {}
+    bzero = {'1SHORT': -1.77210143797,
+             '2SHORT': -2.23774549066
+             }
+    bdel = {'1SHORT': 0.177210143797,
+            '2SHORT': 0.279718186333
+            }
     for c in channels:
-        ch_dict.update({tuple(wr[c]): selector.LabelMapperDict(('alpha', 'beta', 'lam'), slice_model[c],
-                                                   models.Mapping([1, ], n_inputs=3), atol=10**-2)})
+        mapper = jwmodels.MIRI_AB2Slice(bzero[c], bdel[c])
+        lm = selector.LabelMapper(inputs=('alpha', 'beta', 'lam'),
+                                  mapper=mapper, inputs_mapping=models.Mapping((1,), n_inputs=3))
+        ch_dict[tuple(wr[c])] = lm
+
     alpha_beta_mapper = selector.LabelMapperRange(('alpha', 'beta', 'lam'), ch_dict,
                                                   models.Mapping((2,)))
+
     label_mapper.inverse = alpha_beta_mapper
-
-
     det2alpha_beta = selector.RegionsSelector(('x', 'y'), ('alpha', 'beta', 'lam'),
-                                              label_mapper=label_mapper, selector=transforms)
+                                              label_mapper=label_mapper,
+                                              selector=transforms)
     return det2alpha_beta
 
 
