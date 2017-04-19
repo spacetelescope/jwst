@@ -20,6 +20,7 @@ from .exceptions import (
     AssociationNotValidError,
     AssociationProcessMembers,
 )
+from .lib.callback_registry import CallbackRegistry
 
 __all__ = ['AssociationRegistry']
 
@@ -55,6 +56,9 @@ class AssociationRegistry(dict):
         If True, include base classes not considered
         rules.
     """
+
+    # Callback registry
+    callback = CallbackRegistry()
 
     def __init__(self,
                  definition_files=None,
@@ -145,6 +149,8 @@ class AssociationRegistry(dict):
         logger.debug('Starting...')
         if allow is None:
             allow = self.rule_set
+        if ignore is None:
+            ignore = []
         associations = []
         process_list = []
         for name, rule in self.items():
@@ -264,6 +270,16 @@ class AssociationRegistry(dict):
         else:
             return results
 
+    def finalize(self, associations):
+        """Finalize newly generated associations
+
+        Parameters
+        ----------
+        assocations: [association[, ...]]
+            The list of associations
+        """
+        finalized = self.callback.reduce('finalize', associations)
+        return finalized
 
 # Utilities
 def import_from_file(filename):

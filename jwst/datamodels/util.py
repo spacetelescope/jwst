@@ -106,6 +106,9 @@ def open(init=None, extensions=None, **kwargs):
 
     # If we have it, determine the shape from the science hdu
     if hdulist:
+        # So we don't need to open the image twice
+        init = hdulist
+
         try:
             hdu = hdulist[(fits_header_name('SCI'), 1)]
         except (KeyError, NameError):
@@ -361,3 +364,4 @@ def ensure_ascii(s):
         if six.PY3:
             s = s.decode('ascii')
     return s
+

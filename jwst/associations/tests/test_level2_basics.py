@@ -1,6 +1,8 @@
 """Test basic usage of Level2 associations"""
 from __future__ import absolute_import
 
+import pytest
+
 from .helpers import (
     combine_pools,
     registry_level2_only,
@@ -13,6 +15,7 @@ from .. import (
 )
 
 
+@pytest.mark.xfail(reason='Temporarily removed Level2 associations')
 def test_level2_schema():
     with open(t_path('data/asn_level2.json')) as asn_file:
         asn = load_asn(asn_file)
@@ -30,12 +33,12 @@ def test_level2_image():
     rules = registry_level2_only()
     pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
     asns, orphaned = generate(pool, rules)
-    assert len(asns) == 1
+    assert len(asns) == 8
     len(orphaned) == 0
     asn = asns[0]
     assert asn['asn_rule'] == 'Asn_Lv2Image'
     assert asn['asn_type'] == 'image2'
-    assert len(asn['members']) == 8
+    assert len(asn['members']) == 1
     member = asn['members'][0]
     base_keys = {'expname', 'exptype'}
     assert base_keys.issubset(member.keys())
@@ -48,12 +51,12 @@ def test_level2_spec():
     rules = registry_level2_only()
     pool = combine_pools(t_path('data/pool_007_spec_miri.csv'))
     asns, orphaned = generate(pool, rules)
-    assert len(asns) == 1
+    assert len(asns) == 11
     len(orphaned) == 0
     asn = asns[0]
     assert asn['asn_rule'] == 'Asn_Lv2Spec'
     assert asn['asn_type'] == 'spec2'
-    assert len(asn['members']) == 5
+    assert len(asn['members']) == 1
     member = asn['members'][0]
     base_keys = {'expname', 'exptype'}
     assert base_keys.issubset(member.keys())

@@ -138,7 +138,7 @@ class OptRes(object):
 
         Parameters
         ----------
-        num_seg: int
+        num_seg: int, 1D array
             counter for segment number within the section
 
         g_pix: int, 1D array
@@ -226,7 +226,7 @@ class OptRes(object):
             cr_int_has_cr = np.where(cr_mag_int.sum(axis=0) != 0)
 
             # Initialize number of crs for each image pixel for this integration
-            end_cr = np.zeros(imshape, dtype=np.int8)
+            end_cr = np.zeros(imshape, dtype=np.int16)
 
             for k_rd in range(nreads):
                 # loop over pixels having a CR
@@ -237,7 +237,8 @@ class OptRes(object):
                         cr_com[ii_int, end_cr[y, x], y, x] = cr_mag_int[k_rd, y, x]
                         end_cr[y, x] += 1
 
-        self.cr_mag_seg = cr_com
+        max_num_crs = end_cr.max()
+        self.cr_mag_seg = cr_com [:,:max_num_crs,:,:]
 
 
     def output_optional(self, model, effintim):
@@ -273,7 +274,7 @@ class OptRes(object):
             yint=self.yint_seg.astype(np.float32),
             sigyint=self.sigyint_seg.astype(np.float32),
             pedestal=self.ped_int.astype(np.float32),
-            weights=(self.inv_var_seg**2).astype(np.float32),
+            weights=self.weights.astype(np.float32),
             crmag=self.cr_mag_seg)
         rfo_model.meta.filename = model.meta.filename
 
@@ -374,7 +375,6 @@ def calc_slope_int(slope_int, m_by_var_int, inv_var_int, num_int):
     ----------
     slope_int: float, 3D array
         cube of integration-specific slopes
-
     m_by_var_int: float, 3D array
         cube of integration-specific slopes divided by variance
 
@@ -399,13 +399,15 @@ def calc_slope_int(slope_int, m_by_var_int, inv_var_int, num_int):
     return slope_slice
 
 
-def calc_pedestal(num_int, slope_int, firstf_int, dq_cube):
+def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap, 
+                  dropframes1):
     """
     Short Summary
     -------------
     The pedestal is calculated by extrapolating the final slope for
     each pixel from its value at the first sample in the integration to
-    an exposure time of zero; any pixel that is saturated on the 1st
+    an exposure time of zero; this calculation accounts for the values of
+    nframes and groupgap.  Any pixel that is saturated on the 1st
     read is given a pedestal value of 0.
 
     Parameters
@@ -422,14 +424,27 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_cube):
     dq_cube: int, 4D array
         hypercube of DQ array
 
+    nframes: int
+        number of frames averaged per group; from the NFRAMES keyword. Does
+        not contain the groupgap.
+
+    groupgap: int
+        number of frames dropped between groups, from the GROUPGAP keyword.
+
+    dropframes1: int
+        number of frames dropped at the beginning of every integration. 
+        Currently this is not stored as an available keyword, so the value
+        is hardcoded to be 0.
+
     Returns
     -------
     ped: float, 2D array
         pedestal image
     """
     ff_all = firstf_int[num_int, :, :].astype(np.float32)
-    ped = ff_all - slope_int[num_int, :, :]
     dq_first = dq_cube[num_int, 0, :, :]
+    ped = ff_all - slope_int[num_int, : :] * \
+             (((nframes + 1.)/2. + dropframes1)/(nframes+groupgap))
 
     ped[dq_first == dqflags.group['SATURATED']] = 0
 
@@ -530,6 +545,7 @@ def gls_output_optional(model, intercept_int, intercept_err_int,
 
 def gls_pedestal(first_group, slope_int, s_mask,
                  frame_time, nframes_used):
+
     """Calculate the pedestal for the GLS case.
 
     The pedestal is the first group, but extrapolated back to zero time
@@ -563,6 +579,7 @@ def gls_pedestal(first_group, slope_int, s_mask,
 
     nframes_used: int
         Number of frames that were averaged together to make a group.
+        Exludes the groupgap.
 
     Returns
     -------
@@ -615,26 +632,38 @@ def shift_z(a, off):
     return b
 
 
-def get_effintim(model):
+def get_efftim_ped(model):
     """
     Short Summary
     -------------
-    Calculate the effective integration time for a single read
+    Calculate the effective integration time for a single read, and return the
+    number of frames per group, and the number of frames dropped between groups.
 
     Parameters
     ----------
     model: instance of Data Model
-       DM object for input
+        DM object for input
 
     Returns
     -------
     effintim: float
         effective integration time for a single read
 
+    nframes: int
+        number of frames averaged per group; from the NFRAMES keyword.
+
+    groupgap: int
+        number of frames dropped between groups; from the GROUPGAP keyword.
+
+    dropframes1: int
+        number of frames dropped at the beginning of every integration. 
+        Currently this is not stored as an available keyword, so the value
+        returned is 0.
     """
     groupgap = model.meta.exposure.groupgap
     nframes = model.meta.exposure.nframes
     frame_time = model.meta.exposure.frame_time
+    dropframes1 = 0
 
     try:
         effintim = (nframes + groupgap) * frame_time
@@ -645,9 +674,11 @@ def get_effintim(model):
     log.debug(' groupgap: %s' % (groupgap))
     log.debug(' nframes: %s' % (nframes))
     log.debug(' frame_time: %s' % (frame_time))
+    log.debug(' dropframes1: %s' % (dropframes1))
     log.info('Effective integration time per group: %s' % (effintim))
 
-    return effintim
+
+    return effintim, nframes, groupgap, dropframes1
 
 
 def get_dataset_info(model):
@@ -732,7 +763,7 @@ def get_more_info(model):
     """
 
     group_time = model.meta.exposure.group_time
-    nframes_used = model.meta.exposure.nframes - model.meta.exposure.groupgap
+    nframes_used = model.meta.exposure.nframes
     saturated_flag = dqflags.group['SATURATED']
     jump_flag = dqflags.group['JUMP_DET']
 
@@ -786,8 +817,8 @@ def reset_bad_gain(pdq, gain):
     Returns
     -------
     pdq: int, 2D array
-        pixleldq array of input model, reset to NO_GAIN_VALUE and DO_NOT_USE for
-        pixels in the gain array that are either non-positive or NaN.
+        pixleldq array of input model, reset to NO_GAIN_VALUE and DO_NOT_USE
+        for pixels in the gain array that are either non-positive or NaN.
     """
     wh_g = np.where( gain <= 0.)
     if len(wh_g[0] > 0):

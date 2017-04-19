@@ -6,7 +6,7 @@ from __future__ import absolute_import, division, unicode_literals, print_functi
 import copy
 import numpy as np
 import jsonschema
-import collections
+import warnings
 
 from astropy.extern import six
 from astropy.utils.compat.misc import override__dir__
@@ -45,6 +45,8 @@ def _cast(val, schema):
         tag = schema.get('tag')
         if tag is not None:
             val = tagged.tag_object(tag, val)
+        if isinstance(val, np.generic) and np.isscalar(val):
+            val = np.asscalar(val)
 
     return val
 
@@ -144,6 +146,8 @@ def _get_schema_for_index(schema, i):
     else:
         return items
 
+class ValidationWarning(Warning):
+    pass
 
 class Node(object):
     def __init__(self, instance, schema, ctx):
@@ -152,22 +156,51 @@ class Node(object):
         self._schema['$schema'] = 'http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema'
         self._ctx = ctx
 
+    def _report(self, value, attr=None):
+        if value is None:
+            if attr is None:
+                msg = "is not valid list operation"
+            else:
+                msgfmt = "{0} is not valid to delete"
+                msg = msgfmt.format(attr)
+        else:
+            if isinstance(value, six.string_types):
+                value = "'{0}'".format(value)
+            else:
+                value = str(value)
+                if len(value) > 55:
+                    value = value[:56] + " ..."
+
+            if attr is None:
+                msgfmt = "{0} is not valid"
+                msg = msgfmt.format(value)
+            else:
+                msgfmt = "{0} is not valid in {1}"
+                msg = msgfmt.format(value, attr)
+                
+        try:
+            filename = self._ctx.meta.filename
+        except AttributeError:
+            filename = None
+        
+        if filename is not None:
+            msg = "In {0} {1}".format(filename, msg)
+
+        if self._ctx._pass_invalid_values:
+            warnings.warn(msg, ValidationWarning)
+        else:
+            raise jsonschema.ValidationError(msg)
+
+
     def _validate(self):
         instance = yamlutil.custom_tree_to_tagged_tree(
             self._instance, self._ctx._asdf)
         try:
-            previously_invalid = self._ctx._has_invalid_values
-        except AttributeError:
-            previously_invalid = False
-        try:
             schema.validate(instance, schema=self._schema)
-            self._ctx._has_invalid_values = False
+            valid = True
         except jsonschema.ValidationError:
-            self._ctx._has_invalid_values = True
-            if  previously_invalid or self._ctx._pass_invalid_values:
-                pass
-            else:
-                raise
+            valid = False     
+        return valid
 
     @property
     def instance(self):
@@ -185,6 +218,8 @@ class ObjectNode(Node):
             return self._instance == other
 
     def __getattr__(self, attr):
+        from . import ndmodel
+
         if attr.startswith('_'):
             raise AttributeError('No attribute {0}'.format(attr))
 
@@ -201,7 +236,7 @@ class ObjectNode(Node):
         if isinstance(val, dict):
             # Meta is special cased to support NDData interface
             if attr == 'meta':
-                node = MetaNode(val, schema, self._ctx)
+                node = ndmodel.MetaNode(val, schema, self._ctx)
             else:
                 node = ObjectNode(val, schema, self._ctx)
         elif isinstance(val, list):
@@ -220,38 +255,34 @@ class ObjectNode(Node):
                 val = _make_default(attr, schema, self._ctx)
             val = _cast(val, schema)
             old_val = self._instance.get(attr, None)
+
             self._instance[attr] = val
-            try:
-                self._validate()
-            except jsonschema.ValidationError:
-                # Revert the transaction
-                msgfmt = "'{0}' is not valid to write to '{1}'"
-                log.warning(msgfmt.format(val, attr))
-                self._ctx._has_invalid_values = False
+            if not self._validate():
+                # Revert the change
                 if old_val is None:
                     del self._instance[attr]
                 else:
                     self._instance[attr] = old_val
-                raise
 
+                self._report(val, attr)
+                
     def __delattr__(self, attr):
         if attr.startswith('_'):
             del self.__dict__[attr]
         else:
             old_val = self._instance.get(attr, None)
+
             try:
                 del self._instance[attr]
             except KeyError:
                 raise AttributeError(
                     "Attribute '{0}' missing".format(attr))
-            try:
-                self._validate()
-            except jsonschema.ValidationError:
-                # Revert the transaction
-                self._ctx._has_invalid_values = False
+            if not self._validate():
+                # Revert the change
                 if old_val is not None:
                     self._instance[attr] = old_val
-                raise
+                        
+                self._report(None, attr)
 
     def __hasattr__(self, attr):
         return (attr in self._instance or
@@ -285,11 +316,13 @@ class ListNode(Node):
     def __setitem__(self, i, val):
         schema = _get_schema_for_index(self._schema, i)
         self._instance[i] = _cast(val, schema)
-        self._validate()
+        if not self._validate():
+            self._report(val)
 
     def __delitem__(self, i):
         del self._instance[i]
-        self._validate()
+        if not self._validate():
+            self._report(None)
 
     def __getslice__(self, i, j):
         if isinstance(self._schema['items'], list):
@@ -307,31 +340,37 @@ class ListNode(Node):
         parts = [_cast(x, _get_schema_for_index(self._schema, k))
                  for (k, x) in enumerate(parts)]
         self._instance[i:j] = _unmake_node(other)
-        self._validate()
+        if not self._validate():
+            self._report(None)
 
     def __delslice__(self, i, j):
         del self._instance[i:j]
-        self._validate()
-
+        if not self._validate():
+            self._report(None)
+            
     def append(self, item):
         schema = _get_schema_for_index(self._schema, len(self._instance))
         self._instance.append(_cast(item, schema))
-        self._validate()
+        if not self._validate():
+            self._report(item)
 
     def insert(self, i, item):
         schema = _get_schema_for_index(self._schema, i)
         self._instance.insert(i, _cast(item, schema))
-        self._validate()
+        if not self._validate():
+            self._report(item)
 
     def pop(self, i=-1):
         schema = _get_schema_for_index(self._schema, 0)
         x = self._instance.pop(i)
-        self._validate()
+        if not self._validate():
+            self._report(None)
         return _make_node(x, schema, self._ctx)
 
     def remove(self, item):
         self._instance.remove(item)
-        self._validate()
+        if not self._validate():
+            self._report(None)
 
     def count(self, item):
         return self._instance.count(item)
@@ -341,12 +380,14 @@ class ListNode(Node):
 
     def reverse(self):
         self._instance.reverse()
-        self._validate()
+        if not self._validate():
+            self._report(None)
 
     def sort(self, *args, **kwargs):
         self._instance.sort(*args, **kwargs)
-        self._validate()
-
+        if not self._validate():
+            self._report(None)
+            
     def extend(self, other):
         for part in _unmake_node(other):
             self.append(part)
@@ -354,7 +395,8 @@ class ListNode(Node):
     def item(self, **kwargs):
         assert isinstance(self._schema['items'], dict)
         obj = ObjectNode(kwargs, self._schema['items'], self._ctx)
-        obj._validate()
+        if not obj._validate():
+            self._report(None)
         return obj
 
 def put_value(path, value, tree):
@@ -407,93 +449,3 @@ def merge_tree(a, b):
     recurse(a, b)
     return a
 
-#---------------------------------------------
-# The following classes provide support
-# for the NDData interface to Datamodels
-#---------------------------------------------
-
-class MetaNode(ObjectNode, collections.MutableMapping):
-    """
-    NDData compatibility class for meta node
-    """
-    def __init__(self, instance, schema, ctx):
-        ObjectNode.__init__(self, instance, schema, ctx)
-
-    def _find(self, path):
-        if not path:
-            return self
-        
-        cursor = self._instance
-        schema = self._schema
-        for attr in path:
-            try:
-                cursor = cursor[attr]
-            except KeyError:
-                raise KeyError("'%s'" % '.'.join(path))
-            schema = _get_schema_for_property(schema, attr)
-            
-        return _make_node(cursor, schema, self._ctx)
-
-    def __delitem__(self, key):
-        path = key.split('.')
-        parent = self._find(path[:-1])
-        try:
-            parent.__delattr__(path[-1])
-        except KeyError:
-            raise KeyError("'%s'" % key)
-
-    def __getitem__(self, key):
-        path = key.split('.')
-        return self._find(path)
-    
-    def __iter__(self):
-        return MetaNodeIterator(self)
-
-    def __len__(self):
-        def recurse(val):
-            n = 0
-            for subval in six.itervalues(val):
-                if isinstance(subval, dict):
-                    n += recurse(subval)
-                else:
-                    n += 1
-            return n
-
-        return recurse(self._instance)
-
-    def __setitem__(self, key, value):
-        path = key.split('.')
-        parent = self._find(path[:-1])
-        try:
-            parent.__setattr__(path[-1], value)
-        except KeyError:
-            raise KeyError("'%s'" % key)
-
-class MetaNodeIterator(six.Iterator):
-    """
-    An iterator for the meta node which flattens the hierachical structure
-    """
-    def __init__(self, node):
-        self.key_stack = []
-        self.iter_stack = [six.iteritems(node._instance)]
-    
-    def __iter__(self):
-        return self
-    
-    def __next__(self):
-        while self.iter_stack:
-            try:
-                key, val = six.next(self.iter_stack[-1])
-            except StopIteration:
-                self.iter_stack.pop()
-                if self.iter_stack:
-                    self.key_stack.pop()
-                continue
-                
-            if isinstance(val, dict):
-                self.key_stack.append(key)
-                self.iter_stack.append(six.iteritems(val))
-            else:
-                return '.'.join(self.key_stack + [key])
-                
-        raise StopIteration
