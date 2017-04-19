@@ -167,7 +167,11 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         except IndexError:
             return PRODUCT_NAME_DEFAULT
 
-        science_name = basename(science['expname']).lower()
+        try:
+            science_name = basename(science['expname']).lower()
+        except Exception:
+            return 'undefined'
+
         match = re.match(_REGEX_LEVEL2A, science_name)
         if match:
             return match.groupdict()['path']
@@ -212,7 +216,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         # Update association state due to new member
         self.update_asn()
 
-    def _add_items(self, items, meta=None):
+    def _add_items(self, items, meta=None, product_name_func=None, **kwargs):
         """ Force adding items to the association
 
         Parameters
@@ -232,6 +236,10 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 - `program`
                     Originating observing program
 
+        product_name_func: func
+            Used if product name is 'undefined' using
+            the class's procedures.
+
         Notes
         -----
         This is a low-level shortcut into adding members, such as file names,
@@ -250,6 +258,13 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             members.append(entry)
             self.update_validity(entry)
             self.update_asn()
+
+            # If product name is still undefined, try
+            # the function, if given
+            if self.current_product['name'] == PRODUCT_NAME_DEFAULT and \
+               product_name_func is not None:
+                self.current_product['name'] = product_name_func(item)
+
         self.data.update(meta)
 
     def update_asn(self):

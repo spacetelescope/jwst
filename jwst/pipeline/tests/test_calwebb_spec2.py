@@ -28,19 +28,6 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@contextmanager
-def chdir(path):
-    """A context manager which changes the working directory to the given
-    path, and then changes it back to its previous value on exit.
-
-    """
-    prev_cwd = path.chdir()
-    try:
-        yield
-    finally:
-        prev_cwd.chdir()
-
-
 @pytest.mark.xfail(reason='Not yet implemented')
 def test_asn(tmpdir):
     exppath = path.join(DATAPATH, EXPFILE)
