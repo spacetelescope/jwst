@@ -10,7 +10,7 @@ from jwst.associations import (
     libpath
 )
 from jwst.associations.association import getattr_from_list
-from jwst.associations.lib.dms_base import DMSBaseMixin
+from jwst.associations.lib.dms_base import (DMSBaseMixin, PRODUCT_NAME_DEFAULT)
 from jwst.associations.lib.rules_level3_base import _EMPTY
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 
@@ -165,7 +165,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         try:
             science = self.members_by_type('SCIENCE')[0]
         except IndexError:
-            return 'undefined'
+            return PRODUCT_NAME_DEFAULT
 
         science_name = basename(science['expname']).lower()
         match = re.match(_REGEX_LEVEL2A, science_name)
@@ -185,7 +185,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             [cc for cc in self.constraints_to_text()]
         )
         self.data['asn_id'] = self.acid.id
-        self.new_product()
+        self.new_product(self.dms_product_name())
 
     def _add(self, member, check_flags=None):
         """Add member to this association.
@@ -209,8 +209,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         # Add entry to the short list
         self.members.add(entry[KEY])
 
-        # Update meta information
-        self.update_meta()
+        # Update association state due to new member
+        self.update_asn()
 
     def _add_items(self, items, meta=None):
         """ Force adding items to the association
@@ -249,13 +249,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             }
             members.append(entry)
             self.update_validity(entry)
-            self.update_meta()
+            self.update_asn()
         self.data.update(meta)
 
-    def update_meta(self):
-        """Update meta information"""
-        product = self.current_product
-        product['name'] = self.product_name
+    def update_asn(self):
+        """Update association info based on current members"""
+        self.current_product['name'] = self.dms_product_name()
 
     def __repr__(self):
         try:
