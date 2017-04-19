@@ -60,17 +60,17 @@ class DataSet(object):
             self.band = model.meta.instrument.band.upper()
         self.slitnum = -1
 
-        log.debug('Using instrument: %s', self.instrument)
-        log.debug(' detector: %s', self.detector)
-        log.debug(' exp_type: %s', self.exptype)
+        log.info('Using instrument: %s', self.instrument)
+        log.info(' detector: %s', self.detector)
+        log.info(' exp_type: %s', self.exptype)
         if self.filter is not None:
-            log.debug(' filter: %s', self.filter)
+            log.info(' filter: %s', self.filter)
         if self.pupil is not None:
-            log.debug(' pupil: %s', self.pupil)
+            log.info(' pupil: %s', self.pupil)
         if self.grating is not None:
-            log.debug(' grating: %s', self.grating)
+            log.info(' grating: %s', self.grating)
         if self.band is not None:
-            log.debug(' band: %s', self.band)
+            log.info(' band: %s', self.band)
 
 
     def calc_nirspec(self, ftab):
@@ -148,7 +148,7 @@ class DataSet(object):
                 # Match on filter and grating only
                 if self.filter == ref_filter and grating == ref_grating:
 
-                    # Check for MSA data
+                    # MSA data
                     if (isinstance(self.input, datamodels.MultiSlitModel) and
                         self.exptype == 'NRS_MSASPEC'):
 
@@ -158,8 +158,68 @@ class DataSet(object):
                             log.info('Working on slit %s' % slit.name)
                             self.slitnum += 1
                             conv_factor = self.photom_io(tabdata)
+
+                    # IFU data
                     else:
-                        conv_factor = self.photom_io(tabdata)
+
+                        # Get the conversion factor from the PHOTMJSR column
+                        conv_factor = tabdata['photmjsr']
+
+                        # Get the length of the relative response arrays in this row
+                        nelem = tabdata['nelem']
+
+                        # If the relative response arrays have length > 0, copy them into the
+                        # relsens table of the data model
+                        if nelem > 0:
+                            waves = tabdata['wavelength'][:nelem]
+                            relresps = tabdata['relresponse'][:nelem]
+
+                            # Convert wavelengths from meters to microns, if necessary
+                            MICRONS_100 = 1.e-4         # 100 microns, in meters
+                            if waves.max() > 0. and waves.max() < MICRONS_100:
+                                waves *= 1.e+6
+
+                        # Load the pixel area table for the IFU slices
+                        area_model = datamodels.NirspecAreaModel(self.area_file)
+                        area_data = area_model.ifu_table
+
+                        # Compute 2D wavelength and pixel area arrays for the whole image
+                        wave2d, area2d, dqmap = self.calc_nrs_ifu_sens2d(area_data)
+
+                        # Compute relative sensitivity for each pixel based on wavelength
+                        sens2d = np.interp(wave2d, waves, relresps)
+                        #datamodels.ImageModel(data=sens2d).save('phot_sens2d1.fits')
+
+                        # Include the scalar conversion factor
+                        sens2d *= conv_factor
+
+                        # Divide by pixel area
+                        sens2d /= area2d
+
+                        # Reset NON_SCIENCE pixels to 1 in sens2d array and in
+                        # science data dq array
+                        where_dq = np.bitwise_and(dqmap, dqflags.pixel['NON_SCIENCE'])
+                        sens2d[where_dq > 0] = 1.
+                        self.input.dq = np.bitwise_or(self.input.dq, dqmap)
+
+                        # FOR DEBUGGING ONLY #
+                        #datamodels.ImageModel(data=wave2d).save('phot_wave2d.fits')
+                        #datamodels.ImageModel(data=area2d).save('phot_area2d.fits')
+                        #datamodels.ImageModel(data=sens2d).save('phot_sens2d2.fits')
+
+                        # Divide the science data and err by the conversion factors
+                        self.input.data /= sens2d
+                        self.input.err /= sens2d
+
+                        # Store the 2D sensitivity factors
+                        self.input.relsens2d = sens2d
+
+                        # Update BUNIT values for the science data and err
+                        self.input.meta.bunit_data = 'mJy/arcsec^2'
+                        self.input.meta.bunit_err = 'mJy/arcsec^2'
+
+                        area_model.close()
+
                     break
 
             if conv_factor is not None:
@@ -347,14 +407,14 @@ class DataSet(object):
                                                 dqflags.pixel['NON_SCIENCE'])
 
             # Divide the science data and err by the conversion factors
-            self.input.data /= ftab.data*ftab.pixsiz
-            self.input.err /= ftab.data*ftab.pixsiz
+            self.input.data /= ftab.data * ftab.pixsiz
+            self.input.err /= ftab.data * ftab.pixsiz
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
 
             # Store the 2D sensitivity factors
-            self.input.relsens2d = ftab.data*ftab.pixsiz
+            self.input.relsens2d = ftab.data * ftab.pixsiz
 
             # Retrieve the scalar conversion factor from the reference data
             conv_factor = ftab.meta.photometry.conversion_megajanskys
@@ -453,6 +513,98 @@ class DataSet(object):
             return 0.0
 
 
+    def calc_nrs_ifu_sens2d(self, area_data):
+
+        import math
+        import numpy as np
+        from .. assign_wcs import nirspec       # for NIRSpec IFU data
+
+        MICRONS_100 = 1.e-4                     # 100 microns, in meters
+
+        # Create empty 2D arrays for the wavelengths and pixel areas
+        wave2d = np.zeros_like(self.input.data)
+        area2d = np.ones_like(self.input.data)
+
+        # Create and initialize an array for the 2D dq map to be returned.
+        # initialize all pixels to NON_SCIENCE, because operations below
+        # only touch pixels within the bounding_box of each slice
+        dqmap = np.zeros_like(self.input.dq) + dqflags.pixel['NON_SCIENCE']
+
+        # Get the list of wcs's for the IFU slices
+        list_of_wcs = nirspec.nrs_ifu_wcs(self.input)
+
+        # Loop over the slices
+        for (k, ifu_wcs) in enumerate(list_of_wcs):
+
+            # Get the corners for the slice
+            xstart = ifu_wcs.bounding_box[0][0]
+            xstop = ifu_wcs.bounding_box[0][1]
+            ystart = ifu_wcs.bounding_box[1][0]
+            ystop = ifu_wcs.bounding_box[1][1]
+
+            log.debug("Slice %d: %g %g %g %g" % (k, xstart, xstop, ystart, ystop))
+
+            # Check for corner values off the edge
+            if xstart < -0.5:
+                log.debug("xstart from WCS bounding_box was %g" % xstart)
+                xstart = 0.
+            if ystart < -0.5:
+                log.debug("ystart from WCS bounding_box was %g" % ystart)
+                ystart = 0.
+            if xstop > 2047.5:
+                log.debug("xstop from WCS bounding_box was %g" % xstop)
+                xstop = 2047.
+            if ystop > 2047.5:
+                log.debug("ystop from WCS bounding_box was %g" % ystop)
+                ystop = 2047.
+
+            # Convert these to integers, and add one to the upper limits,
+            # because we want to use these as slice limits.
+            xstart = int(math.ceil(xstart))
+            xstop = int(math.floor(xstop)) + 1
+            ystart = int(math.ceil(ystart))
+            ystop = int(math.floor(ystop)) + 1
+
+            # Construct array indexes for pixels in this slice
+            dx = xstop - xstart
+            dy = ystop - ystart
+            ind = np.indices((dy, dx))
+            x = ind[1] + xstart
+            y = ind[0] + ystart
+
+            # Get the world coords for all pixels in this slice
+            coords = ifu_wcs(x, y)
+
+            # Pull out the wavelengths only
+            wl = coords[2]
+            nan_flag = np.isnan(wl)
+            good_flag = np.logical_not(nan_flag)
+            if wl[good_flag].max() < MICRONS_100:
+                log.info("Wavelengths in WCS table appear to be in meters")
+
+            # Set NaNs to a harmless value, but don't modify nan_flag.
+            wl[nan_flag] = 0.
+
+            # Mark pixels with no wavelength as non-science
+            dq = np.zeros_like(wl)
+            dq[nan_flag] = dqflags.pixel['NON_SCIENCE']
+            dqmap[ystart:ystop, xstart:xstop] = dq
+
+            # Insert the wavelength values for this slice into the
+            # whole image array
+            wave2d[ystart:ystop, xstart:xstop] = wl
+
+            # Insert the pixel area value for this slice into the
+            # whole image array
+            ar = np.ones_like(wl)
+            ar[:,:] = \
+                area_data[np.where(area_data['slice_id']==k)]['pixarea'][0]
+            ar[nan_flag] = 1.
+            area2d[ystart:ystop, xstart:xstop] = ar
+
+        return wave2d, area2d, dqmap
+
+
     def photom_io(self, tabdata):
         """
         Short Summary
@@ -488,7 +640,7 @@ class DataSet(object):
             if waves.max() > 0. and waves.max() < MICRONS_100:
                 waves *= 1.e+6
             wl_unit = 'microns'
-                
+
             # Set the relative sensitivity table for the correct Model type
             if isinstance(self.input, datamodels.MultiSlitModel):
                 otab = np.array(list(zip(waves, relresps)),
