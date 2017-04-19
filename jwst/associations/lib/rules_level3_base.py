@@ -189,7 +189,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             [cc for cc in self.constraints_to_text()]
         )
         self.data['asn_id'] = self.acid.id
-        self.new_product()
+        self.new_product(product_name=self.dms_product_name())
 
         # Parse out information from the pool file name.
         # Necessary to carry information to the Level3 output.
@@ -334,6 +334,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         to an association. All defined shortcuts and other initializations are
         by-passed, resulting in a potentially unusable association.
         """
+        if product_name is None:
+            raise AssociationNotValidError(
+                'Product name needs to be specified'
+            )
+
         self.new_product(product_name)
         members = self.current_product['members']
         for item in items:

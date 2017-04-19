@@ -5,6 +5,9 @@ from jwst.associations.exceptions import (
 )
 from jwst.associations.lib.acid import ACIDMixin
 
+# Default product name
+PRODUCT_NAME_DEFAULT = 'undefined'
+
 # DMS file name templates
 _ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
 _ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
@@ -63,29 +66,16 @@ class DMSBaseMixin(ACIDMixin):
     def current_product(self):
         return self.data['products'][-1]
 
-    def new_product(self, product_name=None):
+    def new_product(self, product_name=PRODUCT_NAME_DEFAULT):
         """Start a new product"""
-        self.product_name = product_name
         product = {
-            'name': self.product_name,
+            'name': product_name,
             'members': []
         }
         try:
             self.data['products'].append(product)
         except KeyError:
             self.data['products'] = [product]
-
-    @property
-    def product_name(self):
-        if self._product_name is None:
-            product_name = self.dms_product_name()
-        else:
-            product_name = self._product_name
-        return product_name
-
-    @product_name.setter
-    def product_name(self, value):
-        self._product_name = value
 
     def update_validity(self, entry):
         for test in self.validity.values():
