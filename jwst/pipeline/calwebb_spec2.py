@@ -21,6 +21,8 @@ from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
 from ..resample import resample_spec_step
 
+from .level2association import Level2Association
+
 __version__ = "3.0"
 
 # Define logging
@@ -75,7 +77,7 @@ class Spec2Pipeline(Pipeline):
         log.info('Starting calwebb_spec2 ...')
 
         # Retrieve the input(s)
-        asn = Leve2Association(input)
+        asn = Level2Association.open(input)
 
         # Each exposure is a product in the association.
         # Process each exposure.
@@ -219,7 +221,9 @@ class Spec2Pipeline(Pipeline):
             # Save the resampled product
             if not self.resample_spec.skip:
                 self.save_model(resamp, 's2d')
-                log.info('Saved resampled product to %s' % resamp.meta.filename)
+                log.info(
+                    'Saved resampled product to %s' % resamp.meta.filename
+                )
 
             # Pass the resampled data to 1D extraction
             x1d_input = resamp.copy()
@@ -253,13 +257,17 @@ class Spec2Pipeline(Pipeline):
                 self.save_model(x1d_output, 'x1dints')
             else:
                 self.save_model(x1d_output, 'x1d')
-            log.info('Saved extracted spectrum to %s' % x1d_output.meta.filename)
+            log.info(
+                'Saved extracted spectrum to %s' % x1d_output.meta.filename
+            )
 
         input.close()
         x1d_output.close()
 
         # That's all folks
-        log.info('Finished processing exposure {}'.format(product['name']))
+        log.info(
+            'Finished processing exposure {}'.format(exp_product['name'])
+        )
         return
 
 

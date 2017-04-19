@@ -13,18 +13,37 @@ from ..associations.lib.rules_level2_base import DMSLevel2bBase
 __all__ = ['Level2Association']
 
 
-class Level2Association(object):
+DEFAULT_NAME = 'CreatedByLevel2Association'
+
+
+class Level2Association(dict):
+    """Read in or create a Level2 association
+
+    Parameters
+    ----------
+    asn: dict or Association
+        An already existing association
+
+    Notes
+    -----
+    This class is normally not instantiated.
+    the `open` method should be used as the factory
+    method to read an association or create one from
+    a string or `Datamodel` object, or a list of such
+    objects.
+    """
 
     default_lvl2asn_info = {
-        'program': 'lvl2asncreated',
-        'target': 'lvl2asncreated',
-        'asn_pool': 'lvl2asncreated',
+        'program': DEFAULT_NAME,
+        'target': DEFAULT_NAME,
+        'asn_pool': DEFAULT_NAME
     }
 
     level2b_registry = AssociationRegistry(
         definition_files=[libpath('rules_level2b.py')],
         include_default=False
     )
+
 
     @classmethod
     def open(cls, obj):
@@ -35,6 +54,15 @@ class Level2Association(object):
         obj: Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
             The obj to return as an association
 
+        Attributes
+        ----------
+        Along with the attributes belonging to a Level2 association, the
+        following are added:
+
+        filename: str
+            The name of the association file, if such a file
+            where passed in. Otherwise a default value is given.
+
         Returns
         -------
         association: DMSLevel2bBase
@@ -42,7 +70,7 @@ class Level2Association(object):
         """
         try:
             with open(obj) as fp:
-                asn = load_asn(fp, registry=cls.level2b_registry)
+                pure_asn = load_asn(fp, registry=cls.level2b_registry)
         except Exception:
             if not isinstance(obj, list):
                 obj = [obj]
@@ -52,6 +80,11 @@ class Level2Association(object):
                 meta=cls.default_lvl2asn_info,
                 product_name_func=cls.model_product_name
             )
+            asn.filename = DEFAULT_NAME
+        else:
+            asn = cls(pure_asn)
+            asn.filename = obj
+
         return asn
 
     @staticmethod
