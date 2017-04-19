@@ -41,6 +41,7 @@ def chdir(path):
         prev_cwd.chdir()
 
 
+@pytest.mark.xfail(reason='Not yet implemented')
 def test_asn(tmpdir):
     exppath = path.join(DATAPATH, EXPFILE)
     expcal = EXPFILE.replace('_rate', '_cal')
