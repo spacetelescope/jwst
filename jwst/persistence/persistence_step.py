@@ -7,7 +7,6 @@ from . import persistence
 class PersistenceStep(Step):
     """
     PersistenceStep: Correct a science image for persistence.
-    This is currently a no-op step.
     """
 
     spec = """
@@ -17,19 +16,9 @@ class PersistenceStep(Step):
     """
 
     # xxx find a better name than perssat
-    # This is currently commented out to prevent CRDS from trying to
-    # find these files (because they haven't been delivered yet).
-    # xxx xxx reference_file_types = ["trapdensity", "traps", "perssat"]
+    reference_file_types = ["trapdensity", "traps", "perssat"]
 
     def process(self, input):
-
-        # Skip all processing for now ...
-        output_obj = datamodels.open(input).copy()
-        output_obj.meta.cal_step.persistence = 'SKIPPED'
-        self.log.warning('Persistence step is currently a no-op: SKIPPING')
-
-        return output_obj
-        # ... end skip all processing for now
 
         if self.input_traps is not None:
             if self.input_traps == "None" or len(self.input_traps) == 0:
