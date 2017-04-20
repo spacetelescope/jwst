@@ -125,17 +125,17 @@ class Pipeline(Step):
         if self._is_association_file(input_file):
             return
         try:
-            with datamodels.open(input_file) as model:
-                pass
+            model = datamodels.open(input_file)
         except (ValueError, TypeError, IOError):
             self.log.info(
                 'First argument {0} does not appear to be a '
                 'model'.format(input_file))
         else:
-            super(Pipeline, self)._precache_reference_files(input_file)
+            super(Pipeline, self)._precache_reference_files(model)
             for name in self.step_defs.keys():
                 step = getattr(self, name)
-                step._precache_reference_files(input_file)
+                step._precache_reference_files(model)
+            model.close()
         gc.collect()
 
     def set_input_filename(self, path):
