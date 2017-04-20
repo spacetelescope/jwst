@@ -23,4 +23,9 @@ allOf:
         description: |
           Slice width.
         type: number
-    required: [beta_zero, beta_del]
+      channel:
+        description: |
+          MIRI channel number.
+        type:
+          number
+    required: [beta_zero, beta_del, channel]

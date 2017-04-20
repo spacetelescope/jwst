@@ -74,10 +74,12 @@ class MIRI_AB2Slice(Model):
 
     beta_zero = Parameter('beta_zero', default=0)
     beta_del = Parameter('beta_del', default=1)
+    channel = Parameter("channel", default=1)
 
     @staticmethod
-    def evaluate(beta, beta_zero, beta_del):
-        return (beta - beta_zero) / beta_del
+    def evaluate(beta, beta_zero, beta_del, channel):
+        s = channel * 100 + (beta - beta_zero) / beta_del + 1
+        return _toindex(s)
 
 
 class Snell(Model):
@@ -809,3 +811,25 @@ class V23ToSky(Rotation3D):
             outputs = (outputs,)
 
         return self.prepare_outputs(format_info, *outputs)
+
+
+def _toindex(value):
+    """
+    Convert value to an int or an int array.
+
+    Input coordinates converted to integers
+    corresponding to the center of the pixel.
+    The convention is that the center of the pixel is
+    (0, 0), while the lower left corner is (-0.5, -0.5).
+
+    Examples
+    --------
+    >>> _toindex(np.array([-0.5, 0.49999]))
+    array([0, 0])
+    >>> _toindex(np.array([0.5, 1.49999]))
+    array([1, 1])
+    >>> _toindex(np.array([1.5, 2.49999]))
+    array([2, 2])
+    """
+    indx = np.asarray(np.floor(np.asarray(value) + 0.5), dtype=np.int)
+    return indx
