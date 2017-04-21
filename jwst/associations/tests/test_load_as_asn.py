@@ -1,17 +1,17 @@
-"""Test Level2Association"""
+"""Test LoadAsAssociation"""
 
-from ...associations.tests import helpers as asn_helpers
+from . import helpers
 from ...datamodels import ImageModel
-from ..level2association import (
+from ..load_as_asn import (
     DEFAULT_NAME,
-    Level2Association
+    LoadAsLevel2Asn
 )
 
 
-def test_datamodel():
+def test_lv2_datamodel():
     model = ImageModel()
     model.meta.filename = 'modelfile.fits'
-    asn = Level2Association.open(model)
+    asn = LoadAsLevel2Asn.load(model)
     assert asn.filename == DEFAULT_NAME
     assert asn['program'] == DEFAULT_NAME
     assert asn['target'] == DEFAULT_NAME
@@ -20,16 +20,16 @@ def test_datamodel():
     assert asn['products'][0]['name'] == 'modelfile'
 
 
-def test_asn():
-    asn_file = asn_helpers.t_path('data/asn_level2.json')
-    asn = Level2Association.open(asn_file)
+def test_lv2_asn():
+    asn_file = helpers.t_path('data/asn_level2.json')
+    asn = LoadAsLevel2Asn.load(asn_file)
     assert asn.filename == asn_file
     assert len(asn['products']) == 6
 
 
-def test_obj():
+def test_lv2_obj():
     obj = 'some funny object'
-    asn = Level2Association.open(obj)
+    asn = LoadAsLevel2Asn.load(obj)
     assert asn.filename == DEFAULT_NAME
     assert len(asn['products']) == 1
     assert asn['program'] == DEFAULT_NAME
@@ -37,14 +37,14 @@ def test_obj():
     assert asn['asn_pool'] == DEFAULT_NAME
 
 
-def test_obj_list():
+def test_lv2_obj_list():
     model = ImageModel()
     model.meta.filename = 'modelfile.fits'
     objs = [
         'some funny object',
         model,
     ]
-    asn = Level2Association.open(objs)
+    asn = LoadAsLevel2Asn.load(objs)
     assert asn.filename == DEFAULT_NAME
     assert len(asn['products']) == 2
     assert asn['program'] == DEFAULT_NAME

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 from collections import defaultdict
 
-from ..associations import load_asn
+from ..associations.load_as_asn import LoadAsLevel2Asn
 from ..stpipe import Pipeline
 from .. import datamodels
 
@@ -20,8 +20,6 @@ from ..photom import photom_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
 from ..resample import resample_spec_step
-
-from .level2association import Level2Association
 
 __version__ = "3.0"
 
@@ -77,7 +75,7 @@ class Spec2Pipeline(Pipeline):
         log.info('Starting calwebb_spec2 ...')
 
         # Retrieve the input(s)
-        asn = Level2Association.open(input)
+        asn = LoadAsLevel2Asn.load(input)
 
         # Each exposure is a product in the association.
         # Process each exposure.
@@ -269,51 +267,3 @@ class Spec2Pipeline(Pipeline):
             'Finished processing exposure {}'.format(exp_product['name'])
         )
         return
-
-
-class Lvl2Input(object):
-
-    """
-    Class to handle reading the input to the processing, which
-    can be a single science exposure or an association table.
-    The input member info is loaded into an ASN table model.
-    """
-
-    template = {"asn_pool": "",
-                "members": [
-                  {"expname": "",
-                   "exptype": ""}
-                 ]
-                }
-
-    def __init__(self, input):
-
-        if isinstance(input, str):
-            self.filename = input
-            try:
-                # The name of an association table
-                with open(input, 'r') as input_fh:
-                    self.asn = load_asn(input_fh)
-            except:
-                # The name of a single image file
-                self.interpret_image_model(datamodels.open(input))
-            self.poolname = self.asn['asn_pool']
-
-        elif isinstance(input, datamodels.DataModel):
-            # A single data model
-            self.filename = input.meta.filename
-            self.interpret_image_model(input)
-            self.poolname = self.asn['asn_pool']
-
-        else:
-            raise TypeError
-
-    def interpret_image_model(self, model):
-        """ Interpret image model as a single member association
-        """
-
-        # A single exposure was provided as input
-        self.asn = self.template
-        self.asn['asn_pool'] = ''
-        self.asn['members'][0]['expname'] = self.filename
-        self.asn['members'][0]['exptype'] = 'science'

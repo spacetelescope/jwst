@@ -28,7 +28,6 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-#@pytest.mark.xfail(reason='Not yet implemented')
 def test_asn(tmpdir):
     exppath = path.join(DATAPATH, EXPFILE)
     expcal = EXPFILE.replace('_rate', '_cal')
@@ -46,7 +45,6 @@ def test_asn(tmpdir):
         assert path.isfile(expcal)
 
 
-#@pytest.mark.xfail(reason='Not yet implemented')
 def test_datamodel(tmpdir):
     model = dm_open(path.join(DATAPATH, EXPFILE))
     expcal = EXPFILE.replace('_rate', '_cal')
