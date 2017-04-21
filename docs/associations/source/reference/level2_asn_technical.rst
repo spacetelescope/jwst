@@ -6,9 +6,9 @@ Level 2 Associations: Technical Specifications
 Logical Structure
 -----------------
 
-Independent of the actual format, all Level 3 associations have the
+Independent of the actual format, all Level 2 associations have the
 following structure. Again, the structure is defined and enforced by
-the Level 3 schema
+the Level 2 schema
 
   * Top level, or meta, key/values
   * List of products, each consisting of
@@ -29,13 +29,13 @@ Example Association
 The following example will be used to explain the contents of an association::
 
     {
-        "asn_rule": "Asn_Lv2Image",
+        "asn_rule": "Asn_Lv2Spec",
         "asn_pool": "jw82600_001_20160304T145416_pool",
         "program": "82600",
-        "asn_type": "image2",
+        "asn_type": "spec2",
         "products": [
             {
-                "name": "test_lrs1_rate",
+                "name": "test_lrs1",
                 "members": [
                     {
                         "expname": "test_lrs1_rate.fits",
@@ -44,7 +44,7 @@ The following example will be used to explain the contents of an association::
                 ]
             },
             {
-                "name": "test_lrs2bkg_rate",
+                "name": "test_lrs2bkg",
                 "members": [
                     {
                         "expname": "test_lrs2bkg_rate.fits",
@@ -53,7 +53,7 @@ The following example will be used to explain the contents of an association::
                 ]
             },
             {
-                "name": "test_lrs2_rate",
+                "name": "test_lrs2",
                 "members": [
                     {
                         "expname": "test_lrs2_rate.fits",
@@ -128,7 +128,7 @@ exptype *required*
 
   * `SCIENCE`
   * `BACKGROUND`
-  * `LEAKCAL`
+  * `IMPRINT`
 
 Editing the member list
 ^^^^^^^^^^^^^^^^^^^^^^^

@@ -80,7 +80,7 @@ class Spec2Pipeline(Pipeline):
         # Each exposure is a product in the association.
         # Process each exposure.
         for product in asn['products']:
-            log.info('Processing exposure {}'.format(product['name']))
+            log.info('Processing product {}'.format(product['name']))
             self.process_exposure_product(
                 product,
                 asn['asn_pool'],
@@ -264,6 +264,6 @@ class Spec2Pipeline(Pipeline):
 
         # That's all folks
         log.info(
-            'Finished processing exposure {}'.format(exp_product['name'])
+            'Finished processing product {}'.format(exp_product['name'])
         )
         return
