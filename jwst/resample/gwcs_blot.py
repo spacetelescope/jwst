@@ -75,8 +75,7 @@ class GWCSBlot(object):
             The scaling factor for sinc interpolation.
         """
         blot_wcs = blot_img.meta.wcs
-        blot_shape = blot_img.shape
-        outsci = np.zeros((blot_shape[0], blot_shape[1]), dtype=np.float32)
+        outsci = np.zeros(blot_img.shape, dtype=np.float32)
 
         # Compute the mapping between the input and output pixel coordinates
         #log.info("Creating PIXMAP for blotted image...")
