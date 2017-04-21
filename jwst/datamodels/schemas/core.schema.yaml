@@ -367,6 +367,14 @@ properties:
             title: GWA TILT (avg/calib) temperature [K]
             type: number
             fits_keyword: GWA_TILT
+          filter_position:
+            title: NIRISS filter wheel position
+            type: number
+            fits_keyword: FWCPOS
+          pupil_position:
+            title: NIRISS pupil wheel position
+            type: number
+            fits_keyword: PWCPOS
       exposure:
         title: Exposure parameters
         type: object
@@ -1552,4 +1560,46 @@ properties:
             title: Coronagraphic PSF Subtraction
             type: string
             fits_keyword: S_KLIP
+      background:
+        title: Background information
+        type: object
+        properties:
+          level:
+            title: Computed/Matched constant background level
+            type: number
+            fits_keyword: BKGLEVEL
+          subtracted:
+            title: Has background been subtracted from data?
+            type: boolean
+            fits_keyword: BKGSUB
+          polynomial_info:
+            title: List of background polynomial info for each channel
+            type: array
+            items:
+              type: object
+              properties:
+                degree:
+                  title: Max polynomial degree in each coordinate
+                  type: array
+                  items:
+                    type: number
+                refpoint:
+                  title: Reference coordinates
+                  type: array
+                  items:
+                    type: number
+                cs_type:
+                  title: Type of coordinates
+                  type: string
+                  enum: [world, image]
+                wcs:
+                  $ref: http://stsci.edu/schemas/asdf/wcs/wcs-1.0.0
+                coefficients:
+                  title: Polynomial Coefficients
+                  type: array
+                  items:
+                    type: number
+                channel:
+                  title: Channel ID
+                  type: string
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
