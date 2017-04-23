@@ -251,6 +251,9 @@ def ifu(input_model, reference_files):
     xyan2v23 = models.Identity(1) & (models.Shift(7.8) | models.Scale(-1)) & models.Identity(1) | \
         models.Scale(1/60) & models.Scale(1/60) & models.Identity(1)
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
+
+    shape = input_model.data.shape
+    det2alpha_beta.bounding_box = ((-0.5, shape[0]), (-0.5, shape[1]))
     pipeline = [(detector, det2alpha_beta),
                 (miri_focal, ab2xyan),
                 (xyan, xyan2v23),
@@ -292,7 +295,8 @@ def detector_to_alpha_beta(input_model, reference_files):
     beta_model = f.tree['beta_model']
     x_model = f.tree['x_model']
     y_model = f.tree['y_model']
-    slice_model = f.tree['slice_model']
+    bzero = f.tree['bzero']
+    bdel = f.tree['bdel']
     f.close()
     f = AsdfFile.open(reference_files['specwcs'])
     lambda_model = f.tree['model']
@@ -304,7 +308,6 @@ def detector_to_alpha_beta(input_model, reference_files):
     transforms = {}
 
     for sl in alpha_model:
-        #chan = str(sl // 100) + band
         forward = models.Mapping([1, 0, 0, 1, 0]) | \
                 alpha_model[sl] & beta_model[sl] & lambda_model[sl]
         inv = models.Mapping([2, 0, 2, 0]) | x_model[sl] & y_model[sl]
@@ -320,17 +323,12 @@ def detector_to_alpha_beta(input_model, reference_files):
         wr[ch] = r
     f.close()
     ch_dict = {}
-    bzero = {'1SHORT': -1.77210143797,
-             '2SHORT': -2.23774549066
-             }
-    bdel = {'1SHORT': 0.177210143797,
-            '2SHORT': 0.279718186333
-            }
-    for c in channels:
-        mapper = jwmodels.MIRI_AB2Slice(bzero[c], bdel[c])
+    for c in channel:
+        cb = c + band
+        mapper = jwmodels.MIRI_AB2Slice(bzero[cb], bdel[cb], c)
         lm = selector.LabelMapper(inputs=('alpha', 'beta', 'lam'),
                                   mapper=mapper, inputs_mapping=models.Mapping((1,), n_inputs=3))
-        ch_dict[tuple(wr[c])] = lm
+        ch_dict[tuple(wr[cb])] = lm
 
     alpha_beta_mapper = selector.LabelMapperRange(('alpha', 'beta', 'lam'), ch_dict,
                                                   models.Mapping((2,)))
