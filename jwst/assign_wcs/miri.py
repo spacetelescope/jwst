@@ -253,7 +253,7 @@ def ifu(input_model, reference_files):
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
 
     shape = input_model.data.shape
-    det2alpha_beta.bounding_box = ((-0.5, shape[0]), (-0.5, shape[1]))
+    det2alpha_beta.bounding_box = ((-0.5, shape[0] - 0.5), (-0.5, shape[1] - 0.5))
     pipeline = [(detector, det2alpha_beta),
                 (miri_focal, ab2xyan),
                 (xyan, xyan2v23),
