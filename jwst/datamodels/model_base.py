@@ -77,9 +77,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         pass_invalid_values: If true, values that do not validate the schema can
             be read and written and only a warning will be generated
         """
-        filename = os.path.abspath(inspect.getfile(self.__class__))
-        base_url = os.path.join(
-            os.path.dirname(filename), 'schemas', '')
 
         # Set the extensions
         if extensions is None:
@@ -130,6 +127,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             instance = copy.deepcopy(init._instance)
             self._schema = init._schema
             self._shape = init._shape
+            print('why here')
             self._asdf = AsdfFile(instance, extensions=self._extensions)
             self._instance = instance
             self._ctx = self
@@ -156,17 +154,18 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
             try:
-                hdulist = fits.open(init)
-            except IOError:
+                asdf = AsdfFile.open(init, extensions=jwst_extensions)
+            except (ValueError):
                 try:
-                    asdf = AsdfFile.open(init, extensions=jwst_extensions)
+
+                    hdulist = fits.open(init)
                     # TODO: Add json support
-                except ValueError:
+                except (IOError, OSError):
                     raise IOError(
                         "File does not appear to be a FITS or ASDF file.")
-            else:
-                asdf = fits_support.from_fits(hdulist, self._schema, 
-                                              extensions, pass_invalid_values)
+                else:
+                    asdf = fits_support.from_fits(hdulist, self._schema, 
+                                                  extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
         else:
             raise ValueError(
