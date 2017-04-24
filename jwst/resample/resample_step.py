@@ -5,6 +5,10 @@ from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import resample
 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 
 class ResampleStep(Step):
     """

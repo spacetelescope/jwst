@@ -1,8 +1,13 @@
-#! /usr/bin/env python
+from __future__ import (division, print_function, unicode_literals,
+    absolute_import)
 
 from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import outlier_detection
+
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 class OutlierDetectionStep(Step):
