@@ -275,7 +275,7 @@ class SkyImage(object):
         borderx[-1] = borderx[0]
         bordery[-1] = bordery[0]
 
-        ra, dec = self.wcs_fwd(borderx, bordery, 0)
+        ra, dec = self.wcs_fwd(borderx, bordery)
         # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
         #       dec[0] != dec[-1] (even though we close the polygon in the
         #       previous two lines). Then SphericalPolygon fails because
@@ -429,7 +429,7 @@ None, optional
                     continue
 
                 # set pixels in 'fill_mask' that are inside a polygon to True:
-                x, y = self.wcs_inv(ra, dec, 0)
+                x, y = self.wcs_inv(ra, dec)
                 poly_vert = list(zip(*[x, y]))
 
                 polygon = region.Polygon(True, poly_vert)
@@ -531,7 +531,7 @@ None, optional
                     continue
 
                 # set pixels in 'fill_mask' that are inside a polygon to True:
-                x, y = self.wcs_inv(ra, dec, 0)
+                x, y = self.wcs_inv(ra, dec)
                 poly_vert = list(zip(*[x, y]))
 
                 polygon = region.Polygon(True, poly_vert)

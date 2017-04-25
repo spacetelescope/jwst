@@ -1,3 +1,6 @@
+from __future__ import (division, print_function, unicode_literals,
+    absolute_import)
+
 import time
 import numpy as np
 from collections import OrderedDict
@@ -14,7 +17,6 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-DEFAULT_DOMAIN = {'lower': None, 'upper': None, 'includes_lower': True, 'includes_upper': False}
 
 class OutlierDetection(object):
     """
@@ -37,14 +39,23 @@ class OutlierDetection(object):
       6. Updates input data model DQ arrays with mask of detected outliers.
 
     """
-    outlierpars = {'kernel': 'square', 'pixfrac': 1.0, 'resample_bits': None,
-                        'fillval': 'INDEF', 'wht_type': 'exptime',
-                    'nlow': 0, 'nhigh': 1,
-                        'hthresh': None, 'lthresh': None,
-                        'nsigma': '4 3', 'maskpt': 0.7,
-                    'grow': 1, 'ctegrow': 0, 'snr': "4.0 3.0",
-                        'scale': "0.5 0.4", 'backg': 0
-                }
+    outlierpars = {'kernel': 'square',
+                   'pixfrac': 1.0,
+                   'resample_bits': None,
+                   'fillval': 'INDEF',
+                   'wht_type': 'exptime',
+                   'nlow': 0,
+                   'nhigh': 1,
+                   'hthresh': None,
+                   'lthresh': None,
+                   'nsigma': '4 3',
+                   'maskpt': 0.7,
+                   'grow': 1,
+                   'ctegrow': 0,
+                   'snr': "4.0 3.0",
+                   'scale': "0.5 0.4",
+                   'backg': 0
+                   }
 
     def __init__(self, input_models, ref_filename=None, to_file=False, **pars):
         """
@@ -148,7 +159,7 @@ class OutlierDetection(object):
                      **pars)
         if self.to_file:
             log.info("Writing out BLOT input images...")
-            blot_models.save(None)
+            blot_models.save()
 
         # Perform outlier detection using statistical comparisons between
         # original input images and their blotted-median images
