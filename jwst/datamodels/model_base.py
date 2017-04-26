@@ -9,20 +9,22 @@ import datetime
 import inspect
 import os
 import sys
-import warnings
 
 import numpy as np
+import jsonschema
 
 from astropy.extern import six
 from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
+from astropy.nddata import nddata_base
 
 from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
 from asdf import extension as asdf_extension
 
+from . import ndmodel
 from . import fits_support
 from . import properties
 from . import schema as mschema
@@ -34,7 +36,7 @@ from gwcs.extension import GWCSExtension
 
 jwst_extensions = [GWCSExtension(), JWSTExtension(), BaseExtension()]
 
-class DataModel(properties.ObjectNode):
+class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     Base class of all of the data models.
     """
@@ -72,19 +74,32 @@ class DataModel(properties.ObjectNode):
         extensions: classes extending the standard set of extensions, optional.
             If an extension is defined, the prefix used should be 'url'.
 
-        pass_invalid_values: If True, values that do not validate the schema can
-            be read and written, but with a warning message
+        pass_invalid_values: If true, values that do not validate the schema can
+            be read and written and only a warning will be generated
         """
-        filename = os.path.abspath(inspect.getfile(self.__class__))
-        base_url = os.path.join(
-            os.path.dirname(filename), 'schemas', '')
-
+        # Set the extensions
         if extensions is None:
             extensions = jwst_extensions[:]
         else:
             extensions.extend(jwst_extensions)
         self._extensions = extensions
 
+        # Override value of pass_invalid value if environment value set
+        if "PASS_INVALID_VALUES" in os.environ:
+            pass_invalid_values = os.environ["PASS_INVALID_VALUES"]
+            try:
+                pass_invalid_values = bool(int(pass_invalid_values))
+            except ValueError:
+                pass_invalid_values = False
+    
+        self._pass_invalid_values = pass_invalid_values
+
+        # Construct the path to the schema files
+        filename = os.path.abspath(inspect.getfile(self.__class__))
+        base_url = os.path.join(
+            os.path.dirname(filename), 'schemas', '')
+
+        # Load the schema files
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
             extension_list = asdf_extension.AsdfExtensionList(self._extensions)
@@ -93,15 +108,8 @@ class DataModel(properties.ObjectNode):
 
         self._schema = mschema.flatten_combiners(schema)
 
-        if "PASS_INVALID_VALUES" in os.environ:
-            pass_invalid_values = os.environ["PASS_INVALID_VALUES"]
-            try:
-                self._pass_invalid_values = bool(int(pass_invalid_values))
-            except ValueError:
-                self._pass_invalid_values = False
-        else:
-            self._pass_invalid_values = pass_invalid_values
-
+        # Determine what kind of input we have (init) and execute the
+        # proper code to intiailize the model
         self._files_to_close = []
         is_array = False
         is_shape = False
@@ -137,10 +145,9 @@ class DataModel(properties.ObjectNode):
             asdf = AsdfFile()
             is_shape = True
         elif isinstance(init, fits.HDUList):
-            asdf = fits_support.from_fits(init, self._schema,
-                                          extensions=self._extensions,
-                                          validate=False,
-                                          pass_invalid_values=self._pass_invalid_values)
+            asdf = fits_support.from_fits(init, self._schema, extensions,
+                                          pass_invalid_values)
+
         elif isinstance(init, six.string_types):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
@@ -154,15 +161,15 @@ class DataModel(properties.ObjectNode):
                     raise IOError(
                         "File does not appear to be a FITS or ASDF file.")
             else:
-                asdf = fits_support.from_fits(hdulist, self._schema,
-                                              extensions=self._extensions,
-                                              validate=False,
-                                              pass_invalid_values=self._pass_invalid_values)
+                asdf = fits_support.from_fits(hdulist, self._schema, 
+                                              extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
         else:
             raise ValueError(
                 "Can't initialize datamodel using {0}".format(str(type(init))))
 
+        # Initialize object fields as determined fro the code above
+        
         self._shape = shape
         self._instance = asdf.tree
         self._asdf = asdf
@@ -194,6 +201,7 @@ class DataModel(properties.ObjectNode):
                     "no primary array in its schema")
             setattr(self, primary_array_name, init)
 
+        # TODO this code looks useless
         if is_shape:
             getattr(self, self.get_primary_array_name())
 
@@ -363,11 +371,17 @@ class DataModel(properties.ObjectNode):
                 return None
         return self._shape
 
+    def my_attribute(self, attr):
+        properties = frozenset(("shape", "history", "_extra_fits", "schema"))
+        return attr in properties
+
     def __setattr__(self, attr, value):
-        if attr == 'shape':
+        if self.my_attribute(attr):
             object.__setattr__(self, attr, value)
+        elif ndmodel.NDModel.my_attribute(self, attr):
+            ndmodel.NDModel.__setattr__(self, attr, value)
         else:
-            super(DataModel, self).__setattr__(attr, value)
+            properties.ObjectNode.__setattr__(self, attr, value)
 
     def extend_schema(self, new_schema):
         """
@@ -791,3 +805,11 @@ class DataModel(properties.ObjectNode):
         ff = fits_support.from_fits(hdulist, self._schema, validate=False)
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
+
+    #--------------------------------------------------------
+    # These two method aliases are here for astropy.registry
+    # compatibility and should not be called directly
+    #--------------------------------------------------------
+    
+    read = __init__
+    write = save

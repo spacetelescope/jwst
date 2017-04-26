@@ -113,7 +113,7 @@ def UpdateIFUCube(self, Cube,IFUCube, spaxel):
 
     temp_flux =np.reshape(np.array([s.flux for s in spaxel]),
                           [Cube.naxis3,Cube.naxis2,Cube.naxis1])
-    temp_wmap =np.reshape(np.array([len(s.ipointcloud) for s in spaxel]),
+    temp_wmap =np.reshape(np.array([s.iflux for s in spaxel]),
                           [Cube.naxis3,Cube.naxis2,Cube.naxis1])
     
     IFUCube.data = temp_flux

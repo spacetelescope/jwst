@@ -3,6 +3,7 @@ from __future__ import absolute_import
 
 from .helpers import (
     combine_pools,
+    level3_rule_path,
     t_path
 )
 
@@ -16,7 +17,14 @@ from ..main import Main
 
 def test_exposerr():
     pool = combine_pools(t_path('data/pool_008_exposerr.csv'))
-    generated = Main(['--dry-run', '-i', 'o001'], pool=pool)
+    generated = Main(
+        [
+            '--dry-run', '-i', 'o001',
+            '-r', level3_rule_path(),
+            '--ignore-default',
+        ],
+        pool=pool
+    )
     asns = generated.associations
     assert len(asns) == 1
     asn = asns[0]

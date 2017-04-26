@@ -29,6 +29,11 @@ from . import properties
 from . import schema as mschema
 from . import util
 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
+
 
 __all__ = ['to_fits', 'from_fits', 'fits_hdu_name', 'get_hdu']
 
@@ -228,7 +233,7 @@ def _fits_comment_section_handler(validator, properties, instance, schema):
 
 def _fits_element_writer(validator, fits_keyword, instance, schema):
     if schema.get('type', 'object') == 'array':
-        raise ValueError("'fits_keyword' not valid with type of 'array'")
+        raise ValueError("'fits_keyword' is not valid with type of 'array'")
 
     hdu_name = _get_hdu_name(schema)
     index = getattr(validator, 'sequence_index', None)
@@ -450,17 +455,7 @@ def _fits_array_loader(hdulist, schema, hdu_index, known_datas):
         return None
 
     known_datas.add(hdu)
-    data = hdu.data
-    
-    data2 = properties._cast(data, schema)
-
-    # Casting a table loses the listeners, so restore them
-    if isinstance(hdu, fits.BinTableHDU):
-        coldefs = data._coldefs
-        coldefs2 = data2._coldefs
-        coldefs2._listeners = coldefs._listeners
-
-    return data2
+    return from_fits_hdu(hdu, schema)
 
 
 def _schema_has_fits_hdu(schema):
@@ -473,14 +468,23 @@ def _schema_has_fits_hdu(schema):
     return has_fits_hdu[0]
 
 
-def _load_from_schema(hdulist, schema, tree, validate=True,
-                      pass_invalid_values=False):
+def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
     known_keywords = {}
     known_datas = set()
+    invalid_values = set()
 
+    def prefix_filename(msg):
+        # Prefix filename to message where it can be found
+        try:
+            filename = hdulist._file.name
+        except AttributeError:
+            filename = None
+        if filename is not None:
+            msg = "In {0} {1}".format(filename, msg)
+        return msg
+                        
     def callback(schema, path, combiner, ctx, recurse):
         result = None
-
         if 'fits_keyword' in schema:
             fits_keyword = schema['fits_keyword']
             result = _fits_keyword_loader(
@@ -494,16 +498,22 @@ def _load_from_schema(hdulist, schema, tree, validate=True,
                 try:
                     asdf_schema.validate(result, schema=temp_schema)
                 except jsonschema.ValidationError:
-                    if validate:
-                        raise
+                    if isinstance(result, six.string_types):
+                        result = "'{0}'".format(result)
                     else:
-                        msgfmt = "'{0}' is not valid in keyword '{1}'"
-                        warnings.warn(msgfmt.format(result, fits_keyword))
-                        if pass_invalid_values:
-                            properties.put_value(path, result, tree)
+                        result = str(result)
+
+                    msgfmt = "{0} is not valid in {1}"
+                    msg = msgfmt.format(result, fits_keyword)
+                    msg = prefix_filename(msg)
+
+                    warnings.warn(msg, properties.ValidationWarning)
+                    if not pass_invalid_values:
+                        invalid_values.add(fits_keyword)
+                        
                 else:
                     properties.put_value(path, result, tree)
-
+                    
         elif 'fits_hdu' in schema and (
                 'max_ndim' in schema or 'ndim' in schema or 'datatype' in schema):
             result = _fits_array_loader(
@@ -513,8 +523,20 @@ def _load_from_schema(hdulist, schema, tree, validate=True,
                     '$schema':
                     'http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema'}
                 temp_schema.update(schema)
-                asdf_schema.validate(result, schema=temp_schema)
-                properties.put_value(path, result, tree)
+                try:
+                    asdf_schema.validate(result, schema=temp_schema)
+                except jsonschema.ValidationError:
+                    fits_hdu = schema['fits_hdu']
+                    
+                    msgfmt = "{0} is not valid"
+                    msg = msgfmt.format(fits_hdu)
+                    msg = prefix_filename(msg)
+
+                    warnings.warn(msg, properties.ValidationWarning)
+                    if not pass_invalid_values:
+                        invalid_values.add(fits_keyword)
+                else:
+                    properties.put_value(path, result, tree)
 
         if schema.get('type') == 'array':
             has_fits_hdu = _schema_has_fits_hdu(schema)
@@ -527,6 +549,11 @@ def _load_from_schema(hdulist, schema, tree, validate=True,
                 return True
 
     mschema.walk_schema(schema, callback)
+    if len(invalid_values) > 0:
+        msgfmt = "fits data is not valid: {0}"
+        msg = msgfmt.format(','.join(list(invalid_values)))
+        msg = prefix_filename(msg)
+        raise jsonschema.ValidationError(msg)
     return known_keywords, known_datas
 
 
@@ -567,14 +594,27 @@ def _load_history(hdulist, tree):
         history.append(HistoryEntry({'description': entry}))
 
 
-def from_fits(hdulist, schema, extensions=None, validate=True,
-              pass_invalid_values=False):
+def from_fits(hdulist, schema, extensions, pass_invalid_values):
     ff = fits_embed.AsdfInFits.open(hdulist, extensions=extensions)
 
     known_keywords, known_datas = _load_from_schema(
-        hdulist, schema, ff.tree, validate,
-        pass_invalid_values=pass_invalid_values)
+        hdulist, schema, ff.tree, pass_invalid_values)
     _load_extra_fits(hdulist, known_keywords, known_datas, ff.tree)
     _load_history(hdulist, ff.tree)
 
     return ff
+
+def from_fits_hdu(hdu, schema):
+    """
+    Read the data from a fits hdu into a numpy ndarray
+    """
+    data = hdu.data    
+    data2 = properties._cast(data, schema)
+
+    # Casting a table loses the listeners, so restore them
+    if isinstance(hdu, fits.BinTableHDU):
+        coldefs = data._coldefs
+        coldefs2 = data2._coldefs
+        coldefs2._listeners = coldefs._listeners
+
+    return data2

@@ -20,7 +20,7 @@ TMP_FITS = None
 
 def setup():
     global FITS_FILE, TMP_DIR, TMP_FITS, TMP_YAML, TMP_JSON
-    ROOT_DIR = os.path.dirname(__file__)
+    ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
     FITS_FILE = os.path.join(ROOT_DIR, 'sip.fits')
 
     TMP_DIR = tempfile.mkdtemp()

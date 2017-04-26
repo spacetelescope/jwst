@@ -146,6 +146,13 @@ To retrieve an association, one uses the :meth:`Association.load
   with open(file_name, 'r') as file_handle:
       association = Association.load(file_handle)
 
+:meth:`Association.load
+<jwst.associations.association.Association.load>` will only validate
+the incoming data against whatever schema or other validation checks
+the particular subclass calls for. The generally preferred method for
+loading an association is through the
+:func:`jwst.associations.load_asn` function.
+
 Defining New Associations
 -------------------------
 

@@ -21,6 +21,7 @@ class RampFitStep (Step):
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
+
     """
 
     # Prior to 04/26/17, the following were also in the spec above:
@@ -33,7 +34,6 @@ class RampFitStep (Step):
     weighting = 'optimal'  # Only weighting allowed for Build 7.1
 
     reference_file_types = ['readnoise', 'gain']
-
 
     def process(self, input):
 

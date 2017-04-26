@@ -34,6 +34,9 @@ __version__ = '0.7.4'
 import numpy as np
 from os.path import basename
 from astropy.extern import six
+from astropy.io import registry
+
+from . import ndmodel
 
 from .model_base import DataModel
 from .amilg import AmiLgModel
@@ -74,7 +77,7 @@ from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
 from .quad import QuadModel
 from .ramp import RampModel
 from .rampfitoutput import RampFitOutputModel
-from .reference import ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel 
+from .reference import ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel
 from .readnoise import ReadnoiseModel
 from .reset import ResetModel
 from .rscd import RSCDModel
@@ -82,15 +85,19 @@ from .saturation import SaturationModel
 from .spec import SpecModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
+from .traps import TrapsModel
 from .util import open
 
 
 
 __all__ = [
     'open',
+    'CombinedSpecModel',
     'DataModel', 'AmiLgModel', 'AsnModel', 'ContrastModel',
     'CubeModel', 'CubeFlatModel', 'DarkModel', 'DarkMIRIModel', 'DrizParsModel',
     'NircamDrizParsModel', 'MiriImgDrizParsModel',
+    'MiriImgOutlierParsModel', 'NircamOutlierParsModel', 'OutlierParsModel',
+    'PathlossModel', 'PixelAreaModel',
     'DrizProductModel', 'FgsPhotomModel', 'FilterModel',
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'LinearityModel',
@@ -100,14 +107,21 @@ __all__ = [
     'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
     'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'QuadModel', 'RampModel',
-    'RampFitOutputModel', 'ReadnoiseModel', 'ReferenceCubeModel', 
-    'ReferenceFileModel','ReferenceImageModel', 'ReferenceQuadModel', 
+    'RampFitOutputModel', 'ReadnoiseModel', 'ReferenceCubeModel',
+    'ReferenceFileModel', 'ReferenceImageModel', 'ReferenceQuadModel',
     'ResetModel', 'RSCDModel', 'SaturationModel', 'SpecModel',
-    'StrayLightModel']
+    'StrayLightModel', 'SuperBiasModel', 'TrapsModel']
 
 _all_models = __all__[1:]
 _local_dict = dict(locals())
 _defined_models = { k: _local_dict[k] for k in _all_models }
+
+# Initialize the astropy.io registry
+with registry.delay_doc_updates(DataModel):
+    registry.register_reader('datamodel', DataModel, ndmodel.read)
+    registry.register_writer('datamodel', DataModel, ndmodel.write)
+    registry.register_identifier('datamodel', DataModel, ndmodel.identify)
+
 
 '''
 def test(verbose=False) :
