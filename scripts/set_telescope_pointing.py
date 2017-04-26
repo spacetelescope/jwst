@@ -257,40 +257,43 @@ def add_wcs(filename):
     except ValueError as exception:
         logger.warning(
             'Cannot retrieve telescope pointing.'
-            '\nUsing proposal values.'
-            '\nFailure {}'.format(exception)
+            '\n{}'
+            '\nUsing TARG_RA, TARG_DEC and PA_V3=0 '
+            'to set pointing.'.format(exception)
         )
         ra = pheader['TARG_RA']
         dec = pheader['TARG_DEC']
         roll = 0
-        wcsinfo = (ra, dec, roll)
+        local_roll = compute_local_roll(roll, ra, dec, v2ref, v3ref)
+        wcsinfo = (ra, dec, local_roll)
         vinfo = (ra, dec, roll)
+        crval1, crval2, pa_aper_deg = wcsinfo
+        v1_ra_deg, v1_dec_deg, v3_pa_deg = vinfo
+        pa_aper_deg = local_roll - vparity * v3idlyang
     else:
         # compute relevant WCS information
-        logger.info('Successful read of Engineering Quaternions.')
+        logger.info('Successful read of engineering quaternions.')
         logger.debug('q={}'.format(q))
         logger.debug('j2fgs_matrix={}'.format(j2fgs_matrix))
         logger.debug('fsmcorr={}'.format(fsmcorr))
         wcsinfo, vinfo = calc_wcs(v2ref, v3ref, v3idlyang, vparity,
                                   q, j2fgs_matrix, fsmcorr)
+        crval1, crval2, pa_aper_deg = wcsinfo
+        v1_ra_deg, v1_dec_deg, v3_pa_deg = vinfo
+        local_roll = compute_local_roll(v3_pa_deg, crval1, crval2, v2ref, v3ref)
 
-    crval1, crval2, pa_aper_deg = wcsinfo
-    v1_ra_deg, v1_dec_deg, v3_pa_deg = vinfo
-    # update header
     pheader['RA_V1'] = v1_ra_deg
     pheader['DEC_V1'] = v1_dec_deg
     pheader['PA_V3'] = v3_pa_deg
     pheader['CRVAL1'] = crval1
     pheader['CRVAL2'] = crval2
-    pheader['PC1_1'] = np.cos(pa_aper_deg * D2R)
-    pheader['PC1_2'] = -np.sin(pa_aper_deg * D2R)
+    pheader['PC1_1'] = -np.cos(pa_aper_deg * D2R)
+    pheader['PC1_2'] = np.sin(pa_aper_deg * D2R)
     pheader['PC2_1'] = np.sin(pa_aper_deg * D2R)
     pheader['PC2_2'] = np.cos(pa_aper_deg * D2R)
     pheader['RA_REF'] = crval1
     pheader['DEC_REF'] = crval2
-    pheader['ROLL_REF'] = compute_local_roll(
-        v3_pa_deg, crval1, crval2, v2ref, v3ref
-    )
+    pheader['ROLL_REF'] = local_roll
     pheader['WCSAXES'] = len(pheader['CTYPE*'])
     hdulist.flush()
     hdulist.close()
@@ -421,8 +424,8 @@ def get_pointing(obstart, obsend, result_type='first'):
 
     if not len(results):
         raise ValueError(
-                'No non-zero quanternion found'
-                'in the DB for observation range given.'
+                'No non-zero quanternion found '
+                'in the DB between MJD {} and {}'.format(obstart, obsend)
             )
 
     if result_type == 'first':
@@ -476,9 +479,9 @@ def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
     """
     v2 = np.deg2rad(v2_ref / 3600)
     v3 = np.deg2rad(v3_ref / 3600)
-
-    angles = [-pa_v3, -dec_ref, ra_ref]
-    axes = "xyz"
+    ra_ref = np.deg2rad(ra_ref)
+    dec_ref = np.deg2rad(dec_ref)
+    pa_v3 = np.deg2rad(pa_v3)
 
     M = np.array([[cos(ra_ref) * cos(dec_ref),
                    -sin(ra_ref) * cos(pa_v3) + cos(ra_ref) * sin(dec_ref) * sin(pa_v3),

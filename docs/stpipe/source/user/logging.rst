@@ -78,7 +78,7 @@ In each section, the following may be configured:
     - ``format``: Allows one to customize what each log message
       contains.  What this string may contain is described in the
       `logging module LogRecord Attributes
-      <http://docs.python.org/library/logging.html#logrecord-attributes>`_
+      <https://docs.python.org/3/library/logging.html#logrecord-attributes>`_
       section of the Python standard library.
 
 Examples

@@ -27,8 +27,8 @@ def getCenter(exp_type, input):
         # MSA centering specified in the MiltiSlit model
         # "input" treated as a slit object
         try:
-            xcenter = input.source_xcent
-            ycenter = input.source_ycent
+            xcenter = input.source_xpos
+            ycenter = input.source_ypos
         except AttributeError:
             log.warn("Unable to get source center from model")
             log.warn("Using 0.0, 0.0")

@@ -6,12 +6,13 @@ import logging
 
 import numpy as np
 
-from ..associations import Association
+from ..associations import load_asn
 from .. import datamodels
 from . import temp_wcs
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
 
 class InputSpectrumModel(object):
     """Attributes:
@@ -69,6 +70,7 @@ class InputSpectrumModel(object):
             self.wcs = None
         self.nelem = 0
         self.weight = 1.
+
 
 class OutputSpectrumModel(object):
     """Attributes:
@@ -381,6 +383,7 @@ class OutputSpectrumModel(object):
         self.countrate_dtype = None
         self.normalized = False
 
+
 def check_exptime(exptime_key):
     """Check exptime_key for validity.
 
@@ -422,6 +425,7 @@ def check_exptime(exptime_key):
 
     return exptime_key
 
+
 def do_combine1d(asn_file, exptime_key, interpolation):
     """Combine the input spectra.
 
@@ -439,7 +443,7 @@ def do_combine1d(asn_file, exptime_key, interpolation):
     """
 
     with open(asn_file) as asn_file_handle:
-        asn = Association.load(asn_file_handle)
+        asn = load_asn(asn_file_handle)
 
     # Get the name to use for the output file.
     output_name = asn["products"][0]["name"]
@@ -479,6 +483,7 @@ def do_combine1d(asn_file, exptime_key, interpolation):
 
     out_model.save(output_name)
     out_model.close()
+
 
 def correct_model(input_file, exptime_key, interpolation):
     """Combine 1-D spectra."""

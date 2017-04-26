@@ -1,0 +1,20 @@
+{
+    "asn_rule": "n_a",
+    "asn_pool": "n_a",
+    "target": "n_a",
+    "asn_id": "a3001",
+    "constraints": "n_a",
+    "program": "n_a",
+    "asn_type": "n_a",
+    "products": [
+        {
+            "name": "user_defined",
+            "members": [
+                {
+                    "expname": "user_defined.fits",
+                    "exptype": "SCIENCE"
+                }
+            ]
+        }
+    ]
+}

@@ -1,6 +1,9 @@
-************************************
-Sky statistics functions for skypac.
-************************************
+*************************************
+skystatistics
+*************************************
+
+The ``skystatistics`` module contains various statistical
+functions used by ``skymatch.``
 
 .. moduleauthor:: Mihai Cara <help@stsci.edu>
 

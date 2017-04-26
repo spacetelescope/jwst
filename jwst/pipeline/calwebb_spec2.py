@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-from ..associations import Association
+from ..associations import load_asn
 from ..stpipe import Pipeline
 from .. import datamodels
 
@@ -71,7 +71,13 @@ class Spec2Pipeline(Pipeline):
         for member in input_table.asn['members']:
 
             input_file = member['expname']
-            self.log.debug(' Working on %s ...', input_file)
+
+            # Skip processing of non-science members
+            if member['exptype'].upper() != 'SCIENCE':
+                self.log.info('Skipping non-science input %s', input_file)
+                continue
+
+            self.log.info('Working on input %s ...', input_file)
             input = datamodels.open(input_file)
             exp_type = input.meta.exposure.type
 
@@ -86,8 +92,8 @@ class Spec2Pipeline(Pipeline):
                 log.error('No output product will be created')
                 continue
 
-            # Do background processing
-            if len(member['bkgexps']) > 0:
+            # Do background processing, if necessary
+            if 'bkgexps' in member and len(member['bkgexps']) > 0:
 
                 # Assemble the list of background exposures to use
                 bkg_list = []
@@ -106,7 +112,7 @@ class Spec2Pipeline(Pipeline):
 
             # Apply NIRSpec MSA imprint subtraction
             if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
-                if len(member['imprint']) > 0:
+                if 'imprint' in member and len(member['imprint']) > 0:
                     imprint_filename = member['imprint'][0]['expname']
                     input = self.imprint_subtract(input, imprint_filename)
 
@@ -198,39 +204,35 @@ class Spec2Pipeline(Pipeline):
 
             # Save the extracted spectrum
             if self.extract_1d.skip != True:
-                self.save_model(x1d_output, 'x1d')
+                if isinstance(input, datamodels.CubeModel):
+                    self.save_model(x1d_output, 'x1dints')
+                else:
+                    self.save_model(x1d_output, 'x1d')
                 log.info('Saved extracted spectrum to %s' % x1d_output.meta.filename)
 
             input.close()
             x1d_output.close()
 
         # We're done
-        log.info('... ending calwebb_spec2')
+        log.info('Ending calwebb_spec2')
 
         return
 
-
-import json
 
 class Lvl2Input(object):
 
     """
     Class to handle reading the input to the processing, which
     can be a single science exposure or an association table.
-    The input and output member info is loaded into an ASN table model.
+    The input member info is loaded into an ASN table model.
     """
 
-    template = {"asn_rule": "",
-              "target": "",
-              "asn_pool": "",
-              "asn_type": "",
-              "members": [
-                  {"exptype": "",
-                   "expname": "",
-                   "bkgexps": [],
-                   "imprint": []}
-                ]
-              }
+    template = {"asn_pool": "",
+                "members": [
+                  {"expname": "",
+                   "exptype": ""}
+                 ]
+                }
 
     def __init__(self, input):
 
@@ -239,24 +241,27 @@ class Lvl2Input(object):
             try:
                 # The name of an association table
                 with open(input, 'r') as input_fh:
-                    self.asn = Association.load(input_fh)
+                    self.asn = load_asn(input_fh)
             except:
                 # The name of a single image file
                 self.interpret_image_model(datamodels.open(input))
             self.poolname = self.asn['asn_pool']
+
+        elif isinstance(input, datamodels.DataModel):
+            # A single data model
+            self.filename = input.meta.filename
+            self.interpret_image_model(input)
+            self.poolname = self.asn['asn_pool']
+
         else:
             raise TypeError
 
     def interpret_image_model(self, model):
-        """ Interpret image model as a single member association data product.
+        """ Interpret image model as a single member association
         """
 
         # A single exposure was provided as input
         self.asn = self.template
-        self.asn['target'] = model.meta.target.catalog_name
-        self.asn['asn_rule'] = 'singleton'
-        self.asn['asn_type'] = 'singleton'
         self.asn['asn_pool'] = ''
-
-        self.rootname = self.filename[:self.filename.rfind('_')]
         self.asn['members'][0]['expname'] = self.filename
+        self.asn['members'][0]['exptype'] = 'science'

@@ -9,5 +9,3 @@ Association Class
 .. autoclass:: Association
    :members: add, dump, load, test_and_set_constraints,
              add_constraints
-
-.. autofunction:: validate

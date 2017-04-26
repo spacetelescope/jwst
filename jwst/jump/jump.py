@@ -4,8 +4,10 @@ import time
 import logging
 
 import numpy as np
+from ..datamodels import dqflags 
 from . import twopoint_difference as twopt
 from . import yintercept as yint
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -21,8 +23,8 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     Note that the detection methods are currently setup on the assumption
     that the input science and error data arrays will be in units of
     electrons, hence this routine scales those input arrays by the detector
-    gain. The methods assume that the read noise values will also be in units
-    of electrons.
+    gain. The methods assume that the read noise values will be in units
+    of DN.
 
     The gain is applied to the science data and error arrays using the
     appropriate instrument- and detector-dependent values for each pixel of an
@@ -35,6 +37,7 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     data = input_model.data
     err  = input_model.err
     gdq  = input_model.groupdq
+    pdq  = input_model.pixeldq
 
     ngroups = data.shape[1]
     nframes = input_model.meta.exposure.nframes
@@ -61,9 +64,23 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         log.debug('Extracting readnoise subarray to match science data')
         readnoise_2d = readnoise_model.data[ystart-1:ystop,xstart-1:xstop]
 
-    # Apply gain to the SCI and ERR arrays so they're in units of electrons
+    # Flag the pixeldq where the gain is <=0 or NaN so they will be ignored
+    wh_g = np.where( gain_2d <= 0.)  
+    if len(wh_g[0] > 0):
+        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
+        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] ) 
+
+    wh_g = np.where( np.isnan( gain_2d ))
+    if len(wh_g[0] > 0):
+        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['NO_GAIN_VALUE'] )
+        pdq[wh_g] = np.bitwise_or( pdq[wh_g], dqflags.pixel['DO_NOT_USE'] ) 
+
+    # Apply gain to the SCI, ERR, and readnoise arrays so they're in units 
+    #   of electrons
+
     data *= gain_2d
     err  *= gain_2d
+    readnoise_2d *= gain_2d
 
     # Apply the 2-point difference method as a first pass
     log.info('Executing two-point difference method')
@@ -91,8 +108,9 @@ def detect_jumps (input_model, gain_model, readnoise_model,
         elapsed = time.time() - start
         log.debug('Elapsed time = %g sec' %elapsed)
 
-    # Update the DQ array of the output model with the jump detection results
+    # Update the DQ arrays of the output model with the jump detection results
     output_model.groupdq = gdq
+    output_model.pixeldq = pdq
 
     return output_model
 

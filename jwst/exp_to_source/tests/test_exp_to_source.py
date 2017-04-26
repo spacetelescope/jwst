@@ -8,7 +8,7 @@ from ..exp_to_source import exp_to_source, multislit_to_container
 
 
 @pytest.fixture
-def run_exp_to_source(scope='module'):
+def run_exp_to_source():
     inputs = [
         MultiSlitModel(f)
         for f in helpers.INPUT_FILES
@@ -18,7 +18,7 @@ def run_exp_to_source(scope='module'):
 
 
 @pytest.fixture
-def run_multislit_to_container(scope='module'):
+def run_multislit_to_container():
     inputs = ModelContainer([MultiSlitModel(f) for f in helpers.INPUT_FILES])
     outputs = multislit_to_container(inputs)
     return inputs, outputs
