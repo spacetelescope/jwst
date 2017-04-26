@@ -1,17 +1,20 @@
-from __future__ import absolute_import, unicode_literals, division, print_function
-import importlib
+from __future__ import (absolute_import, unicode_literals, division,
+    print_function)
 
 import numpy as np
 from scipy import ndimage
 from stsci.tools import bitmask
 
 from .. import datamodels
-from .. import assign_wcs
-# from ..stpipe import Step
-
 from . import quickDeriv
 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
+
 CRBIT = np.uint32(datamodels.dqflags.pixel.get('JUMP_DET', 4))
+
 
 def do_detection(input_models, blot_models, ref_filename, **pars):
     """
