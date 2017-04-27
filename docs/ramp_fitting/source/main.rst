@@ -12,7 +12,7 @@ data cube in a second output data product.  A third, optional output product
 is also available and is produced only when the step parameter 'save_opt' is
 True (the default is False).  The output values will be in units of counts (DN)
 or counts per second.  Following a description of the fitting algorithm, these
-three type of output files are detailed below.
+three type of output files are detailed below. 
 
 
 The count rate for each pixel is determined by a linear fit to the
