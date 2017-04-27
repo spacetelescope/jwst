@@ -353,13 +353,19 @@ def flip_rotate(input_hdulist):
                     detector_column_start = 0  # corresponds to 1 in detector/IRAF coordinates
         ncols = int(float(header['NAXIS1']))
         nrows = int(float(header['NAXIS2']))
-        #
-        #  Interchange X and Y coordinates for detector #491
-        #  FASTAXIS is 2, as the detector is now read from bottom to top
-        colstart = detector_row_start + 1
-        colstop = colstart + nrows - 1
-        rowstart = detector_column_start + 1
-        rowstop = rowstart + ncols - 1
+        if input_file_types.is_nirspec_irs2(input_hdulist):
+            colstart = 1
+            colstop = 2048
+            rowstart = 1
+            rowstop = 2048
+        else:
+            #
+            #  Interchange X and Y coordinates for detector #491
+            #  FASTAXIS is 2, as the detector is now read from bottom to top
+            colstart = detector_row_start + 1
+            colstop = colstart + nrows - 1
+            rowstart = detector_column_start + 1
+            rowstop = rowstart + ncols - 1
         ncols, nrows = nrows, ncols
         fastaxis = 2
         slowaxis = 1
@@ -400,17 +406,23 @@ def flip_rotate(input_hdulist):
                     detector_column_start = 0
         ncols = int(float(header['NAXIS1']))
         nrows = int(float(header['NAXIS2']))
-        #
-        #  Interchange X and Y coordinates for detector #492 and then subtract from 2049
-        #  Fastaxis is now -2, as the detector is read from top to bottom
-        det_xmin = detector_column_start + 1
-        det_xmax = detector_column_start + ncols
-        det_ymin = detector_row_start + 1
-        det_ymax = detector_row_start + nrows
-        colstart = 2049 - det_ymax
-        colstop = 2049 - det_ymin
-        rowstart = 2049 - det_xmax
-        rowstop = 2049 - det_xmin
+        if input_file_types.is_nirspec_irs2(input_hdulist):
+            colstart = 1
+            colstop = 2048
+            rowstart = 1
+            rowstop = 2048
+        else:
+            #
+            #  Interchange X and Y coordinates for detector #492 and then subtract from 2049
+            #  Fastaxis is now -2, as the detector is read from top to bottom
+            det_xmin = detector_column_start + 1
+            det_xmax = detector_column_start + ncols
+            det_ymin = detector_row_start + 1
+            det_ymax = detector_row_start + nrows
+            colstart = 2049 - det_ymax
+            colstop = 2049 - det_ymin
+            rowstart = 2049 - det_xmax
+            rowstop = 2049 - det_xmin
         nrows, ncols = ncols, nrows
         fastaxis = -2
         slowaxis = -1

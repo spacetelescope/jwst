@@ -8,11 +8,11 @@ from .helpers import (
     BasePoolRule,
     PoolParams,
     combine_pools,
-    generate_params,
+    registry_level3_only,
     t_path
 )
 
-from .. import (AssociationRegistry, generate)
+from .. import generate
 from ..main import constrain_on_candidates
 
 
@@ -20,7 +20,11 @@ class TestLevel3Spectrographic(BasePoolRule):
 
     pools = [
         PoolParams(
-            path=glob(t_path('data/pool_*_spec_*.csv')),
+            path=[
+                t_path('data/pool_005_spec_niriss.csv'),
+                t_path('data/pool_006_spec_nirspec.csv'),
+                t_path('data/pool_007_spec_miri.csv'),
+            ],
             n_asns=7,
             n_orphaned=0
         ),
@@ -41,22 +45,22 @@ class TestLevel3Spectrographic(BasePoolRule):
     params=[
         (
             'o001',
-            'spec',
-            'jw99009-o001_spec_\d{3}_asn',
+            'spec3',
+            'jw99009-o001_spec3_\d{3}_asn',
             'jw99009-o001_t001_nirspec_f100lp-g140m',
             set(('SCIENCE', 'TARGET_ACQUISTION', 'AUTOWAVE'))
         ),
         (
             'o002',
-            'spec',
-            'jw99009-o002_spec_\d{3}_asn',
+            'spec3',
+            'jw99009-o002_spec3_\d{3}_asn',
             'jw99009-o002_t003_nirspec_f100lp-g140h',
             set(('SCIENCE', 'TARGET_ACQUISTION', 'AUTOFLAT', 'AUTOWAVE'))
         ),
         (
             'o003',
-            'nrsifu',
-            'jw99009-o003_nrsifu_\d{3}_asn',
+            'spec3',
+            'jw99009-o003_spec3_\d{3}_asn',
             'jw99009-o003_t002_nirspec_clear',
             set(('SCIENCE', 'TARGET_ACQUISTION', 'AUTOWAVE'))
         ),
@@ -68,7 +72,7 @@ def nirspec_params(request):
     gc = {
         'asn_candidate': constrain_on_candidates((cid,))
     }
-    rules = AssociationRegistry(global_constraints=gc)
+    rules = registry_level3_only(global_constraints=gc)
     asns, orphaned = generate(pool, rules)
     return asns, asn_type, asn_name, product_name, exptypes
 
@@ -94,32 +98,32 @@ def test_nirspec_modes(nirspec_params):
     params=[
         (
             'o007',
-            'mirifu',
-            'jw99009-o007_mirifu_\d{3}_asn',
+            'spec3',
+            'jw99009-o007_spec3_\d{3}_asn',
             'jw99009-o007_t001_miri',
         ),
         (
             'o008',
-            'mirifu',
-            'jw99009-o008_mirifu_\d{3}_asn',
+            'spec3',
+            'jw99009-o008_spec3_\d{3}_asn',
             'jw99009-o008_t001_miri',
         ),
         (
             'o009',
-            'mirifu',
-            'jw99009-o009_mirifu_\d{3}_asn',
+            'spec3',
+            'jw99009-o009_spec3_\d{3}_asn',
             'jw99009-o009_t001_miri'
         ),
         (
             'o010',
-            'mirifu',
-            'jw99009-o010_mirifu_\d{3}_asn',
+            'spec3',
+            'jw99009-o010_spec3_\d{3}_asn',
             'jw99009-o010_t001_miri'
         ),
         (
             'o011',
-            'mirifu',
-            'jw99009-o011_mirifu_\d{3}_asn',
+            'spec3',
+            'jw99009-o011_spec3_\d{3}_asn',
             'jw99009-o011_t001_miri'
         ),
     ]
@@ -130,7 +134,7 @@ def miri_params(request):
     gc = {
         'asn_candidate': constrain_on_candidates((cid,))
     }
-    rules = AssociationRegistry(global_constraints=gc)
+    rules = registry_level3_only(global_constraints=gc)
     asns, orphaned = generate(pool, rules)
     return asns, asn_type, asn_name, product_name
 

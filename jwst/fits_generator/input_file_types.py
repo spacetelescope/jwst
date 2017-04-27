@@ -387,6 +387,22 @@ def is_nirspec_ips(hdulist):
     except:
         return False
 
+def is_nirspec_irs2(hdulist):
+    """Returns true if the file uses NIRSPEC IRS2 readout pattern.  The
+    READOUT keyword will contain the string "IRS2"
+    """
+    keywordname = 'READOUT'
+    try:
+        keywordvalue = hdulist[0].header[keywordname]
+    except KeyError:
+        print("No keyword 'READOUT'")
+        print("Returning False for is_nirspec_irs2")
+        return False
+    if keywordvalue.upper().find('IRS2') != -1:
+        return True
+    else:
+        return False
+
 def is_tfi(hdulist):
     """Returns True if the INSTRUME string is 'TFI'."""
     try:

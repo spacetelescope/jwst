@@ -1,10 +1,11 @@
 {
     "asn_rule": "Asn_Mosaic",
-    "targname": "1",
+    "target": "1",
     "creation_time": "20160615T210324",
     "asn_pool": "jw96090_20160406T233447_pool",
     "degraded_status": "No known degraded exposures in association.",
     "program": "96090",
+    "asn_id": "o001",
     "products": [
         {
             "name": "jw96090_t001_nircam_f150w2_mosaic.fits",

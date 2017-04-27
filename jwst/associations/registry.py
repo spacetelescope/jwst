@@ -5,8 +5,6 @@ from inspect import (
     isclass,
     ismodule
 )
-import json
-import jsonschema
 import logging
 from os.path import (
     basename,
@@ -22,6 +20,7 @@ from .exceptions import (
     AssociationNotValidError,
     AssociationProcessMembers,
 )
+from .lib.callback_registry import CallbackRegistry
 
 __all__ = ['AssociationRegistry']
 
@@ -52,13 +51,21 @@ class AssociationRegistry(dict):
 
     name: str
         An identifying string, used to prefix rule names.
+
+    include_bases: bool
+        If True, include base classes not considered
+        rules.
     """
+
+    # Callback registry
+    callback = CallbackRegistry()
 
     def __init__(self,
                  definition_files=None,
                  include_default=True,
                  global_constraints=None,
-                 name=None):
+                 name=None,
+                 include_bases=False):
         super(AssociationRegistry, self).__init__()
 
         # Generate a UUID for this instance. Used to modify rule
@@ -92,7 +99,7 @@ class AssociationRegistry(dict):
             ]
             for class_name, class_object in get_classes(module):
                 logger.debug('class_name="{}"'.format(class_name))
-                if class_name.startswith(USER_ASN):
+                if include_bases or class_name.startswith(USER_ASN):
                     try:
                         rule_name = '_'.join([self.name, class_name])
                     except TypeError:
@@ -142,6 +149,8 @@ class AssociationRegistry(dict):
         logger.debug('Starting...')
         if allow is None:
             allow = self.rule_set
+        if ignore is None:
+            ignore = []
         associations = []
         process_list = []
         for name, rule in self.items():
@@ -164,29 +173,35 @@ class AssociationRegistry(dict):
 
         Parameters
         ----------
-        association: dict
+        association: association-like
             The data to validate
 
         Returns
         -------
-        schemas: list
-            List of schemas which validated
+        rules: list
+            List of rules that validated
 
         Raises
         ------
         AssociationNotValidError
             Association did not validate
         """
-        results = []
-        for schema_file in self.schemas:
-            with open(schema_file, 'r') as handle:
-                schema = json.load(handle)
+
+        # Change rule validation from an exception
+        # to a boolean
+        def is_valid(rule, association):
             try:
-                jsonschema.validate(association, schema)
-            except jsonschema.ValidationError:
-                continue
+                rule.validate(association)
+            except AssociationNotValidError:
+                return False
             else:
-                results.append(schema)
+                return True
+
+        results = [
+            rule
+            for rule_name, rule in self.items()
+            if is_valid(rule, association)
+        ]
 
         if len(results) == 0:
             raise AssociationNotValidError(
@@ -194,6 +209,77 @@ class AssociationRegistry(dict):
             )
         return results
 
+    def load(
+            self,
+            serialized,
+            format=None,
+            validate=True,
+            first=True,
+            **kwargs
+    ):
+        """Marshall a previously serialized association
+
+        Parameters
+        ----------
+        serialized: object
+            The serialized form of the association.
+
+        format: str or None
+            The format to force. If None, try all available.
+
+        validate: bool
+            Validate against the class' defined schema, if any.
+
+        first: bool
+            A serialization potentially matches many rules.
+            Only return the first succesful load.
+
+        kwargs: dict
+            Other arguments to pass to the `load` method
+
+        Returns
+        -------
+        The Association object, or the list of association objects.
+
+        Raises
+        ------
+        AssociationError
+            Cannot create or validate the association.
+        """
+        results = []
+        for rule_name, rule in self.items():
+            try:
+                results.append(
+                    rule.load(
+                        serialized,
+                        format=format,
+                        validate=validate,
+                        **kwargs
+                    )
+                )
+            except (AssociationError, AttributeError) as err:
+                lasterr = err
+                continue
+            if first:
+                break
+        if len(results) == 0:
+            logger.debug('Data did not validate against any rule.')
+            raise lasterr
+        if first:
+            return results[0]
+        else:
+            return results
+
+    def finalize(self, associations):
+        """Finalize newly generated associations
+
+        Parameters
+        ----------
+        assocations: [association[, ...]]
+            The list of associations
+        """
+        finalized = self.callback.reduce('finalize', associations)
+        return finalized
 
 # Utilities
 def import_from_file(filename):

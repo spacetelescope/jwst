@@ -20,7 +20,9 @@ Algorithm
 This routine detects jumps in an exposure by looking for outliers
 in the up-the-ramp signal for each pixel in each integration within
 an input exposure. On output, the GROUPDQ array of the data is updated to
-reflect the location of each jump that was found. The SCI, ERR, and PIXELDQ
+reflect the location of each jump that was found, and the PIXELDQ array
+is updated to have DQ flags set to NO_GAIN_VALUE and DO_NOT_USE for all 
+pixels that are non-positive or NaN in the gain array. The SCI and ERR 
 arrays of the input data are not modified.
 
 The current implementation uses the two-point difference method described 

@@ -6,6 +6,7 @@ import json
 import os
 import numpy as np
 from ..stpipe import Step, cmdline
+import logging
 from .. import datamodels
 from . import cube_build_io
 from . import cube_build
@@ -14,6 +15,9 @@ from . import CubeCloud
 from . import cube_model
 from . import InstrumentDefaults
 from . import coord
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 1
 class CubeBuildStep (Step):
     """
@@ -67,21 +71,20 @@ class CubeBuildStep (Step):
         if(self.wavemax !=None): self.log.info('Setting Maximum wavelength of spectral cube to: %f',
                                               self.wavemax)
 
-
         self.debug_pixel = 0
         if(self.xdebug !=None and self.ydebug !=None and self.zdebug !=None):
             self.debug_pixel = 1
-
             self.log.info('Writing debug information for spaxel %i %i %i',self.xdebug,self.ydebug,
                           self.zdebug)
-
             self.log.debug('Writing debug information for spaxel %i %i %i',self.xdebug,self.ydebug,
                           self.zdebug)
             self.xdebug = self.xdebug -1
             self.ydebug = self.ydebug -1
             self.zdebug = self.zdebug -1
+            self.spaxel_debug = open('cube_spaxel_info.results','w')
+            self.spaxel_debug.write('Writing debug information for spaxel %i %i %i' %
+                                    (self.xdebug,self.ydebug,self.zdebug) + '\n')
 
-        print('write debug results',self.debug_pixel)
         # valid coord_system:
         # 1. alpha-beta (only valid for MIRI Single Cubes)
         # 2. ra-dec
@@ -121,7 +124,6 @@ class CubeBuildStep (Step):
 
         # input read parameters - Channel, Band (Subchannel), Grating, Filter
         cube_build_io.Read_User_Input(self)
-
 #_________________________________________________________________________________________________
         #Read in the input data - either in form of ASSOCIATION table or single filename
         # If a single file - then assocation table format is filled in
@@ -161,10 +163,8 @@ class CubeBuildStep (Step):
         cube_build_io.DetermineCubeCoverage(self, MasterTable)
         cube_build.CheckCubeType(self)
 
-
         self.output_name_base = input_table.asn_table['products'][0]['name']
         self.output_name = cube_build_io.UpdateOutPutName(self)
-
 #________________________________________________________________________________
 
 # Cube is an instance of CubeInfo - which holds basic information on Cube
@@ -202,17 +202,26 @@ class CubeBuildStep (Step):
         if self.scale2 != 0.0:
             b_scale = self.scale2
 
+
         wscale = scale[2]
+        # temp fix for large cubes - need to change to variable wavelength scale
+        if self.scalew == 0 and self.metadata['num_bands'] > 6:   
+                wscale  = wscale*2            
+        if self.scalew == 0 and self.metadata['num_bands'] > 9:   
+                wscale  = wscale*2            
+
         if self.scalew != 0.0:
             wscale = self.scalew
 
+
+
+            
 
         Cube.SetScale(a_scale, b_scale, wscale)
         self.scale1 = Cube.Cdelt1
         self.scale2 = Cube.Cdelt2
         self.scalew = Cube.Cdelt3
 
-        t0 = time.time()
 #________________________________________________________________________________
 # find the min & max final coordinates of cube: map each slice to cube
 # add any dither offsets, then find the min & max value in each dimension
@@ -222,9 +231,6 @@ class CubeBuildStep (Step):
         CubeFootPrint = cube_build.DetermineCubeSize(self, Cube, 
                                                          MasterTable, 
                                                          InstrumentInfo)
-
-        t1 = time.time()
-#        print("Time to determine size of cube = %.1f.s" % (t1 - t0,))
 
             # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
             # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
@@ -250,15 +256,8 @@ class CubeBuildStep (Step):
 
             # now you have the size of cube - create an instance for each spaxel
             # create an empty spaxel list - this will become a list of Spaxel classses
-#        spaxel = []
-#        t0 = time.time()
-#        for z in range(Cube.naxis3):
-#            for y in range(Cube.naxis2):
-#                for x in range(Cube.naxis1):
-#                    spaxel.append(cube.Spaxel())                        
-#        t1 = time.time()
-#        print("Time to create list of spaxel classes = %.1f.s" % (t1 - t0,))
-        t0 = time.time()
+
+
         spaxel = []
         total_num = Cube.naxis1*Cube.naxis2*Cube.naxis3
 
@@ -268,9 +267,6 @@ class CubeBuildStep (Step):
         else:
             for t in range(total_num):
                 spaxel.append(cube.SpaxelAB())
-
-        t1 = time.time()
-        print("Time to create list of spaxel classes = %.1f.s" % (t1 - t0,))
 
 
         t0 = time.time()
@@ -288,43 +284,24 @@ class CubeBuildStep (Step):
             this_par1 = parameter1[i]
             this_par2 = parameter2[i]            
             
-            self.log.info("Working on Band defined by:%s %s " ,this_par1,this_par2)
+            self.log.debug("Working on Band defined by:%s %s " ,this_par1,this_par2)
 
-
-            Cloud = cube_build.MapDetectorToCube(self, 
-                                                 this_par1, this_par2, 
-                                                 Cube, spaxel, 
-                                                 MasterTable, 
-                                                 InstrumentInfo,
-                                                 IFUCube)
-            if(i==0):  # If first time
-                PixelCloud = Cloud
-            else:    #  add information for another slice  to the  PixelCloud
-                PixelCloud = np.hstack((PixelCloud, Cloud))
-
-#             if i == 0:
-#                 PixelCloud = np.zeros((Cloud.shape[0], Cloud.shape[1]*number_bands))
-#             PixelCloud[:, i*Cloud.shape[1]] = Cloud
-
-#            print(Cloud.shape,PixelCloud.shape)
-
+            cube_build.MapDetectorToCube(self, 
+                                         this_par1, this_par2, 
+                                         Cube, spaxel, 
+                                         MasterTable, 
+                                         InstrumentInfo)
 
         t1 = time.time()
-        self.log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
+#        self.log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
 
 #_______________________________________________________________________
 # Mapped all data to cube or Point Cloud
 # now determine Cube Spaxel flux
 
-        t0 = time.time()
-        if self.interpolation == 'pointcloud':
-            CubeCloud.FindROI(self, Cube, spaxel, PixelCloud)
-        t1 = time.time()
-        self.log.info("Time to find the ROI = %.1f.s" % (t1 - t0,))
-
 
         t0 = time.time()
-        cube_build.FindCubeFlux(self, Cube, spaxel, PixelCloud)
+        cube_build.FindCubeFlux(self, Cube, spaxel)
 
         t1 = time.time()
         self.log.info("Time find Cube Flux= %.1f.s" % (t1 - t0,))
@@ -333,18 +310,18 @@ class CubeBuildStep (Step):
         result = cube_model.UpdateIFUCube(self, Cube,IFUCube, spaxel)
 
 # write out the IFU cube
-        print(self.CubeType) 
+#        print(self.CubeType) 
         if self.CubeType == 'File' or self.CubeType =='ASN' :
-            print('Default output file name',self.output_file)
+#            print('Default output file name',self.output_file)
             root, ext = os.path.splitext(self.output_file)
             default = root.find('cube_build') # the user has not provided a name
-            print('default',default)
             if(default != -1):
                 self.output_file = IFUCube.meta.filename
 #            IFUCube.save(IFUCube.meta.filename)
-            print('Output name',self.output_file)
+#            print('Output name',self.output_file)
         IFUCube.close()
-
+        if(self.debug_pixel ==1):
+            self.spaxel_debug.close()
         return result
 
 

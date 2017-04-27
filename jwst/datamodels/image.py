@@ -26,11 +26,14 @@ class ImageModel(model_base.DataModel):
 
     relsens : numpy array
         The relative sensitivity table.
+
+    relsens2d: numpy array
+        The relative sensitivty 2D array.
     """
     schema_url = "image.schema.yaml"
 
     def __init__(self, init=None, data=None, dq=None, err=None, relsens=None,
-                 zeroframe=None, area=None, **kwargs):
+                 relsens2d=None, zeroframe=None, area=None, **kwargs):
         super(ImageModel, self).__init__(init=init, **kwargs)
 
         if data is not None:
@@ -44,6 +47,9 @@ class ImageModel(model_base.DataModel):
 
         if relsens is not None:
             self.relsens = relsens
+
+        if relsens2d is not None:
+            self.relsens2d = relsens2d
 
         if zeroframe is not None:
             self.zeroframe = zeroframe

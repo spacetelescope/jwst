@@ -1,0 +1,18 @@
+title: Traps data model
+allOf:
+- $ref: referencefile.schema.yaml
+- type: object
+  properties:
+    traps_table:
+      title: Trap capture and decay parameters
+      fits_hdu: TRAPS
+      datatype:
+      - name: capture0
+        datatype: float64
+      - name: capture1
+        datatype: float64
+      - name: capture2
+        datatype: float64
+      - name: decay_param
+        datatype: float64
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

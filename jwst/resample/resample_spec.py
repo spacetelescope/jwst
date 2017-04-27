@@ -92,11 +92,9 @@ class ResampleSpecData(object):
             self.build_nirspec_output_wcs()
         elif instr_name in ['MIRI']:
             self.build_miri_output_wcs()
-        else:
-            raise NotImplementedError('Only NIRSPEC and MIRI are supported.')
-        self.build_size_from_domain()
+        self.build_size_from_bounding_box()
         self.blank_output = datamodels.DrizProductModel(self.data_size)
-        self.blank_output.assign_wcs(self.output_wcs)
+        self.blank_output.meta.wcs = self.output_wcs
 
         # Default to defining output models metadata as
         # a copy of the first input_model's metadata
@@ -119,13 +117,13 @@ class ResampleSpecData(object):
         ref_model = datamodels.DrizParsModel(self.ref_filename)
         # look for row that applies to this set of input data models
         # NOTE:
-        # This logic could be replaced by a method added to the DrizParsModel 
+        # This logic could be replaced by a method added to the DrizParsModel
         # object to select the correct row based on a set of selection params
         row = None
         drizpars = ref_model.drizpars_table
 
         filter_match = False # flag to support wild-card rows in drizpars table
-        for n, filt, num in zip(range(1, drizpars.numimages.shape[0] + 1), 
+        for n, filt, num in zip(range(1, drizpars.numimages.shape[0] + 1),
             drizpars.filter, drizpars.numimages):
             # only remember this row if no exact match has already been made for
             # the filter. This allows the wild-card row to be anywhere in the
@@ -167,12 +165,14 @@ class ResampleSpecData(object):
         if refwcs == None:
             refwcs = input_model.meta.wcs
 
-        # Generate grid of sky coordinates for area within domain
-        det = x, y = wcstools.grid_from_domain(refwcs.domain)
+        # Generate grid of sky coordinates for area within bounding box
+        bb = refwcs.bounding_box
+        det = x, y = wcstools.grid_from_bounding_box(bb, step=(1, 1),
+            center=True)
         sky = ra, dec, lam = refwcs(*det)
-        domain_xsize = refwcs.domain[0]['upper'] - refwcs.domain[0]['lower']
-        domain_ysize = refwcs.domain[1]['upper'] - refwcs.domain[1]['lower']
-        x_center, y_center = int(domain_xsize / 2), int(domain_ysize / 2)
+        x_center = int((bb[0][1] - bb[0][0]) / 2)
+        y_center = int((bb[1][1] - bb[1][0]) / 2)
+        log.debug("Center of bounding box: {}  {}".format(x_center, y_center))
 
         # Compute slit angular size, slit center sky coords
         xpos = []
@@ -181,11 +181,11 @@ class ResampleSpecData(object):
             if np.isnan(row[x_center]):
                 xpos.append(np.nan)
             else:
-                f = interpolate.interp1d(row[x_center-sz+1:x_center+sz],
-                    x[y_center, x_center-sz+1:x_center+sz])
+                f = interpolate.interp1d(row[x_center - sz + 1:x_center + sz],
+                    x[y_center, x_center - sz + 1:x_center + sz])
                 xpos.append(f(lam[y_center, x_center]))
-        x_arg = np.array(xpos)[~np.isnan(lam[:,x_center])]
-        y_arg = y[~np.isnan(lam[:,x_center]),x_center]
+        x_arg = np.array(xpos)[~np.isnan(lam[:, x_center])]
+        y_arg = y[~np.isnan(lam[:,x_center]), x_center]
         # slit_coords, spect0 = refwcs(x_arg, y_arg, output='numericals_plus')
         slit_ra, slit_dec, slit_spec_ref = refwcs(x_arg, y_arg)
         slit_coords = SkyCoord(ra=slit_ra, dec=slit_dec, unit=u.deg)
@@ -215,10 +215,11 @@ class ResampleSpecData(object):
 
         # Compute slit angle relative (clockwise) to y axis
         slit_rot_angle = (np.arcsin(dx / slit_npix) * u.radian).to(u.degree)
+        slit_rot_angle = slit_rot_angle.value
         log.debug('Slit rotation angle: {0}'.format(slit_rot_angle))
 
         # Compute transform for output frame
-        roll_ref = input_model.meta.wcsinfo.roll_ref * u.deg
+        roll_ref = input_model.meta.wcsinfo.roll_ref
         min_lam = np.nanmin(lam)
         offset = Shift(-slit_center_pix) & Shift(-slit_center_pix)
         # TODO: double-check the signs on the following rotation angles
@@ -240,16 +241,14 @@ class ResampleSpecData(object):
         output_frame = refwcs.output_frame
         wnew = WCS(output_frame=output_frame, forward_transform=transform)
 
-        # Build the domain in the output frame wcs object
-        domain_grid = wnew.backward_transform(*sky)
-        domain = []
+        # Build the bounding_box in the output frame wcs object
+        bounding_box_grid = wnew.backward_transform(ra, dec, lam)
+        bounding_box = []
         for axis in input_frame.axes_order:
-            axis_min = np.nanmin(domain_grid[axis])
-            axis_max = np.nanmax(domain_grid[axis]) + 1
-            domain.append({'lower': axis_min, 'upper': axis_max,
-                'includes_lower': True, 'includes_upper': False})
-        log.debug('Domain: {0} {1}'.format(domain[1]['lower'], domain[1]['upper']))
-        wnew.domain = domain
+            axis_min = np.nanmin(bounding_box_grid[axis])
+            axis_max = np.nanmax(bounding_box_grid[axis])
+            bounding_box.append((axis_min, axis_max))
+        wnew.bounding_box = tuple(bounding_box)
 
         # Update class properties
         self.output_spatial_scale = spatial_scale
@@ -267,8 +266,8 @@ class ResampleSpecData(object):
         if refwcs == None:
             refwcs = input_model.meta.wcs
 
-        # Generate grid of sky coordinates for area within domain
-        x, y = wcstools.grid_from_domain(refwcs.domain)
+        x, y = wcstools.grid_from_bounding_box(refwcs.bounding_box, step=(1, 1),
+            center=True)
         ra, dec, lam = refwcs(x.flatten(), y.flatten())
         # TODO: once astropy.modeling._Tabular is fixed, take out the
         # flatten() and reshape() code above and below
@@ -295,15 +294,15 @@ class ResampleSpecData(object):
 
         # Get the slit size at the center of the dispersion
         sky_coords = SkyCoord(ra=ra, dec=dec, unit=u.deg)
-        slit_coords = sky_coords[int(sky_coords.shape[0]/2)]
+        slit_coords = sky_coords[int(sky_coords.shape[0] / 2)]
         slit_angular_size = slit_coords[0].separation(slit_coords[-1])
         log.debug('Slit angular size: {0}'.format(slit_angular_size.arcsec))
 
-        # Compute slit center from domain
-        dx0 = refwcs.domain[0]['lower']
-        dx1 = refwcs.domain[0]['upper']
-        dy0 = refwcs.domain[1]['lower']
-        dy1 = refwcs.domain[1]['upper']
+        # Compute slit center from bounding_box
+        dx0 = refwcs.bounding_box[0][0]
+        dx1 = refwcs.bounding_box[0][1]
+        dy0 = refwcs.bounding_box[1][0]
+        dy1 = refwcs.bounding_box[1][1]
         slit_center_pix = (dx1 - dx0) / 2
         dispersion_center_pix = (dy1 - dy0) / 2
         slit_center = refwcs_minus_rot(dx0 + slit_center_pix, dy0 +
@@ -316,7 +315,7 @@ class ResampleSpecData(object):
         spatial_scale = slit_angular_size / slit_coords.shape[0]
         log.debug('Spatial scale: {0}'.format(spatial_scale.arcsec))
         tcenter = int((dx1 - dx0) / 2)
-        trace = lam[:,tcenter]
+        trace = lam[:, tcenter]
         trace = trace[~np.isnan(trace)]
         spectral_scale = np.abs((trace[-1] - trace[0]) / trace.shape[0])
         log.debug('spectral scale: {0}'.format(spectral_scale))
@@ -347,18 +346,15 @@ class ResampleSpecData(object):
         output_frame = refwcs.output_frame
         wnew = WCS(output_frame=output_frame, forward_transform=transform)
 
-        # Build the domain in the output frame wcs object
-        domain_grid = wnew.backward_transform(ra, dec, lam)
+        # Build the bounding_box in the output frame wcs object
+        bounding_box_grid = wnew.backward_transform(ra, dec, lam)
 
-        domain = []
+        bounding_box = []
         for axis in input_frame.axes_order:
-            axis_min = np.nanmin(domain_grid[axis])
-            axis_max = np.nanmax(domain_grid[axis]) + 1
-            domain.append({'lower': axis_min, 'upper': axis_max,
-                'includes_lower': True, 'includes_upper': False})
-        log.debug('Domain: {0} {1}'.format(domain[0]['lower'], domain[0]['upper']))
-        log.debug('Domain: {0} {1}'.format(domain[1]['lower'], domain[1]['upper']))
-        wnew.domain = domain
+            axis_min = np.nanmin(bounding_box_grid[axis])
+            axis_max = np.nanmax(bounding_box_grid[axis])
+            bounding_box.append((axis_min, axis_max))
+        wnew.bounding_box = tuple(bounding_box)
 
         # Update class properties
         self.output_spatial_scale = spatial_scale
@@ -366,14 +362,14 @@ class ResampleSpecData(object):
         self.output_wcs = wnew
 
 
-    def build_size_from_domain(self, refwcs=None):
-        """ Compute the size of the output frame based on the domain
+    def build_size_from_bounding_box(self, refwcs=None):
+        """ Compute the size of the output frame based on the bounding_box
         """
         if refwcs == None:
             refwcs = self.output_wcs
         size = []
-        for axis in refwcs.domain:
-            delta = axis['upper'] - axis['lower']
+        for axis in refwcs.bounding_box:
+            delta = axis[1] - axis[0]
             size.append(int(delta + 0.5))
         self.data_size = tuple(reversed(size))
 
@@ -412,7 +408,7 @@ class ResampleSpecData(object):
             # # TODO: do this properly in wcs_from_spec_footprints()
             # output_model.meta.wcs.domain = self.output_wcs.domain
             # # Instead we do a cludge below to get the domain to not be neg.
-            output_model.meta.wcs.domain = resample_utils.create_domain(
+            output_model.meta.wcs.bounding_box = resample_utils.create_bounding_box(
                 self.output_wcs, output_model.data.shape)
             output_model.meta.filename = obs_product
 

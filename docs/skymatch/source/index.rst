@@ -1,16 +1,11 @@
-Welcome to skymatch documentation!
-==================================
-
-Contents:
+JWST Science Calibration Pipeline: Sky Matching
+================================================
 
 .. toctree::
    :maxdepth: 2
 
-   skymatch
-   skyimage
-   region
-   skystatistics
-   skymatch_step
+   description.rst
+   functions.rst
 
 Indices and tables
 ==================

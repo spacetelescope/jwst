@@ -15,6 +15,10 @@ from drizzle import doblot
 from drizzle import cdrizzle
 from . import resample_utils
 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 
 class GWCSDrizzle(object):
     """
@@ -235,45 +239,6 @@ class GWCSDrizzle(object):
                             pixfrac=self.pixfrac, kernel=self.kernel,
                             fillval=self.fillval)
 
-    def blot_fits_file(self, infile, interp='poly5', sinscl=1.0):
-        """
-        Resample the output using another image's world coordinate system.
-
-        Parameters
-        ----------
-
-        infile : str
-            The name of the fits file containing the world coordinate
-            system that the output file will be resampled to. The name may
-            possibly include an extension.
-
-        interp : str, optional
-            The type of interpolation used in the resampling. The
-            possible values are "nearest" (nearest neighbor interpolation),
-            "linear" (bilinear interpolation), "poly3" (cubic polynomial
-            interpolation), "poly5" (quintic polynomial interpolation),
-            "sinc" (sinc interpolation), "lan3" (3rd order Lanczos
-            interpolation), and "lan5" (5th order Lanczos interpolation).
-
-        sincscl : float, optional
-            The scaling factor for sinc interpolation.
-        """
-        blotwcs = None
-
-        fileroot, extn = util.parse_filename(infile)
-
-        if os.path.exists(fileroot):
-            handle = fits.open(fileroot)
-            hdu = util.get_extn(handle, extn=extn)
-
-            if hdu is not None:
-                blotwcs = wcs.WCS(header=hdu.header)
-            handle.close()
-
-        if not blotwcs:
-            raise ValueError("Drizzle did not get a blot reference image")
-
-        self.blot_image(blotwcs, interp=interp, sinscl=sinscl)
 
     def blot_image(self, blotwcs, interp='poly5', sinscl=1.0):
         """
@@ -495,10 +460,8 @@ def dodrizzle(insci, input_wcs, inwht,
     pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs)
     pixmap[np.isnan(pixmap)] = -1
 
-    #
     # Call 'drizzle' to perform image combination
-    # This call to 'cdriz.tdriz' uses the new C syntax
-    #
+    log.info('Starting drizzle...')
     _vers, nmiss, nskip = cdrizzle.tdriz(
         insci, inwht, pixmap, outsci, outwht, outcon,
         uniqid=uniqid, xmin=xmin, xmax=xmax,

@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 from . import helpers
 
-from .. import (AssociationRegistry, AssociationPool, generate)
+from .. import generate
 
 
 class TestLevel3WFS(helpers.BasePoolRule):
@@ -21,7 +21,7 @@ class TestLevel3WFS(helpers.BasePoolRule):
     ]
 
     def test_wfs_product_name(self):
-        rules = AssociationRegistry()
+        rules = helpers.registry_level3_only()
         pool = helpers.combine_pools(
             helpers.t_path('data/pool_004_wfs.csv')
         )

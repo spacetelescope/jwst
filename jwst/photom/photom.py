@@ -5,6 +5,7 @@
 import logging
 import numpy as np
 from .. import datamodels
+from .. datamodels import dqflags
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -13,8 +14,7 @@ PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
 
 class DataSet(object):
     """
-    Input dataset whose SCI header will have photom factor
-        written to as PHOTMJSR
+    Input dataset to which the photom information will be attached
 
     Parameters
     ----------
@@ -55,6 +55,9 @@ class DataSet(object):
         self.grating = None
         if model.meta.instrument.grating is not None:
             self.grating = model.meta.instrument.grating.upper()
+        self.band = None
+        if model.meta.instrument.band is not None:
+            self.band = model.meta.instrument.band.upper()
         self.slitnum = -1
 
         log.debug('Using instrument: %s', self.instrument)
@@ -66,6 +69,8 @@ class DataSet(object):
             log.debug(' pupil: %s', self.pupil)
         if self.grating is not None:
             log.debug(' grating: %s', self.grating)
+        if self.band is not None:
+            log.debug(' band: %s', self.band)
 
 
     def calc_nirspec(self, ftab):
@@ -232,20 +237,32 @@ class DataSet(object):
 
         # Simple ImageModels
         else:
+
+            # Hardwire the science data order number to 1 for now
             order = 1
 
             # Locate matching row in reference file
             for tabdata in ftab.phot_table:
-
                 ref_filter = tabdata['filter'].strip().upper()
                 ref_pupil = tabdata['pupil'].strip().upper()
                 ref_order = tabdata['order']
 
-                # Find matching values of FILTER, PUPIL, ORDER
-                if (self.filter == ref_filter and self.pupil == ref_pupil
-                    and order == ref_order):
-                    conv_factor = self.photom_io(tabdata)
-                    break
+                # Spectroscopic mode
+                if self.exptype in ['NIS_SOSS', 'NIS_WFSS']:
+
+                    # Find matching values of FILTER, PUPIL, and ORDER
+                    if (self.filter == ref_filter and self.pupil == ref_pupil
+                        and order == ref_order):
+                        conv_factor = self.photom_io(tabdata)
+                        break
+
+                # Imaging mode
+                else:
+
+                    # Find matching values of FILTER and PUPIL
+                    if (self.filter == ref_filter and self.pupil == ref_pupil):
+                        conv_factor = self.photom_io(tabdata)
+                        break
 
             if conv_factor is not None:
                 return float(conv_factor)
@@ -309,17 +326,42 @@ class DataSet(object):
         # MRS detectors
         elif self.detector == 'MIRIFUSHORT' or self.detector == 'MIRIFULONG':
 
-            # Get the BAND value of the input data model
-            band = self.input.meta.instrument.band.strip().upper()
-            log.debug(' band: %s', band)
+            # Reset conversion and pixel size values with DQ=NON_SCIENCE to 1,
+            # so no conversion is applied
+            where_dq = np.bitwise_and(ftab.dq, dqflags.pixel['NON_SCIENCE'])
+            ftab.data[where_dq > 0] = 1.0
+            ftab.pixsiz[where_dq > 0] = 1.0
 
-            # Find the matching row in reference file
-            for tabdata in ftab.phot_table:
+            # Reset NaN's in conversion array to 1
+            where_nan = np.isnan(ftab.data)
+            ftab.data[where_nan] = 1.0
 
-                ref_band = tabdata['band'].strip().upper()
-                if band == ref_band:
-                    conv_factor = self.photom_io(tabdata)
-                    break
+            # Reset zeros in pixsiz array to 1
+            where_zero = np.where(ftab.pixsiz == 0.0)
+            ftab.pixsiz[where_zero] = 1.0
+
+            # Make sure all NaN's and zeros have DQ flags set
+            ftab.dq[where_nan] = np.bitwise_or(ftab.dq[where_nan],
+                                               dqflags.pixel['NON_SCIENCE'])
+            ftab.dq[where_zero] = np.bitwise_or(ftab.dq[where_zero],
+                                                dqflags.pixel['NON_SCIENCE'])
+
+            # Divide the science data and err by the conversion factors
+            self.input.data /= ftab.data*ftab.pixsiz
+            self.input.err /= ftab.data*ftab.pixsiz
+
+            # Update the science dq
+            self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
+
+            # Store the 2D sensitivity factors
+            self.input.relsens2d = ftab.data*ftab.pixsiz
+
+            # Retrieve the scalar conversion factor from the reference data
+            conv_factor = ftab.meta.photometry.conversion_megajanskys
+
+            # Update BUNIT values for the science data and err
+            self.input.meta.bunit_data = 'mJy/arcsec^2'
+            self.input.meta.bunit_err = 'mJy/arcsec^2'
 
         if conv_factor is not None:
             return float(conv_factor)
@@ -584,7 +626,7 @@ class DataSet(object):
             conv_factor = 0.0
 
         if area_fname is not None: # Load and save the pixel area info
-            if 'IMAGE' in self.exptype:
+            if 'IMAGE' in self.exptype and area_fname != 'N/A':
                 result = self.save_area_info(ftab, area_fname)
 
         # Store the conversion factors in the meta data
@@ -607,7 +649,7 @@ class DataSet(object):
         Returns
         -------
         self.input: DM object
-            input DM object with photom key word PHOTMJSR updated
+            input DM object with conversion factors attached/applied
 
         """
         photom_fname = self.phot_file
