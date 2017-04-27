@@ -21,7 +21,7 @@ class JumpStep(Step):
     # As of 04/26/17, do_yintercept is not an option. Only the 2-point 
     #   difference method is allowed for Build 7.1.
     do_yintercept = False  # do_intercept is no longer an option     
-    yint_threshold = 0.0   # placeholder in case algorithm is re-enabled later
+    yint_threshold = 1.0   # placeholder in case algorithm is re-enabled later
 
     reference_file_types = ['gain', 'readnoise']
 
