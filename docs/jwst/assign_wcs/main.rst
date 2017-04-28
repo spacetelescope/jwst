@@ -46,7 +46,7 @@ Calling it as a function with detector positions as inputs returns the
 corresponding world coordinates. Using MIRI LRS fixed slit as an example:
 
 >>> from jwst.datamodels import ImageModel
->>> exp = ImagModel(miri_fixed_assign_wcs.fits')
+>>> exp = ImageModel(miri_fixed_assign_wcs.fits')
 >>> ra, dec, lam = exp.meta.wcs(x, y)
 >>> print(ra, dec, lam)
     (329.97260532549336, 372.0242999250267, 5.4176100046836675)
@@ -73,7 +73,7 @@ multiple-integration datasets the step will accept either of these data products
 the slope results for each integration in the exposure, or the single slope image
 that is the result of averaging over all integrations.
 
-jwst.assign_wcsis based on gwcs and uses the modeling, units and coordinates subpackages in astropy.
+jwst.assign_wcs is based on gwcs and uses the modeling, units and coordinates subpackages in astropy.
 
 Software dependencies:
 

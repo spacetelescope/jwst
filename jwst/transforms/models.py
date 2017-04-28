@@ -4,7 +4,8 @@ Some of these may go in astropy.modeling in the future.
 """
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import, division, unicode_literals, print_function
+from __future__ import (absolute_import, division, unicode_literals,
+                        print_function)
 import math
 from collections import namedtuple
 import numpy as np
@@ -12,14 +13,30 @@ from astropy.modeling.core import Model
 from astropy.modeling.parameters import Parameter, InputParameterError
 from astropy.modeling.models import Polynomial2D
 from astropy.utils import isiterable
-from astropy import units as u
 
 
-__all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
-           'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
-           'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa',
-           'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit',
-           'MIRI_AB2Slice', 'V2V3ToIdeal', 'IdealToV2V3']
+__all__ = ['AngleFromGratingEquation',
+           'WavelengthFromGratingEquation',
+           'NRSZCoord',
+           'Unitless2DirCos',
+           'DirCos2Unitless',
+           'Rotation3DToGWA',
+           'Gwa2Slit',
+           'Slit2Msa',
+           'Snell',
+           'Logical',
+           'NirissSOSSModel',
+           'V23ToSky',
+           'Slit',
+           'NIRCAMForwardGrismDispersion',
+           'NIRCAMBackwardGrismDispersion',
+           'MIRI_AB2Slice',
+           'SkyObject',
+           'GrismObject',
+           'NIRISSForwardGrismDispersion',
+           'NIRISSBackwardGrismDispersion',
+           'V2V3ToIdeal',
+           'IdealToV2V3']
 
 
 # Number of shutters per quadrant
@@ -30,22 +47,157 @@ Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
                            "ymin", "ymax", "quadrant", "source_id", "nshutters",
                            "source_name", "source_alias", "stellarity",
                            "source_xpos", "source_ypos"])
-Slit.__new__.__defaults__= ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, "", "", "", 0.0, 0.0, 0.0)
+Slit.__new__.__defaults__ = ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, "", "", "",
+                             0.0, 0.0, 0.0)
+
+# WFSS Object definition, these are objects identified from the direct image
+# catalog associated with the grism exposure
+SkyObject = namedtuple('SkyObject', ["name",
+                                     "catalog_id",
+                                     "xcen",
+                                     "ycen",
+                                     "catalog_xcentroid",
+                                     "catalog_ycentroid",
+                                     "ra_icrs_centroid",
+                                     "dec_icrs_centroid",
+                                     "area",
+                                     "stellarity",
+                                     "source_sum",
+                                     "source_sum_err",
+                                     "semimajor_axis_sigma",
+                                     "semiminor_axis_sigma",
+                                     "orientation_sky",
+                                     "orientation",
+                                     "abmag",
+                                     "abmag_error"])
+
+SkyObject.__new__.__defaults__ = ("", "", 0, 0, 0, 0, 0, 0, 0, 0, 0,
+                                  0, 0, 0, 0, 0, 0, 0)
+
+
+class LinearTraceDispersion(Model):
+    """This model calculates the dispersion extent of pixels for row and column.
+
+    The dispersion is relative to the input x and y center from the dispersed
+    image, and is currently linear. The evaluation here is only dependent
+    on t, x and y are input parameters for consistency with higher order
+    models.
+
+
+    Parameters:
+    -----------
+    xcoeff : list
+        The list of coefficients for the polynomial model in x
+    ycoeff : list
+        The list of coefficients for the polynomial model in y
+    lcoeff : list
+        The list of coefficients for the polynomial model in l
+    x_in : int,float,list
+        Input x coordinate(s)
+    y_in : int,float,list
+        Input y coordinate(s)
+
+    Notes:
+    ------
+    LOOK AWAY! LOOK AWAY!
+
+    """
+
+    standard_broadcasting = False
+    seperable = False
+    fittable = False
+    linear = True
+
+    inputs = ("t_in", "x_in", "y_in")
+    outputs = ("x_out,", "y_out", "lam_out")
+
+    def __init__(self, xcoeff, ycoeff, lcoeff, name=None, meta=None):
+        self._x_coeff = xcoeff
+        self._y_coeff = ycoeff
+        self._l_coeff = lcoeff
+        super(LinearTraceDispersion, self).__init__(name=name, meta=meta)
+
+    @property
+    def xcoeff(self):
+        return self._x_coeff
+
+    @xcoeff.setter
+    def xcoeff(self, xcoeff):
+        if not isinstance(xcoeff, (list, np.ndarray)):
+            raise TypeError("Unexpect type for xcoeff ")
+        if len(xcoeff) != 2:
+            raise ValueError("Coefficient list not expected length (2)")
+        self._x_coeff = np.asarray(xcoeff, dtype=np.float)
+
+    @property
+    def ycoeff(self):
+        return self._y_coeff
+
+    @ycoeff.setter
+    def ycoeff(self, ycoeff):
+        if not isinstance(ycoeff, (list, np.ndarray)):
+            raise TypeError("Unexptect type for ycoeff")
+        if len(ycoeff) != 2:
+            raise ValueError("Coefficient list not expected length (2)")
+        self._y_coeff = np.asarray(ycoeff, dtype=np.float)
+
+    @property
+    def lcoeff(self):
+        return self._l_coeff
+
+    @lcoeff.setter
+    def lcoeff(self, lcoeff):
+        if not isinstance(lcoeff, (list, np.ndarray)):
+            raise TypeError("Unexpected type for lcoeff")
+        if len(lcoeff) != 2:
+            raise ValueError("Coefficient list not expected length (2)")
+        self._l_coeff = np.asarray(lcoeff, dtype=np.float)
+
+    def evaluate(self, t_in, x_in=0, y_in=0):
+        """Return the valid pixel(s) and wavelengths for input t range
+
+        Parameters:
+        -----------
+        t_in : int,float,list
+            Input location along trace, where 0 is the - and 1 is the + edge
+
+        Returns:
+        --------
+        The valid row pixel(s) for the trace locations (t) that were specified.
+
+        Notes:
+        ------
+        This currently evaluates the linear polynomial dependent only on the
+        value of t because higher orders have not yet been defined for NIRCAM
+
+        """
+        if isinstance(t_in, (float, int, list, np.ndarray)):
+            t = np.array(t_in, dtype=np.float)
+        else:
+            raise TypeError("t_in is unexpected type")
+        if (np.any(np.where((t > 0.) and (t < 1.)))):
+            raise ValueError("t_in should be between zero and one")
+
+        row_dispersion = self._x_coeff[0] + t * self._x_coeff[1]
+        column_dispersion = self._y_coeff[0] + t * self._y_coeff[1]
+        waves = self._l_coeff[0] + t * self._l_coeff[1]
+
+        return (row_dispersion, column_dispersion, waves)
 
 
 class MIRISelector(Model):
     """
     """
-    inputs = ('x' , 'y', 'slice')
+    inputs = ('x', 'y', 'slice')
     outputs = ('alpha', 'beta')
 
     def __init__(self, selector, **kwargs):
-        #self._inputs = inputs
-        #self._outputs = outputs
+        # self._inputs = inputs
+        # self._outputs = outputs
         self._selector = selector
         super(MIRISelector, self).__init__(**kwargs)
 
-    def evaluate(x, y, slice_id):
+    def evaluate(self, x, y, slice_id):
         slice_id = np.unique(slice_id)
         # remove 0
         res = np.zeros(x.shape) + np.nan
@@ -113,7 +265,6 @@ class Snell(Model):
     inputs = ("lam", "alpha_in", "beta_in", "zin")
     outputs = ("alpha_out", "beta_out", "zout")
 
-
     def __init__(self, angle, kcoef, lcoef, tcoef, tref, pref,
                  temperature, pressure, name=None):
         self.prism_angle = angle
@@ -127,43 +278,47 @@ class Snell(Model):
         super(Snell, self).__init__(name=name)
 
     @staticmethod
-    def compute_refraction_index(lam, temp, tref, pref, pressure, kcoef, lcoef, tcoef):
-        """Calculate and retrun the refraction index."""
+    def compute_refraction_index(lam, temp, tref, pref, pressure,
+                                 kcoef, lcoef, tcoef):
+        """Calculate and return the refraction index."""
 
         # convert the wavelength to microns
         lam = np.asarray(lam) * 1e6
         KtoC = 273.15  # kelvin to celcius conversion
 
-        # Derive the refractive index of air at the reference temperature and pressure
-        # and at the operational system's temperature and pressure.
+        # Derive the refractive index of air at the reference temperature and
+        # pressure and at the operational system's temperature and pressure.
         nref = 1. + (6432.8 + 2949810. * lam**2 /
                      (146.0 * lam**2 - 1.) + 25540.0 * lam**2 /
                      (41.0 * lam**2 - 1.)) * 1e-8
 
         # T should be in C, P should be in ATM
-        nair_obs = 1.0 + ((nref - 1.0) * pressure) / (1.0 + (temp - KtoC - 15.) * 3.4785e-3)
-        nair_ref = 1.0 + (nref - 1.0) * pref / (1.0 + (tref - KtoC - 15) * 3.4785e-3)
+        nair_obs = (1.0 + ((nref - 1.0) * pressure) /
+                    (1.0 + (temp - KtoC - 15.) * 3.4785e-3))
+        nair_ref = (1.0 + (nref - 1.0) * pref /
+                    (1.0 + (tref - KtoC - 15) * 3.4785e-3))
 
-        # Compute the relative index of the glass at Tref and Pref using Sellmeier equation I.
+        # Compute the relative index of the glass at Tref and Pref using
+        # Sellmeier equation I.
         lamrel = lam * nair_obs / nair_ref
 
         K1, K2, K3 = kcoef
         L1, L2, L3 = lcoef
         nrel = np.sqrt(1. +
                        K1 * lamrel**2 / (lamrel ** 2 - L1) +
-                       K2 * lamrel **2 / (lamrel **2 - L2) +
-                       K3 * lamrel **2 / (lamrel ** 2 -L3)
+                       K2 * lamrel ** 2 / (lamrel ** 2 - L2) +
+                       K3 * lamrel ** 2 / (lamrel ** 2 - L3)
                        )
-        # Convert the relative index of refraction at the reference temperature and pressure
-        # to absolute.
+        # Convert the relative index of refraction at the reference temperature
+        # and pressure to absolute.
         nabs_ref = nrel * nair_ref
 
         # Compute the absolute index of the glass
         delt = temp - tref
         D0, D1, D2, E0, E1, lam_tk = tcoef
-        delnabs = 0.5 * (nrel ** 2 - 1.) / nrel * \
-                (D0 * delt + D1 * delt**2 + D2 * delt**3 + \
-                 (E0 * delt + E1 * delt**2) / (lamrel**2  - lam_tk**2))
+        delnabs = (0.5 * (nrel ** 2 - 1.) / nrel *
+                   (D0 * delt + D1 * delt**2 + D2 * delt**3 +
+                   (E0 * delt + E1 * delt**2) / (lamrel**2 - lam_tk**2)))
         nabs_obs = nabs_ref + delnabs
 
         # Define the relative index at the system's operating T and P.
@@ -172,8 +327,14 @@ class Snell(Model):
 
     def evaluate(self, lam, alpha_in, beta_in, zin):
         """Go through the prism"""
-        n = self.compute_refraction_index(lam, self.temp, self.tref, self.pref, self.pressure,
-                                          self.kcoef, self.lcoef, self.tcoef)
+        n = self.compute_refraction_index(lam,
+                                          self.temp,
+                                          self.tref,
+                                          self.pref,
+                                          self.pressure,
+                                          self.kcoef,
+                                          self.lcoef,
+                                          self.tcoef)
         # Apply Snell's law through front surface, eq 5.3.3 II
         xout = alpha_in / n
         yout = beta_in / n
@@ -216,13 +377,15 @@ class RefractionIndexFromPrism(Model):
     prism_angle = Parameter(setter=np.deg2rad, getter=np.rad2deg)
 
     def __init__(self, prism_angle, name=None):
-        super(RefractionIndexFromPrism, self).__init__(prism_angle=prism_angle, name=name)
+        super(RefractionIndexFromPrism, self).__init__(prism_angle=prism_angle,
+                                                       name=name)
 
     def evaluate(self, alpha_in, beta_in, alpha_out, prism_angle):
         sangle = math.sin(prism_angle)
         cangle = math.cos(prism_angle)
-        nsq = ((alpha_out + alpha_in * (1 - 2 * sangle**2)) / (2 * sangle * cangle)) **2 + \
-            alpha_in ** 2 + beta_in ** 2
+        nsq = (((alpha_out + alpha_in * (1 - 2 * sangle**2)) /
+                (2 * sangle * cangle)) ** 2 +
+               alpha_in ** 2 + beta_in ** 2)
         return np.sqrt(nsq)
 
 
@@ -232,8 +395,7 @@ class NRSChromaticCorrection(Polynomial2D):
         super(NRSChromaticCorrection, self).__init__(degree, **coeffs)
 
     def evaluate(self, x, y, lam, *coeffs):
-        """For each input multiply the distortion coefficients by the computed lambda.
-        """
+        """Multiply the distortion coefficients by the computed lambda."""
         coeffs *= lam
         return super(NRSChromaticCorrection, self).evaluate(x, y, *coeffs)
 
@@ -492,9 +654,9 @@ class Rotation3D(Model):
                 matrix[2, 2] = 1
                 matrix[:2, :2] = mat
             else:
-                raise ValueError("Expected axes_order to be a combination \
-                        of characters 'x', 'y' and 'z', got {0}".format(
-                                     set(axes_order).difference(['x', 'y', 'z'])))
+                raise ValueError("Expected axes_order to be a combination"
+                                 "of characters 'x', 'y' and 'z', got {0}"
+                        .format(set(axes_order).difference(['x', 'y', 'z'])))
             matrices.append(matrix)
         if len(angles) == 1:
             return matrix
@@ -563,12 +725,12 @@ class LRSWavelength(Model):
         x0 = self._wavetable[:, 3]
         y0 = self._wavetable[:, 4]
         x1 = self._wavetable[:, 5]
-        #y1 = self._wavetable[:, 6]
+        # y1 = self._wavetable[:, 6]
         wave = self._wavetable[:, 2]
 
         diff0 = (dy - y0[0])
         ind = np.abs(np.asarray(diff0 / slitsize, dtype=np.int))
-        condition = np.logical_and(dy < y0[0], dy > y0[-1])  #, dx>x0, dx<x1)
+        condition = np.logical_and(dy < y0[0], dy > y0[-1])  # , dx>x0, dx<x1)
         xyind = condition.nonzero()
         wavelength = np.zeros(condition.shape)
         wavelength += np.nan
@@ -702,7 +864,8 @@ class NirissSOSSModel(Model):
         try:
             order_number = int(spectral_order[0])
         except Exception as e:
-            raise ValueError('Spectral order is not between 1 and 3, {}'.format(spectral_order))
+            raise ValueError('Spectral order is not between 1 and 3, {}'
+                             .format(spectral_order))
 
         return self.models[order_number](x, y)
 
@@ -753,8 +916,9 @@ class Logical(Model):
 
     def __repr__(self):
         txt = "{0}(condition={1}, compareto={2}, value={3})"
-        return txt.format(self.__class__.__name__, self.condition,
-            self.compareto, self.value)
+        return txt.format(self.__class__.__name__,
+                          self.condition,
+                          self.compareto, self.value)
 
 
 class V23ToSky(Rotation3D):
@@ -791,7 +955,7 @@ class V23ToSky(Rotation3D):
         Convert cartesian coordinates to spherical coordinates (in deg).
         """
         h = np.hypot(x, y)
-        alpha  = np.rad2deg(np.arctan2(y, x))
+        alpha = np.rad2deg(np.arctan2(y, x))
         delta = np.rad2deg(np.arctan2(z, h))
         return alpha, delta
 
@@ -820,7 +984,7 @@ class IdealToV2V3(Model):
 
     Note: This model has no schema implemented - add schema if needed.
     """
-    
+
     inputs = ('xidl', 'yidl')
 
     outputs = ('v2', 'v3')
@@ -830,7 +994,7 @@ class IdealToV2V3(Model):
     v3ref = Parameter() # in arcsec
     vparity = Parameter()
 
-    
+
     def __init__(self, v3idlyangle, v2ref, v3ref, vparity, name='idl2V', **kwargs):
         super(IdealToV2V3, self).__init__(v3idlyangle=v3idlyangle, v2ref=v2ref,
                                           v3ref=v3ref, vparity=vparity, name=name,
@@ -857,14 +1021,14 @@ class IdealToV2V3(Model):
 
         """
         v3idlyangle = np.deg2rad(v3idlyangle)
-        
+
         v2 = v2ref + vparity * xidl * np.cos(v3idlyangle) + yidl * np.sin(v3idlyangle)
         v3 = v3ref - vparity * xidl * np.sin(v3idlyangle) + yidl * np.cos(v3idlyangle)
         return v2, v3
 
     def inverse(self):
         return V2V3ToIdeal(self.v3idlyangle, self.v2ref, self.v3ref, self.vparity)
-    
+
 
 class V2V3ToIdeal(Model):
     """
@@ -873,7 +1037,7 @@ class V2V3ToIdeal(Model):
 
     Note: This model has no schema implemented - add if needed.
     """
-    
+
     inputs = ('v2', 'v3')
 
     outputs = ('xidl', 'yidl')
@@ -905,7 +1069,7 @@ class V2V3ToIdeal(Model):
         Returns
         -------
         xidl, yidl : ndarray-like
-            Coordinates in the Ideal telescope system [in arcsec]. 
+            Coordinates in the Ideal telescope system [in arcsec].
 
         """
         v3idlyangle = np.deg2rad(v3idlyangle)
@@ -914,13 +1078,13 @@ class V2V3ToIdeal(Model):
                           (v3 - v3ref) * np.sin(v3idlyangle))
         yidl = ((v2 - v2ref) * np.sin(v3idlyangle) +
                 (v3 - v3ref) * np.cos(v3idlyangle))
-        
+
         return xidl, yidl
-    
+
     def inverse(self):
         return IdealToV2V3(self.v3idlyangle, self.v2ref, self.v3ref, self.vparity)
 
-    
+
 def _toindex(value):
     """
     Convert value to an int or an int array.

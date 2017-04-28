@@ -25,7 +25,7 @@ class AssignWcsStep(Step):
 
     camera             NIRSPEC Camera model
     collimator         NIRSPEC Collimator Model
-    disperser          Disperser parameters
+    disperser          Disperser model
     distortion         Spatial distortion model
     filteroffset       MIRI Imager fiter offsets
     fore               Transform through the NIRSPEC FORE optics
@@ -36,11 +36,12 @@ class AssignWcsStep(Step):
     regions            Stores location of the regions on the detector
     v2v3               Transform from MIRI instrument focal plane to V2V3 plane
     wavelengthrange    Typical wavelength ranges
+    wfss               Wide Field Slitless Spec
     """
     reference_file_types = ['distortion', 'filteroffset', 'specwcs', 'regions',
                             'wavelengthrange', 'v2v3', 'camera', 'collimator',
                             'disperser', 'fore', 'fpa', 'msa', 'ote', 'ifupost',
-                            'ifufore', 'ifuslicer']
+                            'ifufore', 'ifuslicer', 'wfss']
 
     def process(self, input):
         reference_file_names = {}
