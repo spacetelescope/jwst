@@ -11,8 +11,8 @@ env:
     global:
         - MAIN_CMD='python setup.py'
         - CONDA_CHANNELS='http://ssb.stsci.edu/conda-dev'
-        - CONDA_DEPENDENCIES='pytest jwst sphinx=1.3.5'
-        - CONDA_JWST_DEPENDENCIES='pytest jwst sphinx=1.3.5'
+        - CONDA_DEPENDENCIES='pytest jwst sphinx graphviz'
+        - CONDA_JWST_DEPENDENCIES='pytest jwst sphinx'
         - PIP_DEPENDENCIES=''
         - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
         - CRDS_PATH='/tmp/crds_cache'
@@ -33,9 +33,10 @@ matrix:
 
         # build sphinx documentation
         - os: linux
-          env: PYTHON_VERSION=3.5 MAIN_CMD='docs/mkdocs.sh'
-               SETUP_CMD=''
+          env: PYTHON_VERSION=3.5 
+               SETUP_CMD='build_sphinx'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
+               PIP_DEPDENDENCIES='sphinx_rtd_theme sphinx-automodapi'
 
     allow_failures:
         # PEP8 will fail for numerous reasons. Ignore it.
