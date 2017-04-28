@@ -1,0 +1,13 @@
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      instrument:
+        type: object
+        properties:
+          channel:
+            title: Channel name.
+            type: string
+            fits_keyword: CHANNEL
+            pattern: ^((LONG|SHORT|12|34|1|2|3|4|ANY|N/A)\s*\|\s*)+$

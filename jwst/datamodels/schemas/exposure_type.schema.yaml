@@ -1,0 +1,23 @@
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      exposure:
+        type: object
+        properties:
+          type:
+            title: Type of data used to create the model
+            type: string
+            pattern: ^((FGS_DARK|FGS_FOCUS|FGS_IMAGE|FGS_INTFLAT|FGS_SKYFLAT|\
+              MIR_IMAGE|MIR_TACQ|MIR_LYOT|MIR_4QPM|MIR_LRS-FIXEDSLIT|\
+              MIR_LRS-SLITLESS|MIR_MRS|MIR_DARK|MIR_FLAT-IMAGE|MIR_FLATIMAGE|\
+              MIR_FLAT-MRS|MIR_FLATMRS|MIR_CORONCAL|NIS_AMI|NIS_DARK|\
+              NIS_FOCUS|NIS_IMAGE|NIS_LAMP|NIS_SOSS|NIS_TACQ|NIS_TACONFIRM|\
+              NIS_WFSS|N/A|ANY|NRC_IMAGE|NRC_GRISM|NRC_TACQ|NRC_CORON|\
+              NRC_FOCUS|NRC_DARK|NRC_FLAT|NRC_LED|NRC_WFSC|NRC_TACONFIRM|\
+              NRC_TSIMAGE|NRC_TSGRISM|NRS_AUTOFLAT|NRS_AUTOWAVE|NRS_BOTA|\
+              NRS_BRIGHTOBJ|NRS_CONFIRM|NRS_DARK|NRS_FIXEDSLIT|NRS_FOCUS|\
+              NRS_IFU|NRS_IMAGE|NRS_LAMP|NRS_MIMF|NRS_MSASPEC|NRS_TACONFIRM|\
+              NRS_TACQ|NRS_TASLIT)\s*\|\s*)+$
+            fits_keyword: EXP_TYPE

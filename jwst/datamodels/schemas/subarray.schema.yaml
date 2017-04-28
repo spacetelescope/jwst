@@ -1,0 +1,51 @@
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      subarray:
+        type: object
+        properties:
+          name:
+            title: Subarray used
+            type: string
+            pattern: ^((1024X16|128X128|128X2048|2048X128|2048X64|32X32|\
+              64X2048|8X8|ALLSLITS|BRIGHTSKY|FULL|GENERIC|\
+              MASKA210R|MASKA335R|MASKA430R|MASKBLWB|MASKBSWB|MASK1065|\
+              MASK1140|MASK1550|MASKLYOT|\
+              S1600A1|S200A1|S200A2|S200B1|S400A1|SLITLESSPRISM|STRIPE|\
+              SUB1024A|SUB1024B|SUB128|SUB128LLCORNER|SUB128DIAGONAL|\
+              SUB128CENTER|SUB16|SUB160|SUB160P|SUB1A|SUB1B|\
+              SUB2048|SUB256|SUB32|SUB32LLCORNER|SUB32DIAGONAL|SUB32CENTER|\
+              SUB320|SUB400P|SUB512|SUB64|SUB640|\
+              SUB64P|SUB80|SUB8LLCORNER|SUB8DIAGONAL|SUB8CENTER|SUB96|\
+              SUBAMPCAL|SUBFP1A|SUBFP1B|SUBGRISM128|\
+              SUBGRISM256|SUBGRISM64|SUBSTRIP256|SUBSTRIPE256|SUBSTRIP96|\
+              SUBPRISM|SUBSTRIP80|SUBTASOSS|SUBTAAMI|\
+              WFSS128C|WFSS128R|WFSS64C|WFSS64R|N/A)\s*\|\s*)+$
+            fits_keyword: SUBARRAY
+          xstart:
+            title: Starting pixel in axis 1 direction
+            type: integer
+            fits_keyword: SUBSTRT1
+          ystart:
+            title: Starting pixel in axis 2 direction
+            type: integer
+            fits_keyword: SUBSTRT2
+          xsize:
+            title: Number of pixels in axis 1 direction
+            type: integer
+            fits_keyword: SUBSIZE1
+          ysize:
+            title: Number of pixels in axis 2 direction
+            type: integer
+            fits_keyword: SUBSIZE2
+          fastaxis:
+            title: Fast readout axis direction
+            type: integer
+            fits_keyword: FASTAXIS
+          slowaxis:
+            title: Slow readout axis direction
+            type: integer
+            fits_keyword: SLOWAXIS
+        additionalProperties: false
