@@ -1,18 +1,71 @@
 
-from __future__ import absolute_import, division, unicode_literals, print_function
-import numpy as np
+from __future__ import (absolute_import, division, unicode_literals,
+                        print_function)
+from numpy.testing import assert_array_equal
 from asdf import yamlutil
 from asdf.tags.transform.basic import TransformType
 
-from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
-                      NRSZCoord, Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA,
-                      LRSWavelength, Gwa2Slit, Slit2Msa, Logical, NirissSOSSModel, V23ToSky,
-                      RefractionIndexFromPrism, Snell, MIRI_AB2Slice)
+from ..models import (WavelengthFromGratingEquation,
+                      AngleFromGratingEquation,
+                      NRSZCoord,
+                      Unitless2DirCos,
+                      DirCos2Unitless,
+                      Rotation3DToGWA,
+                      LRSWavelength,
+                      Gwa2Slit,
+                      Slit2Msa,
+                      Logical,
+                      NirissSOSSModel,
+                      V23ToSky,
+                      RefractionIndexFromPrism,
+                      Snell,
+                      LinearTraceDispersion,
+                      MIRI_AB2Slice)
 
 
-__all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
-           'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSky',
-           'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType']
+__all__ = ['GratingEquationType',
+           'CoordsType',
+           'RotationSequenceType',
+           'LRSWavelengthType',
+           'Gwa2SlitType',
+           'Slit2MsaType',
+           'LogicalType',
+           'NirissSOSSType',
+           'V23ToSky',
+           'RefractionIndexType',
+           'SnellType',
+           'MIRI_AB2SliceType',
+           'LinearTraceDispersionType']
+
+
+class LinearTraceDispersionType(TransformType):
+    name = "linear_trace_dispersion"
+    types = [LinearTraceDispersion]
+    standard = "jwst_pipeline"
+    version = "0.1.0"
+
+    @classmethod
+    def from_tree_transform(cls, node, ctx):
+        return LinearTraceDispersion(node["xcoeff"],
+                                     node['ycoeff_n'],
+                                     node['lcoeff'])
+
+    @classmethod
+    def to_tree_transform(cls, model, ctx):
+        node = {'_x_coeff': model.xcoeff.tolist(),
+                '_y_coeff': model.ycoeff.tolist(),
+                '_l_coeff': model.lcoeff.tolist(),
+                }
+        return yamlutil.custom_tree_to_tagged_tree(node, ctx)
+
+    @classmethod
+    def assert_equal(cls, a, b):
+        TransformType.assert_equal(a, b)
+        assert (isinstance(a, LinearTraceDispersion) and
+                isinstance(b, LinearTraceDispersion))
+        assert_array_equal(a._x_coeff, b._x_coeff)
+        assert_array_equal(a._y_coeff, b._y_coeff)
+        assert_array_equal(a._l_coeff, b._l_coeff)
 
 
 class RotationSequenceType(TransformType):
@@ -80,7 +133,8 @@ class CoordsType(TransformType):
         elif isinstance(model, Unitless2DirCos):
             model_type = 'to_dircos'
         else:
-            raise TypeError("Model of type {0} i snot supported.".format(model.__class__))
+            raise TypeError("Model of type {0} i snot supported."
+                            .format(model.__class__))
         node = {'model_type': model_type}
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
@@ -101,7 +155,8 @@ class GratingEquationType(TransformType):
         elif output == "angle":
             model = AngleFromGratingEquation(groove_density, order)
         else:
-            raise ValueError("Can't create a GratingEquation model with output {0}".format(output))
+            raise ValueError("Can't create a GratingEquation model with"
+                             "output {0}".format(output))
         return model
 
     @classmethod
@@ -114,17 +169,9 @@ class GratingEquationType(TransformType):
         elif isinstance(model, WavelengthFromGratingEquation):
             node['output'] = 'wavelength'
         else:
-            raise TypeError("Can't serialize an instance of {0}".format(model.__class__.__name__))
+            raise TypeError("Can't serialize an instance of {0}"
+                            .format(model.__class__.__name__))
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
-
-    #@classmethod
-    #def assert_equal(cls, a, b):
-        #from astropy import modeling
-
-        #TransformType.assert_equal(a, b)
-        #assert (isinstance(a, modeling.models.Shift) and
-                #isinstance(b, modeling.models.Shift))
-        #assert_array_equal(a.offset.value, b.offset.value)
 
 
 class LRSWavelengthType(TransformType):
@@ -248,8 +295,14 @@ class SnellType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        return Snell(node['prism_angle'], node['kcoef'], node['lcoef'], node['tcoef'],
-                     node['ref_temp'], node['ref_pressure'], node['temp'], node['pressure'])
+        return Snell(node['prism_angle'],
+                     node['kcoef'],
+                     node['lcoef'],
+                     node['tcoef'],
+                     node['ref_temp'],
+                     node['ref_pressure'],
+                     node['temp'],
+                     node['pressure'])
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
@@ -287,7 +340,9 @@ class MIRI_AB2SliceType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        return MIRI_AB2Slice(node['beta_zero'], node['beta_del'], node['channel'])
+        return MIRI_AB2Slice(node['beta_zero'],
+                             node['beta_del'],
+                             node['channel'])
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
