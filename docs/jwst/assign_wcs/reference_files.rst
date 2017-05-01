@@ -238,7 +238,8 @@ The “data” field is an array with 30 rows pertaining to the 30 slices and th
             X size of teh aperture (in meters)
           y_size
             Y size of the aperture (in meters)
-   :model: Transform from relative positions within the IFU slicer to absolute positions within the field of view. It's a combination of shifts and rotation.
+:model: Transform from relative positions within the IFU slicer to absolute positions within the field of view. It's a combination of shifts and rotation.
+
 
 MSA
 ---
@@ -389,5 +390,3 @@ For NIRSPEC the file is a dictionary storing information about default wavelengt
 :filter_grating:
                  :order: Default spectral order
                  :range: Default wavelength range
-
-

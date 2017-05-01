@@ -51,6 +51,7 @@ accumulated DN of the pixel  from the previous integration is estimated from the
 For each pixel the group values are corrected according the formula:
 
     corrected value = input vaule + dn_accumulated * scale * exp(-T / tau),
+
 where T is the time since the last frame in the last integration.
 
 

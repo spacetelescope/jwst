@@ -10,7 +10,9 @@ Association generation is done either using the command line tool
 Command Line
 ------------
 
-.. program-output:: asn_generate --help
+.. code-block:: shell
+
+    asn_generate --help
 
 Association Candidates
 ^^^^^^^^^^^^^^^^^^^^^^

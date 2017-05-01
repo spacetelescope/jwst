@@ -7,15 +7,15 @@ os:
 sudo: false
 
 env:
-    # CONDA_JWST_DEPENDENCIES is used because CONDA_DEPENDENCIES is not truly global.
     global:
         - MAIN_CMD='python setup.py'
         - CONDA_CHANNELS='http://ssb.stsci.edu/conda-dev'
-        - CONDA_DEPENDENCIES='pytest jwst sphinx graphviz'
-        - CONDA_JWST_DEPENDENCIES='pytest jwst sphinx'
+        - CONDA_DEPENDENCIES='pytest jwst cython sphinx'
+        - CONDA_JWST_DEPENDENCIES='pytest jwst cython sphinx'
         - PIP_DEPENDENCIES=''
         - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
         - CRDS_PATH='/tmp/crds_cache'
+        - NUMPY_VERSION=1.11
 
     matrix:
         - PYTHON_VERSION=2.7 SETUP_CMD='install'
@@ -24,6 +24,10 @@ env:
         - PYTHON_VERSION=3.5 SETUP_CMD='test'
 
 matrix:
+
+    # Don't wait for allowed failures
+    fast_finish: true
+
     include:
         # PEP8 check with pycodestyle (only once, i.e. "os: linux")
         - os: linux
@@ -36,7 +40,7 @@ matrix:
           env: PYTHON_VERSION=3.5 
                SETUP_CMD='build_sphinx'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
-               PIP_DEPDENDENCIES='sphinx_rtd_theme sphinx-automodapi'
+               PIP_DEPENDENCIES='sphinx_rtd_theme sphinx-automodapi graphviz'
 
     allow_failures:
         # PEP8 will fail for numerous reasons. Ignore it.

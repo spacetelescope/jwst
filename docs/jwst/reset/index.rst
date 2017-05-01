@@ -1,4 +1,12 @@
-.. include:: description.rst
-.. include:: reference_files.rst
-.. include:: arguments.rst
+========
+RESAMPLE
+========
+
+.. toctree::
+   :maxdepth: 2
+
+   description.rst
+   reference_files.rst
+   arguments.rst
+
 .. automodapi:: jwst.reset

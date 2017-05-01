@@ -31,33 +31,35 @@ the files from an operational viewpoint (i.e. Observation, Visit,
 ParallelSequenceID, Activity, Exposure, Detector).  The file has a
 structure similar to XML with nested groups:
 
-<Proposal title="MIRI FM IMG_OPT_01_FOV">
-  <Observation>
-    <Visit>
-      <VisitGroup>
-        <ParallelSequenceID>
-          <Activity>
-            <Exposure>
-              <Detector>
-                <base>MIRFM1T00012942_1_493_SE_2011-07-13T10h45m00.fits</base>
-                <subarray></subarray>
-                <exp_type>MIR_IMAGE</exp_type>
-              </Detector>
-            </Exposure>
-          </Activity>
-        </ParallelSequenceID>
-      </VisitGroup>
-    </Visit>
-  </Observation>
-</Proposal>
+::
+
+    <Proposal title="MIRI FM IMG_OPT_01_FOV">
+      <Observation>
+        <Visit>
+          <VisitGroup>
+            <ParallelSequenceID>
+              <Activity>
+                <Exposure>
+                  <Detector>
+                    <base>MIRFM1T00012942_1_493_SE_2011-07-13T10h45m00.fits</base>
+                    <subarray></subarray>
+                    <exp_type>MIR_IMAGE</exp_type>
+                  </Detector>
+                </Exposure>
+              </Activity>
+            </ParallelSequenceID>
+          </VisitGroup>
+        </Visit>
+      </Observation>
+    </Proposal>
 
 Each nest can be repeated as needed.  The <Detector></Detector> tags
 contain the information for each input/output file, with the input
-file name inside the <base></base> tags, the name of the subarray to
-be extracted within the <subarray></subarray> tag, and the exposure
-type within the <exp_type></exp_type> tag.
+file name inside the `<base></base>` tags, the name of the subarray to
+be extracted within the `<subarray></subarray>` tag, and the exposure
+type within the `<exp_type></exp_type>` tag.
 
-The files within the <base></base> tag should be in the same directory
+The files within the `<base></base>` tag should be in the same directory
 as the proposal file.
 
 The input FITS files can be from any of several different sources:
