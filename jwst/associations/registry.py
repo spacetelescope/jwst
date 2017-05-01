@@ -156,16 +156,13 @@ class AssociationRegistry(dict):
         for name, rule in self.items():
             if rule not in ignore and rule in allow:
                 logger.debug('Checking membership for rule "{}"'.format(rule))
-                try:
-                    associations.append(rule(member, version_id))
-                except AssociationError as error:
+                asn, reprocess = rule.create(member, version_id)
+                process_list.extend(reprocess)
+                if asn is None:
                     logger.debug('Rule "{}" not matched'.format(name))
-                    logger.debug('Reason="{}"'.format(error))
-                except AssociationProcessMembers as process_event:
-                    logger.debug('Process event "{}"'.format(process_event))
-                    process_list.append(process_event)
                 else:
                     logger.debug('Member belongs to rule "{}"'.format(rule))
+                    associations.append(asn)
         return associations, process_list
 
     def validate(self, association):

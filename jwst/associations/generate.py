@@ -1,14 +1,10 @@
 import logging
 
-from astropy.table import Table
 import numpy as np
 
 from .association import (
+    ProcessList,
     make_timestamp
-)
-from .exceptions import (
-    AssociationError,
-    AssociationProcessMembers
 )
 
 # Configure logging
@@ -54,21 +50,21 @@ def generate(pool, rules, version_id=None):
     if type(version_id) is bool:
         version_id = make_timestamp()
     process_list = [
-        AssociationProcessMembers(
+        ProcessList(
             members=pool,
-            allowed_rules=[rule for _, rule in rules.items()]
+            rules=[rule for _, rule in rules.items()]
         )
     ]
 
-    for process_event in process_list:
-        for member in process_event.members:
+    for process_item in process_list:
+        for member in process_item.members:
             logger.debug('Working member="{}"'.format(member))
             existing_asns, new_asns, to_process = generate_from_member(
                 member,
                 version_id,
                 associations,
                 rules,
-                process_event.allowed_rules
+                process_item.rules
             )
             associations.extend(new_asns)
             process_list.extend(to_process)
@@ -123,7 +119,7 @@ def generate_from_member(
             Empty if none match
         new_asns: [association,...]
             List of new associations member creates. Empty if none match
-        process_list: [AssociationProcess, ...]
+        process_list: [ProcessList, ...]
             List of process events.
     """
 
@@ -171,25 +167,25 @@ def match_member(member, associations):
     (associations, process_list): 2-tuple where
         associations: [association,...]
             List of associations member belongs to. Empty if none match
-        process_list: [AssociationProcess, ...]
+        process_list: [ProcessList, ...]
             List of process events.
     """
+    logger.debug('Matching member to {} associations'.format(
+        len(associations),
+        member
+    ))
     member_associations = []
     process_list = []
     for asn in associations:
         if asn in member_associations:
             continue
-        try:
-            asn.add(member)
-        except AssociationError as error:
-            logger.debug(
-                'Did not match association "{}"'.format(asn)
-            )
-            logger.debug('Reason="{}"'.format(error))
-        except AssociationProcessMembers as process_event:
-            logger.debug('Process event "{}"'.format(process_event))
-            process_list.append(process_event)
-        else:
-            logger.debug('Matched association "{}"'.format(asn))
+        matches, reprocess = asn.add(member)
+        logger.debug('Member added to {} was {}'.format(
+            asn.asn_name,
+            matches
+        ))
+        logger.debug('New to reprocess: {}'.format(len(reprocess)))
+        process_list.extend(reprocess)
+        if matches:
             member_associations.append(asn)
     return member_associations, process_list
