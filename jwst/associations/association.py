@@ -441,18 +441,23 @@ class Association(MutableMapping):
         # If the value is a list, build the reprocess list
         logger.debug('To check: Input="{}" Value="{}"'.format(input, value))
         evaled = evaluate(value)
+        current_value = None
         if is_iterable(evaled):
             process_members = []
             for avalue in evaled:
+                if not current_value:
+                    current_value = avalue
+                    continue
                 new_member = deepcopy(member)
                 new_member[input] = str(avalue)
                 process_members.append(new_member)
-            reprocess.append(ProcessList(
-                process_members,
-                [type(self)]
-            ))
-            logger.debug('List found reprocess="{}"'.format(reprocess))
-            return False, reprocess
+            if len(process_members) > 0:
+                reprocess.append(ProcessList(
+                    process_members,
+                    [type(self)]
+                ))
+                logger.debug('List found reprocess="{}"'.format(reprocess))
+            evaled = current_value
 
         evaled_str = str(evaled)
         if conditions['value'] is not None:
