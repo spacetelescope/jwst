@@ -351,6 +351,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             }
             self.update_validity(entry)
             members.append(entry)
+        self.sequence = next(self._sequence)
 
     def __repr__(self):
         try:

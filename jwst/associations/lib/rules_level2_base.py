@@ -266,6 +266,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 self.current_product['name'] = product_name_func(item)
 
         self.data.update(meta)
+        self.sequence = next(self._sequence)
 
     def update_asn(self):
         """Update association info based on current members"""

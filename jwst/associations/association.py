@@ -13,11 +13,8 @@ from numpy.ma import masked
 
 from . import __version__
 from .exceptions import (
-    AssociationError,
-    AssociationNotValidError,
-    AssociationProcessMembers
+    AssociationNotValidError
 )
-from .lib.counter import Counter
 from .lib.ioregistry import IORegistry
 
 __all__ = ['Association']
@@ -93,9 +90,6 @@ class Association(MutableMapping):
     # Initialize a global IO registry
     ioregistry = IORegistry()
 
-    # Associations of the same type are sequenced.
-    _sequence = Counter(start=1)
-
     def __init__(
             self,
             version_id=None,
@@ -140,7 +134,6 @@ class Association(MutableMapping):
         matches, reprocess = asn.add(member)
         if not matches:
             return None, reprocess
-        asn.sequence = next(asn._sequence)
         return asn, reprocess
 
     @property
@@ -546,10 +539,6 @@ class Association(MutableMapping):
                 yield '    {:s}: Is Invalid'.format(name)
             else:
                 yield '    {:s}: {}'.format(name, conditions['value'])
-
-    @classmethod
-    def reset_sequence(cls):
-        cls._sequence = Counter(start=1)
 
     def _init_hook(self, member):
         """Post-check and pre-member-adding initialization."""
