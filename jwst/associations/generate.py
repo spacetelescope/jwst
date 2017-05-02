@@ -43,8 +43,6 @@ def generate(pool, rules, version_id=None):
     Refer to the :ref:`Association Generator <association-generator>`
     documentation for a full description.
     """
-    logger.debug('Starting...')
-
     associations = []
     in_an_asn = np.zeros((len(pool),), dtype=bool)
     if type(version_id) is bool:
@@ -58,7 +56,6 @@ def generate(pool, rules, version_id=None):
 
     for process_item in process_list:
         for member in process_item.members:
-            logger.debug('Working member="{}"'.format(member))
             existing_asns, new_asns, to_process = generate_from_member(
                 member,
                 version_id,
@@ -71,7 +68,6 @@ def generate(pool, rules, version_id=None):
             if len(existing_asns) +\
                len(new_asns) > 0:
                 in_an_asn[member.index] = True
-    logger.debug('Number of processes: "{}"'.format(len(process_list)))
 
     # Finalize found associations
     finalized_asns = rules.finalize(associations)
@@ -141,9 +137,6 @@ def generate_from_member(
         allow=allowed_rules,
         ignore=ignore_asns,
     )
-    logger.debug(
-        'Member created new associations "{}"'.format(new_asns)
-    )
 
     process_list.extend(to_process)
     return existing_asns, new_asns, process_list
@@ -170,21 +163,12 @@ def match_member(member, associations):
         process_list: [ProcessList, ...]
             List of process events.
     """
-    logger.debug('Matching member to {} associations'.format(
-        len(associations),
-        member
-    ))
     member_associations = []
     process_list = []
     for asn in associations:
         if asn in member_associations:
             continue
         matches, reprocess = asn.add(member)
-        logger.debug('Member added to {} was {}'.format(
-            asn.asn_name,
-            matches
-        ))
-        logger.debug('New to reprocess: {}'.format(len(reprocess)))
         process_list.extend(reprocess)
         if matches:
             member_associations.append(asn)
