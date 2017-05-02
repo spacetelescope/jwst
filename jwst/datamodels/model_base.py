@@ -33,6 +33,9 @@ from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
 
+import gc
+from memory_profiler import profile
+
 
 jwst_extensions = [GWCSExtension(), JWSTExtension(), BaseExtension()]
 
@@ -42,6 +45,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     schema_url = "core.schema.yaml"
 
+    @profile
     def __init__(self, init=None, schema=None, extensions=None,
                  pass_invalid_values=False):
         """
@@ -92,7 +96,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 pass_invalid_values = bool(int(pass_invalid_values))
             except ValueError:
                 pass_invalid_values = False
-    
+
         self._pass_invalid_values = pass_invalid_values
 
         # Construct the path to the schema files
@@ -127,7 +131,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             instance = copy.deepcopy(init._instance)
             self._schema = init._schema
             self._shape = init._shape
-            print('why here')
             self._asdf = AsdfFile(instance, extensions=self._extensions)
             self._instance = instance
             self._ctx = self
@@ -164,7 +167,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     raise IOError(
                         "File does not appear to be a FITS or ASDF file.")
                 else:
-                    asdf = fits_support.from_fits(hdulist, self._schema, 
+                    asdf = fits_support.from_fits(hdulist, self._schema,
                                                   extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
         else:
@@ -172,7 +175,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 "Can't initialize datamodel using {0}".format(str(type(init))))
 
         # Initialize object fields as determined fro the code above
-        
+
         self._shape = shape
         self._instance = asdf.tree
         self._asdf = asdf
@@ -813,6 +816,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     # These two method aliases are here for astropy.registry
     # compatibility and should not be called directly
     #--------------------------------------------------------
-    
+
     read = __init__
     write = save

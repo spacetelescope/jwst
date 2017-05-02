@@ -11,3 +11,4 @@ properties:
             type: string
             enum: [SHORT, MEDIUM, LONG, N/A, ANY]
             fits_keyword: BAND
+        required: [band]

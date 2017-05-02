@@ -2,8 +2,6 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 
 import warnings
 from . import model_base
-from astropy.modeling import models
-import six
 
 from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
@@ -20,7 +18,7 @@ class DistortionModel(model_base.DataModel):
 
     """
     schema_url = "distortion.schema.yaml"
-    referencefile_schema_url ="referencefile.schema.yaml"
+    referencefile_schema_url = "referencefile.schema.yaml"
 
     """
     reffile={'author': 'ND', 'pedigree': 'ground', 'description': 'dist', 'useafter':'106-03-02'}
@@ -47,11 +45,8 @@ class DistortionModel(model_base.DataModel):
         if model is not None:
             self.model = model
         self.meta.input_units = input_units
-        self.meta.output_units=output_units
+        self.meta.output_units = output_units
         self.meta.reftype = "distortion"
-        #self.meta.instrument = instrument
-        #self.meta.exposure.type = exp_type
-        #self.meta.instrument.filter = filter
 
     def on_save(self, path=None):
         """

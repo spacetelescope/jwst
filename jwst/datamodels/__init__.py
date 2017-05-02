@@ -86,6 +86,7 @@ from .spec import SpecModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
 from .traps import TrapsModel
+from .distortion import DistortionModel
 from .util import open
 
 

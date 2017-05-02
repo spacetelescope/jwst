@@ -1,6 +1,11 @@
 title: MIRI Dark current data model
 allOf:
 - $ref: referencefile.schema.yaml
+- $ref: instrument_name.schema.yaml
+- $ref: detector.schema.yaml
+- $ref: filter_core.schema.yaml
+- $ref: exposure_type.schema.yaml
+- $ref: subarray.schema.yaml
 - type: object
   properties:
     data:
