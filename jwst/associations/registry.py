@@ -278,7 +278,7 @@ class AssociationRegistry(dict):
         assocations: [association[, ...]]
             The list of associations
         """
-        finalized = self.callback.reduce('finalize', associations)
+        finalized = self.callback.filter('finalize', associations)
         return finalized
 
 # Utilities

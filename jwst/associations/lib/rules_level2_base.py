@@ -40,6 +40,10 @@ FLAG_TO_EXPTYPE = {
 # File templates
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
+_REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)'
+
+# Key that uniquely identfies members.
+KEY = 'expname'
 
 
 class DMSLevel2bBase(DMSBaseMixin, Association):
@@ -54,12 +58,23 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
     def __init__(self, *args, **kwargs):
 
+        # Keep the set of members included in this association
+        self.members = set()
+
         # I am defined by the following constraints
         self.add_constraints({
             'program': {
                 'value': None,
                 'inputs': ['PROGRAM']
             },
+        })
+
+        # Initialize validity checks
+        self.validity.update({
+            'has_science': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'SCIENCE'
+            }
         })
 
         # Now, lets see if member belongs to us.
@@ -69,7 +84,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         """Get list of members by their exposure type"""
         member_type = member_type.lower()
         try:
-            members = self.data['members']
+            members = self.current_product['members']
         except KeyError:
             result = []
         else:
@@ -133,7 +148,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         """Compare equality of two assocaitions"""
         if isinstance(other, DMSLevel2bBase):
             result = self.data['asn_type'] == other.data['asn_type']
-            result = result and (self.data['members'] == other.data['members'])
+            result = result and (self.members == other.members)
             return result
         else:
             return NotImplemented
@@ -144,6 +159,20 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             return not self.__eq__(other)
         else:
             return NotImplemented
+
+    def dms_product_name(self):
+        """Define product name."""
+        try:
+            science = self.members_by_type('SCIENCE')[0]
+        except IndexError:
+            return 'undefined'
+
+        science_name = basename(science['expname']).lower()
+        match = re.match(_REGEX_LEVEL2A, science_name)
+        if match:
+            return match.groupdict()['path']
+        else:
+            return science_name
 
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
@@ -156,7 +185,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             [cc for cc in self.constraints_to_text()]
         )
         self.data['asn_id'] = self.acid.id
-        self.data['members'] = []
+        self.new_product()
 
     def _add(self, member, check_flags=None):
         """Add member to this association.
@@ -173,7 +202,20 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             'expname': Utility.rename_to_level2a(member['FILENAME']),
             'exptype': self.get_exptype(member, check_flags=check_flags)
         }
-        self.data['members'].append(entry)
+        self.update_validity(entry)
+        members = self.current_product['members']
+        members.append(entry)
+
+        # Add entry to the short list
+        self.members.add(entry[KEY])
+
+        # Update meta information
+        self.update_meta()
+
+    def update_meta(self):
+        """Update meta information"""
+        product = self.current_product
+        product['name'] = self.product_name
 
     def __repr__(self):
         try:
@@ -200,11 +242,13 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             result.append('        {:s}'.format(cc))
 
         # Products of the assocation
-        result.append('\n    Members:')
-        for member in self.data['members']:
-                result.append('        {:s}: {:s}'.format(
-                    member['expname'], member['exptype'])
+        for product in self.data['products']:
+            result.append(
+                '\t{} with {} members'.format(
+                    product['name'],
+                    len(product['members'])
                 )
+            )
 
         # That's all folks
         result.append('\n')
@@ -280,8 +324,50 @@ class Utility(object):
             else:
                 finalized.append(asn)
 
+        # Merge all the associations into common types
+        merged_asns = Utility.merge_asns(lv2_asns)
+
         # Merge lists and return
-        return finalized + lv2_asns
+        return finalized + merged_asns
+
+    @staticmethod
+    def merge_asns(asns):
+        # Merge all the associations into common types
+        merged_by_type = {}
+        for asn in asns:
+            try:
+                current_asn = merged_by_type[asn['asn_type']]
+            except KeyError:
+                merged_by_type[asn['asn_type']] = asn
+                current_asn = asn
+            for product in asn['products']:
+                merge_occured = False
+                for current_product in current_asn['products']:
+                    if product['name'] == current_product['name']:
+                        member_names = set([
+                            member['expname']
+                            for member in product['members']
+                        ])
+                        current_member_names = [
+                            member['expname']
+                            for member in current_product['members']
+                        ]
+                        new_names = member_names.difference(current_member_names)
+                        new_members = [
+                            member
+                            for member in product['members']
+                            if member['expname'] in new_names
+                        ]
+                        current_product['members'].extend(new_members)
+                        merge_occured = True
+                if not merge_occured:
+                    current_asn['products'].append(product)
+
+        merged_asns = [
+            asn
+            for asn_type, asn in merged_by_type.items()
+        ]
+        return merged_asns
 
 
 # ---------------------------------------------

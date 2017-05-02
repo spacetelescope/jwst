@@ -94,7 +94,7 @@ def test_base_instatiation():
                 }
             },
             helpers.t_path('data/mega_pool.csv'),
-            1,
+            2,
         ),
         (
             {
@@ -115,7 +115,7 @@ def test_base_instatiation():
                 }
             },
             helpers.t_path('data/pool_001_candidates.csv'),
-            2,
+            3,
         ),
         (
             {
@@ -126,7 +126,7 @@ def test_base_instatiation():
                 }
             },
             helpers.t_path('data/pool_001_candidates.csv'),
-            4,
+            5,
         ),
     ]
 )
@@ -145,7 +145,6 @@ def test_global_constraints(constraints, pool, n_asns):
     assert len(asns) == n_asns
 
 
-@pytest.mark.xfail(reason='Temporarily removed Level2 rules')
 def test_rulesets():
     """Test finding members in a ruleset"""
     rule_file = helpers.t_path('../lib/association_rules.py')

@@ -1,5 +1,8 @@
 """Association attributes common to DMS-based Rules"""
 
+from jwst.associations.exceptions import (
+    AssociationNotValidError,
+)
 from jwst.associations.lib.acid import ACIDMixin
 
 # DMS file name templates
@@ -40,3 +43,71 @@ class DMSBaseMixin(ACIDMixin):
                 sequence=sequence,
             )
         return name.lower()
+
+    @property
+    def validity(self):
+        """Keeper of the validity tests"""
+        try:
+            validity = self._validity
+        except AttributeError:
+            self._validity = {}
+            validity = self._validity
+        return validity
+
+    @validity.setter
+    def validity(self, item):
+        """Set validity dict"""
+        self._validity = item
+
+    @property
+    def current_product(self):
+        return self.data['products'][-1]
+
+    def new_product(self, product_name=None):
+        """Start a new product"""
+        self.product_name = product_name
+        product = {
+            'name': self.product_name,
+            'members': []
+        }
+        try:
+            self.data['products'].append(product)
+        except KeyError:
+            self.data['products'] = [product]
+
+    @property
+    def product_name(self):
+        if self._product_name is None:
+            product_name = self.dms_product_name()
+        else:
+            product_name = self._product_name
+        return product_name
+
+    @product_name.setter
+    def product_name(self, value):
+        self._product_name = value
+
+    def update_validity(self, entry):
+        for test in self.validity.values():
+            if not test['validated']:
+                test['validated'] = test['check'](entry)
+
+    @classmethod
+    def validate(cls, asn):
+        super(DMSBaseMixin, cls).validate(asn)
+
+        if isinstance(asn, DMSBaseMixin):
+            result = False
+            try:
+                result = all(
+                    test['validated']
+                    for test in asn.validity.values()
+                )
+            except (AttributeError, KeyError):
+                raise AssociationNotValidError('Validation failed')
+            if not result:
+                raise AssociationNotValidError(
+                    'Validation failed validity tests.'
+                )
+
+        return True

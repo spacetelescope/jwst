@@ -15,17 +15,25 @@ class CallbackRegistry(object):
         """Add a callback to an event"""
         self.registry[event].append(callback)
 
-    def reduce(self, event, *args):
+    def filter(self, event, *args):
         """Peform a reduction on the event args
 
         Parameters
         ----------
         args: [arg[,...]]
-            The args to reduce
+            The args to filter
 
         Returns
         -------
-        The reduction
+        The filtered results.
+
+        Notes
+        -----
+        Each function is given the results of the previous
+        function. As such, if the data has more than one
+        object, the return of each function should be a tuple that can
+        then be passed as arguments to the next function.
+
         """
         for callback in self.registry[event]:
             result = callback(*args)
@@ -38,6 +46,11 @@ class CallbackRegistry(object):
         """Add callback by calling instance
 
         Allows instances to be used as a decorator
+
+        Parameters
+        ----------
+        event: str
+            The name of event to attache the object to.
         """
         def wrapper(callback):
             self.add(event, callback)
@@ -69,24 +82,24 @@ class TestSuite(object):
     def test_basics(self):
         cbr = CallbackRegistry()
         cbr.add('event1', TestSuite.fn_single_1)
-        assert cbr.reduce('event1', 1) == 2
+        assert cbr.filter('event1', 1) == 2
 
-    def test_reduce(self):
+    def test_filter(self):
         cbr = CallbackRegistry()
         cbr.add('event1', TestSuite.fn_single_1)
         cbr.add('event1', TestSuite.fn_single_2)
-        assert cbr.reduce('event1', 1) == 4
+        assert cbr.filter('event1', 1) == 4
 
     def test_double(self):
         cbr = CallbackRegistry()
         cbr.add('event1', TestSuite.fn_double_1)
-        assert cbr.reduce('event1', 1, 2) == (2, 1)
+        assert cbr.filter('event1', 1, 2) == (2, 1)
 
-    def test_double_reduce(self):
+    def test_double_filter(self):
         cbr = CallbackRegistry()
         cbr.add('event1', TestSuite.fn_double_1)
         cbr.add('event1', TestSuite.fn_double_2)
-        assert cbr.reduce('event1', 1, 2) == (4, 2)
+        assert cbr.filter('event1', 1, 2) == (4, 2)
 
     def test_decorator(self):
         cbr = CallbackRegistry()
@@ -99,4 +112,4 @@ class TestSuite(object):
         def fn_single_2(arg):
             return arg + arg
 
-        assert cbr.reduce('event1', 1) == 4
+        assert cbr.filter('event1', 1) == 4

@@ -1,6 +1,5 @@
 """Base classes which define the Level3 Associations"""
 from collections import defaultdict
-from functools import partial
 import logging
 from os.path import basename
 import re
@@ -12,7 +11,6 @@ from jwst.associations import (
 )
 from jwst.associations.association import (
     evaluate,
-    getattr_from_list,
     is_iterable
 )
 from jwst.associations.exceptions import (
@@ -65,7 +63,6 @@ _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 # Product name regex's
 _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
 
-
 # Key that uniquely identfies members.
 KEY = 'expname'
 
@@ -104,12 +101,12 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         self.members = set()
 
         # Initialize validity checks
-        self.validity = {
+        self.validity.update({
             'has_science': {
                 'validated': False,
                 'check': lambda entry: entry['exptype'] == 'SCIENCE'
             }
-        }
+        })
 
         # Let us see if member belongs to us.
         super(DMS_Level3_Base, self).__init__(*args, **kwargs)
@@ -130,26 +127,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         if 'asn_pool' not in self.data:
             self.data['asn_pool'] = 'none'
 
-    @classmethod
-    def validate(cls, asn):
-        super(DMS_Level3_Base, cls).validate(asn)
-
-        if isinstance(asn, DMS_Level3_Base):
-            result = False
-            try:
-                result = all(
-                    test['validated']
-                    for test in asn.validity.values()
-                )
-            except (AttributeError, KeyError):
-                raise AssociationNotValidError('Validation failed')
-            if not result:
-                raise AssociationNotValidError(
-                    'Validation failed validity tests.'
-                )
-
-        return True
-
     @property
     def current_product(self):
         return self.data['products'][-1]
@@ -169,30 +146,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             return not self.__eq__(other)
         else:
             return NotImplemented
-
-    def new_product(self, product_name=None):
-        """Start a new product"""
-        self.product_name = product_name
-        product = {
-            'name': self.product_name,
-            'members': []
-        }
-        try:
-            self.data['products'].append(product)
-        except KeyError:
-            self.data['products'] = [product]
-
-    @property
-    def product_name(self):
-        if self._product_name is None:
-            product_name = self.dms_product_name()
-        else:
-            product_name = self._product_name
-        return product_name
-
-    @product_name.setter
-    def product_name(self, value):
-        self._product_name = value
 
     def dms_product_name(self):
         """Define product name."""
@@ -219,11 +172,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         )
 
         return product_name.lower()
-
-    def update_validity(self, entry):
-        for test in self.validity.values():
-            if not test['validated']:
-                test['validated'] = test['check'](entry)
 
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
@@ -736,7 +684,7 @@ class AsnMixin_CrossCandidate(DMS_Level3_Base):
     def validate(cls, asn):
         super(AsnMixin_CrossCandidate, cls).validate(asn)
 
-        if isinstance(asn, DMS_Level3_Base):
+        if isinstance(asn, AsnMixin_CrossCandidate):
             try:
                 candidates = set(
                     member['asn_candidate_id']

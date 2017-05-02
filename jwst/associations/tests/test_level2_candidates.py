@@ -30,22 +30,22 @@ pytestmark = pytest.mark.skipif(
         # Basic observation ACIDs
         (
             ['-i', 'o001'],
-            10
+            1
         ),
         # Whole program
         (
             [],
-            140
+            1
         ),
         # Discovered only
         (
             ['--discover'],
-            0
+            1
         ),
         # Candidates only
         (
             ['--all-candidates'],
-            140
+            1
         ),
     ]
 )
