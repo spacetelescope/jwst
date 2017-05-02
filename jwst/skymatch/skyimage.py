@@ -275,7 +275,7 @@ class SkyImage(object):
         borderx[-1] = borderx[0]
         bordery[-1] = bordery[0]
 
-        ra, dec = self.wcs_fwd(borderx, bordery)
+        ra, dec = self.wcs_fwd(borderx, bordery, with_bounding_box=False)
         # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
         #       dec[0] != dec[-1] (even though we close the polygon in the
         #       previous two lines). Then SphericalPolygon fails because
