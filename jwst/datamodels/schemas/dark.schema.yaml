@@ -12,19 +12,19 @@ allOf:
       title: Dark current array
       fits_hdu: SCI
       default: 0.0
-      ndim: 4
+      ndim: 3
       datatype: float32
     dq:
       title: 2-D data quality array for all planes
       fits_hdu: DQ
       default: 0
-      ndim: 4
+      ndim: 3
       datatype: int16
     err:
       title: Error array
       fits_hdu: ERR
       default: 0.0
-      ndim: 4
+      ndim: 3
       datatype: float32
     dq_def:
       $ref: dq_def.schema.yaml
