@@ -13,10 +13,10 @@ from .helpers import (
 from ..main import Main
 
 # Temporarily skip if running under Travis
-pytestmark = pytest.mark.skipif(
-    "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
-    reason='Temporarily disable due to performance issues'
-)
+# pytestmark = pytest.mark.skipif(
+#     "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
+#     reason='Temporarily disable due to performance issues'
+# )
 
 
 @pytest.mark.parametrize(
@@ -30,22 +30,22 @@ pytestmark = pytest.mark.skipif(
         # Basic observation ACIDs
         (
             ['-i', 'o001'],
-            10
+            1
         ),
         # Whole program
         (
             [],
-            140
+            1
         ),
         # Discovered only
         (
             ['--discover'],
-            0
+            1
         ),
         # Candidates only
         (
             ['--all-candidates'],
-            140
+            1
         ),
     ]
 )

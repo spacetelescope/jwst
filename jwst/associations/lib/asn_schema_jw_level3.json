@@ -73,10 +73,6 @@
         }
     },
     "required": ["asn_type",
-                 "asn_id",
-                 "asn_rule",
-                 "program",
-                 "target",
                  "asn_pool",
                  "products"]
 }

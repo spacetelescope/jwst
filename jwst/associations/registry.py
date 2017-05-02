@@ -90,15 +90,12 @@ class AssociationRegistry(dict):
         self.schemas = []
         Utility = type('Utility', (object,), {})
         for fname in definition_files:
-            logger.debug('Import rules files "{}"'.format(fname))
             module = import_from_file(fname)
-            logger.debug('Module="{}"'.format(module))
             self.schemas += [
                 schema
                 for schema in find_member(module, 'ASN_SCHEMA')
             ]
             for class_name, class_object in get_classes(module):
-                logger.debug('class_name="{}"'.format(class_name))
                 if include_bases or class_name.startswith(USER_ASN):
                     try:
                         rule_name = '_'.join([self.name, class_name])
@@ -146,7 +143,6 @@ class AssociationRegistry(dict):
             reprocess_list: [AssociationReprocess, ...]
                 List of reprocess events.
         """
-        logger.debug('Starting...')
         if allow is None:
             allow = self.rule_set
         if ignore is None:
@@ -155,17 +151,12 @@ class AssociationRegistry(dict):
         process_list = []
         for name, rule in self.items():
             if rule not in ignore and rule in allow:
-                logger.debug('Checking membership for rule "{}"'.format(rule))
                 try:
                     associations.append(rule(member, version_id))
                 except AssociationError as error:
-                    logger.debug('Rule "{}" not matched'.format(name))
-                    logger.debug('Reason="{}"'.format(error))
+                    pass
                 except AssociationProcessMembers as process_event:
-                    logger.debug('Process event "{}"'.format(process_event))
                     process_list.append(process_event)
-                else:
-                    logger.debug('Member belongs to rule "{}"'.format(rule))
         return associations, process_list
 
     def validate(self, association):
@@ -263,7 +254,6 @@ class AssociationRegistry(dict):
             if first:
                 break
         if len(results) == 0:
-            logger.debug('Data did not validate against any rule.')
             raise lasterr
         if first:
             return results[0]
@@ -278,7 +268,7 @@ class AssociationRegistry(dict):
         assocations: [association[, ...]]
             The list of associations
         """
-        finalized = self.callback.reduce('finalize', associations)
+        finalized = self.callback.filter('finalize', associations)
         return finalized
 
 # Utilities
@@ -343,12 +333,10 @@ def get_classes(module):
     class members: generator
         A generator that will yield all class members in the module.
     """
-    logger.debug('Called.')
     for class_name, class_object in getmembers(
             module,
             lambda o: isclass(o) or ismodule(o)
     ):
-        logger.debug('name="{}" object="{}"'.format(class_name, class_object))
         if ismodule(class_object) and class_name.startswith('asn_'):
             for sub_name, sub_class in get_classes(class_object):
                 yield sub_name, sub_class
