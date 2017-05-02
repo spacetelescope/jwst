@@ -52,6 +52,7 @@ pipeline is as follows.
 calwebb_sloper  calwebb_sloper
 (All Near-IR)   (MIRI)
 ==============  ==============
+group_scale     group_scale
 dq_init         dq_init
 saturation      saturation
 ipc             ipc       
