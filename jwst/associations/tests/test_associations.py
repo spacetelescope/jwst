@@ -17,8 +17,8 @@ from ..registry import (
 
 # Temporarily skip if running under Travis
 # pytestmark = pytest.mark.skipif(
-#    "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
-#    reason='Temporarily disable due to performance issues'
+#     "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
+#     reason='Temporarily disable due to performance issues'
 # )
 
 
