@@ -4,6 +4,7 @@ from .. import datamodels
 import os
 
 # step imports
+from ..group_scale import group_scale_step
 from ..dq_init import dq_init_step
 from ..saturation import saturation_step
 from ..ipc import ipc_step
@@ -18,7 +19,7 @@ from ..jump import jump_step
 from ..ramp_fitting import ramp_fit_step
 
 
-__version__ = "7.0.0"
+__version__ = "7.1.0"
 
 # Define logging
 import logging
@@ -30,8 +31,9 @@ class SloperPipeline(Pipeline):
 
     SloperPipeline: Apply all calibration steps to raw JWST
     ramps to produce a 2-D slope product. Included steps are:
-    dq_init, saturation, ipc, superbias, refpix, rscd, lastframe,
-    linearity, dark_current, persistence, jump detection, and ramp_fit.
+    group_scale, dq_init, saturation, ipc, superbias, refpix, rscd,
+    lastframe, linearity, dark_current, persistence, jump detection,
+    and ramp_fit.
 
     """
 
@@ -40,7 +42,8 @@ class SloperPipeline(Pipeline):
     """
 
     # Define aliases to steps
-    step_defs = {'dq_init': dq_init_step.DQInitStep,
+    step_defs = {'group_scale': group_scale_step.GroupScaleStep,
+                 'dq_init': dq_init_step.DQInitStep,
                  'saturation': saturation_step.SaturationStep,
                  'ipc': ipc_step.IPCStep,
                  'superbias': superbias_step.SuperBiasStep,
@@ -73,6 +76,7 @@ class SloperPipeline(Pipeline):
             # the steps are in a different order than NIR
             log.debug('Processing a MIRI exposure')
 
+            input = self.group_scale(input)
             input = self.dq_init(input)
             input = self.saturation(input)
             input = self.ipc(input)
@@ -88,6 +92,7 @@ class SloperPipeline(Pipeline):
             # process Near-IR exposures
             log.debug('Processing a Near-IR exposure')
 
+            input = self.group_scale(input)
             input = self.dq_init(input)
             input = self.saturation(input)
             input = self.ipc(input)
