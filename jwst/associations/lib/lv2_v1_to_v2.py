@@ -86,8 +86,8 @@ if __name__ == '__main__':
     )
 
     parser.add_argument(
-        'old_asn',
-        help='Old style Level2 Association file'
+        'old_asns',
+        help='Old style Level2 Association files to convert. May be a glob specification'
     )
     parser.add_argument(
         '-p', '--prefix', default='v2_',
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     numeric_log_level = getattr(logging, args.log_level.upper())
     logger.setLevel(numeric_log_level)
 
-    files = glob(args.old_asn)
+    files = glob(args.old_asns)
     for fname in files:
         logger.info('Working {}'.format(fname))
         with open(fname) as fp:
