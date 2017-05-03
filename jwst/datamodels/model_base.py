@@ -33,11 +33,9 @@ from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
 
-import gc
-from memory_profiler import profile
-
 
 jwst_extensions = [GWCSExtension(), JWSTExtension(), BaseExtension()]
+
 
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
@@ -45,7 +43,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     schema_url = "core.schema.yaml"
 
-    @profile
     def __init__(self, init=None, schema=None, extensions=None,
                  pass_invalid_values=False):
         """
@@ -81,7 +78,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         pass_invalid_values: If true, values that do not validate the schema can
             be read and written and only a warning will be generated
         """
-
         # Set the extensions
         if extensions is None:
             extensions = jwst_extensions[:]
@@ -160,7 +156,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 asdf = AsdfFile.open(init, extensions=jwst_extensions)
             except (ValueError):
                 try:
-
                     hdulist = fits.open(init)
                     # TODO: Add json support
                 except (IOError, OSError):
@@ -168,7 +163,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                         "File does not appear to be a FITS or ASDF file.")
                 else:
                     asdf = fits_support.from_fits(hdulist, self._schema,
-                                                  extensions, pass_invalid_values)
+                                                  self.extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
         else:
             raise ValueError(
