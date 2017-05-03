@@ -322,6 +322,7 @@ def constrain_on_candidates(candidates):
         'inputs': ['ASN_CANDIDATE'],
         'force_unique': True,
         'is_acid': True,
+        'evaluate': True,
     }
 
     return constraint

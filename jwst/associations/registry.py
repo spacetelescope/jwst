@@ -151,13 +151,9 @@ class AssociationRegistry(dict):
         process_list = []
         for name, rule in self.items():
             if rule not in ignore and rule in allow:
-                logger.debug('Checking membership for rule "{}"'.format(rule))
                 asn, reprocess = rule.create(member, version_id)
                 process_list.extend(reprocess)
-                if asn is None:
-                    logger.debug('Rule "{}" not matched'.format(name))
-                else:
-                    logger.debug('Member belongs to rule "{}"'.format(rule))
+                if asn is not None:
                     associations.append(asn)
         return associations, process_list
 

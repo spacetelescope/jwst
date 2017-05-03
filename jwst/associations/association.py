@@ -80,6 +80,9 @@ class Association(MutableMapping):
     # can be explicitly checked.
     DEFAULT_REQUIRE_CONSTRAINT = True
 
+    # Default do not evaluate input values
+    DEFAULT_EVALUATE = False
+
     # Global constraints
     GLOBAL_CONSTRAINTS = {}
 
@@ -418,40 +421,33 @@ class Association(MutableMapping):
                 return False, reprocess
 
         # If the value is a list, build the reprocess list
-        evaled = evaluate(value)
-        current_value = None
-        if is_iterable(evaled):
-            process_members = []
-            for avalue in evaled:
-                if not current_value:
-                    current_value = avalue
-                    continue
-                new_member = deepcopy(member)
-                new_member[input] = str(avalue)
-                process_members.append(new_member)
-            if len(process_members) > 0:
+        if conditions.get('evaluate', self.DEFAULT_EVALUATE):
+            evaled = evaluate(value)
+            if is_iterable(evaled):
+                process_members = []
+                for avalue in evaled:
+                    new_member = deepcopy(member)
+                    new_member[input] = str(avalue)
+                    process_members.append(new_member)
                 reprocess.append(ProcessList(
                     process_members,
                     [type(self)]
                 ))
-            evaled = current_value
+                return False, reprocess
+            value = str(evaled)
 
-        evaled_str = str(evaled)
+        # Check condition
         if conditions['value'] is not None:
             if not meets_conditions(
-                    evaled_str, conditions['value']
+                    value, conditions['value']
             ):
-                logging.debug(
-                    'Constraint {}'
-                    ' does not match association.'.format(constraint)
-                )
                 return False, reprocess
 
         # At this point, the constraint has passed.
         # Fix the conditions.
         if conditions['value'] is None or \
            conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
-            conditions['value'] = re.escape(evaled_str)
+            conditions['value'] = re.escape(value)
             conditions['inputs'] = [input]
             conditions['force_unique'] = False
 
@@ -485,10 +481,6 @@ class Association(MutableMapping):
             if not meets_conditions(
                     evaled_str, conditions['value']
             ):
-                logging.debug(
-                    'Constraint {}'
-                    ' does not match association.'.format(constraint)
-                )
                 return False, reprocess
 
         # At this point, the constraint has passed.
