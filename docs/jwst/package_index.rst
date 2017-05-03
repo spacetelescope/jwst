@@ -1,4 +1,6 @@
-
+=============
+Package Index
+=============
 .. toctree::
    :maxdepth: 2
 
@@ -20,6 +22,7 @@
    fits_generator/index.rst
    flatfield/index.rst
    fringe/index.rst
+   group_scale/index.rst
    imprint/index.rst
    ipc/index.rst
    jump/index.rst

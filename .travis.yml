@@ -6,12 +6,21 @@ os:
 
 sudo: false
 
+# The apt packages below are needed for sphinx builds, which can no longer
+# be installed with sudo apt-get.
+addons:
+    apt:
+        packages:
+            - graphviz
+            - texlive-latex-extra
+            - dvipng
+
 env:
     global:
         - MAIN_CMD='python setup.py'
         - CONDA_CHANNELS='http://ssb.stsci.edu/conda-dev'
-        - CONDA_DEPENDENCIES='pytest jwst cython sphinx'
-        - CONDA_JWST_DEPENDENCIES='pytest jwst cython sphinx'
+        - CONDA_DEPENDENCIES='pytest jwst sphinx'
+        - CONDA_JWST_DEPENDENCIES='pytest jwst sphinx'
         - PIP_DEPENDENCIES=''
         - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
         - CRDS_PATH='/tmp/crds_cache'
@@ -35,12 +44,12 @@ matrix:
                SETUP_CMD='jwst' TEST_CMD='pycodestyle --version'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
 
-        # build sphinx documentation
+        # build sphinx documentation with warnings
         - os: linux
           env: PYTHON_VERSION=3.5 
                SETUP_CMD='build_sphinx'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
-               PIP_DEPENDENCIES='sphinx_rtd_theme sphinx-automodapi graphviz'
+               PIP_DEPENDENCIES='sphinx_rtd_theme sphinx-automodapi'
 
     allow_failures:
         # PEP8 will fail for numerous reasons. Ignore it.

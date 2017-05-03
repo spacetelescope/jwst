@@ -6,6 +6,31 @@ from setuptools.command.test import test as TestCommand
 from numpy import get_include as np_include
 from glob import glob
 
+# hack building the sphinx docs with C source
+from setuptools.command.build_ext import build_ext
+import sphinx
+from sphinx.setup_command import BuildDoc
+
+
+class BuildSphinx(BuildDoc):
+    """Build Sphinx documentation after compiling C source files"""
+
+    description = 'Build Sphinx documentation'
+
+    def initialize_options(self):
+        BuildDoc.initialize_options(self)
+
+    def finalize_options(self):
+        BuildDoc.finalize_options(self)
+
+    def run(self):
+        build_cmd = self.reinitialize_command('build_ext')
+        build_cmd.inplace = 1
+        self.run_command('build_ext')
+        sphinx.build_main(['setup.py', '-b', 'html', './docs', './docs/_build/html'])
+
+
+
 NAME = 'jwst'
 SCRIPTS = glob('scripts/*')
 PACKAGE_DATA = {
@@ -96,6 +121,7 @@ setup(
         'pytest-catchlog'
     ],
     cmdclass={
-        'test': PyTest
+        'test': PyTest,
+        'build_sphinx': BuildSphinx
     },
 )
