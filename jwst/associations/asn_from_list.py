@@ -60,7 +60,7 @@ class Main(object):
 
         parser = argparse.ArgumentParser(
             description='Create an association from a list of files',
-            usage='asn_from_list -o asn_file filelist'
+            usage='asn_from_list -o mosaic_asn.json --product-name my_mosaic *.fits'
         )
 
         parser.add_argument(
