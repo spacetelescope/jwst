@@ -22,6 +22,3 @@ using the class names involved.
    :scale: 50%
 
    Association Class Relationship overview
-
-The details of each of these components are described in the rest of
-this part:

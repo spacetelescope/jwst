@@ -1,3 +1,5 @@
+.. _pipeline-classes:
+
 ========================================
 Pipeline Classes and Configuration Files
 ========================================
