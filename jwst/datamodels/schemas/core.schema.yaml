@@ -440,10 +440,22 @@ properties:
             title: Number of frames per group
             type: number
             fits_keyword: NFRAMES
+          frame_divisor:
+            title: Divisor applied to frame-averaged groups
+            type: integer
+            fits_keyword: FRMDIVSR
           groupgap:
             title: Number of frames dropped between groups
             type: integer
             fits_keyword: GROUPGAP
+          dropframes1:
+            title: Frames dropped at start of each integration
+            type: integer
+            fits_keyword: DRPFRMS1
+          dropframes3:
+            title: Frames dropped at end of each integration
+            type: integer
+            fits_keyword: DRPFRMS3
           nsamples:
             title: Number of A/D samples per pixel
             type: integer
@@ -1440,6 +1452,10 @@ properties:
             title: Last Frame Correction
             type: string
             fits_keyword: S_LASTFR
+          group_scale:
+            title: Group Scale Correction
+            type: string
+            fits_keyword: S_GRPSCL
           dq_init:
             title: Data Quality Initialization
             type: string

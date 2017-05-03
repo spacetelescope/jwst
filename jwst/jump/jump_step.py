@@ -8,16 +8,20 @@ from .jump import detect_jumps
 class JumpStep(Step):
     """
     JumpStep: Performs CR/jump detection on each ramp integration within an
-    exposure. The 2-point difference method is applied on a first pass to all
-    of the data. The y-intercept method is then applied in a second pass to
-    only those pixels that have signal levels in the readout noise regime.
+    exposure. The 2-point difference method is applied.
     """
 
     spec = """
         rejection_threshold = float(default=4.0,min=0) # CR rejection threshold
-        do_yintercept = boolean(default=False) # do y-intercept method?
-        yint_threshold = float(default=1.0,min=0) # y-intercept signal threshold
     """
+
+    # Prior to 04/26/17, the following were also in the spec above:
+    #    do_yintercept = boolean(default=False) # do y-intercept method?
+    #    yint_threshold = float(default=1.0,min=0) # y-intercept signal threshold
+    # As of 04/26/17, do_yintercept is not an option. Only the 2-point 
+    #   difference method is allowed for Build 7.1.
+    do_yintercept = False  # do_intercept is no longer an option     
+    yint_threshold = 1.0   # placeholder in case algorithm is re-enabled later
 
     reference_file_types = ['gain', 'readnoise']
 
