@@ -23,7 +23,7 @@ def test_distortion_schema():
     dist.meta.instrument.detector = "NRCA1"
     dist.meta.instrument.p_pupil = "F162M|F164N|CLEAR|"
     dist.meta.instrument.pupil = "F162M"
-    dist.meta.exposure.p_exptype = "NRC_IMAGE|NRC_FLAT|NRC_LED|NRC_WFSC|"
+    dist.meta.exposure.p_exptype = "NRC_IMAGE|NRC_TSIMAGE|NRC_FLAT|NRC_LED|NRC_WFSC|"
     dist.meta.exposure.type = "NRC_IMAGE"
     dist.meta.psubarray = "FULL|SUB64P|SUB160)|SUB160P|SUB320|SUB400P|SUB640|"
     dist.meta.subarray.name = "FULL"
