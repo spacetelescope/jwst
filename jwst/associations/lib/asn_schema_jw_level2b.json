@@ -3,7 +3,7 @@
     "title": "Association: JWST DMS Level2a->Level2b",
     "description": "The data structure that, within the JWST DMS processing system, defines how to group level2a exposures to produce Level2b data products.",
     "type": "object",
-    "required": ["asn_type", "asn_pool", "products"],
+    "required": ["products"],
     "properties": {
         "asn_type": {
             "description": "The type of association represented.",
@@ -26,6 +26,7 @@
             "type": "array",
             "items": {
                 "type": "object",
+                "required": ["name", "members"],
                 "properties": {
                     "name": {
                         "description": "Name of the output product",
@@ -36,6 +37,7 @@
                         "type": "array",
                         "items": {
                             "type": "object",
+                            "required": ["expname", "exptype"],
                             "properties": {
                                 "expname": {
                                     "description": "Name of the input member.",
@@ -45,12 +47,10 @@
                                     "description": "Type of member.",
                                     "type": "string"
                                 }
-                            },
-                            "required": ["expname", "exptype"]
+                            }
                         }
                     }
-                },
-                "required": ["name", "members"]
+                }
             }
         }
     }
