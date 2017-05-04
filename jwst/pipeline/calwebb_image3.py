@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 import os
 
-from fitsblender import blendheaders
-
 from ..stpipe import Pipeline
 from .. import datamodels
 
@@ -74,7 +72,8 @@ class Image3Pipeline(Pipeline):
                 except:
                     pass
 
-            log.info("Resampling ASN to create combined product: {}".format(input_models.meta.resample.output))
+            log.info("Resampling {} to create combined "
+                "product: {}".format(input, input_models.meta.resample.output))
 
         # Setup output file name for subsequent use
         # TODO: fix single resample to do what outlier detection does
@@ -90,18 +89,9 @@ class Image3Pipeline(Pipeline):
         # create final source catalog from resampled output
         out_catalog = self.source_catalog(output)
 
-
         # Save the final image product
         log.info('Saving final image product to %s', output_file)
         output.save(output_file)
-
-        # Run fitsblender on output product
-        input_files = [i.meta.filename for i in input_models]
-        blendheaders.blendheaders(output_file, input_files)
-
-        # close all inputs and outputs
-        output.close()
-        input_models.close()
         log.info('... ending calwebb_image3')
 
         return

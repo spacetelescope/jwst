@@ -19,8 +19,7 @@ class ResampleStep(Step):
     Parameters
     -----------
     input : str or model
-        Single filename for either a single image or an association table.  This
-        would then get used to create a AsnModel(?) object for this step.
+        Single filename for either a single image or an association table.
     """
 
     spec = """
@@ -29,7 +28,8 @@ class ResampleStep(Step):
         pixfrac = float(default=1.0)
         kernel = string(default='square')
         fillval = string(default='INDEF')
-        good_bits = integer(default=-1)
+        good_bits = integer(default=4)
+        blendheaders = boolean(default=True)
     """
     reference_file_types = ['drizpars']
 
@@ -49,26 +49,27 @@ class ResampleStep(Step):
 
         # identify what reference file has been associated with these inputs
         try:
-            self.ref_filename = self.get_reference_file(self.input_models[0], 'drizpars')
+            self.ref_filename = self.get_reference_file(self.input_models[0],
+                self.reference_file_types[0])
+            log.info('{} reffile is {}'.format(self.reference_file_types[0],
+                self.ref_filename))
         except:
-            # This is only in place for initial testing of this code, prior
-            # to ref file being included in CRDS
-            self.ref_filename = self.input_models[0].meta.storage.get_fits_header('PRIMARY')['r_resamp']
-        self.log.info('Reference file to use: %s ', self.ref_filename)
+            log.error('{} reffile is not found.'.format(
+                self.reference_file_types[0]))
 
         # Call the resampling routine
-        self.step = resample.ResampleData(self.input_models, self.ref_filename,
-                                single=self.single, wht_type=self.wht_type,
-                                pixfrac=self.pixfrac, kernel=self.kernel,
-                                fillval=self.fillval, good_bits=self.good_bits)
-        self.step.do_drizzle()
+        resamp = resample.ResampleData(self.input_models,
+            ref_filename=self.ref_filename,
+            single=self.single, wht_type=self.wht_type, pixfrac=self.pixfrac,
+            kernel=self.kernel, fillval=self.fillval, good_bits=self.good_bits,
+            blendheaders=self.blendheaders)
+        resamp.do_drizzle()
 
-        #self.input_models.close()
-
-        if len(self.step.output_models) == 1:
-            output_model = self.step.output_models[0]
+        if len(resamp.output_models) == 1:
+            output_model = resamp.output_models[0]
         else:
-            output_model = self.step.output_models
+            output_model = resamp.output_models
+
 
         output_model.meta.cal_step.resample = "COMPLETE"
 
