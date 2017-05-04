@@ -1,6 +1,4 @@
-.. _pipeline modules: http://ssb.stsci.edu/doc/jwst_git/docs/stpipe/html/
-
-.. _overview:
+.. _asn-overview:
 
 ======================
 Association Processing
@@ -18,10 +16,10 @@ System (DMS), associations have the following characteristics:
 - Relationships between multiple exposures are captured in an association.
 - An association is a means of identifying a set of exposures that belong together and may be dependent upon one another.
 - The association concept permits exposures to be calibrated, archived, retrieved, and reprocessed as a set rather than as individual objects.
--  For each association, DMS will generate the most combined and least combined data products.
+- For each association, DMS will generate the most combined and least combined data products.
 
 Associations are used as the primary input to various Level2 and
-Level3 JWST `pipeline modules`_.
+Level3 JWST :ref:`pipeline modules <pipeline-classes>`.
 
 In DMS, associations are created by the :ref:`association generator
 <asn-generate>`. The association generator is basically a classifier.

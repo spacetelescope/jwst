@@ -4,6 +4,7 @@ import pytest
 
 from .. import (Association, AssociationRegistry, load_asn)
 from ..asn_from_list import (Main, asn_from_list)
+from ..exceptions import AssociationNotValidError
 
 
 def test_base_association():
@@ -68,7 +69,7 @@ def test_default_fail():
     A product name needs to be included, but is not.
     """
     items = ['a']
-    with pytest.raises((KeyError, TypeError)):
+    with pytest.raises((AssociationNotValidError)):
         asn = asn_from_list(items)
 
 

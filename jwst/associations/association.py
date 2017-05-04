@@ -13,11 +13,8 @@ from numpy.ma import masked
 
 from . import __version__
 from .exceptions import (
-    AssociationError,
-    AssociationNotValidError,
-    AssociationProcessMembers
+    AssociationNotValidError
 )
-from .lib.counter import Counter
 from .lib.ioregistry import IORegistry
 
 __all__ = ['Association']
@@ -36,9 +33,6 @@ class Association(MutableMapping):
 
     Parameters
     ----------
-    member: dict
-        The member to initialize the association with.
-
     version_id: str or None
         Version_Id to use in the name of this association.
         If None, nothing is added.
@@ -86,6 +80,9 @@ class Association(MutableMapping):
     # can be explicitly checked.
     DEFAULT_REQUIRE_CONSTRAINT = True
 
+    # Default do not evaluate input values
+    DEFAULT_EVALUATE = False
+
     # Global constraints
     GLOBAL_CONSTRAINTS = {}
 
@@ -96,12 +93,8 @@ class Association(MutableMapping):
     # Initialize a global IO registry
     ioregistry = IORegistry()
 
-    # Associations of the same type are sequenced.
-    _sequence = Counter(start=1)
-
     def __init__(
             self,
-            member=None,
             version_id=None,
     ):
 
@@ -119,9 +112,32 @@ class Association(MutableMapping):
             'code_version': __version__,
         })
 
-        if member is not None:
-            self.add(member)
-        self.sequence = next(self._sequence)
+    @classmethod
+    def create(cls, member, version_id=None):
+        """Create association if member belongs
+
+        Parameters
+        ----------
+        member: dict
+            The member to initialize the association with.
+
+        version_id: str or None
+            Version_Id to use in the name of this association.
+            If None, nothing is added.
+
+        Returns
+        -------
+        (association, reprocess_list)
+            2-tuple consisting of:
+            - association: The association or, if the member does not
+                this rule, None
+            - [ProcessList[, ...]]: List of members to process again.
+        """
+        asn = cls(version_id=version_id)
+        matches, reprocess = asn.add(member)
+        if not matches:
+            return None, reprocess
+        return asn, reprocess
 
     @property
     def asn_name(self):
@@ -303,14 +319,23 @@ class Association(MutableMapping):
             If True, see if the member should belong to this association.
             If False, just add it.
 
+        Returns
+        -------
+        (matches, reprocess_list)
+            2-tuple consisting of:
+            - bool: True if the all constraints are satisfied
+            - [ProcessList[, ...]]: List of members to process again.
         """
         if check_constraints:
-            self.test_and_set_constraints(member)
+            matches, reprocess = self.test_and_set_constraints(member)
 
-        if self.run_init_hook:
-            self._init_hook(member)
-        self._add(member)
-        self.run_init_hook = False
+        if matches:
+            if self.run_init_hook:
+                self._init_hook(member)
+            self._add(member)
+            self.run_init_hook = False
+
+        return matches, reprocess
 
     @nottest
     def test_and_set_constraints(self, member):
@@ -323,24 +348,34 @@ class Association(MutableMapping):
             The parameters to check/set for this association.
             This can be a list of dictionaries.
 
-        Raises
-        ------
-        AssociationError
-            If a match fails.
+        Returns
+        -------
+        (matches, reprocess_list)
+            2-tuple consisting of:
+            - bool: True if the all constraints are satisfied
+            - [ProcessMember[, ...]]: List of members to process again.
 
         Notes
         -----
         If a constraint is present, but does not have a value,
         that constraint is set, and, by definition, matches.
         """
+
+        # If there are no conditions, the default is a
+        # successful test
+        matches = True
+
+        reprocess = []
         constraints = deepcopy(self.constraints)
         for constraint, conditions in constraints.items():
-            logger.debug('Constraint="{}" Conditions="{}"'.format(
-                constraint, conditions
-            ))
             test = conditions.get('test', self.match_member)
-            test(member, constraint, conditions)
-        self.constraints = constraints
+            matches, new_reprocess = test(member, constraint, conditions)
+            reprocess.extend(new_reprocess)
+            if not matches:
+                break
+        else:
+            self.constraints = constraints
+        return matches, reprocess
 
     def match_member(self, member, constraint, conditions):
         """Use member info to match to the conditions
@@ -356,24 +391,16 @@ class Association(MutableMapping):
         conditions: dict
             The conditions structure
 
-        Raises
-        ------
-        AssociationError
-            If the match fails
-
-        AssociationProcessMembers
-            If more members need to be reprocessed.
+        Returns
+        -------
+        (matches, reprocess_list)
+            2-tuple consisting of:
+            - bool: True if the all constraints are satisfied
+            - [ProcessList[, ...]]: List of members to process again.
         """
-        logger.debug(
-            'Called with:\n'
-            '\tmember="{}"\n'
-            '\tconstraint="{}"\n'
-            '\tconditions={}\n'.format(
-                member,
-                constraint,
-                conditions
-            )
-        )
+        reprocess = []
+
+        # Get the condition information.
         try:
             input, value = getattr_from_list(
                 member,
@@ -386,52 +413,46 @@ class Association(MutableMapping):
                    'required',
                    self.DEFAULT_REQUIRE_CONSTRAINT
                ):
-                raise AssociationError(
-                    'Constraint {} not present in member.'.format(constraint)
-                )
+                return False, reprocess
             else:
-                return
+                return True, reprocess
         else:
             if conditions.get('force_undefined', False):
-                raise AssociationError(
-                    'Constraint {} present'
-                    ' when it should not be'.format(constraint)
-                )
+                return False, reprocess
 
-        # If the value is a list, signal that a reprocess
-        # needs to be done.
-        logger.debug('To check: Input="{}" Value="{}"'.format(input, value))
-        evaled = evaluate(value)
+        # If the value is a list, build the reprocess list
+        if conditions.get('evaluate', self.DEFAULT_EVALUATE):
+            evaled = evaluate(value)
+            if is_iterable(evaled):
+                process_members = []
+                for avalue in evaled:
+                    new_member = deepcopy(member)
+                    new_member[input] = str(avalue)
+                    process_members.append(new_member)
+                reprocess.append(ProcessList(
+                    process_members,
+                    [type(self)]
+                ))
+                return False, reprocess
+            value = str(evaled)
 
-        if is_iterable(evaled):
-            process_members = []
-            for avalue in evaled:
-                new_member = deepcopy(member)
-                new_member[input] = str(avalue)
-                process_members.append(new_member)
-            raise AssociationProcessMembers(
-                process_members,
-                [type(self)]
-            )
-
-        evaled_str = str(evaled)
+        # Check condition
         if conditions['value'] is not None:
             if not meets_conditions(
-                    evaled_str, conditions['value']
+                    value, conditions['value']
             ):
-                raise AssociationError(
-                    'Constraint {}'
-                    ' does not match association.'.format(constraint)
-                )
+                return False, reprocess
 
         # At this point, the constraint has passed.
         # Fix the conditions.
-        logger.debug('Success Input="{}" Value="{}"'.format(input, evaled_str))
         if conditions['value'] is None or \
            conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
-            conditions['value'] = re.escape(evaled_str)
+            conditions['value'] = re.escape(value)
             conditions['inputs'] = [input]
             conditions['force_unique'] = False
+
+        # That's all folks
+        return True, reprocess
 
     def match_constraint(self, member, constraint, conditions):
         """Generic constraint checking
@@ -447,28 +468,30 @@ class Association(MutableMapping):
         conditions: dict
             The conditions structure
 
-        Raises
-        ------
-        AssociationError
-            If the match fails
+        Returns
+        -------
+        (matches, reprocess_list)
+            2-tuple consisting of:
+            - bool: True if the all constraints are satisfied
+            - [ProcessList[, ...]]: List of members to process again.
         """
+        reprocess = []
         evaled_str = conditions['inputs'](member)
         if conditions['value'] is not None:
             if not meets_conditions(
                     evaled_str, conditions['value']
             ):
-                raise AssociationError(
-                    'Constraint {}'
-                    ' does not match association.'.format(constraint)
-                )
+                return False, reprocess
 
         # At this point, the constraint has passed.
         # Fix the conditions.
-        logger.debug('Success Input="{}" Value="{}"'.format(input, evaled_str))
         if conditions['value'] is None or \
            conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
             conditions['value'] = re.escape(evaled_str)
             conditions['force_unique'] = False
+
+        # That's all folks
+        return True, reprocess
 
     def add_constraints(self, new_constraints):
         """Add a set of constraints to the current constraints."""
@@ -488,10 +511,6 @@ class Association(MutableMapping):
                 yield '    {:s}: Is Invalid'.format(name)
             else:
                 yield '    {:s}: {}'.format(name, conditions['value'])
-
-    @classmethod
-    def reset_sequence(cls):
-        cls._sequence = Counter(start=1)
 
     def _init_hook(self, member):
         """Post-check and pre-member-adding initialization."""
@@ -551,6 +570,23 @@ class Association(MutableMapping):
 
     def values(self):
         return self.data.values()
+
+
+class ProcessList(object):
+    """A Process list
+
+    Parameters
+    ----------
+    members: [member[, ...]]
+        The list of members to process
+
+    rules: [Association[, ...]]
+        List of rules to process the members against.
+    """
+
+    def __init__(self, members, rules):
+        self.members = members
+        self.rules = rules
 
 
 # #########

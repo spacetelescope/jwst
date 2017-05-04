@@ -37,3 +37,13 @@ class Asn_Lv2SpecBkg(
         AsnMixin_Lv2Mode
 ):
     """Level2b Spectra with backgrounds"""
+
+    def __init__(self, *args, **kwargs):
+        self.validity.update({
+            'has_background': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'BACKGROUND'
+            }
+        })
+
+        super(Asn_Lv2SpecBkg, self).__init__(*args, **kwargs)

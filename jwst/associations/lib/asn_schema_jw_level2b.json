@@ -3,7 +3,7 @@
     "title": "Association: JWST DMS Level2a->Level2b",
     "description": "The data structure that, within the JWST DMS processing system, defines how to group level2a exposures to produce Level2b data products.",
     "type": "object",
-    "required": ["asn_type", "asn_rule", "asn_pool", "members"],
+    "required": ["products"],
     "properties": {
         "asn_type": {
             "description": "The type of association represented.",
@@ -21,30 +21,30 @@
             "description": "The observing program identifier",
             "type": "string"
         },
-        "members": {
-            "description": "List of level2a exposures",
+        "products": {
+            "description": "Array of output products and their required inputs derived from this association.",
             "type": "array",
             "items": {
                 "type": "object",
-                "required": ["expname", "exptype"],
+                "required": ["name", "members"],
                 "properties": {
-                    "expname": {
-                        "description": "Level2a exposure name",
+                    "name": {
+                        "description": "Name of the output product",
                         "type": "string"
                     },
-                    "exptype": {
-                        "description": "Type of exposure",
-                        "type": "string"
-                    },
-                    "bkgexps": {
-                        "description": "List of background exposure",
+                    "members": {
+                        "description": "Array of input members.",
                         "type": "array",
                         "items": {
                             "type": "object",
-                            "required": ["expname"],
+                            "required": ["expname", "exptype"],
                             "properties": {
                                 "expname": {
-                                    "description": "Level2a background exposure name",
+                                    "description": "Name of the input member.",
+                                    "type": "string"
+                                },
+                                "exptype": {
+                                    "description": "Type of member.",
                                     "type": "string"
                                 }
                             }
