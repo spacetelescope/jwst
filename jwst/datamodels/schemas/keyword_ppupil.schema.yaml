@@ -6,8 +6,8 @@ properties:
       instrument:
         type: object
         properties:
-          pupil:
-            title: Name of the filter element used
+          p_pupil:
+            title: Name of applicable pupil elements.
             type: string
             pattern: ^((ANY|CLEAR|CLEARP|F090W|F115W|F140M|F150W|F158M|F162M|F164N|\
               F200W|F323N|F405N|F466N|F470N|FLAT|GDHS|GDHS0|GDHS60|GR700XD|\

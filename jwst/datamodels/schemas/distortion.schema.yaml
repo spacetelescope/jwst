@@ -1,10 +1,14 @@
+title: Distortion data model
 allOf:
 - $ref: referencefile.schema.yaml
-- $ref: instrument_name.schema.yaml
-- $ref: detector.schema.yaml
-- $ref: filter_core.schema.yaml
-- $ref: pupil.schema.yaml
-- $ref: exposure_type.schema.yaml
+- $ref: keyword_filter.schema.yaml
+- $ref: keyword_pfilter.schema.yaml
+- $ref: keyword_pupil.schema.yaml
+- $ref: keyword_ppupil.schema.yaml
+- $ref: keyword_exptype.schema.yaml
+- $ref: keyword_pexptype.schema.yaml
+- $ref: subarray.schema.yaml
+- $ref: psubarray.schema.yaml
 - type: object
   properties:
     model:

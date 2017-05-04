@@ -6,8 +6,8 @@ properties:
       instrument:
         type: object
         properties:
-          filter:
-            title: Name of the filter element used
+          p_filter:
+            title: Names of applicable filter elements.
             type: string
             pattern: ^((CLEAR|F070LP|F090W|F1000W|F100LP|F1065C|\
               F110W|F1130W|F1140C|F115W|F1280W|F140M|F140X|F1500W|F150W|\
@@ -16,5 +16,4 @@ properties:
               F322W2|F335M|F356W|F360M|F380M|F410M|F430M|F444W|\
               F460M|F480M|F560W|F770W|FLENS|FND|FNDP750L|GR150C|\
               GR150R|OPAQUE|P750L|WL3|WLP4|N/A|ANY)\s*\|\s*)+$
-            fits_keyword: FILTER
-        required: [filter]
+            fits_keyword: P_FILTER

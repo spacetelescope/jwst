@@ -153,7 +153,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
             try:
-                asdf = AsdfFile.open(init, extensions=jwst_extensions)
+                asdf = AsdfFile.open(init, extensions=extensions)
             except (ValueError):
                 try:
                     hdulist = fits.open(init)
@@ -163,7 +163,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                         "File does not appear to be a FITS or ASDF file.")
                 else:
                     asdf = fits_support.from_fits(hdulist, self._schema,
-                                                  self.extensions, pass_invalid_values)
+                                                  extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
         else:
             raise ValueError(

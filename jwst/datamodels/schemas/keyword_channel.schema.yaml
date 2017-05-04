@@ -7,8 +7,7 @@ properties:
         type: object
         properties:
           channel:
-            title: Channel name.
+            title: NIRCAM or MIRI channel name.
             type: string
+            enum: [LONG, SHORT, '12', '34', '1', '2', '3', '4', ANY, N/A]
             fits_keyword: CHANNEL
-            pattern: ^((LONG|SHORT|12|34|1|2|3|4|ANY|N/A)\s*\|\s*)+$
-        required: [channel]

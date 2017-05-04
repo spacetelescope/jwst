@@ -11,4 +11,3 @@ properties:
             type: string
             enum: [G140M, G235M, G395M, G140H, G235H, G395H, PRISM, MIRROR, N/A, ANY]
             fits_keyword: GRATING
-        required: [grating]
