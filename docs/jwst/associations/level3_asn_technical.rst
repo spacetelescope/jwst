@@ -138,36 +138,36 @@ Association Meta Keywords
 
 The following are the top-level, or meta, keywords of an association.
 
-program
+program *optional*
   Program number for which this association was created.
 
-target
+target *optional*
   Target ID for which this association refers to. DMS currently uses
   the TARGETID header keyword in the Level2 exposure files, but there
   is no formal restrictions on value.
 
-asn_type
+asn_type *optional*
   The type of association represented. See :ref:`level3-asn-association-types`
 
-asn_id
+asn_id *optional*
   The association id. The id is what appears in the :ref:`asn-DMS-naming`
 
-asn_pool
+asn_pool *optional*
   Association pool from which this association was created.
 
-asn_rule
+asn_rule *optional*
   Name of the association rule which created this association.
 
-degraded_status
+degraded_status *optional*
   Error status from the observation logs. If none the phrase "No
   known degraded exposures in association." is used.
 
-version_id
+version_id *optional*
   Version identifier. DMS uses a time stamp with the format
   `yyyymmddthhmmss`
   Can be None or NULL
 
-constraints
+constraints *optional*
   List of constraints used by the association generator to create this
   association. Format and contents are determined by the defining
   rule.
@@ -178,13 +178,15 @@ constraints
 
 Association products have to components:
 
-name
+name *optional*
   The string template to be used by Level 3 processing tasks to create
   the output file names. The product name, in general, is a prefix on
   which the individual pipeline and step modules will append whatever
   suffix information is needed.
 
-members
+  If not specified, the Level3 processing modules will create a name root.
+
+members *required*
   This is a list of the exposures to be used by the Level 3 processing
   tasks. This keyword is explained in detail in the next section.
 
