@@ -18,7 +18,7 @@ DATAPATH = abspath(
     '${TEST_BIGDATA}/miri/test_image2pipeline/'
 )
 EXPFILE = 'jw00001001001_01101_00001_MIRIMAGE_uncal_MiriSloperPipeline.fits'
-CALFILE = 'cal.fits'
+CALFILE = 'jw00001001001_01101_00001_MIRIMAGE_cal.fits'
 
 # Skip if the data is not available
 pytestmark = pytest.mark.skipif(
@@ -39,19 +39,19 @@ def test_asn(tmpdir):
     with tmpdir.join(asn_file).open('w') as fp:
         fp.write(serialized)
     with tmpdir.as_cwd():
-        Image2Pipeline.call(asn_file, output_file=CALFILE)
+        Image2Pipeline.call(asn_file)
         assert path.isfile(CALFILE)
 
 
 def test_datamodel(tmpdir):
     model = dm_open(path.join(DATAPATH, EXPFILE))
     with tmpdir.as_cwd():
-        Image2Pipeline.call(model, output_file=CALFILE)
+        Image2Pipeline.call(model)
         assert path.isfile(CALFILE)
 
 
 def test_file(tmpdir):
     exppath = path.join(DATAPATH, EXPFILE)
     with tmpdir.as_cwd():
-        Image2Pipeline.call(exppath, output_file=CALFILE)
+        Image2Pipeline.call(exppath)
         assert path.isfile(CALFILE)

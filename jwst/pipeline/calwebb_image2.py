@@ -1,7 +1,10 @@
 #!/usr/bin/env python
-from ..stpipe import Pipeline
+from collections import defaultdict
+import logging
+
 from .. import datamodels
-import os
+from ..associations.load_as_asn import LoadAsLevel2Asn
+from ..stpipe import Pipeline
 
 # calwebb IMAGE2 step imports
 from ..assign_wcs import assign_wcs_step
@@ -9,12 +12,12 @@ from ..flatfield import flat_field_step
 from ..photom import photom_step
 
 
-__version__ = "2.2"
+__version__ = "2.3"
 
 # Define logging
-import logging
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
+
 
 class Image2Pipeline(Pipeline):
     """
@@ -37,48 +40,68 @@ class Image2Pipeline(Pipeline):
 
         log.info('Starting calwebb_image2 ...')
 
-        # work on slope images
-        input = self.assign_wcs(input)
-        input = self.flat_field(input)
-        input = self.photom(input)
+        # Retrieve the input(s)
+        asn = LoadAsLevel2Asn.load(input)
 
-        # setup output_file for saving
-        self.setup_output(input)
+        # Each exposure is a product in the association.
+        # Process each exposure.
+        for product in asn['products']:
+            log.info('Processing product {}'.format(product['name']))
+            self.process_exposure_product(
+                product,
+                asn['asn_pool'],
+                asn.filename
+            )
 
         log.info('... ending calwebb_image2')
 
         return input
 
+    # Process each exposure
+    def process_exposure_product(
+            self,
+            exp_product,
+            pool_name=' ',
+            asn_file=' '
+    ):
+        """Process an exposure found in the association product
 
-    def setup_output(self, input):
+        Parameters
+        ---------
+        exp_product: dict
+            A Level2b association product.
+        """
+        # Find all the member types in the product
+        members_by_type = defaultdict(list)
+        for member in exp_product['members']:
+            members_by_type[member['exptype']].append(member['expname'])
 
-        # This routine doesn't actually save the final result to a file,
-        # but just sets up the value of self.output_file appropriately.
-        # The final data model is passed back up to the caller, which can be
-        # either an interactive session or a command-line instance of stpipe.
-        # If it's an interactive session, the data model is simply returned to
-        # the user without saving to a file. If it's a command-line instance
-        # of stpipe, stpipe will save the data model to a file using the name
-        # given in self.output_file.
+        # Get the science member. Technically there should only be
+        # one. We'll just get the first one found.
+        science = members_by_type['SCIENCE']
+        if len(science) != 1:
+            log.warn(
+                'Wrong number of science files found in {}'.format(
+                    exp_product['name']
+                )
+            )
+        science = science[0]
 
-        # first determine the proper file name suffix to use later
-        if isinstance(input, datamodels.CubeModel):
-            suffix = 'calints'
+        self.log.info('Working on input %s ...', science)
+        if isinstance(science, datamodels.DataModel):
+            input = science
         else:
-            suffix = 'cal'
+            input = datamodels.open(science)
 
-        # Has an output file name already been set?
-        if self.output_file is not None:
+        # Record ASN pool and table names in output
+        input.meta.asn.pool_name = pool_name
+        input.meta.asn.table_name = asn_file
 
-            # Check to see if the output_file name is the default set by
-            # stpipe for command-line processing
-            root, ext = os.path.splitext(self.output_file)
-            if root[root.rfind('_') + 1:] == 'Image2Pipeline':
+        # work on slope images
+        input = self.assign_wcs(input)
+        input = self.flat_field(input)
+        input = self.photom(input)
 
-                # Remove the step name that stpipe appended to the file name,
-                # as well as the original suffix on the input file name,
-                # and create a new name with the appropriate output suffix
-                root = root[:root.rfind('_')]
-                self.output_file = root[:root.rfind('_') + 1] + suffix + ext
-
-        # If no output name was set, take no action
+        # Save the calibrated exposure
+        self.save_model(input, 'cal')
+        log.info('Saved calibrated product to %s' % input.meta.filename)
