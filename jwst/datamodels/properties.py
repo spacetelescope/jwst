@@ -239,6 +239,7 @@ class ObjectNode(Node):
                 errmsg = self._validate()
                 reraise = False
             except jsonschema.ValidationError as errmsg:
+                errmsg = str(errmsg)
                 reraise = True
             if errmsg is not None:
                 # Revert the change
@@ -264,6 +265,7 @@ class ObjectNode(Node):
                 errmsg = self._validate()
                 reraise = False
             except jsonschema.ValidationError as errmsg:
+                errmsg = str(errmsg)
                 reraise = True
             if errmsg is not None:
                 # Revert the change
