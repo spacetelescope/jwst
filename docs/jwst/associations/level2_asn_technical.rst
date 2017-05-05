@@ -73,27 +73,27 @@ Association Meta Keywords
 
 The following are the top-level, or meta, keywords of an association.
 
-program
+program *optional*
   Program number for which this association was created.
   
-asn_type
+asn_type *optional*
   The type of association represented. See :ref:`level3-asn-association-types`
 
-asn_id
+asn_id *optional*
   The association id. The id is what appears in the :ref:`asn-DMS-naming`
   
-asn_pool
+asn_pool *optional*
   Association pool from which this association was created.
 
-asn_rule
+asn_rule *optional*
   Name of the association rule which created this association.
   
-version_id
+version_id *optional*
   Version identifier. DMS uses a time stamp with the format
   `yyyymmddthhmmss`
   Can be None or NULL
 
-constraints
+constraints *optional*
   List of constraints used by the association generator to create this
   association. Format and contents are determined by the defining
   rule.
@@ -102,15 +102,23 @@ constraints
 `products` Keyword
 ^^^^^^^^^^^^^^^^^^
 
-Association products have to components:
+A list of products that would be produced by this association. For
+Level2, each product is an exposure. Each product should have one
+`SCIENCE` member, the exposure on which the Level2b processing will
+occur.
 
-name
+Association products have two components: 
+
+name *optional*
   The string template to be used by Level 2b processing tasks to create
   the output file names. The product name, in general, is a prefix on
   which the individual pipeline and step modules will append whatever
   suffix information is needed.
 
-members
+  If not specified, the Level2b processing modules will create a name
+  based off the name of the `SCIENCE` member.
+
+members *required*
   This is a list of the exposures to be used by the Level 2b processing
   tasks. This keyword is explained in detail in the next section.
 
