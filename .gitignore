@@ -11,5 +11,7 @@ dist/
 docs/*/source/*.txt.rst
 docs/fits_generator/source/templates.rst
 docs/jwst_git/
+docs/_build/
+docs/api/
 RELIC-INFO
 relic/

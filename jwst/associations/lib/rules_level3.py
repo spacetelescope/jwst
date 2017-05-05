@@ -74,6 +74,7 @@ class Asn_WFSCMB(
                 'inputs': ['ASN_CANDIDATE'],
                 'force_unique': True,
                 'is_acid': True,
+                'evaluate': True,
             },
             'activity_id': {
                 'value': None,

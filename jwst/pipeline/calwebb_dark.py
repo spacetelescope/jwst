@@ -4,6 +4,7 @@ from .. import datamodels
 import os
 
 # step imports
+from ..group_scale import group_scale_step
 from ..dq_init import dq_init_step
 from ..saturation import saturation_step
 from ..ipc import ipc_step
@@ -14,7 +15,7 @@ from ..lastframe import lastframe_step
 from ..linearity import linearity_step
 
 
-__version__ = "0.7"
+__version__ = "0.7.1"
 
 # Define logging
 import logging
@@ -26,13 +27,14 @@ class DarkPipeline(Pipeline):
 
     DarkPipeline: Apply detector-level calibration steps to raw JWST
     dark ramp to produce a corrected 4-D ramp product.
-    Included steps are: dq_init, saturation, ipc, superbias, refpix,
-    rscd, lastframe, and linearity.
+    Included steps are: group_scale, dq_init, saturation, ipc,
+    superbias, refpix, rscd, lastframe, and linearity.
 
     """
 
     # Define aliases to steps
-    step_defs = {'dq_init': dq_init_step.DQInitStep,
+    step_defs = {'group_scale': group_scale_step.GroupScaleStep,
+                 'dq_init': dq_init_step.DQInitStep,
                  'saturation': saturation_step.SaturationStep,
                  'ipc': ipc_step.IPCStep,
                  'superbias': superbias_step.SuperBiasStep,
@@ -57,6 +59,7 @@ class DarkPipeline(Pipeline):
             # the steps are in a different order than NIR
             log.debug('Processing a MIRI exposure')
 
+            input = self.group_scale(input)
             input = self.dq_init(input)
             input = self.saturation(input)
             input = self.ipc(input)
@@ -69,6 +72,7 @@ class DarkPipeline(Pipeline):
             # process Near-IR exposures
             log.debug('Processing a Near-IR exposure')
 
+            input = self.group_scale(input)
             input = self.dq_init(input)
             input = self.saturation(input)
             input = self.ipc(input)

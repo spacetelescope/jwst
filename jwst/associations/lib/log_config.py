@@ -72,7 +72,8 @@ base_logger = {
         'info',
         'debug',
         'default',
-    ]
+    ],
+    'propagate': False,
 }
 
 # Basic, user-centric logging

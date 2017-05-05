@@ -40,25 +40,25 @@ class OutlierDetectionStep(Step):
         scale = string(default='0.5 0.4')
         backg = float(default=0.0)
     """
-    reference_file_types = ['gain', 'readnoise'] # No ref file for Build6...
+    reference_file_types = ['gain', 'readnoise']
 
     def process(self, input, to_file=False):
 
         self.input_models = datamodels.open(input)
 
-        self.ref_filename = {}
-        self.ref_filename['gain'] = self.build_reffile_container('gain')
-        self.ref_filename['readnoise'] = self.build_reffile_container('readnoise')
+        self.reffiles= {}
+        self.reffiles['gain'] = self._build_reffile_container('gain')
+        self.reffiles['readnoise'] = self._build_reffile_container('readnoise')
 
         # Call the resampling routine
         self.step = outlier_detection.OutlierDetection(self.input_models,
                                 to_file=to_file,
-                                ref_filename=self.ref_filename)
+                                reffiles=self.reffiles)
         self.step.do_detection()
 
         return self.input_models
 
-    def build_reffile_container(self, reftype):
+    def _build_reffile_container(self, reftype):
         """
         Return a ModelContainer of reference file models.
 
@@ -77,17 +77,16 @@ class OutlierDetectionStep(Step):
         a ModelContainer with corresponding reference files for each input model
         """
         reffiles = [self.get_reference_file(im, reftype) for im in self.input_models]
+        log.debug("Using {} reffile(s) {}".format(reftype.upper(), set(reffiles)))
 
         # Check if all the ref files are the same.  If so build it by reading
         # the reference file just once.
         if len(set(reffiles)) <= 1:
             length = len(self.input_models)
             ref_list = [datamodels.open(reffiles[0])] * length
-            #ref_list = [ref_model(reffiles[0])] * length
         else:
             ref_list = [datamodels.open(ref) for ref in reffiles]
-            #ref_list = [ref_model(ref) for ref in reffiles]
-        return datamodels.ModelContainer(ref_list) #, build_groups=False)
+        return datamodels.ModelContainer(ref_list)
 
 
 
