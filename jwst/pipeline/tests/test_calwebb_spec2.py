@@ -16,10 +16,10 @@ def abspath(filepath):
 
 
 DATAPATH = abspath(
-    '$DEVDIR/testdata/jwst_data/dev/build7.1/spec2_test'
+    '$TEST_BIGDATA/pipelines'
 )
 EXPFILE = 'jw00035001001_01101_00001_mirimage_rate.fits'
-
+CALFILE = EXPFILE.replace('_rate', '_cal')
 
 # Skip if the data is not available
 pytestmark = pytest.mark.skipif(
@@ -30,7 +30,6 @@ pytestmark = pytest.mark.skipif(
 
 def test_asn(tmpdir):
     exppath = path.join(DATAPATH, EXPFILE)
-    expcal = EXPFILE.replace('_rate', '_cal')
     lv2_meta = {
         'program': 'test',
         'target': 'test',
@@ -42,20 +41,18 @@ def test_asn(tmpdir):
         fp.write(serialized)
     with tmpdir.as_cwd():
         Spec2Pipeline.call(asn_file)
-        assert path.isfile(expcal)
+        assert path.isfile(CALFILE)
 
 
 def test_datamodel(tmpdir):
     model = dm_open(path.join(DATAPATH, EXPFILE))
-    expcal = EXPFILE.replace('_rate', '_cal')
     with tmpdir.as_cwd():
         Spec2Pipeline.call(model)
-        assert path.isfile(expcal)
+        assert path.isfile(CALFILE)
 
 
 def test_file(tmpdir):
     exppath = path.join(DATAPATH, EXPFILE)
-    expcal = EXPFILE.replace('_rate', '_cal')
     with tmpdir.as_cwd():
         Spec2Pipeline.call(exppath)
-        assert path.isfile(expcal)
+        assert path.isfile(CALFILE)
