@@ -204,11 +204,11 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     np.logical_and(where_cr_ctegrow_kernel_conv, where_cr_grow_kernel_conv, cr_mask)
     cr_mask = cr_mask.astype(bool)
 
-    # Update the DQ array in the input image
+    # Update the DQ array in the input image in place
     np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT, sci_image.dq)
 
     # write out the updated file to disk to preserve the changes
-    sci_image.save(sci_image.meta.filename)
+    # sci_image.save(sci_image.meta.filename)
 
     # write out the dq array as a separate file
     # outfilename = sci_image.meta.filename.split('.')[0] + '_dq.fits'

@@ -52,28 +52,30 @@ class Image3Pipeline(Pipeline):
         is_container = (type(input_models) == type(datamodels.ModelContainer()))
         if is_container and len(input_models.group_names) > 1:
 
-            generate_2c_names(input_models)
+            # generate_2c_names(input_models)
 
-            # perform full outlier_detection of ASN data
             log.info("Generating source catalogs for alignment...")
             input_models = self.tweakreg_catalog(input_models)
+
             log.info("Aligning input images...")
             input_models = self.tweakreg(input_models)
+
             log.info("Matching sky values across all input images...")
             input_models = self.skymatch(input_models)
+
             log.info("Performing outlier detection on input images...")
             input_models = self.outlier_detection(input_models)
             
-            # Now clean up intermediate products which no are no longer needed
-            for i in input_models:
+            # Now clean up intermediate tweakreg_catalog catalogs
+            # which no are no longer needed
+            for model in input_models:
                 try:
-                    catalog_name = i.meta.tweakreg_catalog.filename
+                    catalog_name = model.meta.tweakreg_catalog.filename
                     os.remove(catalog_name)
                 except:
                     pass
 
-            log.info("Resampling {} to create combined "
-                "product: {}".format(input, input_models.meta.resample.output))
+            log.info("Resampling images in {} ...".format(input))
 
         # Setup output file name for subsequent use
         # TODO: fix single resample to do what outlier detection does
@@ -92,9 +94,9 @@ class Image3Pipeline(Pipeline):
         # Save the final image product
         log.info('Saving final image product to %s', output_file)
         output.save(output_file)
-        log.info('... ending calwebb_image3')
 
         return
+
 
 def generate_2c_names(input_models):
     """ Update the names of the input files with Level 2C names
