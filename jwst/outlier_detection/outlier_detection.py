@@ -57,7 +57,7 @@ class OutlierDetection(object):
                    'backg': 0
                    }
 
-    def __init__(self, input_models, ref_filename=None, to_file=False, **pars):
+    def __init__(self, input_models, reffiles=None, to_file=False, **pars):
         """
         Parameters
         ----------
@@ -73,13 +73,13 @@ class OutlierDetection(object):
 
         """
         self.input_models = input_models
-        self.ref_filename = ref_filename
+        self.reffiles = reffiles
         self.to_file = to_file
 
         self.num_groups = len(self.input_models.group_names)
 
         self.outlierpars = {}
-        if 'outlierpars' in ref_filename:
+        if 'outlierpars' in reffiles:
             self._get_outlier_pars()
         self.outlierpars.update(pars)
 
@@ -91,7 +91,7 @@ class OutlierDetection(object):
         input_dm = self.input_models[0]
         filtname = input_dm.meta.instrument.filter
 
-        ref_model = datamodels.OutlierParsModel(self.ref_filename['outlierpars'])
+        ref_model = datamodels.OutlierParsModel(self.reffiles['outlierpars'])
 
         # look for row that applies to this set of input data models
         # NOTE:
@@ -116,7 +116,7 @@ class OutlierDetection(object):
 
         # With presence of wild-card rows, code should never trigger this logic
         if row is None:
-            log.error("No row found in %s that matches input data.", self.ref_filename)
+            log.error("No row found in %s that matches input data.", self.reffiles)
             raise ValueError
 
         # read in values from that row for each parameter
@@ -164,7 +164,7 @@ class OutlierDetection(object):
         # Perform outlier detection using statistical comparisons between
         # original input images and their blotted-median images
         flag_cr.do_detection(self.input_models, blot_models,
-            self.ref_filename, **pars)
+            self.reffiles, **pars)
 
         # clean-up (just to be explicit about being finished with these results)
         del median_model, blot_models
