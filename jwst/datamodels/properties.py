@@ -174,11 +174,11 @@ class Node(object):
             self._instance, self._ctx._asdf)
         try:
             schema.validate(instance, schema=self._schema)
-            errmsg = None
+            valid = True
         except jsonschema.ValidationError as errmsg:
-            errmsg = str(errmsg)
-            self._report(errmsg)  
-        return errmsg
+            self._report(str(errmsg))
+            valid = False
+        return valid
 
     @property
     def instance(self):
@@ -236,20 +236,12 @@ class ObjectNode(Node):
 
             self._instance[attr] = val
             try:
-                errmsg = self._validate()
-                reraise = False
-            except jsonschema.ValidationError as errmsg:
-                errmsg = str(errmsg)
-                reraise = True
-            if errmsg is not None:
-                # Revert the change
-                if old_val is None:
-                    del self._instance[attr]
-                else:
-                    self._instance[attr] = old_val
-                if reraise:
-                    raise jsonschema.ValidationError(errmsg)
-
+                if not self._validate():
+                    self._revert(attr, old_val)
+            except jsonschema.ValidationError:
+                self._revert(attr, old_val)
+                raise
+    
     def __delattr__(self, attr):
         if attr.startswith('_'):
             del self.__dict__[attr]
@@ -262,21 +254,22 @@ class ObjectNode(Node):
                 raise AttributeError(
                     "Attribute '{0}' missing".format(attr))
             try:
-                errmsg = self._validate()
-                reraise = False
-            except jsonschema.ValidationError as errmsg:
-                errmsg = str(errmsg)
-                reraise = True
-            if errmsg is not None:
-                # Revert the change
-                if old_val is not None:
-                    self._instance[attr] = old_val
-                if reraise:
-                    raise jsonschema.ValidationError(errmsg)
+                if not self._validate():
+                    self._revert(attr, old_val)
+            except jsonschema.ValidationError:
+                self._revert(attr, old_val)
+                raise
 
     def __hasattr__(self, attr):
         return (attr in self._instance or
                 _find_property(self._schema, attr))
+
+    def _revert(self, attr, old_val):
+        # Revert the change
+        if old_val is None:
+            del self._instance[attr]
+        else:
+            self._instance[attr] = old_val
 
 class ListNode(Node):
     def __cast(self, other):
