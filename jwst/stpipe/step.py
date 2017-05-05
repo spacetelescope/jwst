@@ -666,3 +666,86 @@ class Step(object):
 
         new_path = join(dirname, new_filename)
         model.save(new_path, *args, **kwargs)
+
+    def make_output_filename(self, model, suffix):
+        """Make up an output file name based on input
+
+        Parameters
+        ----------
+        model: DataModel
+            The datamodel to base the name off of.
+
+        suffix: str
+            The suffix to add
+
+        Returns
+        -------
+        filename: str
+            The file name
+        """
+        if model.meta.filename is not None:
+            root = model.meta.filename
+        elif self._input_filename is not None:
+            root = self._input_filename
+        else:
+            raise ValueError(
+                "Model has no filename, and step has no input filename")
+        root, ext = splitext(root)
+        root = root[:root.rfind('_')]
+        if suffix is not None:
+            root = root + '_' + suffix
+        root = root + ext
+        return root
+
+    def setup_output(self, input, suffix=None):
+        """Fix the output file name if requested but not specified
+
+        Parameters
+        ----------
+        input: DataModel
+            The datamodel that will be saved.
+
+        suffix: str
+            The suffix to attach.
+
+        Notes
+        -----
+        This routine doesn't actually save the final result to a file,
+        but just sets up the value of self.output_file appropriately.
+        The final data model is passed back up to the caller, which can be
+        either an interactive session or a command-line instance of stpipe.
+        If it's an interactive session, the data model is simply returned to
+        the user without saving to a file. If it's a command-line instance
+        of stpipe, stpipe will save the data model to a file using the name
+        given in self.output_file.
+        """
+
+        # Has an output file name already been set?
+        if self.output_file is not None:
+
+            # If name is empty, make it
+            if self.output_file == '':
+                root = self.make_output_filename(input, suffix)
+
+            # Else, Check to see if the output_file name is the default set by
+            # stpipe for command-line processing and remove it
+            else:
+                root, ext = splitext(self.output_file)
+                if root[root.rfind('_') + 1:] == self.__class__.__name__:
+                    root = root[:root.rfind('_')]
+
+                # Remove a previously added suffix.
+                root = root[:root.rfind('_')]
+
+                # Add new suffix, if specified.
+                if suffix is not None:
+                    root = root + '_' + suffix
+
+                # Finish off
+                root = root + ext
+
+            # Fix output folder
+            if self.output_dir is not None:
+                oldpath, filename = split(root)
+                root = join(self.output_dir, filename)
+            self.output_file = root
