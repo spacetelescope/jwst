@@ -6,7 +6,6 @@ from scipy import ndimage
 from stsci.tools import bitmask
 
 from .. import datamodels
-from . import quickDeriv
 
 import logging
 log = logging.getLogger(__name__)
@@ -16,7 +15,7 @@ log.setLevel(logging.DEBUG)
 CRBIT = np.uint32(datamodels.dqflags.pixel.get('JUMP_DET', 4))
 
 
-def do_detection(input_models, blot_models, ref_filename, **pars):
+def do_detection(input_models, blot_models, reffiles, **pars):
     """
     Flags DQ array for cosmic rays in input images.
 
@@ -33,7 +32,7 @@ def do_detection(input_models, blot_models, ref_filename, **pars):
         data model container holding ImageModels of the median output frame
         blotted back to the wcs and frame of the ImageModels in input_models
 
-    ref_filename : dict
+    reffiles : dict
         Contains JWST ModelContainers for 'gain' and 'readnoise' reference files
 
     Returns
@@ -45,8 +44,8 @@ def do_detection(input_models, blot_models, ref_filename, **pars):
     #gain_models = build_reffile_container(input_models, 'gain')
     #rn_models = build_reffile_container(input_models, 'readnoise')
 
-    gain_models = ref_filename['gain']
-    rn_models = ref_filename['readnoise']
+    gain_models = reffiles['gain']
+    rn_models = reffiles['readnoise']
 
     for image, blot, gain, rn in zip(input_models, blot_models, gain_models,
         rn_models):
@@ -112,7 +111,7 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
 
     input_image = sci_image.data * exptime
     blot_data = blot_image.data * exptime
-    blot_deriv = quickDeriv.qderiv(blot_data)
+    blot_deriv = abs_deriv(blot_data)
 
     # # This mask can take into account any crbits values
     # # specified by the user to be ignored.
@@ -135,42 +134,28 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     exp_mult = 1.
 
     ##################   COMPUTATION PART I    ###################
-    # Create a temporary array mask
-    __t1 = np.absolute(input_image - blot_data)
-    __ta = np.sqrt(gain * np.absolute(blot_data * exp_mult +
+    # Create a CR mask
+    t1 = np.abs(input_image - blot_data)
+    ta = np.sqrt(gain * np.abs(blot_data * exp_mult +
         subtracted_background * exp_mult) + read_noise ** 2)
-    __tb = (mult1 * blot_deriv + snr1 * __ta / gain)
-    del __ta
-    __t2 = __tb / exp_mult
-    del __tb
-    __tmp1 = np.logical_not(np.greater(__t1, __t2))
-    del __t1
-    del __t2
+    t2 = (mult1 * blot_deriv + snr1 * ta / gain) / exp_mult
+    tmp1 = np.logical_not(np.greater(t1, t2))
 
-    # Create a convolution kernel that is 3 x 3 of 1's
+    # Convolve mask with 3x3 kernel
     kernel = np.ones((3, 3), dtype=np.uint8)
-    # Create an output tmp file the same size as the input temp mask array
-    __tmp2 = np.zeros(__tmp1.shape, dtype=np.int16)
-    # Convolve the mask with the kernel
-    ndimage.convolve(__tmp1, kernel, output=__tmp2, mode='nearest', cval=0)
-    del kernel
-    del __tmp1
+    tmp2 = np.zeros(tmp1.shape, dtype=np.int16)
+    ndimage.convolve(tmp1, kernel, output=tmp2, mode='nearest', cval=0)
 
     ##################   COMPUTATION PART II    ###################
-    # Create the CR Mask
-    __xt1 = np.absolute(input_image - blot_data)
-    __xta = np.sqrt(gain * np.absolute(blot_data * exp_mult +
-        subtracted_background * exp_mult) + read_noise * read_noise)
-    __xtb = (mult2 * blot_deriv + snr2 * __xta / gain)
-    del __xta
-    __xt2 = __xtb / exp_mult
-    del __xtb
-    # Must use a bitwise 'and' to create the mask with numarray objects.
-    np.logical_not(np.greater(__xt1, __xt2) & np.less(__tmp2, 9), cr_mask)
+    # Create a second CR Mask
+    # xt1 = np.abs(input_image - blot_data)
+    xt1 = t1
+    # xta = np.sqrt(gain * np.abs(blot_data * exp_mult +
+    #     subtracted_background * exp_mult) + read_noise ** 2)
+    xta = ta
+    xt2 = (mult2 * blot_deriv + snr2 * xta / gain) / exp_mult
 
-    del __xt1
-    del __xt2
-    del __tmp2
+    np.logical_not(np.greater(xt1, xt2) & np.less(tmp2, 9), cr_mask)
 
     ##################   COMPUTATION PART III    ###################
     # Flag additional cte 'radial' and 'tail' pixels surrounding CR
@@ -222,25 +207,43 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     # Update the DQ array in the input image
     np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT, sci_image.dq)
 
-    del cr_mask_orig_bool
-    del cr_grow_kernel
-    del cr_grow_kernel_conv
-    del cr_ctegrow_kernel
-    del cr_ctegrow_kernel_conv
-    del where_cr_grow_kernel_conv
-    del where_cr_ctegrow_kernel_conv
-
     # write out the updated file to disk to preserve the changes
     sci_image.save(sci_image.meta.filename)
 
-    # # write out the dq array as a separate file
+    # write out the dq array as a separate file
     # outfilename = sci_image.meta.filename.split('.')[0] + '_dq.fits'
     # out_dq = datamodels.ImageModel()
     # out_dq.data = result_dq
     # out_dq.to_fits(outfilename, overwrite=True)
 
-    # ######## Save the cosmic ray mask file to disk
+    # Save the cosmic ray mask file to disk
     # _cr_file = np.zeros(input_image.shape, np.uint32)
     # _cr_file = np.where(cr_mask, 1, 0).astype(np.uint32)
 
     # _pf = util.createFile(_cr_file, outfile=outfile, header = None)
+
+
+def abs_deriv(array):
+    """Take the absolute derivate of a numpy array"""
+
+    tmp = np.zeros(array.shape, dtype=np.float64)
+    out = np.zeros(array.shape, dtype=np.float64)
+
+    tmp[1:,:] = array[:-1,:]
+    tmp, out = _absolute_subtract(array, tmp, out)
+    tmp[:-1,:] = array[1:,:]
+    tmp, out = _absolute_subtract(array, tmp, out)
+
+    tmp[:,1:] = array[:,:-1]
+    tmp, out = _absolute_subtract(array, tmp, out)
+    tmp[:,:-1] = array[:,1:]
+    tmp, out = _absolute_subtract(array, tmp, out)
+
+    return out
+
+
+def _absolute_subtract(array, tmp, out):
+    tmp = np.abs(array - tmp)
+    out = np.maximum(tmp, out)
+    tmp = tmp * 0.
+    return tmp, out

@@ -457,8 +457,8 @@ def dodrizzle(insci, input_wcs, inwht,
         outcon = outcon[planeid]
 
     # Compute the mapping between the input and output pixel coordinates
+    # for use in drizzle.cdrizzle.tdriz
     pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs)
-    pixmap[np.isnan(pixmap)] = -1
 
     # Call 'drizzle' to perform image combination
     log.info('Starting drizzle...')

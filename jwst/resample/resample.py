@@ -7,10 +7,10 @@ from collections import OrderedDict
 
 from .. import datamodels
 
-#from drizzlepac import cdriz, util
 from . import gwcs_drizzle
 from . import bitmask
 from . import resample_utils
+from . import blend
 
 import logging
 log = logging.getLogger(__name__)
@@ -38,8 +38,13 @@ class ResampleData(object):
       5. Updates output data model with output arrays from drizzle, including
          (eventually) a record of metadata from all input models.
     """
-    drizpars = {'single': False, 'kernel': 'square', 'pixfrac': 1.0, 'good_bits': None,
-                        'fillval': 'INDEF', 'wht_type': 'exptime'}
+    drizpars = {'single': False,
+                'kernel': 'square',
+                'pixfrac': 1.0,
+                'good_bits': 4,
+                'fillval': 'INDEF',
+                'wht_type': 'exptime',
+                'blendheaders': True}
 
     def __init__(self, input_models, output=None, ref_filename=None, **pars):
         """
@@ -66,15 +71,9 @@ class ResampleData(object):
 
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = resample_utils.make_output_wcs(self.input_models)
-
         self.blank_output = datamodels.DrizProductModel(self.output_wcs.data_size)
         self.blank_output.meta.wcs = self.output_wcs
 
-        # Default to defining output models metadata as
-        # a copy of the first input_model's metadata
-        ### TO DO:
-        ###    replace this with a call to a generalized version of fitsblender
-        ###
         self.blank_output.meta = self.input_models[0].meta
         self.output_models = datamodels.ModelContainer()
 
@@ -97,8 +96,8 @@ class ResampleData(object):
         drizpars = ref_model.drizpars_table
 
         filter_match = False # flag to support wild-card rows in drizpars table
-        for n, filt, num in zip(range(1, drizpars.numimages.shape[0] + 1), drizpars.filter,
-                            drizpars.numimages):
+        for n, filt, num in zip(range(1, drizpars.numimages.shape[0] + 1),
+            drizpars.filter, drizpars.numimages):
             # only remember this row if no exact match has already been made for
             # the filter. This allows the wild-card row to be anywhere in the
             # table; since it may be placed at beginning or end of table.
@@ -112,7 +111,7 @@ class ResampleData(object):
 
         # With presence of wild-card rows, code should never trigger this logic
         if row is None:
-            log.error("No row found in %s that matches input data.", self.ref_filename)
+            log.error("No row found in %s matching input data.", self.ref_filename)
             raise ValueError
 
         # read in values from that row for each parameter
@@ -132,22 +131,25 @@ class ResampleData(object):
         self.blank_output.con = outcon
 
 
-    def create_output_metadata(self):
+    def blend_output_metadata(self, output_model):
         """ Create new output metadata based on blending all input metadata
         """
-        pass
+        # Run fitsblender on output product
+        input_list = [i.meta.filename for i in self.input_models]
+        log.debug('Blending metadata for {}'.format(output_model.meta.filename))
+        blend.blendfitsdata(input_list, output_model)
+
 
     def do_drizzle(self, **pars):
         """ Perform drizzling operation on input images's to create a new output
-
-       """
+        """
         # Set up information about what outputs we need to create: single or final
         # Key: value from metadata for output/observation name
         # Value: full filename for output file
         driz_outputs = OrderedDict()
 
         # Look for input configuration parameter telling the code to run
-        # in single-drizzle mode (mosaic all detectors in a single observation?)
+        # in single-drizzle mode (mosaic all detectors in a single observation)
         if self.drizpars['single']:
             driz_outputs = self.input_models.group_names
             model_groups = self.input_models.models_grouped
@@ -155,21 +157,25 @@ class ResampleData(object):
             for group in model_groups:
                 group_exptime.append(group[0].meta.exposure.exposure_time)
         else:
-            final_output = self.input_models.meta.resample.output # get global name
-            driz_outputs = [final_output]
+            driz_outputs = [self.input_models.meta.resample.output]
             model_groups = [self.input_models]
 
             total_exposure_time = 0.0
-            for group in self.input_models.models_grouped:
+            for group in model_groups:
                 total_exposure_time += group[0].meta.exposure.exposure_time
             group_exptime = [total_exposure_time]
-
         pointings = len(self.input_models.group_names)
-        # Now, generate each output for all input_models
-        for obs_product, group, texptime in zip(driz_outputs, model_groups, group_exptime):
+
+        for obs_product, group, texptime in zip(driz_outputs, model_groups,
+            group_exptime):
             output_model = self.blank_output.copy()
             output_model.meta.filename = obs_product
 
+            if self.drizpars['blendheaders']:
+                self.blend_output_metadata(output_model)
+
+            # Following 2 lines can probably be removed once ASN dicts
+            # are handled properly
             output_model.meta.asn.pool_name = self.input_models.meta.pool_name
             output_model.meta.asn.table_name = self.input_models.meta.table_name
 
