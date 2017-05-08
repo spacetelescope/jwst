@@ -6,8 +6,8 @@ properties:
       instrument:
         type: object
         properties:
-          band:
+          p_band:
             title: MRS wavelength band
             type: string
-            enum: [SHORT, MEDIUM, LONG, N/A, ANY]
-            fits_keyword: BAND
+            pattern: ^((ANY|SHORT|MEDIUM|LONG|N/A)\s*\|\s*)+$
+            fits_keyword: P_BAND
