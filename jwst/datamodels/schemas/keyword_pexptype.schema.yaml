@@ -21,4 +21,4 @@ properties:
               NRS_BRIGHTOBJ|NRS_CONFIRM|NRS_DARK|NRS_FIXEDSLIT|NRS_FOCUS|\
               NRS_IFU|NRS_IMAGE|NRS_LAMP|NRS_MIMF|NRS_MSASPEC|NRS_TACONFIRM|\
               NRS_TACQ|NRS_TASLIT)\\s*\\|\\s*)+$"
-            fits_keyword: P_EXPTYP
+            fits_keyword: P_EXP_TY
