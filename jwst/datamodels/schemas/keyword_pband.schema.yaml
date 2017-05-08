@@ -1,0 +1,13 @@
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      instrument:
+        type: object
+        properties:
+          p_band:
+            title: MRS wavelength band
+            type: string
+            pattern: ^((ANY|SHORT|MEDIUM|LONG|N/A)\s*\|\s*)+$
+            fits_keyword: P_BAND
