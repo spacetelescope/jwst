@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals, division, print_function
 
-import warnings
+from astropy.modeling.core import Model
+from astropy import units as u
 from . import model_base
 
 from .extension import BaseExtension
@@ -57,3 +58,10 @@ class DistortionModel(model_base.DataModel):
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
+
+    def validate(self):
+        assert isinstance(self.model, Model)
+        assert isinstance(self.meta.input_units, (str, u.Unit))
+        assert isinstance(self.meta.output_units, (str, u.Unit))
+        assert self.meta.instrument.name in [NIRCAM, NIRSPEC, MIRI, TFI, FGS, NIRISS]
+
