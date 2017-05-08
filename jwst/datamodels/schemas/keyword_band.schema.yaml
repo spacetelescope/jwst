@@ -1,0 +1,13 @@
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      instrument:
+        type: object
+        properties:
+          band:
+            title: MRS wavelength band
+            type: string
+            enum: [SHORT, MEDIUM, LONG, N/A, ANY]
+            fits_keyword: BAND

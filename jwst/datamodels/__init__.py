@@ -51,7 +51,7 @@ from .darkMIRI import DarkMIRIModel
 from .drizpars import DrizParsModel, NircamDrizParsModel, MiriImgDrizParsModel
 from .outlierpars import OutlierParsModel, NircamOutlierParsModel, MiriImgOutlierParsModel
 from .drizproduct import DrizProductModel
-from .filter import FilterModel
+from .throughput import ThroughputModel
 from .flat import FlatModel
 from .fringe import FringeModel
 from .gain import GainModel
@@ -86,6 +86,7 @@ from .spec import SpecModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
 from .traps import TrapsModel
+from .distortion import DistortionModel
 from .util import open
 
 
@@ -98,7 +99,7 @@ __all__ = [
     'NircamDrizParsModel', 'MiriImgDrizParsModel',
     'MiriImgOutlierParsModel', 'NircamOutlierParsModel', 'OutlierParsModel',
     'PathlossModel', 'PixelAreaModel',
-    'DrizProductModel', 'FgsPhotomModel', 'FilterModel',
+    'DrizProductModel', 'FgsPhotomModel', 'ThroughputModel',
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'LinearityModel',
     'MaskModel', 'MIRIRampModel', 'ModelContainer',

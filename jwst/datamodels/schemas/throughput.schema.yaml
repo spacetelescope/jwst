@@ -1,4 +1,4 @@
-title: Filter data model
+title: Filter throughput data model
 allOf:
 - $ref: core.schema.yaml
 - type: object

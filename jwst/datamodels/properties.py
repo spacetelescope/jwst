@@ -202,7 +202,6 @@ class ObjectNode(Node):
             raise AttributeError('No attribute {0}'.format(attr))
 
         schema = _get_schema_for_property(self._schema, attr)
-
         try:
             val = self._instance[attr]
         except KeyError:
