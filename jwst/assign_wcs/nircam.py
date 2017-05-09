@@ -1,27 +1,39 @@
 from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
+import logging
 
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import Scale
-from astropy.table import Table
-
+from astropy.modeling.models import Scale, Identity
 import gwcs.coordinate_frames as cf
+
 from . import pointing
-from .util import not_implemented_mode, subarray_transform
-from ..datamodels import DistortionModel
+from .util import not_implemented_mode, subarray_transform, get_object_info
+from ..datamodels import ImageModel, NIRCAMGrismModel
+from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
+                                 NIRCAMForwardColumnGrismDispersion,
+                                 NIRCAMBackwardGrismDispersion)
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
-def create_pipeline(input_model, reference_files):
+def create_pipeline(input_model, reference_files, catalog=None):
     """Get reference files from crds."""
     exp_type = input_model.meta.exposure.type.lower()
-    pipeline = exp_type2transform[exp_type](input_model, reference_files)
+    if catalog is not None:
+        pipeline = exp_type2transform[exp_type](input_model,
+                                                reference_files,
+                                                catalog)
+    else:
+        pipeline = exp_type2transform[exp_type](input_model, reference_files)
 
     return pipeline
 
 
 def imaging(input_model, reference_files):
-    """ The NIRCAM imaging pipeline
+    """
+    The NIRCAM imaging pipeline
 
     This includes 3 coordinate frames - detector, focal plane and sky
 
@@ -54,67 +66,70 @@ def imaging_distortion(input_model, reference_files):
         bb = transform.bounding_box
     except NotImplementedError:
         shape = input_model.data.shape
-        # Note: Since bounding_box is attached to the model here it's in reverse order.
+        # Note: Since bounding_box is attached to the model
+        # here it's in reverse order.
         transform.bounding_box = ((-0.5, shape[0] - 0.5),
                                   (-0.5, shape[1] - 0.5))
     return transform
 
 
-def wfss(input_model, reference_files):
-    """Create the WCS pipeline for a NIRCAM grism observation.
+def grism(input_model, reference_files):
+    """
+    Create the WCS pipeline for a NIRCAM grism observation.
 
     Parameters
     ----------
-    input_model: datamodels.ImageModel
+    input_model: jwst.datamodels.ImagingModel
         The input datamodel, derived from datamodels
     reference_files: dict
-        Reference files needed for this pipeline
+        Dictionary {reftype: reference file name}.
 
     Notes
     -----
-    reference_files = {
-        "grism_config": 'NIRCAM_modA_R.asdf'
-    }
-
-    The tree in the grism reference file has a section for each order/beam as
-    well as the link to the filter data file, not sure if there will be a
-    separate passband reference file needed for the wavelength scaling or the
-    wedge offsets. This file is currently created in
+    The tree in the grism reference file has a section for each order/beam
+    not sure if there will be a separate passband reference file needed for
+    the wavelength scaling or wedge offsets. This helper is currently in
     jwreftools/nircam/nircam_reftools
 
-    The direct image the catalog has been made from has been corrected for
+    The direct image the catalog has been created from was corrected for
     distortion, but the dispersed images have not. This is OK if the trace and
     dispersion solutions are defined with respect to the distortion-corrected
     image. The catalog from the combined direct image has object locations in
-    in detector space. The WCS information from the direct image will be used
-    to translate this to RA/DEC locations for each of the grism images. The
-    grism images will then use their own WCS information to translate to
-    detector space. The translations is assumed to be one-to-one for purposes
+    in detector space and the RA DEC of the object on sky.
+
+    The WCS information for the grism image  plus the observed filter will be
+    used to translate these to pixel locations for each of the objects.
+    The grism images will then use their grism trace information to translate
+    to detector space. The translation is assumed to be one-to-one for purposes
     of identifying the center of the object trace.
 
     The extent of the trace for each object can then be calculated based on
-    the grism in use (row or column).
+    the grism in use (row or column). Where the left/bottom of the trace starts
+    at t = 0 and the right/top of the trace ends at t = 1, as long as they
+    have been defined as such by th team.
 
-    The extraction box in the cross-dispersion direction will be calculated to
-    be just larger that the object extent in the segmentation map associated
-    with the direct image and the object catalog.
+    The extraction box is calculated to be the minimum bounding box of the
+    object extent in the segmentation map associated with the direct image.
+    The values of the min and max corners are saved in the photometry
+    catalog in units of RA,DEC so they can be translated to pixels by
+    the dispersed image's imaging wcs.
 
-    For each spectral order, the configuration file contains a pair of
-    magnitude-cutoff values. Sources with magnitudes fainter than the
-    extraction cutoff (MMAG_EXTRACT_X) are will not be extracted, but are
+    For each spectral order, the configuration file contains a
+    magnitude-cutoff value. Sources with magnitudes fainter than the
+    extraction cutoff (MMAG_EXTRACT)  will not be extracted, but are
     accounted for when computing the spectral contamination and background
-    estimates.
+    estimates. The default extraction value is 99 right now.
 
-    Sources with magnitudes fainter than the second cutoff (MMAG_MARK_X) are
-    completely ignored.  Here, X equals +1, +2, etc., for each spectral order,
-    as specified in the configuration file.
+    The sensitivity information from the original aXe style configuration
+    file needs to be modified by the passband of the filter used for
+    the direct image to get the min and max wavelengths
+    which correspond to t=0 and t=1, this currently has been done by the team
+    and the min and max wavelengths to use to calculate t are stored in the
+    grism reference file as wrange, which can be selected by wrange_selector
+    which contains the filter names.
 
-    The configuration file also contains the reference to the polynomial models
-    which describe the trace dispersion. The sensativity information in this
-    configuration file needs to be modified by the passband of the filter used
-    for the direct image.
 
-
+    All the following was moved to the extract_2d stage
     Step 1: Convert the source catalog from the reference frame of the
             uberimage to that of the dispersed image.  For the Vanilla
             Pipeline we assume that the pointing information in the file
@@ -128,106 +143,83 @@ def wfss(input_model, reference_files):
     Step 4: Compute the WIDTH of each spectral subwindow, which may be fixed or
             variable (see discussion of optimal extraction, below).  Record
             this information.
-    Step 4: Record the MMAG_EXTRACT and MMAG_MARK keywords (described below)
-            for each object and spectral order.
 
-
+    catalog and associated steps moved to extract_2d
     """
-
-    # Where to get the association file from?
 
     # The input is the grism image
-    if not isinstance(datamodel, ImageModel):
+    if not isinstance(input_model, ImageModel):
         raise TypeError('The input data model must be an ImageModel.')
 
-    # Get the disperser parameters and polynomial trace model
-    configuration = AsdfFile.open(reference_files['disperser']).tree
+    # make sure this is a grism image
+    if "NRC_GRISM" not in input_model.meta.exposure.type:
+            raise TypeError('The input exposure is not a NIRCAM grism')
 
-    # the wcs information for the input_model should already be
-    # complete. yes? Not sure what processing has been done on the
-    # input grism image. We minimally need the basic WCS information
-    # here so we can translate the catalog object positions
+    # Create the empty detector as a 2D coordinate frame in pixel units
+    gdetector = cf.Frame2D(name='grism_detector',
+                           axes_order=(0, 1),
+                           unit=(u.pix, u.pix))
 
-    # catlog images are distortion corrected before catalog is made
-    # but slitless images are not. The polynomials account for this.
-    # In order to convert
+    # translate the x,y detector-in to x,y detector out coordinates
+    # Get the disperser parameters which are defined as a model for each
+    # spectral order
+    with NIRCAMGrismModel(reference_files['specwcs']) as f:
+        displ = f.displ
+        dispx = f.dispx
+        dispy = f.dispy
+        invdispx = f.invdispx
+        invdispy = f.invdispy
+        invdispl = f.invdispl
+        orders = f.orders
 
-    # Get the catalog object locations from the direct image
+    # now create the appropriate model for the grism[R/C]
+    if "GRISMR" in input_model.meta.instrument.pupil:
+        det2det = NIRCAMForwardRowGrismDispersion(orders,
+                                                  lmodels=displ,
+                                                  xmodels=invdispx,
+                                                  ymodels=dispy)
 
-    # Create the model transforms.
-    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
-    world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
-    distortion = imaging_distortion(input_model, reference_files)
-    tel2sky = pointing.v23tosky(input_model)
+    elif "GRISMC" in input_model.meta.instrument.pupil:
+        det2det = NIRCAMForwardColumnGrismDispersion(orders,
+                                                     lmodels=displ,
+                                                     xmodels=dispx,
+                                                     ymodels=invdispy)
 
-    # for the grism data
-    pipeline = [(objects, detector),
-                (v2v3, tel2sky),
-                (world, None)]
-
-
-    return pipeline
-
-
-def ImageXYToGrismXY(catalog, grism_config, polynomials):
-    """We want to determine the x, y, and wavelength of pixel containing the
-    trace originating from a pixel at x_in, y_in in the un-dispersed frame.
-
-    We want to look at the dispersed pixels that are at location x+dxs on the
-    dispersed image. Where dxs can be an array.
-
-
-
-
-    """
-    xy_catalog = get_catalog(catalog)
+    det2det.inverse = NIRCAMBackwardGrismDispersion(orders,
+                                                    lmodels=invdispl,
+                                                    xmodels=dispx,
+                                                    ymodels=dispy)
 
 
+    # create the pipeline to construct a WCS object for the whole image
+    # which can translate ra,dec to image frame reference pixels
+    # it also needs to be part of the grism image wcs pipeline to
+    # go from detector to world coordinates. However, the grism image
+    # will be effectively translating pixel->world coordinates in a
+    # manner that gives you the originating 'imaging' pixels ra and dec,
+    # not the ra/dec on the sky from the pointing wcs of the grism image.
+    image_pipeline = imaging(input_model, reference_files)
 
-def get_catalog_info(asn_catalog_name, asn_segment_imagename):
-    """
-    Return the object locations from the direct image catalog
-    and the segmentation map that they were created from
+    # input is (x,y,x0,y0,order) -> x0, y0, wave, order
+    # x0, y0 is in the image-detector reference frame already
+    # and are fed to the wcs to calculate the ra,dec, pix offsets
+    # and order are used to calculate the wavelength of the pixel
+    grism_pipeline = [(gdetector, det2det)]
+    print(grism_pipeline)
 
-
-    In [360]: !more jw96090_t001_nircam_f322w2_mosaic_cat.ecsv
-    # %ECSV 0.9
-    # ---
-    # datatype:
-    # - {name: id, datatype: int64}
-    # - {name: xcentroid, unit: pix, datatype: float64}
-    # - {name: ycentroid, unit: pix, datatype: float64}
-    # - {name: ra_icrs_centroid, unit: deg, datatype: float64}
-    # - {name: dec_icrs_centroid, unit: deg, datatype: float64}
-    # - {name: area, unit: pix2, datatype: float64}
-    # - {name: source_sum, datatype: float32}
-    # - {name: source_sum_err, datatype: float32}
-    # - {name: semimajor_axis_sigma, unit: pix, datatype: float64}
-    # - {name: semiminor_axis_sigma, unit: pix, datatype: float64}
-    # - {name: orientation, unit: deg, datatype: float64}
-    # - {name: orientation_sky, unit: deg, datatype: float64}
-    # - {name: abmag, datatype: float64}
-    # - {name: abmag_error, datatype: float32}
-    id xcentroid ycentroid ra_icrs_centroid dec_icrs_centroid area source_sum source_sum_err semimajor_axis_sigma semiminor_axis_sigma orientation orientation_sky abmag abmag_error
-    1 1478.79057591 8.20729790816 150.158383692 2.30276751202 77.0 20.0082 0.167517 3.25911081809 2.05169541295 -84.7150877614 185.284912239 0.0 0.00909026
-    2 1579.15673474 6.91806291859 150.156709574 2.3027460732 56.0 16.1
-
-    Do any sort of extra conversion needed here?
-    Where do I get the segmentation map, can I construct the name from the
-    name of the direct image in the association file?
-
-    """
-    catalog_data = Table.read(catalog, format='ascii.ecsv')
-    return catalog_data
-
-
-
-
+    # pass the x0,y0, wave, order, through the pipeline
+    imagepipe = []
+    world = image_pipeline.pop()
+    for cframe, trans in image_pipeline:
+        trans = trans & (Identity(2))
+        imagepipe.append((cframe, trans))
+    imagepipe.append((world))
+    grism_pipeline.extend(imagepipe)
+    return grism_pipeline
 
 
 exp_type2transform = {'nrc_image': imaging,
-                      'nrc_grism': wfss,
+                      'nrc_grism': grism,
                       'nrc_tacq': imaging,
                       'nrc_taconfirm': imaging,
                       'nrc_coron': imaging,

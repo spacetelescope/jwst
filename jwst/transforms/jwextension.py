@@ -19,7 +19,9 @@ class JWSTExtension(AsdfExtension):
                 Slit2MsaType,
                 MIRI_AB2SliceType,
                 SnellType,
-                LinearTraceDispersionType]
+                NIRCAMGrismDispersionType,
+                NIRISSGrismDispersionType,
+                ]
 
     @property
     def tag_mapping(self):

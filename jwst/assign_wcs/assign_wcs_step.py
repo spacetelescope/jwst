@@ -36,12 +36,11 @@ class AssignWcsStep(Step):
     regions            Stores location of the regions on the detector
     v2v3               Transform from MIRI instrument focal plane to V2V3 plane
     wavelengthrange    Typical wavelength ranges
-    wfss               Wide Field Slitless Spec
     """
     reference_file_types = ['distortion', 'filteroffset', 'specwcs', 'regions',
                             'wavelengthrange', 'v2v3', 'camera', 'collimator',
                             'disperser', 'fore', 'fpa', 'msa', 'ote', 'ifupost',
-                            'ifufore', 'ifuslicer', 'wfss']
+                            'ifufore', 'ifuslicer']
 
     def process(self, input):
         reference_file_names = {}
@@ -58,6 +57,7 @@ class AssignWcsStep(Step):
             for reftype in self.reference_file_types:
                 reffile = self.get_reference_file(input_model, reftype)
                 reference_file_names[reftype] = reffile if reffile else ""
+
             result = load_wcs(input_model, reference_file_names)
 
         return result

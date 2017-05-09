@@ -4,68 +4,96 @@ from __future__ import (absolute_import, division, unicode_literals,
 from numpy.testing import assert_array_equal
 from asdf import yamlutil
 from asdf.tags.transform.basic import TransformType
-
-from ..models import (WavelengthFromGratingEquation,
-                      AngleFromGratingEquation,
-                      NRSZCoord,
-                      Unitless2DirCos,
-                      DirCos2Unitless,
-                      Rotation3DToGWA,
-                      LRSWavelength,
-                      Gwa2Slit,
-                      Slit2Msa,
-                      Logical,
-                      NirissSOSSModel,
-                      V23ToSky,
-                      RefractionIndexFromPrism,
-                      Snell,
-                      LinearTraceDispersion,
-                      MIRI_AB2Slice)
+from .. import models
+from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation, NRSZCoord,
+                      Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA, LRSWavelength, Gwa2Slit,
+                      Slit2Msa, Logical, NirissSOSSModel, V23ToSky, RefractionIndexFromPrism,
+                      Snell, NIRCAMForwardRowGrismDispersion, NIRCAMForwardColumnGrismDispersion,
+                      NIRISSForwardRowGrismDispersion, NIRISSForwardColumnGrismDispersion,
+                      NIRCAMBackwardGrismDispersion, NIRISSBackwardGrismDispersion, MIRI_AB2Slice)
 
 
-__all__ = ['GratingEquationType',
-           'CoordsType',
-           'RotationSequenceType',
-           'LRSWavelengthType',
-           'Gwa2SlitType',
-           'Slit2MsaType',
-           'LogicalType',
-           'NirissSOSSType',
-           'V23ToSky',
-           'RefractionIndexType',
-           'SnellType',
-           'MIRI_AB2SliceType',
-           'LinearTraceDispersionType']
+__all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
+           'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSky',
+           'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType', 'NIRCAMGrismDispersionType',
+           'NIRISSGrismDispersionType']
 
 
-class LinearTraceDispersionType(TransformType):
-    name = "linear_trace_dispersion"
-    types = [LinearTraceDispersion]
+class NIRCAMGrismDispersionType(TransformType):
+    name = "nircam_grism_dispersion"
+    types = [NIRCAMForwardRowGrismDispersion, NIRCAMForwardColumnGrismDispersion,
+             NIRCAMBackwardGrismDispersion]
     standard = "jwst_pipeline"
-    version = "0.1.0"
+    version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        return LinearTraceDispersion(node["xcoeff"],
-                                     node['ycoeff_n'],
-                                     node['lcoeff'])
+        _fname = getattr(models, node["class_name"])
+        return _fname(list(node['orders']),
+                      list(node['lmodels']),
+                      list(node['xmodels']),
+                      list(node['ymodels']),
+                      )
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
-        node = {'_x_coeff': model.xcoeff.tolist(),
-                '_y_coeff': model.ycoeff.tolist(),
-                '_l_coeff': model.lcoeff.tolist(),
+        node = {'orders': list(model.orders),
+                'lmodels': list(model.lmodels),
+                'xmodels': list(model.xmodels),
+                'ymodels': list(model.ymodels),
+                'class_name': type(model).name
                 }
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
     @classmethod
     def assert_equal(cls, a, b):
         TransformType.assert_equal(a, b)
-        assert (isinstance(a, LinearTraceDispersion) and
-                isinstance(b, LinearTraceDispersion))
-        assert_array_equal(a._x_coeff, b._x_coeff)
-        assert_array_equal(a._y_coeff, b._y_coeff)
-        assert_array_equal(a._l_coeff, b._l_coeff)
+        assert (isinstance(a, type(b)))
+        assert_array_equal(a.xmodels, b.xmodels)
+        assert_array_equal(a.ymodels, b.ymodels)
+        assert_array_equal(a.lmodels, b.lmodels)
+        assert_array_equal(a.orders, b.orders)
+
+
+class NIRISSGrismDispersionType(TransformType):
+    name = "niriss_grism_dispersion"
+    types = [NIRISSForwardRowGrismDispersion, NIRISSForwardColumnGrismDispersion,
+             NIRISSBackwardGrismDispersion]
+    standard = "jwst_pipeline"
+    version = "0.7.0"
+
+    @classmethod
+    def from_tree_transform(cls, node, ctx):
+        _fname = getattr(models, node["model_type"])
+        return _fname(list(node['orders']),
+                      list(node['lmodels']),
+                      list(node['xmodels']),
+                      list(node['ymodels']),
+                      node['fwcpos_ref'],
+                      )
+
+    @classmethod
+    def to_tree_transform(cls, model, ctx):
+        xll=[list(m) for m in model.xmodels]
+        yll=[list(m) for m in model.ymodels]
+        node = {'orders': list(model.orders),
+                'xmodels': xll,
+                'ymodels': yll,
+                'lmodels': list(model.lmodels),
+                'fwcpos_ref': model.fwcpos_ref,
+                'model_type': type(model).name
+                }
+        return yamlutil.custom_tree_to_tagged_tree(node, ctx)
+
+    @classmethod
+    def assert_equal(cls, a, b):
+        TransformType.assert_equal(a, b)
+        assert (isinstance(a, type(b)))
+        assert_array_equal(a.xmodels, b.xmodels)
+        assert_array_equal(a.ymodels, b.ymodels)
+        assert_array_equal(a.lmodels, b.lmodels)
+        assert_array_equal(a.orders, b.orders)
+        assert_array_equal(a.fwcpos_ref, b.fwcpos_ref)
 
 
 class RotationSequenceType(TransformType):

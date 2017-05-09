@@ -1,0 +1,59 @@
+title: SPECWCS_NIRCAM_GRISM reference file model
+allOf:
+- $ref: referencefile.schema.yaml
+- $ref: keyword_module.schema.yaml
+- $ref: keyword_pupil.schema.yaml
+- $ref: keyword_exptype.schema.yaml
+- type: object
+  properties:
+    displ:
+        description: |
+          Nircam Grism wavelength dispersion model, instance of astropy.modeling.Model
+        type: array
+        items:
+          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    dispx:
+        description: |
+          Nircam Grism row dispersion model, instance of astropy.modeling.Model
+        type: array
+        items:
+          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    dispy:
+        description: |
+          Nircam Grism column dispersion model, instance of astropy.modeling.Model
+        type: array
+        items:
+          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    invdispl:
+        description: |
+          Nircam Grism inverse wavelength dispersion model, instance of astropy.modeling.Model
+        type: array
+        items:
+          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    invdispx:
+        description: |
+          Nircam Grism inverse row dispersion model, instance of astropy.modeling.Model
+        type: array
+        items:
+          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    invdispy:
+        description: |
+          Nircam Grism inverse column dispersion model, instance of astropy.modeling.Model
+        type: array
+        items:
+          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    meta:
+      type: object
+      properties:
+        input_units:
+          description: |
+            Input units for wavelength
+          anyOf:
+            - type: string
+            - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0
+        output_units:
+          description: |
+            Output units for wavelength
+          anyOf:
+            - type: string
+            - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0

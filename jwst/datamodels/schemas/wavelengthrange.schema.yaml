@@ -11,6 +11,8 @@ allOf:
         A keyword which is a selector for the different ranges.
         For MIRI MRS this is a <channel><band>, for exmaple, "1SHORT".
         For NirSpec the identifier is <filter>_<grating>, for example F070LP_G140H.
+        For NIRCAM grisms the identifier is [order][filter].
+        For NIRISS grisms the identifier is [order][filter].
       type: array
       items:
         type: string

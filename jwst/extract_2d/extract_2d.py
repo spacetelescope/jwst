@@ -86,3 +86,13 @@ def extract2d(input_model, which_subarray=None):
     # Set the step status to COMPLETE
     output_model.meta.cal_step.extract_2d = 'COMPLETE'
     return output_model
+
+
+# move to extract 2d for grism exposures
+# add the wavelength range using the far left and far right orders?
+# fselect1 = wrange_selector[0].index(input_model.meta.instrument.filter)
+# fselect2 = wrange_selector[-1].index(input_model.meta.instrument.filter)
+# lower_lam = wrange[0][fselect1][0]
+# upper_lam = wrange[-1][fselect2][1]
+# input_model.meta.wcsinfo.waverange_start = lower_lam
+# input_model.meta.wcsinfo.waverange_end = upper_lam
