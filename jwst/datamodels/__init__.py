@@ -45,7 +45,6 @@ from .combinedspec import CombinedSpecModel
 from .container import ModelContainer
 from .contrast import ContrastModel
 from .cube import CubeModel
-from .cubeflat import CubeFlatModel
 from .dark import DarkModel
 from .darkMIRI import DarkMIRIModel
 from .drizpars import DrizParsModel, NircamDrizParsModel, MiriImgDrizParsModel
@@ -95,7 +94,7 @@ __all__ = [
     'open',
     'CombinedSpecModel',
     'DataModel', 'AmiLgModel', 'AsnModel', 'ContrastModel',
-    'CubeModel', 'CubeFlatModel', 'DarkModel', 'DarkMIRIModel', 'DrizParsModel',
+    'CubeModel', 'DarkModel', 'DarkMIRIModel', 'DrizParsModel',
     'NircamDrizParsModel', 'MiriImgDrizParsModel',
     'MiriImgOutlierParsModel', 'NircamOutlierParsModel', 'OutlierParsModel',
     'PathlossModel', 'PixelAreaModel',
