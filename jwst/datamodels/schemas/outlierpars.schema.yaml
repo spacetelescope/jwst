@@ -1,6 +1,6 @@
 title: Default Oulier Detection parameters data model
 allOf:
-- $ref: core.schema.yaml
+- $ref: referencefile.schema.yaml
 - type: object
   properties:
     outlierpars_table:
