@@ -1,5 +1,6 @@
 allOf:
-- $ref: core.schema.yaml
+- $ref: referencefile.schema.yaml
+- $ref: subarray.schema.yaml
 - type: object
   properties:
     data:
