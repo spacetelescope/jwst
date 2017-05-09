@@ -32,9 +32,9 @@ class DistortionModel(model_base.DataModel):
                 raise TypeError("Both input_units and output_units should be specified.")
         if model is not None:
             self.model = model
-        if self.meta.input_units != input_units:
+        if input_units is not None:
             self.meta.input_units = input_units
-        if self.meta.output_units != output_units:
+        if output_units is not None:
             self.meta.output_units = output_units
         self.meta.reftype = "distortion"
 
