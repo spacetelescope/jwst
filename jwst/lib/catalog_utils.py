@@ -4,6 +4,7 @@ Utilities for naming source catalogs.
 
 import re
 from os.path import split, splitext, join, abspath, expanduser
+from collections import namedtuple
 
 
 def replace_suffix_ext(filename, old_suffix_list, new_suffix,
@@ -72,3 +73,78 @@ def replace_suffix_ext(filename, old_suffix_list, new_suffix,
         output_path = abspath(expanduser(join(output_dir, output_path)))
 
     return output_path
+
+
+
+class SkyObject(namedtuple('SkyObject', ("sid",
+                                         "xcentroid",
+                                         "ycentroid",
+                                         "ra_icrs_centroid",
+                                         "dec_icrs_centroid",
+                                         "abmag",
+                                         "abmag_error",
+                                         "ramin",
+                                         "decmin",
+                                         "ramax",
+                                         "decmax"), rename=False)):
+
+    """ Sky Object
+
+    This is a convenience object for storing the catalog information
+    as a named tuple. The object has explicit fields to guard for changing column
+    locations in the catalog file that's read. Callers should
+    validate for the minimum fields they require. This is currently populated for
+    the minimum information needed by the WFSS modes in nircam and niriss.
+    """
+
+    __slots__ = ()  # prevent instance dictionary creation for low mem
+
+    def __new__(cls, sid=None,
+                     xcentroid=None,
+                     ycentroid=None,
+                     ra_icrs_centroid=None,
+                     dec_icrs_centroid=None,
+                     abmag=None,
+                     abmag_error=None,
+                     ramin=None,
+                     decmin=None,
+                     ramax=None,
+                     decmax=None):
+
+        return super(SkyObject, cls).__new__(cls,
+                                             sid,
+                                             xcentroid,
+                                             ycentroid,
+                                             ra_icrs_centroid,
+                                             dec_icrs_centroid,
+                                             abmag,
+                                             abmag_error,
+                                             ramin,
+                                             decmin,
+                                             ramax,
+                                             decmax)
+
+    def __str__(self):
+        """Return a pretty print for the object information."""
+        return ("id: {0}\n"
+                "xcentroid: {1}\n"
+                "ycentroid: {2}\n"
+                "ra_icrs_centroid: {3}\n"
+                "dec_icrs_centroid: {4}\n"
+                "abmag: {5}\n"
+                "abmag_error: {6}\n"
+                "ramin: {7}\n"
+                "decmin: {8}\n"
+                "ramax: {9}\n"
+                "decmax: {10}\n"
+                .format(self.sid,
+                        self.xcentroid,
+                        self.ycentroid,
+                        self.ra_icrs_centroid,
+                        self.dec_icrs_centroid,
+                        self.abmag,
+                        self.abmag_error,
+                        self.ramin,
+                        self.decmin,
+                        self.ramax,
+                        self.decmax))
