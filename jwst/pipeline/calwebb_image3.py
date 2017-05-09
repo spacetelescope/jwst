@@ -1,10 +1,10 @@
-#!/usr/bin/env python
+from __future__ import unicode_literals, absolute_import
+
 import os
 
 from ..stpipe import Pipeline
 from .. import datamodels
 
-# calwebb Image3 step imports
 from ..resample import resample_step
 from ..skymatch import skymatch_step
 from ..outlier_detection import outlier_detection_step
@@ -13,7 +13,7 @@ from ..tweakreg_catalog import tweakreg_catalog_step
 from ..tweakreg import tweakreg_step
 
 __version__ = "0.7.0"
-# Define logging
+
 import logging
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
@@ -49,52 +49,50 @@ class Image3Pipeline(Pipeline):
 
         input_models = datamodels.open(input)
 
-        is_container = (type(input_models) == type(datamodels.ModelContainer()))
+        is_container = isinstance(input_models, datamodels.ModelContainer)
+
+        # Multiple input files that represent more than 1 exposure
         if is_container and len(input_models.group_names) > 1:
 
-            generate_2c_names(input_models)
-
-            # perform full outlier_detection of ASN data
             log.info("Generating source catalogs for alignment...")
             input_models = self.tweakreg_catalog(input_models)
+
             log.info("Aligning input images...")
             input_models = self.tweakreg(input_models)
-            log.info("Matching sky values across all input images...")
-            input_models = self.skymatch(input_models)
-            log.info("Performing outlier detection on input images...")
-            input_models = self.outlier_detection(input_models)
-            
-            # Now clean up intermediate products which no are no longer needed
-            for i in input_models:
+
+            # Clean up tweakreg catalogs which no are no longer needed
+            for model in input_models:
                 try:
-                    catalog_name = i.meta.tweakreg_catalog.filename
+                    catalog_name = model.meta.tweakreg_catalog.filename
                     os.remove(catalog_name)
                 except:
                     pass
 
-            log.info("Resampling {} to create combined "
-                "product: {}".format(input, input_models.meta.resample.output))
+            log.info("Matching sky values across all input images...")
+            input_models = self.skymatch(input_models)
+
+            log.info("Performing outlier detection on input images...")
+            input_models = self.outlier_detection(input_models)
+
+            log.info("Writing out Level 2c images with updated DQ arrays...")
+            generate_2c_names(input_models)
+            input_models.save()
 
         # Setup output file name for subsequent use
-        # TODO: fix single resample to do what outlier detection does
-        # in updating meta.resample.*
-        output_file = mk_prodname(self.output_dir,
-            input_models.meta.resample.output, 'i2d')
+        output_file = mk_prodname(self.output_dir, input_models.meta.resample.output, 'i2d')
         input_models.meta.resample.output = output_file
 
-        # Resample step always returns ModelContainer,
-        # yet we only need the DataModel result
+        log.info("Resampling images to final output...")
         output = self.resample(input_models)
 
-        # create final source catalog from resampled output
+        log.info("Creating source catalog...")
         out_catalog = self.source_catalog(output)
 
-        # Save the final image product
-        log.info('Saving final image product to %s', output_file)
+        log.info('Saving final resampled image to %s', output_file)
         output.save(output_file)
-        log.info('... ending calwebb_image3')
 
         return
+
 
 def generate_2c_names(input_models):
     """ Update the names of the input files with Level 2C names

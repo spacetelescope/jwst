@@ -96,8 +96,8 @@ class ResampleData(object):
         drizpars = ref_model.drizpars_table
 
         filter_match = False # flag to support wild-card rows in drizpars table
-        for n, filt, num in zip(range(1, drizpars.numimages.shape[0] + 1),
-            drizpars.filter, drizpars.numimages):
+        for n, filt, num in zip(range(0, len(drizpars)), drizpars.filter,
+            drizpars.numimages):
             # only remember this row if no exact match has already been made for
             # the filter. This allows the wild-card row to be anywhere in the
             # table; since it may be placed at beginning or end of table.
@@ -117,7 +117,7 @@ class ResampleData(object):
         # read in values from that row for each parameter
         for kw in self.drizpars:
             if kw in drizpars.names:
-                self.drizpars[kw] = ref_model['drizpars_table.{0}'.format(kw)][row]
+                self.drizpars[kw] = getattr(drizpars, kw)[row]
 
     def update_driz_outputs(self):
         """ Define output arrays for use with drizzle operations.
