@@ -130,12 +130,13 @@ class OutlierDetection(object):
         pars = self.outlierpars
 
         # Start by creating resampled/mosaic images for each group of exposures
-        sdriz = resample.resample.ResampleData(self.input_models, single=True, **pars)
+        sdriz = resample.resample.ResampleData(self.input_models, single=True,
+            blendheaders=False, **pars)
         sdriz.do_drizzle(**pars)
         drizzled_models = sdriz.output_models
         if self.to_file:
             log.info("Saving resampled grouped exposures to disk...")
-            drizzled_models.save(None)
+            drizzled_models.save()
 
         # Initialize intermediate products used in the outlier detection
         median_model = datamodels.ImageModel(init=drizzled_models[0].data.shape)
@@ -162,7 +163,7 @@ class OutlierDetection(object):
             blot_models.save()
 
         # Perform outlier detection using statistical comparisons between
-        # original input images and their blotted-median images
+        # each original input image and its blotted version of the median image
         flag_cr.do_detection(self.input_models, blot_models,
             self.reffiles, **pars)
 
