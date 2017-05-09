@@ -424,47 +424,34 @@ class Model_db(object):
             for value in values:
                 save_dictionary(fd, value, leading=leading+'- ')
             
-        def save_long_line(leading, name, value, sep1, max_length=80):
-            long_line = leading + name + ': '
-            if len(long_line) + len(value) < max_length:
-                long_line += value + '\n'
-                
-            else:
-                values = value.split(sep1)
-                sep2 = sep1 + '\\\n'
-                    
-                start = True
-                line_start = 0
-                prefix = leading + '  '
-    
-                for value in values:
-                    if start:
-                        long_line += '"' + value
-                        start = False
-                    else:
-                        line_length = (len(long_line) + len(value) + len(sep1)
-                                        - line_start)
-    
-                        if line_length < max_length:
-                            long_line += sep1 + value
-                        else:
-                            line_start = len(long_line) + len(sep2)
-                            long_line +=  sep2 + prefix + value
-                        
-                long_line += '"\n'
-
-            return long_line
-
         def save_simple_list(leading, name, values, max_length=80):
-            sep = ', '
-            vstr = [str(v) for v in values]
-            value = '[' + sep.join(vstr) + ']'
-            return save_long_line(leading, name, value, sep)
+            start = True
+            line_start = 0
+            prefix = leading + '  '
+            long_line = leading + name + ": ["
+
+            for value in sorted(values):
+                if not isinstance(value, six.string_types):
+                    value = str(value)
+                value = value.strip()
+                
+                if start:
+                    long_line += value
+                    start = False
+                else:
+                    line_length = len(long_line) + len(value) + 2 - line_start
+                    if line_length < max_length:
+                        long_line += ", " + value
+                    else:
+                        line_start = len(long_line) + 2
+                        long_line += ",\n" + prefix + value
+                    
+            long_line += "]\n"
+            return long_line
 
     
         def save_scalar(leading, name, value):
-            sep = '|'
-            return save_long_line(leading, name, value, sep)
+            return leading + name + ": " + str(value) + "\n"
     
         with open(schema_file, mode='w') as fd:
             save_dictionary(fd, schema)
