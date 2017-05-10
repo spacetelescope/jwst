@@ -87,7 +87,8 @@ if __name__ == '__main__':
 
     parser.add_argument(
         'old_asns',
-        help='Old style Level2 Association files to convert. May be a glob specification'
+        help='Old style Level2 Association files to convert. May be a glob specification',
+        nargs='+'
     )
     parser.add_argument(
         '-p', '--prefix', default='v2_',
@@ -103,8 +104,7 @@ if __name__ == '__main__':
     numeric_log_level = getattr(logging, args.log_level.upper())
     logger.setLevel(numeric_log_level)
 
-    files = glob(args.old_asns)
-    for fname in files:
+    for fname in args.old_asns:
         logger.info('Working {}'.format(fname))
         with open(fname) as fp:
             asn_v1 = json.load(fp)
@@ -112,4 +112,4 @@ if __name__ == '__main__':
         asn_v2_fname = args.prefix + fname
         logger.info('\tWriting to {}'.format(asn_v2_fname))
         with open(asn_v2_fname, 'w') as fp:
-            json.dump(asn_v2, fp)
+            json.dump(asn_v2, fp, indent=4, separators=(',', ': '))
