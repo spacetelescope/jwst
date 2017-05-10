@@ -1,4 +1,4 @@
-title: Default MIRI IFU cube parameters data model
+title: Default NIRSPEC IFU cube parameters data model
 allOf:
 - $ref: ifucubepars.schema.yaml
 - type: object
@@ -7,9 +7,9 @@ allOf:
       title: default IFU cube  parameters table
       fits_hdu: CUBEPAR
       datatype:
-      - name: channel
-        datatype: [ascii,3]
-      - name: band
+      - name: filter
+        datatype: [ascii,5]
+      - name: grating
         datatype: [ascii, 6]
       - name: spatial_res
         datatype: float32
