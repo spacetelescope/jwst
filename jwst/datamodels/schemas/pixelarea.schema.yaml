@@ -1,10 +1,7 @@
 allOf:
 - $ref: referencefile.schema.yaml
-- $ref: nirspec_area.schema.yaml
-- $ref: keyword_band.schema.yaml
 - $ref: keyword_exptype.schema.yaml
 - $ref: keyword_filter.schema.yaml
-- $ref: keyword_grating.schema.yaml
 - $ref: keyword_pixelarea.schema.yaml
 - $ref: keyword_pupil.schema.yaml
 
