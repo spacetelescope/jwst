@@ -17,17 +17,13 @@ class CubeInfo(object):
 # Array of classes, CubeType[i]  defines type of Cube being created and the list
 # of files are are used in making the cube.
 
-    def __init__(self, instrument,detector, parameter1, parameter2, output_name):
+    def __init__(self, instrument,detector, parameter1, parameter2, output_name,coord_system):
 
         self.channel = []
         self.subchannel = []
 
         self.file = []
-        self.a_wave = []
-        self.c_wave = []
 
-        self.a_weight = []
-        self.c_weight = []
         self.transform_v23toab = []
         self.transform_worldtov23 = []
 
@@ -38,6 +34,7 @@ class CubeInfo(object):
         self.detector = detector
         self.instrument = instrument
         self.output_name = output_name
+        self.coord_system = coord_system
         if(instrument == 'MIRI'):
             self.channel = parameter1
             self.subchannel = parameter2
@@ -171,7 +168,27 @@ class CubeInfo(object):
         for i in range(self.naxis2):
             self.ycoord[i] = ystart
             ystart = ystart + self.Cdelt2
+#_______________________________________________________________________
+#        print('in cube.py ycoords',self.ycoord)
+#        print('in cube.py xcoords',self.xcoord)
+        
+        ystart = self.ycoord[0]
+        yend = self.ycoord[self.naxis2-1] + self.Cdelt2
 
+        xstart = self.xcoord[0]
+        xend = self.xcoord[self.naxis1-1] + self.Cdelt1
+
+        yy,xx = np.mgrid[ystart:yend:self.Cdelt2,
+                         xstart:xend:self.Cdelt1]
+#        print('yy shape',yy.shape,self.ycoord.shape)
+#        print('xx shape',xx.shape,self.xcoord.shape)
+
+        self.GridY = yy
+        self.GridX = xx
+        self.Ycenters = np.ravel(yy)
+        self.Xcenters = np.ravel(xx)
+#        print(self.Ycenters)
+#        print('in cube.py Xcenters shape',self.Xcenters.shape)
 #_______________________________________________________________________
         #set up the lambda (z) coordinate of the cube
 
@@ -198,7 +215,10 @@ class CubeInfo(object):
     def PrintCubeGeometry(self, instrument):
         log.info('Cube Geometry:')
         blank = '  '
-        log.info('axis# Naxis  CRPIX    CRVAL      CDELT(arc sec)  MIN & Max (xi,eta arc sec)')
+        if (self.coord_system == 'alpha-beta'):
+            log.info('axis# Naxis  CRPIX    CRVAL      CDELT(arc sec)  MIN & Max (alpha,beta arc sec)')
+        else:
+            log.info('axis# Naxis  CRPIX    CRVAL      CDELT(arc sec)  MIN & Max (xi,eta arc sec)')
         log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
                  self.naxis1, self.Crpix1, self.Crval1, self.Cdelt1, self.a_min, self.a_max)
         log.info('Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
@@ -223,10 +243,6 @@ class CubeInfo(object):
                 this_gwa = self.grating[i]
                 log.info('Cube covers grating, filter: %s %s ', this_gwa,this_fwa)
 
-#_______________________________________________________________________
-
-
-
 ##################################################################################
 class Spaxel(object):
 
@@ -241,12 +257,11 @@ class Spaxel(object):
 
 class SpaxelAB(object):
 
-    __slots__ = ['flux', 'error', 'pixel_flux', 'pixel_error', 'pixel_overlap']
+    __slots__ = ['flux', 'error', 'flux_weight','iflux']
 
     def __init__(self):
 
         self.flux = 0
         self.error = 0
-        self.pixel_flux = []
-        self.pixel_error = []
-        self.pixel_overlap = []
+        self.flux_weight = 0.0
+        self.iflux = 0.0

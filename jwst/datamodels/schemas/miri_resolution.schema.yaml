@@ -1,0 +1,60 @@
+title: Miri Resolution Reference file 
+allOf:
+- $ref:	referencefile.schema.yaml
+- type: object
+  properties:
+    resolving_power_table:
+       title: Resolving Power table
+       fits_hdu: RESOLVING_POWER
+       datatype:
+       - name: band
+         datatype: [ascii,16]
+       - name: center 
+         datatype: float32
+       - name: a_low
+         datatype: float32
+       - name: b_low
+         datatype: float32
+       - name: c_low
+         datatype: float32
+       - name: a_high
+         datatype: float32
+       - name: b_high
+         datatype: float32
+       - name: c_high
+         datatype: float32
+       - name: a_ave
+         datatype: float32
+       - name: b_ave
+         datatype: float32
+       - name: c_ave
+         datatype: float32
+    psf_fwhm_alpha_table:
+       title: PSF FWHM Alpha
+       fits_hdu: PSF_FWHM_ALPHA
+       datatype:
+       - name: a_cutoff
+         datatype: float32 
+       - name: a_a_short
+         datatype: float32 
+       - name: a_b_short
+         datatype: float32 
+       - name: a_a_long
+         datatype: float32 
+       - name: a_b_long
+         datatype: float32 
+    psf_fwhm_beta_table:
+       title: PSF FWHM Beta
+       fits_hdu: PSF_FWHM_BETA
+       datatype:
+       - name: b_cutoff
+         datatype: float32 
+       - name: b_a_short
+         datatype: float32 
+       - name: b_b_short
+         datatype: float32 
+       - name: b_a_long
+         datatype: float32 
+       - name: b_b_long
+         datatype: float32 
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

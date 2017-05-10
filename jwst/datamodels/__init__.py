@@ -50,6 +50,7 @@ from .darkMIRI import DarkMIRIModel
 from .drizpars import DrizParsModel, NircamDrizParsModel, MiriImgDrizParsModel
 from .outlierpars import OutlierParsModel, NircamOutlierParsModel, MiriImgOutlierParsModel
 from .drizproduct import DrizProductModel
+from .ifucubepars import IFUCubeParsModel, NirspecIFUCubeParsModel, MiriIFUCubeParsModel
 from .throughput import ThroughputModel
 from .flat import FlatModel
 from .fringe import FringeModel
@@ -68,6 +69,7 @@ from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
 from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
 from .ifucube import IFUCubeModel
+from .resolution import ResolutionModel, MiriResolutionModel
 from .pixelarea import PixelAreaModel
 from .pathloss import PathlossModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
@@ -110,7 +112,10 @@ __all__ = [
     'RampFitOutputModel', 'ReadnoiseModel', 'ReferenceCubeModel',
     'ReferenceFileModel', 'ReferenceImageModel', 'ReferenceQuadModel',
     'ResetModel', 'RSCDModel', 'SaturationModel', 'SpecModel',
-    'StrayLightModel', 'SuperBiasModel', 'TrapsModel']
+    'StrayLightModel', 'SuperBiasModel', 'TrapsModel','IFUCubeParsModel',
+    'NirspecIFUCubeParsModel','MiriIFUCubeParsModel','ResolutionModel',
+    'MiriResolutionModel']
+
 
 _all_models = __all__[1:]
 _local_dict = dict(locals())
