@@ -1540,10 +1540,6 @@ properties:
             title: 1-D Spectral Combination
             type: string
             fits_keyword: S_COMB1D
-          resample:
-            title: Image resampling
-            type: string
-            fits_keyword: S_RESAMP
           back_sub:
             title: Background subtraction
             type: string
@@ -1576,6 +1572,26 @@ properties:
             title: Coronagraphic PSF Subtraction
             type: string
             fits_keyword: S_KLIP
+          tweakreg:
+            title: Image Alignment via Astronomical Sources
+            type: string
+            fits_keyword: S_TWKREG
+          skymatch:
+            title: Sky Background Equalization or Subtraction
+            type: string
+            fits_keyword: S_SKYMAT
+          outlier_detection:
+            title: Outlier Detection
+            type: string
+            fits_keyword: S_OUTLIR
+          resample:
+            title: Image resampling
+            type: string
+            fits_keyword: S_RESAMP
+          source_catalog:
+            title: Source Photometry and Morphology
+            type: string
+            fits_keyword: S_SRCCAT
       background:
         title: Background information
         type: object
