@@ -1,16 +1,15 @@
 from __future__ import absolute_import, division, print_function
 
-import os
-from os.path import dirname, join, abspath, isfile
-import shutil
-import tempfile
+from os.path import (
+    abspath,
+    dirname,
+    join,
+)
 
-#from nose.tools import raises
 import pytest
 import numpy as np
 
 from ..config_parser import ValidationError
-from ..step import Step
 
 
 def test_step():
@@ -181,21 +180,3 @@ def test_omit_ref_file():
 
     step = OptionalRefTypeStep(override_to_be_ignored_ref_type="")
     step.process()
-
-
-def test_save_model():
-    tempdir = tempfile.mkdtemp()
-    orig_filename = join(dirname(__file__), 'data', 'flat.fits')
-    temp_filename = join(tempdir, 'flat_FOO.fits')
-    shutil.copyfile(orig_filename, temp_filename)
-
-    args = [
-        'jwst.stpipe.tests.steps.SaveStep',
-        temp_filename
-    ]
-
-    Step.from_cmdline(args)
-    fname = join(tempdir, 'flat_FOO_SaveStep.fits')
-    assert isfile(fname)
-    # The following file is produced in __init__.py SaveStep class.  Cleanup.
-    os.remove('flat_processed.fits')
