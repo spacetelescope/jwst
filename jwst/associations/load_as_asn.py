@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-DEFAULT_NAME = 'cast_to_association'
+DEFAULT_NAME = 'singleton'
 DEFAULT_ASN_META = {
     'program': DEFAULT_NAME,
     'target': DEFAULT_NAME,
