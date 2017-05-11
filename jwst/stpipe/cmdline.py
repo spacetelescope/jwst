@@ -1,7 +1,12 @@
 """
 Various utilities to handle running Steps from the commandline.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
+from __future__ import (
+    absolute_import,
+    division,
+    print_function,
+    unicode_literals
+)
 
 # import cProfile
 import io
@@ -157,7 +162,7 @@ def just_the_step_from_cmdline(args, cls=None):
         will be set as member variables on the returned `Step`
         instance.
 
-    step_class: Step class 
+    step_class: Step class
         As defined by `cls` parameter or .cfg file.
 
     positional: list of strings
@@ -254,7 +259,10 @@ def just_the_step_from_cmdline(args, cls=None):
     except config_parser.ValidationError as e:
         # If the configobj validator failed, print usage information.
         if six.PY2:
-            _print_important_message("ERROR PARSING CONFIGURATION:", unicode(e))
+            _print_important_message(
+                "ERROR PARSING CONFIGURATION:",
+                unicode(e)
+            )
             parser2.print_help()
             raise ValueError(unicode(e))
         else:
@@ -265,8 +273,14 @@ def just_the_step_from_cmdline(args, cls=None):
     # Always have an output_file set on the outermost step
     if step.output_file is None:
         if len(positional):
-            step.output_file = os.path.abspath(os.path.splitext(
-                positional[0])[0] + "_{0}.fits".format(step.name))
+            step.output_file = os.path.splitext(
+                os.path.split(positional[0])[1]
+            )[0] + "_{0}.fits".format(step.name)
+            if step.output_dir is not None:
+                step.output_file = os.path.join(
+                    step.output_dir,
+                    step.output_file
+                )
 
     if len(positional):
         step.set_input_filename(positional[0])
@@ -275,6 +289,7 @@ def just_the_step_from_cmdline(args, cls=None):
     log.log.info("OS: {0}".format(os.uname()[0]))
 
     return step, step_class, positional, debug_on_exception
+
 
 def step_from_cmdline(args, cls=None):
     """

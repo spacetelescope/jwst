@@ -111,8 +111,9 @@ def test_save_pipeline_specified(mk_tmp_dirs):
     args = [
         step_fn_path,
         data_fn_path,
+        '--output_dir=' + tmp_data_path,
         '--steps.savestep.skip=False',
-        '--output_dir='+tmp_data_path
+        '--steps.savestep.output_dir=' + tmp_data_path,
     ]
 
     Step.from_cmdline(args)
