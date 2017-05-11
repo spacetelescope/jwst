@@ -60,6 +60,7 @@ from .image import ImageModel
 from .ipc import IPCModel
 from .irs2 import IRS2Model
 from .lastframe import LastFrameModel
+from .level1b import Level1bModel
 from .linearity import LinearityModel
 from .mask import MaskModel
 from .miri_ramp import MIRIRampModel
@@ -102,8 +103,8 @@ __all__ = [
     'PathlossModel', 'PixelAreaModel',
     'DrizProductModel', 'FgsPhotomModel', 'ThroughputModel',
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
-    'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'LinearityModel',
-    'MaskModel', 'MIRIRampModel', 'ModelContainer',
+    'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
+    'LinearityModel', 'MaskModel', 'MIRIRampModel', 'ModelContainer',
     'MultiExposureModel', 'MultiProductModel', 'MultiSlitModel',
     'MultiSpecModel', 'IFUCubeModel', 'PhotomModel', 'NircamPhotomModel',
     'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
