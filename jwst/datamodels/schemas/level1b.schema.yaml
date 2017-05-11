@@ -15,6 +15,12 @@ allOf:
       default: 0.0
       ndim: 3
       datatype: int16
+    refout:
+      title: Reference Output
+      fits_hdu: REFOUT
+      default: 0.0
+      ndim: 4
+      datatype: int16
     group:
       $ref: group.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
