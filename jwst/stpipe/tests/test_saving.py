@@ -35,7 +35,7 @@ def test_save_step_default(mk_tmp_dirs):
     """Default save should be current working directory"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     orig_filename = join(dirname(__file__), 'data', 'flat.fits')
-    temp_filename = join(tmp_data_path, 'flat_FOO.fits')
+    temp_filename = join(tmp_data_path, 'flat.fits')
     shutil.copyfile(orig_filename, temp_filename)
 
     args = [
@@ -45,7 +45,7 @@ def test_save_step_default(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    fname = 'flat_FOO_SaveStep.fits'
+    fname = 'flat_StepWithModel.fits'
     assert isfile(fname)
 
 
@@ -86,12 +86,12 @@ def test_save_step_specified(mk_tmp_dirs):
     args = [
         'jwst.stpipe.tests.steps.StepWithModel',
         orig_filename,
-        '--output_dir='+tmp_config_path
+        '--output_dir=' + tmp_data_path
     ]
 
     Step.from_cmdline(args)
 
-    output_fn_path = join(tmp_data_path, 'flat_FOO_SaveStep.fits')
+    output_fn_path = join(tmp_data_path, 'flat_StepWithModel.fits')
     assert isfile(output_fn_path)
 
 
