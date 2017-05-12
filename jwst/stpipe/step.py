@@ -390,9 +390,10 @@ class Step(object):
 
                         # If the user specified an output_dir, replace the
                         # default path with output_dir
-                        if self.output_dir is not None:
+                        output_dir = self.search_attr('output_dir')
+                        if output_dir is not None:
                             dirname, filename = split(output_file_name)
-                            output_file_name = join(self.output_dir, filename)
+                            output_file_name = join(output_dir, filename)
 
                         self.log.info('Saving file {0}'.format(output_file_name))
                         result.save(output_file_name, overwrite=True)
@@ -682,11 +683,10 @@ class Step(object):
 
         # If the user specified an output_dir, replace the
         # original dirname with output_dir
-        if self.output_dir is not None:
-            dirname = self.output_dir
-
-        new_path = join(dirname, new_filename)
-        model.save(new_path, *args, **kwargs)
+        output_dir = self.search_attr('output_dir')
+        if output_dir is not None:
+            new_filename = join(output_dir, new_filename)
+        model.save(new_filename, *args, **kwargs)
 
     def make_output_filename(self, model, suffix):
         """Make up an output file name based on input
