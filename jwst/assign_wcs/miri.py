@@ -11,6 +11,7 @@ from astropy.io import fits
 
 import gwcs.coordinate_frames as cf
 from gwcs import selector
+from gwcs.utils import _toindex
 from . import pointing
 from ..transforms import models as jwmodels
 from .util import not_implemented_mode, subarray_transform
@@ -183,8 +184,8 @@ def lrs(input_model, reference_files):
     spatial_transform = full_distortion | tel2sky
     radec = np.array(spatial_transform(x, y))[:, 0, :]
 
-    ra_full = np.matlib.repmat(radec[0], bb[1][1] + 1 - bb[1][0], 1)
-    dec_full = np.matlib.repmat(radec[1], bb[1][1] + 1 - bb[1][0], 1)
+    ra_full = np.matlib.repmat(radec[0], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)
+    dec_full = np.matlib.repmat(radec[1], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)
 
     ra_t2d = models.Tabular2D(lookup_table=ra_full, name='xtable',
         bounds_error=False, fill_value=np.nan)
