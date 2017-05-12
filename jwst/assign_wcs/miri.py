@@ -11,6 +11,7 @@ from astropy.io import fits
 
 import gwcs.coordinate_frames as cf
 from gwcs import selector
+from gwcs.utils import _toindex
 from . import pointing
 from ..transforms import models as jwmodels
 from .util import not_implemented_mode, subarray_transform
