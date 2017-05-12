@@ -3,9 +3,10 @@
 from . import helpers
 from ...datamodels import ImageModel
 from ..load_as_asn import (
-    DEFAULT_NAME,
     LoadAsLevel2Asn
 )
+
+DEFAULT_NAME = 'singleton'
 
 
 def test_lv2_datamodel():

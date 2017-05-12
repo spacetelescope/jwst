@@ -1,5 +1,7 @@
 allOf:
 - $ref: referencefile.schema.yaml
+- $ref: subarray.schema.yaml
+- $ref: keyword_preadpatt.schema.yaml
 - type: object
   properties:
     dq:
