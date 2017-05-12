@@ -49,7 +49,7 @@ class CubeBuildStep (Step):
          ydebug = integer(default=None) 
          zdebug = integer(default=None)
        """
-    reference_file_types = ['cubepars','resol']
+    # reference_file_types = ['cubepars','resol']
 
     def process(self, input):
         self.log.info('Starting IFU Cube Building Step')
