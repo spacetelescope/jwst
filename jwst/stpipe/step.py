@@ -457,6 +457,27 @@ class Step(object):
             instance = cls(**kwargs)
         return instance.run(*args)
 
+    def search_attr(self, attribute):
+        """Return first non-None attribute in step heirarchy
+
+        Parameters
+        ----------
+        attribute: str
+            The attribute to retrieve
+
+        Returns
+        -------
+        value: obj
+            Attribute value or None if not found
+        """
+        value = getattr(self, attribute, None)
+        if value is None:
+            try:
+                value = self.parent.search_attr(attribute)
+            except AttributeError:
+                pass
+        return value
+
     @classmethod
     def _is_association_file(cls, input_file):
         """Return True IFF `input_file` is an association file."""

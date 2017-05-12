@@ -180,3 +180,15 @@ def test_omit_ref_file():
 
     step = OptionalRefTypeStep(override_to_be_ignored_ref_type="")
     step.process()
+
+
+def test_search_attr():
+    from .steps import SavePipeline
+
+    value = '/tmp'
+    pipeline = SavePipeline('afile.fits', output_dir=value)
+
+    assert pipeline.search_attr('output_dir') == value
+    assert pipeline.stepwithmodel.search_attr('output_dir') == value
+    assert pipeline.search_attr('junk') is None
+    assert pipeline.stepwithmodel.search_attr('junk') is None
