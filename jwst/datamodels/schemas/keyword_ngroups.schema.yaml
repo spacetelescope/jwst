@@ -1,0 +1,12 @@
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      exposure:
+        type: object
+        properties:
+          ngroups:
+            title: Number of groups in integration
+            type: integer
+            fits_keyword: NGROUPS

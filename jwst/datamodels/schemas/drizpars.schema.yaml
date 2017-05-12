@@ -1,10 +1,10 @@
 title: Default Drizzle parameters data model
 allOf:
-- $ref: core.schema.yaml
+- $ref: referencefile.schema.yaml
 - type: object
   properties:
     drizpars_table:
-      title: Distortion correction parameters table
+      title: Drizzle parameters table
       fits_hdu: DRIZPARS
       datatype:
       - name: numimages
