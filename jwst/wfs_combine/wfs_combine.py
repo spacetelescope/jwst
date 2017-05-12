@@ -162,10 +162,10 @@ class DataSet(object):
             # 3. Set limits of the subarrays (in frames of input data)
             #    for interpolation by taking this centroid +/- PSF_SIZE
             #    and adding BLUR_SIZE, taking edges into account
-            xmin = round(max(0, ctrd_x - PSF_SIZE))
-            ymin = round(max(0, ctrd_y - PSF_SIZE))
-            xmax = round(min(self.input_1.data.shape[1], ctrd_x + PSF_SIZE))
-            ymax = round(min(self.input_1.data.shape[0], ctrd_y + PSF_SIZE))
+            xmin = int(round(max(0, ctrd_x - PSF_SIZE)))
+            ymin = int(round(max(0, ctrd_y - PSF_SIZE)))
+            xmax = int(round(min(self.input_1.data.shape[1], ctrd_x + PSF_SIZE)))
+            ymax = int(round(min(self.input_1.data.shape[0], ctrd_y + PSF_SIZE)))
 
             # 3a. Set subarrays and interpolate over bad pixels
             data_sub_1 = self.input_1.data[ymin: ymax, xmin: xmax]
@@ -727,10 +727,10 @@ def calc_cor_coef(sci_nai_1, sci_nai_2, off_x, off_y):
     xcen = xlen / 2 + 1
     ycen = ylen / 2 + 1
 
-    xmin = max(0, xcen - PSF_SIZE)
-    xmax = min(xlen - 1, xcen + PSF_SIZE)
-    ymin = max(0, ycen - PSF_SIZE)
-    ymax = min(ylen - 1, ycen + PSF_SIZE)
+    xmin = int(max(0, xcen - PSF_SIZE))
+    xmax = int(min(xlen - 1, xcen + PSF_SIZE))
+    ymin = int(max(0, ycen - PSF_SIZE))
+    ymax = int(min(ylen - 1, ycen + PSF_SIZE))
 
     # Create subarrays using these limits, and make them
     #   1D for numpy's correlation coefficient
