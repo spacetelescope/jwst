@@ -382,21 +382,19 @@ class Step(object):
                     result.meta.calibration_software_revision = __version_commit__ #__svn_revision__
                     result.meta.calibration_software_version = __version__
                     if self.output_file is not None:
+                        output_path = self.output_file
+                        if not len(output_path):
+                            output_path = self._input_filename
+                        suffix = None
                         if len(results) > 1:
-                            base, ext = splitext(self.output_file)
-                            output_file_name = "{0}.{1}{2}".format(base, i, ext)
-                        else:
-                            output_file_name = self.output_file
+                            suffix = str(i)
+                        output_path = self.make_output_path(
+                            basepath=output_path,
+                            suffix=suffix
+                        )
 
-                        # If the user specified an output_dir, replace the
-                        # default path with output_dir
-                        output_dir = self.search_attr('output_dir')
-                        if output_dir is not None:
-                            dirname, filename = split(output_file_name)
-                            output_file_name = join(output_dir, filename)
-
-                        self.log.info('Saving file {0}'.format(output_file_name))
-                        result.save(output_file_name, overwrite=True)
+                        self.log.info('Saving file {0}'.format(output_path))
+                        result.save(output_path, overwrite=True)
 
             self.log.info(
                 'Step {0} done'.format(self.name))
@@ -688,35 +686,41 @@ class Step(object):
             new_filename = join(output_dir, new_filename)
         model.save(new_filename, *args, **kwargs)
 
-    def make_output_filename(self, model, suffix):
-        """Make up an output file name based on input
+    def make_output_path(self, basepath, suffix=None, ext=None):
+        """Make up a path based on input
 
         Parameters
         ----------
-        model: DataModel
-            The datamodel to base the name off of.
+        basepath: str
+            The base file path. This can be anything from just a
+            name without extension, to a filename with extension, to
+            a fully qualified file path.
 
         suffix: str
             The suffix to add
 
+        ext: str
+            The extension to add. If none,
+            the original extension will be used.
+
         Returns
         -------
-        filename: str
-            The file name
+        output_path: str
+            The fully qualified output path
         """
-        if model.meta.filename is not None:
-            root = model.meta.filename
-        elif self._input_filename is not None:
-            root = self._input_filename
-        else:
-            raise ValueError(
-                "Model has no filename, and step has no input filename")
-        root, ext = splitext(root)
-        root = root[:root.rfind('_')]
+        path, filename = split(basepath)
+        name, input_ext = splitext(filename)
+        output_path = [name]
         if suffix is not None:
-            root = root + '_' + suffix
-        root = root + ext
-        return root
+            output_path.append('_' + suffix)
+        if ext is None:
+            ext = input_ext
+        output_path.append(ext)
+        output_path = ''.join(output_path)
+        output_dir = self.search_attr('output_dir')
+        if output_dir is not None:
+            output_path = join(output_dir, output_path)
+        return output_path
 
     def setup_output(self, input, suffix=None):
         """Fix the output file name if requested but not specified

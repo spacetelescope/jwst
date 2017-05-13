@@ -270,20 +270,18 @@ def just_the_step_from_cmdline(args, cls=None):
             parser2.print_help()
             raise ValueError(str(e))
 
-    # Always have an output_file set on the outermost step
-    if step.output_file is None:
-        if len(positional):
-            step.output_file = os.path.splitext(
-                os.path.split(positional[0])[1]
-            )[0] + "_{0}.fits".format(step.name)
-            if step.output_dir is not None:
-                step.output_file = os.path.join(
-                    step.output_dir,
-                    step.output_file
-                )
-
+    # Define the primary input file.
     if len(positional):
         step.set_input_filename(positional[0])
+
+    # Always have an output_file set on the outermost step
+    if step.output_file is None or not len(step.output_file):
+        if len(positional):
+            step.output_file = step.make_output_path(
+                basepath=positional[0],
+                suffix=step.name,
+                ext='.fits'
+            )
 
     log.log.info("Hostname: {0}".format(os.uname()[1]))
     log.log.info("OS: {0}".format(os.uname()[0]))
