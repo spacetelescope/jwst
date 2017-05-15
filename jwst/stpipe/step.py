@@ -376,23 +376,26 @@ class Step(object):
             for post_hook in self._post_hooks:
                 post_hook.run(result)
 
-            # Save the output file if one was specified
-            for i, result in enumerate(results):
+            # Mark versions
+            for result in results:
                 if isinstance(result, datamodels.DataModel):
-                    result.meta.calibration_software_revision = __version_commit__ #__svn_revision__
+                    result.meta.calibration_software_revision = __version_commit__
                     result.meta.calibration_software_version = __version__
-                    if self.output_file is not None:
-                        output_path = self.output_file
-                        if not len(output_path):
-                            output_path = self._input_filename
-                        suffix = None
-                        if len(results) > 1:
-                            suffix = str(i)
-                        output_path = self.make_output_path(
-                            basepath=output_path,
-                            suffix=suffix
-                        )
 
+            # Save the output file if one was specified
+            if self.output_file is not None:
+                idx_generator = lambda idx: None
+                if len(results) > 1:
+                    idx_generator = lambda idx: str(idx)
+
+                for i, result in enumerate(results):
+                    if hasattr(result, 'save'):
+                        make_output_path = self.search_attr(
+                            'make_output_path', parent_first=True
+                        )
+                        output_path = make_output_path(
+                            result, self.output_file, idx_generator(i)
+                        )
                         self.log.info('Saving file {0}'.format(output_path))
                         result.save(output_path, overwrite=True)
 
@@ -456,7 +459,7 @@ class Step(object):
             instance = cls(**kwargs)
         return instance.run(*args)
 
-    def search_attr(self, attribute):
+    def search_attr(self, attribute, parent_first=False):
         """Return first non-None attribute in step heirarchy
 
         Parameters
@@ -464,18 +467,27 @@ class Step(object):
         attribute: str
             The attribute to retrieve
 
+        parent_first: bool
+            If `True`, allow parent definition to override step version
+
         Returns
         -------
         value: obj
             Attribute value or None if not found
         """
-        value = getattr(self, attribute, None)
-        if value is None:
+        if parent_first:
             try:
-                value = self.parent.search_attr(attribute)
+                value = self.parent.search_attr(attribute, parent_first=parent_first)
             except AttributeError:
-                pass
-        return value
+                return getattr(self, attribute, None)
+        else:
+            value = getattr(self, attribute, None)
+            if value is None:
+                try:
+                    value = self.parent.search_attr(attribute)
+                except AttributeError:
+                    pass
+            return value
 
     @classmethod
     def _is_association_file(cls, input_file):
@@ -686,37 +698,44 @@ class Step(object):
             new_filename = join(output_dir, new_filename)
         model.save(new_filename, *args, **kwargs)
 
-    def make_output_path(self, basepath, suffix=None, ext=None):
-        """Make up a path based on input
+    def make_output_path(self, data, basepath=None, suffix=None):
+        """Make up a path based on data and user specification
 
         Parameters
         ----------
-        basepath: str
-            The base file path. This can be anything from just a
-            name without extension, to a filename with extension, to
-            a fully qualified file path.
+        data: obj
+            Unused by this routine
 
-        suffix: str
-            The suffix to add
+        basepath: str or None
+            The output file name. If `None` or empty string, create
+            a filename based on the data.
 
-        ext: str
-            The extension to add. If none,
-            the original extension will be used.
+        suffix: str or None
+            The suffix to append to the basename.
 
         Returns
         -------
         output_path: str
             The fully qualified output path
         """
-        path, filename = split(basepath)
-        name, input_ext = splitext(filename)
-        output_path = [name]
-        if suffix is not None:
-            output_path.append('_' + suffix)
-        if ext is None:
-            ext = input_ext
-        output_path.append(ext)
-        output_path = ''.join(output_path)
+        from ..datamodels import DataModel
+
+        has_basepath = basepath is not None and len(basepath)
+        output_path = basepath
+
+        if isinstance(data, DataModel):
+            if not has_basepath:
+                output_path = data.meta.filename
+            path, filename = split(output_path)
+            name, ext = splitext(filename)
+            output_path = [name]
+            if not has_basepath:
+                output_path.append('_' + self.name)
+            if suffix is not None:
+                output_path.append('_' + suffix)
+            output_path.append(ext)
+            output_path = ''.join(output_path)
+
         output_dir = self.search_attr('output_dir')
         if output_dir is not None:
             output_path = join(output_dir, output_path)

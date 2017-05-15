@@ -58,6 +58,20 @@ class StepWithModel(Step):
         return model
 
 
+class StepWithModelNaming(Step):
+    """A step with a model"""
+
+    spec = """
+    """
+
+    def process(self, *args):
+        from ....datamodels import ImageModel
+
+        model = ImageModel(args[0])
+
+        return model
+
+
 class SaveStep(Step):
     """
     Step with explicit save.

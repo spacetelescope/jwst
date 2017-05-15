@@ -158,3 +158,20 @@ def test_save_substep_specified(mk_tmp_dirs):
     )
     assert isfile(output_pipeline_fn_path)
     assert isfile(output_stepsave_fn_path)
+
+
+def test_save_step_stepnamed(mk_tmp_dirs):
+    """Save to specified folder"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+    orig_filename = join(dirname(__file__), 'data', 'flat.fits')
+
+    args = [
+        'jwst.stpipe.tests.steps.StepWithModelNaming',
+        orig_filename,
+        '--output_dir=' + tmp_data_path
+    ]
+
+    Step.from_cmdline(args)
+
+    output_fn_path = join(tmp_data_path, 'flat_swmn.fits')
+    assert isfile(output_fn_path)
