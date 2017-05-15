@@ -1,7 +1,9 @@
-title: PSF mask data model
+title: Coronagraphic PSF mask data model
 allOf:
 - $ref: referencefile.schema.yaml
 - $ref: keyword_filter.schema.yaml
+- $ref: keyword_coronmsk.schema.yaml
+- $ref: subarray.schema.yaml
 - type: object
   properties:
     data:
