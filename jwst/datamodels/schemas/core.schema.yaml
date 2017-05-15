@@ -536,7 +536,11 @@ properties:
               SUBAMPCAL, SUBFP1A, SUBFP1B, SUBGRISM128,
               SUBGRISM256, SUBGRISM64, SUBSTRIP256, SUBSTRIPE256, SUBSTRIP96,
               SUBPRISM, SUBSTRIP80, SUBTASOSS, SUBTAAMI,
-              WFSS128C, WFSS128R, WFSS64C, WFSS64R, N/A]
+              WFSS128C, WFSS128R, WFSS64C, WFSS64R, SUB32TATS, SUB32TATSGRISM,
+              SUB640A210R, SUB320A335R, SUB320A430R, SUB640ASWB, SUB320ALWB,
+              SUBNDA210R, SUBNDA335R, SUBNDA430R, SUBNDASWBL, SUBNDALWBS, SUBNDALWBL,
+              SUBNDASWBS, SUBFSA210R, SUBFSASWB, SUBFSALWB, SUBFSA335R, SUBFSA430R,
+              SUB96DHSPILA, SUB96DHSPILB, SUB8FP1A, SUB64FP1A, SUB8FP1B, SUB64FP1B,N/A]
             fits_keyword: SUBARRAY
           xstart:
             title: Starting pixel in axis 1 direction
@@ -1540,10 +1544,6 @@ properties:
             title: 1-D Spectral Combination
             type: string
             fits_keyword: S_COMB1D
-          resample:
-            title: Image resampling
-            type: string
-            fits_keyword: S_RESAMP
           back_sub:
             title: Background subtraction
             type: string
@@ -1576,6 +1576,26 @@ properties:
             title: Coronagraphic PSF Subtraction
             type: string
             fits_keyword: S_KLIP
+          tweakreg:
+            title: Image Alignment via Astronomical Sources
+            type: string
+            fits_keyword: S_TWKREG
+          skymatch:
+            title: Sky Background Equalization or Subtraction
+            type: string
+            fits_keyword: S_SKYMAT
+          outlier_detection:
+            title: Outlier Detection
+            type: string
+            fits_keyword: S_OUTLIR
+          resample:
+            title: Image resampling
+            type: string
+            fits_keyword: S_RESAMP
+          source_catalog:
+            title: Source Photometry and Morphology
+            type: string
+            fits_keyword: S_SRCCAT
       background:
         title: Background information
         type: object

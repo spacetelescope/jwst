@@ -45,13 +45,13 @@ from .combinedspec import CombinedSpecModel
 from .container import ModelContainer
 from .contrast import ContrastModel
 from .cube import CubeModel
-from .cubeflat import CubeFlatModel
 from .dark import DarkModel
 from .darkMIRI import DarkMIRIModel
 from .drizpars import DrizParsModel, NircamDrizParsModel, MiriImgDrizParsModel
 from .outlierpars import OutlierParsModel, NircamOutlierParsModel, MiriImgOutlierParsModel
 from .drizproduct import DrizProductModel
-from .filter import FilterModel
+from .ifucubepars import IFUCubeParsModel, NirspecIFUCubeParsModel, MiriIFUCubeParsModel
+from .throughput import ThroughputModel
 from .flat import FlatModel
 from .fringe import FringeModel
 from .gain import GainModel
@@ -60,6 +60,7 @@ from .image import ImageModel
 from .ipc import IPCModel
 from .irs2 import IRS2Model
 from .lastframe import LastFrameModel
+from .level1b import Level1bModel
 from .linearity import LinearityModel
 from .mask import MaskModel
 from .miri_ramp import MIRIRampModel
@@ -69,6 +70,7 @@ from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
 from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
 from .ifucube import IFUCubeModel
+from .resolution import ResolutionModel, MiriResolutionModel
 from .pixelarea import PixelAreaModel
 from .pathloss import PathlossModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
@@ -87,6 +89,7 @@ from .spec import SpecModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
 from .traps import TrapsModel
+from .distortion import DistortionModel
 from .util import open
 
 
@@ -95,14 +98,14 @@ __all__ = [
     'open',
     'CombinedSpecModel',
     'DataModel', 'AmiLgModel', 'AsnModel', 'ContrastModel',
-    'CubeModel', 'CubeFlatModel', 'DarkModel', 'DarkMIRIModel', 'DrizParsModel',
+    'CubeModel', 'DarkModel', 'DarkMIRIModel', 'DrizParsModel',
     'NircamDrizParsModel', 'MiriImgDrizParsModel',
     'MiriImgOutlierParsModel', 'NircamOutlierParsModel', 'OutlierParsModel',
     'PathlossModel', 'PixelAreaModel',
-    'DrizProductModel', 'FgsPhotomModel', 'FilterModel',
+    'DrizProductModel', 'FgsPhotomModel', 'ThroughputModel',
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
-    'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'LinearityModel',
-    'MaskModel', 'MIRIRampModel', 'ModelContainer',
+    'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
+    'LinearityModel', 'MaskModel', 'MIRIRampModel', 'ModelContainer',
     'MultiExposureModel', 'MultiProductModel', 'MultiSlitModel',
     'MultiSpecModel', 'IFUCubeModel', 'PhotomModel', 'NircamPhotomModel',
     'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
@@ -111,7 +114,10 @@ __all__ = [
     'RampFitOutputModel', 'ReadnoiseModel', 'ReferenceCubeModel',
     'ReferenceFileModel', 'ReferenceImageModel', 'ReferenceQuadModel',
     'ResetModel', 'RSCDModel', 'SaturationModel', 'SpecModel',
-    'StrayLightModel', 'SuperBiasModel', 'TrapsModel']
+    'StrayLightModel', 'SuperBiasModel', 'TrapsModel','IFUCubeParsModel',
+    'NirspecIFUCubeParsModel','MiriIFUCubeParsModel','ResolutionModel',
+    'MiriResolutionModel']
+
 
 _all_models = __all__[1:]
 _local_dict = dict(locals())

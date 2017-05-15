@@ -38,6 +38,10 @@ matrix:
     fast_finish: true
 
     include:
+        # Test numpy 1.12
+        - os: linux
+          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.12 SETUP_CMD='test'
+
         # PEP8 check with pycodestyle (only once, i.e. "os: linux")
         - os: linux
           env: PYTHON_VERSION=3.5 MAIN_CMD='pycodestyle --count'
@@ -46,7 +50,7 @@ matrix:
 
         # build sphinx documentation with warnings
         - os: linux
-          env: PYTHON_VERSION=3.5 
+          env: PYTHON_VERSION=3.5
                SETUP_CMD='build_sphinx'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
                PIP_DEPENDENCIES='sphinx_rtd_theme sphinx-automodapi'

@@ -6,6 +6,7 @@ import numpy as np
 import math
 from . import cube
 from .. import datamodels
+from ..datamodels import dqflags
 #________________________________________________________________________________
 def FindAreaPoly(nVertices, xpixel, ypixel):
     """
@@ -76,7 +77,6 @@ def FindAreaQuad(MinX, MinY, Xcorner, Ycorner):
                    (PX[3] * PY[4] - PX[4] * PY[3]))
 
     return abs(Area)
-
 
 #_______________________________________________________________________
 
@@ -249,12 +249,6 @@ def SH_FindOverlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
     AreaOverlap
     """
 
-    #testing
-#    ycenter = 0.5
-#    xcenter = 0.5
-#    ylength = 1.0
-#    xlength = 1.0
-    #####
     areaClipped = 0.0
     top = ycenter + 0.5 * ylength
     bottom = ycenter - 0.5 * ylength
@@ -262,9 +256,7 @@ def SH_FindOverlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
     left = xcenter - 0.5 * xlength
     right = xcenter + 0.5 * xlength
 
-    #print('top bottom left right',top,bottom,left,right)
     nVertices = 4 # input detector pixel vertices
-
     MaxVertices = 9
     # initialize xPixel, yPixel to the detector pixel corners.
     # xPixel,yPixel will become the clipped polygon vertices inside the cube pixel
@@ -292,29 +284,25 @@ def SH_FindOverlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
 
 
     for i in range(0, 4):     # 0:left, 1: right, 2: bottom, 3: top
-#        print('**************************',i)
         nVertices2 = 0
         for j in range(0, nVertices):
             x1 = xPixel[j]
             y1 = yPixel[j]
             x2 = xPixel[j + 1]
             y2 = yPixel[j + 1]
-
             condition = calcCondition(i, x1, y1, x2, y2, left, right, top, bottom)
-
             x = 0
             y = 0
-#            print('nVertices2 ',nVertices2)
 
-            if(condition == 1):
+            if condition == 1:
                 x, y = solveIntersection(i, x1, y1, x2, y2,
                                         left, right, top, bottom)
                 nVertices2 = addpoint(x, y, xnew, ynew, nVertices2);
                 nVertices2 = addpoint(x2, y2, xnew, ynew, nVertices2)
 
-            elif(condition == 2):
+            elif condition == 2:
                 nVertices2 = addpoint(x2, y2, xnew, ynew, nVertices2)
-            elif (condition == 3):
+            elif condition == 3:
                 x, y = solveIntersection(i, x1, y1, x2, y2,
                                         left, right, top, bottom)
                 nVertices2 = addpoint(x, y, xnew, ynew, nVertices2)
@@ -323,9 +311,9 @@ def SH_FindOverlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
 #  Done looping over J  corners
         nVertices2 = addpoint(xnew[0], ynew[0], xnew, ynew, nVertices2)  # close polygon
 
-        if(nVertices2 > MaxVertices):
-            print("SH_findOverlap:: failure in finding the clipped polygon, nVertices2 > 9 ");
-            exit(EXIT_FAILURE);
+        if nVertices2 > MaxVertices:
+            raise Error2DAreaPolygon(" Failure in finding the clipped polygon, nVertices2 > 9 ")
+
 
         nVertices = nVertices2 - 1;
 
@@ -337,10 +325,8 @@ def SH_FindOverlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
     nVertices = nVertices + 1
 
 
-    if(nVertices > 0):
-#        print('xPixel yPixel',nVertices, xPixel, yPixel)
+    if nVertices > 0:
         areaClipped = FindAreaPoly(nVertices, xPixel, yPixel);
-#        print('Area clipped',areaClipped)
 
 
     return areaClipped;
@@ -348,7 +334,7 @@ def SH_FindOverlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
 #________________________________________________________________________________
 
 
-def SpaxelOverlap(self, x, y, sliceno, start_slice, input_model, transform, beta_width, Cube, spaxel):
+def MatchDet2Cube(self, x, y, sliceno, start_slice, input_model, transform, Cube, spaxel):
     """
     Short Summary
     -------------
@@ -366,7 +352,6 @@ def SpaxelOverlap(self, x, y, sliceno, start_slice, input_model, transform, beta
     sliceno
     input_model: input slope model or file
     transform: wcs transform to transform x,y to alpha,beta, lambda
-    beta_width: width of slice
     Cube: class holding basic information on cube
     spaxel: list of spaxels holding information on each cube pixel.
 
@@ -379,21 +364,33 @@ def SpaxelOverlap(self, x, y, sliceno, start_slice, input_model, transform, beta
     nxc = len(Cube.xcoord)
     nzc = len(Cube.zcoord)
     nyc = len(Cube.ycoord)
-    nn = len(x)
 
     sliceno_use = sliceno - start_slice + 1
+# 1-1 mapping in beta
+    yy = sliceno_use - 1
 
-    pixel_flux = input_model.data[y, x]
-    pixel_error = input_model.err[y, x]
+    pixel_dq = input_model.dq[y,x]
+
+    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['DROPOUT'] + 
+                 dqflags.pixel['NON_SCIENCE'] +
+                 dqflags.pixel['DEAD'] + dqflags.pixel['HOT'] + 
+                 dqflags.pixel['RC'] + dqflags.pixel['NONLINEAR'])
+    # find the location of all the values to reject in cube building    
+    good_data = np.where((np.bitwise_and(pixel_dq, all_flags)==0))
+
+    # good data holds the location of pixels we want to map to cube
+    x = x[good_data]
+    y = y[good_data] 
 
     #center of first pixel, x,y = 1 for Adrian's equations
     # but we want the pixel corners, x,y values passed into this routine start at 0
+    pixel_flux = input_model.data[y, x]
+    pixel_error = input_model.err[y, x]
+
     yy_bot = y
-    xx_left = x
-
     yy_top = y + 1
+    xx_left = x
     xx_right = x + 1
-
 
     alpha, beta, lam = transform(x, y)
     alpha1, beta1, lam1 = transform(xx_left, yy_bot)
@@ -401,15 +398,9 @@ def SpaxelOverlap(self, x, y, sliceno, start_slice, input_model, transform, beta
     alpha3, beta3, lam3 = transform(xx_right, yy_top)
     alpha4, beta4, lam4 = transform(xx_left, yy_top)
 
-
+    nn = len(x)
     # Loop over all pixels in slice
     for ipixel in range(0, nn - 1):
-        valid_pixel = True
-        debug = 0
-
-#        if(x[ipixel] == 67 and y[ipixel] ==41) :
-#            print('Found pixel',alpha[ipixel],beta[ipixel],lam[ipixel])
-#            sys.exit('STOP')
 
         # detector pixel -> 4 corners
         # In alpha,wave space
@@ -430,107 +421,54 @@ def SpaxelOverlap(self, x, y, sliceno, start_slice, input_model, transform, beta
 
 #________________________________________________________________________________
 # Now it does not matter the WCS method used
+        alpha_min = min(alpha_corner)
+        alpha_max = max(alpha_corner)
+        wave_min = min(wave_corner)
+        wave_max = max(wave_corner)
+        #_______________________________________________________________________
 
-        if(valid_pixel):
-            alpha_min = min(alpha_corner)
-            alpha_max = max(alpha_corner)
-            wave_min = min(wave_corner)
-            wave_max = max(wave_corner)
+        Area = FindAreaQuad(alpha_min, wave_min, alpha_corner, wave_corner)
 
         # estimate the where the pixel overlaps in the cube
         # find the min and max values in the cube xcoord,ycoord and zcoord
 
-            MinA = (alpha_min - Cube.Crval1) / Cube.Cdelt1
-            MaxA = (alpha_max - Cube.Crval1) / Cube.Cdelt1
-            ix1 = max(0, int(math.trunc(MinA)))
-            ix2 = int(math.ceil(MaxA))
-            if(ix2 >= nxc):
-                ix2 = nxc - 1
+        MinA = (alpha_min - Cube.Crval1) / Cube.Cdelt1
+        MaxA = (alpha_max - Cube.Crval1) / Cube.Cdelt1
+        ix1 = max(0, int(math.trunc(MinA)))
+        ix2 = int(math.ceil(MaxA))
+        if ix2 >= nxc:
+            ix2 = nxc - 1
 
-
-            MinW = (wave_min - Cube.Crval3) / Cube.Cdelt3
-            MaxW = (wave_max - Cube.Crval3) / Cube.Cdelt3
-            iz1 = int(math.trunc(MinW))
-            iz2 = int(math.ceil(MaxW))
-            if(iz2 >= nzc):
-                iz2 = nzc - 1
-
-
-# 1-1 mapping in beta
-            iy2 = sliceno_use - 1
-
-
-        #_______________________________________________________________________
-
-            Area = FindAreaQuad(alpha_min, wave_min, alpha_corner, wave_corner)
-
+        MinW = (wave_min - Cube.Crval3) / Cube.Cdelt3
+        MaxW = (wave_max - Cube.Crval3) / Cube.Cdelt3
+        iz1 = int(math.trunc(MinW))
+        iz2 = int(math.ceil(MaxW))
+        if iz2 >= nzc:
+            iz2 = nzc - 1
         #_______________________________________________________________________
         # loop over possible overlapping cube pixels
+        noverlap = 0
+        nplane = Cube.naxis1 * Cube.naxis2
 
-            noverlap = 0
-            nplane = Cube.naxis1 * Cube.naxis2
+        for zz in range(iz1, iz2 + 1):
+            zcenter = Cube.zcoord[zz]
+            istart = zz * nplane
 
-            for zz in range(iz1, iz2 + 1):
-                zcenter = Cube.zcoord[zz]
-                istart = zz * nplane
-                yy = iy2 # one to one mapping
+            for xx in range(ix1, ix2 + 1):
+                cube_index = istart + yy * Cube.naxis1 + xx #yy = slice # -1
+                xcenter = Cube.xcoord[xx]
+                AreaOverlap = SH_FindOverlap(xcenter, zcenter, 
+                                             Cube.Cdelt1, Cube.Cdelt3, 
+                                             alpha_corner, wave_corner)
 
-
-                for xx in range(ix1, ix2 + 1):
-                    cube_index = istart + yy * Cube.naxis1 + xx
-                    xcenter = Cube.xcoord[xx]
-                    AreaOverlap = SH_FindOverlap(xcenter, zcenter, Cube.Cdelt1, Cube.Cdelt3, alpha_corner, wave_corner)
-
-                    if(AreaOverlap > 0.0):
-
-                        AreaRatio = AreaOverlap / Area
-                        spaxel[cube_index].pixel_overlap.append(AreaRatio)
-                        spaxel[cube_index].pixel_flux.append(pixel_flux[ipixel])
-                        spaxel[cube_index].pixel_error.append(pixel_error[ipixel])
-
-
-#                        if(xx== 7 and yy == 10 and zz == 100):
-#                            print('For pixel ',x[ipixel]+1,y[ipixel]+1)
-#                            print('Alpha-beta-lambda',alpha[ipixel],beta[ipixel],lam[ipixel])
-#                            print('flux',pixel_flux[ipixel])
-#                            print('zcenter xcenter',zcenter,xcenter)
-#                            print(' Overlaping Spaxel',cube_index,xx,yy,zz)
-#                            print('Spaxel Area', AreaOverlap,AreaRatio*100.0)
+                if AreaOverlap > 0.0:
+                    AreaRatio = AreaOverlap / Area
+                    spaxel[cube_index].flux = spaxel[cube_index].flux + (AreaRatio * pixel_flux[ipixel])
+                    spaxel[cube_index].flux_weight = spaxel[cube_index].flux_weight + AreaRatio
+                    spaxel[cube_index].iflux = spaxel[cube_index].iflux + 1
 #________________________________________________________________________________
-def SpaxelFlux(radius_y, i, Cube, spaxel):
 
-    """
-    Short Summary
-    -------------
-    based on the overlapping detector pixels and area of overlap find the flux of the spaxel
 
-    Parameters
-    ----------
-    radius_y: radius of interest in beta dimension
-    i: index of spaxel
-    Cube: class holding basic information of Cube
-    spaxel: cube pixel
 
-    Returns
-    -------
-    weighted flux of spaxel
-
-    """
-    debug = 0
-    num = len(spaxel[i].pixel_overlap)
-
-    #print(' For spaxel i # overlaps',num)
-    flux = 0
-    FinalWeight = 0.0
-    FinalFlux = 0.0
-
-    for j in range(num):
-        FinalFlux = FinalFlux + spaxel[i].pixel_flux[j] * spaxel[i].pixel_overlap[j]
-        FinalWeight = FinalWeight + spaxel[i].pixel_overlap[j]
-    if(num > 0):
-        FinalFlux = FinalFlux / FinalWeight
-        spaxel[i].flux = FinalFlux
-        if(i == -debug):
-            print('Flux', FinalFlux, i)
-    else:
-        spaxel[i].flux = 0.0
+class Error2DPolygon(Exception):
+    pass
