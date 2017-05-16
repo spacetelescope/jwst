@@ -1,5 +1,3 @@
-
-
 Description
 ============
 
@@ -7,14 +5,14 @@ This step determines the mean count rate for each pixel by performing a linear
 fit to the data in the input (jump) file.  The fit is done using "ordinary
 least squares" (the "generalized least squares" is no longer an option).
 The fit is performed independently for each pixel.  There are up to three
-output files. The primary output file (RampFit, giving the slope at each
-pixel) is always produced.  If the input exposure contains more than one
-integration, the resulting slope images from each integration are stored as a
-data cube in a second output data product.  A third, optional output product
-is also available and is produced only when the step parameter 'save_opt' is
-True (the default is False).  The output values will be in units of counts (DN)
-or counts per second.  Following a description of the fitting algorithm, these
-three type of output files are detailed below.
+output files. The primary output file, giving the slope at each pixel, is 
+always produced.  If the input exposure contains more than one integration, the 
+resulting slope images from each integration are stored as a data cube in a 
+second output data product.  A third, optional output product is also available 
+and is produced only when the step parameter 'save_opt' is True (the default is 
+False).  The output values will be in units of counts per second.  Following a 
+description of the fitting algorithm, these three type of output files are 
+detailed below.
 
 
 The count rate for each pixel is determined by a linear fit to the
@@ -39,7 +37,11 @@ a given pixel, the final slope is determined as a weighted average from all
 intervals and is written to a file as the primary output product.  In this
 output product, the 4-D GROUPDQ from all integrations is compressed into 2-D,
 which is then merged (using a bitwise OR) with the input 2-D PIXELDQ to create
-the output PIXELDQ.
+the output PIXELDQ.  If the ramp fitting step is run by itself, the output file 
+name will have the suffix '_RampFit' or the suffix '_RampFitStep'; if the ramp 
+fitting step is run as the final step in a pipeline, the final output file name 
+will have the suffix '_rate'. In either case, the user can override this name by 
+specifying an output file name.
 
 
 If the input exposure contains more than one integration, the resulting slope
@@ -48,8 +50,9 @@ product. Each plane of the 3-D SCI, ERR, and DQ arrays in this product is the
 result for a given integration.  In this output product, the 4-D GROUPDQ from
 an integration is compressed into 2-D, which is then merged with the input 2-D
 PIXELDQ to create the output PIXELDQ for each integration.  By default, the
-name of this output product is based on the name of the input file; the user
-can override this name by specifying a name using the parameter int_name.
+name of this output product is based on the name of the input file and will have
+the suffix '_rateints'; the user can override this name by specifying a name using
+the parameter int_name.
 
 
 A third, optional output product is also available and is produced only when
@@ -61,18 +64,18 @@ The y-intercept refers to the result of the fit at an exposure time of zero.
 This product also contains a 3-D array called PEDESTAL, which gives the signal
 at zero exposure time for each pixel, and the 4-D CRMAG array, which contains
 the magnitude of each read that was flagged as having a CR hit.  By default,
-the name of this output file is based on the name of the input file; the user
-can override this name by specifying a name using the parameter opt_name.  In
-this optional output product, the pedestal array is calculated for each
-integration by extrapolating the final slope (the weighted average of the slopes
-of all of ramp segments in the integration) for each pixel from its value at
-the first sample to an exposure time of zero. Any pixel that is saturated on
-the first read is given a pedestal value of 0.  Before compression, the cosmic
-ray magnitude array is equivalent to the input SCI array but with the only
-nonzero values being those whose pixel locations are flagged in the input
-GROUPDQ as cosmic ray hits. The array is compressed, removing all reads in which
-all the values are 0 for pixels having at least one read with a non-zero
-magnitude. The order of the cosmic rays within the ramp is preserved.
+the name of this output file is based on the name of the input file and will have
+the suffix '_fitopt'; the user can override this name by specifying a name using 
+the parameter opt_name.  In this optional output product, the pedestal array is 
+calculated for each integration by extrapolating the final slope (the weighted 
+average of the slopes of all of ramp segments in the integration) for each pixel 
+from its value at the first sample to an exposure time of zero. Any pixel that 
+is saturated on the first read is given a pedestal value of 0.  Before 
+compression, the cosmic ray magnitude array is equivalent to the input SCI array 
+but with the only nonzero values being those whose pixel locations are flagged 
+in the input GROUPDQ as cosmic ray hits. The array is compressed, removing all 
+reads in which all the values are 0 for pixels having at least one read with a 
+non-zero magnitude. The order of the cosmic rays within the ramp is preserved.
 
 
 The fitting algorithm does an 'optimal' linear fit, which is the weighting used
@@ -114,3 +117,5 @@ The ramp fitting step has three optional arguments that can be set by the user:
 * ``--int_name``: A string that can be used to override the default name
   for the integration-by-integration slopes, for the case that the input
   file contains more than one integration.
+
+

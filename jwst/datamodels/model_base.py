@@ -36,6 +36,7 @@ from gwcs.extension import GWCSExtension
 
 jwst_extensions = [GWCSExtension(), JWSTExtension(), BaseExtension()]
 
+
 class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     Base class of all of the data models.
@@ -91,7 +92,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 pass_invalid_values = bool(int(pass_invalid_values))
             except ValueError:
                 pass_invalid_values = False
-    
+
         self._pass_invalid_values = pass_invalid_values
 
         # Construct the path to the schema files
@@ -103,7 +104,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
             extension_list = asdf_extension.AsdfExtensionList(self._extensions)
-            schema = asdf_schema.load_schema(schema_path, 
+            schema = asdf_schema.load_schema(schema_path,
                 resolver=extension_list.url_mapping, resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
@@ -152,24 +153,24 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
             try:
-                hdulist = fits.open(init)
-            except IOError:
+                asdf = AsdfFile.open(init, extensions=extensions)
+            except (ValueError):
                 try:
-                    asdf = AsdfFile.open(init, extensions=self._extensions)
+                    hdulist = fits.open(init)
                     # TODO: Add json support
-                except ValueError:
+                except (IOError, OSError):
                     raise IOError(
                         "File does not appear to be a FITS or ASDF file.")
-            else:
-                asdf = fits_support.from_fits(hdulist, self._schema, 
-                                              extensions, pass_invalid_values)
+                else:
+                    asdf = fits_support.from_fits(hdulist, self._schema,
+                                                  extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
         else:
             raise ValueError(
                 "Can't initialize datamodel using {0}".format(str(type(init))))
 
         # Initialize object fields as determined fro the code above
-        
+
         self._shape = shape
         self._instance = asdf.tree
         self._asdf = asdf
@@ -304,7 +305,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         -------
         model : DataModel instance
         """
-        return cls(init, schema=schema, extensions=self._extensions)
+        return cls(init, schema=schema, extensions=jwst_extensions)
 
     def to_asdf(self, init, *args, **kwargs):
         """
@@ -810,6 +811,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     # These two method aliases are here for astropy.registry
     # compatibility and should not be called directly
     #--------------------------------------------------------
-    
+
     read = __init__
     write = save

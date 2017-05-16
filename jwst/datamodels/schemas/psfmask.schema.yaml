@@ -1,0 +1,15 @@
+title: Coronagraphic PSF mask data model
+allOf:
+- $ref: referencefile.schema.yaml
+- $ref: keyword_filter.schema.yaml
+- $ref: keyword_coronmsk.schema.yaml
+- $ref: subarray.schema.yaml
+- type: object
+  properties:
+    data:
+      title: The PSF mask
+      fits_hdu: SCI
+      default: 1.0
+      ndim: 2
+      datatype: float32
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

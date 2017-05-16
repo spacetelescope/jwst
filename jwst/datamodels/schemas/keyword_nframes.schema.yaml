@@ -1,0 +1,12 @@
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      exposure:
+        type: object
+        properties:
+          nframes:
+            title: Number of frames per group
+            type: integer
+            fits_keyword: NFRAMES

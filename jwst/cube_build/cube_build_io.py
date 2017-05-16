@@ -9,6 +9,7 @@ import json
 
 from astropy.io import fits
 
+#from gwcs.utils import _domain_to_bounds
 from ..associations import load_asn
 from .. import datamodels
 from ..assign_wcs import nirspec
@@ -74,7 +75,7 @@ def Read_User_Input(self):
     if self.subchannel == 'ALL':
         self.subchannel = ''
 
-    if self.subchannel : # it is not empty the it has been set
+    if self.subchannel : #  not empty it has been set
         subchannellist = self.subchannel.split(',')
         user_blen = len(subchannellist)
         for j in range(user_blen):
@@ -203,29 +204,38 @@ def DetermineCubeCoverage(self, MasterTable):
         user_clen = len(self.metadata['channel'])
         user_slen = len(self.metadata['subchannel'])
 
-        if user_clen !=0 and user_slen ==0:
-            raise ErrorMissingParameter("Channel specified, but Subchannel was not")
+#        if user_clen !=0 and user_slen ==0:
+#            raise ErrorMissingParameter("Channel specified, but Subchannel was not")
 
-        if user_clen ==0 and user_slen !=0:
-            raise ErrorMissingParameter("Subchannel specified, but Channel was not")
+#        if user_clen ==0 and user_slen !=0:
+#            raise ErrorMissingParameter("Subchannel specified, but Channel was not")
 
-        # parameters not set
-        if user_clen == 0 and  user_slen == 0:
-            for i in range(nchannels):
-                for j in range(nsubchannels):
-                    nfiles = len(MasterTable.FileMap['MIRI'][ValidChannel[i]][ValidSubchannel[j]])
-
-                    if nfiles > 0 :
+#________________________________________________________________________________
+        for i in range(nchannels):
+            for j in range(nsubchannels):
+                nfiles = len(MasterTable.FileMap['MIRI'][ValidChannel[i]][ValidSubchannel[j]])
+                if nfiles > 0 :
+#________________________________________________________________________________
+        # neither parameters not set
+                    if user_clen == 0 and  user_slen == 0:
                         self.metadata['band_channel'].append(ValidChannel[i])
                         self.metadata['band_subchannel'].append(ValidSubchannel[j])
-
-        # parameters set
-        else:
-            for i in range(nchannels):
-                for j in range(nsubchannels):
-                    nfiles = len(MasterTable.FileMap['MIRI'][ValidChannel[i]][ValidSubchannel[j]])
-                    if nfiles > 0:
-                        # now check if these options have been set
+#________________________________________________________________________________
+# channel was set by user but not sub-channel
+                    elif user_clen !=0 and user_slen ==0:
+                        # now check if this channel was set by user
+                        if (ValidChannel[i] in self.metadata['channel'] ):
+                            self.metadata['band_channel'].append(ValidChannel[i])
+                            self.metadata['band_subchannel'].append(ValidSubchannel[j])
+#________________________________________________________________________________
+# sub-channel was set by user but not channel
+                    elif user_clen ==0 and user_slen !=0:
+                        if (ValidSubchannel[j] in self.metadata['subchannel']):
+                            self.metadata['band_channel'].append(ValidChannel[i])
+                            self.metadata['band_subchannel'].append(ValidSubchannel[j])
+#________________________________________________________________________________
+# both parameters set
+                    else:
                         if (ValidChannel[i] in self.metadata['channel'] and
                            ValidSubchannel[j] in self.metadata['subchannel']):
                             self.metadata['band_channel'].append(ValidChannel[i])
@@ -234,7 +244,7 @@ def DetermineCubeCoverage(self, MasterTable):
 
         log.info('The desired cubes covers the MIRI Channels: %s',
                  self.metadata['band_channel'])
-        log.info('The desried cubes covers the MIRI subchannels: %s',
+        log.info('The desired cubes covers the MIRI subchannels: %s',
                  self.metadata['band_subchannel'])
 
 
@@ -365,7 +375,9 @@ def SetFileTable(self, input_table, MasterTable):
 
     num = len(input_filenames)
 
-
+# added self.models just to be able to have a list of models that we can send
+# the first one  so get_reference_files knows the instrument type
+    self.models = input_models
 #________________________________________________________________________________
 # Loop over input list of files and assign fill in the MasterTable with filename
 # for the correct (channel-subchannel) or (grating-subchannel)
@@ -394,7 +406,6 @@ def SetFileTable(self, input_table, MasterTable):
             #________________________________________________________________________________
                 clenf = len(channel)
                 for k in range(clenf):
-#                    MasterTable.FileMap['MIRI'][channel[k]][subchannel].append(ifile)
                     MasterTable.FileMap['MIRI'][channel[k]][subchannel].append(input_model)
                     ioffset = len(self.ra_offset)
                     if (ioffset > 0):
@@ -407,7 +418,6 @@ def SetFileTable(self, input_table, MasterTable):
                 fwa = input_model.meta.instrument.filter
                 gwa = input_model.meta.instrument.grating
 
-#                MasterTable.FileMap['NIRSPEC'][gwa][fwa].append(ifile)
                 MasterTable.FileMap['NIRSPEC'][gwa][fwa].append(input_model)
             else:
 
@@ -444,8 +454,8 @@ def UpdateOutPutName(self):
             number_subchannels = len(subchannels)
             b_name = ''
             for i in range(number_subchannels):
-                b_name = b_name + subchannels[i] + '-'
-
+                b_name = b_name + subchannels[i] 
+                if(i > 1): b_name = b_name + '-'
             b_name  = b_name.lower()
             newname = self.output_name_base + ch_name+ '-' + b_name +  '_s3d.fits'
 
@@ -463,6 +473,141 @@ def UpdateOutPutName(self):
     return newname
 
 
+#********************************************************************************
+
+def ReadCubePars(self,Cube, InstrumentInfo):
+#********************************************************************************
+    """
+    Short Summary
+    -------------
+    Based on the instrument and channel/subchannels (MIRI) or grating/filter(NIRSPEC)
+    that covers the full range of the data, read in the appropriate columns in the
+    cube parameter reference file and fill in the cooresponding dicitionary in 
+    InstrumentInfo
+
+    Parameters
+    ----------
+    Cube: Class holding basic information on cube
+    ptab: cube parameter reference table 
+    InstrumentInfo holds the defaults scales for each channel/subchannel
+
+    Returns
+    -------
+    The correct elements of InstrumentInfo are filled in 
+
+    """
+    if Cube.instrument == 'MIRI':
+        ptab = datamodels.MiriIFUCubeParsModel(self.par_filename)
+        number_bands = len(Cube.channel)
+
+        # pull out the channels and subcahnnels that cover the data making up the cube
+        for i in range(number_bands):
+            this_channel = Cube.channel[i]
+            compare_channel = 'CH'+this_channel
+            this_sub = Cube.subchannel[i]
+                # find the table entries for this combination
+            for tabdata in ptab.ifucubepars_table:
+                table_channel = tabdata['channel']
+                table_band = tabdata['band']
+                table_plt_scale = tabdata['PLTSCALE']
+                table_wresol = tabdata['WRESOL']
+                table_sroi = tabdata['SROI']
+                table_wroi = tabdata['WROI']
+                #match on this_channel and this_sub
+                if(compare_channel == table_channel and this_sub == table_band):
+                    InstrumentInfo.SetSpatialScale(table_plt_scale,this_channel,this_sub)
+                    InstrumentInfo.SetWaveRes(table_wresol,this_channel,this_sub)
+                    InstrumentInfo.SetWaveROI(table_wroi,this_channel,this_sub)
+                    InstrumentInfo.SetSpatialROI(table_sroi,this_channel,this_sub)
+        
+    elif Cube.instrument == 'NIRSPEC':
+        ptab = datamodels.NispecIFUCubeParsModel(self.par_filename)
+        number_gratings = len(Cube.grating)
+
+        for i in range(number_gratings):
+            this_gwa = Cube.grating[i]
+            for tabdata in ptab.ifucubepars_table:
+                table_grating = tabdata['grating']
+                table_filter = tabdata['filter']
+                table_plt_scale = tabdata['PLTSCALE']
+                table_wresol = tabdata['WRESOL']
+                table_sroi = tabdata['SROI']
+                table_wroi = tabdata['WROI']
+                if(this_gwa == table_grating):
+                    InstrumentInfo.SetSpatialScale(table_plt_scale,this_gwa)
+                    InstrumentInfo.SetWaveRes(table_wresol,this_gwa)
+                    InstrumentInfo.SetWaveROI(table_wroi,this_gwa)
+                    InstrumentInfo.SetSpatialROI(table_sroi,this_gwa)
+
+#_______________________________________________________________________
+
+# Read MIRI Resolution reference file
+#********************************************************************************
+def ReadResolutionFile(self,Cube,InstrumentInfo):
+
+    ptab = datamodels.MiriResolutionModel(self.resol_filename)
+    table_alpha_cutoff = ptab.psf_fwhm_alpha_table['A_CUTOFF']
+    table_alpha_a_short = ptab.psf_fwhm_alpha_table['A_A_SHORT']
+    table_alpha_b_short = ptab.psf_fwhm_alpha_table['A_B_SHORT']
+    table_alpha_a_long = ptab.psf_fwhm_alpha_table['A_A_LONG']
+    table_alpha_b_long = ptab.psf_fwhm_alpha_table['A_B_LONG']
+
+    table_beta_cutoff = ptab.psf_fwhm_beta_table['B_CUTOFF']
+    table_beta_a_short = ptab.psf_fwhm_beta_table['B_A_SHORT']
+    table_beta_b_short = ptab.psf_fwhm_beta_table['B_B_SHORT']
+    table_beta_a_long = ptab.psf_fwhm_beta_table['B_A_LONG']
+    table_beta_b_long = ptab.psf_fwhm_beta_table['B_B_LONG']
+    
+
+    InstrumentInfo.Set_psf_alpha_parameters(table_alpha_cutoff,
+                                            table_alpha_a_short,
+                                            table_alpha_b_short,
+                                            table_alpha_a_long,
+                                            table_alpha_b_long)
+
+    InstrumentInfo.Set_psf_beta_parameters(table_beta_cutoff,
+                                            table_beta_a_short,
+                                            table_beta_b_short,
+                                            table_beta_a_long,
+                                            table_beta_b_long)
+    
+    number_bands = len(Cube.channel)
+    print('cube_build_io: number of bands',number_bands)
+        # pull out the channels and subcahnnels that cover the data making up the cube
+    for i in range(number_bands):
+        this_channel = Cube.channel[i]
+        this_sub = Cube.subchannel[i]    
+        compare_band = this_channel+this_sub
+        for tabdata in ptab.resolving_power_table:
+            table_sub_band = tabdata['SUB_BAND']
+            table_wave_center = tabdata['R_CENTRE']
+            table_res_a_low = tabdata['R_A_LOW']
+            table_res_b_low = tabdata['R_B_LOW']
+            table_res_c_low = tabdata['R_C_LOW']
+            table_res_a_high = tabdata['R_A_HIGH']
+            table_res_b_high = tabdata['R_B_HIGH']
+            table_res_c_high = tabdata['R_C_HIGH']
+            table_res_a_ave = tabdata['R_A_AVG']
+            table_res_b_ave = tabdata['R_B_AVG']
+            table_res_c_ave = tabdata['R_C_AVG']
+            #match on this_channel and this_sub
+            if compare_band == table_sub_band:
+                InstrumentInfo.Set_RP_Wave_Cutoff(table_wave_center,
+                                                  this_channel,this_sub)
+                InstrumentInfo.Set_RP_low(table_res_a_low,
+                                          table_res_b_low,
+                                          table_res_c_low,
+                                          this_channel,this_sub)
+
+                InstrumentInfo.Set_RP_high(table_res_a_high,
+                                          table_res_b_high,
+                                          table_res_c_high,
+                                          this_channel,this_sub)
+
+                InstrumentInfo.Set_RP_ave(table_res_a_ave,
+                                          table_res_b_ave,
+                                          table_res_c_ave,
+                                          this_channel,this_sub)
 
 
 class ErrorNoAssignWCS(Exception):
@@ -577,6 +722,8 @@ class IFUCubeASN(object):
         return members
     def get_outputs(self, product=0):
         return self.asn_table['products'][product]['name']
+
+
 
 
 ##################################################################################

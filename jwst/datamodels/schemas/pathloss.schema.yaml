@@ -1,6 +1,8 @@
 title: Pathloss correction data model
 allOf:
 - $ref: referencefile.schema.yaml
+- $ref: keyword_pexptype.schema.yaml
+- $ref: keyword_exptype.schema.yaml
 - type: object
   properties:
     apertures:

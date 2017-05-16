@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 
 from . import model_base
 
-__all__ = ['DrizParsModel']
+__all__ = ['DrizParsModel', 'NircamDrizParsModel', 'MiriImgDrizParsModel']
 
 
 class DrizParsModel(model_base.DataModel):

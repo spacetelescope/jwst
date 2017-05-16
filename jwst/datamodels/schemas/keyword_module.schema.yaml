@@ -1,0 +1,13 @@
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      instrument:
+        type: object
+        properties:
+          module:
+            title: 'NIRCam module: A or B'
+            type: string
+            enum: [A, B]
+            fits_keyword: MODULE
