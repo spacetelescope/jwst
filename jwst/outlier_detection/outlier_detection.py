@@ -39,23 +39,6 @@ class OutlierDetection(object):
       6. Updates input data model DQ arrays with mask of detected outliers.
 
     """
-    outlierpars = {'kernel': 'square',
-                   'pixfrac': 1.0,
-                   'resample_bits': None,
-                   'fillval': 'INDEF',
-                   'wht_type': 'exptime',
-                   'nlow': 0,
-                   'nhigh': 1,
-                   'hthresh': None,
-                   'lthresh': None,
-                   'nsigma': '4 3',
-                   'maskpt': 0.7,
-                   'grow': 1,
-                   'ctegrow': 0,
-                   'snr': "4.0 3.0",
-                   'scale': "0.5 0.4",
-                   'backg': 0
-                   }
 
     def __init__(self, input_models, reffiles=None, to_file=False, **pars):
         """
@@ -124,8 +107,7 @@ class OutlierDetection(object):
             self.outlierpars[kw] = ref_model['outlierpars_table.{0}'.format(kw)]
 
     def do_detection(self):
-        """ Perform drizzling operation on input images's to create a new output
-
+        """Compare blotted median to input images to flag outlier pixels in DQ
         """
         pars = self.outlierpars
 
@@ -165,7 +147,7 @@ class OutlierDetection(object):
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
         flag_cr.do_detection(self.input_models, blot_models,
-            self.reffiles, **pars)
+            self.reffiles, **self.outlierpars)
 
         # clean-up (just to be explicit about being finished with these results)
         del median_model, blot_models
