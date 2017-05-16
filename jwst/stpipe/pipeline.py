@@ -46,12 +46,16 @@ class Pipeline(Step):
     """
     A Pipeline is a way of combining a number of steps together.
     """
+
+    # Configuration
+    spec = """
+    output_basename = string(default=None) # Output base name
+    output_ext = string(default=".fits") # Output extension
+    suffix = string(default=None) # Suffix for output file name
+    """
     # A set of steps used in the Pipeline.  Should be overridden by
     # the subclass.
     step_defs = {}
-
-    # Default result extension
-    output_ext = '.fits'
 
     def __init__(self, *args, **kwargs):
         """

@@ -34,7 +34,6 @@ class Step(object):
     output_file = output_file(default=None) # File to save output to.
     skip = boolean(default=False) # Skip this step
     save_results = boolean(default=False) # Force save results
-    suffix = string(default=None) # Suffix for output file name
     """
 
     reference_file_types = []
