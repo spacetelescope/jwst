@@ -8,7 +8,7 @@ from astropy.modeling.models import Scale
 
 import gwcs.coordinate_frames as cf
 from . import pointing
-from .util import not_implemented_mode
+from .util import not_implemented_mode, subarray_transform
 
 
 def create_pipeline(input_model, reference_files):
@@ -32,7 +32,12 @@ def imaging(input_model, reference_files):
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
-    distortion = imaging_distortion(input_model, reference_files)
+
+    subarray2full = subarray_transform(input_model)
+    imdistortion = imaging_distortion(input_model, reference_files)
+    distortion = subarray2full | imdistortion
+    distortion.bounding_box = imdistortion.bounding_box
+    del imdistortion.bounding_box
     tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),

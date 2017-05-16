@@ -20,7 +20,7 @@ Both notes have been communicated to the INS team.
 
 """
 from __future__ import absolute_import, division, unicode_literals, print_function
-
+import pytest
 import numpy as np
 from astropy.io import fits
 from gwcs import wcs
@@ -105,37 +105,37 @@ def run_test(model):
         #utils.assert_allclose(xin, x, atol=10**-5)
         #utils.assert_allclose(yin, y, atol=10**-5)
 
-
+@pytest.mark.xfail(reason="reference file not in CRDS yet, #834")
 def test_miri_mrs_12A():
     hdul = create_hdul(detector="MIRIFUSHORT", channel="12", band="SHORT")
     im = create_datamodel(hdul)
     run_test(im)
 
-
+@pytest.mark.xfail(reason="reference file not in CRDS yet, #834")
 def test_miri_mrs_12B():
     hdul = create_hdul(detector="MIRIFUSHORT", channel="12", band="MEDIUM")
     im = create_datamodel(hdul)
     run_test(im)
 
-
+@pytest.mark.xfail(reason="reference file not in CRDS yet, #834")
 def test_miri_mrs_12C():
     hdul = create_hdul(detector="MIRIFUSHORT", channel="12", band="LONG")
     im = create_datamodel(hdul)
     run_test(im)
 
-
+@pytest.mark.xfail(reason="reference file not in CRDS yet, #834")
 def test_miri_mrs_34A():
     hdul = create_hdul(detector="MIRIFULONG", channel="34", band="SHORT")
     im = create_datamodel(hdul)
     run_test(im)
 
-
+@pytest.mark.xfail(reason="reference file not in CRDS yet, #834")
 def test_miri_mrs_34B():
     hdul = create_hdul(detector="MIRIFULONG", channel="34", band="MEDIUM")
     im = create_datamodel(hdul)
     run_test(im)
 
-
+@pytest.mark.xfail(reason="reference file not in CRDS yet, #834")
 def test_miri_mrs_34C():
     hdul = create_hdul(detector="MIRIFULONG", channel="34", band="LONG")
     im = create_datamodel(hdul)

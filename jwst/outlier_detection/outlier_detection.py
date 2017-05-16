@@ -1,3 +1,6 @@
+from __future__ import (division, print_function, unicode_literals,
+    absolute_import)
+
 import time
 import numpy as np
 from collections import OrderedDict
@@ -14,7 +17,6 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-DEFAULT_DOMAIN = {'lower': None, 'upper': None, 'includes_lower': True, 'includes_upper': False}
 
 class OutlierDetection(object):
     """
@@ -37,16 +39,8 @@ class OutlierDetection(object):
       6. Updates input data model DQ arrays with mask of detected outliers.
 
     """
-    outlierpars = {'kernel': 'square', 'pixfrac': 1.0, 'resample_bits': None,
-                        'fillval': 'INDEF', 'wht_type': 'exptime',
-                    'nlow': 0, 'nhigh': 1,
-                        'hthresh': None, 'lthresh': None,
-                        'nsigma': '4 3', 'maskpt': 0.7,
-                    'grow': 1, 'ctegrow': 0, 'snr': "4.0 3.0",
-                        'scale': "0.5 0.4", 'backg': 0
-                }
 
-    def __init__(self, input_models, ref_filename=None, to_file=False, **pars):
+    def __init__(self, input_models, reffiles=None, to_file=False, **pars):
         """
         Parameters
         ----------
@@ -62,13 +56,13 @@ class OutlierDetection(object):
 
         """
         self.input_models = input_models
-        self.ref_filename = ref_filename
+        self.reffiles = reffiles
         self.to_file = to_file
 
         self.num_groups = len(self.input_models.group_names)
 
         self.outlierpars = {}
-        if 'outlierpars' in ref_filename:
+        if 'outlierpars' in reffiles:
             self._get_outlier_pars()
         self.outlierpars.update(pars)
 
@@ -80,7 +74,7 @@ class OutlierDetection(object):
         input_dm = self.input_models[0]
         filtname = input_dm.meta.instrument.filter
 
-        ref_model = datamodels.OutlierParsModel(self.ref_filename['outlierpars'])
+        ref_model = datamodels.OutlierParsModel(self.reffiles['outlierpars'])
 
         # look for row that applies to this set of input data models
         # NOTE:
@@ -105,7 +99,7 @@ class OutlierDetection(object):
 
         # With presence of wild-card rows, code should never trigger this logic
         if row is None:
-            log.error("No row found in %s that matches input data.", self.ref_filename)
+            log.error("No row found in %s that matches input data.", self.reffiles)
             raise ValueError
 
         # read in values from that row for each parameter
@@ -113,18 +107,18 @@ class OutlierDetection(object):
             self.outlierpars[kw] = ref_model['outlierpars_table.{0}'.format(kw)]
 
     def do_detection(self):
-        """ Perform drizzling operation on input images's to create a new output
-
+        """Compare blotted median to input images to flag outlier pixels in DQ
         """
         pars = self.outlierpars
 
         # Start by creating resampled/mosaic images for each group of exposures
-        sdriz = resample.resample.ResampleData(self.input_models, single=True, **pars)
+        sdriz = resample.resample.ResampleData(self.input_models, single=True,
+            blendheaders=False, **pars)
         sdriz.do_drizzle(**pars)
         drizzled_models = sdriz.output_models
         if self.to_file:
             log.info("Saving resampled grouped exposures to disk...")
-            drizzled_models.save(None)
+            drizzled_models.save()
 
         # Initialize intermediate products used in the outlier detection
         median_model = datamodels.ImageModel(init=drizzled_models[0].data.shape)
@@ -148,12 +142,12 @@ class OutlierDetection(object):
                      **pars)
         if self.to_file:
             log.info("Writing out BLOT input images...")
-            blot_models.save(None)
+            blot_models.save()
 
         # Perform outlier detection using statistical comparisons between
-        # original input images and their blotted-median images
+        # each original input image and its blotted version of the median image
         flag_cr.do_detection(self.input_models, blot_models,
-            self.ref_filename, **pars)
+            self.reffiles, **self.outlierpars)
 
         # clean-up (just to be explicit about being finished with these results)
         del median_model, blot_models

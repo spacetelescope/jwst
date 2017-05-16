@@ -14,6 +14,12 @@ from .helpers import (
 from ..main import Main
 from .. import load_asn
 
+# Temporarily skip if running under Travis
+# pytestmark = pytest.mark.skipif(
+#     "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
+#     reason='Temporarily disable due to performance issues'
+# )
+
 
 @pytest.yield_fixture(
     scope='module',

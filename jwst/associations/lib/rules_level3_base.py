@@ -6,6 +6,7 @@ import re
 
 from jwst.associations import (
     Association,
+    AssociationRegistry,
     libpath
 )
 from jwst.associations.association import (
@@ -41,7 +42,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # Non-specified values found in DMS Association Pools
-_EMPTY = (None, 'NULL')
+_EMPTY = (None, 'NULL', '--')
 
 # The schema that these associations must adhere to.
 ASN_SCHEMA = libpath('asn_schema_jw_level3.json')
@@ -61,7 +62,6 @@ _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
 # Product name regex's
 _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
-
 
 # Key that uniquely identfies members.
 KEY = 'expname'
@@ -101,12 +101,12 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         self.members = set()
 
         # Initialize validity checks
-        self.validity = {
+        self.validity.update({
             'has_science': {
                 'validated': False,
                 'check': lambda entry: entry['exptype'] == 'SCIENCE'
             }
-        }
+        })
 
         # Let us see if member belongs to us.
         super(DMS_Level3_Base, self).__init__(*args, **kwargs)
@@ -127,26 +127,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         if 'asn_pool' not in self.data:
             self.data['asn_pool'] = 'none'
 
-    @classmethod
-    def validate(cls, asn):
-        super(DMS_Level3_Base, cls).validate(asn)
-
-        if isinstance(asn, DMS_Level3_Base):
-            result = False
-            try:
-                result = all(
-                    test['validated']
-                    for test in asn.validity.values()
-                )
-            except (AttributeError, KeyError):
-                raise AssociationNotValidError('Validation failed')
-            if not result:
-                raise AssociationNotValidError(
-                    'Validation failed validity tests.'
-                )
-
-        return True
-
     @property
     def current_product(self):
         return self.data['products'][-1]
@@ -166,30 +146,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             return not self.__eq__(other)
         else:
             return NotImplemented
-
-    def new_product(self, product_name=None):
-        """Start a new product"""
-        self.product_name = product_name
-        product = {
-            'name': self.product_name,
-            'members': []
-        }
-        try:
-            self.data['products'].append(product)
-        except KeyError:
-            self.data['products'] = [product]
-
-    @property
-    def product_name(self):
-        if self._product_name is None:
-            product_name = self.dms_product_name()
-        else:
-            product_name = self._product_name
-        return product_name
-
-    @product_name.setter
-    def product_name(self, value):
-        self._product_name = value
 
     def dms_product_name(self):
         """Define product name."""
@@ -217,11 +173,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         return product_name.lower()
 
-    def update_validity(self, entry):
-        for test in self.validity.values():
-            if not test['validated']:
-                test['validated'] = test['check'](entry)
-
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
         super(DMS_Level3_Base, self)._init_hook(member)
@@ -238,7 +189,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             [cc for cc in self.constraints_to_text()]
         )
         self.data['asn_id'] = self.acid.id
-        self.new_product()
+        self.new_product(product_name=self.dms_product_name())
 
         # Parse out information from the pool file name.
         # Necessary to carry information to the Level3 output.
@@ -383,6 +334,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         to an association. All defined shortcuts and other initializations are
         by-passed, resulting in a potentially unusable association.
         """
+        if product_name is None:
+            raise AssociationNotValidError(
+                'Product name needs to be specified'
+            )
+
         self.new_product(product_name)
         members = self.current_product['members']
         for item in items:
@@ -395,9 +351,13 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             }
             self.update_validity(entry)
             members.append(entry)
+        self.sequence = next(self._sequence)
 
     def __repr__(self):
-        file_name, json_repr = self.ioregistry['json'].dump(self)
+        try:
+            file_name, json_repr = self.ioregistry['json'].dump(self)
+        except:
+            return str(self.__class__)
         return json_repr
 
     def __str__(self):
@@ -527,6 +487,40 @@ class Utility(object):
         result = _EXPTYPE_MAP.get(exp_type, default)
         return result
 
+    @staticmethod
+    @AssociationRegistry.callback('finalize')
+    def finalize(associations):
+        """Check validity and duplications in an association list
+
+        Parameters
+        ----------
+        associations:[association[, ...]]
+            List of associations
+
+        Returns
+        -------
+        finalized_associations: [association[, ...]]
+            The validated list of associations
+        """
+        finalized = []
+        lv3_asns = []
+        for asn in associations:
+            if isinstance(asn, DMS_Level3_Base):
+
+                # Check validity
+                if asn.is_valid:
+                    lv3_asns.append(asn)
+
+            else:
+                finalized.append(asn)
+
+        # Ensure sequencing is correct.
+        Utility.resequence(lv3_asns)
+
+        # Merge lists and return
+        return finalized + lv3_asns
+
+
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
 # ---------------------------------------------
@@ -541,7 +535,7 @@ class AsnMixin_Base(DMS_Level3_Base):
         self.add_constraints({
             'program': {
                 'value': None,
-                'inputs': ['PROGRAM']
+                'inputs': ['PROGRAM'],
             },
             'instrument': {
                 'value': None,
@@ -696,7 +690,7 @@ class AsnMixin_CrossCandidate(DMS_Level3_Base):
     def validate(cls, asn):
         super(AsnMixin_CrossCandidate, cls).validate(asn)
 
-        if isinstance(asn, DMS_Level3_Base):
+        if isinstance(asn, AsnMixin_CrossCandidate):
             try:
                 candidates = set(
                     member['asn_candidate_id']

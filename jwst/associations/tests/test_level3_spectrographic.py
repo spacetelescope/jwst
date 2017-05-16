@@ -20,7 +20,11 @@ class TestLevel3Spectrographic(BasePoolRule):
 
     pools = [
         PoolParams(
-            path=glob(t_path('data/pool_*_spec_*.csv')),
+            path=[
+                t_path('data/pool_005_spec_niriss.csv'),
+                t_path('data/pool_006_spec_nirspec.csv'),
+                t_path('data/pool_007_spec_miri.csv'),
+            ],
             n_asns=7,
             n_orphaned=0
         ),

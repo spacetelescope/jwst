@@ -42,7 +42,7 @@ class Asn_Image(
         self.add_constraints({
             'wfsvisit': {
                 'inputs': ['WFSVISIT'],
-                'is_invalid': True,
+                'force_undefined': True,
             },
         })
 
@@ -74,6 +74,7 @@ class Asn_WFSCMB(
                 'inputs': ['ASN_CANDIDATE'],
                 'force_unique': True,
                 'is_acid': True,
+                'evaluate': True,
             },
             'activity_id': {
                 'value': None,

@@ -24,6 +24,7 @@ from asdf import yamlutil
 from asdf import schema as asdf_schema
 from asdf import extension as asdf_extension
 
+from . import ndmodel
 from . import fits_support
 from . import properties
 from . import schema as mschema
@@ -35,7 +36,8 @@ from gwcs.extension import GWCSExtension
 
 jwst_extensions = [GWCSExtension(), JWSTExtension(), BaseExtension()]
 
-class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
+
+class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     Base class of all of the data models.
     """
@@ -90,7 +92,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
                 pass_invalid_values = bool(int(pass_invalid_values))
             except ValueError:
                 pass_invalid_values = False
-    
+
         self._pass_invalid_values = pass_invalid_values
 
         # Construct the path to the schema files
@@ -102,7 +104,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
             extension_list = asdf_extension.AsdfExtensionList(self._extensions)
-            schema = asdf_schema.load_schema(schema_path, 
+            schema = asdf_schema.load_schema(schema_path,
                 resolver=extension_list.url_mapping, resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
@@ -151,24 +153,24 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
             try:
-                hdulist = fits.open(init)
-            except IOError:
+                asdf = AsdfFile.open(init, extensions=extensions)
+            except (ValueError):
                 try:
-                    asdf = AsdfFile.open(init, extensions=self._extensions)
+                    hdulist = fits.open(init)
                     # TODO: Add json support
-                except ValueError:
+                except (IOError, OSError):
                     raise IOError(
                         "File does not appear to be a FITS or ASDF file.")
-            else:
-                asdf = fits_support.from_fits(hdulist, self._schema, 
-                                              extensions, pass_invalid_values)
+                else:
+                    asdf = fits_support.from_fits(hdulist, self._schema,
+                                                  extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
         else:
             raise ValueError(
                 "Can't initialize datamodel using {0}".format(str(type(init))))
 
         # Initialize object fields as determined fro the code above
-        
+
         self._shape = shape
         self._instance = asdf.tree
         self._asdf = asdf
@@ -303,7 +305,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         -------
         model : DataModel instance
         """
-        return cls(init, schema=schema, extensions=self._extensions)
+        return cls(init, schema=schema, extensions=jwst_extensions)
 
     def to_asdf(self, init, *args, **kwargs):
         """
@@ -370,11 +372,17 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
                 return None
         return self._shape
 
+    def my_attribute(self, attr):
+        properties = frozenset(("shape", "history", "_extra_fits", "schema"))
+        return attr in properties
+
     def __setattr__(self, attr, value):
-        if attr == 'shape':
+        if self.my_attribute(attr):
             object.__setattr__(self, attr, value)
+        elif ndmodel.NDModel.my_attribute(self, attr):
+            ndmodel.NDModel.__setattr__(self, attr, value)
         else:
-            super(DataModel, self).__setattr__(attr, value)
+            properties.ObjectNode.__setattr__(self, attr, value)
 
     def extend_schema(self, new_schema):
         """
@@ -799,71 +807,10 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
 
-    #---------------------------------------
-    # Nddata interface compatibility methods
-    #---------------------------------------
+    #--------------------------------------------------------
+    # These two method aliases are here for astropy.registry
+    # compatibility and should not be called directly
+    #--------------------------------------------------------
 
-    @property
-    def data(self):
-        """The stored dataset.
-        """
-        return self.__getattr__('data')
-
-    @property
-    def mask(self):
-        """Mask for the dataset.
-        """
-        return self.dq
-
-    @property
-    def unit(self):
-        """Unit for the dataset.
-        """
-        try:
-            val = self.meta.bunit_data
-        except AttributeError:
-            val = None
-        return val
-
-    @property
-    def wcs(self):
-        """World coordinate system (WCS) for the dataset.
-        """
-        return self.__getattr__('wcs')
-
-
-    @property
-    def meta(self):
-        """Additional meta information about the dataset.
-        """
-        return self.__getattr__('meta')
-
-
-    @property
-    def uncertainty(self):
-        """Uncertainty in the dataset.
-        """
-        err = self.err
-        try:
-            val = self.meta.bunit_err
-        except AttributeError:
-            val = None
-        return Uncertainty(err, uncertainty_type=val)
-
-
-class Uncertainty(np.ndarray):
-    """
-    Subclass ndarray to include an additional property, uncertainty_type
-    """
-    def __new__(cls, err, uncertainty_type=None):
-        # info on how to subclass np.ndarray is at
-        # https://docs.scipy.org/doc/numpy/user/basics.subclassing.html
-        # this code is taken from there
-        obj = np.asarray(err).view(cls)
-        obj.uncertainty_type = uncertainty_type
-        return obj
-
-    def __array_finalize__(self, obj):
-        if obj is None:
-            return
-        self.uncertainty_type = getattr(obj, 'uncertainty_type', None)
+    read = __init__
+    write = save

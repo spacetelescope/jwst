@@ -21,9 +21,18 @@ class RampFitStep (Step):
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
-        algorithm = option('OLS', 'GLS', default='OLS')
-        weighting = option('unweighted', 'optimal', default='unweighted')
+
     """
+
+    # Prior to 04/26/17, the following were also in the spec above:
+    #      algorithm = option('OLS', 'GLS', default='OLS') # 'OLS' or 'GLS'
+    #      weighting = option('unweighted', 'optimal', default='unweighted') \
+    #      # 'unweighted' or 'optimal'
+    # As of 04/26/17, the only allowed algorithm is 'ols', and the 
+    #      only allowed weighting is 'optimal'.
+    algorithm = 'ols'      # Only algorithm allowed for Build 7.1
+    weighting = 'optimal'  # Only weighting allowed for Build 7.1
+
     reference_file_types = ['readnoise', 'gain']
 
     def process(self, input):

@@ -15,7 +15,12 @@ import numpy as np
 from ..stpipe import Step, cmdline
 from .. import datamodels
 
-from stsci.tools import bitmask
+try:
+    from stsci.tools.bitmask import bitfield_to_boolean_mask
+    from stsci.tools.bitmask import interpret_bit_flags
+except ImportError:
+    from stsci.tools.bitmask import bitmask2mask as bitfield_to_boolean_mask
+    from stsci.tools.bitmask import interpret_bits_value as interpret_bit_flags
 
 #LOCAL:
 from . skymatch import match
@@ -53,7 +58,7 @@ class CubeSkyMatchStep(Step):
     def process(self, input1, input2):
         cube_models = datamodels.ModelContainer(input1)
         models2d = datamodels.ModelContainer(input2)
-        dqbits = bitmask.interpret_bits_value(self.dqbits)
+        dqbits = interpret_bit_flags(self.dqbits)
 
         # set sky stattistics:
         self._skystat = SkyStats(
@@ -66,11 +71,18 @@ class CubeSkyMatchStep(Step):
             binwidth=self.binwidth
         )
 
+        # At this moment running 'cube_skymatch' on images whose
+        # background has been previously subtracted is not supported.
+        # Raise an exception if background was subtracted:
+        self._check_background(cube_models)
+        self._check_background(models2d)
+        self._reset_background(cube_models)
+        self._reset_background(models2d)
+
         # create a list of SkyCubes:
         skycubes = []
 
         for cm in cube_models:
-
             # process weights and combine with DQ:
             if not hasattr(cm, 'weightmap') or cm.weightmap is None:
                 weights = np.ones_like(cm.data, dtype=np.float64)
@@ -78,9 +90,12 @@ class CubeSkyMatchStep(Step):
                 weights = cm.weightmap.copy()
 
             if dqbits is not None:
-                dq = bitmask.bitmask2mask(bitmask=cm.dq,
-                                          ignore_bits=self._dqbits,
-                                          good_mask_value=0, dtype=np.bool)
+                dq = bitfield_to_boolean_mask(
+                    cm.dq,
+                    self._dqbits,
+                    good_mask_value=0,
+                    dtype=np.bool
+                )
                 weights[dq] = 0.0
 
             wcs = cm.meta.wcs if hasattr(cm.meta, 'wcs') else None
@@ -107,8 +122,8 @@ class CubeSkyMatchStep(Step):
         skymatch_cubes, nsubspace = match(skycubes, subtract=self.subtract)
 
         if nsubspace > 1:
-                self.log.warning("Not all cubes have been sky matched as "
-                                 "some of them do not overlap.")
+            self.log.warning("Not all cubes have been sky matched as "
+                             "some of them do not overlap.")
 
         # save background info in 'meta' and subtract sky from 2D images
         # if requested:
@@ -134,16 +149,48 @@ class CubeSkyMatchStep(Step):
 
         return cube_models, models2d
 
+    def _check_background(self, models):
+        # see if 'cube_skymatch' step was previously run and raise
+        # an exception as 'cube_skymatch' cannot be run twice on the
+        # same data:
+        for m in models:
+            if m.meta.background.subtracted is None:
+                if m.meta.background.level is not None:
+                    # report inconsistency:
+                    raise ValueError("Background level was set but the "
+                                     "'subtracted' property is undefined "
+                                     "(None).")
+
+            elif m.meta.background.subtracted:
+                raise ValueError("'cube_skymatch' step cannot be run on "
+                                 "data whose background has been previously "
+                                 "subtracted.")
+
+    def _reset_background(self, models):
+        for m in models:
+            del m.meta.background
+
     def _set_cube_bkg_meta(self, model, sky_cube):
-        _extend_cube_schema(model)
+        np = len(meta.background.polynomial_info)
+        if np > 1 or (np == 1 and meta.background.polynomial_info[0].channel):
+            raise ValueError("Cube's 'polynomial_info' must be empty or "
+                             "containt at most one element with a 'channel' "
+                             "property set to None.")
 
-        cs_type = "image" if sky_cube.wcs is None else "world"
-        coeffs = sky_cube.bkg_coeff.ravel().tolist()
+        pinfo = {
+            'degree': list(sky_cube.bkg_degree),
+            'refpoint': list(sky_cube.bkg_center),
+            'cs_type': "image" if sky_cube.wcs is None else "world",
+            'coefficients': sky_cube.bkg_coeff.ravel().tolist(),
+            'wcs': sky_cube.wcs
+        }
 
-        model.meta.background.degree = list(sky_cube.bkg_degree)
-        model.meta.background.refpoint = list(sky_cube.bkg_center)
-        model.meta.background.cs_type = cs_type
-        model.meta.background.coefficients = coeffs
+        model.meta.background.subtract = self.subtract
+        model.meta.background.level = None
+        if np == 0:
+            meta.background.polynomial_info.append(pinfo)
+        else:
+            meta.background.polynomial_info[0] = pinfo
 
     def _set_model2d_bkg_meta(self, model3d, model2d, channel):
         _extend_2d_schema(model2d)
@@ -153,7 +200,7 @@ class CubeSkyMatchStep(Step):
         # find the index of this channel:
         index = _find_channel_bkg_index(model2d, channel)
 
-        cubebkg = model3d.meta.background
+        cubebkg = model3d.meta.background.polynomial_info[0]
         bkgmeta = {
             "degree": list(cubebkg.degree),
             "refpoint": list(cubebkg.refpoint),
@@ -163,10 +210,12 @@ class CubeSkyMatchStep(Step):
             "channel": channel
         }
 
+        model2d.meta.background.subtract = self.subtract2d
+        model2d.meta.background.level = None
         if index is None:
-            model2d.meta.background.append(bkgmeta)
+            model2d.meta.background.polynomial_info.append(bkgmeta)
         else:
-            model2d.meta.background[index] = bkgmeta
+            model2d.meta.background.polynomial_info[index] = bkgmeta
 
     def _apply_sky_2d(self, model2d, channel):
         """ Apply/subtract sky from 2D image data. """
@@ -178,7 +227,7 @@ class CubeSkyMatchStep(Step):
                              .format(channel, model2d.meta.filename))
 
         # get may parameters of the background polynomial:
-        bkgmeta = model2d.meta.background[index]
+        bkgmeta = model2d.meta.background.polynomial_info[index]
         degree = tuple(bkgmeta.degree)
         degree_p1 = tuple((i + 1 for i in degree))
         c = np.reshape(list(bkgmeta.coefficients), degree_p1)
@@ -265,145 +314,10 @@ def _find_channel_bkg_index(model2d, channel):
     """
     channel = str(channel)
     index = None
-    for k, m in enumerate(model2d.meta.background):
+    for k, m in enumerate(model2d.meta.background.polynomial_info):
         if m.channel == channel:
             index = k
     return index
-
-
-def _extend_cube_schema(model):
-    bkg_schema = {
-        "type": "object",
-        "properties": {
-            "meta": {
-                "type": "object",
-                "properties": {
-                    "background": {
-                        "type": "object",
-                        "properties": {
-                            "channel": {
-                                "title": "Channel for which background is "
-                                         "applicable",
-                                "type": "string"
-                            },
-
-                            "degree": {
-                                "title": "Max degree in each coordinate",
-                                "type": "array",
-                                "items": [
-                                    {
-                                      "type": "number"
-                                    }
-                                ]
-                            },
-
-                            "refpoint": {
-                                "title": "Reference coordinates",
-                                "type": "array",
-                                "items": [
-                                    {
-                                      "type": "number"
-                                    }
-                                ]
-                            },
-
-                            "cs_type": {
-                                "title": "Type of coordinates.",
-                                "type": "string",
-                                "enum": ["world", "image"]
-                            },
-
-                            "wcs": {"$ref": "http://stsci.edu/schemas/asdf"
-                                    "/wcs/wcs-1.0.0"},
-
-                            "coefficients": {
-                                "title": "Polynomial Coefficients",
-                                "type": "array",
-                                "items": [
-                                    {
-                                      "type": "number"
-                                    }
-                                ]
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    model.extend_schema(bkg_schema)
-
-
-def _extend_2d_schema(model):
-    bkg_schema = {
-        "type": "object",
-        "properties": {
-            "meta": {
-                "type": "object",
-                "properties": {
-                    "background": {
-                        "title": "List of background objects for each channel",
-                        "type": "array",
-                        "items": [
-                            {
-                              "type": "object",
-                              "properties": {
-
-                                  "degree": {
-                                      "title": "Max degree in each "
-                                               "coordinate",
-                                      "type": "array",
-                                      "items": [
-                                          {
-                                            "type": "number"
-                                          }
-                                      ]
-                                  },
-
-                                  "refpoint": {
-                                      "title": "Reference coordinates",
-                                      "type": "array",
-                                      "items": [
-                                          {
-                                            "type": "number"
-                                          }
-                                      ]
-                                  },
-
-                                  "cs_type": {
-                                      "title": "Type of coordinates.",
-                                      "type": "string",
-                                      "enum": ["world", "image"]
-                                  },
-
-                                  "wcs": {"$ref": "http://stsci.edu/"
-                                          "schemas/asdf/wcs/wcs-1.0.0"},
-
-                                  "coefficients": {
-                                      "title": "Polynomial Coefficients",
-                                      "type": "array",
-                                      "items": [
-                                          {
-                                            "type": "number"
-                                          }
-                                      ]
-                                  },
-
-                                  "channel": {
-                                      "title": "Channel ID",
-                                      "type": "string"
-                                  }
-                              }
-                            }
-                        ]
-                    }
-                }
-            }
-        }
-    }
-
-    model.extend_schema(bkg_schema)
 
 
 if __name__ == '__main__':

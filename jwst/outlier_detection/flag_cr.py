@@ -1,19 +1,21 @@
-from __future__ import absolute_import, unicode_literals, division, print_function
-import importlib
+from __future__ import (absolute_import, unicode_literals, division,
+    print_function)
 
 import numpy as np
 from scipy import ndimage
 from stsci.tools import bitmask
 
 from .. import datamodels
-from .. import assign_wcs
-# from ..stpipe import Step
 
-from . import quickDeriv
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 
 CRBIT = np.uint32(datamodels.dqflags.pixel.get('JUMP_DET', 4))
 
-def do_detection(input_models, blot_models, ref_filename, **pars):
+
+def do_detection(input_models, blot_models, reffiles, **pars):
     """
     Flags DQ array for cosmic rays in input images.
 
@@ -30,7 +32,7 @@ def do_detection(input_models, blot_models, ref_filename, **pars):
         data model container holding ImageModels of the median output frame
         blotted back to the wcs and frame of the ImageModels in input_models
 
-    ref_filename : dict
+    reffiles : dict
         Contains JWST ModelContainers for 'gain' and 'readnoise' reference files
 
     Returns
@@ -39,21 +41,18 @@ def do_detection(input_models, blot_models, ref_filename, **pars):
         The dq array in each input model is modified in place
     """
 
-    #gain_models = build_reffile_container(input_models, 'gain')
-    #rn_models = build_reffile_container(input_models, 'readnoise')
-
-    gain_models = ref_filename['gain']
-    rn_models = ref_filename['readnoise']
+    gain_models = reffiles['gain']
+    rn_models = reffiles['readnoise']
 
     for image, blot, gain, rn in zip(input_models, blot_models, gain_models,
         rn_models):
         flag_cr(image, blot, gain, rn, **pars)
 
 
-def buildMask(dqarr, bitvalue):
+def build_mask(dqarr, bitvalue):
     """ Builds a bit-mask from an input DQ array and a bitvalue flag"""
 
-    bitvalue = bitmask.interpret_bits_value(bitvalue)
+    bitvalue = bitmask.interpret_bit_flags(bitvalue)
     if bitvalue is None:
         return (np.ones(dqarr.shape, dtype=np.uint32))
     return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint32)
@@ -87,33 +86,34 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
 
     grow     = 1               # Radius to mask [default=1 for 3x3]
     ctegrow  = 0               # Length of CTE correction to be applied
-    snr      = "4.0 3.0"       # Signal-to-noise ratio
-    scale    = "0.5 0.4"       # scaling factor applied to the derivative
+    snr      = "5.0 4.0"       # Signal-to-noise ratio
+    scale    = "1.2 0.7"       # scaling factor applied to the derivative
     backg    = 0               # Background value
     """
 
     grow = pars.get('grow', 1)
     ctegrow = pars.get('ctegrow', 0)
-    snr = pars.get('snr', '4.0 3.0').split()
-    scale = pars.get('scale', '0.5 0.4').split()
+    snr = pars.get('snr', '5.0 4.0').split()
+    scale = pars.get('scale', '1.2 0.7').split()
     backg = pars.get('backg', 0)
-    # Get necessary parameters from the meta tree
-    try:
-        subtracted_background = sci_image.meta.skybg
-    except AttributeError:
+
+    if sci_image.meta.background.subtracted:
+        subtracted_background = sci_image.meta.background.level
+        log.debug("Subtracted background: {}".format(subtracted_background))
+    else:
         subtracted_background = backg
-    try:
-        exptime = float(sci_image.meta.exposure.exposure_time)
-    except AttributeError:
-        exptime = 100.
+        log.debug("No subtracted background. "
+            "Using outlierpars.backg: {}".format(backg))
 
-    input_image = sci_image.data * exptime
+    exptime = sci_image.meta.exposure.exposure_time
+
+    sci_data = sci_image.data * exptime
     blot_data = blot_image.data * exptime
-    blot_deriv = quickDeriv.qderiv(blot_data)
+    blot_deriv = abs_deriv(blot_data)
 
-    # # This mask can take into account any crbits values
-    # # specified by the user to be ignored.
-    # dq_mask = buildMask(sci_image.dq, CRBIT)
+    # This mask can take into account any crbits values
+    # specified by the user to be ignored.
+    # dq_mask = build_mask(sci_image.dq, CRBIT)
 
     #parse out the SNR and scaling information
     snr1 = float(snr[0])
@@ -122,52 +122,34 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     mult2 = float(scale[1])
 
     gain = gain_image.data
-    read_noise = readnoise_image.data
+    rn = readnoise_image.data
+    # TODO: for JWST, the actual readnoise at a given pixel depends on the
+    # number of reads going into that pixel.  So we need to account for that
+    # using the meta.exposure.nints, ngroups and nframes keywords.
 
     # Define output cosmic ray mask to populate
     cr_mask = np.zeros(sci_image.shape, dtype=np.uint8)
 
-    # Set scaling factor to 1 since scaling has already been accounted for
-    # in blotted image
-    exp_mult = 1.
-
     ##################   COMPUTATION PART I    ###################
-    # Create a temporary array mask
-    __t1 = np.absolute(input_image - blot_data)
-    __ta = np.sqrt(gain * np.absolute(blot_data * exp_mult +
-        subtracted_background * exp_mult) + read_noise ** 2)
-    __tb = (mult1 * blot_deriv + snr1 * __ta / gain)
-    del __ta
-    __t2 = __tb / exp_mult
-    del __tb
-    __tmp1 = np.logical_not(np.greater(__t1, __t2))
-    del __t1
-    del __t2
+    # Create a CR mask
+    t1 = np.abs(sci_data - blot_data)
+    # gain[np.isnan(gain)] = 1 # get rid of NaNs
+    # gain[gain < 0] = 0 # get rid of negatives
+    ta = np.sqrt(gain * np.abs(blot_data + subtracted_background) + rn ** 2)
+    # gain[gain == 0.] = 1 # Get rid of divide by zero
+    t2 = mult1 * blot_deriv + snr1 * ta / gain
+    tmp1 = np.logical_not(np.greater(t1, t2))
 
-    # Create a convolution kernel that is 3 x 3 of 1's
+    # Convolve mask with 3x3 kernel
     kernel = np.ones((3, 3), dtype=np.uint8)
-    # Create an output tmp file the same size as the input temp mask array
-    __tmp2 = np.zeros(__tmp1.shape, dtype=np.int16)
-    # Convolve the mask with the kernel
-    ndimage.convolve(__tmp1, kernel, output=__tmp2, mode='nearest', cval=0)
-    del kernel
-    del __tmp1
+    tmp2 = np.zeros(tmp1.shape, dtype=np.int16)
+    ndimage.convolve(tmp1, kernel, output=tmp2, mode='nearest', cval=0)
 
     ##################   COMPUTATION PART II    ###################
-    # Create the CR Mask
-    __xt1 = np.absolute(input_image - blot_data)
-    __xta = np.sqrt(gain * np.absolute(blot_data * exp_mult +
-        subtracted_background * exp_mult) + read_noise * read_noise)
-    __xtb = (mult2 * blot_deriv + snr2 * __xta / gain)
-    del __xta
-    __xt2 = __xtb / exp_mult
-    del __xtb
-    # Must use a bitwise 'and' to create the mask with numarray objects.
-    np.logical_not(np.greater(__xt1, __xt2) & np.less(__tmp2, 9), cr_mask)
+    # Create a second CR Mask
+    xt2 = mult2 * blot_deriv + snr2 * ta / gain
 
-    del __xt1
-    del __xt2
-    del __tmp2
+    np.logical_not(np.greater(t1, xt2) & np.less(tmp2, 9), cr_mask)
 
     ##################   COMPUTATION PART III    ###################
     # Flag additional cte 'radial' and 'tail' pixels surrounding CR
@@ -197,11 +179,11 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     # We could put useful info in here for CTE masking if needed.  Code
     # remains below.  For now, we set to zero, which turns off CTE masking.
     ctedir = 0
-    if (ctedir == 1):  # HRC: amp C or D ; WFC: chip = sci,1 ; WFPC2
-        cr_ctegrow_kernel[0:ctegrow, ctegrow] = 1    #  'positive' direction
-    if (ctedir == -1): # HRC: amp A or B ; WFC: chip = sci,2
-        cr_ctegrow_kernel[ctegrow + 1:2 * ctegrow + 1, ctegrow] = 1 #'negative' direction
-    if (ctedir == 0):  # NICMOS: no cte tail correction
+    if (ctedir == 1):
+        cr_ctegrow_kernel[0:ctegrow, ctegrow] = 1
+    if (ctedir == -1):
+        cr_ctegrow_kernel[ctegrow + 1:2 * ctegrow + 1, ctegrow] = 1
+    if (ctedir == 0):
         pass
 
     # finally do the tail convolution
@@ -216,28 +198,36 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     np.logical_and(where_cr_ctegrow_kernel_conv, where_cr_grow_kernel_conv, cr_mask)
     cr_mask = cr_mask.astype(bool)
 
-    # Update the DQ array in the input image
+    count_sci = np.count_nonzero(sci_image.dq)
+    count_cr = np.count_nonzero(cr_mask)
+    log.debug("Pixels in input DQ: {}".format(count_sci))
+    log.debug("Pixels in cr_mask:  {}".format(count_cr))
+
+    # Update the DQ array in the input image in place
     np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT, sci_image.dq)
 
-    del cr_mask_orig_bool
-    del cr_grow_kernel
-    del cr_grow_kernel_conv
-    del cr_ctegrow_kernel
-    del cr_ctegrow_kernel_conv
-    del where_cr_grow_kernel_conv
-    del where_cr_ctegrow_kernel_conv
 
-    # write out the updated file to disk to preserve the changes
-    sci_image.save(sci_image.meta.filename)
+def abs_deriv(array):
+    """Take the absolute derivate of a numpy array"""
 
-    # # write out the dq array as a separate file
-    # outfilename = sci_image.meta.filename.split('.')[0] + '_dq.fits'
-    # out_dq = datamodels.ImageModel()
-    # out_dq.data = result_dq
-    # out_dq.to_fits(outfilename, overwrite=True)
+    tmp = np.zeros(array.shape, dtype=np.float64)
+    out = np.zeros(array.shape, dtype=np.float64)
 
-    # ######## Save the cosmic ray mask file to disk
-    # _cr_file = np.zeros(input_image.shape, np.uint32)
-    # _cr_file = np.where(cr_mask, 1, 0).astype(np.uint32)
+    tmp[1:,:] = array[:-1,:]
+    tmp, out = _absolute_subtract(array, tmp, out)
+    tmp[:-1,:] = array[1:,:]
+    tmp, out = _absolute_subtract(array, tmp, out)
 
-    # _pf = util.createFile(_cr_file, outfile=outfile, header = None)
+    tmp[:,1:] = array[:,:-1]
+    tmp, out = _absolute_subtract(array, tmp, out)
+    tmp[:,:-1] = array[:,1:]
+    tmp, out = _absolute_subtract(array, tmp, out)
+
+    return out
+
+
+def _absolute_subtract(array, tmp, out):
+    tmp = np.abs(array - tmp)
+    out = np.maximum(tmp, out)
+    tmp = tmp * 0.
+    return tmp, out

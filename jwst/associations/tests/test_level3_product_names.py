@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 
+import os
+import pytest
 import re
 
 from .helpers import (
@@ -11,6 +13,12 @@ from .helpers import (
 )
 
 from .. import (AssociationPool, generate)
+
+# Temporarily skip if running under Travis
+# pytestmark = pytest.mark.skipif(
+#     "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
+#     reason='Temporarily disable due to performance issues'
+# )
 
 LEVEL3_PRODUCT_NAME_REGEX = (
     'jw'
@@ -54,6 +62,7 @@ global_constraints = func_fixture(
                 'inputs': ['ASN_CANDIDATE'],
                 'force_unique': True,
                 'is_acid': True,
+                'evaluate': True,
             }
         },
     ]
@@ -82,6 +91,7 @@ def test_level3_productname_components_acid():
         'inputs': ['ASN_CANDIDATE'],
         'force_unique': True,
         'is_acid': True,
+        'evaluate': True,
     }
     rules = registry_level3_only(global_constraints=global_constraints)
     pool = combine_pools(t_path('data/pool_002_image_miri.csv'))

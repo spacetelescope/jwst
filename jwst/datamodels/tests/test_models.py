@@ -389,7 +389,7 @@ def container():
 
 def test_modelcontainer_iteration(container):
     for model in container:
-        assert model.meta.filename == 'test.fits'
+        assert model.meta.telescope == 'JWST'
 
 
 def test_modelcontainer_indexing(container):

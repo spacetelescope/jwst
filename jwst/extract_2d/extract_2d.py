@@ -16,7 +16,7 @@ from ..assign_wcs import nirspec
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 
 def extract2d(input_model, which_subarray=None):
@@ -42,21 +42,21 @@ def extract2d(input_model, which_subarray=None):
 
         for slit in open_slits:
             slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
-            xlo, xhi = slit_wcs.bounding_box[0]
-            ylo, yhi = slit_wcs.bounding_box[1]
+            xlo, xhi = _toindex(slit_wcs.bounding_box[0])
+            ylo, yhi = _toindex(slit_wcs.bounding_box[1])
 
             # Add the slit offset to each slit WCS object
             tr = slit_wcs.get_transform('detector', 'sca')
-            tr = tr | Shift(xlo) & Shift(ylo)
+            tr = Shift(xlo) & Shift(ylo) | tr
             slit_wcs.set_transform('detector', 'sca', tr.rename('dms2sca'))
 
             log.info('Name of subarray extracted: %s', slit.name)
             log.info('Subarray x-extents are: %s %s', xlo, xhi)
             log.info('Subarray y-extents are: %s %s', ylo, yhi)
 
-            ext_data = input_model.data[ylo: yhi, xlo: xhi].copy()
-            ext_err = input_model.err[ylo: yhi, xlo: xhi].copy()
-            ext_dq = input_model.dq[ylo: yhi, xlo: xhi].copy()
+            ext_data = input_model.data[ylo: yhi + 1, xlo: xhi + 1].copy()
+            ext_err = input_model.err[ylo: yhi + 1, xlo: xhi + 1].copy()
+            ext_dq = input_model.dq[ylo: yhi + 1, xlo: xhi + 1].copy()
             new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
             shape = ext_data.shape
             bounding_box= ((0, shape[1] - 1), (0, shape[0] - 1))
@@ -66,12 +66,12 @@ def extract2d(input_model, which_subarray=None):
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
             nslit = len(output_model.slits) - 1
-            xlo_ind, xhi_ind, ylo_ind, yhi_ind = _toindex((xlo, xhi, ylo, yhi)).astype(np.int)
+            xlo_ind, xhi_ind, ylo_ind, yhi_ind = _toindex((xlo, xhi, ylo, yhi)).astype(np.int16)
             output_model.slits[nslit].name = str(slit.name)
             output_model.slits[nslit].xstart = xlo_ind + 1
-            output_model.slits[nslit].xsize = xhi_ind - xloind
+            output_model.slits[nslit].xsize = (xhi_ind - xlo_ind) + 1
             output_model.slits[nslit].ystart = ylo_ind + 1
-            output_model.slits[nslit].ysize = yhi_ind - ylo_ind
+            output_model.slits[nslit].ysize = (yhi_ind - ylo_ind) + 1
             if exp_type.lower() == 'nrs_msaspec':
                 output_model.slits[nslit].source_id = int(slit.source_id)
                 output_model.slits[nslit].source_name = slit.source_name
