@@ -33,6 +33,8 @@ class Step(object):
     output_dir = string(default=None) # Directory path for output files
     output_file = output_file(default=None) # File to save output to.
     skip = boolean(default=False) # Skip this step
+    save_results = boolean(default=False) # Force save results
+    suffix = string(default=None) # Suffix for output file name
     """
 
     reference_file_types = []
@@ -295,7 +297,6 @@ class Step(object):
             self._post_hooks = []
 
         self._reference_files_used = []
-
         self._input_filename = None
 
     def _check_args(self, args, discouraged_types, msg):
@@ -383,7 +384,7 @@ class Step(object):
                     result.meta.calibration_software_version = __version__
 
             # Save the output file if one was specified
-            if self.output_file is not None:
+            if self.save_results or self.output_file is not None:
                 idx_generator = lambda idx: None
                 if len(results) > 1:
                     idx_generator = lambda idx: str(idx)
@@ -394,7 +395,7 @@ class Step(object):
                             'make_output_path', parent_first=True
                         )
                         output_path = make_output_path(
-                            result, self.output_file, idx_generator(i)
+                            self, result, self.output_file, idx_generator(i)
                         )
                         self.log.info('Saving file {0}'.format(output_path))
                         result.save(output_path, overwrite=True)
@@ -477,9 +478,14 @@ class Step(object):
         """
         if parent_first:
             try:
-                value = self.parent.search_attr(attribute, parent_first=parent_first)
+                value = self.parent.search_attr(
+                    attribute, parent_first=parent_first
+                )
             except AttributeError:
-                return getattr(self, attribute, None)
+                value = None
+            if value is None:
+                value = getattr(self, attribute, None)
+            return value
         else:
             value = getattr(self, attribute, None)
             if value is None:
@@ -698,11 +704,15 @@ class Step(object):
             new_filename = join(output_dir, new_filename)
         model.save(new_filename, *args, **kwargs)
 
-    def make_output_path(self, data, basepath=None, suffix=None):
+    @staticmethod
+    def make_output_path(step, data, basepath=None, suffix=None):
         """Make up a path based on data and user specification
 
         Parameters
         ----------
+        step: Step
+            The step which produced the data
+
         data: obj
             Unused by this routine
 
@@ -720,7 +730,7 @@ class Step(object):
         """
         from ..datamodels import DataModel
 
-        has_basepath = basepath is not None and len(basepath)
+        has_basepath = basepath is not None and len(basepath) > 0
         output_path = basepath
 
         if isinstance(data, DataModel):
@@ -730,13 +740,13 @@ class Step(object):
             name, ext = splitext(filename)
             output_path = [name]
             if not has_basepath:
-                output_path.append('_' + self.name)
+                output_path.append('_' + step.name)
             if suffix is not None:
                 output_path.append('_' + suffix)
             output_path.append(ext)
             output_path = ''.join(output_path)
 
-        output_dir = self.search_attr('output_dir')
+        output_dir = step.search_attr('output_dir')
         if output_dir is not None:
             output_path = join(output_dir, output_path)
         return output_path

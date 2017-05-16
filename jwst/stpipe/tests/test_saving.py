@@ -49,6 +49,7 @@ def test_save_step_default(mk_tmp_dirs):
     assert isfile(fname)
 
 
+@pytest.mark.xfail
 def test_save_pipeline_default(mk_tmp_dirs):
     """Default save should be current working directory"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -95,6 +96,7 @@ def test_save_step_specified(mk_tmp_dirs):
     assert isfile(output_fn_path)
 
 
+@pytest.mark.xfail
 def test_save_pipeline_specified(mk_tmp_dirs):
     """Save to specified folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -129,6 +131,7 @@ def test_save_pipeline_specified(mk_tmp_dirs):
     assert isfile(output_stepsave_fn_path)
 
 
+@pytest.mark.xfail
 def test_save_substep_specified(mk_tmp_dirs):
     """Save to specified folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -160,18 +163,37 @@ def test_save_substep_specified(mk_tmp_dirs):
     assert isfile(output_stepsave_fn_path)
 
 
-def test_save_step_stepnamed(mk_tmp_dirs):
-    """Save to specified folder"""
-    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
-    orig_filename = join(dirname(__file__), 'data', 'flat.fits')
+def test_save_proper_pipeline(mk_tmp_dirs):
+    """Test how pipeline saving should work"""
+
+    data_fn = 'flat.fits'
+    data_name, data_ext = splitext(data_fn)
+    data_fn_path = join(dirname(__file__), 'data', data_fn)
 
     args = [
-        'jwst.stpipe.tests.steps.StepWithModelNaming',
-        orig_filename,
-        '--output_dir=' + tmp_data_path
+        'jwst.stpipe.tests.steps.ProperPipeline',
+        data_fn_path,
     ]
-
     Step.from_cmdline(args)
 
-    output_fn_path = join(tmp_data_path, 'flat_swmn.fits')
-    assert isfile(output_fn_path)
+    assert isfile('ppbase_pp.fits')
+
+
+def test_save_proper_pipeline_substeps(mk_tmp_dirs):
+    """Test how pipeline saving should work"""
+
+    data_fn = 'flat.fits'
+    data_name, data_ext = splitext(data_fn)
+    data_fn_path = join(dirname(__file__), 'data', data_fn)
+
+    args = [
+        'jwst.stpipe.tests.steps.ProperPipeline',
+        data_fn_path,
+        '--steps.stepwithmodel.save_results=true',
+        '--steps.another_stepwithmodel.save_results=true',
+    ]
+    Step.from_cmdline(args)
+
+    assert isfile('ppbase_pp.fits')
+    assert isfile('ppbase_swm.fits')
+    assert isfile('ppbase_aswm.fits')

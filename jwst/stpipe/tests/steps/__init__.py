@@ -58,20 +58,6 @@ class StepWithModel(Step):
         return model
 
 
-class StepWithModelNaming(Step):
-    """A step with a model"""
-
-    spec = """
-    """
-
-    def process(self, *args):
-        from ....datamodels import ImageModel
-
-        model = ImageModel(args[0])
-
-        return model
-
-
 class SaveStep(Step):
     """
     Step with explicit save.
@@ -105,5 +91,31 @@ class SavePipeline(Pipeline):
 
         r = self.stepwithmodel(model)
         r = self.savestep(r)
+
+        return r
+
+
+class ProperPipeline(Pipeline):
+    """Pipeline with proper output setupt"""
+
+    spec = """
+    """
+
+    step_defs = {
+        'stepwithmodel': StepWithModel,
+        'another_stepwithmodel': StepWithModel,
+    }
+
+    def process(self, *args):
+
+        self.output_basename = 'ppbase'
+        self.suffix = 'pp'
+
+        model = ImageModel(args[0])
+
+        self.stepwithmodel.suffix = 'swm'
+        r = self.stepwithmodel(model)
+        self.another_stepwithmodel.suffix = 'aswm'
+        r = self.another_stepwithmodel(r)
 
         return r

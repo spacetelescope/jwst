@@ -276,8 +276,7 @@ def just_the_step_from_cmdline(args, cls=None):
 
     # Always have an output_file set on the outermost step
     if step.output_file is None:
-        if len(positional):
-            step.output_file = ''
+        step.save_results = len(positional) > 0
 
     log.log.info("Hostname: {0}".format(os.uname()[1]))
     log.log.info("OS: {0}".format(os.uname()[0]))
