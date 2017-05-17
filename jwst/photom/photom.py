@@ -406,15 +406,15 @@ class DataSet(object):
             ftab.dq[where_zero] = np.bitwise_or(ftab.dq[where_zero],
                                                 dqflags.pixel['NON_SCIENCE'])
 
-            # Divide the science data and err by the conversion factors
-            self.input.data /= ftab.data * ftab.pixsiz
-            self.input.err /= ftab.data * ftab.pixsiz
+            # Store the 2D sensitivity factors in the science product
+            self.input.relsens2d = ftab.data * ftab.pixsiz
+
+            # Divide the science data and err by the 2D sensitivity factors
+            self.input.data /= self.input.relsens2d
+            self.input.err /= self.input.relsens2d
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
-
-            # Store the 2D sensitivity factors
-            self.input.relsens2d = ftab.data * ftab.pixsiz
 
             # Retrieve the scalar conversion factor from the reference data
             conv_factor = ftab.meta.photometry.conversion_megajanskys
@@ -518,6 +518,7 @@ class DataSet(object):
         import math
         import numpy as np
         from .. assign_wcs import nirspec       # for NIRSpec IFU data
+        import gwcs
 
         MICRONS_100 = 1.e-4                     # 100 microns, in meters
 
@@ -536,41 +537,10 @@ class DataSet(object):
         # Loop over the slices
         for (k, ifu_wcs) in enumerate(list_of_wcs):
 
-            # Get the corners for the slice
-            xstart = ifu_wcs.bounding_box[0][0]
-            xstop = ifu_wcs.bounding_box[0][1]
-            ystart = ifu_wcs.bounding_box[1][0]
-            ystop = ifu_wcs.bounding_box[1][1]
-
-            log.debug("Slice %d: %g %g %g %g" % (k, xstart, xstop, ystart, ystop))
-
-            # Check for corner values off the edge
-            if xstart < -0.5:
-                log.debug("xstart from WCS bounding_box was %g" % xstart)
-                xstart = 0.
-            if ystart < -0.5:
-                log.debug("ystart from WCS bounding_box was %g" % ystart)
-                ystart = 0.
-            if xstop > 2047.5:
-                log.debug("xstop from WCS bounding_box was %g" % xstop)
-                xstop = 2047.
-            if ystop > 2047.5:
-                log.debug("ystop from WCS bounding_box was %g" % ystop)
-                ystop = 2047.
-
-            # Convert these to integers, and add one to the upper limits,
-            # because we want to use these as slice limits.
-            xstart = int(math.ceil(xstart))
-            xstop = int(math.floor(xstop)) + 1
-            ystart = int(math.ceil(ystart))
-            ystop = int(math.floor(ystop)) + 1
-
             # Construct array indexes for pixels in this slice
-            dx = xstop - xstart
-            dy = ystop - ystart
-            ind = np.indices((dy, dx))
-            x = ind[1] + xstart
-            y = ind[0] + ystart
+            x, y = gwcs.wcstools.grid_from_bounding_box(ifu_wcs.bounding_box, step=(1,1), center=True)
+
+            log.debug("Slice %d: %g %g %g %g" % (k, x[0][0], x[-1][-1], y[0][0], y[-1][-1]))
 
             # Get the world coords for all pixels in this slice
             coords = ifu_wcs(x, y)
@@ -588,11 +558,11 @@ class DataSet(object):
             # Mark pixels with no wavelength as non-science
             dq = np.zeros_like(wl)
             dq[nan_flag] = dqflags.pixel['NON_SCIENCE']
-            dqmap[ystart:ystop, xstart:xstop] = dq
+            dqmap[y.astype(int), x.astype(int)] = dq
 
             # Insert the wavelength values for this slice into the
             # whole image array
-            wave2d[ystart:ystop, xstart:xstop] = wl
+            wave2d[y.astype(int), x.astype(int)] = wl
 
             # Insert the pixel area value for this slice into the
             # whole image array
@@ -600,7 +570,7 @@ class DataSet(object):
             ar[:,:] = \
                 area_data[np.where(area_data['slice_id']==k)]['pixarea'][0]
             ar[nan_flag] = 1.
-            area2d[ystart:ystop, xstart:xstop] = ar
+            area2d[y.astype(int), x.astype(int)] = ar
 
         return wave2d, area2d, dqmap
 
