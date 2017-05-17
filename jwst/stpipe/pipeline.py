@@ -33,13 +33,16 @@ Pipeline
 
 from __future__ import absolute_import, division, print_function
 
-from os.path import dirname, join, split, splitext
 import gc
+from os.path import dirname, join, split, splitext
+import re
 
 from .configobj.configobj import Section
 
 from . import config_parser
 from . import Step
+
+REMOVE_SUFFIX = '(.+?)(_(rate|cal)(ints)?)?$'
 
 
 class Pipeline(Step):
@@ -52,6 +55,7 @@ class Pipeline(Step):
     output_basename = string(default=None) # Output base name
     output_ext = string(default=".fits") # Output extension
     suffix = string(default=None) # Suffix for output file name
+    output_use_model = boolean(default=False)
     """
     # A set of steps used in the Pipeline.  Should be overridden by
     # the subclass.
@@ -151,7 +155,7 @@ class Pipeline(Step):
             getattr(self, key).set_input_filename(path)
 
     @staticmethod
-    def make_output_path(step, data, basepath=None, suffix=None, ext=None):
+    def make_output_path(step, data, basepath=None, suffix=None, ext=None, ignore_use_model=False):
         """Make up a path based on data and user specification
 
         Parameters
@@ -172,6 +176,9 @@ class Pipeline(Step):
         ext: str or None
             The file format extension
 
+        ignore_use_model: bool
+            Ignore configuration parameter `output_use_model`
+
         Returns
         -------
         output_path: str
@@ -184,23 +191,33 @@ class Pipeline(Step):
 
         if isinstance(data, DataModel):
             if not has_basepath:
-                output_path = step.search_attr('output_basename')
-                if output_path is None:
+                if not ignore_use_model and \
+                   getattr(step, 'output_use_model', False):
                     output_path = data.meta.filename
-            path, filename = split(output_path)
-            name, filename_ext = splitext(filename)
-            output_path = [name]
-            if suffix is None:
-                suffix = step.search_attr('suffix')
-            if suffix is not None:
-                output_path.append('_' + suffix)
-            if ext is None:
-                ext = step.search_attr('output_ext')
-                if ext is None:
-                    ext = filename_ext
-            if ext is not None:
-                output_path.append(ext)
-            output_path = ''.join(output_path)
+                else:
+                    output_path = step.search_attr('output_basename')
+                    if output_path is None:
+                        output_path = data.meta.filename
+                    path, filename = split(output_path)
+                    name, filename_ext = splitext(filename)
+
+                    # Remove any known, previous suffixes.
+                    match = re.match(REMOVE_SUFFIX, name)
+                    name = match.group(1)
+
+                    # Rebuild the path.
+                    output_path = [name]
+                    if suffix is None:
+                        suffix = step.search_attr('suffix')
+                    if suffix is not None:
+                        output_path.append('_' + suffix)
+                    if ext is None:
+                        ext = step.search_attr('output_ext')
+                        if ext is None:
+                            ext = filename_ext
+                    if ext is not None:
+                        output_path.append(ext)
+                    output_path = ''.join(output_path)
 
         output_dir = step.search_attr('output_dir')
         if output_dir is not None:
