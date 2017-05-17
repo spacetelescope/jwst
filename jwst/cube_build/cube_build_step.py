@@ -271,12 +271,7 @@ class CubeBuildStep (Step):
         CubeFootPrint = cube_build.DetermineCubeSize(self, Cube, 
                                                          MasterTable, 
                                                          InstrumentInfo)
-#TODO# do we need the 3 lines of code below ?
-#        self.scale1 = Cube.Cdelt1
-#        self.scale2 = Cube.Cdelt2
-#        self.scalew = Cube.Cdelt3
-#        print('new scale2',self.scale2)
-#####
+
         # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
         # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
         if(self.coord_system == 'ra-dec'): 
@@ -302,7 +297,8 @@ class CubeBuildStep (Step):
                 spaxel.append(cube.SpaxelAB())
 
         t0 = time.time()
-        # now need to loop over every file that covers this channel/subchannel (MIRI) or Grating/filter(NIRSPEC)
+        # now need to loop over every file that covers this channel/subchannel (MIRI) 
+        # or Grating/filter(NIRSPEC)
         #and map the detector pixels to the cube spaxel.
         if(instrument == 'MIRI'):
             parameter1 = Cube.channel
@@ -358,13 +354,13 @@ class CubeBuildStep (Step):
 # Blend the headers
 
         nf = len(Cube.file)
-        print(Cube.file)
+#        print(Cube.file)
 
-        for n in range(nf):
-            print('File: ',Cube.file[n])
+#        for n in range(nf):
+#            print('File: ',Cube.file[n])
 
         
-        print('Saving IFUCube',self.output_file)
+#        print('Saving IFUCube',self.output_file)
         IFUCube.save(IFUCube.meta.filename)
 #_______________________________________________________________________
         IFUCube.close()

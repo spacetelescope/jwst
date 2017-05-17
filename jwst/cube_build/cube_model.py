@@ -122,7 +122,8 @@ def UpdateIFUCube(self, Cube,IFUCube, spaxel):
                           [Cube.naxis3,Cube.naxis2,Cube.naxis1])
     temp_wmap =np.reshape(np.array([s.iflux for s in spaxel]),
                           [Cube.naxis3,Cube.naxis2,Cube.naxis1])
-    
+
+#    print('Flux shape',temp_flux.shape)
     IFUCube.data = temp_flux
     IFUCube.weightmap = temp_wmap
     
