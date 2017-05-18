@@ -138,8 +138,8 @@ class Spec2Pipeline(Pipeline):
                 'Wrong number of science exposures found in {}'.format(
                     exp_product['name']
                 )
-            log.warn('    Using only first one.')
             )
+            log.warn('    Using only first one.')
         science = science[0]
 
         self.log.info('Working on input %s ...', science)

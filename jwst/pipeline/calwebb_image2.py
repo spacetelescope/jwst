@@ -43,19 +43,33 @@ class Image2Pipeline(Pipeline):
         # Retrieve the input(s)
         asn = LoadAsLevel2Asn.load(input)
 
+        # Setup output creation
+        make_output_path = self.search_attr(
+            'make_output_path', parent_first=True
+        )
+
         # Each exposure is a product in the association.
         # Process each exposure.
+        results = []
         for product in asn['products']:
             log.info('Processing product {}'.format(product['name']))
-            self.process_exposure_product(
+            self.output_basename = product['name']
+            result = self.process_exposure_product(
                 product,
                 asn['asn_pool'],
                 asn.filename
             )
+            results.append(result)
+
+            # Setup filename
+            result.meta.filename = make_output_path(
+                self,
+                result,
+                ignore_use_model=True
+            )
 
         log.info('... ending calwebb_image2')
-
-        return input
+        return results
 
     # Process each exposure
     def process_exposure_product(
@@ -84,7 +98,9 @@ class Image2Pipeline(Pipeline):
                 'Wrong number of science files found in {}'.format(
                     exp_product['name']
                 )
+
             )
+            log.warn('    Using only first one.')
         science = science[0]
 
         self.log.info('Working on input %s ...', science)
@@ -102,6 +118,8 @@ class Image2Pipeline(Pipeline):
         input = self.flat_field(input)
         input = self.photom(input)
 
-        # Save the calibrated exposure
-        self.save_model(input, 'cal')
-        log.info('Saved calibrated product to %s' % input.meta.filename)
+        # That's all folks
+        log.info(
+            'Finished processing product {}'.format(exp_product['name'])
+        )
+        return input
