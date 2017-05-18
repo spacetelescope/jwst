@@ -384,9 +384,9 @@ class Step(object):
 
             # Save the output file if one was specified
             if self.save_results or self.output_file is not None:
-                idx_generator = lambda idx: None
+                make_result_id = lambda idx: self.name
                 if len(results) > 1:
-                    idx_generator = lambda idx: str(idx)
+                    make_result_id = lambda idx: self.name + '_' + str(idx)
 
                 for i, result in enumerate(results):
                     if hasattr(result, 'save'):
@@ -394,7 +394,9 @@ class Step(object):
                             'make_output_path', parent_first=True
                         )
                         output_path = make_output_path(
-                            self, result, self.output_file, idx_generator(i)
+                            self, result,
+                            basepath=self.output_file,
+                            result_id=make_result_id(i)
                         )
                         self.log.info('Saving file {0}'.format(output_path))
                         result.save(output_path, overwrite=True)
@@ -704,7 +706,11 @@ class Step(object):
         model.save(new_filename, *args, **kwargs)
 
     @staticmethod
-    def make_output_path(step, data, basepath=None, suffix=None):
+    def make_output_path(
+            step, data,
+            basepath=None, suffix=None,
+            result_id=None
+    ):
         """Make up a path based on data and user specification
 
         Parameters
@@ -722,6 +728,10 @@ class Step(object):
         suffix: str or None
             The suffix to append to the basename.
 
+        result_id: str or None
+            If a suffix cannot be determined, use this as the suffix.
+            If the result is still None, raise ValueError
+
         Returns
         -------
         output_path: str
@@ -738,8 +748,8 @@ class Step(object):
             path, filename = split(output_path)
             name, ext = splitext(filename)
             output_path = [name]
-            if not has_basepath:
-                output_path.append('_' + step.name)
+            if suffix is None:
+                suffix = result_id
             if suffix is not None:
                 output_path.append('_' + suffix)
             output_path.append(ext)

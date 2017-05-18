@@ -44,6 +44,20 @@ def mk_tmp_dirs():
         os.chdir(old_path)
 
 
+def test_no_cfg(mk_tmp_dirs):
+    """What happens when the pipeline is run without a config"""
+    exppath = path.join(DATAPATH, EXPFILE)
+    args = [
+        path.join(path.dirname(__file__), 'calwebb_image2_empty.cfg'),
+        exppath,
+    ]
+    Step.from_cmdline(args)
+
+    expname, expext = path.splitext(EXPFILE)
+    calfile = expname + '_Image2Pipeline' + expext
+    assert path.isfile(calfile)
+
+
 def test_asn(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     exppath = path.join(DATAPATH, EXPFILE)
@@ -66,14 +80,14 @@ def test_asn(mk_tmp_dirs):
     assert path.isfile(CALFILE)
 
 
-def test_datamodel(tmpdir):
+def test_datamodel(mk_tmp_dirs):
     model = dm_open(path.join(DATAPATH, EXPFILE))
     cfg = path.join(path.dirname(__file__), 'calwebb_image2_save.cfg')
     Image2Pipeline.call(model, config_file=cfg)
     assert path.isfile('jw00001001001_01101_00001_MIRIMAGE_uncal_cal.fits')
 
 
-def test_file(tmpdir):
+def test_file(mk_tmp_dirs):
     exppath = path.join(DATAPATH, EXPFILE)
     cfg = path.join(path.dirname(__file__), 'calwebb_image2_save.cfg')
     Image2Pipeline.call(exppath, config_file=cfg)

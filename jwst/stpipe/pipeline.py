@@ -155,7 +155,11 @@ class Pipeline(Step):
             getattr(self, key).set_input_filename(path)
 
     @staticmethod
-    def make_output_path(step, data, basepath=None, suffix=None, ext=None, ignore_use_model=False):
+    def make_output_path(
+            step, data,
+            basepath=None, suffix=None, ext=None,
+            ignore_use_model=False, result_id=None
+    ):
         """Make up a path based on data and user specification
 
         Parameters
@@ -178,6 +182,10 @@ class Pipeline(Step):
 
         ignore_use_model: bool
             Ignore configuration parameter `output_use_model`
+
+        result_id: str or None
+            If a suffix cannot be determined, use this as the suffix.
+            If the result is still None, raise ValueError
 
         Returns
         -------
@@ -209,6 +217,8 @@ class Pipeline(Step):
                     output_path = [name]
                     if suffix is None:
                         suffix = step.search_attr('suffix')
+                    if suffix is None:
+                        suffix = result_id
                     if suffix is not None:
                         output_path.append('_' + suffix)
                     if ext is None:
