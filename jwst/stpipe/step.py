@@ -30,10 +30,10 @@ class Step(object):
     pre_hooks = string_list(default=list())
     post_hooks = string_list(default=list())
 
-    output_dir = string(default=None) # Directory path for output files
+    output_dir = string(default=None)       # Directory path for output files
     output_file = output_file(default=None) # File to save output to.
-    skip = boolean(default=False) # Skip this step
-    save_results = boolean(default=False) # Force save results
+    skip = boolean(default=False)           # Skip this step
+    save_results = boolean(default=False)   # Force save results
     """
 
     reference_file_types = []
@@ -713,7 +713,7 @@ class Step(object):
             The step which produced the data
 
         data: obj
-            Unused by this routine
+            Information name will be based on.
 
         basepath: str or None
             The output file name. If `None` or empty string, create

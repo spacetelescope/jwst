@@ -12,7 +12,7 @@ from ..flatfield import flat_field_step
 from ..photom import photom_step
 
 
-__version__ = "2.3"
+__version__ = "3.0"
 
 # Define logging
 log = logging.getLogger()

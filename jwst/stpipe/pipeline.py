@@ -52,10 +52,10 @@ class Pipeline(Step):
 
     # Configuration
     spec = """
-    output_basename = string(default=None) # Output base name
-    output_ext = string(default=".fits") # Output extension
-    suffix = string(default=None) # Suffix for output file name
-    output_use_model = boolean(default=False)
+    output_basename = string(default=None)    # Output base name
+    output_ext = string(default=".fits")      # Output extension
+    suffix = string(default=None)             # Suffix for output file name
+    output_use_model = boolean(default=False) # force use `meta.filename` as the output name
     """
     # A set of steps used in the Pipeline.  Should be overridden by
     # the subclass.
