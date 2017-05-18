@@ -135,9 +135,10 @@ class Spec2Pipeline(Pipeline):
         science = members_by_type['SCIENCE']
         if len(science) != 1:
             log.warn(
-                'Wrong number of science files found in {}'.format(
+                'Wrong number of science exposures found in {}'.format(
                     exp_product['name']
                 )
+            log.warn('    Using only first one.')
             )
         science = science[0]
 
