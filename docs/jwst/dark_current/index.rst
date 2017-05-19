@@ -1,6 +1,6 @@
-============
-DARK CURRENT
-============
+========================
+Dark Current Subtraction
+========================
 
 .. toctree::
    :maxdepth: 2

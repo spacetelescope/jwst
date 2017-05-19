@@ -1,6 +1,6 @@
-======
-FRINGE
-======
+=================
+Fringe Correction
+=================
 
 .. toctree::
    :maxdepth: 2

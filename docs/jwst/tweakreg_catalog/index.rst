@@ -1,5 +1,5 @@
 ================
-TWEAKREG CATALOG
+Tweakreg Catalog
 ================
 
 .. toctree::

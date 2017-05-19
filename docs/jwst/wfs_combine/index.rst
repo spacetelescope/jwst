@@ -1,5 +1,5 @@
 ===========
-WFS COMBINE
+WFS Combine
 ===========
 
 .. toctree::

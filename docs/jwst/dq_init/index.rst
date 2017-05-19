@@ -1,6 +1,6 @@
-=======
-DQ INIT
-=======
+================================
+Data Quality (DQ) Initialization
+================================
 
 .. toctree::
    :maxdepth: 2

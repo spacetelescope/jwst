@@ -1,5 +1,5 @@
 ==============
-SOURCE CATALOG
+Source Catalog
 ==============
 
 .. toctree::
