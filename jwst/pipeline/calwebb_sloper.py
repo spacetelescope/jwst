@@ -122,8 +122,6 @@ class SloperPipeline(Pipeline):
     def setup_output(self, input):
         # Determine the proper file name suffix to use later
         if input.meta.cal_step.ramp_fit == 'COMPLETE':
-            suffix = 'rate'
+            self.suffix = 'rate'
         else:
-            suffix = 'ramp'
-
-        super(SloperPipeline, self).setup_output(input, suffix)
+            self.suffix = 'ramp'

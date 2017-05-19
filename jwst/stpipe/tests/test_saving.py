@@ -49,7 +49,6 @@ def test_save_step_default(mk_tmp_dirs):
     assert isfile(fname)
 
 
-@pytest.mark.xfail
 def test_save_pipeline_default(mk_tmp_dirs):
     """Default save should be current working directory"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -73,8 +72,8 @@ def test_save_pipeline_default(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    output_pipeline_fn_path = data_name + '_SavePipeline' + data_ext
-    output_stepsave_fn_path = data_name[:-1] + '_processed' + data_ext
+    output_pipeline_fn_path = data_name + '_processed_SavePipeline' + data_ext
+    output_stepsave_fn_path = data_name + '_processed' + data_ext
     assert isfile(output_pipeline_fn_path)
     assert isfile(output_stepsave_fn_path)
 
@@ -124,7 +123,6 @@ def test_save_pipeline_specified(mk_tmp_dirs):
     assert isfile(output_pipeline_fn_path)
 
 
-@pytest.mark.xfail
 def test_save_substep_specified(mk_tmp_dirs):
     """Save to specified folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -147,10 +145,10 @@ def test_save_substep_specified(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    output_pipeline_fn_path = data_name + '_SavePipeline' + data_ext
+    output_pipeline_fn_path = data_name + '_processed_SavePipeline' + data_ext
     output_stepsave_fn_path = join(
         tmp_data_path,
-        data_name[:-1] + '_processed' + data_ext
+        data_name + '_processed' + data_ext
     )
     assert isfile(output_pipeline_fn_path)
     assert isfile(output_stepsave_fn_path)
