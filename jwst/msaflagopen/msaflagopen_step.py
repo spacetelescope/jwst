@@ -1,5 +1,5 @@
-from jwst_lib.stpipe import Step
-from jwst_lib import models
+from ..stpipe import Step
+from .. import datamodels
 from . import msaflag_open
 
 
@@ -12,16 +12,16 @@ class MSAFlagOpenStep(Step):
 
     """
 
-    reference_file_types = ['badshutter']
+    reference_file_types = ['msaoper']
 
     def process(self, input):
 
         # Open the input data model
-        with models.open(input) as input_model:
+        with datamodels.open(input) as input_model:
 
             # Get the name of the reference file to use
             self.reference_name = self.get_reference_file(input_model,
-                                                          'badshutter')
+                                                          'msaoper')
             self.log.info('Using reference file %s', self.reference_name)
 
             # Check for a valid reference file
@@ -32,17 +32,16 @@ class MSAFlagOpenStep(Step):
                 result.meta.cal_step.msaflagopen = 'SKIPPED'
                 return result
 
-            # Open the bad shutter ref file data model
+            # Open the bad shutter reference file data model
             f1 = open(self.reference_name, 'r')
             shutters = json.load(f1)
             f1.close()
 
             # Do the DQ flagging
             result = msaflag_open.do_correction(input_model,
-                                                shutters['badshutters'])
+                                                shutters['msaoper'])
 
             # set the step status to complete
             result.meta.cal_step.msaflagopen = 'COMPLETE'
 
         return result
-
