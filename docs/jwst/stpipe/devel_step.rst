@@ -44,7 +44,8 @@ Output Configuration
 
 There are three ways a step's results can be written to a file:
 
-1. Implicitly when a step is run from the command line
+1. Implicitly when a step is run from the command line or with
+   `Step.from_cmdline` 
 
 2. Explicity by specifying the parameter `save_results`
 

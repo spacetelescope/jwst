@@ -201,7 +201,6 @@ individual steps, you have two options:
   - Specify a file name using `output_file <filename>`
 
     This option will save the step results using the name specified.
-    Note that the suffix of the step will still be appended to the name.
 
 For example, to save the result from the dark current step of
 `calwebb_sloper` in a file named `dark_sub.fits`, use
@@ -211,18 +210,20 @@ For example, to save the result from the dark current step of
     $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --steps.dark_current.output_file='dark_sub.fits'
 
-The results at the end of the dark current subtraction step would be saved
-to the file `dark_sub_DarkCurrentStep.fits`. 
-
 You can also specify a particular file name for saving the end result of
-the entire pipeline using the `--output_file` argument.
+the entire pipeline using the `--output_file` argument also
+::
+   
+    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+        --output_file='sloper_processed.fits'
+
 
 Output Directory
 ----------------
 
 By default, all pipeline and step outputs will drop into the current
 working directory, i.e., the directory in which the process is
-running. To change this use the `output_dir` argument. For example, to
+running. To change this, use the `output_dir` argument. For example, to
 have all output from `calwebb_sloper`, including any saved
 intermediate steps, appear in the sub-directory `calibrated`, use
 ::

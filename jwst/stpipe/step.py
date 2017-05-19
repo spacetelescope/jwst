@@ -387,19 +387,18 @@ class Step(object):
 
             # Save the output file if one was specified
             if self.save_results or self.output_file is not None:
-                make_result_id = lambda idx: self.name
-                if len(results) > 1:
-                    make_result_id = lambda idx: self.name + '_' + str(idx)
-
-                for i, result in enumerate(results):
+                result_id = _make_result_id(
+                    self.output_file, len(results), self.name
+                )
+                make_output_path = self.search_attr(
+                    'make_output_path', parent_first=True
+                )
+                for idx, result in enumerate(results):
                     if hasattr(result, 'save'):
-                        make_output_path = self.search_attr(
-                            'make_output_path', parent_first=True
-                        )
                         output_path = make_output_path(
                             self, result,
                             basepath=self.output_file,
-                            result_id=make_result_id(i)
+                            result_id=result_id(idx)
                         )
                         self.log.info('Saving file {0}'.format(output_path))
                         result.save(output_path, overwrite=True)
@@ -749,7 +748,7 @@ class Step(object):
             path, filename = split(output_path)
             name, filename_ext = splitext(filename)
             output_name = [name]
-            suffix = _get_suffix(suffix, step, default_suffix=result_id)
+            suffix = _get_suffix(suffix, default_suffix=result_id)
             if suffix is not None:
                 output_name.append('_' + suffix)
             output_name.append(filename_ext)
@@ -782,7 +781,9 @@ class Step(object):
 
                     # Rebuild the path.
                     output_name = [name]
-                    suffix = _get_suffix(suffix, step, default_suffix=result_id)
+                    suffix = _get_suffix(
+                        suffix, step=step, default_suffix=result_id
+                    )
                     if suffix is not None:
                         output_name.append('_' + suffix)
                     if ext is None:
@@ -803,7 +804,39 @@ class Step(object):
 # #########
 # Utilities
 # #########
-def _get_suffix(suffix, step, default_suffix=None):
+def _make_result_id(output_file, n_results, default_name):
+    """Create function the constructs a result identifier
+
+    Parameters
+    ----------
+    output_file: str or None
+        output file name
+
+    n_results: int
+        The number of results to be saved.
+
+    default_name: str
+        The name to use if `output_file` is not defined
+
+    Returns
+    -------
+    result_id: func
+        A function that takes an int and produces a str
+        the represents a result identifier
+    """
+    id_format = []
+    if output_file is None:
+        id_format.append(default_name.lower())
+    if n_results > 1:
+        id_format.append('{idx}')
+    if len(id_format):
+        id_format = '_'.join(id_format)
+        result_id = lambda idx: id_format.format(idx=str(idx))
+    else:
+        result_id = lambda idx: None
+    return result_id
+
+def _get_suffix(suffix, step=None, default_suffix=None):
     """Retrieve either specified or pipeline-supplied suffix
 
     Parameters
@@ -811,7 +844,7 @@ def _get_suffix(suffix, step, default_suffix=None):
     suffix: str or None
         Suffix to use if specified.
 
-    step: Step or Pipeline
+    step: Step or None
         The step to retrieve the suffux.
 
     default_suffix: str
@@ -823,7 +856,7 @@ def _get_suffix(suffix, step, default_suffix=None):
     suffix: str or None
         Suffix to use
     """
-    if suffix is None:
+    if suffix is None and step is not None:
         suffix = step.search_attr('suffix')
     if suffix is None:
         suffix = default_suffix

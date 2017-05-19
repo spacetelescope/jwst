@@ -110,6 +110,4 @@ def test_file_outputdir(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    name, ext = path.splitext(outfile)
-    pipeline_output = name + '_cal' + ext
-    assert path.isfile(path.join(tmp_data_path, pipeline_output))
+    assert path.isfile(path.join(tmp_data_path, outfile))
