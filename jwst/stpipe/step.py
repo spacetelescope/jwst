@@ -708,8 +708,8 @@ class Step(object):
     @staticmethod
     def make_output_path(
             step, data,
-            basepath=None, suffix=None,
-            result_id=None
+            basepath=None, suffix=None, ext=None,
+            result_id=None, **kwargs
     ):
         """Make up a path based on data and user specification
 
@@ -724,6 +724,9 @@ class Step(object):
         basepath: str or None
             The output file name. If `None` or empty string, create
             a filename based on the data.
+
+        ext: str or None
+            The file format extension
 
         suffix: str or None
             The suffix to append to the basename.
@@ -746,12 +749,14 @@ class Step(object):
             if not has_basepath:
                 output_path = data.meta.filename
             path, filename = split(output_path)
-            name, ext = splitext(filename)
+            name, filename_ext = splitext(filename)
             output_path = [name]
             if suffix is None:
                 suffix = result_id
             if suffix is not None:
                 output_path.append('_' + suffix)
+            if ext is None:
+                ext = filename_ext
             output_path.append(ext)
             output_path = ''.join(output_path)
 

@@ -92,3 +92,24 @@ def test_file(mk_tmp_dirs):
     cfg = path.join(path.dirname(__file__), 'calwebb_image2_save.cfg')
     Image2Pipeline.call(exppath, config_file=cfg)
     assert path.isfile(CALFILE)
+
+
+def test_file_outputdir(mk_tmp_dirs):
+    """Test putting results in another folder"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    exppath = path.join(DATAPATH, EXPFILE)
+    outfile = 'junk.fits'
+
+    args = [
+        path.join(path.dirname(__file__), 'calwebb_image2_save.cfg'),
+        exppath,
+        '--output_file=' + outfile,
+        '--output_dir=' + tmp_data_path,
+    ]
+
+    Step.from_cmdline(args)
+
+    name, ext = path.splitext(outfile)
+    pipeline_output = name + '_cal' + ext
+    assert path.isfile(path.join(tmp_data_path, pipeline_output))

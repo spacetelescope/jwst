@@ -158,7 +158,7 @@ class Pipeline(Step):
     def make_output_path(
             step, data,
             basepath=None, suffix=None, ext=None,
-            ignore_use_model=False, result_id=None
+            result_id=None, ignore_use_model=False
     ):
         """Make up a path based on data and user specification
 
@@ -180,12 +180,12 @@ class Pipeline(Step):
         ext: str or None
             The file format extension
 
-        ignore_use_model: bool
-            Ignore configuration parameter `output_use_model`
-
         result_id: str or None
             If a suffix cannot be determined, use this as the suffix.
             If the result is still None, raise ValueError
+
+        ignore_use_model: bool
+            Ignore configuration parameter `output_use_model`
 
         Returns
         -------
@@ -195,18 +195,40 @@ class Pipeline(Step):
         from ..datamodels import DataModel
 
         has_basepath = basepath is not None and len(basepath) > 0
+        use_model_name = not ignore_use_model and getattr(step, 'output_use_model', False)
         output_path = basepath
 
-        if isinstance(data, DataModel):
-            if not has_basepath:
-                if not ignore_use_model and \
-                   getattr(step, 'output_use_model', False):
-                    output_path = data.meta.filename
+        # If a basepath was specified, use that, but adding the
+        # result_id if necessary
+        if has_basepath:
+            path, filename = split(output_path)
+            name, filename_ext = splitext(filename)
+            output_name = [name]
+            suffix = _get_suffix(suffix, step, default_suffix=result_id)
+            if suffix is not None:
+                output_name.append('_' + suffix)
+            output_name.append(filename_ext)
+            output_name = ''.join(output_name)
+
+        # Otherwise, construct a name
+        else:
+
+            # Make names based on DataModels
+            if isinstance(data, DataModel):
+
+                # If using what is in the model, just retrieve that.
+                if use_model_name:
+                    basepath = data.meta.filename
+                    path, output_name = split(basepath)
+
+                # Otherwise, create a fully qualified pipeline outputname
                 else:
-                    output_path = step.search_attr('output_basename')
-                    if output_path is None:
-                        output_path = data.meta.filename
-                    path, filename = split(output_path)
+                    basepath = step.search_attr('output_basename')
+                    if basepath is None:
+                        basepath = data.meta.filename
+
+                    # Breakdown the components
+                    path, filename = split(basepath)
                     name, filename_ext = splitext(filename)
 
                     # Remove any known, previous suffixes.
@@ -214,22 +236,50 @@ class Pipeline(Step):
                     name = match.group(1)
 
                     # Rebuild the path.
-                    output_path = [name]
-                    if suffix is None:
-                        suffix = step.search_attr('suffix')
-                    if suffix is None:
-                        suffix = result_id
+                    output_name = [name]
+                    suffix = _get_suffix(suffix, step, default_suffix=result_id)
                     if suffix is not None:
-                        output_path.append('_' + suffix)
+                        output_name.append('_' + suffix)
                     if ext is None:
                         ext = step.search_attr('output_ext')
                         if ext is None:
                             ext = filename_ext
                     if ext is not None:
-                        output_path.append(ext)
-                    output_path = ''.join(output_path)
+                        output_name.append(ext)
+                    output_name = ''.join(output_name)
 
+        output_path = output_name
         output_dir = step.search_attr('output_dir')
         if output_dir is not None:
             output_path = join(output_dir, output_path)
         return output_path
+
+
+# #########
+# Utilities
+# #########
+def _get_suffix(suffix, step, default_suffix=None):
+    """Retrieve either specified or pipeline-supplied suffix
+
+    Parameters
+    ----------
+    suffix: str or None
+        Suffix to use if specified.
+
+    step: Step or Pipeline
+        The step to retrieve the suffux.
+
+    default_suffix: str
+        If the pipeline does not supply a suffix,
+        use this.
+
+    Returns
+    -------
+    suffix: str or None
+        Suffix to use
+    """
+    if suffix is None:
+        suffix = step.search_attr('suffix')
+    if suffix is None:
+        suffix = default_suffix
+    return suffix
