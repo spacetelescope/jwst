@@ -1,4 +1,3 @@
-
 Description
 ===========
 
@@ -7,7 +6,7 @@ distortion information, and will combine multiple resampled images
 into a single undistorted product.  The distortion information should have
 been incorporated into the image using the latest assign_wcs pipeline step.
 
-The resample step can take as input either:
+The resample step can take as input either
   * a single 2D input image updated by assign_wcs
   * an association table (in json format)
 

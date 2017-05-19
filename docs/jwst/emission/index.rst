@@ -1,5 +1,5 @@
 ========
-EMISSION
+Emission
 ========
 
 .. toctree::

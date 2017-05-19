@@ -1,6 +1,6 @@
-=========
-SUPERBIAS
-=========
+=====================
+Superbias Subtraction
+=====================
 
 .. toctree::
    :maxdepth: 2

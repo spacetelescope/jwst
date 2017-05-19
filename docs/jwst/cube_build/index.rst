@@ -1,5 +1,5 @@
 =============
-CUBE BUILDING
+Cube Building
 =============
 
 .. toctree::

@@ -1,5 +1,5 @@
 ========
-TWEAKREG
+Tweakreg
 ========
 
 .. toctree::

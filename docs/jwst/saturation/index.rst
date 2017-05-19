@@ -1,6 +1,6 @@
-==========
-SATURATION
-==========
+====================
+Saturation Detection
+====================
 
 .. toctree::
    :maxdepth: 2

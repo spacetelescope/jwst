@@ -1,6 +1,6 @@
-======
-REFPIX
-======
+==========================
+Reference Pixel Correction
+==========================
 
 .. toctree::
    :maxdepth: 2

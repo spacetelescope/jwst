@@ -1,6 +1,6 @@
-======
-PHOTOM
-======
+======================
+Photometric Correction
+======================
 
 .. toctree::
    :maxdepth: 2
