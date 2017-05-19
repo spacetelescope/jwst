@@ -776,7 +776,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         hdu = fits_support.get_hdu(ff._hdulist, hdu_name)
         header = hdu.header
 
-        return WCS(header, key=key, relax=True, fix=True)
+        naxis = header.get('NAXIS', 0)
+        if naxis == 0:
+            wcs = None
+        else:
+            wcs = WCS(header, key=key, relax=True, fix=True)
+        return wcs
 
     def set_fits_wcs(self, wcs, hdu_name='PRIMARY'):
         """
