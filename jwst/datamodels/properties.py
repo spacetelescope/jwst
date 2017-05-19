@@ -25,7 +25,6 @@ log.addHandler(logging.NullHandler())
 
 __all__ = ['ObjectNode', 'ListNode']
 
-
 def _cast(val, schema):
     val = _unmake_node(val)
     if val is not None:
@@ -43,11 +42,6 @@ def _cast(val, schema):
             raise ValueError(
                 "Array has wrong number of dimensions.  Expected <= {0}, got {1}".format(
                     schema['max_ndim'], len(val.shape)))
-        #tag = schema.get('tag')
-        #if tag is not None:
-            #val = tagged.tag_object(tag, val)
-        #if isinstance(val, np.generic) and np.isscalar(val):
-            #val = np.asscalar(val)
 
     return val
 
@@ -59,6 +53,7 @@ def _make_default_array(attr, schema, ctx):
     ndim = schema.get('ndim', schema.get('max_ndim'))
     default = schema.get('default', None)
     primary_array_name = ctx.get_primary_array_name()
+
     if attr == primary_array_name:
         if ctx.shape is not None:
             shape = ctx.shape
@@ -232,6 +227,7 @@ class ObjectNode(Node):
                 val = _make_default(attr, schema, self._ctx)
             val = _cast(val, schema)
             old_val = self._instance.get(attr, None)
+
             self._instance[attr] = val
             try:
                 if not self._validate():
