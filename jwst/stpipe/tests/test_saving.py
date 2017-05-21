@@ -46,7 +46,7 @@ def test_save_step_default(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    fname = 'flat_StepWithModel.fits'
+    fname = 'flat_stepwithmodel.fits'
     assert isfile(fname)
 
 
@@ -81,7 +81,7 @@ def test_save_step_withdir(mk_tmp_dirs):
 
     output_fn_path = join(
         tmp_data_path,
-        data_name + '_StepWithModel' + data_ext,
+        data_name + '_stepwithmodel' + data_ext,
     )
     assert isfile(output_fn_path)
 
@@ -128,7 +128,7 @@ def test_save_pipeline_default(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    output_pipeline_fn_path = data_name + '_processed_SavePipeline' + data_ext
+    output_pipeline_fn_path = data_name + '_processed_savepipeline' + data_ext
     output_stepsave_fn_path = data_name + '_processed' + data_ext
     assert isfile(output_pipeline_fn_path)
     assert isfile(output_stepsave_fn_path)
@@ -153,7 +153,7 @@ def test_save_pipeline_withdir(mk_tmp_dirs):
 
     output_pipeline_fn_path = join(
         tmp_data_path,
-        data_name + '_SavePipeline' + data_ext
+        data_name + '_savepipeline' + data_ext
     )
     assert isfile(output_pipeline_fn_path)
 
@@ -176,7 +176,7 @@ def test_save_substep_withdir(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    output_pipeline_fn_path = data_name + '_processed_SavePipeline' + data_ext
+    output_pipeline_fn_path = data_name + '_processed_savepipeline' + data_ext
     output_stepsave_fn_path = join(
         tmp_data_path,
         data_name + '_processed' + data_ext
