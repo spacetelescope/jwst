@@ -78,8 +78,10 @@ class GWCSBlot(object):
         outsci = np.zeros(blot_img.shape, dtype=np.float32)
 
         # Compute the mapping between the input and output pixel coordinates
-        #log.info("Creating PIXMAP for blotted image...")
-        pixmap = resample_utils.calc_gwcs_pixmap(self.source_wcs, blot_wcs)
+        pixmap = resample_utils.calc_gwcs_pixmap(self.source_wcs, blot_wcs,
+            self.source.shape)
+        log.debug("Pixmap shape: {}".format(pixmap[:,:,0].shape))
+        log.debug("Sci shape: {}".format(self.source.shape))
 
         source_pscale = self.source_model.meta.wcsinfo.cdelt1
         blot_pscale = blot_img.meta.wcsinfo.cdelt1
