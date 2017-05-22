@@ -8,15 +8,18 @@ from __future__ import division
 import math
 import numpy as np
 import logging
-from jwst_lib import models
-from jwst_pipeline.assign_wcs import nirspec
+from .. import datamodels
+from ..assign_wcs import nirspec
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-BADFLAG = models.dqflags.pixel['MSA_FAILED_OPEN']
 
-def do_correction(input_model, failedopen_model):
+BADFLAG = datamodels.dqflags.pixel['MSA_FAILED_OPEN']
+
+FLAGGABLE_STATES = ['Internal state', 'TA state', 'state']
+
+def do_correction(input_model, shutters):
     """
     Short Summary
     -------------
@@ -24,11 +27,11 @@ def do_correction(input_model, failedopen_model):
 
     Parameters
     ----------
-    input_model: data model object
+    input_model: datamodel object
         science data to be corrected
 
-    failedopen_model: failedopen model object
-        failed open reference data
+    shutters: list
+        list of shutters
 
     Returns
     -------
@@ -36,9 +39,10 @@ def do_correction(input_model, failedopen_model):
         science data with DQ array modified
 
     """
-       
+    failedopenlist = get_failed_open_shutters(shutters, flaggable_states)
+
     # Flag the stuck open shutters
-    output_model = flag(input_model, failedopen)
+    output_model = flag(input_model, failedopenlist)
 
     output_model.meta.cal_step.msaflagopen = 'COMPLETE'
 
@@ -130,3 +134,16 @@ def setdq(datamodel, xmin, ymin, xmax, ymax,
             dataslice = datamodel[dq][iy-halfheight:iy+halfheight+1, ix]
             dataslice = np.bitwise_or(dataslice, BADFLAG)
     return
+
+def get_failed_open_shutters(shutters):
+    """
+    Return a list of shutters which satisfy the condition that at
+    least one of the states in FLAGGABLE_STATES is set to 'open'
+    """
+    failedopen = []
+    for shutter in shutters:
+        for state in FLAGGABLE_STATES:
+            if shutter[state] == 'open':
+                failedopen.append(shutter)
+                break
+    return failedopen
