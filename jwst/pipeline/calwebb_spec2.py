@@ -158,7 +158,7 @@ class Spec2Pipeline(Pipeline):
             log.error('Assign_wcs processing was skipped')
             log.error('Aborting remaining processing for this exposure')
             log.error('No output product will be created')
-            return
+            return input
 
         # Do background processing, if necessary
         if len(members_by_type['BACKGROUND']) > 0:
@@ -170,7 +170,7 @@ class Spec2Pipeline(Pipeline):
 
             # Backwards compatibility
             if self.save_bsub:
-                self.bkg_subtract.save_results = true
+                self.bkg_subtract.save_results = True
 
             # Call the background subtraction step
             input = self.bkg_subtract(input, members_by_type['BACKGROUND'])

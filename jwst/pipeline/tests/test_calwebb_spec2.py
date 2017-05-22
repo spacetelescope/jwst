@@ -73,6 +73,35 @@ def test_asn_with_bkg(mk_tmp_dirs):
     assert path.isfile(BSUBFILE)
 
 
+def test_asn_with_bkg_bsub(mk_tmp_dirs):
+    """Test background saving using the bsub flag"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+    exppath = path.join(DATAPATH, EXPFILE)
+    lv2_meta = {
+        'program': 'test',
+        'target': 'test',
+        'asn_pool': 'test',
+    }
+    asn = asn_from_list([exppath], rule=DMSLevel2bBase, meta=lv2_meta)
+    asn['products'][0]['members'].append({
+        'expname': exppath, 'exptype': 'BACKGROUND'
+    })
+    asn_file, serialized = asn.dump()
+    with open(asn_file, 'w') as fp:
+        fp.write(serialized)
+
+    args = [
+        path.join(path.dirname(__file__), 'calwebb_spec2.cfg'),
+        asn_file,
+        '--save_bsub=true'
+    ]
+
+    Step.from_cmdline(args)
+
+    assert path.isfile(CALFILE)
+    assert path.isfile(BSUBFILE)
+
+
 def test_asn(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     exppath = path.join(DATAPATH, EXPFILE)
