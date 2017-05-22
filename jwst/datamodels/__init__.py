@@ -89,7 +89,7 @@ from .spec import SpecModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
 from .traps import TrapsModel
-from .distortion import DistortionModel
+from .wcs_ref_models import *
 from .util import open
 
 
@@ -116,7 +116,10 @@ __all__ = [
     'ResetModel', 'RSCDModel', 'SaturationModel', 'SpecModel',
     'StrayLightModel', 'SuperBiasModel', 'TrapsModel','IFUCubeParsModel',
     'NirspecIFUCubeParsModel','MiriIFUCubeParsModel','ResolutionModel',
-    'MiriResolutionModel']
+    'MiriResolutionModel','DistortionModel', 'DistortionMRSModel', 'SpecwcsModel',
+    'RegionsModel', 'WavelengthrangeModel', 'CameraModel', 'CollimatorModel', 'OTEModel',
+    'FOREModel', "FPAModel", 'IFUPostModel', 'IFUFOREModel', 'IFUSlicerModel',
+    'MSAModel', 'FilteroffsetModel', 'DisperserModel']
 
 
 _all_models = __all__[1:]

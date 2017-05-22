@@ -108,7 +108,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 resolver=extension_list.url_mapping, resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
-
         # Determine what kind of input we have (init) and execute the
         # proper code to intiailize the model
         self._files_to_close = []
