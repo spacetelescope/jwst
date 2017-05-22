@@ -1,13 +1,15 @@
 """Test calwebb_spec2"""
 
-from contextlib import contextmanager
+import os
 from os import path
 import pytest
+import tempfile
 
 from ...associations.asn_from_list import asn_from_list
 from ...associations.lib.rules_level2_base import DMSLevel2bBase
 from ...datamodels import open as dm_open
 from ..calwebb_spec2 import Spec2Pipeline
+from ...stpipe.step import Step
 
 
 def abspath(filepath):
@@ -16,10 +18,11 @@ def abspath(filepath):
 
 
 DATAPATH = abspath(
-    '$DEVDIR/testdata/jwst_data/dev/build7.1/spec2_test'
+    '$TEST_BIGDATA/pipelines'
 )
 EXPFILE = 'jw00035001001_01101_00001_mirimage_rate.fits'
-
+CALFILE = EXPFILE.replace('_rate', '_cal')
+BSUBFILE = EXPFILE.replace('_rate', '_bsub')
 
 # Skip if the data is not available
 pytestmark = pytest.mark.skipif(
@@ -28,9 +31,51 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_asn(tmpdir):
+@pytest.fixture
+def mk_tmp_dirs():
+    tmp_current_path = tempfile.mkdtemp()
+    tmp_data_path = tempfile.mkdtemp()
+    tmp_config_path = tempfile.mkdtemp()
+
+    old_path = os.getcwd()
+    try:
+        os.chdir(tmp_current_path)
+        yield (tmp_current_path, tmp_data_path, tmp_config_path)
+    finally:
+        os.chdir(old_path)
+
+
+def test_asn_with_bkg(mk_tmp_dirs):
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     exppath = path.join(DATAPATH, EXPFILE)
-    expcal = EXPFILE.replace('_rate', '_cal')
+    lv2_meta = {
+        'program': 'test',
+        'target': 'test',
+        'asn_pool': 'test',
+    }
+    asn = asn_from_list([exppath], rule=DMSLevel2bBase, meta=lv2_meta)
+    asn['products'][0]['members'].append({
+        'expname': exppath, 'exptype': 'BACKGROUND'
+    })
+    asn_file, serialized = asn.dump()
+    with open(asn_file, 'w') as fp:
+        fp.write(serialized)
+
+    args = [
+        path.join(path.dirname(__file__), 'calwebb_spec2.cfg'),
+        asn_file,
+        '--steps.bkg_subtract.save_results=true'
+    ]
+
+    Step.from_cmdline(args)
+
+    assert path.isfile(CALFILE)
+    assert path.isfile(BSUBFILE)
+
+
+def test_asn(mk_tmp_dirs):
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+    exppath = path.join(DATAPATH, EXPFILE)
     lv2_meta = {
         'program': 'test',
         'target': 'test',
@@ -38,24 +83,54 @@ def test_asn(tmpdir):
     }
     asn = asn_from_list([exppath], rule=DMSLevel2bBase, meta=lv2_meta)
     asn_file, serialized = asn.dump()
-    with tmpdir.join(asn_file).open('w') as fp:
+    with open(asn_file, 'w') as fp:
         fp.write(serialized)
-    with tmpdir.as_cwd():
-        Spec2Pipeline.call(asn_file)
-        assert path.isfile(expcal)
+
+    args = [
+        path.join(path.dirname(__file__), 'calwebb_spec2.cfg'),
+        asn_file,
+    ]
+
+    Step.from_cmdline(args)
+
+    assert path.isfile(CALFILE)
 
 
-def test_datamodel(tmpdir):
-    model = dm_open(path.join(DATAPATH, EXPFILE))
-    expcal = EXPFILE.replace('_rate', '_cal')
-    with tmpdir.as_cwd():
-        Spec2Pipeline.call(model)
-        assert path.isfile(expcal)
-
-
-def test_file(tmpdir):
+def test_asn_multiple_products(mk_tmp_dirs):
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     exppath = path.join(DATAPATH, EXPFILE)
-    expcal = EXPFILE.replace('_rate', '_cal')
-    with tmpdir.as_cwd():
-        Spec2Pipeline.call(exppath)
-        assert path.isfile(expcal)
+    lv2_meta = {
+        'program': 'test',
+        'target': 'test',
+        'asn_pool': 'test',
+    }
+    asn = asn_from_list([exppath, exppath], rule=DMSLevel2bBase, meta=lv2_meta)
+    asn['products'][0]['name'] = 'product1'
+    asn['products'][1]['name'] = 'product2'
+    asn_file, serialized = asn.dump()
+    with open(asn_file, 'w') as fp:
+        fp.write(serialized)
+
+    args = [
+        path.join(path.dirname(__file__), 'calwebb_spec2.cfg'),
+        asn_file,
+    ]
+
+    Step.from_cmdline(args)
+
+    assert path.isfile('product1_cal.fits')
+    assert path.isfile('product2_cal.fits')
+
+
+def test_datamodel(mk_tmp_dirs):
+    model = dm_open(path.join(DATAPATH, EXPFILE))
+    cfg = path.join(path.dirname(__file__), 'calwebb_spec2_save.cfg')
+    Spec2Pipeline.call(model, config_file=cfg)
+    assert path.isfile(CALFILE)
+
+
+def test_file(mk_tmp_dirs):
+    exppath = path.join(DATAPATH, EXPFILE)
+    cfg = path.join(path.dirname(__file__), 'calwebb_spec2_save.cfg')
+    Spec2Pipeline.call(exppath, config_file=cfg)
+    assert path.isfile(CALFILE)

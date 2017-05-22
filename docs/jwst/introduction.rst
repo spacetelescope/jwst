@@ -191,18 +191,57 @@ Output File
 When running a pipeline, the `stpipe` infrastructure automatically passes the
 output data model from one step to the input of the next step, without
 saving any intermediate results to disk. If you want to save the results from
-individual steps, you can use the `output_file` argument for each step.
-For example, if you specify
+individual steps, you have two options:
+
+  - Specify `save_results`
+
+    This option will save the results of the step, using a filename
+    created by the step.
+
+  - Specify a file name using `output_file <filename>`
+
+    This option will save the step results using the name specified.
+
+For example, to save the result from the dark current step of
+`calwebb_sloper` in a file named `dark_sub.fits`, use
+
 ::
 
     $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --steps.dark_current.output_file='dark_sub.fits'
 
-the results at the end of the dark current subtraction step would be saved
-to the file `dark_sub.fits`.
-
 You can also specify a particular file name for saving the end result of
-the entire pipeline using the `--output_file` argument.
+the entire pipeline using the `--output_file` argument also
+::
+   
+    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+        --output_file='sloper_processed.fits'
+
+
+Output Directory
+----------------
+
+By default, all pipeline and step outputs will drop into the current
+working directory, i.e., the directory in which the process is
+running. To change this, use the `output_dir` argument. For example, to
+have all output from `calwebb_sloper`, including any saved
+intermediate steps, appear in the sub-directory `calibrated`, use
+::
+
+    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+        --output_dir=calibrated
+
+`output_dir` can be specified at the step level, overriding what was
+specified for the pipeline. From the example above, to change the name
+and location of the `dark_current` step, use the following
+::
+
+
+    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+        --output_dir=calibrated
+        --steps.dark_current.output_file='dark_sub.fits'
+        --steps.dark_current.output_dir='dark_calibrated'
+
 
 Override Reference File
 -----------------------
