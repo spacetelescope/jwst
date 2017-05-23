@@ -10,6 +10,7 @@ import numpy as np
 import logging
 from .. import datamodels
 from ..assign_wcs import nirspec
+from ..transforms.models import Slit
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -71,7 +72,11 @@ def flag(input, failedopen):
         science data with DQ flags of affected modified
 
     """
-
+    #
+    # Use Nadia's machinery to create a WCS object for each bad shutter
+    failed_slitlets = create_slitlets(faildopen)
+    pipeline = create_pipeline(input_model, failed_slitlets)
+    wcs = WCS(pipeline)
     # Create output as a copy of the input science data model
     output = input.copy()
     filter = input.meta.instrument.filter
@@ -147,3 +152,30 @@ def get_failed_open_shutters(shutters):
                 failedopen.append(shutter)
                 break
     return failedopen
+
+def create_slitlets(failedopen):
+    """A slitlet looks like this:
+    slitlets : list
+        A list of slitlets. Each slitlet is a named tuple with
+        ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax", "quadrant", "source_id", "nshutters")
+
+    A slit is:
+    
+    Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
+                           "ymin", "ymax", "quadrant", "source_id", "nshutters",
+                           "source_name", "source_alias", "catalog_id", "stellarity",
+                           "source_xpos", "source_ypos"])
+    Slit.__new__.__defaults__= ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, "", "", "", 0.0, 0.0, 0.0)
+
+    The only ones that matter are "name" (must be unique), xcen, ycen, quadrant (from msaoper
+    file), ymin, ymax (should be -0.5, 0.5), nshutters (should be 1)
+ 
+    """
+    slitlets = []
+    counter = 0
+    for shutter in failedopen:
+        counter = counter + 1
+        slitlets.append(Slit(str(counter), 0, shutter['x'], shutter['y'], -0.5, 0.5,
+                             shutter['Q'], 0, 1, "", "", "", 0.0, 0.0, 0.0)
+                        )
+    return slitlets
