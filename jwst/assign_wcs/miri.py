@@ -3,7 +3,6 @@ from __future__ import (absolute_import, unicode_literals, division,
 import os.path
 import logging
 import numpy as np
-from asdf import AsdfFile
 from astropy.modeling import models
 from astropy import coordinates as coord
 from astropy import units as u
@@ -15,6 +14,9 @@ from gwcs.utils import _toindex
 from . import pointing
 from ..transforms import models as jwmodels
 from .util import not_implemented_mode, subarray_transform
+from ..datamodels import (DistortionModel, FilteroffsetModel,
+                          DistortionMRSModel, WavelengthrangeModel,
+                          RegionsModel, SpecwcsModel)
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -105,15 +107,24 @@ def imaging_distortion(input_model, reference_files):
     ref_file: distortion.asdf -(2,3,4)
     """
     # Read in the distortion.
-    distortion = AsdfFile.open(reference_files['distortion']).tree['model']
+    with DistortionModel(reference_files['distortion']) as dist:
+        distortion = dist.model
     obsfilter = input_model.meta.instrument.filter
 
     # Add an offset for the filter
-    with AsdfFile.open(reference_files['filteroffset']) as filter_offset:
-        if obsfilter in filter_offset.tree:
-            filter_corr = filter_offset.tree[obsfilter]
-            distortion = models.Shift(filter_corr['column_offset']) & models.Shift(
-                filter_corr['row_offset']) | distortion
+    # Add an offset for the filter
+    with FilteroffsetModel(reference_files['filteroffset']) as filter_offset:
+        filters = filter_offset.filters
+    col_offset = None
+    row_offset = None
+    for f in filters:
+        if f.name == obsfilter:
+            col_offset = f.column_offset
+            row_offset = f.row_offset
+            break
+
+    if (col_offset is not None) and (row_offset is not None):
+        distortion = models.Shift(col_offset) & models.Shift(row_offset) | distortion
 
     # scale to degrees (remove this once pipeline can handle v2,v3 in arcsec)
     distortion = distortion | models.Scale(1 / 3600) & models.Scale(1 / 3600)
@@ -146,7 +157,8 @@ def lrs(input_model, reference_files):
 
     # Determine the distortion model.
     subarray2full = subarray_transform(input_model)
-    distortion = AsdfFile.open(reference_files['distortion']).tree['model']
+    with DistortionModel(reference_files['distortion']) as dist:
+        distortion = dist.model
     # Distortion is in arcsec.  Convert to degrees
     full_distortion = subarray2full | distortion | models.Scale(1 / 3600.) & models.Scale(1 / 3600.)
 
@@ -288,39 +300,34 @@ def detector_to_abl(input_model, reference_files):
     # used to read the wavelength range
     channels = [c + band for c in channel]
 
-    f = AsdfFile.open(reference_files['distortion'])
-    # The name of the model indicates the output coordinate
-    alpha_model = f.tree['alpha_model']
-    beta_model = f.tree['beta_model']
-    x_model = f.tree['x_model']
-    y_model = f.tree['y_model']
-    bzero = f.tree['bzero']
-    bdel = f.tree['bdel']
-    f.close()
-    f = AsdfFile.open(reference_files['specwcs'])
-    lambda_model = f.tree['model']
-    f.close()
-    f = AsdfFile.open(reference_files['regions'])
-    regions = f.tree['regions'].copy()
-    f.close()
+    with DistortionMRSModel(reference_files['distortion']) as dist:
+        alpha_model = dist.alpha_model
+        beta_model = dist.beta_model
+        x_model = dist.x_model
+        y_model = dist.y_model
+        bzero = dict(zip(dist.bzero.channel_band, dist.bzero.beta_zero))
+        bdel = dict(zip(dist.bdel.channel_band, dist.bdel.delta_beta))
+        slices = dist.slices
+
+    with SpecwcsModel(reference_files['specwcs']) as f:
+        lambda_model = f.model
+
+    with RegionsModel(reference_files['regions']) as f:
+        regions = f.regions.copy()
+
     label_mapper = selector.LabelMapperArray(regions)
     transforms = {}
 
-    for sl in alpha_model:
+    for i, sl in enumerate(slices):
         forward = models.Mapping([1, 0, 0, 1, 0]) | \
-                alpha_model[sl] & beta_model[sl] & lambda_model[sl]
-        inv = models.Mapping([2, 0, 2, 0]) | x_model[sl] & y_model[sl]
+                alpha_model[i] & beta_model[i] & lambda_model[i]
+        inv = models.Mapping([2, 0, 2, 0]) | x_model[i] & y_model[i]
         forward.inverse = inv
         transforms[sl] = forward
 
-    f = AsdfFile.open(reference_files['wavelengthrange'])
-    # the following should go in the asdf reader
-    wave_range = f.tree['wavelengthrange'].copy()
-    wave_channels = f.tree['channels']
-    wr = {}
-    for ch, r in zip(wave_channels, wave_range):
-        wr[ch] = r
-    f.close()
+    with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
+        wr = dict(zip(f.waverange_selector, f.wavelengthrange))
+
     ch_dict = {}
     for c in channel:
         cb = c + band
@@ -338,6 +345,7 @@ def detector_to_abl(input_model, reference_files):
     det2alpha_beta = selector.RegionsSelector(('x', 'y'), ('alpha', 'beta', 'lam'),
                                               label_mapper=label_mapper, selector=transforms)
     return det2alpha_beta
+
 
 def abl_to_v2v3l(input_model, reference_files):
     """
@@ -366,15 +374,11 @@ def abl_to_v2v3l(input_model, reference_files):
     # used to read the wavelength range
     channels = [c + band for c in channel]
 
-    f = AsdfFile.open(reference_files['distortion'])
-    v23 = f.tree['abv2v3_model']
-    f.close()
-    f = AsdfFile.open(reference_files['wavelengthrange'])
-    # the following should go in the asdf reader
-    wave_range = f.tree['wavelengthrange'].copy()
-    wave_channels = f.tree['channels']
-    wr = dict(zip(wave_channels, wave_range))
-    f.close()
+    with DistortionMRSModel(reference_files['distortion']) as dist:
+        v23 = dict(zip(dist.abv2v3_model.channel_band, dist.abv2v3_model.model))
+
+    with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
+        wr = dict(zip(f.waverange_selector, f.wavelengthrange))
 
     dict_mapper = {}
     sel = {}
