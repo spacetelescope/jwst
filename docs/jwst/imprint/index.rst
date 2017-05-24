@@ -1,6 +1,6 @@
-=======
-IMPRINT
-=======
+===================
+Imprint Subtraction
+===================
 
 .. toctree::
    :maxdepth: 2

@@ -1,5 +1,5 @@
 =============
-ASSOCIATIONS
+Associations
 =============
 
 .. toctree::

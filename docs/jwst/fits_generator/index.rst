@@ -1,5 +1,5 @@
 ==============
-FITS GENERATOR
+FITS Generator
 ==============
 
 .. toctree::

@@ -77,18 +77,38 @@ class Spec2Pipeline(Pipeline):
         # Retrieve the input(s)
         asn = LoadAsLevel2Asn.load(input)
 
+        # Setup output creation
+        make_output_path = self.search_attr(
+            'make_output_path', parent_first=True
+        )
+
         # Each exposure is a product in the association.
         # Process each exposure.
+        results = []
         for product in asn['products']:
             log.info('Processing product {}'.format(product['name']))
-            self.process_exposure_product(
+            self.output_basename = product['name']
+            result = self.process_exposure_product(
                 product,
                 asn['asn_pool'],
                 asn.filename
             )
+            results.append(result)
+
+            # Setup filename
+            suffix = 'cal'
+            if isinstance(input, datamodels.CubeModel):
+                suffix = 'calints'
+            result.meta.filename = make_output_path(
+                self,
+                result,
+                suffix=suffix,
+                ignore_use_model=True
+            )
 
         # We're done
         log.info('Ending calwebb_spec2')
+        return results
 
     # Process each exposure
     def process_exposure_product(
@@ -115,10 +135,11 @@ class Spec2Pipeline(Pipeline):
         science = members_by_type['SCIENCE']
         if len(science) != 1:
             log.warn(
-                'Wrong number of science files found in {}'.format(
+                'Wrong number of science exposures found in {}'.format(
                     exp_product['name']
                 )
             )
+            log.warn('    Using only first one.')
         science = science[0]
 
         self.log.info('Working on input %s ...', science)
@@ -131,26 +152,28 @@ class Spec2Pipeline(Pipeline):
         # Apply WCS info
         input = self.assign_wcs(input)
 
+        # Do background processing, if necessary
+        if len(members_by_type['BACKGROUND']) > 0:
+
+            # Setup for saving
+            self.bkg_subtract.suffix = 'bsub'
+            if isinstance(input, datamodels.CubeModel):
+                self.bkg_subtract.suffix = 'bsubints'
+
+            # Backwards compatibility
+            if self.save_bsub:
+                self.bkg_subtract.save_results = True
+
+            # Call the background subtraction step
+            input = self.bkg_subtract(input, members_by_type['BACKGROUND'])
+
         # If assign_wcs was skipped, abort the rest of processing,
         # because so many downstream steps depend on the WCS
         if input.meta.cal_step.assign_wcs == 'SKIPPED':
             log.error('Assign_wcs processing was skipped')
             log.error('Aborting remaining processing for this exposure')
             log.error('No output product will be created')
-            return
-
-        # Do background processing, if necessary
-        if len(members_by_type['BACKGROUND']) > 0:
-
-            # Call the background subtraction step
-            input = self.bkg_subtract(input, members_by_type['BACKGROUND'])
-
-            # Save the background-subtracted product, if requested
-            if self.save_bsub:
-                if isinstance(input, datamodels.CubeModel):
-                    self.save_model(input, "bsubints")
-                else:
-                    self.save_model(input, "bsub")
+            return input
 
         # Apply NIRSpec MSA imprint subtraction
         # Technically there should be just one.
@@ -198,12 +221,10 @@ class Spec2Pipeline(Pipeline):
         input.meta.asn.pool_name = pool_name
         input.meta.asn.table_name = asn_file
 
-        # Save the calibrated exposure
+        # Setup to save the calibrated exposure at end of step.
+        self.suffix = 'cal'
         if isinstance(input, datamodels.CubeModel):
-            self.save_model(input, 'calints')
-        else:
-            self.save_model(input, "cal")
-        log.info('Saved calibrated product to %s' % input.meta.filename)
+            self.suffix = 'calints'
 
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled
@@ -214,14 +235,8 @@ class Spec2Pipeline(Pipeline):
         ]:
 
             # Call the resample_spec step
+            self.resample_spec.suffix = 's2d'
             resamp = self.resample_spec(input)
-
-            # Save the resampled product
-            if not self.resample_spec.skip:
-                self.save_model(resamp, 's2d')
-                log.info(
-                    'Saved resampled product to %s' % resamp.meta.filename
-                )
 
             # Pass the resampled data to 1D extraction
             x1d_input = resamp.copy()
@@ -230,12 +245,8 @@ class Spec2Pipeline(Pipeline):
         elif exp_type in ['MIR_MRS', 'NRS_IFU']:
 
             # Call the cube_build step for IFU data
+            self.cube_build.suffix = 's3d'
             cube = self.cube_build(input)
-
-            # Save the cube product
-            if not self.cube_build.skip:
-                self.save_model(cube, 's3d')
-                log.info('Saved IFU cube product to %s' % cube.meta.filename)
 
             # Pass the cube along for input to 1D extraction
             x1d_input = cube.copy()
@@ -246,19 +257,12 @@ class Spec2Pipeline(Pipeline):
             x1d_input = input
 
         # Extract a 1D spectrum from the 2D/3D data
+        self.extract_1d.suffix = 'x1d'
+        if isinstance(input, datamodels.CubeModel):
+            self.extract_1d.suffix = 'x1dints'
         x1d_output = self.extract_1d(x1d_input)
+
         x1d_input.close()
-
-        # Save the extracted spectrum
-        if not self.extract_1d.skip:
-            if isinstance(input, datamodels.CubeModel):
-                self.save_model(x1d_output, 'x1dints')
-            else:
-                self.save_model(x1d_output, 'x1d')
-            log.info(
-                'Saved extracted spectrum to %s' % x1d_output.meta.filename
-            )
-
         input.close()
         x1d_output.close()
 
@@ -266,4 +270,4 @@ class Spec2Pipeline(Pipeline):
         log.info(
             'Finished processing product {}'.format(exp_product['name'])
         )
-        return
+        return input

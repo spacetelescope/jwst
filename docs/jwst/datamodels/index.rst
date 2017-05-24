@@ -1,5 +1,5 @@
 ===========
-DATA MODELS
+Data Models
 ===========
 
 .. toctree::

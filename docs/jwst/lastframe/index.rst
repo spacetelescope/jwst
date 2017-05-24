@@ -1,6 +1,6 @@
-====================
-LASTFRAME CORRECTION
-====================
+=====================
+Last Frame Correction
+=====================
 
 .. toctree::
    :maxdepth: 2

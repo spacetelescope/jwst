@@ -1,6 +1,6 @@
-==========
-EXTRACT 1D
-==========
+==================
+Extract 1D Spectra
+==================
 
 .. toctree::
    :maxdepth: 2

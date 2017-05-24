@@ -4,6 +4,7 @@ from ..stpipe import Step
 from .. import datamodels
 from . import background_sub
 
+
 class BackgroundStep(Step):
     """
     BackgroundStep:  Subtract background exposures from target exposures.

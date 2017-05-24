@@ -1,5 +1,5 @@
 =========
-FLATFIELD
+Flatfield
 =========
 .. toctree::
    :maxdepth: 2

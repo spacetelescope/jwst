@@ -1,13 +1,9 @@
-=====
-RESET
-=====
-
 Description
 ===========
 
 Assumptions
 -----------
-This correction is currently only implemented for MIRI data. It is
+The reset correction is currently only implemented for MIRI data. It is
 assumed that the input science data have *NOT* had the zero group (or bias)
 subtracted. We also do not want the reset correction  to remove the
 bias signal from the science exposure, therefore the reset correction

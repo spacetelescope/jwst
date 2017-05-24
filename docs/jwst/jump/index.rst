@@ -1,6 +1,6 @@
-====
-JUMP
-====
+==============
+Jump Detection
+==============
 
 .. toctree::
    :maxdepth: 2

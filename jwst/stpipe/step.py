@@ -3,11 +3,12 @@ Step
 """
 from __future__ import absolute_import, division, print_function
 
-import contextlib
 from astropy.extern import six
-from os.path import dirname, join, basename, splitext, abspath, split
-import sys
+import contextlib
 import gc
+from os.path import dirname, join, basename, splitext, abspath, split
+import re
+import sys
 
 try:
     from astropy.io import fits
@@ -21,6 +22,8 @@ from . import log
 from . import utilities
 from .. import __version_commit__, __version__
 
+REMOVE_SUFFIX = '(.+?)(_(rate|cal)(ints)?)?$'
+
 
 class Step(object):
     """
@@ -30,9 +33,10 @@ class Step(object):
     pre_hooks = string_list(default=list())
     post_hooks = string_list(default=list())
 
-    output_dir = string(default=None) # Directory path for output files
+    output_dir = string(default=None)       # Directory path for output files
     output_file = output_file(default=None) # File to save output to.
-    skip = boolean(default=False) # Skip this step
+    skip = boolean(default=False)           # Skip this step
+    save_results = boolean(default=False)   # Force save results
     """
 
     reference_file_types = []
@@ -295,7 +299,6 @@ class Step(object):
             self._post_hooks = []
 
         self._reference_files_used = []
-
         self._input_filename = None
 
     def _check_args(self, args, discouraged_types, msg):
@@ -376,26 +379,29 @@ class Step(object):
             for post_hook in self._post_hooks:
                 post_hook.run(result)
 
-            # Save the output file if one was specified
-            for i, result in enumerate(results):
+            # Mark versions
+            for result in results:
                 if isinstance(result, datamodels.DataModel):
-                    result.meta.calibration_software_revision = __version_commit__ #__svn_revision__
+                    result.meta.calibration_software_revision = __version_commit__
                     result.meta.calibration_software_version = __version__
-                    if self.output_file is not None:
-                        if len(results) > 1:
-                            base, ext = splitext(self.output_file)
-                            output_file_name = "{0}.{1}{2}".format(base, i, ext)
-                        else:
-                            output_file_name = self.output_file
 
-                        # If the user specified an output_dir, replace the
-                        # default path with output_dir
-                        if self.output_dir is not None:
-                            dirname, filename = split(output_file_name)
-                            output_file_name = join(self.output_dir, filename)
-
-                        self.log.info('Saving file {0}'.format(output_file_name))
-                        result.save(output_file_name, overwrite=True)
+            # Save the output file if one was specified
+            if self.save_results or self.output_file is not None:
+                result_id = _make_result_id(
+                    self.output_file, len(results), self.name
+                )
+                make_output_path = self.search_attr(
+                    'make_output_path', parent_first=True
+                )
+                for idx, result in enumerate(results):
+                    if hasattr(result, 'save'):
+                        output_path = make_output_path(
+                            self, result,
+                            basepath=self.output_file,
+                            result_id=result_id(idx)
+                        )
+                        self.log.info('Saving file {0}'.format(output_path))
+                        result.save(output_path, overwrite=True)
 
             self.log.info(
                 'Step {0} done'.format(self.name))
@@ -456,6 +462,41 @@ class Step(object):
         else:
             instance = cls(**kwargs)
         return instance.run(*args)
+
+    def search_attr(self, attribute, parent_first=False):
+        """Return first non-None attribute in step heirarchy
+
+        Parameters
+        ----------
+        attribute: str
+            The attribute to retrieve
+
+        parent_first: bool
+            If `True`, allow parent definition to override step version
+
+        Returns
+        -------
+        value: obj
+            Attribute value or None if not found
+        """
+        if parent_first:
+            try:
+                value = self.parent.search_attr(
+                    attribute, parent_first=parent_first
+                )
+            except AttributeError:
+                value = None
+            if value is None:
+                value = getattr(self, attribute, None)
+            return value
+        else:
+            value = getattr(self, attribute, None)
+            if value is None:
+                try:
+                    value = self.parent.search_attr(attribute)
+                except AttributeError:
+                    pass
+            return value
 
     @classmethod
     def _is_association_file(cls, input_file):
@@ -623,46 +664,200 @@ class Step(object):
         """
         self._input_filename = path
 
-    def save_model(self, model, name, *args, **kwargs):
+    def save_model(self, model, suffix, *args, **kwargs):
         """
-        Saves the given model using a filename based on the model's name
-        or the input filename.
-
-        The "root" or "source" filename is determined first by looking
-        at `meta.filename` on the passed-in model.  If that entry
-        doesn't exist, the input filename passed to stpipe on the
-        command line (or in the config file) is used.
-
-        To generate an output filename from the root filename, the
-        part of the input filename following the last underscore is
-        removed and replaced with `name`, and the same filename
-        extension is used.
+        Saves the given model using the step/pipeline's naming scheme
 
         Parameters
         ----------
         model : jwst.datamodels.Model instance
             The model to save.
 
-        name : str
+        suffix : str
             The suffix to add to the filename.
 
+        Notes
+        -----
+        This routine is used to save data outside of the normal step
+        cycle, where results are saved at the end of a step.
+
+        Serious consideration should be given to the step design
+        if this call is needed. In particular, if such data
+        is important to save, consider making the producing code
+        its own step, such that it is subject to the output controls
+        of the step infrastructure.
         """
-        if model.meta.filename is not None:
-            root = model.meta.filename
-        elif self._input_filename is not None:
-            root = self._input_filename
+
+        # Get the output path as defined by the current step.
+        make_output_path = self.search_attr(
+            'make_output_path', parent_first=True
+        )
+        output_path = make_output_path(
+            self, model, suffix=suffix, ignore_use_model=True
+        )
+
+        model.save(output_path, *args, **kwargs)
+
+    @staticmethod
+    def make_output_path(
+            step, data,
+            basepath=None, suffix=None, ext=None,
+            result_id=None, ignore_use_model=False
+    ):
+        """Make up a path based on data and user specification
+
+        Parameters
+        ----------
+        step: Step
+            The step which produced the data
+
+        data: obj
+            Unused by this routine
+
+        basepath: str or None
+            The output file name. If `None` or empty string, create
+            a filename based on the data.
+
+        suffix: str or None
+            The suffix to append to the basename.
+
+        ext: str or None
+            The file format extension
+
+        result_id: str or None
+            If a suffix cannot be determined, use this as the suffix.
+            If the result is still None, raise ValueError
+
+        ignore_use_model: bool
+            Ignore configuration parameter `output_use_model`
+
+        Returns
+        -------
+        output_path: str
+            The fully qualified output path
+        """
+        from ..datamodels import DataModel
+
+        has_basepath = basepath is not None and len(basepath) > 0
+        use_model_name = not ignore_use_model and getattr(step, 'output_use_model', False)
+        output_path = basepath
+
+        # If a basepath was specified, use that, but adding the
+        # result_id if necessary
+        if has_basepath:
+            path, filename = split(output_path)
+            name, filename_ext = splitext(filename)
+            output_name = [name]
+            suffix = _get_suffix(suffix, default_suffix=result_id)
+            if suffix is not None:
+                output_name.append('_' + suffix)
+            output_name.append(filename_ext)
+            output_name = ''.join(output_name)
+
+        # Otherwise, construct a name
         else:
-            raise ValueError(
-                "Model has no filename, and step has no input filename")
 
-        dirname, filename = split(root)
-        base, ext = splitext(filename)
-        new_filename = base[:base.rfind('_')] + '_' + name + ext
+            # Make names based on DataModels
+            if isinstance(data, DataModel):
 
-        # If the user specified an output_dir, replace the
-        # original dirname with output_dir
-        if self.output_dir is not None:
-            dirname = self.output_dir
+                # If using what is in the model, just retrieve that.
+                if use_model_name:
+                    basepath = data.meta.filename
+                    path, output_name = split(basepath)
 
-        new_path = join(dirname, new_filename)
-        model.save(new_path, *args, **kwargs)
+                # Otherwise, create a fully qualified pipeline outputname
+                else:
+                    basepath = step.search_attr('output_basename')
+                    if basepath is None:
+                        basepath = data.meta.filename
+
+                    # Breakdown the components
+                    path, filename = split(basepath)
+                    name, filename_ext = splitext(filename)
+
+                    # Remove any known, previous suffixes.
+                    match = re.match(REMOVE_SUFFIX, name)
+                    name = match.group(1)
+
+                    # Rebuild the path.
+                    output_name = [name]
+                    suffix = _get_suffix(
+                        suffix, step=step, default_suffix=result_id
+                    )
+                    if suffix is not None:
+                        output_name.append('_' + suffix)
+                    if ext is None:
+                        ext = step.search_attr('output_ext')
+                        if ext is None:
+                            ext = filename_ext
+                    if ext is not None:
+                        output_name.append(ext)
+                    output_name = ''.join(output_name)
+
+        output_path = output_name
+        output_dir = step.search_attr('output_dir')
+        if output_dir is not None:
+            output_path = join(output_dir, output_path)
+        return output_path
+
+
+# #########
+# Utilities
+# #########
+def _make_result_id(output_file, n_results, default_name):
+    """Create function the constructs a result identifier
+
+    Parameters
+    ----------
+    output_file: str or None
+        output file name
+
+    n_results: int
+        The number of results to be saved.
+
+    default_name: str
+        The name to use if `output_file` is not defined
+
+    Returns
+    -------
+    result_id: func
+        A function that takes an int and produces a str
+        the represents a result identifier
+    """
+    id_format = []
+    if output_file is None:
+        id_format.append(default_name.lower())
+    if n_results > 1:
+        id_format.append('{idx}')
+    if len(id_format):
+        id_format = '_'.join(id_format)
+        result_id = lambda idx: id_format.format(idx=str(idx))
+    else:
+        result_id = lambda idx: None
+    return result_id
+
+def _get_suffix(suffix, step=None, default_suffix=None):
+    """Retrieve either specified or pipeline-supplied suffix
+
+    Parameters
+    ----------
+    suffix: str or None
+        Suffix to use if specified.
+
+    step: Step or None
+        The step to retrieve the suffux.
+
+    default_suffix: str
+        If the pipeline does not supply a suffix,
+        use this.
+
+    Returns
+    -------
+    suffix: str or None
+        Suffix to use
+    """
+    if suffix is None and step is not None:
+        suffix = step.search_attr('suffix')
+    if suffix is None:
+        suffix = default_suffix
+    return suffix

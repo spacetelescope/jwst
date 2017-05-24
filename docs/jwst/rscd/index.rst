@@ -1,6 +1,6 @@
-====
-RSCD
-====
+===========================================
+Reset Switch Charge Decay (RSCD) Correction
+===========================================
 
 .. toctree::
    :maxdepth: 2
