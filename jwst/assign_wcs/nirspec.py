@@ -209,6 +209,11 @@ def slits_wcs(input_model, reference_files):
     n_slits = len(open_slits_id)
     log.info("Computing WCS for {0} open slitlets".format(n_slits))
 
+    msa_pipeline = slitlets_wcs(input_model, reference_files, open_slits_id)
+
+    return msa_pipeline
+
+def slitlets_wcs(input_model, reference_files, open_slits_id):
     # Get the corrected disperser model
     disperser = get_disperser(input_model, reference_files['disperser'])
 
