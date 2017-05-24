@@ -215,6 +215,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         for fd in self._files_to_close:
             if fd is not None:
                 fd.close()
+        if self._asdf is not None:
+            self._asdf.close()
 
     def copy(self, memo=None):
         """
