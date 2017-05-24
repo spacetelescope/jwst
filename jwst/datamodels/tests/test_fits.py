@@ -40,6 +40,13 @@ def setup():
 def teardown():
     shutil.rmtree(TMP_DIR)
 
+def lists_equal(a, b):
+    if len(a) != len(b):
+        return False
+    for i in range(len(a)):
+        if a[i] != b[i]:
+            return False
+    return True
 
 def test_from_new_hdulist():
     with pytest.raises(AttributeError):
@@ -382,7 +389,7 @@ def test_replace_table():
     m.to_fits(TMP_FITS, overwrite=True)
 
     with fits.open(TMP_FITS) as hdulist:
-        assert repr(list(x)) == repr(list(np.asarray(hdulist[1].data)))
+        assert list_equals(x, np.asarray(hdulist[1].data))
         assert hdulist[1].data.dtype[1].str == '>f4'
         assert hdulist[1].header['TFORM2'] == 'E'
 
