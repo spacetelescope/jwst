@@ -1,5 +1,5 @@
 ========
-RESAMPLE
+Resample
 ========
 
 .. toctree::

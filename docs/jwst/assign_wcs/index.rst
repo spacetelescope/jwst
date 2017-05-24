@@ -1,5 +1,5 @@
 ==========
-ASSIGN WCS
+Assign WCS
 ==========
 
 .. toctree::

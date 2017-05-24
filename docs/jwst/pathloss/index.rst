@@ -1,6 +1,6 @@
-========
-PATHLOSS
-========
+===================
+Pathloss Correction
+===================
 
 .. toctree::
    :maxdepth: 2

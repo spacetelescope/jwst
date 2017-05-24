@@ -1,0 +1,137 @@
+title: NirSpec Disperser reference file model
+allOf:
+- $ref: referencefile.schema.yaml
+- $ref: keyword_exptype.schema.yaml
+- $ref: keyword_grating.schema.yaml
+- $ref: keyword_pgrating.schema.yaml
+- type: object
+  properties:
+    groovedensity:
+      description: |
+        Number of grooves per meter in a grating.
+      type: integer
+    angle:
+      description: |
+        Prism angle (in degerees) between the front surface and the back surface.
+      type: number
+    gwa_tiltx:
+      type: object
+      description: |
+        Grating Y tilt angle relative to mirror
+      properties:
+        temperatures:
+          description: |
+            Temperature where the GWA sensor calibraiton was obtained.
+          type: array
+          items:
+            type: number
+        tilt_model:
+          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+          description: |
+            Relation THETA_Y vs GWA_X reading.
+        unit:
+          anyOf:
+            - type: string
+            - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0
+        zeroreadings:
+          description: |
+            Value of GWA sensor reading corresponding to disperser
+            model parameters.
+          type: array
+          items:
+            type: number
+    gwa_tilty:
+      type: bject
+      description: |
+        Grating X tilt angle relative to mirror
+      properties:
+        temperatures:
+          description: |
+            Temperature where the GWA sensor calibraiton was obtained.
+          type: array
+          items:
+            type: number
+        tilt_model:
+          $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+          description: |
+            Relation THETA_Y vs GWA_X reading.
+        unit:
+          anyOf:
+            - type: string
+            - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0
+        zeroreadings:
+          description: |
+            Value of GWA sensor reading corresponding to disperser
+            model parameters.
+          type: array
+          items:
+            type: number
+    kcoef:
+      type: array
+      description: |
+        K coefficients to describe the material
+      items:
+        type: number
+        minItems: 3
+        maxItems: 3
+    lcoef:
+      type: array
+      description: |
+        L coefficients to describe the material
+      items:
+        type: number
+        minItems: 3
+        maxItems: 3
+    tcoef:
+      type: array
+      description: |
+        Constants (D0, D1, D2, E0, E1 and lambdak) to describe the thermal behavior of the glass.
+      items:
+        type: number
+        minItems: 6
+        maxItems: 6
+    pref:
+      description: |
+        Pressure in ATM to compute the change in temperature relative to the
+        reference temperature of the glass.
+      type: number
+      default: 1.0
+    theta_x:
+      description: |
+        Element alignment angles in arcsec in x-axis.
+      type: number
+    theta_y:
+      description: |
+        Element alignment angles in arcsec in y-axis.
+      type: number
+    theta_z:
+      description: |
+        Element alignment angles in arcsec in z-axis.
+      type: number
+    tilt_x:
+      type: number
+    tilt_y:
+      description: |
+        Angle n deg between the fromn surface and the reference
+        surface (MIRROR).
+      type: number
+    tref:
+      description: |
+        Temperature in K to compute the change in temperature relative to the
+        reference temperature of the glass.
+      type: number
+    wbound:
+      description: |
+        Minimum and maximum wavelengths in meter (validity of the formula)
+      type: array
+      items:
+        type: number
+        minItems: 2
+        maxItems: 2
+    meta:
+      type: object
+      properties:
+        wavelength_units:
+          anyOf:
+            - type: string
+            - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0

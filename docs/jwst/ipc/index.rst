@@ -1,6 +1,6 @@
-===
-IPC
-===
+==============
+IPC Correction
+==============
 
 .. toctree::
    :maxdepth: 2

@@ -40,6 +40,8 @@ class AlignRefsStep(Step):
             # Call the alignment routine
             result = imageregistration.align_models(target_model, psf_model,
                                                     mask_model)
+            result.meta.cal_step.align_psfs = 'COMPLETE'
+
             mask_model.close()
             psf_model.close()
 

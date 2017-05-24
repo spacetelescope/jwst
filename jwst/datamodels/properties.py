@@ -42,11 +42,6 @@ def _cast(val, schema):
             raise ValueError(
                 "Array has wrong number of dimensions.  Expected <= {0}, got {1}".format(
                     schema['max_ndim'], len(val.shape)))
-        tag = schema.get('tag')
-        if tag is not None:
-            val = tagged.tag_object(tag, val)
-        if isinstance(val, np.generic) and np.isscalar(val):
-            val = np.asscalar(val)
 
     return val
 
@@ -240,7 +235,7 @@ class ObjectNode(Node):
             except jsonschema.ValidationError:
                 self._revert(attr, old_val)
                 raise
-    
+
     def __delattr__(self, attr):
         if attr.startswith('_'):
             del self.__dict__[attr]
@@ -325,7 +320,7 @@ class ListNode(Node):
     def __delslice__(self, i, j):
         del self._instance[i:j]
         self._validate()
-            
+
     def append(self, item):
         schema = _get_schema_for_index(self._schema, len(self._instance))
         self._instance.append(_cast(item, schema))
@@ -359,7 +354,7 @@ class ListNode(Node):
     def sort(self, *args, **kwargs):
         self._instance.sort(*args, **kwargs)
         self._validate()
-            
+
     def extend(self, other):
         for part in _unmake_node(other):
             self.append(part)

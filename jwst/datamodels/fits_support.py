@@ -352,8 +352,6 @@ def _save_from_schema(hdulist, tree, schema):
     validator.hdulist = hdulist
     # TODO: Handle comment stack on per-hdu-basis
     validator.comment_stack = []
-    # Tag the tree values first, the validator requires it
-    _tag_values(tree, schema)
     # This actually kicks off the saving
     validator.validate(tree, _schema=schema)
 
@@ -382,31 +380,6 @@ def _save_history(hdulist, tree):
             else:
                 history[i] = HistoryEntry({'description': str(history[i])})
         hdulist[0].header['HISTORY'] = history[i]['description']
-
-
-def _tag_values(tree, schema):
-    # Replace tag value in tree with tagged versions
-
-    def included(cursor, part):
-        if isinstance(part, int):
-            return part > 0 and part < len(cursor)
-        else:
-            return part in cursor
-
-    def callback(subschema, path, combiner, ctx, recurse):
-        tag = subschema.get('tag')
-        if tag is not None:
-            cursor = tree
-            for part in path[:-1]:
-                if included(cursor, part):
-                    cursor = cursor[part]
-                else:
-                    return
-            part = path[-1]
-            if included(cursor, part):
-                cursor[part] = tagged.tag_object(tag, cursor[part])
-
-    mschema.walk_schema(schema, callback)
 
 
 def to_fits(tree, schema, extensions=None):

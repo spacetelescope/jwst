@@ -1,5 +1,5 @@
 ============
-RAMP FITTING
+Ramp Fitting
 ============
 
 .. toctree::

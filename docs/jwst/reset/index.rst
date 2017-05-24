@@ -1,6 +1,6 @@
-========
-RESAMPLE
-========
+================
+Reset Correction
+================
 
 .. toctree::
    :maxdepth: 2
