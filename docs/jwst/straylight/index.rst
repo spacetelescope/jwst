@@ -1,6 +1,6 @@
-===========
-STRAY LIGHT
-===========
+======================
+Stray Light Correction
+======================
 
 .. toctree::
    :maxdepth: 2

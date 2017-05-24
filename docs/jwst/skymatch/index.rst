@@ -1,5 +1,5 @@
 ========
-SKYMATCH
+Skymatch
 ========
 
 .. toctree::

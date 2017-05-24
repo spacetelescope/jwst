@@ -190,14 +190,10 @@ def FindFootPrintMIRI(self, input, this_channel, InstrumentInfo):
 
         coord1, coord2, lam = detector2alpha_beta(x, y)
 
-
-        #print(x[15,59],y[15,59])
-        #print('Found x,y values',coord1[15,59], coord2[15,59],lam[15,59])
-
-        xtest = 28.310396-1 # test pixel to compare with Distortion doc 
-        ytest = 512.0-1     # test pixel to compare with Distortion doc
-        coord1_test,coord2_test,lam_test = detector2alpha_beta(xtest,ytest)
-        print('test values',xtest+1,ytest+1,coord1_test,coord2_test,lam_test)
+#        xtest = 28.310396-1 # test pixel to compare with Distortion doc 
+#        ytest = 512.0-1     # test pixel to compare with Distortion doc
+#        coord1_test,coord2_test,lam_test = detector2alpha_beta(xtest,ytest)
+#        print('test values',xtest+1,ytest+1,coord1_test,coord2_test,lam_test)
 
 
     elif self.coord_system == 'ra-dec':
@@ -425,11 +421,12 @@ def DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo):
         #TODO instead of self.interpolation=area I think it should be coord_system = alpha-beta
         # so we have a 1 to 1 mapping in beta dimension.
         nslice = InstrumentInfo.GetNSlice(parameter1[0])
+        self.log.info('Beta Scale %f ',Cube.Cdelt2)
         Cube.Cdelt2 = (final_b_max - final_b_min)/nslice
-        print('remove********')
-        Cube.Cdelt2 = 0.17722104
+        #print('remove********')
+        #Cube.Cdelt2 = 0.17722104
         final_b_max = final_b_min + (nslice)*Cube.Cdelt2
-        print('remove********')
+        #print('remove********')
         self.log.info('Changed the Beta Scale dimension so we have 1 -1 mapping between beta and slice #')
         self.log.info('New Beta Scale %f ',Cube.Cdelt2)
 
@@ -499,11 +496,6 @@ def MapDetectorToCube(self,this_par1, this_par2,
             Cube.file.append(input_model.meta.filename)
 #********************************************************************************
             if instrument == 'MIRI':
-            # For MIRI this information is used in the weight scheme on how to
-            # combine the surface brightness information. The Cube class stores
-            # these paramters as a series of lists.
-
-
 #________________________________________________________________________________
 # Standard method 
                 if(self.interpolation == 'pointcloud'):
@@ -536,7 +528,6 @@ def MapDetectorToCube(self,this_par1, this_par2,
                     #    det2ab_shift.selector[key] = shift | det2ab_shift.selector[key]
 
                     #    input_model.meta.wcs.set_transform('detector','alpha_beta',det2ab_shift)
-
 
                     start_region = InstrumentInfo.GetStartSlice(this_par1)
                     end_region = InstrumentInfo.GetEndSlice(this_par1)
@@ -666,8 +657,8 @@ def CheckCubeType(self):
         if(self.metadata['number_files'] > 1):
             raise IncorrectInput("For interpolation = area, only one file can be used to created the cube")
 
-        if(len(self.metadata['channel']) > 1):
-            raise IncorrectInput("For interpolation = area, only channel can be used to created the cube")
+        if(len(self.metadata['band_channel']) > 1):
+            raise IncorrectInput("For interpolation = area, only a single channel can be used to created the cube. Use --channel=# option")
 
         if(self.scale2 !=0):
             raise AreaInterpolation("When using interpolation = area, the output coordinate system is alpha-beta" +

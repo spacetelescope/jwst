@@ -121,6 +121,7 @@ def MatchDet2Cube(self, input_model,
     xpix = x[good_data] # only used for testing
     ypix = y[good_data] # only used for testing
 
+    
     ra = ra - c1_offset/3600.0
     dec = dec - c2_offset/3600.0
     ra_use = ra[good_data]
@@ -141,21 +142,6 @@ def MatchDet2Cube(self, input_model,
         coord2 = eta
 
 
-#    print('ra use',ra_use[0:10])
-#    print('dec use',dec_use[0:10])
-#    print('ra use shape',ra_use.shape)
-#        index_xy = np.nonzero( (xpix == 470) & (ypix ==1))[0]
-#        print('wavelength',lam_use[index_xy])
-#        mm = (lam_use[index_xy])
-#        print('Wavelength at 470,1',mm)
-#        n= len(lam)
-#        for ii in range(0, n - 1):
-#            if(lam[ii] < mm):
-#                mnew = lam[ii]
-#                print(mnew,mm,xpix[ii],ypix[ii],dq_all[ii])
-   
-    
-
     nplane = Cube.naxis1 * Cube.naxis2
     lower_limit = 0.01
 
@@ -170,17 +156,28 @@ def MatchDet2Cube(self, input_model,
         # cube coordinates. 
         # find the spaxels that fall withing ROI of point cloud defined  by
         # coord1,coord2,wave
+#        if(ipt > 2): sys.exit('STOP')
+#        print('For point ',coord1[ipt],coord2[ipt],wave[ipt],ipt)
 
         xdistance = (Cube.Xcenters - coord1[ipt])
         ydistance = (Cube.Ycenters - coord2[ipt])
-        
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
+
+#        print(radius.shape[0]) 
+#        for ii in range(radius.shape[0]):
+#            print(radius[ii],ii,(radius[ii] <= self.rois),Cube.Xcenters[ii],Cube.Ycenters[ii])
         indexr = np.where(radius  <=self.rois)
         indexz = np.where(abs(Cube.zcoord - wave[ipt]) <= self.roiw)
 
+#        print('indexz',indexz)
+#        print('indexr',indexr)
         zlam = Cube.zcoord[indexz]        # z Cube values falling in wavelength roi
         xi_cube = Cube.Xcenters[indexr]   # x Cube values within radius 
         eta_cube = Cube.Ycenters[indexr]  # y cube values with the radius
+
+#        print('found xi_cube',xi_cube)
+#        print('found eta_cube',eta_cube)
+
 #________________________________________________________________________________
 # loop over the points in the ROI
         for iz, zz in enumerate(indexz[0]):
@@ -189,15 +186,18 @@ def MatchDet2Cube(self, input_model,
 
                 yy_cube = int(rr/Cube.naxis1)
                 xx_cube = rr - yy_cube*Cube.naxis1
+#                print('xx yy cube',rr,Cube.naxis1,xx_cube,yy_cube)
 #________________________________________________________________________________
                 if self.weighting =='standard':
 
                     d1 = (xi_cube[ir] - coord1[ipt])/Cube.Cdelt1
                     d2 = (eta_cube[ir] - coord2[ipt])/Cube.Cdelt2
                     d3 = (zlam[iz] - wave[ipt])/Cube.Cdelt3
-                        
+#                    print('d1,d2,d3',d1,d2,d3)
+                    
                     weight_distance = math.sqrt(d1*d1 + d2*d2 + d3*d3)
                     weight_distance = math.pow(weight_distance,self.weight_power)
+#                    print('weight_distance',weight_distance)
 #________________________________________________________________________________
 # if weight is miripsf -distances determined in alpha-beta coordinate system 
 
@@ -237,6 +237,9 @@ def MatchDet2Cube(self, input_model,
                 weight_distance = 1.0 / weight_distance
 
                 cube_index = istart + rr
+
+
+#                print('Cube_index',cube_index,istart,rr)
                 spaxel[cube_index].flux = spaxel[cube_index].flux + weight_distance*flux[ipt]
                 spaxel[cube_index].flux_weight = spaxel[cube_index].flux_weight + weight_distance
                 spaxel[cube_index].iflux = spaxel[cube_index].iflux + 1
@@ -245,13 +248,13 @@ def MatchDet2Cube(self, input_model,
                 if( self.debug_pixel == 1 and self.xdebug == xx_cube and
                       self.ydebug == yy_cube and self.zdebug == zz):
 
-                    log.debug('For spaxel %d %d %d, detector x,y,flux %d %d %f %d %f '
+                    log.debug('For spaxel %d %d %d, %d detector x,y,flux %d %d %f %d %f '
                                   %(self.xdebug+1,self.ydebug+1,
-                                    self.zdebug+1,xpix[ipt],ypix[ipt],
+                                    self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
                                     flux[ipt],file_slice_no,weight_distance))
-                    self.spaxel_debug.write('For spaxel %d %d %d, detector x,y,flux %d %d %f %d %f %f %f %f %f %f '
+                    self.spaxel_debug.write('For spaxel %d %d %d %d, detector x,y,flux %d %d %f %d %f %f %f %f %f %f '
                                   %(self.xdebug+1,self.ydebug+1,
-                                    self.zdebug+1,xpix[ipt],ypix[ipt],
+                                    self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
                                     flux[ipt],file_slice_no,weight_distance,wave[ipt],zlam[iz],
                                     d1*Cube.Cdelt1,d2*Cube.Cdelt2,d3*Cube.Cdelt3) +' \n')
         iprint = iprint +1

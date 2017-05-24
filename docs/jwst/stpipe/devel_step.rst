@@ -39,6 +39,32 @@ the user can use to specify the file to save this model to.  The
 saving is handled by the framework -- steps generally do not need to
 explicitly save their results.
 
+Output Configuration
+--------------------
+
+There are three ways a step's results can be written to a file:
+
+1. Implicitly when a step is run from the command line or with
+   `Step.from_cmdline` 
+
+2. Explicity by specifying the parameter `save_results`
+
+3. Explicity by specifying a file name with the paremeter
+   `output_file`
+
+In all cases, the file, or files, is/are created with an added suffix
+at the end of the base file name. By default this suffix is the class
+name of the step that produced the results. Use the `suffix` parameter
+to explicitly change the suffix.
+
+For pipelines, this can be done either in the default coniguration
+file, or within the code itself. See `calwebb_dark` for an example
+of specifying in the configuration.
+
+For an example where the suffix can only be determined at runtime, see
+`calwebb_sloper`. For an example of a pipeline that returns many
+results, see `calwebb_spec2`.
+
 The Python class
 ----------------
 

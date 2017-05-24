@@ -33,8 +33,9 @@ Pipeline
 
 from __future__ import absolute_import, division, print_function
 
-from os.path import dirname, join
 import gc
+from os.path import dirname, join, split, splitext
+import re
 
 from .configobj.configobj import Section
 
@@ -45,6 +46,14 @@ from . import Step
 class Pipeline(Step):
     """
     A Pipeline is a way of combining a number of steps together.
+    """
+
+    # Configuration
+    spec = """
+    output_basename = string(default=None)    # Output base name
+    output_ext = string(default=".fits")      # Output extension
+    suffix = string(default=None)             # Suffix for output file name
+    output_use_model = boolean(default=False) # force use `meta.filename` as the output name
     """
     # A set of steps used in the Pipeline.  Should be overridden by
     # the subclass.

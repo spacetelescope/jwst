@@ -1,6 +1,6 @@
-=======
-SRCTYPE
-=======
+===================================
+Source Type (SRCTYPE) Determination
+===================================
 
 .. toctree::
    :maxdepth: 2

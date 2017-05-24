@@ -1,6 +1,6 @@
-==========
-COMBINE 1D
-==========
+==================
+Combine 1D Spectra
+==================
 
 .. toctree::
    :maxdepth: 2

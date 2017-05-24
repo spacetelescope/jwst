@@ -125,70 +125,97 @@ class CubeInfo(object):
         # actually this is hard due to converenge of hour angle
         # improve determining ra_ave in the future - do not just average (BAD) 
         ra_ave = ((ra_min + ra_max)/2.0 )#* math.cos(dec_ave*deg2rad) 
-
-        range_ra = (ra_max - ra_min) * 3600.0 * math.cos(dec_ave*deg2rad)
-        range_dec = (dec_max - dec_min) * 3600.0
+#        range_ra = (ra_max - ra_min) * 3600.0 * math.cos(dec_ave*deg2rad)
+#        range_dec = (dec_max - dec_min) * 3600.0
 
         self.Crval1 = ra_ave 
         self.Crval2 = dec_ave
-        xi,eta = coord.radec2std(self.Crval1, self.Crval2,ra_ave,dec_ave)
+        xi_center,eta_center = coord.radec2std(self.Crval1, self.Crval2,ra_ave,dec_ave)
         
         xi_min,eta_min = coord.radec2std(self.Crval1, self.Crval2,ra_min,dec_min)
         xi_max,eta_max = coord.radec2std(self.Crval1, self.Crval2,ra_max,dec_max)
-        
-        xi_min = xi_min - self.Cdelt1/2.0
-        xi_max = xi_max + self.Cdelt1/2.0
-        eta_min = eta_min - self.Cdelt2/2.0
-        eta_max = eta_max + self.Cdelt2/2.0
+#________________________________________________________________________________
+        # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
+        # to find location of center abs of min values is how many pixels 
 
         n1a = int(math.ceil(math.fabs(xi_min) / self.Cdelt1)) 
-        n1b = int(math.ceil(math.fabs(xi_max) / self.Cdelt1)) 
         n2a = int(math.ceil(math.fabs(eta_min) / self.Cdelt2)) 
+
+        n1b = int(math.ceil(math.fabs(xi_max) / self.Cdelt1)) 
         n2b = int(math.ceil(math.fabs(eta_max) / self.Cdelt2)) 
 
+        xi_min = 0.0 - (n1a * self.Cdelt1) - self.Cdelt1/2.0
+        xi_max = (n1b * self.Cdelt1) + self.Cdelt1/2.0
+
+        eta_min = 0.0 - (n2a * self.Cdelt2) - self.Cdelt2/2.0
+        eta_max = (n2b * self.Cdelt2) + self.Cdelt2/2.0
+        
+        self.Crpix1 = n1a
+        self.Crpix2 = n2a
+
         self.naxis1 = n1a + n1b
-        self.naxis2 = n2a + n2b 
+        self.naxis2 = n2a + n2b
+
         self.a_min  = xi_min
         self.a_max = xi_max
         self.b_min = eta_min
         self.b_max = eta_max
 
+# center of spaxels 
         self.xcoord = np.zeros(self.naxis1)
-
-        self.Crpix1 = n1a
-        xstart = self.a_min + self.Cdelt1 / 2.0
+        xstart = xi_min + self.Cdelt1 / 2.0
         for i in range(self.naxis1):
             self.xcoord[i] = xstart
             xstart = xstart + self.Cdelt1
+#            print('xcoord',self.xcoord[i],i)
 
         self.ycoord = np.zeros(self.naxis2)
+        ystart = eta_min + self.Cdelt2 / 2.0
 
-        self.Crpix2 = n2a
-        ystart = self.b_min + self.Cdelt2 / 2.0
         for i in range(self.naxis2):
             self.ycoord[i] = ystart
             ystart = ystart + self.Cdelt2
-#_______________________________________________________________________
-#        print('in cube.py ycoords',self.ycoord)
-#        print('in cube.py xcoords',self.xcoord)
+#            print('ycoord',self.ycoord[i],i)
+
+#        print('ycoord xcoord shape',self.ycoord.shape,self.xcoord.shape)
         
+#_______________________________________________________________________
+        
+#        ystart = self.ycoord[0]
+#        yend = self.ycoord[0] + self.Cdelt2*(self.naxis2)
+        
+#        xstart = self.xcoord[0]
+#        xend = self.xcoord[0] + self.Cdelt1*(self.naxis1)
+
+#        yy,xx = np.mgrid[ystart:yend:self.Cdelt2,
+#                         xstart:xend:self.Cdelt1]
+
+        ygrid = np.zeros(self.naxis2*self.naxis1)
+        xgrid = np.zeros(self.naxis2*self.naxis1)
+
+        k = 0 
         ystart = self.ycoord[0]
-        yend = self.ycoord[self.naxis2-1] + self.Cdelt2
+        for i in range(self.naxis2):
+            xstart = self.xcoord[0]
+            for j in range(self.naxis1): 
+                xgrid[k] = xstart
+                ygrid[k] = ystart
+                xstart = xstart + self.Cdelt1
+                k = k + 1
+            ystart = ystart + self.Cdelt2
+        
 
-        xstart = self.xcoord[0]
-        xend = self.xcoord[self.naxis1-1] + self.Cdelt1
+#        print('y start end',ystart,yend)
+#        print('x start end',xstart,xend)
 
-        yy,xx = np.mgrid[ystart:yend:self.Cdelt2,
-                         xstart:xend:self.Cdelt1]
 #        print('yy shape',yy.shape,self.ycoord.shape)
 #        print('xx shape',xx.shape,self.xcoord.shape)
 
-        self.GridY = yy
-        self.GridX = xx
-        self.Ycenters = np.ravel(yy)
-        self.Xcenters = np.ravel(xx)
-#        print(self.Ycenters)
-#        print('in cube.py Xcenters shape',self.Xcenters.shape)
+#        self.Ycenters = np.ravel(yy)
+#        self.Xcenters = np.ravel(xx)
+
+        self.Xcenters = xgrid
+        self.Ycenters = ygrid
 #_______________________________________________________________________
         #set up the lambda (z) coordinate of the cube
 

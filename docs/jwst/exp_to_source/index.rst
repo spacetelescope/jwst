@@ -1,6 +1,6 @@
-=============
-EXP_TO_SOURCE
-=============
+=============================
+Exposure to Source Conversion
+=============================
 
 .. toctree::
    :maxdepth: 2

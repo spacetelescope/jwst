@@ -1,7 +1,8 @@
 #!/usr/bin/env python
+import logging
+
 from ..stpipe import Pipeline
 from .. import datamodels
-import os
 
 # step imports
 from ..group_scale import group_scale_step
@@ -18,9 +19,9 @@ from ..linearity import linearity_step
 __version__ = "0.7.1"
 
 # Define logging
-import logging
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
+
 
 class DarkPipeline(Pipeline):
     """
@@ -43,7 +44,6 @@ class DarkPipeline(Pipeline):
                  'lastframe': lastframe_step.LastFrameStep,
                  'linearity': linearity_step.LinearityStep,
                  }
-
 
     # start the actual processing
     def process(self, input):
@@ -80,41 +80,6 @@ class DarkPipeline(Pipeline):
             input = self.refpix(input)
             input = self.linearity(input)
 
-        # setup output_file for saving
-        self.setup_output(input)
-
         log.info('... ending calwebb_dark')
 
         return input
-
-
-    def setup_output(self, input):
-
-        # This routine doesn't actually save the final result to a file,
-        # but just sets up the value of self.output_file appropriately.
-        # The final data model is passed back up to the caller, which can be
-        # either an interactive session or a command-line instance of stpipe.
-        # If it's an interactive session, the data model is simply returned to
-        # the user without saving to a file. If it's a command-line instance
-        # of stpipe, stpipe will save the data model to a file using the name
-        # given in self.output_file.
-
-        # The desired suffix for corrected dark ramps is 'dark'
-        suffix = 'dark'
-
-        # Has an output file name already been set, either by the user
-        # or by stpipe when the pipeline was instantiated?
-        if self.output_file is not None:
-
-            # Check to see if the output_file name is the default set by
-            # stpipe for command-line processing
-            root, ext = os.path.splitext(self.output_file)
-            if root[root.rfind('_') + 1:] == 'DarkPipeline':
-
-                # Remove the class name that stpipe appended to the file name,
-                # as well as the original suffix on the input file name,
-                # and create a new name with the appropriate output suffix
-                root = root[:root.rfind('_')]
-                self.output_file = root[:root.rfind('_') + 1] + suffix + ext
-
-        # If no output name was set, take no action

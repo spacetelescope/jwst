@@ -59,9 +59,11 @@ def do_correction(input_model, dark_model, dark_output=None):
 
     # Check that the number of groups in the science data does not exceed
     # the number of groups in the dark current array.
-    if (sci_nframes + sci_groupgap) * sci_ngroups - sci_groupgap > drk_ngroups:
-        log.warning("There are more groups in the science data than in the " +
-        "dark data.")
+    sci_total_frames = sci_ngroups * (sci_nframes + sci_groupgap)
+    drk_total_frames = drk_ngroups * (drk_nframes + drk_groupgap)
+    if sci_total_frames > drk_total_frames:
+        log.warning("Not enough data in dark reference file to match to " +
+        "science data.")
         log.warning("Input will be returned without subtracting dark current.")
         input_model.meta.cal_step.dark_sub = 'SKIPPED'
         return input_model.copy()

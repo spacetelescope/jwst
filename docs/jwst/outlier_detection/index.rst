@@ -1,5 +1,5 @@
 =================
-OUTLIER DETECTION
+Outlier Detection
 =================
 
 .. toctree::

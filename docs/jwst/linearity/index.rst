@@ -1,6 +1,6 @@
-=========
-LINEARITY
-=========
+====================
+Linearity Correction
+====================
 
 .. toctree::
    :maxdepth: 2
