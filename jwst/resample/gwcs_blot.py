@@ -14,7 +14,7 @@ from gwcs import wcstools
 
 from drizzle import util
 from drizzle import doblot
-from drizzle import cdrizzle
+from drizzle.cdrizzle import tblot
 from . import resample_utils
 
 import logging
@@ -78,17 +78,17 @@ class GWCSBlot(object):
         outsci = np.zeros(blot_img.shape, dtype=np.float32)
 
         # Compute the mapping between the input and output pixel coordinates
-        pixmap = resample_utils.calc_gwcs_pixmap(self.source_wcs, blot_wcs,
-            self.source.shape)
+        pixmap = resample_utils.calc_gwcs_pixmap(blot_wcs, self.source_wcs,
+            outsci.shape)
         log.debug("Pixmap shape: {}".format(pixmap[:,:,0].shape))
-        log.debug("Sci shape: {}".format(self.source.shape))
+        log.debug("Sci shape: {}".format(outsci.shape))
 
         source_pscale = self.source_model.meta.wcsinfo.cdelt1
         blot_pscale = blot_img.meta.wcsinfo.cdelt1
 
         pix_ratio = source_pscale / blot_pscale
-        log.info("Starting blot...")
-        cdrizzle.tblot(self.source, pixmap, outsci, scale=pix_ratio, kscale=1.0,
+        log.info('Blotting {} <-- {}'.format(outsci.shape, self.source.shape))
+        tblot(self.source, pixmap, outsci, scale=pix_ratio, kscale=1.0,
                        interp=interp, exptime=1.0, misval=0.0, sinscl=sinscl)
 
         return outsci
