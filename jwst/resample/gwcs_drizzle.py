@@ -311,7 +311,6 @@ def dodrizzle(insci, input_wcs, inwht,
 
     insci : 2d array
         A 2d numpy array containing the input image to be drizzled.
-        it is an error to not supply an image.
 
     input_wcs : gwcs.WCS object
         The world coordinate system of the input image.
@@ -458,10 +457,12 @@ def dodrizzle(insci, input_wcs, inwht,
 
     # Compute the mapping between the input and output pixel coordinates
     # for use in drizzle.cdrizzle.tdriz
-    pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs)
+    pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs, insci.shape)
+    log.debug("Pixmap shape: {}".format(pixmap[:,:,0].shape))
+    log.debug("Sci shape: {}".format(insci.shape))
 
     # Call 'drizzle' to perform image combination
-    log.info('Starting drizzle...')
+    log.info('Drizzling {} --> {}'.format(insci.shape, outsci.shape))
     _vers, nmiss, nskip = cdrizzle.tdriz(
         insci, inwht, pixmap, outsci, outwht, outcon,
         uniqid=uniqid, xmin=xmin, xmax=xmax,

@@ -22,23 +22,20 @@ class OutlierDetectionStep(Step):
     spec = """
         wht_type = option('exptime','error',None,default='exptime')
         pixfrac = float(default=1.0)
-        kernel = string(default='square')
+        kernel = string(default='square') # drizzle kernel
         fillval = string(default='INDEF')
         nlow = integer(default=0)
         nhigh = integer(default=0)
-        hthresh = float(default=-1.0)
-        lthresh = float(default=-1.0)
-        nsigma = string(default='4.0 3.0')
         maskpt = float(default=0.7)
         grow = integer(default=1)
-        ctegrow = integer(default=0)
         snr = string(default='4.0 3.0')
         scale = string(default='0.5 0.4')
         backg = float(default=0.0)
+        save_intermediate_files = boolean(default=False)
     """
     reference_file_types = ['gain', 'readnoise']
 
-    def process(self, input, to_file=False):
+    def process(self, input):
 
         with datamodels.open(input) as input_models:
 
@@ -62,19 +59,16 @@ class OutlierDetectionStep(Step):
                 'fillval': self.fillval,
                 'nlow': self.nlow,
                 'nhigh': self.nhigh,
-                'hthresh': self.hthresh,
-                'lthresh': self.lthresh,
-                'nsigma': self.nsigma,
                 'maskpt': self.maskpt,
                 'grow': self.grow,
-                'ctegrow': self.ctegrow,
                 'snr': self.snr,
                 'scale': self.scale,
-                'backg': self.backg}
+                'backg': self.backg,
+                'save_intermediate_files': self.save_intermediate_files}
 
             # Set up outlier detection, then do detection
             step = outlier_detection.OutlierDetection(self.input_models,
-                reffiles=reffiles, to_file=to_file, **pars)
+                reffiles=reffiles, **pars)
             step.do_detection()
 
             return self.input_models
