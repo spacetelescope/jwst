@@ -2,7 +2,7 @@ JWST Calibration Pipeline
 =========================
 [![Build Status](https://travis-ci.org/STScI-JWST/jwst.svg?branch=master)](https://travis-ci.org/STScI-JWST/jwst)
 
-[!(docs/_static/JWSTlogocrop.png)]
+![JWST Logo](docs/_static/JWSTlogocrop.png)
 
 Installing
 ----------
