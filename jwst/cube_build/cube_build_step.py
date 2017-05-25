@@ -2,11 +2,13 @@
 
 import sys
 import time
+import math
 import json
 import os
 import numpy as np
 from ..stpipe import Step, cmdline
 import logging
+from fitsblender import blendheaders
 from .. import datamodels
 from . import cube_build_io
 from . import cube_build
@@ -37,9 +39,8 @@ class CubeBuildStep (Step):
          interpolation = option(,'pointcloud','area','POINTCLOUD','AREA',default='pointcloud')
          weighting = option('standard','miripsf','STANDARD','MIRIPSF',default = 'standard')
          coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec')
-         roi1 = float(default=1.0)
-         roi2 = float(default=1.0)
-         roiw = float(default=1.0)
+         rois = float(default=0.0)
+         roiw = float(default=0.0)
          weight_power = float(default=2.0)
          offset_list = string(default='NA')
          wavemin = float(default=None)
@@ -48,6 +49,7 @@ class CubeBuildStep (Step):
          ydebug = integer(default=None) 
          zdebug = integer(default=None)
        """
+    # reference_file_types = ['cubepars','resol']
 
     def process(self, input):
         self.log.info('Starting IFU Cube Building Step')
@@ -71,6 +73,9 @@ class CubeBuildStep (Step):
         if(self.wavemax !=None): self.log.info('Setting Maximum wavelength of spectral cube to: %f',
                                               self.wavemax)
 
+        if(self.rois != 0.0): self.log.info('Input Spatial ROI size %f', self.rois)
+        if(self.roiw != 0.0): self.log.info('Input Wave ROI size %f', self.roiw)
+
         self.debug_pixel = 0
         if(self.xdebug !=None and self.ydebug !=None and self.zdebug !=None):
             self.debug_pixel = 1
@@ -89,17 +94,17 @@ class CubeBuildStep (Step):
         # 1. alpha-beta (only valid for MIRI Single Cubes)
         # 2. ra-dec
 
-        if (self.interpolation == 'area'):
+        if self.interpolation == 'area':
             self.coord_system = 'alpha-beta'
 
-        if (self.coord_system == 'ra-dec'):
+        if self.coord_system == 'ra-dec':
             self.interpolation = 'pointcloud'  # can not be area
 
         self.log.info('Input interpolation: %s', self.interpolation)
-
         self.log.info('Coordinate system to use: %s', self.coord_system)
-        self.log.info('Weighting method for point cloud: %s',self.weighting)
-        self.log.info('Power Weighting distance : %f',self.weight_power) 
+        if self.interpolation =='pointcloud':
+            self.log.info('Weighting method for point cloud: %s',self.weighting)
+            self.log.info('Power Weighting distance : %f',self.weight_power) 
 #_________________________________________________________________________________________________
 # Set up the IFU cube basic parameters that define a cube
         self.metadata = {}
@@ -122,7 +127,7 @@ class CubeBuildStep (Step):
         self.metadata['output_name'] = ''
         self.metadata['number_files'] = 0
 
-        # input read parameters - Channel, Band (Subchannel), Grating, Filter
+        # read input user parameters - Channel, Band (Subchannel), Grating, Filter
         cube_build_io.Read_User_Input(self)
 #_________________________________________________________________________________________________
         #Read in the input data - either in form of ASSOCIATION table or single filename
@@ -151,16 +156,20 @@ class CubeBuildStep (Step):
         num, instrument, detector = cube_build_io.SetFileTable(self, input_table, 
                                                                MasterTable)
 
-
         self.metadata['number_files'] = num
         self.metadata['detector'] = detector            
         self.metadata['instrument'] = instrument
+
+        # self.models is filled in by SetFileTable - only used now for getting the
+        # correct reference file type 
 
         # Determine which channels/subchannels or filter/grating cubes will be constructed from.
         # returns self.metadata['subchannel'] and self.metadata['channel']
         # or self.metadata['filter'], self.metadata['grating']
 
         cube_build_io.DetermineCubeCoverage(self, MasterTable)
+        # check on interpolation = area and coord_system=alpha-beta types of cubes 
+        # if interpolation = area also checks that the use did not supply a scale2 values (beta dim) 
         cube_build.CheckCubeType(self)
 
         self.output_name_base = input_table.asn_table['products'][0]['name']
@@ -170,30 +179,59 @@ class CubeBuildStep (Step):
 # Cube is an instance of CubeInfo - which holds basic information on Cube
 # Set up if we are building a MIRI cube or a NIRSPEC cube
 
-        if(instrument == 'MIRI'):
+        if instrument == 'MIRI':
             Cube = cube.CubeInfo('MIRI',detector,
                                  self.metadata['band_channel'], 
                                  self.metadata['band_subchannel'], 
-                                 self.output_name)
+                                 self.output_name,
+                                 self.coord_system)
 
-        if(instrument == 'NIRSPEC'):
+        if instrument == 'NIRSPEC':
             Cube = cube.CubeInfo('NIRSPEC',detector,
                                  self.metadata['band_filter'], 
                                  self.metadata['band_grating'], 
-                                 self.output_name)
+                                 self.output_name,
+                                 self.coord_system)
 
-
+#_________________________________________________________________________________________________
         # for now InstrumentDefaults holds defaults on the two instruments
         InstrumentInfo = InstrumentDefaults.Info()
+# Read in Cube Parameter Reference file
+        # identify what reference file has been associated with these input
+        self.par_filename = self.get_reference_file(self.models[0], 'cubepars')
+        self.log.info('Reading default cube parameter file %s', self.par_filename)
+        
+ # Check for a valid reference file
+        if self.par_filename == 'N/A':
+            self.log.warning('No default cube parameters reference file found')
+            return
 
-        if self.CubeType == 'File' or self.CubeType == 'ASN' : self.log.info('Building Cube %s ', Cube.output_name)
+        # Load the parameter ref file data model
+        # fill in the appropriate fields in InstrumentInfo
+        # with the cube parameters
 
+        cube_build_io.ReadCubePars(self,Cube,InstrumentInfo)
+#--------------------------------------------------------------------------------
+# Read in  MIRI Resolution file if weighting = psf
+        # identify what reference file has been associated with these inputs
 
-            # Scale is 3 dimensions and is determined from default values InstrumentInfo.GetScale
+        if(instrument =='MIRI' and self.weighting == 'miripsf'):
+            self.resol_filename = self.get_reference_file(self.models[0], 'resol')
+            self.log.info('Reading default MIRI cube resolution file %s', self.resol_filename)
+            if self.resol_filename == 'N/A':
+                self.log.warning('No default spectral resolution reference file found')
+                self.log.warning('Run again and turn off miripsf')
+
+        # Load the miri resolution ref file data model - 
+        # fill in the appropriate fields in InstrumentInfo
+        # with the cube parameters
+            cube_build_io.ReadResolutionFile(self,Cube,InstrumentInfo)
+#________________________________________________________________________________
+        if self.CubeType == 'File' or self.CubeType == 'ASN' : 
+            self.log.info('Building Cube %s ', Cube.output_name)
+        # Scale is 3 dimensions and is determined from values held in  InstrumentInfo.GetScale
         scale = cube_build.DetermineScale(Cube, InstrumentInfo)
-
-
-            # if the user has set the scale of output cube use those values instead
+        # if the user has set the scale of output cube use those values instead
         a_scale = scale[0]
         if self.scale1 != 0.0:
             a_scale = self.scale1
@@ -201,8 +239,6 @@ class CubeBuildStep (Step):
         b_scale = scale[1]
         if self.scale2 != 0.0:
             b_scale = self.scale2
-
-
         wscale = scale[2]
         # temp fix for large cubes - need to change to variable wavelength scale
         if self.scalew == 0 and self.metadata['num_bands'] > 6:   
@@ -213,49 +249,41 @@ class CubeBuildStep (Step):
         if self.scalew != 0.0:
             wscale = self.scalew
 
-
-
-            
-
         Cube.SetScale(a_scale, b_scale, wscale)
-        self.scale1 = Cube.Cdelt1
-        self.scale2 = Cube.Cdelt2
-        self.scalew = Cube.Cdelt3
+#________________________________________________________________________________
+# get the ROI sizes 
+        roi = cube_build.DetermineROISize(Cube, InstrumentInfo)
+        # if the user has not set the size of the ROI then use defaults in reference
+        # parameter file
 
+        if self.roiw == 0.0: self.roiw = roi[0]
+        if self.rois == 0.0: self.rois = roi[1]
+        if self.interpolation == 'pointcloud':
+            self.log.info('Region of interest  %f %f', 
+                               self.rois,self.roiw)
 #________________________________________________________________________________
 # find the min & max final coordinates of cube: map each slice to cube
 # add any dither offsets, then find the min & max value in each dimension
 # Foot print is returned in ra,dec coordinates
 
 
+        # if interpolation = area (alpha-beta), then 1 to 1 mapping in beta 
         CubeFootPrint = cube_build.DetermineCubeSize(self, Cube, 
                                                          MasterTable, 
                                                          InstrumentInfo)
 
-            # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
-            # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
+        # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
+        # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
         if(self.coord_system == 'ra-dec'): 
             Cube.SetGeometry(CubeFootPrint)
         else: 
             Cube.SetGeometryAB(CubeFootPrint) # local coordinate system 
 
         Cube.PrintCubeGeometry(instrument)
-
-            # if the user has not set the size of the ROI then use defaults of 1* cube scale in dimension
-        if(self.roi1 == 1): self.roi1 = Cube.Cdelt1* 1.0
-        if(self.roi2 == 1): self.roi2 = Cube.Cdelt2* 1.0
-        if(self.roiw == 1): self.roiw = Cube.Cdelt3* 1.0
-
         IFUCube = cube_model.SetUpIFUCube(self,Cube)
-
-
-        if(self.interpolation == 'pointcloud'):
-            self.log.info('Region of interest %f %f %f', 
-                              self.roi1, self.roi2, self.roiw)
-
-
-            # now you have the size of cube - create an instance for each spaxel
-            # create an empty spaxel list - this will become a list of Spaxel classses
+#________________________________________________________________________________
+        # now you have the size of cube - create an instance for each spaxel
+        # create an empty spaxel list - this will become a list of Spaxel classses
 
 
         spaxel = []
@@ -268,9 +296,9 @@ class CubeBuildStep (Step):
             for t in range(total_num):
                 spaxel.append(cube.SpaxelAB())
 
-
         t0 = time.time()
-        # now need to loop over every file that covers this channel/subchannel (MIRI) or Grating/filter(NIRSPEC)
+        # now need to loop over every file that covers this channel/subchannel (MIRI) 
+        # or Grating/filter(NIRSPEC)
         #and map the detector pixels to the cube spaxel.
         if(instrument == 'MIRI'):
             parameter1 = Cube.channel
@@ -293,7 +321,7 @@ class CubeBuildStep (Step):
                                          InstrumentInfo)
 
         t1 = time.time()
-#        self.log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
+        self.log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
 
 #_______________________________________________________________________
 # Mapped all data to cube or Point Cloud
@@ -306,9 +334,13 @@ class CubeBuildStep (Step):
         t1 = time.time()
         self.log.info("Time find Cube Flux= %.1f.s" % (t1 - t0,))
 
+#_______________________________________________________________________
+# shove Flux and iflux in the  final IFU cube
 
         result = cube_model.UpdateIFUCube(self, Cube,IFUCube, spaxel)
 
+#_______________________________________________________________________
+ 
 # write out the IFU cube
 #        print(self.CubeType) 
         if self.CubeType == 'File' or self.CubeType =='ASN' :
@@ -317,9 +349,25 @@ class CubeBuildStep (Step):
             default = root.find('cube_build') # the user has not provided a name
             if(default != -1):
                 self.output_file = IFUCube.meta.filename
-#            IFUCube.save(IFUCube.meta.filename)
-#            print('Output name',self.output_file)
+        
+#_______________________________________________________________________
+# Blend the headers
+
+        nf = len(Cube.file)
+#        print(Cube.file)
+
+#        for n in range(nf):
+#            print('File: ',Cube.file[n])
+
+        
+#        print('Saving IFUCube',self.output_file)
+        IFUCube.save(IFUCube.meta.filename)
+#_______________________________________________________________________
         IFUCube.close()
+
+        blendheaders.blendheaders(self.output_file,Cube.file)
+#        blendheaders.blendheaders(self.output_file,inputs=Cube.file,verbose=True)
+
         if(self.debug_pixel ==1):
             self.spaxel_debug.close()
         return result

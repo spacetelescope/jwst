@@ -4,12 +4,10 @@ properties:
     type: object
     properties:
       date:
-        #allOf:
-        #- $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
-        #- title: Date this file was created (UTC)
-        #  fits_keyword: DATE
+        anyOf:
+          - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
+          - type: string
         title: Date this file was created (UTC)
-        type: string
         fits_keyword: DATE
       origin:
         title: Organization responsible for creating file
@@ -106,12 +104,10 @@ properties:
         type: object
         properties:
           date:
-            #allOf:
-            #- $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
-            #- title: UTC date at the start of the exposure
-            #  fits_keyword: DATE-OBS
+            anyOf:
+              - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
+              - type: string
             title: (yyyy-mm-dd) UTC date at start of exposure
-            type: string
             fits_keyword: DATE-OBS
           time:
             title: (hh:mm:ss.ssssss) UTC time at start of exposure
@@ -205,10 +201,6 @@ properties:
             title: Type of target (fixed, moving, generic)
             type: string
             fits_keyword: TARGTYPE
-          id:
-            title: Target id used in PPS DB queries
-            type: string
-            fits_keyword: TARGID
           ra:
             title: Target RA at mid time of exposure
             type: number
@@ -371,6 +363,14 @@ properties:
             title: GWA TILT (avg/calib) temperature [K]
             type: number
             fits_keyword: GWA_TILT
+          filter_position:
+            title: NIRISS filter wheel position
+            type: number
+            fits_keyword: FWCPOS
+          pupil_position:
+            title: NIRISS pupil wheel position
+            type: number
+            fits_keyword: PWCPOS
       exposure:
         title: Exposure parameters
         type: object
@@ -436,10 +436,22 @@ properties:
             title: Number of frames per group
             type: number
             fits_keyword: NFRAMES
+          frame_divisor:
+            title: Divisor applied to frame-averaged groups
+            type: integer
+            fits_keyword: FRMDIVSR
           groupgap:
             title: Number of frames dropped between groups
             type: integer
             fits_keyword: GROUPGAP
+          dropframes1:
+            title: Frames dropped at start of each integration
+            type: integer
+            fits_keyword: DRPFRMS1
+          dropframes3:
+            title: Frames dropped at end of each integration
+            type: integer
+            fits_keyword: DRPFRMS3
           nsamples:
             title: Number of A/D samples per pixel
             type: integer
@@ -520,7 +532,11 @@ properties:
               SUBAMPCAL, SUBFP1A, SUBFP1B, SUBGRISM128,
               SUBGRISM256, SUBGRISM64, SUBSTRIP256, SUBSTRIPE256, SUBSTRIP96,
               SUBPRISM, SUBSTRIP80, SUBTASOSS, SUBTAAMI,
-              WFSS128C, WFSS128R, WFSS64C, WFSS64R, N/A]
+              WFSS128C, WFSS128R, WFSS64C, WFSS64R, SUB32TATS, SUB32TATSGRISM,
+              SUB640A210R, SUB320A335R, SUB320A430R, SUB640ASWB, SUB320ALWB,
+              SUBNDA210R, SUBNDA335R, SUBNDA430R, SUBNDASWBL, SUBNDALWBS, SUBNDALWBL,
+              SUBNDASWBS, SUBFSA210R, SUBFSASWB, SUBFSALWB, SUBFSA335R, SUBFSA430R,
+              SUB96DHSPILA, SUB96DHSPILB, SUB8FP1A, SUB64FP1A, SUB8FP1B, SUB64FP1B,N/A]
             fits_keyword: SUBARRAY
           xstart:
             title: Starting pixel in axis 1 direction
@@ -1436,6 +1452,10 @@ properties:
             title: Last Frame Correction
             type: string
             fits_keyword: S_LASTFR
+          group_scale:
+            title: Group Scale Correction
+            type: string
+            fits_keyword: S_GRPSCL
           dq_init:
             title: Data Quality Initialization
             type: string
@@ -1520,10 +1540,6 @@ properties:
             title: 1-D Spectral Combination
             type: string
             fits_keyword: S_COMB1D
-          resample:
-            title: Image resampling
-            type: string
-            fits_keyword: S_RESAMP
           back_sub:
             title: Background subtraction
             type: string
@@ -1556,4 +1572,66 @@ properties:
             title: Coronagraphic PSF Subtraction
             type: string
             fits_keyword: S_KLIP
+          tweakreg:
+            title: Image Alignment via Astronomical Sources
+            type: string
+            fits_keyword: S_TWKREG
+          skymatch:
+            title: Sky Background Equalization or Subtraction
+            type: string
+            fits_keyword: S_SKYMAT
+          outlier_detection:
+            title: Outlier Detection
+            type: string
+            fits_keyword: S_OUTLIR
+          resample:
+            title: Image resampling
+            type: string
+            fits_keyword: S_RESAMP
+          source_catalog:
+            title: Source Photometry and Morphology
+            type: string
+            fits_keyword: S_SRCCAT
+      background:
+        title: Background information
+        type: object
+        properties:
+          level:
+            title: Computed/Matched constant background level
+            type: number
+            fits_keyword: BKGLEVEL
+          subtracted:
+            title: Has background been subtracted from data?
+            type: boolean
+            fits_keyword: BKGSUB
+          polynomial_info:
+            title: List of background polynomial info for each channel
+            type: array
+            items:
+              type: object
+              properties:
+                degree:
+                  title: Max polynomial degree in each coordinate
+                  type: array
+                  items:
+                    type: number
+                refpoint:
+                  title: Reference coordinates
+                  type: array
+                  items:
+                    type: number
+                cs_type:
+                  title: Type of coordinates
+                  type: string
+                  enum: [world, image]
+                wcs:
+                  $ref: http://stsci.edu/schemas/asdf/wcs/wcs-1.0.0
+                coefficients:
+                  title: Polynomial Coefficients
+                  type: array
+                  items:
+                    type: number
+                channel:
+                  title: Channel ID
+                  type: string
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

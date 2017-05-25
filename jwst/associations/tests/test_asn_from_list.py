@@ -4,6 +4,7 @@ import pytest
 
 from .. import (Association, AssociationRegistry, load_asn)
 from ..asn_from_list import (Main, asn_from_list)
+from ..exceptions import AssociationNotValidError
 
 
 def test_base_association():
@@ -68,7 +69,7 @@ def test_default_fail():
     A product name needs to be included, but is not.
     """
     items = ['a']
-    with pytest.raises((KeyError, TypeError)):
+    with pytest.raises((AssociationNotValidError)):
         asn = asn_from_list(items)
 
 
@@ -143,4 +144,40 @@ def test_cmdline_change_rules(tmpdir):
     with open(path.strpath, 'r') as fp:
         asn = load_asn(fp, registry=AssociationRegistry(include_bases=True))
     assert inlist == asn['members']
-    
+
+
+def test_api_list():
+    """Test api call with simple list"""
+    product_name = 'test_product'
+    inlist = ['a', 'b', 'c']
+
+    asn = asn_from_list(inlist, product_name=product_name)
+    assert len(asn['products']) == 1
+    assert asn['products'][0]['name'] == product_name
+    members = asn['products'][0]['members']
+    expnames = [
+        member['expname']
+        for member in members
+    ]
+    assert inlist == expnames
+
+
+def test_api_with_type():
+    """Test api call with type tuple"""
+    product_name = 'test_product'
+    inlist = [
+        ('a', 'science'),
+        ('b', 'psf'),
+        ('c', 'science')
+    ]
+
+    asn = asn_from_list(inlist, product_name=product_name, with_type=True)
+    assert len(asn['products']) == 1
+    assert asn['products'][0]['name'] == product_name
+    members = asn['products'][0]['members']
+    members_dict = {
+        member['expname']: member['exptype']
+        for member in members
+    }
+    for name, type_ in inlist:
+        assert members_dict[name] == type_

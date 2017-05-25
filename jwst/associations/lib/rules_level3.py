@@ -42,18 +42,12 @@ class Asn_Image(
         self.add_constraints({
             'wfsvisit': {
                 'inputs': ['WFSVISIT'],
-                'is_invalid': True,
+                'force_undefined': True,
             },
         })
 
         # Now check and continue initialization.
         super(Asn_Image, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, member):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'image'
-        super(Asn_Image, self)._init_hook(member)
 
 
 class Asn_WFSCMB(
@@ -80,6 +74,7 @@ class Asn_WFSCMB(
                 'inputs': ['ASN_CANDIDATE'],
                 'force_unique': True,
                 'is_acid': True,
+                'evaluate': True,
             },
             'activity_id': {
                 'value': None,
@@ -303,12 +298,6 @@ class Asn_MIRI_IFU(
 
         return product_name.lower()
 
-    def _init_hook(self, member):
-        """Post-check and pre-add initialization"""
-
-        super(Asn_MIRI_IFU, self)._init_hook(member)
-        self.data['asn_type'] = 'mirifu'
-
 
 class Asn_NRS_IFU(
         AsnMixin_Spectrum,
@@ -337,9 +326,3 @@ class Asn_NRS_IFU(
 
         # Check and continue initialization.
         super(Asn_NRS_IFU, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, member):
-        """Post-check and pre-add initialization"""
-
-        super(Asn_NRS_IFU, self)._init_hook(member)
-        self.data['asn_type'] = 'nrsifu'

@@ -29,7 +29,8 @@ class IFUCubeModel(model_base.DataModel):
     """
     schema_url = "ifucube.schema.yaml"
 
-    def __init__(self, init=None, data=None, dq=None, err=None, weightmap=None, **kwargs):
+    def __init__(self, init=None, data=None, dq=None, err=None, 
+                 weightmap=None, hdrtab=None,  **kwargs):
         super(IFUCubeModel, self).__init__(init=init, **kwargs)
 
         if data is not None:
@@ -44,7 +45,8 @@ class IFUCubeModel(model_base.DataModel):
         if weightmap is not None:
             self.weightmap = weightmap
 
-
+        if hdrtab is not None:
+            self.hdrtab = hdrtab
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err

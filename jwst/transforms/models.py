@@ -18,7 +18,8 @@ from astropy import units as u
 __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
            'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa',
-           'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit']
+           'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit',
+           'MIRI_AB2Slice']
 
 
 # Number of shutters per quadrant
@@ -31,6 +32,54 @@ Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
                            "source_xpos", "source_ypos"])
 Slit.__new__.__defaults__= ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, "", "", "", 0.0, 0.0, 0.0)
 
+
+class MIRISelector(Model):
+    """
+    """
+    inputs = ('x' , 'y', 'slice')
+    outputs = ('alpha', 'beta')
+
+    def __init__(self, selector, **kwargs):
+        #self._inputs = inputs
+        #self._outputs = outputs
+        self._selector = selector
+        super(MIRISelector, self).__init__(**kwargs)
+
+    def evaluate(x, y, slice_id):
+        slice_id = np.unique(slice_id)
+        # remove 0
+        res = np.zeros(x.shape) + np.nan
+        for sid in slice_id:
+            if sid != 0:
+                sid_ind = slice_id == sid
+                res[sid_ind] = self._selector[sid](x[sid_ind], y[sid_ind])
+            else:
+                pass
+        return res
+
+
+class MIRI_AB2Slice(Model):
+    """
+    MIRI MRS alpha, beta to slice transform
+
+    Parameters
+    ----------
+    beta_zero : float
+    beta_del : float
+    """
+    standard_broadcastnig = False
+
+    inputs = ("beta",)
+    outputs = ("slice",)
+
+    beta_zero = Parameter('beta_zero', default=0)
+    beta_del = Parameter('beta_del', default=1)
+    channel = Parameter("channel", default=1)
+
+    @staticmethod
+    def evaluate(beta, beta_zero, beta_del, channel):
+        s = channel * 100 + (beta - beta_zero) / beta_del + 1
+        return _toindex(s)
 
 
 class Snell(Model):
@@ -762,3 +811,25 @@ class V23ToSky(Rotation3D):
             outputs = (outputs,)
 
         return self.prepare_outputs(format_info, *outputs)
+
+
+def _toindex(value):
+    """
+    Convert value to an int or an int array.
+
+    Input coordinates converted to integers
+    corresponding to the center of the pixel.
+    The convention is that the center of the pixel is
+    (0, 0), while the lower left corner is (-0.5, -0.5).
+
+    Examples
+    --------
+    >>> _toindex(np.array([-0.5, 0.49999]))
+    array([0, 0])
+    >>> _toindex(np.array([0.5, 1.49999]))
+    array([1, 1])
+    >>> _toindex(np.array([1.5, 2.49999]))
+    array([2, 2])
+    """
+    indx = np.asarray(np.floor(np.asarray(value) + 0.5), dtype=np.int)
+    return indx

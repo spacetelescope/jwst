@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals, division, print_function
 
+import os.path
 from astropy.extern import six
 
 def check(init):
@@ -16,7 +17,7 @@ def check(init):
     file_type: a string with the file type ("asdf", "asn", or "fits")
     """
     
-    if isinstance(init, (six.text_type)):
+    if isinstance(init, six.string_types):
         fd = open(init, "rb")
         magic = fd.read(5)
         fd.close()
@@ -39,4 +40,3 @@ def check(init):
         file_type = "asn"
 
     return file_type
-

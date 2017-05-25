@@ -1,15 +1,24 @@
 from __future__ import absolute_import
 
+import os
+import pytest
 import re
 
 from .helpers import (
     combine_pools,
     func_fixture,
     generate_params,
+    registry_level3_only,
     t_path,
 )
 
-from .. import (AssociationRegistry, AssociationPool, generate)
+from .. import (AssociationPool, generate)
+
+# Temporarily skip if running under Travis
+# pytestmark = pytest.mark.skipif(
+#     "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
+#     reason='Temporarily disable due to performance issues'
+# )
 
 LEVEL3_PRODUCT_NAME_REGEX = (
     'jw'
@@ -53,6 +62,7 @@ global_constraints = func_fixture(
                 'inputs': ['ASN_CANDIDATE'],
                 'force_unique': True,
                 'is_acid': True,
+                'evaluate': True,
             }
         },
     ]
@@ -60,7 +70,7 @@ global_constraints = func_fixture(
 
 
 def test_level3_productname_components_discovered():
-    rules = AssociationRegistry()
+    rules = registry_level3_only()
     pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
     asns, orphaned = generate(pool, rules)
     asn = asns[0]
@@ -81,8 +91,9 @@ def test_level3_productname_components_acid():
         'inputs': ['ASN_CANDIDATE'],
         'force_unique': True,
         'is_acid': True,
+        'evaluate': True,
     }
-    rules = AssociationRegistry(global_constraints=global_constraints)
+    rules = registry_level3_only(global_constraints=global_constraints)
     pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
     asns, orphaned = generate(pool, rules)
     asn = asns[0]
@@ -97,7 +108,7 @@ def test_level3_productname_components_acid():
 
 
 def test_level35_names(pool_file):
-    rules = AssociationRegistry()
+    rules = registry_level3_only()
     pool = AssociationPool.read(pool_file)
     (asns, orphaned) = generate(pool, rules)
     for asn in asns:
@@ -110,7 +121,7 @@ def test_level35_names(pool_file):
 
 
 def test_level3_names(pool_file, global_constraints):
-    rules = AssociationRegistry(
+    rules = registry_level3_only(
         global_constraints=global_constraints
     )
     pool = AssociationPool.read(pool_file)
@@ -126,7 +137,7 @@ def test_level3_names(pool_file, global_constraints):
 
 
 def test_multiple_optelems(pool_file):
-    rules = AssociationRegistry()
+    rules = registry_level3_only()
     pool = AssociationPool.read(pool_file)
     (asns, orphaned) = generate(pool, rules)
     for asn in asns:
