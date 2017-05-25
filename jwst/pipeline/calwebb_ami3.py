@@ -2,7 +2,7 @@
 import os
 
 from ..stpipe import Pipeline
-from ..associations import load_asn
+from ..associations.load_as_asn import LoadAsAssociation
 from .. import datamodels
 
 
@@ -43,8 +43,9 @@ class Ami3Pipeline(Pipeline):
         log.info('Starting calwebb_ami3')
 
         # Load the input association table
-        with open(input, 'r') as input_fh:
-            asn = load_asn(input_fh)
+        #with open(input, 'r') as input_fh:
+        #    asn = load_asn(input_fh)
+        asn = LoadAsAssociation.load(input)
 
         # We assume there's one final product defined by the association
         prod = asn['products'][0]
@@ -76,6 +77,8 @@ class Ami3Pipeline(Pipeline):
             result = self.ami_analyze(input_file)
 
             # Save the LG analysis results to a file
+            result.meta.asn.pool_name = asn['asn_pool']
+            result.meta.asn.table_name = asn.filename
             output_file = mk_filename(self.output_dir, input_file, 'ami')
             self.log.info('Saving LG results to %s', output_file)
             result.save(output_file)
@@ -94,6 +97,8 @@ class Ami3Pipeline(Pipeline):
 
             # Save the results to a file, if requested
             if self.save_averages:
+                psf_avg.meta.asn.pool_name = asn['asn_pool']
+                psf_avg.meta.asn.table_name = asn.filename
                 output_file = mk_prodname(self.output_dir, prod['psf_name'], 'amiavg')
                 self.log.info('Saving averaged PSF results to %s', output_file)
                 psf_avg.save(output_file)
@@ -105,6 +110,8 @@ class Ami3Pipeline(Pipeline):
 
             # Save the results to a file, if requested
             if self.save_averages:
+                targ_avg.meta.asn.pool_name = asn['asn_pool']
+                targ_avg.meta.asn.table_name = asn.filename
                 output_file = mk_prodname(self.output_dir, prod['name'], 'amiavg')
                 self.log.info('Saving averaged target results to %s', output_file)
                 targ_avg.save(output_file)
@@ -116,6 +123,8 @@ class Ami3Pipeline(Pipeline):
             result = self.ami_normalize(targ_avg, psf_avg)
 
             # Save the result
+            result.meta.asn.pool_name = asn['asn_pool']
+            result.meta.asn.table_name = asn.filename
             output_file = mk_prodname(self.output_dir, prod['name'], 'aminorm')
             self.log.info('Saving normalized result to %s', output_file)
             result.save(output_file)
