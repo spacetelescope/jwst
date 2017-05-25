@@ -1,16 +1,29 @@
-# Summary
+JWST Calibration Pipeline
+=========================
 
-TODO
+Installing
+----------
 
-# Installing
+For developers:
 
-TODO
+    % git clone https://github.com/STScI-JWST/jwst.git
 
-# Using (etc...)
+    % cd jwst
 
-TODO
+    % python setup.py install
 
-# Project Status
+    or
 
+    % python setup.py develop
+
+Using
+-----
+
+Documentation (built nightly) is available here:
+
+http://ssb.stsci.edu/doc/jwst_dev/
+
+Project Status
+--------------
 [![Build Status](https://travis-ci.org/STScI-JWST/jwst.svg?branch=master)](https://travis-ci.org/STScI-JWST/jwst)
 
