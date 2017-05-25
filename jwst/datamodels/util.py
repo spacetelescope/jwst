@@ -366,7 +366,7 @@ def ensure_ascii(s):
     return s
 
 
-def create_historty_entry(description, software=None):
+def create_history_entry(description, software=None):
     """
     Create a HistoryEntry object.
 
