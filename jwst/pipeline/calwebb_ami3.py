@@ -43,8 +43,6 @@ class Ami3Pipeline(Pipeline):
         log.info('Starting calwebb_ami3')
 
         # Load the input association table
-        #with open(input, 'r') as input_fh:
-        #    asn = load_asn(input_fh)
         asn = LoadAsAssociation.load(input)
 
         # We assume there's one final product defined by the association
