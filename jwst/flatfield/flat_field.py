@@ -368,7 +368,7 @@ def do_NIRSpec_flat_field(output_model,
         # used a few lines farther down.
         slits = nirspec.get_open_slits(output_model)
     for (k, slit) in enumerate(output_model.slits):
-        log.debug("Processing slit %s", slit.name)
+        log.info("Processing slit %s", slit.name)
         slit_nt = None
         if exposure_type == "NRS_MSASPEC":
             # Find this slit in the list of open slits.
@@ -408,8 +408,8 @@ def do_NIRSpec_flat_field(output_model,
         sum_nan_mask = nan_mask.sum(dtype=np.intp)
         sum_good_mask = good_mask.sum(dtype=np.intp)
         if sum_nan_mask > 0:
-            log.info("Number of NaNs in sci wavelength array = %s out of %s",
-                     sum_nan_mask, sum_nan_mask + sum_good_mask)
+            log.debug("Number of NaNs in sci wavelength array = %s out of %s",
+                      sum_nan_mask, sum_nan_mask + sum_good_mask)
             if sum_good_mask < 1:
                 log.warning("(all are NaN)")
             # Replace NaNs with a harmless but out-of-bounds value.
@@ -425,7 +425,7 @@ def do_NIRSpec_flat_field(output_model,
         mask = (flat_2d <= 0.)
         nbad = mask.sum(dtype=np.intp)
         if nbad > 0:
-            log.warning("%d flat-field values <= 0", nbad)
+            log.debug("%d flat-field values <= 0", nbad)
             flat_2d[mask] = 1.
         del mask
 
