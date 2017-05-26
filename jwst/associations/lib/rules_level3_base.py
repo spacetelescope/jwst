@@ -204,7 +204,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
     def _add(self, member):
         """Add member to this association."""
         try:
-            exposerr = member['EXPOSERR']
+            exposerr = member['exposerr']
         except KeyError:
             exposerr = None
         entry = {
