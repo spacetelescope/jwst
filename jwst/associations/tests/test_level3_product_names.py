@@ -40,7 +40,7 @@ LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX = (
 )
 
 # Null values
-EMPTY = (None, 'NULL', 'CLEAR')
+EMPTY = (None, 'NULL', 'Null', 'null', 'CLEAR', 'Clear', 'clear')
 
 
 pool_file = func_fixture(
