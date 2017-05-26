@@ -1,0 +1,10 @@
+title: MIRI MRS REGIONS reference file model (assign_wcs step)
+allOf:
+- $ref: referencefile.schema.yaml
+- $ref: keyword_band.schema.yaml
+- $ref: keyword_channel.schema.yaml
+- $ref: keyword_exptype.schema.yaml
+- type: object
+  properties:
+    regions:
+      $ref: http://stsci.edu/schemas/asdf/core/ndarray-1.0.0

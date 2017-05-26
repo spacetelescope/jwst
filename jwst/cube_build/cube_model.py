@@ -49,7 +49,8 @@ def SetUpIFUCube(self,Cube):
 
     IFUCube = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
 
-    if self.CubeType =='Model':
+#    if self.CubeType =='Model' or self.CubeType =='File':
+    if self.CubeType =='Model' :
         IFUCube.update(self.input_model)
 
     IFUCube.meta.filename = Cube.output_name
@@ -63,12 +64,19 @@ def SetUpIFUCube(self,Cube):
     IFUCube.meta.wcsinfo.cdelt2 = Cube.Cdelt2/3600.0
     IFUCube.meta.wcsinfo.cdelt3 = Cube.Cdelt3
 
+#    if(self.coord_system == 'ra-dec'):
     IFUCube.meta.wcsinfo.ctype1 = 'RA---TAN'
     IFUCube.meta.wcsinfo.ctype2 = 'DEC--TAN'
-    IFUCube.meta.wcsinfo.ctype3 = 'WAVE'
-
     IFUCube.meta.wcsinfo.cunit1 = 'deg'
     IFUCube.meta.wcsinfo.cunit2 = 'deg'
+        
+#    elif(self.coord_system == 'alpha-beta'):
+#        IFUCube.meta.wcsinfo.ctype1 = 'ALPHA'
+#        IFUCube.meta.wcsinfo.ctype2 = 'BETA'
+#        IFUCube.meta.wcsinfo.cunit1 = 'arcsec'
+#        IFUCube.meta.wcsinfo.cunit2 = 'arcsec'
+
+    IFUCube.meta.wcsinfo.ctype3 = 'WAVE'
     IFUCube.meta.wcsinfo.cunit3 = 'um'
 
     IFUCube.meta.wcsinfo.wcsaxes = 3
@@ -82,7 +90,6 @@ def SetUpIFUCube(self,Cube):
 
 
     wcsobj = pointing.create_fitswcs(IFUCube)
-
     
     IFUCube.meta.wcs = wcsobj
     return IFUCube
@@ -115,7 +122,8 @@ def UpdateIFUCube(self, Cube,IFUCube, spaxel):
                           [Cube.naxis3,Cube.naxis2,Cube.naxis1])
     temp_wmap =np.reshape(np.array([s.iflux for s in spaxel]),
                           [Cube.naxis3,Cube.naxis2,Cube.naxis1])
-    
+
+#    print('Flux shape',temp_flux.shape)
     IFUCube.data = temp_flux
     IFUCube.weightmap = temp_wmap
     

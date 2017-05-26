@@ -6,16 +6,25 @@ os:
 
 sudo: false
 
+# The apt packages below are needed for sphinx builds, which can no longer
+# be installed with sudo apt-get.
+addons:
+    apt:
+        packages:
+            - graphviz
+            - texlive-latex-extra
+            - dvipng
+
 env:
-    # CONDA_JWST_DEPENDENCIES is used because CONDA_DEPENDENCIES is not truly global.
     global:
         - MAIN_CMD='python setup.py'
         - CONDA_CHANNELS='http://ssb.stsci.edu/conda-dev'
-        - CONDA_DEPENDENCIES='pytest jwst sphinx=1.3.5'
-        - CONDA_JWST_DEPENDENCIES='pytest jwst sphinx=1.3.5'
+        - CONDA_DEPENDENCIES='pytest jwst sphinx'
+        - CONDA_JWST_DEPENDENCIES='pytest jwst sphinx'
         - PIP_DEPENDENCIES=''
         - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
         - CRDS_PATH='/tmp/crds_cache'
+        - NUMPY_VERSION=1.11
 
     matrix:
         - PYTHON_VERSION=2.7 SETUP_CMD='install'
@@ -24,18 +33,27 @@ env:
         - PYTHON_VERSION=3.5 SETUP_CMD='test'
 
 matrix:
+
+    # Don't wait for allowed failures
+    fast_finish: true
+
     include:
+        # Test numpy 1.12
+        - os: linux
+          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.12 SETUP_CMD='test'
+
         # PEP8 check with pycodestyle (only once, i.e. "os: linux")
         - os: linux
           env: PYTHON_VERSION=3.5 MAIN_CMD='pycodestyle --count'
                SETUP_CMD='jwst' TEST_CMD='pycodestyle --version'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
 
-        # build sphinx documentation
+        # build sphinx documentation with warnings
         - os: linux
-          env: PYTHON_VERSION=3.5 MAIN_CMD='docs/mkdocs.sh'
-               SETUP_CMD=''
+          env: PYTHON_VERSION=3.5
+               SETUP_CMD='build_sphinx'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
+               PIP_DEPENDENCIES='sphinx_rtd_theme sphinx-automodapi'
 
     allow_failures:
         # PEP8 will fail for numerous reasons. Ignore it.

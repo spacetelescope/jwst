@@ -335,10 +335,10 @@ def model_array(ctrs, lam, oversample, pitch, fov, d,
     ffmodel.append(ffc.N * np.ones(ffc.size))
     for q, r in enumerate(alist):
         # r[0] and r[1] are holes i and j, x-coord: 0, y-coord: 1
-        ffc.ri = ctrs[r[0]]
-        ffc.rj = ctrs[r[1]]
-        ffs.ri = ctrs[r[0]]
-        ffs.rj = ctrs[r[1]]
+        ffc.ri = ctrs[int(r[0])]
+        ffc.rj = ctrs[int(r[1])]
+        ffs.ri = ctrs[int(r[0])]
+        ffs.rj = ctrs[int(r[1])]
         ffmodel.append(np.fromfunction(ffc, ffc.size))
         ffmodel.append(np.fromfunction(ffs, ffs.size))
 

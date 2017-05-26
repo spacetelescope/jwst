@@ -59,7 +59,7 @@ class AmiAnalyzeStep(Step):
                 return result
 
             # Open the filter throughput reference file
-            filter_model = datamodels.FilterModel(self.filter_ref_name)
+            filter_model = datamodels.ThroughputModel(self.filter_ref_name)
 
             # Do the LG analysis on the input image
             result = ami_analyze.apply_LG(input_model, filter_model,

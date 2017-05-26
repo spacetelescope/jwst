@@ -408,8 +408,8 @@ class ResampleSpecData(object):
             # # TODO: do this properly in wcs_from_spec_footprints()
             # output_model.meta.wcs.domain = self.output_wcs.domain
             # # Instead we do a cludge below to get the domain to not be neg.
-            output_model.meta.wcs.bounding_box = resample_utils.create_bounding_box(
-                self.output_wcs, output_model.data.shape)
+            bb = resample_utils.bounding_box_from_shape(output_model.data.shape)
+            output_model.meta.wcs.bounding_box = bb
             output_model.meta.filename = obs_product
 
             output_model.meta.asn.pool_name = self.input_models.meta.pool_name

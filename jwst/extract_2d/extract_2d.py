@@ -47,7 +47,7 @@ def extract2d(input_model, which_subarray=None):
 
             # Add the slit offset to each slit WCS object
             tr = slit_wcs.get_transform('detector', 'sca')
-            tr = tr | Shift(xlo) & Shift(ylo)
+            tr = Shift(xlo) & Shift(ylo) | tr
             slit_wcs.set_transform('detector', 'sca', tr.rename('dms2sca'))
 
             log.info('Name of subarray extracted: %s', slit.name)

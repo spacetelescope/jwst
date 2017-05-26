@@ -44,12 +44,12 @@ from ..main import Main
         # Whole program
         (
             [],
-            20
+            22
         ),
         # Discovered only
         (
             ['--discover'],
-            0
+            2
         ),
     ]
 )

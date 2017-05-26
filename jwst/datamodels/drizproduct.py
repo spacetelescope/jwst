@@ -30,3 +30,11 @@ class DrizProductModel(model_base.DataModel):
 
         if relsens is not None:
             self.relsens = relsens
+
+    @property
+    def hdrtab(self):
+        return self._extra_fits.HDRTAB.data
+
+    @hdrtab.setter
+    def hdrtab(self, v):
+        self._extra_fits.HDRTAB.data = v

@@ -180,15 +180,15 @@ class DataSet(object):
                                 waves *= 1.e+6
 
                         # Load the pixel area table for the IFU slices
-                        area_model = datamodels.NirspecAreaModel(self.area_file)
-                        area_data = area_model.ifu_table
+                        area_model = datamodels.NirspecIfuAreaModel(self.area_file)
+                        area_data = area_model.area_table
 
                         # Compute 2D wavelength and pixel area arrays for the whole image
                         wave2d, area2d, dqmap = self.calc_nrs_ifu_sens2d(area_data)
 
                         # Compute relative sensitivity for each pixel based on wavelength
                         sens2d = np.interp(wave2d, waves, relresps)
-                        #datamodels.ImageModel(data=sens2d).save('phot_sens2d1.fits')
+                        datamodels.ImageModel(data=sens2d).save('phot_sens2d1.fits')
 
                         # Include the scalar conversion factor
                         sens2d *= conv_factor
@@ -203,9 +203,9 @@ class DataSet(object):
                         self.input.dq = np.bitwise_or(self.input.dq, dqmap)
 
                         # FOR DEBUGGING ONLY #
-                        #datamodels.ImageModel(data=wave2d).save('phot_wave2d.fits')
-                        #datamodels.ImageModel(data=area2d).save('phot_area2d.fits')
-                        #datamodels.ImageModel(data=sens2d).save('phot_sens2d2.fits')
+                        datamodels.ImageModel(data=wave2d).save('phot_wave2d.fits')
+                        datamodels.ImageModel(data=area2d).save('phot_area2d.fits')
+                        datamodels.ImageModel(data=sens2d).save('phot_sens2d2.fits')
 
                         # Divide the science data and err by the conversion factors
                         self.input.data /= sens2d
