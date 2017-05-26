@@ -625,6 +625,19 @@ class Step(object):
                 (reference_file_type, hdr_name))
         return crds_client.check_reference_open(reference_name)
 
+    def reference_uri_to_cache_path(self, reference_uri):
+        """Convert an abstract CRDS reference URI to an absolute file path in the CRDS
+        cache.  Reference URI's are typically output to dataset headers to record the
+        reference files used.
+
+        e.g. 'crds://jwst_miri_flat_0177.fits'  -->  
+            '/grp/crds/cache/references/jwst/jwst_miri_flat_0177.fits'
+
+        The CRDS cache is typically located relative to env var CRDS_PATH
+        with default value /grp/crds/cache.   See also https://jwst-crds.stsci.edu
+        """
+        return crds_client.reference_uri_to_cache_path(reference_uri)
+
     @contextlib.contextmanager
     def get_reference_file_model(self, input_file, reference_file_type):
         """

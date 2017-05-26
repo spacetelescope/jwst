@@ -37,7 +37,7 @@ from astropy.extern import six
 import gc
 
 import crds
-from crds import log
+from crds import log, config
 
 def _flatten_dict(nested):
     def flatten(root, path, output):
@@ -163,3 +163,20 @@ def get_context_used():
     """Return the context (.pmap) used for determining best references."""
     _connected, final_context = crds.heavy_client.get_processing_mode("jwst")
     return final_context
+
+def reference_uri_to_cache_path(reference_uri):
+    """Convert an abstract CRDS reference file URI into an absolute path for the
+    file as located in the CRDS cache.
+
+    e.g. 'crds://jwst_miri_flat_0177.fits'  -->  
+            '/grp/crds/cache/references/jwst/jwst_miri_flat_0177.fits'
+
+    Standard CRDS cache paths are typically defined relative to the CRDS_PATH
+    environment variable.  See https://jwst-crds.stsci.edu guide and top level
+    page for more info on configuring CRDS.
+
+    The default CRDS_PATH value is /grp/crds/cache, currently on the Central Store.
+    """
+    assert reference_uri.startswith("crds://"), "CRDS file URI's should start with 'crds://'"
+    basename = config.pop_crds_uri(reference_uri)
+    return crds.locate_file(basename, "jwst")
