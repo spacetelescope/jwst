@@ -9,19 +9,21 @@ import logging
 from .. import datamodels
 from ..assign_wcs import nirspec
 from ..datamodels import dqflags
-from . import cube
 from . import coord
-from . import InstrumentDefaults
+from . import instrument_defaults
 from gwcs import wcstools
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 #________________________________________________________________________________
-
-def MatchDet2Cube(self, input_model,
+#********************************************************************************
+# HELPER ROUTINES for CubeData class defined in cube_build.py
+# these methods relate to wcs type procedures.  
+# determine_scale
+#********************************************************************************
+def match_det2cube(self, input_model,
                   x, y, file_slice_no,
                   this_par1,this_par2,
-                  InstrumentInfo,
-                  Cube,spaxel,
+                  spaxel,
                   c1_offset, c2_offset):
     """
     Short Summary
@@ -33,7 +35,6 @@ def MatchDet2Cube(self, input_model,
     x,y list of x and y values to map
     input_model: slope image
     file_no: the index on the files that are used to construct the Cube
-    Cube: holds the basic information on the Cube (including wcs of Cube)
     v2v32radec: temporary (until information is contained in assign_wcs)
                 holds the information to do the transformation from v2-v3 to ra-dec
     c1_offset, c2_offset: dither offsets for each file (default = 0)
@@ -49,7 +50,7 @@ def MatchDet2Cube(self, input_model,
     """
 
 #________________________________________________________________________________
-    if Cube.instrument == 'MIRI':
+    if self.instrument == 'MIRI':
         file_no = file_slice_no
         det2ab_transform = input_model.meta.wcs.get_transform('detector','alpha_beta')
         detector2v23 = input_model.meta.wcs.get_transform('detector', 'v2v3')
@@ -66,11 +67,10 @@ def MatchDet2Cube(self, input_model,
         valid2 = np.isfinite(v3)
 
         if self.weighting == 'miripsf':
-            wave_resol = InstrumentInfo.Get_RP_ave_Wave(this_par1,this_par2)
-            alpha_resol = InstrumentInfo.Get_psf_alpha_parameters()
-            beta_resol = InstrumentInfo.Get_psf_beta_parameters()
+            wave_resol = self.instrument_info.Get_RP_ave_Wave(this_par1,this_par2)
+            alpha_resol = self.instrument_info.Get_psf_alpha_parameters()
+            beta_resol = self.instrument_info.Get_psf_beta_parameters()
 
-            
             # transform Cube Spaxel centers to alpha,beta of exposure
             # for MIRI weighting parameters are based on distance in 
             # alpha-beta coord system
@@ -79,7 +79,7 @@ def MatchDet2Cube(self, input_model,
             # ra-dec -> v2,v3
             # v2,v3 -> local alpha,beta
 
-    elif Cube.instrument == 'NIRSPEC':
+    elif self.instrument == 'NIRSPEC':
         islice = file_slice_no
         slice_wcs = nirspec.nrs_wcs_set_input(input_model, islice)
         yrange = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
@@ -126,7 +126,7 @@ def MatchDet2Cube(self, input_model,
     dec = dec - c2_offset/3600.0
     ra_use = ra[good_data]
     dec_use = dec[good_data]
-    if Cube.instrument == 'MIRI':
+    if self.instrument == 'MIRI':
         # need alpha,beta if weigthing is miripsf or cubes in alpha-beta space
         alpha_det = alpha[good_data]
         beta_det = beta[good_data]
@@ -137,12 +137,12 @@ def MatchDet2Cube(self, input_model,
 
     else:
 # xi,eta in arc seconds
-        xi,eta = coord.radec2std(Cube.Crval1, Cube.Crval2,ra_use,dec_use) 
+        xi,eta = coord.radec2std(self.Crval1, self.Crval2,ra_use,dec_use) 
         coord1 = xi
         coord2 = eta
 
 
-    nplane = Cube.naxis1 * Cube.naxis2
+    nplane = self.naxis1 * self.naxis2
     lower_limit = 0.01
 
     iprint = 0
@@ -159,21 +159,21 @@ def MatchDet2Cube(self, input_model,
 #        if(ipt > 2): sys.exit('STOP')
 #        print('For point ',coord1[ipt],coord2[ipt],wave[ipt],ipt)
 
-        xdistance = (Cube.Xcenters - coord1[ipt])
-        ydistance = (Cube.Ycenters - coord2[ipt])
+        xdistance = (self.Xcenters - coord1[ipt])
+        ydistance = (self.Ycenters - coord2[ipt])
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
 
 #        print(radius.shape[0]) 
 #        for ii in range(radius.shape[0]):
 #            print(radius[ii],ii,(radius[ii] <= self.rois),Cube.Xcenters[ii],Cube.Ycenters[ii])
         indexr = np.where(radius  <=self.rois)
-        indexz = np.where(abs(Cube.zcoord - wave[ipt]) <= self.roiw)
+        indexz = np.where(abs(self.zcoord - wave[ipt]) <= self.roiw)
 
 #        print('indexz',indexz)
 #        print('indexr',indexr)
-        zlam = Cube.zcoord[indexz]        # z Cube values falling in wavelength roi
-        xi_cube = Cube.Xcenters[indexr]   # x Cube values within radius 
-        eta_cube = Cube.Ycenters[indexr]  # y cube values with the radius
+        zlam = self.zcoord[indexz]        # z Cube values falling in wavelength roi
+        xi_cube = self.Xcenters[indexr]   # x Cube values within radius 
+        eta_cube = self.Ycenters[indexr]  # y cube values with the radius
 
 #        print('found xi_cube',xi_cube)
 #        print('found eta_cube',eta_cube)
@@ -184,15 +184,15 @@ def MatchDet2Cube(self, input_model,
             istart = zz * nplane
             for ir, rr in enumerate(indexr[0]):
 
-                yy_cube = int(rr/Cube.naxis1)
-                xx_cube = rr - yy_cube*Cube.naxis1
-#                print('xx yy cube',rr,Cube.naxis1,xx_cube,yy_cube)
+                yy_cube = int(rr/self.naxis1)
+                xx_cube = rr - yy_cube*self.naxis1
+#                print('xx yy cube',rr,self.naxis1,xx_cube,yy_cube)
 #________________________________________________________________________________
                 if self.weighting =='standard':
 
-                    d1 = (xi_cube[ir] - coord1[ipt])/Cube.Cdelt1
-                    d2 = (eta_cube[ir] - coord2[ipt])/Cube.Cdelt2
-                    d3 = (zlam[iz] - wave[ipt])/Cube.Cdelt3
+                    d1 = (xi_cube[ir] - coord1[ipt])/self.Cdelt1
+                    d2 = (eta_cube[ir] - coord2[ipt])/self.Cdelt2
+                    d3 = (zlam[iz] - wave[ipt])/self.Cdelt3
 #                    print('d1,d2,d3',d1,d2,d3)
                     
                     weight_distance = math.sqrt(d1*d1 + d2*d2 + d3*d3)
@@ -208,8 +208,8 @@ def MatchDet2Cube(self, input_model,
                                                          beta_resol)
 
 
-                    ra_spaxel,dec_spaxel=coord.std2radec(Cube.Crval1,
-                                                         Cube.Crval2,
+                    ra_spaxel,dec_spaxel=coord.std2radec(self.Crval1,
+                                                         self.Crval2,
                                                          xi_cube[ir],eta_cube[ir])
 
                     v2_spaxel,v3_spaxel,zl = worldtov23(ra_spaxel,
@@ -256,13 +256,13 @@ def MatchDet2Cube(self, input_model,
                                   %(self.xdebug+1,self.ydebug+1,
                                     self.zdebug+1,ipt,xpix[ipt]+1,ypix[ipt]+1,
                                     flux[ipt],file_slice_no,weight_distance,wave[ipt],zlam[iz],
-                                    d1*Cube.Cdelt1,d2*Cube.Cdelt2,d3*Cube.Cdelt3) +' \n')
+                                    d1*self.Cdelt1,d2*self.Cdelt2,d3*self.Cdelt3) +' \n')
         iprint = iprint +1
         if iprint == 10000:
             log.debug('Mapping point and finding ROI for point cloud # %d %d' %(ipt,nn))
             iprint = 0
 #_______________________________________________________________________
-def FindWaveWeights(channel, subchannel,InstrumentInfo):
+def FindWaveWeights(channel, subchannel):
     """
     Short Summary
     -------------
