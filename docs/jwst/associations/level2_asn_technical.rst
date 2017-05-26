@@ -39,7 +39,7 @@ The following example will be used to explain the contents of an association::
                 "members": [
                     {
                         "expname": "test_lrs1_rate.fits",
-                        "exptype": "SCIENCE"
+                        "exptype": "science"
                     }
                 ]
             },
@@ -48,7 +48,7 @@ The following example will be used to explain the contents of an association::
                 "members": [
                     {
                         "expname": "test_lrs2bkg_rate.fits",
-                        "exptype": "SCIENCE"
+                        "exptype": "science"
                     }
                 ]
             },
@@ -57,11 +57,11 @@ The following example will be used to explain the contents of an association::
                 "members": [
                     {
                         "expname": "test_lrs2_rate.fits",
-                        "exptype": "SCIENCE"
+                        "exptype": "science"
                     },
                     {
                         "expname": "test_lrs2bkg_rate.fits",
-                        "exptype": "BACKGROUND"
+                        "exptype": "background"
                     }
                 ]
             }
@@ -104,7 +104,7 @@ constraints *optional*
 
 A list of products that would be produced by this association. For
 Level2, each product is an exposure. Each product should have one
-`SCIENCE` member, the exposure on which the Level2b processing will
+`science` member, the exposure on which the Level2b processing will
 occur.
 
 Association products have two components: 
@@ -116,7 +116,7 @@ name *optional*
   suffix information is needed.
 
   If not specified, the Level2b processing modules will create a name
-  based off the name of the `SCIENCE` member.
+  based off the name of the `science` member.
 
 members *required*
   This is a list of the exposures to be used by the Level 2b processing
@@ -134,9 +134,9 @@ expname *required*
 exptype *required*
   Type of information represented by the exposure. Possible values are
 
-  * `SCIENCE`
-  * `BACKGROUND`
-  * `IMPRINT`
+  * `science`
+  * `background`
+  * `imprint`
 
 Editing the member list
 ^^^^^^^^^^^^^^^^^^^^^^^
@@ -146,7 +146,7 @@ formatted as follows::
 
   {
       "expname": "jw_00003_cal.fits",
-      "exptype": "SCIENCE",
+      "exptype": "science",
   },
 
 To remove a member, simply delete its corresponding set.
@@ -155,5 +155,5 @@ To add a member, one need only specify the two required keywords::
 
   {
       "expname": "jw_00003_cal.fits",
-      "exptype": "SCIENCE"
+      "exptype": "science"
   },
