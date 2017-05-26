@@ -42,7 +42,8 @@ def _cast(val, schema):
             raise ValueError(
                 "Array has wrong number of dimensions.  Expected <= {0}, got {1}".format(
                     schema['max_ndim'], len(val.shape)))
-
+        if isinstance(val, np.generic) and np.isscalar(val):
+            val = np.asscalar(val)
     return val
 
 

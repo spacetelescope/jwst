@@ -133,7 +133,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
     def __eq__(self, other):
         """Compare equality of two assocaitions"""
-        if isinstance(other, self.__class__):
+        if isinstance(other, DMS_Level3_Base):
             result = self.data['asn_type'] == other.data['asn_type']
             result = result and (self.members == other.members)
             return result
@@ -142,10 +142,10 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
     def __ne__(self, other):
         """Compare inequality of two associations"""
-        if isinstance(other, DMS_Level3_Base):
-            return not self.__eq__(other)
-        else:
-            return NotImplemented
+        result = self.__eq__(other)
+        if result is not NotImplemented:
+            result = not result
+        return result
 
     def dms_product_name(self):
         """Define product name."""

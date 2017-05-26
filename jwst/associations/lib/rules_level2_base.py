@@ -1,6 +1,9 @@
 """Base classes which define the Level2 Associations"""
 import logging
-from os.path import basename
+from os.path import (
+    basename,
+    splitext
+)
 
 import re
 
@@ -40,7 +43,7 @@ FLAG_TO_EXPTYPE = {
 # File templates
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
-_REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)'
+_REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)'
 
 # Key that uniquely identfies members.
 KEY = 'expname'
@@ -168,15 +171,15 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             return PRODUCT_NAME_DEFAULT
 
         try:
-            science_name = basename(science['expname']).lower()
+            science_path, ext = splitext(science['expname'])
         except Exception:
-            return 'undefined'
+            return PRODUCT_NAME_DEFAULT
 
-        match = re.match(_REGEX_LEVEL2A, science_name)
+        match = re.match(_REGEX_LEVEL2A, science_path)
         if match:
             return match.groupdict()['path']
         else:
-            return science_name
+            return science_path
 
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
