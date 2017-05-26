@@ -68,17 +68,17 @@ KEY = 'expname'
 
 # Exposure EXP_TYPE to Association EXPTYPE mapping
 _EXPTYPE_MAP = {
-    'MIR_TACQ':      'TARGET_ACQUISTION',
-    'NIS_TACQ':      'TARGET_ACQUISTION',
-    'NIS_TACONFIRM': 'TARGET_ACQUISTION',
-    'NRC_TACQ':      'TARGET_ACQUISTION',
-    'NRC_TACONFIRM': 'TARGET_ACQUISTION',
-    'NRS_AUTOFLAT':  'AUTOFLAT',
-    'NRS_AUTOWAVE':  'AUTOWAVE',
-    'NRS_CONFIRM':   'TARGET_ACQUISTION',
-    'NRS_TACQ':      'TARGET_ACQUISTION',
-    'NRS_TACONFIRM': 'TARGET_ACQUISTION',
-    'NRS_TASLIT':    'TARGET_ACQUISTION',
+    'mir_tacq':      'target_acquistion',
+    'nis_tacq':      'target_acquistion',
+    'nis_taconfirm': 'target_acquistion',
+    'nrc_tacq':      'target_acquistion',
+    'nrc_taconfirm': 'target_acquistion',
+    'nrs_autoflat':  'autoflat',
+    'nrs_autowave':  'autowave',
+    'nrs_confirm':   'target_acquistion',
+    'nrs_tacq':      'target_acquistion',
+    'nrs_taconfirm': 'target_acquistion',
+    'nrs_taslit':    'target_acquistion',
 }
 
 
@@ -104,7 +104,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         self.validity.update({
             'has_science': {
                 'validated': False,
-                'check': lambda entry: entry['exptype'] == 'SCIENCE'
+                'check': lambda entry: entry['exptype'] == 'science'
             }
         })
 
@@ -180,8 +180,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         # Set which sequence counter should be used.
         self._sequence = self._sequences[self.data['asn_type']]
 
-        self.data['target'] = member['TARGETID']
-        self.data['program'] = str(member['PROGRAM'])
+        self.data['target'] = member['targetid']
+        self.data['program'] = str(member['program'])
         self.data['asn_pool'] = basename(
             member.meta['pool_file']
         ).split('.')[0]
@@ -208,10 +208,10 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         except KeyError:
             exposerr = None
         entry = {
-            'expname': Utility.rename_to_level2b(member['FILENAME']),
-            'exptype': Utility.get_exposure_type(member, default='SCIENCE'),
+            'expname': Utility.rename_to_level2b(member['filename']),
+            'exptype': Utility.get_exposure_type(member, default='science'),
             'exposerr': exposerr,
-            'asn_candidate': member['ASN_CANDIDATE']
+            'asn_candidate': member['asn_candidate']
         }
 
         self.update_validity(entry)
@@ -219,7 +219,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         members.append(entry)
         if exposerr not in _EMPTY:
             logger.warn('Member {} has error "{}"'.format(
-                member['FILENAME'],
+                member['filename'],
                 exposerr
             ))
             self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
@@ -270,7 +270,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         except KeyError:
             pass
         else:
-            if value not in _EMPTY and value != 'CLEAR':
+            if value not in _EMPTY and value != 'clear':
                 opt_elem = value
                 join_char = '-'
         try:
@@ -278,7 +278,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         except KeyError:
             pass
         else:
-            if value not in _EMPTY and value != 'CLEAR':
+            if value not in _EMPTY and value != 'clear':
                 opt_elem = join_char.join(
                     [opt_elem, value]
                 )
@@ -342,7 +342,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         self.new_product(product_name)
         members = self.current_product['members']
         for item in items:
-            type_ = 'SCIENCE'
+            type_ = 'science'
             if with_type:
                 item, type_ = item
             entry = {
@@ -480,7 +480,7 @@ class Utility(object):
         """
         result = default
         try:
-            exp_type = member['EXP_TYPE']
+            exp_type = member['exp_type']
         except KeyError:
             raise LookupError('Exposure type cannot be determined')
 
@@ -535,11 +535,11 @@ class AsnMixin_Base(DMS_Level3_Base):
         self.add_constraints({
             'program': {
                 'value': None,
-                'inputs': ['PROGRAM'],
+                'inputs': ['program'],
             },
             'instrument': {
                 'value': None,
-                'inputs': ['INSTRUME']
+                'inputs': ['instrume']
             },
         })
 
@@ -554,11 +554,11 @@ class AsnMixin_OpticalPath(DMS_Level3_Base):
         self.add_constraints({
             'opt_elem': {
                 'value': None,
-                'inputs': ['FILTER']
+                'inputs': ['filter']
             },
             'opt_elem2': {
                 'value': None,
-                'inputs': ['PUPIL', 'GRATING'],
+                'inputs': ['pupil', 'grating'],
                 'required': False,
             },
         })
@@ -575,7 +575,7 @@ class AsnMixin_Target(DMS_Level3_Base):
         self.add_constraints({
             'target': {
                 'value': None,
-                'inputs': ['TARGETID']
+                'inputs': ['targetid']
             },
         })
 
@@ -591,8 +591,8 @@ class AsnMixin_MIRI(DMS_Level3_Base):
         # Setup for checking.
         self.add_constraints({
             'instrument': {
-                'value': 'MIRI',
-                'inputs': ['INSTRUME']
+                'value': 'miri',
+                'inputs': ['instrume']
             }
         })
 
@@ -608,8 +608,8 @@ class AsnMixin_NIRSPEC(DMS_Level3_Base):
         # Setup for checking.
         self.add_constraints({
             'instrument': {
-                'value': 'NIRSPEC',
-                'inputs': ['INSTRUME']
+                'value': 'nirspec',
+                'inputs': ['instrume']
             }
         })
 
@@ -625,8 +625,8 @@ class AsnMixin_NIRISS(DMS_Level3_Base):
         # Setup for checking.
         self.add_constraints({
             'instrument': {
-                'value': 'NIRISS',
-                'inputs': ['INSTRUME']
+                'value': 'niriss',
+                'inputs': ['instrume']
             },
         })
 
@@ -642,8 +642,8 @@ class AsnMixin_NIRCAM(DMS_Level3_Base):
         # Setup for checking.
         self.add_constraints({
             'instrument': {
-                'value': 'NIRCAM',
-                'inputs': ['INSTRUME']
+                'value': 'nircam',
+                'inputs': ['instrume']
             },
         })
 
@@ -658,8 +658,8 @@ class AsnMixin_Image(DMS_Level3_Base):
 
         self.add_constraints({
             'exp_type': {
-                'value': 'NRC_IMAGE|MIR_IMAGE|NIS_IMAGE|FGS_IMAGE',
-                'inputs': ['EXP_TYPE'],
+                'value': 'nrc_image|mir_image|nis_image|fgs_image',
+                'inputs': ['exp_type'],
                 'force_unique': True,
             }
         })
