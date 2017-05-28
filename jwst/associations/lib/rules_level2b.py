@@ -42,7 +42,7 @@ class Asn_Lv2SpecBkg(
         self.validity.update({
             'has_background': {
                 'validated': False,
-                'check': lambda entry: entry['exptype'] == 'BACKGROUND'
+                'check': lambda entry: entry['exptype'] == 'background'
             }
         })
 

@@ -319,7 +319,7 @@ def constrain_on_candidates(candidates):
         values = None
     constraint = {
         'value': values,
-        'inputs': ['ASN_CANDIDATE'],
+        'inputs': ['asn_candidate'],
         'force_unique': True,
         'is_acid': True,
         'evaluate': True,
