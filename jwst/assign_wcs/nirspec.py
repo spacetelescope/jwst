@@ -445,6 +445,17 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
                 for s in msa_source if s['source_id'] == source_id][0]
             # Create the output list of tuples that contain the required
             # data for further computations
+            """
+            Convert source positions from PPS to Model coordinate frame.
+            The source x,y position in the shutter is given in the msa configuration file,
+            columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
+            The source position is in a coordinate system associated with each shutter whose
+            origin is the upper left corner of the shutter, positive x is to the right
+            and positive y is downwards. To convert to the coordinate frame associated with the
+            slit, where (0, 0) is in the center of the slit, we subtract 0.5 in both directions.
+            """
+            source_xpos = source_xpos - 0.5
+            source_ypos = source_ypos - 0.5
             slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax,
                                  quadrant, source_id, nshutters, source_name, source_alias,
                                  catalog_id, stellarity, source_xpos, source_ypos))
@@ -1271,6 +1282,45 @@ def nrs_ifu_wcs(input_model):
     for i in range(30):
         wcs_list.append(nrs_wcs_set_input(input_model, i, wrange))
     return wcs_list
+
+
+def compute_dispersion(wcsobj):
+    x, y = grid_from_bounding_box(wcsobj.bounding_box)
+    _, _, lam = wcsobj(x, y)
+    disp = np.empty(lam.shape)
+    disp[:-1, :-1] = lam[1:] - lam[:-1]
+    disp[:,-1] = disp[:,-2] + disp[:,-2]-disp[:,-3]
+    return disp
+
+
+def compute_lam_zero_point(lam, x_source, reference_files):
+    f = fits.open('wzprf.fits')
+    data = f[1].data
+    w = wcs.WCS(f[1].header)
+    width = f[1].header['width']
+    x_source *= width
+    lam, xpos = w.wcs_pixel2world(lam, xpos, 1)
+    t = Tabular2D(lookup_table=data)
+    corr_interp = t(lam, xpos, fill_value=np.nan)
+    lam_corr = dispersion *corr_interp
+    return lam_corr
+
+class WZPModel(Model):
+    def __init__(self, xpos, dispersion, table, wcs, width):
+        self.table = table
+        self.xpos = xpos
+        self.dispersion = dispersion
+        self.wcs = wcs
+        self.width = width
+
+    def __call__(self, lam):
+        lam, xpos = self.wcs.wcs_pix2world(lam, self.xpos*self.width)
+        t = Tabular2D(lookup_table=self.data)
+        return self.dispersion * t(lam, xpos)
+
+
+
+
 
 
 exp_type2transform = {'nrs_tacq': imaging,
