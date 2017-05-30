@@ -268,13 +268,16 @@ def update_output_name(self):
 #________________________________________________________________________________
 # check and see if one is provided by the user
 # self.output_file is automatically filled in by step class
-
-        root, ext = os.path.splitext(self.output_file)
-        default = root.find('cube_build') # the user has not provided a name
-        if(default != -1):
+        print('output file',self.output_file)
+        if(self.output_file == None):
             self.output_file = newname
-        else:
-            newname = self.output_file
+        else: 
+            root, ext = os.path.splitext(self.output_file)
+            default = root.find('cube_build') # the user has not provided a name
+            if(default != -1):
+                self.output_file = newname
+            else:
+                newname = self.output_file
 
 
     return newname
@@ -327,7 +330,7 @@ def read_cubepars(self, instrument_info):
                     instrument_info.SetSpatialROI(table_sroi,this_channel,this_sub)
         
     elif self.instrument == 'NIRSPEC':
-        ptab = datamodels.NispecIFUCubeParsModel(self.par_filename)
+        ptab = datamodels.NirspecIFUCubeParsModel(self.par_filename)
         number_gratings = len(self.band_grating)
 
         for i in range(number_gratings):

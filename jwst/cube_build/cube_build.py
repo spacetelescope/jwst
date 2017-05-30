@@ -1,3 +1,4 @@
+
 # Routines used for building cubes
 from __future__ import absolute_import, print_function
 import sys
@@ -436,6 +437,98 @@ class CubeData(object):
         CubeData.update_IFUCube(self,IFUCube, self.spaxel)
 
         return IFUCube
+
+#********************************************************************************
+
+    def build_ifucube_single(self):
+
+        """
+        Short Summary
+        -------------
+        Loop over every band contained in the IFU cube and read in the data associated with the band
+        Map the detector data to the cube output coordinate system 
+
+        Parameter
+        ----------
+        spaxel - a list of spaxel members holding the detector flux information 
+
+        Returns
+        -------
+        each spaxel element with the mapped detector values associated with it 
+
+        """
+
+        # loop over input models 
+
+        single_IFUCube = []
+        n = len(self.input_models)
+        this_par1 = self.band_channel[0] # only one channel is used in this approach
+        this_par2 = None # not import for this type of mapping
+
+        self.weighting =='standard'
+        c1_offset = 0
+        c2_offset = 0 
+        for j in range(n):
+            t0 = time.time()
+            print('********************************************')
+            print(' new spaxel')
+# for each new data model create a new spaxel
+            spaxel = []
+
+            spaxel = CubeData.create_spaxel(self)
+
+            with datamodels.ImageModel(self.input_models[j]) as input_model:
+#********************************************************************************
+# pulled necessary routines from   CubeData.map_detector_to_spaxel
+                if self.instrument == 'MIRI':
+#________________________________________________________________________________
+                    xstart, xend = self.instrument_info.GetMIRISliceEndPts(this_par1)
+                    y, x = np.mgrid[:1024, xstart:xend]
+                    y = np.reshape(y, y.size)
+                    x = np.reshape(x, x.size)
+                    t0 = time.time()
+                    cube_cloud.match_det2cube(self,input_model,
+                                              x, y, j,
+                                              this_par1,this_par2,
+                                              spaxel,
+                                              c1_offset, c2_offset)
+
+                elif instrument == 'NIRSPEC':
+                    # each file, detector has 30 slices - wcs information access seperately for each slice
+                    start_slice = 0
+                    end_slice = 29
+                    nslices = end_slice - start_slice + 1
+                    regions = list(range(start_slice, end_slice + 1))
+                    for ii in regions:
+#                    print('on region ',ii)
+                        slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
+                        yrange = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
+                        xrange = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
+                        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
+
+                        t0 = time.time()
+                        cube_cloud.match_det2cube(self,input_model,
+                                                  x, y, ii,
+                                                  this_par1,this_par2,
+                                                  spaxel,
+                                                  c1_offset, c2_offset)
+
+                        t1 = time.time()
+                        log.debug("Time Match one NIRSPEC slice  to IFUCube = %.1f.s" % (t1 - t0,))
+#_______________________________________________________________________
+# shove Flux and iflux in the  final IFU cube
+            CubeData.find_spaxel_flux(self, spaxel)
+# now determine Cube Spaxel flux
+            IFUCube = CubeData.setup_IFUCube(self)
+            CubeData.update_IFUCube(self,IFUCube, spaxel)
+
+            t1 = time.time()
+            log.info("Time Create Single IFUcube  = %.1f.s" % (t1 - t0,))
+#_______________________________________________________________________
+            single_IFUCube.append(IFUCube)
+            del spaxel[:]             
+        return single_IFUCube
+
 #********************************************************************************
 
     def create_spaxel(self):
@@ -560,7 +653,6 @@ class CubeData(object):
                 c2_offset = self.master_table.FileOffset[this_par1][this_par2]['C2'][k]
 # Open the input data model
             with datamodels.ImageModel(ifile) as input_model:
-#            Cube.file.append(input_model.meta.filename)
 #********************************************************************************
                 if self.instrument == 'MIRI':
 #________________________________________________________________________________
@@ -633,8 +725,8 @@ class CubeData(object):
                     for i in regions:
 #                    print('on region ',i)
                         slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
-                        yrange = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][0]
-                        xrange = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][0]
+                        yrange = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
+                        xrange = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
 
                         t0 = time.time()
@@ -730,6 +822,7 @@ class CubeData(object):
 
         IFUCube = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
 
+
         if self.cube_type =='Model' :
             IFUupdate(self.input_models[0])
 
@@ -796,6 +889,7 @@ class CubeData(object):
         """
     #pull out data into array
 
+        print('size of spaxel',len(spaxel))
 
         temp_flux =np.reshape(np.array([s.flux for s in spaxel]),
                           [self.naxis3,self.naxis2,self.naxis1])

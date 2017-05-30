@@ -44,6 +44,7 @@ class CubeBuildStep (Step):
          single = boolean(default=false)
        """
     reference_file_types = ['cubepars','resol']
+#    reference_file_types = ['cubepars']
 
     def process(self, input):
         self.log.info('Starting IFU Cube Building Step')
@@ -52,7 +53,6 @@ class CubeBuildStep (Step):
 # For all parameters convert to a standard format
 # Report read in values to screen
 #________________________________________________________________________________
-
         self.subchannel = self.band
         if(not self.subchannel.isupper()): self.subchannel = self.subchannel.upper()
         if(not self.filter.isupper()): self.filter = self.filter.upper()
@@ -108,7 +108,7 @@ class CubeBuildStep (Step):
         if(self.single) :
             print(' Cube build will create single images mapped to full output cube coord system')
 #________________________________________________________________________________
-    # read input user parameters - Channel, Band (Subchannel), Grating, Filter
+    # read input parameters - Channel, Band (Subchannel), Grating, Filter
 #________________________________________________________________________________
         self.pars_input = {}
         self.pars_input['channel'] = []     # input parameter or determined from reading in files
@@ -116,9 +116,10 @@ class CubeBuildStep (Step):
 
         self.pars_input['filter'] = []   # input parameter
         self.pars_input['grating'] = []  # input parameter
-        read_user_input(self)
+        read_user_input(self)  # see if options channel, band,grating filter are set
+                               # if they are filling par_input with values 
 #________________________________________________________________________________
-#Read in the input data - 4 formats are allowed:
+#data_types: DataTypes: Read in the input data - 4 formats are allowed:
 # 1. filename
 # 2. single model
 # 3. ASN table
@@ -152,6 +153,7 @@ class CubeBuildStep (Step):
             if resol_filename == 'N/A':
                 self.log.warning('No default spectral resolution reference file found')
                 self.log.warning('Run again and turn off miripsf')
+                return
 #________________________________________________________________________________
 # shove the input parameters in to pars to pull out in work horse module - 
 # cube_build.py
@@ -182,6 +184,7 @@ class CubeBuildStep (Step):
             'offset_list': self.offset_list}
 
 #________________________________________________________________________________
+# create an instance of class CubeData
 
         cubeinfo = cube_build.CubeData(self.cube_type,
                                        self.input_models,
@@ -192,7 +195,9 @@ class CubeBuildStep (Step):
                                        resol_filename,
                                        **pars)
 #________________________________________________________________________________
-# read in all the input files
+# read in all the input files, information from cube_pars, read in input data and
+# fill in master_table holding what files are associationed with each ch/sub-ch
+# or grating/filter
 
         self.output_file = cubeinfo.setup()
 #________________________________________________________________________________
@@ -202,12 +207,22 @@ class CubeBuildStep (Step):
 
         cubeinfo.setup_wcs()
 
+#________________________________________________________________________________
+# build the IFU Cube
+
+# If single = True: map each file to output grid and return single mapped file 
+#to output grid
+# this option is used for background matching and outlier rejection
+
         if self.single:
             print('working on single cubes')
-#            cubeinfo.build_single_ifucube()
+
+            result_list = cubeinfo.build_ifucube_single()
+            print('number of IFUCube models',len(result_list))
+
+# Else standard IFU cube building
         else:
            result =  cubeinfo.build_ifucube()
-#           result.save(result.meta.filename)
            blendheaders.blendheaders(self.output_file,self.input_filenames)
 
 
@@ -223,16 +238,19 @@ def read_user_input(self):
     Short Summary
     -------------
     figure out if any of the input paramters channel,band,filter or grating
-    have been set. If they check that they are valid and fill in 
+    have been set. If they have been  check that they are valid and fill in 
     input_pars paramters
 
     Parameters
     ----------
-    
+    none
 
     Returns
     -------
-    
+    self.pars_input['channel']
+    self.pars_input['sub_channel']
+    self.pars_input['grating']
+    self.pars_input['filter']
 
     """
     ValidChannel = ['1', '2', '3', '4','ALL']

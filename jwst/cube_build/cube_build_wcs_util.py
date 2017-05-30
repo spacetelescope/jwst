@@ -217,13 +217,15 @@ def find_footprint_NIRSPEC(self, input,flag_data):
     regions = list(range(start_slice, end_slice + 1))
     k = 0
 
-    self.log.info('Looping over slices to determine cube size .. this takes a while')
+    log.info('Looping over slices to determine cube size .. this takes a while')
     # for NIRSPEC there are 30 regions
     for i in regions:
 
         slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
         yrange_slice = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][0]
         xrange_slice = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][0]
+
+        print(' for slice ',i,yrange_slice,xrange_slice)
 
         if(xrange_slice[0] >= 0 and xrange_slice[1] > 0):
 
@@ -251,7 +253,7 @@ def find_footprint_NIRSPEC(self, input,flag_data):
     lambda_max = max(lambda_slice)
 
     if(a_min == 0.0 and a_max == 0.0 and b_min ==0.0 and b_max == 0.0):
-        self.log.info('This NIRSPEC exposure has no IFU data on it - skipping file')
+        log.info('This NIRSPEC exposure has no IFU data on it - skipping file')
         flag_data = -1
 
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
@@ -282,6 +284,8 @@ def set_geometry(self, footprint):
         # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
         # to find location of center abs of min values is how many pixels 
 
+#        print('crval1 crval2',self.Crval1,self.Crval2)
+              
         n1a = int(math.ceil(math.fabs(xi_min) / self.Cdelt1)) 
         n2a = int(math.ceil(math.fabs(eta_min) / self.Cdelt2)) 
 
@@ -311,7 +315,8 @@ def set_geometry(self, footprint):
         for i in range(self.naxis1):
             self.xcoord[i] = xstart
             xstart = xstart + self.Cdelt1
-
+            
+#        print('naxis 1 2',self.naxis1,self.naxis2)
 
         self.ycoord = np.zeros(self.naxis2)
         ystart = eta_min + self.Cdelt2 / 2.0
@@ -319,7 +324,7 @@ def set_geometry(self, footprint):
         for i in range(self.naxis2):
             self.ycoord[i] = ystart
             ystart = ystart + self.Cdelt2
-#            print('ycoord',self.ycoord[i],i)
+            print('ycoord',self.ycoord[i],i)
 
 #        print('ycoord xcoord shape',self.ycoord.shape,self.xcoord.shape)
         
