@@ -54,9 +54,10 @@ class _SimpleModel(model_base.DataModel):
 
     def validate(self):
         assert isinstance(self.model, Model)
-        assert isinstance(self.meta.input_units, (str, u.Unit))
-        assert isinstance(self.meta.output_units, (str, u.Unit))
+        assert isinstance(self.meta.input_units, (str, u.NamedUnit))
+        assert isinstance(self.meta.output_units, (str, u.NamedUnit))
         assert self.meta.instrument.name in ["NIRCAM", "NIRSPEC", "MIRI", "TFI", "FGS", "NIRISS"]
+        assert self.meta.instrument.detector
 
 
 class DistortionModel(_SimpleModel):
@@ -65,6 +66,16 @@ class DistortionModel(_SimpleModel):
     """
     schema_url = "distortion.schema.yaml"
     reftype = "distortion"
+
+    def validate(self):
+        super(DistortionModel, self).validate()
+        if self.meta.instrument.name == 'NIRCAM':
+            assert self.meta.instrument.module
+            assert self.meta.instrument.channel
+            assert self.meta.instrument.p_pupil
+        elif self.meta.instrument.name == 'MIRI':
+            assert self.meta.exposure.type
+            assert self.meta.exposure.p_exptype
 
 
 class DistortionMRSModel(model_base.DataModel):
