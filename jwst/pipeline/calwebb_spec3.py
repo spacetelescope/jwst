@@ -99,7 +99,7 @@ class Spec3Pipeline(Pipeline):
                 # subsequent steps
                 # Extracts data from each of the Exposures in MultiExposureModel
                 # and packs into a ModelContainer
-                <your code here>
+                raise RuntimeError('No code to convert MultiSource to ModelContainer')
 
                 # Call outlier detection
                 source_models = self.outlier_detection(source_models)
@@ -107,7 +107,7 @@ class Spec3Pipeline(Pipeline):
                 # Need to somehow now translate the updated DQ flags contained
                 # in the returned source_models back into DQ arrays of original
                 # MultiExposureModel and save as a pseudo level-2c product
-                <your code here>
+                raise RuntimeError('No code to update DQ arrays in exposure-based data')
 
                 # Save updated inputs to level-2c products
 
@@ -118,13 +118,13 @@ class Spec3Pipeline(Pipeline):
                 s2d_result = self.resample_spec(source_models)
 
                 # Save this result as a 's2d' source-based product
-                <your code here>
+                raise RuntimeError('No code to save s2d result')
 
                 # Finally call extract_1d on resampled s2d product
                 x1d_result = self.extract_1d_step(s2d_result)
 
                 # Save this result to a source-based 'x1d' product
-                <your code here>
+                raise RuntimeError('No code to save x1d result')
 
                 # Done with this source-based input product. Loop to the next ...
 
