@@ -27,21 +27,16 @@ class PersistenceStep(Step):
     # This is currently commented out to prevent CRDS from trying to
     # find these files (because they haven't been delivered yet).
     # xxx xxx reference_file_types = ["trapdensity", "traps", "fullwell"]
-    # xxx begin test debug ...
-    reference_file_types = ["trapdensity", "traps", "fullwell"]
-    # xxx ... end test debug
 
     def process(self, input):
 
-        # xxx begin test debug ...
         # Skip all processing for now ...
-        #output_obj = datamodels.open(input).copy()
-        #output_obj.meta.cal_step.persistence = 'SKIPPED'
-        #self.log.warning('Persistence step is currently a no-op: SKIPPING')
+        output_obj = datamodels.open(input).copy()
+        output_obj.meta.cal_step.persistence = 'SKIPPED'
+        self.log.warning('Persistence step is currently a no-op: SKIPPING')
 
-        #return output_obj
+        return output_obj
         # ... end skip all processing for now
-        # xxx ... end test debug
 
         if self.input_trapsfilled is not None:
             if (self.input_trapsfilled == "None" or
