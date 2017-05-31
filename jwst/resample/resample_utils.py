@@ -48,17 +48,18 @@ def make_output_wcs(input_models):
     wcslist = [i.meta.wcs for i in input_models]
     for w, i in zip(wcslist, input_models):
         if w.bounding_box is None:
-            w.bounding_box = create_bounding_box(w, i.data.shape)
+            w.bounding_box = bounding_box_from_shape(i.data.shape)
 
     output_frame = wcslist[0].output_frame
     naxes = wcslist[0].output_frame.naxes
 
     if naxes == 3:
+        # THIS BLOCK CURRENTLY ISN"T USED BY resample_spec
         output_wcs = wcs_from_spec_footprints(wcslist)
-        data_size = build_size_from_spec_bounding_box(output_wcs.bounding_box)
+        data_size = shape_from_bounding_box(output_wcs.bounding_box)
     elif naxes == 2:
         output_wcs = assign_wcs.util.wcs_from_footprints(input_models)
-        data_size = build_size_from_bounding_box(output_wcs.bounding_box)
+        data_size = shape_from_bounding_box(output_wcs.bounding_box)
 
     output_wcs.data_size = (data_size[1], data_size[0])
     return output_wcs
@@ -84,28 +85,28 @@ def compute_output_transform(refwcs, filename, fiducial):
 
     xscale = np.abs(position0.separation(position_xdir).value)
     yscale = np.abs(position0.separation(position_ydir).value)
-    scale = np.mean([xscale, yscale])
+    scale = np.sqrt(xscale * yscale)
 
-    c00 = offset_xdir[0].value - scale
-    c01 = offset_xdir[1].value - scale
-    c10 = offset_ydir[0].value - scale
-    c11 = offset_ydir[1].value - scale
+    c00 = offset_xdir[0].value / scale
+    c01 = offset_xdir[1].value / scale
+    c10 = offset_ydir[0].value / scale
+    c11 = offset_ydir[1].value / scale
     pc_matrix = AffineTransformation2D(matrix=[[c00, c01], [c10, c11]])
     cdelt = Scale(scale) & Scale(scale)
 
     return pc_matrix | cdelt
 
 
-def create_bounding_box(wcs, shape):
+def bounding_box_from_shape(shape):
     """ Create bounding_box for WCS based on shape of model data.
     """
     bb = []
     for s in reversed(shape):
-        bb.append((0, s))
-    return bb
+        bb.append((-0.5, s - 0.5))
+    return tuple(bb)
 
 
-def build_size_from_bounding_box(bounding_box):
+def shape_from_bounding_box(bounding_box):
     """ Return the size of the frame based on the provided domain
     """
     size = []
@@ -116,27 +117,20 @@ def build_size_from_bounding_box(bounding_box):
     return tuple(reversed(size))
 
 
-def build_size_from_spec_bounding_box(bounding_box):
-    """ Return the size of the frame based on the provided bounding_box
-    """
-    size = []
-    for axis in bounding_box:
-        delta = axis[1] - axis[0]
-        size.append(int(delta + 0.5))
-    return tuple(size)
-
-
-def calc_gwcs_pixmap(in_wcs, out_wcs):
+def calc_gwcs_pixmap(in_wcs, out_wcs, shape=None):
     """ Return a pixel grid map from input frame to output frame.
     """
-    # TODO: Is the following 1-indexed or 0-indexed?  Check.
-    grid = wcstools.grid_from_bounding_box(in_wcs.bounding_box, step=(1, 1),
-        center=True)
+    if shape:
+        bb = bounding_box_from_shape(shape)
+        log.debug("Bounding box from data shape: {}".format(bb))
+    else:
+        bb = in_wcs.bounding_box
+        log.debug("Bounding box from WCS: {}".format(in_wcs.bounding_box))
 
-    # pixmap_tuple = reproject(in_wcs, out_wcs)(grid[1], grid[0])
-    pixmap_tuple = reproject(in_wcs, out_wcs)(grid[0], grid[1])
-    pixmap = np.dstack(pixmap_tuple)
+    grid = wcstools.grid_from_bounding_box(bb, step=(1, 1), center=True)
+    pixmap = np.dstack(reproject(in_wcs, out_wcs)(grid[0], grid[1]))
     return pixmap
+
 
 def reproject(wcs1, wcs2):
     """

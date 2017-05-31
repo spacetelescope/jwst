@@ -5,10 +5,6 @@ from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import resample
 
-import logging
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-
 
 class ResampleStep(Step):
     """
@@ -51,10 +47,10 @@ class ResampleStep(Step):
         try:
             self.ref_filename = self.get_reference_file(self.input_models[0],
                 self.reference_file_types[0])
-            log.info('{} reffile is {}'.format(self.reference_file_types[0],
+            self.log.info('{} reffile is {}'.format(self.reference_file_types[0],
                 self.ref_filename))
         except:
-            log.error('{} reffile is not found.'.format(
+            self.log.error('{} reffile is not found.'.format(
                 self.reference_file_types[0]))
 
         # Call the resampling routine

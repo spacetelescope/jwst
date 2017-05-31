@@ -48,21 +48,21 @@ class TestLevel3Spectrographic(BasePoolRule):
             'spec3',
             'jw99009-o001_spec3_\d{3}_asn',
             'jw99009-o001_t001_nirspec_f100lp-g140m',
-            set(('SCIENCE', 'TARGET_ACQUISTION', 'AUTOWAVE'))
+            set(('science', 'target_acquistion', 'autowave'))
         ),
         (
             'o002',
             'spec3',
             'jw99009-o002_spec3_\d{3}_asn',
             'jw99009-o002_t003_nirspec_f100lp-g140h',
-            set(('SCIENCE', 'TARGET_ACQUISTION', 'AUTOFLAT', 'AUTOWAVE'))
+            set(('science', 'target_acquistion', 'autoflat', 'autowave'))
         ),
         (
             'o003',
             'spec3',
             'jw99009-o003_spec3_\d{3}_asn',
             'jw99009-o003_t002_nirspec_clear',
-            set(('SCIENCE', 'TARGET_ACQUISTION', 'AUTOWAVE'))
+            set(('science', 'target_acquistion', 'autowave'))
         ),
     ]
 )

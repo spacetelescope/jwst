@@ -1,7 +1,8 @@
 .. _design-pool:
 
-Association Pool
-================
+==================
+ Association Pool
+==================
 
 .. _astropy Table:
    http://docs.astropy.org/en/stable/table/index.html
@@ -16,7 +17,7 @@ attributes of that member. It is these attributes that the generator
 uses to determine which members go into which associations.
 
 Regardless of any implied or explicit typing of data by a table file,
-internally all data are converted to strings. It is left up to the
+internally all data are converted to lowercase strings. It is left up to the
 individual association definitions on how they will use these
 attributes.
 

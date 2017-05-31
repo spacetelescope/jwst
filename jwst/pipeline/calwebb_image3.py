@@ -14,13 +14,9 @@ from ..tweakreg import tweakreg_step
 
 __version__ = "0.7.0"
 
-import logging
-log = logging.getLogger()
-log.setLevel(logging.DEBUG)
 
 class Image3Pipeline(Pipeline):
     """
-
     Image3Pipeline: Applies level 3 processing to imaging-mode data from
                     any JWST instrument.
 
@@ -31,7 +27,6 @@ class Image3Pipeline(Pipeline):
         outlier_detection
         resample
         source_catalog
-
     """
 
     # Define alias to steps
@@ -45,7 +40,7 @@ class Image3Pipeline(Pipeline):
 
     def process(self, input):
 
-        log.info('Starting calwebb_image3 ...')
+        self.log.info('Starting calwebb_image3 ...')
 
         input_models = datamodels.open(input)
 
@@ -54,10 +49,10 @@ class Image3Pipeline(Pipeline):
         # Multiple input files that represent more than 1 exposure
         if is_container and len(input_models.group_names) > 1:
 
-            log.info("Generating source catalogs for alignment...")
+            self.log.info("Generating source catalogs for alignment...")
             input_models = self.tweakreg_catalog(input_models)
 
-            log.info("Aligning input images...")
+            self.log.info("Aligning input images...")
             input_models = self.tweakreg(input_models)
 
             # Clean up tweakreg catalogs which no are no longer needed
@@ -68,13 +63,13 @@ class Image3Pipeline(Pipeline):
                 except:
                     pass
 
-            log.info("Matching sky values across all input images...")
+            self.log.info("Matching sky values across all input images...")
             input_models = self.skymatch(input_models)
 
-            log.info("Performing outlier detection on input images...")
+            self.log.info("Performing outlier detection on input images...")
             input_models = self.outlier_detection(input_models)
 
-            log.info("Writing out Level 2c images with updated DQ arrays...")
+            self.log.info("Writing out Level 2c images with updated DQ arrays...")
             generate_2c_names(input_models)
             input_models.save()
 
@@ -82,13 +77,13 @@ class Image3Pipeline(Pipeline):
         output_file = mk_prodname(self.output_dir, input_models.meta.resample.output, 'i2d')
         input_models.meta.resample.output = output_file
 
-        log.info("Resampling images to final output...")
+        self.log.info("Resampling images to final output...")
         output = self.resample(input_models)
 
-        log.info("Creating source catalog...")
+        self.log.info("Creating source catalog...")
         out_catalog = self.source_catalog(output)
 
-        log.info('Saving final resampled image to %s', output_file)
+        self.log.info('Saving final resampled image to %s', output_file)
         output.save(output_file)
 
         return
