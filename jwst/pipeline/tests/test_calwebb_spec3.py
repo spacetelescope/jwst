@@ -37,4 +37,4 @@ def test_basic_run(mk_tmp_dirs):
     ]
 
     Step.from_cmdline(args)
-    assert True
+    assert False
