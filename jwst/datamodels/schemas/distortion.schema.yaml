@@ -5,6 +5,7 @@ allOf:
 - $ref: keyword_pfilter.schema.yaml
 - $ref: keyword_pupil.schema.yaml
 - $ref: keyword_ppupil.schema.yaml
+- $ref: keyword_module.schema.yaml
 - $ref: keyword_exptype.schema.yaml
 - $ref: keyword_pexptype.schema.yaml
 - $ref: subarray.schema.yaml
