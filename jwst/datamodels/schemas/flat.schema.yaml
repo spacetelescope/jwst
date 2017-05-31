@@ -5,6 +5,7 @@ allOf:
 - $ref: keyword_pfilter.schema.yaml
 - $ref: keyword_pupil.schema.yaml
 - $ref: keyword_ppupil.schema.yaml
+- $ref: keyword_channel.schema.yaml
 - type: object
   properties:
     data:
