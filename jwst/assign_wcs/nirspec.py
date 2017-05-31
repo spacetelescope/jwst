@@ -1284,45 +1284,6 @@ def nrs_ifu_wcs(input_model):
     return wcs_list
 
 
-def compute_dispersion(wcsobj):
-    x, y = grid_from_bounding_box(wcsobj.bounding_box)
-    _, _, lam = wcsobj(x, y)
-    disp = np.empty(lam.shape)
-    disp[:-1, :-1] = lam[1:] - lam[:-1]
-    disp[:,-1] = disp[:,-2] + disp[:,-2]-disp[:,-3]
-    return disp
-
-
-def compute_lam_zero_point(lam, x_source, reference_files):
-    f = fits.open('wzprf.fits')
-    data = f[1].data
-    w = wcs.WCS(f[1].header)
-    width = f[1].header['width']
-    x_source *= width
-    lam, xpos = w.wcs_pixel2world(lam, xpos, 1)
-    t = Tabular2D(lookup_table=data)
-    corr_interp = t(lam, xpos, fill_value=np.nan)
-    lam_corr = dispersion *corr_interp
-    return lam_corr
-
-class WZPModel(Model):
-    def __init__(self, xpos, dispersion, table, wcs, width):
-        self.table = table
-        self.xpos = xpos
-        self.dispersion = dispersion
-        self.wcs = wcs
-        self.width = width
-
-    def __call__(self, lam):
-        lam, xpos = self.wcs.wcs_pix2world(lam, self.xpos*self.width)
-        t = Tabular2D(lookup_table=self.data)
-        return self.dispersion * t(lam, xpos)
-
-
-
-
-
-
 exp_type2transform = {'nrs_tacq': imaging,
                       'nrs_taslit': imaging,
                       'nrs_taconfirm': imaging,
