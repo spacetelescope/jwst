@@ -128,11 +128,11 @@ class Spec2Pipeline(Pipeline):
         # Find all the member types in the product
         members_by_type = defaultdict(list)
         for member in exp_product['members']:
-            members_by_type[member['exptype']].append(member['expname'])
+            members_by_type[member['exptype'].lower()].append(member['expname'])
 
         # Get the science member. Technically there should only be
         # one. We'll just get the first one found.
-        science = members_by_type['SCIENCE']
+        science = members_by_type['science']
         if len(science) != 1:
             log.warn(
                 'Wrong number of science exposures found in {}'.format(
@@ -153,7 +153,7 @@ class Spec2Pipeline(Pipeline):
         input = self.assign_wcs(input)
 
         # Do background processing, if necessary
-        if len(members_by_type['BACKGROUND']) > 0:
+        if len(members_by_type['background']) > 0:
 
             # Setup for saving
             self.bkg_subtract.suffix = 'bsub'
@@ -165,7 +165,7 @@ class Spec2Pipeline(Pipeline):
                 self.bkg_subtract.save_results = True
 
             # Call the background subtraction step
-            input = self.bkg_subtract(input, members_by_type['BACKGROUND'])
+            input = self.bkg_subtract(input, members_by_type['background'])
 
         # If assign_wcs was skipped, abort the rest of processing,
         # because so many downstream steps depend on the WCS
@@ -178,7 +178,7 @@ class Spec2Pipeline(Pipeline):
         # Apply NIRSpec MSA imprint subtraction
         # Technically there should be just one.
         # We'll just get the first one found
-        imprint = members_by_type['IMPRINT']
+        imprint = members_by_type['imprint']
         if exp_type in ['NRS_MSASPEC', 'NRS_IFU'] and \
            len(imprint) > 0:
             if len(imprint) > 1:

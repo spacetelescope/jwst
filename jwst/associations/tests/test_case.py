@@ -1,4 +1,4 @@
-"""test_level3_dithers: Test of dither rules."""
+"""Test case insensitivity"""
 from __future__ import absolute_import
 import pytest
 
@@ -54,9 +54,10 @@ from ..main import Main
         ),
     ]
 )
-def test_candidate_observation(partial_args, n_asns):
+def test_candidate_observation_caseagnostic(partial_args, n_asns):
+    """Use the extensive candidate test as a test for case"""
     with mkstemp_pool_file(
-            t_path('data/pool_001_candidates.csv')
+            t_path('data/pool_001_candidates_lower.csv')
     ) as pool_path:
         cmd_args = [
             pool_path,

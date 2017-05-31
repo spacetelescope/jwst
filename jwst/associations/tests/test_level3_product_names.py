@@ -40,7 +40,7 @@ LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX = (
 )
 
 # Null values
-EMPTY = (None, 'NULL', 'CLEAR')
+EMPTY = (None, 'NULL', 'Null', 'null', 'CLEAR', 'Clear', 'clear')
 
 
 pool_file = func_fixture(
@@ -59,7 +59,7 @@ global_constraints = func_fixture(
         {
             'asn_candidate': {
                 'value': ['.+o002.+'],
-                'inputs': ['ASN_CANDIDATE'],
+                'inputs': ['asn_candidate'],
                 'force_unique': True,
                 'is_acid': True,
                 'evaluate': True,
@@ -88,7 +88,7 @@ def test_level3_productname_components_acid():
     global_constraints = {}
     global_constraints['asn_candidate_ids'] = {
         'value': '.+o001.+',
-        'inputs': ['ASN_CANDIDATE'],
+        'inputs': ['asn_candidate'],
         'force_unique': True,
         'is_acid': True,
         'evaluate': True,

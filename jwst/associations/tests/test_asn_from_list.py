@@ -22,7 +22,7 @@ def test_level2():
         assert len(members) == 1
         member = members[0]
         assert member['expname'] == product['name']
-        assert member['exptype'] == 'SCIENCE'
+        assert member['exptype'] == 'science'
 
 
 def test_level2_from_cmdline(tmpdir):
@@ -48,7 +48,7 @@ def test_level2_from_cmdline(tmpdir):
         assert len(members) == 1
         member = members[0]
         assert member['expname'] == product['name']
-        assert member['exptype'] == 'SCIENCE'
+        assert member['exptype'] == 'science'
 
 
 def test_base_association():
@@ -84,16 +84,16 @@ def test_default_simple():
     assert len(product['members']) == len(items)
     for member in product['members']:
         assert member['expname'] in items
-        assert member['exptype'] == 'SCIENCE'
+        assert member['exptype'] == 'science'
 
 
 def test_default_with_type():
     """Level3 association with types specified"""
     product_name = 'test_product'
     items = {
-        'a': 'SCIENCE',
-        'b': 'TARGET_ACQ',
-        'c': 'SOMETHINGELSE'
+        'a': 'science',
+        'b': 'target_acq',
+        'c': 'somethingelse'
     }
     asn = asn_from_list(
         [(item, type_) for item, type_ in items.items()],
@@ -125,9 +125,9 @@ def test_default_roundtrip():
     """Create/Write/Read a Level3 association"""
     product_name = 'test_product'
     items = {
-        'a': 'SCIENCE',
-        'b': 'TARGET_ACQ',
-        'c': 'SOMETHINGELSE'
+        'a': 'science',
+        'b': 'target_acq',
+        'c': 'somethingelse'
     }
     asn = asn_from_list(
         [(item, type_) for item, type_ in items.items()],

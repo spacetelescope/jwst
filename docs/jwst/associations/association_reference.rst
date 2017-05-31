@@ -82,7 +82,7 @@ These are the methods of an association rule deal with creation or returning the
 created association. A rule may define other methods, but the
 following are required to be implemented.
 
-    :meth:`Association`
+    :meth:`create() <Association.create>`
           Create an association.
 
     :meth:`add() <Association.add>`
@@ -98,24 +98,32 @@ following are required to be implemented.
 Creation
 ^^^^^^^^
 
-To create an association based on a member, one simply attempts to
-instantiate the rule using the member as an argument::
+To create an association based on a member, the `create` method of the
+rule is called::
 
-  association = Asn_SomeRule(member)
+  (association, reprocess_list) = Asn_SomeRule.create(member)
 
-If, for reasons determined within the class instantiation code itself,
-the member should not belong the association, an `AssociationError` is
-raised. Otherwise, the association is successfully created, with the
-member as its first member.
+`create` returns a 2-tuple: The first element is the association and the
+second element is a list of `reprocess` instances.
+
+If the member matches the conditions for the rule, an association is
+returned. If the member does not belong, `None` is returned for the
+association.
+
+Whether an association is created or not, it is possible a list of
+`reprocess` instances may be returned. This list represents the
+expansion of the pool in :ref:`member-with-lists`
+
+Addition
+^^^^^^^^
 
 To add members to an existing association, one uses the :meth:`Association.add
 <jwst.associations.association.Association.add>` method::
 
-  association.add(new_member)
+  (matches, reprocess_list) = association.add(new_member)
 
-If the association accepts the member, no further action occurs. If
-the member does not belong in the association, again, an
-`AssociationError` is raised.
+If the association accepts the member, the `matches` element of the
+2-tuple will be `True`.
 
 Typically, one does not deal with a single rule, but a collection of
 rules. For association creation, one typically uses an
@@ -205,22 +213,32 @@ dict is the contents of the `data` attribute. For example::
   assert asn.data['value'] == 'another value'
   # True
 
-Initialization
-^^^^^^^^^^^^^^
+Instantiation
+^^^^^^^^^^^^^
 
-When overriding the `__init__()` function, the base classes ultimately
-call `add()` to confirm that the given member actually belongs to the
-current rule. Therefore, any initialization required to ensure that
-the member can actually be added should be done before calling
-`super().__init__()`. Any post-member-add operations can be done
-afterwards, noting that if the `add()` fails, an `AssociationError` is raised.
+Instantiating a rule, in and of itself, does nothing more than setup
+the constraints that define the rule, and basic structure
+initialization.
+
+Implementing `create()`
+^^^^^^^^^^^^^^^^^^^^^^^
+
+The base class function performs the following steps:
+
+    - Instantiates an instance of the rule
+    - Calls `add()` to attempt to add the member to the instance
+
+If `add()` returns `matches==False`, then `create` returns `None` as the
+new association.
+
+Any override of this method is expected to first call `super`. On
+success, any further initializations may be performed.
 
 Implementing `add()`
 ^^^^^^^^^^^^^^^^^^^^
 
 The :meth:`~jwst.associations.association.Association.add` method adds
-members to an association. If a member does not belong, an
-`AssociationError` is raised.
+members to an association.
 
 If a member does belong to the association, the following events
 occur:

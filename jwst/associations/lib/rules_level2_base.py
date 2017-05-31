@@ -37,7 +37,7 @@ ASN_SCHEMA = libpath('asn_schema_jw_level2b.json')
 
 # Flag to exposure type
 FLAG_TO_EXPTYPE = {
-    'BACKGROUND': 'BACKGROUND',
+    'background': 'background',
 }
 
 # File templates
@@ -68,7 +68,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self.add_constraints({
             'program': {
                 'value': None,
-                'inputs': ['PROGRAM']
+                'inputs': ['program']
             },
         })
 
@@ -76,7 +76,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self.validity.update({
             'has_science': {
                 'validated': False,
-                'check': lambda entry: entry['exptype'] == 'SCIENCE'
+                'check': lambda entry: entry['exptype'] == 'science'
             }
         })
 
@@ -116,8 +116,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             True if member can be added
         """
         exptype = self.get_exptype(member, check_flags=check_flags)
-        limit_reached = len(self.members_by_type('SCIENCE')) >= 1
-        limit_reached = limit_reached and exptype == 'SCIENCE'
+        limit_reached = len(self.members_by_type('science')) >= 1
+        limit_reached = limit_reached and exptype == 'science'
         return limit_reached
 
     def get_exptype(self, member, check_flags=None):
@@ -136,7 +136,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         -------
         exptype: str
         """
-        exptype = Utility.get_exposure_type(member, default='SCIENCE')
+        exptype = Utility.get_exposure_type(member, default='science')
         if check_flags:
             for flag in check_flags:
                 try:
@@ -166,7 +166,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
     def dms_product_name(self):
         """Define product name."""
         try:
-            science = self.members_by_type('SCIENCE')[0]
+            science = self.members_by_type('science')[0]
         except IndexError:
             return PRODUCT_NAME_DEFAULT
 
@@ -183,8 +183,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
-        self.data['target'] = member['TARGETID']
-        self.data['program'] = str(member['PROGRAM'])
+        self.data['target'] = member['targetid']
+        self.data['program'] = str(member['program'])
         self.data['asn_pool'] = basename(
             member.meta['pool_file']
         ).split('.')[0]
@@ -206,7 +206,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             A list of extra keys to check for truthness in the member
         """
         entry = {
-            'expname': Utility.rename_to_level2a(member['FILENAME']),
+            'expname': Utility.rename_to_level2a(member['filename']),
             'exptype': self.get_exptype(member, check_flags=check_flags)
         }
         members = self.current_product['members']
@@ -256,7 +256,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             members = self.current_product['members']
             entry = {
                 'expname': item,
-                'exptype': 'SCIENCE'
+                'exptype': 'science'
             }
             members.append(entry)
             self.update_validity(entry)
@@ -439,12 +439,12 @@ class AsnMixin_Lv2Image(DMSLevel2bBase):
         self.add_constraints({
             'exp_type': {
                 'value': (
-                    'FGS_IMAGE'
-                    '|MIR_IMAGE'
-                    '|NIS_IMAGE'
-                    '|NRC_IMAGE'
+                    'fgs_image'
+                    '|mir_image'
+                    '|nis_image'
+                    '|nrc_image'
                 ),
-                'inputs': ['EXP_TYPE'],
+                'inputs': ['exp_type'],
                 'force_unique': True,
             }
         })
@@ -466,19 +466,19 @@ class AsnMixin_Lv2Spec(DMSLevel2bBase):
         self.add_constraints({
             'exp_type': {
                 'value': (
-                    'NRC_GRISM'
-                    '|NRC_TSGRISM'
-                    '|MIR_LRS-FIXEDSLIT'
-                    '|MIR_LRS-SLITLESS'
-                    '|MIR_MRS'
-                    '|NRS_FIXEDSLIT'
-                    '|NRS_IFU'
-                    '|NRS_MSASPEC'
-                    '|NRS_BRIGHTOBJ'
-                    '|NIS_WFSS'
-                    '|NIS_SOSS'
+                    'nrc_grism'
+                    '|nrc_tsgrism'
+                    '|mir_lrs-fixedslit'
+                    '|mir_lrs-slitless'
+                    '|mir_mrs'
+                    '|nrs_fixedslit'
+                    '|nrs_ifu'
+                    '|nrs_msaspec'
+                    '|nrs_brightobj'
+                    '|nis_wfss'
+                    '|nis_soss'
                 ),
-                'inputs': ['EXP_TYPE'],
+                'inputs': ['exp_type'],
                 'force_unique': True,
             }
         })
@@ -500,33 +500,33 @@ class AsnMixin_Lv2Mode(DMSLevel2bBase):
         self.add_constraints({
             'program': {
                 'value': None,
-                'inputs': ['PROGRAM']
+                'inputs': ['program']
             },
             'instrument': {
                 'value': None,
-                'inputs': ['INSTRUME']
+                'inputs': ['instrume']
             },
             'detector': {
                 'value': None,
-                'inputs': ['DETECTOR']
+                'inputs': ['detector']
             },
             'opt_elem': {
                 'value': None,
-                'inputs': ['FILTER', 'BAND']
+                'inputs': ['filter', 'band']
             },
             'opt_elem2': {
                 'value': None,
-                'inputs': ['PUPIL', 'GRATING'],
+                'inputs': ['pupil', 'grating'],
                 'required': False,
             },
             'subarray': {
                 'value': None,
-                'inputs': ['SUBARRAY'],
+                'inputs': ['subarray'],
                 'required': False,
             },
             'channel': {
                 'value': None,
-                'inputs': ['CHANNEL'],
+                'inputs': ['channel'],
                 'required': False,
             }
         })
@@ -561,8 +561,8 @@ class AsnMixin_Lv2Bkg(DMSLevel2bBase):
         # I am defined by the following constraints
         self.add_constraints({
             'background': {
-                'inputs': ['ASN_CANDIDATE'],
-                'value': '.+BACKGROUND.+',
+                'inputs': ['asn_candidate'],
+                'value': '.+background.+',
                 'force_unique': True,
                 'is_acid': False,
                 'required': False,
@@ -571,7 +571,7 @@ class AsnMixin_Lv2Bkg(DMSLevel2bBase):
                 'test': self.match_constraint,
                 'value': 'False',
                 'inputs': lambda member: str(
-                    self.has_science(member, check_flags=['BACKGROUND'])
+                    self.has_science(member, check_flags=['background'])
                 ),
             },
         })
@@ -582,5 +582,5 @@ class AsnMixin_Lv2Bkg(DMSLevel2bBase):
     def _add(self, member, check_flags=None):
         if not check_flags:
             check_flags = []
-        check_flags.append('BACKGROUND')
+        check_flags.append('background')
         super(AsnMixin_Lv2Bkg, self)._add(member, check_flags)

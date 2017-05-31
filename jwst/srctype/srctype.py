@@ -14,7 +14,7 @@ def set_source_type(input_model):
     # Get the exposure type of the input model
     try:
         exptype = input_model.meta.exposure.type
-        log.debug('Input EXP_TYPE is %s' % exptype)
+        log.info('Input EXP_TYPE is %s' % exptype)
     except:
         log.error('Failed to access EXP_TYPE value in input')
         log.error('Step will be skipped')
@@ -54,8 +54,6 @@ def set_source_type(input_model):
         # Loop over the input slits
         for slit in input_model.slits:
             stellarity = slit.stellarity
-            log.debug('source_id=%g, stellarity=%g' %
-                      (slit.source_id, stellarity))
 
             # Eventually the stellarity value will be compared against
             # a threshold value from a reference file. For now, the
@@ -66,6 +64,9 @@ def set_source_type(input_model):
                 slit.source_type = 'POINT'
             else:
                 slit.source_type = 'EXTENDED'
+
+            log.info('source_id=%g, stellarity=%g, type=%s' %
+                      (slit.source_id, stellarity, slit.source_type))
 
         # Set the source type value in the primary header to
         # a harmless default

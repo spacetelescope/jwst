@@ -65,7 +65,7 @@ The following example will be used to explain the contents of an association::
         "version_id": "20160826t131159",
         "asn_type": "image3",
         "asn_id": "c3001",
-        "constraints": "Constraints:\n    opt_elem2: CLEAR\n    pointing_type: SCIENCE\n    detector: (?!NULL).+\n    target_name: 1\n    exp_type: NRC_IMAGE\n    wfsvisit: NULL\n    instrument: NIRCAM\n    opt_elem: F090W\n    program: 99009",
+        "constraints": "Constraints:\n    opt_elem2: CLEAR\n    detector: (?!NULL).+\n    target_name: 1\n    exp_type: NRC_IMAGE\n    wfsvisit: NULL\n    instrument: NIRCAM\n    opt_elem: F090W\n    program: 99009",
         "asn_pool": "mega_pool",
         "asn_rule": "Asn_Image",
         "target": "1",
@@ -77,14 +77,14 @@ The following example will be used to explain the contents of an association::
                     {
                         "exposerr": null,
                         "expname": "jw_00001_cal.fits",
-                        "asn_candidate": "[('o001', 'OBSERVATION')]",
-                        "exptype": "SCIENCE"
+                        "asn_candidate": "[('o001', 'observation')]",
+                        "exptype": "science"
                     },
                     {
                         "exposerr": null,
                         "expname": "jw_00002_cal.fits",
-                        "asn_candidate": "[('o001', 'OBSERVATION')]",
-                        "exptype": "SCIENCE"
+                        "asn_candidate": "[('o001', 'observation')]",
+                        "exptype": "science"
                     },
                 ]
             }
@@ -202,8 +202,8 @@ expname *required*
 exptype *required*
   Type of information represented by the exposure. Possible values are
 
-  * `SCIENCE`
-  * `TARGET_AQUISITION`
+  * `science`
+  * `target_aquisition`
 
 exposerr *optional*
   If there was some issue the occured on the observatory that may have
@@ -222,9 +222,9 @@ formatted as follows::
 
   {
       "expname": "jw_00003_cal.fits",
-      "exptype": "SCIENCE",
+      "exptype": "science",
       "exposerr": null,
-      "asn_candidate": "[('o001', 'OBSERVATION')]"
+      "asn_candidate": "[('o001', 'observation')]"
   },
 
 To remove a member, simply delete its corresponding set.
@@ -233,5 +233,5 @@ To add a member, one need only specify the two required keywords::
 
   {
       "expname": "jw_00003_cal.fits",
-      "exptype": "SCIENCE"
+      "exptype": "science"
   },
