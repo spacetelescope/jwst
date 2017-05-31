@@ -459,8 +459,8 @@ class CubeData(object):
         """
 
         # loop over input models 
-
-        single_IFUCube = []
+#        single_IFUCube = []
+        single_IFUCube = datamodels.ModelContainer()
         n = len(self.input_models)
         this_par1 = self.band_channel[0] # only one channel is used in this approach
         this_par2 = None # not import for this type of mapping
@@ -470,8 +470,6 @@ class CubeData(object):
         c2_offset = 0 
         for j in range(n):
             t0 = time.time()
-            print('********************************************')
-            print(' new spaxel')
 # for each new data model create a new spaxel
             spaxel = []
 
@@ -486,7 +484,7 @@ class CubeData(object):
                     y, x = np.mgrid[:1024, xstart:xend]
                     y = np.reshape(y, y.size)
                     x = np.reshape(x, x.size)
-                    t0 = time.time()
+
                     cube_cloud.match_det2cube(self,input_model,
                                               x, y, j,
                                               this_par1,this_par2,
@@ -500,21 +498,21 @@ class CubeData(object):
                     nslices = end_slice - start_slice + 1
                     regions = list(range(start_slice, end_slice + 1))
                     for ii in regions:
-#                    print('on region ',ii)
+                        t0a = time.time()
                         slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
                         yrange = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
                         xrange = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
 
-                        t0 = time.time()
+
                         cube_cloud.match_det2cube(self,input_model,
                                                   x, y, ii,
                                                   this_par1,this_par2,
                                                   spaxel,
                                                   c1_offset, c2_offset)
 
-                        t1 = time.time()
-                        log.debug("Time Match one NIRSPEC slice  to IFUCube = %.1f.s" % (t1 - t0,))
+                        t1a = time.time()
+                        log.debug("Time Match one NIRSPEC slice  to IFUCube = %.1f.s" % (t1a - t0a,))
 #_______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
             CubeData.find_spaxel_flux(self, spaxel)
@@ -722,13 +720,16 @@ class CubeData(object):
                     end_slice = 29
                     nslices = end_slice - start_slice + 1
                     regions = list(range(start_slice, end_slice + 1))
+                    log.info("Mapping each NIRSPEC slice to sky, this takes a while for NIRSPEC data")
                     for i in regions:
 #                    print('on region ',i)
                         slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
                         yrange = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
                         xrange = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
-                        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
 
+
+                        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,
+                                                              step=(1,1), center=True)
                         t0 = time.time()
                         cube_cloud.match_det2cube(self,input_model,
                                                   x, y, i,
@@ -889,7 +890,6 @@ class CubeData(object):
         """
     #pull out data into array
 
-        print('size of spaxel',len(spaxel))
 
         temp_flux =np.reshape(np.array([s.flux for s in spaxel]),
                           [self.naxis3,self.naxis2,self.naxis1])

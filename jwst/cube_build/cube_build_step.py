@@ -43,8 +43,7 @@ class CubeBuildStep (Step):
          zdebug = integer(default=None)
          single = boolean(default=false)
        """
-    reference_file_types = ['cubepars','resol']
-#    reference_file_types = ['cubepars']
+    reference_file_types = ['cubepar','resol']
 
     def process(self, input):
         self.log.info('Starting IFU Cube Building Step')
@@ -105,8 +104,9 @@ class CubeBuildStep (Step):
             self.log.info('Weighting method for point cloud: %s',self.weighting)
             self.log.info('Power Weighting distance : %f',self.weight_power) 
 
-        if(self.single) :
-            print(' Cube build will create single images mapped to full output cube coord system')
+        if self.single :
+            self.log.info(' Single = true, creating a set of single exposures mapped' +
+                          ' to output IFUCube coordinate system') 
 #________________________________________________________________________________
     # read input parameters - Channel, Band (Subchannel), Grating, Filter
 #________________________________________________________________________________
@@ -138,7 +138,7 @@ class CubeBuildStep (Step):
 #________________________________________________________________________________
 # Read in Cube Parameter Reference file
         # identify what reference file has been associated with these input
-        par_filename = self.get_reference_file(self.input_models[0], 'cubepars')
+        par_filename = self.get_reference_file(self.input_models[0], 'cubepar')
  # Check for a valid reference file
         if par_filename == 'N/A':
             self.log.warning('No default cube parameters reference file found')
@@ -215,10 +215,8 @@ class CubeBuildStep (Step):
 # this option is used for background matching and outlier rejection
 
         if self.single:
-            print('working on single cubes')
-
-            result_list = cubeinfo.build_ifucube_single()
-            print('number of IFUCube models',len(result_list))
+            result = cubeinfo.build_ifucube_single()
+            self.log.info("Number of IFUCube models returned from building single IFUCubes %i ",len(result))
 
 # Else standard IFU cube building
         else:

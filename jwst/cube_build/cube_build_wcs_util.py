@@ -13,6 +13,7 @@ from ..associations import load_asn
 from .. import datamodels
 from ..assign_wcs import nirspec
 from . import coord
+from gwcs import wcstools
 
 import logging
 log = logging.getLogger(__name__)
@@ -222,10 +223,10 @@ def find_footprint_NIRSPEC(self, input,flag_data):
     for i in regions:
 
         slice_wcs = nirspec.nrs_wcs_set_input(input,  i)
-        yrange_slice = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][0]
-        xrange_slice = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][0]
+        yrange_slice = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
+        xrange_slice = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
 
-        print(' for slice ',i,yrange_slice,xrange_slice)
+#        print(' for slice ',i,yrange_slice,xrange_slice)
 
         if(xrange_slice[0] >= 0 and xrange_slice[1] > 0):
 
@@ -324,7 +325,7 @@ def set_geometry(self, footprint):
         for i in range(self.naxis2):
             self.ycoord[i] = ystart
             ystart = ystart + self.Cdelt2
-            print('ycoord',self.ycoord[i],i)
+#            print('ycoord',self.ycoord[i],i)
 
 #        print('ycoord xcoord shape',self.ycoord.shape,self.xcoord.shape)
         

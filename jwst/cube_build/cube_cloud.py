@@ -85,8 +85,10 @@ def match_det2cube(self, input_model,
         yrange = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
         xrange = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1,1), center=True)
-        ra, dec, lam = slice_wcs(x, y) # return v2,v3 are in degrees
+        x = x.astype(np.int)
+        y = y.astype(np.int)
 
+        ra, dec, lam = slice_wcs(x, y) # return v2,v3 are in degrees
         valid1 = np.isfinite(ra)
         valid2 = np.isfinite(dec)
 #________________________________________________________________________________
