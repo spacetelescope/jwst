@@ -37,6 +37,7 @@ class Step(object):
     output_file = output_file(default=None) # File to save output to.
     skip = boolean(default=False)           # Skip this step
     save_results = boolean(default=False)   # Force save results
+    suffix = string(default=None)           # Default suffix for output files
     """
 
     reference_file_types = []
@@ -630,7 +631,7 @@ class Step(object):
         cache.  Reference URI's are typically output to dataset headers to record the
         reference files used.
 
-        e.g. 'crds://jwst_miri_flat_0177.fits'  -->  
+        e.g. 'crds://jwst_miri_flat_0177.fits'  -->
             '/grp/crds/cache/references/jwst/jwst_miri_flat_0177.fits'
 
         The CRDS cache is typically located relative to env var CRDS_PATH

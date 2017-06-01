@@ -23,6 +23,7 @@ DATAPATH = abspath(
 EXPFILE = 'jw00035001001_01101_00001_mirimage_rate.fits'
 CALFILE = EXPFILE.replace('_rate', '_cal')
 BSUBFILE = EXPFILE.replace('_rate', '_bsub')
+EXTRACT1DFILE = EXPFILE.replace('_rate', '_x1d')
 
 # Skip if the data is not available
 pytestmark = pytest.mark.skipif(
@@ -45,6 +46,20 @@ def mk_tmp_dirs():
         os.chdir(old_path)
 
 
+def test_full_run(mk_tmp_dirs):
+    """Make a full run with the default configuraiton"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+    exppath = path.join(DATAPATH, EXPFILE)
+
+    args = [
+        path.join(path.dirname(__file__), '..', 'calwebb_spec2.cfg'),
+        exppath
+    ]
+    Step.from_cmdline(args)
+
+    assert path.isfile(CALFILE)
+    assert path.isfile(EXTRACT1DFILE)
+
 def test_asn_with_bkg(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     exppath = path.join(DATAPATH, EXPFILE)
@@ -62,7 +77,7 @@ def test_asn_with_bkg(mk_tmp_dirs):
         fp.write(serialized)
 
     args = [
-        path.join(path.dirname(__file__), 'calwebb_spec2.cfg'),
+        path.join(path.dirname(__file__), 'calwebb_spec2_basic.cfg'),
         asn_file,
         '--steps.bkg_subtract.save_results=true'
     ]
@@ -91,7 +106,7 @@ def test_asn_with_bkg_bsub(mk_tmp_dirs):
         fp.write(serialized)
 
     args = [
-        path.join(path.dirname(__file__), 'calwebb_spec2.cfg'),
+        path.join(path.dirname(__file__), 'calwebb_spec2_basic.cfg'),
         asn_file,
         '--save_bsub=true'
     ]
@@ -116,7 +131,7 @@ def test_asn(mk_tmp_dirs):
         fp.write(serialized)
 
     args = [
-        path.join(path.dirname(__file__), 'calwebb_spec2.cfg'),
+        path.join(path.dirname(__file__), 'calwebb_spec2_basic.cfg'),
         asn_file,
     ]
 
@@ -141,7 +156,7 @@ def test_asn_multiple_products(mk_tmp_dirs):
         fp.write(serialized)
 
     args = [
-        path.join(path.dirname(__file__), 'calwebb_spec2.cfg'),
+        path.join(path.dirname(__file__), 'calwebb_spec2_basic.cfg'),
         asn_file,
     ]
 
