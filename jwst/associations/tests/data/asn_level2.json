@@ -9,7 +9,7 @@
             "members": [
                 {
                     "expname": "test_lrs1_rate.fits",
-                    "exptype": "SCIENCE"
+                    "exptype": "science"
                 }
             ]
         },
@@ -18,7 +18,7 @@
             "members": [
                 {
                     "expname": "test_lrs2_rate.fits",
-                    "exptype": "SCIENCE"
+                    "exptype": "science"
                 }
             ]
         },
@@ -27,7 +27,7 @@
             "members": [
                 {
                     "expname": "test_lrs3bkg_rate.fits",
-                    "exptype": "SCIENCE"
+                    "exptype": "science"
                 }
             ]
         },
@@ -36,7 +36,7 @@
             "members": [
                 {
                     "expname": "test_lrs4bkg_rate.fits",
-                    "exptype": "SCIENCE"
+                    "exptype": "science"
                 }
             ]
         },
@@ -45,11 +45,11 @@
             "members": [
                 {
                     "expname": "test_lrs3_rate.fits",
-                    "exptype": "SCIENCE"
+                    "exptype": "science"
                 },
                 {
                     "expname": "test_lrs3bkg_rate.fits",
-                    "exptype": "BACKGROUND"
+                    "exptype": "background"
                 }
             ]
         },
@@ -58,11 +58,11 @@
             "members": [
                 {
                     "expname": "test_lrs4_rate.fits",
-                    "exptype": "SCIENCE"
+                    "exptype": "science"
                 },
                 {
                     "expname": "test_lrs4bkg_rate.fits",
-                    "exptype": "BACKGROUND"
+                    "exptype": "background"
                 }
             ]
         }

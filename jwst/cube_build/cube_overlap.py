@@ -4,7 +4,6 @@ from __future__ import print_function
 import sys
 import numpy as np
 import math
-from . import cube
 from .. import datamodels
 from ..datamodels import dqflags
 #________________________________________________________________________________
@@ -334,7 +333,7 @@ def SH_FindOverlap(xcenter, ycenter, xlength, ylength, xp_corner, yp_corner):
 #________________________________________________________________________________
 
 
-def MatchDet2Cube(self, x, y, sliceno, start_slice, input_model, transform, Cube, spaxel):
+def match_det2cube(self, x, y, sliceno, start_slice, input_model, transform, spaxel):
     """
     Short Summary
     -------------
@@ -352,7 +351,6 @@ def MatchDet2Cube(self, x, y, sliceno, start_slice, input_model, transform, Cube
     sliceno
     input_model: input slope model or file
     transform: wcs transform to transform x,y to alpha,beta, lambda
-    Cube: class holding basic information on cube
     spaxel: list of spaxels holding information on each cube pixel.
 
     Returns
@@ -361,9 +359,9 @@ def MatchDet2Cube(self, x, y, sliceno, start_slice, input_model, transform, Cube
 
 
     """
-    nxc = len(Cube.xcoord)
-    nzc = len(Cube.zcoord)
-    nyc = len(Cube.ycoord)
+    nxc = len(self.xcoord)
+    nzc = len(self.zcoord)
+    nyc = len(self.ycoord)
 
     sliceno_use = sliceno - start_slice + 1
 # 1-1 mapping in beta
@@ -432,15 +430,15 @@ def MatchDet2Cube(self, x, y, sliceno, start_slice, input_model, transform, Cube
         # estimate the where the pixel overlaps in the cube
         # find the min and max values in the cube xcoord,ycoord and zcoord
 
-        MinA = (alpha_min - Cube.Crval1) / Cube.Cdelt1
-        MaxA = (alpha_max - Cube.Crval1) / Cube.Cdelt1
+        MinA = (alpha_min - self.Crval1) / self.Cdelt1
+        MaxA = (alpha_max - self.Crval1) / self.Cdelt1
         ix1 = max(0, int(math.trunc(MinA)))
         ix2 = int(math.ceil(MaxA))
         if ix2 >= nxc:
             ix2 = nxc - 1
 
-        MinW = (wave_min - Cube.Crval3) / Cube.Cdelt3
-        MaxW = (wave_max - Cube.Crval3) / Cube.Cdelt3
+        MinW = (wave_min - self.Crval3) / self.Cdelt3
+        MaxW = (wave_max - self.Crval3) / self.Cdelt3
         iz1 = int(math.trunc(MinW))
         iz2 = int(math.ceil(MaxW))
         if iz2 >= nzc:
@@ -448,17 +446,17 @@ def MatchDet2Cube(self, x, y, sliceno, start_slice, input_model, transform, Cube
         #_______________________________________________________________________
         # loop over possible overlapping cube pixels
         noverlap = 0
-        nplane = Cube.naxis1 * Cube.naxis2
+        nplane = self.naxis1 * self.naxis2
 
         for zz in range(iz1, iz2 + 1):
-            zcenter = Cube.zcoord[zz]
+            zcenter = self.zcoord[zz]
             istart = zz * nplane
 
             for xx in range(ix1, ix2 + 1):
-                cube_index = istart + yy * Cube.naxis1 + xx #yy = slice # -1
-                xcenter = Cube.xcoord[xx]
+                cube_index = istart + yy * self.naxis1 + xx #yy = slice # -1
+                xcenter = self.xcoord[xx]
                 AreaOverlap = SH_FindOverlap(xcenter, zcenter, 
-                                             Cube.Cdelt1, Cube.Cdelt3, 
+                                             self.Cdelt1, self.Cdelt3, 
                                              alpha_corner, wave_corner)
 
                 if AreaOverlap > 0.0:

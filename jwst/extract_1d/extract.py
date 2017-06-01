@@ -1045,7 +1045,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
 
         # Loop over the slits in the input model
         for slit in slits:
-            log.debug('slit name = %s' % slit.name)
+            log.info('Working on slit %s' % slit.name)
             extract_params = get_extract_parameters(refname, slit.name,
                                 input_model.meta, smoothing_length, bkg_order)
             wavelength, net, background = \
