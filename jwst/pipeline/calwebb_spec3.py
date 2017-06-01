@@ -91,7 +91,9 @@ class Spec3Pipeline(Pipeline):
         # However, there are modes in which the exposures contain data
         # from multiple sources. In that case, the data must be
         # rearranged, collecting the exposures representing each
-        # source into its own ModelContainer.
+        # source into its own ModelContainer. This produces a list of
+        # sources, each represented by a MultiExposureModel instead of
+        # a single ModelContainer.
         sources = [input_models]
         if exptype in MULTISOURCE_EXPTYPES:
             log.info('Convert from exposure-based to source-based data.')
@@ -100,22 +102,16 @@ class Spec3Pipeline(Pipeline):
         # Process each source
         for source in sources:
 
-            # If source is a MultiExposureModel, save the model
-            # and convert to a ModelContainer
-            is_multiexposure = False
+            # The MultiExposureModel is a required output.
             if isinstance(source, datamodels.MultiExposureModel):
-                is_multiexposure = True
                 self.save_model(source, 'source')
-                source = datamodels.ModelContainer(source)
 
             # Call the skymatch step for MIRI MRS data
             if exptype in ['MIR_MRS']:
                 source = self.skymatch(source)
 
             # Call outlier detection
-            source = self.outlier_detection(
-                source, save_as_multiexposure=is_multiexposure
-            )
+            source = self.outlier_detection(source)
 
             # Resample time. Dependent on whether the data is IFU or
             # not.
@@ -126,6 +122,9 @@ class Spec3Pipeline(Pipeline):
 
             # Do 1-D spectral extraction
             source = self.extract_1d(source)
+
+            # Save results now in order to conserve
+            # memory.
             self.save_model(source, suffix=self.suffix)
 
         # We're done
