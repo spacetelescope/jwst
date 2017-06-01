@@ -13,12 +13,6 @@ from ..extract_1d import extract_1d_step
 
 __version__ = "0.7.1"
 
-# Define logging
-import logging
-log = logging.getLogger()
-log.setLevel(logging.DEBUG)
-
-
 # Group exposure types
 MULTISOURCE_EXPTYPES = ['NRS_MSASPEC', 'NRC_GRISM', 'NIS_WFSS']
 IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
@@ -57,7 +51,7 @@ class Spec3Pipeline(Pipeline):
         input: str, Level3 Association, or DataModel
             The exposure or association of exposures to process
         """
-        log.info('Starting calwebb_spec3 ...')
+        self.log.info('Starting calwebb_spec3 ...')
 
         # Retrieve the inputs:
         # could either be done via LoadAsAssociation and then manually
@@ -96,7 +90,7 @@ class Spec3Pipeline(Pipeline):
         # a single ModelContainer.
         sources = [input_models]
         if exptype in MULTISOURCE_EXPTYPES:
-            log.info('Convert from exposure-based to source-based data.')
+            self.log.info('Convert from exposure-based to source-based data.')
             sources = exp_to_source(input_models)
 
         # Process each source
@@ -127,10 +121,10 @@ class Spec3Pipeline(Pipeline):
             # Save results now in order to conserve
             # memory.
             if result == source:
-                log.warning('No steps executed, not attempting to save result.')
+                self.log.warning('No steps executed, not attempting to save result.')
             else:
                 self.save_model(result, suffix=self.suffix)
 
         # We're done
-        log.info('Ending calwebb_spec3')
+        self.log.info('Ending calwebb_spec3')
         return
