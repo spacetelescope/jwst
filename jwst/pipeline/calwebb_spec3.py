@@ -101,31 +101,35 @@ class Spec3Pipeline(Pipeline):
 
         # Process each source
         for source in sources:
+            result = source
 
             # The MultiExposureModel is a required output.
-            if isinstance(source, datamodels.MultiExposureModel):
-                self.save_model(source, 'source')
+            if isinstance(result, datamodels.MultiExposureModel):
+                self.save_model(result, 'source')
 
             # Call the skymatch step for MIRI MRS data
             if exptype in ['MIR_MRS']:
-                source = self.skymatch(source)
+                result = self.skymatch(result)
 
             # Call outlier detection
-            source = self.outlier_detection(source)
+            result = self.outlier_detection(result)
 
             # Resample time. Dependent on whether the data is IFU or
             # not.
             if exptype in IFU_EXPTYPES:
-                source = self.cube_build(source)
+                result = self.cube_build(result)
             else:
-                source = self.resample_spec(source)
+                result = self.resample_spec(result)
 
             # Do 1-D spectral extraction
-            source = self.extract_1d(source)
+            result = self.extract_1d(result)
 
             # Save results now in order to conserve
             # memory.
-            self.save_model(source, suffix=self.suffix)
+            if result == source:
+                log.warning('No steps executed, not attempting to save result.')
+            else:
+                self.save_model(result, suffix=self.suffix)
 
         # We're done
         log.info('Ending calwebb_spec3')
