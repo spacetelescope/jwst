@@ -10,6 +10,7 @@ from .helpers import (
     update_asn_basedir,
 )
 
+from ...associations import load_asn
 from ...stpipe.step import Step
 
 DATAPATH = abspath(
@@ -23,7 +24,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_basic_run(mk_tmp_dirs):
+def test_run_nosteps(mk_tmp_dirs):
     """Test a basic run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
@@ -42,4 +43,23 @@ def test_basic_run(mk_tmp_dirs):
     ]
 
     Step.from_cmdline(args)
-    assert False
+
+
+def test_run_extract_1d_only(mk_tmp_dirs):
+    """Test a basic run"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    asn_path = update_asn_basedir(
+        path.join(SCRIPT_PATH, 'basic_spec3_asn.json'),
+        root=DATAPATH
+    )
+    args = [
+        path.join(SCRIPT_PATH, 'calwebb_spec3_full.cfg'),
+        asn_path,
+        '--steps.skymatch.skip=true',
+        '--steps.outlier_detection.skip=true',
+        '--steps.resample_spec.skip=true',
+        '--steps.cube_build.skip=true',
+    ]
+
+    Step.from_cmdline(args)

@@ -116,12 +116,23 @@ class Spec3Pipeline(Pipeline):
                 result = self.resample_spec(result)
 
             # Do 1-D spectral extraction
-            result = self.extract_1d(result)
+            try:
+                is_resampled = result.meta.cal_step.resample.upper() == 'COMPLETE'
+            except AttributeError:
+                is_resampled = False
+            if is_resampled:
+                result = self.extract_1d(result)
+            else:
+                self.log.warn(
+                    'Resampling was not completed. Skipping extract_1d.'
+                )
 
             # Save results now in order to conserve
             # memory.
             if result == source:
-                self.log.warning('No steps executed, not attempting to save result.')
+                self.log.warning(
+                    'No steps executed, not attempting to save result.'
+                )
             else:
                 self.save_model(result, suffix=self.suffix)
 
