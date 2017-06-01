@@ -741,8 +741,19 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         return self._instance.setdefault('history', [])
 
     @history.setter
-    def history(self, v):
-        self._instance['history'] = v
+    def history(self, value):
+        """
+        Set a history entry.
+
+        Parameters
+        ----------
+        value : list
+            For FITS files this should be a list of strings.
+            For ASDF files use a list of ``HistoryEntry`` object. It can be created
+            with `~jwst.datamodels.util.create_history_entry`.
+
+        """
+        self._instance['history'] = value
 
     def get_fits_wcs(self, hdu_name='PRIMARY', key=' '):
         """

@@ -30,14 +30,14 @@ def getCenter(exp_type, input):
             xcenter = input.source_xpos
             ycenter = input.source_ypos
         except AttributeError:
-            log.warn("Unable to get source center from model")
-            log.warn("Using 0.0, 0.0")
+            log.warning("Unable to get source center from model")
+            log.warning("Using 0.0, 0.0")
             xcenter = 0.0
             ycenter = 0.0
         return (xcenter, ycenter)
     else:
-        log.warn("No method to get centering for exp_type %s" % exp_type)
-        log.warn("Using (0.0, 0.0)")
+        log.warning("No method to get centering for exp_type %s" % exp_type)
+        log.warning("Using (0.0, 0.0)")
         return (0.0, 0.0)
 
 def getApertureFromModel(input_model, match):
@@ -50,10 +50,10 @@ def getApertureFromModel(input_model, match):
             if aperture.shutters == match: return aperture
     elif input_model.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
         for aperture in input_model.apertures:
-            log.info(aperture.name)
+            log.debug(aperture.name)
             if aperture.name == match: return aperture
     else:
-        log.warn('Unable to get aperture from model type {0}'.format(input_model.meta.exposure.type))
+        log.warning('Unable to get aperture from model type {0}'.format(input_model.meta.exposure.type))
     #
     # If nothing matches, return None
     return None
@@ -155,6 +155,7 @@ def do_correction(input_model, pathloss_model):
         # For each slit
         for slit in input_model.slits:
             slit_number = slit_number + 1
+            log.info('Working on slit %d' % slit_number)
             size = slit.data.size
             # That has data.size > 0
             if size > 0:
@@ -183,7 +184,7 @@ def do_correction(input_model, pathloss_model):
                     slit.pathloss_uniformsource = pathloss_uniform_vector
                     slit.wavelength_uniformsource = wavelength_uniformsource
                 else:
-                    print("Cannot find matching pathloss model for slit with size %d" % slit.nshutters)
+                    log.warning("Cannot find matching pathloss model for slit with size %d" % slit.nshutters)
                     continue
         input_model.meta.cal_step.pathloss = 'COMPLETE'
     elif exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
@@ -218,7 +219,7 @@ def do_correction(input_model, pathloss_model):
                 slit.pathloss_uniformsource = pathloss_uniform_vector
                 slit.wavelength_uniformsource = wavelength_uniformsource
             else:
-                print("Cannot find matching pathloss model for aperture %s" % slit.name)
+                log.warning("Cannot find matching pathloss model for aperture %s" % slit.name)
                 continue
         input_model.meta.cal_step.pathloss = 'COMPLETE'
     elif exp_type == 'NRS_IFU':

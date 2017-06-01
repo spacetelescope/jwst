@@ -90,7 +90,7 @@ def test_base_instatiation():
             {
                 'obs_id': {
                     'value': 'V99009001001P0000000002101',
-                    'inputs': ['OBS_ID']
+                    'inputs': ['obs_id']
                 }
             },
             helpers.t_path('data/mega_pool.csv'),
@@ -100,7 +100,7 @@ def test_base_instatiation():
             {
                 'obs_id': {
                     'value': 'junk',
-                    'inputs': ['OBS_ID']
+                    'inputs': ['obs_id']
                 }
             },
             helpers.t_path('data/pool_001_candidates.csv'),
@@ -110,7 +110,7 @@ def test_base_instatiation():
             {
                 'asn_candidate_id': {
                     'value': '.+(o001|o002).+',
-                    'inputs': ['ASN_CANDIDATE'],
+                    'inputs': ['asn_candidate'],
                     'force_unique': False,
                 }
             },
@@ -121,7 +121,7 @@ def test_base_instatiation():
             {
                 'asn_candidate_id': {
                     'value': '.+(o001|o002).+',
-                    'inputs': ['ASN_CANDIDATE'],
+                    'inputs': ['asn_candidate'],
                     'force_unique': True,
                 }
             },

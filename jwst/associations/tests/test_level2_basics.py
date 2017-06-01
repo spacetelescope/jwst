@@ -15,7 +15,7 @@ from .. import (
     load_asn
 )
 
-NONSSCIENCE = ['BACKGROUND']
+NONSSCIENCE = ['background']
 REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)'
 
 
@@ -50,15 +50,15 @@ def generate_from_pool(pool_path):
         ),
         (
             generate_from_pool('data/pool_011_spec_miri_lv2bkg_lrs.csv'), 1, 2,
-            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['BACKGROUND']
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
         ),
         (
             generate_from_pool('data/pool_009_spec_miri_lv2bkg.csv'), 1, 9,
-            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['BACKGROUND']
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
         ),
         (
             generate_from_pool('data/pool_010_spec_nirspec_lv2bkg.csv'), 1, 8,
-            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['BACKGROUND']
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
         ),
     ]
 )
@@ -83,14 +83,14 @@ def test_level2(
             science = [
                 member
                 for member in members
-                if member['exptype'] == 'SCIENCE'
+                if member['exptype'] == 'science'
             ]
             assert len(science) == 1
             if len(members) > 1:
                 nonscience = [
                     member
                     for member in members
-                    if member['exptype'] != 'SCIENCE'
+                    if member['exptype'] != 'science'
                 ]
                 assert len(nonscience) > 0
                 exptypes = set(
@@ -110,7 +110,7 @@ def test_level2_productname():
             science = [
                 member
                 for member in product['members']
-                if member['exptype'] == 'SCIENCE'
+                if member['exptype'] == 'science'
             ]
             assert len(science) == 1
             match = re.match(REGEX_LEVEL2A, science[0]['expname'])
