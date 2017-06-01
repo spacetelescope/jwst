@@ -32,8 +32,13 @@ def test_basic_run(mk_tmp_dirs):
         root=DATAPATH
     )
     args = [
-        path.join(SCRIPT_PATH, 'calwebb_spec3_basic.cfg'),
-        asn_path
+        path.join(SCRIPT_PATH, 'calwebb_spec3_full.cfg'),
+        asn_path,
+        '--steps.skymatch.skip=true',
+        '--steps.outlier_detection.skip=true',
+        '--steps.resample_spec.skip=true',
+        '--steps.cube_build.skip=true',
+        '--steps.extract_1d.skip=true',
     ]
 
     Step.from_cmdline(args)
