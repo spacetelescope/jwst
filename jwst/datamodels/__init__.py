@@ -56,6 +56,7 @@ from .flat import FlatModel
 from .fringe import FringeModel
 from .gain import GainModel
 from .gls_rampfit import GLS_RampFitModel
+from .ifucube import IFUCubeModel
 from .image import ImageModel
 from .ipc import IPCModel
 from .irs2 import IRS2Model
@@ -69,20 +70,19 @@ from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
 from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
-from .ifucube import IFUCubeModel
-from .pixelarea import PixelAreaModel, NirspecAreaModel, NirspecSlitAreaModel, NirspecMosAreaModel, NirspecIfuAreaModel
-from .resolution import ResolutionModel, MiriResolutionModel
 from .pathloss import PathlossModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
 from .photom import NirspecPhotomModel, NirspecFSPhotomModel
 from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
+from .pixelarea import PixelAreaModel, NirspecSlitAreaModel, NirspecMosAreaModel, NirspecIfuAreaModel
 from .psfmask import PsfMaskModel
 from .quad import QuadModel
 from .ramp import RampModel
 from .rampfitoutput import RampFitOutputModel
-from .reference import ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel
 from .readnoise import ReadnoiseModel
+from .reference import ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel
 from .reset import ResetModel
+from .resolution import ResolutionModel, MiriResolutionModel
 from .rscd import RSCDModel
 from .saturation import SaturationModel
 from .spec import SpecModel
@@ -101,7 +101,7 @@ __all__ = [
     'CubeModel', 'DarkModel', 'DarkMIRIModel', 'DrizParsModel',
     'NircamDrizParsModel', 'MiriImgDrizParsModel',
     'MiriImgOutlierParsModel', 'NircamOutlierParsModel', 'OutlierParsModel',
-    'PathlossModel', 'PixelAreaModel', 'NirspecAreaModel', 'NirspecSlitAreaModel',
+    'PathlossModel', 'PixelAreaModel', 'NirspecSlitAreaModel',
     'NirspecMosAreaModel', 'NirspecIfuAreaModel',
     'DrizProductModel', 'FgsPhotomModel', 'ThroughputModel',
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',

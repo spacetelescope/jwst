@@ -188,7 +188,6 @@ class DataSet(object):
 
                         # Compute relative sensitivity for each pixel based on wavelength
                         sens2d = np.interp(wave2d, waves, relresps)
-                        datamodels.ImageModel(data=sens2d).save('phot_sens2d1.fits')
 
                         # Include the scalar conversion factor
                         sens2d *= conv_factor
@@ -203,9 +202,9 @@ class DataSet(object):
                         self.input.dq = np.bitwise_or(self.input.dq, dqmap)
 
                         # FOR DEBUGGING ONLY #
-                        datamodels.ImageModel(data=wave2d).save('phot_wave2d.fits')
-                        datamodels.ImageModel(data=area2d).save('phot_area2d.fits')
-                        datamodels.ImageModel(data=sens2d).save('phot_sens2d2.fits')
+                        #datamodels.ImageModel(data=wave2d).save('phot_wave2d.fits')
+                        #datamodels.ImageModel(data=area2d).save('phot_area2d.fits')
+                        #datamodels.ImageModel(data=sens2d).save('phot_sens2d2.fits')
 
                         # Divide the science data and err by the conversion factors
                         self.input.data /= sens2d
@@ -365,7 +364,7 @@ class DataSet(object):
 
             # Get the subarray value of the input data model
             subarray = self.input.meta.subarray.name
-            log.debug(' subarray: %s', subarray)
+            log.info(' subarray: %s', subarray)
 
             # Find the matching row in the reference file
             for tabdata in ftab.phot_table:
