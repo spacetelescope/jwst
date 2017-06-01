@@ -242,6 +242,22 @@ def test_save_proper_pipeline_substeps(mk_tmp_dirs):
     assert isfile('ppbase_aswm.fits')
 
 
+def test_save_proper_pipeline_substeps_skip(mk_tmp_dirs):
+    """Test how pipeline saving should work"""
+    args = [
+        'jwst.stpipe.tests.steps.ProperPipeline',
+        data_fn_path,
+        '--steps.stepwithmodel.save_results=true',
+        '--steps.another_stepwithmodel.save_results=true',
+        '--steps.another_stepwithmodel.skip=true',
+    ]
+    Step.from_cmdline(args)
+
+    assert isfile('ppbase_pp.fits')
+    assert isfile('ppbase_swm.fits')
+    assert not isfile('ppbase_aswm.fits')
+
+
 def test_save_proper_pipeline_substeps_withdir(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

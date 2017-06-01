@@ -387,7 +387,9 @@ class Step(object):
                     result.meta.calibration_software_version = __version__
 
             # Save the output file if one was specified
-            if self.save_results or self.output_file is not None:
+            if not self.skip and (
+                    self.save_results or self.output_file is not None
+            ):
                 result_id = _make_result_id(
                     self.output_file, len(results), self.name
                 )
