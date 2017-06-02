@@ -900,6 +900,7 @@ class CubeData(object):
         IFUCube.data = temp_flux
         IFUCube.weightmap = temp_wmap
     
+        IFUCube.meta.cal_step.cube_build = 'COMPLETE'
 #    icube = 0
 #    for z in range(Cube.naxis3):
 #        for y in range(Cube.naxis2):
