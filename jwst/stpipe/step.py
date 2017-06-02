@@ -386,7 +386,9 @@ class Step(object):
                     result.meta.calibration_software_version = __version__
 
             # Save the output file if one was specified
-            if self.save_results or self.output_file is not None:
+            if not self.skip and (
+                    self.save_results or self.output_file is not None
+            ):
                 result_id = _make_result_id(
                     self.output_file, len(results), self.name
                 )
@@ -624,6 +626,19 @@ class Step(object):
             self._reference_files_used.append(
                 (reference_file_type, hdr_name))
         return crds_client.check_reference_open(reference_name)
+
+    def reference_uri_to_cache_path(self, reference_uri):
+        """Convert an abstract CRDS reference URI to an absolute file path in the CRDS
+        cache.  Reference URI's are typically output to dataset headers to record the
+        reference files used.
+
+        e.g. 'crds://jwst_miri_flat_0177.fits'  -->
+            '/grp/crds/cache/references/jwst/jwst_miri_flat_0177.fits'
+
+        The CRDS cache is typically located relative to env var CRDS_PATH
+        with default value /grp/crds/cache.   See also https://jwst-crds.stsci.edu
+        """
+        return crds_client.reference_uri_to_cache_path(reference_uri)
 
     @contextlib.contextmanager
     def get_reference_file_model(self, input_file, reference_file_type):

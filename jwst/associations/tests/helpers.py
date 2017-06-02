@@ -220,9 +220,9 @@ def fmt_cand(candidate_list):
     evaled_list = []
     for cid, ctype in candidate_list:
         if isinstance(cid, int):
-            if ctype == 'OBSERVATION' and cid < 1000:
+            if ctype == 'observation' and cid < 1000:
                 cid_format = 'o{:0>3d}'
-            elif ctype in ['MOSAIC'] and cid >= 1000 and cid < 3000:
+            elif ctype in ['mosaic'] and cid >= 1000 and cid < 3000:
                 cid_format = 'c{:0>4d}'
             else:
                 cid_format = 'r{:0>4d}'

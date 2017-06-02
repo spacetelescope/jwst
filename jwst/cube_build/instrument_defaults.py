@@ -14,7 +14,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class Info(object):
+class InstrumentInfo(object):
 
     def __init__(self):
 #_______________________________________________________________________

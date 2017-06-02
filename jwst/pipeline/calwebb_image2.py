@@ -88,11 +88,11 @@ class Image2Pipeline(Pipeline):
         # Find all the member types in the product
         members_by_type = defaultdict(list)
         for member in exp_product['members']:
-            members_by_type[member['exptype']].append(member['expname'])
+            members_by_type[member['exptype'].lower()].append(member['expname'])
 
         # Get the science member. Technically there should only be
         # one. We'll just get the first one found.
-        science = members_by_type['SCIENCE']
+        science = members_by_type['science']
         if len(science) != 1:
             log.warn(
                 'Wrong number of science files found in {}'.format(

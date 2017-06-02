@@ -36,6 +36,14 @@ class AssociationPool(Table):
             format=format,
             converters=_ConvertToStr(), **kwargs
         )
+
+        # Lowercase the column names
+        # Note: Cannot do in-place because modifying the
+        #       list while iterating.
+        columns = [column for name, column in table.columns.items()]
+        for c in columns:
+            c.name = c.name.lower()
+
         table.meta['pool_file'] = filename
         return table
 
@@ -51,7 +59,15 @@ class AssociationPool(Table):
 
 class _ConvertToStr(dict):
     def __getitem__(self, k):
-        return [convert_numpy(str)]
+        func, type_ = convert_numpy(str)
+
+        def convert_func(vals):
+            """Lowercase the conversion"""
+            results = func(vals)
+            results = [result.lower() for result in results]
+            return results
+
+        return [(convert_func, type_)]
 
     def get(self, k, default=None):
         return self.__getitem__(k)
