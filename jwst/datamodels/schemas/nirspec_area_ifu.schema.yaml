@@ -1,0 +1,17 @@
+title: NIRSpec IFU pixel area data model
+allOf:
+- $ref: referencefile.schema.yaml
+- $ref: keyword_filter.schema.yaml
+- $ref: keyword_grating.schema.yaml
+- $ref: keyword_exptype.schema.yaml
+- type: object
+  properties:
+    area_table:
+      title: NIRSpec IFU pixel area table
+      fits_hdu: AREA
+      datatype:
+      - name: slice_id
+        datatype: int16
+      - name: pixarea
+        datatype: float32
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema
