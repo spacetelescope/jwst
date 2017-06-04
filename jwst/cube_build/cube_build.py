@@ -824,8 +824,8 @@ class CubeData(object):
         IFUCube = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
 
 
-        if self.cube_type =='Model' :
-            IFUupdate(self.input_models[0])
+#        if self.cube_type =='Model' :
+        IFUCube.update(self.input_models[0])
 
         IFUCube.meta.filename = self.output_name
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
