@@ -11,6 +11,12 @@ from ..resample import resample_spec_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
 
+# Dummy Testing steps
+from .tests.dummy_resample_step import (
+    DummyCubeBuildStep,
+    DummyResampleStep
+)
+
 __version__ = "0.7.1"
 
 # Group exposure types
@@ -37,8 +43,8 @@ class Spec3Pipeline(Pipeline):
     step_defs = {
         'skymatch': skymatch_step.SkyMatchStep,
         'outlier_detection': outlier_detection_step.OutlierDetectionStep,
-        'resample_spec': resample_spec_step.ResampleSpecStep,
-        'cube_build': cube_build_step.CubeBuildStep,
+        'resample_spec': DummyResampleStep,
+        'cube_build': DummyCubeBuildStep,
         'extract_1d': extract_1d_step.Extract1dStep
     }
 
@@ -67,9 +73,10 @@ class Spec3Pipeline(Pipeline):
         # some of this is here only for the purpose of creating fake
         # products until the individual tasks work and do it themselves
         exptype = input_models[0].meta.exposure.type
+        self.output_basename = input_models.meta.asn_table.products[0].name
+
         pool_name = input_models.meta.asn_table.asn_pool
         asn_file = input
-        prod_template = input_models.meta.asn_table.products[0].name
         prog = input_models.meta.asn_table.program
         acid = input_models.meta.asn_table.asn_id
 
@@ -91,7 +98,7 @@ class Spec3Pipeline(Pipeline):
         sources = [input_models]
         if exptype in MULTISOURCE_EXPTYPES:
             self.log.info('Convert from exposure-based to source-based data.')
-            sources = exp_to_source(input_models)
+            sources = [model for name, model in exp_to_source(input_models).items()]
 
         # Process each source
         for source in sources:
