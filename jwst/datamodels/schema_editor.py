@@ -425,7 +425,7 @@ class Model_db(object):
                 save_dictionary(fd, value, leading=leading+'- ')
             
         def is_long_line(leading, name, value, max_length=80):
-            long_line = leading + name + ': ' + value
+            long_line = leading + name + ': ' + str(value)
             return len(long_line) > max_length
     
         def save_long_line(leading, name, value, sep1, sep2, max_length=80):
@@ -437,6 +437,12 @@ class Model_db(object):
             prefix = leading + '  '
 
             for value in values:
+                nl = value.find('\n')
+                if nl >= 0:
+                    long_line += value[0:nl+1]
+                    value = value[nl+1:]
+                    line_start = len(long_line)
+
                 if start:
                     long_line += value
                     start = False
@@ -455,7 +461,7 @@ class Model_db(object):
             return long_line
 
         def save_short_line(leading, name, value):
-            short_line = leading + name + ': ' + value + '\n'
+            short_line = leading + name + ': ' + str(value) + '\n'
             return short_line
             
         def save_simple_list(leading, name, values, max_length=80):
@@ -472,7 +478,7 @@ class Model_db(object):
         def save_scalar(leading, name, value):
             sep = '|'
             if is_long_line(leading, name, value):
-                value = '"' + value + '"'
+                value = '"\n' + value + '"\\'
                 line = save_long_line(leading, name, value, '|', '|\\\n')
             else:
                 line = save_short_line(leading, name, value)
