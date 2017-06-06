@@ -824,8 +824,8 @@ class CubeData(object):
         IFUCube = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
 
 
-        if self.cube_type =='Model' :
-            IFUupdate(self.input_models[0])
+#        if self.cube_type =='Model' :
+        IFUCube.update(self.input_models[0])
 
         IFUCube.meta.filename = self.output_name
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
@@ -900,6 +900,7 @@ class CubeData(object):
         IFUCube.data = temp_flux
         IFUCube.weightmap = temp_wmap
     
+        IFUCube.meta.cal_step.cube_build = 'COMPLETE'
 #    icube = 0
 #    for z in range(Cube.naxis3):
 #        for y in range(Cube.naxis2):
