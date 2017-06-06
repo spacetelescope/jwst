@@ -310,13 +310,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     def to_asdf(self, init, *args, **kwargs):
         """
-        Write a DataModel to a ASDF file.
+        Write a DataModel to an ASDF file.
 
         Parameters
         ----------
         init : file path or file object
 
-        *args, **kwargs
+        args, kwargs
             Any additional arguments are passed along to
             `asdf.AsdfFile.write_to`.
         """
@@ -354,7 +354,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         ----------
         init : file path or file object
 
-        *args, **kwargs
+        args, kwargs
             Any additional arguments are passed along to
             `astropy.io.fits.writeto`.
         """
@@ -432,7 +432,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         -------
         locations : list of str
 
-            If `return_result` is `True, a list of the locations in
+            If `return_result` is `True`, a list of the locations in
             the schema where this FITS keyword is used.  Each element
             is a dot-separated path.
 

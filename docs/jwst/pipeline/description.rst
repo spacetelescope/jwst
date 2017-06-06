@@ -171,7 +171,7 @@ The list of correction steps is shown below. Some steps are only applied to
 certain instruments or instrument modes, as noted in the table.
 
 Note that level-2b processing for NIRCam and NIRISS Wide-Field Slitless (grism)
-Spectroscopy modes is not yet implemented.
+Spectroscopy modes are not implemented yet.
 
 +------------------+----+-----+-----+----+----+-----+--------+
 | Instrument Mode  |     NIRSpec    |     MIRI      | NIRISS |
@@ -203,11 +203,11 @@ Spectroscopy modes is not yet implemented.
 | extract_1d       | X  |  X  |  X  | X  | X  |  X  |   X    |
 +------------------+----+-----+-----+----+----+-----+--------+
 
-The ``resamp_spec`` step produces a resampled/rectified product for non-IFU
-modes of some kinds of spectroscopic exposures. If the resample_spec step is not
-applied to a given exposure, the extract_1d operation will be performed on the
-original (unresampled) data.
-The ``cube_build`` step produces a resampled/rectified cube for IFU exposures.
+The ``resample_spec`` step produces a resampled/rectified product for non-IFU
+modes of some kinds of spectroscopic exposures. If the ``resample_spec`` step
+is not applied to a given exposure, the ``extract_1d`` operation will be
+performed on the original (unresampled) data. The ``cube_build`` step produces
+a resampled/rectified cube for IFU exposures.
 
 Inputs
 ------
