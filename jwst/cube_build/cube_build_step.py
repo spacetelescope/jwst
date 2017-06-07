@@ -201,7 +201,7 @@ class CubeBuildStep (Step):
 
         self.output_file = cubeinfo.setup()
 
-        print('in cube_build_step',self.output_file)
+        #print('in cube_build_step',self.output_file)
 
 #________________________________________________________________________________
 # find the min & max final coordinates of cube: map each slice to cube
@@ -218,9 +218,9 @@ class CubeBuildStep (Step):
 # this option is used for background matching and outlier rejection
 
         if self.single:
+            self.output_file = None
             result = cubeinfo.build_ifucube_single()
             self.log.info("Number of IFUCube models returned from building single IFUCubes %i ",len(result))
-            print('output file',self.output_file)
 
 # Else standard IFU cube building
         else:

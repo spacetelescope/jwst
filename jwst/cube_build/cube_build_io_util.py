@@ -265,10 +265,11 @@ def update_output_name(self):
             fg_name = fg_name.lower()
 
             newname = self.output_name_base + fg_name+ '_s3d.fits'
+
 #________________________________________________________________________________
 # check and see if one is provided by the user
 # self.output_file is automatically filled in by step class
-        #print('output file',self.output_file)
+
         if(self.output_file == None):
             self.output_file = newname
         else: 
@@ -278,7 +279,6 @@ def update_output_name(self):
                 self.output_file = newname
             else:
                 newname = self.output_file
-
 
     return newname
 

@@ -22,6 +22,7 @@ from . import instrument_defaults
 from . import spaxel
 from . import cube_overlap
 from . import cube_cloud
+from . import data_types
 
 from gwcs import wcstools
 
@@ -216,9 +217,7 @@ class CubeData(object):
 # Set up values to return and acess for other parts of cube_build
 
         self.master_table = master_table
-
-        print('****in set up these two are ==',self.output_name,self.output_file)
-
+        
         return self.output_file
 
 #********************************************************************************
@@ -465,6 +464,7 @@ class CubeData(object):
 
         # loop over input models
 
+
         single_IFUCube = datamodels.ModelContainer()
         n = len(self.input_models)
         this_par1 = self.band_channel[0] # only one channel is used in this approach
@@ -526,7 +526,7 @@ class CubeData(object):
 
             t1 = time.time()
             log.info("Time Create Single IFUcube  = %.1f.s" % (t1 - t0,))
-            print('build_ifucube_single:',IFUCube.meta.filename)
+#            print('build_ifucube_single:',IFUCube.meta.filename)
 #_______________________________________________________________________
             single_IFUCube.append(IFUCube)
             del spaxel[:]
@@ -829,17 +829,23 @@ class CubeData(object):
         IFUCube = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
 
 
-#        if self.cube_type =='Model' :
+
         IFUCube.update(self.input_models[j])
         IFUCube.meta.filename = self.output_name
         if self.single:
-#            print('THis is a single file')
             with datamodels.open(self.input_models[j]) as input:
                 # makingf fileanme = org gives a error later when past
                 # back to model container - do we want to define
                 # a new KEYWORD - filename_org ?
                 #IFUCube.meta.filename = input.meta.filename
-                #print('input filename',input.meta.filename,IFUCube.meta.filename)
+
+
+                filename = self.input_filenames[j]
+                indx = filename.rfind('.fits')
+                self.output_name_base = filename[:indx]
+                self.output_file = None
+                newname  = cube_build_io_util.update_output_name(self)
+                IFUCube.meta.filename = newname
                 IFUCube.meta.instrument.channel = self.band_channel[0] 
 
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
