@@ -268,7 +268,7 @@ def update_output_name(self):
 #________________________________________________________________________________
 # check and see if one is provided by the user
 # self.output_file is automatically filled in by step class
-        print('output file',self.output_file)
+        #print('output file',self.output_file)
         if(self.output_file == None):
             self.output_file = newname
         else: 

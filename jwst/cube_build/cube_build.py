@@ -49,7 +49,9 @@ class CubeData(object):
         self.data_type = data_type
         self.par_filename = par_filename
         self.resol_filename = resol_filename
+        
 
+        self.single = pars.get('single')
         self.channel = pars.get('channel')
         self.subchannel = pars.get('subchannel')
         self.grating = pars.get('grating')
@@ -63,7 +65,6 @@ class CubeData(object):
         self.interpolation = pars.get('interpolation')
         self.coord_system = pars.get('coord_system')
         self.offset_list = pars.get('offset_list')
-        self.output_file = pars.get('output_file')
         self.wavemin = pars.get('wavemin')
         self.wavemax = pars.get('wavemax')
         self.weighting = pars.get('weighting')
@@ -153,8 +154,8 @@ class CubeData(object):
 # Also if there is an Offset list - fill in MasterTable.FileOffset
 #________________________________________________________________________________
         master_table = file_table.FileTable()
-        instrument, detector = master_table.set_file_table(self.input_filenames,
-                                                           self.input_models,
+        instrument, detector = master_table.set_file_table(self.input_models,
+                                                           self.input_filenames,
                                                            self.ra_offset,
                                                            self.dec_offset)
 #________________________________________________________________________________
@@ -215,6 +216,9 @@ class CubeData(object):
 # Set up values to return and acess for other parts of cube_build
 
         self.master_table = master_table
+
+        print('****in set up these two are ==',self.output_name,self.output_file)
+
         return self.output_file
 
 #********************************************************************************
@@ -431,7 +435,7 @@ class CubeData(object):
         t1 = time.time()
         log.info("Time find Cube Flux= %.1f.s" % (t1 - t0,))
 
-        IFUCube = CubeData.setup_IFUCube(self)
+        IFUCube = CubeData.setup_IFUCube(self,0)
 #_______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
         CubeData.update_IFUCube(self,IFUCube, self.spaxel)
@@ -459,7 +463,7 @@ class CubeData(object):
         """
 
         # loop over input models 
-#        single_IFUCube = []
+
         single_IFUCube = datamodels.ModelContainer()
         n = len(self.input_models)
         this_par1 = self.band_channel[0] # only one channel is used in this approach
@@ -472,7 +476,6 @@ class CubeData(object):
             t0 = time.time()
 # for each new data model create a new spaxel
             spaxel = []
-
             spaxel = CubeData.create_spaxel(self)
 
             with datamodels.ImageModel(self.input_models[j]) as input_model:
@@ -517,11 +520,12 @@ class CubeData(object):
 # shove Flux and iflux in the  final IFU cube
             CubeData.find_spaxel_flux(self, spaxel)
 # now determine Cube Spaxel flux
-            IFUCube = CubeData.setup_IFUCube(self)
+            IFUCube = CubeData.setup_IFUCube(self,j)
             CubeData.update_IFUCube(self,IFUCube, spaxel)
 
             t1 = time.time()
             log.info("Time Create Single IFUcube  = %.1f.s" % (t1 - t0,))
+            print('build_ifucube_single:',IFUCube.meta.filename)
 #_______________________________________________________________________
             single_IFUCube.append(IFUCube)
             del spaxel[:]             
@@ -792,7 +796,7 @@ class CubeData(object):
             log.info("Time to interpolate at spaxel values = %.1f.s" % (t1 - t0,))
 
 #********************************************************************************
-    def setup_IFUCube(self):
+    def setup_IFUCube(self,j):
 
         """
         Short Summary
@@ -825,9 +829,18 @@ class CubeData(object):
 
 
 #        if self.cube_type =='Model' :
-        IFUCube.update(self.input_models[0])
-
+        IFUCube.update(self.input_models[j])
         IFUCube.meta.filename = self.output_name
+        if self.single:
+#            print('THis is a single file')
+            with datamodels.open(self.input_models[j]) as input:
+                # makingf fileanme = org gives a error later when past
+                # back to model container - do we want to define
+                # a new KEYWORD - filename_org ?
+                #IFUCube.meta.filename = input.meta.filename
+                #print('input filename',input.meta.filename,IFUCube.meta.filename)
+                IFUCube.meta.instrument.channel = self.band_channel[0] 
+
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
         IFUCube.meta.wcsinfo.crval2 = self.Crval2
         IFUCube.meta.wcsinfo.crval3 = self.Crval3

@@ -200,6 +200,9 @@ class CubeBuildStep (Step):
 # or grating/filter
 
         self.output_file = cubeinfo.setup()
+
+        print('in cube_build_step',self.output_file)
+
 #________________________________________________________________________________
 # find the min & max final coordinates of cube: map each slice to cube
 # add any dither offsets, then find the min & max value in each dimension
@@ -217,6 +220,7 @@ class CubeBuildStep (Step):
         if self.single:
             result = cubeinfo.build_ifucube_single()
             self.log.info("Number of IFUCube models returned from building single IFUCubes %i ",len(result))
+            print('output file',self.output_file)
 
 # Else standard IFU cube building
         else:
