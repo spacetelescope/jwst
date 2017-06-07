@@ -32,7 +32,6 @@ class Step(object):
     spec = """
     pre_hooks = string_list(default=list())
     post_hooks = string_list(default=list())
-
     output_dir = string(default=None)       # Directory path for output files
     output_file = output_file(default=None) # File to save output to.
     skip = boolean(default=False)           # Skip this step
@@ -90,9 +89,9 @@ class Step(object):
         name : str, optional
             If provided, use that name for the returned instance.
             If not provided, the following are tried (in order):
-                - The `name` parameter in the config file
-                - The filename of the config file
-                - The name of returned class
+            - The `name` parameter in the config file
+            - The filename of the config file
+            - The name of returned class
 
         Returns
         -------
