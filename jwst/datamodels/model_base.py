@@ -9,6 +9,7 @@ import datetime
 import inspect
 import os
 import sys
+import warnings
 
 import numpy as np
 import jsonschema
@@ -362,7 +363,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         with fits_support.to_fits(self._instance, self._schema,
                                   extensions=self._extensions) as ff:
-            ff.write_to(init, *args, **kwargs)
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', message='Card is too long')
+                ff.write_to(init, *args, **kwargs)
 
     @property
     def shape(self):
