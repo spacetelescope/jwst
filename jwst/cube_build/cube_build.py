@@ -37,7 +37,7 @@ class CubeData(object):
                  input_models,
                  input_filenames,
                  output_name_base,
-                 data_type, 
+                 data_type,
                  par_filename,
                  resol_filename,
                  **pars):
@@ -85,8 +85,8 @@ class CubeData(object):
         self.band_grating = []
         self.num_bands = 0
         self.output_name = ''
-        self.number_files = 0 
- 
+        self.number_files = 0
+
         self.Cdelt1 = None
         self.Cdelt2 = None
         self.Cdelt3 = None
@@ -102,10 +102,10 @@ class CubeData(object):
 
         self.a_min = 0
         self.a_max = 0
-        self.b_min = 0 
+        self.b_min = 0
         self.b_max = 0
         self.lambda_min = 0
-        self.lambda_max = 0 
+        self.lambda_max = 0
         self.xcoord = None
         self.ycoord = None
         self.zcoord = None
@@ -120,13 +120,13 @@ class CubeData(object):
         Set up the IFU cube
         Read in the input_models and fill in the dictionary master_table that stores
         the files for each channel/subchannel or grating/filter
-    
-        if the channel/subchannel or grating/filter is not set then determine which 
+
+        if the channel/subchannel or grating/filter is not set then determine which
         ones are found in the data
 
         Read in necessary reference data:
         * ra dec offset list
-        * cube parameter reference file 
+        * cube parameter reference file
         * if miripsf weighting paramter is set then read in resolution file
 
         Parameters
@@ -136,11 +136,11 @@ class CubeData(object):
 
         Returns
         -------
-        self with necessary files filled in 
+        self with necessary files filled in
         """
 #________________________________________________________________________________
 # Check if there is an offset list (this ra,dec dither offset list will probably
-# only be used in testing) 
+# only be used in testing)
 
         if self.data_type == 'singleton':
             self.offset_list = 'NA'
@@ -153,31 +153,31 @@ class CubeData(object):
 # Also if there is an Offset list - fill in MasterTable.FileOffset
 #________________________________________________________________________________
         master_table = file_table.FileTable()
-        instrument, detector = master_table.set_file_table(self.input_filenames,
-                                                           self.input_models,
+        instrument, detector = master_table.set_file_table(self.input_models,
+                                                           self.input_filenames,
                                                            self.ra_offset,
                                                            self.dec_offset)
 #________________________________________________________________________________
 # find out how many files are in the association table or if it is an single file
 # store the input_filenames and input_models
-        num = 0    
+        num = 0
         num = len(self.input_filenames)
         self.number_files = num
-        self.detector = detector            
+        self.detector = detector
         self.instrument = instrument
 #________________________________________________________________________________
-    # Determine which channels/subchannels or filter/grating cubes will be 
+    # Determine which channels/subchannels or filter/grating cubes will be
     # constructed from.
     # fills in band_channel, band_subchannel, band_grating, band_filer
 #________________________________________________________________________________
         cube_build_io_util.determine_band_coverage(self, master_table)
 #________________________________________________________________________________
-    # check on interpolation = area and coord_system=alpha-beta types of cubes 
-    # if interpolation = area also checks that the use did not supply a scale2 
+    # check on interpolation = area and coord_system=alpha-beta types of cubes
+    # if interpolation = area also checks that the use did not supply a scale2
     # values (beta dim)
-#________________________________________________________________________________ 
+#________________________________________________________________________________
         cube_build_io_util.check_cube_type(self)
-    
+
         self.output_name = cube_build_io_util.update_output_name(self)
         log.info('Output Name %s',self.output_name)
         log.info('Output Base %s ', self.output_name_base)
@@ -193,15 +193,15 @@ class CubeData(object):
         log.info('Reading  cube parameter file %s', self.par_filename)
         cube_build_io_util.read_cubepars(self,instrument_info)
 #--------------------------------------------------------------------------------
-        # Load the miri resolution ref file data model - 
+        # Load the miri resolution ref file data model -
         # fill in the appropriate fields in instrument_info
         # with the cube parameters
         if(self.weighting == 'miripsf'):
             log.info('Reading default MIRI cube resolution file %s', self.resol_filename)
             cube_build_io_util.read_resolution_file(self,instrument_info)
 #________________________________________________________________________________
-# get the ROI sizes 
-        self.instrument_info = instrument_info            
+# get the ROI sizes
+        self.instrument_info = instrument_info
         roi = CubeData.determine_roi_size(self)
         # if the user has not set the size of the ROI then use defaults in reference
         # parameter file
@@ -211,7 +211,7 @@ class CubeData(object):
         if self.interpolation == 'pointcloud':
             log.info('Region of interest  %f %f',self.rois,self.roiw)
 
-#________________________________________________________________________________ 
+#________________________________________________________________________________
 # Set up values to return and acess for other parts of cube_build
 
         self.master_table = master_table
@@ -225,29 +225,29 @@ class CubeData(object):
         """
         Short Summary
         -------------
-        Function to determine the min and max coordinates of the spectral 
+        Function to determine the min and max coordinates of the spectral
         cube,given channel & subchannel
 
 
         Parameter
         ----------
-        self.master_table:  A table that contains the channel/subchannel or 
+        self.master_table:  A table that contains the channel/subchannel or
         filter/grating for each input file
-        self.instrument_info: Default information on the MIRI and NIRSPEC instruments. 
+        self.instrument_info: Default information on the MIRI and NIRSPEC instruments.
 
         Returns
         -------
         Cube Dimension Information:
-        Footprint of cube: min and max of coordinates of cube. 
+        Footprint of cube: min and max of coordinates of cube.
         If an offset list is provided then these values are applied.
-        If the coordinate system is alpha-beta (MIRI) then min and max 
+        If the coordinate system is alpha-beta (MIRI) then min and max
         coordinates of alpha (arc sec), beta (arc sec) and lambda (microns)
-        If the coordinate system is ra-dec then the min and max of 
+        If the coordinate system is ra-dec then the min and max of
         ra(degress), dec (degrees) and lambda (microns) is returned.
         """
 
 #________________________________________________________________________________
-        if self.cube_type == 'File' or self.cube_type == 'ASN' : 
+        if self.cube_type == 'File' or self.cube_type == 'ASN' :
             log.info('Building Cube %s ', self.output_name)
 
         # Scale is 3 dimensions and is determined from values held in  instrument_info.GetScale
@@ -300,15 +300,15 @@ class CubeData(object):
                 with datamodels.ImageModel(ifile) as input_model:
                     if self.instrument == 'NIRSPEC':
                         flag_data = 0
-                        ch_footprint = cube_build_wcs_util.find_footprint_NIRSPEC(self, 
+                        ch_footprint = cube_build_wcs_util.find_footprint_NIRSPEC(self,
                                                                               input_model,
                                                                               flag_data)
                         amin, amax, bmin, bmax, lmin, lmax = ch_footprint
 #________________________________________________________________________________
                     if self.instrument == 'MIRI':
-                        ch_footprint = cube_build_wcs_util.find_footprint_MIRI(self, 
-                                                                           input_model, 
-                                                                           this_a, 
+                        ch_footprint = cube_build_wcs_util.find_footprint_MIRI(self,
+                                                                           input_model,
+                                                                           this_a,
                                                                            self.instrument_info)
                         amin, amax, bmin, bmax, lmin, lmax = ch_footprint
 
@@ -372,10 +372,10 @@ class CubeData(object):
     # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
     # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
 
-        if(self.coord_system == 'ra-dec'): 
+        if(self.coord_system == 'ra-dec'):
             cube_build_wcs_util.set_geometry(self,cube_footprint)
-        else: 
-            cube_build_wcs_util.set_geometryAB(self,cube_footprint) # local coordinate system 
+        else:
+            cube_build_wcs_util.set_geometryAB(self,cube_footprint) # local coordinate system
 
         cube_build_wcs_util.print_cube_geometry(self)
 
@@ -388,19 +388,19 @@ class CubeData(object):
         Short Summary
         -------------
         Loop over every band contained in the IFU cube and read in the data associated with the band
-        Map the detector data to the cube output coordinate system 
+        Map the detector data to the cube output coordinate system
 
         Parameter
         ----------
-        spaxel - a list of spaxel members holding the detector flux information 
+        spaxel - a list of spaxel members holding the detector flux information
 
         Returns
         -------
-        each spaxel element with the mapped detector values associated with it 
+        each spaxel element with the mapped detector values associated with it
 
         """
         self.spaxel = CubeData.create_spaxel(self)
-        # now need to loop over every file that covers this channel/subchannel (MIRI) 
+        # now need to loop over every file that covers this channel/subchannel (MIRI)
         # or Grating/filter(NIRSPEC)
         #and map the detector pixels to the cube spaxel.
         if(self.instrument == 'MIRI'):
@@ -414,10 +414,10 @@ class CubeData(object):
         t0 = time.time()
         for i in range(number_bands):
             this_par1 = parameter1[i]
-            this_par2 = parameter2[i]            
-            
+            this_par2 = parameter2[i]
+
             log.debug("Working on Band defined by:%s %s " ,this_par1,this_par2)
-            CubeData.map_detector_to_spaxel(self,this_par1, this_par2,self.spaxel)  
+            CubeData.map_detector_to_spaxel(self,this_par1, this_par2,self.spaxel)
 
         t1 = time.time()
         log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
@@ -446,19 +446,19 @@ class CubeData(object):
         Short Summary
         -------------
         Loop over every band contained in the IFU cube and read in the data associated with the band
-        Map the detector data to the cube output coordinate system 
+        Map the detector data to the cube output coordinate system
 
         Parameter
         ----------
-        spaxel - a list of spaxel members holding the detector flux information 
+        spaxel - a list of spaxel members holding the detector flux information
 
         Returns
         -------
-        each spaxel element with the mapped detector values associated with it 
+        each spaxel element with the mapped detector values associated with it
 
         """
 
-        # loop over input models 
+        # loop over input models
 #        single_IFUCube = []
         single_IFUCube = datamodels.ModelContainer()
         n = len(self.input_models)
@@ -467,7 +467,7 @@ class CubeData(object):
 
         self.weighting =='standard'
         c1_offset = 0
-        c2_offset = 0 
+        c2_offset = 0
         for j in range(n):
             t0 = time.time()
 # for each new data model create a new spaxel
@@ -524,7 +524,7 @@ class CubeData(object):
             log.info("Time Create Single IFUcube  = %.1f.s" % (t1 - t0,))
 #_______________________________________________________________________
             single_IFUCube.append(IFUCube)
-            del spaxel[:]             
+            del spaxel[:]
         return single_IFUCube
 
 #********************************************************************************
@@ -554,7 +554,7 @@ class CubeData(object):
         else:
             for t in range(total_num):
                 self.spaxel.append(spaxel.SpaxelAB())
-    
+
         return self.spaxel
 
 #********************************************************************************
@@ -562,9 +562,9 @@ class CubeData(object):
         """
         Short Summary
         -------------
-        Determine the spatial and wavelength roi size to use for selecting point cloud 
-        elements around the spaxel centeres. 
-        If the IFU cube covers more than 1 band - then use the rules to 
+        Determine the spatial and wavelength roi size to use for selecting point cloud
+        elements around the spaxel centeres.
+        If the IFU cube covers more than 1 band - then use the rules to
         define the Spatial and Wavelength roi size to use for the cube
         Current Rule: using the minimum
 
@@ -575,8 +575,8 @@ class CubeData(object):
 
         Returns
         -------
-        roi size for spatial and wavelength 
-    
+        roi size for spatial and wavelength
+
         """
 
         roi = [0, 0]
@@ -637,9 +637,9 @@ class CubeData(object):
         log.debug('Number of files in cube %i', nfiles)
 
     # loop over the files that cover the spectral range the cube is for
-    
+
         for k in range(nfiles):
-            ifile = self.master_table.FileMap[instrument][this_par1][this_par2][k]        
+            ifile = self.master_table.FileMap[instrument][this_par1][this_par2][k]
             ioffset = len(self.master_table.FileOffset[this_par1][this_par2]['C1'])
 
             c1_offset = 0.0
@@ -654,7 +654,7 @@ class CubeData(object):
 #********************************************************************************
                 if self.instrument == 'MIRI':
 #________________________________________________________________________________
-# Standard method 
+# Standard method
                     if self.interpolation == 'pointcloud':
                         xstart, xend = self.instrument_info.GetMIRISliceEndPts(this_par1)
                         y, x = np.mgrid[:1024, xstart:xend]
@@ -674,7 +674,7 @@ class CubeData(object):
 #________________________________________________________________________________
 #2D area method - only works for single files and coord_system = 'alpha-beta'
                     if self.interpolation == 'area':
-                        det2ab_transform = input_model.meta.wcs.get_transform('detector', 
+                        det2ab_transform = input_model.meta.wcs.get_transform('detector',
                                                                               'alpha_beta')
 
 
@@ -682,7 +682,7 @@ class CubeData(object):
                         end_region = self.instrument_info.GetEndSlice(this_par1)
                         regions = list(range(start_region, end_region + 1))
 
-                    #xtest = 28.310396-1 # test pixel to compare with Distortion doc 
+                    #xtest = 28.310396-1 # test pixel to compare with Distortion doc
                     #ytest = 512.0-1     # test pixel to compare with Distortion doc
                     #coord1_test,coord2_test,lam_test = det2ab_shift(xtest,ytest)
                     #print('test values',xtest+1,ytest+1,coord1_test,coord2_test,lam_test)
@@ -699,7 +699,7 @@ class CubeData(object):
                     #    beta distance
 
 # getting pixel corner - ytop = y + 1 (routine fails for y = 1024)
-                            index = np.where(y < 1023) 
+                            index = np.where(y < 1023)
                             y = y[index]
                             x = x[index]
                             t0 = time.time()
@@ -708,7 +708,7 @@ class CubeData(object):
                             cube_overlap.match_det2cube(self, x, y, i,
                                                         start_region,
                                                         input_model,
-                                                        det2ab_transform,  
+                                                        det2ab_transform,
                                                         spaxel)
                             t1 = time.time()
                             log.debug("Time Map one Slice  to Cube = %.1f.s" % (t1 - t0,))
@@ -759,7 +759,7 @@ class CubeData(object):
         or
         if(interpolation = pointcloud) flux determined for each spaxel based on interpolation of PixelCloud
         """
-    
+
 
         if self.interpolation == 'area':
             nspaxel = len(spaxel)
@@ -842,7 +842,7 @@ class CubeData(object):
         IFUCube.meta.wcsinfo.ctype2 = 'DEC--TAN'
         IFUCube.meta.wcsinfo.cunit1 = 'deg'
         IFUCube.meta.wcsinfo.cunit2 = 'deg'
-        
+
 #    elif(self.coord_system == 'alpha-beta'):
 #        IFUCube.wcsinfo.ctype1 = 'ALPHA'
 #        IFUCube.wcsinfo.ctype2 = 'BETA'
@@ -860,10 +860,10 @@ class CubeData(object):
         IFUCube.meta.weightmap = 'WMAP'
         IFUCube.meta.data_model_type = 'IFUCubeModel'
         IFUCube.error_type = 'ERR'
-    
+
 
         wcsobj = pointing.create_fitswcs(IFUCube)
-    
+
         IFUCube.meta.wcs = wcsobj
         return IFUCube
 
@@ -899,7 +899,7 @@ class CubeData(object):
 
         IFUCube.data = temp_flux
         IFUCube.weightmap = temp_wmap
-    
+
         IFUCube.meta.cal_step.cube_build = 'COMPLETE'
 #    icube = 0
 #    for z in range(Cube.naxis3):
