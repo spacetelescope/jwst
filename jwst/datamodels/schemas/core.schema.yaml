@@ -1588,6 +1588,10 @@ properties:
             title: Image resampling
             type: string
             fits_keyword: S_RESAMP
+          cube_build:
+            title: IFU  resampling
+            type: string
+            fits_keyword: S_IFUCUB
           source_catalog:
             title: Source Photometry and Morphology
             type: string

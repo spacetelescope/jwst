@@ -23,11 +23,6 @@ from ..resample import resample_spec_step
 
 __version__ = "3.0"
 
-# Define logging
-import logging
-log = logging.getLogger()
-log.setLevel(logging.DEBUG)
-
 
 class Spec2Pipeline(Pipeline):
     """
@@ -72,7 +67,7 @@ class Spec2Pipeline(Pipeline):
         input: str, Level2 Association, or DataModel
             The exposure or association of exposures to process
         """
-        log.info('Starting calwebb_spec2 ...')
+        self.log.info('Starting calwebb_spec2 ...')
 
         # Retrieve the input(s)
         asn = LoadAsLevel2Asn.load(input)
@@ -86,7 +81,7 @@ class Spec2Pipeline(Pipeline):
         # Process each exposure.
         results = []
         for product in asn['products']:
-            log.info('Processing product {}'.format(product['name']))
+            self.log.info('Processing product {}'.format(product['name']))
             self.output_basename = product['name']
             result = self.process_exposure_product(
                 product,
@@ -107,7 +102,7 @@ class Spec2Pipeline(Pipeline):
             )
 
         # We're done
-        log.info('Ending calwebb_spec2')
+        self.log.info('Ending calwebb_spec2')
         return results
 
     # Process each exposure
@@ -134,12 +129,12 @@ class Spec2Pipeline(Pipeline):
         # one. We'll just get the first one found.
         science = members_by_type['science']
         if len(science) != 1:
-            log.warn(
+            self.log.warn(
                 'Wrong number of science exposures found in {}'.format(
                     exp_product['name']
                 )
             )
-            log.warn('    Using only first one.')
+            self.log.warn('    Using only first one.')
         science = science[0]
 
         self.log.info('Working on input %s ...', science)
@@ -170,9 +165,9 @@ class Spec2Pipeline(Pipeline):
         # If assign_wcs was skipped, abort the rest of processing,
         # because so many downstream steps depend on the WCS
         if input.meta.cal_step.assign_wcs == 'SKIPPED':
-            log.error('Assign_wcs processing was skipped')
-            log.error('Aborting remaining processing for this exposure')
-            log.error('No output product will be created')
+            self.log.error('Assign_wcs processing was skipped')
+            self.log.error('Aborting remaining processing for this exposure')
+            self.log.error('No output product will be created')
             return input
 
         # Apply NIRSpec MSA imprint subtraction
@@ -182,7 +177,7 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['NRS_MSASPEC', 'NRS_IFU'] and \
            len(imprint) > 0:
             if len(imprint) > 1:
-                log.warn('Wrong number of imprint members')
+                self.log.warn('Wrong number of imprint members')
             imprint = imprint[0]
             input = self.imprint_subtract(input, imprint)
 
@@ -267,7 +262,7 @@ class Spec2Pipeline(Pipeline):
         x1d_output.close()
 
         # That's all folks
-        log.info(
+        self.log.info(
             'Finished processing product {}'.format(exp_product['name'])
         )
         return input
