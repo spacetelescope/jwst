@@ -107,6 +107,10 @@ class DataTypes(object):
         single_product = filename[:indx]
         return single_product
 
+
+        
+    
+
 # TODO:  Routines not used below - saved just in case we need them later - if not
 # remove. 
 
