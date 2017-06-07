@@ -27,7 +27,7 @@ TMP_DIR = None
 
 def setup():
     global ROOT_DIR, FITS_FILE, TMP_DIR, TMP_FITS, TMP_YAML, TMP_JSON, TMP_FITS2
-    ROOT_DIR = os.path.dirname(__file__)
+    ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
     FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
 
     TMP_DIR = tempfile.mkdtemp()
@@ -40,6 +40,16 @@ def setup():
 def teardown():
     shutil.rmtree(TMP_DIR)
 
+def records_equal(a, b):
+    a = a.item()
+    b = b.item()
+    a_size = len(a)
+    b_size = len(b)
+    equal = a_size == b_size
+    for i in range(a_size):
+        if not equal: break
+        equal = a[i] == b[i]
+    return equal
 
 def test_from_new_hdulist():
     with pytest.raises(AttributeError):
@@ -103,7 +113,7 @@ def test_from_scratch():
 
         dm.meta.instrument.name = 'NIRCAM'
 
-        dm.to_fits(TMP_FITS, clobber=True)
+        dm.to_fits(TMP_FITS, overwrite=True)
 
         with ImageModel.from_fits(TMP_FITS) as dm2:
             assert dm2.shape == (50, 50)
@@ -173,7 +183,7 @@ def test_extra_fits():
         assert 'BITPIX' not in _header_to_dict(dm.extra_fits.PRIMARY.header)
         assert _header_to_dict(dm.extra_fits.PRIMARY.header)['SCIYSTRT'] == 705
         dm2 = dm.copy()
-        dm2.to_fits(TMP_FITS, clobber=True)
+        dm2.to_fits(TMP_FITS, overwrite=True)
 
     with DataModel(TMP_FITS) as dm3:
         assert 'BITPIX' not in _header_to_dict(dm.extra_fits.PRIMARY.header)
@@ -221,7 +231,7 @@ def test_casting():
 def test_fits_comments():
     with ImageModel() as dm:
         dm.meta.subarray.xstart = 42
-        dm.save(TMP_FITS, clobber=True)
+        dm.save(TMP_FITS, overwrite=True)
 
     from astropy.io import fits
     hdulist = fits.open(TMP_FITS)
@@ -240,7 +250,7 @@ def test_fits_comments():
 
 def test_metadata_doesnt_override():
     with ImageModel() as dm:
-        dm.save(TMP_FITS, clobber=True)
+        dm.save(TMP_FITS, overwrite=True)
 
     from astropy.io import fits
     hdulist = fits.open(TMP_FITS, mode='update')
@@ -305,7 +315,7 @@ def test_table_with_metadata():
         ]
     with FluxModel(flux_table=flux_im) as datamodel:
         datamodel.meta.fluxinfo.exposure = 'Exposure info'
-        datamodel.save(TMP_FITS, clobber=True)
+        datamodel.save(TMP_FITS, overwrite=True)
         del datamodel
 
     from astropy.io import fits
@@ -379,20 +389,20 @@ def test_replace_table():
 
     m = DataModel(schema=schema_narrow)
     m.data = x
-    m.to_fits(TMP_FITS, clobber=True)
+    m.to_fits(TMP_FITS, overwrite=True)
 
     with fits.open(TMP_FITS) as hdulist:
-        assert repr(list(x)) == repr(list(np.asarray(hdulist[1].data)))
+        assert records_equal(x, np.asarray(hdulist[1].data))
         assert hdulist[1].data.dtype[1].str == '>f4'
         assert hdulist[1].header['TFORM2'] == 'E'
 
     with DataModel(TMP_FITS,
                    schema=schema_wide) as m:
         foo = m.data
-        m.to_fits(TMP_FITS2, clobber=True)
+        m.to_fits(TMP_FITS2, overwrite=True)
 
     with fits.open(TMP_FITS2) as hdulist:
-        assert repr(list(x)) == repr(list(np.asarray(hdulist[1].data)))
+        assert records_equal(x, np.asarray(hdulist[1].data))
         assert hdulist[1].data.dtype[1].str == '>f8'
         assert hdulist[1].header['TFORM2'] == 'D'
 
@@ -401,7 +411,7 @@ def test_metadata_from_fits():
     from astropy.io import fits
 
     mask = np.array([[0, 1], [2, 3]])
-    fits.ImageHDU(data=mask, name='DQ').writeto(TMP_FITS, clobber=True)
+    fits.ImageHDU(data=mask, name='DQ').writeto(TMP_FITS, overwrite=True)
     with DataModel(init=TMP_FITS) as dm:
         dm.save(TMP_FITS2)
 
@@ -416,7 +426,7 @@ def test_metadata_from_fits():
 #     primary = fits.PrimaryHDU()
 #     hdulist.append(primary)
 #     hdulist[0].header['SUBSTRT1'] = 42.7
-#     hdulist.writeto(TMP_FITS, clobber=True)
+#     hdulist.writeto(TMP_FITS, overwrite=True)
 
 #     with DataModel(TMP_FITS) as dm:
 #         assert dm.meta.subarray.xstart == 42.7

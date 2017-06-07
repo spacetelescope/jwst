@@ -1,4 +1,4 @@
-from jwst.extract_2d.extract_2d_step import Extract2dStep
+from __future__ import absolute_import
+from .extract_2d_step import Extract2dStep
 
-__version__ = '0.7.0'
-
+__version__ = '0.7.4'

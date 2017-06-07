@@ -58,7 +58,7 @@ def set_bary_helio_times(filename, jwstpos=None):
     pheader = hdul[0].header
     # Obtain the necessary info from the header
     targcoord = astropy.coordinates.SkyCoord(
-        ra=pheader['PROP_RA'], dec=pheader['PROP_DEC'], frame='fk5', unit=(u.hourangle, u.deg))
+        ra=pheader['TARG_RA'], dec=pheader['TARG_DEC'], frame='fk5', unit=(u.hourangle, u.deg))
     starttime = pheader['EXPSTART']
     middletime = pheader['EXPMID']
     endtime = pheader['EXPEND']

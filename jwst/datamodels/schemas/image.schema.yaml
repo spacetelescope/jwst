@@ -1,5 +1,6 @@
 allOf:
 - $ref: core.schema.yaml
+- $ref: bunit.schema.yaml
 - type: object
   properties:
     data:
@@ -30,6 +31,33 @@ allOf:
       datatype: float32
     relsens:
       $ref: relsens.schema.yaml
+    relsens2d:
+      title: Sensitivity array
+      fits_hdu: RELSENS2D
+      default: 1.0
+      datatype: float32
+- type: object
+  properties:
+    pathloss_pointsource:
+      title: pathloss array for point sources
+      fits_hdu: PATHLOSS_POINTSOURCE
+      ndim: 1
+      datatype: float32
+    wavelength_pointsource:
+      title: wavelength array for point sources
+      fits_hdu: WAVELENGTH_POINTSOURCE
+      ndim: 1
+      datatype: float32
+    pathloss_uniformsource:
+      title: pathloss_array for uniform sources
+      fits_hdu: PATHLOSS_UNIFORMSOURCE
+      ndim: 1
+      datatype: float32
+    wavelength_uniformsource:
+      title: wavelength array for uniform sources
+      fits_hdu: WAVELENGTH_UNIFORMSOURCE
+      ndim: 1
+      datatype: float32
 - type: object
   properties:
     meta:

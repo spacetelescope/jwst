@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function
 
+import os
 from os.path import dirname, join, abspath
 import sys
 
@@ -71,7 +72,7 @@ class MultiplyBy2(Step):
                 return dm2
 
 
-class TestPipeline(Pipeline):
+class MyPipeline(Pipeline):
     """
     A test pipeline.
     """
@@ -113,6 +114,7 @@ def test_pipeline():
     assert pipe.flat_field.multiplier == 2.0
 
     pipe.run()
+    os.remove(pipe.output_filename)
 
 
 def test_pipeline_python():
@@ -120,8 +122,8 @@ def test_pipeline_python():
         'flat_field': {'threshold': 42.0}
         }
 
-    pipe = TestPipeline(
-        "TestPipeline",
+    pipe = MyPipeline(
+        "MyPipeline",
         config_file=__file__,
         steps=steps,
         science_filename=abspath(join(dirname(__file__), 'data', 'science.fits')),
@@ -132,9 +134,10 @@ def test_pipeline_python():
     assert pipe.flat_field.multiplier == 1.0
 
     pipe.run()
+    os.remove(pipe.output_filename)
 
 
-class TestLinearPipeline(LinearPipeline):
+class MyLinearPipeline(LinearPipeline):
     pipeline_steps = [
         ('multiply', MultiplyBy2),
         ('multiply2', MultiplyBy2),
@@ -143,7 +146,7 @@ class TestLinearPipeline(LinearPipeline):
 
 
 def test_partial_pipeline():
-    pipe = TestLinearPipeline() # output_filename="output.fits")
+    pipe = MyLinearPipeline()
 
     pipe.end_step = 'multiply2'
     result = pipe.run(abspath(join(dirname(__file__), 'data', 'science.fits')))
@@ -153,7 +156,7 @@ def test_partial_pipeline():
     result = pipe.run(abspath(join(dirname(__file__), 'data', 'science.fits')))
 
     assert_allclose(np.sum(result.data), 9969.82514685, rtol=1e-4)
-
+    os.remove('stpipe.MyLinearPipeline.fits')
 
 def test_pipeline_commandline():
     args = [
@@ -167,11 +170,12 @@ def test_pipeline_commandline():
     assert pipe.flat_field.multiplier == 2.0
 
     pipe.run()
+    os.remove(pipe.output_filename)
 
 
 def test_pipeline_commandline_class():
     args = [
-        'jwst.stpipe.tests.test_pipeline.TestPipeline',
+        'jwst.stpipe.tests.test_pipeline.MyPipeline',
         '--logcfg={0}'.format(
             abspath(join(dirname(__file__), 'steps', 'log.cfg'))),
         # The file_name parameters are *required*
@@ -188,13 +192,14 @@ def test_pipeline_commandline_class():
     assert pipe.flat_field.multiplier == 1.0
 
     pipe.run()
+    os.remove(pipe.output_filename)
 
 
 def test_pipeline_commandline_invalid_args():
     from io import StringIO
 
     args = [
-        'jwst.stpipe.tests.test_pipeline.TestPipeline',
+        'jwst.stpipe.tests.test_pipeline.MyPipeline',
         # The file_name parameters are *required*, and one of them
         # is missing, so we should get a message to that effect
         # followed by the commandline usage message.

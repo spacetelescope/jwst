@@ -1,4 +1,5 @@
-import photutils
+from photutils import detect_threshold, DAOStarFinder
+
 from ..datamodels import ImageModel
 
 
@@ -45,14 +46,14 @@ def make_tweakreg_catalog(model, kernel_fwhm, snr_threshold, sharplo=0.2,
     if not isinstance(model, ImageModel):
         raise ValueError('The input model must be a ImageModel.')
 
-    # threshold = snr_threshold * model.err   # can't input img to daofind
-    threshold_img = photutils.detect_threshold(model.data, snr=snr_threshold)
+    threshold_img = detect_threshold(model.data, snr=snr_threshold)
+    # TODO:  use threshold image based on error array
     threshold = threshold_img[0, 0]     # constant image
 
-    sources = photutils.daofind(model.data, fwhm=kernel_fwhm,
-                                threshold=threshold, sharplo=sharplo,
-                                sharphi=sharphi, roundlo=roundlo,
-                                roundhi=roundhi)
+    daofind = DAOStarFinder(fwhm=kernel_fwhm, threshold=threshold,
+                            sharplo=sharplo, sharphi=sharphi, roundlo=roundlo,
+                            roundhi=roundhi)
+    sources = daofind(model.data)
 
     columns = ['id', 'xcentroid', 'ycentroid', 'flux']
     catalog = sources[columns]

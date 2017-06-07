@@ -1,8 +1,8 @@
 from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
+import os.path
 import logging
 import numpy as np
-from asdf import AsdfFile
 from astropy.modeling import models
 from astropy import coordinates as coord
 from astropy import units as u
@@ -10,9 +10,13 @@ from astropy.io import fits
 
 import gwcs.coordinate_frames as cf
 from gwcs import selector
+from gwcs.utils import _toindex
 from . import pointing
 from ..transforms import models as jwmodels
-from .util import not_implemented_mode
+from .util import not_implemented_mode, subarray_transform
+from ..datamodels import (DistortionModel, FilteroffsetModel,
+                          DistortionMRSModel, WavelengthrangeModel,
+                          RegionsModel, SpecwcsModel)
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -20,7 +24,14 @@ log.setLevel(logging.DEBUG)
 
 def create_pipeline(input_model, reference_files):
     '''
-    get reference files from crds
+    Create the WCS pipeline for MIRI modes.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
+    reference_files : dict
+        Dictionary {reftype: reference file name}.
 
     '''
     exp_type = input_model.meta.exposure.type.lower()
@@ -31,6 +42,15 @@ def create_pipeline(input_model, reference_files):
 
 def imaging(input_model, reference_files):
     """
+    Create MIRI Imagng WCS.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
+    reference_files : dict
+        Dictionary {reftype: reference file name}.
+
     The MIRI imaging pipeline includes 3 coordinate frames - detector,
     focal plane and sky
 
@@ -43,8 +63,18 @@ def imaging(input_model, reference_files):
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
     # Create the transforms
-    distortion = imaging_distortion(input_model, reference_files)
+    subarray2full = subarray_transform(input_model)
+    imdistortion = imaging_distortion(input_model, reference_files)
+    distortion = subarray2full | imdistortion
     tel2sky = pointing.v23tosky(input_model)
+
+    # TODO: remove setting the bounding box when it is set in the new ref file.
+    try:
+        bb = distortion.bounding_box
+    except NotImplementedError:
+        shape = input_model.data.shape
+        # Note: Since bounding_box is attached to the model here it's in reverse order.
+        distortion.bounding_box = ((-0.5, shape[0] - 0.5), (3.5, shape[1] - 4.5))
 
     # Create the pipeline
     pipeline = [(detector, distortion),
@@ -61,57 +91,56 @@ def imaging_distortion(input_model, reference_files):
 
     Parameters
     ----------
-    model : jwst.datamodels.ImagingModel
-        input model
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
     reference_files : dict
-        reference files from CRDS
+        Dictionary {reftype: reference file name}.
 
-
-    using CDP 3 Reference distortion file
-        Old one: ~~MIRI_FM_MIRIMAGE_F1000W_PSF_03.01.00.fits~~
-    Current one: MIRI_FM_MIRIMAGE_DISTORTION_06.03.00.fits
-
-    reference files/corrections needed (pixel to sky):
-
-    1. Filter dependent shift in (x,y) (!with an oposite sign to that delievred by the IT)
+    1. Filter dependent shift in (x,y) (!with an oposite sign to that delivered by the IT)
     2. Apply MI
     3. Apply Ai and BI matrices
-    4. Apply the TI matrix (this gives V2/V3 coordinates)
-    5. Apply V2/V3 to sky transformation
+    4. Apply the TI matrix (this gives Xan/Yan coordinates)
+    5. Aply the XanYan --> V2V3 transform
+    6. Apply V2V3 --> sky transform
 
     ref_file: filter_offset.asdf - (1)
     ref_file: distortion.asdf -(2,3,4)
     """
+    # Read in the distortion.
+    with DistortionModel(reference_files['distortion']) as dist:
+        distortion = dist.model
+    obsfilter = input_model.meta.instrument.filter
 
-    # Load the distortion and filter from the reference files.
+    # Add an offset for the filter
+    # Add an offset for the filter
+    with FilteroffsetModel(reference_files['filteroffset']) as filter_offset:
+        filters = filter_offset.filters
+    col_offset = None
+    row_offset = None
+    for f in filters:
+        if f.name == obsfilter:
+            col_offset = f.column_offset
+            row_offset = f.row_offset
+            break
 
-    # Load in the distortion file.
-    distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    filter_offset = AsdfFile.open(reference_files['filteroffset']).tree[input_model.meta.instrument.filter]
+    if (col_offset is not None) and (row_offset is not None):
+        distortion = models.Shift(col_offset) & models.Shift(row_offset) | distortion
 
-    # Now apply each of the models.  The Scale(60) converts from arc-minutes to arc-seconds.
-    full_distortion = models.Shift(filter_offset['column_offset']) & models.Shift(
-        filter_offset['row_offset']) | distortion | models.Scale(1/60) & models.Scale(1/60)
-
-
-    # ToDo: This will likely have to change in the future, but the "filteroffset" file we have
-    # ToDo: currently does not contain that key.
-    filter_offset = None
-    if input_model.meta.instrument.filter in  AsdfFile.open(reference_files['filteroffset']).tree:
-        filter_offset = AsdfFile.open(reference_files['filteroffset']).tree[input_model.meta.instrument.filter]
-        full_distortion = models.Shift(filter_offset['row_offset']) & models.Shift(
-            filter_offset['column_offset']) | distortion
-    else:
-        full_distortion = distortion
-
-    full_distortion = full_distortion.rename('distortion')
-
-    return full_distortion
+    # scale to degrees (remove this once pipeline can handle v2,v3 in arcsec)
+    distortion = distortion | models.Scale(1 / 3600) & models.Scale(1 / 3600)
+    return distortion
 
 
 def lrs(input_model, reference_files):
     """
     Create the WCS pipeline for a MIRI fixed slit observation.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
+    reference_files : dict
+        Dictionary {reftype: reference file name}.
 
     reference_files = {
         "specwcs": 'MIRI_FM_MIRIMAGE_P750L_DISTORTION_04.02.00.fits'
@@ -127,9 +156,11 @@ def lrs(input_model, reference_files):
 
 
     # Determine the distortion model.
-    distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    # Now apply each of the models.  The Scale(1/60) converts from arc-minutes to deg.
-    full_distortion = distortion | models.Scale(1 / 60) & models.Scale(1 / 60)
+    subarray2full = subarray_transform(input_model)
+    with DistortionModel(reference_files['distortion']) as dist:
+        distortion = dist.model
+    # Distortion is in arcsec.  Convert to degrees
+    full_distortion = subarray2full | distortion | models.Scale(1 / 3600.) & models.Scale(1 / 3600.)
 
     # Load and process the reference data.
     with fits.open(reference_files['specwcs']) as ref:
@@ -137,21 +168,21 @@ def lrs(input_model, reference_files):
 
         # Get the zero point from the reference data.
         # The zero_point is X, Y  (which should be COLUMN, ROW)
+        # TODO: Are imx, imy 0- or 1-indexed?  We are treating them here as
+        # 0-indexed.  Since they are FITS, they are probably 1-indexed.
         if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
             zero_point = ref[1].header['imx'], ref[1].header['imy']
         elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
             #zero_point = ref[1].header['imxsltl'], ref[1].header['imysltl']
             zero_point = [35, 442]  # [35, 763] # account for subarray
 
-    # Create the domain
+    # Create the bounding_box
     x0 = lrsdata[:, 3]
     y0 = lrsdata[:, 4]
     x1 = lrsdata[:, 5]
 
-    domain = [{'lower': x0.min() + zero_point[0], 'upper': x1.max() + zero_point[0]},
-              {'lower': (y0.min() + zero_point[1]), 'upper': (y0.max() + zero_point[1])}
-              ]
-
+    bb = ((x0.min() - 0.5 + zero_point[0], x1.max() + 0.5 + zero_point[0]),
+          (y0.min() - 0.5 + zero_point[1], y0.max() + 0.5 + zero_point[1]))
     # Find the ROW of the zero point which should be the [1] of zero_point
     row_zero_point = zero_point[1]
 
@@ -162,32 +193,33 @@ def lrs(input_model, reference_files):
     # x.shape will be something like (1, 388)
     y, x = np.mgrid[row_zero_point:row_zero_point + 1, 0:input_model.data.shape[1]]
 
-    radec = distortion | tel2sky
-    radec = np.array(radec(x, y))[:, 0, :]
+    spatial_transform = full_distortion | tel2sky
+    radec = np.array(spatial_transform(x, y))[:, 0, :]
 
-    ra_full = np.matlib.repmat(radec[0], domain[1]['upper'] + 1 - domain[1]['lower'], 1)
-    dec_full = np.matlib.repmat(radec[1], domain[1]['upper'] + 1 - domain[1]['lower'], 1)
+    ra_full = np.matlib.repmat(radec[0], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)
+    dec_full = np.matlib.repmat(radec[1], _toindex(bb[1][1]) + 1 - _toindex(bb[1][0]), 1)
 
-    ra_t2d = models.Tabular2D(lookup_table=ra_full, name='xtable')
-    dec_t2d = models.Tabular2D(lookup_table=dec_full, name='ytable')
+    ra_t2d = models.Tabular2D(lookup_table=ra_full, name='xtable',
+        bounds_error=False, fill_value=np.nan)
+    dec_t2d = models.Tabular2D(lookup_table=dec_full, name='ytable',
+        bounds_error=False, fill_value=np.nan)
 
     # Create the model transforms.
     lrs_wav_model = jwmodels.LRSWavelength(lrsdata, zero_point)
 
     # Incorporate the small rotation
     angle = np.arctan(0.00421924)
-    spatial = models.Rotation2D(angle)
-    radec_t2d = ra_t2d & dec_t2d | spatial
+    rot = models.Rotation2D(angle)
+    radec_t2d = ra_t2d & dec_t2d | rot
 
     # Account for the subarray when computing spatial coordinates.
-    xshift = -domain[0]['lower']
-    yshift = -domain[1]['lower']
+    xshift = -bb[0][0]
+    yshift = -bb[1][0]
     det2world = models.Mapping((1, 0, 1, 0, 0, 1)) | models.Shift(yshift, name='yshift1') & \
               models.Shift(xshift, name='xshift1') & \
               models.Shift(yshift, name='yshift2') & models.Shift(xshift, name='xshift2') & \
               models.Identity(2) | radec_t2d & lrs_wav_model
-    det2world.meta['domain'] = domain
-
+    det2world.bounding_box = bb[::-1]
     # Now the actual pipeline.
     pipeline = [(detector, det2world),
                 (world, None)
@@ -199,43 +231,58 @@ def lrs(input_model, reference_files):
 def ifu(input_model, reference_files):
     """
     Create the WCS pipeline for a MIRI IFU observation.
+    Goes from 0-indexed detector pixels (0,0) middle of lower left reference pixel
+    to V2,V3 in arcsec.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
+    reference_files : dict
+        Dictionary {reftype: reference file name}.
     """
 
     #reference_files = {'distortion': 'jwst_miri_distortion_00001.asdf', #files must hold 2 channels each
                         #'specwcs': 'jwst_miri_specwcs_00001.asdf',
                         #'regions': 'jwst_miri_regions_00001.asdf',
-                        #'v2v3': 'jwst_miri_v2v3_00001.asdf'
                         #'wavelengthrange': 'jwst_miri_wavelengthrange_0001.asdf'}
+    # Define reference frames
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     alpha_beta = cf.Frame2D(name='alpha_beta_spatial', axes_order=(0, 1), unit=(u.arcsec, u.arcsec), axes_names=('alpha', 'beta'))
     spec_local = cf.SpectralFrame(name='alpha_beta_spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     miri_focal = cf.CompositeFrame([alpha_beta, spec_local], name='alpha_beta')
-    xyan_spatial = cf.Frame2D(name='Xan_Yan_spatial', axes_order=(0, 1), unit=(u.arcmin, u.arcmin), axes_names=('v2', 'v3'))
-    spec = cf.SpectralFrame(name='Xan_Yan_spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
-    xyan = cf.CompositeFrame([xyan_spatial, spec], name='Xan_Yan')
     v23_spatial = cf.Frame2D(name='V2_V3_spatial', axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=('v2', 'v3'))
     spec = cf.SpectralFrame(name='spectral', axes_order=(2,), unit=(u.micron,), axes_names=('lambda',))
     v2v3 = cf.CompositeFrame([v23_spatial, spec], name='v2v3')
     icrs = cf.CelestialFrame(name='icrs', reference_frame=coord.ICRS(),
                              axes_order=(0, 1), unit=(u.deg, u.deg), axes_names=('RA', 'DEC'))
     world = cf.CompositeFrame([icrs, spec], name='world')
-    det2alpha_beta = (detector_to_alpha_beta(input_model, reference_files)).rename(
-        "detector_to_alpha_beta")
-    ab2xyan = (alpha_beta2XanYan(input_model, reference_files)).rename("alpha_beta_to_Xan_Yan")
-    xyan2v23 = models.Identity(1) & (models.Shift(7.8) | models.Scale(-1)) & models.Identity(1) | \
-        models.Scale(1/60) & models.Scale(1/60) & models.Identity(1)
+
+    # Define the actual transforms
+    det2abl = (detector_to_abl(input_model, reference_files)).rename(
+        "detector_to_abl")
+    abl2v2v3l = (abl_to_v2v3l(input_model, reference_files)).rename("abl_to_v2v3l")
     tel2sky = pointing.v23tosky(input_model) & models.Identity(1)
-    pipeline = [(detector, det2alpha_beta),
-                (miri_focal, ab2xyan),
-                (xyan, xyan2v23),
+
+    # Put the transforms together into a single transform
+    shape = input_model.data.shape
+    det2abl.bounding_box = ((-0.5, shape[0] - 0.5), (-0.5, shape[1] - 0.5))
+    pipeline = [(detector, det2abl),
+                (miri_focal, abl2v2v3l),
                 (v2v3, tel2sky),
                 (world, None)]
     return pipeline
 
-
-def detector_to_alpha_beta(input_model, reference_files):
+def detector_to_abl(input_model, reference_files):
     """
     Create the transform from detector to alpha, beta frame.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
+    reference_files : dict
+        Dictionary {reftype: reference file name}.
 
     forward transform:
       RegionsSelector
@@ -253,43 +300,43 @@ def detector_to_alpha_beta(input_model, reference_files):
     # used to read the wavelength range
     channels = [c + band for c in channel]
 
-    f = AsdfFile.open(reference_files['distortion'])
-    # The name of the model indicates the output coordinate
-    alpha_model = f.tree['alpha_model']
-    beta_model = f.tree['beta_model']
-    x_model = f.tree['x_model']
-    y_model = f.tree['y_model']
-    slice_model = f.tree['slice_model']
-    f.close()
-    f = AsdfFile.open(reference_files['specwcs'])
-    lambda_model = f.tree['model']
-    f.close()
-    f = AsdfFile.open(reference_files['regions'])
-    regions = f.tree['regions'].copy()
-    f.close()
+    with DistortionMRSModel(reference_files['distortion']) as dist:
+        alpha_model = dist.alpha_model
+        beta_model = dist.beta_model
+        x_model = dist.x_model
+        y_model = dist.y_model
+        bzero = dict(zip(dist.bzero.channel_band, dist.bzero.beta_zero))
+        bdel = dict(zip(dist.bdel.channel_band, dist.bdel.delta_beta))
+        slices = dist.slices
+
+    with SpecwcsModel(reference_files['specwcs']) as f:
+        lambda_model = f.model
+
+    with RegionsModel(reference_files['regions']) as f:
+        regions = f.regions.copy()
+
     label_mapper = selector.LabelMapperArray(regions)
     transforms = {}
 
-    for sl in alpha_model:
-        #chan = str(sl // 100) + band
+    for i, sl in enumerate(slices):
         forward = models.Mapping([1, 0, 0, 1, 0]) | \
-                alpha_model[sl] & beta_model[sl] & lambda_model[sl]
-        inv = models.Mapping([2, 0, 2, 0]) | x_model[sl] & y_model[sl]
+                alpha_model[i] & beta_model[i] & lambda_model[i]
+        inv = models.Mapping([2, 0, 2, 0]) | x_model[i] & y_model[i]
         forward.inverse = inv
         transforms[sl] = forward
 
-    f = AsdfFile.open(reference_files['wavelengthrange'])
-    # the following should go in the asdf reader
-    wave_range = f.tree['wavelengthrange'].copy()
-    wave_channels = f.tree['channels']
-    wr = {}
-    for ch, r in zip(wave_channels, wave_range):
-        wr[ch] = r
-    f.close()
+    with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
+        wr = dict(zip(f.waverange_selector, f.wavelengthrange))
+
     ch_dict = {}
-    for c in channels:
-        ch_dict.update({tuple(wr[c]): selector.LabelMapperDict(('alpha', 'beta', 'lam'), slice_model[c],
-                                                   models.Mapping([1, ], n_inputs=3))})
+    for c in channel:
+        cb = c + band
+        mapper = jwmodels.MIRI_AB2Slice(bzero[cb], bdel[cb], c)
+        lm = selector.LabelMapper(inputs=('alpha', 'beta', 'lam'),
+                                  mapper=mapper, inputs_mapping=models.Mapping((1,), n_inputs=3))
+        ch_dict[tuple(wr[cb])] = lm
+
+
     alpha_beta_mapper = selector.LabelMapperRange(('alpha', 'beta', 'lam'), ch_dict,
                                                   models.Mapping((2,)))
     label_mapper.inverse = alpha_beta_mapper
@@ -300,66 +347,68 @@ def detector_to_alpha_beta(input_model, reference_files):
     return det2alpha_beta
 
 
-def alpha_beta2XanYan(input_model, reference_files):
+def abl_to_v2v3l(input_model, reference_files):
     """
-    Create the transform from detector to Xan, Yan frame.
+    Create the transform from (alpha,beta,lambda) to (V2,V3,lambda) frame.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
+    reference_files : dict
+        Dictionary {reftype: reference file name}.
 
     forward transform:
       RegionsSelector
         label_mapper is LabelMapperDict()
         {channel_wave_range (): channel_number}
-        selector is {channel_number: ab2Xan & ab2Yan}
+        selector is {channel_number: ab2v2 & ab2v3}
     bacward_transform
       RegionsSelector
         label_mapper is LabelMapperDict()
         {channel_wave_range (): channel_number}
-        selector is {channel_number: Xan2ab & Yan2ab}
+        selector is {channel_number: v22ab & v32ab}
     """
     band = input_model.meta.instrument.band
     channel = input_model.meta.instrument.channel
     # used to read the wavelength range
     channels = [c + band for c in channel]
 
-    f = AsdfFile.open(reference_files['v2v3'])
-    v23 = f.tree['model']
-    f.close()
-    f = AsdfFile.open(reference_files['wavelengthrange'])
-    # the following should go in the asdf reader
-    wave_range = f.tree['wavelengthrange'].copy()
-    wave_channels = f.tree['channels']
-    wr = {}
-    for ch, r in zip(wave_channels, wave_range):
-        wr[ch] = r
-    f.close()
+    with DistortionMRSModel(reference_files['distortion']) as dist:
+        v23 = dict(zip(dist.abv2v3_model.channel_band, dist.abv2v3_model.model))
+
+    with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
+        wr = dict(zip(f.waverange_selector, f.wavelengthrange))
 
     dict_mapper = {}
     sel = {}
+    # Since there are two channels in each reference file we need to loop over them
     for c in channels:
         ch = int(c[0])
         dict_mapper[tuple(wr[c])] = models.Mapping((2,), name="mapping_lam") | \
                    models.Const1D(ch, name="channel #")
-        map1 = models.Mapping((1, 0, 1, 0), name='map2poly')
-        map1._outputs = ('alpha', 'beta', 'alpha', 'beta')
-        map1._inputs = ('alpha', 'beta')
-        map1.inverse = models.Mapping((0, 1))
         ident1 = models.Identity(1, name='identity_lam')
         ident1._inputs = ('lam',)
         chan_v23 = v23[c]
         v23chan_backward = chan_v23.inverse
         del chan_v23.inverse
-        v23_spatial = map1 | chan_v23
-        v23_spatial.inverse = map1 | v23chan_backward
+        # This is the spatial part of the transform; tack on additional conversion to degrees
+        # Remove this degrees conversion once pipeline can handle v2,v3 in arcsec
+        v23_spatial=chan_v23 | models.Scale(1 / 3600) & models.Scale(1 / 3600)
+        v23_spatial.inverse = models.Scale(3600) & models.Scale(3600) | v23chan_backward
+        # Tack on passing the third wavelength component
         v23c = v23_spatial & ident1
         sel[ch] = v23c
 
     wave_range_mapper = selector.LabelMapperRange(('alpha', 'beta', 'lam'), dict_mapper,
                                                   inputs_mapping=models.Mapping([2, ]))
     wave_range_mapper.inverse = wave_range_mapper.copy()
-    ab2xyan = selector.RegionsSelector(('alpha', 'beta', 'lam'), ('v2', 'v3', 'lam'),
+    abl2v2v3l = selector.RegionsSelector(('alpha', 'beta', 'lam'), ('v2', 'v3', 'lam'),
                                       label_mapper=wave_range_mapper,
                                       selector=sel)
 
-    return ab2xyan
+    return abl2v2v3l
+
 
 exp_type2transform = {'mir_image': imaging,
                       'mir_tacq': imaging,
@@ -375,3 +424,34 @@ exp_type2transform = {'mir_image': imaging,
                       'mir_flat-image': not_implemented_mode,
                       'mir_dark': not_implemented_mode,
                       }
+
+
+def get_wavelength_range(input_model, path=None):
+    """
+    Return the wavelength range used for computing the WCS.
+
+    Needs access to the reference file used to construct the WCS object.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model after assign_wcs has been run.
+    path : str
+        Directory where the reference file is. (optional)
+    """
+    fname = input_model.meta.ref_file.wavelengthrange.name.split('/')[-1]
+    if path is None and not os.path.exists(fname):
+        raise IOError("Reference file {0} not found. Please specify a path.".format(fname))
+    else:
+        fname = os.path.join(path, fname)
+        f = AsdfFile.open(fname)
+
+    wave_range = f.tree['wavelengthrange'].copy()
+    wave_channels = f.tree['channels']
+    f.close()
+
+    wr = dict(zip(wave_channels, wave_range))
+    channel = input_model.meta.instrument.channel
+    band = input_model.meta.instrument.band
+
+    return dict([(ch+band, wr[ch+band]) for ch in channel ])

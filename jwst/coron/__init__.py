@@ -5,5 +5,4 @@ from .align_refs_step import AlignRefsStep
 from .klip_step import KlipStep
 from .hlsp_step import HlspStep
 
-__version__ = '0.6.0'
-
+__version__ = '0.7.0'

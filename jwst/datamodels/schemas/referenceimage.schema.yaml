@@ -1,0 +1,48 @@
+allOf:
+- $ref: core.schema.yaml
+- type: object
+  properties:
+    data:
+      title: The science data
+      fits_hdu: SCI
+      default: 0.0
+      ndim: 2
+      datatype: float32
+    dq:
+      title: Data quality array
+      fits_hdu: DQ
+      default: 0
+      datatype: uint32
+    err:
+      title: Error array
+      fits_hdu: ERR
+      default: 0.0
+      datatype: float32
+    meta:
+      type: object
+      properties:
+        reffile:
+          title: Information about the reference file
+          type: object
+          properties:
+            type:
+              title: Reference file type
+              type: string
+              fits_keyword: REFTYPE
+            pedigree:
+              title: The pedigree of the reference file
+              type: string
+              fits_keyword: PEDIGREE
+            description:
+              title: Description of the reference file
+              type: string
+              fits_keyword: DESCRIP
+            author:
+              title: Author of the reference file
+              type: string
+              fits_keyword: AUTHOR
+            useafter:
+              title: Use after date of the reference file
+              type: string
+              fits_keyword: USEAFTER
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

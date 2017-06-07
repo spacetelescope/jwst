@@ -1,0 +1,27 @@
+{
+    "asn_rule": "Asn_Image",
+    "degraded_status": "No known degraded exposures in association.",
+    "target": "1",
+    "code_version": "0.7.0",
+    "version_id": null,
+    "asn_pool": "pool",
+    "asn_id": "a3001",
+    "program": "80600",
+    "products": [
+        {
+            "name": "jw80600-a3001_t001_miri_p750l",
+            "members": [
+                {
+                    "exptype": "SCIENCE",
+                    "expname": "test.fits",
+                },
+                {
+                    "exptype": "SCIENCE",
+                    "expname": "test.fits",
+                },
+            ]
+        }
+    ],
+    "asn_type": "image",
+    "constraints": "Constraints:\n    target: 1\n    opt_elem: P750L\n    exp_type: MIR_LRS-SLITLESS|MIR_TACQ\n    instrument: MIRI\n    program: 80600\n    subarray: SUBPRISM"
+}

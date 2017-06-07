@@ -5,10 +5,12 @@ import sys
 import argparse
 import logging
 
-from jwst.associations import __version__
-from jwst.associations.association import AssociationRegistry
-from jwst.associations.generate import generate
-from jwst.associations.pool import AssociationPool
+from jwst.associations import (
+    __version__,
+    AssociationPool,
+    AssociationRegistry,
+    generate,
+)
 from jwst.associations.lib.log_config import (log_config, DMS_config)
 
 # Configure logging
@@ -20,35 +22,40 @@ CANDIDATE_RULESET = 'candidate'
 
 
 class Main(object):
-    """Generate Associations from an Association Pool
-    Docs from the source.
+    """
+    Generate Associations from an Association Pool
 
     Parameters
     ----------
     args: [str, ...], or None
         The command line arguments. Can be one of
-            - None: `sys.argv` is then used.
-            - [str, ...]: A list of strings which create the command line
+            - `None`: `sys.argv` is then used.
+            - `[str, ...]`: A list of strings which create the command line
               with the similar structure as `sys.argv`
 
     pool: None or AssociationPool
-        If None, a pool file must be specified in the `args`.
-        Otherwise, an AssociationPool
+        If `None`, a pool file must be specified in the `args`.
+        Otherwise, an `AssociationPool`
 
     Attributes
     ----------
-    pool: AssociationPool
+    pool: `AssociationPool`
         The pool read in, or passed in through the parameter `pool`
 
-    rules: AssociationRegistry
-        The ruleset used.
+    rules: `AssociationRegistry`
+        The rules used for association creation.
 
-    associations: [Association, ...]
+    associations: [`Association`, ...]
         The list of generated associations.
 
-    orphaned: AssociationPool
+    orphaned: `AssociationPool`
         The pool of exposures that do not belong
         to any association.
+
+    Notes
+    -----
+    Refer to the :ref:`Association Generator <association-generator>`
+    documentation for a full description.
     """
 
     def __init__(self, args=None, pool=None):
@@ -229,10 +236,12 @@ class Main(object):
             )
 
         logger.info('Generating associations.')
-        self.associations, self.orphaned = generate(self.pool, self.rules, version_id=parsed.version_id)
+        self.associations, self.orphaned = generate(
+            self.pool, self.rules, version_id=parsed.version_id
+        )
 
         if parsed.discover:
-            self.associations = self.rules.Utility.filter_discovered_only(
+            self.associations = filter_discovered_only(
                 self.associations,
                 DISCOVER_RULESET,
                 CANDIDATE_RULESET,
@@ -276,7 +285,7 @@ class Main(object):
             If true, save the orphans to an astropy.table.Table
         """
         for asn in self.associations:
-            (fname, serialized) = asn.dump(protocol=format)
+            (fname, serialized) = asn.dump(format=format)
             with open(os.path.join(path, fname + '.' + format), 'w') as f:
                 f.write(serialized)
 
@@ -288,7 +297,9 @@ class Main(object):
             )
 
 
+# #########
 # Utilities
+# #########
 def constrain_on_candidates(candidates):
     """Create a constraint based on a list of candidates
 
@@ -308,12 +319,77 @@ def constrain_on_candidates(candidates):
         values = None
     constraint = {
         'value': values,
-        'inputs': ['ASN_CANDIDATE'],
+        'inputs': ['asn_candidate'],
         'force_unique': True,
         'is_acid': True,
+        'evaluate': True,
     }
 
     return constraint
+
+
+def filter_discovered_only(
+        associations,
+        discover_ruleset,
+        candidate_ruleset,
+        keep_candidates=True,
+):
+    """Return only those associations that have multiple candidates
+
+    Parameters
+    ----------
+    associations: iterable
+        The list of associations to check. The list
+        is that returned by the `generate` function.
+
+    discover_ruleset: str
+        The name of the ruleset that has the discover rules
+
+    candidate_ruleset: str
+        The name of the ruleset that finds just candidates
+
+    keep_candidates: bool
+        Keep explicit candidate associations in the list.
+
+    Returns
+    -------
+    iterable
+        The new list of just cross candidate associations.
+
+    Notes
+    -----
+    This utility is only meant to run on associations that have
+    been constructed. Associations that have been Association.dump
+    and then Association.load will not return proper results.
+    """
+    # Split the associations along discovered/not discovered lines
+    asn_by_ruleset = {
+        candidate_ruleset: [],
+        discover_ruleset: []
+    }
+    for asn in associations:
+        asn_by_ruleset[asn.registry.name].append(asn)
+    candidate_list = asn_by_ruleset[candidate_ruleset]
+    discover_list = asn_by_ruleset[discover_ruleset]
+
+    # Filter out the non-unique discovereds.
+    for candidate in candidate_list:
+        if len(discover_list) == 0:
+            break
+        unique_list = []
+        for discover in discover_list:
+            if discover != candidate:
+                unique_list.append(discover)
+
+        # Reset the discovered list to the new unique list
+        # and try the next candidate.
+        discover_list = unique_list
+
+    if keep_candidates:
+        discover_list.extend(candidate_list)
+    return discover_list
+
+
 
 
 if __name__ == '__main__':

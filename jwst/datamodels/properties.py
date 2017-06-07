@@ -4,11 +4,9 @@
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 import copy
-import warnings
-
 import numpy as np
-
 import jsonschema
+import warnings
 
 from astropy.extern import six
 from astropy.utils.compat.misc import override__dir__
@@ -20,6 +18,10 @@ from asdf import tagged
 
 from . import util
 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
 
 __all__ = ['ObjectNode', 'ListNode']
 
@@ -40,10 +42,8 @@ def _cast(val, schema):
             raise ValueError(
                 "Array has wrong number of dimensions.  Expected <= {0}, got {1}".format(
                     schema['max_ndim'], len(val.shape)))
-        tag = schema.get('tag')
-        if tag is not None:
-            val = tagged.tag_object(tag, val)
-
+        if isinstance(val, np.generic) and np.isscalar(val):
+            val = np.asscalar(val)
     return val
 
 
@@ -142,6 +142,8 @@ def _get_schema_for_index(schema, i):
     else:
         return items
 
+class ValidationWarning(Warning):
+    pass
 
 class Node(object):
     def __init__(self, instance, schema, ctx):
@@ -150,16 +152,29 @@ class Node(object):
         self._schema['$schema'] = 'http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema'
         self._ctx = ctx
 
+    def _report(self, errmsg):
+        try:
+            filename = self._ctx.meta.filename
+            errmsg = "In {0} {1}".format(filename, errmsg)
+        except AttributeError:
+            pass
+
+        if self._ctx._pass_invalid_values:
+            warnings.warn(errmsg, ValidationWarning)
+        else:
+            raise jsonschema.ValidationError(errmsg)
+
+
     def _validate(self):
         instance = yamlutil.custom_tree_to_tagged_tree(
             self._instance, self._ctx._asdf)
         try:
             schema.validate(instance, schema=self._schema)
-        except jsonschema.ValidationError:
-            if self._ctx._pass_invalid_values:
-                pass
-            else:
-                raise
+            valid = True
+        except jsonschema.ValidationError as errmsg:
+            self._report(str(errmsg))
+            valid = False
+        return valid
 
     @property
     def instance(self):
@@ -177,11 +192,12 @@ class ObjectNode(Node):
             return self._instance == other
 
     def __getattr__(self, attr):
+        from . import ndmodel
+
         if attr.startswith('_'):
             raise AttributeError('No attribute {0}'.format(attr))
 
         schema = _get_schema_for_property(self._schema, attr)
-
         try:
             val = self._instance[attr]
         except KeyError:
@@ -190,7 +206,18 @@ class ObjectNode(Node):
             val = _make_default(attr, schema, self._ctx)
             self._instance[attr] = val
 
-        return _make_node(val, schema, self._ctx)
+        if isinstance(val, dict):
+            # Meta is special cased to support NDData interface
+            if attr == 'meta':
+                node = ndmodel.MetaNode(val, schema, self._ctx)
+            else:
+                node = ObjectNode(val, schema, self._ctx)
+        elif isinstance(val, list):
+            node = ListNode(val, schema, self._ctx)
+        else:
+            node = val
+
+        return node
 
     def __setattr__(self, attr, val):
         if attr.startswith('_'):
@@ -201,17 +228,13 @@ class ObjectNode(Node):
                 val = _make_default(attr, schema, self._ctx)
             val = _cast(val, schema)
             old_val = self._instance.get(attr, None)
+
             self._instance[attr] = val
             try:
-                self._validate()
+                if not self._validate():
+                    self._revert(attr, old_val)
             except jsonschema.ValidationError:
-                # Revert the transaction
-                msgfmt = "'{0}' is not valid to write to '{1}'"
-                warnings.warn(msgfmt.format(val, attr))
-                if old_val is None:
-                    del self._instance[attr]
-                else:
-                    self._instance[attr] = old_val
+                self._revert(attr, old_val)
                 raise
 
     def __delattr__(self, attr):
@@ -219,23 +242,29 @@ class ObjectNode(Node):
             del self.__dict__[attr]
         else:
             old_val = self._instance.get(attr, None)
+
             try:
                 del self._instance[attr]
             except KeyError:
                 raise AttributeError(
                     "Attribute '{0}' missing".format(attr))
             try:
-                self._validate()
+                if not self._validate():
+                    self._revert(attr, old_val)
             except jsonschema.ValidationError:
-                # Revert the transaction
-                if old_val is not None:
-                    self._instance[attr] = old_val
+                self._revert(attr, old_val)
                 raise
 
     def __hasattr__(self, attr):
         return (attr in self._instance or
                 _find_property(self._schema, attr))
 
+    def _revert(self, attr, old_val):
+        # Revert the change
+        if old_val is None:
+            del self._instance[attr]
+        else:
+            self._instance[attr] = old_val
 
 class ListNode(Node):
     def __cast(self, other):
@@ -337,7 +366,6 @@ class ListNode(Node):
         obj._validate()
         return obj
 
-
 def put_value(path, value, tree):
     """
     Put a value at the given path into tree, replacing it if it is
@@ -387,3 +415,4 @@ def merge_tree(a, b):
 
     recurse(a, b)
     return a
+

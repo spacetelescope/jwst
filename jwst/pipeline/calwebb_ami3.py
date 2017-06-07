@@ -2,7 +2,7 @@
 import os
 
 from ..stpipe import Pipeline
-from ..associations import Association
+from ..associations.load_as_asn import LoadAsAssociation
 from .. import datamodels
 
 
@@ -12,7 +12,7 @@ from ..ami import ami_average_step
 from ..ami import ami_normalize_step
 
 
-__version__ = "1.1"
+__version__ = "1.2"
 
 # Define logging
 import logging
@@ -40,27 +40,18 @@ class Ami3Pipeline(Pipeline):
 
     def process(self, input):
 
-        log.info('Starting calwebb_ami3 ...')
+        log.info('Starting calwebb_ami3')
 
         # Load the input association table
-        with open(input, 'r') as input_fh:
-            asn = Association.load(input_fh)
+        asn = LoadAsAssociation.load(input)
 
         # We assume there's one final product defined by the association
         prod = asn['products'][0]
 
         # Construct lists of all the PSF and science target members
-        psf_files = []
-        targ_files = []
-        for member in prod['members']:
-            if member['exptype'].upper() == 'PSF':
-                psf_files.append(member['expname'])
-                log.info('reference psf file {0} = {1}'.format(len(psf_files),
-                          member['expname']))
-            if member['exptype'].upper() == 'SCIENCE':
-                targ_files.append(member['expname'])
-                log.info('target file {0} = {1}'.format(len(targ_files),
-                          member['expname']))
+        # so that we know what we've been given to work with
+        psf_files = [m['expname'] for m in prod['members'] if m['exptype'].upper() =='PSF']
+        targ_files = [m['expname'] for m in prod['members'] if m['exptype'].upper() =='SCIENCE']
 
         # Make sure we found some science target members
         if len(targ_files) == 0:
@@ -84,7 +75,9 @@ class Ami3Pipeline(Pipeline):
             result = self.ami_analyze(input_file)
 
             # Save the LG analysis results to a file
-            output_file = mk_filename(self.output_dir, input_file, 'lg')
+            result.meta.asn.pool_name = asn['asn_pool']
+            result.meta.asn.table_name = asn.filename
+            output_file = mk_filename(self.output_dir, input_file, 'ami')
             self.log.info('Saving LG results to %s', output_file)
             result.save(output_file)
 
@@ -102,7 +95,9 @@ class Ami3Pipeline(Pipeline):
 
             # Save the results to a file, if requested
             if self.save_averages:
-                output_file = mk_prodname(self.output_dir, prod['name'], 'lgavgr')
+                psf_avg.meta.asn.pool_name = asn['asn_pool']
+                psf_avg.meta.asn.table_name = asn.filename
+                output_file = mk_prodname(self.output_dir, prod['psf_name'], 'amiavg')
                 self.log.info('Saving averaged PSF results to %s', output_file)
                 psf_avg.save(output_file)
 
@@ -113,7 +108,9 @@ class Ami3Pipeline(Pipeline):
 
             # Save the results to a file, if requested
             if self.save_averages:
-                output_file = mk_prodname(self.output_dir, prod['name'], 'lgavgt')
+                targ_avg.meta.asn.pool_name = asn['asn_pool']
+                targ_avg.meta.asn.table_name = asn.filename
+                output_file = mk_prodname(self.output_dir, prod['name'], 'amiavg')
                 self.log.info('Saving averaged target results to %s', output_file)
                 targ_avg.save(output_file)
 
@@ -124,7 +121,9 @@ class Ami3Pipeline(Pipeline):
             result = self.ami_normalize(targ_avg, psf_avg)
 
             # Save the result
-            output_file = mk_prodname(self.output_dir, prod['name'], 'lgnorm')
+            result.meta.asn.pool_name = asn['asn_pool']
+            result.meta.asn.table_name = asn.filename
+            output_file = mk_prodname(self.output_dir, prod['name'], 'aminorm')
             self.log.info('Saving normalized result to %s', output_file)
             result.save(output_file)
             result.close()
@@ -179,7 +178,7 @@ def mk_prodname(output_dir, filename, suffix):
     The input ASN product name is used as a template. A user-specified
     output directory path is prepended to the root of the product name.
     The input product type suffix is appended to the root of the input
-    product name, preserving any existing file name extension 
+    product name, preserving any existing file name extension
     (e.g. ".fits").
 
     Args:

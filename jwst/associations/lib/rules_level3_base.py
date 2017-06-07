@@ -6,25 +6,43 @@ import re
 
 from jwst.associations import (
     Association,
+    AssociationRegistry,
     libpath
 )
 from jwst.associations.association import (
     evaluate,
     is_iterable
 )
-from jwst.associations.exceptions import AssociationNotAConstraint
+from jwst.associations.exceptions import (
+    AssociationNotAConstraint,
+    AssociationNotValidError,
+)
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.counter import Counter
+from jwst.associations.lib.dms_base import DMSBaseMixin
+
+__all__ = [
+    'AsnMixin_Base',
+    'AsnMixin_CrossCandidate',
+    'AsnMixin_Image',
+    'AsnMixin_MIRI',
+    'AsnMixin_NIRCAM',
+    'AsnMixin_NIRISS',
+    'AsnMixin_NIRSPEC',
+    'AsnMixin_OpticalPath',
+    'AsnMixin_Spectrum',
+    'AsnMixin_Target',
+    'ASN_SCHEMA',
+    'DMS_Level3_Base',
+    'Utility',
+]
 
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-# Start of the discovered association ids.
-_DISCOVERED_ID_START = 3001
-
 # Non-specified values found in DMS Association Pools
-_EMPTY = (None, 'NULL')
+_EMPTY = (None, 'NULL', 'Null', 'null', '--')
 
 # The schema that these associations must adhere to.
 ASN_SCHEMA = libpath('asn_schema_jw_level3.json')
@@ -39,36 +57,36 @@ _DEGRADED_STATUS_NOTOK = (
 )
 
 # DMS file name templates
-_ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
-_ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
 # Product name regex's
 _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
 
-
 # Key that uniquely identfies members.
 KEY = 'expname'
 
 # Exposure EXP_TYPE to Association EXPTYPE mapping
 _EXPTYPE_MAP = {
-    'MIR_TACQ':      'TARGET_ACQUISTION',
-    'NIS_TACQ':      'TARGET_ACQUISTION',
-    'NIS_TACONFIRM': 'TARGET_ACQUISTION',
-    'NRC_TACQ':      'TARGET_ACQUISTION',
-    'NRC_TACONFIRM': 'TARGET_ACQUISTION',
-    'NRS_AUTOFLAT':  'AUTOFLAT',
-    'NRS_AUTOWAVE':  'AUTOWAVE',
-    'NRS_CONFIRM':   'TARGET_ACQUISTION',
-    'NRS_TACQ':      'TARGET_ACQUISTION',
-    'NRS_TACONFIRM': 'TARGET_ACQUISTION',
-    'NRS_TASLIT':    'TARGET_ACQUISTION',
+    'mir_tacq':      'target_acquistion',
+    'nis_tacq':      'target_acquistion',
+    'nis_taconfirm': 'target_acquistion',
+    'nrc_tacq':      'target_acquistion',
+    'nrc_taconfirm': 'target_acquistion',
+    'nrs_autoflat':  'autoflat',
+    'nrs_autowave':  'autowave',
+    'nrs_confirm':   'target_acquistion',
+    'nrs_tacq':      'target_acquistion',
+    'nrs_taconfirm': 'target_acquistion',
+    'nrs_taslit':    'target_acquistion',
 }
 
 
-class DMS_Level3_Base(Association):
+class DMS_Level3_Base(DMSBaseMixin, Association):
     """Basic class for DMS Level3 associations."""
+
+    # Set the validation schema
+    schema_file = ASN_SCHEMA
 
     # Attribute values that are indicate the
     # attribute is not specified.
@@ -82,19 +100,13 @@ class DMS_Level3_Base(Association):
         # Keep the set of members included in this association
         self.members = set()
 
-        # Initialize discovered association ID
-        self.discovered_id = Counter(_DISCOVERED_ID_START)
-
-        # Set the validation schema
-        self.schema_file = ASN_SCHEMA
-
         # Initialize validity checks
-        self.validity = {
+        self.validity.update({
             'has_science': {
                 'validated': False,
-                'check': lambda entry: entry['exptype'] == 'SCIENCE'
+                'check': lambda entry: entry['exptype'] == 'science'
             }
-        }
+        })
 
         # Let us see if member belongs to us.
         super(DMS_Level3_Base, self).__init__(*args, **kwargs)
@@ -102,69 +114,40 @@ class DMS_Level3_Base(Association):
         # Other presumptions on the association
         if 'degraded_status' not in self.data:
             self.data['degraded_status'] = _DEGRADED_STATUS_OK
-
-    @property
-    def is_valid(self):
-        return all(test['validated'] for test in self.validity.values())
-
-    @property
-    def acid(self):
-        """Association ID"""
-        for _, constraint in self.constraints.items():
-            if constraint.get('is_acid', False):
-                value = re.sub('\\\\', '', constraint['value'])
-                try:
-                    acid = ACID(value)
-                except ValueError:
-                    pass
-                else:
-                    break
-        else:
-            id = 'a{:0>3}'.format(self.discovered_id.value)
-            acid = ACID((id, 'DISCOVERED'))
-
-        return acid
-
-    @property
-    def asn_name(self):
-        program = self.data['program']
-        version_id = self.version_id
-        asn_type = self.data['asn_type']
-        sequence = self.sequence
-
-        if version_id:
-            name = _ASN_NAME_TEMPLATE_STAMP.format(
-                program=program,
-                acid=self.acid.id,
-                stamp=version_id,
-                type=asn_type,
-                sequence=sequence,
-            )
-        else:
-            name = _ASN_NAME_TEMPLATE.format(
-                program=program,
-                acid=self.acid.id,
-                type=asn_type,
-                sequence=sequence,
-            )
-        return name.lower()
+        if 'program' not in self.data:
+            self.data['program'] = 'noprogram'
+        if 'constraints' not in self.data:
+            self.data['constraints'] = 'No constraints'
+        if 'asn_type' not in self.data:
+            self.data['asn_type'] = 'user_built'
+        if 'asn_id' not in self.data:
+            self.data['asn_id'] = 'a3001'
+        if 'target' not in self.data:
+            self.data['target'] = 'none'
+        if 'asn_pool' not in self.data:
+            self.data['asn_pool'] = 'none'
 
     @property
     def current_product(self):
         return self.data['products'][-1]
 
-    def new_product(self, member):
-        """Start a new product"""
-        product = {
-            'name': self.product_name(),
-            'members': []
-        }
-        try:
-            self.data['products'].append(product)
-        except KeyError:
-            self.data['products'] = [product]
+    def __eq__(self, other):
+        """Compare equality of two assocaitions"""
+        if isinstance(other, DMS_Level3_Base):
+            result = self.data['asn_type'] == other.data['asn_type']
+            result = result and (self.members == other.members)
+            return result
+        else:
+            return NotImplemented
 
-    def product_name(self):
+    def __ne__(self, other):
+        """Compare inequality of two associations"""
+        result = self.__eq__(other)
+        if result is not NotImplemented:
+            result = not result
+        return result
+
+    def dms_product_name(self):
         """Define product name."""
         target = self._get_target()
 
@@ -190,11 +173,6 @@ class DMS_Level3_Base(Association):
 
         return product_name.lower()
 
-    def update_validity(self, entry):
-        for test in self.validity.values():
-            if not test['validated']:
-                test['validated'] = test['check'](entry)
-
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
         super(DMS_Level3_Base, self)._init_hook(member)
@@ -202,8 +180,8 @@ class DMS_Level3_Base(Association):
         # Set which sequence counter should be used.
         self._sequence = self._sequences[self.data['asn_type']]
 
-        self.data['target'] = member['TARGETID']
-        self.data['program'] = str(member['PROGRAM'])
+        self.data['target'] = member['targetid']
+        self.data['program'] = str(member['program'])
         self.data['asn_pool'] = basename(
             member.meta['pool_file']
         ).split('.')[0]
@@ -211,7 +189,7 @@ class DMS_Level3_Base(Association):
             [cc for cc in self.constraints_to_text()]
         )
         self.data['asn_id'] = self.acid.id
-        self.new_product(member)
+        self.new_product(product_name=self.dms_product_name())
 
         # Parse out information from the pool file name.
         # Necessary to carry information to the Level3 output.
@@ -226,14 +204,14 @@ class DMS_Level3_Base(Association):
     def _add(self, member):
         """Add member to this association."""
         try:
-            exposerr = member['EXPOSERR']
+            exposerr = member['exposerr']
         except KeyError:
             exposerr = None
         entry = {
-            'expname': Utility.rename_to_level2b(member['FILENAME']),
-            'exptype': Utility.get_exposure_type(member, default='SCIENCE'),
+            'expname': Utility.rename_to_level2b(member['filename']),
+            'exptype': Utility.get_exposure_type(member, default='science'),
             'exposerr': exposerr,
-            'asn_candidate': member['ASN_CANDIDATE']
+            'asn_candidate': member['asn_candidate']
         }
 
         self.update_validity(entry)
@@ -241,7 +219,7 @@ class DMS_Level3_Base(Association):
         members.append(entry)
         if exposerr not in _EMPTY:
             logger.warn('Member {} has error "{}"'.format(
-                member['FILENAME'],
+                member['filename'],
                 exposerr
             ))
             self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
@@ -292,7 +270,7 @@ class DMS_Level3_Base(Association):
         except KeyError:
             pass
         else:
-            if value not in _EMPTY and value != 'CLEAR':
+            if value not in _EMPTY and value != 'clear':
                 opt_elem = value
                 join_char = '-'
         try:
@@ -300,7 +278,7 @@ class DMS_Level3_Base(Association):
         except KeyError:
             pass
         else:
-            if value not in _EMPTY and value != 'CLEAR':
+            if value not in _EMPTY and value != 'clear':
                 opt_elem = join_char.join(
                     [opt_elem, value]
                 )
@@ -331,8 +309,55 @@ class DMS_Level3_Base(Association):
                 exposure = '{0:0>2s}'.format(activity_id)
         return exposure
 
+    def _add_items(self, items, product_name=None, with_type=False):
+        """ Force adding items to the association
+
+        Parameters
+        ----------
+        items: [object[, ...]]
+            A list of items to make members of the association.
+
+        product_name: str or None
+            The name of the product to add the items to.
+            If the product does not already exist, it will be created.
+            If None, the default DMS Level3 naming
+            conventions will be attempted.
+
+        with_type: bool
+            If True, each item is expected to be a 2-tuple with
+            the first element being the item to add as `expname`
+            and the second items is the `exptype`
+
+        Notes
+        -----
+        This is a low-level shortcut into adding members, such as file names,
+        to an association. All defined shortcuts and other initializations are
+        by-passed, resulting in a potentially unusable association.
+        """
+        if product_name is None:
+            raise AssociationNotValidError(
+                'Product name needs to be specified'
+            )
+
+        self.new_product(product_name)
+        members = self.current_product['members']
+        for item in items:
+            type_ = 'science'
+            if with_type:
+                item, type_ = item
+            entry = {
+                'expname': item,
+                'exptype': type_
+            }
+            self.update_validity(entry)
+            members.append(entry)
+        self.sequence = next(self._sequence)
+
     def __repr__(self):
-        file_name, json_repr = self.to_json()
+        try:
+            file_name, json_repr = self.ioregistry['json'].dump(self)
+        except:
+            return str(self.__class__)
         return json_repr
 
     def __str__(self):
@@ -365,75 +390,11 @@ class Utility(object):
     @staticmethod
     def resequence(associations):
         """Resequence the numbering for the Level3 association types"""
-        counters = defaultdict(lambda : defaultdict(Counter))
+        counters = defaultdict(lambda: defaultdict(Counter))
         for asn in associations:
-            asn.sequence = next(counters[asn.data['asn_id']][asn.data['asn_type']])
-
-    @staticmethod
-    def filter_discovered_only(
-            associations,
-            discover_ruleset,
-            candidate_ruleset,
-            keep_candidates=True,
-    ):
-        """Return only those associations that have multiple candidates
-
-        Parameters
-        ----------
-        associations: iterable
-            The list of associations to check. The list
-            is that returned by the `generate` function.
-
-        discover_ruleset: str
-            The name of the ruleset that has the discover rules
-
-        candidate_ruleset: str
-            The name of the ruleset that finds just candidates
-
-        keep_candidates: bool
-            Keep explicit candidate associations in the list.
-
-        Returns
-        -------
-        iterable
-            The new list of just cross candidate associations.
-
-        Notes
-        -----
-        This utility is only meant to run on associations that have
-        been constructed. Associations that have been Association.dump
-        and then Association.load will not return proper results.
-        """
-        # Split the associations along discovered/not discovered lines
-        asn_by_ruleset = {
-            candidate_ruleset: [],
-            discover_ruleset: []
-        }
-        for asn in associations:
-            asn_by_ruleset[asn.registry.name].append(asn)
-        candidate_list = asn_by_ruleset[candidate_ruleset]
-        discover_list = asn_by_ruleset[discover_ruleset]
-
-        # Filter out the non-unique discovereds.
-        for candidate in candidate_list:
-            if len(discover_list) == 0:
-                break
-            unique_list = []
-            for discover in discover_list:
-                if discover.data['asn_type'] == candidate.data['asn_type'] and \
-                   discover.members == candidate.members:
-                    # This association is not unique. Ignore
-                    pass
-                else:
-                    unique_list.append(discover)
-
-            # Reset the discovered list to the new unique list
-            # and try the next candidate.
-            discover_list = unique_list
-
-        if keep_candidates:
-            discover_list.extend(candidate_list)
-        return discover_list
+            asn.sequence = next(
+                counters[asn.data['asn_id']][asn.data['asn_type']]
+            )
 
     @staticmethod
     def rename_to_level2b(level1b_name):
@@ -519,12 +480,46 @@ class Utility(object):
         """
         result = default
         try:
-            exp_type = member['EXP_TYPE']
+            exp_type = member['exp_type']
         except KeyError:
             raise LookupError('Exposure type cannot be determined')
 
         result = _EXPTYPE_MAP.get(exp_type, default)
         return result
+
+    @staticmethod
+    @AssociationRegistry.callback('finalize')
+    def finalize(associations):
+        """Check validity and duplications in an association list
+
+        Parameters
+        ----------
+        associations:[association[, ...]]
+            List of associations
+
+        Returns
+        -------
+        finalized_associations: [association[, ...]]
+            The validated list of associations
+        """
+        finalized = []
+        lv3_asns = []
+        for asn in associations:
+            if isinstance(asn, DMS_Level3_Base):
+
+                # Check validity
+                if asn.is_valid:
+                    lv3_asns.append(asn)
+
+            else:
+                finalized.append(asn)
+
+        # Ensure sequencing is correct.
+        Utility.resequence(lv3_asns)
+
+        # Merge lists and return
+        return finalized + lv3_asns
+
 
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
@@ -540,11 +535,11 @@ class AsnMixin_Base(DMS_Level3_Base):
         self.add_constraints({
             'program': {
                 'value': None,
-                'inputs': ['PROGRAM']
+                'inputs': ['program'],
             },
             'instrument': {
                 'value': None,
-                'inputs': ['INSTRUME']
+                'inputs': ['instrume']
             },
         })
 
@@ -559,11 +554,11 @@ class AsnMixin_OpticalPath(DMS_Level3_Base):
         self.add_constraints({
             'opt_elem': {
                 'value': None,
-                'inputs': ['FILTER']
+                'inputs': ['filter']
             },
             'opt_elem2': {
                 'value': None,
-                'inputs': ['PUPIL', 'GRATING'],
+                'inputs': ['pupil', 'grating'],
                 'required': False,
             },
         })
@@ -580,7 +575,7 @@ class AsnMixin_Target(DMS_Level3_Base):
         self.add_constraints({
             'target': {
                 'value': None,
-                'inputs': ['TARGETID']
+                'inputs': ['targetid']
             },
         })
 
@@ -596,8 +591,8 @@ class AsnMixin_MIRI(DMS_Level3_Base):
         # Setup for checking.
         self.add_constraints({
             'instrument': {
-                'value': 'MIRI',
-                'inputs': ['INSTRUME']
+                'value': 'miri',
+                'inputs': ['instrume']
             }
         })
 
@@ -613,8 +608,8 @@ class AsnMixin_NIRSPEC(DMS_Level3_Base):
         # Setup for checking.
         self.add_constraints({
             'instrument': {
-                'value': 'NIRSPEC',
-                'inputs': ['INSTRUME']
+                'value': 'nirspec',
+                'inputs': ['instrume']
             }
         })
 
@@ -630,8 +625,8 @@ class AsnMixin_NIRISS(DMS_Level3_Base):
         # Setup for checking.
         self.add_constraints({
             'instrument': {
-                'value': 'NIRISS',
-                'inputs': ['INSTRUME']
+                'value': 'niriss',
+                'inputs': ['instrume']
             },
         })
 
@@ -647,8 +642,8 @@ class AsnMixin_NIRCAM(DMS_Level3_Base):
         # Setup for checking.
         self.add_constraints({
             'instrument': {
-                'value': 'NIRCAM',
-                'inputs': ['INSTRUME']
+                'value': 'nircam',
+                'inputs': ['instrume']
             },
         })
 
@@ -663,13 +658,19 @@ class AsnMixin_Image(DMS_Level3_Base):
 
         self.add_constraints({
             'exp_type': {
-                'value': 'NRC_IMAGE|MIR_IMAGE|NIS_IMAGE|FGS_IMAGE',
-                'inputs': ['EXP_TYPE'],
+                'value': 'nrc_image|mir_image|nis_image|fgs_image',
+                'inputs': ['exp_type'],
                 'force_unique': True,
             }
         })
 
         super(AsnMixin_Image, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, member):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'image3'
+        super(AsnMixin_Image, self)._init_hook(member)
 
 
 class AsnMixin_Spectrum(DMS_Level3_Base):
@@ -678,17 +679,28 @@ class AsnMixin_Spectrum(DMS_Level3_Base):
     def _init_hook(self, member):
         """Post-check and pre-add initialization"""
 
-        self.data['asn_type'] = 'spec'
+        self.data['asn_type'] = 'spec3'
         super(AsnMixin_Spectrum, self)._init_hook(member)
 
 
 class AsnMixin_CrossCandidate(DMS_Level3_Base):
     """Basic constraints for Cross-Candidate associations"""
 
-    def is_valid(self):
-        candidates = set(
-            member['asn_candidate_id']
-            for product in self.data['products']
-            for member in product['members']
-        )
-        return len(candidates) > 1
+    @classmethod
+    def validate(cls, asn):
+        super(AsnMixin_CrossCandidate, cls).validate(asn)
+
+        if isinstance(asn, AsnMixin_CrossCandidate):
+            try:
+                candidates = set(
+                    member['asn_candidate_id']
+                    for product in asn.data['products']
+                    for member in product['members']
+                )
+            except (AttributeError, KeyError) as err:
+                raise AssociationNotValidError('Validation failed')
+            if not len(candidates) > 1:
+                raise AssociationNotValidError(
+                    'Validation failed: No candidates found.'
+                )
+        return True

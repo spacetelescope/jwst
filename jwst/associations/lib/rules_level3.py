@@ -4,6 +4,19 @@ import logging
 
 from jwst.associations.lib.rules_level3_base import *
 
+__all__ = [
+    'Asn_Image',
+    'Asn_MIRI_IFU',
+    'Asn_MIRI_LRS_FIXEDSLIT',
+    'Asn_MIRI_LRS_SLITLESS',
+    'Asn_NRS_FIXEDSLIT',
+    'Asn_NRS_IFU',
+    'Asn_NRS_MSA',
+    'Asn_NIR_SO_SLITLESS',
+    'Asn_WFSCMB',
+
+]
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -28,19 +41,13 @@ class Asn_Image(
         # Setup for checking.
         self.add_constraints({
             'wfsvisit': {
-                'inputs': ['WFSVISIT'],
-                'is_invalid': True,
+                'inputs': ['wfsvisit'],
+                'force_undefined': True,
             },
         })
 
         # Now check and continue initialization.
         super(Asn_Image, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, member):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'image'
-        super(Asn_Image, self)._init_hook(member)
 
 
 class Asn_WFSCMB(
@@ -59,18 +66,19 @@ class Asn_WFSCMB(
         # Setup for checking.
         self.add_constraints({
             'wfsvisit': {
-                'value': '(?!NULL).+',
-                'inputs': ['WFSVISIT'],
+                'value': '(?!null).+',
+                'inputs': ['wfsvisit'],
             },
             'asn_candidate_wfs': {
-                'value': '.+MOSAIC.+',
-                'inputs': ['ASN_CANDIDATE'],
+                'value': '.+mosaic.+',
+                'inputs': ['asn_candidate'],
                 'force_unique': True,
                 'is_acid': True,
+                'evaluate': True,
             },
             'activity_id': {
                 'value': None,
-                'inputs': ['ACT_ID']
+                'inputs': ['act_id']
             }
         })
 
@@ -98,16 +106,16 @@ class Asn_MIRI_LRS_FIXEDSLIT(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'MIR_LRS-FIXEDSLIT|MIR_TACQ',
-                'inputs': ['EXP_TYPE']
+                'value': 'mir_lrs-fixedslit|mir_tacq',
+                'inputs': ['exp_type']
             },
             'opt_elem': {
-                'value': 'P750L',
-                'inputs': ['FILTER']
+                'value': 'p750l',
+                'inputs': ['filter']
             },
             'subarray': {
-                'value': 'FULL',
-                'inputs': ['SUBARRAY']
+                'value': 'full',
+                'inputs': ['subarray']
             }
         })
 
@@ -128,16 +136,16 @@ class Asn_MIRI_LRS_SLITLESS(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'MIR_LRS-SLITLESS|MIR_TACQ',
-                'inputs': ['EXP_TYPE']
+                'value': 'mir_lrs-slitless|mir_tacq',
+                'inputs': ['exp_type']
             },
             'opt_elem': {
-                'value': 'P750L',
-                'inputs': ['FILTER']
+                'value': 'p750l',
+                'inputs': ['filter']
             },
             'subarray': {
-                'value': 'SUBPRISM',
-                'inputs': ['SUBARRAY']
+                'value': 'subprism',
+                'inputs': ['subarray']
             }
         })
 
@@ -158,20 +166,20 @@ class Asn_NIR_SO_SLITLESS(
         # Setup for checking.
         self.add_constraints({
             'detector': {
-                'value': 'NIS',
-                'inputs': ['DETECTOR']
+                'value': 'nis',
+                'inputs': ['detector']
             },
             'exp_type': {
-                'value': 'NIS_SOSS|NIS_TACQ|NIS_TACNFRM',
-                'inputs': ['EXP_TYPE']
+                'value': 'nis_soss|nis_tacq|nis_tacnfrm',
+                'inputs': ['exp_type']
             },
             'opt_elem': {
-                'value': 'GR700XD',
-                'inputs': ['PUPIL']
+                'value': 'gr700xd',
+                'inputs': ['pupil']
             },
             'subarray': {
-                'value': 'FULL|SUBSTRIP256|SUBSTRIP80',
-                'inputs': ['SUBARRAY'],
+                'value': 'full|substrip256|substrip80',
+                'inputs': ['subarray'],
                 'force_unique': True
             }
         })
@@ -195,22 +203,22 @@ class Asn_NRS_FIXEDSLIT(
         self.add_constraints({
             'exp_type': {
                 'value': (
-                    'NRS_FIXEDSLIT'
-                    '|NRS_AUTOWAVE'
-                    '|NRS_CONFIRM'
-                    '|NRS_TACQ'
-                    '|NRS_TACONFIRM'
-                    '|NRS_TASLIT'
+                    'nrs_fixedslit'
+                    '|nrs_autowave'
+                    '|nrs_confirm'
+                    '|nrs_tacq'
+                    '|nrs_taconfirm'
+                    '|nrs_taslit'
                 ),
-                'inputs': ['EXP_TYPE']
+                'inputs': ['exp_type']
             },
             'fixed_slit': {
                 'value': None,
-                'inputs': ['FXD_SLIT']
+                'inputs': ['fxd_slit']
             },
             'subarray': {
                 'value': None,
-                'inputs': ['SUBARRAY']
+                'inputs': ['subarray']
             },
         })
 
@@ -233,15 +241,15 @@ class Asn_NRS_MSA(
         self.add_constraints({
             'exp_type': {
                 'value': (
-                    'NRS_MSASPEC'
-                    '|NRS_AUTOFLAT'
-                    '|NRS_AUTOWAVE'
-                    '|NRS_CONFIRM'
-                    '|NRS_TASLIT'
-                    '|NRS_TACQ'
-                    '|NRS_TACONFIRM'
+                    'nrs_msaspec'
+                    '|nrs_autoflat'
+                    '|nrs_autowave'
+                    '|nrs_confirm'
+                    '|nrs_taslit'
+                    '|nrs_tacq'
+                    '|nrs_taconfirm'
                 ),
-                'inputs': ['EXP_TYPE']
+                'inputs': ['exp_type']
             },
         })
 
@@ -263,11 +271,11 @@ class Asn_MIRI_IFU(
         self.add_constraints({
             'exp_type': {
                 'value': (
-                    'MIR_MRS'
-                    '|MIR_FLATMRS'
-                    '|MIR_TACQ'
+                    'mir_mrs'
+                    '|mir_flatmrs'
+                    '|mir_tacq'
                 ),
-                'inputs': ['EXP_TYPE'],
+                'inputs': ['exp_type'],
                 'force_unique': False,
             },
         })
@@ -275,7 +283,7 @@ class Asn_MIRI_IFU(
         # Check and continue initialization.
         super(Asn_MIRI_IFU, self).__init__(*args, **kwargs)
 
-    def product_name(self):
+    def dms_product_name(self):
         """Define product name."""
         target = self._get_target()
 
@@ -289,12 +297,6 @@ class Asn_MIRI_IFU(
         )
 
         return product_name.lower()
-
-    def _init_hook(self, member):
-        """Post-check and pre-add initialization"""
-
-        super(Asn_MIRI_IFU, self)._init_hook(member)
-        self.data['asn_type'] = 'mirifu'
 
 
 class Asn_NRS_IFU(
@@ -311,22 +313,16 @@ class Asn_NRS_IFU(
         self.add_constraints({
             'exp_type': {
                 'value': (
-                    'NRS_IFU'
-                    '|NRS_AUTOWAVE'
-                    '|NRS_CONFIRM'
-                    '|NRS_TASLIT'
-                    '|NRS_TACQ'
-                    '|NRS_TACONFIRM'
+                    'nrs_ifu'
+                    '|nrs_autowave'
+                    '|nrs_confirm'
+                    '|nrs_taslit'
+                    '|nrs_tacq'
+                    '|nrs_taconfirm'
                 ),
-                'inputs': ['EXP_TYPE']
+                'inputs': ['exp_type']
             },
         })
 
         # Check and continue initialization.
         super(Asn_NRS_IFU, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, member):
-        """Post-check and pre-add initialization"""
-
-        super(Asn_NRS_IFU, self)._init_hook(member)
-        self.data['asn_type'] = 'nrsifu'

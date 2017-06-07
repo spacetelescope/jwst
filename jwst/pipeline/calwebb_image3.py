@@ -1,12 +1,10 @@
-#!/usr/bin/env python
-import os
+from __future__ import unicode_literals, absolute_import
 
-from fitsblender import blendheaders
+import os
 
 from ..stpipe import Pipeline
 from .. import datamodels
 
-# calwebb Image3 step imports
 from ..resample import resample_step
 from ..skymatch import skymatch_step
 from ..outlier_detection import outlier_detection_step
@@ -15,14 +13,10 @@ from ..tweakreg_catalog import tweakreg_catalog_step
 from ..tweakreg import tweakreg_step
 
 __version__ = "0.7.0"
-# Define logging
-import logging
-log = logging.getLogger()
-log.setLevel(logging.DEBUG)
+
 
 class Image3Pipeline(Pipeline):
     """
-
     Image3Pipeline: Applies level 3 processing to imaging-mode data from
                     any JWST instrument.
 
@@ -33,7 +27,6 @@ class Image3Pipeline(Pipeline):
         outlier_detection
         resample
         source_catalog
-
     """
 
     # Define alias to steps
@@ -47,61 +40,54 @@ class Image3Pipeline(Pipeline):
 
     def process(self, input):
 
-        log.info('Starting calwebb_image3 ...')
+        self.log.info('Starting calwebb_image3 ...')
 
         input_models = datamodels.open(input)
 
-        is_container = (type(input_models) == type(datamodels.ModelContainer()))
+        is_container = isinstance(input_models, datamodels.ModelContainer)
+
+        # Multiple input files that represent more than 1 exposure
         if is_container and len(input_models.group_names) > 1:
 
-            generate_2c_names(input_models)
-
-            # perform full outlier_detection of ASN data
-            log.info("Generating source catalogs for alignment...")
+            self.log.info("Generating source catalogs for alignment...")
             input_models = self.tweakreg_catalog(input_models)
-            log.info("Aligning input images...")
-            input_models = self.tweakreg(input_models)
-            log.info("Matching sky values across all input images...")
-            input_models = self.skymatch(input_models)
-            log.info("Performing outlier detection on input images...")
-            input_models = self.outlier_detection(input_models)
-            
-            # Now clean up intermediate products which no are no longer needed
-            for i in input_models:
-                if hasattr(i.meta,'tweakreg_catalog'):
-                    cname = i.meta.tweakreg_catalog.filename
-                    if os.path.exists(cname):
-                        os.remove(cname)
 
-            log.info("Resampling ASN to create combined product: {}".format(input_models.meta.resample.output))
+            self.log.info("Aligning input images...")
+            input_models = self.tweakreg(input_models)
+
+            # Clean up tweakreg catalogs which no are no longer needed
+            for model in input_models:
+                try:
+                    catalog_name = model.meta.tweakreg_catalog.filename
+                    os.remove(catalog_name)
+                except:
+                    pass
+
+            self.log.info("Matching sky values across all input images...")
+            input_models = self.skymatch(input_models)
+
+            self.log.info("Performing outlier detection on input images...")
+            input_models = self.outlier_detection(input_models)
+
+            self.log.info("Writing out Level 2c images with updated DQ arrays...")
+            generate_2c_names(input_models)
+            input_models.save()
 
         # Setup output file name for subsequent use
-        output_file = mk_prodname(self.output_dir,
-            input_models.meta.resample.output, 'i2d')
+        output_file = mk_prodname(self.output_dir, input_models.meta.resample.output, 'i2d')
         input_models.meta.resample.output = output_file
 
-        # Resample step always returns ModelContainer,
-        # yet we only need the DataModel result
+        self.log.info("Resampling images to final output...")
         output = self.resample(input_models)
 
-        # create final source catalog from resampled output
+        self.log.info("Creating source catalog...")
         out_catalog = self.source_catalog(output)
 
-
-        # Save the final image product
-        log.info('Saving final image product to %s', output_file)
+        self.log.info('Saving final resampled image to %s', output_file)
         output.save(output_file)
 
-        # Run fitsblender on output product
-        input_files = [i.meta.filename for i in input_models]
-        blendheaders.blendheaders(output_file, input_files)
-
-        # close all inputs and outputs
-        output.close()
-        input_models.close()
-        log.info('... ending calwebb_image3')
-
         return
+
 
 def generate_2c_names(input_models):
     """ Update the names of the input files with Level 2C names

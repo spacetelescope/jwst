@@ -12,6 +12,8 @@ from astropy.io import fits
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+log.addHandler(logging.NullHandler())
+
 
 def open(init=None, extensions=None, **kwargs):
     """
@@ -19,7 +21,6 @@ def open(init=None, extensions=None, **kwargs):
 
     Parameters
     ----------
-
     init : shape tuple, file path, file object, astropy.io.fits.HDUList,
            numpy array, dict, None
 
@@ -43,73 +44,100 @@ def open(init=None, extensions=None, **kwargs):
         A list of extensions to the ASDF to support when reading
         and writing ASDF files.
 
-   Results
+    Returns
     -------
-
     model : DataModel instance
     """
 
     from . import model_base
-    from . import _defined_models as defined_models # dict of model classes
+    from . import filetype
 
-    model_type = None
+    # Initialize variables used to select model class
 
-    # Get three special cases for opening a model out of the way
-    # all three cases return a model if they match
-    
+    hdulist = {}
+    shape = ()
+
+    # Get special cases for opening a model out of the way
+    # all special cases return a model if they match
+
     if init is None:
         return model_base.DataModel(None)
-    # Send _asn.json files to ModelContainer; avoid shape "cleverness" below
-    elif (isinstance(init, six.string_types) and
-            basename(init).split('.')[0].split('_')[-1] == 'asn'):
-        try:
-            from . import container
-            return container.ModelContainer(init, extensions=extensions, 
-                **kwargs)
-        except:
-            raise TypeError(
-                "init ASN not valid for ModelContainer"
-                )
+
     elif isinstance(init, model_base.DataModel):
         # Copy the object so it knows not to close here
         return init.__class__(init)
-    
-    # Get the shape from the input argument where possible
-    if isinstance(init, tuple):
+
+    elif isinstance(init, (six.text_type, bytes)) or hasattr(init, "read"):
+        # If given a string, presume its a file path.
+        # if it has a read method, assume a file descriptor
+
+        if isinstance(init, (bytes)):
+            init = init.decode(sys.getfilesystemencoding())
+
+        file_type = filetype.check(init)
+
+        if file_type == "fits":
+            hdulist = fits.open(init)
+
+        elif file_type == "asn":
+            # Read the file as an association / model container
+            from . import container
+            return container.ModelContainer(init, extensions=extensions,
+                                            **kwargs)
+
+        elif file_type == "asdf":
+            # Read the file as asdf, no need for a special class
+            return model_base.DataModel(init, extensions=extensions,
+                                        **kwargs)
+
+    elif isinstance(init, tuple):
         for item in init:
             if not isinstance(item, int):
                 raise ValueError("shape must be a tuple of ints")
         shape = init
+
     elif isinstance(init, np.ndarray):
         shape = init.shape
-    else:
-        shape = ()
 
-    # Get the list of hdus where possible
-    if isinstance(init, (six.text_type, bytes)) or hasattr(init, "read"):
-        hdulist = fits.open(init)
     elif isinstance(init, fits.HDUList):
         hdulist = init
-    else:
-        hdulist = {}
-        
-    # First try to get the class name from the primary header
-    if hdulist:
-        # Can also return None if no header keyword
-        new_class = _class_from_model_type(hdulist)
-    else:
-        new_class = None
 
-    # Get the class name from the shape and other header keywords
+    # If we have it, determine the shape from the science hdu
+    if hdulist:
+        # So we don't need to open the image twice
+        init = hdulist
+
+        try:
+            hdu = hdulist[(fits_header_name('SCI'), 1)]
+        except (KeyError, NameError):
+            shape = ()
+        else:
+            if hasattr(hdu, 'shape'):
+                shape = hdu.shape
+            else:
+                shape = ()
+
+    # First try to get the class name from the primary header
+    new_class = _class_from_model_type(hdulist)
+
+    # Special handling for ramp files for backwards compatibility
+    if new_class is None:
+        new_class = _class_from_ramp_type(hdulist, shape)
+
+    # Or get the class from the reference file type and other header keywords
+    if new_class is None:
+        new_class = _class_from_reftype(hdulist, shape)
+
+    # Or Get the class from the shape
     if new_class is None:
         new_class = _class_from_shape(hdulist, shape)
 
     # Throw an error if these attempts were unsuccessful
     if new_class is None:
         raise TypeError("Can't determine datamodel class from argument to open")
-        
+
     # Log a message about how the model was opened
-    if isinstance(init, (six.text_type, bytes)):
+    if isinstance(init, six.text_type):
         log.debug('Opening {0} as {1}'.format(basename(init), new_class))
     else:
         log.debug('Opening as {0}'.format(new_class))
@@ -125,62 +153,90 @@ def _class_from_model_type(hdulist):
     """
     from . import _defined_models as defined_models
 
-    try:
+    if hdulist:
         primary = hdulist[0]
-    except KeyError:
-        model_type = None
-    else:
-        model_type = primary.header.get('DATAMODL')
+        model_type = primary.header.get(fits_header_name('DATAMODL'))
 
-    if model_type is None:
+        if model_type is None:
+            new_class = None
+        else:
+            new_class = defined_models.get(model_type)
+    else:
+        new_class = None
+
+    return new_class
+
+
+def _class_from_ramp_type(hdulist, shape):
+    """
+    Special check to see if file is ramp file
+    """
+    if not hdulist:
         new_class = None
     else:
-        new_class = defined_models.get(model_type)
+        if len(shape) == 4:
+            try:
+                dqhdu = hdulist[fits_header_name('DQ')]
+            except KeyError:
+                # It's a RampModel or MIRIRampModel
+                try:
+                    refouthdu = hdulist[fits_header_name('REFOUT')]
+                except KeyError:
+                    # It's a RampModel
+                    from . import ramp
+                    new_class = ramp.RampModel
+                else:
+                    # It's a MIRIRampModel
+                    from . import miri_ramp
+                    new_class = miri_ramp.MIRIRampModel
+            else:
+                new_class = None
+        else:
+            new_class = None
+
+    return new_class
+
+
+def _class_from_reftype(hdulist, shape):
+    """
+    Get the class name from the reftype and other header keywords
+    """
+    if not hdulist:
+        new_class = None
+
+    else:
+        primary = hdulist[0]
+        reftype = primary.header.get(fits_header_name('REFTYPE'))
+        if reftype is None:
+            new_class = None
+
+        else:
+            from . import reference
+            if len(shape) == 0:
+                new_class = reference.ReferenceFileModel
+            elif len(shape) == 2:
+                new_class = reference.ReferenceImageModel
+            elif len(shape) == 3:
+                new_class = reference.ReferenceCubeModel
+            elif len(shape) == 4:
+                new_class = reference.ReferenceQuadModel
+            else:
+                new_class = None
 
     return new_class
 
 
 def _class_from_shape(hdulist, shape):
     """
-    Get the class name from the shape and other header keywords
+    Get the class name from the shape
     """
-    # If we do not have it, determine the shape from the science hdu
-    if len(shape) == 0:
-        try:
-            hdu = hdulist[(fits_header_name('SCI'), 1)]
-        except KeyError:
-            pass
-        else:
-            if hasattr(hdu, 'shape'):
-                shape = hdu.shape
-
-    # Try to figure out which type to return, otherwise, just return a
-    # new instance of the requested class
     if len(shape) == 0:
         from . import model_base
         new_class = model_base.DataModel
     elif len(shape) == 4:
-        # It's a RampModel, MIRIRampModel, or QuadModel
-        try:
-            dqhdu = hdulist[fits_header_name('DQ')]
-        except KeyError:
-            # It's a RampModel or MIRIRampModel
-            try:
-                refouthdu = hdulist[fits_header_name('REFOUT')]
-            except KeyError:
-                # It's a RampModel
-                from . import ramp
-                new_class = ramp.RampModel
-            else:
-                # It's a MIRIRampModel
-                from . import miri_ramp
-                new_class = miri_ramp.MIRIRampModel
-        else:
-            # It's a QuadModel
-            from . import quad
-            new_class = quad.QuadModel
+        from . import quad
+        new_class = quad.QuadModel
     elif len(shape) == 3:
-        # It's a CubeModel
         from . import cube
         new_class = cube.CubeModel
     elif len(shape) == 2:
@@ -196,7 +252,7 @@ def _class_from_shape(hdulist, shape):
             new_class = multislit.MultiSlitModel
     else:
         new_class = None
-        
+
     return new_class
 
 
@@ -306,3 +362,48 @@ def ensure_ascii(s):
         if six.PY3:
             s = s.decode('ascii')
     return s
+
+
+def create_history_entry(description, software=None):
+    """
+    Create a HistoryEntry object.
+
+    Parameters
+    ----------
+    description : str
+        Description of the change.
+    software : dict or list of dict
+        A description of the software used.  It should not include
+        asdf itself, as that is automatically notated in the
+        `asdf_library` entry.
+
+        Each dict must have the following keys:
+
+        ``name``: The name of the software
+        ``author``: The author or institution that produced the software
+        ``homepage``: A URI to the homepage of the software
+        ``version``: The version of the software
+
+    Examples
+    --------
+    >>> soft = {'name': 'jwreftools', 'author': 'STSCI',
+                'homepage': 'https://github.com/spacetelescope/jwreftools', 'version': "0.7"}
+    >>> entry = create_history_entry(description="HISTORY of this file", software=soft)
+
+    """
+    from asdf.tags.core import Software, HistoryEntry
+    import datetime
+
+    if isinstance(software, list):
+            software = [Software(x) for x in software]
+    elif software is not None:
+        software = Software(software)
+
+    entry = HistoryEntry({
+        'description': description,
+        'time': datetime.datetime.utcnow()
+    })
+
+    if software is not None:
+        entry['software'] = software
+    return entry

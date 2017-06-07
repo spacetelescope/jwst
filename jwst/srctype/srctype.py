@@ -14,7 +14,7 @@ def set_source_type(input_model):
     # Get the exposure type of the input model
     try:
         exptype = input_model.meta.exposure.type
-        log.debug('Input EXP_TYPE is %s' % exptype)
+        log.info('Input EXP_TYPE is %s' % exptype)
     except:
         log.error('Failed to access EXP_TYPE value in input')
         log.error('Step will be skipped')
@@ -23,7 +23,7 @@ def set_source_type(input_model):
     # For exposure types that use a single source, get the user-supplied
     # source type from the selection they provided in the APT
     if exptype in ['MIR_LRS-FIXEDSLIT', 'MIR_LRS-SLITLESS', 'MIR_MRS',
-                   'NIS_SOSS', 'NRS_FIXEDSLIT', 'NRS_IFU']:
+                   'NIS_SOSS', 'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_IFU']:
 
         # Get the value the user specified (if any)
         user_type = input_model.meta.target.source_type
@@ -54,8 +54,6 @@ def set_source_type(input_model):
         # Loop over the input slits
         for slit in input_model.slits:
             stellarity = slit.stellarity
-            log.debug('source_id=%g, stellarity=%g' %
-                      (slit.source_id, stellarity))
 
             # Eventually the stellarity value will be compared against
             # a threshold value from a reference file. For now, the
@@ -66,6 +64,9 @@ def set_source_type(input_model):
                 slit.source_type = 'POINT'
             else:
                 slit.source_type = 'EXTENDED'
+
+            log.info('source_id=%g, stellarity=%g, type=%s' %
+                      (slit.source_id, stellarity, slit.source_type))
 
         # Set the source type value in the primary header to
         # a harmless default

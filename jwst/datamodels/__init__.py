@@ -29,11 +29,14 @@
 
 from __future__ import absolute_import, division, print_function
 
-__version__ = '1.1.0'
+__version__ = '0.7.4'
 
 import numpy as np
 from os.path import basename
 from astropy.extern import six
+from astropy.io import registry
+
+from . import ndmodel
 
 from .model_base import DataModel
 from .amilg import AmiLgModel
@@ -42,21 +45,23 @@ from .combinedspec import CombinedSpecModel
 from .container import ModelContainer
 from .contrast import ContrastModel
 from .cube import CubeModel
-from .cubeflat import CubeFlatModel
 from .dark import DarkModel
 from .darkMIRI import DarkMIRIModel
 from .drizpars import DrizParsModel, NircamDrizParsModel, MiriImgDrizParsModel
 from .outlierpars import OutlierParsModel, NircamOutlierParsModel, MiriImgOutlierParsModel
 from .drizproduct import DrizProductModel
-from .filter import FilterModel
+from .ifucubepars import IFUCubeParsModel, NirspecIFUCubeParsModel, MiriIFUCubeParsModel
+from .throughput import ThroughputModel
 from .flat import FlatModel
 from .fringe import FringeModel
 from .gain import GainModel
 from .gls_rampfit import GLS_RampFitModel
+from .ifucube import IFUCubeModel
 from .image import ImageModel
 from .ipc import IPCModel
 from .irs2 import IRS2Model
 from .lastframe import LastFrameModel
+from .level1b import Level1bModel
 from .linearity import LinearityModel
 from .mask import MaskModel
 from .miri_ramp import MIRIRampModel
@@ -65,45 +70,69 @@ from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
 from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
-from .ifucube import IFUCubeModel
-from .pixelarea import PixelAreaModel
+from .pathloss import PathlossModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
 from .photom import NirspecPhotomModel, NirspecFSPhotomModel
 from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
+from .pixelarea import PixelAreaModel, NirspecSlitAreaModel, NirspecMosAreaModel, NirspecIfuAreaModel
+from .psfmask import PsfMaskModel
 from .quad import QuadModel
 from .ramp import RampModel
 from .rampfitoutput import RampFitOutputModel
 from .readnoise import ReadnoiseModel
+from .reference import ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel
 from .reset import ResetModel
+from .resolution import ResolutionModel, MiriResolutionModel
 from .rscd import RSCDModel
 from .saturation import SaturationModel
 from .spec import SpecModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
+from .traps import TrapsModel
+from .wcs_ref_models import *
 from .util import open
 
 
 
 __all__ = [
     'open',
+    'CombinedSpecModel',
     'DataModel', 'AmiLgModel', 'AsnModel', 'ContrastModel',
-    'CubeModel', 'CubeFlatModel', 'DarkModel', 'DarkMIRIModel', 'DrizParsModel',
+    'CubeModel', 'DarkModel', 'DarkMIRIModel', 'DrizParsModel',
     'NircamDrizParsModel', 'MiriImgDrizParsModel',
-    'DrizProductModel', 'FgsPhotomModel', 'FilterModel',
+    'MiriImgOutlierParsModel', 'NircamOutlierParsModel', 'OutlierParsModel',
+    'PathlossModel', 'PixelAreaModel', 'NirspecSlitAreaModel',
+    'NirspecMosAreaModel', 'NirspecIfuAreaModel',
+    'DrizProductModel', 'FgsPhotomModel', 'ThroughputModel',
     'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
-    'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'LinearityModel',
-    'MaskModel', 'MIRIRampModel', 'ModelContainer',
+    'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
+    'LinearityModel', 'MaskModel', 'MIRIRampModel', 'ModelContainer',
     'MultiExposureModel', 'MultiProductModel', 'MultiSlitModel',
     'MultiSpecModel', 'IFUCubeModel', 'PhotomModel', 'NircamPhotomModel',
     'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
     'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'QuadModel', 'RampModel',
-    'RampFitOutputModel', 'ReadnoiseModel', 'ResetModel', 'RSCDModel',
-    'SaturationModel', 'SpecModel', 'StrayLightModel']
+    'RampFitOutputModel', 'ReadnoiseModel', 'ReferenceCubeModel',
+    'ReferenceFileModel', 'ReferenceImageModel', 'ReferenceQuadModel',
+    'ResetModel', 'RSCDModel', 'SaturationModel', 'SpecModel',
+    'StrayLightModel', 'SuperBiasModel', 'TrapsModel','IFUCubeParsModel',
+    'NirspecIFUCubeParsModel','MiriIFUCubeParsModel','ResolutionModel',
+    'MiriResolutionModel','DistortionModel', 'DistortionMRSModel', 'SpecwcsModel',
+    'RegionsModel', 'WavelengthrangeModel', 'CameraModel', 'CollimatorModel', 'OTEModel',
+    'FOREModel', "FPAModel", 'IFUPostModel', 'IFUFOREModel', 'IFUSlicerModel',
+    'MSAModel', 'FilteroffsetModel', 'DisperserModel']
+
 
 _all_models = __all__[1:]
 _local_dict = dict(locals())
 _defined_models = { k: _local_dict[k] for k in _all_models }
+
+# Initialize the astropy.io registry
+with registry.delay_doc_updates(DataModel):
+    registry.register_reader('datamodel', DataModel, ndmodel.read)
+    registry.register_writer('datamodel', DataModel, ndmodel.write)
+    registry.register_identifier('datamodel', DataModel, ndmodel.identify)
+
 
 '''
 def test(verbose=False) :

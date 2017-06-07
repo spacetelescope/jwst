@@ -2,8 +2,9 @@
 import os
 
 from ..stpipe import Pipeline
-from ..associations import Association
+from ..associations import load_asn
 from .. import datamodels
+from ..resample import blend
 
 # step imports
 from ..coron import stack_refs_step
@@ -13,7 +14,7 @@ from ..outlier_detection import outlier_detection_step
 from ..resample import resample_step
 
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 # Define logging
 import logging
@@ -48,23 +49,14 @@ class Coron3Pipeline(Pipeline):
 
         # Load the input association table
         with open(input, 'r') as input_fh:
-            asn = Association.load(input_fh)
+            asn = load_asn(input_fh)
 
         # We assume there's one final product defined by the association
         prod = asn['products'][0]
 
         # Construct lists of all the PSF and science target members
-        psf_files = []
-        targ_files = []
-        for member in prod['members']:
-            if member['exptype'].upper() == 'PSF':
-                psf_files.append(member['expname'])
-                log.info('psf file {0} = {1}'.format(len(psf_files),
-                          member['expname']))
-            if member['exptype'].upper() == 'SCIENCE':
-                targ_files.append(member['expname'])
-                log.info('target file {0} = {1}'.format(len(targ_files),
-                          member['expname']))
+        psf_files = [m['expname'] for m in prod['members'] if m['exptype'].upper() == 'PSF']
+        targ_files = [m['expname'] for m in prod['members'] if m['exptype'].upper() == 'SCIENCE']
 
         # Make sure we found some PSF and target members
         if len(psf_files) == 0:
@@ -80,9 +72,9 @@ class Coron3Pipeline(Pipeline):
         # Assemble all the input psf files into a single ModelContainer
         psf_models = datamodels.ModelContainer()
         for i in range(len(psf_files)):
-            input = datamodels.CubeModel(psf_files[i])
-            psf_models.append(input)
-            input.close()
+            psf_input = datamodels.CubeModel(psf_files[i])
+            psf_models.append(psf_input)
+            psf_input.close()
 
         # Call the stack_refs step to stack all the PSF images into
         # a single CubeModel
@@ -133,6 +125,14 @@ class Coron3Pipeline(Pipeline):
             # Call outlier_detection
             target_models = self.outlier_detection(target_models)
 
+            # TEMPORAY HACK UNTIL OUTLIER_DETECTION IS VIABLE
+            # Create a dummy level-2c output product
+            log.warning('Creating fake outlier_detection results until step is available')
+            lev2c_name = mk_filename(self.output_dir, target_file, 'calints-'+asn['asn_id'])
+            lev2c_model = psf_sub.copy()
+            lev2c_model.meta.cal_step.outlier_detection = 'COMPLETE'
+            lev2c_model.save(lev2c_name)
+
             # Append results from this target exposure to resample input model
             for i in range(len(target_models)):
                 resample_input.append(target_models[i])
@@ -140,9 +140,23 @@ class Coron3Pipeline(Pipeline):
         # Call the resample step to combine all the psf-subtracted target images
         result = self.resample(resample_input)
 
+        # TEMPORARY HACK UNTIL RESAMPLE IS VIABLE
+        log.warning('Creating fake resample results until step is available')
+        result = datamodels.DrizProductModel(data=resample_input[0].data,
+                                             con=resample_input[0].dq,
+                                             wht=resample_input[0].err)
+        result.update(resample_input[0])
+        output_file = mk_prodname(self.output_dir, prod['name'], 'i2d')
+        log.debug('Blending metadata for {}'.format(output_file))
+        blend.blendfitsdata(targ_files, result)
+        result.meta.asn.pool_name = asn['asn_pool']
+        result.meta.asn.table_name = input
+        result.meta.cal_step.outlier_detection = 'COMPLETE'
+        result.meta.cal_step.resample = 'COMPLETE'
+        result.meta.model_type = 'DrizProductModel'
+
         # Save the final result
-        output_file = mk_prodname(self.output_dir, prod['name'], 'coroncmb')
-        self.log.info('Saving final result to %s', output_file)
+        log.info('Saving final result to %s', output_file)
         result.save(output_file)
         result.close()
 
@@ -196,7 +210,7 @@ def mk_prodname(output_dir, filename, suffix):
     The input ASN product name is used as a template. A user-specified
     output directory path is prepended to the root of the product name.
     The input product type suffix is appended to the root of the input
-    product name, preserving any existing file name extension 
+    product name, preserving any existing file name extension
     (e.g. ".fits").
 
     Args:
