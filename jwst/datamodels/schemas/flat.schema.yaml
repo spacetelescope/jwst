@@ -1,5 +1,7 @@
 allOf:
 - $ref: referencefile.schema.yaml
+- $ref: keyword_filter.schema.yaml
+- $ref: keyword_pupil.schema.yaml
 - $ref: subarray.schema.yaml
 - $ref: keyword_filter.schema.yaml
 - $ref: keyword_pfilter.schema.yaml
