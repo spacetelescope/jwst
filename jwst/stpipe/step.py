@@ -22,7 +22,9 @@ from . import log
 from . import utilities
 from .. import __version_commit__, __version__
 
-REMOVE_SUFFIX = '(.+?)(_(rate|cal)(ints)?)?$'
+SUFFIX_LIST = ['rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
+    'jump', 'ramp', 'x1d', 'x2d', 'x1dints', 'calints', 'rateints']
+REMOVE_SUFFIX = '^(.+?)(_(' + '|'.join(SUFFIX_LIST) + '))?$'
 
 
 class Step(object):
