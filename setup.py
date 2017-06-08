@@ -3,6 +3,7 @@ from __future__ import print_function
 import os
 import subprocess
 import sys
+import multiprocessing
 from setuptools import setup, find_packages, Extension, Command
 from setuptools.command.test import test as TestCommand
 from numpy import get_include as np_include
@@ -63,15 +64,27 @@ PACKAGE_DATA = {
 
 
 class PyTest(TestCommand):
+    user_options = [('pytest-args=', 'm', "Arguments to pass to pytest")]
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
-        self.pytest_args = [NAME]
+        self.pytest_args = []
 
     def finalize_options(self):
         TestCommand.finalize_options(self)
         self.test_args = []
         self.test_suite = True
+        if self.pytest_args:
+            if self.pytest_args == 'auto':
+                self.pytest_args = "-n " + str(multiprocessing.cpu_count())
+            else:
+                self.pytest_args = "-n " + self.pytest_args
+            self.pytest_args = [self.pytest_args]
+        self.pytest_args.append(NAME)
+
+        # Always run with 2 cores on Travis CI
+        if os.environ.get('TRAVIS'):
+            self.pytest_args = ["-n 2", NAME]
 
     def run_tests(self):
         try:
@@ -134,7 +147,8 @@ setup(
         'backports.tempfile',
         'pytest',
         'requests_mock',
-        'pytest-catchlog'
+        'pytest-catchlog',
+        'pytest-xdist'
     ],
     cmdclass={
         'test': PyTest,
