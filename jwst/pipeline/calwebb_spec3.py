@@ -11,12 +11,6 @@ from ..resample import resample_spec_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
 
-# Dummy Testing steps
-from .tests.dummy_resample_step import (
-    DummyCubeBuildStep,
-    DummyResampleStep
-)
-
 __version__ = "0.7.1"
 
 # Group exposure types
@@ -43,8 +37,8 @@ class Spec3Pipeline(Pipeline):
     step_defs = {
         'skymatch': skymatch_step.SkyMatchStep,
         'outlier_detection': outlier_detection_step.OutlierDetectionStep,
-        'resample_spec': DummyResampleStep,
-        'cube_build': DummyCubeBuildStep,
+        'resample_spec': resample_spec_step.ResampleSpecStep,
+        'cube_build': cube_build_step.CubeBuildStep,
         'extract_1d': extract_1d_step.Extract1dStep
     }
 
