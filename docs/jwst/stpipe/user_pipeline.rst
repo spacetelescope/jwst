@@ -219,7 +219,10 @@ provided to make them easier to specify in a configuration file.
 Pre-hooks are run right before the Step.  The inputs to the pre-hook
 are the same as the inputs to their parent Step.
 Post-hooks are run right after the Step.  The inputs to the post-hook
-are the return value(s) from the parent Step.
+are the return value(s) from the parent Step. The return values are
+always passed as a list. If the return value from the parent Step is a
+single item, a list of this single item is passed to the post hooks.
+This allows the post hooks to modify the return results, if necessary.
 
 Hooks are specified using the ``pre_hooks`` and ``post_hooks``
 configuration parameter associated with each step.  More than one pre-
