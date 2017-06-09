@@ -1,4 +1,11 @@
-"""Test calwebb_spec3"""
+"""Test calwebb_spec3 with MIRI LRS-Fixedslit
+
+Notes
+-----
+The test data has been arranged to match that of the pandokia jwst_test_data
+file structure. As such the environmental variable TEST_BIGDATA points to
+the top of the example data tree.
+"""
 
 from os import path
 import pytest
@@ -15,7 +22,7 @@ from ...associations import load_asn
 from ...stpipe.step import Step
 
 DATAPATH = abspath(
-    '$TEST_BIGDATA/miri/test_spec3pipeline'
+    '$TEST_BIGDATA/miri/test_datasets/lrs_fixedslit'
 )
 
 # Skip if the data is not available
@@ -26,29 +33,6 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.mark.xfail(
-    reason='No available testdata'
-)
-def test_run_skymatch_only(mk_tmp_dirs):
-    """Test a basic run"""
-    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
-
-    asn_path = update_asn_basedir(
-        path.join(SCRIPT_PATH, 'mir_mrs_spec3_asn.json'),
-        root=DATAPATH
-    )
-    args = [
-        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_full.cfg'),
-        asn_path,
-        '--steps.outlier_detection.skip=true',
-        '--steps.resample_spec.skip=true',
-        '--steps.cube_build.skip=true',
-        '--steps.extract_1d.skip=true',
-    ]
-
-    Step.from_cmdline(args)
-
-
-@pytest.mark.xfail(
     reason='due to bug in resample.utils'
 )
 def test_run_outlier_only(mk_tmp_dirs):
@@ -56,11 +40,11 @@ def test_run_outlier_only(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'mir_lrs_fixedslit_spec3_asn.json'),
+        path.join(DATAPATH, 'jw80600-a3002_20170227t160430_spec3_001_asn.json'),
         root=DATAPATH
     )
     args = [
-        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_full.cfg'),
+        path.join(DATAPATH, 'calwebb_spec3_full.cfg'),
         asn_path,
         '--steps.skymatch.skip=true',
         '--steps.resample_spec.skip=true',
@@ -77,11 +61,11 @@ def test_run_resample_only(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'mir_lrs_fixedslit_spec3_asn.json'),
+        path.join(DATAPATH, 'jw80600-a3002_20170227t160430_spec3_001_asn.json'),
         root=DATAPATH
     )
     args = [
-        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_full.cfg'),
+        path.join(DATAPATH, 'calwebb_spec3_full.cfg'),
         asn_path,
         '--steps.skymatch.skip=true',
         '--steps.outlier_detection.skip=true',
@@ -105,11 +89,11 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'mir_lrs_fixedslit_spec3_asn.json'),
+        path.join(DATAPATH, 'jw80600-a3002_20170227t160430_spec3_001_asn.json'),
         root=DATAPATH
     )
     args = [
-        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_full.cfg'),
+        path.join(DATAPATH, 'calwebb_spec3_full.cfg'),
         asn_path,
         '--steps.skymatch.skip=true',
         '--steps.outlier_detection.skip=true',
@@ -125,11 +109,11 @@ def test_run_nosteps(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'mir_lrs_fixedslit_spec3_asn.json'),
+        path.join(DATAPATH, 'jw80600-a3002_20170227t160430_spec3_001_asn.json'),
         root=DATAPATH
     )
     args = [
-        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_full.cfg'),
+        path.join(DATAPATH, 'calwebb_spec3_full.cfg'),
         asn_path,
         '--steps.skymatch.skip=true',
         '--steps.outlier_detection.skip=true',
@@ -149,11 +133,11 @@ def test_run_mir_lrs_fixedslit(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'mir_lrs_fixedslit_spec3_asn.json'),
+        path.join(DATAPATH, 'jw80600-a3002_20170227t160430_spec3_001_asn.json'),
         root=DATAPATH
     )
     args = [
-        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_full.cfg'),
+        path.join(DATAPATH, 'calwebb_spec3_full.cfg'),
         asn_path,
     ]
 

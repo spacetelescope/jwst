@@ -15,7 +15,7 @@ from ...associations import load_asn
 from ...stpipe.step import Step
 
 DATAPATH = abspath(
-    '$TEST_BIGDATA/nirspec/msa'
+    '$TEST_BIGDATA/nirspec/test_datasets/msa/simulated-3nod'
 )
 
 # Skip if the data is not available
@@ -25,8 +25,8 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.mark.xfail(
-    reason='due to bug in resample.utils'
+@pytest.mark.skip(
+    reason='Takes too long, need to shorten'
 )
 def test_run_outlier_only(mk_tmp_dirs):
     """Test a basic run"""
@@ -34,7 +34,7 @@ def test_run_outlier_only(mk_tmp_dirs):
 
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'mos_udf_g235M_spec3_asn.json'),
-        root=DATAPATH
+        root=path.join(DATAPATH, 'level2b')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_full.cfg'),
@@ -55,7 +55,7 @@ def test_run_resample_only(mk_tmp_dirs):
 
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'mos_udf_g235M_spec3_asn.json'),
-        root=DATAPATH
+        root=path.join(DATAPATH, 'level2b')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_full.cfg'),
@@ -75,6 +75,9 @@ def test_run_resample_only(mk_tmp_dirs):
     assert path.isfile(product_name)
 
 
+@pytest.mark.skip(
+    reason='Takes too long, need to shorten'
+)
 def test_run_extract_1d_only(mk_tmp_dirs):
     """Test only the extraction step. Should produce nothing
     because extraction requires resampling
@@ -97,6 +100,9 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     Step.from_cmdline(args)
 
 
+@pytest.mark.skip(
+    reason='Takes too long, need to shorten'
+)
 def test_run_nosteps(mk_tmp_dirs):
     """Test where no steps execute"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -118,8 +124,8 @@ def test_run_nosteps(mk_tmp_dirs):
     Step.from_cmdline(args)
 
 
-@pytest.mark.xfail(
-    reason='None of the steps operate'
+@pytest.mark.skip(
+    reason='Takes too long, need to shorten'
 )
 def test_run_full(mk_tmp_dirs):
     """Test a full run"""

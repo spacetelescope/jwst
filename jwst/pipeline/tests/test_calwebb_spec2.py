@@ -54,6 +54,7 @@ def test_full_run(mk_tmp_dirs):
     assert path.isfile(CALFILE)
     assert path.isfile(EXTRACT1DFILE)
 
+
 def test_asn_with_bkg(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     exppath = path.join(DATAPATH, EXPFILE)
