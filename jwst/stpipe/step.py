@@ -378,7 +378,7 @@ class Step(object):
                 self._reference_files_used = []
 
             for post_hook in self._post_hooks:
-                post_hook.run(result)
+                post_hook.run(results)
 
             # Mark versions
             for result in results:

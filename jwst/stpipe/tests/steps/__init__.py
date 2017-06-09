@@ -131,9 +131,6 @@ class PreHookStep(Step):
         self.log.info('Received args: "{}"'.format(args))
         self.log.info('Self.parent = "{}"'.format(self.parent))
 
-        assert isinstance(args[0], ImageModel)
-        assert isinstance(self.parent, Step)
-
         args[0].pre_hook_run = True
         self.parent.pre_hook_run = True
 
@@ -148,8 +145,5 @@ class PostHookStep(Step):
         self.log.info('Received args: "{}"'.format(args))
         self.log.info('Self.parent = "{}"'.format(self.parent))
 
-        assert isinstance(args[0], ImageModel)
-        assert isinstance(self.parent, Step)
-
-        args[0].post_hook_run = True
+        args[0][0].post_hook_run = True
         self.parent.post_hook_run = True
