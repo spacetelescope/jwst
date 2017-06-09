@@ -724,6 +724,7 @@ class Step(object):
             self, model, suffix=suffix, ignore_use_model=True
         )
 
+        self.log.info('Step.save_model {}'.format(output_path))
         model.save(output_path, *args, **kwargs)
 
     @staticmethod

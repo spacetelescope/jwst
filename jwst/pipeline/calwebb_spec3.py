@@ -113,15 +113,13 @@ class Spec3Pipeline(Pipeline):
             # not.
             if exptype in IFU_EXPTYPES:
                 result = self.cube_build(result)
+                resample_complete = result.meta.cal_step.cube_build
             else:
                 result = self.resample_spec(result)
+                resample_complete = result.meta.cal_step.resample
 
             # Do 1-D spectral extraction
-            try:
-                is_resampled = result.meta.cal_step.resample.upper() == 'COMPLETE'
-            except AttributeError:
-                is_resampled = False
-            if is_resampled:
+            if resample_complete.upper() == 'COMPLETE':
                 result = self.extract_1d(result)
             else:
                 self.log.warn(
