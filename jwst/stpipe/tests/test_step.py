@@ -29,6 +29,22 @@ def test_hook():
     assert step.post_hook_run
 
 
+def test_hook_with_return():
+    """Test the running of hooks"""
+    from .. import Step
+    from ... import datamodels
+
+    step_fn = join(dirname(__file__), 'steps', 'stepwithmodel_hookreturn.cfg')
+    step = Step.from_config_file(step_fn)
+
+    model = datamodels.ImageModel()
+    result = step.run(model)
+
+    assert result == 'PostHookWithReturnStep executed'
+    assert step.pre_hook_run
+    assert step.post_hook_run
+
+
 def test_step():
     from .. import Step
 
