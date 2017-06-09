@@ -84,7 +84,7 @@ def test_datamodel(mk_tmp_dirs):
     model = dm_open(path.join(DATAPATH, EXPFILE))
     cfg = path.join(path.dirname(__file__), 'calwebb_image2_save.cfg')
     Image2Pipeline.call(model, config_file=cfg)
-    assert path.isfile('jw00001001001_01101_00001_MIRIMAGE_uncal_cal.fits')
+    assert path.isfile('jw00001001001_01101_00001_MIRIMAGE_cal.fits')
 
 
 def test_file(mk_tmp_dirs):
