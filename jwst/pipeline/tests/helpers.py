@@ -11,6 +11,7 @@ from ...associations import load_asn
 SCRIPT_PATH = path.dirname(__file__)
 SCRIPT_DATA_PATH = path.join(SCRIPT_PATH, 'data')
 
+
 def abspath(filepath):
     """Get the absolute file path"""
     return path.abspath(path.expanduser(path.expandvars(filepath)))

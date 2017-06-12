@@ -37,7 +37,7 @@ def test_run_outlier_only(mk_tmp_dirs):
         root=path.join(DATAPATH, 'level2b')
     )
     args = [
-        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_full.cfg'),
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
         '--steps.skymatch.skip=true',
         '--steps.resample_spec.skip=true',
@@ -49,6 +49,9 @@ def test_run_outlier_only(mk_tmp_dirs):
     assert False
 
 
+@pytest.mark.skip(
+    reason='Dies with crds error no META.INSTRUMENT.NAME'
+)
 def test_run_resample_only(mk_tmp_dirs):
     """Test resample step only."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -58,7 +61,7 @@ def test_run_resample_only(mk_tmp_dirs):
         root=path.join(DATAPATH, 'level2b')
     )
     args = [
-        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_full.cfg'),
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
         '--steps.skymatch.skip=true',
         '--steps.outlier_detection.skip=true',
@@ -89,7 +92,7 @@ def test_run_extract_1d_only(mk_tmp_dirs):
         root=DATAPATH
     )
     args = [
-        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_full.cfg'),
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
         '--steps.skymatch.skip=true',
         '--steps.outlier_detection.skip=true',
@@ -112,7 +115,7 @@ def test_run_nosteps(mk_tmp_dirs):
         root=DATAPATH
     )
     args = [
-        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_full.cfg'),
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
         '--steps.skymatch.skip=true',
         '--steps.outlier_detection.skip=true',
@@ -136,7 +139,7 @@ def test_run_full(mk_tmp_dirs):
         root=DATAPATH
     )
     args = [
-        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_full.cfg'),
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
     ]
 

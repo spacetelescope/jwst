@@ -111,12 +111,19 @@ class Spec3Pipeline(Pipeline):
 
             # Resample time. Dependent on whether the data is IFU or
             # not.
+            resample_complete = 'SKIPPED'
             if exptype in IFU_EXPTYPES:
                 result = self.cube_build(result)
-                resample_complete = result.meta.cal_step.cube_build
+                try:
+                    resample_complete = result.meta.cal_step.cube_build
+                except AttributeError:
+                    pass
             else:
                 result = self.resample_spec(result)
-                resample_complete = result.meta.cal_step.resample
+                try:
+                    resample_complete = result.meta.cal_step.resample
+                except AttributeError:
+                    pass
 
             # Do 1-D spectral extraction
             if resample_complete.upper() == 'COMPLETE':
