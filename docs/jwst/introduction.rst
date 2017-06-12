@@ -1,5 +1,3 @@
-
-
 Introduction
 ============
 
@@ -9,50 +7,37 @@ Pipeline (referred to as "the pipeline") and individual pipeline steps.
 The pipeline currently consists of ramps-to-slopes processing for all
 observing modes, Level-2b processing for all imaging modes, Level-2b
 processing for most spectroscopic modes (everything but Wide-Field
-Slitless Spectroscopy), and Level-3 imaging.
+Slitless Spectroscopy), and Level-3 processing for imaging.
 
 The ramps-to-slopes (Level-2a) processing consists of detector-level
 corrections that are necessary to perform on a group-by-group basis
 before ramp fitting is applied. The output of Level-2a processing
 is a countrate image per exposure or per integration for some models.
-Details of this pipeline can be found at:
-
-http://ssb.stsci.edu/doc/jwst_dev/jwst/pipeline/description.html#level-2a-pipeline-step-flow-calwebb-sloper
+Details of this pipeline can be found at :ref:`level-2a-flow`.
 
 Level-2b processing consists of additional corrections and
 calibrations to produce a fully calibrated exposure. The details
 differ for imaging and spectroscopic exposures, and there are some
 corrections that are unique to certain instruments or modes.
-Details are at:
-
-http://ssb.stsci.edu/doc/jwst_dev/jwst/pipeline/description.html#level-2b-imaging-pipeline-step-flow-calwebb-image2
+Details are at :ref:`level-2b-imaging-flow`
+and :ref:`level-2b-spectroscopic-flow`.
 
 Level-3 processing consists of routines that combine the data from
 multiple exposures, for all observing modes. Level-3 processing is only
-available at this time for imaging observations. Details are at:
-
-http://ssb.stsci.edu/doc/jwst_dev/jwst/pipeline/description.html#level-3-imaging-pipeline-step-flow-calwebb-image3
+available at this time for imaging observations. Details are at
+:ref:`level-3-imaging-flow`.
 
 This document discusses pipeline configuration files and examples of running
 pipelines either as a whole or in individual steps.
 
-This document is a work in progress and will be updated frequently.  The most
-recent version of this document is built nightly from the source
-code repository on git.  The most recent version of this document can be found on the
-site:
-
-http://ssb.stsci.edu/doc/jwst_dev/
-
-
 CRDS Reference Files
 ====================
-
 CRDS reference file mappings are usually set by default to always give access
 to the most recent reference file deliveries and selection rules. On
 occasion it might be necessary or desirable to use one of the non-default
 mappings in order to, for example, run different versions of the pipeline
 software or use older versions of the reference files. This can be
-accomplished by setting the environment variable 'CRDS_CONTEXT' to the
+accomplished by setting the environment variable `CRDS_CONTEXT` to the
 desired project mapping version, e.g.
 ::
 
@@ -66,19 +51,17 @@ The current storage location for all JWST CRDS reference files is:
 Each pipeline step records the reference file that it used in the value of
 a header keyword in the output data file. The keyword names use the syntax
 "R_<ref>", where <ref> corresponds to the first 6 characters of the reference
-file type, such as "R_DARK", "R_LINEAR", and "R_PHOTOM".
-
+file type, such as `R_DARK`, `R_LINEAR`, and `R_PHOTOM`.
 
 Running From the Command Line
 =============================
-
 Individual steps and pipelines (consisting of a series of steps) can be run
-from the command line using the `strun` command:
+from the command line using the ``strun`` command:
 ::
 
     $ strun <class_name or cfg_file> <input_file>
 
-The first argument to `strun` must be either the python class name of the
+The first argument to ``strun`` must be either the python class name of the
 step or pipeline to be run, or the name of a configuration (.cfg) file for the
 desired step or pipeline (see `Configuration Files`_ below for more details).
 The second argument to `strun` is the name of the input data file to be processed.
@@ -122,10 +105,10 @@ step by using the '-h' (help) argument to strun:
 
 If you want to consistently override the default values of certain arguments
 and don't want to have to specify them on the command line every time you
-execute `strun`, you can specify them in the configuration (.cfg) file for
+execute ``strun``, you can specify them in the configuration (.cfg) file for
 either the pipeline or the individual step.
-For example, to always run 'SloperPipeline' using the override in the
-previous example, you could edit your 'calwebb_sloper.cfg' file to
+For example, to always run ``SloperPipeline`` using the override in the
+previous example, you could edit your `calwebb_sloper.cfg` file to
 contain the following:
 ::
 
@@ -139,7 +122,7 @@ contain the following:
 Note that simply removing the entry for a step from a pipeline cfg file will
 **NOT** cause that step to be skipped when you run the pipeline (it will simply
 run the step with all default parameters). In order to skip a step you must
-use the 'skip = True' argument for that step (see `Skip`_ below).
+use the `skip = True` argument for that step (see `Skip`_ below).
 
 Alternatively, you can specify arguments for individual steps within the
 step's configuration file and then reference those step cfg files in the pipeline
@@ -153,7 +136,7 @@ cfg file, such as:
       [[dark_current]]
         config_file = my_dark_current.cfg
 
-where "my_dark_current.cfg" contains:
+where `my_dark_current.cfg` contains:
 ::
 
  name = "dark_current"
@@ -165,7 +148,7 @@ Running From Within Python
 ==========================
 
 You can execute a pipeline or a step from within python by using the
-`call` method of the class:
+``call`` method of the class:
 ::
 
  from jwst.pipeline import SloperPipeline
@@ -188,7 +171,7 @@ Universal Parameters
 Output File
 -----------
 
-When running a pipeline, the `stpipe` infrastructure automatically passes the
+When running a pipeline, the ``stpipe`` infrastructure automatically passes the
 output data model from one step to the input of the next step, without
 saving any intermediate results to disk. If you want to save the results from
 individual steps, you have two options:
@@ -251,7 +234,7 @@ option to override the automatic selection of a reference file from CRDS and
 specify your own file to use. Arguments for this are of the form
 `--override_\<ref_type\>`, where `ref_type` is the name of the reference file
 type, such as `mask`, `dark`, `gain`, or `linearity`. When in doubt as to
-the correct name, just use the `-h` argument to `strun` to show you the list
+the correct name, just use the `-h` argument to ``strun`` to show you the list
 of available override arguments.
 
 To override the use of the default linearity file selection, for example,
@@ -265,7 +248,7 @@ Skip
 ----
 
 Another argument available to all steps in a pipeline is `skip`.
-If 'skip=True' is set for any step, that step will be skipped, with the
+If `skip=True` is set for any step, that step will be skipped, with the
 output of the previous step being automatically passed directly to the input
 of the step following the one that was skipped. For example, if you want to
 skip the linearity correction step, edit the calwebb_sloper.cfg file to
@@ -305,7 +288,7 @@ and the file `pipeline-log.cfg` contains:
     handler = file:pipeline.log
     level = INFO
 
-In this example log information is written to a file called "pipeline.log."
+In this example log information is written to a file called `pipeline.log`.
 The `level` argument in the log cfg file can be set to one of the standard
 logging level designations of `DEBUG`, `INFO`, `WARNING`, `ERROR`, and
 `CRITICAL`. Only messages at or above the specified level
@@ -371,7 +354,7 @@ Configuration (.cfg) files can be used to specify parameter values
 when running a pipeline or individual steps, as well as for
 specifying logging options.
 
-You can use the "collect_pipeline_cfgs" task to get copies of all the cfg
+You can use the ``collect_pipeline_cfgs`` task to get copies of all the cfg
 files currently in use by the jwst pipeline software. The task takes a single
 argument, which is the name of the directory to which you want the cfg files
 copied. Use '.' to specify the current working directory, e.g.
@@ -419,31 +402,20 @@ You can list all of the parameters for this step using:
  $ strun jump.cfg -h
 
 which gives the usage, the positional arguments, and the optional arguments.
-More information on configuration files can be found in the `stpipe` User's
-Guide at:
-
-http://ssb.stsci.edu/doc/jwst_dev/jwst/stpipe/
+More information on configuration files can be found in the ``stpipe`` User's
+Guide at :ref:`stpipe-user-steps`.
 
 Available Pipelines
 ===================
-
 There are currently several pre-defined pipelines available for processing
 the data from different instrument observing modes. For all of the details
-see:
-
-http://ssb.stsci.edu/doc/jwst_dev/jwst/pipeline/
+see :ref:`pipelines`.
 
 
 For More Information
 ====================
-
-More information on logging and running pipelines can be found in the `stpipe`
-User's Guide at:
-
-http://ssb.stsci.edu/doc/jwst_dev/jwst/stpipe/index.html#for-users
+More information on logging and running pipelines can be found in the ``stpipe``
+User's Guide at :ref:`stpipe-user-steps`.
 
 More detailed information on writing pipelines can be found
-in the `stpipe` Developer's Guide at:
-
-http://ssb.stsci.edu/doc/jwst_dev/jwst/stpipe/index.html#for-developers
-
+in the ``stpipe`` Developer's Guide at :ref:`stpipe-devel-steps`.
