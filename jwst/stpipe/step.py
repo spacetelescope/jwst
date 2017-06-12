@@ -191,8 +191,8 @@ class Step(object):
         name : str, optional
             If provided, use that name for the returned instance.
             If not provided, try the following (in order):
-                - The `name` parameter in the config file fragment
-                - The name of returned class
+              - The `name` parameter in the config file fragment
+              - The name of returned class
 
         config_file : str, optional
             The path to the config file that created this step, if

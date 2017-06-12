@@ -1,4 +1,3 @@
-
 Tasks in the package
 ====================
 The coronagraphic package currently consists of the following tasks:
@@ -20,7 +19,6 @@ high-level science products (HLSP's) from a KLIP-subtracted image.
 
 CALWEBB_CORON3
 ==============
-
 Currently the individual steps can only be run in a convenient way by
 running the ``calwebb_coron3`` pipeline, which calls the individual steps
 and takes care of all the necessary loading and passing of data
@@ -46,7 +44,7 @@ processing. An example ASN file is shown below.
  "asn_type": "coron",
  "asn_id": "c1001"}
 
-In this example the output product ``jw89001-c1001_t001_nircam_f160w``
+In this example the output product "jw89001-c1001_t001_nircam_f160w"
 is defined to consist of 2 science target inputs and 3 reference psf
 inputs. Note that the values of the ``exptype`` attribute for each
 member are very important and used by the ``calwebb_coron3`` pipeline to
@@ -55,18 +53,18 @@ data for the science target. The output product name listed in the ASN
 file is used as the root name for some of the products created by the
 ``calwebb_coron3`` pipeline. This includes:
 
-- rootname_psfstack: the output of the stack_refs step
-- rootname_coroncmb: the final combined target image
+- rootname_psfstack: the output of the ``stack_refs`` step
+- rootname_i2d: the final combined target image
 
 Other products will be created for each individual science target
 member, in which case the root names of the original input science
 target products will be used as a basis for the output products.
 These products include:
 
-- targetname_psfalign: the output of the align_refs step
-- targetname_psfsub: the output of the klip step
+- targetname_psfalign: the output of the ``align_refs`` step
+- targetname_psfsub: the output of the ``klip`` step
 
-STACK_REFS
+Stack_refs
 ==========
 
 Overview
@@ -84,16 +82,15 @@ of integrations contained in all of the input files.
 
 Inputs and Outputs
 ------------------
-
 The ``stack_refs`` step is called from the ``calwebb_coron3`` pipeline module.
-The ``calwebb_coron3`` pipeline will find all of the ``psf`` members listed
+The ``calwebb_coron3`` pipeline will find all of the `psf` members listed
 in the input ASN file, load each one into a CubeModel data model, and
 construct a ModelContainer that is the list of all psf CubeModels. The
 ModelContainer is passed as input to the ``stack_refs`` step. The output
 of ``stack_refs`` will be a single CubeModel containing all of the
 concatenated data cubes from the input psf files.
 
-ALIGN_REFS
+Align_refs
 ==========
 
 Overview
@@ -109,7 +106,6 @@ that are aligned to the images in that science target product.
 
 Inputs and Outputs
 ------------------
-
 The ``align_refs`` step takes 2 inputs: a science target product, in the
 form of a CubeModel data model, and the stacked PSF product, also in
 the form of a CubeModel data model. The resulting output is a 4D data
@@ -118,12 +114,11 @@ number of reference PSF images in the input PSF stack and the 4th
 axis has length equal to the number of integrations in the input
 science target product.
 
-KLIP
+Klip
 ====
 
 Overview
 --------
-
 The ``klip`` task applies the KLIP algorithm to coronagraphic images, using an
 accompanying set of reference PSF images, in order to
 fit and subtract an optimal PSF from the source. The KLIP algorithm uses a KL
@@ -146,7 +141,6 @@ The KLIP algorithm consists of the following steps:
 
 Inputs and Outputs
 ------------------
-
 The ``klip`` task takes two inputs: a science target product, in the form of a 3D
 CubeModel data model, and a set of aligned PSF images, in the form of a 4D
 QuadModel data model. Each 'layer' in the 4th dimension of the PSF data
@@ -158,8 +152,7 @@ of the science target product.
 
 Arguments
 ---------
-
-The task takes one optional argument, ``truncate``, which is used to specify the
+The task takes one optional argument, `truncate`, which is used to specify the
 number of KL transform rows to keep when computing the PSF fit to the target.
 The default value is 50.
 
@@ -168,7 +161,6 @@ HLSP
 
 Overview
 --------
-
 The ``hlsp`` task produces high-level science products for KLIP-processed images.
 The task currently produces two such products: a signal-to-noise ratio (SNR)
 image and a table of contrast data. The SNR image is computed by simply taking
@@ -180,15 +172,13 @@ nearest whole pixel; no sub-pixel calculations are performed.
 
 Input Arguments
 ---------------
-
 The ``hlsp`` task takes one input file name argument, which is the name of the
 KLIP-processed target product to be analyzed. One optional argument is available,
-``annuli_width``, which specifies the width (in pixels) of the annuli to use in
+`annuli_width`, which specifies the width (in pixels) of the annuli to use in
 calculating the contrast data. The default value is 2 pixels.
 
 Outputs
 -------
-
 The ``hslp`` task produces two output products. The first is the snr image (file
 name suffix "_snr") and the second is the table of contrast data (file name
 suffix "_contrast"). The contrast data are stored as a 2-column table giving

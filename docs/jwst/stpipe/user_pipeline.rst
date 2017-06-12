@@ -1,4 +1,4 @@
-.. _user-pipelines:
+.. _stpipe-user-pipelines:
 
 =========
 Pipelines
@@ -7,8 +7,8 @@ Pipelines
 .. TODO: Rewrite using a real-world example
 
 It is important to note that a Pipeline is also a Step, so everything
-that applies to a Step in the :ref:`user-steps` chapter also applies to
-Pipelines.
+that applies to a Step in the :ref:`stpipe-user-steps` chapter also
+applies to Pipelines.
 
 Configuring a Pipeline
 ======================
