@@ -38,6 +38,7 @@ class Step(object):
     output_file = output_file(default=None) # File to save output to.
     skip = boolean(default=False)           # Skip this step
     save_results = boolean(default=False)   # Force save results
+    suffix = string(default=None)           # Default suffix for output files
     """
 
     reference_file_types = []
@@ -723,6 +724,7 @@ class Step(object):
             self, model, suffix=suffix, ignore_use_model=True
         )
 
+        self.log.info('Step.save_model {}'.format(output_path))
         model.save(output_path, *args, **kwargs)
 
     @staticmethod
