@@ -21,7 +21,6 @@ def open(init=None, extensions=None, **kwargs):
 
     Parameters
     ----------
-
     init : shape tuple, file path, file object, astropy.io.fits.HDUList,
            numpy array, dict, None
 
@@ -45,9 +44,8 @@ def open(init=None, extensions=None, **kwargs):
         A list of extensions to the ASDF to support when reading
         and writing ASDF files.
 
-   Results
+    Returns
     -------
-
     model : DataModel instance
     """
 

@@ -1,5 +1,5 @@
 ===========
-PERSISTENCE
+Persistence
 ===========
 
 .. toctree::

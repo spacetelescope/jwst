@@ -16,8 +16,6 @@ class BackgroundStep(Step):
     def process(self, input, bkg_list):
 
         """
-        Short Summary
-        -------------
         Subtract the background signal from target exposures by subtracting
         designated background images from them.
 

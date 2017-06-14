@@ -152,21 +152,21 @@ class ResampleData(object):
         # in single-drizzle mode (mosaic all detectors in a single observation)
         if self.drizpars['single']:
             driz_outputs = self.input_models.group_names
-            model_groups = self.input_models.models_grouped
+            exposures = self.input_models.models_grouped
             group_exptime = []
-            for group in model_groups:
-                group_exptime.append(group[0].meta.exposure.exposure_time)
+            for exposure in exposures:
+                group_exptime.append(exposure[0].meta.exposure.exposure_time)
         else:
-            driz_outputs = [self.input_models.meta.resample.output]
-            model_groups = [self.input_models]
+            driz_outputs = [self.output_filename]
+            exposures = [self.input_models]
 
             total_exposure_time = 0.0
-            for group in model_groups:
-                total_exposure_time += group[0].meta.exposure.exposure_time
+            for exposure in exposures:
+                total_exposure_time += exposure[0].meta.exposure.exposure_time
             group_exptime = [total_exposure_time]
         pointings = len(self.input_models.group_names)
 
-        for obs_product, group, texptime in zip(driz_outputs, model_groups,
+        for obs_product, exposure, texptime in zip(driz_outputs, exposures,
             group_exptime):
             output_model = self.blank_output.copy()
             output_model.meta.filename = obs_product
@@ -188,7 +188,7 @@ class ResampleData(object):
                                 kernel=self.drizpars['kernel'],
                                 fillval=self.drizpars['fillval'])
 
-            for n, img in enumerate(group):
+            for n, img in enumerate(exposure):
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
 
@@ -223,7 +223,7 @@ class ResampleData(object):
             output_model.meta.resample.pointings = pointings
 
             self.output_models.append(output_model)
-        #self.output_models.save(None)  # DEBUG: Remove for production
+
 
 def _buildMask(dqarr, bitvalue):
     """ Builds a bit-mask from an input DQ array and a bitvalue flag"""

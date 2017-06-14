@@ -2,9 +2,10 @@
 STPIPE
 ======
 
+.. _stpipe-user-steps:
+
 For Users
 =========
-
 .. toctree::
    :maxdepth: 2
 
@@ -12,6 +13,8 @@ For Users
    user_pipeline.rst
    user_logging.rst
 
+
+.. _stpipe-devel-steps:
 
 For Developers
 ==============

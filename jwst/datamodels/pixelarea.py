@@ -34,8 +34,8 @@ class NirspecSlitAreaModel(model_base.DataModel):
         of the slit id and the pixel area values associated with
         the slits.
 
-        slit_id: str[15]
-        pixarea: float32
+        - slit_id: str[15]
+        - pixarea: float32
     """
     schema_url = "nirspec_area_slit.schema.yaml"
 
@@ -59,10 +59,10 @@ class NirspecMosAreaModel(model_base.DataModel):
         of MOS shutter parameters and the pixel area values associated
         with the shutters.
 
-        quadrant: int16
-        shutter_x: int16
-        shutter_y: int16
-        pixarea: float32
+        - quadrant: int16
+        - shutter_x: int16
+        - shutter_y: int16
+        - pixarea: float32
     """
     schema_url = "nirspec_area_mos.schema.yaml"
 
@@ -86,8 +86,8 @@ class NirspecIfuAreaModel(model_base.DataModel):
         of IFU slice id and the pixel area values associated
         with the slices.
 
-        slice_id: int16
-        pixarea: float32
+        - slice_id: int16
+        - pixarea: float32
     """
     schema_url = "nirspec_area_ifu.schema.yaml"
 

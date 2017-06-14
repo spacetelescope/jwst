@@ -110,7 +110,7 @@ class OutlierDetection(object):
         """Flag outlier pixels in DQ of input images
         """
         pars = self.outlierpars
-        save_intermediate_files = pars['save_intermediate_files']
+        save_intermediate_results = pars['save_intermediate_results']
 
         # Start by creating resampled/mosaic images for each group of exposures
         sdriz = resample.ResampleData(self.input_models, single=True,
@@ -119,7 +119,7 @@ class OutlierDetection(object):
         drizzled_models = sdriz.output_models
         for model in drizzled_models:
             model.meta.filename += ".fits"
-        if save_intermediate_files:
+        if save_intermediate_results:
             log.info("Writing out resampled exposures...")
             drizzled_models.save()
 
@@ -133,14 +133,14 @@ class OutlierDetection(object):
         # Perform median combination on set of drizzled mosaics
         median_model.data = create_median(drizzled_models, **pars)
 
-        if save_intermediate_files:
+        if save_intermediate_results:
             log.info("Writing out MEDIAN image to: {}".format(median_model.meta.filename))
             median_model.save(median_model.meta.filename)
 
         # Blot the median image back to recreate each input image specified in
         # the original input list/ASN/ModelContainer
         blot_models = blot_median(median_model, self.input_models, **pars)
-        if save_intermediate_files:
+        if save_intermediate_results:
             log.info("Writing out BLOT images...")
             blot_models.save()
 

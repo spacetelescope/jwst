@@ -186,12 +186,18 @@ class ModelContainer(model_base.DataModel):
         self.meta.asn_rule = str(asn_data['asn_rule'])
 
 
-    def save(self, path=None, *args, **kwargs):
+    def save(self, path_not_used, path=None, *args, **kwargs):
         """
         Write out models in container to FITS or ASDF.
 
         Parameters
         ----------
+        path_not_used : string
+            This first argument is ignored in this implementation of the
+            save method.  It is used by pipeline steps to save individual
+            files, but that is not applicable here.  Instead, we use the path
+            arg below and read the filename output from `meta.filename` in each
+            file in the container.
 
         path : string
             Directory to write out files.  Defaults to current working dir.
