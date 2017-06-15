@@ -153,7 +153,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
             try:
-                asdf = AsdfFile.open(init, extensions=extensions)
+                # The open function now automatically processes FITS files with
+                # ASDF extensions. However, since our implementation expects
+                # the function to raise a ValueError for anything other than a
+                # true ASDF file, we need to explicitly tell open to ignore
+                # FITS files.
+                asdf = AsdfFile.open(init, extensions=extensions,
+                                     accept_asdf_in_fits=False)
             except (ValueError):
                 try:
                     hdulist = fits.open(init)
