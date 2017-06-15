@@ -1,8 +1,5 @@
 from __future__ import absolute_import
 
-import os
-import pytest
-
 from . import helpers
 from .helpers import full_pool_rules
 

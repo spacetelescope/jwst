@@ -100,7 +100,7 @@ class Spec3Pipeline(Pipeline):
 
             # The MultiExposureModel is a required output.
             if isinstance(result, datamodels.MultiExposureModel):
-                self.save_model(result, 'source')
+                self.save_model(result, 'cal')
 
             # Call the skymatch step for MIRI MRS data
             if exptype in ['MIR_MRS']:
@@ -111,22 +111,16 @@ class Spec3Pipeline(Pipeline):
 
             # Resample time. Dependent on whether the data is IFU or
             # not.
-            resample_complete = 'SKIPPED'
+            resample_complete = None
             if exptype in IFU_EXPTYPES:
                 result = self.cube_build(result)
-                try:
-                    resample_complete = result.meta.cal_step.cube_build
-                except AttributeError:
-                    pass
+                resample_complete = result.meta.cal_step.cube_build
             else:
                 result = self.resample_spec(result)
-                try:
-                    resample_complete = result.meta.cal_step.resample
-                except AttributeError:
-                    pass
+                resample_complete = result.meta.cal_step.resample
 
             # Do 1-D spectral extraction
-            if resample_complete.upper() == 'COMPLETE':
+            if resample_complete is not None and resample_complete.upper() == 'COMPLETE':
                 result = self.extract_1d(result)
             else:
                 self.log.warn(
