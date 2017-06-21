@@ -181,8 +181,9 @@ class CubeData(object):
         cube_build_io_util.check_cube_type(self)
 
         self.output_name = cube_build_io_util.update_output_name(self)
-        log.info('Output Name %s',self.output_name)
-        log.info('Output Base %s ', self.output_name_base)
+        if not self.single:
+            log.info('Output Name %s',self.output_name)
+#            log.info('Output Base %s ', self.output_name_base)
 #________________________________________________________________________________
 # InstrumentDefaults is an  dictionary that holds default parameters for
 # difference instruments and for each band
@@ -827,10 +828,8 @@ class CubeData(object):
         err_cube = np.zeros((naxis3, naxis2, naxis1))
 
         IFUCube = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
-
-
-
         IFUCube.update(self.input_models[j])
+
         IFUCube.meta.filename = self.output_name
         if self.single:
             with datamodels.open(self.input_models[j]) as input:
@@ -838,7 +837,6 @@ class CubeData(object):
                 # back to model container - do we want to define
                 # a new KEYWORD - filename_org ?
                 #IFUCube.meta.filename = input.meta.filename
-
 
                 filename = self.input_filenames[j]
                 indx = filename.rfind('.fits')
@@ -874,10 +872,10 @@ class CubeData(object):
 
         IFUCube.meta.wcsinfo.wcsaxes = 3
 
-        IFUCube.flux_extension = 'SCI'
-        IFUCube.error_extension = 'ERR'
+        IFUCube.meta.flux_extension = 'SCI'
+        IFUCube.meta.error_extension = 'ERR'
         IFUCube.meta.dq_extension = 'DQ'
-        IFUCube.meta.weightmap = 'WMAP'
+        IFUCube.meta.weightmap_extension = 'WMAP'
         IFUCube.meta.data_model_type = 'IFUCubeModel'
         IFUCube.error_type = 'ERR'
 
