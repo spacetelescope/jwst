@@ -16,8 +16,6 @@ class SubtractImagesStep(Step):
     def process(self, input1, input2):
 
         """
-        Short Summary
-        -------------
         Subtract the background signal from a JWST data model by
         subtracting a background image from it.
 

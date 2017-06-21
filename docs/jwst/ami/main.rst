@@ -1,4 +1,3 @@
-
 Tasks in the Package
 ====================
 The Aperture Masking Interferometry (AMI) pipeline package currently consists
@@ -98,7 +97,7 @@ following list of extensions:
 7) ``PUPIL_PHA``: table of pupil phases
 8) ``SOLNS``: table of fringe coefficients
 
-AMI_AVERAGE
+AMI_Average
 ===========
 
 Overview
@@ -120,7 +119,7 @@ The step produces a single output file, having the same format as the input
 files, where the data for the 8 file components
 are the average of each component from the list of input files.
 
-AMI_NORMALIZE
+AMI_Normalize
 =============
 
 Overview

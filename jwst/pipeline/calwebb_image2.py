@@ -14,10 +14,6 @@ from ..photom import photom_step
 
 __version__ = "3.0"
 
-# Define logging
-log = logging.getLogger()
-log.setLevel(logging.DEBUG)
-
 
 class Image2Pipeline(Pipeline):
     """
@@ -38,7 +34,7 @@ class Image2Pipeline(Pipeline):
 
     def process(self, input):
 
-        log.info('Starting calwebb_image2 ...')
+        self.log.info('Starting calwebb_image2 ...')
 
         # Retrieve the input(s)
         asn = LoadAsLevel2Asn.load(input)
@@ -52,7 +48,7 @@ class Image2Pipeline(Pipeline):
         # Process each exposure.
         results = []
         for product in asn['products']:
-            log.info('Processing product {}'.format(product['name']))
+            self.log.info('Processing product {}'.format(product['name']))
             self.output_basename = product['name']
             result = self.process_exposure_product(
                 product,
@@ -68,7 +64,7 @@ class Image2Pipeline(Pipeline):
                 ignore_use_model=True
             )
 
-        log.info('... ending calwebb_image2')
+        self.log.info('... ending calwebb_image2')
         return results
 
     # Process each exposure
@@ -94,13 +90,13 @@ class Image2Pipeline(Pipeline):
         # one. We'll just get the first one found.
         science = members_by_type['science']
         if len(science) != 1:
-            log.warn(
+            self.log.warn(
                 'Wrong number of science files found in {}'.format(
                     exp_product['name']
                 )
 
             )
-            log.warn('    Using only first one.')
+            self.log.warn('    Using only first one.')
         science = science[0]
 
         self.log.info('Working on input %s ...', science)
@@ -119,7 +115,7 @@ class Image2Pipeline(Pipeline):
         input = self.photom(input)
 
         # That's all folks
-        log.info(
+        self.log.info(
             'Finished processing product {}'.format(exp_product['name'])
         )
         return input

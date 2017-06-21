@@ -13,8 +13,6 @@ class AmiAverageStep(Step):
 
     def process(self, input_list):
         """
-        Short Summary
-        -------------
         Averages the results of LG analysis for a set of multiple NIRISS AMI
         mode exposures.
 

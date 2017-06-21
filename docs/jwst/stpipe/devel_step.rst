@@ -1,5 +1,3 @@
-.. _devel-steps:
-
 =====
 Steps
 =====
