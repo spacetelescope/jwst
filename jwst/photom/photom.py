@@ -537,9 +537,11 @@ class DataSet(object):
         for (k, ifu_wcs) in enumerate(list_of_wcs):
 
             # Construct array indexes for pixels in this slice
-            x, y = gwcs.wcstools.grid_from_bounding_box(ifu_wcs.bounding_box, step=(1,1), center=True)
+            x, y = gwcs.wcstools.grid_from_bounding_box(ifu_wcs.bounding_box,
+                    step=(1, 1), center=True)
 
-            log.debug("Slice %d: %g %g %g %g" % (k, x[0][0], x[-1][-1], y[0][0], y[-1][-1]))
+            log.debug("Slice %d: %g %g %g %g" %
+                    (k, x[0][0], x[-1][-1], y[0][0], y[-1][-1]))
 
             # Get the world coords for all pixels in this slice
             coords = ifu_wcs(x, y)
@@ -566,8 +568,8 @@ class DataSet(object):
             # Insert the pixel area value for this slice into the
             # whole image array
             ar = np.ones_like(wl)
-            ar[:,:] = \
-                area_data[np.where(area_data['slice_id']==k)]['pixarea'][0]
+            ar[:, :] = \
+                area_data[np.where(area_data['slice_id'] == k)]['pixarea'][0]
             ar[nan_flag] = 1.
             area2d[y.astype(int), x.astype(int)] = ar
 
@@ -631,58 +633,82 @@ class DataSet(object):
         Short Summary
         -------------
         Read the pixel area values in the PIXAR_A2 and PIXAR_SR keys from the
-        meta data in the table reference file and in the pixel area reference
-        file. If all the keys are present in both reference files, and if the
-        the difference in the values of the pixel areas in square arc seconds
-        does not exceed the threshold, these 2 keywords are written to the
-        primary extension of the output product. Copy the pixel area array from
-        the pixel area reference file to the area extension of the output
-        product.
+        meta data in the photom reference file and the pixel area reference
+        file. Copy the values from the pixel area reference file header keywords
+        to the output product. If the difference between the values of the pixel
+        area (in units of arc seconds) between the two reference files exceeds a
+        defined threshold, issue a warning.
+
+        Also copy the pixel area data array from the pixel area reference file
+        to the area extension of the output product.
 
         Parameters
         ----------
         ftab: DataModel object
-            Instance for photom table reference file
+            Instance of photom reference file table data
 
         area_fname: string
-            pixel area map file name
+            Pixel area reference file name
 
         Returns
         -------
         None
 
         """
+
+        # Load the pixel area reference file
         pix_area = datamodels.PixelAreaModel(area_fname)
 
-        # Set model-dependent attribute to area array
+        # Copy the pixel area data array to the appropriate attribute
+        # of the science data model
         if isinstance(self.input, datamodels.MultiSlitModel):
             self.input.slits[0].area = pix_area.data
         else:
             self.input.area = pix_area.data
+        log.info('Pixel area map copied to output.')
 
-        # access pixel areas in steradians and arcsec squared from
-        # the table ref file and the pixel area ref file
-        # (the *_ster keys are read but not used)
+        # Load the average pixel area values from the photom reference file
         try:
+            tab_ster = None
+            tab_a2 = None
             tab_ster = ftab.meta.photometry.pixelarea_steradians
             tab_a2 = ftab.meta.photometry.pixelarea_arcsecsq
+        except:
+            # If one or both of them are missing, issue a warning, but carry on
+            log.warning('At least one of the PIXAR_nn keyword values in missing')
+            log.warning('from the photom reference file')
+
+        # Load the average pixel area values from the pixel area reference file
+        try:
+            area_ster = None
+            area_a2 = None
             area_ster = pix_area.meta.photometry.pixelarea_steradians
             area_a2 = pix_area.meta.photometry.pixelarea_arcsecsq
+        except:
+            # If one or both of them are missing, issue a warning
+            log.warning('At least one of the PIXAR_nn keyword values is missing')
+            log.warning('from the reference file %s', area_fname)
+            log.warning('Pixel area keyword values will not be set in the output')
 
-            a2_tol = abs(tab_a2 - area_a2) / (tab_a2 + area_a2) # rel. tolerance
+        # Compute the relative difference between the pixel area values from the
+        # two different sources, if they exist
+        if (tab_a2 is not None) and (area_a2 is not None):
+            a2_tol = abs(tab_a2 - area_a2) / (tab_a2 + area_a2)
+
+            # If the difference is greater than the defined tolerance,
+            # issue a warning
             if (a2_tol > PHOT_TOL):
                 log.warning('The relative difference between the values for the')
                 log.warning('pixel area in sq arcsec (%s)', a2_tol)
-                log.warning('exceeds the allowed tolerance (%s)', PHOT_TOL)
-            else:  # copy the keys to the primary header of the output
-                log.debug('The values of the pixel areas (PIXAR_A2 and PIXAR_SR)')
-                log.debug('will be copied to the output.')
-                self.input.meta.photometry.pixelarea_arcsecsq = float(tab_a2)
-                self.input.meta.photometry.pixelarea_steradians = float(tab_ster)
-        except: # at least 1 keyword is missing so keys will not be written
-            pass
+                log.warning('exceeds the defined tolerance (%s)', PHOT_TOL)
 
-        log.info('Pixel area map written.')
+        # Copy the pixel area values to the output
+        log.debug('The values of the pixel areas (PIXAR_A2 and PIXAR_SR)')
+        log.debug('will be copied to the output.')
+        if area_a2 is not None:
+            self.input.meta.photometry.pixelarea_arcsecsq = float(area_a2)
+        if area_ster is not None:
+            self.input.meta.photometry.pixelarea_steradians = float(area_ster)
 
         return None
 

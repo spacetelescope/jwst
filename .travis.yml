@@ -24,7 +24,7 @@ env:
         - PIP_DEPENDENCIES=''
         - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
         - CRDS_PATH='/tmp/crds_cache'
-        - NUMPY_VERSION=1.11
+        - NUMPY_VERSION=1.12
 
     matrix:
         - PYTHON_VERSION=2.7 SETUP_CMD='install'
@@ -38,9 +38,9 @@ matrix:
     fast_finish: true
 
     include:
-        # Test numpy 1.12
-        - os: linux
-          env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.12 SETUP_CMD='test'
+        # Test numpy 1.13
+        #- os: linux
+        #  env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.13 SETUP_CMD='test'
 
         # PEP8 check with pycodestyle (only once, i.e. "os: linux")
         - os: linux
@@ -64,6 +64,9 @@ matrix:
 install:
     - git clone git://github.com/astropy/ci-helpers.git
     - source ci-helpers/travis/setup_conda_$TRAVIS_OS_NAME.sh
+
+after_install:
+    - conda list astropy
 
 script:
     - $MAIN_CMD $SETUP_CMD

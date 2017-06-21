@@ -1,4 +1,3 @@
-
 FITS file structures and contents
 =================================
 
@@ -7,7 +6,7 @@ forms of FITS files for JWST science data products. Each type of FITS
 file is the result of serialization of a corresponding data model.
 
 Common Features
-===============
+---------------
 
 All FITS science products have a few common features to their structure
 and organization:
@@ -46,13 +45,13 @@ An example Level-2a product FITS file name is::
    jw93065002001_02101_00001_nrca1_rate.fits
 
 Specific products
-=================
+-----------------
 
 This section lists the organization and contents of each type of
 science product in FITS form.
 
 Raw Level-1b (suffix = `uncal`)
--------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Exposure raw data (level-1b) products are designated with a file name
 suffix of "uncal." These files usually contain only the raw pixel values
@@ -89,7 +88,7 @@ for each integration, stored as a 3-D cube (each cube plane corresponds
 to an integration).
 
 Level-2 ramp data (suffix = `ramp`)
------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 As soon as raw level-1b products are loaded into the calibration
 pipeline the contents of the product is modified to include
 additional data extensions, as well as converting the raw SCI
@@ -121,8 +120,7 @@ file (e.g. GROUP, ZEROFRAME, REFOUT) will be carried along and
 will also appear in the level-2 ramp product.
 
 Level-2a countrate products (suffix = `rate` and `rateints`)
-------------------------------------------------------------
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Countrate products are produced by applying ramp-fitting to the
 integrations within an exposure, in order to compute count rates
 from the original accumulating signal. For exposures that
@@ -170,8 +168,7 @@ previous types of products have been combined into a single DQ extension
 with the same dimensions as the SCI and ERR components.
 
 Level-2b calibrated products (suffix = `cal` and `calints`)
------------------------------------------------------------
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Single exposure calibrated products duplicate the format and content of
 level-2a products. As with level-2a, there are two different forms of
 calibrated products: one containing results for individual integrations

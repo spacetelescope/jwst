@@ -5,17 +5,19 @@ from os import path
 import pytest
 import tempfile
 
+from .helpers import (
+    SCRIPT_PATH,
+    SCRIPT_DATA_PATH,
+    abspath,
+    mk_tmp_dirs,
+    update_asn_basedir,
+)
+
 from ...associations.asn_from_list import asn_from_list
 from ...associations.lib.rules_level2_base import DMSLevel2bBase
 from ...datamodels import open as dm_open
 from ...stpipe.step import Step
 from ..calwebb_image2 import Image2Pipeline
-
-
-def abspath(filepath):
-    """Get the absolute file path"""
-    return path.abspath(path.expanduser(path.expandvars(filepath)))
-
 
 DATAPATH = abspath(
     '${TEST_BIGDATA}/miri/test_image2pipeline/'
@@ -30,25 +32,11 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-@pytest.fixture
-def mk_tmp_dirs():
-    tmp_current_path = tempfile.mkdtemp()
-    tmp_data_path = tempfile.mkdtemp()
-    tmp_config_path = tempfile.mkdtemp()
-
-    old_path = os.getcwd()
-    try:
-        os.chdir(tmp_current_path)
-        yield (tmp_current_path, tmp_data_path, tmp_config_path)
-    finally:
-        os.chdir(old_path)
-
-
 def test_no_cfg(mk_tmp_dirs):
     """What happens when the pipeline is run without a config"""
     exppath = path.join(DATAPATH, EXPFILE)
     args = [
-        path.join(path.dirname(__file__), 'calwebb_image2_empty.cfg'),
+        path.join(SCRIPT_DATA_PATH, 'calwebb_image2_empty.cfg'),
         exppath,
     ]
     Step.from_cmdline(args)
@@ -72,7 +60,7 @@ def test_asn(mk_tmp_dirs):
         fp.write(serialized)
 
     args = [
-        path.join(path.dirname(__file__), 'calwebb_image2_save.cfg'),
+        path.join(SCRIPT_DATA_PATH, 'calwebb_image2_save.cfg'),
         asn_file,
     ]
     Step.from_cmdline(args)
@@ -82,14 +70,14 @@ def test_asn(mk_tmp_dirs):
 
 def test_datamodel(mk_tmp_dirs):
     model = dm_open(path.join(DATAPATH, EXPFILE))
-    cfg = path.join(path.dirname(__file__), 'calwebb_image2_save.cfg')
+    cfg = path.join(SCRIPT_DATA_PATH, 'calwebb_image2_save.cfg')
     Image2Pipeline.call(model, config_file=cfg)
-    assert path.isfile('jw00001001001_01101_00001_MIRIMAGE_uncal_cal.fits')
+    assert path.isfile('jw00001001001_01101_00001_MIRIMAGE_cal.fits')
 
 
 def test_file(mk_tmp_dirs):
     exppath = path.join(DATAPATH, EXPFILE)
-    cfg = path.join(path.dirname(__file__), 'calwebb_image2_save.cfg')
+    cfg = path.join(SCRIPT_DATA_PATH, 'calwebb_image2_save.cfg')
     Image2Pipeline.call(exppath, config_file=cfg)
     assert path.isfile(CALFILE)
 
@@ -102,7 +90,7 @@ def test_file_outputdir(mk_tmp_dirs):
     outfile = 'junk.fits'
 
     args = [
-        path.join(path.dirname(__file__), 'calwebb_image2_save.cfg'),
+        path.join(SCRIPT_DATA_PATH, 'calwebb_image2_save.cfg'),
         exppath,
         '--output_file=' + outfile,
         '--output_dir=' + tmp_data_path,

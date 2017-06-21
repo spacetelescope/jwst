@@ -20,8 +20,6 @@ class AmiAnalyzeStep(Step):
 
     def process(self, input):
         """
-        Short Summary
-        -------------
         Performs analysis of an AMI mode exposure by applying the LG algorithm.
 
         Parameters

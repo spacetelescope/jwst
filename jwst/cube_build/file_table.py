@@ -163,8 +163,12 @@ class FileTable(object):
 
 
 #********************************************************************************
-    def set_file_table(self, input_models,input_filenames,
-                       input_ra_offset,input_dec_offset):
+    def set_file_table(self,
+                       input_models,
+                       input_filenames,
+                       input_ra_offset,
+                       input_dec_offset
+    ):
 #********************************************************************************
         """
         Short Summary
@@ -187,7 +191,7 @@ class FileTable(object):
         detector
 
         """
-        num = 0    
+        num = 0
         num = len(input_filenames)
 
 #________________________________________________________________________________

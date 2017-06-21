@@ -476,10 +476,6 @@ properties:
             title: Effective exposure time (sec)
             type: number
             fits_keyword: EFFEXPTM
-          charge_time:
-            title: Charge accumulation time per integration (sec)
-            type: number
-            fits_keyword: CHRGTIME
           duration:
             title: Total duration of exposure (sec)
             type: number
@@ -1088,18 +1084,6 @@ properties:
             type: string
             enum: [COARSE, FINEGUIDE, MOVING, NONE, TRACK]
             fits_keyword: PCS_MODE
-          gs_ctd_x:
-            title: guide star centroid x position in the FGS ideal coordinate frame (arcsec)
-            type: number
-            fits_keyword: GSCENTX
-          gs_ctd_y:
-            title: guide star centroid y position in the FGS ideal coordinate frame (arcsec)
-            type: number
-            fits_keyword: GSCENTY
-          gs_jitter_rms:
-            title: RMS jitter over the exposure (arcsec)
-            type: number
-            fits_keyword: JITTERMS
           visit_end_time:
             title: Observatory UTC time when the visit completed
             type: string
@@ -1588,6 +1572,10 @@ properties:
             title: Image resampling
             type: string
             fits_keyword: S_RESAMP
+          cube_build:
+            title: IFU  resampling
+            type: string
+            fits_keyword: S_IFUCUB
           source_catalog:
             title: Source Photometry and Morphology
             type: string

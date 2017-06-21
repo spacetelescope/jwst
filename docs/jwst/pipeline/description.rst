@@ -1,3 +1,7 @@
+.. _pipelines:
+
+Pipeline Modules
+================
 
 The actual pipelines that call individual correction steps in various
 orders are defined as python classes within python code modules. The pipelines
@@ -34,6 +38,8 @@ parenthetical link to the data model in question. For some steps, the
 output file may represent different data models depending on the input
 to those steps. As a result, the data models listed here will not be
 an exhaustive list.
+
+.. _level-2a-flow:
 
 Level-2a Pipeline Step Flow (calwebb_sloper)
 =============================================
@@ -127,6 +133,8 @@ Arguments
 ---------
 The ``calwebb_dark`` pipeline does not have any optional arguments.
 
+.. _level-2b-imaging-flow:
+
 Level-2b Imaging Pipeline Step Flow (calwebb_image2)
 ====================================================
 Level-2b imaging (``calwebb_image2``) processing applies additonal corrections
@@ -162,6 +170,8 @@ Arguments
 ---------
 The ``calwebb_image2`` pipeline does not have any optional arguments.
 
+.. _level-2b-spectroscopic-flow:
+
 Level-2b Spectroscopic Pipeline Step Flow (calwebb_spec2)
 ==========================================================
 Level-2b spectroscopic (``calwebb_spec2``) processing applies additional
@@ -171,7 +181,7 @@ The list of correction steps is shown below. Some steps are only applied to
 certain instruments or instrument modes, as noted in the table.
 
 Note that level-2b processing for NIRCam and NIRISS Wide-Field Slitless (grism)
-Spectroscopy modes is not yet implemented.
+Spectroscopy modes are not implemented yet.
 
 +------------------+----+-----+-----+----+----+-----+--------+
 | Instrument Mode  |     NIRSpec    |     MIRI      | NIRISS |
@@ -203,11 +213,11 @@ Spectroscopy modes is not yet implemented.
 | extract_1d       | X  |  X  |  X  | X  | X  |  X  |   X    |
 +------------------+----+-----+-----+----+----+-----+--------+
 
-The ``resamp_spec`` step produces a resampled/rectified product for non-IFU
-modes of some kinds of spectroscopic exposures. If the resample_spec step is not
-applied to a given exposure, the extract_1d operation will be performed on the
-original (unresampled) data.
-The ``cube_build`` step produces a resampled/rectified cube for IFU exposures.
+The ``resample_spec`` step produces a resampled/rectified product for non-IFU
+modes of some kinds of spectroscopic exposures. If the ``resample_spec`` step
+is not applied to a given exposure, the ``extract_1d`` operation will be
+performed on the original (unresampled) data. The ``cube_build`` step produces
+a resampled/rectified cube for IFU exposures.
 
 Inputs
 ------
@@ -267,6 +277,8 @@ The ``calwebb_spec2`` pipeline has one optional argument:
 which is a Boolean argument with a default value of ``False``. If the user sets
 it to ``True``, the results of the background subtraction step (if applied) are
 saved to an intermediate file of type ``_bsub`` or ``_bsubints``, as appropriate.
+
+.. _level-3-imaging-flow:
 
 Level-3 Imaging Pipeline Step Flow (calwebb_image3)
 ===================================================

@@ -8,15 +8,15 @@ from . import outlier_detection
 
 class OutlierDetectionStep(Step):
     """
-    OutlierDetectionStep: Flag outlier pixels (bad pixels, cosmic-ray hits,...)
-    in the DQ arrays of each input image of an ASN.  This step relies on the
-    same basic algorithm (and even some of the core code) from DrizzlePac.
+    Flag outlier bad pixels and cosmic rays in the DQ array of each input image
+
+    Input images can listed in an input association file or already opened
+    with a ModelContainer.  DQ arrays are modified in place.
 
     Parameters
     -----------
-    input : str or model
-        Single filename for either a single image or an association table.  This
-        would then get used to create a AsnModel(?) object for this step.
+    input : asn file or ModelContainer
+        Single filename association table, or a datamodels.ModelContainer.
     """
 
     spec = """
@@ -31,7 +31,7 @@ class OutlierDetectionStep(Step):
         snr = string(default='4.0 3.0')
         scale = string(default='0.5 0.4')
         backg = float(default=0.0)
-        save_intermediate_files = boolean(default=False)
+        save_intermediate_results = boolean(default=False)
     """
     reference_file_types = ['gain', 'readnoise']
 
@@ -64,7 +64,8 @@ class OutlierDetectionStep(Step):
                 'snr': self.snr,
                 'scale': self.scale,
                 'backg': self.backg,
-                'save_intermediate_files': self.save_intermediate_files}
+                'save_intermediate_results': self.save_intermediate_results
+                }
 
             # Set up outlier detection, then do detection
             step = outlier_detection.OutlierDetection(self.input_models,
