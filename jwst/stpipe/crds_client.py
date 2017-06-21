@@ -39,6 +39,8 @@ import gc
 import crds
 from crds import log, config
 
+log.remove_console_handler()  # Remove CRDS native output in favor of stpipe Step logging
+
 def _flatten_dict(nested):
     def flatten(root, path, output):
         for key, val in root.items():
