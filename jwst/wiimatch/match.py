@@ -12,7 +12,6 @@ from __future__ import (absolute_import, division, unicode_literals,
 
 # STDLIB
 import copy
-import sets
 
 import numpy as np
 from stsci.tools.bitmask import interpret_bit_flags
@@ -177,7 +176,7 @@ array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
     """
 
     # check that all images have the same shape:
-    shapes = sets.Set()
+    shapes = set([])
     for im in images:
         shapes.add(im.shape)
     if len(shapes) > 1:
