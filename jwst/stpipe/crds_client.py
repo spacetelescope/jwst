@@ -87,14 +87,24 @@ def get_multiple_reference_paths(input_file, reference_file_types):
     try:
         bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
     except crds.CrdsBadRulesError as exc:
+        _augment_traceback(input_file, reference_file_types, data_dict)
         raise crds.CrdsBadRulesError(str(exc))
     except crds.CrdsBadReferenceError as exc:
+        _augment_traceback(input_file, reference_file_types, data_dict)
         raise crds.CrdsBadReferenceError(str(exc))
-
+    except Exception:
+        _augment_traceback(input_file, reference_file_types, data_dict)
+        raise
+    
     refpaths = {filetype: filepath if "N/A" not in filepath.upper() else "N/A"
                  for (filetype, filepath) in bestrefs.items()}
 
     return refpaths
+
+def _augment_traceback(input_file, reftypes, data_dict):
+    """For CRDS fatal exceptions, add debug output prior to re-raising."""
+    log.error("Fetching best references FAILED for dataset='{}' for reftypes={} with parameters:\n".format(
+        input_file, reftypes), log.PP(data_dict))
 
 def check_reference_open(refpath):
     """Verify that `refpath` exists and is readable for the current user.
