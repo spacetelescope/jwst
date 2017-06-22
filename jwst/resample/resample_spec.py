@@ -182,7 +182,8 @@ class ResampleSpecData(object):
                 xpos.append(np.nan)
             else:
                 f = interpolate.interp1d(row[x_center - sz + 1:x_center + sz],
-                    x[y_center, x_center - sz + 1:x_center + sz])
+                    x[y_center, x_center - sz + 1:x_center + sz],
+                    bounds_error=False, fill_value='extrapolate')
                 xpos.append(f(lam[y_center, x_center]))
         x_arg = np.array(xpos)[~np.isnan(lam[:, x_center])]
         y_arg = y[~np.isnan(lam[:,x_center]), x_center]

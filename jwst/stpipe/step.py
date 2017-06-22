@@ -22,7 +22,9 @@ from . import log
 from . import utilities
 from .. import __version_commit__, __version__
 
-REMOVE_SUFFIX = '(.+?)(_(rate|cal)(ints)?)?$'
+SUFFIX_LIST = ['rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
+    'jump', 'ramp', 'x1d', 'x2d', 'x1dints', 'calints', 'rateints']
+REMOVE_SUFFIX = '^(.+?)(_(' + '|'.join(SUFFIX_LIST) + '))?$'
 
 
 class Step(object):
@@ -36,6 +38,7 @@ class Step(object):
     output_file = output_file(default=None) # File to save output to.
     skip = boolean(default=False)           # Skip this step
     save_results = boolean(default=False)   # Force save results
+    suffix = string(default=None)           # Default suffix for output files
     """
 
     reference_file_types = []
@@ -188,8 +191,8 @@ class Step(object):
         name : str, optional
             If provided, use that name for the returned instance.
             If not provided, try the following (in order):
-                - The `name` parameter in the config file fragment
-                - The name of returned class
+              - The `name` parameter in the config file fragment
+              - The name of returned class
 
         config_file : str, optional
             The path to the config file that created this step, if
@@ -336,8 +339,12 @@ class Step(object):
                 'Step {0} running with args {1}.'.format(
                     self.name, args))
 
+            hook_args = args
             for pre_hook in self._pre_hooks:
-                pre_hook.run(*args)
+                hook_results = pre_hook.run(*hook_args)
+                if hook_results is not None:
+                    hook_args = hook_results
+            args = hook_args
 
             self._reference_files_used = []
 
@@ -360,6 +367,16 @@ class Step(object):
             # Warn if returning a discouraged object
             self._check_args(result, DISCOURAGED_TYPES, "Returned")
 
+            # Run the post hooks
+            for post_hook in self._post_hooks:
+                hook_results = post_hook.run(result)
+                if hook_results is not None:
+                    result = hook_results
+
+            # Result to return
+            result_return = result
+
+            # Update meta information
             if not isinstance(result, (list, tuple)):
                 results = [result]
             else:
@@ -374,9 +391,6 @@ class Step(object):
                         result.meta.ref_file.crds.sw_version = crds_client.get_svn_version()
                         result.meta.ref_file.crds.context_used = crds_client.get_context_used()
                 self._reference_files_used = []
-
-            for post_hook in self._post_hooks:
-                post_hook.run(result)
 
             # Mark versions
             for result in results:
@@ -409,7 +423,7 @@ class Step(object):
         finally:
             log.delegator.log = orig_log
 
-        return result
+        return result_return
 
     __call__ = run
 
@@ -710,6 +724,7 @@ class Step(object):
             self, model, suffix=suffix, ignore_use_model=True
         )
 
+        self.log.info('Step.save_model {}'.format(output_path))
         model.save(output_path, *args, **kwargs)
 
     @staticmethod

@@ -119,3 +119,45 @@ class ProperPipeline(Pipeline):
         r = self.another_stepwithmodel(r)
 
         return r
+
+
+class PreHookStep(Step):
+    """A step to try out hooks"""
+
+    spec = """
+    """
+
+    def process(self, *args):
+        self.log.info('Received args: "{}"'.format(args))
+        self.log.info('Self.parent = "{}"'.format(self.parent))
+
+        args[0].pre_hook_run = True
+        self.parent.pre_hook_run = True
+
+
+class PostHookStep(Step):
+    """A step to try out hooks"""
+
+    spec = """
+    """
+
+    def process(self, *args):
+        self.log.info('Received args: "{}"'.format(args))
+        self.log.info('Self.parent = "{}"'.format(self.parent))
+
+        args[0].post_hook_run = True
+        self.parent.post_hook_run = True
+
+
+class PostHookWithReturnStep(Step):
+    """A step to try out hooks"""
+
+    spec = """
+    """
+
+    def process(self, *args):
+        self.log.info('Received args: "{}"'.format(args))
+        self.log.info('Self.parent = "{}"'.format(self.parent))
+
+        self.parent.post_hook_run = True
+        return 'PostHookWithReturnStep executed'
