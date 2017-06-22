@@ -424,65 +424,34 @@ class Model_db(object):
             for value in values:
                 save_dictionary(fd, value, leading=leading+'- ')
             
-        def is_long_line(leading, name, value, max_length=80):
-            long_line = leading + name + ': ' + str(value)
-            return len(long_line) > max_length
-    
-        def save_long_line(leading, name, value, sep1, sep2, max_length=80):
-            long_line = leading + name + ': '
-            values = value.split(sep1)
-                
+        def save_simple_list(leading, name, values, max_length=80):
             start = True
             line_start = 0
             prefix = leading + '  '
+            long_line = leading + name + ": ["
 
-            for value in values:
-                nl = value.find('\n')
-                if nl >= 0:
-                    long_line += value[0:nl+1]
-                    value = value[nl+1:]
-                    line_start = len(long_line)
-
+            for value in sorted(values):
+                if not isinstance(value, six.string_types):
+                    value = str(value)
+                value = value.strip()
+                
                 if start:
                     long_line += value
                     start = False
                 else:
-                    line_length = (len(long_line) + len(value) + len(sep1)
-                                    - line_start)
-
+                    line_length = len(long_line) + len(value) + 2 - line_start
                     if line_length < max_length:
-                        long_line += sep1 + value
+                        long_line += ", " + value
                     else:
-                        line_start = len(long_line) + len(sep2)
-                        long_line +=  sep2 + prefix + value
+                        line_start = len(long_line) + 2
+                        long_line += ",\n" + prefix + value
                     
-            long_line += '\n'
-
+            long_line += "]\n"
             return long_line
 
-        def save_short_line(leading, name, value):
-            short_line = leading + name + ': ' + str(value) + '\n'
-            return short_line
-            
-        def save_simple_list(leading, name, values, max_length=80):
-            sep1 = ', '
-            sep2 = sep1 + '\n'
-            vstr = [str(v) for v in values]
-            value = '[' + sep1.join(vstr) + ']'
-            if is_long_line(leading, name, value):
-                line = save_long_line(leading, name, value, sep1, sep2)
-            else:
-                line = save_short_line(leading, name, value)
-            return line
     
         def save_scalar(leading, name, value):
-            sep = '|'
-            if is_long_line(leading, name, value):
-                value = '"\n' + value + '"\\'
-                line = save_long_line(leading, name, value, '|', '|\\\n')
-            else:
-                line = save_short_line(leading, name, value)
-            return line
+            return leading + name + ": " + str(value) + "\n"
     
         with open(schema_file, mode='w') as fd:
             save_dictionary(fd, schema)
@@ -619,12 +588,11 @@ class Options(object):
         else:
             if self.first_time:
                 if not self.query_run(self.preamble, self.run_script):
-                    return False
+                    return
             
             parameters = self.query_options(parameters)
 
         self.set_parameters(editor, parameters)
-        return True
         
     def get_parameters(self, editor):
         """
@@ -900,8 +868,7 @@ class Schema_editor(object):
         if self.options is None:
             self.query = False
         else:
-            if not self.options.get(self):
-                return
+            self.options.get(self)
         
         # Parse the keyword database files            
         keyword_db = Keyword_db(self.input)
