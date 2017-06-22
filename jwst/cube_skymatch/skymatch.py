@@ -16,7 +16,7 @@ from datetime import datetime
 import numpy as np
 
 from ..skymatch.skystatistics import SkyStats
-from .skyimage import *
+from ..skymatch.skyimage import *
 
 
 __all__ = ['match']
