@@ -21,6 +21,9 @@ DATAPATH = abspath(
 )
 
 
+@pytest.mark.skip(
+    reason='Badly reading container for calibration information'
+)
 @runslow
 @require_bigdata
 def test_run_outlier_only(mk_tmp_dirs):
