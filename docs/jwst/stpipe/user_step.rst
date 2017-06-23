@@ -1,5 +1,3 @@
-.. _user-steps:
-
 =====
 Steps
 =====
@@ -34,7 +32,7 @@ being run.
 class of the step, since the same class of Step may be configured in
 different ways, and it is useful to be able to have a way of
 distinguishing between them.  For example, when Steps are combined
-into :ref:`user-pipelines`, a Pipeline may use the same Step class
+into :ref:`stpipe-user-pipelines`, a Pipeline may use the same Step class
 multiple times, each with different configuration parameters.
 
 ``class`` specifies the Python class to run.  It should be a
@@ -90,9 +88,8 @@ that runs the ``stpipe.cleanup`` step to clean up an image.
 
 .. _strun:
 
-Running a Step rom the commandline
-----------------------------------
-
+Running a Step from the commandline
+-----------------------------------
 The ``strun`` command can be used to run Steps from the commandline.
 
 The first argument may be either:

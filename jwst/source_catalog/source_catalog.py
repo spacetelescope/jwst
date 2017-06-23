@@ -81,9 +81,9 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
     """
 
     if not isinstance(model, DrizProductModel):
-        raise ValueError('The input model must be an DrizProductModel.')
+        raise ValueError('The input model must be a DrizProductModel.')
 
-    # Remove until model.wht contains an IVM map
+    # Use this when model.wht contains an IVM map
     # Calculate "background-only" error assuming the weight image is an
     # inverse-variance map (IVM).  The weight image is clipped because it
     # may contain zeros.
@@ -144,24 +144,28 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
     catalog['orientation_sky'] = ((270. - rot +
                                    catalog['orientation'].value) * u.deg)
 
-    # define AB mag and AB mag error
+    # define flux in microJanskys
+    nsources = len(catalog)
     pixelarea = model.meta.photometry.pixelarea_arcsecsq
     if pixelarea is None:
-        micro_Jy = 0.0
+        micro_Jy = np.full(nsources, np.nan)
     else:
         micro_Jy = (catalog['source_sum'] *
                     model.meta.photometry.conversion_microjanskys *
                     model.meta.photometry.pixelarea_arcsecsq)
-    if micro_Jy > 0.0:
-        abmag = -2.5 * np.log10(micro_Jy) + 23.9
-    else:
-        abmag = 0.
+
+    # define AB mag
+    mask = np.isfinite(micro_Jy)
+    abmag = np.full(nsources, np.nan)
+    abmag[mask] = -2.5 * np.log10(micro_Jy) + 23.9
     catalog['abmag'] = abmag
 
-    # assuming SNR >> 1 (otherwise abmag_error is asymmetric):
-    catalog['abmag_error'] = (2.5 * np.log10(np.e) *
-                              catalog['source_sum_err'] /
-                              catalog['source_sum'])
+    # define AB mag error
+    # assuming SNR >> 1 (otherwise abmag_error is asymmetric)
+    abmag_error = (2.5 * np.log10(np.e) * catalog['source_sum_err'] /
+                   catalog['source_sum'])
+    abmag_error[~mask] = np.nan
+    catalog['abmag_error'] = abmag_error
 
     return catalog
 

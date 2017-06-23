@@ -1,3 +1,7 @@
+.. _pipelines:
+
+Pipeline Modules
+================
 
 The actual pipelines that call individual correction steps in various
 orders are defined as python classes within python code modules. The pipelines
@@ -34,6 +38,8 @@ parenthetical link to the data model in question. For some steps, the
 output file may represent different data models depending on the input
 to those steps. As a result, the data models listed here will not be
 an exhaustive list.
+
+.. _level-2a-flow:
 
 Level-2a Pipeline Step Flow (calwebb_sloper)
 =============================================
@@ -127,6 +133,8 @@ Arguments
 ---------
 The ``calwebb_dark`` pipeline does not have any optional arguments.
 
+.. _level-2b-imaging-flow:
+
 Level-2b Imaging Pipeline Step Flow (calwebb_image2)
 ====================================================
 Level-2b imaging (``calwebb_image2``) processing applies additonal corrections
@@ -161,6 +169,8 @@ Outputs
 Arguments
 ---------
 The ``calwebb_image2`` pipeline does not have any optional arguments.
+
+.. _level-2b-spectroscopic-flow:
 
 Level-2b Spectroscopic Pipeline Step Flow (calwebb_spec2)
 ==========================================================
@@ -267,6 +277,8 @@ The ``calwebb_spec2`` pipeline has one optional argument:
 which is a Boolean argument with a default value of ``False``. If the user sets
 it to ``True``, the results of the background subtraction step (if applied) are
 saved to an intermediate file of type ``_bsub`` or ``_bsubints``, as appropriate.
+
+.. _level-3-imaging-flow:
 
 Level-3 Imaging Pipeline Step Flow (calwebb_image3)
 ===================================================

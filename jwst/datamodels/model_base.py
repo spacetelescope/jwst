@@ -9,6 +9,7 @@ import datetime
 import inspect
 import os
 import sys
+import warnings
 
 import numpy as np
 import jsonschema
@@ -152,7 +153,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
             try:
-                asdf = AsdfFile.open(init, extensions=extensions)
+                # The open function now automatically processes FITS files with
+                # ASDF extensions. However, since our implementation expects
+                # the function to raise a ValueError for anything other than a
+                # true ASDF file, we need to explicitly tell open to ignore
+                # FITS files.
+                asdf = AsdfFile.open(init, extensions=extensions,
+                                     accept_asdf_in_fits=False)
             except (ValueError):
                 try:
                     hdulist = fits.open(init)
@@ -362,7 +369,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         with fits_support.to_fits(self._instance, self._schema,
                                   extensions=self._extensions) as ff:
-            ff.write_to(init, *args, **kwargs)
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', message='Card is too long')
+                ff.write_to(init, *args, **kwargs)
 
     @property
     def shape(self):
