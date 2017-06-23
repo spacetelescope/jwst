@@ -9,7 +9,7 @@ allOf:
     groovedensity:
       description: |
         Number of grooves per meter in a grating.
-      type: integer
+      type: number
     angle:
       description: |
         Prism angle (in degerees) between the front surface and the back surface.
@@ -41,7 +41,7 @@ allOf:
           items:
             type: number
     gwa_tilty:
-      type: bject
+      type: object
       description: |
         Grating X tilt angle relative to mirror
       properties:
