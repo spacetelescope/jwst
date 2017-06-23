@@ -163,7 +163,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 else:
                     asdf = fits_support.from_fits(hdulist, self._schema,
                                                   extensions, pass_invalid_values)
-                self._files_to_close.append(hdulist)
+                    self._files_to_close.append(hdulist)
         else:
             raise ValueError(
                 "Can't initialize datamodel using {0}".format(str(type(init))))
