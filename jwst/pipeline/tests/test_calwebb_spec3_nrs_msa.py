@@ -78,7 +78,6 @@ def test_run_resample_only(mk_tmp_dirs):
     assert path.isfile(product_name)
 
 
-@runslow
 @require_bigdata
 def test_run_extract_1d_only(mk_tmp_dirs):
     """Test only the extraction step. Should produce nothing
@@ -87,8 +86,8 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'mos_udf_g235M_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b')
+        path.join(DATAPATH, 'two_member_spec3_asn.json'),
+        root=path.join(DATAPATH, 'level2b_twoslit')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
@@ -101,8 +100,14 @@ def test_run_extract_1d_only(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
+    # Though the calibration is not run, the conversion to
+    # source base has occured. Check
+    with open(asn_path) as fd:
+        asn = load_asn(fd)
+    product_name_base = asn['products'][0]['name']
+    assert path.isfile(product_name_base + '_cal.fits')
 
-@runslow
+
 @require_bigdata
 def test_run_nosteps(mk_tmp_dirs):
     """Test where no steps execute"""
@@ -110,7 +115,7 @@ def test_run_nosteps(mk_tmp_dirs):
 
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'two_member_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b')
+        root=path.join(DATAPATH, 'level2b_twoslit')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),

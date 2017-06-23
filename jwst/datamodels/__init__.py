@@ -85,6 +85,7 @@ from .reset import ResetModel
 from .resolution import ResolutionModel, MiriResolutionModel
 from .rscd import RSCDModel
 from .saturation import SaturationModel
+from .source_container import SourceContainerModel
 from .spec import SpecModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
