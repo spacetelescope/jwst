@@ -399,9 +399,11 @@ class DisperserModel(model_base.DataModel):
 
     def __init__(self, init=None, angle=None, gwa_tiltx=None, gwa_tilty=None,
                  kcoef=None, lcoef=None, tcoef=None, pref=None, tref=None,
-                 theta_x=None, theta_y=None,theta_z=None, tilt_x=None, tilt_y=None,
-                 **kwargs):
+                 theta_x=None, theta_y=None,theta_z=None,
+                 groovedensity=None, **kwargs):
         super(DisperserModel, self).__init__(init=init, **kwargs)
+        if groovedensity is not None:
+            self.groovedensity = groovedensity
         if angle is not None:
             self.angle = angle
         if gwa_tiltx is not None:
@@ -424,14 +426,17 @@ class DisperserModel(model_base.DataModel):
             self.theta_y = theta_y
         if theta_z is not None:
             self.theta_z = theta_z
-        if tilt_x is not None:
-            self.tilt_x = tilt_x
-        if tilt_y is not None:
-            self.tilt_y = tilt_y
+        if gwa_tiltx is not None:
+            self.gwa_tiltx = gwa_tiltx
+        if gwa_tilty is not None:
+            self.gwa_tilty = gwa_tilty
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
         self.meta.telescope = self.meta.telescope
+        self.groovedensity = self.meta.groovedensity
+        self.angle = self.meta.angle
+        self.gwa_tiltx
 
     def populate_meta(self):
         self.meta.instrument.name = "NIRSPEC"
@@ -512,7 +517,7 @@ class CameraModel(_SimpleModel):
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRAIGHTOBJ|"
+        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
 
 
 class CollimatorModel(_SimpleModel):
@@ -550,3 +555,7 @@ class FOREModel(_SimpleModel):
         self.meta.instrument.name = "NIRSPEC"
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.instrument.p_filter = "CLEAR|F070LP|F100LP|F110W|F140X|F170LP|F290LP|"
+
+    def on_save(self, path=None):
+        self.meta.reftype = self.reftype
+        self.meta.telescope = self.meta.telescope

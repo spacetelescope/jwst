@@ -1,6 +1,7 @@
 title: NirSpec CAMERA reference file model
 allOf:
 - $ref: referencefile.schema.yaml
+- $ref: keyword_pdetector.schema.yaml
 - $ref: keyword_exptype.schema.yaml
 - $ref: keyword_pexptype.schema.yaml
 - type: object
