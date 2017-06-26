@@ -22,7 +22,7 @@ DATAPATH = abspath(
 
 
 @pytest.mark.skip(
-    reason='Badly reading container for calibration information'
+    reason='Fails due to issue #947'
 )
 @runslow
 @require_bigdata
@@ -32,7 +32,7 @@ def test_run_outlier_only(mk_tmp_dirs):
 
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'two_member_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b')
+        root=path.join(DATAPATH, 'level2b_twoslit')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
@@ -47,9 +47,6 @@ def test_run_outlier_only(mk_tmp_dirs):
     assert False
 
 
-@pytest.mark.skip(
-    reason='Dies with crds error no META.INSTRUMENT.NAME'
-)
 @runslow
 @require_bigdata
 def test_run_resample_only(mk_tmp_dirs):

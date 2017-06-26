@@ -4,7 +4,7 @@ from collections import defaultdict
 
 from ..datamodels import (
     MultiExposureModel,
-    SourceContainerModel
+    SourceModelContainer
 )
 from ..datamodels.properties import merge_tree
 
@@ -59,6 +59,6 @@ def multislit_to_container(inputs):
     """
     containers = exp_to_source(inputs)
     for id in containers:
-        containers[id] = SourceContainerModel(containers[id])
+        containers[id] = SourceModelContainer(containers[id])
 
     return containers

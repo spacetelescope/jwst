@@ -2,7 +2,7 @@
 
 from ..stpipe import Pipeline
 from .. import datamodels
-from ..exp_to_source import exp_to_source
+from ..exp_to_source import multislit_to_container
 
 # step imports
 from ..skymatch import skymatch_step
@@ -92,14 +92,17 @@ class Spec3Pipeline(Pipeline):
         sources = [input_models]
         if exptype in MULTISOURCE_EXPTYPES:
             self.log.info('Convert from exposure-based to source-based data.')
-            sources = [model for name, model in exp_to_source(input_models).items()]
+            sources = [
+                model
+                for name, model in multislit_to_container(input_models).items()
+            ]
 
         # Process each source
         for source in sources:
             result = source
 
             # The MultiExposureModel is a required output.
-            if isinstance(result, datamodels.MultiExposureModel):
+            if isinstance(result, datamodels.SourceModelContainer):
                 self.save_model(result, 'cal')
 
             # Call the skymatch step for MIRI MRS data
