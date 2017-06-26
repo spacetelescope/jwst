@@ -149,7 +149,7 @@ def open(init=None, extensions=None, **kwargs):
     
     # Close the hdulist if we opened it
     if file_to_close is not None:
-        file_to_close.close()
+        model._files_to_close.append(file_to_close)
         
     return model
 
