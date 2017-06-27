@@ -5,11 +5,11 @@ from .. import datamodels
 from ..exp_to_source import multislit_to_container
 
 # step imports
-from ..skymatch import skymatch_step
-from ..outlier_detection import outlier_detection_step
-from ..resample import resample_spec_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
+from ..mrs_imatch import mrs_imatch_step
+from ..outlier_detection import outlier_detection_step
+from ..resample import resample_spec_step
 
 __version__ = "0.7.1"
 
@@ -35,7 +35,7 @@ class Spec3Pipeline(Pipeline):
 
     # Define aliases to steps
     step_defs = {
-        'skymatch': skymatch_step.SkyMatchStep,
+        'mrs_imatch': mrs_imatch_step.MRSIMatchStep,
         'outlier_detection': outlier_detection_step.OutlierDetectionStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'cube_build': cube_build_step.CubeBuildStep,
@@ -108,7 +108,7 @@ class Spec3Pipeline(Pipeline):
 
             # Call the skymatch step for MIRI MRS data
             if exptype in ['MIR_MRS']:
-                result = self.skymatch(result)
+                result = self.mrs_imatch(result)
 
             # Call outlier detection
             result = self.outlier_detection(result)
