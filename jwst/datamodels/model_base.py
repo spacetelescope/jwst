@@ -26,6 +26,7 @@ from asdf import schema as asdf_schema
 from asdf import extension as asdf_extension
 
 from . import ndmodel
+from . import filetype
 from . import fits_support
 from . import properties
 from . import schema as mschema
@@ -149,28 +150,25 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             asdf = fits_support.from_fits(init, self._schema, extensions,
                                           pass_invalid_values)
 
-        elif isinstance(init, six.string_types):
+        elif isinstance(init, (six.string_types, bytes)):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
-            try:
-                # The open function now automatically processes FITS files with
-                # ASDF extensions. However, since our implementation expects
-                # the function to raise a ValueError for anything other than a
-                # true ASDF file, we need to explicitly tell open to ignore
-                # FITS files.
-                asdf = AsdfFile.open(init, extensions=extensions,
-                                     accept_asdf_in_fits=False)
-            except (ValueError):
-                try:
-                    hdulist = fits.open(init)
-                    # TODO: Add json support
-                except (IOError, OSError):
-                    raise IOError(
-                        "File does not appear to be a FITS or ASDF file.")
-                else:
-                    asdf = fits_support.from_fits(hdulist, self._schema,
-                                                  extensions, pass_invalid_values)
+            file_type = filetype.check(init)
+     
+            if file_type == "fits":
+                hdulist = fits.open(init)
+                asdf = fits_support.from_fits(hdulist, self._schema,
+                                              extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
+     
+            elif file_type == "asdf":
+                asdf = AsdfFile.open(init, extensions=extensions)
+
+            else:
+                # TODO handle json files as well
+                raise IOError(
+                        "File does not appear to be a FITS or ASDF file.")
+            
         else:
             raise ValueError(
                 "Can't initialize datamodel using {0}".format(str(type(init))))
