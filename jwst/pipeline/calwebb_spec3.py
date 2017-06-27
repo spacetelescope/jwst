@@ -14,8 +14,8 @@ from ..extract_1d import extract_1d_step
 __version__ = "0.7.1"
 
 # Group exposure types
-MULTISOURCE_EXPTYPES = ['NRS_MSASPEC', 'NRC_GRISM', 'NIS_WFSS']
-IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
+MULTISOURCE_MODELS = ['MultiSlitModel']
+CUBE_MODELS = ['CubeModel', 'IFUCubeModel']
 
 
 class Spec3Pipeline(Pipeline):
@@ -67,7 +67,9 @@ class Spec3Pipeline(Pipeline):
         # some of this is here only for the purpose of creating fake
         # products until the individual tasks work and do it themselves
         exptype = input_models[0].meta.exposure.type
+        model_type = input_models[0].meta.model_type
         self.output_basename = input_models.meta.asn_table.products[0].name
+        self.log.info('Running on data of EXP_TYPE={}'.format(exptype))
 
         pool_name = input_models.meta.asn_table.asn_pool
         asn_file = input
@@ -90,7 +92,7 @@ class Spec3Pipeline(Pipeline):
         # sources, each represented by a MultiExposureModel instead of
         # a single ModelContainer.
         sources = [input_models]
-        if exptype in MULTISOURCE_EXPTYPES:
+        if model_type in MULTISOURCE_MODELS:
             self.log.info('Convert from exposure-based to source-based data.')
             sources = [
                 model
@@ -115,7 +117,7 @@ class Spec3Pipeline(Pipeline):
             # Resample time. Dependent on whether the data is IFU or
             # not.
             resample_complete = None
-            if exptype in IFU_EXPTYPES:
+            if model_type in CUBE_MODELS:
                 result = self.cube_build(result)
                 try:
                     resample_complete = result.meta.cal_step.cube_build
