@@ -101,6 +101,14 @@ class DataSet():
         self.trappars_model = trappars_model
         self.persistencesat = persat_model
 
+        # These will be populated from metadata.
+        self.tframe = 0.
+        self.tgroup = 0.
+        self.ngroups = 0
+        self.nframes = 0
+        self.groupgap = 0
+        self.nresets = 0
+
 
     def do_all(self):
         """
@@ -190,6 +198,11 @@ class DataSet():
                         - self.traps_filled.meta.exposure.end_time) * 86400.
             log.debug("Decay time for previous traps-filled file = %g s",
                       to_start)
+            # Decay during the reset at the beginning of the integration
+            # will be accounted for in the loop over integrations.
+            self.get_group_info(0)              # first integration
+            reset_time = self.nresets * self.tframe
+            to_start -= reset_time
             for k in range(nfamilies):
                 decay_param_k = self.get_decay_param(par, k)
                 decay = self.compute_decay(self.traps_filled.data[k],
@@ -250,6 +263,7 @@ class DataSet():
         # account for charge capture and decay of traps.
         filled = -1                             # just to ensure that it exists
         for integ in range(nints):
+            self.get_group_info(integ)          # self.tgroup, etc.
             decayed[:, :, :] = 0.               # initialize
             # slope has to be computed early in the loop over integrations,
             # before the data are modified by subtracting persistence.
@@ -259,19 +273,24 @@ class DataSet():
                 persistence[:, :] = 0.          # initialize
                 for k in range(nfamilies):
                     decay_param_k = self.get_decay_param(par, k)
+                    # Compute and subtract the decays during the reset.
+                    if group == 0 and self.nresets > 0:
+                        reset_time = self.tframe * self.nresets
+                        decay_during_reset = \
+                            self.compute_decay(self.traps_filled.data[k],
+                                               decay_param_k, reset_time)
+                        self.traps_filled.data[k, :, :] -= decay_during_reset
                     # Decays during current group, for current trap family.
                     decayed_in_group = \
                         self.compute_decay(self.traps_filled.data[k],
                                            decay_param_k, t_group)
                     # Cumulative decay to the end of the current group.
                     decayed[k, :, :] += decayed_in_group
+                    self.traps_filled.data[k, :, :] -= decayed_in_group
                     if is_subarray:
                         persistence += decayed[k, save_slice[0], save_slice[1]]
-                        self.traps_filled.data[k, :, :] -= \
-                            decayed_in_group[save_slice[0], save_slice[1]]
                     else:
                         persistence += decayed[k, :, :]
-                        self.traps_filled.data[k, :, :] -= decayed_in_group
                     del decayed_in_group
 
                 # Persistence was computed in DN.
@@ -477,12 +496,12 @@ class DataSet():
         """
 
         (_, ngroups, ny, nx) = self.output_obj.shape
-        if ngroups < 2:
-            # These values are supposed to be arrays, but the way they're
-            # used (in predict_capture and delta_fcn_capture), they will
-            # either broadcast to the array shape (in predict_capture) or
-            # they will not actually be referenced when ngroups < 2.
-            return (0., 0.)
+        if ngroups == 1:
+            # This won't be accurate, because there's only one group.
+            grp_slope = self.output_obj.data[integ, 0, :, :]
+            slope = grp_slope / (self.persistencesat.data
+                                 * self.output_obj.meta.exposure.group_time)
+            return (grp_slope, slope)
 
         gdqflags = dqflags.group
 
@@ -593,40 +612,42 @@ class DataSet():
     def get_group_info(self, integ):
         """Get some metadata.
 
+        This method populates these attributes:
+            self.tframe
+            self.tgroup
+            self.ngroups
+            self.nframes
+            self.groupgap
+            self.nresets
+
         Parameters
         ----------
         integ: int
             Integration number.
-
-        Returns
-        -------
-        grp_info: dictionary
-            The keys are "tframe", "tgroup", "ngroups", "nframes",
-            "groupgap", and "nresets".  The value for "nresets" may
-            depend on `integ`.
         """
 
-        grp_info = {}
         shape = self.output_obj.data.shape
-        grp_info["tframe"] = self.output_obj.meta.exposure.frame_time
-        grp_info["tgroup"] = self.output_obj.meta.exposure.group_time
+
+        self.tframe = self.output_obj.meta.exposure.frame_time
+        self.tgroup = self.output_obj.meta.exposure.group_time
         ngroups = self.output_obj.meta.exposure.ngroups
         if ngroups != shape[-3]:
             log.warning("model.meta and data disagree about ngroups:")
             log.warning("  %d vs %d; will use %d.",
                         ngroups, shape[-3], shape[-3])
-        grp_info["ngroups"] = shape[-3]
-        grp_info["nframes"] = self.output_obj.meta.exposure.nframes
-        grp_info["groupgap"] = self.output_obj.meta.exposure.groupgap
+        self.ngroups = shape[-3]
+        self.nframes = self.output_obj.meta.exposure.nframes
+        self.groupgap = self.output_obj.meta.exposure.groupgap
         try:
             if integ == 0:
-                grp_info["nresets"] = self.output_obj.meta.exposure.nrststrt
+                self.nresets = self.output_obj.meta.exposure.nrststrt
             else:
-                grp_info["nresets"] = self.output_obj.meta.exposure.nresets
+                self.nresets = self.output_obj.meta.exposure.nresets
         except AttributeError:
-            grp_info["nresets"] = 1
-
-        return grp_info
+            if self.output_obj.meta.instrument.detector == "MIRI":
+                self.nresets = 0
+            else:
+                self.nresets = 1
 
 
     def predict_capture(self, capture_param_k, trap_density, integ,
@@ -669,15 +690,14 @@ class DataSet():
 
         data = self.output_obj.data[integ, :, :, :]
 
-        grp_info = self.get_group_info(integ)
-        t_frame = grp_info["tframe"]
-        t_group = grp_info["tgroup"]
-        ngroups = grp_info["ngroups"]
-        nresets = grp_info["nresets"]
+        t_frame = self.tframe
+        t_group = self.tgroup
+        ngroups = self.ngroups
+        nresets = self.nresets
 
-        # nresets (usually equal to 1) was included because, in Mike's
-        # words:  "you get an extra frame of soak due to the full frame
-        # reset at the beginning of the integration."
+        # nresets (usually equal to 1) was included because, in Mike
+        # Regan's words:  "you get an extra frame of soak due to the
+        # full frame reset at the beginning of the integration."
         totaltime = ngroups * t_group + nresets * t_frame
 
         # Find pixels exceeding the persistence saturation limit (full well).
