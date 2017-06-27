@@ -15,7 +15,7 @@ __version__ = "0.7.1"
 
 # Group exposure types
 MULTISOURCE_MODELS = ['MultiSlitModel']
-CUBE_MODELS = ['CubeModel', 'IFUCubeModel']
+IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
 
 
 class Spec3Pipeline(Pipeline):
@@ -69,7 +69,6 @@ class Spec3Pipeline(Pipeline):
         exptype = input_models[0].meta.exposure.type
         model_type = input_models[0].meta.model_type
         self.output_basename = input_models.meta.asn_table.products[0].name
-        self.log.info('Running on data of EXP_TYPE={}'.format(exptype))
 
         pool_name = input_models.meta.asn_table.asn_pool
         asn_file = input
@@ -117,7 +116,7 @@ class Spec3Pipeline(Pipeline):
             # Resample time. Dependent on whether the data is IFU or
             # not.
             resample_complete = None
-            if model_type in CUBE_MODELS:
+            if exptype in IFU_EXPTYPES:
                 result = self.cube_build(result)
                 try:
                     resample_complete = result.meta.cal_step.cube_build
