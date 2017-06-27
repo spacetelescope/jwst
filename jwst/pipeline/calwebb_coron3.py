@@ -123,13 +123,15 @@ class Coron3Pipeline(Pipeline):
                 target_models.append(image)
 
             # Call outlier_detection
-            target_models = self.outlier_detection(target_models)
+            target_models = self.outlier_detection(target_models, resample_data=False)
 
-            # TEMPORAY HACK UNTIL OUTLIER_DETECTION IS VIABLE
-            # Create a dummy level-2c output product
-            log.warning('Creating fake outlier_detection results until step is available')
+            # Create a level-2c output product
+            log.debug('Creating and saving Level-2C result')
             lev2c_name = mk_filename(self.output_dir, target_file, 'calints-'+asn['asn_id'])
             lev2c_model = psf_sub.copy()
+            # Update/replace L2B product DQ array with L2C results
+            for i in range(len(target_models)):
+                psf_sub.dq[i] = target_models[i].dq
             lev2c_model.meta.cal_step.outlier_detection = 'COMPLETE'
             lev2c_model.save(lev2c_name)
 
