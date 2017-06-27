@@ -7,7 +7,6 @@ from . import persistence
 class PersistenceStep(Step):
     """
     PersistenceStep: Correct a science image for persistence.
-    This is currently a no-op step.
     """
 
     spec = """
@@ -24,19 +23,9 @@ class PersistenceStep(Step):
         save_persistence = boolean(default=False)
     """
 
-    # This is currently commented out to prevent CRDS from trying to
-    # find these files (because they haven't been delivered yet).
-    # xxx xxx reference_file_types = ["trapdensity", "traps", "fullwell"]
+    reference_file_types = ["trapdensity", "trappars", "persat"]
 
     def process(self, input):
-
-        # Skip all processing for now ...
-        output_obj = datamodels.open(input).copy()
-        output_obj.meta.cal_step.persistence = 'SKIPPED'
-        self.log.warning('Persistence step is currently a no-op: SKIPPING')
-
-        return output_obj
-        # ... end skip all processing for now
 
         if self.input_trapsfilled is not None:
             if (self.input_trapsfilled == "None" or
@@ -46,24 +35,49 @@ class PersistenceStep(Step):
         output_obj = datamodels.open(input).copy()
 
         self.trap_density_filename = self.get_reference_file(output_obj,
-                                                             'trapdensity')
-        self.traps_filename = self.get_reference_file(output_obj, 'traps')
-        self.full_well_filename = self.get_reference_file(output_obj,
-                                                          'fullwell')
+                                                             "trapdensity")
+        self.trappars_filename = self.get_reference_file(output_obj,
+                                                         "trappars")
+        self.persat_filename = self.get_reference_file(output_obj, "persat")
+
+        # Is any reference file missing?
+        missing = False
+        missing_reftypes = []
+        if self.persat_filename == "N/A":
+            missing = True
+            missing_reftypes.append("PERSAT")
+        if self.trap_density_filename == "N/A":
+            missing = True
+            missing_reftypes.append("TRAPDENSITY")
+        if self.trappars_filename == "N/A":
+            missing = True
+            missing_reftypes.append("TRAPPARS")
+        if missing:
+            if len(missing_reftypes) == 1:
+                msg = "Missing reference file type:  " + missing_reftypes[0]
+            else:
+                msg = "Missing reference file types: "
+                for name in missing_reftypes:
+                    msg += (" " + name)
+            self.log.warning("%s", msg)
+            output_obj.meta.cal_step.persistence = "SKIPPED"
+            return output_obj
 
         if self.input_trapsfilled is None:
             traps_filled_model = None
         else:
-            traps_filled_model = datamodels.CubeModel(self.input_trapsfilled)
-        trap_density_model = datamodels.ImageModel(self.trap_density_filename)
-        traps_model = datamodels.TrapsModel(self.traps_filename)
-        full_well_model = datamodels.SaturationModel(self.full_well_filename)
+            traps_filled_model = datamodels.TrapsFilledModel(
+                                        self.input_trapsfilled)
+        trap_density_model = datamodels.TrapDensityModel(
+                                self.trap_density_filename)
+        trappars_model = datamodels.TrapParsModel(self.trappars_filename)
+        persat_model = datamodels.PersistenceSatModel(self.persat_filename)
 
         pers_a = persistence.DataSet(output_obj, traps_filled_model,
                                      self.flag_pers_cutoff,
                                      self.save_persistence,
-                                     trap_density_model, traps_model,
-                                     full_well_model)
+                                     trap_density_model, trappars_model,
+                                     persat_model)
         (output_obj, traps_filled, output_pers, skipped) = pers_a.do_all()
         if skipped:
             output_obj.meta.cal_step.persistence = 'SKIPPED'
@@ -84,8 +98,8 @@ class PersistenceStep(Step):
 
         # Close reference files.
         trap_density_model.close()
-        traps_model.close()
-        full_well_model.close()
+        trappars_model.close()
+        persat_model.close()
 
         return output_obj
 
