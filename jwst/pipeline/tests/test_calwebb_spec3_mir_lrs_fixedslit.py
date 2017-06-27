@@ -7,6 +7,7 @@ file structure. As such the environmental variable TEST_BIGDATA points to
 the top of the example data tree.
 """
 
+from glob import glob
 from os import path
 import pytest
 
@@ -15,6 +16,8 @@ from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
     mk_tmp_dirs,
+    require_bigdata,
+    runslow,
     update_asn_basedir,
 )
 
@@ -25,16 +28,12 @@ DATAPATH = abspath(
     '$TEST_BIGDATA/miri/test_datasets/lrs_fixedslit'
 )
 
-# Skip if the data is not available
-pytestmark = pytest.mark.skipif(
-    not path.exists(DATAPATH),
-    reason='Test data not accessible'
-)
 
-
-@pytest.mark.xfail(
+@pytest.mark.skip(
     reason='Fails due to issue #947'
 )
+@runslow
+@require_bigdata
 def test_run_outlier_only(mk_tmp_dirs):
     """Test a basic run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -56,6 +55,7 @@ def test_run_outlier_only(mk_tmp_dirs):
     assert False
 
 
+@require_bigdata
 def test_run_resample_mock_only(mk_tmp_dirs):
     """Test resample step only."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -82,9 +82,11 @@ def test_run_resample_mock_only(mk_tmp_dirs):
     assert path.isfile(product_name)
 
 
-@pytest.mark.xfail(
-    reason='resample step not implemented'
+@pytest.mark.skip(
+    reasone='Failure documented in issue #1006'
 )
+@runslow
+@require_bigdata
 def test_run_resample_only(mk_tmp_dirs):
     """Test resample step only."""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -111,6 +113,7 @@ def test_run_resample_only(mk_tmp_dirs):
     assert path.isfile(product_name)
 
 
+@require_bigdata
 def test_run_extract_1d_only(mk_tmp_dirs):
     """Test only the extraction step. Should produce nothing
     because extraction requires resampling
@@ -132,7 +135,14 @@ def test_run_extract_1d_only(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
+    # Check that no other products built
+    files = glob('*s3d*')
+    files.extend(glob('*s2d*'))
+    files.extend(glob('*x1d*'))
+    assert not files
 
+
+@require_bigdata
 def test_run_nosteps(mk_tmp_dirs):
     """Test where no steps execute"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -153,10 +163,18 @@ def test_run_nosteps(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
+    # Check that no other products built
+    files = glob('*s3d*')
+    files.extend(glob('*s2d*'))
+    files.extend(glob('*x1d*'))
+    assert not files
 
-@pytest.mark.xfail(
+
+@pytest.mark.skip(
     reason='None of the steps operate'
 )
+@runslow
+@require_bigdata
 def test_run_mir_lrs_fixedslit(mk_tmp_dirs):
     """Test a full run"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
