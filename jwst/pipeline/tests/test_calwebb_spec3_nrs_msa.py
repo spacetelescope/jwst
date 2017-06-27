@@ -22,8 +22,9 @@ DATAPATH = abspath(
 )
 
 
-@pytest.mark.skip(
-    reason='Fails due to issue #947'
+@pytest.mark.xfail(
+    reason='Fails due to issue #947',
+    run=False,
 )
 @runslow
 @require_bigdata
@@ -38,7 +39,7 @@ def test_run_outlier_only(mk_tmp_dirs):
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
-        '--steps.skymatch.skip=true',
+        '--steps.mrs_imatch.skip=true',
         '--steps.resample_spec.skip=true',
         '--steps.cube_build.skip=true',
         '--steps.extract_1d.skip=true',
@@ -48,8 +49,9 @@ def test_run_outlier_only(mk_tmp_dirs):
     assert False
 
 
-@pytest.mark.skip(
-    reason='Fails as documented in issue #1005'
+@pytest.mark.xfail(
+    reason='Fails as documented in issue #1005',
+    run=False,
 )
 @runslow
 @require_bigdata
@@ -64,7 +66,7 @@ def test_run_resample_only(mk_tmp_dirs):
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
-        '--steps.skymatch.skip=true',
+        '--steps.mrs_imatch.skip=true',
         '--steps.outlier_detection.skip=true',
         '--steps.cube_build.skip=true',
         '--steps.extract_1d.skip=true',
@@ -91,7 +93,7 @@ def test_run_cube_build(mk_tmp_dirs):
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
-        '--steps.skymatch.skip=true',
+        '--steps.mrs_imatch.skip=true',
         '--steps.outlier_detection.skip=true',
         '--steps.resample_spec.skip=true',
         '--steps.extract_1d.skip=true',
@@ -123,7 +125,7 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
-        '--steps.skymatch.skip=true',
+        '--steps.mrs_imatch.skip=true',
         '--steps.outlier_detection.skip=true',
         '--steps.resample_spec.skip=true',
         '--steps.cube_build.skip=true',
@@ -157,7 +159,7 @@ def test_run_nosteps(mk_tmp_dirs):
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
-        '--steps.skymatch.skip=true',
+        '--steps.mrs_imatch.skip=true',
         '--steps.outlier_detection.skip=true',
         '--steps.resample_spec.skip=true',
         '--steps.cube_build.skip=true',
@@ -178,8 +180,9 @@ def test_run_nosteps(mk_tmp_dirs):
     files.extend(glob('*x1d*'))
     assert not files
 
-@pytest.mark.skip(
-    reason='Many individual steps have failures'
+@pytest.mark.xfail(
+    reason='Many individual steps have failures',
+    run=False,
 )
 @runslow
 @require_bigdata
