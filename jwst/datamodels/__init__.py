@@ -56,6 +56,7 @@ from .flat import FlatModel
 from .fringe import FringeModel
 from .gain import GainModel
 from .gls_rampfit import GLS_RampFitModel
+from .guider_cds import GuiderCdsModel
 from .image import ImageModel
 from .ipc import IPCModel
 from .irs2 import IRS2Model

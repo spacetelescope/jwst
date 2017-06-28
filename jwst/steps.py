@@ -15,6 +15,7 @@ from . import extract_2d
 from . import fits_generator
 from . import flatfield
 from . import fringe
+from . import guider_cds 
 from . import imprint
 from . import ipc
 from . import jump
