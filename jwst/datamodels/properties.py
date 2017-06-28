@@ -259,6 +259,9 @@ class ObjectNode(Node):
         return (attr in self._instance or
                 _find_property(self._schema, attr))
 
+    def __iter__(self):
+        return NodeIterator(self)
+    
     def _revert(self, attr, old_val):
         # Revert the change
         if old_val is None:
@@ -266,6 +269,14 @@ class ObjectNode(Node):
         else:
             self._instance[attr] = old_val
 
+    def items(self):
+        # Return a (key, value) tuple for the node
+        for key in self:
+            val = self
+            for field in key.split('.'):
+                val = getattr(val, field)
+            yield (key, val)
+        
 class ListNode(Node):
     def __cast(self, other):
         if isinstance(other, ListNode):
@@ -365,6 +376,35 @@ class ListNode(Node):
         obj = ObjectNode(kwargs, self._schema['items'], self._ctx)
         obj._validate()
         return obj
+
+class NodeIterator(six.Iterator):
+    """
+    An iterator for a node which flattens the hierachical structure
+    """
+    def __init__(self, node):
+        self.key_stack = []
+        self.iter_stack = [six.iteritems(node._instance)]
+
+    def __iter__(self):
+        return self
+    
+    def __next__(self):
+        while self.iter_stack:
+            try:
+                key, val = six.next(self.iter_stack[-1])
+            except StopIteration:
+                self.iter_stack.pop()
+                if self.iter_stack:
+                    self.key_stack.pop()
+                continue
+                
+            if isinstance(val, dict):
+                self.key_stack.append(key)
+                self.iter_stack.append(six.iteritems(val))
+            else:
+                return '.'.join(self.key_stack + [key])
+                
+        raise StopIteration
 
 def put_value(path, value, tree):
     """
