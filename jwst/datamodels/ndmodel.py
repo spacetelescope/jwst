@@ -240,9 +240,6 @@ class MetaNode(properties.ObjectNode, collections.MutableMapping):
         path = key.split('.')
         return self._find(path)
     
-    def __iter__(self):
-        return MetaNodeIterator(self)
-
     def __len__(self):
         def recurse(val):
             n = 0
@@ -262,35 +259,6 @@ class MetaNode(properties.ObjectNode, collections.MutableMapping):
             parent.__setattr__(path[-1], value)
         except KeyError:
             raise KeyError("'%s'" % key)
-
-class MetaNodeIterator(six.Iterator):
-    """
-    An iterator for the meta node which flattens the hierachical structure
-    """
-    def __init__(self, node):
-        self.key_stack = []
-        self.iter_stack = [six.iteritems(node._instance)]
-    
-    def __iter__(self):
-        return self
-    
-    def __next__(self):
-        while self.iter_stack:
-            try:
-                key, val = six.next(self.iter_stack[-1])
-            except StopIteration:
-                self.iter_stack.pop()
-                if self.iter_stack:
-                    self.key_stack.pop()
-                continue
-                
-            if isinstance(val, dict):
-                self.key_stack.append(key)
-                self.iter_stack.append(six.iteritems(val))
-            else:
-                return '.'.join(self.key_stack + [key])
-                
-        raise StopIteration
 
 class Uncertainty(np.ndarray):
     """

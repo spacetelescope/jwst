@@ -71,6 +71,7 @@ from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
 from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
 from .pathloss import PathlossModel
+from .persat import PersistenceSatModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
 from .photom import NirspecPhotomModel, NirspecFSPhotomModel
 from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
@@ -89,7 +90,9 @@ from .source_container import SourceModelContainer
 from .spec import SpecModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
-from .traps import TrapsModel
+from .trapdensity import TrapDensityModel
+from .trappars import TrapParsModel
+from .trapsfilled import TrapsFilledModel
 from .wcs_ref_models import *
 from .util import open
 
@@ -117,6 +120,7 @@ __all__ = [
     'MultiSpecModel', 'OTEModel',
     'OutlierParsModel', 'MiriImgOutlierParsModel', 'NircamOutlierParsModel',
     'PathlossModel',
+    'PersistenceSatModel',
     'PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel', 'NirspecIfuAreaModel',
     'ThroughputModel',
     'PhotomModel', 'FgsPhotomModel', 'MiriImgPhotomModel', 'MiriMrsPhotomModel',
@@ -128,7 +132,8 @@ __all__ = [
     'ResolutionModel', 'MiriResolutionModel',
     'RSCDModel', 'SaturationModel', 'SpecModel',
     'StrayLightModel', 'SuperBiasModel', 'SpecwcsModel',
-    'TrapsModel', 'WavelengthrangeModel']
+    'TrapDensityModel', 'TrapParsModel', 'TrapsFilledModel',
+    'WavelengthrangeModel']
 
 _all_models = __all__[1:]
 _local_dict = dict(locals())
