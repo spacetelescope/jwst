@@ -31,21 +31,10 @@ class SourceModelContainer(ModelContainer):
             super(SourceModelContainer, self).__init__(init, **kwargs)
             self._multiexposure = init._multiexposure
         elif isinstance(init, MultiExposureModel):
-
-            # Convert exposures to ImageModels to allow
-            # iteration over various properties.
-            models = [
-                ImageModel(exposure.instance)
-                for exposure in init.exposures
-            ]
-
-            super(SourceModelContainer, self).__init__(init=models, **kwargs)
+            super(SourceModelContainer, self).__init__(init=None, **kwargs)
+            self._models = init.exposures
             self._multiexposure = init
 
     def save(self, *args, **kwargs):
         """Save out the container as a MultiExposureModel"""
-        self._multiexposure.exposures = [
-            model.instance
-            for model in self._models
-        ]
         self._multiexposure.save(*args, **kwargs)
