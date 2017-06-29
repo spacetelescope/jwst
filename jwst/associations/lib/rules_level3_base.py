@@ -97,6 +97,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
     def __init__(self, *args, **kwargs):
 
+        super(DMS_Level3_Base, self).__init__(*args, **kwargs)
+
         # Keep the set of members included in this association
         self.members = set()
 
@@ -108,8 +110,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             }
         })
 
-        # Let us see if member belongs to us.
-        super(DMS_Level3_Base, self).__init__(*args, **kwargs)
 
         # Other presumptions on the association
         if 'degraded_status' not in self.data:
