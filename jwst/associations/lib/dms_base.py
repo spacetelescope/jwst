@@ -22,8 +22,8 @@ class DMSBaseMixin(ACIDMixin):
     # Associations of the same type are sequenced.
     _sequence = Counter(start=1)
 
-    def __init__(self, version_id=None):
-        super(DMSBaseMixin, self).__init__(version_id=version_id)
+    def __init__(self, *args, **kwargs):
+        super(DMSBaseMixin, self).__init__(*args, **kwargs)
 
         self.sequence = None
         self.data.update({
