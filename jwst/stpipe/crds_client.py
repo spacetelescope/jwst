@@ -34,10 +34,17 @@ from os.path import dirname, join
 import re
 from astropy.extern import six
 
+# ----------------------------------------------------------------------
+
 import gc
+
+# ----------------------------------------------------------------------
 
 import crds
 from crds import log, config
+from crds.core import crds_cache_locking
+
+# ----------------------------------------------------------------------
 
 def _flatten_dict(nested):
     def flatten(root, path, output):
@@ -50,6 +57,8 @@ def _flatten_dict(nested):
     output = {}
     flatten(nested, [], output)
     return output
+
+# ----------------------------------------------------------------------
 
 def get_multiple_reference_paths(input_file, reference_file_types):
     """Aligns JWST pipeline requirements with CRDS library top
@@ -85,7 +94,9 @@ def get_multiple_reference_paths(input_file, reference_file_types):
     gc.collect()
 
     try:
-        bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
+        with crds_cache_locking.get_cache_lock():
+            bestrefs = crds.getreferences(
+                data_dict, reftypes=reference_file_types, observatory="jwst")
     except crds.CrdsBadRulesError as exc:
         raise crds.CrdsBadRulesError(str(exc))
     except crds.CrdsBadReferenceError as exc:
