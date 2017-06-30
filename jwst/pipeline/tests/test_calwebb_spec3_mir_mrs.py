@@ -30,8 +30,7 @@ DATAPATH = abspath(
 @runslow
 @require_bigdata
 def test_run_extract_1d_only(mk_tmp_dirs):
-    """Test only the extraction step. Should produce nothing
-    because extraction requires resampling
+    """Test only the extraction step.
     """
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
