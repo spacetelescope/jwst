@@ -83,6 +83,34 @@ def test_run_resample_mock_only(mk_tmp_dirs):
     assert path.isfile(product_name)
 
 
+@require_bigdata
+def test_run_extract_1d_resample_mock_only(mk_tmp_dirs):
+    """Test resample step only."""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    asn_path = update_asn_basedir(
+        path.join(DATAPATH, 'jw80600-a3002_20170227t160430_spec3_001_asn.json'),
+        root=DATAPATH
+    )
+    args = [
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_mock.cfg'),
+        asn_path,
+        '--steps.mrs_imatch.skip=true',
+        '--steps.outlier_detection.skip=true',
+        '--steps.cube_build.skip=true',
+    ]
+
+    Step.from_cmdline(args)
+
+    with open(asn_path) as fd:
+        asn = load_asn(fd)
+    product_name_base = asn['products'][0]['name']
+    product_name = product_name_base + '_s2d.fits'
+    assert path.isfile(product_name)
+    product_name = product_name_base + '_x1d.fits'
+    assert path.isfile(product_name)
+
+
 @pytest.mark.xfail(
     reason='Failure documented in issue #1006',
     run=False,
