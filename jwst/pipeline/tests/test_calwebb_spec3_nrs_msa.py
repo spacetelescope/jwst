@@ -126,6 +126,42 @@ def test_run_resample_only(mk_tmp_dirs):
     assert len(glob(product_name_glob)) == 2
 
 
+@runslow
+@require_bigdata
+def test_run_resample_mock_only(mk_tmp_dirs):
+    """Test resample step only."""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    asn_path = update_asn_basedir(
+        path.join(DATAPATH, 'two_member_spec3_asn.json'),
+        root=path.join(DATAPATH, 'level2b_twoslit')
+    )
+    args = [
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_mock.cfg'),
+        asn_path,
+        '--steps.mrs_imatch.skip=true',
+        '--steps.outlier_detection.skip=true',
+        '--steps.cube_build.skip=true',
+        '--steps.extract_1d.skip=true',
+    ]
+
+    Step.from_cmdline(args)
+
+    with open(asn_path) as fd:
+        asn = load_asn(fd)
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
+
+    # Check for resample results
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_s2d.fits'
+    assert len(glob(product_name_glob)) == 2
+
+
 @require_bigdata
 def test_run_cube_build(mk_tmp_dirs):
     """NRS MSA data is not cube data. Nothing should happen"""
@@ -196,6 +232,48 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     files.extend(glob('*s2d*'))
     files.extend(glob('*x1d*'))
     assert not files
+
+
+@require_bigdata
+def test_run_extract_1d_resample_mock(mk_tmp_dirs):
+    """Test only the extraction step. Should produce nothing
+    because extraction requires resampling
+    """
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    asn_path = update_asn_basedir(
+        path.join(DATAPATH, 'two_member_spec3_asn.json'),
+        root=path.join(DATAPATH, 'level2b_twoslit')
+    )
+    args = [
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_mock.cfg'),
+        asn_path,
+        '--steps.mrs_imatch.skip=true',
+        '--steps.outlier_detection.skip=true',
+        '--steps.cube_build.skip=true',
+    ]
+
+    Step.from_cmdline(args)
+
+    # Though the calibration is not run, the conversion to
+    # source base has occured. Check
+    with open(asn_path) as fd:
+        asn = load_asn(fd)
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
+
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_s2d.fits'
+    assert len(glob(product_name_glob)) == 2
+
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_x1d.fits'
+    assert len(glob(product_name_glob)) == 2
 
 
 @require_bigdata
