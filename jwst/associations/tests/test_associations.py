@@ -15,13 +15,6 @@ from ..registry import (
     find_member
 )
 
-# Temporarily skip if running under Travis
-# pytestmark = pytest.mark.skipif(
-#     "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
-#     reason='Temporarily disable due to performance issues'
-# )
-
-
 # Basic Association object
 def test_read_assoc_defs():
     rules = AssociationRegistry(
