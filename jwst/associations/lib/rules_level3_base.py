@@ -20,6 +20,7 @@ from jwst.associations.exceptions import (
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import DMSBaseMixin
+from jwst.associations.lib.format_template import FormatTemplate
 
 __all__ = [
     'AsnMixin_Base',
@@ -519,6 +520,17 @@ class Utility(object):
 
         # Merge lists and return
         return finalized + lv3_asns
+
+
+# ---------
+# Utilities
+# ---------
+# Define default product name filling
+format_product = FormatTemplate(
+    key_formats={
+        'source_id': 's{:05d}'
+    }
+)
 
 
 # ---------------------------------------------
