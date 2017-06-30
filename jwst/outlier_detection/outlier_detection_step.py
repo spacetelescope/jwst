@@ -38,7 +38,6 @@ class OutlierDetectionStep(Step):
     def process(self, input):
 
         with datamodels.open(input) as input_models:
-
             if not isinstance(input_models, datamodels.ModelContainer):
                 self.log.warning("Input is not a ModelContainer.")
                 self.log.warning("Outlier detection step will be skipped.")
@@ -96,11 +95,18 @@ class OutlierDetectionStep(Step):
         reffile_to_model = {'gain': datamodels.GainModel,
             'readnoise': datamodels.ReadnoiseModel}
 
-        reffiles = [self.get_reference_file(im, reftype) for im in self.input_models]
+        if reftype in self.input_models[0].meta.ref_file._instance:
+            reffile_names = [tm.meta.ref_file._instance[reftype]['name'] for tm in self.input_models]
+            if len(set(reffile_names)) == 1:
+               reffiles = [self.get_reference_file(self.input_models[0],reftype)]*len(reffile_names)
+            else:
+                reffiles = [self.get_reference_file(im, reftype) for im in self.input_models]                 
+        else:
+            reffiles = [self.get_reference_file(im, reftype) for im in self.input_models]
+
         self.log.debug("Using {} reffile(s):".format(reftype.upper()))
         for r in set(reffiles):
             self.log.debug("    {}".format(r))
-
         # Check if all the ref files are the same.  If so build it by reading
         # the reference file just once.
         if len(set(reffiles)) <= 1:
