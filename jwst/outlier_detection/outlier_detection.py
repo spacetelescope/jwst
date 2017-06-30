@@ -1,6 +1,7 @@
 from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
+
 import time
 import numpy as np
 from collections import OrderedDict
@@ -111,7 +112,6 @@ class OutlierDetection(object):
         """
         pars = self.outlierpars
         save_intermediate_results = pars['save_intermediate_results']
-
         if pars['resample_data'] is True:
             # Start by creating resampled/mosaic images for each group of exposures
             sdriz = resample.ResampleData(self.input_models, single=True,
@@ -324,10 +324,10 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     # logic copied from jwst.jump step...
     # Get subarray limits from metadata of input model
     xstart = blot_image.meta.subarray.xstart
-    xsize  = blot_image.meta.subarray.xsize
+    xsize  = blot_image.data.shape[1]
     xstop  = xstart + xsize - 1
     ystart = blot_image.meta.subarray.ystart
-    ysize  = blot_image.meta.subarray.ysize
+    ysize  = blot_image.data.shape[0]
     ystop  = ystart + ysize - 1
     if (readnoise_image.meta.subarray.xstart==xstart and
         readnoise_image.meta.subarray.xsize==xsize   and
