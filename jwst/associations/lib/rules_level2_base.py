@@ -61,6 +61,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
     def __init__(self, *args, **kwargs):
 
+        super(DMSLevel2bBase, self).__init__(*args, **kwargs)
+
         # Keep the set of members included in this association
         self.members = set()
 
@@ -79,9 +81,6 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 'check': lambda entry: entry['exptype'] == 'science'
             }
         })
-
-        # Now, lets see if member belongs to us.
-        super(DMSLevel2bBase, self).__init__(*args, **kwargs)
 
     def members_by_type(self, member_type):
         """Get list of members by their exposure type"""

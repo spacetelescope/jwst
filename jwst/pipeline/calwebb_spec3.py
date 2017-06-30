@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-from ..stpipe import Pipeline
 from .. import datamodels
+from ..associations.lib.rules_level3_base import format_product
 from ..exp_to_source import multislit_to_container
+from ..stpipe import Pipeline
 
 # step imports
 from ..cube_build import cube_build_step
@@ -68,7 +69,8 @@ class Spec3Pipeline(Pipeline):
         # products until the individual tasks work and do it themselves
         exptype = input_models[0].meta.exposure.type
         model_type = input_models[0].meta.model_type
-        self.output_basename = input_models.meta.asn_table.products[0].name
+        output_basename = input_models.meta.asn_table.products[0].name
+        self.output_basename = output_basename
 
         pool_name = input_models.meta.asn_table.asn_pool
         asn_file = input
@@ -94,13 +96,22 @@ class Spec3Pipeline(Pipeline):
         if model_type in MULTISOURCE_MODELS:
             self.log.info('Convert from exposure-based to source-based data.')
             sources = [
-                model
+                (name, model)
                 for name, model in multislit_to_container(input_models).items()
             ]
 
         # Process each source
         for source in sources:
-            result = source
+
+            # If each source is a SourceModelContainer
+            # the output name needs to be updated with the source name.
+            if isinstance(source, tuple):
+                source_id, result = source
+                self.output_basename = format_product(
+                    output_basename, source_id=int(source_id)
+                )
+            else:
+                result = source
 
             # The MultiExposureModel is a required output.
             if isinstance(result, datamodels.SourceModelContainer):
@@ -136,15 +147,6 @@ class Spec3Pipeline(Pipeline):
                 self.log.warn(
                     'Resampling was not completed. Skipping extract_1d.'
                 )
-
-            # Save results now in order to conserve
-            # memory.
-            if result == source:
-                self.log.warning(
-                    'No steps executed, not attempting to save result.'
-                )
-            else:
-                self.save_model(result, suffix=self.suffix)
 
         # We're done
         self.log.info('Ending calwebb_spec3')

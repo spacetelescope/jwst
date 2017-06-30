@@ -55,13 +55,6 @@ def generate(pool, rules, version_id=None):
     ]
 
     for process_idx, process_item in enumerate(process_list):
-        logger.debug('idx={} members={} rules={} associations={} list={}'.format(
-            process_idx,
-            len(process_item.members),
-            len(process_item.rules),
-            len(associations),
-            len(process_list)
-        ))
         for member in process_item.members:
             existing_asns, new_asns, to_process = generate_from_member(
                 member,

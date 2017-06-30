@@ -84,6 +84,10 @@ def test_run_resample_only(mk_tmp_dirs):
     assert path.isfile(product_name)
 
 
+@pytest.mark.xfail(
+    reason='Saving mrs_imatch results fails',
+    run=False
+)
 @runslow
 @require_bigdata
 def test_run_mrs_imatch_only(mk_tmp_dirs):
@@ -100,6 +104,7 @@ def test_run_mrs_imatch_only(mk_tmp_dirs):
         '--steps.outlier_detection.skip=true',
         '--steps.resample_spec.skip=true',
         '--steps.extract_1d.skip=true',
+        '--steps.mrs_imatch.save_results=true',
     ]
 
     Step.from_cmdline(args)

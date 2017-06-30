@@ -40,6 +40,7 @@ def test_run_outlier_only(mk_tmp_dirs):
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
         '--steps.mrs_imatch.skip=true',
+        '--steps.outlier_detection.save_results=true',
         '--steps.resample_spec.skip=true',
         '--steps.cube_build.skip=true',
         '--steps.extract_1d.skip=true',
@@ -47,6 +48,42 @@ def test_run_outlier_only(mk_tmp_dirs):
 
     Step.from_cmdline(args)
     assert False
+
+
+@require_bigdata
+def test_run_outlier_only_mock(mk_tmp_dirs):
+    """Test a basic run"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    asn_path = update_asn_basedir(
+        path.join(DATAPATH, 'two_member_spec3_asn.json'),
+        root=path.join(DATAPATH, 'level2b_twoslit')
+    )
+    args = [
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_mock.cfg'),
+        asn_path,
+        '--steps.mrs_imatch.skip=true',
+        '--steps.resample_spec.skip=true',
+        '--steps.cube_build.skip=true',
+        '--steps.extract_1d.skip=true',
+    ]
+
+    Step.from_cmdline(args)
+
+    # Check for the Source-based cal name.
+    with open(asn_path) as fp:
+        asn = load_asn(fp)
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
+
+    # Check for the outlier resutls
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_crj.fits'
+    assert len(glob(product_name_glob)) == 2
 
 
 @pytest.mark.xfail(
@@ -76,9 +113,17 @@ def test_run_resample_only(mk_tmp_dirs):
 
     with open(asn_path) as fd:
         asn = load_asn(fd)
-    product_name_base = asn['products'][0]['name']
-    product_name = product_name_base + '_s2d.fits'
-    assert path.isfile(product_name)
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
+
+    # Check for resample results
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_s2d.fits'
+    assert len(glob(product_name_glob)) == 2
 
 
 @require_bigdata
@@ -104,8 +149,11 @@ def test_run_cube_build(mk_tmp_dirs):
     # Check for the Source-based cal name.
     with open(asn_path) as fp:
         asn = load_asn(fp)
-    product_name = asn['products'][0]['name']
-    assert path.isfile(product_name + '_cal.fits')
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
 
     # Assert that no cubes were built.
     cube_files = glob('*s3d*')
@@ -137,8 +185,11 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     # source base has occured. Check
     with open(asn_path) as fd:
         asn = load_asn(fd)
-    product_name_base = asn['products'][0]['name']
-    assert path.isfile(product_name_base + '_cal.fits')
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
 
     # Check that no other products built
     files = glob('*s3d*')
@@ -171,8 +222,11 @@ def test_run_nosteps(mk_tmp_dirs):
     # Check for the Source-based cal name.
     with open(asn_path) as fp:
         asn = load_asn(fp)
-    product_name = asn['products'][0]['name']
-    assert path.isfile(product_name + '_cal.fits')
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
 
     # Check that no other products built
     files = glob('*s3d*')
