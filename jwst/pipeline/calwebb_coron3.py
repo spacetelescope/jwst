@@ -131,7 +131,7 @@ class Coron3Pipeline(Pipeline):
             lev2c_model = psf_sub.copy()
             # Update/replace L2B product DQ array with L2C results
             for i in range(len(target_models)):
-                psf_sub.dq[i] = target_models[i].dq
+                lev2c_model.dq[i] = target_models[i].dq
             lev2c_model.meta.cal_step.outlier_detection = 'COMPLETE'
             lev2c_model.save(lev2c_name)
 
