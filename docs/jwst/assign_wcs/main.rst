@@ -83,4 +83,4 @@ Software dependencies:
 
 - `astropy <http://www.astropy.org/>`__ 1.2.1 or later
 
-- `asdf <http://pyasdf.readthedocs.org/en/latest/>`__ 1.1.1 or later
+- `asdf <http://asdf.readthedocs.io/en/latest/>`__ 1.1.1 or later
