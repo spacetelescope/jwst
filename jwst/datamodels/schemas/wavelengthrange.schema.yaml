@@ -1,4 +1,4 @@
-title: MIRI MRS WAVELENGTHRANGE reference file model
+title: WAVELENGTHRANGE reference file model
 allOf:
 - $ref: referencefile.schema.yaml
 - $ref: keyword_exptype.schema.yaml

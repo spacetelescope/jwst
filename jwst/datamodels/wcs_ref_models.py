@@ -206,11 +206,11 @@ class WavelengthrangeModel(model_base.DataModel):
     schema_url = "wavelengthrange.schema.yaml"
     reftype = "wavelengthrange"
 
-    def __init__(self, init=None, channels=None, wrange=None, order=None, wunits=None, **kwargs):
+    def __init__(self, init=None, wrange_selector=None, wrange=None, order=None, wunits=None, **kwargs):
 
         super(WavelengthrangeModel, self).__init__(init=init, **kwargs)
-        if channels is not None:
-            self.channels = channels
+        if wrange_selector is not None:
+            self.waverange_selector = wrange_selector
         if wrange is not None:
             self.wavelengthrange = wrange
         if order is not None:
