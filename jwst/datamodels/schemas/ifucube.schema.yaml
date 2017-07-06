@@ -18,14 +18,6 @@ allOf:
           title: EXTNAME of the extension containing data quality mask
           type: string
           fits_keyword: MASKEXT
-        weightmap_extension:
-          title: EXTNAME of the extension containing weight map
-          type: string
-          fits_keyword: WMAPEXT
-        data_model_type:
-          title: type of data model used to construct object
-          type: string
-          fits_keyword: DATAMODL
 - type: object
   properties:
     data:

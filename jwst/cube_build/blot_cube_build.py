@@ -15,8 +15,6 @@ from ..associations import Association
 from .. import datamodels
 from ..assign_wcs import nirspec
 from ..assign_wcs import pointing
-from . import cube_build_io_util
-from . import cube_build_wcs_util
 from . import file_table
 from . import instrument_defaults
 from . import spaxel
@@ -30,65 +28,14 @@ from gwcs import wcstools
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-class CubeData(object):
-# CubeData - holds all the importatn informtion for IFU Cube Building:
-# wcs, data, reference data
+class CubeBlot(object):
+# CubeBlot - holds all the important information for Blotting an IFU Cube back to detecto:
 
-    def __init__(self, cube_type,
-                 input_models,
-                 input_filenames,
-                 output_name_base,
-                 data_type,
-                 par_filename,
-                 resol_filename,
-                 **pars):
+    def __init__(self, median_models,
+                 input_models):
 
-        self.cube_type = cube_type
-        self.input_models = input_models
-        self.input_filenames = input_filenames
-        self.output_name_base = output_name_base
-        self.data_type = data_type
-        self.par_filename = par_filename
-        self.resol_filename = resol_filename
         
-
-        self.single = pars.get('single')
-        self.channel = pars.get('channel')
-        self.subchannel = pars.get('subchannel')
-        self.grating = pars.get('grating')
-        self.filter = pars.get('filter')
-        self.scale1 = pars.get('scale1')
-        self.scale2 = pars.get('scale2')
-        self.scalew = pars.get('scalew')
-        self.rois = pars.get('rois')
-        self.roiw = pars.get('roiw')
-        self.output_file = pars.get('output_file')
-        self.interpolation = pars.get('interpolation')
-        self.coord_system = pars.get('coord_system')
-        self.offset_list = pars.get('offset_list')
-        self.wavemin = pars.get('wavemin')
-        self.wavemax = pars.get('wavemax')
-        self.weighting = pars.get('weighting')
-        self.weight_power = pars.get('weight_power')
-        self.xdebug = pars.get('xdebug')
-        self.ydebug = pars.get('ydebug')
-        self.zdebug = pars.get('zdebug')
-        self.debug_pixel = pars.get('debug_pixel')
-        self.spaxel_debug = pars.get('spaxel_debug')
-
-        self.ra_offset = []  # units arc seconds
-        self.dec_offset = [] # units arc seconds
-        self.detector = None
-        self.instrument = None
-        self.num_bands = 0
-        self.band_channel = []
-        self.band_subchannel = []
-        self.band_filter = []
-        self.band_grating = []
-        self.num_bands = 0
-        self.output_name = ''
         self.number_files = 0
-
         self.Cdelt1 = None
         self.Cdelt2 = None
         self.Cdelt3 = None
@@ -98,6 +45,7 @@ class CubeData(object):
         self.Crval1 = None
         self.Crval2 = None
         self.Crval3 = None
+
         self.naxis1 = None
         self.naxis2 = None
         self.naxis3 = None
@@ -112,7 +60,9 @@ class CubeData(object):
         self.ycoord = None
         self.zcoord = None
 
-        self.spaxel = []        # list of spaxel classes
+        self.median = median_models
+        self.input = input
+
 #********************************************************************************
     def setup(self):
 
@@ -875,7 +825,8 @@ class CubeData(object):
         IFUCube.meta.flux_extension = 'SCI'
         IFUCube.meta.error_extension = 'ERR'
         IFUCube.meta.dq_extension = 'DQ'
-#        IFUCube.meta.data_model_type = 'IFUCubeModel'
+        IFUCube.meta.weightmap_extension = 'WMAP'
+        IFUCube.meta.data_model_type = 'IFUCubeModel'
         IFUCube.error_type = 'ERR'
 
 
