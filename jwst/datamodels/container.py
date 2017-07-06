@@ -71,10 +71,7 @@ class ModelContainer(model_base.DataModel):
         if init is None:
             self._models = []
         elif isinstance(init, list):
-            for item in init:
-                if not isinstance(item, model_base.DataModel):
-                    raise ValueError('list must contain only DataModels')
-            self._models = init
+            self._models = init[:]
         elif isinstance(init, self.__class__):
             instance = copy.deepcopy(init._instance)
             self._schema = init._schema
@@ -96,11 +93,36 @@ class ModelContainer(model_base.DataModel):
                             'an ASN file'.format(init))
 
 
+    def _open_model(self, init):
+        if not isinstance(init, model_base.DataModel):
+            model = datamodel_open(init,
+                                   extensions=self._extensions,
+                                   pass_invalid_values=self._pass_invalid_values)
+            if isinstance(init, six.string_types):
+                model.meta.filename = op.basename(init)
+                
+        return model
+
+
+    def _close_model(self, model, path=None):
+        if isinstance(model, model_base.DataModel):
+            if path is None:
+                path = os.getcwd()
+            try:
+                temp = op.join(path, model.meta.filename)
+            except:
+                temp = model._shape
+            model.close()
+            model = temp
+        return model
+
+
     def __len__(self):
         return len(self._models)
 
 
     def __getitem__(self, index):
+        self._models[index] = self._open_model(self._models[index])
         return self._models[index]
 
 
@@ -109,12 +131,12 @@ class ModelContainer(model_base.DataModel):
 
 
     def __delitem__(self, index):
+        self._close_model(self._models[index])
         del self._models[index]
 
 
     def __iter__(self):
-        for model in self._models:
-            yield model
+        return ModelContainerIterator(self)
 
 
     def insert(self, index, model):
@@ -129,19 +151,23 @@ class ModelContainer(model_base.DataModel):
         self._models.extend(model)
 
 
-    def pop(self, index=None):
-        if not index:
-            self._models.pop(-1)
-        else:
-            self._models.pop(index)
-
+    def pop(self, index=-1):
+        model = self._models.pop(index)
+        if model:
+            model = self._open_model(model)
+        return model
+    
 
     def copy(self):
         """
         Returns a deep copy of the models in this model container.
         """
-
-        models_copy = [m.copy() for m in self._models]
+        models_copy = []
+        for model in self._models:
+            if isinstance(model, model_base.DataModel):
+                models_copy.append(model.copy())
+            else:
+                models_copy.append(model)
         return self.__class__(init=models_copy)
 
 
@@ -166,10 +192,7 @@ class ModelContainer(model_base.DataModel):
         # make a list of all the input FITS files
         infiles = [op.join(basedir, member['expname']) for member
                    in asn_data['products'][0]['members']]
-        try:
-            self._models = [datamodel_open(infile, **kwargs) for infile in infiles]
-        except IOError:
-            raise IOError('Cannot open {}'.format(infiles))
+        self._models = infiles
 
         # Pull the whole association table into meta.asn_table
         self.meta.asn_table = {}
@@ -206,12 +229,12 @@ class ModelContainer(model_base.DataModel):
         """
         if path is None:
             path = os.getcwd()
-        try:
-            for model in self._models:
-                outpath = op.join(path, model.meta.filename)
+        for model in self:
+            outpath = op.join(path, model.meta.filename)
+            try:
                 model.save(outpath, *args, **kwargs)
-        except IOError as err:
-            raise err
+            except IOError as err:
+                raise err
 
 
     def __assign_group_ids(self):
@@ -232,7 +255,7 @@ class ModelContainer(model_base.DataModel):
         meta.instrument.name
         meta.instrument.channel
         """
-        for i, model in enumerate(self._models):
+        for i, model in enumerate(self):
             try:
                 model_attrs = []
                 model_attrs.append(model.meta.observation.program_number)
@@ -261,7 +284,7 @@ class ModelContainer(model_base.DataModel):
         """
         self.__assign_group_ids()
         group_dict = OrderedDict()
-        for model in self._models:
+        for model in self:
             group_id = model.meta.group_id
             if group_id in group_dict:
                 group_dict[group_id].append(model)
@@ -308,3 +331,35 @@ class ModelContainer(model_base.DataModel):
         Returns a list of values of the specified field from meta.
         """
         return self.__get_recursively(field, self.meta._instance)
+
+
+class ModelContainerIterator(six.Iterator):
+    """
+    An iterator for model containers that opens one model at a time
+    """
+    def __init__(self, container):
+        self.index = -1
+        self.path = None
+        self.container = container
+        for model in container._models:
+            if isinstance(model, six.string_types):
+                self.path = op.dirname(model)
+                break
+
+
+    def __iter__(self):
+        return self
+
+    
+    def __next__(self):
+        models = self.container._models
+        if self.index >= 0 and self.index < len(models):
+            models[self.index] = self.container._close_model(models[self.index],
+                                                             path=self.path)
+            
+        self.index += 1    
+        if self.index < len(models):
+            models[self.index] = self.container._open_model(models[self.index])
+            return models[self.index]
+        else:
+            raise StopIteration
