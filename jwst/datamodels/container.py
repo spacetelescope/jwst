@@ -71,6 +71,7 @@ class ModelContainer(model_base.DataModel):
         if init is None:
             self._models = []
         elif isinstance(init, list):
+            self._validate_model(init)
             self._models = init[:]
         elif isinstance(init, self.__class__):
             instance = copy.deepcopy(init._instance)
@@ -93,28 +94,28 @@ class ModelContainer(model_base.DataModel):
                             'an ASN file'.format(init))
 
 
-    def _open_model(self, init):
-        if not isinstance(init, model_base.DataModel):
-            model = datamodel_open(init,
+    def _open_model(self, index):
+        model = self._models[index]
+        if not isinstance(model, model_base.DataModel):
+            model = datamodel_open(model,
                                    extensions=self._extensions,
                                    pass_invalid_values=self._pass_invalid_values)
-            if isinstance(init, six.string_types):
-                model.meta.filename = op.basename(init)
+            self._models[index] = model
                 
         return model
 
 
-    def _close_model(self, model, path=None):
-        if isinstance(model, model_base.DataModel):
-            if path is None:
-                path = os.getcwd()
-            try:
-                temp = op.join(path, model.meta.filename)
-            except:
-                temp = model._shape
-            model.close()
-            model = temp
-        return model
+    def _close_model(self, filename, index):
+        self._models[index].close()
+        self._models[index] = filename
+
+
+    def _validate_model(self, models):
+        if not isinstance(models, list):
+            models = [models]
+        for model in models:
+            if not isinstance(model, (six.string_types, model_base.DataModel)):
+               raise ValueError('model must be string or DataModel')
 
 
     def __len__(self):
@@ -122,16 +123,15 @@ class ModelContainer(model_base.DataModel):
 
 
     def __getitem__(self, index):
-        self._models[index] = self._open_model(self._models[index])
-        return self._models[index]
+        return self._open_model(index)
 
 
     def __setitem__(self, index, model):
+        self._validate_model(model)
         self._models[index] = model
 
 
     def __delitem__(self, index):
-        self._close_model(self._models[index])
         del self._models[index]
 
 
@@ -140,23 +140,24 @@ class ModelContainer(model_base.DataModel):
 
 
     def insert(self, index, model):
+        self._validate_model(model)
         self._models.insert(index, model)
 
 
     def append(self, model):
+        self._validate_model(model)
         self._models.append(model)
 
 
-    def extend(self, model):
-        self._models.extend(model)
+    def extend(self, models):
+        self._validate_model(models)
+        self._models.extend(models)
 
 
     def pop(self, index=-1):
-        model = self._models.pop(index)
-        if model:
-            model = self._open_model(model)
-        return model
-    
+        self._open_model(index)
+        return self._models.pop(index)
+
 
     def copy(self):
         """
@@ -339,12 +340,8 @@ class ModelContainerIterator(six.Iterator):
     """
     def __init__(self, container):
         self.index = -1
-        self.path = None
+        self.open_filename = None
         self.container = container
-        for model in container._models:
-            if isinstance(model, six.string_types):
-                self.path = op.dirname(model)
-                break
 
 
     def __iter__(self):
@@ -352,14 +349,17 @@ class ModelContainerIterator(six.Iterator):
 
     
     def __next__(self):
-        models = self.container._models
-        if self.index >= 0 and self.index < len(models):
-            models[self.index] = self.container._close_model(models[self.index],
-                                                             path=self.path)
+        if self.open_filename is not None:
+            self.container._close_model(self.open_filename, self.index)
+            self.open_filename = None
             
         self.index += 1    
-        if self.index < len(models):
-            models[self.index] = self.container._open_model(models[self.index])
-            return models[self.index]
+        if self.index < len(self.container._models):
+            model = self.container._models[self.index]
+            if isinstance(model, six.string_types):
+                name = model
+                model = self.container._open_model(self.index)
+                self.open_filename = name
+            return model
         else:
             raise StopIteration
