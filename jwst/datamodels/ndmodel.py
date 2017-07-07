@@ -11,6 +11,8 @@ import collections
 from astropy.extern import six
 from astropy.units import Quantity
 from astropy.nddata import nddata_base
+from astropy import wcs
+import gwcs
 
 from . import util
 from . import filetype
@@ -105,7 +107,7 @@ def write(data, path, *args, **kwargs):
 #---------------------------------------
 
 class NDModel(nddata_base.NDDataBase):
-    def my_attribute(self, attr):
+    def _my_attribute(self, attr):
         """
         Test if attribute is part of the NDData interface
         """
@@ -162,15 +164,30 @@ class NDModel(nddata_base.NDDataBase):
     def wcs(self):
         """
         Read the world coordinate system (WCS) for the dataset.
+
+        Get the GWCS object or if it hasn't been set, generate an astropy WCS
+        object from the header info.
         """
-        return self.get_fits_wcs()
+        try:
+            val = self.meta.wcs
+        except AttributeError:
+            val = None
+        if val:
+            return val
+        else:
+            return self.get_fits_wcs()
 
     @wcs.setter
     def wcs(self, value):
         """
         Write the world coordinate system (WCS) to the dataset.
+
+        Write an astropy WCS or GWCS object as required.
         """
-        return self.set_fits_wcs(value)
+        if isinstance(value, wcs.WCS):
+            self.set_fits_wcs(value)
+        elif isinstance(value, gwcs.WCS):
+            self.meta.wcs = value
 
     @property
     def meta(self):
