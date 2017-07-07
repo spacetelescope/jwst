@@ -9,4 +9,4 @@ Ramp Fitting
    reference_files.rst
 
 
-..automodapi:: jwst.ramp_fitting
+.. automodapi:: jwst.ramp_fitting
