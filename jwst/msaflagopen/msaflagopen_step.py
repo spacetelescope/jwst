@@ -18,8 +18,6 @@ class MSAFlagOpenStep(Step):
 
         # Open the input data model
         with datamodels.open(input) as input_model:
-
-            # Get the name of the reference file to use
             self.reference_name = self.get_reference_file(input_model,
                                                           'msaoper')
             self.log.info('Using reference file %s', self.reference_name)
@@ -32,16 +30,41 @@ class MSAFlagOpenStep(Step):
                 result.meta.cal_step.msaflagopen = 'SKIPPED'
                 return result
 
-            # Open the bad shutter reference file data model
-            f1 = open(self.reference_name, 'r')
-            shutters = json.load(f1)
-            f1.close()
 
+            #
+            # Get the reference file names for constructing the WCS pipeline
+            wcs_reffile_names = create_reference_filename_dictionary(input_model)
             # Do the DQ flagging
             result = msaflag_open.do_correction(input_model,
-                                                shutters['msaoper'])
+                                                self.reference_name,
+                                                wcs_reffile_names)
 
             # set the step status to complete
             result.meta.cal_step.msaflagopen = 'COMPLETE'
 
         return result
+
+def create_reference_filename_dictionary(input_model):
+    reffiles = {}
+    a = Step()
+    reffiles['distortion'] = input_model.meta.ref_file.distortion.name
+    reffiles['filteroffset'] = input_model.meta.ref_file.filteroffset.name
+    reffiles['specwcs'] = input_model.meta.ref_file.filteroffset.name
+    reffiles['regions'] = input_model.meta.ref_file.regions.name
+    reffiles['wavelengthrange'] = input_model.meta.ref_file.wavelengthrange.name
+    reffiles['v2v3'] = input_model.meta.ref_file.v2v3.name
+    reffiles['camera'] = input_model.meta.ref_file.camera.name
+    reffiles['collimator'] = input_model.meta.ref_file.collimator.name
+    reffiles['disperser'] = input_model.meta.ref_file.disperser.name
+    reffiles['fore'] = input_model.meta.ref_file.fore.name
+    reffiles['fpa'] = input_model.meta.ref_file.fpa.name
+    reffiles['msa'] = input_model.meta.ref_file.msa.name
+    reffiles['ote'] = input_model.meta.ref_file.ote.name
+    reffiles['ifupost'] = input_model.meta.ref_file.ifupost.name
+    reffiles['ifufore'] = input_model.meta.ref_file.ifufore.name
+    reffiles['ifuslicer'] = input_model.meta.ref_file.ifuslicer.name
+    # Convert from crds protocol to absolute filenames
+    for key in reffiles.keys():
+        if reffiles[key].startswith('crds://'):
+            reffiles[key] = a.reference_uri_to_cache_path(reffiles[key])
+    return reffiles
