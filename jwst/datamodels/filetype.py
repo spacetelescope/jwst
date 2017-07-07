@@ -16,11 +16,18 @@ def check(init):
     -------
     file_type: a string with the file type ("asdf", "asn", or "fits")
     """
-    
+
     if isinstance(init, six.string_types):
-        fd = open(init, "rb")
-        magic = fd.read(5)
-        fd.close()
+        if os.path.exists(init):
+            fd = open(init, "rb")
+            magic = fd.read(5)
+            fd.close()
+        else:
+            filename, file_extension = os.path.splitext(init)
+            file_type = file_extension[1:]
+            if file_type not in ("asdf", "fits", "asn"):
+                raise ValueError("Cannot get file type of " + str(init))
+            return file_type
         
     elif hasattr(init, "read") and hasattr(init, "seek"):
         magic = init.read(5)
