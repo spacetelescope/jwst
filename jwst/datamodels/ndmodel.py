@@ -169,12 +169,8 @@ class NDModel(nddata_base.NDDataBase):
         object from the header info.
         """
         try:
-            val = self.meta.wcs
+            return self.meta.wcs
         except AttributeError:
-            val = None
-        if val:
-            return val
-        else:
             return self.get_fits_wcs()
 
     @wcs.setter
