@@ -348,10 +348,9 @@ class CubeData(object):
             final_lambda_max = self.wavemax
             log.info('Changed max wavelength of cube to %f ',final_lambda_max)
 #________________________________________________________________________________
-        if self.instrument =='MIRI' and self.interpolation=='area':
-        #TODO instead of self.interpolation=area I think it should be coord_system = alpha-beta
-        # so we have a 1 to 1 mapping in beta dimension.
-            nslice = instrument_info.GetNSlice(parameter1[0])
+        if self.instrument =='MIRI' and self.coord_system=='alpha-beta':
+        #  we have a 1 to 1 mapping in beta dimension.
+            nslice = self.instrument_info.GetNSlice(parameter1[0])
             log.info('Beta Scale %f ',self.Cdelt2)
             self.Cdelt2 = (final_b_max - final_b_min)/nslice
         #print('remove********')
@@ -436,10 +435,14 @@ class CubeData(object):
         log.info("Time find Cube Flux= %.1f.s" % (t1 - t0,))
 
         IFUCube = CubeData.setup_IFUCube(self,0)
+
+
 #_______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
         CubeData.update_IFUCube(self,IFUCube, self.spaxel)
 
+        print('***** ',IFUCube.meta.wcsinfo.crval1,IFUCube.meta.wcsinfo.cravl2,IFUCube.meta.wcsinfo.crval3)
+        print('***** ',IFUCube.meta.wcs.crval1,IFUCube.meta.wcs.cravl2,IFUCube.meta.wcs.crval3)
         return IFUCube
 
 #********************************************************************************
@@ -523,7 +526,13 @@ class CubeData(object):
             CubeData.find_spaxel_flux(self, spaxel)
 # now determine Cube Spaxel flux
             IFUCube = CubeData.setup_IFUCube(self,j)
+
             CubeData.update_IFUCube(self,IFUCube, spaxel)
+            print('***** ',IFUCube.meta.wcsinfo.crval1,IFUCube.meta.wcsinfo.crval2,
+                  IFUCube.meta.wcsinfo.crval3)
+
+            print('wcs ',IFUCube.meta.wcs(1,1,1))
+            
 
             t1 = time.time()
             log.info("Time Create Single IFUcube  = %.1f.s" % (t1 - t0,))
@@ -861,15 +870,8 @@ class CubeData(object):
         IFUCube.meta.wcsinfo.cunit1 = 'deg'
         IFUCube.meta.wcsinfo.cunit2 = 'deg'
 
-#    elif(self.coord_system == 'alpha-beta'):
-#        IFUCube.wcsinfo.ctype1 = 'ALPHA'
-#        IFUCube.wcsinfo.ctype2 = 'BETA'
-#        IFUCube.wcsinfo.cunit1 = 'arcsec'
-#        IFUCube.wcsinfo.cunit2 = 'arcsec'
-
         IFUCube.meta.wcsinfo.ctype3 = 'WAVE'
         IFUCube.meta.wcsinfo.cunit3 = 'um'
-
         IFUCube.meta.wcsinfo.wcsaxes = 3
 
         IFUCube.meta.flux_extension = 'SCI'
@@ -878,10 +880,18 @@ class CubeData(object):
 #        IFUCube.meta.data_model_type = 'IFUCubeModel'
         IFUCube.error_type = 'ERR'
 
+        if(self.coord_system == 'alpha-beta'):
+            IFUCube.meta.wcsinfo.ctype1 = 'ALPHA'
+            IFUCube.meta.wcsinfo.ctype2 = 'BETA'
+            IFUCube.meta.wcsinfo.cunit1 = 'arcsec'
+            IFUCube.meta.wcsinfo.cunit2 = 'arcsec'
+
+        print('***** ',IFUCube.meta.wcsinfo.crval1,IFUCube.meta.wcsinfo.crval2,
+                  IFUCube.meta.wcsinfo.crval3)
 
         wcsobj = pointing.create_fitswcs(IFUCube)
-
         IFUCube.meta.wcs = wcsobj
+        IFUCube.meta.wcs.bounding_box = ((0,naxis1-1),(0,naxis2-1),(0,naxis3-1))
         return IFUCube
 
 #********************************************************************************

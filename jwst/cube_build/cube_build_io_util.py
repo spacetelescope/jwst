@@ -230,8 +230,6 @@ def update_output_name(self):
         newname = self.output_name
     else:
         if self.instrument == 'MIRI':
-            #channels = list(set(self.metadata['band_channel']))
-            # set does not preserve order so when forming name numbers out of order
 
             channels = []
             for ch in self.band_channel:
@@ -254,6 +252,9 @@ def update_output_name(self):
                 if(i > 1): b_name = b_name + '-'
             b_name  = b_name.lower()
             newname = self.output_name_base + ch_name+ '-' + b_name +  '_s3d.fits'
+            if(self.coord_system == 'alpha-beta'): 
+                newname = self.output_name_base + ch_name+ '-' + b_name +  '_ab_s3d.fits'
+
 
         elif self.instrument == 'NIRSPEC':
             fg_name = '_'
