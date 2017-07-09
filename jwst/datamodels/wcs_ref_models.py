@@ -177,6 +177,8 @@ class RegionsModel(model_base.DataModel):
         super(RegionsModel, self).__init__(init=init, **kwargs)
         if regions is not None:
             self.regions = regions
+        if init is None:
+            self.populate_meta()
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
@@ -217,6 +219,8 @@ class WavelengthrangeModel(model_base.DataModel):
             self.order = order
         if wunits is not None:
             self.meta.wavelength_units = wunits
+        if init is None:
+            self.populate_meta()
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
@@ -296,10 +300,11 @@ class IFUPostModel(model_base.DataModel):
             else:
                 for i, m in enumerate(models):
                     setattr(self, "slice_{0]".format(i), m)
+        if init is None:
+            self.populate_meta()
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
-        self.meta.telescope = self.meta.telescope
 
     def populate_meta(self):
         self.meta.instrument.name = "NIRSPEC"
@@ -331,6 +336,8 @@ class IFUSlicerModel(model_base.DataModel):
             self.model = model
         if data is not None:
             seld.data = data
+        if init is None:
+            self.populate_meta()
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
@@ -367,6 +374,8 @@ class MSAModel(model_base.DataModel):
             self.Q3 = {'model': models['Q3'], 'data': data['Q3']}
             self.Q4 = {'model': models['Q4'], 'data': data['Q4']}
             self.Q5 = {'model': models['Q5'], 'data': data['Q5']}
+        if init is None:
+            self.populate_meta()
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
@@ -430,6 +439,8 @@ class DisperserModel(model_base.DataModel):
             self.gwa_tiltx = gwa_tiltx
         if gwa_tilty is not None:
             self.gwa_tilty = gwa_tilty
+        if init is None:
+            self.populate_meta()
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
