@@ -181,8 +181,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         if isinstance(init, six.string_types):
             self.meta.filename = os.path.basename(init)
         elif isinstance(init, fits.HDUList):
-            filename = init.fileinfo(0)['filename']
-            self.meta.filename = os.path.basename(filename)
+            info = init.fileinfo(0)
+            if info is not None:
+                filename = info.get('filename')
+                if filename is not None:
+                    self.meta.filename = os.path.basename(filename)
         
         # if the input model doesn't have a date set, use the current date/time
         if self.meta.date is None:
