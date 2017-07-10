@@ -9,7 +9,10 @@ from .helpers import (
 )
 from .. import generate
 
-@pytest.mark.xfail(reason='No determined yet')
+@pytest.mark.xfail(
+    reason='Not determined yet',
+    run=False
+)
 def test_level2_bkgnod():
     assert False
 

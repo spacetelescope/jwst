@@ -1,20 +1,21 @@
 #!/usr/bin/env python
 
-from ..stpipe import Pipeline
 from .. import datamodels
-from ..exp_to_source import exp_to_source
+from ..associations.lib.rules_level3_base import format_product
+from ..exp_to_source import multislit_to_container
+from ..stpipe import Pipeline
 
 # step imports
-from ..skymatch import skymatch_step
-from ..outlier_detection import outlier_detection_step
-from ..resample import resample_spec_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
+from ..mrs_imatch import mrs_imatch_step
+from ..outlier_detection import outlier_detection_step
+from ..resample import resample_spec_step
 
 __version__ = "0.7.1"
 
 # Group exposure types
-MULTISOURCE_EXPTYPES = ['NRS_MSASPEC', 'NRC_GRISM', 'NIS_WFSS']
+MULTISOURCE_MODELS = ['MultiSlitModel']
 IFU_EXPTYPES = ['MIR_MRS', 'NRS_IFU']
 
 
@@ -35,7 +36,7 @@ class Spec3Pipeline(Pipeline):
 
     # Define aliases to steps
     step_defs = {
-        'skymatch': skymatch_step.SkyMatchStep,
+        'mrs_imatch': mrs_imatch_step.MRSIMatchStep,
         'outlier_detection': outlier_detection_step.OutlierDetectionStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'cube_build': cube_build_step.CubeBuildStep,
@@ -67,7 +68,9 @@ class Spec3Pipeline(Pipeline):
         # some of this is here only for the purpose of creating fake
         # products until the individual tasks work and do it themselves
         exptype = input_models[0].meta.exposure.type
-        self.output_basename = input_models.meta.asn_table.products[0].name
+        model_type = input_models[0].meta.model_type
+        output_basename = input_models.meta.asn_table.products[0].name
+        self.output_basename = output_basename
 
         pool_name = input_models.meta.asn_table.asn_pool
         asn_file = input
@@ -90,21 +93,33 @@ class Spec3Pipeline(Pipeline):
         # sources, each represented by a MultiExposureModel instead of
         # a single ModelContainer.
         sources = [input_models]
-        if exptype in MULTISOURCE_EXPTYPES:
+        if model_type in MULTISOURCE_MODELS:
             self.log.info('Convert from exposure-based to source-based data.')
-            sources = [model for name, model in exp_to_source(input_models).items()]
+            sources = [
+                (name, model)
+                for name, model in multislit_to_container(input_models).items()
+            ]
 
         # Process each source
         for source in sources:
-            result = source
+
+            # If each source is a SourceModelContainer
+            # the output name needs to be updated with the source name.
+            if isinstance(source, tuple):
+                source_id, result = source
+                self.output_basename = format_product(
+                    output_basename, source_id=int(source_id)
+                )
+            else:
+                result = source
 
             # The MultiExposureModel is a required output.
-            if isinstance(result, datamodels.MultiExposureModel):
+            if isinstance(result, datamodels.SourceModelContainer):
                 self.save_model(result, 'cal')
 
             # Call the skymatch step for MIRI MRS data
             if exptype in ['MIR_MRS']:
-                result = self.skymatch(result)
+                result = self.mrs_imatch(result)
 
             # Call outlier detection
             result = self.outlier_detection(result)
@@ -114,10 +129,16 @@ class Spec3Pipeline(Pipeline):
             resample_complete = None
             if exptype in IFU_EXPTYPES:
                 result = self.cube_build(result)
-                resample_complete = result.meta.cal_step.cube_build
+                try:
+                    resample_complete = result.meta.cal_step.cube_build
+                except AttributeError:
+                    pass
             else:
                 result = self.resample_spec(result)
-                resample_complete = result.meta.cal_step.resample
+                try:
+                    resample_complete = result.meta.cal_step.resample
+                except AttributeError:
+                    pass
 
             # Do 1-D spectral extraction
             if resample_complete is not None and resample_complete.upper() == 'COMPLETE':
@@ -126,15 +147,6 @@ class Spec3Pipeline(Pipeline):
                 self.log.warn(
                     'Resampling was not completed. Skipping extract_1d.'
                 )
-
-            # Save results now in order to conserve
-            # memory.
-            if result == source:
-                self.log.warning(
-                    'No steps executed, not attempting to save result.'
-                )
-            else:
-                self.save_model(result, suffix=self.suffix)
 
         # We're done
         self.log.info('Ending calwebb_spec3')

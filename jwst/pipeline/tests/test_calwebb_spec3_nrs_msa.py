@@ -1,5 +1,6 @@
 """Test calwebb_spec3"""
 
+from glob import glob
 from os import path
 import pytest
 
@@ -21,8 +22,9 @@ DATAPATH = abspath(
 )
 
 
-@pytest.mark.skip(
-    reason='Dies with crds error no META.INSTRUMENT.NAME'
+@pytest.mark.xfail(
+    reason='Fails due to issue #947',
+    run=False,
 )
 @runslow
 @require_bigdata
@@ -31,13 +33,14 @@ def test_run_outlier_only(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'mos_udf_g235M_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b')
+        path.join(DATAPATH, 'two_member_spec3_asn.json'),
+        root=path.join(DATAPATH, 'level2b_twoslit')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
-        '--steps.skymatch.skip=true',
+        '--steps.mrs_imatch.skip=true',
+        '--steps.outlier_detection.save_results=true',
         '--steps.resample_spec.skip=true',
         '--steps.cube_build.skip=true',
         '--steps.extract_1d.skip=true',
@@ -47,8 +50,45 @@ def test_run_outlier_only(mk_tmp_dirs):
     assert False
 
 
-@pytest.mark.skip(
-    reason='Dies with crds error no META.INSTRUMENT.NAME'
+@require_bigdata
+def test_run_outlier_only_mock(mk_tmp_dirs):
+    """Test a basic run"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    asn_path = update_asn_basedir(
+        path.join(DATAPATH, 'two_member_spec3_asn.json'),
+        root=path.join(DATAPATH, 'level2b_twoslit')
+    )
+    args = [
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_mock.cfg'),
+        asn_path,
+        '--steps.mrs_imatch.skip=true',
+        '--steps.resample_spec.skip=true',
+        '--steps.cube_build.skip=true',
+        '--steps.extract_1d.skip=true',
+    ]
+
+    Step.from_cmdline(args)
+
+    # Check for the Source-based cal name.
+    with open(asn_path) as fp:
+        asn = load_asn(fp)
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
+
+    # Check for the outlier resutls
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_crj.fits'
+    assert len(glob(product_name_glob)) == 2
+
+
+@pytest.mark.xfail(
+    reason='Fails as documented in issue #1005',
+    run=False,
 )
 @runslow
 @require_bigdata
@@ -63,7 +103,7 @@ def test_run_resample_only(mk_tmp_dirs):
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
-        '--steps.skymatch.skip=true',
+        '--steps.mrs_imatch.skip=true',
         '--steps.outlier_detection.skip=true',
         '--steps.cube_build.skip=true',
         '--steps.extract_1d.skip=true',
@@ -73,12 +113,88 @@ def test_run_resample_only(mk_tmp_dirs):
 
     with open(asn_path) as fd:
         asn = load_asn(fd)
-    product_name_base = asn['products'][0]['name']
-    product_name = product_name_base + '_s2d.fits'
-    assert path.isfile(product_name)
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
+
+    # Check for resample results
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_s2d.fits'
+    assert len(glob(product_name_glob)) == 2
 
 
 @runslow
+@require_bigdata
+def test_run_resample_mock_only(mk_tmp_dirs):
+    """Test resample step only."""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    asn_path = update_asn_basedir(
+        path.join(DATAPATH, 'two_member_spec3_asn.json'),
+        root=path.join(DATAPATH, 'level2b_twoslit')
+    )
+    args = [
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_mock.cfg'),
+        asn_path,
+        '--steps.mrs_imatch.skip=true',
+        '--steps.outlier_detection.skip=true',
+        '--steps.cube_build.skip=true',
+        '--steps.extract_1d.skip=true',
+    ]
+
+    Step.from_cmdline(args)
+
+    with open(asn_path) as fd:
+        asn = load_asn(fd)
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
+
+    # Check for resample results
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_s2d.fits'
+    assert len(glob(product_name_glob)) == 2
+
+
+@require_bigdata
+def test_run_cube_build(mk_tmp_dirs):
+    """NRS MSA data is not cube data. Nothing should happen"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    asn_path = update_asn_basedir(
+        path.join(DATAPATH, 'two_member_spec3_asn.json'),
+        root=path.join(DATAPATH, 'level2b_twoslit')
+    )
+    args = [
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
+        asn_path,
+        '--steps.mrs_imatch.skip=true',
+        '--steps.outlier_detection.skip=true',
+        '--steps.resample_spec.skip=true',
+        '--steps.extract_1d.skip=true',
+    ]
+
+    Step.from_cmdline(args)
+
+    # Check for the Source-based cal name.
+    with open(asn_path) as fp:
+        asn = load_asn(fp)
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
+
+    # Assert that no cubes were built.
+    cube_files = glob('*s3d*')
+    assert not cube_files
+
 @require_bigdata
 def test_run_extract_1d_only(mk_tmp_dirs):
     """Test only the extraction step. Should produce nothing
@@ -87,13 +203,13 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'mos_udf_g235M_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b')
+        path.join(DATAPATH, 'two_member_spec3_asn.json'),
+        root=path.join(DATAPATH, 'level2b_twoslit')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
-        '--steps.skymatch.skip=true',
+        '--steps.mrs_imatch.skip=true',
         '--steps.outlier_detection.skip=true',
         '--steps.resample_spec.skip=true',
         '--steps.cube_build.skip=true',
@@ -101,8 +217,65 @@ def test_run_extract_1d_only(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
+    # Though the calibration is not run, the conversion to
+    # source base has occured. Check
+    with open(asn_path) as fd:
+        asn = load_asn(fd)
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
 
-@runslow
+    # Check that no other products built
+    files = glob('*s3d*')
+    files.extend(glob('*s2d*'))
+    files.extend(glob('*x1d*'))
+    assert not files
+
+
+@require_bigdata
+def test_run_extract_1d_resample_mock(mk_tmp_dirs):
+    """Test only the extraction step. Should produce nothing
+    because extraction requires resampling
+    """
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    asn_path = update_asn_basedir(
+        path.join(DATAPATH, 'two_member_spec3_asn.json'),
+        root=path.join(DATAPATH, 'level2b_twoslit')
+    )
+    args = [
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_mock.cfg'),
+        asn_path,
+        '--steps.mrs_imatch.skip=true',
+        '--steps.outlier_detection.skip=true',
+        '--steps.cube_build.skip=true',
+    ]
+
+    Step.from_cmdline(args)
+
+    # Though the calibration is not run, the conversion to
+    # source base has occured. Check
+    with open(asn_path) as fd:
+        asn = load_asn(fd)
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
+
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_s2d.fits'
+    assert len(glob(product_name_glob)) == 2
+
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_x1d.fits'
+    assert len(glob(product_name_glob)) == 2
+
+
 @require_bigdata
 def test_run_nosteps(mk_tmp_dirs):
     """Test where no steps execute"""
@@ -110,12 +283,12 @@ def test_run_nosteps(mk_tmp_dirs):
 
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'two_member_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b')
+        root=path.join(DATAPATH, 'level2b_twoslit')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
-        '--steps.skymatch.skip=true',
+        '--steps.mrs_imatch.skip=true',
         '--steps.outlier_detection.skip=true',
         '--steps.resample_spec.skip=true',
         '--steps.cube_build.skip=true',
@@ -127,12 +300,21 @@ def test_run_nosteps(mk_tmp_dirs):
     # Check for the Source-based cal name.
     with open(asn_path) as fp:
         asn = load_asn(fp)
-    product_name = asn['products'][0]['name']
-    assert path.isfile(product_name + '_cal.fits')
+    product_name_template = asn['products'][0]['name']
+    product_name_glob = product_name_template.format(
+        source_id='s0000[14]',
+    ) + '_cal.fits'
+    assert len(glob(product_name_glob)) == 2
 
+    # Check that no other products built
+    files = glob('*s3d*')
+    files.extend(glob('*s2d*'))
+    files.extend(glob('*x1d*'))
+    assert not files
 
-@pytest.mark.skip(
-    reason='Dies with crds error no META.INSTRUMENT.NAME'
+@pytest.mark.xfail(
+    reason='Many individual steps have failures',
+    run=False,
 )
 @runslow
 @require_bigdata
@@ -141,8 +323,8 @@ def test_run_full(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'mos_udf_g235M_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b')
+        path.join(DATAPATH, 'two_member_spec3_asn.json'),
+        root=path.join(DATAPATH, 'level2b_twoslit')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),

@@ -28,7 +28,33 @@ class TempSkipStep(Step):
         self.parent._orig_skip = self.parent.skip
         self.parent.skip = True
 
-        
+
+class MockReflectionStep(Step):
+    """Dummy step that simply returns the passe input
+
+    Notes
+    -----
+    Run as a post hook on the results.
+    """
+
+    spec = """
+    """
+
+    def process(self, input):
+        self.log.warning(
+            'Reflecting back the input'
+        )
+
+        # Reset the parent's `skip`.
+        # If an explicit skip was requested, then skip here also.
+        self.parent.skip = getattr(self.parent, '_orig_skip', self.parent.skip)
+        if self.parent.skip:
+            self.log.warning('Skipping because original parent step is skipped')
+            return
+
+        return input
+
+
 class MockResampleStep(Step):
     """Dummy up results for resample
 
@@ -47,8 +73,8 @@ class MockResampleStep(Step):
             'Creating mock resampled product until step is available'
         )
 
-        # See if an explicit skip was requested
-        # If so, then skip this.
+        # Reset the parent's `skip`.
+        # If an explicit skip was requested, then skip here also.
         self.parent.skip = getattr(self.parent, '_orig_skip', self.parent.skip)
         if self.parent.skip:
             self.log.warning('Skipping because original parent step is skipped')
@@ -87,8 +113,8 @@ class MockCubeBuildStep(Step):
             'Creating fake cube build product until step is available'
         )
 
-        # See if an explicit skip was requested
-        # If so, then skip this.
+        # Reset the parent's `skip`.
+        # If an explicit skip was requested, then skip here also.
         self.parent.skip = getattr(self.parent, '_orig_skip', self.parent.skip)
         if self.parent.skip:
             self.log.warning('Skipping because original parent step is skipped')

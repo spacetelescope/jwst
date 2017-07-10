@@ -9,12 +9,6 @@ from .helpers import full_pool_rules
 
 from ..main import Main
 
-# Temporarily skip if running under Travis
-# pytestmark = pytest.mark.skipif(
-#     "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
-#     reason='Temporarily disable due to performance issues'
-# )
-
 
 def test_script(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
@@ -74,7 +68,10 @@ def test_toomanyoptions(full_pool_rules):
         ])
 
 
-@pytest.mark.skip(reason='Need to further investigate')
+@pytest.mark.xfail(
+    reason='Need to further investigate',
+    run=False
+)
 def test_discovered(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 

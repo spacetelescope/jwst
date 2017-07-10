@@ -113,9 +113,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         # Determine what kind of input we have (init) and execute the
         # proper code to intiailize the model
         self._files_to_close = []
+        self._iscopy = False
+    
         is_array = False
         is_shape = False
         shape = None
+        
         if init is None:
             asdf = AsdfFile(extensions=extensions)
         elif isinstance(init, dict):
@@ -125,13 +128,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             shape = init.shape
             is_array = True
         elif isinstance(init, self.__class__):
-            instance = copy.deepcopy(init._instance)
-            self._schema = init._schema
-            self._shape = init._shape
-            self._asdf = AsdfFile(instance, extensions=self._extensions)
-            self._instance = instance
-            self._ctx = self
-            self.__class__ = init.__class__
+            self.clone(self, init)
             return
         elif isinstance(init, DataModel):
             raise TypeError(
@@ -217,21 +214,38 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         self.close()
 
     def close(self):
-        for fd in self._files_to_close:
-            if fd is not None:
-                fd.close()
-        if self._asdf is not None:
-            self._asdf.close()
+        if not self._iscopy:
+            for fd in self._files_to_close:
+                if fd is not None:
+                    fd.close()
+            if self._asdf is not None:
+                self._asdf.close()
+
+    @staticmethod
+    def clone(target, source, deepcopy=False, memo=None):
+        if deepcopy:
+            instance = copy.deepcopy(source._instance, memo=memo)
+            target._asdf = AsdfFile(instance, extensions=source._extensions)
+            target._instance = instance
+            target._iscopy = source._iscopy
+        else:
+            target._asdf = source._asdf
+            target._instance = source._instance
+            target._iscopy = True
+
+        target._files_to_close = source._files_to_close[:]
+        target._schema = source._schema
+        target._shape = source._shape
+        target._ctx = target
 
     def copy(self, memo=None):
         """
         Returns a deep copy of this model.
         """
-        result = self.__class__(
-            init=copy.deepcopy(self._instance, memo=memo),
-            schema=self._schema,
-            extensions=self._extensions)
-        result._shape = self._shape
+        result = self.__class__(init=None,
+                                extensions=self._extensions,
+                                pass_invalid_values=self._pass_invalid_values)
+        self.clone(result, self, deepcopy=True, memo=memo)
         return result
 
     __copy__ = __deepcopy__ = copy

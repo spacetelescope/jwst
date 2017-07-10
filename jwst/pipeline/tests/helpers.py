@@ -9,6 +9,7 @@ import tempfile
 # Import from the common helpers module
 # simply to make available from this module.
 from ...tests.helpers import (
+    abspath,
     require_bigdata,
     runslow,
 )
@@ -17,11 +18,6 @@ from ...associations import load_asn
 
 SCRIPT_PATH = path.dirname(__file__)
 SCRIPT_DATA_PATH = path.join(SCRIPT_PATH, 'data')
-
-
-def abspath(filepath):
-    """Get the absolute file path"""
-    return path.abspath(path.expanduser(path.expandvars(filepath)))
 
 
 @pytest.fixture
