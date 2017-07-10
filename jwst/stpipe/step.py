@@ -22,7 +22,9 @@ from . import log
 from . import utilities
 from .. import __version_commit__, __version__
 
-REMOVE_SUFFIX = '(.+?)(_(rate|cal)(ints)?)?$'
+SUFFIX_LIST = ['rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
+    'jump', 'ramp', 'x1d', 'x2d', 'x1dints', 'calints', 'rateints']
+REMOVE_SUFFIX = '^(.+?)(_(' + '|'.join(SUFFIX_LIST) + '))?$'
 
 
 class Step(object):
@@ -32,11 +34,11 @@ class Step(object):
     spec = """
     pre_hooks = string_list(default=list())
     post_hooks = string_list(default=list())
-
     output_dir = string(default=None)       # Directory path for output files
     output_file = output_file(default=None) # File to save output to.
     skip = boolean(default=False)           # Skip this step
     save_results = boolean(default=False)   # Force save results
+    suffix = string(default=None)           # Default suffix for output files
     """
 
     reference_file_types = []
@@ -90,9 +92,9 @@ class Step(object):
         name : str, optional
             If provided, use that name for the returned instance.
             If not provided, the following are tried (in order):
-                - The `name` parameter in the config file
-                - The filename of the config file
-                - The name of returned class
+            - The `name` parameter in the config file
+            - The filename of the config file
+            - The name of returned class
 
         Returns
         -------
@@ -189,8 +191,8 @@ class Step(object):
         name : str, optional
             If provided, use that name for the returned instance.
             If not provided, try the following (in order):
-                - The `name` parameter in the config file fragment
-                - The name of returned class
+              - The `name` parameter in the config file fragment
+              - The name of returned class
 
         config_file : str, optional
             The path to the config file that created this step, if
@@ -337,8 +339,12 @@ class Step(object):
                 'Step {0} running with args {1}.'.format(
                     self.name, args))
 
+            hook_args = args
             for pre_hook in self._pre_hooks:
-                pre_hook.run(*args)
+                hook_results = pre_hook.run(*hook_args)
+                if hook_results is not None:
+                    hook_args = hook_results
+            args = hook_args
 
             self._reference_files_used = []
 
@@ -361,6 +367,16 @@ class Step(object):
             # Warn if returning a discouraged object
             self._check_args(result, DISCOURAGED_TYPES, "Returned")
 
+            # Run the post hooks
+            for post_hook in self._post_hooks:
+                hook_results = post_hook.run(result)
+                if hook_results is not None:
+                    result = hook_results
+
+            # Result to return
+            result_return = result
+
+            # Update meta information
             if not isinstance(result, (list, tuple)):
                 results = [result]
             else:
@@ -376,9 +392,6 @@ class Step(object):
                         result.meta.ref_file.crds.context_used = crds_client.get_context_used()
                 self._reference_files_used = []
 
-            for post_hook in self._post_hooks:
-                post_hook.run(result)
-
             # Mark versions
             for result in results:
                 if isinstance(result, datamodels.DataModel):
@@ -386,7 +399,9 @@ class Step(object):
                     result.meta.calibration_software_version = __version__
 
             # Save the output file if one was specified
-            if self.save_results or self.output_file is not None:
+            if not self.skip and (
+                    self.save_results or self.output_file is not None
+            ):
                 result_id = _make_result_id(
                     self.output_file, len(results), self.name
                 )
@@ -408,7 +423,7 @@ class Step(object):
         finally:
             log.delegator.log = orig_log
 
-        return result
+        return result_return
 
     __call__ = run
 
@@ -630,7 +645,7 @@ class Step(object):
         cache.  Reference URI's are typically output to dataset headers to record the
         reference files used.
 
-        e.g. 'crds://jwst_miri_flat_0177.fits'  -->  
+        e.g. 'crds://jwst_miri_flat_0177.fits'  -->
             '/grp/crds/cache/references/jwst/jwst_miri_flat_0177.fits'
 
         The CRDS cache is typically located relative to env var CRDS_PATH
@@ -709,6 +724,7 @@ class Step(object):
             self, model, suffix=suffix, ignore_use_model=True
         )
 
+        self.log.info('Step.save_model {}'.format(output_path))
         model.save(output_path, *args, **kwargs)
 
     @staticmethod

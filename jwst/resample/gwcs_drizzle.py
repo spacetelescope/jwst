@@ -458,8 +458,22 @@ def dodrizzle(insci, input_wcs, inwht,
     # Compute the mapping between the input and output pixel coordinates
     # for use in drizzle.cdrizzle.tdriz
     pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs, insci.shape)
+
+    # Temporary fix for tdriz not handling NaNs correctly; set NaNs to map
+    # off the output image and set the weight to zero
+    pixmap[np.isnan(pixmap)] = -10
+    # print("Number of NaNs: ", len(np.isnan(pixmap)) / 2)
+    # inwht[np.isnan(pixmap[:,:,0])] = 0.
+
     log.debug("Pixmap shape: {}".format(pixmap[:,:,0].shape))
-    log.debug("Sci shape: {}".format(insci.shape))
+    log.debug("Input Sci shape: {}".format(insci.shape))
+    log.debug("Output Sci shape: {}".format(outsci.shape))
+
+    # y_mid = pixmap.shape[0] // 2
+    # x_mid = pixmap.shape[1] // 2
+    # print("x slice: ", pixmap[y_mid,:,0])
+    # print("y slice: ", pixmap[:,x_mid,1])
+    # print("insci: ", insci)
 
     # Call 'drizzle' to perform image combination
     log.info('Drizzling {} --> {}'.format(insci.shape, outsci.shape))

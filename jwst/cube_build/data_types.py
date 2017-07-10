@@ -41,7 +41,7 @@ class DataTypes(object):
                 ]
               }
 
-    def __init__(self, input):
+    def __init__(self, input,single):
 
         self.input_models = []
         self.filenames = []
@@ -65,14 +65,16 @@ class DataTypes(object):
 #            print('this is a model container type')
             self.input_type='Container'
             self.data_type = 'multi'
-            with datamodels.ModelContainer(input) as input_model:
-                self.output_name =input_model.meta.asn_table.products[0].name
+            self.output_name  = 'Temp'
+            if not single:  # find the name of the output file from the association 
+                with datamodels.ModelContainer(input) as input_model:
+                    self.output_name =input_model.meta.asn_table.products[0].name
 
             for model in input:
                 self.input_models.append(model)
                 self.filenames.append(model.meta.filename)
 #            print('number of models',len(self.filenames))
-
+#            print('the name of the output file', self.output_name) 
         elif isinstance(input, str):
             try:
                 # The name of an association table
@@ -91,7 +93,7 @@ class DataTypes(object):
                         self.input_models.append(datamodels.ImageModel(m['expname']))
             except:
                 # The name of a single image file
- #               print(' this is a single file  read in filename')
+#                print(' this is a single file  read in filename')
                 self.input_type = 'File'
                 self.data_type = 'singleton'
                 self.filenames.append(input)
@@ -106,6 +108,10 @@ class DataTypes(object):
         indx = filename.rfind('.fits')
         single_product = filename[:indx]
         return single_product
+
+
+        
+    
 
 # TODO:  Routines not used below - saved just in case we need them later - if not
 # remove. 
