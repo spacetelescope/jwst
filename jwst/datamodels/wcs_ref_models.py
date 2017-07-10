@@ -7,10 +7,7 @@ from . import model_base
 from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
-
-
-jwst_extensions = [GWCSExtension(), JWSTExtension(), BaseExtension()]
-
+from .reference import ReferenceFileModel
 
 __all__ = ['DistortionModel', 'DistortionMRSModel', 'SpecwcsModel', 'RegionsModel',
            'WavelengthrangeModel', 'CameraModel', 'CollimatorModel', 'OTEModel',
@@ -18,7 +15,7 @@ __all__ = ['DistortionModel', 'DistortionMRSModel', 'SpecwcsModel', 'RegionsMode
            'MSAModel', 'FilteroffsetModel', 'DisperserModel']
 
 
-class _SimpleModel(model_base.DataModel):
+class _SimpleModel(ReferenceFileModel):
     """
     A model for a reference file of type "distortion".
     """
@@ -42,7 +39,6 @@ class _SimpleModel(model_base.DataModel):
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
-        self.meta.telescope = self.meta.telescope
 
     def populate_meta(self):
         """
@@ -54,17 +50,10 @@ class _SimpleModel(model_base.DataModel):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
+        super(_SimpleModel, self).validate()
         assert isinstance(self.model, Model)
-        #assert isinstance(self.meta.input_units, (str, u.NamedUnit))
-        #assert isinstance(self.meta.output_units, (str, u.NamedUnit))
         assert self.meta.instrument.name in ["NIRCAM", "NIRSPEC", "MIRI", "TFI", "FGS", "NIRISS"]
-        assert self.meta.description is not None
-        assert self.meta.telescope is not None
-        assert self.meta.reftype is not None
-        assert self.meta.author is not None
-        assert self.meta.pedigree is not None
-        assert self.meta.useafter is not None
-        
+
 
 class DistortionModel(_SimpleModel):
     """
@@ -81,9 +70,9 @@ class DistortionModel(_SimpleModel):
             assert self.meta.instrument.module is not None
             assert self.meta.instrument.channel is not None
             assert self.meta.instrument.p_pupil is not None
-        
 
-class DistortionMRSModel(model_base.DataModel):
+
+class DistortionMRSModel(ReferenceFileModel):
     """
     A model for a reference file of type "distortion" for the MIRI MRS.
     """
@@ -119,7 +108,6 @@ class DistortionMRSModel(model_base.DataModel):
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
-        self.meta.telescope = self.meta.telescope
 
     def populate_meta(self):
         self.meta.instrument.name = "MIRI"
@@ -131,6 +119,7 @@ class DistortionMRSModel(model_base.DataModel):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
+        super(DistortionMRSModel, self).validate()
         assert isinstance(self.meta.input_units, (str, u.NamedUnit))
         assert isinstance(self.meta.output_units, (str, u.NamedUnit))
         assert self.meta.instrument.name == "MIRI"
@@ -144,11 +133,6 @@ class DistortionMRSModel(model_base.DataModel):
         assert all([isinstance(m, Model) for m in self.beta_model])
         assert len(self.abv2v3_model.model) == 2
         assert len(self.abv2v3_model.channel_band) == 2
-        assert self.meta.description is not None
-        assert self.meta.telescope is not None
-        assert self.meta.reftype is not None
-        assert self.meta.author is not None
-        assert self.meta.pedigree is not None
 
 
 class SpecwcsModel(_SimpleModel):
@@ -164,7 +148,7 @@ class SpecwcsModel(_SimpleModel):
         assert self.meta.instrument.name in ["NIRCAM", "NIRSPEC", "MIRI", "TFI", "FGS", "NIRISS"]
 
 
-class RegionsModel(model_base.DataModel):
+class RegionsModel(ReferenceFileModel):
     """
     A model for a reference file of type "regions".
     """
@@ -180,28 +164,24 @@ class RegionsModel(model_base.DataModel):
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
-        self.meta.telescope = self.meta.telescope
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
+        super(RegionsModel, self).validate()
         assert isinstance(self.regions.copy(), np.ndarray)
         assert self.meta.instrument.name == "MIRI"
         assert self.meta.exposure.type == "MIR_MRS"
         assert self.meta.instrument.channel in ("12", "34", "1", "2", "3", "4")
         assert self.meta.instrument.band in ("SHORT", "LONG")
         assert self.meta.instrument.detector in ("MIRIFUSHORT", "MIRIFULONG")
-        assert self.meta.description is not None
-        assert self.meta.telescope is not None
-        assert self.meta.reftype is not None
-        assert self.meta.author is not None
-        assert self.meta.pedigree is not None
 
 
-class WavelengthrangeModel(model_base.DataModel):
+class WavelengthrangeModel(ReferenceFileModel):
     """
-    A model for a reference file of type "wavelenghrange".
+    A model for a reference file of type "wavelengthrange".
+    The model is used by MIRI and NIRSPEC.
     """
     schema_url = "wavelengthrange.schema.yaml"
     reftype = "wavelengthrange"
@@ -217,34 +197,19 @@ class WavelengthrangeModel(model_base.DataModel):
             self.order = order
         if wunits is not None:
             self.meta.wavelength_units = wunits
-        if init is None:
-            self.populate_meta()
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
-        self.meta.telescope = self.meta.telescope
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file")
 
-    def populate_meta(self):
-        self.meta.instrument.name = "NIRSPEC"
-        self.meta.instrument.p_detector = "NRS1|NRS2|"
-        self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
-        NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
-        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
-
     def validate(self):
+        super(WavelengthrangeModel, self).validate()
         assert self.meta.instrument.name in ("MIRI", "NIRSPEC")
-        assert self.meta.description is not None
-        assert self.meta.telescope is not None
-        assert self.meta.reftype is not None
-        assert self.meta.author is not None
-        assert self.meta.pedigree is not None
-        assert self.meta.useafter is not None
 
 
-class FPAModel(model_base.DataModel):
+class FPAModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "fpa".
     """
@@ -263,7 +228,6 @@ class FPAModel(model_base.DataModel):
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
-        self.meta.telescope = self.meta.telescope
 
     def populate_meta(self):
         self.meta.instrument.name = "NIRSPEC"
@@ -271,22 +235,18 @@ class FPAModel(model_base.DataModel):
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
         NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        self.meta.exposure.type = "N/A"
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
+        super(FPAModel, self).validate()
         assert isinstance(self.nrs1_model, Model)
         assert isinstance(self.nrs2_model, Model)
-        assert self.meta.description is not None
-        assert self.meta.telescope is not None
-        assert self.meta.reftype is not None
-        assert self.meta.author is not None
-        assert self.meta.pedigree is not None
-        assert self.meta.useafter is not None
 
 
-class IFUPostModel(model_base.DataModel):
+class IFUPostModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "ifupost".
     """
@@ -312,20 +272,16 @@ class IFUPostModel(model_base.DataModel):
         self.meta.instrument.name = "NIRSPEC"
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.type = "NRS_IFU"
+        self.meta.exposure.p_exptype = "NRS_IFU"
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
-        assert self.meta.description is not None
-        assert self.meta.telescope is not None
-        assert self.meta.reftype is not None
-        assert self.meta.author is not None
-        assert self.meta.pedigree is not None
-        assert self.meta.useafter is not None
+        super(IFUPostModel, self).validate()
 
 
-class IFUSlicerModel(model_base.DataModel):
+class IFUSlicerModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "ifuslicer".
     """
@@ -344,26 +300,21 @@ class IFUSlicerModel(model_base.DataModel):
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
-        self.meta.telescope = self.meta.telescope
 
     def populate_meta(self):
         self.meta.instrument.name = "NIRSPEC"
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.type = "NRS_IFU"
+        self.meta.exposure.p_exptype = "NRS_IFU"
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
-        assert self.meta.description is not None
-        assert self.meta.telescope is not None
-        assert self.meta.reftype is not None
-        assert self.meta.author is not None
-        assert self.meta.pedigree is not None
-        assert self.meta.useafter is not None
+        super(IFUSlicerModel, self).validate()
 
 
-class MSAModel(model_base.DataModel):
+class MSAModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "msa".
     """
@@ -383,7 +334,6 @@ class MSAModel(model_base.DataModel):
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
-        self.meta.telescope = self.meta.telescope
 
     def populate_meta(self):
         self.meta.instrument.name = "NIRSPEC"
@@ -391,20 +341,16 @@ class MSAModel(model_base.DataModel):
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
         NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        self.meta.exposure.type = "N/A"
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
 
     def validate(self):
-        assert self.meta.description is not None
-        assert self.meta.telescope is not None
-        assert self.meta.reftype is not None
-        assert self.meta.author is not None
-        assert self.meta.pedigree is not None
-        assert self.meta.useafter is not None
+        super(MSAModel, self).validate()
 
 
-class DisperserModel(model_base.DataModel):
+class DisperserModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "disperser".
     """
@@ -449,10 +395,6 @@ class DisperserModel(model_base.DataModel):
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
-        self.meta.telescope = self.meta.telescope
-        self.groovedensity = self.meta.groovedensity
-        self.angle = self.meta.angle
-        self.gwa_tiltx
 
     def populate_meta(self):
         self.meta.instrument.name = "NIRSPEC"
@@ -461,23 +403,18 @@ class DisperserModel(model_base.DataModel):
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
         NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
         self.meta.instrument.p_grating = "G140M|G235M|G395M|G140H|G235H|G395H|PRISM|MIRROR|"
+        self.meta.exposure.type = "N/A"
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
 
-    def on_save(self, path=None):
-        self.meta.reftype = self.reftype
-
     def validate(self):
-        assert self.meta.description is not None
-        assert self.meta.telescope is not None
-        assert self.meta.reftype is not None
-        assert self.meta.author is not None
-        assert self.meta.pedigree is not None
-        assert self.meta.useafter is not None
+        super(DisperserModel, self).validate()
+        assert self.meta.instrument.grating in ["G140H", "G140M", "G235H", "G235M",
+                                                "G395H", "G395M", "MIRROR", "PRISM"]
 
 
-class FilteroffsetModel(model_base.DataModel):
+class FilteroffsetModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "disperser".
     """
@@ -497,17 +434,11 @@ class FilteroffsetModel(model_base.DataModel):
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
-        self.meta.telescope = self.meta.telescope
 
     def validate(self):
         assert self.meta.instrument.name == "MIRI"
         assert self.meta.instrument.detector == "MIRIMAGE"
-        assert self.meta.description is not None
-        assert self.meta.telescope is not None
-        assert self.meta.reftype is not None
-        assert self.meta.author is not None
-        assert self.meta.pedigree is not None
-        assert self.meta.useafter is not None
+        super(FilteroffsetModel, self).validate()
 
 
 class IFUFOREModel(_SimpleModel):
@@ -521,6 +452,7 @@ class IFUFOREModel(_SimpleModel):
         self.meta.instrument.name = "NIRSPEC"
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.exposure.type = "NRS_IFU"
+        self.meta.exposure.p_exptype = "NRS_IFU"
 
 
 class CameraModel(_SimpleModel):
@@ -536,6 +468,7 @@ class CameraModel(_SimpleModel):
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
         NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        self.meta.exposure.type = "N/A"
 
 
 class CollimatorModel(_SimpleModel):
@@ -548,6 +481,10 @@ class CollimatorModel(_SimpleModel):
     def populate_meta(self):
         self.meta.instrument.name = "NIRSPEC"
         self.meta.instrument.p_detector = "NRS1|NRS2|"
+        self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
+        NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
+        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        self.meta.exposure.type = "N/A"
 
 
 class OTEModel(_SimpleModel):
@@ -560,6 +497,10 @@ class OTEModel(_SimpleModel):
     def populate_meta(self):
         self.meta.instrument.name = "NIRSPEC"
         self.meta.instrument.p_detector = "NRS1|NRS2|"
+        self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
+        NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
+        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        self.meta.exposure.type = "N/A"
 
 
 class FOREModel(_SimpleModel):
@@ -573,7 +514,15 @@ class FOREModel(_SimpleModel):
         self.meta.instrument.name = "NIRSPEC"
         self.meta.instrument.p_detector = "NRS1|NRS2|"
         self.meta.instrument.p_filter = "CLEAR|F070LP|F100LP|F110W|F140X|F170LP|F290LP|"
+        self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
+        NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
+        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
+        self.meta.exposure.type = "N/A"
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
-        self.meta.telescope = self.meta.telescope
+
+    def validate(self):
+        super(FOREModel, self).validate()
+        assert self.meta.instrument.filter in ["CLEAR", "F070LP", "F100LP", "F110W",
+                                               "F140X", "F170LP", "F290LP"]
