@@ -55,15 +55,16 @@ class _SimpleModel(model_base.DataModel):
 
     def validate(self):
         assert isinstance(self.model, Model)
-        assert isinstance(self.meta.input_units, (str, u.NamedUnit))
-        assert isinstance(self.meta.output_units, (str, u.NamedUnit))
+        #assert isinstance(self.meta.input_units, (str, u.NamedUnit))
+        #assert isinstance(self.meta.output_units, (str, u.NamedUnit))
         assert self.meta.instrument.name in ["NIRCAM", "NIRSPEC", "MIRI", "TFI", "FGS", "NIRISS"]
         assert self.meta.description is not None
         assert self.meta.telescope is not None
         assert self.meta.reftype is not None
         assert self.meta.author is not None
         assert self.meta.pedigree is not None
-
+        assert self.meta.useafter is not None
+        
 
 class DistortionModel(_SimpleModel):
     """
@@ -74,11 +75,13 @@ class DistortionModel(_SimpleModel):
 
     def validate(self):
         super(DistortionModel, self).validate()
+        assert isinstance(self.meta.input_units, (str, u.NamedUnit))
+        assert isinstance(self.meta.output_units, (str, u.NamedUnit))
         if self.meta.instrument.name == 'NIRCAM':
             assert self.meta.instrument.module is not None
             assert self.meta.instrument.channel is not None
             assert self.meta.instrument.p_pupil is not None
-
+        
 
 class DistortionMRSModel(model_base.DataModel):
     """
@@ -159,11 +162,6 @@ class SpecwcsModel(_SimpleModel):
         assert isinstance(self.meta.input_units, (str, u.NamedUnit))
         assert isinstance(self.meta.output_units, (str, u.NamedUnit))
         assert self.meta.instrument.name in ["NIRCAM", "NIRSPEC", "MIRI", "TFI", "FGS", "NIRISS"]
-        assert self.meta.description is not None
-        assert self.meta.telescope is not None
-        assert self.meta.reftype is not None
-        assert self.meta.author is not None
-        assert self.meta.pedigree is not None
 
 
 class RegionsModel(model_base.DataModel):
@@ -227,20 +225,23 @@ class WavelengthrangeModel(model_base.DataModel):
         self.meta.telescope = self.meta.telescope
 
     def to_fits(self):
-        raise NotImplementedError("FITS format is not supported for this file.")
+        raise NotImplementedError("FITS format is not supported for this file")
+
+    def populate_meta(self):
+        self.meta.instrument.name = "NIRSPEC"
+        self.meta.instrument.p_detector = "NRS1|NRS2|"
+        self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
+        NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
+        NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
 
     def validate(self):
         assert self.meta.instrument.name in ("MIRI", "NIRSPEC")
-        assert self.meta.exposure.type in ("MIR_MRS", "NRS_AUTOFLAT", "NRS_AUTOWAVE", "NRS_BOTA",
-                                           "NRS_BRIGHTOBJ", "NRS_CONFIRM", "NRS_DARK", "NRS_FIXEDSLIT",
-                                           "NRS_FOCUS", "NRS_IFU", "NRS_IMAGE", "NRS_LAMP", "NRS_MIMF",
-                                           "NRS_MSASPEC", "NRS_TACONFIRM", "NRS_TACQ", "NRS_TASLIT", "N/A",
-                                           "ANY")
         assert self.meta.description is not None
         assert self.meta.telescope is not None
         assert self.meta.reftype is not None
         assert self.meta.author is not None
         assert self.meta.pedigree is not None
+        assert self.meta.useafter is not None
 
 
 class FPAModel(model_base.DataModel):
@@ -282,6 +283,7 @@ class FPAModel(model_base.DataModel):
         assert self.meta.reftype is not None
         assert self.meta.author is not None
         assert self.meta.pedigree is not None
+        assert self.meta.useafter is not None
 
 
 class IFUPostModel(model_base.DataModel):
@@ -320,6 +322,7 @@ class IFUPostModel(model_base.DataModel):
         assert self.meta.reftype is not None
         assert self.meta.author is not None
         assert self.meta.pedigree is not None
+        assert self.meta.useafter is not None
 
 
 class IFUSlicerModel(model_base.DataModel):
@@ -357,6 +360,7 @@ class IFUSlicerModel(model_base.DataModel):
         assert self.meta.reftype is not None
         assert self.meta.author is not None
         assert self.meta.pedigree is not None
+        assert self.meta.useafter is not None
 
 
 class MSAModel(model_base.DataModel):
@@ -397,6 +401,7 @@ class MSAModel(model_base.DataModel):
         assert self.meta.reftype is not None
         assert self.meta.author is not None
         assert self.meta.pedigree is not None
+        assert self.meta.useafter is not None
 
 
 class DisperserModel(model_base.DataModel):
@@ -469,6 +474,7 @@ class DisperserModel(model_base.DataModel):
         assert self.meta.reftype is not None
         assert self.meta.author is not None
         assert self.meta.pedigree is not None
+        assert self.meta.useafter is not None
 
 
 class FilteroffsetModel(model_base.DataModel):
@@ -501,6 +507,7 @@ class FilteroffsetModel(model_base.DataModel):
         assert self.meta.reftype is not None
         assert self.meta.author is not None
         assert self.meta.pedigree is not None
+        assert self.meta.useafter is not None
 
 
 class IFUFOREModel(_SimpleModel):
