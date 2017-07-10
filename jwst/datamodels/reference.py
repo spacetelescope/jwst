@@ -19,7 +19,7 @@ class ReferenceFileModel(model_base.DataModel):
 
     def __init__(self, init=None, **kwargs):
         super(ReferenceFileModel, self).__init__(init=init, **kwargs)
-
+        self.meta.telescope = "JWST"
 
     def validate(self):
         """
