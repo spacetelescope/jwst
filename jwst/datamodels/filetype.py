@@ -25,7 +25,7 @@ def check(init):
         else:
             filename, file_extension = os.path.splitext(init)
             file_type = file_extension[1:]
-            if file_type not in ("asdf", "fits", "asn"):
+            if file_type not in ("asdf", "fits"):
                 raise ValueError("Cannot get file type of " + str(init))
             return file_type
         
