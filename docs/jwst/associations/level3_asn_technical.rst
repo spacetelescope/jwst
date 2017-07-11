@@ -72,7 +72,7 @@ The following example will be used to explain the contents of an association::
         "program": "99009",
         "products": [
             {
-                "name": "jw99009-a3001_t001_nircam_f090w_",
+                "name": "jw99009-a3001_t001_nircam_f090w",
                 "members": [
                     {
                         "exposerr": null,
@@ -85,7 +85,7 @@ The following example will be used to explain the contents of an association::
                         "expname": "jw_00002_cal.fits",
                         "asn_candidate": "[('o001', 'observation')]",
                         "exptype": "science"
-                    },
+                    }
                 ]
             }
         ]
