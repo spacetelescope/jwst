@@ -402,7 +402,6 @@ class DisperserModel(ReferenceFileModel):
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
         NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
-        self.meta.instrument.p_grating = "G140M|G235M|G395M|G140H|G235H|G395H|PRISM|MIRROR|"
         self.meta.exposure.type = "N/A"
 
     def to_fits(self):
@@ -513,7 +512,6 @@ class FOREModel(_SimpleModel):
     def populate_meta(self):
         self.meta.instrument.name = "NIRSPEC"
         self.meta.instrument.p_detector = "NRS1|NRS2|"
-        self.meta.instrument.p_filter = "CLEAR|F070LP|F100LP|F110W|F140X|F170LP|F290LP|"
         self.meta.exposure.p_exptype = "NRS_TACQ|NRS_TASLIT|NRS_TACONFIRM|\
         NRS_CONFIRM|NRS_FIXEDSLIT|NRS_IFU|NRS_MSASPEC|NRS_IMAGE|NRS_FOCUS|\
         NRS_MIMF|NRS_BOTA|NRS_LAMP|NRS_BRIGHTOBJ|"
