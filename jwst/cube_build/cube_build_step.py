@@ -95,6 +95,9 @@ class CubeBuildStep (Step):
         if self.interpolation == 'area':
             self.coord_system = 'alpha-beta'
 
+        if self.coord_system == 'alpha-beta':
+            self.interpolation = 'area'
+
         if self.coord_system == 'ra-dec':
             self.interpolation = 'pointcloud'  # can not be area
 
