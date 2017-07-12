@@ -37,11 +37,7 @@ data through the system.
 The figure represents the following workflow:
 
 - Data comes down from the observatory and is converted to the Level
-<<<<<<< HEAD
-  1a FITS files.
-=======
   1b FITS files.
->>>>>>> 18f904ea6d7eefd5e497d22ad9854c6ffc6a275f
 - `calwebb_sloper` is run on each file to convert the data to the
   Level 2a format.
 - In parallel with `calwebb_sloper`, the Pool Maker collects the list
