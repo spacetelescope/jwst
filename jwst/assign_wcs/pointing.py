@@ -117,7 +117,7 @@ def wcsinfo_from_model(input_model):
     pc = np.zeros((wcsaxes, wcsaxes))
 
     for i in range(1, wcsaxes + 1):
-        for j in range(1, 3):
+        for j in range(1, wcsaxes + 1):
             pc[i - 1, j - 1] = getattr(input_model.meta.wcsinfo, 'pc{0}_{1}'.format(i, j))
     wcsinfo['PC'] = pc
     wcsinfo['RADESYS'] = input_model.meta.coordinates.reference_frame
