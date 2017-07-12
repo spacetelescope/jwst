@@ -441,8 +441,6 @@ class CubeData(object):
 # shove Flux and iflux in the  final IFU cube
         CubeData.update_IFUCube(self,IFUCube, self.spaxel)
 
-        print('***** ',IFUCube.meta.wcsinfo.crval1,IFUCube.meta.wcsinfo.cravl2,IFUCube.meta.wcsinfo.crval3)
-        print('***** ',IFUCube.meta.wcs.crval1,IFUCube.meta.wcs.cravl2,IFUCube.meta.wcs.crval3)
         return IFUCube
 
 #********************************************************************************
@@ -465,9 +463,7 @@ class CubeData(object):
 
         """
 
-
         # loop over input models
-
 
         single_IFUCube = datamodels.ModelContainer()
         n = len(self.input_models)
@@ -528,15 +524,15 @@ class CubeData(object):
             IFUCube = CubeData.setup_IFUCube(self,j)
 
             CubeData.update_IFUCube(self,IFUCube, spaxel)
-            print('***** ',IFUCube.meta.wcsinfo.crval1,IFUCube.meta.wcsinfo.crval2,
-                  IFUCube.meta.wcsinfo.crval3)
+#            print('***** ',IFUCube.meta.wcsinfo.crval1,IFUCube.meta.wcsinfo.crval2,
+#                  IFUCube.meta.wcsinfo.crval3)
 
-            print('wcs ',IFUCube.meta.wcs(1,1,1))
+#            print('ra,dec,lambda 1,1,1 ',IFUCube.meta.wcs(1,1,1))
             
 
             t1 = time.time()
             log.info("Time Create Single IFUcube  = %.1f.s" % (t1 - t0,))
-#            print('build_ifucube_single:',IFUCube.meta.filename)
+
 #_______________________________________________________________________
             single_IFUCube.append(IFUCube)
             del spaxel[:]
@@ -873,10 +869,24 @@ class CubeData(object):
         IFUCube.meta.wcsinfo.ctype3 = 'WAVE'
         IFUCube.meta.wcsinfo.cunit3 = 'um'
         IFUCube.meta.wcsinfo.wcsaxes = 3
+        IFUCube.meta.wcsinfo.pc1_1 = 1
+        IFUCube.meta.wcsinfo.pc1_2 = 0
+        IFUCube.meta.wcsinfo.pc1_3 = 0
+
+        IFUCube.meta.wcsinfo.pc2_1 = 0
+        IFUCube.meta.wcsinfo.pc2_2 = 1
+        IFUCube.meta.wcsinfo.pc2_3 = 0
+
+        IFUCube.meta.wcsinfo.pc3_1 = 0
+        IFUCube.meta.wcsinfo.pc3_2 = 0
+        IFUCube.meta.wcsinfo.pc3_3 = 1
 
         IFUCube.meta.flux_extension = 'SCI'
         IFUCube.meta.error_extension = 'ERR'
         IFUCube.meta.dq_extension = 'DQ'
+        IFUCube.meta.roi_spatial = self.rois    
+        IFUCube.meta.roi_wave = self.roiw
+
 #        IFUCube.meta.data_model_type = 'IFUCubeModel'
         IFUCube.error_type = 'ERR'
 
@@ -886,8 +896,6 @@ class CubeData(object):
             IFUCube.meta.wcsinfo.cunit1 = 'arcsec'
             IFUCube.meta.wcsinfo.cunit2 = 'arcsec'
 
-        print('***** ',IFUCube.meta.wcsinfo.crval1,IFUCube.meta.wcsinfo.crval2,
-                  IFUCube.meta.wcsinfo.crval3)
 
         wcsobj = pointing.create_fitswcs(IFUCube)
         IFUCube.meta.wcs = wcsobj
