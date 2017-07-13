@@ -42,7 +42,12 @@ import gc
 
 import crds
 from crds import log, config
-from crds.core import crds_cache_locking
+
+try:
+    from crds.core import crds_cache_locking
+except ImportError:
+    crds_cache_locking = None
+    log.warning("CRDS needs to be updated to v7.1.4 or greater to support cache locking and association based CRDS cache updates.  Try 'conda update crds'.")
 
 # ----------------------------------------------------------------------
 
@@ -94,9 +99,11 @@ def get_multiple_reference_paths(input_file, reference_file_types):
     gc.collect()
 
     try:
-        with crds_cache_locking.get_cache_lock():
-            bestrefs = crds.getreferences(
-                data_dict, reftypes=reference_file_types, observatory="jwst")
+        if crds_cache_locking is not None:
+            with crds_cache_locking.get_cache_lock():
+                bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
+        else:
+            bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")            
     except crds.CrdsBadRulesError as exc:
         raise crds.CrdsBadRulesError(str(exc))
     except crds.CrdsBadReferenceError as exc:
