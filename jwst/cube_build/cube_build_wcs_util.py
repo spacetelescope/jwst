@@ -143,11 +143,11 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
     if self.coord_system == 'alpha-beta':
         detector2alpha_beta = input.meta.wcs.get_transform('detector', 'alpha_beta')
 
-        shift = models.Shift(1) & models.Shift(1)
-        for key in detector2alpha_beta.selector:
-            detector2alpha_beta.selector[key] = shift | detector2alpha_beta.selector[key]
+#        shift = models.Shift(1) & models.Shift(1)
+#        for key in detector2alpha_beta.selector:
+#            detector2alpha_beta.selector[key] = shift | detector2alpha_beta.selector[key]
 
-        input.meta.wcs.set_transform('detector','alpha_beta',detector2alpha_beta)
+#        input.meta.wcs.set_transform('detector','alpha_beta',detector2alpha_beta)
 
         coord1, coord2, lam = detector2alpha_beta(x, y)
 
@@ -272,8 +272,6 @@ def set_geometry(self, footprint):
         # actually this is hard due to converenge of hour angle
         # improve determining ra_ave in the future - do not just average (BAD) 
         ra_ave = ((ra_min + ra_max)/2.0 )#* math.cos(dec_ave*deg2rad) 
-#        range_ra = (ra_max - ra_min) * 3600.0 * math.cos(dec_ave*deg2rad)
-#        range_dec = (dec_max - dec_min) * 3600.0
 
         self.Crval1 = ra_ave 
         self.Crval2 = dec_ave

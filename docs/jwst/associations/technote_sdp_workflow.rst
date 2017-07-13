@@ -37,7 +37,7 @@ data through the system.
 The figure represents the following workflow:
 
 - Data comes down from the observatory and is converted to the Level
-  1a FITS files.
+  1b FITS files.
 - `calwebb_sloper` is run on each file to convert the data to the
   Level 2a format.
 - In parallel with `calwebb_sloper`, the Pool Maker collects the list
@@ -79,3 +79,36 @@ Catalog` file set, show in red in the diagram. The level 2 association
 also the catalog and segment map files produced by the Level 3 image
 processing. Hence, the workflow knows to wait for these files before
 continuing the spectral processing.
+
+Field Guide to File Names
+=========================
+
+The high-level distinctions between Level 2, Level 3, exposure-centric,
+and target-centric files can be determined by the following file patterns.
+
+- Files produced by Level 3 processing
+  
+  Any file name that matches the following regex is a file that has
+  been produced by a Level 3 pipeline::
+
+    .+[aocr][0-9]{3:4}.+
+
+- Files containing exposure-centric data
+
+  Such data have files that match the following regex::
+
+    jw[0-9]{11}_[0-9]{5}_[0-9]{5}_.+\.fits
+
+- Files containing target-centric data
+
+  Such data have files that match the following regex::
+
+    jw[0-9]{5}-[aocr][0-9]{3:4}_.+
+
+  Such data is the result of the combination of data from several
+  exposures, usually produced by a Level 3 calibration pipeline.
+
+Note that these patterns are not intended to fully define all the
+specific types of files there are. However, these are the main
+classifications, from which the documentation for the individual
+calibrations steps and pipelines will describe any further details.
