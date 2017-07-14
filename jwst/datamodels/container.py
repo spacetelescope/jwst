@@ -96,7 +96,7 @@ class ModelContainer(model_base.DataModel):
 
     def _open_model(self, index):
         model = self._models[index]
-        if not isinstance(model, model_base.DataModel):
+        if isinstance(model, six.string_types):
             model = datamodel_open(model,
                                    extensions=self._extensions,
                                    pass_invalid_values=self._pass_invalid_values)
@@ -238,9 +238,10 @@ class ModelContainer(model_base.DataModel):
                 raise err
 
 
-    def __assign_group_ids(self):
+    @property
+    def models_grouped(self):
         """
-        Assign an ID grouping by exposure.
+        Returns a list of a list of datamodels grouped by exposure.
 
         Data from different detectors of the same exposure will have the
         same group id, which allows grouping by exposure.  The following
@@ -256,7 +257,10 @@ class ModelContainer(model_base.DataModel):
         meta.instrument.name
         meta.instrument.channel
         """
-        for i, model in enumerate(self):
+        group_dict = OrderedDict()
+        for i in range(len(self)):
+            model = self._open_model(i)
+            
             try:
                 model_attrs = []
                 model_attrs.append(model.meta.observation.program_number)
@@ -277,20 +281,12 @@ class ModelContainer(model_base.DataModel):
             except:
                 model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
-
-    @property
-    def models_grouped(self):
-        """
-        Returns a list of a list of datamodels grouped by exposure.
-        """
-        self.__assign_group_ids()
-        group_dict = OrderedDict()
-        for model in self:
             group_id = model.meta.group_id
             if group_id in group_dict:
                 group_dict[group_id].append(model)
             else:
                 group_dict[group_id] = [model]
+
         return group_dict.values()
 
 
