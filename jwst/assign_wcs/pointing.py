@@ -141,7 +141,7 @@ def fitswcs_transform_from_model(wcsinfo):
         WCS forward transform - from pixel to world coordinates.
 
     """
-    spatial_axes, spectral_axes = gwutils.get_axes(wcsinfo)
+    spatial_axes, spectral_axes, unknown = gwutils.get_axes(wcsinfo)
     sp_axis = spectral_axes[0]
 
     transform = gwutils.make_fitswcs_transform(wcsinfo)
@@ -161,17 +161,29 @@ def frame_from_fits(ff):
 
 def frame_from_model(wcsinfo):
     wcsaxes = wcsinfo['WCSAXES']
-    spatial_axes, spectral_axes = gwutils.get_axes(wcsinfo)
+    celestial_axes, spectral_axes, other = gwutils.get_axes(wcsinfo)
     cunit = wcsinfo['CUNIT']
-    ref_frame = coords.ICRS()
-    sky = cf.CelestialFrame(name='sky', axes_order=tuple(spatial_axes), reference_frame=ref_frame,
-                            unit=cunit[spatial_axes], axes_names=('RA', 'DEC'))
-    if wcsaxes == 2:
-        return sky
-    elif wcsaxes == 3:
-        spec = cf.SpectralFrame(name='spectral', axes_order=tuple(spectral_axes), unit=cunit[spectral_axes[0]],
+    frames = []
+    if celestial_axes:
+        ref_frame = coords.ICRS()
+        celestial = cf.CelestialFrame(name='sky', axes_order=tuple(spatial_axes),
+                                    reference_frame=ref_frame, unit=cunit[spatial_axes],
+                                    axes_names=('RA', 'DEC'))
+        frames.append(celestial)
+    if spectral_axes:
+        spec = cf.SpectralFrame(name='spectral', axes_order=tuple(spectral_axes),
+                                unit=cunit[spectral_axes[0]],
                                 axes_names=('wavelength',))
-        world = cf.CompositeFrame([sky, spec], name='world')
+        frames.append(spec)
+    if other:
+        name = "_".join(wcsinfo['CTYPE'][other])
+        spatial = cf.Frame2D(name=name, axes_order=tuple(other), unit=cunit[other],
+                             axes_names=tuple(wcsinfo['CTYPE'][other]))
+        frames.append(spatial)
+    if wcsaxes == 2:
+        return frames[0]
+    elif wcsaxes == 3:
+        world = cf.CompositeFrame(frames, name='world')
         return world
     else:
         raise ValueError("WCSAXES can be 2 or 3, got {0}".format(wcsaxes))
