@@ -175,13 +175,12 @@ def test_run_outlier_only(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'two_member_spec3_asn.json'),
-        root=path.join(DATAPATH, 'level2b_twoslit')
+        path.join(DATAPATH, 'single_spec3_asn.json'),
+        root=path.join(DATAPATH, 'level2b')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
-        '--steps.skymatch.skip=true',
         '--steps.resample_spec.skip=true',
         '--steps.cube_build.skip=true',
         '--steps.extract_1d.skip=true',
