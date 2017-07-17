@@ -535,8 +535,6 @@ class Step(object):
         gc.collect()
         if self.skip:
             return
-        if self._is_association_file(input_file):
-            return
         if len(self.reference_file_types):
             from .. import datamodels
             try:
@@ -568,16 +566,24 @@ class Step(object):
         """
         if self.skip:
             return
+
         if self._is_association_file(model):
+            for mod in model:
+                self._precache_reference_files(mod)
             return
+        
         ovr_refs = {
             reftype: self._get_ref_override(reftype)
             for reftype in self.reference_file_types
             if self._get_ref_override(reftype) is not None
             }
+        
         fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
+
         crds_refs = crds_client.get_multiple_reference_paths(model, fetch_types)
+
         ref_path_map = dict(list(crds_refs.items()) + list(ovr_refs.items()))
+
         for (reftype, refpath) in sorted(ref_path_map.items()):
             how = "Override" if reftype in ovr_refs else "Prefetch"
             self.log.info("{0} for {1} reference file is '{2}'.".format(how, reftype.upper(), refpath))
