@@ -95,6 +95,7 @@ from .trapdensity import TrapDensityModel
 from .trappars import TrapParsModel
 from .trapsfilled import TrapsFilledModel
 from .wcs_ref_models import *
+from .slit import SlitModel, SlitDataModel
 from .util import open
 
 
@@ -133,7 +134,7 @@ __all__ = [
     'ReferenceFileModel', 'ReferenceCubeModel', 'ReferenceImageModel', 'ReferenceQuadModel',
     'RegionsModel', 'ResetModel',
     'ResolutionModel', 'MiriResolutionModel',
-    'RSCDModel', 'SaturationModel', 'SpecModel',
+    'RSCDModel', 'SaturationModel', 'SlitModel', 'SlitDataModel', 'SpecModel',
     'StrayLightModel', 'SuperBiasModel', 'SpecwcsModel',
     'TrapDensityModel', 'TrapParsModel', 'TrapsFilledModel',
     'WavelengthrangeModel', 'WaveCorrModel']

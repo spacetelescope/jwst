@@ -121,7 +121,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         is_array = False
         is_shape = False
         shape = None
-
         if init is None:
             asdf = AsdfFile(extensions=extensions)
         elif isinstance(init, dict):

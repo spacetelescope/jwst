@@ -1,5 +1,6 @@
 from . import model_base
 from .image import ImageModel
+from .slit import SlitModel, SlitDataModel
 
 
 __all__ = ['MultiSlitModel']
@@ -30,7 +31,7 @@ class MultiSlitModel(model_base.DataModel):
     schema_url = "multislit.schema.yaml"
 
     def __init__(self, init=None, **kwargs):
-        if isinstance(init, ImageModel):
+        if isinstance(init, SlitModel):
             super(MultiSlitModel, self).__init__(init=None, **kwargs)
             self.update(init)
             self.slits.append(self.slits.item())
@@ -43,3 +44,22 @@ class MultiSlitModel(model_base.DataModel):
             return
 
         super(MultiSlitModel, self).__init__(init=init, **kwargs)
+
+    def __getitem__(self, key):
+        """
+        Get a metadata value using a dotted name.
+        """
+        def _get_data_keys(*obj):
+            return obj
+
+        if isinstance(key, six.string_types) and key.split('.') == 'meta':
+            super(MultiSlitModel, self).__getitem__(key)
+        elif isinstance(key, int):
+            # Return an instance of a SlitModel
+            data_keys = _get_data_keys(*self.slits[key])
+            kwargs = dict(((k, getattr(self.slits[key], k)) for k in data_keys))
+            s = SlitModel(**kwargs)
+            s.update(self)#, only='PRIMARY')
+            return s
+        else:
+            raise ValueError("Invalid key {0}".format(key))
