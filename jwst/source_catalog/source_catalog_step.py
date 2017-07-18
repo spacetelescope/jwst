@@ -39,7 +39,7 @@ class SourceCatalogStep(Step):
                 npixels, deblend=deblend)
             self.log.info('Detected {0} sources'.format(len(catalog)))
 
-            catalog_filename = model.meta.filename.replace('.fits',
+            catalog_filename = model.meta.filename.replace('_i2d.fits',
                                                            '_cat.ecsv')
             catalog.write(catalog_filename, format='ascii.ecsv')
             self.log.info('Wrote source catalog: {0}'
