@@ -61,7 +61,7 @@ class TweakRegStep(Step):
 
     def process(self, input):
 
-        img = datamodels.ModelContainer(input)
+        img = datamodels.ModelContainer(input, persist=True)
 
         if len(img) == 0:
             raise ValueError("Input must contain at least one image model.")

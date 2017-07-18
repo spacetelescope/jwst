@@ -40,6 +40,8 @@ class ModelContainer(model_base.DataModel):
         - None: initializes an empty `ModelContainer` instance, to which
           DataModels can be added via the ``append()`` method.
 
+    persist: boolean. If True, do not close model after opening it
+    
     Examples
     --------
     >>> container = datamodels.ModelContainer('example_asn.json')
@@ -64,9 +66,10 @@ class ModelContainer(model_base.DataModel):
     # does not describe the data contents of the container.
     schema_url = "container.schema.yaml"
 
-    def __init__(self, init=None, **kwargs):
+    def __init__(self, init=None, persist=False, **kwargs):
 
         super(ModelContainer, self).__init__(init=None, **kwargs)
+        self._persist = persist
 
         if init is None:
             self._models = []
@@ -106,16 +109,19 @@ class ModelContainer(model_base.DataModel):
 
 
     def _close_model(self, filename, index):
-        self._models[index].close()
-        self._models[index] = filename
+        if not self._persist:
+            self._models[index].close()
+            self._models[index] = filename
 
 
     def _validate_model(self, models):
         if not isinstance(models, list):
             models = [models]
         for model in models:
+            if isinstance(model, ModelContainer):
+                raise ValueError("ModelContainer cannot contain ModelContainer")
             if not isinstance(model, (six.string_types, model_base.DataModel)):
-               raise ValueError('model must be string or DataModel')
+                raise ValueError('model must be string or DataModel')
 
 
     def __len__(self):

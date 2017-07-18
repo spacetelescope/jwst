@@ -27,7 +27,7 @@ class TweakregCatalogStep(Step):
         catalog_format = self.catalog_format
         kernel_fwhm = self.kernel_fwhm
         snr_threshold = self.snr_threshold
-
+        # TODO: fix
         model = ModelContainer(input)
 
         for image_model in model:
@@ -53,7 +53,6 @@ class TweakregCatalogStep(Step):
             image_model.meta.tweakreg_catalog.filename = catalog_filename
             image_model.catalog = catalog
 
-        model.close()
         return model
 
 

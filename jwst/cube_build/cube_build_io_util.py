@@ -489,7 +489,8 @@ class IFUCubeASN(object):
             with datamodels.ModelContainer(input) as input_model:
                 self.output_name =input_model.meta.asn_table.products[0].name
 
-            for model in input:
+            for i in range(len(input)):
+                model = input[i]
                 self.input_models.append(model)
                 self.filenames.append(model.meta.filename)
 #            print('number of models',len(self.filenames))
