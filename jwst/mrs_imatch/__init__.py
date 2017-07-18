@@ -1,6 +1,4 @@
-""" mrs_imatch
-
-This package provides support for image intensity subtraction and equalization
+""" This package provides support for image intensity subtraction and equalization
 (matching) for MIRI images.
 
 """
@@ -21,13 +19,3 @@ __author__ = 'Mihai Cara'
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-
-def help():
-    msg = \
-"""
-mrs_imatch provides support for image intensity subtraction and equalization
-(matching) for MIRI MRS images.
-
-"""
-    print(msg)
