@@ -114,7 +114,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
     if transform is None:
         transform = []
         wcsinfo = pointing.wcsinfo_from_model(refmodel)
-        sky_axes, _ = gwutils.get_axes(wcsinfo)
+        sky_axes, spec, other = gwutils.get_axes(wcsinfo)
         rotation = astmodels.AffineTransformation2D(np.array(wcsinfo['PC']))
         transform.append(rotation)
         if sky_axes:
