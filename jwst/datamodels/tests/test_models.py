@@ -19,22 +19,19 @@ import numpy as np
 from numpy.testing.decorators import knownfailureif
 from numpy.testing import assert_array_equal
 
-from .. import DataModel, ImageModel, QuadModel, MultiSlitModel, open
+from .. import (DataModel, ImageModel, QuadModel, MultiSlitModel,
+                ModelContainer)
+from ..util import open as open_model
 from .. import schema
 
 
-FITS_FILE = None
-TMP_FITS = None
-TMP_YAML = None
-TMP_JSON = None
-TMP_DIR = None
-TMP_FITS2 = None
+ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
+FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
+ASN_FILE = os.path.join(ROOT_DIR, 'association.json')
 
 
 def setup():
     global FITS_FILE, TMP_DIR, TMP_FITS, TMP_YAML, TMP_JSON, TMP_FITS2
-    ROOT_DIR = os.path.dirname(__file__)
-    FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
 
     TMP_DIR = tempfile.mkdtemp()
     TMP_FITS = os.path.join(TMP_DIR, 'tmp.fits')
@@ -72,13 +69,13 @@ def test_broadcast2():
 def test_from_hdulist():
     from astropy.io import fits
     with fits.open(FITS_FILE) as hdulist:
-        with open(hdulist) as dm:
+        with open_model(hdulist) as dm:
             pass
         assert hdulist.fileinfo(0)['file'].closed == False
 
 
 def delete_array():
-    with open() as dm:
+    with open_model() as dm:
         del dm.data
 
 
@@ -113,7 +110,7 @@ def roundtrip(func):
 
 @roundtrip
 def test_from_fits_write(dm):
-    dm.to_fits(TMP_FITS, clobber=True)
+    dm.to_fits(TMP_FITS, overwrite=True)
     return DataModel.from_fits(TMP_FITS)
 
 
@@ -139,13 +136,13 @@ def test_delete():
 
 
 def test_open():
-    with open() as dm:
+    with open_model() as dm:
         pass
 
-    with open((50, 50)) as dm:
+    with open_model((50, 50)) as dm:
         pass
 
-    with open(FITS_FILE) as dm:
+    with open_model(FITS_FILE) as dm:
         assert isinstance(dm, QuadModel)
 
 
@@ -174,7 +171,7 @@ def test_section():
 
 def test_init_with_array():
     array = np.empty((50, 50))
-    with open(array) as dm:
+    with open_model(array) as dm:
         assert dm.data.shape == (50, 50)
         assert isinstance(dm, ImageModel)
 
@@ -251,7 +248,7 @@ def test_multislit_from_image():
 
 def test_multislit_from_fits_image():
     with ImageModel((64, 64)) as im:
-        im.save(TMP_FITS, clobber=True)
+        im.save(TMP_FITS, overwrite=True)
 
     with MultiSlitModel(TMP_FITS) as ms:
         assert len(ms.slits) == 1
@@ -271,8 +268,8 @@ def test_multislit_metadata():
             ms.slits.append(ms.slits.item())
             ms.slits[-1].data = im.data
         im = ms.slits[0]
-        im.subarray.name = "FOO"
-        assert ms.slits[0].subarray.name == "FOO"
+        im.subarray.name = "FULL"
+        assert ms.slits[0].subarray.name == "FULL"
 
 
 def test_multislit_metadata():
@@ -322,7 +319,7 @@ def test_multislit_copy():
 
 
 def test_model_with_nonstandard_primary_array():
-    ROOT_DIR = os.path.dirname(__file__)
+    ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
     class NonstandardPrimaryArrayModel(DataModel):
         schema_url = os.path.join(
@@ -353,7 +350,7 @@ def test_relsens():
 
 def test_image_with_extra_keyword_to_multislit():
     with ImageModel(data=np.empty((32, 32))) as im:
-        im.save(TMP_FITS, clobber=True)
+        im.save(TMP_FITS, overwrite=True)
 
     from astropy.io import fits
     with fits.open(TMP_FITS, mode="update") as hdulist:
@@ -366,9 +363,57 @@ def test_image_with_extra_keyword_to_multislit():
                 ms.slits.append(ImageModel(data=np.empty((4, 4))))
             assert len(ms.slits) == 3
 
-            ms.save(TMP_FITS2, clobber=True)
+            ms.save(TMP_FITS2, overwrite=True)
 
     with MultiSlitModel(TMP_FITS2) as ms:
         assert len(ms.slits) == 3
         for slit in ms.slits:
             assert slit.data.shape == (4, 4)
+
+
+@pytest.fixture(scope="module")
+def container():
+    with ModelContainer(ASN_FILE) as c:
+        for m in c:
+            m.meta.observation.program_number = '0001'
+            m.meta.observation.observation_number = '1'
+            m.meta.observation.visit_number = '1'
+            m.meta.observation.visit_group = '1'
+            m.meta.observation.sequence_id = '01'
+            m.meta.observation.activity_id = '1'
+            m.meta.observation.exposure_number = '1'
+            m.meta.instrument.name = 'NIRCAM'
+            m.meta.instrument.channel = 'SHORT'
+        yield c
+
+
+def test_modelcontainer_iteration(container):
+    for model in container:
+        assert model.meta.telescope == 'JWST'
+
+
+def test_modelcontainer_indexing(container):
+    assert isinstance(container[0], DataModel)
+
+
+def test_modelcontainer_group1(container):
+    for group in container.models_grouped:
+        assert len(group) == 2
+        for model in group:
+            pass
+
+
+def test_modelcontainer_group2(container):
+    container[0].meta.observation.exposure_number = '2'
+    for group in container.models_grouped:
+        assert len(group) == 1
+        for model in group:
+            pass
+    container[0].meta.observation.exposure_number = '1'
+
+
+def test_modelcontainer_group_names(container):
+    assert len(container.group_names) == 1
+    container[0].meta.observation.exposure_number = '2'
+    assert len(container.group_names) == 2
+    container[0].meta.observation.exposure_number = '1'

@@ -12,7 +12,7 @@ class JWSTExtension(AsdfExtension):
     @property
     def types(self):
         return [GratingEquationType, CoordsType, RotationSequenceType, LRSWavelengthType,
-                Gwa2SlitType, Slit2MsaType]
+                Gwa2SlitType, Slit2MsaType, MIRI_AB2SliceType]
 
     @property
     def tag_mapping(self):

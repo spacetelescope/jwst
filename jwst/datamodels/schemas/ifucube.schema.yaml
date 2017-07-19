@@ -1,5 +1,6 @@
 allOf:
 - $ref: core.schema.yaml
+- $ref: bunit.schema.yaml
 - type: object
   properties:
     meta:
@@ -17,6 +18,14 @@ allOf:
           title: EXTNAME of the extension containing data quality mask
           type: string
           fits_keyword: MASKEXT
+        roi_spatial:
+          title: Size of ROI in spatial dimension arcs seconds
+          type: number
+          fits_keyword: ROIS
+        roi_wave:
+          title: Size of ROI in wavelength dimension microns
+          type: number
+          fits_keyword: ROIW
 - type: object
   properties:
     data:

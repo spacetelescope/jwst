@@ -2,9 +2,13 @@
 """
 from collections import defaultdict
 
-from jwst.datamodels import MultiExposureModel
+from ..datamodels import (
+    MultiExposureModel,
+    SourceModelContainer
+)
+from ..datamodels.properties import merge_tree
 
-__all__ = ['exp_to_source']
+__all__ = ['exp_to_source', 'multislit_to_container']
 
 
 def exp_to_source(inputs):
@@ -26,5 +30,35 @@ def exp_to_source(inputs):
     for exposure in inputs:
         for slit in exposure.slits:
             result[slit.name].exposures.append(slit)
-            result[slit.name].exposures[-1].meta = exposure.meta
+            merge_tree(
+                result[slit.name].exposures[-1].meta.instance,
+                exposure.meta.instance
+            )
+
+    # Turn off the default factory
+    result.default_factory = None
+
     return result
+
+
+def multislit_to_container(inputs):
+    """Reformat exposure-based MSA data to source-based containers.
+
+    Parameters
+    ----------
+    inputs: [MultiSlitModel, ...]
+        List of MultiSlitModel instances to reformat, or just a
+        ModelContainer full of MultiSlitModels.
+
+    Returns
+    -------
+    {str: ModelContainer, }
+        Returns a dict of ModelContainer instances wherein each
+        instance contains ImageModels of slits belonging to the same source.
+        The key is the name of each slit.
+    """
+    containers = exp_to_source(inputs)
+    for id in containers:
+        containers[id] = SourceModelContainer(containers[id])
+
+    return containers

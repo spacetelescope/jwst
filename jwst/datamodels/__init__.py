@@ -29,11 +29,14 @@
 
 from __future__ import absolute_import, division, print_function
 
-__version__ = '1.1.0'
+__version__ = '0.7.4'
 
 import numpy as np
 from os.path import basename
 from astropy.extern import six
+from astropy.io import registry
+
+from . import ndmodel
 
 from .model_base import DataModel
 from .amilg import AmiLgModel
@@ -42,178 +45,106 @@ from .combinedspec import CombinedSpecModel
 from .container import ModelContainer
 from .contrast import ContrastModel
 from .cube import CubeModel
-from .cubeflat import CubeFlatModel
 from .dark import DarkModel
 from .darkMIRI import DarkMIRIModel
 from .drizpars import DrizParsModel, NircamDrizParsModel, MiriImgDrizParsModel
 from .outlierpars import OutlierParsModel, NircamOutlierParsModel, MiriImgOutlierParsModel
 from .drizproduct import DrizProductModel
-from .filter import FilterModel
+from .ifucubepars import IFUCubeParsModel, NirspecIFUCubeParsModel, MiriIFUCubeParsModel
+from .throughput import ThroughputModel
 from .flat import FlatModel
 from .fringe import FringeModel
 from .gain import GainModel
 from .gls_rampfit import GLS_RampFitModel
+from .ifucube import IFUCubeModel
 from .image import ImageModel
 from .ipc import IPCModel
 from .irs2 import IRS2Model
 from .lastframe import LastFrameModel
+from .level1b import Level1bModel
 from .linearity import LinearityModel
 from .mask import MaskModel
 from .miri_ramp import MIRIRampModel
 from .multiexposure import MultiExposureModel
+from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
-from .ifucube import IFUCubeModel
-from .pixelarea import PixelAreaModel
+from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
+from .pathloss import PathlossModel
+from .persat import PersistenceSatModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
 from .photom import NirspecPhotomModel, NirspecFSPhotomModel
 from .photom import MiriImgPhotomModel, MiriMrsPhotomModel
+from .pixelarea import PixelAreaModel, NirspecSlitAreaModel, NirspecMosAreaModel, NirspecIfuAreaModel
+from .psfmask import PsfMaskModel
 from .quad import QuadModel
 from .ramp import RampModel
 from .rampfitoutput import RampFitOutputModel
 from .readnoise import ReadnoiseModel
+from .reference import ReferenceFileModel, ReferenceImageModel, ReferenceCubeModel, ReferenceQuadModel
 from .reset import ResetModel
+from .resolution import ResolutionModel, MiriResolutionModel
 from .rscd import RSCDModel
 from .saturation import SaturationModel
+from .source_container import SourceModelContainer
 from .spec import SpecModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
-from .util import fits_header_name
+from .trapdensity import TrapDensityModel
+from .trappars import TrapParsModel
+from .trapsfilled import TrapsFilledModel
+from .wcs_ref_models import *
+from .util import open
 
 
 
 __all__ = [
     'open',
-    'DataModel', 'AmiLgModel', 'AsnModel', 'ContrastModel',
-    'CubeModel', 'CubeFlatModel', 'DarkModel', 'DarkMIRIModel', 'DrizParsModel',
-    'NircamDrizParsModel', 'MiriImgDrizParsModel',
-    'DrizProductModel', 'FgsPhotomModel', 'FilterModel',
-    'FlatModel', 'FringeModel', 'GainModel', 'GLS_RampFitModel',
-    'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'LinearityModel',
-    'MaskModel', 'MIRIRampModel', 'ModelContainer',
-    'MultiExposureModel',
-    'MultiSlitModel',
-    'MultiSpecModel', 'IFUCubeModel', 'PhotomModel', 'NircamPhotomModel',
-    'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
-    'MiriImgPhotomModel', 'MiriMrsPhotomModel', 'QuadModel', 'RampModel',
-    'RampFitOutputModel', 'ReadnoiseModel', 'ResetModel', 'RSCDModel',
-    'SaturationModel', 'SpecModel', 'StrayLightModel']
+    'DataModel', 'AmiLgModel', 'AsnModel',
+    'CameraModel', 'CollimatorModel',
+    'CombinedSpecModel', 'ContrastModel', 'CubeModel',
+    'DarkModel', 'DarkMIRIModel',
+    'DisperserModel', 'DistortionModel', 'DistortionMRSModel',
+    'DrizProductModel',
+    'DrizParsModel', 'NircamDrizParsModel', 'MiriImgDrizParsModel',
+    'FilteroffsetModel',
+    'FlatModel', 'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
+    'FOREModel', 'FPAModel',
+    'FringeModel', 'GainModel', 'GLS_RampFitModel',
+    'IFUCubeModel',
+    'IFUCubeParsModel', 'NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel',
+    'IFUFOREModel', 'IFUPostModel', 'IFUSlicerModel',
+    'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
+    'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',
+    'MultiExposureModel', 'MultiProductModel', 'MultiSlitModel',
+    'MultiSpecModel', 'OTEModel',
+    'OutlierParsModel', 'MiriImgOutlierParsModel', 'NircamOutlierParsModel',
+    'PathlossModel',
+    'PersistenceSatModel',
+    'PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel', 'NirspecIfuAreaModel',
+    'ThroughputModel',
+    'PhotomModel', 'FgsPhotomModel', 'MiriImgPhotomModel', 'MiriMrsPhotomModel',
+    'NircamPhotomModel', 'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
+    'QuadModel', 'RampModel', 'MIRIRampModel',
+    'RampFitOutputModel', 'ReadnoiseModel',
+    'ReferenceFileModel', 'ReferenceCubeModel', 'ReferenceImageModel', 'ReferenceQuadModel',
+    'RegionsModel', 'ResetModel',
+    'ResolutionModel', 'MiriResolutionModel',
+    'RSCDModel', 'SaturationModel', 'SpecModel',
+    'StrayLightModel', 'SuperBiasModel', 'SpecwcsModel',
+    'TrapDensityModel', 'TrapParsModel', 'TrapsFilledModel',
+    'WavelengthrangeModel']
 
+_all_models = __all__[1:]
+_local_dict = dict(locals())
+_defined_models = { k: _local_dict[k] for k in _all_models }
 
-def open(init=None, extensions=None):
-    """
-    Creates a DataModel from a number of different types
+# Initialize the astropy.io registry
+with registry.delay_doc_updates(DataModel):
+    registry.register_reader('datamodel', DataModel, ndmodel.read)
+    registry.register_writer('datamodel', DataModel, ndmodel.write)
+    registry.register_identifier('datamodel', DataModel, ndmodel.identify)
 
-    Parameters
-    ----------
-
-    init : shape tuple, file path, file object, astropy.io.fits.HDUList, numpy array, dict, None
-
-        - None: A default data model with no shape
-
-        - shape tuple: Initialize with empty data of the given shape
-
-        - file path: Initialize from the given file (FITS , JSON or ASDF)
-
-        - readable file object: Initialize from the given file object
-
-        - astropy.io.fits.HDUList: Initialize from the given
-          `~astropy.io.fits.HDUList`
-
-        - A numpy array: A new model with the data array initialized
-          to what was passed in.
-
-        - dict: The object model tree for the data model
-
-    extensions : list of AsdfExtension
-        A list of extensions to the ASDF to support when reading
-        and writing ASDF files.
-
-   Results
-    -------
-
-    model : DataModel instance
-    """
-    from astropy.io import fits
-
-    if init is None:
-        return DataModel(None)
-    # Send _asn.json files to ModelContainer; avoid shape "cleverness" below
-    elif (isinstance(init, six.string_types) and
-            basename(init).split('.')[0].split('_')[-1] == 'asn'):
-        try:
-            m = ModelContainer(init, extensions=extensions)
-        except:
-            raise TypeError(
-                "init ASN not valid for ModelContainer"
-                )
-        return m
-    elif isinstance(init, DataModel):
-        # Copy the object so it knows not to close here
-        return init.__class__(init)
-    elif isinstance(init, tuple):
-        for item in init:
-            if not isinstance(item, int):
-                raise ValueError("shape must be a tuple of ints")
-        shape = init
-    elif isinstance(init, np.ndarray):
-        shape = init.shape
-    else:
-        if isinstance(init, (six.text_type, bytes)) or hasattr(init, "read"):
-            hdulist = fits.open(init)
-        elif isinstance(init, fits.HDUList):
-            hdulist = init
-        else:
-            raise TypeError(
-                "init must be None, shape tuple, file path, "
-                "readable file object, or astropy.io.fits.HDUList")
-
-        shape = ()
-        try:
-            hdu = hdulist[fits_header_name('SCI')]
-        except KeyError:
-            pass
-        else:
-            if hasattr(hdu, 'shape'):
-                shape = hdu.shape
-
-    # Here, we try to be clever about which type to
-    # return, otherwise, just return a new instance of the
-    # requested class
-    if len(shape) == 0:
-        new_class = DataModel
-    elif len(shape) == 4:
-        # It's a RampModel, MIRIRampModel, or QuadModel
-        try:
-            dqhdu = hdulist[fits_header_name('DQ')]
-        except KeyError:
-            # It's a RampModel or MIRIRampModel
-            try:
-                refouthdu = hdulist[fits_header_name('REFOUT')]
-            except KeyError:
-                # It's a RampModel
-                from . import ramp
-                new_class = ramp.RampModel
-            else:
-                # It's a MIRIRampModel
-                from . import miri_ramp
-                new_class = miri_ramp.MIRIRampModel
-        else:
-            # It's a QuadModel
-            from . import quad
-            new_class = quad.QuadModel
-    elif len(shape) == 3:
-        # It's a CubeModel
-        from . import cube
-        new_class = cube.CubeModel
-    elif len(shape) == 2:
-        # It's an ImageModel
-        from . import image
-        new_class = image.ImageModel
-    else:
-        raise ValueError("Don't have a DataModel class to match the shape")
-
-    return new_class(init, extensions=extensions)
 
 '''
 def test(verbose=False) :

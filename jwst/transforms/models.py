@@ -2,133 +2,228 @@
 
 Some of these may go in astropy.modeling in the future.
 """
+# -*- coding: utf-8 -*-
+
+from __future__ import absolute_import, division, unicode_literals, print_function
 import math
+from collections import namedtuple
 import numpy as np
 from astropy.modeling.core import Model
 from astropy.modeling.parameters import Parameter, InputParameterError
 from astropy.modeling.models import Polynomial2D
+from astropy.utils import isiterable
+from astropy import units as u
 
 
 __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
-           'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa', 'slitid_to_slit',
-           'slit_to_slitid', 'Snell', 'RefractionIndex']
+           'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa',
+           'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit',
+           'MIRI_AB2Slice']
 
 
 # Number of shutters per quadrant
 N_SHUTTERS_QUADRANT = 62415
 
+# Nirspec slit definition
+Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
+                           "ymin", "ymax", "quadrant", "source_id", "nshutters",
+                           "source_name", "source_alias", "catalog_id", "stellarity",
+                           "source_xpos", "source_ypos"])
+Slit.__new__.__defaults__= ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, "", "", "", 0.0, 0.0, 0.0)
 
-class RefractionIndex(Model):
-    """Calculate a refraction index given lamda and a reference file.
 
-    Referenced in NTN-2014-004/ESA-JWST-TN-20930
-    Requires  reference file information
+class MIRISelector(Model):
+    """
+    """
+    inputs = ('x' , 'y', 'slice')
+    outputs = ('alpha', 'beta')
+
+    def __init__(self, selector, **kwargs):
+        #self._inputs = inputs
+        #self._outputs = outputs
+        self._selector = selector
+        super(MIRISelector, self).__init__(**kwargs)
+
+    def evaluate(x, y, slice_id):
+        slice_id = np.unique(slice_id)
+        # remove 0
+        res = np.zeros(x.shape) + np.nan
+        for sid in slice_id:
+            if sid != 0:
+                sid_ind = slice_id == sid
+                res[sid_ind] = self._selector[sid](x[sid_ind], y[sid_ind])
+            else:
+                pass
+        return res
+
+
+class MIRI_AB2Slice(Model):
+    """
+    MIRI MRS alpha, beta to slice transform
 
     Parameters
     ----------
-    temp: float
-        the instrument temperature in kelvins
-    pressure: float
-        local pressure in atmospheres
-    pref: float
-        the reference pressure
-    kcoef: list of floats
-        three items which are fit coefficients
-    lcoef: list of floats
-        three items which are fit coefficients
-    tref: float
-        the reference temperature in kelvins
+    beta_zero : float
+    beta_del : float
+    """
+    standard_broadcastnig = False
+
+    inputs = ("beta",)
+    outputs = ("slice",)
+
+    beta_zero = Parameter('beta_zero', default=0)
+    beta_del = Parameter('beta_del', default=1)
+    channel = Parameter("channel", default=1)
+
+    @staticmethod
+    def evaluate(beta, beta_zero, beta_del, channel):
+        s = channel * 100 + (beta - beta_zero) / beta_del + 1
+        return _toindex(s)
+
+
+class Snell(Model):
+    """
+    Apply transforms, including Snell law, through the NIRSpec prism.
+
+
+    Parameters
+    ----------
+    angle : flaot
+        Prism angle in deg.
+    kcoef : list
+        K coefficients in Sellmeir equation.
+    lcoef : list
+        L coefficients in Sellmeir equation.
+    tcoef : list
+        Thermal coefficients of glass.
+    tref : float
+        Refernce temperature in K.
+    pref : float
+        Refernce pressure in ATM.
+    temperature : float
+        System temperature during observation in K
+    pressure : float
+        System pressure during observation in ATM.
+
     """
 
-    fittable = False
-    separable = False
+    standard_broadcasting = False
 
-    inputs = ("lam",)
-    outputs = ("n",)
+    inputs = ("lam", "alpha_in", "beta_in", "zin")
+    outputs = ("alpha_out", "beta_out", "zout")
 
-    temp = Parameter()
-    tref = Parameter()
-    pref = Parameter()
-    pressure = Parameter()
-    kcoef = Parameter()
-    lcoef = Parameter()
-    tcoef = Parameter()
 
-    def __init__(self, temp, tref, pref, pressure, kcoef, lcoef, tcoef,
-                 name=None):
-        super(RefractionIndex, self).__init__(temp=temp, tref=tref,
-                                              pref=pref, pressure=pressure,
-                                              kcoef=kcoef, lcoef=lcoef,
-                                              tcoef=tcoef, name=name)
+    def __init__(self, angle, kcoef, lcoef, tcoef, tref, pref,
+                 temperature, pressure, name=None):
+        self.prism_angle = angle
+        self.kcoef = np.array(kcoef, dtype=np.float)
+        self.lcoef = np.array(lcoef, dtype=np.float)
+        self.tcoef = np.array(tcoef, dtype=np.float)
+        self.tref = tref
+        self.pref = pref
+        self.temp = temperature
+        self.pressure = pref
+        super(Snell, self).__init__(name=name)
 
-    def evaluate(self, lam, temp, tref, pref, pressure, kcoef, lcoef, tcoef):
+    @staticmethod
+    def compute_refraction_index(lam, temp, tref, pref, pressure, kcoef, lcoef, tcoef):
         """Calculate and retrun the refraction index."""
 
-        # scale input wavelength to air at reference temp and
-        # pressure (T=35 K, P=1 atm)
         # convert the wavelength to microns
-        lam = lam * 1e6
+        lam = np.asarray(lam) * 1e6
         KtoC = 273.15  # kelvin to celcius conversion
 
+        # Derive the refractive index of air at the reference temperature and pressure
+        # and at the operational system's temperature and pressure.
         nref = 1. + (6432.8 + 2949810. * lam**2 /
                      (146.0 * lam**2 - 1.) + 25540.0 * lam**2 /
                      (41.0 * lam**2 - 1.)) * 1e-8
 
-        nair_obs = 1.0 + (nref - 1.0) * pressure / \
-            (1.0 + (temp - KtoC - 15.) * 2.4785e-3)
+        # T should be in C, P should be in ATM
+        nair_obs = 1.0 + ((nref - 1.0) * pressure) / (1.0 + (temp - KtoC - 15.) * 3.4785e-3)
+        nair_ref = 1.0 + (nref - 1.0) * pref / (1.0 + (tref - KtoC - 15) * 3.4785e-3)
 
-        nair_ref = 1.0 + (nref - 1.0) * pref / \
-            (1.0 + tref - KtoC)
-
+        # Compute the relative index of the glass at Tref and Pref using Sellmeier equation I.
         lamrel = lam * nair_obs / nair_ref
-        nrel = np.sqrt(1.0 + kcoef[0] * lamrel**2 /
-                       (lamrel**2 - lcoef[0]) +
-                       kcoef[1] * lamrel**2 / (lamrel**2 - lcoef[1]) +
-                       kcoef[2] * lamrel**2 / (lamrel**2 - lcoef[2]))
+
+        K1, K2, K3 = kcoef
+        L1, L2, L3 = lcoef
+        nrel = np.sqrt(1. +
+                       K1 * lamrel**2 / (lamrel ** 2 - L1) +
+                       K2 * lamrel **2 / (lamrel **2 - L2) +
+                       K3 * lamrel **2 / (lamrel ** 2 -L3)
+                       )
+        # Convert the relative index of refraction at the reference temperature and pressure
+        # to absolute.
         nabs_ref = nrel * nair_ref
 
-        # compute the absolute index of the glass
+        # Compute the absolute index of the glass
         delt = temp - tref
-        delnabs = 0.5 * (nrel**2 - 1.) / nrel * \
-            (tcoef[0] * delt + tcoef[1] * delt**2 + tcoef[2] * delt**2 +
-             (tcoef[3] * delt + tcoef[4] * delt**2) / (lamrel**2 - tcoef[5]**2))
+        D0, D1, D2, E0, E1, lam_tk = tcoef
+        delnabs = 0.5 * (nrel ** 2 - 1.) / nrel * \
+                (D0 * delt + D1 * delt**2 + D2 * delt**3 + \
+                 (E0 * delt + E1 * delt**2) / (lamrel**2  - lam_tk**2))
         nabs_obs = nabs_ref + delnabs
-        return nabs_obs / nair_obs
+
+        # Define the relative index at the system's operating T and P.
+        n = nabs_obs / nair_obs
+        return n
+
+    def evaluate(self, lam, alpha_in, beta_in, zin):
+        """Go through the prism"""
+        n = self.compute_refraction_index(lam, self.temp, self.tref, self.pref, self.pressure,
+                                          self.kcoef, self.lcoef, self.tcoef)
+        # Apply Snell's law through front surface, eq 5.3.3 II
+        xout = alpha_in / n
+        yout = beta_in / n
+        zout = np.sqrt(1.0 - xout**2 - yout**2)
+
+        # Go to back surface frame # eq 5.3.3 III
+        y_rotation = Rotation3DToGWA([self.prism_angle], "y")
+        xout, yout, zout = y_rotation(xout, yout, zout)
+
+        # Reflection on back surface
+        xout = -1 * xout
+        yout = -1 * yout
+
+        # Back to front surface
+        y_rotation = Rotation3DToGWA([-self.prism_angle], "y")
+        xout, yout, zout = y_rotation(xout, yout, zout)
+
+        # Snell's refraction law through front surface
+        xout = xout * n
+        yout = yout * n
+        zout = np.sqrt(1.0 - xout**2 - yout**2)
+        return xout, yout, zout
 
 
-class Snell(Model):
-    """Computes the Prism Snell refraction through a surface.
+class RefractionIndexFromPrism(Model):
+    """
+    Compute the refraction index of a prism (NIRSpec).
 
     Parameters
     ----------
-    n: float
-        refraction index as calculated for a given wavelenth
+    prism_angle : float
+        Prism angle in deg.
+
     """
+    standard_broadcasting = False
 
-    inputs = ("xin", "yin", "zin")
-    outputs = ("xout", "yout", "zout")
+    inputs = ("alpha_in", "beta_in", "alpha_out",)
+    outputs = ("n")
 
-    n = Parameter(default=1.0)
+    prism_angle = Parameter(setter=np.deg2rad, getter=np.rad2deg)
 
-    def __init__(self, n=n, name=None):
-        super(Snell, self).__init__(n=n, name=name)
+    def __init__(self, prism_angle, name=None):
+        super(RefractionIndexFromPrism, self).__init__(prism_angle=prism_angle, name=name)
 
-    def evaluate(self, x, y, z, n):
-        """Compute Snell's refraction law from the front surface."""
-
-        xout = x / n
-        yout = y / n
-        zout = np.sqrt(1.0 - xout**2 - yout**2)
-        return xout, yout, zout
-
-    def inverse(self, x, y, z, n):
-        """Compute Snell's refraction law from the back surface."""
-
-        xout = x * n
-        yout = y * n
-        zout = np.sqrt(1.0 - xout**2 - yout**2)
-        return xout, yout, zout
+    def evaluate(self, alpha_in, beta_in, alpha_out, prism_angle):
+        sangle = math.sin(prism_angle)
+        cangle = math.cos(prism_angle)
+        nsq = ((alpha_out + alpha_in * (1 - 2 * sangle**2)) / (2 * sangle * cangle)) **2 + \
+            alpha_in ** 2 + beta_in ** 2
+        return np.sqrt(nsq)
 
 
 class NRSChromaticCorrection(Polynomial2D):
@@ -187,13 +282,16 @@ class WavelengthFromGratingEquation(Model):
 
     separable = False
 
-    inputs = ("alpha_in", "alpha_out")
+    inputs = ("alpha_in", "beta_in", "alpha_out")
     outputs = ("lam",)
 
     groove_density = Parameter()
     order = Parameter(default=1)
 
-    def evaluate(self, alpha_in, alpha_out, groove_density, order):
+    def evaluate(self, alpha_in, beta_in, alpha_out, groove_density, order):
+        # beta_in is not used in this equation but is here because it's
+        # needed for the prism computation. Currently these two computations
+        # need to have the same interface.
         return -(alpha_in + alpha_out) / (groove_density * order)
 
 
@@ -368,9 +466,10 @@ class Rotation3D(Model):
     def inverse(self):
         """Inverse rotation."""
         angles = self.angles.value[::-1] * -1
-        return self.__class__(angles, self.axes_order[::-1])
+        return self.__class__(angles, axes_order=self.axes_order[::-1])
 
-    def _compute_matrix(self, angles, axes_order):
+    @staticmethod
+    def _compute_matrix(angles, axes_order):
         if len(angles) != len(axes_order):
             raise InputParameterError(
                 "Number of angles must equal number of axes in axes_order.")
@@ -378,24 +477,24 @@ class Rotation3D(Model):
         for angle, axis in zip(angles, axes_order):
             matrix = np.zeros((3, 3), dtype=np.float)
             if axis == 'x':
-                mat = self._rotation_matrix_from_angle(angle)
+                mat = Rotation3D.rotation_matrix_from_angle(angle)
                 matrix[0, 0] = 1
                 matrix[1:, 1:] = mat
             elif axis == 'y':
-                mat = self._rotation_matrix_from_angle(-angle)
+                mat = Rotation3D.rotation_matrix_from_angle(-angle)
                 matrix[1, 1] = 1
                 matrix[0, 0] = mat[0, 0]
                 matrix[0, 2] = mat[0, 1]
                 matrix[2, 0] = mat[1, 0]
                 matrix[2, 2] = mat[1, 1]
             elif axis == 'z':
-                mat = self._rotation_matrix_from_angle(angle)
+                mat = Rotation3D.rotation_matrix_from_angle(angle)
                 matrix[2, 2] = 1
                 matrix[:2, :2] = mat
             else:
                 raise ValueError("Expected axes_order to be a combination \
                         of characters 'x', 'y' and 'z', got {0}".format(
-                                     set(axes_order).difference(self.axes)))
+                                     set(axes_order).difference(['x', 'y', 'z'])))
             matrices.append(matrix)
         if len(angles) == 1:
             return matrix
@@ -407,7 +506,8 @@ class Rotation3D(Model):
                 prod = np.dot(m, prod)
             return prod
 
-    def _rotation_matrix_from_angle(self, angle):
+    @staticmethod
+    def rotation_matrix_from_angle(angle):
         """
         Clockwise rotation matrix.
         """
@@ -482,48 +582,254 @@ class LRSWavelength(Model):
         return wavelength
 
 
-def slitid_to_slit(open_slits_id):
-    """
-    A slit_id is a tuple of (quadrant_number, slit_number)
-    Internally a slit is represented as a number
-    slit = quadrant_number * N_SHUTTERS_QUADRANT + slit_number
-    """
-    return open_slits_id[:, 0] * N_SHUTTERS_QUADRANT + open_slits_id[:, 1]
-
-
-def slit_to_slitid(slits):
-    """
-    Return the slitid for the slits.
-    """
-    slits = np.asarray(slits)
-    return np.array(zip(*divmod(slits, N_SHUTTERS_QUADRANT)))
-
-
 class Gwa2Slit(Model):
+    """
+    NIRSpec GWA to slit transform.
 
-    inputs = ('angle1', 'angle2', 'angle3', 'quadrant', 'slitid')
-    outputs = ('x_slit', 'y_slit', 'lam', 'quadrant', 'slitid')
+    Parameters
+    ----------
+    slits : list
+        open slits
+        a slit is a namedtupe
+        Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
+             "quadrant", "source_id", "nshutters")
+    models : list
+        an instance of `~astropy.modeling.core.Model`
+    """
+    inputs = ('name', 'angle1', 'angle2', 'angle3')
+    outputs = ('name', 'x_slit', 'y_slit', 'lam')
 
-    def __init__(self, models):
-        self.slits = slit_to_slitid(list(models.keys()))
+    def __init__(self, slits, models):
+        if isiterable(slits[0]):
+            self._slits = [tuple(s) for s in slits]
+            self.slit_ids = [s[0] for s in self._slits]
+        else:
+            self._slits = list(slits)
+            self.slit_ids = self._slits
+
         self.models = models
         super(Gwa2Slit, self).__init__()
 
-    def evaluate(self, quadrant, slitid, x, y, z):
-        slit = int(slitid_to_slit(np.array([quadrant, slitid]).T)[0])
-        return (quadrant, slitid) + self.models[slit](x, y, z)
+    @property
+    def slits(self):
+        if isiterable(self._slits[0]):
+            return [Slit(*row) for row in self._slits]
+        else:
+            return self.slit_ids
+
+    def get_model(self, name):
+        index = self.slit_ids.index(name)
+        return self.models[index]
+
+    def evaluate(self, name, x, y, z):
+        index = self.slit_ids.index(name)
+        return (name, ) + self.models[index](x, y, z)
 
 
 class Slit2Msa(Model):
+    """
+    NIRSpec slit to MSA position transform.
 
-    inputs = ('quadrant', 'slitid', 'x_slit', 'y_slit', 'lam')
+    Parameters
+    ----------
+    slits : list
+        open slits
+        a slit is a namedtupe
+        Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
+             "quadrant", "source_id", "nshutters")
+    models : list
+        an instance of `~astropy.modeling.core.Model`
+    """
+
+    inputs = ('name', 'x_slit', 'y_slit', 'lam')
     outputs = ('x_msa', 'y_msa', 'lam')
 
-    def __init__(self, models):
+    def __init__(self, slits, models):
         super(Slit2Msa, self).__init__()
-        self.slits = slit_to_slitid(list(models.keys()))
+        if isiterable(slits[0]):
+            self._slits = [tuple(s) for s in slits]
+            self.slit_ids = [s[0] for s in self._slits]
+        else:
+            self._slits = list(slits)
+            self.slit_ids = self._slits
         self.models = models
 
-    def evaluate(self, quadrant, slitid, x, y, lam):
-        slit = int(slitid_to_slit(np.array([quadrant, slitid]).T)[0])
-        return self.models[slit](x, y) + (lam,)
+    @property
+    def slits(self):
+        if isiterable(self._slits[0]):
+            return [Slit(*row) for row in self._slits]
+        else:
+            return self.slit_ids
+
+    def get_model(self, name):
+        index = self.slit_ids.index(name)
+        return self.models[index]
+
+    def evaluate(self, name, x, y, lam):
+        index = self.slit_ids.index(name)
+        return self.models[index](x, y) + (lam,)
+
+
+class NirissSOSSModel(Model):
+    """
+    NIRISS SOSS wavelength solution.
+
+    Parameters
+    ----------
+    spectral_orders : list of int
+        Spectral orders for which there is a wavelength solution.
+    models : list of `~astropy.modeling.core.Model`
+        A list of transforms representing the wavelength solution for
+        each order in spectral orders. It should match the order in
+        ``spectral_orders``.
+    """
+
+    inputs = ('x', 'y', 'spectral_order')
+    outputs = ('ra', 'dec', 'lam')
+
+    def __init__(self, spectral_orders, models):
+        super(NirissSOSSModel, self).__init__()
+        self.spectral_orders = spectral_orders
+        self.models = dict(zip(spectral_orders, models))
+
+    def get_model(self, spectral_order):
+        return self.models[spectral_order]
+
+    def evaluate(self, x, y, spectral_order):
+
+        # The spectral_order variable is coming in as an array/list of one element.
+        # So, we are going to just take the 0'th element and use that as the index.
+        try:
+            order_number = int(spectral_order[0])
+        except Exception as e:
+            raise ValueError('Spectral order is not between 1 and 3, {}'.format(spectral_order))
+
+        return self.models[order_number](x, y)
+
+
+class Logical(Model):
+    """
+    Substitute values in an array where the condition is evaluated to True.
+
+    Similar to numpy's where function.
+
+    Parameters
+    ----------
+    condition : str
+        A string representing the logical, one of GT, LT, NE, EQ
+    compareto : float, ndarray
+        A number to compare to using the condition
+        If ndarray then the input array, compareto and value should have the
+        same shape.
+    value : float, ndarray
+        Value to substitute where condition is True.
+    """
+    inputs = ('x', )
+    outputs = ('x', )
+
+    conditions = {'GT': np.greater,
+                  'LT': np.less,
+                  'EQ': np.equal,
+                  'NE': np.not_equal
+                  }
+
+    def __init__(self, condition, compareto, value, **kwargs):
+        self.condition = condition.upper()
+        self.compareto = compareto
+        self.value = value
+        super(Logical, self).__init__(**kwargs)
+
+    def evaluate(self, x):
+        x = x.copy()
+        m = ~np.isnan(x)
+        m_ind = np.flatnonzero(m)
+        if isinstance(self.compareto, np.ndarray):
+            cond = self.conditions[self.condition](x[m], self.compareto[m])
+            x.flat[m_ind[cond]] = self.value.flat[m_ind[cond]]
+        else:
+            cond = self.conditions[self.condition](x[m], self.compareto)
+            x.flat[m_ind[cond]] = self.value
+        return x
+
+    def __repr__(self):
+        txt = "{0}(condition={1}, compareto={2}, value={3})"
+        return txt.format(self.__class__.__name__, self.condition,
+            self.compareto, self.value)
+
+
+class V23ToSky(Rotation3D):
+    """
+    Transform from V2V3 to a standard coordinate system.
+
+    Parameters
+    ----------
+    angles : list
+        A sequence of angles (in deg).
+    axes_order : str
+        A sequence of characters ('x', 'y', or 'z') corresponding to the
+        axis of rotation and matching the order in ``angles``.
+    """
+
+    inputs = ("v2", "v3")
+    outputs = ("ra", "dec")
+
+    @staticmethod
+    def spherical2cartesian(alpha, delta):
+        """
+        Convert spherical coordinates (in deg) to cartesian.
+        """
+        alpha = np.deg2rad(alpha)
+        delta = np.deg2rad(delta)
+        x = np.cos(alpha) * np.cos(delta)
+        y = np.cos(delta) * np.sin(alpha)
+        z = np.sin(delta)
+        return np.array([x, y, z])
+
+    @staticmethod
+    def cartesian2spherical(x, y, z):
+        """
+        Convert cartesian coordinates to spherical coordinates (in deg).
+        """
+        h = np.hypot(x, y)
+        alpha  = np.rad2deg(np.arctan2(y, x))
+        delta = np.rad2deg(np.arctan2(z, h))
+        return alpha, delta
+
+    def evaluate(self, v2, v3, angles):
+        x, y, z = self.spherical2cartesian(v2, v3)
+        x1, y1, z1 = super(V23ToSky, self).evaluate(x, y, z, angles)
+        return self.cartesian2spherical(x1, y1, z1)
+
+    def __call__(self, v2, v3):
+        from itertools import chain
+        inputs, format_info = self.prepare_inputs(v2, v3)
+        parameters = self._param_sets(raw=True)
+
+        outputs = self.evaluate(*chain([v2, v3], parameters))
+
+        if self.n_outputs == 1:
+            outputs = (outputs,)
+
+        return self.prepare_outputs(format_info, *outputs)
+
+
+def _toindex(value):
+    """
+    Convert value to an int or an int array.
+
+    Input coordinates converted to integers
+    corresponding to the center of the pixel.
+    The convention is that the center of the pixel is
+    (0, 0), while the lower left corner is (-0.5, -0.5).
+
+    Examples
+    --------
+    >>> _toindex(np.array([-0.5, 0.49999]))
+    array([0, 0])
+    >>> _toindex(np.array([0.5, 1.49999]))
+    array([1, 1])
+    >>> _toindex(np.array([1.5, 2.49999]))
+    array([2, 2])
+    """
+    indx = np.asarray(np.floor(np.asarray(value) + 0.5), dtype=np.int)
+    return indx

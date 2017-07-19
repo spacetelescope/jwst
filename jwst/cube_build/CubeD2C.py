@@ -265,17 +265,17 @@ def ReadDistortionFile(self, channel, subchannel,):
     self.wcs['V2_COEFFS'] = v2coeff
     self.wcs['V3_COEFFS'] = v3coeff
 
-    alpha_min = list()
-    alpha_max = list()
-    beta_min = list()
-    beta_max = list()
-    lambda_min = list()
-    lambda_max = list()
+    alpha_min = []
+    alpha_max = []
+    beta_min = []
+    beta_max = []
+    lambda_min = []
+    lambda_max = []
 
-    v2_min = list()
-    v2_max = list()
-    v3_min = list()
-    v3_max = list()
+    v2_min = []
+    v2_max = []
+    v3_min = []
+    v3_max = []
 
 
     print('number of slices determining min and max ', nslices)
@@ -350,8 +350,8 @@ def pullout_poly_models(data):
     """
     nslices = len(data)
 
-    xa = list()
-    acoeffs = list()
+    xa = []
+    acoeffs = []
     for i in range(nslices):
         al = data[i]
         xa.append(al[0])
@@ -400,9 +400,9 @@ def xy2abl(self, slice_no, x, y):
 #________________________________________________________________________________
 
 #    if (isinstance(x,np.ndarray)):
-#        alpha = list()
-#        beta = list()
-#        lam = list()
+#        alpha = []
+#        beta = []
+#        lam = []
 #        for k in range (len(x)):
 #            a = 0;
 #            l = 0;

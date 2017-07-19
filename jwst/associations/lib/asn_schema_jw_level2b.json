@@ -3,6 +3,7 @@
     "title": "Association: JWST DMS Level2a->Level2b",
     "description": "The data structure that, within the JWST DMS processing system, defines how to group level2a exposures to produce Level2b data products.",
     "type": "object",
+    "required": ["products"],
     "properties": {
         "asn_type": {
             "description": "The type of association represented.",
@@ -20,17 +21,23 @@
             "description": "The observing program identifier",
             "type": "string"
         },
-        "groups": {
-            "description": "Array of groups of Level2a exposures which are needed to be processed together to produce their Level 2b versions. What these groups represent and how they should be processed is encoded by the asn_type.",
+        "products": {
+            "description": "Array of output products and their required inputs derived from this association.",
             "type": "array",
             "items": {
                 "type": "object",
+                "required": ["members"],
                 "properties": {
+                    "name": {
+                        "description": "Name of the output product",
+                        "type": "string"
+                    },
                     "members": {
                         "description": "Array of input members.",
                         "type": "array",
                         "items": {
                             "type": "object",
+                            "required": ["expname", "exptype"],
                             "properties": {
                                 "expname": {
                                     "description": "Name of the input member.",
@@ -40,14 +47,11 @@
                                     "description": "Type of member.",
                                     "type": "string"
                                 }
-                            },
-                            "required": ["expname", "exptype"]
+                            }
                         }
                     }
-                },
-                "required": ["members"]
+                }
             }
         }
-    },
-    "required": ["asn_type", "asn_rule", "asn_pool", "groups"]
+    }
 }

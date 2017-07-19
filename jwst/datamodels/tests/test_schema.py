@@ -28,7 +28,7 @@ TMP_DIR = None
 
 def setup():
     global FITS_FILE, MASK_FILE, TMP_DIR, TMP_FITS, TMP_YAML, TMP_ASDF, TMP_FITS2
-    ROOT_DIR = os.path.dirname(__file__)
+    ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
     FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
     MASK_FILE = os.path.join(ROOT_DIR, 'mask.fits')
 
@@ -50,13 +50,10 @@ def test_choice():
             dm.meta.instrument.name = 'FOO'
 
 
-def test_get_na_ra():
+def test_set_na_ra():
     with pytest.raises(jsonschema.ValidationError):
         with DataModel(FITS_FILE) as dm:
-            # It's invalid in the file, so we should get the default of None
-            assert dm.meta.target.ra is None
-
-            # But this should raise a ValueError
+            # Setting an invalid value should raise a ValueError
             dm.meta.target.ra = "FOO"
 
 '''
@@ -146,7 +143,7 @@ def test_ad_hoc_fits():
     with DataModel() as dm:
         dm.meta.foo = {'a': 42, 'b': ['a', 'b', 'c']}
 
-        dm.to_fits(TMP_FITS, clobber=True)
+        dm.to_fits(TMP_FITS, overwrite=True)
 
     with DataModel.from_fits(TMP_FITS) as dm2:
         assert dm2.meta.foo == {'a': 42, 'b': ['a', 'b', 'c']}
@@ -285,7 +282,7 @@ def test_table_array():
             (str('my_string'), str('S64'))
             ]
 
-        x.to_fits(TMP_FITS, clobber=True)
+        x.to_fits(TMP_FITS, overwrite=True)
 
     with DataModel(TMP_FITS, schema=table_schema) as x:
         table = x.table
@@ -421,7 +418,7 @@ def test_data_array():
         x.arr[2].data = array3
         del x.arr[1]
         assert len(x.arr) == 2
-        x.to_fits(TMP_FITS, clobber=True)
+        x.to_fits(TMP_FITS, overwrite=True)
 
     with DataModel(TMP_FITS, schema=data_array_schema) as x:
         assert len(x.arr) == 2
@@ -442,7 +439,7 @@ def test_data_array():
         assert len(x.arr) == 3
         del x.arr[1]
         assert len(x.arr) == 2
-        x.to_fits(TMP_FITS2, clobber=True)
+        x.to_fits(TMP_FITS2, overwrite=True)
 
     from astropy.io import fits
     with fits.open(TMP_FITS2) as hdulist:
@@ -535,7 +532,7 @@ def test_multislit_move_from_fits():
         hdu.ver = i + 1
         hdulist.append(hdu)
 
-    hdulist.writeto(TMP_FITS, clobber=True)
+    hdulist.writeto(TMP_FITS, overwrite=True)
 
     n = MultiSlitModel()
     with MultiSlitModel(TMP_FITS) as m:

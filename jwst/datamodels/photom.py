@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals, division, print_function
 
 from . import model_base
+from .dynamicdq import dynamic_mask
 
 __all__ = ['PhotomModel']
 
@@ -31,6 +32,16 @@ class NircamPhotomModel(PhotomModel):
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
+
+        - filter: str[12]
+        - pupil: str[12]
+        - order: int16
+        - photmjsr: float32
+        - uncertainty: float32
+        - nelem: int16
+        - wavelength: float32[3000]
+        - relresponse: float32[3000]
+
     """
     schema_url = "nircam_photom.schema.yaml"
 
@@ -54,6 +65,16 @@ class NirissPhotomModel(PhotomModel):
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
+
+        - filter: str[12]
+        - pupil: str[12]
+        - order: int16
+        - photmjsr: float32
+        - uncertainty: float32
+        - nelem: int16
+        - wavelength: float32[5000]
+        - relresponse: float32[5000]
+
     """
     schema_url = "niriss_photom.schema.yaml"
 
@@ -77,6 +98,16 @@ class NirspecPhotomModel(PhotomModel):
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
+
+        - filter: str[12]
+        - grating: str[12]
+        - photmjsr: float32
+        - uncertainty: float32
+        - nelem: int16
+        - wavelength: float32[150]
+        - relresponse: float32[150]
+        - reluncertainty: float32[150]
+
     """
     schema_url = "nirspec_photom.schema.yaml"
 
@@ -100,6 +131,17 @@ class NirspecFSPhotomModel(PhotomModel):
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
+
+        - filter: str[12]
+        - grating: str[12]
+        - slit: str[12]
+        - photmjsr: float32
+        - uncertainty: float32
+        - nelem: int16
+        - wavelength: float32[150]
+        - relresponse: float32[150]
+        - reluncertainty: float32[150]
+
     """
     schema_url = "nirspecfs_photom.schema.yaml"
 
@@ -123,6 +165,15 @@ class MiriImgPhotomModel(PhotomModel):
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
+
+        - filter: str[12]
+        - subarray: str[15]
+        - photmjsr: float32
+        - uncertainty: float32
+        - nelem: int16
+        - wavelength: float32[500]
+        - relresponse: float32[500]
+
     """
     schema_url = "mirimg_photom.schema.yaml"
 
@@ -142,18 +193,47 @@ class MiriMrsPhotomModel(PhotomModel):
     init : any
         Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
-    phot_table : numpy array
-        A table-like object containing row selection criteria made up
-        of instrument mode parameters and photometric conversion
-        factors associated with those modes.
+    data : numpy array
+        An array-like object containing the pixel-by-pixel conversion values
+        in units of DN / sec / mJy / pixel.
+
+    err : numpy array
+        An array-like object containing the uncertainties in the conversion
+        values, in the same units as the data array.
+
+    dq : numpy array
+        An array-like object containing bit-encoded data quality flags,
+        indicating problem conditions for values in the data array.
+
+    dq_def : numpy array
+        A table-like object containing the data quality definitions table.
+
+    pixsiz : numpy array
+        An array-like object containing pixel-by-pixel size values, in units of
+        square arcseconds (arcsec^2).
     """
     schema_url = "mirmrs_photom.schema.yaml"
 
-    def __init__(self, init=None, phot_table=None, **kwargs):
+    def __init__(self, init=None, data=None, err=None, dq=None, dq_def=None,
+                 pixsiz=None, **kwargs):
         super(MiriMrsPhotomModel, self).__init__(init=init, **kwargs)
 
-        if phot_table is not None:
-            self.phot_table = phot_table
+        if data is not None:
+            self.data = data
+
+        if err is not None:
+            self.err = err
+
+        if dq is not None:
+            self.dq = dq
+
+        if dq_def is not None:
+            self.dq_def = dq_def
+
+        if pixsiz is not None:
+            self.pixsiz = pixsiz
+
+        self.dq = dynamic_mask(self)
 
 class FgsPhotomModel(PhotomModel):
     """
@@ -168,6 +248,13 @@ class FgsPhotomModel(PhotomModel):
         A table-like object containing row selection criteria made up
         of instrument mode parameters and photometric conversion
         factors associated with those modes.
+
+        - photmjsr: float32
+        - uncertainty: float32
+        - nelem: int16
+        - wavelength: float32[5000]
+        - relresponse: float32[5000]
+
     """
     schema_url = "fgs_photom.schema.yaml"
 

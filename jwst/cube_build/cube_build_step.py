@@ -2,267 +2,378 @@
 
 import sys
 import time
+import math
 import json
+import os
 import numpy as np
 from ..stpipe import Step, cmdline
+from fitsblender import blendheaders
 from .. import datamodels
 from . import cube_build
-from . import cube
-from . import CubeD2C
-from . import CubeCloud
-from . import InstrumentDefaults
+from . import data_types
+
 1
 class CubeBuildStep (Step):
     """
-    CubeBuildStep: Creates a 3-D spectral cube from a given list of input files
+    CubeBuildStep: Creates a 3-D spectral cube from a given association, single model, 
+    single input file, or model container. 
+    Input parameters allow the spectral cube to be built from a provided  
+    channel/subchannel (MIRI) or grating/filer  (NIRSPEC)
     """
 
     spec = """
-         channel = string(default='')
+         channel = option('1','2','3','4','ALL','all',default='ALL')
+         band = option('SHORT','MEDIUM','LONG','ALL','short','medium','long','all',default='ALL')
+         grating   = option('PRISIM','G140M','G140H','G235M','G235H',G395M','G395H','ALL','all',default='ALL')
+         filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL','all',default='ALL')
          scale1 = float(default=0.0)
-         scale2 = float(default =0.0)
-         scalew = float(default = 0.0)
-         interpolation = string(default='pointcloud')
-         wcs_method = string(default='assign_wcs')
-         coord_system = string(default='v2-v3')
-         roi1 = float(default=1.0)
-         roi2 = float(default=1.0)
-         roiw = float(default=1.0)
+         scale2 = float(default=0.0)
+         scalew = float(default=0.0)
+         interpolation = option(,'pointcloud','area','POINTCLOUD','AREA',default='pointcloud')
+         weighting = option('standard','miripsf','STANDARD','MIRIPSF',default = 'standard')
+         coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec')
+         rois = float(default=0.0)
+         roiw = float(default=0.0)
+         weight_power = float(default=2.0)
          offset_list = string(default='NA')
+         wavemin = float(default=None)
+         wavemax = float(default=None)
+         xdebug = integer(default=None)
+         ydebug = integer(default=None) 
+         zdebug = integer(default=None)
+         single = boolean(default=false)
        """
+    reference_file_types = ['cubepar','resol']
 
     def process(self, input):
-        self.log.info('Starting IFU Cube Building Step...')
+        self.log.info('Starting IFU Cube Building Step')
 
-        if(not self.wcs_method.islower()): self.wcs_method = self.wcs_method.lower()
+#________________________________________________________________________________
+# For all parameters convert to a standard format
+# Report read in values to screen
+#________________________________________________________________________________
+        self.subchannel = self.band
+        if(not self.subchannel.isupper()): self.subchannel = self.subchannel.upper()
+        if(not self.filter.isupper()): self.filter = self.filter.upper()
+        if(not self.grating.isupper()): self.grating = self.grating.upper()
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
         if(not self.interpolation.islower()): self.interpolation = self.interpolation.lower()
+        if(not self.weighting.islower()): self.weighting = self.weighting.lower()
 
-
-        # input parameters
-        if(self.channel != ''): self.log.info('Input Channel %s', self.channel)
         if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
         if(self.scale2 != 0.0): self.log.info('Input Scale of axis 2 %f', self.scale2)
         if(self.scalew != 0.0): self.log.info('Input wavelength scale %f  ', self.scalew)
         if(self.offset_list != 'NA'): self.log.info('Offset Dither list %s', self.offset_list)
 
+        if(self.wavemin !=None): self.log.info('Setting Minimum wavelength of spectral cube to: %f',
+                                               self.wavemin)
+        if(self.wavemax !=None): self.log.info('Setting Maximum wavelength of spectral cube to: %f',
+                                               self.wavemax)
+
+        if(self.rois != 0.0): self.log.info('Input Spatial ROI size %f', self.rois)
+        if(self.roiw != 0.0): self.log.info('Input Wave ROI size %f', self.roiw)
+
+        self.debug_pixel = 0
+        self.spaxel_debug = None
+        if(self.xdebug !=None and self.ydebug !=None and self.zdebug !=None):
+            self.debug_pixel = 1
+            self.log.info('Writing debug information for spaxel %i %i %i',self.xdebug,self.ydebug,
+                          self.zdebug)
+            self.log.debug('Writing debug information for spaxel %i %i %i',self.xdebug,self.ydebug,
+                           self.zdebug)
+            self.xdebug = self.xdebug -1
+            self.ydebug = self.ydebug -1
+            self.zdebug = self.zdebug -1
+            self.spaxel_debug = open('cube_spaxel_info.results','w')
+            self.spaxel_debug.write('Writing debug information for spaxel %i %i %i' %
+                                    (self.xdebug,self.ydebug,self.zdebug) + '\n')
 
         # valid coord_system:
-        # 1. alpha-beta (only valid for Single Cubes)
-        # 2. v2-v3
-        # 3. ra-dec
+        # 1. alpha-beta (only valid for MIRI Single Cubes)
+        # 2. ra-dec
 
-        # valid wcs_method
-        # 1. assign_wcs
-        # 2. distortion - only valid for MIRI, reads in distortion polynomials only used in testing
-
-
-        if (self.interpolation == 'area'):
+        if self.interpolation == 'area':
             self.coord_system = 'alpha-beta'
 
-        if (self.coord_system == 'v2-v3'):
+        if self.coord_system == 'alpha-beta':
+            self.interpolation = 'area'
+
+        if self.coord_system == 'ra-dec':
             self.interpolation = 'pointcloud'  # can not be area
 
-        self.log.info('Input interpolation %s', self.interpolation)
-        self.log.info('WCS methods to use %s', self.wcs_method)
-        self.log.info('Coordinate system to use %s', self.coord_system)
+        self.log.info('Input interpolation: %s', self.interpolation)
+        self.log.info('Coordinate system to use: %s', self.coord_system)
+        if self.interpolation =='pointcloud':
+            self.log.info('Weighting method for point cloud: %s',self.weighting)
+            self.log.info('Power Weighting distance : %f',self.weight_power) 
 
-#_________________________________________________________________________________________________
-        #Read in the input data - either in form of ASSOCIATION table or single filename
-        # If a single file - then assocation table format is filled in
-
-        input_table = cube_build.IFUCubeInput(input)
-
-        self.input_table_type = 'Association'
-        if(input_table.asn_table['asn_type'] == 'singleton'):
-            self.offset_list = 'NA'
-            self.input_table_type = 'singleton'
-
-#_________________________________________________________________________________________________
-# Loop over every Output Product Base name and set of member files
-#_________________________________________________________________________________________________
-# for each product name in the association table loop over the main cube building code
-
-        num_products = len(input_table.asn_table['products'])
-        self.log.debug('Number of products %d', num_products)
-        for iproduct in range(num_products):
-            self.log.debug('Output Base %s ', input_table.asn_table['products'][iproduct]['name'])
-#_________________________________________________________________________________________________
-            self.metadata = {}
-            self.metadata['instrument'] = ''
-            self.metadata['detector'] = ''
-
-            self.metadata['channel'] = list()     # filled in by association table in FilesinCube
-            self.metadata['subchannel'] = list()  # figured out from the members in the association
-
-            self.metadata['filter'] = list()   #figured out from the members in the association
-            self.metadata['grating'] = list()  #figured out from the memebers in the assoication
-            self.metadata['output_name'] = ''
-            self.metadata['number_files'] = 0
-
-        # Check if there is an offset list
-            self.v2offset = list()
-            self.v3offset = list()
-            if(self.offset_list != 'NA'):
-                print('Going to read in dither offset list')
-                cube_build.ReadOffSetFile(self)
-
-        # Read in the input data (association table or single file)
-        # Fill in MasterTable   based on Channel/Subchannel  or filter/grating
-        # Also if there is an Offset list - fill in MasterTable.FileOffset
-            MasterTable = cube.FileTable()
-
-            num, instrument,detector = cube_build.FilesinCube(self, input_table, iproduct, MasterTable)
-            self.metadata['number_files'] = num
-            self.metadata['detector'] = detector            
-            self.metadata['instrument'] = instrument
-        # Determine which channels/subchannels or filter/grating cubes will be constructed from.
-        # returns self.metadata['subchannel'] and self.metadata['channel']
-        # or self.metadata['filter'], self.metadata['grating']
-
-            cube_build.DetermineCubeCoverage(self, MasterTable)
-
-            cube_build.CheckCubeType(self)
-
-            self.output_name = input_table.asn_table['products'][iproduct]['name']
-            if(self.input_table_type == 'singleton'):
-
-                self.output_name = cube_build.UpdateOutPutName(self)
-
-#            print('Output name',self.output_name)
+        if self.single :
+            self.log.info(' Single = true, creating a set of single exposures mapped' +
+                          ' to output IFUCube coordinate system') 
 #________________________________________________________________________________
+    # read input parameters - Channel, Band (Subchannel), Grating, Filter
+#________________________________________________________________________________
+        self.pars_input = {}
+        self.pars_input['channel'] = []     # input parameter or determined from reading in files
+        self.pars_input['subchannel'] = []  # inputparameter or determined from reading in files 
 
-# Cube is an instance of CubeInfo - which holds basic information on Cube
-            if(instrument == 'MIRI'):
-                Cube = cube.CubeInfo('MIRI',detector,self.metadata['channel'], self.metadata['subchannel'], self.output_name)
+        self.pars_input['filter'] = []   # input parameter
+        self.pars_input['grating'] = []  # input parameter
+        read_user_input(self)  # see if options channel, band,grating filter are set
+                               # if they are filling par_input with values 
+#________________________________________________________________________________
+#data_types: DataTypes: Read in the input data - 4 formats are allowed:
+# 1. filename
+# 2. single model
+# 3. ASN table
+# 4. model containter
+# figure out what type of data we have an fill in the 
+# input_table.input_models - which is used in the rest of IFU Cube Building
+# We need to do this in cube_build_step because we need to pass the data_model to
+# CRDS to figure out what type of reference files to grab (MIRI or NIRSPEC)
+#________________________________________________________________________________
+        input_table = data_types.DataTypes(input,self.single)
+        self.cube_type = input_table.input_type
+        self.input_models = input_table.input_models
+        self.input_filenames = input_table.filenames
+        self.output_name_base = input_table.output_name
+        self.data_type = input_table.data_type 
+#________________________________________________________________________________
+# Read in Cube Parameter Reference file
+        # identify what reference file has been associated with these input
+        par_filename = self.get_reference_file(self.input_models[0], 'cubepar')
+ # Check for a valid reference file
+        if par_filename == 'N/A':
+            self.log.warning('No default cube parameters reference file found')
+            return
+#________________________________________________________________________________
+# If miripsf weight is set then set up reference file 
+        # identify what reference file has been associated with these inputs
+        resol_filename = None
+        if(self.weighting == 'miripsf'):
+            resol_filename = self.get_reference_file(self.input_models[0], 'resol')
 
-            if(instrument == 'NIRSPEC'):
-                Cube = cube.CubeInfo('NIRSPEC',detector,self.metadata['filter'], self.metadata['grating'], self.output_name)
+            if resol_filename == 'N/A':
+                self.log.warning('No default spectral resolution reference file found')
+                self.log.warning('Run again and turn off miripsf')
+                return
+#________________________________________________________________________________
+# shove the input parameters in to pars to pull out in work horse module - 
+# cube_build.py
 
-            InstrumentInfo = InstrumentDefaults.Info()
-            self.log.info(' Building Cube %s ', Cube.output_name)
+        pars = {
+            'channel': self.pars_input['channel'],
+            'subchannel': self.pars_input['subchannel'],
+            'grating': self.pars_input['grating'],
+            'filter': self.pars_input['filter'],
+            'scale1': self.scale1,
+            'scale2': self.scale2,
+            'scalew': self.scalew,
+            'interpolation': self.interpolation,
+            'weighting': self.weighting,
+            'weight_power': self.weight_power,
+            'coord_system': self.coord_system,
+            'rois': self.rois,
+            'roiw': self.roiw,
+            'single': self.single,
+            'wavemin': self.wavemin,
+            'wavemax': self.wavemax,
+            'xdebug': self.xdebug,
+            'ydebug': self.ydebug,
+            'zdebug': self.zdebug,
+            'debug_pixel': self.debug_pixel,
+            'spaxel_debug':self.spaxel_debug,
+            'output_file':self.output_file,
+            'offset_list': self.offset_list}
 
-            # Scale is 3 dimensions and is determined from default values InstrumentInfo.GetScale
-            scale = cube_build.DetermineScale(Cube, InstrumentInfo)
+#________________________________________________________________________________
+# create an instance of class CubeData
 
-            # if the user has set the scale of output cube use those values instead
-            a_scale = scale[0]
-            if self.scale1 != 0:
-                a_scale = self.scale1
+        cubeinfo = cube_build.CubeData(self.cube_type,
+                                       self.input_models,
+                                       self.input_filenames,
+                                       self.output_name_base,
+                                       self.data_type,
+                                       par_filename,
+                                       resol_filename,
+                                       **pars)
+#________________________________________________________________________________
+# read in all the input files, information from cube_pars, read in input data and
+# fill in master_table holding what files are associationed with each ch/sub-ch
+# or grating/filter
 
-            b_scale = scale[1]
-            if self.scale2 != 0:
-                b_scale = self.scale2
+        self.output_file = cubeinfo.setup()
 
-            wscale = scale[2]
-            if self.scalew != 0:
-                wscale = self.scalew
+#        print('in cube_build_step',self.output_file)
 
-            Cube.SetScale(a_scale, b_scale, wscale)
+#________________________________________________________________________________
+# find the min & max final coordinates of cube: map each slice to cube
+# add any dither offsets, then find the min & max value in each dimension
+# Foot print is returned in ra,dec coordinates
 
-            # WCS method -
-            # 1. Use the DISTORTION files that miri_cube uses (only valid for Testing `<MIRI)
+        cubeinfo.setup_wcs()
 
-            # 2. Use the assign_wcs step to determine the transformation between coordinates systems
-            self.wcs = {}
-            self.wcs['Method'] = self.wcs_method
+#________________________________________________________________________________
+# build the IFU Cube
 
-                # find the min & max final coordinates of cube: map each slice to cube
-                # add any dither offsets, then find the min & max value in each dimension
-            t0 = time.time()
+# If single = True: map each file to output grid and return single mapped file 
+#to output grid
+# this option is used for background matching and outlier rejection
 
-            CubeFootPrint = cube_build.DetermineCubeSize(self, Cube, MasterTable, InstrumentInfo)
-            t1 = time.time()
-            print("Time to determine size of cube = %.1f.s" % (t1 - t0,))
+        if self.single:
+            self.output_file = None
+            result = cubeinfo.build_ifucube_single()
+            self.log.info("Number of IFUCube models returned from building single IFUCubes %i ",len(result))
 
-                # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
-                # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
-            Cube.SetGeometry(self.coord_system, CubeFootPrint)
-            Cube.PrintCubeGeometry(instrument)
-
-
-            # if the user has not set the size of the ROI then use defaults of 1* cube scale in dimension
-            if(self.roi1 == 1): self.roi1 = Cube.Cdelt1* 1.0
-            if(self.roi2 == 1): self.roi2 = Cube.Cdelt2* 1.0
-            if(self.roiw == 1): self.roiw = Cube.Cdelt3* 1.0
-            #self.radius_x = Cube.Cdelt1 * 1.5
-            #self.radius_y = Cube.Cdelt2 * 1.5
-            #self.radius_z = Cube.Cdelt3 * 2.0
-
-            # for now keep these values - may not use them in the future
-            self.power_x = 1
-            self.power_y = 1
-            self.power_z = 1
-
-            if(self.interpolation == 'pointcloud'):
-                self.log.info('Region of interest %f %f %f', self.roi1, self.roi2, self.roiw)
-                self.log.info('Power parameters for weighting %5.1f %5.1f %5.1f', self.power_x, self.power_y, self.power_z)
-
-            # now you have the size of cube - create an instance for each spaxel
-            # create an empty spaxel list - this will become a list of Spaxel classses
-            spaxel = []
-
-            # set up center of the corner cube spaxel
-            t0 = time.time()
-            for z in range(Cube.naxis3):
-                for y in range(Cube.naxis2):
-                    for x in range(Cube.naxis1):
-                        spaxel.append(cube.Spaxel(Cube.xcoord[x], Cube.ycoord[y], Cube.zcoord[z]))
-
-
-            t1 = time.time()
-            print("Time to create list of spaxel classes = %.1f.s" % (t1 - t0,))
-
-
-            # create an empty Pixel Cloud array of 8 columns
-            # if doing interpolation on point cloud this will become a matrix of  Pixel Point cloud values
-            # each row holds information for a single pixel
-
-            # Initialize the PixelCloud to 8   columns of zeros (1 row)
-            PixelCloud = np.zeros(shape=(10, 1))
-            t0 = time.time()
-            # now need to loop over every file that covers this channel/subchannel and
-            # map the detector pixels to the cube spaxel.
-            if(instrument == 'MIRI'):
-                parameter1 = Cube.channel
-                parameter2 = Cube.subchannel
-            elif(instrument == 'NIRSPEC'):
-                parameter1 = Cube.grating
-                parameter2 = Cube.filter
-
-            number1 = len(parameter1)
-            number2 = len(parameter2)
-            for i in range(number1):
-                this_par1 = parameter1[i]
-                for j in range(number2):
-                    this_par2 = parameter2[j]
-
-                    PixelCloud = cube_build.MapDetectorToCube(self, this_par1, this_par2, Cube, spaxel, PixelCloud,\
-                                                                      MasterTable, InstrumentInfo)
-
-            t1 = time.time()
-            self.log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
-
-#_______________________________________________________________________
-# Mapped all data to cube or Point Cloud
-# now determine Cube Spaxel flux
-
-            t0 = time.time()
-            if self.interpolation == 'pointcloud':
-                CubeCloud.FindROI(self, Cube, spaxel, PixelCloud)
-            t1 = time.time()
-            self.log.info("Time to Match Pt to cube = %.1f.s" % (t1 - t0,))
+# Else standard IFU cube building
+        else:
+           result =  cubeinfo.build_ifucube()
+           blendheaders.blendheaders(self.output_file,self.input_filenames)
 
 
-            t0 = time.time()
-            cube_build.FindCubeFlux(self, Cube, spaxel, PixelCloud)
+        if(self.debug_pixel ==1):
+            self.spaxel_debug.close()
+        return result
 
-            t1 = time.time()
-            self.log.info("Time find Cube Flux= %.1f.s" % (t1 - t0,))
-# write out the IFU cube
-            cube_build.WriteCube(self, Cube, spaxel)
+#********************************************************************************
+# Read in the User input options for Channel, Subchannel, Filter, Grating
 
-#        sys.exit('Stop')
+def read_user_input(self):
+    """
+    Short Summary
+    -------------
+    figure out if any of the input paramters channel,band,filter or grating
+    have been set. If they have been  check that they are valid and fill in 
+    input_pars paramters
+
+    Parameters
+    ----------
+    none
+
+    Returns
+    -------
+    self.pars_input['channel']
+    self.pars_input['sub_channel']
+    self.pars_input['grating']
+    self.pars_input['filter']
+
+    """
+    ValidChannel = ['1', '2', '3', '4','ALL']
+    ValidSubChannel = ['SHORT', 'MEDIUM', 'LONG','ALL']
+    ValidFWA = ['F070LP', 'F100LP', 'F100LP', 'F170LP',
+                    'F170LP', 'F290LP', 'F290LP', 'CLEAR','ALL']
+    ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H',
+                    'G395M', 'G395H', 'PRISM','ALL']
+    nchannels = len(ValidChannel)
+    nsubchannels = len(ValidSubChannel)
+
+    nfilter = len(ValidFWA)
+    ngrating = len(ValidGWA)
+
+#________________________________________________________________________________
+    # for MIRI we can set the channel
+# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
+# self.channel to empty
+    if self.channel == 'ALL':
+        self.channel = ''
+
+    if self.channel:  # self.channel is false if it is empty
+
+        channellist = self.channel.split(',')
+        user_clen = len(channellist)
+
+        for j in range(user_clen):
+            ch = channellist[j]
+            if(user_clen > 1):
+                ch = ch.strip('[')
+                ch = ch.strip(']')
+                ch = ch.strip(' ')
+                ch = ch[1:-1]
+            ch = str(ch)
+
+            if ch in ValidChannel:
+                self.pars_input['channel'].append(ch)
+#                print('found channel',ch)
+            else:
+                raise ErrorInvalidParameter("Invalid Channel %s",ch)
+# remove duplicates if needed
+        self.pars_input['channel'] = list(set(self.pars_input['channel']))
+
+#________________________________________________________________________________
+    # for MIRI we can set the subchannel
+# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
+# self.subchannel = empty
+
+    if self.subchannel == 'ALL':
+        self.subchannel = ''
+
+    if self.subchannel : #  not empty it has been set
+        subchannellist = self.subchannel.split(',')
+        user_blen = len(subchannellist)
+        for j in range(user_blen):
+            b = subchannellist[j]
+            if(user_blen > 1) :
+                b = b.strip('[')
+                b = b.strip(']')
+                b = b.strip(' ')
+                b = b[1:-1]
+            b  = str(b)
+            if b in ValidSubChannel:
+                self.pars_input['subchannel'].append(b)
+            else:
+                raise ErrorInvalidParameter("Invalid Subchannel %s",b)
+# remove duplicates if needed
+        self.pars_input['subchannel'] = list(set(self.pars_input['subchannel']))
+#________________________________________________________________________________
+    # for NIRSPEC we can set the filter
+# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
+# self.filter = empty
+    if self.filter == 'ALL':
+        self.filter = ''
+    if self.filter:
+        filterlist = self.filter.split(',')
+        user_flen = len(filterlist)
+        for j in range(user_flen):
+            f = filterlist[j]
+            if(user_flen > 1) :
+                f = f.strip('[')
+                f = f.strip(']')
+                f = f.strip(' ')
+                f = f[1:-1]
+            f  = str(f)
+            if f in ValidFWA:
+                self.pars_input['filter'].append(f)
+            else:
+                raise ErrorInvalidParameter("Invalid Filter %s", f)
+# remove duplicates if needed
+        self.pars_input['filter'] = list(set(self.pars_input['filter']))
+#________________________________________________________________________________
+    # for NIRSPEC we can set the grating
+# if set to ALL then let the DetermineCubeCoverage figure out the data we have and set
+# self.grating = empty
+    if self.grating == 'ALL':
+        self.grating = ''
+
+    if self.grating:
+        gratinglist = self.grating.split(',')
+        user_glen = len(gratinglist)
+        for j in range(user_glen):
+
+            g = gratinglist[j]
+            if(user_glen > 1) :
+                g = g.strip('[')
+                g = g.strip(']')
+                g = g.strip(' ')
+                g = g[1:-1]
+            g  = str(g)
+            if g in ValidGWA:
+                self.pars_input['grating'].append(g)
+            else:
+                raise ErrorInvalidParameter("Invalid Grating %s",g)
+# remove duplicates if needed
+        self.pars_input['grating'] = list(set(self.pars_input['grating']))
+
+
 
 
 if __name__ == '__main__':

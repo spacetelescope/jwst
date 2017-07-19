@@ -20,7 +20,7 @@ Both notes have been communicated to the INS team.
 
 """
 from __future__ import absolute_import, division, unicode_literals, print_function
-
+import pytest
 import numpy as np
 from astropy.io import fits
 from gwcs import wcs
@@ -31,7 +31,8 @@ from .. import miri
 from ..assign_wcs_step import AssignWcsStep
 
 
-wcs_kw = {'wcsaxes': 2, 'crval1': 5.6, 'crval2': -72,
+wcs_kw = {'wcsaxes': 2, 'ra_ref': 165, 'dec_ref': 54,
+          'v2_ref': -8.3942412, 'v3_ref': -5.3123744, 'roll_ref': 37,
           'crpix1': 1024, 'crpix2': 1024,
           'cdelt1': .08, 'cdelt2': .08,
           'ctype1': 'RA---TAN', 'ctype2': 'DEC--TAN',
@@ -105,36 +106,60 @@ def run_test(model):
         #utils.assert_allclose(yin, y, atol=10**-5)
 
 
+@pytest.mark.xfail(
+    reason="reference file not in CRDS yet, #834",
+    run=False
+)
 def test_miri_mrs_12A():
     hdul = create_hdul(detector="MIRIFUSHORT", channel="12", band="SHORT")
     im = create_datamodel(hdul)
     run_test(im)
 
 
+@pytest.mark.xfail(
+    reason="reference file not in CRDS yet, #834",
+    run=False
+)
 def test_miri_mrs_12B():
     hdul = create_hdul(detector="MIRIFUSHORT", channel="12", band="MEDIUM")
     im = create_datamodel(hdul)
     run_test(im)
 
 
+@pytest.mark.xfail(
+    reason="reference file not in CRDS yet, #834",
+    run=False
+)
 def test_miri_mrs_12C():
     hdul = create_hdul(detector="MIRIFUSHORT", channel="12", band="LONG")
     im = create_datamodel(hdul)
     run_test(im)
 
 
+@pytest.mark.xfail(
+    reason="reference file not in CRDS yet, #834",
+    run=False
+)
 def test_miri_mrs_34A():
     hdul = create_hdul(detector="MIRIFULONG", channel="34", band="SHORT")
     im = create_datamodel(hdul)
     run_test(im)
 
 
+@pytest.mark.xfail(
+    reason="reference file not in CRDS yet, #834",
+    run=False
+)
 def test_miri_mrs_34B():
     hdul = create_hdul(detector="MIRIFULONG", channel="34", band="MEDIUM")
     im = create_datamodel(hdul)
     run_test(im)
 
 
+@pytest.mark.xfail(
+    reason="reference file not in CRDS yet, #834",
+    run=False
+)
 def test_miri_mrs_34C():
     hdul = create_hdul(detector="MIRIFULONG", channel="34", band="LONG")
     im = create_datamodel(hdul)

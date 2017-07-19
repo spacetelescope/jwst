@@ -4,10 +4,11 @@ from __future__ import (absolute_import, unicode_literals, division,
 from asdf import AsdfFile
 from astropy import coordinates as coord
 from astropy import units as u
+from astropy.modeling.models import Scale
 
 import gwcs.coordinate_frames as cf
 from . import pointing
-from .util import not_implemented_mode
+from .util import not_implemented_mode, subarray_transform
 
 
 def create_pipeline(input_model, reference_files):
@@ -29,28 +30,45 @@ def imaging(input_model, reference_files):
     reference_files={'distortion': 'test.asdf', 'filter_offsets': 'filter_offsets.asdf'}
     """
     detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    focal = cf.Frame2D(name='focal', axes_order=(0, 1), unit=(u.arcmin, u.arcmin))
-    sky = cf.CelestialFrame(reference_frame=coord.ICRS())
-    distortion = imaging_distortion(input_model, reference_files)
-    fitswcs_transform = pointing.create_fitswcs_transform(input_model)
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
+    world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
+
+    subarray2full = subarray_transform(input_model)
+    imdistortion = imaging_distortion(input_model, reference_files)
+    distortion = subarray2full | imdistortion
+    distortion.bounding_box = imdistortion.bounding_box
+    del imdistortion.bounding_box
+    tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
-                (focal, fitswcs_transform),
-                (sky, None)
-                ]
+                (v2v3, tel2sky),
+                (world, None)]
     return pipeline
 
 
 def imaging_distortion(input_model, reference_files):
     distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    return distortion
+    # Convert to deg - output of distortion models is in arcsec.
+    transform = distortion | Scale(1 / 3600) & Scale(1 / 3600)
+
+    try:
+        bb = transform.bounding_box
+    except NotImplementedError:
+        shape = input_model.data.shape
+        # Note: Since bounding_box is attached to the model here it's in reverse order.
+        transform.bounding_box = ((-0.5, shape[0] - 0.5),
+                                  (-0.5 , shape[1] - 0.5))
+    return transform
 
 
 exp_type2transform = {'nrc_image': imaging,
-                      'nrc_slitless': not_implemented_mode, #WFSS mode
-                      'nrc_tacq': not_implemented_mode,#       ?? distortion
-                      'nrc_coron': not_implemented_mode,#    ?? distortion
-                      'nrc_focus': not_implemented_mode,#       ?? distortion
-                      'nrc_tss': not_implemented_mode,# custom SOSS like mode TBC
-                      'nrc_tsi': not_implemented_mode,# custom soss like mode (TBC
-                      'nrc_led': not_implemented_mode,#    ?? WFSS mode
+                      'nrc_grism': not_implemented_mode,
+                      'nrc_tacq': imaging,
+                      'nrc_taconfirm': imaging,
+                      'nrc_coron': not_implemented_mode,
+                      'nrc_focus': imaging,
+                      'nrc_tsimage': imaging,
+                      'nrc_tsgrism': not_implemented_mode,
+                      'nrc_led': not_implemented_mode,
+                      'nrc_dark': not_implemented_mode,
+                      'nrc_flat': not_implemented_mode,
                       }

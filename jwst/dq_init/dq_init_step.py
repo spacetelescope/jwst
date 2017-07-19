@@ -18,6 +18,25 @@ class DQInitStep(Step):
 
         with datamodels.open(input) as input_model:
 
+            # Check for consistency between keyword values and data shape
+            nints, ngroups, ysize, xsize = input_model.data.shape
+            nints_kwd = input_model.meta.exposure.nints
+            ngroups_kwd = input_model.meta.exposure.ngroups
+            ysize_kwd = input_model.meta.subarray.ysize
+            xsize_kwd = input_model.meta.subarray.xsize
+            if nints != nints_kwd:
+                self.log.error("Keyword 'NINTS' value of '{0} does not match data array size of '{1}'".format(nints_kwd,nints))
+                raise ValueError("Bad data dimensions")
+            if ngroups != ngroups_kwd:
+                self.log.error("Keyword 'NGROUPS' value of '{0}' does not match data array size of '{1}'".format(ngroups_kwd,ngroups))
+                raise ValueError("Bad data dimensions")
+            if ysize != ysize_kwd and 'IRS2' not in input_model.meta.exposure.readpatt.upper():
+                self.log.error("Keyword 'SUBSIZE2' value of '{0}' does not match data array size of '{1}'".format(ysize_kwd,ysize))
+                raise ValueError("Bad data dimensions")
+            if xsize != xsize_kwd:
+                self.log.error("Keyword 'SUBSIZE1' value of '{0}' does not match data array size of '{1}'".format(xsize_kwd,xsize))
+                raise ValueError("Bad data dimensions")
+
             # Retreive the mask reference file name
             self.mask_filename = self.get_reference_file(input_model, 'mask')
             self.log.info('Using MASK reference file %s', self.mask_filename)

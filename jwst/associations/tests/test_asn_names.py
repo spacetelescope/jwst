@@ -1,54 +1,100 @@
 from __future__ import absolute_import
 
-import os
+import pytest
 import re
 
 from . import helpers
 
-from .. import (AssociationRegistry, AssociationPool, generate)
+from .. import generate
 
-LEVEL3_ASN_NAME_REGEX = (
+LEVEL3_ASN_ACID_NAME_REGEX = (
     'jw'
     '(?P<program>\d{5})'
-    '(?:-(?P<acid>\d{4}))?'
-    '_(?P<stamp>\d{8}(T|t)\d{6})'
+    '-(?P<acid>(o|c)\d{3,4})'
+    '_(?P<asn_type>\w+)'
+    '_(?P<sequence>\d{3})'
+    '_asn'
+)
+LEVEL3_ASN_DISCOVERED_NAME_REGEX = (
+    'jw'
+    '(?P<program>\d{5})'
+    '-(?P<acid>a\d{4})'
+    '_(?P<asn_type>\w+)'
+    '_(?P<sequence>\d{3})'
+    '_asn'
+)
+
+LEVEL3_ASN_WITH_VERSION = (
+    'jw'
+    '(?P<program>\d{5})'
+    '-(?P<acid>[a-z]\d{4})'
+    '_(?P<stamp>.+)'
     '_(?P<asn_type>.+)'
     '_(?P<sequence>\d{3})'
     '_asn'
 )
 
 
-class TestASNtNames():
+pool_params = pytest.fixture(
+    scope='module',
+    params=[
+        'data/pool_002_image_miri.csv'
+    ]
+)(helpers.generate_params)
 
-    pool_file = helpers.t_path(
-        'data/pool_001_candidates.csv'
-    )
 
-    global_constraints = {
-        'asn_candidate_ids': {
-            'value': ['o002'],
-            'inputs': ['ASN_CANDIDATE'],
-            'force_unique': True,
-        }
-    }
+def test_level3_asn_names(pool_params):
+    pool_path = helpers.t_path(pool_params)
+    pool = helpers.combine_pools(pool_path)
+    rules = helpers.registry_level3_only()
+    asns, orphaned = generate(pool, rules)
+    assert len(asns) > 0
+    for asn in asns:
+        name = asn.asn_name
+        if any(
+                c.get('is_acid', False)
+                for _, c in asn.constraints.items()
+        ):
+            m = re.match(LEVEL3_ASN_ACID_NAME_REGEX, name)
+        else:
+            m = re.match(LEVEL3_ASN_DISCOVERED_NAME_REGEX, name)
+        assert m is not None
 
-    def test_level35_names(self):
-        rules = AssociationRegistry()
-        pool = helpers.combine_pools(self.pool_file)
-        (asns, orphaned) = generate(pool, rules)
-        for asn in asns:
-            asn_name = asn.asn_name
-            m = re.match(LEVEL3_ASN_NAME_REGEX, asn_name)
-            yield helpers.not_none, m
+def test_level3_asn_names_with_version(pool_params):
+    pool_path = helpers.t_path(pool_params)
+    pool = helpers.combine_pools(pool_path)
+    rules = helpers.registry_level3_only()
+    asns, orphaned = generate(pool, rules, version_id=True)
+    assert len(asns) > 0
+    for asn in asns:
+        name = asn.asn_name
+        m = re.match(LEVEL3_ASN_WITH_VERSION, name)
+        assert m is not None
 
-    def test_level3_names(self):
-        rules = AssociationRegistry(
-            global_constraints=self.global_constraints
-        )
-        pool = helpers.combine_pools(self.pool_file)
-        (asns, orphaned) = generate(pool, rules)
-        for asn in asns:
-            asn_name = asn.asn_name
-            m = re.match(LEVEL3_ASN_NAME_REGEX, asn_name)
-            yield helpers.not_none, m
-            yield helpers.check_equal, m.groupdict()['acid'], 'o002'
+def test_level2_asn_names(pool_params):
+    pool_path = helpers.t_path(pool_params)
+    pool = helpers.combine_pools(pool_path)
+    rules = helpers.registry_level2_only()
+    asns, orphaned = generate(pool, rules)
+    assert len(asns) > 0
+    for asn in asns:
+        name = asn.asn_name
+        if any(
+                c.get('is_acid', False)
+                for _, c in asn.constraints.items()
+        ):
+            m = re.match(LEVEL3_ASN_ACID_NAME_REGEX, name)
+        else:
+            m = re.match(LEVEL3_ASN_DISCOVERED_NAME_REGEX, name)
+        assert m is not None
+
+def test_level2_asn_names_with_version(pool_params):
+    pool_path = helpers.t_path(pool_params)
+    pool = helpers.combine_pools(pool_path)
+    rules = helpers.registry_level2_only()
+    asns, orphaned = generate(pool, rules, version_id=True)
+    assert len(asns) > 0
+    for asn in asns:
+        name = asn.asn_name
+        m = re.match(LEVEL3_ASN_WITH_VERSION, name)
+        assert m is not None

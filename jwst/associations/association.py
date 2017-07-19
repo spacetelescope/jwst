@@ -1,8 +1,7 @@
 from ast import literal_eval
-from collections import namedtuple, MutableMapping
+from collections import MutableMapping
 from copy import deepcopy
 from datetime import datetime
-from itertools import count
 import json
 import jsonschema
 import logging
@@ -12,15 +11,14 @@ import re
 from astropy.extern import six
 from numpy.ma import masked
 
-from .exceptions import (AssociationError, AssociationProcessMembers)
-from .registry import AssociationRegistry
+from . import __version__
+from .exceptions import (
+    AssociationNotValidError
+)
+from .lib.format_template import FormatTemplate
+from .lib.ioregistry import IORegistry
 
-__all__ = [
-    'Association',
-    'getattr_from_list',
-    'SERIALIZATION_PROTOCOLS',
-    'validate',
-]
+__all__ = ['Association']
 
 
 # Configure logging
@@ -28,21 +26,17 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # Timestamp template
-_TIMESTAMP_TEMPLATE = '%Y%m%dT%H%M%S'
+_TIMESTAMP_TEMPLATE = '%Y%m%dt%H%M%S'
 
 
 class Association(MutableMapping):
-    """An Association
+    """Association Base Class
 
     Parameters
     ----------
-    member: dict
-        The member to initialize the association with.
-
-    timestamp: str
-        Timestamp to use in the name of this association. Should conform
-        to the datetime.strftime format '%Y%m%dT%M%H%S'. If None, class
-        instantiation will create this string using current time.
+    version_id: str or None
+        Version_Id to use in the name of this association.
+        If None, nothing is added.
 
     Raises
     ------
@@ -66,7 +60,19 @@ class Association(MutableMapping):
     schema_file: str
         The name of the output schema that an association
         must adhere to.
+
+    registry: AssociationRegistry
+        The registry this association came from.
+
+    asn_name: str
+        The suggested file name of association
+
+    asn_rule: str
+        The name of the rule
     """
+
+    # Assume no registry
+    registry = None
 
     # Default force a constraint to use first value.
     DEFAULT_FORCE_UNIQUE = False
@@ -75,16 +81,22 @@ class Association(MutableMapping):
     # can be explicitly checked.
     DEFAULT_REQUIRE_CONSTRAINT = True
 
+    # Default do not evaluate input values
+    DEFAULT_EVALUATE = False
+
     # Global constraints
     GLOBAL_CONSTRAINTS = {}
 
-    # Associations of the same type are sequenced.
-    _sequence = count(1)
+    # Attribute values that are indicate the
+    # attribute is not specified.
+    INVALID_VALUES = None
+
+    # Initialize a global IO registry
+    ioregistry = IORegistry()
 
     def __init__(
             self,
-            member=None,
-            timestamp=None,
+            version_id=None,
     ):
 
         self.data = dict()
@@ -92,20 +104,41 @@ class Association(MutableMapping):
         self.run_init_hook = True
         self.meta = {}
 
-        if timestamp is not None:
-            self.timestamp = timestamp
-        else:
-            self.timestamp = make_timestamp()
+        self.version_id = version_id
 
         self.data.update({
             'asn_type': 'None',
             'asn_rule': self.asn_rule,
-            'creation_time': self.timestamp
+            'version_id': self.version_id,
+            'code_version': __version__,
         })
 
-        if member is not None:
-            self.add(member)
-        self.sequence = next(self._sequence)
+    @classmethod
+    def create(cls, member, version_id=None):
+        """Create association if member belongs
+
+        Parameters
+        ----------
+        member: dict
+            The member to initialize the association with.
+
+        version_id: str or None
+            Version_Id to use in the name of this association.
+            If None, nothing is added.
+
+        Returns
+        -------
+        (association, reprocess_list)
+            2-tuple consisting of:
+            - association: The association or, if the member does not
+                this rule, None
+            - [ProcessList[, ...]]: List of members to process again.
+        """
+        asn = cls(version_id=version_id)
+        matches, reprocess = asn.add(member)
+        if not matches:
+            return None, reprocess
+        return asn, reprocess
 
     @property
     def asn_name(self):
@@ -119,13 +152,62 @@ class Association(MutableMapping):
     def asn_rule(self):
         return self._asn_rule()
 
-    def dump(self, protocol='json'):
+    @classmethod
+    def validate(cls, asn):
+        """Validate an association against this rule
+
+        Parameters
+        ----------
+        asn: Association or association-like
+            The association structure to examine
+
+        Returns
+        -------
+        valid: bool
+            True if valid. Otherwise the `AssociationNotValidError` is raised
+
+        Raises
+        ------
+        AssociationNotValidError
+            If there is some reason validation failed.
+
+        Notes
+        -----
+        The base method checks against the rule class' schema
+        If the rule class does not define a schema, a warning is issued
+        but the routine will return True.
+        """
+        if not hasattr(cls, 'schema_file'):
+            logger.warning(
+                'Cannot validate: {} has no schema. Presuming OK.'.format(cls)
+            )
+            return True
+
+        if isinstance(asn, cls):
+            asn_data = asn.data
+        else:
+            asn_data = asn
+
+        with open(cls.schema_file, 'r') as schema_file:
+            asn_schema = json.load(schema_file)
+
+        try:
+            jsonschema.validate(asn_data, asn_schema)
+        except (AttributeError, jsonschema.ValidationError) as err:
+            raise AssociationNotValidError('Validation failed')
+        return True
+
+    def dump(self, format='json', **kwargs):
         """Serialize the association
 
         Parameters
         ----------
-        protocol: ('json',)
-            The format to use for serialization.
+        format: str
+            The format to use to dump the association into.
+
+        kwargs: dict
+            List of arguments to pass to the registered
+            routines for the current association type.
 
         Returns
         -------
@@ -133,11 +215,30 @@ class Association(MutableMapping):
             Tuple where the first item is the suggested
             base name for the file.
             Second item is the serialization.
+
+        Raises
+        ------
+        AssociationError
+            If the operation cannot be done
+
+        AssociationNotValidError
+            If the given association does not validate.
         """
-        return SERIALIZATION_PROTOCOLS[protocol].serialize(self)
+        if self.is_valid:
+            return self.ioregistry[format].dump(self, **kwargs)
+        else:
+            raise AssociationNotValidError(
+                'Association {} is not valid'.format(self)
+            )
 
     @classmethod
-    def load(cls, serialized):
+    def load(
+            cls,
+            serialized,
+            format=None,
+            validate=True,
+            **kwargs
+    ):
         """Marshall a previously serialized association
 
         Parameters
@@ -145,70 +246,67 @@ class Association(MutableMapping):
         serialized: object
             The serialized form of the association.
 
+        format: str or None
+            The format to force. If None, try all available.
+
+        validate: bool
+            Validate against the class' defined schema, if any.
+
+        kwargs: dict
+            Other arguments to pass to the `load` method
+
         Returns
         -------
         The Association object
+
+        Raises
+        ------
+        AssociationNotValidError
+            Cannot create or validate the association.
+
+        Notes
+        -----
+        The `serialized` object can be in any format
+        supported by the registered I/O routines. For example, for
+        `json` and `yaml` formats, the input can be either a string or
+        a file object containing the string.
         """
-        asn = None
-        for protocol in SERIALIZATION_PROTOCOLS:
-            try:
-                asn = SERIALIZATION_PROTOCOLS[protocol].unserialize(serialized)
-                break
-            except AssociationError:
-                continue
+        if format is None:
+            formats = [
+                format_func
+                for format_name, format_func in cls.ioregistry.items()
+            ]
         else:
-            raise AssociationError(
+            formats = [cls.ioregistry[format]]
+
+        for format_func in formats:
+            try:
+                asn = format_func.load(
+                    cls, serialized, **kwargs
+                )
+            except AssociationNotValidError:
+                continue
+            else:
+                break
+        else:
+            raise AssociationNotValidError(
                 'Cannot translate "{}" to an association'.format(serialized)
             )
 
-        return asn
-
-    def to_json(self):
-        """Create JSON representation.
-
-        Returns
-        -------
-        (name, str):
-            Tuple where the first item is the suggested
-            base name for the JSON file.
-            Second item is the string containing the JSON serialization.
-        """
-
         # Validate
-        with open(self.schema_file, 'r') as schema_file:
-            asn_schema = json.load(schema_file)
-        jsonschema.validate(self.data, asn_schema)
-
-        return (
-            self.asn_name,
-            json.dumps(self.data, indent=4, separators=(',', ': '))
-        )
-
-    @classmethod
-    def from_json(cls, serialized):
-        """Unserialize an assocation from JSON
-
-        Parameters
-        ----------
-        serialized: str or file object
-            The JSON to read
-
-        Returns
-        -------
-        association: dict
-            The association
-        """
-        try:
-            asn = json.loads(serialized)
-        except TypeError:
-            try:
-                asn = json.load(serialized)
-            except (AttributeError, IOError):
-                raise AssociationError(
-                    'Containter is not JSON: "{}"'.format(serialized)
-                )
+        if validate:
+            cls.validate(asn)
 
         return asn
+
+    @property
+    def is_valid(self):
+        """Check if association is valid"""
+        try:
+            self.__class__.validate(self)
+        except AssociationNotValidError:
+            return False
+        return True
 
     def add(self, member, check_constraints=True):
         """Add the member to the association
@@ -222,14 +320,23 @@ class Association(MutableMapping):
             If True, see if the member should belong to this association.
             If False, just add it.
 
+        Returns
+        -------
+        (matches, reprocess_list)
+            2-tuple consisting of:
+            - bool: True if the all constraints are satisfied
+            - [ProcessList[, ...]]: List of members to process again.
         """
         if check_constraints:
-            self.test_and_set_constraints(member)
+            matches, reprocess = self.test_and_set_constraints(member)
 
-        if self.run_init_hook:
-            self._init_hook(member)
-        self._add(member)
-        self.run_init_hook = False
+        if matches:
+            if self.run_init_hook:
+                self._init_hook(member)
+            self._add(member)
+            self.run_init_hook = False
+
+        return matches, reprocess
 
     @nottest
     def test_and_set_constraints(self, member):
@@ -242,64 +349,150 @@ class Association(MutableMapping):
             The parameters to check/set for this association.
             This can be a list of dictionaries.
 
-        Raises
-        ------
-        AssociationError
-            If a match fails.
+        Returns
+        -------
+        (matches, reprocess_list)
+            2-tuple consisting of:
+            - bool: True if the all constraints are satisfied
+            - [ProcessMember[, ...]]: List of members to process again.
 
         Notes
         -----
         If a constraint is present, but does not have a value,
         that constraint is set, and, by definition, matches.
         """
-        for constraint, conditions in self.constraints.items():
-            logger.debug('Constraint="{}" Conditions="{}"'.format(constraint, conditions))
-            try:
-                input, value = getattr_from_list(member, conditions['inputs'])
-            except KeyError:
-                if conditions.get('required', self.DEFAULT_REQUIRE_CONSTRAINT):
-                    raise AssociationError(
-                        'Constraint {} not present in member.'.format(constraint)
-                    )
-                else:
-                    conditions['value'] = 'Constraint not present and ignored'
-                    continue
 
-            # If the value is a list, signal that a reprocess
-            # needs to be done.
-            logger.debug('To check: Input="{}" Value="{}"'.format(input, value))
-            try:
-                evaled = literal_eval(value)
-            except (ValueError, SyntaxError):
-                evaled = value
+        # If there are no conditions, the default is a
+        # successful test
+        matches = True
 
+        reprocess = []
+        constraints = deepcopy(self.constraints)
+        for constraint, conditions in constraints.items():
+            test = conditions.get('test', self.match_member)
+            matches, new_reprocess = test(member, constraint, conditions)
+            reprocess.extend(new_reprocess)
+            if not matches:
+                break
+        else:
+            self.constraints = constraints
+        return matches, reprocess
+
+    def match_member(self, member, constraint, conditions):
+        """Use member info to match to the conditions
+
+        Parameters
+        ----------
+        member: dict
+            The member to retrieve the values from
+
+        constraint: str
+            The name of the constraint
+
+        conditions: dict
+            The conditions structure
+
+        Returns
+        -------
+        (matches, reprocess_list)
+            2-tuple consisting of:
+            - bool: True if the all constraints are satisfied
+            - [ProcessList[, ...]]: List of members to process again.
+        """
+        reprocess = []
+
+        # Get the condition information.
+        try:
+            input, value = getattr_from_list(
+                member,
+                conditions['inputs'],
+                invalid_values=self.INVALID_VALUES
+            )
+        except KeyError:
+            if not conditions.get('force_undefined', False) and \
+               conditions.get(
+                   'required',
+                   self.DEFAULT_REQUIRE_CONSTRAINT
+               ):
+                return False, reprocess
+            else:
+                return True, reprocess
+        else:
+            if conditions.get('force_undefined', False):
+                return False, reprocess
+
+        # If the value is a list, build the reprocess list
+        if conditions.get('evaluate', self.DEFAULT_EVALUATE):
+            evaled = evaluate(value)
             if is_iterable(evaled):
                 process_members = []
                 for avalue in evaled:
                     new_member = deepcopy(member)
                     new_member[input] = str(avalue)
                     process_members.append(new_member)
-                raise AssociationProcessMembers(
+                reprocess.append(ProcessList(
                     process_members,
                     [type(self)]
-                )
+                ))
+                return False, reprocess
+            value = str(evaled)
 
-            evaled_str = str(evaled)
-            if conditions['value'] is not None:
-                if not meets_conditions(
-                        evaled_str, conditions['value']
-                ):
-                    raise AssociationError(
-                        'Constraint {} does not match association.'.format(constraint)
-                    )
+        # Check condition
+        if conditions['value'] is not None:
+            if not meets_conditions(
+                    value, conditions['value']
+            ):
+                return False, reprocess
 
-            # Fix the conditions.
-            logger.debug('Success Input="{}" Value="{}"'.format(input, evaled_str))
-            if conditions['value'] is None or \
-               conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
-                conditions['value'] = re.escape(evaled_str)
-                conditions['inputs'] = [input]
-                conditions['force_unique'] = False
+        # At this point, the constraint has passed.
+        # Fix the conditions.
+        if conditions['value'] is None or \
+           conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
+            conditions['value'] = re.escape(value)
+            conditions['inputs'] = [input]
+            conditions['force_unique'] = False
+
+        # That's all folks
+        return True, reprocess
+
+    def match_constraint(self, member, constraint, conditions):
+        """Generic constraint checking
+
+        Parameters
+        ----------
+        member: dict
+            The member to retrieve the values from
+
+        constraint: str
+            The name of the constraint
+
+        conditions: dict
+            The conditions structure
+
+        Returns
+        -------
+        (matches, reprocess_list)
+            2-tuple consisting of:
+            - bool: True if the all constraints are satisfied
+            - [ProcessList[, ...]]: List of members to process again.
+        """
+        reprocess = []
+        evaled_str = conditions['inputs'](member)
+        if conditions['value'] is not None:
+            if not meets_conditions(
+                    evaled_str, conditions['value']
+            ):
+                return False, reprocess
+
+        # At this point, the constraint has passed.
+        # Fix the conditions.
+        if conditions['value'] is None or \
+           conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
+            conditions['value'] = re.escape(evaled_str)
+            conditions['force_unique'] = False
+
+        # That's all folks
+        return True, reprocess
 
     def add_constraints(self, new_constraints):
         """Add a set of constraints to the current constraints."""
@@ -314,12 +507,11 @@ class Association(MutableMapping):
 
     def constraints_to_text(self):
         yield 'Constraints:'
-        for c, p in self.constraints.items():
-            yield '    {:s}: {}'.format(c, p['value'])
-
-    @classmethod
-    def reset_sequence(cls):
-        cls._sequence = count(1)
+        for name, conditions in self.constraints.items():
+            if conditions.get('force_undefined', False):
+                yield '    {:s}: Is Invalid'.format(name)
+            else:
+                yield '    {:s}: {}'.format(name, conditions['value'])
 
     def _init_hook(self, member):
         """Post-check and pre-member-adding initialization."""
@@ -331,6 +523,28 @@ class Association(MutableMapping):
             'Association._add must be implemented by a specific assocation rule.'
         )
 
+    def _add_items(self, items, **kwargs):
+        """ Force adding items to the association
+
+        Parameters
+        ----------
+        items: [object[, ...]]
+            A list of items to make members of the association.
+
+        Notes
+        -----
+        This is a low-level shortcut into adding members, such as file names,
+        to an association. All defined shortcuts and other initializations are
+        by-passed, resulting in a potentially unusable association.
+        """
+        try:
+            self['members'].update(items)
+        except KeyError:
+            self['members'] = items
+
+    # #################################################
+    # Methods required for implementing MutableMapping
+    # #################################################
     def __getitem__(self, key):
         return self.data[self.__keytransform__(key)]
 
@@ -349,49 +563,36 @@ class Association(MutableMapping):
     def __keytransform__(self, key):
         return key
 
+    def keys(self):
+        return self.data.keys()
 
-# User module level functions
-def validate(
-        association,
-        definition_files=None,
-        include_default=True,
-        global_constraints=None
-):
-    """Validate an association against know schema
+    def items(self):
+        return self.data.items()
+
+    def values(self):
+        return self.data.values()
+
+
+class ProcessList(object):
+    """A Process list
 
     Parameters
     ----------
-    association: dict-like
-        The association to validate
+    members: [member[, ...]]
+        The list of members to process
 
-    definition_files: [str,]
-        The files to find the association definitions in.
-
-    include_default: bool
-        True to include the default definitions.
-
-    global_constraints: dict
-        Constraints to be added to each rule.
-
-    Returns
-    -------
-    schemas: list
-        List of schemas which validated
-
-    Raises
-    ------
-    AssociationNotValidError
-        Association did not validate
+    rules: [Association[, ...]]
+        List of rules to process the members against.
     """
-    rules = AssociationRegistry(
-        definition_files=definition_files,
-        include_default=include_default,
-        global_constraints=global_constraints
-    )
-    return rules.validate(association)
+
+    def __init__(self, members, rules):
+        self.members = members
+        self.rules = rules
 
 
+# #########
 # Utilities
+# #########
 def meets_conditions(value, conditions):
     """Check whether value meets any of the provided conditions
 
@@ -429,7 +630,7 @@ def make_timestamp():
     return timestamp
 
 
-def getattr_from_list(adict, attributes):
+def getattr_from_list(adict, attributes, invalid_values=None):
     """Retrieve value from dict using a list of attributes
 
     Parameters
@@ -439,6 +640,10 @@ def getattr_from_list(adict, attributes):
 
     attributes: list
         List of attributes
+
+    invalid_values: set
+        A set of values that essentially mean the
+        attribute does not exist.
 
     Returns
     -------
@@ -451,29 +656,51 @@ def getattr_from_list(adict, attributes):
     KeyError
         None of the attributes are found in the dict.
     """
+    if invalid_values is None:
+        invalid_values = set()
+
     for attribute in attributes:
         try:
             result = adict[attribute]
-            if result is masked:
-                raise KeyError
-            return attribute, result
         except KeyError:
             continue
+        else:
+            if result is masked:
+                continue
+            if result not in invalid_values:
+                return attribute, result
+            else:
+                continue
     else:
         raise KeyError
 
 
-# Available serialization protocols
-ProtocolFuncs = namedtuple('ProtocolFuncs', ['serialize', 'unserialize'])
-SERIALIZATION_PROTOCOLS = {
-    'json': ProtocolFuncs(
-        serialize=Association.to_json,
-        unserialize=Association.from_json)
-}
+def evaluate(value):
+    """Evaluate a value
+
+    Parameters
+    ----------
+    value: str
+        The string to evaluate.
+
+    Returns
+    -------
+    type or str
+        The evaluation. If the value cannot be
+        evaluated, the value is simply returned
+    """
+    try:
+        evaled = literal_eval(value)
+    except (ValueError, SyntaxError):
+        evaled = value
+    return evaled
 
 
-# Utility
 def is_iterable(obj):
     return not isinstance(obj, six.string_types) and \
         not isinstance(obj, tuple) and \
         hasattr(obj, '__iter__')
+
+
+# Define default product name filling
+format_product = FormatTemplate()

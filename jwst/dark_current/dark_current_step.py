@@ -32,8 +32,8 @@ class DarkCurrentStep(Step):
                 result.meta.cal_step.dark = 'SKIPPED'
                 return result
 
-            instrument = input_model.meta.instrument.name
             # Open the dark ref file data model - based on Instrument
+            instrument = input_model.meta.instrument.name
             if(instrument == 'MIRI'):
                 dark_model = datamodels.DarkMIRIModel(self.dark_name)
             else:
@@ -42,7 +42,6 @@ class DarkCurrentStep(Step):
             # Do the dark correction
             result = dark_sub.do_correction(input_model, dark_model,
                                                     self.dark_output)
-
             dark_model.close()
 
 

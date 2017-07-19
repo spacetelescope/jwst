@@ -5,7 +5,8 @@ from os.path import (
     dirname,
     join
 )
-__version__ = '0.6.0'
+__version__ = '0.7.1.beta4'
+
 
 # Utility
 def libpath(filepath):
@@ -17,6 +18,8 @@ def libpath(filepath):
 
 from .association import *
 from .exceptions import *
+from .association_io import *
 from .generate import *
 from .pool import *
 from .registry import *
+from .load_asn import load_asn

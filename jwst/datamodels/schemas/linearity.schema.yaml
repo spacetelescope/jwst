@@ -1,7 +1,9 @@
 title: Linearity correction data model
 allOf:
-- $ref: core.schema.yaml
 - $ref: referencefile.schema.yaml
+- $ref: subarray.schema.yaml
+- $ref: keyword_band.schema.yaml
+- $ref: keyword_filter.schema.yaml
 - type: object
   properties:
     coeffs:

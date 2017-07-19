@@ -1,5 +1,7 @@
 #!/usr/bin/env python
-from ..associations import Association
+from collections import defaultdict
+
+from ..associations.load_as_asn import LoadAsLevel2Asn
 from ..stpipe import Pipeline
 from .. import datamodels
 
@@ -10,16 +12,17 @@ from ..imprint import imprint_step
 #from jwst.msaflagging import msa_flag_step
 from ..extract_2d import extract_2d_step
 from ..flatfield import flat_field_step
+from ..srctype import srctype_step
 from ..straylight import straylight_step
 from ..fringe import fringe_step
+from ..pathloss import pathloss_step
 from ..photom import photom_step
+from ..cube_build import cube_build_step
+from ..extract_1d import extract_1d_step
+from ..resample import resample_spec_step
 
-__version__ = "2.0"
+__version__ = "3.0"
 
-# Define logging
-import logging
-log = logging.getLogger()
-log.setLevel(logging.DEBUG)
 
 class Spec2Pipeline(Pipeline):
     """
@@ -29,7 +32,8 @@ class Spec2Pipeline(Pipeline):
     Included steps are:
     assign_wcs, background subtraction, NIRSpec MSA imprint subtraction,
     NIRSpec MSA bad shutter flagging, 2-D subwindow extraction, flat field,
-    straylight, fringe, and photom.
+    source type decision, straylight, fringe, pathloss, photom, resample_spec,
+    cube_build, and extract_1d.
     """
 
     spec = """
@@ -37,150 +41,228 @@ class Spec2Pipeline(Pipeline):
     """
 
     # Define aliases to steps
-    step_defs = {'assign_wcs': assign_wcs_step.AssignWcsStep,
-                 'bkg_subtract': background_step.BackgroundStep,
-                 'imprint_subtract': imprint_step.ImprintStep,
-                 #'msa_flagging' : msa_flag_step.MsaFlagStep,
-                 'extract_2d': extract_2d_step.Extract2dStep,
-                 'flat_field': flat_field_step.FlatFieldStep,
-                 'straylight': straylight_step.StraylightStep,
-                 'fringe': fringe_step.FringeStep,
-                 'photom': photom_step.PhotomStep
-                }
+    step_defs = {
+        'assign_wcs': assign_wcs_step.AssignWcsStep,
+        'bkg_subtract': background_step.BackgroundStep,
+        'imprint_subtract': imprint_step.ImprintStep,
+        #'msa_flagging' : msa_flag_step.MsaFlagStep,
+        'extract_2d': extract_2d_step.Extract2dStep,
+        'flat_field': flat_field_step.FlatFieldStep,
+        'srctype': srctype_step.SourceTypeStep,
+        'straylight': straylight_step.StraylightStep,
+        'fringe': fringe_step.FringeStep,
+        'pathloss': pathloss_step.PathLossStep,
+        'photom': photom_step.PhotomStep,
+        'resample_spec': resample_spec_step.ResampleSpecStep,
+        'cube_build': cube_build_step.CubeBuildStep,
+        'extract_1d': extract_1d_step.Extract1dStep
+    }
 
-    # The main process method
+    # Main processing
     def process(self, input):
+        """Entrypoint for this pipeline
 
-        log.info('Starting calwebb_spec2 ...')
+        Parameters
+        ----------
+        input: str, Level2 Association, or DataModel
+            The exposure or association of exposures to process
+        """
+        self.log.info('Starting calwebb_spec2 ...')
 
         # Retrieve the input(s)
-        input_table = Lvl2Input(input)
+        asn = LoadAsLevel2Asn.load(input)
 
-        # Loop over all the members
-        for member in input_table.asn['members']:
+        # Setup output creation
+        make_output_path = self.search_attr(
+            'make_output_path', parent_first=True
+        )
 
-            input_file = member['expname']
-            self.log.debug(' Working on %s ...', input_file)
-            input = datamodels.open(input_file)
+        # Each exposure is a product in the association.
+        # Process each exposure.
+        results = []
+        for product in asn['products']:
+            self.log.info('Processing product {}'.format(product['name']))
+            self.output_basename = product['name']
+            result = self.process_exposure_product(
+                product,
+                asn['asn_pool'],
+                asn.filename
+            )
+            results.append(result)
 
-            # Apply WCS info
-            input = self.assign_wcs(input)
-
-            # Do background processing
-            if len(member['bkgexps']) > 0:
-
-                # Assemble the list of background exposures to use
-                bkg_list = []
-                for bkg in member['bkgexps']:
-                    bkg_list.append(bkg['expname'])
-
-                # Call the background subtraction step
-                input = self.bkg_subtract(input, bkg_list)
-
-                # Save the background-subtracted product, if requested
-                if self.save_bsub:
-                    if isinstance(input, datamodels.CubeModel):
-                        self.save_model(input, "bsubints")
-                    else:
-                        self.save_model(input, "bsub")
-
-            # Apply NIRSpec MSA imprint subtraction
-            if input.meta.exposure.type in ['NRS_MSASPEC', 'NRS_IFU']:
-                if len(member['imprint']) > 0:
-                    imprint_filename = member['imprint'][0]['expname']
-                    input = self.imprint_subtract(input, imprint_filename)
-
-            # Apply NIRSpec MSA bad shutter flagging
-            # Stubbed out as placeholder until step module is created
-            #if input.meta.exposure.type in ['NRS_MSASPEC', 'NRS_IFU']:
-            #    input = self.msa_flagging(input)
-
-            # Extract 2D sub-windows for NIRSpec slit and MSA
-            if input.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
-                input = self.extract_2d(input)
-
-            # Apply flat-field correction
-            input = self.flat_field(input)
-
-            # Apply the straylight correction for MIRI MRS
-            if input.meta.exposure.type == 'MIR_MRS':
-                input = self.straylight(input)
-
-            # Apply the fringe correction for MIRI MRS
-            if input.meta.exposure.type == 'MIR_MRS':
-                input = self.fringe(input)
-
-            # Apply flux calibration
-            input = self.photom(input)
-
-            # Save the calibrated exposure
-            if input_table.poolname:
-                input.meta.asn.pool_name = input_table.poolname
-                input.meta.asn.table_name = input_table.filename
-            else:
-                input.meta.asn.pool_name = ' '
-                input.meta.asn.table_name = ' '
-
+            # Setup filename
+            suffix = 'cal'
             if isinstance(input, datamodels.CubeModel):
-                self.save_model(input, 'calints')
-            else:
-                self.save_model(input, "cal")
-
-            input.close()
+                suffix = 'calints'
+            result.meta.filename = make_output_path(
+                self,
+                result,
+                suffix=suffix,
+                ignore_use_model=True
+            )
 
         # We're done
-        log.info('... ending calwebb_spec2')
+        self.log.info('Ending calwebb_spec2')
+        return results
 
-        return
+    # Process each exposure
+    def process_exposure_product(
+            self,
+            exp_product,
+            pool_name=' ',
+            asn_file=' '
+    ):
+        """Process an exposure found in the association product
 
-
-import json
-
-class Lvl2Input(object):
-
-    """
-    Class to handle reading the input to the processing, which
-    can be a single science exposure or an association table.
-    The input and output member info is loaded into an ASN table model.
-    """
-
-    template = {"asn_rule": "",
-              "targname": "",
-              "asn_pool": "",
-              "asn_type": "",
-              "members": [
-                  {"exptype": "",
-                   "expname": "",
-                   "bkgexps": [],
-                   "imprint": []}
-                ]
-              }
-
-    def __init__(self, input):
-
-        if isinstance(input, str):
-            self.filename = input
-            try:
-                # The name of an association table
-                with open(input, 'r') as input_fh:
-                    self.asn = Association.load(input_fh)
-            except:
-                # The name of a single image file
-                self.interpret_image_model(datamodels.open(input))
-            self.poolname = self.asn['asn_pool']
-        else:
-            raise TypeError
-
-    def interpret_image_model(self, model):
-        """ Interpret image model as a single member association data product.
+        Parameters
+        ---------
+        exp_product: dict
+            A Level2b association product.
         """
 
-        # A single exposure was provided as input
-        self.asn = self.template
-        self.asn['targname'] = model.meta.target.catalog_name
-        self.asn['asn_rule'] = 'singleton'
-        self.asn['asn_type'] = 'singleton'
-        self.asn['asn_pool'] = ''
+        # Find all the member types in the product
+        members_by_type = defaultdict(list)
+        for member in exp_product['members']:
+            members_by_type[member['exptype'].lower()].append(member['expname'])
 
-        self.rootname = self.filename[:self.filename.rfind('_')]
-        self.asn['members'][0]['expname'] = self.filename
+        # Get the science member. Technically there should only be
+        # one. We'll just get the first one found.
+        science = members_by_type['science']
+        if len(science) != 1:
+            self.log.warn(
+                'Wrong number of science exposures found in {}'.format(
+                    exp_product['name']
+                )
+            )
+            self.log.warn('    Using only first one.')
+        science = science[0]
+
+        self.log.info('Working on input %s ...', science)
+        if isinstance(science, datamodels.DataModel):
+            input = science
+        else:
+            input = datamodels.open(science)
+        exp_type = input.meta.exposure.type
+
+        # Apply WCS info
+        input = self.assign_wcs(input)
+
+        # Do background processing, if necessary
+        if len(members_by_type['background']) > 0:
+
+            # Setup for saving
+            self.bkg_subtract.suffix = 'bsub'
+            if isinstance(input, datamodels.CubeModel):
+                self.bkg_subtract.suffix = 'bsubints'
+
+            # Backwards compatibility
+            if self.save_bsub:
+                self.bkg_subtract.save_results = True
+
+            # Call the background subtraction step
+            input = self.bkg_subtract(input, members_by_type['background'])
+
+        # If assign_wcs was skipped, abort the rest of processing,
+        # because so many downstream steps depend on the WCS
+        if input.meta.cal_step.assign_wcs == 'SKIPPED':
+            self.log.error('Assign_wcs processing was skipped')
+            self.log.error('Aborting remaining processing for this exposure')
+            self.log.error('No output product will be created')
+            return input
+
+        # Apply NIRSpec MSA imprint subtraction
+        # Technically there should be just one.
+        # We'll just get the first one found
+        imprint = members_by_type['imprint']
+        if exp_type in ['NRS_MSASPEC', 'NRS_IFU'] and \
+           len(imprint) > 0:
+            if len(imprint) > 1:
+                self.log.warn('Wrong number of imprint members')
+            imprint = imprint[0]
+            input = self.imprint_subtract(input, imprint)
+
+        # Apply NIRSpec MSA bad shutter flagging
+        # Stubbed out as placeholder until step module is created
+        #if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
+        #    input = self.msa_flagging(input)
+
+        # Extract 2D sub-windows for NIRSpec slit and MSA
+        if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC']:
+            input = self.extract_2d(input)
+
+        # Apply flat-field correction
+        input = self.flat_field(input)
+
+        # Apply the source type decision step
+        input = self.srctype(input)
+
+        # Apply the straylight correction for MIRI MRS
+        if exp_type == 'MIR_MRS':
+            input = self.straylight(input)
+
+        # Apply the fringe correction for MIRI MRS
+        if exp_type == 'MIR_MRS':
+            input = self.fringe(input)
+
+        # Apply pathloss correction to NIRSpec exposures
+        if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC',
+                        'NRS_IFU']:
+            input = self.pathloss(input)
+
+        # Apply flux calibration
+        input = self.photom(input)
+
+        # Record ASN pool and table names in output
+        input.meta.asn.pool_name = pool_name
+        input.meta.asn.table_name = asn_file
+
+        # Setup to save the calibrated exposure at end of step.
+        self.suffix = 'cal'
+        if isinstance(input, datamodels.CubeModel):
+            self.suffix = 'calints'
+
+        # Produce a resampled product, either via resample_spec for
+        # "regular" spectra or cube_build for IFU data. No resampled
+        # product is produced for time-series modes.
+        if input.meta.exposure.type in [
+                'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ',
+                'NRS_MSASPEC', 'NIS_WFSS', 'NRC_GRISM'
+        ]:
+
+            # Call the resample_spec step
+            self.resample_spec.suffix = 's2d'
+            resamp = self.resample_spec(input)
+
+            # Pass the resampled data to 1D extraction
+            x1d_input = resamp.copy()
+            resamp.close()
+
+        elif exp_type in ['MIR_MRS', 'NRS_IFU']:
+
+            # Call the cube_build step for IFU data
+            self.cube_build.suffix = 's3d'
+            cube = self.cube_build(input)
+
+            # Pass the cube along for input to 1D extraction
+            x1d_input = cube.copy()
+            cube.close()
+
+        else:
+            # Pass the unresampled cal product to 1D extraction
+            x1d_input = input
+
+        # Extract a 1D spectrum from the 2D/3D data
+        self.extract_1d.suffix = 'x1d'
+        if isinstance(input, datamodels.CubeModel):
+            self.extract_1d.suffix = 'x1dints'
+        x1d_output = self.extract_1d(x1d_input)
+
+        x1d_input.close()
+        input.close()
+        x1d_output.close()
+
+        # That's all folks
+        self.log.info(
+            'Finished processing product {}'.format(exp_product['name'])
+        )
+        return input

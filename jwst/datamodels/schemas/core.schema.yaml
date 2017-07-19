@@ -4,12 +4,10 @@ properties:
     type: object
     properties:
       date:
-        #allOf:
-        #- $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
-        #- title: Date this file was created (UTC)
-        #  fits_keyword: DATE
+        anyOf:
+          - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
+          - type: string
         title: Date this file was created (UTC)
-        type: string
         fits_keyword: DATE
       origin:
         title: Organization responsible for creating file
@@ -43,10 +41,18 @@ properties:
         title: Calibration software revision number
         type: string
         fits_keyword: CAL_SVN
+      model_type:
+        title: Type of data model
+        type: string
+        fits_keyword: DATAMODL
       telescope:
         title: Telescope used to acquire the data
         type: string
         fits_keyword: TELESCOP
+      hga_move:
+        title: High Gain Antenna moved during data collection
+        type: boolean
+        fits_keyword: HGA_MOVE
       coordinates:
         title: Information about the coordinates in the file
         type: object
@@ -54,6 +60,7 @@ properties:
           reference_frame:
             title: Name of the coordinate reference frame
             type: string
+            default: ICRS
             fits_keyword: RADESYS
             enum: [ICRS]
       asn:
@@ -101,12 +108,10 @@ properties:
         type: object
         properties:
           date:
-            #allOf:
-            #- $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
-            #- title: UTC date at the start of the exposure
-            #  fits_keyword: DATE-OBS
+            anyOf:
+              - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
+              - type: string
             title: (yyyy-mm-dd) UTC date at start of exposure
-            type: string
             fits_keyword: DATE-OBS
           time:
             title: (hh:mm:ss.ssssss) UTC time at start of exposure
@@ -172,6 +177,10 @@ properties:
             title: Wavefront sensing and control visit indicator
             type: string
             fits_keyword: WFSVISIT
+          status:
+            title: Status of a visit
+            type: string
+            fits_keyword: VISITSTA
           total_exposures:
             title: Total number of planned exposures in visit
             type: integer
@@ -228,6 +237,10 @@ properties:
             title: Target proper motion epoch
             type: string
             fits_keyword: PROPEPOC
+          source_type:
+            title: Advised source type (point/extended)
+            type: string
+            fits_keyword: SRCTYPE
       instrument:
         title: Instrument configuration information
         type: object
@@ -307,7 +320,10 @@ properties:
           coronagraph:
             title: coronagraph mask used
             type: string
-            enum: [4QPM, LYOT, MASK210R, MASKSWB, MASK335R, MASK430R, MASKLWB, NONE]
+            enum: [4QPM, 4QPM_1065, 4QPM_1140, 4QPM_1550,
+                   LYOT, LYOT_2300,
+                   MASK210R, MASKSWB, MASK335R, MASK430R, MASKLWB,
+                   NONE]
             fits_keyword: CORONMSK
           msa_state:
             title: State of the MSA
@@ -315,9 +331,9 @@ properties:
             #enum: [ALL OPEN, ALL CLOSED, CONFIGURED]
             fits_keyword: MSASTATE
           msa_configuration_file:
-            title: MSA configuration file name
+            title: MSA metadata file name
             type: string
-            fits_keyword: MSACONFL
+            fits_keyword: MSAMETFL
           msa_metadata_id:
             title: MSA metadata ID
             type: integer
@@ -355,9 +371,17 @@ properties:
             type: number
             fits_keyword: GWA_PYAV
           gwa_tilt:
-            title: GWA TILT (avg/calib) temperature
+            title: GWA TILT (avg/calib) temperature [K]
             type: number
             fits_keyword: GWA_TILT
+          filter_position:
+            title: NIRISS filter wheel position
+            type: number
+            fits_keyword: FWCPOS
+          pupil_position:
+            title: NIRISS pupil wheel position
+            type: number
+            fits_keyword: PWCPOS
       exposure:
         title: Exposure parameters
         type: object
@@ -373,7 +397,8 @@ properties:
           type:
             title: Type of data in the exposure
             type: string
-            enum: [FGS_DARK, FGS_FOCUS, FGS_IMAGE, FGS_INTFLAT, FGS_SKYFLAT,
+            enum: [FGS_ACQ1, FGS_ACQ2, FGS_DARK, FGS_FINEGUIDE, FGS_FOCUS,
+              FGS_ID-IMAGE, FGS_ID-STACK, FGS_IMAGE, FGS_INTFLAT, FGS_SKYFLAT, FGS_TRACK,
               MIR_IMAGE, MIR_TACQ, MIR_LYOT, MIR_4QPM, MIR_LRS-FIXEDSLIT,
               MIR_LRS-SLITLESS, MIR_MRS, MIR_DARK, MIR_FLAT-IMAGE, MIR_FLATIMAGE,
               MIR_FLAT-MRS, MIR_FLATMRS, MIR_CORONCAL, NIS_AMI, NIS_DARK,
@@ -385,6 +410,11 @@ properties:
               NRS_IFU, NRS_IMAGE, NRS_LAMP, NRS_MIMF, NRS_MSASPEC, NRS_TACONFIRM,
               NRS_TACQ, NRS_TASLIT]
             fits_keyword: EXP_TYPE
+          prime_parallel:
+            title: Prime or parallel exposure
+            type: string
+            enum: [PRIME, PARALLEL_COORDINATED, PARALLEL_PURE]
+            fits_keyword: EXPRIPAR
           start_time:
             allOf:
               - type: number
@@ -423,10 +453,22 @@ properties:
             title: Number of frames per group
             type: number
             fits_keyword: NFRAMES
+          frame_divisor:
+            title: Divisor applied to frame-averaged groups
+            type: integer
+            fits_keyword: FRMDIVSR
           groupgap:
             title: Number of frames dropped between groups
             type: integer
             fits_keyword: GROUPGAP
+          dropframes1:
+            title: Frames dropped at start of each integration
+            type: integer
+            fits_keyword: DRPFRMS1
+          dropframes3:
+            title: Frames dropped at end of each integration
+            type: integer
+            fits_keyword: DRPFRMS3
           nsamples:
             title: Number of A/D samples per pixel
             type: integer
@@ -451,10 +493,6 @@ properties:
             title: Effective exposure time (sec)
             type: number
             fits_keyword: EFFEXPTM
-          charge_time:
-            title: Charge accumulation time per integration (sec)
-            type: number
-            fits_keyword: CHRGTIME
           duration:
             title: Total duration of exposure (sec)
             type: number
@@ -495,15 +533,23 @@ properties:
             title: Subarray used
             type: string
             enum: [1024X16, 128X128, 128X2048, 2048X128, 2048X64, 32X32,
-              64X2048, 8X8, ALLSLITS, BRIGHTSKY, FULL, GENERIC, MASKA210R,
-              MASKA430R, MASK1065, MASK1140, MASK1550, MASKLYOT, S1600A1,
-              S200A1, S200A2, S200B1, S400A1, SLITLESSPRISM, STRIPE, SUB1024A,
-              SUB1024B, SUB128, SUB16, SUB160, SUB160P, SUB1A, SUB1B, SUB2048,
-              SUB256, SUB32, SUB320, SUB400P, SUB512, SUB64, SUB640, SUB64P,
-              SUB80, SUB96, SUBAMPCAL, SUBFP1A, SUBFP1B, SUBGRISM128,
+              64X2048, 8X8, ALLSLITS, BRIGHTSKY, FULL, GENERIC,
+              MASKA210R, MASKA335R, MASKA430R, MASKBLWB, MASKBSWB, MASK1065,
+              MASK1140, MASK1550, MASKLYOT,
+              S1600A1, S200A1, S200A2, S200B1, S400A1, SLITLESSPRISM, STRIPE,
+              SUB1024A, SUB1024B, SUB128, SUB128LLCORNER, SUB128DIAGONAL,
+              SUB128CENTER, SUB16, SUB160, SUB160P, SUB1A, SUB1B,
+              SUB2048, SUB256, SUB32, SUB32LLCORNER, SUB32DIAGONAL, SUB32CENTER,
+              SUB320, SUB400P, SUB512, SUB64, SUB640,
+              SUB64P, SUB80, SUB8LLCORNER, SUB8DIAGONAL, SUB8CENTER, SUB96,
+              SUBAMPCAL, SUBFP1A, SUBFP1B, SUBGRISM128,
               SUBGRISM256, SUBGRISM64, SUBSTRIP256, SUBSTRIPE256, SUBSTRIP96,
-              SUBPRISM, SUBTASOSS, SUBTAAMI, WFSS128C, WFSS128R, WFSS64C,
-              WFSS64R, N/A]
+              SUBPRISM, SUBSTRIP80, SUBTASOSS, SUBTAAMI,
+              WFSS128C, WFSS128R, WFSS64C, WFSS64R, SUB32TATS, SUB32TATSGRISM,
+              SUB640A210R, SUB320A335R, SUB320A430R, SUB640ASWB, SUB320ALWB,
+              SUBNDA210R, SUBNDA335R, SUBNDA430R, SUBNDASWBL, SUBNDALWBS, SUBNDALWBL,
+              SUBNDASWBS, SUBFSA210R, SUBFSASWB, SUBFSALWB, SUBFSA335R, SUBFSA430R,
+              SUB96DHSPILA, SUB96DHSPILB, SUB8FP1A, SUB64FP1A, SUB8FP1B, SUB64FP1B,N/A]
             fits_keyword: SUBARRAY
           xstart:
             title: Starting pixel in axis 1 direction
@@ -680,26 +726,32 @@ properties:
           crpix1:
             title: axis 1 coordinate of the reference pixel
             type: number
+            default: 0.0
             fits_keyword: CRPIX1
           crpix2:
             title: axis 2 coordinate of the reference pixel
             type: number
+            default: 0.0
             fits_keyword: CRPIX2
           crpix3:
             title: axis 3 coordinate of the reference pixel
             type: number
+            default: 0.0
             fits_keyword: CRPIX3
           crval1:
             title: RA at the reference pixel (deg)
             type: number
+            default: 0.0
             fits_keyword: CRVAL1
           crval2:
             title: Dec at the reference pixel (deg)
             type: number
+            default: 0.0
             fits_keyword: CRVAL2
           crval3:
             title: Wavelength at the reference pixel (microns)
             type: number
+            default: 0.0
             fits_keyword: CRVAL3
           ctype1:
             title: first axis coordinate type
@@ -728,39 +780,63 @@ properties:
           cdelt1:
             title: first axis increment per pixel (deg)
             type: number
+            default: 1.0
             fits_keyword: CDELT1
           cdelt2:
             title: second axis increment per pixel (deg)
             type: number
+            default: 1.0
             fits_keyword: CDELT2
           cdelt3:
             title: third axis increment per pixel (microns)
             type: number
+            default: 1.0
             fits_keyword: CDELT3
           pc1_1:
             title: linear transformation matrix element
             type: number
+            default: 1.0
             fits_keyword: PC1_1
           pc1_2:
             title: linear transformation matrix element
             type: number
+            default: 0.0
             fits_keyword: PC1_2
+          pc1_3:
+            title: linear transformation matrix element
+            type: number
+            default: 0.0
+            fits_keyword: PC1_3
           pc2_1:
             title: linear transformation matrix element
             type: number
+            default: 0.0
             fits_keyword: PC2_1
           pc2_2:
             title: linear transformation matrix element
             type: number
+            default: 1.0
             fits_keyword: PC2_2
+          pc2_3:
+            title: linear transformation matrix element
+            type: number
+            default: 0.0
+            fits_keyword: PC2_3
           pc3_1:
             title: linear transformation matrix element
             type: number
+            default: 0.0
             fits_keyword: PC3_1
           pc3_2:
             title: linear transformation matrix element
             type: number
+            default: 0.0
             fits_keyword: PC3_2
+          pc3_3:
+            title: linear transformation matrix element
+            type: number
+            default: 1.0
+            fits_keyword: PC3_3
           s_region:
             title: spatial extent of the observation
             type: string
@@ -777,6 +853,41 @@ properties:
             title: default spectral order
             type: number
             fits_keyword: SPORDER
+          v2_ref:
+            title: Telescope v2 coordinate of the reference point (arcsec)
+            type: number
+            default: 0.0
+            fits_keyword: V2_REF
+          v3_ref:
+            title: Telescope v3 coordinate of the reference point (arcsec)
+            type: number
+            default: 0.0
+            fits_keyword: V3_REF
+          vparity:
+            title: Relative sense of rotation between Ideal xy and V2V3
+            type: integer
+            default: 1
+            fits_keyword: VPARITY
+          v3yangle:
+            title: Angle from V3 axis to Ideal y axis (deg)
+            type: number
+            default: 0.0
+            fits_keyword: V3I_YANG
+          ra_ref:
+            title: Right ascension of the reference point (deg)
+            type: number
+            default: 0.0
+            fits_keyword: RA_REF
+          dec_ref:
+            title: Declination of the reference point (deg)
+            type: number
+            default: 0.0
+            fits_keyword: DEC_REF
+          roll_ref:
+            title: Telescope roll angle of V3 measured from North over East at the ref. point (deg)
+            type: number
+            default: 0.0
+            fits_keyword: ROLL_REF
       pointing:
         title: Spacecraft pointing information
         type: object
@@ -865,38 +976,6 @@ properties:
             title: Nominal pixel area in arcsec^2
             type: number
             fits_keyword: PIXAR_A2
-      target_acq:
-        title: Target acquisition files
-        type: object
-        properties:
-          tacqname:
-            title: target acquisition file name
-            type: string
-            fits_keyword: TACQNAME
-          refstrfl:
-            title: reference star file name
-            type: string
-            fits_keyword: REFSTRFL
-          tacqslit:
-            title: target acq illuminated slit image file name
-            type: string
-            fits_keyword: TACQSLIT
-          tacq1img:
-            title: first target acq image file name
-            type: string
-            fits_keyword: TACQ1IMG
-          tacq2img:
-            title: second target acq image file name
-            type: string
-            fits_keyword: TACQ2IMG
-          tacnfimg:
-            title: target acq confirmation image file name
-            type: string
-            fits_keyword: TACNFIMG
-          sccnfimg:
-            title: science confirmation image file name
-            type: string
-            fits_keyword: SCCNFIMG
       nircam_focus:
         title: NIRCam Focus Adjust Mechanism parameters
         type: object
@@ -971,7 +1050,7 @@ properties:
             fits_keyword: RMA_POS
           rma_step:
             title: Refocus Mechanism Assembly relative position
-            type: integer
+            type: string
             fits_keyword: FCSRLPOS
       guide_star:
         title: Guide star information
@@ -1022,18 +1101,6 @@ properties:
             type: string
             enum: [COARSE, FINEGUIDE, MOVING, NONE, TRACK]
             fits_keyword: PCS_MODE
-          gs_ctd_x:
-            title: guide star centroid x position in the FGS ideal coordinate frame (arcsec)
-            type: number
-            fits_keyword: GSCENTX
-          gs_ctd_y:
-            title: guide star centroid y position in the FGS ideal coordinate frame (arcsec)
-            type: number
-            fits_keyword: GSCENTY
-          gs_jitter_rms:
-            title: RMS jitter over the exposure (arcsec)
-            type: number
-            fits_keyword: JITTERMS
           visit_end_time:
             title: Observatory UTC time when the visit completed
             type: string
@@ -1086,6 +1153,30 @@ properties:
                 title: Flat reference file name
                 type: string
                 fits_keyword: R_FLAT
+          dflat:
+            title: DFlat reference file information
+            type: object
+            properties:
+              name:
+                title: DFlat reference file name
+                type: string
+                fits_keyword: R_DFLAT
+          fflat:
+            title: FFlat reference file information
+            type: object
+            properties:
+              name:
+                title: FFlat reference file name
+                type: string
+                fits_keyword: R_FFLAT
+          sflat:
+            title: SFlat reference file information
+            type: object
+            properties:
+              name:
+                title: SFlat reference file name
+                type: string
+                fits_keyword: R_SFLAT
           fringe:
             title: Fringe reference file information
             type: object
@@ -1158,6 +1249,14 @@ properties:
                 title: Mask reference file name
                 type: string
                 fits_keyword: R_MASK
+          pathloss:
+            title: Pathloss reference file information
+            type: object
+            properties:
+              name:
+                title: Pathloss reference file name
+                type: string
+                fits_keyword: R_PTHLOS
           photom:
             title: Photometric reference file information
             type: object
@@ -1245,7 +1344,7 @@ properties:
               name:
                 title: Spectral distortion reference file name
                 type: string
-                fits_keyword: R_SPDIST
+                fits_keyword: R_SPCWCS
           regions:
             title: Regions reference file information
             type: object
@@ -1354,6 +1453,10 @@ properties:
             title: Last Frame Correction
             type: string
             fits_keyword: S_LASTFR
+          group_scale:
+            title: Group Scale Correction
+            type: string
+            fits_keyword: S_GRPSCL
           dq_init:
             title: Data Quality Initialization
             type: string
@@ -1438,10 +1541,6 @@ properties:
             title: 1-D Spectral Combination
             type: string
             fits_keyword: S_COMB1D
-          resample:
-            title: Image resampling
-            type: string
-            fits_keyword: S_RESAMP
           back_sub:
             title: Background subtraction
             type: string
@@ -1454,6 +1553,14 @@ properties:
             title: NIRSpec MSA Stuck Shutter Flagging
             type: string
             fits_keyword: S_MSAFLG
+          pathloss:
+            title: Pathloss Correction
+            type: string
+            fits_keyword: S_PTHLOS
+          srctype:
+            title: Source Type Determination
+            type: string
+            fits_keyword: S_SRCTYP
           stack_psfs:
             title: Coronagraphic PSF Stacking
             type: string
@@ -1466,4 +1573,70 @@ properties:
             title: Coronagraphic PSF Subtraction
             type: string
             fits_keyword: S_KLIP
+          tweakreg:
+            title: Image Alignment via Astronomical Sources
+            type: string
+            fits_keyword: S_TWKREG
+          skymatch:
+            title: Sky Background Equalization or Subtraction
+            type: string
+            fits_keyword: S_SKYMAT
+          outlier_detection:
+            title: Outlier Detection
+            type: string
+            fits_keyword: S_OUTLIR
+          resample:
+            title: Image resampling
+            type: string
+            fits_keyword: S_RESAMP
+          cube_build:
+            title: IFU  resampling
+            type: string
+            fits_keyword: S_IFUCUB
+          source_catalog:
+            title: Source Photometry and Morphology
+            type: string
+            fits_keyword: S_SRCCAT
+      background:
+        title: Background information
+        type: object
+        properties:
+          level:
+            title: Computed/Matched constant background level
+            type: number
+            fits_keyword: BKGLEVEL
+          subtracted:
+            title: Has background been subtracted from data?
+            type: boolean
+            fits_keyword: BKGSUB
+          polynomial_info:
+            title: List of background polynomial info for each channel
+            type: array
+            items:
+              type: object
+              properties:
+                degree:
+                  title: Max polynomial degree in each coordinate
+                  type: array
+                  items:
+                    type: number
+                refpoint:
+                  title: Reference coordinates
+                  type: array
+                  items:
+                    type: number
+                cs_type:
+                  title: Type of coordinates
+                  type: string
+                  enum: [world, image]
+                wcs:
+                  $ref: http://stsci.edu/schemas/asdf/wcs/wcs-1.0.0
+                coefficients:
+                  title: Polynomial Coefficients
+                  type: array
+                  items:
+                    type: number
+                channel:
+                  title: Channel ID
+                  type: string
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

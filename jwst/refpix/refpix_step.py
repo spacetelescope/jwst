@@ -27,12 +27,13 @@ class RefPixStep(Step):
         with datamodels.open(input) as input_model:
             if input_model.meta.exposure.readpatt is not None and \
                input_model.meta.exposure.readpatt.find("IRS2") >= 0:
-                self.irs2_name = self.get_reference_file(input_model, 'irs2')
-                self.log.info('Using IRS2 reference file: %s' % self.irs2_name)
+                self.irs2_name = self.get_reference_file(input_model, 'refpix')
+                self.log.info('Using refpix reference file: %s' %
+                              self.irs2_name)
 
                 # Check for a valid reference file
                 if self.irs2_name == 'N/A':
-                    self.log.warning('No IRS2 reference file found')
+                    self.log.warning('No refpix reference file found')
                     self.log.warning('RefPix step will be skipped')
                     result = input_model.copy()
                     result.meta.cal_step.refpix = 'SKIPPED'
@@ -42,6 +43,7 @@ class RefPixStep(Step):
                 irs2_model = datamodels.IRS2Model(self.irs2_name)
                 result = irs2_subtract_reference.correct_model(input_model,
                                                                irs2_model)
+                result.meta.cal_step.refpix = 'COMPLETE'
                 irs2_model.close()
             else:
                 self.log.info('use_side_ref_pixels = %s' %
@@ -53,13 +55,15 @@ class RefPixStep(Step):
                 self.log.info('side_gain = %f' % (self.side_gain,))
                 self.log.info('odd_even_rows = %s' % (self.odd_even_rows,))
                 result = reference_pixels.correct_model(input_model,
-                                                    self.odd_even_columns,
-                                                    self.use_side_ref_pixels,
-                                                    self.side_smoothing_length,
-                                                    self.side_gain,
-                                                    self.odd_even_rows)
-
-        result.meta.cal_step.refpix = 'COMPLETE'
+                                                        self.odd_even_columns,
+                                                        self.use_side_ref_pixels,
+                                                        self.side_smoothing_length,
+                                                        self.side_gain,
+                                                        self.odd_even_rows)
+                if input_model.meta.subarray.name == 'FULL':
+                    result.meta.cal_step.refpix = 'COMPLETE'
+                else:
+                    result.meta.cal_step.refpix = 'SKIPPED'
 
         return result
 

@@ -1,0 +1,79 @@
+title: NirSpec IFUPOST reference file model
+allOf:
+- $ref: referencefile.schema.yaml
+- $ref: keyword_exptype.schema.yaml
+- type: object
+  properties:
+    slice_0:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_1:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_2:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_3:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_4:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_5:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_6:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_7:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_8:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_9:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_10:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_11:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_12:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_13:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_14:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_15:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_16:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_17:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_18:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_19:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_20:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_21:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_22:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_23:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_24:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_25:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_26:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_27:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    slice_28:
+      $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    meta:
+      type: object
+      properties:
+        output_units:
+          description: |
+            Output units of coordinates after the model is applied.
+          anyOf:
+            - type: string
+            - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0
+        input_units:
+          description: |
+            Units of the inputs to this model.
+          anyOf:
+            - type: string
+            - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0

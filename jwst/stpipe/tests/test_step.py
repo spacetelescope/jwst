@@ -1,15 +1,48 @@
 from __future__ import absolute_import, division, print_function
 
-from os.path import dirname, join, abspath, isfile
-import shutil
-import tempfile
+from os.path import (
+    abspath,
+    dirname,
+    join,
+)
 
-#from nose.tools import raises
 import pytest
 import numpy as np
 
 from ..config_parser import ValidationError
-from ..step import Step
+
+
+def test_hook():
+    """Test the running of hooks"""
+    from .. import Step
+    from ... import datamodels
+
+    step_fn = join(dirname(__file__), 'steps', 'stepwithmodel_hook.cfg')
+    step = Step.from_config_file(step_fn)
+
+    model = datamodels.ImageModel()
+    result = step.run(model)
+
+    assert result.pre_hook_run
+    assert step.pre_hook_run
+    assert result.post_hook_run
+    assert step.post_hook_run
+
+
+def test_hook_with_return():
+    """Test the running of hooks"""
+    from .. import Step
+    from ... import datamodels
+
+    step_fn = join(dirname(__file__), 'steps', 'stepwithmodel_hookreturn.cfg')
+    step = Step.from_config_file(step_fn)
+
+    model = datamodels.ImageModel()
+    result = step.run(model)
+
+    assert result == 'PostHookWithReturnStep executed'
+    assert step.pre_hook_run
+    assert step.post_hook_run
 
 
 def test_step():
@@ -182,17 +215,13 @@ def test_omit_ref_file():
     step.process()
 
 
-def test_save_model():
-    tempdir = tempfile.mkdtemp()
-    orig_filename = join(dirname(__file__), 'data', 'flat.fits')
-    temp_filename = join(tempdir, 'flat_FOO.fits')
-    shutil.copyfile(orig_filename, temp_filename)
+def test_search_attr():
+    from .steps import SavePipeline
 
-    args = [
-        'jwst.stpipe.tests.steps.SaveStep',
-        temp_filename
-    ]
+    value = '/tmp'
+    pipeline = SavePipeline('afile.fits', output_dir=value)
 
-    Step.from_cmdline(args)
-    fname = join(tempdir, 'flat_FOO_SaveStep.fits')
-    assert isfile(fname)
+    assert pipeline.search_attr('output_dir') == value
+    assert pipeline.stepwithmodel.search_attr('output_dir') == value
+    assert pipeline.search_attr('junk') is None
+    assert pipeline.stepwithmodel.search_attr('junk') is None

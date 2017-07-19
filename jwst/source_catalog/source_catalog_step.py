@@ -12,12 +12,11 @@ class SourceCatalogStep(Step):
     Parameters
     -----------
     input : str or `DrizProductModel`
-        A FITS filename or an `DrizProductModel` of a single drizzled
+        A FITS filename or a `DrizProductModel` of a single drizzled
         image.  The input image is assumed to be background subtracted.
     """
 
     spec = """
-        catalog_format = string(default='ecsv')   # Catalog output file format
         kernel_fwhm = float(default=2.0)    # Gaussian kernel FWHM in pixels
         kernel_xsize = float(default=5)     # Kernel x size in pixels
         kernel_ysize = float(default=5)     # Kernel y size in pixels
@@ -27,8 +26,6 @@ class SourceCatalogStep(Step):
     """
 
     def process(self, input):
-
-        catalog_format = self.catalog_format
         kernel_fwhm = self.kernel_fwhm
         kernel_xsize = self.kernel_xsize
         kernel_ysize = self.kernel_ysize
@@ -42,22 +39,14 @@ class SourceCatalogStep(Step):
                 npixels, deblend=deblend)
             self.log.info('Detected {0} sources'.format(len(catalog)))
 
-            catalog_filename = model.meta.filename.replace(
-                '.fits', '_cat.{0}'.format(catalog_format))
-            if catalog_format == 'ecsv':
-                fmt = 'ascii.ecsv'
-            elif catalog_format == 'fits':
-                # NOTE: The catalog must not contain any 'None' values.
-                #       FITS will also not clobber existing files.
-                fmt = 'fits'
-            else:
-                raise ValueError('catalog_format must be "ecsv" or "fits".')
-            catalog.write(catalog_filename, format=fmt)
-            self.log.info('Wrote source catalog: {0}'.
-                          format(catalog_filename))
+            catalog_filename = model.meta.filename.replace('.fits',
+                                                           '_cat.ecsv')
+            catalog.write(catalog_filename, format='ascii.ecsv')
+            self.log.info('Wrote source catalog: {0}'
+                          .format(catalog_filename))
             model.meta.source_catalog.filename = catalog_filename
 
-        # because the is the last CALIMAGE3 step, nothing is returned
+        # nothing is returned because this is the last step
         return
 
 

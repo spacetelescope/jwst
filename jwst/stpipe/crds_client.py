@@ -34,10 +34,22 @@ from os.path import dirname, join
 import re
 from astropy.extern import six
 
+# ----------------------------------------------------------------------
+
 import gc
 
+# ----------------------------------------------------------------------
+
 import crds
-from crds import log
+from crds import log, config
+
+try:
+    from crds.core import crds_cache_locking
+except ImportError:
+    crds_cache_locking = None
+    log.warning("CRDS needs to be updated to v7.1.4 or greater to support cache locking and association based CRDS cache updates.  Try 'conda update crds'.")
+
+# ----------------------------------------------------------------------
 
 def _flatten_dict(nested):
     def flatten(root, path, output):
@@ -50,6 +62,8 @@ def _flatten_dict(nested):
     output = {}
     flatten(nested, [], output)
     return output
+
+# ----------------------------------------------------------------------
 
 def get_multiple_reference_paths(input_file, reference_file_types):
     """Aligns JWST pipeline requirements with CRDS library top
@@ -85,7 +99,11 @@ def get_multiple_reference_paths(input_file, reference_file_types):
     gc.collect()
 
     try:
-        bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
+        if crds_cache_locking is not None:
+            with crds_cache_locking.get_cache_lock():
+                bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
+        else:
+            bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")            
     except crds.CrdsBadRulesError as exc:
         raise crds.CrdsBadRulesError(str(exc))
     except crds.CrdsBadReferenceError as exc:
@@ -163,3 +181,20 @@ def get_context_used():
     """Return the context (.pmap) used for determining best references."""
     _connected, final_context = crds.heavy_client.get_processing_mode("jwst")
     return final_context
+
+def reference_uri_to_cache_path(reference_uri):
+    """Convert an abstract CRDS reference file URI into an absolute path for the
+    file as located in the CRDS cache.
+
+    e.g. 'crds://jwst_miri_flat_0177.fits'  -->  
+            '/grp/crds/cache/references/jwst/jwst_miri_flat_0177.fits'
+
+    Standard CRDS cache paths are typically defined relative to the CRDS_PATH
+    environment variable.  See https://jwst-crds.stsci.edu guide and top level
+    page for more info on configuring CRDS.
+
+    The default CRDS_PATH value is /grp/crds/cache, currently on the Central Store.
+    """
+    assert reference_uri.startswith("crds://"), "CRDS file URI's should start with 'crds://'"
+    basename = config.pop_crds_uri(reference_uri)
+    return crds.locate_file(basename, "jwst")

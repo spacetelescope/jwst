@@ -1,6 +1,7 @@
 title: MIRI imager photometric flux conversion data model
 allOf:
 - $ref: photom.schema.yaml
+- $ref: keyword_pixelarea.schema.yaml
 - type: object
   properties:
     phot_table:

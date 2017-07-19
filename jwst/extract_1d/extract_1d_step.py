@@ -24,18 +24,27 @@ class Extract1dStep(Step):
 
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
+        data_model_from_header = input_model.meta.model_type
+        self.log.debug("Data model from header = %s", data_model_from_header)
 
         if isinstance(input_model, datamodels.CubeModel):
-           # It's a 3-D multi-integration model
+            # It's a 3-D multi-integration model
             self.log.debug('Input is a CubeModel for a multiple integ. file')
         elif isinstance(input_model, datamodels.ImageModel):
             # It's a single 2-D image
             self.log.debug('Input is an ImageModel')
-        elif isinstance(input_model, datamodels.DataModel):
-            # It's a MultiSlitModel
+        elif isinstance(input_model, datamodels.MultiSlitModel):
             self.log.debug('Input is a MultiSlitModel')
-            input_model.close()
-            input_model = datamodels.MultiSlitModel(input)
+        elif isinstance(input_model, datamodels.MultiProductModel):
+            self.log.debug('Input is a MultiProductModel')
+        elif isinstance(input_model, datamodels.IFUCubeModel):
+            self.log.debug('Input is an IFUCubeModel')
+        elif isinstance(input_model, datamodels.DrizProductModel):
+            # Resampled 2-D data
+            self.log.debug('Input is a DrizProductModel')
+        else:
+            self.log.warning('Input is a %s,', str(type(input_model)))
+            self.log.warning('which was not expected for extract_1d.')
 
         # Get the reference file name
         self.ref_file = self.get_reference_file(input_model, 'extract1d')

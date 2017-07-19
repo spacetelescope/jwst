@@ -20,7 +20,7 @@ TMP_FITS = None
 
 def setup():
     global FITS_FILE, TMP_DIR, TMP_FITS, TMP_YAML, TMP_JSON
-    ROOT_DIR = os.path.dirname(__file__)
+    ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
     FITS_FILE = os.path.join(ROOT_DIR, 'sip.fits')
 
     TMP_DIR = tempfile.mkdtemp()
@@ -56,7 +56,7 @@ def test_wcs():
     wcs2 = dm2.get_fits_wcs()
     assert wcs2.wcs.crpix[0] == 42.0
 
-    dm2.to_fits(TMP_FITS, clobber=True)
+    dm2.to_fits(TMP_FITS, overwrite=True)
 
     with ImageModel(TMP_FITS) as dm3:
         wcs3 = dm3.get_fits_wcs()
@@ -69,7 +69,7 @@ def test_wcs():
 
     dm4 = ImageModel()
     dm4.set_fits_wcs(wcs3)
-    dm4.to_fits(TMP_FITS, clobber=True)
+    dm4.to_fits(TMP_FITS, overwrite=True)
 
     with ImageModel(TMP_FITS) as dm5:
         wcs5 = dm5.get_fits_wcs()

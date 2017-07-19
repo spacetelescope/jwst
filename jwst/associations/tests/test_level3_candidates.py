@@ -3,23 +3,17 @@ from __future__ import absolute_import
 import pytest
 
 from .helpers import (
-    generate_params,
-    generate_pool_paths,
+    level3_rule_path,
     mkstemp_pool_file,
-    t_path
+    t_path,
 )
 
 from ..main import Main
 
-pool_path = pytest.yield_fixture(
-    scope='module',
-    params=['data/pool_001_candidates.csv']
-)(generate_pool_paths)
 
-
-pool_params = pytest.fixture(
-    scope='module',
-    params=[
+@pytest.mark.parametrize(
+    "partial_args, n_asns",
+    [
         # Invalid ACID
         (
             ['-i', 'nosuchid'],
@@ -53,15 +47,23 @@ pool_params = pytest.fixture(
             [],
             22
         ),
+        # Discovered only
+        (
+            ['--discover'],
+            2
+        ),
     ]
-)(generate_params)
-
-
-class TestLevel3Candidates(object):
-
-    def test_candidate_observation(self, pool_path, pool_params):
-        partial_args, n_asns = pool_params
-        cmd_args = [pool_path, '--dry-run']
+)
+def test_candidate_observation(partial_args, n_asns):
+    with mkstemp_pool_file(
+            t_path('data/pool_001_candidates.csv')
+    ) as pool_path:
+        cmd_args = [
+            pool_path,
+            '--dry-run',
+            '-r', level3_rule_path(),
+            '--ignore-default',
+        ]
         cmd_args.extend(partial_args)
         generated = Main(cmd_args)
         assert len(generated.associations) == n_asns

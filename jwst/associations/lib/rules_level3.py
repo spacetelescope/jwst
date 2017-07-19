@@ -4,6 +4,19 @@ import logging
 
 from jwst.associations.lib.rules_level3_base import *
 
+__all__ = [
+    'Asn_Image',
+    'Asn_MIRI_IFU',
+    'Asn_MIRI_LRS_FIXEDSLIT',
+    'Asn_MIRI_LRS_SLITLESS',
+    'Asn_NRS_FIXEDSLIT',
+    'Asn_NRS_IFU',
+    'Asn_NRS_MSA',
+    'Asn_NIR_SO_SLITLESS',
+    'Asn_WFSCMB',
+
+]
+
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
@@ -17,8 +30,9 @@ logger.addHandler(logging.NullHandler())
 # Image associations
 class Asn_Image(
         AsnMixin_Image,
+        AsnMixin_OpticalPath,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """Non-Association Candidate Dither Associations"""
 
@@ -26,30 +40,20 @@ class Asn_Image(
 
         # Setup for checking.
         self.add_constraints({
-            'pointing_type': {
-                'value': 'SCIENCE',
-                'inputs': ['PNTGTYPE']
-            },
             'wfsvisit': {
-                'value': 'NULL',
-                'inputs': ['WFSVISIT'],
+                'inputs': ['wfsvisit'],
+                'force_undefined': True,
             },
         })
 
         # Now check and continue initialization.
         super(Asn_Image, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, member):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'image'
-        super(Asn_Image, self)._init_hook(member)
-
 
 class Asn_WFSCMB(
         AsnMixin_Image,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """Wavefront Sensing association
 
@@ -62,16 +66,19 @@ class Asn_WFSCMB(
         # Setup for checking.
         self.add_constraints({
             'wfsvisit': {
-                'value': '(?!NULL).+',
-                'inputs': ['WFSVISIT'],
+                'value': '(?!null).+',
+                'inputs': ['wfsvisit'],
             },
             'asn_candidate_wfs': {
-                'value': '.+MOSAIC.+',
-                'inputs': ['ASN_CANDIDATE']
+                'value': '.+mosaic.+',
+                'inputs': ['asn_candidate'],
+                'force_unique': True,
+                'is_acid': True,
+                'evaluate': True,
             },
             'activity_id': {
                 'value': None,
-                'inputs': ['ACT_ID']
+                'inputs': ['act_id']
             }
         })
 
@@ -90,7 +97,7 @@ class Asn_MIRI_LRS_FIXEDSLIT(
         AsnMixin_Spectrum,
         AsnMixin_MIRI,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """MIRI LRS Fixed slit"""
 
@@ -98,22 +105,17 @@ class Asn_MIRI_LRS_FIXEDSLIT(
 
         # Setup for checking.
         self.add_constraints({
-            'patttype': {
-                'value': None,
-                'inputs': ['PATTTYPE'],
-                'force_unique': True
-            },
             'exp_type': {
-                'value': 'MIR_LRS-FIXEDSLIT',
-                'inputs': ['EXP_TYPE']
+                'value': 'mir_lrs-fixedslit|mir_tacq',
+                'inputs': ['exp_type']
             },
             'opt_elem': {
-                'value': 'P750L',
-                'inputs': ['FILTER']
+                'value': 'p750l',
+                'inputs': ['filter']
             },
             'subarray': {
-                'value': 'FULL',
-                'inputs': ['SUBARRAY']
+                'value': 'full',
+                'inputs': ['subarray']
             }
         })
 
@@ -125,7 +127,7 @@ class Asn_MIRI_LRS_SLITLESS(
         AsnMixin_Spectrum,
         AsnMixin_MIRI,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """MIRI LRS Slitless"""
 
@@ -134,16 +136,16 @@ class Asn_MIRI_LRS_SLITLESS(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'MIR_LRS-SLITLESS',
-                'inputs': ['EXP_TYPE']
+                'value': 'mir_lrs-slitless|mir_tacq',
+                'inputs': ['exp_type']
             },
             'opt_elem': {
-                'value': 'P750L',
-                'inputs': ['FILTER']
+                'value': 'p750l',
+                'inputs': ['filter']
             },
             'subarray': {
-                'value': 'SUBPRISM',
-                'inputs': ['SUBARRAY']
+                'value': 'subprism',
+                'inputs': ['subarray']
             }
         })
 
@@ -155,7 +157,7 @@ class Asn_NIR_SO_SLITLESS(
         AsnMixin_Spectrum,
         AsnMixin_NIRISS,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """NIRISS Single-Object Slitless"""
 
@@ -164,20 +166,20 @@ class Asn_NIR_SO_SLITLESS(
         # Setup for checking.
         self.add_constraints({
             'detector': {
-                'value': 'NIS',
-                'inputs': ['DETECTOR']
+                'value': 'nis',
+                'inputs': ['detector']
             },
             'exp_type': {
-                'value': 'NIS_SOSS',
-                'inputs': ['EXP_TYPE']
+                'value': 'nis_soss|nis_tacq|nis_tacnfrm',
+                'inputs': ['exp_type']
             },
             'opt_elem': {
-                'value': 'GR700XD',
-                'inputs': ['PUPIL']
+                'value': 'gr700xd',
+                'inputs': ['pupil']
             },
             'subarray': {
-                'value': 'FULL|SUBSTRIP256|SUBSTRIP80',
-                'inputs': ['SUBARRAY'],
+                'value': 'full|substrip256|substrip80',
+                'inputs': ['subarray'],
                 'force_unique': True
             }
         })
@@ -189,8 +191,9 @@ class Asn_NIR_SO_SLITLESS(
 class Asn_NRS_FIXEDSLIT(
         AsnMixin_Spectrum,
         AsnMixin_NIRSPEC,
+        AsnMixin_OpticalPath,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """NIRSPEC Fixed Slit"""
 
@@ -199,24 +202,23 @@ class Asn_NRS_FIXEDSLIT(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'NRS_FIXEDSLIT',
-                'inputs': ['EXP_TYPE']
-            },
-            'opt_elem': {
-                'value': None,
-                'inputs': ['FILTER']
-            },
-            'grating': {
-                'value': None,
-                'inputs': ['GRATING']
+                'value': (
+                    'nrs_fixedslit'
+                    '|nrs_autowave'
+                    '|nrs_confirm'
+                    '|nrs_tacq'
+                    '|nrs_taconfirm'
+                    '|nrs_taslit'
+                ),
+                'inputs': ['exp_type']
             },
             'fixed_slit': {
                 'value': None,
-                'inputs': ['FXD_SLIT']
+                'inputs': ['fxd_slit']
             },
             'subarray': {
                 'value': None,
-                'inputs': ['SUBARRAY']
+                'inputs': ['subarray']
             },
         })
 
@@ -227,8 +229,9 @@ class Asn_NRS_FIXEDSLIT(
 class Asn_NRS_MSA(
         AsnMixin_Spectrum,
         AsnMixin_NIRSPEC,
+        AsnMixin_OpticalPath,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """NIRSPEC MSA"""
 
@@ -236,21 +239,17 @@ class Asn_NRS_MSA(
 
         # Setup for checking.
         self.add_constraints({
-            'pointing_type': {
-                'value': 'SCIENCE',
-                'inputs': ['PNTGTYPE']
-            },
             'exp_type': {
-                'value': 'NRS_MSASPEC',
-                'inputs': ['EXP_TYPE']
-            },
-            'opt_elem': {
-                'value': None,
-                'inputs': ['FILTER']
-            },
-            'grating': {
-                'value': None,
-                'inputs': ['GRATING']
+                'value': (
+                    'nrs_msaspec'
+                    '|nrs_autoflat'
+                    '|nrs_autowave'
+                    '|nrs_confirm'
+                    '|nrs_taslit'
+                    '|nrs_tacq'
+                    '|nrs_taconfirm'
+                ),
+                'inputs': ['exp_type']
             },
         })
 
@@ -258,11 +257,11 @@ class Asn_NRS_MSA(
         super(Asn_NRS_MSA, self).__init__(*args, **kwargs)
 
 
-class Asn_MIRI_MRS(
+class Asn_MIRI_IFU(
         AsnMixin_Spectrum,
         AsnMixin_MIRI,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """MIRI MRS (IFU)"""
 
@@ -271,24 +270,40 @@ class Asn_MIRI_MRS(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'MIR_MRS',
-                'inputs': ['EXP_TYPE']
-            },
-            'opt_elem': {
-                'value': None,
-                'inputs': ['BAND']
+                'value': (
+                    'mir_mrs'
+                    '|mir_flatmrs'
+                    '|mir_tacq'
+                ),
+                'inputs': ['exp_type'],
+                'force_unique': False,
             },
         })
 
         # Check and continue initialization.
-        super(Asn_MIRI_MRS, self).__init__(*args, **kwargs)
+        super(Asn_MIRI_IFU, self).__init__(*args, **kwargs)
+
+    def dms_product_name(self):
+        """Define product name."""
+        target = self._get_target()
+
+        instrument = self._get_instrument()
+
+        product_name = 'jw{}-{}_{}_{}'.format(
+            self.data['program'],
+            self.acid.id,
+            target,
+            instrument
+        )
+
+        return product_name.lower()
 
 
 class Asn_NRS_IFU(
         AsnMixin_Spectrum,
         AsnMixin_NIRSPEC,
         AsnMixin_Target,
-        AsnMixin_Unique_Config
+        AsnMixin_Base
 ):
     """NIRSPEC IFU"""
 
@@ -297,17 +312,16 @@ class Asn_NRS_IFU(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'NRS_IFU',
-                'inputs': ['EXP_TYPE']
+                'value': (
+                    'nrs_ifu'
+                    '|nrs_autowave'
+                    '|nrs_confirm'
+                    '|nrs_taslit'
+                    '|nrs_tacq'
+                    '|nrs_taconfirm'
+                ),
+                'inputs': ['exp_type']
             },
-            'opt_elem': {
-                'value': None,
-                'inputs': ['FILTER']
-            },
-            'grating': {
-                'value': None,
-                'inputs': ['GRATING']
-            }
         })
 
         # Check and continue initialization.

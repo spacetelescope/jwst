@@ -1,18 +1,26 @@
 import os
 import pytest
+import numpy as np
 
 from . import helpers
-from ...datamodels import (MultiExposureModel, MultiSlitModel)
-from ..exp_to_source import exp_to_source
+from ...datamodels import (MultiExposureModel, MultiSlitModel, ModelContainer)
+from ..exp_to_source import exp_to_source, multislit_to_container
 
 
-@pytest.fixture
-def run_exp_to_source(scope='module'):
+@pytest.fixture(scope='module')
+def run_exp_to_source():
     inputs = [
         MultiSlitModel(f)
         for f in helpers.INPUT_FILES
     ]
     outputs = exp_to_source(inputs)
+    return inputs, outputs
+
+
+@pytest.fixture(scope='module')
+def run_multislit_to_container():
+    inputs = ModelContainer([MultiSlitModel(f) for f in helpers.INPUT_FILES])
+    outputs = multislit_to_container(inputs)
     return inputs, outputs
 
 
@@ -24,7 +32,7 @@ def test_model_structure(run_exp_to_source):
         for slit in in_model.slits:
             exposure = outputs[slit.name].exposures[in_idx]
             assert (exposure.data == slit.data).all()
-            assert len(exposure.meta._instance) == len(in_model.meta._instance)
+            assert len(exposure.meta._instance) >= len(in_model.meta._instance)
             assert exposure.meta.filename == in_model.meta.filename
             assert outputs[slit.name].meta.filename != in_model.meta.filename
 
@@ -45,3 +53,16 @@ def test_model_roundtrip(run_exp_to_source):
                 exp_files.add(exposure.meta.filename)
             assert len(exp_files) == len(multiexposure_model.exposures)
             assert multiexposure_model.meta.filename not in exp_files
+
+
+def test_container_structure(run_multislit_to_container):
+    inputs, outputs = run_multislit_to_container
+    assert len(inputs) == 3
+    assert len(outputs) == 5
+    for i, model in enumerate(inputs):
+        for slit in model.slits:
+            exposure = outputs[slit.name][i]
+            assert (exposure.data == slit.data).all()
+            assert np.array_equal(exposure.data, slit.data)
+            assert exposure.meta.filename == model.meta.filename
+            assert exposure.meta.wcs.pipeline == slit.meta.wcs.pipeline

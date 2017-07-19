@@ -3,6 +3,7 @@
     "title": "Association: JWST DMS Level2b->Level3",
     "description": "The data structure that, within the JWST DMS processing system, defines how to group level2b exposures to produce Level3 data products.",
     "type": "object",
+    "required": ["products"],
     "properties": {
         "asn_type": {
             "description": "The type of association represented.",
@@ -12,11 +13,15 @@
             "description": "Association definition used to create this association.",
             "type": "string"
         },
+        "asn_id": {
+            "description": "Association identifier",
+            "type": "string"
+        },
         "program": {
             "description": "The observing program identifier",
             "type": "string"
         },
-        "targname": {
+        "target": {
             "description": "Canonical name of the astronomical object being observed.",
             "type": "string"
         },
@@ -24,15 +29,23 @@
             "description": "Name of the Association Pool from which this association was generated.",
             "type": "string"
         },
-        "creation_time": {
-            "description": "Timestamp of association creation.",
-            "type": "string"
+        "version_id": {
+            "description": "Version identifier.",
+            "anyOf":[
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ] 
         },
         "products": {
             "description": "Array of output products and their required inputs derived from this association.",
             "type": "array",
             "items": {
                 "type": "object",
+                "required": ["members"],
                 "properties": {
                     "name": {
                         "description": "Name of the output product",
@@ -43,6 +56,7 @@
                         "type": "array",
                         "items": {
                             "type": "object",
+                            "required": ["expname", "exptype"],
                             "properties": {
                                 "expname": {
                                     "description": "Name of the input member.",
@@ -52,20 +66,11 @@
                                     "description": "Type of member.",
                                     "type": "string"
                                 }
-                            },
-                            "required": ["expname", "exptype"]
+                            }
                         }
                     }
-                },
-                "required": ["name", "members"]
+                }
             }
         }
-    },
-    "required": ["asn_type",
-                 "asn_rule",
-                 "program",
-                 "targname",
-                 "asn_pool",
-                 "products",
-                 "creation_time"]
+    }
 }

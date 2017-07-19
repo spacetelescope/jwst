@@ -9,37 +9,44 @@ import datetime
 import inspect
 import os
 import sys
+import warnings
 
 import numpy as np
+import jsonschema
 
 from astropy.extern import six
 from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
+from astropy.nddata import nddata_base
 
 from asdf import AsdfFile
 from asdf import yamlutil
 from asdf import schema as asdf_schema
+from asdf import extension as asdf_extension
 
+from . import ndmodel
+from . import filetype
 from . import fits_support
 from . import properties
 from . import schema as mschema
 
+from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
 from gwcs.extension import GWCSExtension
 
 
-jwst_extensions = [GWCSExtension(), JWSTExtension()]
+jwst_extensions = [GWCSExtension(), JWSTExtension(), BaseExtension()]
 
 
-class DataModel(properties.ObjectNode):
+class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     Base class of all of the data models.
     """
     schema_url = "core.schema.yaml"
 
     def __init__(self, init=None, schema=None, extensions=None,
-                 resolver=None, pass_invalid_values=False):
+                 pass_invalid_values=False):
         """
         Parameters
         ----------
@@ -67,44 +74,51 @@ class DataModel(properties.ObjectNode):
             If not provided, the schema associated with this class
             will be used.
 
-        extensions: classes extending the standard set of extensions, optional
+        extensions: classes extending the standard set of extensions, optional.
+            If an extension is defined, the prefix used should be 'url'.
 
-        resolver: an object which resolves references in schemas into filenames, optional
-            If None, the default resolver will be used.
-            
-        pass_invalid_values: If True, values that do not validate the schema can
-            be read and written, but with a warning message
+        pass_invalid_values: If true, values that do not validate the schema can
+            be read and written and only a warning will be generated
         """
+        # Set the extensions
+        if extensions is None:
+            extensions = jwst_extensions[:]
+        else:
+            extensions.extend(jwst_extensions)
+        self._extensions = extensions
+
+        # Override value of pass_invalid value if environment value set
+        if "PASS_INVALID_VALUES" in os.environ:
+            pass_invalid_values = os.environ["PASS_INVALID_VALUES"]
+            try:
+                pass_invalid_values = bool(int(pass_invalid_values))
+            except ValueError:
+                pass_invalid_values = False
+
+        self._pass_invalid_values = pass_invalid_values
+
+        # Construct the path to the schema files
         filename = os.path.abspath(inspect.getfile(self.__class__))
         base_url = os.path.join(
             os.path.dirname(filename), 'schemas', '')
 
+        # Load the schema files
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
-            schema = asdf_schema.load_schema(schema_path, 
-                resolver=resolver, resolve_references=True)
+            extension_list = asdf_extension.AsdfExtensionList(self._extensions)
+            schema = asdf_schema.load_schema(schema_path,
+                resolver=extension_list.url_mapping, resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
-
-        if extensions is not None:
-            extensions.extend(jwst_extensions)
-        else:
-            extensions = jwst_extensions[:]
-        self._extensions = extensions
-
-        if "PASS_INVALID_VALUES" in os.environ:
-            pass_invalid_values = os.environ["PASS_INVALID_VALUES"]
-            try:
-                self._pass_invalid_values = bool(int(pass_invalid_values))
-            except ValueError:
-                self._pass_invalid_values = False
-        else:
-            self._pass_invalid_values = pass_invalid_values
-
+        # Determine what kind of input we have (init) and execute the
+        # proper code to intiailize the model
         self._files_to_close = []
+        self._iscopy = False
+    
         is_array = False
         is_shape = False
         shape = None
+        
         if init is None:
             asdf = AsdfFile(extensions=extensions)
         elif isinstance(init, dict):
@@ -114,13 +128,7 @@ class DataModel(properties.ObjectNode):
             shape = init.shape
             is_array = True
         elif isinstance(init, self.__class__):
-            instance = copy.deepcopy(init._instance)
-            self._schema = init._schema
-            self._shape = init._shape
-            self._asdf = AsdfFile(instance, extensions=self._extensions)
-            self._instance = instance
-            self._ctx = self
-            self.__class__ = init.__class__
+            self.clone(self, init)
             return
         elif isinstance(init, DataModel):
             raise TypeError(
@@ -136,46 +144,62 @@ class DataModel(properties.ObjectNode):
             asdf = AsdfFile()
             is_shape = True
         elif isinstance(init, fits.HDUList):
-            asdf = fits_support.from_fits(init, self._schema,
-                                          extensions=self._extensions,
-                                          validate=False,
-                                          pass_invalid_values=self._pass_invalid_values)
-        elif isinstance(init, six.string_types):
+            asdf = fits_support.from_fits(init, self._schema, extensions,
+                                          pass_invalid_values)
+
+        elif isinstance(init, (six.string_types, bytes)):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
-            try:
+            file_type = filetype.check(init)
+     
+            if file_type == "fits":
                 hdulist = fits.open(init)
-            except IOError:
-                try:
-                    asdf = AsdfFile.open(init, extensions=self._extensions)
-                    # TODO: Add json support
-                except ValueError:
-                    raise IOError(
-                        "File does not appear to be a FITS or ASDF file.")
-            else:
                 asdf = fits_support.from_fits(hdulist, self._schema,
-                                              extensions=self._extensions,
-                                              validate=False,
-                                              pass_invalid_values=self._pass_invalid_values)
+                                              extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
+     
+            elif file_type == "asdf":
+                asdf = AsdfFile.open(init, extensions=extensions)
+
+            else:
+                # TODO handle json files as well
+                raise IOError(
+                        "File does not appear to be a FITS or ASDF file.")
+            
         else:
             raise ValueError(
                 "Can't initialize datamodel using {0}".format(str(type(init))))
+
+        # Initialize object fields as determined fro the code above
 
         self._shape = shape
         self._instance = asdf.tree
         self._asdf = asdf
         self._ctx = self
 
-        # if the input model doesn't have a date set, use the current date/time
-        if self.meta.date is None:
-            self.meta.date = Time(datetime.datetime.now())
-            self.meta.date.format = 'isot'
-            self.meta.date = self.meta.date.value
-
         # if the input is from a file, set the filename attribute
         if isinstance(init, six.string_types):
             self.meta.filename = os.path.basename(init)
+        elif isinstance(init, fits.HDUList):
+            info = init.fileinfo(0)
+            if info is not None:
+                filename = info.get('filename')
+                if filename is not None:
+                    self.meta.filename = os.path.basename(filename)
+        
+        # if the input model doesn't have a date set, use the current date/time
+        if self.meta.date is None:
+            self.meta.date = Time(datetime.datetime.now())
+            if hasattr(self.meta.date, 'value'):
+                self.meta.date.format = 'isot'
+                self.meta.date = str(self.meta.date.value)
+
+        # store the data model type, if not already set
+        if hasattr(self.meta, 'model_type'):
+            if self.meta.model_type is None:
+                self.meta.model_type = self.__class__.__name__
+        else:
+            self.meta.model_type = None
 
         if is_array:
             primary_array_name = self.get_primary_array_name()
@@ -185,6 +209,7 @@ class DataModel(properties.ObjectNode):
                     "no primary array in its schema")
             setattr(self, primary_array_name, init)
 
+        # TODO this code looks useless
         if is_shape:
             getattr(self, self.get_primary_array_name())
 
@@ -195,17 +220,38 @@ class DataModel(properties.ObjectNode):
         self.close()
 
     def close(self):
-        for fd in self._files_to_close:
-            if fd is not None:
-                fd.close()
+        if not self._iscopy:
+            for fd in self._files_to_close:
+                if fd is not None:
+                    fd.close()
+            if self._asdf is not None:
+                self._asdf.close()
 
-    def copy(self):
+    @staticmethod
+    def clone(target, source, deepcopy=False, memo=None):
+        if deepcopy:
+            instance = copy.deepcopy(source._instance, memo=memo)
+            target._asdf = AsdfFile(instance, extensions=source._extensions)
+            target._instance = instance
+            target._iscopy = source._iscopy
+        else:
+            target._asdf = source._asdf
+            target._instance = source._instance
+            target._iscopy = True
+
+        target._files_to_close = source._files_to_close[:]
+        target._schema = source._schema
+        target._shape = source._shape
+        target._ctx = target
+
+    def copy(self, memo=None):
         """
         Returns a deep copy of this model.
         """
-        result = self.__class__(
-            init=copy.deepcopy(self._instance), schema=self._schema, extensions=self._extensions)
-        result._shape = self._shape
+        result = self.__class__(init=None,
+                                extensions=self._extensions,
+                                pass_invalid_values=self._pass_invalid_values)
+        self.clone(result, self, deepcopy=True, memo=memo)
         return result
 
     __copy__ = __deepcopy__ = copy
@@ -240,6 +286,7 @@ class DataModel(properties.ObjectNode):
         self.meta.date = Time(datetime.datetime.now())
         self.meta.date.format = 'isot'
         self.meta.date = self.meta.date.value
+        self.meta.model_type = self.__class__.__name__
 
     def save(self, path, *args, **kwargs):
         """
@@ -255,7 +302,9 @@ class DataModel(properties.ObjectNode):
 
         # TODO: Support gzip-compressed fits
         if ext == '.fits':
-            kwargs.setdefault('clobber', True)
+            # TODO: remove 'clobber' check once depreciated fully in astropy
+            if 'clobber' not in kwargs:
+                kwargs.setdefault('overwrite', True)
             self.to_fits(path, *args, **kwargs)
         elif ext == '.asdf':
             self.to_asdf(path, *args, **kwargs)
@@ -282,17 +331,17 @@ class DataModel(properties.ObjectNode):
         -------
         model : DataModel instance
         """
-        return cls(init, schema=schema, extensions=self._extensions)
+        return cls(init, schema=schema, extensions=jwst_extensions)
 
     def to_asdf(self, init, *args, **kwargs):
         """
-        Write a DataModel to a ASDF file.
+        Write a DataModel to an ASDF file.
 
         Parameters
         ----------
         init : file path or file object
 
-        *args, **kwargs
+        args, kwargs
             Any additional arguments are passed along to
             `asdf.AsdfFile.write_to`.
         """
@@ -330,7 +379,7 @@ class DataModel(properties.ObjectNode):
         ----------
         init : file path or file object
 
-        *args, **kwargs
+        args, kwargs
             Any additional arguments are passed along to
             `astropy.io.fits.writeto`.
         """
@@ -338,7 +387,9 @@ class DataModel(properties.ObjectNode):
 
         with fits_support.to_fits(self._instance, self._schema,
                                   extensions=self._extensions) as ff:
-            ff.write_to(init, *args, **kwargs)
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', message='Card is too long')
+                ff.write_to(init, *args, **kwargs)
 
     @property
     def shape(self):
@@ -349,11 +400,17 @@ class DataModel(properties.ObjectNode):
                 return None
         return self._shape
 
+    def my_attribute(self, attr):
+        properties = frozenset(("shape", "history", "_extra_fits", "schema"))
+        return attr in properties
+
     def __setattr__(self, attr, value):
-        if attr == 'shape':
+        if self.my_attribute(attr):
             object.__setattr__(self, attr, value)
+        elif ndmodel.NDModel.my_attribute(self, attr):
+            ndmodel.NDModel.__setattr__(self, attr, value)
         else:
-            super(DataModel, self).__setattr__(attr, value)
+            properties.ObjectNode.__setattr__(self, attr, value)
 
     def extend_schema(self, new_schema):
         """
@@ -402,7 +459,7 @@ class DataModel(properties.ObjectNode):
         -------
         locations : list of str
 
-            If `return_result` is `True, a list of the locations in
+            If `return_result` is `True`, a list of the locations in
             the schema where this FITS keyword is used.  Each element
             is a dot-separated path.
 
@@ -510,25 +567,14 @@ class DataModel(properties.ObjectNode):
                     for x in recurse(val, path + [i]):
                         yield x
             elif tree is not None:
-                yield ('.'.join(six.text_type(x) for x in path), tree)
+                yield (str('.'.join(six.text_type(x) for x in path)), tree)
 
         for x in recurse(self._instance):
             yield x
 
-    if six.PY3:
-        items = iteritems
-    else:
-        def items(self):
-            """
-            Get all of the schema items in a flat way.
+    # We are just going to define the items to return the iteritems
+    items = iteritems
 
-            Each element is a pair (`key`, `value`).  Each `key` is a
-            dot-separated name.  For example, the schema element
-            `meta.observation.date` will end up in the result as::
-
-                ("meta.observation.date": "2012-04-22T03:22:05.432")
-            """
-            return list(self.items())
 
     def iterkeys(self):
         """
@@ -594,7 +640,7 @@ class DataModel(properties.ObjectNode):
             elif isinstance(d, list):
                 for key, val in enumerate(d):
                     hdu_keywords_from_data(val, path + [key], hdu_keywords)
-            elif isinstance(b, np.ndarray):
+            elif isinstance(d, np.ndarray):
                 # skip data arrays
                 pass
             else:
@@ -616,7 +662,7 @@ class DataModel(properties.ObjectNode):
         def included(cursor, part):
             # Test if part is in the cursor
             if isinstance(part, int):
-                return part > 0 and part < len(cursor)
+                return part >= 0 and part < len(cursor)
             else:
                 return part in cursor
 
@@ -630,10 +676,16 @@ class DataModel(properties.ObjectNode):
             else:
                 that_cursor = that_cursor[part]
                 if not included(this_cursor, part):
-                    if isinstance(part, int):
-                        this_cursor[part] = []
+                    if isinstance(path[0], int):
+                        if isinstance(part, int):
+                            this_cursor.append([])
+                        else:
+                            this_cursor[part] = []
                     else:
-                        this_cursor[part] = {}
+                        if isinstance(part, int):
+                            this_cursor.append({})
+                        else:
+                            this_cursor[part] = {}
                 this_cursor = this_cursor[part]
                 set_hdu_keyword(this_cursor, that_cursor, path)
 
@@ -716,8 +768,19 @@ class DataModel(properties.ObjectNode):
         return self._instance.setdefault('history', [])
 
     @history.setter
-    def history(self, v):
-        self._instance['history'] = v
+    def history(self, value):
+        """
+        Set a history entry.
+
+        Parameters
+        ----------
+        value : list
+            For FITS files this should be a list of strings.
+            For ASDF files use a list of ``HistoryEntry`` object. It can be created
+            with `~jwst.datamodels.util.create_history_entry`.
+
+        """
+        self._instance['history'] = value
 
     def get_fits_wcs(self, hdu_name='PRIMARY', key=' '):
         """
@@ -782,3 +845,11 @@ class DataModel(properties.ObjectNode):
         ff = fits_support.from_fits(hdulist, self._schema, validate=False)
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
+
+    #--------------------------------------------------------
+    # These two method aliases are here for astropy.registry
+    # compatibility and should not be called directly
+    #--------------------------------------------------------
+
+    read = __init__
+    write = save

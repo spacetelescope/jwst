@@ -37,27 +37,44 @@ def do_correction(input_model, dark_model, dark_output=None):
     """
 
     # Save some data params for easy use later
-
     instrument = input_model.meta.instrument.name
     sci_nints = input_model.data.shape[0]
     sci_ngroups = input_model.data.shape[1]
     sci_nframes = input_model.meta.exposure.nframes
     sci_groupgap = input_model.meta.exposure.groupgap
+
+    if instrument == 'MIRI':
+        drk_nints = dark_model.data.shape[0]
+        drk_ngroups = dark_model.data.shape[1]
+    else:
+        drk_nints = 1
+        drk_ngroups = dark_model.data.shape[0]
     drk_nframes = dark_model.meta.exposure.nframes
     drk_groupgap = dark_model.meta.exposure.groupgap
 
-
-    log.debug('Dark sub using nints=%d, ngroups=%d, nframes=%d, groupgap=%d',
-               sci_nints, sci_ngroups, sci_nframes, sci_groupgap)
+    log.info('Science data nints=%d, ngroups=%d, nframes=%d, groupgap=%d',
+              sci_nints, sci_ngroups, sci_nframes, sci_groupgap)
+    log.info('Dark data nints=%d, ngroups=%d, nframes=%d, groupgap=%d',
+              drk_nints, drk_ngroups, drk_nframes, drk_groupgap)
 
     # Check that the number of groups in the science data does not exceed
     # the number of groups in the dark current array.
-    drk_ngroups = dark_model.meta.exposure.ngroups
-    if (sci_nframes + sci_groupgap) * sci_ngroups - sci_groupgap > drk_ngroups:
-        log.warning("There are more groups in the science data than in the " +
-        "dark data, so returning the input without the dark current subtracted.")
-        # copy() needed in return because original is closed at end of
-        # 'with' loop in dark_current_step
+    sci_total_frames = sci_ngroups * (sci_nframes + sci_groupgap)
+    drk_total_frames = drk_ngroups * (drk_nframes + drk_groupgap)
+    if sci_total_frames > drk_total_frames:
+        log.warning("Not enough data in dark reference file to match to " +
+        "science data.")
+        log.warning("Input will be returned without subtracting dark current.")
+        input_model.meta.cal_step.dark_sub = 'SKIPPED'
+        return input_model.copy()
+
+    # Check that the value of nframes and groupgap in the dark
+    # are not greater than those of the science data
+    if drk_nframes > sci_nframes or drk_groupgap > sci_groupgap:
+        log.warning("The value of nframes or groupgap in the dark data is " +
+        "greater than that of the science data.")
+        log.warning("Input will be returned without subtracting dark current.")
+        input_model.meta.cal_step.dark_sub = 'SKIPPED'
         return input_model.copy()
 
     # Replace NaN's in the dark with zeros
@@ -73,22 +90,22 @@ def do_correction(input_model, dark_model, dark_output=None):
     else:
 
         # Create a frame-averaged version of the dark data to match
-        # the nframes and groupgap settings of the science data
-        # If the data is MIRI data - then the darks are integration dependent and we average them
-        # with a seperate routine
+        # the nframes and groupgap settings of the science data.
+        # If the data are from MIRI, the darks are integration-dependent and
+        # we average them with a seperate routine.
 
         if instrument == 'MIRI':
-            averaged_dark = average_MIRIdark_frames(dark_model, sci_nints, sci_ngroups,
-                                                    sci_nframes, sci_groupgap)
+            averaged_dark = average_MIRIdark_frames(dark_model, sci_nints,
+                            sci_ngroups, sci_nframes, sci_groupgap)
         else:
             averaged_dark = average_dark_frames(dark_model, sci_ngroups,
-                                            sci_nframes, sci_groupgap)
+                            sci_nframes, sci_groupgap)
 
         # Save the frame-averaged dark data that was just created,
         # if requested by the user
         if dark_output is not None:
             log.info('Writing averaged dark to %s', dark_output)
-            averaged_dark.to_fits(dark_output)
+            averaged_dark.save(dark_output)
 
         # Subtract the frame-averaged dark data from the science data
         output_model = subtract_dark(input_model, averaged_dark)
@@ -209,7 +226,6 @@ def average_MIRIdark_frames(input_dark, nints, ngroups, nframes, groupgap):
     # Do a direct copy of the 2-d DQ array into the new dark
     avg_dark.dq = input_dark.dq
 
-
     # check if the number of integrations in dark reference file
     # is less than science data, if so then we only need to find the
     # average for num_ints integrations (if science data only has
@@ -240,17 +256,15 @@ def average_MIRIdark_frames(input_dark, nints, ngroups, nframes, groupgap):
                 log.debug('average dark frames %d to %d', start + 1, end)
                 avg_dark.data[it, group] = input_dark.data[it, start:end].mean(axis=0)
                 avg_dark.err[it, group] = np.sqrt(np.add.reduce(
-                        input_dark.err[it, start:end]**2, axis=0)) / (end - start)
+                    input_dark.err[it, start:end]**2, axis=0)) / (end - start)
 
         # Skip over unused frames
             start = end + groupgap
-
 
     # Reset some metadata values for the averaged dark
     avg_dark.meta.exposure.nframes = nframes
     avg_dark.meta.exposure.ngroups = ngroups
     avg_dark.meta.exposure.groupgap = groupgap
-
 
     return avg_dark
 
@@ -277,43 +291,43 @@ def subtract_dark(input, dark):
     """
 
     instrument = input.meta.instrument.name
-    dark_nints = dark.data.shape[0]
+    if instrument == 'MIRI':
+        dark_nints = dark.data.shape[0]
+    else:
+        dark_nints = 1
 
     log.debug("subtract_dark: nints=%d, ngroups=%d, size=%d,%d",
-              input.meta.exposure.nints, input.meta.exposure.ngroups,
-              input.data.shape[-1], input.data.shape[-2])
+              input.data.shape[0], input.data.shape[1],
+              input.data.shape[2], input.data.shape[3])
 
     # Create output as a copy of the input science data model
     output = input.copy()
 
-    # combine the science and dark DQ arrays
-
-    # MIRI Dark reference file has a DQ plane for each integration in the Dark
-    # First lets collapse the dark DQ plane into a single 2-D array
-    if(instrument == 'MIRI'):
-        collapse_darkdq = dark.dq[0, 0, :, :].copy()
+    if instrument == 'MIRI':
+        # MIRI dark reference file has a DQ plane for each integration,
+        # so we collapse the dark DQ planes into a single 2-D array
+        darkdq = dark.dq[0, 0, :, :].copy()
         for i in range(1, dark_nints):
-            combined_darkdq = np.bitwise_or(collapse_darkdq, dark.dq[i, 0, :, :])
-            collapse_darkdq = combined_darkdq
-           #output.pixeldq = np.bitwise_or(input.pixeldq, np.bitwise_or(dark.dq[0,0,:,:], dark.dq[1,0,:,:]))
-
-        output.pixeldq = np.bitwise_or(input.pixeldq, collapse_darkdq)
-
+            darkdq = np.bitwise_or(darkdq, dark.dq[i, 0, :, :])
     else:
-        output.pixeldq = np.bitwise_or(input.pixeldq, dark.dq)
+        # All other instruments have a single 2D dark DQ array
+        darkdq = dark.dq
 
+    # Combine the dark and science DQ data
+    output.pixeldq = np.bitwise_or(input.pixeldq, darkdq)
 
     # loop over all integrations and groups in input science data
     for i in range(input.data.shape[0]):
-        if(instrument == 'MIRI'):
-            if(i < dark_nints):
+
+        if instrument == 'MIRI':
+            if i < dark_nints:
                 dark_int = dark.data[i]
             else:
                 dark_int = dark.data[dark_nints - 1]
 
         for j in range(input.data.shape[1]):
             # subtract the SCI arrays
-            if(instrument == 'MIRI'):
+            if instrument == 'MIRI':
                 output.data[i, j] -= dark_int[j]
             else:
                 output.data[i, j] -= dark.data[j]

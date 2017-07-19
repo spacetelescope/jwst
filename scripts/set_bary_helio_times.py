@@ -37,14 +37,21 @@ for each group by adding the necessary columns to that table.
 '''
 
 from __future__ import print_function, division
-from jwst import timeconversion
-import sys
-import astropy.io.fits as fits
+
 import argparse
-import numpy as np
-import astropy.time
+import logging
+
 import astropy.coordinates
+import astropy.io.fits as fits
+import astropy.time
 import astropy.units as u
+import numpy as np
+
+from jwst import timeconversion
+
+# Setup the logging.
+logging.basicConfig(level=logging.INFO)
+
 
 def set_bary_helio_times(filename, jwstpos=None):
     '''
@@ -52,20 +59,27 @@ def set_bary_helio_times(filename, jwstpos=None):
     given file and update the contents of the file to contain
     these values.
     '''
-    print('Starting set_bary_helio_times task')
+    logging.info('Starting set_bary_helio_times task')
     hdul = fits.open(filename, mode='update')
     pheader = hdul[0].header
     # Obtain the necessary info from the header
     targcoord = astropy.coordinates.SkyCoord(
-        ra=pheader['PROP_RA'], dec=pheader['PROP_DEC'], frame='fk5', unit=(u.hourangle, u.deg))
+        ra=pheader['TARG_RA'],
+        dec=pheader['TARG_DEC'],
+        frame='fk5',
+        unit=(u.hourangle, u.deg)
+    )
     starttime = pheader['EXPSTART']
     middletime = pheader['EXPMID']
     endtime = pheader['EXPEND']
-    times = astropy.time.Time(np.array([starttime, middletime, endtime]),
+    times = astropy.time.Time(
+        np.array([starttime, middletime, endtime]),
         format='mjd', scale='utc').tt.mjd
     ((bstrtime, bmidtime, bendtime), (hstrtime, hmidtime, hendtime)) = \
         timeconversion.compute_bary_helio_time(
-            targetcoord=(targcoord.ra.degree, targcoord.dec.degree), times=times)
+            targetcoord=(targcoord.ra.degree, targcoord.dec.degree),
+            times=times
+        )
     pheader['BSTRTIME'] = bstrtime
     pheader['BMIDTIME'] = bmidtime
     pheader['BENDTIME'] = bendtime
@@ -74,24 +88,56 @@ def set_bary_helio_times(filename, jwstpos=None):
     pheader['HMIDTIME'] = hmidtime
     pheader['HENDTIME'] = hendtime
     pheader['HELIDELT'] = (hstrtime - starttime) * 86400.
+
     # Now modify the table
-    tabhdu = hdul['GROUP']
-    tendtimes = tabhdu.data['group_end_time']
-    # replace colon as separator between date and time to be consistent
-    tendtimeslist = [item[:10] + 'T' + item[11:] for item in tendtimes]
-    astropy_endtimes = astropy.time.Time(tendtimeslist, format='isot', scale='utc')
-    mjdtimes = astropy_endtimes.tt.mjd
-    btimes, htimes = timeconversion.compute_bary_helio_time(
-        targetcoord=(targcoord.ra.degree, targcoord.dec.degree), times=mjdtimes)
-    bcol = fits.Column(name='bary_end_time', format='D', unit='MJD', array=btimes)
-    hcol = fits.Column(name='helio_end_time', format='D', unit='MJD', array=htimes)
-    binhdu = fits.BinTableHDU.from_columns(tabhdu.columns + fits.ColDefs([bcol, hcol]))
-    binhdu.header['EXTNAME'] = 'GROUP'
-    hdul['GROUP'] = binhdu
+    try:
+        tabhdu = hdul['GROUP']
+    except KeyError:
+        logging.info('No GROUP extension found. Ignoring GROUP calculations')
+        pass
+    else:
+        logging.info('Calculating GROUP times')
+        tendtimes = tabhdu.data['group_end_time']
+
+        # replace colon as separator between date and time to be consistent
+        tendtimeslist = [item[:10] + 'T' + item[11:] for item in tendtimes]
+        astropy_endtimes = astropy.time.Time(
+            tendtimeslist, format='isot', scale='utc'
+        )
+        mjdtimes = astropy_endtimes.tt.mjd
+        try:
+            btimes, htimes = timeconversion.compute_bary_helio_time(
+                targetcoord=(targcoord.ra.degree, targcoord.dec.degree),
+                times=mjdtimes
+            )
+        except Exception as exception:
+            logging.warning(
+                'Error in calculating times. Filling with invalid dates.'
+                '\nError is "{}"'.format(exception)
+            )
+            nulls = -1.0 * np.ones(len(tendtimeslist), dtype=np.float)
+            bcol = fits.Column(
+                name='bary_end_time', format='D', unit='MJD', array=nulls
+            )
+            hcol = fits.Column(
+                name='helio_end_time', format='D', unit='MJD', array=nulls
+            )
+        else:
+            bcol = fits.Column(
+                name='bary_end_time', format='D', unit='MJD', array=btimes
+            )
+            hcol = fits.Column(
+                name='helio_end_time', format='D', unit='MJD', array=htimes
+            )
+        binhdu = fits.BinTableHDU.from_columns(
+            tabhdu.columns + fits.ColDefs([bcol, hcol])
+        )
+        binhdu.header['EXTNAME'] = 'GROUP'
+        hdul['GROUP'] = binhdu
+
     hdul.flush()
     hdul.close()
-    print('Completed set_bary_helio_times task')
-
+    logging.info('Completed set_bary_helio_times task')
 
 
 def main(args):
@@ -106,8 +152,12 @@ def main(args):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
-        description="Add corresponding barycentric and heliocentric times to JWST data files")
+        description="Add corresponding barycentric and heliocentric times to JWST data files"
+    )
     parser.add_argument('filenames', metavar='Filename', nargs='+')
-    parser.add_argument('--jwstpos', help="x,y,z JWST position relative to Earth's center in km as comma separated string of values")
+    parser.add_argument(
+        '--jwstpos',
+        help="x,y,z JWST position relative to Earth's center in km as comma separated string of values"
+    )
     args = parser.parse_args()
     main(args)

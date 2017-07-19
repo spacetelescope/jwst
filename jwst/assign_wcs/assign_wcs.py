@@ -30,11 +30,15 @@ def load_wcs(input_model, reference_files={}):
     pipeline = mod.create_pipeline(input_model, reference_files)
     # Initialize the output model as a copy of the input
     # Make the copy after the WCS pipeline is created in order to pass updates to the model.
-    output_model = input_model.copy()
     if pipeline is None:
-        output_model.meta.cal_step.assign_wcs = 'SKIPPED'
+        input_model.meta.cal_step.assign_wcs = 'SKIPPED'
+        log.warning("SKIPPED assign_wcs")
+        return input_model
     else:
+        output_model = input_model.copy()
         wcs = WCS(pipeline)
         output_model.meta.wcs = wcs
         output_model.meta.cal_step.assign_wcs = 'COMPLETE'
+        log.info("COMPLETED assign_wcs")
     return output_model
+

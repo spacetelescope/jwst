@@ -1,6 +1,7 @@
 title: NIRISS photometric flux conversion data model
 allOf:
 - $ref: photom.schema.yaml
+- $ref: keyword_pixelarea.schema.yaml
 - type: object
   properties:
     phot_table:
@@ -11,6 +12,8 @@ allOf:
         datatype: [ascii, 12]
       - name: pupil
         datatype: [ascii, 12]
+      - name: order
+        datatype: int16
       - name: photmjsr
         datatype: float32
       - name: uncertainty
