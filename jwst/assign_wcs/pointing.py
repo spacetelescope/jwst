@@ -72,53 +72,43 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     return new_roll
 
 
-def create_fitswcs_transform(input_model):
-    ff = fits_support.to_fits(input_model._instance, input_model._schema)
-    hdu = fits_support.get_hdu(ff._hdulist, "PRIMARY")
-    header = hdu.header
-    transform = gwutils.make_fitswcs_transform(header)
-    return transform
+#def create_fitswcs_transform(input_model):
+    #"""
+
+    #"""
+    #ff = fits_support.to_fits(input_model._instance, input_model._schema)
+    #hdu = fits_support.get_hdu(ff._hdulist, "PRIMARY")
+    #header = hdu.header
+    #transform = gwutils.make_fitswcs_transform(header)
+    #return transform
 
 
 def wcsinfo_from_model(input_model):
-    defaults = {'crpix': 0, 'crval': 0, 'cdelt': 1}
+    """
+    Create a dict {wcs_keyword: array_of_values} pairs from a data model.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.model_base.DataModel`
+        The input data model
+
+    """
+    defaults = {'CRPIX': 0, 'CRVAL': 0, 'CDELT': 1., 'CTYPE': "", 'CUNIT': u.Unit("")}
     wcsinfo = {}
     wcsaxes = input_model.meta.wcsinfo.wcsaxes
     wcsinfo['WCSAXES'] = wcsaxes
-    for key in ['CRPIX', 'CRVAL', 'CDELT']:
+    for key in ['CRPIX', 'CRVAL', 'CDELT', 'CTYPE', 'CUNIT']:
         val = []
         for ax in range(1, wcsaxes + 1):
             k = (key + "{0}".format(ax)).lower()
-            try:
-                v = getattr(input_model.meta.wcsinfo, k)
-                if v is None:
-                    v = defaults[key]
-                val.append(v)
-            except KeyError:
-                val.append(defaults[key])
-        wcsinfo[key.upper()] = np.array(val)
-
-    ctypes = []
-    cunits = []
-    for ax in range(1, wcsaxes + 1):
-        try:
-            ctypes.append(getattr(input_model.meta.wcsinfo, ("CTYPE{0}".format(ax)).lower()))
-        except KeyError:
-            ctypes.append("")
-        try:
-            v = getattr(input_model.meta.wcsinfo, ("CUNIT{0}".format(ax)).lower())
-            cunits.append(u.Unit(v))
-        except KeyError:
-            cunits.append(u.Unit(""))
-
-    wcsinfo["CTYPE"] = np.array(ctypes)
-    wcsinfo["CUNIT"] = np.array(cunits)
+            v = getattr(input_model.meta.wcsinfo, k, defaults[key])
+            val.append(v)
+        wcsinfo[key] = np.array(val)
 
     pc = np.zeros((wcsaxes, wcsaxes))
-
     for i in range(1, wcsaxes + 1):
         for j in range(1, wcsaxes + 1):
-            pc[i - 1, j - 1] = getattr(input_model.meta.wcsinfo, 'pc{0}_{1}'.format(i, j))
+            pc[i - 1, j - 1] = getattr(input_model.meta.wcsinfo, 'pc{0}_{1}'.format(i, j), 1)
     wcsinfo['PC'] = pc
     wcsinfo['RADESYS'] = input_model.meta.coordinates.reference_frame
     wcsinfo['has_cd'] = False
@@ -156,23 +146,40 @@ def fitswcs_transform_from_model(wcsinfo):
 
 
 def frame_from_fits(ff):
-    raise NotImplementedError()
+    raise NotImplementedError
 
 
 def frame_from_model(wcsinfo):
+    """
+    Initialize a coordinate frame based on values in model.meta.wcsinfo.
+
+    Parameters
+    ----------
+    wcsinfo : `~jwst.datamodels.model_base.DataModel` or dict
+        Either one of the JWST data moels or a dict with model.meta.wcsinfo.
+
+    Returns
+    -------
+    frame : `~coordinate_frames.CoordinateFrame`
+
+    """
+    if isinstance(wcsinfo, DataModel):
+        wcsinfo = wcsinfo_from_model(wcsinfo)
+
     wcsaxes = wcsinfo['WCSAXES']
     celestial_axes, spectral_axes, other = gwutils.get_axes(wcsinfo)
     cunit = wcsinfo['CUNIT']
     frames = []
     if celestial_axes:
         ref_frame = coords.ICRS()
-        celestial = cf.CelestialFrame(name='sky', axes_order=tuple(spatial_axes),
-                                    reference_frame=ref_frame, unit=cunit[spatial_axes],
+        celestial = cf.CelestialFrame(name='sky', axes_order=tuple(celestial_axes),
+                                    reference_frame=ref_frame, unit=cunit[celestial_axes],
                                     axes_names=('RA', 'DEC'))
         frames.append(celestial)
     if spectral_axes:
+        print(cunit, spectral_axes, type(spectral_axes[0]))
         spec = cf.SpectralFrame(name='spectral', axes_order=tuple(spectral_axes),
-                                unit=cunit[spectral_axes[0]],
+                                unit=cunit[spectral_axes],
                                 axes_names=('wavelength',))
         frames.append(spec)
     if other:
@@ -194,9 +201,9 @@ def create_fitswcs(inp, input_frame=None):
         wcsinfo = wcsinfo_from_model(inp)
         transform = fitswcs_transform_from_model(wcsinfo)
         output_frame = frame_from_model(wcsinfo)
-    elif isinstance(inp, six.string_types):
-        transform = create_fitswcs_transform(inp)
-        output_frame = frame_from_fits(inp)
+    #elif isinstance(inp, six.string_types):
+        #transform = create_fitswcs_transform(inp)
+        #output_frame = frame_from_fits(inp)
     else:
         raise TypeError("Input is expected to be a DataModel instance or a FITS file.")
 
