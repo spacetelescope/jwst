@@ -177,7 +177,6 @@ def frame_from_model(wcsinfo):
                                     axes_names=('RA', 'DEC'))
         frames.append(celestial)
     if spectral_axes:
-        print(cunit, spectral_axes, type(spectral_axes[0]))
         spec = cf.SpectralFrame(name='spectral', axes_order=tuple(spectral_axes),
                                 unit=cunit[spectral_axes],
                                 axes_names=('wavelength',))
