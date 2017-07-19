@@ -40,7 +40,7 @@ class MSAFlagOpenStep(Step):
                                                 wcs_reffile_names)
 
             # set the step status to complete
-            result.meta.cal_step.msaflagopen = 'COMPLETE'
+            result.meta.cal_step.msa_flagging = 'COMPLETE'
 
         return result
 

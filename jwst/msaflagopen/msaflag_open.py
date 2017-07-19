@@ -12,6 +12,7 @@ from .. import datamodels
 from ..assign_wcs.nirspec import slitlets_wcs, nrs_wcs_set_input
 from ..transforms.models import Slit
 from gwcs.wcs import WCS
+from gwcs import wcstools
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -60,7 +61,7 @@ def do_correction(input_model, shutter_refname, wcs_refnames):
 
 def flag(input_datamodel, failed_slitlets, wcs_refnames):
     """
-    Takes the list of failed open shutters from thje failedopen reference file
+    Takes the list of failed open shutters from the failedopen reference file
     and calculates the pixels affected using the WCS model.
     The affected pixels in the science data have their DQ flags combined with
     that for the MSA_FAILED_OPEN standard flag.  All other science data
@@ -160,7 +161,7 @@ def wcs_to_dq(wcs_array, FLAG):
     # which has zeros everywhere the wcs array has the value NaN, and 
     # has the value FLAG everywhere the wcs array is not NaN
     dq = np.zeros((wcs_array[0].shape), dtype=np.uint32)
-    non_nan = np.where(np.isfinite(wcs_array[0]))
+    non_nan = np.where(~np.isnan(wcs_array[0]))
     dq[non_nan] = FLAG
     return dq
 
