@@ -97,7 +97,7 @@ class SlitModel(model_base.DataModel):
     relsens2d: numpy array
         The relative sensitivty 2D array.
     """
-    schema_url = "slitdata.schema.yaml"
+    schema_url = "slit.schema.yaml"
 
 
     def __init__(self, init=None, data=None, dq=None, err=None, relsens=None,

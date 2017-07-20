@@ -31,7 +31,7 @@ class MultiSlitModel(model_base.DataModel):
     schema_url = "multislit.schema.yaml"
 
     def __init__(self, init=None, **kwargs):
-        if isinstance(init, SlitModel):
+        if isinstance(init, (SlitModel, ImageModel)):
             super(MultiSlitModel, self).__init__(init=None, **kwargs)
             self.update(init)
             self.slits.append(self.slits.item())
@@ -49,14 +49,12 @@ class MultiSlitModel(model_base.DataModel):
         """
         Get a metadata value using a dotted name.
         """
-        def _get_data_keys(*obj):
-            return obj
-
         if isinstance(key, six.string_types) and key.split('.') == 'meta':
             super(MultiSlitModel, self).__getitem__(key)
         elif isinstance(key, int):
             # Return an instance of a SlitModel
-            data_keys = _get_data_keys(*self.slits[key])
+            data_keys = [item[0] for item in self.slits[key].items() if not
+                         item[0].startswith('meta')]
             kwargs = dict(((k, getattr(self.slits[key], k)) for k in data_keys))
             s = SlitModel(**kwargs)
             s.update(self)#, only='PRIMARY')
