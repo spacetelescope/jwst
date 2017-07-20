@@ -496,7 +496,7 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
         index = wrange_selector.index(keyword)
         #order = wave_range.tree['filter_grating'][keyword]['order']
         #wrange = wave_range.tree['filter_grating'][keyword]['range']
-    except KeyError:
+    except (KeyError, ValueError):
         index = None
     if index is not None:
         order = wave_range_model.order[index]
@@ -565,9 +565,10 @@ def slit_to_msa(open_slits, msafile):
     models = []
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant==quadrant]
+        msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
         if any(slits_in_quadrant):
-            msa_data = msa.tree[quadrant]['data']
-            msa_model = msa.tree[quadrant]['model']
+            msa_data = msa_quadrant.data
+            msa_model = msa_quadrant.model
             for slit in slits_in_quadrant:
                 slit_id = slit.shutter_id
                 slitdata = msa_data[slit_id]
@@ -631,7 +632,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
         slitdata_model = get_slit_location_model(slitdata)
         ifuslicer_transform = (slitdata_model | ifuslicer_model)
         #ifupost_transform = ifupost.tree[slit]['model']
-        ifupost_transform = getattr(ifupost, "slice_" + str(slit))
+        ifupost_transform = getattr(ifupost, "slice_{0}".format(slit))
         msa2gwa = ifuslicer_transform | ifupost_transform | collimator2gwa
         gwa2msa = gwa_to_ymsa(msa2gwa)# TODO: Use model sets here
         bgwa2msa = Mapping((0, 1, 0, 1), n_inputs=3) | \
@@ -687,12 +688,12 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
         lgreq = lgreq | Scale(1e6)
 
     #msa = AsdfFile.open(reference_files['msa'])
-        msa = MSAModel(reference_files['msa'])
+    msa = MSAModel(reference_files['msa'])
     slit_models = []
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant==quadrant]
         log.info("There are {0} open slits in quadrant {1}".format(len(slits_in_quadrant), quadrant))
-        msa_quadrant = getattr(msa, 'Q' + str(quadrant))
+        msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
         if any(slits_in_quadrant):
             #msa_model = msa.tree[quadrant]['model']
             msa_model = msa_quadrant.model
@@ -727,7 +728,7 @@ def angle_from_disperser(disperser, input_model):
     lmax = input_model.meta.wcsinfo.waverange_end
     sporder = input_model.meta.wcsinfo.spectral_order
     if input_model.meta.instrument.grating.lower() != 'prism':
-        agreq = AngleFromGratingEquation(disperser['groove_density'],
+        agreq = AngleFromGratingEquation(disperser.groovedensity,
                                          sporder, name='alpha_from_greq')
         return agreq
     else:
@@ -743,7 +744,7 @@ def angle_from_disperser(disperser, input_model):
 def wavelength_from_disperser(disperser, input_model):
     sporder = input_model.meta.wcsinfo.spectral_order
     if input_model.meta.instrument.grating.lower() != 'prism':
-        lgreq = WavelengthFromGratingEquation(disperser['groove_density'],
+        lgreq = WavelengthFromGratingEquation(disperser.groovedensity,
                                               sporder, name='lambda_from_gratingeq')
         return lgreq
     else:
@@ -1268,7 +1269,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant==quadrant]
         if any(slits_in_quadrant):
-            msa_quadrant = getattr(msa, "Q_"+str(quadrant))
+            msa_quadrant = getattr(msa, "Q{0}".format(quadrant))
             #msa_model = msa.tree[quadrant]['model']
             #msa_data = msa.tree[quadrant]['data']
             msa_model = msa_quadrant.model
