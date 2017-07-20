@@ -66,6 +66,60 @@ two other methods have been introduced: ``'globalmin'`` and
   and the ``'match'`` algorithm to "equalize" sky values among images.
 
 
+Step Arguments
+--------------
+The ``skymatch`` step has the following optional argument:
+
+**General sky matching parameters:**
+* ``skymethod``: A `str` value indicating sky computation algorithm to be used.
+  Allowed values: {``'local'``, ``'global'``, ``'match'``, ``'global+match'``}
+  (Default = ``'global+match'``)
+
+* ``match_down``: A boolean that specifies whether the sky *differences* should
+  be subtracted from images with higher sky values (``match_down`` = `True`)
+  to match the image with the lowest sky or sky differences should be added
+  to the images with lower sky values to match the sky of the image with the
+  highest sky value (``match_down`` = `False`). (Default = `True`)
+
+  .. note::
+     This setting applies *only* when `skymethod` parameter is
+     either `'match'` or `'global+match'`.
+
+* ``subtract``: A boolean indicating whether computed sky background values
+    be subtracted from image data. (Default = `False`)
+
+**Image's bounding polygon parameters:**
+* ``stepsize``: An integer number indicating spacing between vertices of the
+  image's bounding polygon. Default value of `None` creates bounding polygons
+  with four vertices corresponding to the corners of the image.
+
+**Sky statistics parameters:**
+* ``skystat`` A string describing statistics to be used for sky background
+  value computations. Supported values are: 'mean', 'mode', 'midpt',
+  and 'median' (Default = 'mode')
+
+* ``lower`` An optional `float` value indicating lower limit of usable pixel
+  values for computing the sky. This value should be specified in the units
+  of the input image(s). (Default = `None`)
+
+* ``upper`` An optional `float` value indicating upper limit of usable pixel
+  values for computing the sky. This value should be specified in the units
+  of the input image(s). (Default = `None`)
+
+* ``nclip``: A non-negative integer number of clipping iterations
+  to use when computing the sky value. (Default = 5)
+
+* ``lsig``: Lower clipping limit, in sigma, used when computing the sky value.
+  (Default = 4.0)
+
+* ``usig``: Upper clipping limit, in sigma, used when computing the sky value.
+  (Default = 4.0)
+
+* ``binwidth``: Bin width, in sigma, used to sample the distribution of pixel
+  brightness values in order to compute the sky background statistics.
+  (Default = 0.1)
+
+
 Limitations and Discussions
 ---------------------------
 Primary reason for introducing "sky match" algorithm was to try to
@@ -118,4 +172,3 @@ the outcome of the matching (sky subtraction in general) algorithm:
 Reference Files
 ===============
 This step does not require any reference files.
-
