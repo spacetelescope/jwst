@@ -44,7 +44,7 @@ class MRSIMatchStep(Step):
     reference_file_types = []
 
     def process(self, images):
-        all_models2d = datamodels.ModelContainer(images)
+        all_models2d = datamodels.ModelContainer(images, persist=True)
 
         chm = {}
 
