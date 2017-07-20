@@ -6,7 +6,7 @@ from .dynamicdq import dynamic_mask
 __all__ = ['GuiderRawModel']
 
 
-class GuiderRawModel( model_base.DataModel)
+class GuiderRawModel( model_base.DataModel):
     """
     A data model for FGS pipeline input files 
 

@@ -6,7 +6,7 @@ from .dynamicdq import dynamic_mask
 __all__ = ['GuiderCalModel']
 
 
-class GuiderCalModel( model_base.DataModel)
+class GuiderCalModel( model_base.DataModel):
     """
     A data model for FGS pipeline output files 
 

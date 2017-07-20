@@ -1598,7 +1598,7 @@ properties:
             type: string
             fits_keyword: S_SRCCAT
           guider_cds:
-            title: Guider CDS Correction
+            title: Guider CDS Calculation
             type: string
             fits_keyword: S_GUICDS
       background:
