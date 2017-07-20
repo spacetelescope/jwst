@@ -373,7 +373,7 @@ def test_image_with_extra_keyword_to_multislit():
 
 @pytest.fixture(scope="module")
 def container():
-    with ModelContainer(ASN_FILE) as c:
+    with ModelContainer(ASN_FILE, persist=True) as c:
         for m in c:
             m.meta.observation.program_number = '0001'
             m.meta.observation.observation_number = '1'
