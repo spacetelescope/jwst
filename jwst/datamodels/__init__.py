@@ -56,9 +56,10 @@ from .flat import FlatModel
 from .fringe import FringeModel
 from .gain import GainModel
 from .gls_rampfit import GLS_RampFitModel
+from .guiderraw import GuiderRawModel
+from .guidercal import GuiderCalModel
 from .ifucube import IFUCubeModel
-from .image import ImageModel
-from .ipc import IPCModel
+from .image import ImageModelfrom .ipc import IPCModel
 from .irs2 import IRS2Model
 from .lastframe import LastFrameModel
 from .level1b import Level1bModel
@@ -111,6 +112,7 @@ __all__ = [
     'FlatModel', 'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'FOREModel', 'FPAModel',
     'FringeModel', 'GainModel', 'GLS_RampFitModel',
+    'GuiderRawModel', 'GuiderCalModel',
     'IFUCubeModel',
     'IFUCubeParsModel', 'NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel',
     'IFUFOREModel', 'IFUPostModel', 'IFUSlicerModel',
