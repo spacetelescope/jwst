@@ -14,10 +14,10 @@ from astropy.time import Time
 
 import numpy as np
 from numpy.testing.decorators import knownfailureif
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose
 
 from .. import (DataModel, ImageModel, QuadModel, MultiSlitModel,
-                ModelContainer)
+                ModelContainer, SlitModel, SlitDataModel)
 from ..util import open as open_model
 from .. import schema
 
@@ -430,6 +430,25 @@ def test_object_node_iterator():
     items = []
     for i in im.meta.items():
         items.append(i[0])
-    
+
     assert 'date' in items
     assert 'model_type' in items
+
+
+def test_multislit_model():
+    data = np.arange(24, dtype=np.float32).reshape((6, 4))
+    err = np.arange(24, dtype=np.float32).reshape((6, 4)) + 2
+    wav = np.arange(24, dtype=np.float32).reshape((6, 4)) + 3
+    dq = np.arange(24,dtype=np.uint32).reshape((6, 4)) + 1
+    s = SlitDataModel(data=data, err=err, dq=dq, wavelength=wav,
+                      pathloss_uniformsource=np.arange(4))
+    ms = MultiSlitModel()
+    ms.slits.append(s)
+    ms.slits.append(s)
+    ms.meta.instrument.name = 'NIRSPEC'
+    ms.meta.exposure.type = 'NRS_IMAGE'
+    slit1 = ms[1]
+    assert slit1.meta.instrument.name == 'NIRSPEC'
+    assert slit1.meta.exposure.type == 'NRS_IMAGE'
+    assert_allclose(slit1.data, data)
+    assert_allclose(slit1.pathloss_uniformsource, np.arange(4))
