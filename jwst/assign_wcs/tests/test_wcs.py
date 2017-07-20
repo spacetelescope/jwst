@@ -1,8 +1,37 @@
 from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
 from numpy.testing import utils
+from astropy import units as u
+from astropy import wcs
+from astropy.tests.helper import pytest, assert_quantity_allclose
 from .. import pointing
 from ...transforms import models
+from ...datamodels import ImageModel, fits_support
+
+
+
+def _create_model_2d():
+    im = ImageModel()
+    im.meta.wcsinfo.crpix1 = 2.5
+    im.meta.wcsinfo.crpix2 = 3
+    im.meta.wcsinfo.crval1 = 5.6
+    im.meta.wcsinfo.crval2 = -72.3
+    im.meta.wcsinfo.wcsaxes = 2
+    im.meta.wcsinfo.cunit1 = 'deg'
+    im.meta.wcsinfo.cunit2 = 'deg'
+    im.meta.wcsinfo.ctype1 = 'RA---TAN'
+    im.meta.wcsinfo.ctype2 = 'DEC--TAN'
+    return im
+
+
+def _create_model_3d():
+    im = _create_model_2d()
+    im.meta.wcsinfo.crpix3 = 1
+    im.meta.wcsinfo.crval3 = 100
+    im.meta.wcsinfo.wcsaxes = 3
+    im.meta.wcsinfo.cunit3 = 'um'
+    im.meta.wcsinfo.ctype3 = 'WAVE'
+    return im
 
 
 def test_roll_angle():
@@ -43,3 +72,41 @@ def test_v23_to_sky():
     v2s = models.V23ToSky(angles, axes_order=axes)
     radec = v2s(v2, v3)
     utils.assert_allclose(radec, expected_ra_dec, atol=1e-10)
+
+
+def test_frame_from_model():
+    """ Tests creating a frame from a data model. """
+    # Test CompositeFrame initialization (celestial and spectral)
+    im = _create_model_3d()
+    frame = pointing.frame_from_model(im)
+    radec, lam = frame.coordinates(1, 2, 3)
+    utils.assert_allclose(radec.spherical.lon.value, 1)
+    utils.assert_allclose(radec.spherical.lat.value, 2)
+    assert_quantity_allclose(lam, 3 * u.um)
+
+    # Test CompositeFrame initialization with custom frames
+    im.meta.wcsinfo.ctype1 = 'ALPHA1A'
+    im.meta.wcsinfo.ctype2 = 'BETA1A'
+    frame = pointing.frame_from_model(im)
+    assert frame.frames[1].name == 'ALPHA1A_BETA1A'
+    assert frame.frames[1].axes_names == ('ALPHA1A', 'BETA1A')
+
+    # Test 2D spatial custom frame
+    im = _create_model_2d()
+    frame = pointing.frame_from_model(im)
+    assert frame.name == "sky"
+    assert frame.axes_names == ("RA", "DEC")
+
+
+def test_create_fitwcs():
+    """ Test GWCS vs FITS WCS results. """
+    im = _create_model_3d()
+    w3d = pointing.create_fitswcs(im)
+    gra, gdec, glam = w3d(1, 1, 1)
+
+    ff = fits_support.to_fits(im._instance, im._schema)
+    hdu = fits_support.get_hdu(ff._hdulist, "PRIMARY")
+    w = wcs.WCS(hdu.header)
+    wcel = w.sub(['celestial'])
+    ra, dec = wcel.all_pix2world(1, 1, 1)
+    utils.assert_allclose((ra, dec), (gra, gdec))

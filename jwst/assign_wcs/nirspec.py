@@ -9,7 +9,6 @@ from __future__ import (absolute_import, unicode_literals, division,
 import logging
 import numpy as np
 
-from asdf import AsdfFile
 from astropy.modeling import models, fitting
 from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Shift
 from astropy import units as u
@@ -23,6 +22,9 @@ from ..transforms.models import (Rotation3DToGWA, DirCos2Unitless, Slit2Msa,
                                  RefractionIndexFromPrism)
 from .util import not_implemented_mode
 from . import pointing
+from ..datamodels import (CollimatorModel, CameraModel, DisperserModel, FOREModel,
+                          IFUFOREModel, MSAModel, OTEModel, IFUPostModel, IFUSlicerModel,
+                          WavelengthrangeModel, FPAModel)
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -69,7 +71,9 @@ def imaging(input_model, reference_files):
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation').inverse
     dircos2unitless = DirCos2Unitless(name='directional_cosines2unitless')
 
-    col = AsdfFile.open(reference_files['collimator']).tree['model']
+    col_model = CollimatorModel(reference_files['collimator'])
+    col = col.model
+    col_model.close()
 
     # Get the default spectral order and wavelength range and record them in the model.
     sporder, wrange = get_spectral_order_wrange(input_model, reference_files['wavelengthrange'])
@@ -93,8 +97,8 @@ def imaging(input_model, reference_files):
         msa2oteip = msa2ote | Mapping((0, 1), n_inputs=3)
         msa2oteip.inverse = Mapping((0, 1, 0, 1)) | msa2ote.inverse | Mapping((0, 1), n_inputs=3)
         # OTEIP to V2,V3 transform
-        with AsdfFile.open(reference_files['ote']) as f:
-            oteip2v23 = f.tree['model'].copy()
+        with OTEModel(reference_files['ote']) as f:
+            oteip2v23 = f.model
 
         # V2, V3 to world (RA, DEC) transform
         tel2sky = pointing.v23tosky(input_model)
@@ -481,19 +485,28 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
     lamp = input_model.meta.instrument.lamp_state
     grating = input_model.meta.instrument.grating
 
-    wave_range = AsdfFile.open(wavelengthrange_file)
+    #wave_range = AsdfFile.open(wavelengthrange_file)
+    wave_range_model = WavelengthrangeModel(wavelengthrange_file)
+    wrange_selector = wave_range_model.waverange_selector
     if filter == "OPAQUE":
         keyword = lamp + '_' + grating
     else:
         keyword = filter + '_' + grating
     try:
-        order = wave_range.tree['filter_grating'][keyword]['order']
-        wrange = wave_range.tree['filter_grating'][keyword]['range']
+        index = wrange_selector.index(keyword)
+        #order = wave_range.tree['filter_grating'][keyword]['order']
+        #wrange = wave_range.tree['filter_grating'][keyword]['range']
     except KeyError:
+        index = None
+    if index is not None:
+        order = wave_range_model.order[index]
+        wrange = wave_range_model.wavelengthrange[index]
+    else:
         order = -1
         wrange = full_range
         log.warning("Combination {0} missing in wavelengthrange file, setting order to -1 and range to {1}.".format(keyword, full_range))
-    wave_range.close()
+
+    wave_range_model.close()
     return order, wrange
 
 
@@ -514,12 +527,16 @@ def ifuslit_to_msa(slits, reference_files):
         Transform from slit_frame to msa_frame.
     """
 
-    ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
+    #ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
+    ifuslicer = IFUSlicerModel(reference_files['ifuslicer'])
     models = []
-    ifuslicer_model = (ifuslicer.tree['model']).rename('ifuslicer_model')
+    #ifuslicer_model = (ifuslicer.tree['model']).rename('ifuslicer_model')
+    ifuslicer_model = ifuslicer.model
     for slit in slits:
-        slitdata = ifuslicer.tree['data'][slit]
+        #slitdata = ifuslicer.tree['data'][slit]
+        slitdata = ifuslicer.data[slit]
         slitdata_model = (get_slit_location_model(slitdata)).rename('slitdata_model')
+
         msa_transform = slitdata_model | ifuslicer_model
         models.append(msa_transform)
     ifuslicer.close()
@@ -543,7 +560,8 @@ def slit_to_msa(open_slits, msafile):
     model : `~jwst.transforms.Slit2Msa` model.
         Transform from slit_frame to msa_frame.
     """
-    msa = AsdfFile.open(msafile)
+    #msa = AsdfFile.open(msafile)
+    msa = MSAModel(msafile)
     models = []
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant==quadrant]
@@ -600,15 +618,20 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     mask = mask_slit(ymin, ymax)
 
-    ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
-    ifupost = AsdfFile.open(reference_files['ifupost'])
+    #ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
+    #ifupost = AsdfFile.open(reference_files['ifupost'])
+    ifuslicer = IFUSlicerModel(reference_files['ifuslicer'])
+    ifupost = IFUPostModel(reference_files['ifupost'])
     slit_models = []
-    ifuslicer_model = ifuslicer.tree['model']
+    #ifuslicer_model = ifuslicer.tree['model']
+    ifuslicer_model = ifuslicer.model
     for slit in slits:
-        slitdata = ifuslicer.tree['data'][slit]
+        #slitdata = ifuslicer.tree['data'][slit]
+        slitdata = ifuslicer.data[slit]
         slitdata_model = get_slit_location_model(slitdata)
         ifuslicer_transform = (slitdata_model | ifuslicer_model)
-        ifupost_transform = ifupost.tree[slit]['model']
+        #ifupost_transform = ifupost.tree[slit]['model']
+        ifupost_transform = getattr(ifupost, "slice_" + str(slit))
         msa2gwa = ifuslicer_transform | ifupost_transform | collimator2gwa
         gwa2msa = gwa_to_ymsa(msa2gwa)# TODO: Use model sets here
         bgwa2msa = Mapping((0, 1, 0, 1), n_inputs=3) | \
@@ -663,15 +686,19 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     if input_model.meta.instrument.filter == 'OPAQUE':
         lgreq = lgreq | Scale(1e6)
 
-    msa = AsdfFile.open(reference_files['msa'])
+    #msa = AsdfFile.open(reference_files['msa'])
+        msa = MSAModel(reference_files['msa'])
     slit_models = []
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant==quadrant]
         log.info("There are {0} open slits in quadrant {1}".format(len(slits_in_quadrant), quadrant))
+        msa_quadrant = getattr(msa, 'Q' + str(quadrant))
         if any(slits_in_quadrant):
-            msa_model = msa.tree[quadrant]['model']
+            #msa_model = msa.tree[quadrant]['model']
+            msa_model = msa_quadrant.model
             log.info("Getting slits location for quadrant {0}".format(quadrant))
-            msa_data = msa.tree[quadrant]['data']
+            #msa_data = msa.tree[quadrant]['data']
+            msa_data = msa_quadrant.data
             for slit in slits_in_quadrant:
                 mask = mask_slit(slit.ymin, slit.ymax)
                 slit_id = slit.shutter_id
@@ -711,6 +738,7 @@ def angle_from_disperser(disperser, input_model):
                       disperser['tcoef'], disperser['tref'], disperser['pref'],
                       system_temperature, system_pressure, name="snell_law")
         return snell
+
 
 def wavelength_from_disperser(disperser, input_model):
     sporder = input_model.meta.wcsinfo.spectral_order
@@ -763,10 +791,14 @@ def detector_to_gwa(reference_files, detector, disperser):
         Transform from DETECTOR frame to GWA frame.
 
     """
-    with AsdfFile.open(reference_files['fpa']) as f:
-        fpa = f.tree[detector].copy()
-    with AsdfFile.open(reference_files['camera']) as f:
-        camera = f.tree['model'].copy()
+    #with AsdfFile.open(reference_files['fpa']) as f:
+    #    fpa = f.tree[detector].copy()
+    with FPAModel(reference_files['fpa']) as f:
+        fpa = getattr(f, detector.lower() + '_model')
+    #with AsdfFile.open(reference_files['camera']) as f:
+    with CameraModel(reference_files['camera']) as f:
+        #camera = f.tree['model'].copy()
+        camera = f.model
 
     angles = [disperser['theta_x'], disperser['theta_y'],
                disperser['theta_z'], disperser['tilt_y']]
@@ -884,8 +916,9 @@ def collimator_to_gwa(reference_files, disperser):
         Transform from COLLIMATOR to GWA frame.
 
     """
-    with AsdfFile.open(reference_files['collimator']) as f:
-        collimator = f.tree['model'].copy()
+    with CollimatorModel(reference_files['collimator']) as f:
+        #collimator = f.tree['model'].copy()
+        collimator = f.model
     angles = [disperser['theta_x'], disperser['theta_y'],
               disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
@@ -910,8 +943,9 @@ def get_disperser(input_model, disperserfile):
     disperser : dict
         The corrected disperser information.
     """
-    with AsdfFile.open(disperserfile) as f:
-        disperser = f.tree
+    #with DisperserModel(disperserfile) as f:
+    #    disperser = f.tree
+    disperser = DisperserModel(disperserfile)
     xtilt = input_model.meta.instrument.gwa_xtilt
     ytilt = input_model.meta.instrument.gwa_ytilt
     disperser = correct_tilt(disperser, xtilt, ytilt)
@@ -933,8 +967,8 @@ def correct_tilt(disperser, xtilt, ytilt):
 
     """
     def _get_correction(gwa_tilt, tilt_angle):
-        phi_exposure = gwa_tilt['tilt_model'](tilt_angle)
-        phi_calibrator = gwa_tilt['tilt_model'](gwa_tilt['zeroreadings'][0])
+        phi_exposure = gwa_tilt.tilt_model(tilt_angle)
+        phi_calibrator = gwa_tilt.tilt_model(gwa_tilt.zeroreadings[0])
         del_theta = 0.5 * (phi_exposure - phi_calibrator) / 3600. #in deg
         return del_theta
 
@@ -943,15 +977,15 @@ def correct_tilt(disperser, xtilt, ytilt):
     log.info("gwa_xtilt is {0}".format(xtilt))
 
     if xtilt is not None:
-        theta_y_correction = _get_correction(disperser['gwa_tiltx'], xtilt)
+        theta_y_correction = _get_correction(disperser.gwa_tiltx, xtilt)
         log.info('theta_y correction: {0}'.format(theta_y_correction))
-        disp['theta_y'] = disperser['theta_y'] + theta_y_correction
+        disp['theta_y'] = disperser.theta_y + theta_y_correction
     else:
         log.info('gwa_xtilt not applied')
     if ytilt is not None:
-        theta_x_correction = _get_correction(disperser['gwa_tilty'], ytilt)
+        theta_x_correction = _get_correction(disperser.gwa_tilty, ytilt)
         log.info('theta_x correction: {0}'.format(theta_x_correction))
-        disp['theta_x'] = disperser['theta_x'] + theta_x_correction
+        disp.theta_x = disperser.theta_x + theta_x_correction
     else:
         log.info('gwa_ytilt not applied')
     return disp
@@ -971,10 +1005,11 @@ def ifu_msa_to_oteip(reference_files):
     model : `~astropy.modeling.core.Model` model.
         Transform from MSA to OTEIP.
     """
-    with AsdfFile.open(reference_files['fore']) as f:
-        fore = f.tree['model'].copy()
-    with AsdfFile.open(reference_files['ifufore']) as f:
-        ifufore = f.tree['model'].copy()
+    with FOREModel(reference_files['fore']) as f:
+        #fore = f.tree['model'].copy()
+        fore = f.model
+    with IFUFOREModel(reference_files['ifufore']) as f:
+        ifufore = f.model
 
     msa2fore_mapping = Mapping((0, 1, 2, 2))
     msa2fore_mapping.inverse = Identity(3)
@@ -999,8 +1034,8 @@ def msa_to_oteip(reference_files):
         Transform from MSA to OTEIP.
 
     """
-    with AsdfFile.open(reference_files['fore']) as f:
-        fore = f.tree['model'].copy()
+    with FOREModel(reference_files['fore']) as f:
+        fore = f.model
     msa2fore_mapping = Mapping((0, 1, 2, 2), name='msa2fore_mapping')
     msa2fore_mapping.inverse = Identity(3)
     return msa2fore_mapping | (fore & Identity(1))
@@ -1021,8 +1056,8 @@ def oteip_to_v23(reference_files):
         Transform from OTEIP to V2V3.
 
     """
-    with AsdfFile.open(reference_files['ote']) as f:
-        ote = f.tree['model'].copy()
+    with OTEModel(reference_files['ote']) as f:
+        ote = f.model
     fore2ote_mapping = Identity(3, name='fore2ote_mapping')
     fore2ote_mapping.inverse = Mapping((0, 1, 2, 2))
     # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
@@ -1204,12 +1239,14 @@ def validate_open_slits(input_model, open_slits, reference_files):
 
     det2dms = dms_to_sca(input_model).inverse
     # read models from reference files
-    with AsdfFile.open(reference_files['fpa']) as f:
-        fpa = f.tree[input_model.meta.instrument.detector].copy()
-    with AsdfFile.open(reference_files['camera']) as f:
-        camera = f.tree['model'].copy()
-    with AsdfFile.open(reference_files['disperser']) as f:
-        disperser = f.tree
+    with FPAModel(reference_files['fpa']) as f:
+        #fpa = f.tree[input_model.meta.instrument.detector].copy()
+        fpa = getattr(f, input_model.meta.instrument.detector.lower() + '_model')
+    with CameraModel(reference_files['camera']) as f:
+        camera = f.model
+    #with DisperserModel(reference_files['disperser']) as f:
+        #disperser = f.tree
+    disperser = DisperserModel(reference_files['disperser'])
 
     dircos2u = DirCos2Unitless(name='directional2unitless_cosines')
     disperser = correct_tilt(disperser, input_model.meta.instrument.gwa_xtilt,
@@ -1225,14 +1262,17 @@ def validate_open_slits(input_model, open_slits, reference_files):
     # collimator to GWA
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
 
-    msa = AsdfFile.open(reference_files['msa'])
+    msa = MSAModel(reference_files['msa'])
     col2det = collimator2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq | \
             gwa2det | det2dms
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant==quadrant]
         if any(slits_in_quadrant):
-            msa_model = msa.tree[quadrant]['model']
-            msa_data = msa.tree[quadrant]['data']
+            msa_quadrant = getattr(msa, "Q_"+str(quadrant))
+            #msa_model = msa.tree[quadrant]['model']
+            #msa_data = msa.tree[quadrant]['data']
+            msa_model = msa_quadrant.model
+            msa_data = msa_quadrant.data
             for slit in slits_in_quadrant:
                 slit_id = slit.shutter_id
                 slitdata = msa_data[slit_id]

@@ -441,6 +441,11 @@ properties:
               NRSRAPID, NRSIRS2RAPID, ALLIRS2, NRSSLOW, RAPID,
               SHALLOW2, SHALLOW4, SLOW, TRACK, ANY, N/A]
             fits_keyword: READPATT
+          noutputs:
+            title: Number of detector outputs used
+            type: integer
+            enum: [1, 4]
+            fits_keyword: NOUTPUTS
           nints:
             title: Number of integrations in exposure
             type: integer

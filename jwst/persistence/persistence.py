@@ -194,15 +194,17 @@ class DataSet():
             # Decrease traps_filled by the number of traps that decayed
             # in the time (to_start) from the end of the traps_filled file
             # to the start of the current exposure.
+            # Note that to_start includes the reset (if any) at the
+            # beginning of the exposure, because meta.exposure.start_time
+            # is the time when the actual exposure started, not the time
+            # at the beginning of the reset prior to the exposure.
+            # Decays during the time covered by the reset (again, if any)
+            # between integrations will be taken care of in the loop
+            # over integrations.
             to_start = (self.output_obj.meta.exposure.start_time
                         - self.traps_filled.meta.exposure.end_time) * 86400.
             log.debug("Decay time for previous traps-filled file = %g s",
                       to_start)
-            # Decay during the reset at the beginning of the integration
-            # will be accounted for in the loop over integrations.
-            self.get_group_info(0)              # first integration
-            reset_time = self.nresets * self.tframe
-            to_start -= reset_time
             for k in range(nfamilies):
                 decay_param_k = self.get_decay_param(par, k)
                 decay = self.compute_decay(self.traps_filled.data[k],
@@ -274,7 +276,9 @@ class DataSet():
                 for k in range(nfamilies):
                     decay_param_k = self.get_decay_param(par, k)
                     # Compute and subtract the decays during the reset.
-                    if group == 0 and self.nresets > 0:
+                    # Decays during the reset at the beginning of the
+                    # first integration have already been accounted for.
+                    if integ > 0 and group == 0 and self.nresets > 0:
                         reset_time = self.tframe * self.nresets
                         decay_during_reset = \
                             self.compute_decay(self.traps_filled.data[k],
@@ -429,7 +433,6 @@ class DataSet():
             sometimes be 2-D and other times 3-D.
         """
 
-        # The xxx
         refsub = ref.copy()
         refsub.data = ref.data[..., slc[0], slc[1]].copy()
         if ref.__hasattr__(err):
