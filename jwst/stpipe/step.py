@@ -651,16 +651,6 @@ class Step(object):
                 (reference_file_type, hdr_name))
         return crds_client.check_reference_open(reference_name)
 
-    @classmethod
-    def list_reference_files(cls, input_file):
-        """
-        List reference types and files name for a particular input file.
-        """
-        if cls._is_container(input_file):
-            return
-        return crds_client.get_multiple_reference_paths(
-            input_file, cls.reference_file_types)
-
     def reference_uri_to_cache_path(self, reference_uri):
         """Convert an abstract CRDS reference URI to an absolute file path in the CRDS
         cache.  Reference URI's are typically output to dataset headers to record the

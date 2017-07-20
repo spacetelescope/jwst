@@ -129,7 +129,7 @@ class Pipeline(Step):
         Precache all of the expected reference files in this Pipeline
         and all of its constituent Steps process method is called.
 
-        input_file:  a filename string, model, or container model.
+        input_file:  a filename string, model, or model container.
 
         """
         from .. import datamodels
