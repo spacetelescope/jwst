@@ -1,0 +1,41 @@
+allOf:
+- $ref: core.schema.yaml
+- $ref: bunit.schema.yaml
+- type: object
+  properties:
+    data:
+      title: The science data
+      fits_hdu: SCI
+      default: 0.0
+      ndim: 2
+      datatype: float32
+    dq:
+      title: Data quality array
+      fits_hdu: DQ
+      default: 0
+      datatype: uint32
+    err:
+      title: Error array
+      fits_hdu: ERR
+      default: 0.0
+      datatype: float32
+    zeroframe:
+      title: Zeroframe array
+      fits_hdu: ZEROFRAME
+      default: 0.0
+      datatype: float32
+    area:
+      title: Pixel area map array
+      fits_hdu: AREA
+      default: 0.0
+      datatype: float32
+    relsens:
+      $ref: relsens.schema.yaml
+    relsens2d:
+      title: Sensitivity array
+      fits_hdu: RELSENS2D
+      default: 1.0
+      datatype: float32
+- $ref: pathlosscorr.schema.yaml
+
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema
