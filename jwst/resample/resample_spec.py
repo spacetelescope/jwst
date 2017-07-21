@@ -17,7 +17,6 @@ from astropy.modeling import fitting
 from gwcs import wcstools, WCS
 from gwcs.utils import _compute_lon_pole
 
-from ..stpipe import crds_client
 from .. import datamodels
 from ..assign_wcs import util
 from . import gwcs_drizzle
