@@ -112,7 +112,6 @@ def get_dataset_info(model):
     exp_type = model.meta.exposure.type
 
     n_int = model.data.shape[0]
-    nreads = model.data.shape[1]
     asize2 = model.data.shape[2]
     asize1 = model.data.shape[3]
 
@@ -121,7 +120,6 @@ def get_dataset_info(model):
 
     log.info('Instrume: %s' % (instrume))
     log.info('Number of integrations: %d' % (n_int))
-    log.info('Number of reads: %d' % (nreads))
     log.info('Frame time: %d' % (frame_time))
     log.info('Number of groups per integration: %d' % (ngroups))
     log.info('Effective integration time per group: %s' % (effinttm))
