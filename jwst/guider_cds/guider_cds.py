@@ -109,7 +109,7 @@ def get_dataset_info(model):
     ngroups = model.meta.exposure.ngroups
 
     effinttm = model.meta.exposure.integration_time
-    exp_type = model.meta.exposure.exposure.type
+    exp_type = model.meta.exposure.type
 
     n_int = model.data.shape[0]
     nreads = model.data.shape[1]
