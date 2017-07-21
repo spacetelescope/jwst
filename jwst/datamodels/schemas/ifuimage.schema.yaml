@@ -22,19 +22,16 @@ allOf:
     zeroframe:
       title: Zeroframe array
       fits_hdu: ZEROFRAME
-      default: 0.0
       datatype: float32
     area:
       title: Pixel area map array
       fits_hdu: AREA
-      default: 0.0
       datatype: float32
     relsens:
       $ref: relsens.schema.yaml
     relsens2d:
       title: Sensitivity array
       fits_hdu: RELSENS2D
-      default: 1.0
       datatype: float32
 - $ref: pathlosscorr.schema.yaml
 
