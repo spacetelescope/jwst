@@ -44,7 +44,7 @@ class SourceCatalogStep(Step):
             cat_filepath = source_catalog._replace_suffix_ext(
                 model.meta.filename, old_suffixes, 'cat', output_ext='escv',
                 output_dir=output_dir)
-            catalog.write(cat_filepath, format='ascii.ecsv')
+            catalog.write(cat_filepath, format='ascii.ecsv', overwrite=True)
             self.log.info('Wrote source catalog: {0}'
                           .format(cat_filepath))
             model.meta.source_catalog.filename = cat_filepath
