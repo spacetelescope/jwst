@@ -178,9 +178,9 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
                     model.meta.photometry.pixelarea_arcsecsq)
 
     # define AB mag
-    mask = np.isfinite(micro_Jy)
     abmag = np.full(nsources, np.nan)
-    abmag[mask] = -2.5 * np.log10(micro_Jy) + 23.9
+    mask = np.isfinite(micro_Jy)
+    abmag[mask] = -2.5 * np.log10(micro_Jy[mask]) + 23.9
     catalog['abmag'] = abmag
 
     # define AB mag error
