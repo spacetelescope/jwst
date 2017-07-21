@@ -1,5 +1,5 @@
 import re
-from os.path import split, splitext, join
+from os.path import split, splitext, join, abspath, expanduser
 
 import numpy as np
 from astropy.convolution import Gaussian2DKernel
@@ -25,7 +25,7 @@ def _replace_suffix_ext(filepath, old_suffix_list, new_suffix,
 
     output_path = '{0}_{1}.{2}'.format(name, new_suffix, output_ext)
     if output_dir is not None:
-        output_path = join(output_dir, output_path)
+        output_path = abspath(expanduser(join(output_dir, output_path)))
 
     return output_path
 
