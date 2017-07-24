@@ -165,9 +165,7 @@ def match_det2cube(self, input_model,
         ydistance = (self.Ycenters - coord2[ipt])
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
 
-#        print(radius.shape[0]) 
-#        for ii in range(radius.shape[0]):
-#            print(radius[ii],ii,(radius[ii] <= self.rois),Cube.Xcenters[ii],Cube.Ycenters[ii])
+
         indexr = np.where(radius  <=self.rois)
         indexz = np.where(abs(self.zcoord - wave[ipt]) <= self.roiw)
 
@@ -185,24 +183,20 @@ def match_det2cube(self, input_model,
         for iz, zz in enumerate(indexz[0]):
             istart = zz * nplane
             for ir, rr in enumerate(indexr[0]):
-
                 yy_cube = int(rr/self.naxis1)
                 xx_cube = rr - yy_cube*self.naxis1
 #                print('xx yy cube',rr,self.naxis1,xx_cube,yy_cube)
 #________________________________________________________________________________
-                if self.weighting =='standard':
+                if self.weighting =='msm':
 
                     d1 = (xi_cube[ir] - coord1[ipt])/self.Cdelt1
                     d2 = (eta_cube[ir] - coord2[ipt])/self.Cdelt2
                     d3 = (zlam[iz] - wave[ipt])/self.Cdelt3
-#                    print('d1,d2,d3',d1,d2,d3)
                     
                     weight_distance = math.sqrt(d1*d1 + d2*d2 + d3*d3)
                     weight_distance = math.pow(weight_distance,self.weight_power)
-#                    print('weight_distance',weight_distance)
 #________________________________________________________________________________
 # if weight is miripsf -distances determined in alpha-beta coordinate system 
-
                 elif self.weighting =='miripsf':
                     weights = FindNormalizationWeights(wave[ipt], 
                                                          wave_resol,

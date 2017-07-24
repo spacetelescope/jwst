@@ -51,7 +51,6 @@ class CubeData(object):
         self.par_filename = par_filename
         self.resol_filename = resol_filename
         
-
         self.single = pars.get('single')
         self.channel = pars.get('channel')
         self.subchannel = pars.get('subchannel')
@@ -436,7 +435,6 @@ class CubeData(object):
 
         IFUCube = CubeData.setup_IFUCube(self,0)
 
-
 #_______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
         CubeData.update_IFUCube(self,IFUCube, self.spaxel)
@@ -470,7 +468,7 @@ class CubeData(object):
         this_par1 = self.band_channel[0] # only one channel is used in this approach
         this_par2 = None # not import for this type of mapping
 
-        self.weighting =='standard'
+        self.weighting =='msm'
         c1_offset = 0
         c2_offset = 0
         for j in range(n):
@@ -886,15 +884,56 @@ class CubeData(object):
         IFUCube.meta.dq_extension = 'DQ'
         IFUCube.meta.roi_spatial = self.rois    
         IFUCube.meta.roi_wave = self.roiw
+        IFUCube.meta.weighting = self.weighting
+        IFUCube.meta.weight_power = self.weight_power
 
 #        IFUCube.meta.data_model_type = 'IFUCubeModel'
         IFUCube.error_type = 'ERR'
 
-        if(self.coord_system == 'alpha-beta'):
-            IFUCube.meta.wcsinfo.ctype1 = 'ALPHA'
-            IFUCube.meta.wcsinfo.ctype2 = 'BETA'
+        if self.coord_system == 'alpha-beta' :
             IFUCube.meta.wcsinfo.cunit1 = 'arcsec'
             IFUCube.meta.wcsinfo.cunit2 = 'arcsec'
+
+            if self.channel == '1' and self.band == 'SHORT' :
+                IFUCube.meta.wcsinfo.ctype1 = 'MRSAL1A'
+                IFUCube.meta.wcsinfo.ctype2 = 'MRSBE1A'
+            if self.channel == '2' and self.band == 'SHORT':
+                IFUCube.meta.wcsinfo.ctype1 = 'MRSAL2A'
+                IFUCube.meta.wcsinfo.ctype2 = 'MRSBE2A'
+            if self.channel == '3' and self.band == 'SHORT':
+                IFUCube.meta.wcsinfo.ctype1 = 'MRSAL3A'
+                IFUCube.meta.wcsinfo.ctype2 = 'MRSBE3A'
+            if self.channel == '4' and self.band == 'SHORT':
+                IFUCube.meta.wcsinfo.ctype1 = 'MRSAL4A'
+                IFUCube.meta.wcsinfo.ctype2 = 'MRSBE4A'
+
+            if self.channel == '1' and self.band == 'MEDIUM':
+                IFUCube.meta.wcsinfo.ctype1 = 'MRSAL1B'
+                IFUCube.meta.wcsinfo.ctype2 = 'MRSBE1B'
+            if self.channel == '2' and self.band == 'MEDIUM':
+                IFUCube.meta.wcsinfo.ctype1 = 'MRSAL2B'
+                IFUCube.meta.wcsinfo.ctype2 = 'MRSBE2B'
+            if self.channel == '3' and self.band == 'MEDIUM':
+                IFUCube.meta.wcsinfo.ctype1 = 'MRSAL3B'
+                IFUCube.meta.wcsinfo.ctype2 = 'MRSBE3B'
+            if self.channel == '4' and self.band == 'MEDIUM':
+                IFUCube.meta.wcsinfo.ctype1 = 'MRSAL4B'
+                IFUCube.meta.wcsinfo.ctype2 = 'MRSBE4B'
+
+            if self.channel == '1' and self.band == 'LONG':
+                IFUCube.meta.wcsinfo.ctype1 = 'MRSAL1C'
+                IFUCube.meta.wcsinfo.ctype2 = 'MRSBE1C'
+            if self.channel == '2' and self.band == 'LONG':
+                IFUCube.meta.wcsinfo.ctype1 = 'MRSAL2C'
+                IFUCube.meta.wcsinfo.ctype2 = 'MRSBE2C'
+            if self.channel == '3' and self.band == 'LONG':
+                IFUCube.meta.wcsinfo.ctype1 = 'MRSAL3C'
+                IFUCube.meta.wcsinfo.ctype2 = 'MRSBE3C'
+            if self.channel == '4' and self.band == 'LONG':
+                IFUCube.meta.wcsinfo.ctype1 = 'MRSAL4C'
+                IFUCube.meta.wcsinfo.ctype2 = 'MRSBE4C'
+
+
 
 
         wcsobj = pointing.create_fitswcs(IFUCube)
