@@ -68,7 +68,7 @@ two other methods have been introduced: ``'globalmin'`` and
 
 Step Arguments
 --------------
-The ``skymatch`` step has the following optional argument:
+The ``skymatch`` step has the following optional arguments:
 
 **General sky matching parameters:**
 * ``skymethod``: A `str` value indicating sky computation algorithm to be used.

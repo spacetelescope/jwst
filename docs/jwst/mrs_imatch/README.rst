@@ -48,8 +48,8 @@ The mrs_imatch step has two optional argument:
 
 * ``bkg_degree``: An integer background polynomial degree (Default: 1)
 
-* ``subtract``: A boolean value indicating whether computed matching
-  "backgrounds" should subtracted from image data (Default: `False`).
+* ``subtract``: A boolean value indicating whether the computed matching
+  "backgrounds" should be subtracted from image data (Default: `False`).
 
 Reference Files
 ===============
