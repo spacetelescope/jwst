@@ -59,6 +59,11 @@ class CubeBlot(object):
         self.naxis1 = self.median_skycube.data.shape[2]
         self.naxis2 = self.median_skycube.data.shape[1]
         self.naxis3 =  self.median_skycube.data.shape[0]
+        self.cdelt1 = median_model.meta.wcsinfo.cdelt1*3600.0
+        self.cdelt2 = median_model.meta.wcsinfo.cdelt2*3600.0
+        self.cdelt3 = median_model.meta.wcsinfo.cdelt3*3600.0
+
+        print('cdelts',self.cdelt1,self.cdelt2,self.cdelt3)
 
         xcube,ycube,zcube = wcstools.grid_from_bounding_box(self.median_skycube.meta.wcs.bounding_box,
                                                 step=(1,1,1))
@@ -66,10 +71,19 @@ class CubeBlot(object):
         cube_pos1,cube_pos2,cube_pos3 = self.median_skycube.meta.wcs(xcube,ycube,zcube)
         num = self.naxis1* self.naxis2 * self.naxis3
         flux = self.median_skycube.data
-        self.cube_ra = np.reshape(cube_pos1,num)
-        self.cube_dec = np.reshape(cube_pos2,num)
-        self.cube_wave = np.reshape(cube_pos3,num)
-        self.cube_flux = np.reshape(flux,num)            
+        self.cube_ra = cube_pos1
+        self.cube_dec = cube_pos2
+        self.cube_wave = cube_pos3
+        self.cube_flux = flux
+
+        self.lam_centers = self.cube_wave[:,0,0]
+        
+
+#        self.cube_ra = np.reshape(cube_pos1,num)
+#        self.cube_dec = np.reshape(cube_pos2,num)
+#        self.cube_wave = np.reshape(cube_pos3,num)
+#        self.cube_flux = np.reshape(flux,num)
+        print('size of input cube',cube_pos1.shape,cube_pos2.shape,cube_pos3.shape)
 # initialize blotted images to be original input images
 
         self.input_models = input_models
@@ -98,7 +112,6 @@ class CubeBlot(object):
 
     def blot_images(self):
 
-
         blot_models = datamodels.ModelContainer() 
         lower_limit = 0.01
         instrument_info = instrument_defaults.InstrumentInfo()
@@ -111,8 +124,8 @@ class CubeBlot(object):
             filename = model.meta.filename
             indx = filename.rfind('.fits')
             blot.meta.filename = filename[:indx] + '_blot.fits' #set output name
-            print('Blotting back model',model.meta.filename)
 
+            log.info('Blotting back %s',model.meta.filename)
             if(self.instrument =='MIRI'):
                 
                 this_par1 = self.channel # only one channel is blotted at a time
@@ -139,15 +152,6 @@ class CubeBlot(object):
                 good_data =  np.where( value == True)
                 y,x = good_data
 
-#                print('size of value',value.size,value.shape)                
-#                print(value[0,0:100])
-#                print('x', x[0:100])
-#                print(valid1[10,0:100])
-#                print(pixel_mask[10,0:100])
-
-#                print('length of index ',len(good_data[0]))                       
-#                print('good data',good_data)
-                
                 ra_blot = ra_det[good_data]
                 dec_blot = dec_det[good_data]
                 wave_blot = wave_det[good_data]
@@ -159,80 +163,80 @@ class CubeBlot(object):
                 xi_cube,eta_cube = coord.radec2std(crval1, crval2, # cube values
                                                    self.cube_ra,self.cube_dec) 
 
-                print('size of xi_blot',xi_blot.shape)
+                nplane = self.naxis1 * self.naxis2
+                self.xi_centers = np.reshape(xi_cube[0,:,:],nplane)
+                self.eta_centers =np.reshape(eta_cube[0,:,:],nplane)
+                
+#                print('size of xi, eta centers',self.xi_centers.shape,self.eta_centers.shape))
+#                print('size of cube',xi_cube.shape)
+
+
                 num = ra_blot.size
-                print('Size of pixel detectors looping over/1024',num/1024)
+#                print('Size of pixel detectors looping over',num)
                 iprint = 0 
 #________________________________________________________________________________  
                 # loop over the valid pixels on the detector
                 for ipt in range(0, num - 1):
-                    
+
                     # xx,yy are the index value of the orginal detector frame -
                     # blot image
                     yy = y[ipt]
                     xx = x[ipt]                    
                     # find the cube values that fall withing ROI of detector xx,yy
-                    xdistance = (xi_blot[ipt] - xi_cube)
-                    ydistance = (eta_blot[ipt] - eta_cube)
+                    xdistance = (xi_blot[ipt] - self.xi_centers)
+                    ydistance = (eta_blot[ipt] -self.eta_centers)
+
                     radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
                 
-                    index =  np.where(np.logical_and( 
-                            (radius  <=self.rois),  
-                            (abs(wave_blot[ipt] - self.cube_wave) <= self.roiw)
-                            ))
-#                    print('for detector point',ipt,xi_blot[ipt],eta_blot[ipt],wave_blot[ipt])
-#                    print(' original x,y index',x[ipt],y[ipt])
-#                    print(' index, # and value ',len(index[0]),index)
+                    indexr = np.where(radius  <=self.rois)
+                    indexz = np.where(abs(self.lam_centers - wave_blot[ipt]) <= self.roiw)
 
+                    wave_found = self.lam_centers[indexz]        # z Cube values falling in wavelength roi
+                    xi_found = self.xi_centers[indexr]   # x Cube values within radius 
+                    eta_found = self.eta_centers[indexr]  # y cube values with the radius
 
-                    wave_found = self.cube_wave[index]        # z Cube values falling in wavelength roi
-                    xi_found = xi_cube[index]   # x Cube values within radius 
-                    eta_found = eta_cube[index]  # y cube values with the radius
-#                    print('wave found',wave_found)
-#                    print('xi_found',xi_found)
-#                    print('eta found',eta_found)
+#                    if(iprint == 0):
+#                        print ('on pixel ipt',ipt,len(indexr[0]),len(indexz[0]))
+#                        print('point',xi_blot[ipt],eta_blot[ipt],wave_blot[ipt])
+
+#                        print('wave found',wave_found)
+#                        print('xi_found',xi_found)
+#                        print('eta found',eta_found)
 
 #________________________________________________________________________________  
                     #loop over the median cube pixels that fall within the ROI
                     # of the detector center
-                    if(iprint == 0):
-                        print ('on pixel ipt',ipt,len(index[0]))
-                        
-#                    print(xi_found.shape)     
-                    d1 = xi_found- xi_blot[ipt]
-                    d2 = eta_found - eta_blot[ipt]
-                    d3 = wave_found - wave_blot[ipt]
-                    d = d1*d1 + d2*d2 + d3*d3
 
-                    for ii, ij in enumerate(index[0]):
-                        #print(ipt,ii,ij,xx,yy)
-                        #print(xi_found[ii],xi_blot[ipt],eta_found[ii],eta_blot[ipt])
-#                        d1 = xi_found[ii] - xi_blot[ipt]
-#                        d2 = eta_found[ii] - eta_blot[ipt]
-#                        d3 = wave_found[ii] - wave_blot[ipt]
-#                        weight_distance = math.sqrt(d1*d1 + d2*d2 + d3*d3)
-#                        weight_distance = math.pow(weight_distance,self.weight_power)
-#                        if weight_distance < lower_limit: weight_distance = lower_limit
-#                        weight_distance = 1.0 / weight_distance
-                        #print('index',index[0][j])
+                    for iz, zz in enumerate(indexz[0]):
+                        istart = zz * nplane
+                        for ir, rr in enumerate(indexr[0]):
+                            yy_cube = int(rr/self.naxis1)
+                            xx_cube = rr - yy_cube*self.naxis1
+                            
+                            d1 = (xi_found[ir]- xi_blot[ipt])/self.cdelt1
+                            d2 = (eta_found[ir] - eta_blot[ipt])/self.cdelt2
+                            d3 = (wave_found[iz] - wave_blot[ipt])/self.cdelt3
+                            
+                            weight_distance = math.sqrt(d1*d1 + d2*d2 + d3*d3)
+                            weight_distance = math.pow(weight_distance,self.weight_power)
+
+                            if weight_distance < lower_limit: weight_distance = lower_limit
+                            weight_distance = 1.0 / weight_distance
 
 
-                        weight_distance = math.sqrt(d[ii])
-                        weight_distance = math.pow(weight_distance,self.weight_power)
-                        if weight_distance < lower_limit: weight_distance = lower_limit
-                        weight_distance = 1.0 / weight_distance
-
-                        blot_flux[yy,xx] = blot_flux[yy,xx]  + weight_distance*self.cube_flux[ij]
-                        blot_weight[yy,xx] =blot_weight[yy,xx]  + weight_distance
-                        blot_iflux[yy,xx] = blot_iflux[yy,xx] + 1
+                            blot_flux[yy,xx] = blot_flux[yy,xx]  + \
+                                weight_distance*self.cube_flux[zz,yy_cube,xx_cube]
+                            blot_weight[yy,xx] =blot_weight[yy,xx]  + weight_distance
+                            blot_iflux[yy,xx] = blot_iflux[yy,xx] + 1
+#________________________________________________________________________________  
                         
                     # determine finnal flux    
                     if(blot_iflux[yy,xx] > 0) :
                         blot_flux[yy,xx] = blot_flux[yy,xx]/blot_weight[yy,xx]
                     
-                    iprint = iprint+1
-                    if(iprint == 2048):
-                        iprint = 0 
+#                    iprint = iprint+1
+#                    if(iprint == 40960):
+#                        iprint = 0 
                         
                 blot.data = blot_flux
             blot_models.append(blot)

@@ -163,6 +163,7 @@ class CubeData(object):
 # store the input_filenames and input_models
         num = 0
         num = len(self.input_filenames)
+        
         self.number_files = num
         self.detector = detector
         self.instrument = instrument
@@ -209,7 +210,13 @@ class CubeData(object):
         # parameter file
 
         if self.roiw == 0.0: self.roiw = roi[0]
-        if self.rois == 0.0: self.rois = roi[1]
+        if self.rois == 0.0:  # user did not set so use defaults 
+            self.rois = roi[1]
+            if self.single or self.number_files < 4:
+                self.rois = self.rois * 1.5
+                log.info('Increasing spatial region of interest' + \
+                             ' default value set for 4 dithers %f', \
+                             self.rois)
         if self.interpolation == 'pointcloud':
             log.info('Region of interest  %f %f',self.rois,self.roiw)
 
@@ -643,7 +650,7 @@ class CubeData(object):
 
         instrument  = self.instrument
         nfiles = len(self.master_table.FileMap[instrument][this_par1][this_par2])
-        log.debug('Number of files in cube %i', nfiles)
+        log.info('Number of files/models in band %i', nfiles)
 
     # loop over the files that cover the spectral range the cube is for
 

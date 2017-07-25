@@ -151,6 +151,8 @@ def match_det2cube(self, input_model,
 # now loop over the pixel values for this region and find the spaxels that fall 
 # withing the region of interest.
     nn  = coord1.size
+
+#    print('looping over n points mapping to cloud',nn)
 #________________________________________________________________________________
     for ipt in range(0, nn - 1):
 #________________________________________________________________________________        
@@ -161,6 +163,8 @@ def match_det2cube(self, input_model,
 #        if(ipt > 2): sys.exit('STOP')
 #        print('For point ',coord1[ipt],coord2[ipt],wave[ipt],ipt)
 
+#        if(ipt == 0):
+#            print('size of Xcenters',self.Xcenters.size)
         xdistance = (self.Xcenters - coord1[ipt])
         ydistance = (self.Ycenters - coord2[ipt])
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
