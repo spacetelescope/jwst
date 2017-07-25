@@ -1,6 +1,7 @@
 """
-Sky statistics computation class for :py:func:`~jwst_pipeline.skymatch.skymatch.match`
-and :py:class:`~jwst_pipeline.skymatch.skyimage.SkyImage`.
+`skystatistics` module provides statistics computation class used by
+:py:func:`~jwst.skymatch.skymatch.match`
+and :py:class:`~jwst.skymatch.skyimage.SkyImage`.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 

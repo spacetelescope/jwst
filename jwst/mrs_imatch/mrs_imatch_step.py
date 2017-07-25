@@ -12,10 +12,10 @@ from __future__ import (absolute_import, division, unicode_literals,
 
 import numpy as np
 
-from ..stpipe import Step, cmdline
+from .. stpipe import Step, cmdline
 from .. import datamodels
 from .. wiimatch.match import *
-from ..cube_build import CubeBuildStep
+from .. cube_build import CubeBuildStep
 
 try:
     from stsci.tools.bitmask import bitfield_to_boolean_mask
