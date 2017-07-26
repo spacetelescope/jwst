@@ -42,5 +42,13 @@ Level3 Associations
    level3_asn_technical.rst
    level3_asn_rules.rst
 
+   
+Technical Notes
+===============
+.. toctree::
+   :maxdepth: 2
 
+   technote_sdp_workflow.rst
+
+   
 .. automodapi:: jwst.associations

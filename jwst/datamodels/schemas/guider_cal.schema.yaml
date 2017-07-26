@@ -1,0 +1,132 @@
+allOf:
+- $ref: core.schema.yaml
+- $ref: bunit.schema.yaml
+- type: object
+  properties:
+    data:
+      title: The output science data
+      fits_hdu: SCI
+      default: 0.0
+      ndim: 3
+      datatype: float32
+    dq:
+      title: Data quality array
+      fits_hdu: DQ
+      default: 0
+      ndim: 2
+      datatype: uint32
+    planned_star_table: 
+      title: Planned reference star table
+      fits_hdu: PLANNED_STARS
+      datatype:
+      - name: guide_star_order
+        datatype: int32
+      - name: reference_star_id
+        datatype: string
+      - name: ra
+        datatype: float64
+      - name: dec
+        datatype: float64
+      - name: id_x
+        datatype: float64
+      - name: id_y
+        datatype: float64
+      - name: fgs_mag
+        datatype: float64
+      - name: fgs_mag_uncert
+        datatype: float64
+      - name: count_rate
+        datatype: float64
+      - name: count_rate_uncert
+        datatype: float64
+    flight_star_table: 
+      title: Flight reference star table
+      fits_hdu: FLIGHT_STARS
+      datatype:
+      - name: reference_star_id
+        datatype: string
+      - name: id_x
+        datatype: float64
+      - name: id_y
+        datatype: float64
+      - name: count_rate
+        datatype: float64
+    pointing_table:
+      title: Pointing table
+      fits_hdu: POINTING
+      datatype:
+      - name: time
+        datatype: float64
+      - name: jitter
+        datatype: float64
+      - name: delta_ddc_ra
+        datatype: float64
+      - name: delta_ddc_dec
+        datatype: float64
+      - name: delta_aperture_pa
+        datatype: float64
+      - name: delta_v1_ra
+        datatype: float64
+      - name: delta_v1_dec
+        datatype: float64
+      - name: delta_v3_pa
+        datatype: float64
+      - name: delta_j1_ra
+        datatype: float64
+      - name: delta_j1_dec
+        datatype: float64
+      - name: delta_j3_pa
+        datatype: float64
+    centroid_table: 
+      title: Centroid packet table
+      fits_hdu: CENTROID_PACKET
+      datatype:
+      - name: observatory_time   
+        datatype: string
+      - name: centroid_time   
+        datatype: string
+      - name: guide_star_position_x
+        datatype: float64
+      - name: guide_star_position_y
+        datatype: float64
+      - name: guide_star_instrument_counts_per_second
+        datatype: float64
+      - name: signal_to_noise_current_frame
+        datatype: float64
+      - name: delta_signal
+        datatype: float64
+      - name: delta_noise
+        datatype: float64
+      - name: psf_width_x
+        datatype: int32
+      - name: psf_width_y
+        datatype: int32
+      - name: data_quality
+        datatype: int32
+      - name: bad_pixel_flag
+        datatype: string
+      - name: bad_centroid_dq_flag
+        datatype: int32
+      - name: cosmic_ray_hit_flag
+        datatype: int32
+      - name: sw_subwindow_loc_change_flag
+        datatype: int32
+      - name: guide_star_at_detector_subwindow_boundary_flag
+        datatype: int32
+      - name: subwindow_out_of_FOV_flag
+        datatype: int32
+    track_sub_table:
+      title: Track subarray data table
+      fits_hdu: TRACK_SUBARRAY
+      datatype:
+      - name: observatory_time   
+        datatype: string
+      - name: x_corner
+        datatype: float64
+      - name: y_corner
+        datatype: float64
+      - name: x_size
+        datatype: int32
+      - name: y_size
+        datatype: int32
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

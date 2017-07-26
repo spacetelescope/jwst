@@ -1,3 +1,5 @@
+.. _wiimatch-index-label:
+
 Weighted Image Intensity Matching
 =================================
 

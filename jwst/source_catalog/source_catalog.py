@@ -1,10 +1,33 @@
+import re
+from os.path import split, splitext, join, abspath, expanduser
+
 import numpy as np
 from astropy.convolution import Gaussian2DKernel
 from astropy.stats import sigma_clipped_stats, gaussian_fwhm_to_sigma
 from astropy.table import QTable
 import astropy.units as u
 import photutils
+
 from ..datamodels import DrizProductModel
+
+
+def _replace_suffix_ext(filepath, old_suffix_list, new_suffix,
+                        output_ext='escv', output_dir=None):
+    """
+    Replace suffix and extension of a filepath.
+    """
+
+    path, filename = split(filepath)
+    name, ext = splitext(filename)
+    remove_suffix = '^(.+?)(_(' + '|'.join(old_suffix_list) + '))?$'
+    match = re.match(remove_suffix, name)
+    name = match.group(1)
+
+    output_path = '{0}_{1}.{2}'.format(name, new_suffix, output_ext)
+    if output_dir is not None:
+        output_path = abspath(expanduser(join(output_dir, output_path)))
+
+    return output_path
 
 
 def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
@@ -155,9 +178,9 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
                     model.meta.photometry.pixelarea_arcsecsq)
 
     # define AB mag
-    mask = np.isfinite(micro_Jy)
     abmag = np.full(nsources, np.nan)
-    abmag[mask] = -2.5 * np.log10(micro_Jy) + 23.9
+    mask = np.isfinite(micro_Jy)
+    abmag[mask] = -2.5 * np.log10(micro_Jy[mask]) + 23.9
     catalog['abmag'] = abmag
 
     # define AB mag error

@@ -26,6 +26,7 @@ from asdf import schema as asdf_schema
 from asdf import extension as asdf_extension
 
 from . import ndmodel
+from . import filetype
 from . import fits_support
 from . import properties
 from . import schema as mschema
@@ -112,9 +113,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         # Determine what kind of input we have (init) and execute the
         # proper code to intiailize the model
         self._files_to_close = []
+        self._iscopy = False
+    
         is_array = False
         is_shape = False
         shape = None
+        
         if init is None:
             asdf = AsdfFile(extensions=extensions)
         elif isinstance(init, dict):
@@ -124,13 +128,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             shape = init.shape
             is_array = True
         elif isinstance(init, self.__class__):
-            instance = copy.deepcopy(init._instance)
-            self._schema = init._schema
-            self._shape = init._shape
-            self._asdf = AsdfFile(instance, extensions=self._extensions)
-            self._instance = instance
-            self._ctx = self
-            self.__class__ = init.__class__
+            self.clone(self, init)
             return
         elif isinstance(init, DataModel):
             raise TypeError(
@@ -149,28 +147,25 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             asdf = fits_support.from_fits(init, self._schema, extensions,
                                           pass_invalid_values)
 
-        elif isinstance(init, six.string_types):
+        elif isinstance(init, (six.string_types, bytes)):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
-            try:
-                # The open function now automatically processes FITS files with
-                # ASDF extensions. However, since our implementation expects
-                # the function to raise a ValueError for anything other than a
-                # true ASDF file, we need to explicitly tell open to ignore
-                # FITS files.
-                asdf = AsdfFile.open(init, extensions=extensions,
-                                     accept_asdf_in_fits=False)
-            except (ValueError):
-                try:
-                    hdulist = fits.open(init)
-                    # TODO: Add json support
-                except (IOError, OSError):
-                    raise IOError(
-                        "File does not appear to be a FITS or ASDF file.")
-                else:
-                    asdf = fits_support.from_fits(hdulist, self._schema,
-                                                  extensions, pass_invalid_values)
+            file_type = filetype.check(init)
+     
+            if file_type == "fits":
+                hdulist = fits.open(init)
+                asdf = fits_support.from_fits(hdulist, self._schema,
+                                              extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
+     
+            elif file_type == "asdf":
+                asdf = AsdfFile.open(init, extensions=extensions)
+
+            else:
+                # TODO handle json files as well
+                raise IOError(
+                        "File does not appear to be a FITS or ASDF file.")
+            
         else:
             raise ValueError(
                 "Can't initialize datamodel using {0}".format(str(type(init))))
@@ -185,7 +180,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         # if the input is from a file, set the filename attribute
         if isinstance(init, six.string_types):
             self.meta.filename = os.path.basename(init)
-
+        elif isinstance(init, fits.HDUList):
+            info = init.fileinfo(0)
+            if info is not None:
+                filename = info.get('filename')
+                if filename is not None:
+                    self.meta.filename = os.path.basename(filename)
+        
         # if the input model doesn't have a date set, use the current date/time
         if self.meta.date is None:
             self.meta.date = Time(datetime.datetime.now())
@@ -219,21 +220,38 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         self.close()
 
     def close(self):
-        for fd in self._files_to_close:
-            if fd is not None:
-                fd.close()
-        if self._asdf is not None:
-            self._asdf.close()
+        if not self._iscopy:
+            for fd in self._files_to_close:
+                if fd is not None:
+                    fd.close()
+            if self._asdf is not None:
+                self._asdf.close()
+
+    @staticmethod
+    def clone(target, source, deepcopy=False, memo=None):
+        if deepcopy:
+            instance = copy.deepcopy(source._instance, memo=memo)
+            target._asdf = AsdfFile(instance, extensions=source._extensions)
+            target._instance = instance
+            target._iscopy = source._iscopy
+        else:
+            target._asdf = source._asdf
+            target._instance = source._instance
+            target._iscopy = True
+
+        target._files_to_close = source._files_to_close[:]
+        target._schema = source._schema
+        target._shape = source._shape
+        target._ctx = target
 
     def copy(self, memo=None):
         """
         Returns a deep copy of this model.
         """
-        result = self.__class__(
-            init=copy.deepcopy(self._instance, memo=memo),
-            schema=self._schema,
-            extensions=self._extensions)
-        result._shape = self._shape
+        result = self.__class__(init=None,
+                                extensions=self._extensions,
+                                pass_invalid_values=self._pass_invalid_values)
+        self.clone(result, self, deepcopy=True, memo=memo)
         return result
 
     __copy__ = __deepcopy__ = copy

@@ -15,3 +15,5 @@ docs/_build/
 docs/api/
 RELIC-INFO
 relic/
+*.wpr
+*wpu

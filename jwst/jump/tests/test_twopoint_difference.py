@@ -83,7 +83,7 @@ def test_5grps_cr2_nframe2():
     assert(4 == np.max(gdq)) #a CR was found
     assert(np.array_equal([0,4,4,0,0], gdq[0, :, 100, 100]) )
 
-@pytest.mark.xfail
+@pytest.mark.xfail(run=False)
 def test_4grps_twocrs_2nd_4th():
     ngroups=4
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)

@@ -20,6 +20,7 @@ from jwst.associations.exceptions import (
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import DMSBaseMixin
+from jwst.associations.lib.format_template import FormatTemplate
 
 __all__ = [
     'AsnMixin_Base',
@@ -97,6 +98,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
     def __init__(self, *args, **kwargs):
 
+        super(DMS_Level3_Base, self).__init__(*args, **kwargs)
+
         # Keep the set of members included in this association
         self.members = set()
 
@@ -108,8 +111,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             }
         })
 
-        # Let us see if member belongs to us.
-        super(DMS_Level3_Base, self).__init__(*args, **kwargs)
 
         # Other presumptions on the association
         if 'degraded_status' not in self.data:
@@ -519,6 +520,17 @@ class Utility(object):
 
         # Merge lists and return
         return finalized + lv3_asns
+
+
+# ---------
+# Utilities
+# ---------
+# Define default product name filling
+format_product = FormatTemplate(
+    key_formats={
+        'source_id': 's{:05d}'
+    }
+)
 
 
 # ---------------------------------------------

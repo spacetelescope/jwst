@@ -10,7 +10,7 @@ provides automatic structure and metadata validation.
 
 While it is possible to write or edit an ASDF file in a text editor, the best way to create
 reference files is using the python implementation of the format
-`asdf <http://pyasdf.readthedocs.org/en/latest/>`__ and
+`asdf <http://asdf.readthedocs.io/en/latest/>`__ and
 `astropy.modeling <http://astropy.readthedocs.org/en/latest/modeling/index.html>`__ .
 There are two steps in this process:
 
@@ -103,7 +103,7 @@ with all inputs and the operator is applied to the results, e.g. ``model = m1 + 
 Save a transform to an ASDF file
 --------------------------------
 
-`asdf <http://pyasdf.readthedocs.org/en/latest/>`__ is used to read and write reference files in
+`asdf <http://asdf.readthedocs.io/en/latest/>`__ is used to read and write reference files in
 `ASDF <http://asdf-standard.readthedocs.org/en/latest/>`__ format. Once the model is create using the rules in the above section, it needs to be assigned
 to the ASDF tree.
 
