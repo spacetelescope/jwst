@@ -21,7 +21,7 @@ from numpy.testing import assert_array_equal
 
 from .. import (DataModel, ImageModel, QuadModel, MultiSlitModel,
                 ModelContainer)
-from ..util import open
+from ..util import open as open_model
 from .. import schema
 
 
@@ -69,13 +69,13 @@ def test_broadcast2():
 def test_from_hdulist():
     from astropy.io import fits
     with fits.open(FITS_FILE) as hdulist:
-        with open(hdulist) as dm:
+        with open_model(hdulist) as dm:
             pass
         assert hdulist.fileinfo(0)['file'].closed == False
 
 
 def delete_array():
-    with open() as dm:
+    with open_model() as dm:
         del dm.data
 
 
@@ -136,13 +136,13 @@ def test_delete():
 
 
 def test_open():
-    with open() as dm:
+    with open_model() as dm:
         pass
 
-    with open((50, 50)) as dm:
+    with open_model((50, 50)) as dm:
         pass
 
-    with open(FITS_FILE) as dm:
+    with open_model(FITS_FILE) as dm:
         assert isinstance(dm, QuadModel)
 
 
@@ -171,7 +171,7 @@ def test_section():
 
 def test_init_with_array():
     array = np.empty((50, 50))
-    with open(array) as dm:
+    with open_model(array) as dm:
         assert dm.data.shape == (50, 50)
         assert isinstance(dm, ImageModel)
 
@@ -373,7 +373,7 @@ def test_image_with_extra_keyword_to_multislit():
 
 @pytest.fixture(scope="module")
 def container():
-    with ModelContainer(ASN_FILE) as c:
+    with ModelContainer(ASN_FILE, persist=True) as c:
         for m in c:
             m.meta.observation.program_number = '0001'
             m.meta.observation.observation_number = '1'

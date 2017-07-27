@@ -3,6 +3,8 @@ from contextlib import contextmanager
 from glob import glob
 import os
 
+from ...tests.helpers import abspath
+
 INPUT_FILES_GLOB = 'data/jwst_nod?_cal.fits'
 
 
@@ -31,7 +33,6 @@ def chdir(path):
         yield
     finally:
         os.chdir(prev_cwd)
-
 
 # Calcuate some extra constants
 INPUT_FILES_GLOB = t_path(INPUT_FILES_GLOB)

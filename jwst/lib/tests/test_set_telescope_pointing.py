@@ -11,25 +11,19 @@ which is generally not available.
 
 from __future__ import absolute_import
 
-from astropy.io import fits
-from astropy.table import Table
-from astropy.time import Time
+from backports.tempfile import TemporaryDirectory
 import copy
 import numpy as np
 import os
 import pytest
 import requests_mock
-import sys
-from backports.tempfile import TemporaryDirectory
 
-from jwst.lib import engdb_tools
+from astropy.io import fits
+from astropy.table import Table
+from astropy.time import Time
 
-sys.path.insert(
-    0,
-    os.path.join(os.path.dirname(__file__), '../../scripts')
-)
-
-import set_telescope_pointing as stp
+from .. import engdb_tools
+from .. import set_telescope_pointing as stp
 
 # Setup mock engineering service
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'

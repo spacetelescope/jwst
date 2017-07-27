@@ -56,6 +56,7 @@ def open(init=None, extensions=None, **kwargs):
 
     hdulist = {}
     shape = ()
+    file_to_close = None
 
     # Get special cases for opening a model out of the way
     # all special cases return a model if they match
@@ -78,6 +79,7 @@ def open(init=None, extensions=None, **kwargs):
 
         if file_type == "fits":
             hdulist = fits.open(init)
+            file_to_close = hdulist
 
         elif file_type == "asn":
             # Read the file as an association / model container
@@ -144,6 +146,11 @@ def open(init=None, extensions=None, **kwargs):
 
     # Actually open the model
     model = new_class(init, extensions=extensions, **kwargs)
+    
+    # Close the hdulist if we opened it
+    if file_to_close is not None:
+        model._files_to_close.append(file_to_close)
+        
     return model
 
 

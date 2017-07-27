@@ -15,6 +15,7 @@ from . import __version__
 from .exceptions import (
     AssociationNotValidError
 )
+from .lib.format_template import FormatTemplate
 from .lib.ioregistry import IORegistry
 
 __all__ = ['Association']
@@ -272,15 +273,15 @@ class Association(MutableMapping):
         """
         if format is None:
             formats = [
-                format
-                for format_name, format in cls.ioregistry.items()
+                format_func
+                for format_name, format_func in cls.ioregistry.items()
             ]
         else:
             formats = [cls.ioregistry[format]]
 
-        for format in formats:
+        for format_func in formats:
             try:
-                asn = format.load(
+                asn = format_func.load(
                     cls, serialized, **kwargs
                 )
             except AssociationNotValidError:
@@ -699,3 +700,7 @@ def is_iterable(obj):
     return not isinstance(obj, six.string_types) and \
         not isinstance(obj, tuple) and \
         hasattr(obj, '__iter__')
+
+
+# Define default product name filling
+format_product = FormatTemplate()

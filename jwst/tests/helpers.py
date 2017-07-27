@@ -1,7 +1,13 @@
 """Handy helpful pytest helpers helping pytest test"""
 
 import os
+from os import path
 import pytest
+
+
+def abspath(filepath):
+    """Get the absolute file path"""
+    return path.abspath(path.expanduser(path.expandvars(filepath)))
 
 
 # Decorator to indicate slow tests
