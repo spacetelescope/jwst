@@ -1602,6 +1602,10 @@ properties:
             title: Source Photometry and Morphology
             type: string
             fits_keyword: S_SRCCAT
+          guider_cds:
+            title: Guider CDS Calculation
+            type: string
+            fits_keyword: S_GUICDS
       background:
         title: Background information
         type: object
