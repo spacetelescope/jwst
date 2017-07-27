@@ -90,14 +90,19 @@ class CubeBuildStep (Step):
         # 1. alpha-beta (only valid for MIRI Single Cubes)
         # 2. ra-dec
         self.interpolation = 'pointcloud' # true for self.weighting  = 'msm' or 'miripsf'
-        
+
+        # if the weighting is area then interpolation is area
         if self.weighting == 'area':
             self.interpolation = 'area'
             self.coord_system = 'alpha-beta'
 
         if self.coord_system == 'alpha-beta':
             self.weighting = 'area'
+            self.interpolation = 'area'
 
+        # if interpolation is point cloud then weighting can be
+        # 1. MSM: modified shepard method
+        # 2. miripsf - weighting for MIRI based on PSF and LSF
         if self.coord_system == 'ra-dec':
             self.interpolation = 'pointcloud'  # can not be area
 
