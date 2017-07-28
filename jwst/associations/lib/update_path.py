@@ -16,10 +16,10 @@ def update_path(asn, file_path, target='expname'):
     target: str
         Key to replace
     """
-    update_key_value(asn, target, file_path, mod_func=_replace_path)
+    update_key_value(asn, target, (file_path, ), mod_func=_replace_path)
 
 
-def update_key_value(obj, target, *args, mod_func=None):
+def update_key_value(obj, target, func_args, mod_func=None):
     """Update all instances of a key using a modifier
 
     Parameters
@@ -30,7 +30,7 @@ def update_key_value(obj, target, *args, mod_func=None):
     target: str
         The target key to modify
 
-    *args: (arg(, ...))
+    func_args: (arg(, ...))
         Arguments to pass to the modification function
 
     mod_func: function
@@ -49,12 +49,12 @@ def update_key_value(obj, target, *args, mod_func=None):
     if hasattr(obj, 'items'):
         for key, value in obj.items():
             if key == target:
-                obj[key] = mod_func(value, *args)
+                obj[key] = mod_func(value, *func_args)
             if isinstance(value, dict):
-                update_key_value(value, target, *args, mod_func=mod_func)
+                update_key_value(value, target, func_args, mod_func=mod_func)
             elif isinstance(value, list):
                 for item in value:
-                    update_key_value(item, target, *args, mod_func=mod_func)
+                    update_key_value(item, target, func_args, mod_func=mod_func)
 
 
 def _replace_path(old_path, new_path):
@@ -106,7 +106,7 @@ def test_update_key_value_default():
     obj = deepcopy(_test_obj)
     target = 'a'
     new_value = 'changed'
-    update_key_value(obj, target, new_value)
+    update_key_value(obj, target, (new_value,))
     for value in _gen_dict_extract(target, obj):
         assert value == new_value
 
@@ -117,7 +117,7 @@ def test_update_key_value_mod_func():
     target = 'a'
     new_value = 'changed'
     mod_func = lambda v, suffix: v + suffix
-    update_key_value(obj, target, new_value, mod_func=mod_func)
+    update_key_value(obj, target, (new_value,), mod_func=mod_func)
     assert_values = [
         mod_func(value, new_value)
         for value in _gen_dict_extract(target, _test_obj)
