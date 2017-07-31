@@ -4,6 +4,7 @@ from ..stpipe import Step
 from .. import datamodels
 from . import extract_2d
 
+
 class Extract2dStep(Step):
     """
     This Step performs a 2D extraction of spectra.
@@ -11,14 +12,18 @@ class Extract2dStep(Step):
 
     spec = """
         which_subarray = string(default = None)
+        apply_wavecorr = boolean(default=True)
     """
 
-    def process(self, input_file):
+    reference_file_types = ['wavecorr']
+    
 
-        with datamodels.open(input_file) as dm:
-
-            output_model = extract_2d.extract2d(dm, self.which_subarray)
-
+    def process(self, input_model):
+        reffile = self.get_reference_file(input_model, "wavecorr")
+        with datamodels.open(input_model) as dm:
+            output_model = extract_2d.extract2d(dm, self.which_subarray,
+                                                self.apply_wavecorr, reffile=reffile)
+            
         return output_model
 
 

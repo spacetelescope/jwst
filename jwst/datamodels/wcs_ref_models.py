@@ -13,7 +13,7 @@ __all__ = ['DistortionModel', 'DistortionMRSModel', 'SpecwcsModel', 'RegionsMode
            'WavelengthrangeModel', 'CameraModel', 'CollimatorModel', 'OTEModel',
            'FOREModel', "FPAModel", 'IFUPostModel', 'IFUFOREModel', 'IFUSlicerModel',
            'MSAModel', 'FilteroffsetModel', 'DisperserModel',
-           'NIRCAMGrismModel', 'NIRISSGrismModel']
+           'NIRCAMGrismModel', 'NIRISSGrismModel', 'WaveCorrModel']
 
 
 class _SimpleModel(ReferenceFileModel):
@@ -634,3 +634,31 @@ class FOREModel(_SimpleModel):
         super(FOREModel, self).validate()
         assert self.meta.instrument.filter in ["CLEAR", "F070LP", "F100LP", "F110W",
                                                "F140X", "F170LP", "F290LP"]
+
+
+class WaveCorrModel(ReferenceFileModel):
+
+    reftype = "wavecorr"
+    schema_url = "wavecorr.schema.yaml"
+
+    def __init__(self, init=None, apertures=None, **kwargs):
+        super(WaveCorrModel, self).__init__(init, **kwargs)
+        if apertures is not None:
+            self.apertures = apertures
+        if init is None:
+            self.populate_meta()
+
+    @property
+    def aperture_names(self):
+        return [getattr(ap, 'aperture_name') for ap in self.apertures]
+        
+    def populate_meta(self):
+        self.meta.instrument.name = "NIRSPEC"
+
+    def on_save(self, path=None):
+        self.meta.reftype = self.reftype
+
+    def validate(self):
+        super(WaveCorrModel, self).validate()
+        assert self.aperture_names is not None
+        assert self.apertures is not None
