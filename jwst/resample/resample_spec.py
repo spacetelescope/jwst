@@ -17,7 +17,6 @@ from astropy.modeling import fitting
 from gwcs import wcstools, WCS
 from gwcs.utils import _compute_lon_pole
 
-from ..stpipe import crds_client
 from .. import datamodels
 from ..assign_wcs import util
 from . import gwcs_drizzle
@@ -101,7 +100,7 @@ class ResampleSpecData(object):
         ### TO DO:
         ###    replace this with a call to a generalized version of fitsblender
         ###
-        self.blank_output.update(self.input_models[0])
+        self.blank_output.update(datamodels.ImageModel(self.input_models[0]._instance))
         self.output_models = datamodels.ModelContainer()
 
 
@@ -223,13 +222,15 @@ class ResampleSpecData(object):
         roll_ref = input_model.meta.wcsinfo.roll_ref
         min_lam = np.nanmin(lam)
         offset = Shift(-slit_center_pix) & Shift(-slit_center_pix)
+
         # TODO: double-check the signs on the following rotation angles
         rot = Rotation2D(roll_ref + slit_rot_angle)
-        scale = Scale(spatial_scale) & Scale(spatial_scale)
+        scale = Scale(spatial_scale.value) & Scale(spatial_scale.value)
         tan = Pix2Sky_TAN()
         lon_pole = _compute_lon_pole(slit_center_sky, tan)
-        skyrot = RotateNative2Celestial(slit_center_sky.ra, slit_center_sky.dec,
-            lon_pole)
+        skyrot = RotateNative2Celestial(slit_center_sky.ra.value, slit_center_sky.dec.value,
+            lon_pole.value)
+
         spatial_trans = offset | rot | scale | tan | skyrot
         spectral_trans = Scale(spectral_scale) | Shift(min_lam)
         mapping = Mapping((1, 1, 0))

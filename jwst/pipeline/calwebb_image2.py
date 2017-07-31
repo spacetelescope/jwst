@@ -17,20 +17,19 @@ __version__ = "3.0"
 
 class Image2Pipeline(Pipeline):
     """
-
-    CalWebbImage2: Processes JWST imaging-mode slope images from
-                   Level-2a to Level-2b.
+    Image2Pipeline: Processes JWST imaging-mode slope data from Level-2a to
+    Level-2b.
 
     Included steps are:
     assign_wcs, flat_field, and photom.
-
     """
 
     # Define alias to steps
-    step_defs = {'assign_wcs': assign_wcs_step.AssignWcsStep,
-                 'flat_field': flat_field_step.FlatFieldStep,
-                 'photom': photom_step.PhotomStep,
-                 }
+    step_defs = {
+        'assign_wcs': assign_wcs_step.AssignWcsStep,
+        'flat_field': flat_field_step.FlatFieldStep,
+        'photom': photom_step.PhotomStep,
+        }
 
     def process(self, input):
 
