@@ -323,17 +323,6 @@ def set_geometry(self, footprint):
         for i in range(self.naxis2):
             self.ycoord[i] = ystart
             ystart = ystart + self.Cdelt2
-#            print('ycoord',self.ycoord[i],i)
-
-#        print('ycoord xcoord shape',self.ycoord.shape,self.xcoord.shape)
-        
-#_______________________________________________________________________
-        
-#        ystart = self.ycoord[0]
-#        yend = self.ycoord[0] + self.Cdelt2*(self.naxis2)
-        
-#        xstart = self.xcoord[0]
-#        xend = self.xcoord[0] + self.Cdelt1*(self.naxis1)
 
 #        yy,xx = np.mgrid[ystart:yend:self.Cdelt2,
 #                         xstart:xend:self.Cdelt1]

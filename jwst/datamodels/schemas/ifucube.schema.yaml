@@ -26,6 +26,15 @@ allOf:
           title: Size of ROI in wavelength dimension microns
           type: number
           fits_keyword: ROIW
+        weighting:
+          title: Type of weighting type (MSM,MIRIPSF,AREA)
+          type: string
+          fits_keyword: WTYPE
+        weight_power:
+          title: Weighting power for Modified Shepard Method
+          type: number
+          fits_keyword: WPOWER
+
 - type: object
   properties:
     data:
