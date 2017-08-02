@@ -219,7 +219,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self.update_asn()
 
     def _add_items(self, items, meta=None, product_name_func=None, **kwargs):
-        """ Force adding items to the association
+        """Force adding items to the association
 
         Parameters
         ----------
@@ -247,10 +247,18 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         This is a low-level shortcut into adding members, such as file names,
         to an association. All defined shortcuts and other initializations are
         by-passed, resulting in a potentially unusable association.
+
+        `product_name_func` is used if the product name has not been
+        determined by any other means. The call signature is:
+
+            product_name_func(item, idx)
+
+        where `item` is each item being added and `idx` is the count of items.
+
         """
         if meta is None:
             meta = {}
-        for item in items:
+        for idx, item in enumerate(items, start=1):
             self.new_product()
             members = self.current_product['members']
             entry = {
@@ -265,7 +273,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             # the function, if given
             if self.current_product['name'] == PRODUCT_NAME_DEFAULT and \
                product_name_func is not None:
-                self.current_product['name'] = product_name_func(item)
+                self.current_product['name'] = product_name_func(item, idx)
 
         self.data.update(meta)
         self.sequence = next(self._sequence)

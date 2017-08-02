@@ -140,7 +140,7 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         return asn
 
     @staticmethod
-    def model_product_name(model):
+    def model_product_name(model, *args, **kwargs):
         """Product a model product name based on the model.
 
         Parameters
