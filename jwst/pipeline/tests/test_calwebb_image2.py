@@ -10,6 +10,7 @@ from .helpers import (
     SCRIPT_DATA_PATH,
     abspath,
     mk_tmp_dirs,
+    require_bigdata,
     update_asn_basedir,
 )
 
@@ -32,6 +33,7 @@ pytestmark = pytest.mark.skipif(
 )
 
 
+@require_bigdata
 def test_no_cfg(mk_tmp_dirs):
     """What happens when the pipeline is run without a config"""
     exppath = path.join(DATAPATH, EXPFILE)
@@ -41,11 +43,10 @@ def test_no_cfg(mk_tmp_dirs):
     ]
     Step.from_cmdline(args)
 
-    expname, expext = path.splitext(EXPFILE)
-    calfile = expname + '_Image2Pipeline' + expext
-    assert path.isfile(calfile)
+    assert path.isfile(CALFILE)
 
 
+@require_bigdata
 def test_asn(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     exppath = path.join(DATAPATH, EXPFILE)
@@ -68,13 +69,15 @@ def test_asn(mk_tmp_dirs):
     assert path.isfile(CALFILE)
 
 
+@require_bigdata
 def test_datamodel(mk_tmp_dirs):
     model = dm_open(path.join(DATAPATH, EXPFILE))
     cfg = path.join(SCRIPT_DATA_PATH, 'calwebb_image2_save.cfg')
     Image2Pipeline.call(model, config_file=cfg)
-    assert path.isfile('jw00001001001_01101_00001_MIRIMAGE_cal.fits')
+    assert path.isfile(CALFILE)
 
 
+@require_bigdata
 def test_file(mk_tmp_dirs):
     exppath = path.join(DATAPATH, EXPFILE)
     cfg = path.join(SCRIPT_DATA_PATH, 'calwebb_image2_save.cfg')
@@ -82,6 +85,7 @@ def test_file(mk_tmp_dirs):
     assert path.isfile(CALFILE)
 
 
+@require_bigdata
 def test_file_outputdir(mk_tmp_dirs):
     """Test putting results in another folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -98,4 +102,30 @@ def test_file_outputdir(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    assert path.isfile(path.join(tmp_data_path, outfile))
+    result_name, result_ext = path.splitext(outfile)
+    result_path = path.join(tmp_data_path, result_name + '_cal.fits')
+    assert path.isfile(result_path)
+
+
+@require_bigdata
+def test_file_output_fail(caplog, mk_tmp_dirs):
+    """Test for fail if output_file is specified with multiple products"""
+    exppath = path.join(DATAPATH, EXPFILE)
+    lv2_meta = {
+        'program': 'test',
+        'target': 'test',
+        'asn_pool': 'test',
+    }
+    asn = asn_from_list([exppath, exppath], rule=DMSLevel2bBase, meta=lv2_meta)
+    asn_file, serialized = asn.dump()
+    with open(asn_file, 'w') as fp:
+        fp.write(serialized)
+
+    args = [
+        path.join(SCRIPT_DATA_PATH, 'calwebb_image2_save.cfg'),
+        asn_file,
+        '--output_file=junk'
+    ]
+    Step.from_cmdline(args)
+
+    assert '"output_file" specified, but more than one product' in caplog.text

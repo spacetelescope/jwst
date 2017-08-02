@@ -279,11 +279,12 @@ def _fits_array_writer(validator, _, instance, schema):
         hdu_type = fits.BinTableHDU
     else:
         hdu_type = fits.ImageHDU
-    index = getattr(validator, 'sequence_index', None)
+    index = getattr(validator, 'sequence_index', 0)
 
     hdu = _get_or_make_hdu(validator.hdulist, hdu_name, index=index, hdu_type=hdu_type)
 
     hdu.data = instance
+    hdu.ver = index + 1
 
 
 # This is copied from jsonschema._validators and modified to keep track

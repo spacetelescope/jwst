@@ -32,6 +32,8 @@ class OutlierDetectionStep(Step):
         scale = string(default='0.5 0.4')
         backg = float(default=0.0)
         save_intermediate_results = boolean(default=False)
+        resample_data = boolean(default=True)
+        good_bits = integer(default=4)
     """
     reference_file_types = ['gain', 'readnoise']
 
@@ -64,7 +66,9 @@ class OutlierDetectionStep(Step):
                 'snr': self.snr,
                 'scale': self.scale,
                 'backg': self.backg,
-                'save_intermediate_results': self.save_intermediate_results
+                'save_intermediate_results': self.save_intermediate_results,
+                'resample_data': self.resample_data,
+                'good_bits': self.good_bits
                 }
 
             # Set up outlier detection, then do detection

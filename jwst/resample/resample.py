@@ -71,6 +71,7 @@ class ResampleData(object):
 
         # Define output WCS based on all inputs, including a reference WCS
         self.output_wcs = resample_utils.make_output_wcs(self.input_models)
+        log.debug('Output mosaic size: {}'.format(self.output_wcs.data_size))
         self.blank_output = datamodels.DrizProductModel(self.output_wcs.data_size)
         self.blank_output.meta.wcs = self.output_wcs
 

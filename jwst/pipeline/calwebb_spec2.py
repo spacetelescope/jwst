@@ -72,14 +72,8 @@ class Spec2Pipeline(Pipeline):
         # Retrieve the input(s)
         asn = LoadAsLevel2Asn.load(input)
 
-        # Setup output creation
-        make_output_path = self.search_attr(
-            'make_output_path', parent_first=True
-        )
-
         # Each exposure is a product in the association.
         # Process each exposure.
-        results = []
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
             self.output_basename = product['name']
@@ -88,22 +82,15 @@ class Spec2Pipeline(Pipeline):
                 asn['asn_pool'],
                 asn.filename
             )
-            results.append(result)
 
-            # Setup filename
+            # Save result
             suffix = 'cal'
             if isinstance(input, datamodels.CubeModel):
                 suffix = 'calints'
-            result.meta.filename = make_output_path(
-                self,
-                result,
-                suffix=suffix,
-                ignore_use_model=True
-            )
+            self.save_model(result, suffix)
 
         # We're done
         self.log.info('Ending calwebb_spec2')
-        return results
 
     # Process each exposure
     def process_exposure_product(
