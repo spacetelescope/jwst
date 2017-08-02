@@ -72,7 +72,7 @@ def imaging(input_model, reference_files):
     dircos2unitless = DirCos2Unitless(name='directional_cosines2unitless')
 
     col_model = CollimatorModel(reference_files['collimator'])
-    col = col.model
+    col = col_model.model
     col_model.close()
 
     # Get the default spectral order and wavelength range and record them in the model.
