@@ -38,14 +38,20 @@ class Image2Pipeline(Pipeline):
         # Retrieve the input(s)
         asn = LoadAsLevel2Asn.load(input)
 
-        # Setup output creation
-        make_output_path = self.search_attr(
-            'make_output_path', parent_first=True
-        )
+        # If `output_file` is specified and there is only
+        # one product, go ahead an apply
+        if self.output_file:
+            if len(asn['products']) > 1:
+                self.log.warn(
+                    '"output_file" specified, but more than one product'
+                    'will be created. Ignoring.'
+                    '\nConsider using "output_dir" instead'
+                )
+            else:
+                asn['products'][0]['name'] = self.output_file
 
         # Each exposure is a product in the association.
         # Process each exposure.
-        results = []
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
             self.output_basename = product['name']
@@ -54,17 +60,12 @@ class Image2Pipeline(Pipeline):
                 asn['asn_pool'],
                 asn.filename
             )
-            results.append(result)
 
-            # Setup filename
-            result.meta.filename = make_output_path(
-                self,
-                result,
-                ignore_use_model=True
-            )
+            # Save result
+            suffix = 'cal'
+            self.save_model(result, suffix)
 
         self.log.info('... ending calwebb_image2')
-        return results
 
     # Process each exposure
     def process_exposure_product(
