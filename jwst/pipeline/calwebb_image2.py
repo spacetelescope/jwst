@@ -36,7 +36,6 @@ class Image2Pipeline(Pipeline):
         self.log.info('Starting calwebb_image2 ...')
 
         # Retrieve the input(s)
-        self.log.debug('output_file="{}" type="{}"'.format(self.output_file, type(self.output_file)))
         asn = LoadAsLevel2Asn.load(input, basename=self.output_file)
 
         # Each exposure is a product in the association.
