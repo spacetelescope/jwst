@@ -105,27 +105,3 @@ def test_file_outputdir(mk_tmp_dirs):
     result_name, result_ext = path.splitext(outfile)
     result_path = path.join(tmp_data_path, result_name + '_cal.fits')
     assert path.isfile(result_path)
-
-
-@require_bigdata
-def test_file_output_fail(caplog, mk_tmp_dirs):
-    """Test for fail if output_file is specified with multiple products"""
-    exppath = path.join(DATAPATH, EXPFILE)
-    lv2_meta = {
-        'program': 'test',
-        'target': 'test',
-        'asn_pool': 'test',
-    }
-    asn = asn_from_list([exppath, exppath], rule=DMSLevel2bBase, meta=lv2_meta)
-    asn_file, serialized = asn.dump()
-    with open(asn_file, 'w') as fp:
-        fp.write(serialized)
-
-    args = [
-        path.join(SCRIPT_DATA_PATH, 'calwebb_image2_save.cfg'),
-        asn_file,
-        '--output_file=junk'
-    ]
-    Step.from_cmdline(args)
-
-    assert '"output_file" specified, but more than one product' in caplog.text

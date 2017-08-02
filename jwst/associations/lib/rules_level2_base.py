@@ -248,8 +248,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         to an association. All defined shortcuts and other initializations are
         by-passed, resulting in a potentially unusable association.
 
-        `product_name_func` is used if the product name has not been
-        determined by any other means. The call signature is:
+        `product_name_func` is used to define the product names instead of
+        the default methods. The call signature is:
 
             product_name_func(item, idx)
 
@@ -269,11 +269,16 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             self.update_validity(entry)
             self.update_asn()
 
-            # If product name is still undefined, try
-            # the function, if given
-            if self.current_product['name'] == PRODUCT_NAME_DEFAULT and \
-               product_name_func is not None:
-                self.current_product['name'] = product_name_func(item, idx)
+            # If a product name function is given, attempt
+            # to use.
+            if product_name_func is not None:
+                try:
+                    self.current_product['name'] = product_name_func(item, idx)
+                except Exception:
+                    logger.debug(
+                        'Attempted use of product_name_func failed.'
+                        ' Default product name used.'
+                    )
 
         self.data.update(meta)
         self.sequence = next(self._sequence)
