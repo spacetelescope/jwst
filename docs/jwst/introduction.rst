@@ -200,6 +200,14 @@ the entire pipeline using the `--output_file` argument also
     $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --output_file='sloper_processed.fits'
 
+Output File and Associations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The Level 2 pipelines can take both individual file or an
+:ref:`association <associations>` as input. When given an association, `output_file` is
+ignored, in favor of using the product names defined in the
+associations. Level 3 pipelines always require an association, hence
+`output_file` is never used for them.
 
 Output Directory
 ----------------
