@@ -36,19 +36,7 @@ class Image2Pipeline(Pipeline):
         self.log.info('Starting calwebb_image2 ...')
 
         # Retrieve the input(s)
-        asn = LoadAsLevel2Asn.load(input)
-
-        # If `output_file` is specified and there is only
-        # one product, go ahead an apply
-        if self.output_file:
-            if len(asn['products']) > 1:
-                self.log.warn(
-                    '"output_file" specified, but more than one product'
-                    'will be created. Ignoring.'
-                    '\nConsider using "output_dir" instead'
-                )
-            else:
-                asn['products'][0]['name'] = self.output_file
+        asn = LoadAsLevel2Asn.load(input, basename=self.output_file)
 
         # Each exposure is a product in the association.
         # Process each exposure.
