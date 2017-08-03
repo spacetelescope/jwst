@@ -29,8 +29,7 @@ class CubeBuildStep (Step):
          scale1 = float(default=0.0)
          scale2 = float(default=0.0)
          scalew = float(default=0.0)
-         interpolation = option(,'pointcloud','area','POINTCLOUD','AREA',default='pointcloud')
-         weighting = option('standard','miripsf','STANDARD','MIRIPSF',default = 'standard')
+         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm')
          coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec')
          rois = float(default=0.0)
          roiw = float(default=0.0)
@@ -57,7 +56,6 @@ class CubeBuildStep (Step):
         if(not self.filter.isupper()): self.filter = self.filter.upper()
         if(not self.grating.isupper()): self.grating = self.grating.upper()
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
-        if(not self.interpolation.islower()): self.interpolation = self.interpolation.lower()
         if(not self.weighting.islower()): self.weighting = self.weighting.lower()
 
         if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
@@ -91,13 +89,20 @@ class CubeBuildStep (Step):
         # valid coord_system:
         # 1. alpha-beta (only valid for MIRI Single Cubes)
         # 2. ra-dec
+        self.interpolation = 'pointcloud' # true for self.weighting  = 'msm' or 'miripsf'
 
-        if self.interpolation == 'area':
+        # if the weighting is area then interpolation is area
+        if self.weighting == 'area':
+            self.interpolation = 'area'
             self.coord_system = 'alpha-beta'
 
         if self.coord_system == 'alpha-beta':
+            self.weighting = 'area'
             self.interpolation = 'area'
 
+        # if interpolation is point cloud then weighting can be
+        # 1. MSM: modified shepard method
+        # 2. miripsf - weighting for MIRI based on PSF and LSF
         if self.coord_system == 'ra-dec':
             self.interpolation = 'pointcloud'  # can not be area
 

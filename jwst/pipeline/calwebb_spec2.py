@@ -70,7 +70,7 @@ class Spec2Pipeline(Pipeline):
         self.log.info('Starting calwebb_spec2 ...')
 
         # Retrieve the input(s)
-        asn = LoadAsLevel2Asn.load(input)
+        asn = LoadAsLevel2Asn.load(input, basename=self.output_file)
 
         # Each exposure is a product in the association.
         # Process each exposure.

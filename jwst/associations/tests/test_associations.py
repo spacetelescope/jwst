@@ -15,6 +15,7 @@ from ..registry import (
     find_member
 )
 
+
 # Basic Association object
 def test_read_assoc_defs():
     rules = AssociationRegistry(
