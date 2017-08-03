@@ -89,6 +89,8 @@ class Spec2Pipeline(Pipeline):
                 suffix = 'calints'
             self.save_model(result, suffix)
 
+            self.closeout(to_close=[result])
+
         # We're done
         self.log.info('Ending calwebb_spec2')
 

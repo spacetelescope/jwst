@@ -53,6 +53,8 @@ class Image2Pipeline(Pipeline):
             suffix = 'cal'
             self.save_model(result, suffix)
 
+            self.closeout(to_close=[result])
+
         self.log.info('... ending calwebb_image2')
 
     # Process each exposure

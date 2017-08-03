@@ -829,6 +829,46 @@ class Step(object):
             output_path = join(output_dir, output_path)
         return output_path
 
+    def closeout(self, to_close=None, to_del=None):
+        """Close out step processing
+
+        Parameters
+        ----------
+        to_close: [object(, ...)]
+            List of objects with a `close` method to execute
+            The objects will also be deleted
+
+        to_del: [object(, ...)]
+            List of objects to simply delete
+
+        Notes
+        -----
+        Other operations, such as forced garbage collection
+        will also be done.
+        """
+        if to_close is None:
+            to_close = []
+        if to_del is None:
+            to_del = []
+        to_del += to_close
+        for item in to_close:
+            try:
+                item.close()
+            except Exception as exception:
+                self.logger.debug(
+                    'Could not close "{}"'
+                    'Reason:\n{}'.format(item, exception)
+                )
+        for item in to_del:
+            try:
+                del item
+            except Exception as exception:
+                self.logger.debug(
+                    'Could not delete "{}"'
+                    'Reason:\n{}'.format(item, exception)
+                )
+        gc.collect()
+
 
 # #########
 # Utilities
