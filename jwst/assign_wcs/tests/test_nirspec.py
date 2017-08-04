@@ -185,7 +185,7 @@ def test_nirspec_ifu_against_esa():
 
     # Convert meters to microns for the second parameters as the
     # first parameter will be in microns.
-    assert_allclose(lp, lam[cond]*1e6, rtol=1e-4, atol=1e-4)
+    assert_allclose(lp, lam[cond] * 1e6, rtol=1e-4, atol=1e-4)
     ref.close()
 
 '''
