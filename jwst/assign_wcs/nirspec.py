@@ -305,7 +305,7 @@ def get_open_fixed_slits(input_model):
     s2b1 = Slit('S200B1', 4, 0, 0, -.5, .5, 5)
 
     subarray = input_model.meta.subarray.name.upper()
-    if  subarray == "S200A1":
+    if subarray == "S200A1":
         slits.append(s2a1)
     elif subarray == "S200A2":
         slits.append(s2a2)
@@ -313,7 +313,7 @@ def get_open_fixed_slits(input_model):
         slits.append(s4a1)
     elif subarray == "S1600A1":
         slits.append(s16a1)
-    elif  subarray == "S200B1":
+    elif subarray == "S200B1":
         slits.append(s2b1)
     else:
         slits.extend([s2a1, s2a2, s4a1, s16a1, s2b1])
@@ -564,7 +564,7 @@ def slit_to_msa(open_slits, msafile):
     msa = MSAModel(msafile)
     models = []
     for quadrant in range(1, 6):
-        slits_in_quadrant = [s for s in open_slits if s.quadrant==quadrant]
+        slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
         if any(slits_in_quadrant):
             msa_data = msa_quadrant.data
@@ -691,7 +691,7 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     msa = MSAModel(reference_files['msa'])
     slit_models = []
     for quadrant in range(1, 6):
-        slits_in_quadrant = [s for s in open_slits if s.quadrant==quadrant]
+        slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         log.info("There are {0} open slits in quadrant {1}".format(len(slits_in_quadrant), quadrant))
         msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
         if any(slits_in_quadrant):
@@ -890,11 +890,11 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.5, slit_ym
     y_range = np.hstack((y_range_low, y_range_high))
     # add 10 px margin
     # The -1 is technically because the output of slit2detector is 1-based coordinates.
-    x0 = max(0, x_range.min() -1 -10)
-    x1 = min(2047, x_range.max() -1 + 10)
+    x0 = max(0, x_range.min() - 1 - 10)
+    x1 = min(2047, x_range.max() - 1 + 10)
     # add 2 px margin
-    y0 = y_range.min() -1 -2
-    y1 = y_range.max() -1 + 2
+    y0 = y_range.min() - 1 - 2
+    y1 = y_range.max() - 1 + 2
 
     bounding_box = ((x0, x1), (y0, y1))
     return bounding_box
@@ -1267,7 +1267,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
     col2det = collimator2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq | \
             gwa2det | det2dms
     for quadrant in range(1, 6):
-        slits_in_quadrant = [s for s in open_slits if s.quadrant==quadrant]
+        slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         if any(slits_in_quadrant):
             msa_quadrant = getattr(msa, "Q{0}".format(quadrant))
             #msa_model = msa.tree[quadrant]['model']
@@ -1286,7 +1286,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
                     log.info("Removing slit {0} from the list of open slits because the"
                              "WCS bounding_box is completely outside the detector.".format(slit.name))
                     log.debug("Slit bounding_box is {0}".format(bb))
-                    idx = np.nonzero([s.name==slit.name for s in open_slits])[0][0]
+                    idx = np.nonzero([s.name == slit.name for s in open_slits])[0][0]
                     open_slits.pop(idx)
 
     msa.close()
