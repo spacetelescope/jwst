@@ -150,6 +150,7 @@ def test_nirspec_imaging():
     im.meta.wcs(1, 2)
 
 
+@pytest.mark.xfail(reason="test needs CV3 update")
 def test_nirspec_ifu_against_esa():
     """
     Test Nirspec IFU mode using build 6 reference files.
@@ -206,6 +207,7 @@ def test_nirspec_mos():
     w1(1, 2)
 '''
 
+@pytest.mark.xfail(reason="test needs CV3 update")
 def test_nirspec_fs_esa():
     """
     Test Nirspec FS mode using build 6 reference files.
@@ -244,6 +246,7 @@ def test_nirspec_fs_esa():
     ref.close()
 
 
+@pytest.mark.xfail(reason="test needs CV3 update")
 def test_correct_tilt():
     """
     Example provided by Catarina.
