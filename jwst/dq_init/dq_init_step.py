@@ -4,6 +4,7 @@ from ..stpipe import Step
 from .. import datamodels
 from . import dq_initialization
 
+
 class DQInitStep(Step):
     """
 
@@ -14,11 +15,13 @@ class DQInitStep(Step):
 
     reference_file_types = ['mask']
 
-    def process(self, input): 
-
+    def process(self, input):
+        # Determine Model type from EXP_TYPE of RampModel
         input_model = datamodels.open( input )
-        exp_type_pref = input_model.meta.exposure.type[:3]
-        if exp_type_pref == 'FGS':  # reopen as a GuiderRawModel 
+
+        # Set flag for guider mode operations
+        if input_model.meta.exposure.type in dq_initialization.guider_list: # Reopen as GuiderRawModel
+            input_model.close()
             input_model = datamodels.GuiderRawModel( input )
 
         # Check for consistency between keyword values and data shape
@@ -57,7 +60,7 @@ class DQInitStep(Step):
         mask_model = datamodels.MaskModel(self.mask_filename)
 
         # Apply the step
-        result = dq_initialization.correct_model(input_model, mask_model, exp_type_pref)
+        result = dq_initialization.correct_model(input_model, mask_model)
 
         # Close the reference file
         mask_model.close()

@@ -15,31 +15,36 @@ from .. import datamodels
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-def correct_model(input_model, mask_model, exp_type_pref):
+
+guider_list = ['FGS_ID-IMAGE', 'FGS_ID-STACK', 'FGS_ACQ1', 'FGS_ACQ2',\
+             'FGS_TRACK', 'FGS_FINEGUIDE'] # FGS guider operation modes
+
+
+def correct_model(input_model, mask_model):
     """DQ Initialize a JWST Model"""
-    output_model = do_dqinit(input_model, mask_model, exp_type_pref)
+    output_model = do_dqinit(input_model, mask_model)
 
     return output_model
 
 
-def do_dqinit(input_model, mask_model, exp_type_pref):
+def do_dqinit(input_model, mask_model):
     """Do the DQ initialization"""
 
     check_dimensions(input_model)
-
     output_model = input_model.copy()
 
-    if is_subarray(output_model, exp_type_pref): 
+    if is_subarray(output_model):
         log.debug('input exposure is a subarray readout')
-        mask_array = get_mask_subarray(mask_model, output_model, exp_type_pref)
+        mask_array = get_mask_subarray(mask_model, output_model)
     else:
         mask_array = mask_model.dq
 
-    if exp_type_pref == 'FGS':
-        dq = np.bitwise_or(input_model.dq, mask_array)  
+    # set model-specific data quality in output
+    if input_model.meta.exposure.type in guider_list:
+        dq = np.bitwise_or(input_model.dq, mask_array)
         output_model.dq = dq
     else:
-        dq = np.bitwise_or(input_model.pixeldq, mask_array)  
+        dq = np.bitwise_or(input_model.pixeldq, mask_array)
         output_model.pixeldq = dq
 
     output_model.meta.cal_step.dq_init = 'COMPLETE'
@@ -47,11 +52,12 @@ def do_dqinit(input_model, mask_model, exp_type_pref):
     return output_model
 
 
-def is_subarray(input_model, exp_type_pref):
+def is_subarray(input_model):
 
-    if exp_type_pref == 'FGS':
+    # get model-specific data quality dimensions
+    if input_model.meta.exposure.type in guider_list:
         nrows, ncols = input_model.dq.shape
-    else: 
+    else:
         nrows, ncols = input_model.pixeldq.shape
 
     instrument = input_model.meta.instrument.name
@@ -64,14 +70,15 @@ def is_subarray(input_model, exp_type_pref):
         return False
 
 
-def get_mask_subarray(mask_model, output_model, exp_type_pref):
+def get_mask_subarray(mask_model, output_model):
 
     if (output_model.meta.subarray.xstart is None or
         output_model.meta.subarray.ystart is None):
         raise ValueError('xstart or ystart metadata values not found')
-    
-    if exp_type_pref == 'FGS':
-        ysize, xsize = output_model.dq.shape    
+
+    # get model-specific data quality array sizes
+    if output_model.meta.exposure.type in guider_list:
+        ysize, xsize = output_model.dq.shape
     else:
         ysize, xsize = output_model.pixeldq.shape
 
@@ -108,7 +115,7 @@ def check_dimensions(input_model):
     input_shape = input_model.data.shape
 
     if isinstance(input_model, datamodels.GuiderRawModel):
-        if input_model.dq.shape != input_shape[-2:]: 
+        if input_model.dq.shape != input_shape[-2:]:
             # 
             # If the shape is different, then the mask model should have a shape of (0,0)
             # If that's the case, create the array
@@ -116,7 +123,7 @@ def check_dimensions(input_model):
                 input_model.dq = np.zeros((input_shape[-2:])).astype('uint32')
             else:
                 log.error("DQ array has the wrong shape: (%d, %d)" % input_model.dq.shape) 
-    else:    # Not isinstance(input_model, datamodels.GuiderRawModel):
+    else:   # RampModel
         if input_model.pixeldq.shape != input_shape[-2:]:
             #
             # If the shape is different, then the mask model should have a shape of (0,0)
