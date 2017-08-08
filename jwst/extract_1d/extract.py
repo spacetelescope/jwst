@@ -13,6 +13,7 @@ from .. import datamodels
 from .. assign_wcs import niriss        # for specifying spectral order number
 from . import extract1d
 from . import ifu
+from . import spec_wcs
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -887,8 +888,10 @@ class ExtractModel(object):
 
         Returns
         -------
-        (wavelength, net, background)
-            These are all 1-D arrays.  `wavelength` is the wavelength in
+        (ra, dec, wavelength, net, background)
+            ra and dec are floats, and the others are 1-D arrays.
+            ra and dec are the right ascension and declination at the
+            nominal center of the slit.  `wavelength` is the wavelength in
             micrometers at each pixel.  `net` is the count rate
             (counts / s) minus the background at each pixel.  `background`
             is the background count rate that was subtracted from the total
@@ -915,16 +918,20 @@ class ExtractModel(object):
             x_array.fill((self.xstart + self.xstop) / 2.)
 
         if self.wcs is not None:
-            _, _, wavelength = self.wcs(x_array, y_array)
+            ra, dec, wavelength = self.wcs(x_array, y_array)
+            nelem = len(wavelength)
+            ra = ra[nelem // 2]
+            dec = dec[nelem // 2]
 
         elif self._wave_model is not None:
             if self.dispaxis == HORIZONTAL:
                 wavelength = self._wave_model(x_array)
             else:
                 wavelength = self._wave_model(y_array)
+            (ra, dec) = (0., 0.)
 
         else:
-            wavelength = None
+            (ra, dec, wavelength) = (None, None, None)
         del x_array, y_array
 
         # Range (slice) of pixel numbers in the dispersion direction.
@@ -954,7 +961,7 @@ class ExtractModel(object):
                             self.smoothing_length, self.bkg_order,
                             weights=None)
 
-        return (wavelength, net, background)
+        return (ra, dec, wavelength, net, background)
 
 
     def __del__(self):
@@ -1048,7 +1055,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             log.info('Working on slit %s' % slit.name)
             extract_params = get_extract_parameters(refname, slit.name,
                                 input_model.meta, smoothing_length, bkg_order)
-            wavelength, net, background = \
+            (ra, dec, wavelength, net, background) = \
                 extract_one_slit(input_model, slit, -1, **extract_params)
             got_relsens = True
             try:
@@ -1073,6 +1080,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                                  net, nerror, background, berror)),
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
+            spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
             output_model.spec.append(spec)
     else:
         slitname = input_model.meta.exposure.type
@@ -1088,7 +1096,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                                 input_model.meta, smoothing_length, bkg_order)
             if extract_params:
                 slit = DUMMY
-                wavelength, net, background = \
+                (ra, dec, wavelength, net, background) = \
                         extract_one_slit(input_model, slit, -1,
                                          **extract_params)
             else:
@@ -1117,6 +1125,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                                  net, nerror, background, berror)),
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
+            spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
             output_model.spec.append(spec)
 
         elif isinstance(input_model, datamodels.CubeModel):
@@ -1142,7 +1151,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             slit = DUMMY
             for integ in range(input_model.data.shape[0]):
                 # Extract spectrum
-                wavelength, net, background = \
+                (ra, dec, wavelength, net, background) = \
                         extract_one_slit(input_model, slit, integ,
                                          **extract_params)
                 dq = np.zeros(net.shape, dtype=np.int32)
@@ -1160,6 +1169,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                                      net, nerror, background, berror)),
                                 dtype=spec.spec_table.dtype)
                 spec = datamodels.SpecModel(spec_table=otab)
+                spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec,
+                                                             wavelength)
                 output_model.spec.append(spec)
 
         elif isinstance(input_model, datamodels.IFUCubeModel):
@@ -1173,6 +1184,9 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
         else:
             log.error("The input file is not supported for this step.")
             raise RuntimeError("Can't extract a spectrum from this file.")
+
+    # See output_model.spec[i].meta.wcs instead.
+    output_model.meta.wcs = None
 
     return output_model
 
@@ -1195,7 +1209,7 @@ def extract_one_slit(input_model, slit, integ, **extract_params):
     extract_model.log_extraction_parameters()
 
     extract_model.assign_polynomial_limits()
-    wavelength, net, background = extract_model.extract(data)
+    (ra, dec, wavelength, net, background) = extract_model.extract(data)
     del extract_model
 
-    return wavelength, net, background
+    return (ra, dec, wavelength, net, background)
