@@ -52,18 +52,24 @@ def do_correction(input_model, dark_model, dark_output=None):
     drk_nframes = dark_model.meta.exposure.nframes
     drk_groupgap = dark_model.meta.exposure.groupgap
 
-    log.info('Science data nints=%d, ngroups=%d, nframes=%d, groupgap=%d',
-              sci_nints, sci_ngroups, sci_nframes, sci_groupgap)
-    log.info('Dark data nints=%d, ngroups=%d, nframes=%d, groupgap=%d',
-              drk_nints, drk_ngroups, drk_nframes, drk_groupgap)
+    log.info(
+        'Science data nints=%d, ngroups=%d, nframes=%d, groupgap=%d',
+        sci_nints, sci_ngroups, sci_nframes, sci_groupgap
+    )
+    log.info(
+        'Dark data nints=%d, ngroups=%d, nframes=%d, groupgap=%d',
+        drk_nints, drk_ngroups, drk_nframes, drk_groupgap
+    )
 
     # Check that the number of groups in the science data does not exceed
     # the number of groups in the dark current array.
     sci_total_frames = sci_ngroups * (sci_nframes + sci_groupgap)
     drk_total_frames = drk_ngroups * (drk_nframes + drk_groupgap)
     if sci_total_frames > drk_total_frames:
-        log.warning("Not enough data in dark reference file to match to " +
-        "science data.")
+        log.warning(
+            "Not enough data in dark reference file to match to "
+            "science data."
+        )
         log.warning("Input will be returned without subtracting dark current.")
         input_model.meta.cal_step.dark_sub = 'SKIPPED'
         return input_model.copy()
@@ -71,9 +77,11 @@ def do_correction(input_model, dark_model, dark_output=None):
     # Check that the value of nframes and groupgap in the dark
     # are not greater than those of the science data
     if drk_nframes > sci_nframes or drk_groupgap > sci_groupgap:
-        log.warning("The value of nframes or groupgap in the dark data is " +
-        "greater than that of the science data.")
-        log.warning("Input will be returned without subtracting dark current.")
+        log.warning(
+            "The value of nframes or groupgap in the dark data is "
+            "greater than that of the science data."
+            "Input will be returned without subtracting dark current."
+        )
         input_model.meta.cal_step.dark_sub = 'SKIPPED'
         return input_model.copy()
 
@@ -89,9 +97,9 @@ def do_correction(input_model, dark_model, dark_output=None):
 
         # If the user requested to have the dark file saved,
         # save the reference model as this file. This will
-        # ensure consistency fro the user's standpoint
+        # ensure consistency from the user's standpoint
         if dark_output is not None:
-            log.info('Writing dark reference model to %s', dark_output)
+            log.info('Writing dark current data to %s', dark_output)
             dark_model.save(dark_output)
 
     else:
@@ -102,16 +110,18 @@ def do_correction(input_model, dark_model, dark_output=None):
         # we average them with a seperate routine.
 
         if instrument == 'MIRI':
-            averaged_dark = average_MIRIdark_frames(dark_model, sci_nints,
-                            sci_ngroups, sci_nframes, sci_groupgap)
+            averaged_dark = average_MIRIdark_frames(
+                dark_model, sci_nints, sci_ngroups, sci_nframes, sci_groupgap
+            )
         else:
-            averaged_dark = average_dark_frames(dark_model, sci_ngroups,
-                            sci_nframes, sci_groupgap)
+            averaged_dark = average_dark_frames(
+                dark_model, sci_ngroups, sci_nframes, sci_groupgap
+            )
 
         # Save the frame-averaged dark data that was just created,
         # if requested by the user
         if dark_output is not None:
-            log.info('Writing averaged dark to %s', dark_output)
+            log.info('Writing dark current data to %s', dark_output)
             averaged_dark.save(dark_output)
 
         # Subtract the frame-averaged dark data from the science data
@@ -251,14 +261,14 @@ def average_MIRIdark_frames(input_dark, nints, ngroups, nframes, groupgap):
         for group in range(ngroups):
             end = start + nframes
 
-        # If there's only 1 frame per group, just copy the dark frames
+            # If there's only 1 frame per group, just copy the dark frames
             if nframes == 1:
                 log.debug('copy dark frame %d', start)
                 avg_dark.data[it, group] = input_dark.data[it, start]
                 avg_dark.err[it, group] = input_dark.err[it, start]
 
-        # Otherwise average nframes into a new group: take the mean of
-        # the SCI arrays and the quadratic sum of the ERR arrays.
+            # Otherwise average nframes into a new group: take the mean of
+            # the SCI self.assertRaises(Exception, fun)rays and the quadratic sum of the ERR arrays.
             else:
                 log.debug('average dark frames %d to %d', start + 1, end)
                 avg_dark.data[it, group] = input_dark.data[it, start:end].mean(axis=0)
