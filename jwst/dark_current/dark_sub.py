@@ -87,6 +87,13 @@ def do_correction(input_model, dark_model, dark_output=None):
         # They match, so we can subtract the dark ref file data directly
         output_model = subtract_dark(input_model, dark_model)
 
+        # If the user requested to have the dark file saved,
+        # save the reference model as this file. This will
+        # ensure consistency fro the user's standpoint
+        if dark_output is not None:
+            log.info('Writing dark reference model to %s', dark_output)
+            dark_model.save(dark_output)
+
     else:
 
         # Create a frame-averaged version of the dark data to match

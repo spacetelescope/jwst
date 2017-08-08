@@ -10,7 +10,7 @@ class DarkCurrentStep(Step):
     """
 
     spec = """
-        dark_output = output_file(default = None)
+        dark_output = output_file(default = None) # Dark model or averaged dark subtracted
     """
 
     reference_file_types = ['dark']
@@ -40,8 +40,9 @@ class DarkCurrentStep(Step):
                 dark_model = datamodels.DarkModel(self.dark_name)
 
             # Do the dark correction
-            result = dark_sub.do_correction(input_model, dark_model,
-                                                    self.dark_output)
+            result = dark_sub.do_correction(
+                input_model, dark_model, self.dark_output
+            )
             dark_model.close()
 
 
