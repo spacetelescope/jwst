@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 from collections import defaultdict
 
+from .. import datamodels
 from ..associations.load_as_asn import LoadAsLevel2Asn
 from ..stpipe import Pipeline
-from .. import datamodels
 
 # step imports
 from ..assign_wcs import assign_wcs_step
