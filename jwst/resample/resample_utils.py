@@ -1,7 +1,6 @@
 from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
-import logging
 import numpy as np
 import numpy.ma as ma
 from scipy import interpolate
@@ -16,14 +15,9 @@ from gwcs import WCS, utils, wcstools
 
 from .. import assign_wcs
 
+import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-
-DEFAULT_DOMAIN = {'lower': None,
-                  'upper': None,
-                  'includes_lower': True,
-                  'includes_upper': False}
 
 
 def make_output_wcs(input_models):
