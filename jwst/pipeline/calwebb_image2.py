@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from collections import defaultdict
-import logging
 
 from .. import datamodels
 from ..associations.load_as_asn import LoadAsLevel2Asn
@@ -17,36 +16,29 @@ __version__ = "3.0"
 
 class Image2Pipeline(Pipeline):
     """
-
-    CalWebbImage2: Processes JWST imaging-mode slope images from
-                   Level-2a to Level-2b.
+    Image2Pipeline: Processes JWST imaging-mode slope data from Level-2a to
+    Level-2b.
 
     Included steps are:
     assign_wcs, flat_field, and photom.
-
     """
 
     # Define alias to steps
-    step_defs = {'assign_wcs': assign_wcs_step.AssignWcsStep,
-                 'flat_field': flat_field_step.FlatFieldStep,
-                 'photom': photom_step.PhotomStep,
-                 }
+    step_defs = {
+        'assign_wcs': assign_wcs_step.AssignWcsStep,
+        'flat_field': flat_field_step.FlatFieldStep,
+        'photom': photom_step.PhotomStep,
+        }
 
     def process(self, input):
 
         self.log.info('Starting calwebb_image2 ...')
 
         # Retrieve the input(s)
-        asn = LoadAsLevel2Asn.load(input)
-
-        # Setup output creation
-        make_output_path = self.search_attr(
-            'make_output_path', parent_first=True
-        )
+        asn = LoadAsLevel2Asn.load(input, basename=self.output_file)
 
         # Each exposure is a product in the association.
         # Process each exposure.
-        results = []
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
             self.output_basename = product['name']
@@ -55,17 +47,16 @@ class Image2Pipeline(Pipeline):
                 asn['asn_pool'],
                 asn.filename
             )
-            results.append(result)
 
-            # Setup filename
-            result.meta.filename = make_output_path(
-                self,
-                result,
-                ignore_use_model=True
-            )
+            # Save result
+            suffix = 'cal'
+            if isinstance(input, datamodels.CubeModel):
+                suffix = 'calints'
+            self.save_model(result, suffix)
+
+            self.closeout(to_close=[result])
 
         self.log.info('... ending calwebb_image2')
-        return results
 
     # Process each exposure
     def process_exposure_product(

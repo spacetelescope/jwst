@@ -151,6 +151,8 @@ def match_det2cube(self, input_model,
 # now loop over the pixel values for this region and find the spaxels that fall 
 # withing the region of interest.
     nn  = coord1.size
+
+#    print('looping over n points mapping to cloud',nn)
 #________________________________________________________________________________
     for ipt in range(0, nn - 1):
 #________________________________________________________________________________        
@@ -161,13 +163,13 @@ def match_det2cube(self, input_model,
 #        if(ipt > 2): sys.exit('STOP')
 #        print('For point ',coord1[ipt],coord2[ipt],wave[ipt],ipt)
 
+#        if(ipt == 0):
+#            print('size of Xcenters',self.Xcenters.size)
         xdistance = (self.Xcenters - coord1[ipt])
         ydistance = (self.Ycenters - coord2[ipt])
         radius = np.sqrt(xdistance * xdistance + ydistance * ydistance)
 
-#        print(radius.shape[0]) 
-#        for ii in range(radius.shape[0]):
-#            print(radius[ii],ii,(radius[ii] <= self.rois),Cube.Xcenters[ii],Cube.Ycenters[ii])
+
         indexr = np.where(radius  <=self.rois)
         indexz = np.where(abs(self.zcoord - wave[ipt]) <= self.roiw)
 
@@ -185,24 +187,20 @@ def match_det2cube(self, input_model,
         for iz, zz in enumerate(indexz[0]):
             istart = zz * nplane
             for ir, rr in enumerate(indexr[0]):
-
                 yy_cube = int(rr/self.naxis1)
                 xx_cube = rr - yy_cube*self.naxis1
 #                print('xx yy cube',rr,self.naxis1,xx_cube,yy_cube)
 #________________________________________________________________________________
-                if self.weighting =='standard':
+                if self.weighting =='msm':
 
                     d1 = (xi_cube[ir] - coord1[ipt])/self.Cdelt1
                     d2 = (eta_cube[ir] - coord2[ipt])/self.Cdelt2
                     d3 = (zlam[iz] - wave[ipt])/self.Cdelt3
-#                    print('d1,d2,d3',d1,d2,d3)
                     
                     weight_distance = math.sqrt(d1*d1 + d2*d2 + d3*d3)
                     weight_distance = math.pow(weight_distance,self.weight_power)
-#                    print('weight_distance',weight_distance)
 #________________________________________________________________________________
 # if weight is miripsf -distances determined in alpha-beta coordinate system 
-
                 elif self.weighting =='miripsf':
                     weights = FindNormalizationWeights(wave[ipt], 
                                                          wave_resol,

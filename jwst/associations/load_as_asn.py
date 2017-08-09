@@ -1,6 +1,7 @@
 """Treat various objects as Associations"""
 
-from os.path import splitext
+from functools import partial
+from os import path as os_path
 
 from ..associations import (
     Association,
@@ -106,13 +107,16 @@ class LoadAsLevel2Asn(LoadAsAssociation):
     """
 
     @classmethod
-    def load(cls, obj):
+    def load(cls, obj, basename=None):
         """ Open object and return a Level2 association of it
 
         Parameters
         ----------
         obj: Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
             The obj to return as an association
+
+        basename: str
+            If specified, use as the basename, with an index appended.
 
         Attributes
         ----------
@@ -128,6 +132,10 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         association: DMSLevel2bBase
             An association created using given obj
         """
+        product_name_func = cls.model_product_name
+        if basename is not None:
+            product_name_func = partial(cls.name_with_index, basename)
+
         asn = super(LoadAsLevel2Asn, cls).load(
             obj,
             registry=AssociationRegistry(
@@ -135,18 +143,52 @@ class LoadAsLevel2Asn(LoadAsAssociation):
                 include_default=False
             ),
             rule=DMSLevel2bBase,
-            product_name_func=cls.model_product_name
+            product_name_func=product_name_func
         )
         return asn
 
     @staticmethod
-    def model_product_name(model):
+    def model_product_name(model, *args, **kwargs):
         """Product a model product name based on the model.
 
         Parameters
         ----------
         model: DataModel
             The model to get the name from
+
+        Returns
+        -------
+        product_name: str
+            The basename of filename from the model
         """
-        product_name, ext = splitext(model.meta.filename)
+        product_name, ext = os_path.splitext(model.meta.filename)
         return product_name
+
+    @staticmethod
+    def name_with_index(basename, obj, idx, *args, **kwargs):
+        """Produce a name with the basename and index appended
+
+        Parameters
+        ----------
+        basename: str
+            The base of the file name
+
+        obj: object
+            The object being added to the association _(unused)_
+
+        idx: int
+            The current index of the added item.
+
+        Returns
+        -------
+        product_name: str
+            The concatentation of basename, '_', idx
+
+        Notes
+        -----
+        If the index is less than or equal to 1, no appending is done.
+        """
+        basename, extension = os_path.splitext(os_path.basename(basename))
+        if idx > 1:
+            basename = basename + '_' + str(idx)
+        return basename
