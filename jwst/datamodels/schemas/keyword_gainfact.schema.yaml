@@ -1,0 +1,9 @@
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      gain_factor:
+        title: Gain scale factor
+        type: number
+        fits_keyword: GAINFACT

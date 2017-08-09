@@ -530,6 +530,10 @@ properties:
             title: data compressed on-board (T/F)
             type: boolean
             fits_keyword: COMPRSSD
+          gain_factor:
+            title: Gain scale factor
+            type: number
+            fits_keyword: GAINFACT
       subarray:
         title: Subarray parameters
         type: object
@@ -1502,6 +1506,10 @@ properties:
             title: Ramp Fitting
             type: string
             fits_keyword: S_RAMP
+          gain_scale:
+            title: Gain Scale Correction
+            type: string
+            fits_keyword: S_GANSCL
           assign_wcs:
             title: Assign World Coordinate System
             type: string
