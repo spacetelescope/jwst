@@ -45,6 +45,19 @@ db_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_mock.csv')
 mock_db = Table.read(db_path)
 
 
+# Some expected falues
+Q_EXPECTED = np.asarray(
+    [-0.36915286, 0.33763282, 0.05758533, 0.86395264]
+)
+J2FGS_MATRIX_EXPECTED = np.asarray(
+    [-1.00444000e-03,   3.38145836e-03,   9.99993778e-01,
+     9.99999496e-01,  -3.90000000e-14,   1.00444575e-03,
+     3.39649146e-06,   9.99994283e-01,  -3.38145665e-03]
+)
+FSMCORR_EXPECTED = np.zeros((2,))
+OBSTIME_EXPECTED = STARTTIME
+
+
 def register_responses(mocker, response_db, starttime, endtime):
     request_url = ''.join([
         engdb_tools.ENGDB_BASE_URL,
@@ -159,25 +172,35 @@ def test_get_pointing_fail():
 
 
 def test_get_pointing(eng_db):
-        q, j2fgs_matrix, fsmcorr, obstime = stp.get_pointing(STARTTIME, ENDTIME)
-        assert isinstance(q, np.ndarray)
-        assert isinstance(j2fgs_matrix, np.ndarray)
-        assert isinstance(fsmcorr, np.ndarray)
-        assert obstime
+        (q,
+         j2fgs_matrix,
+         fsmcorr,
+         obstime) = stp.get_pointing(STARTTIME, ENDTIME)
+        print(q)
+        print(j2fgs_matrix)
+        print(fsmcorr)
+        print(obstime)
+        assert np.isclose(q, Q_EXPECTED).all()
+        assert np.isclose(j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
+        assert np.isclose(fsmcorr, FSMCORR_EXPECTED).all()
+        assert obstime == STARTTIME
 
 
 def test_get_pointing_list(eng_db):
         results = stp.get_pointing(STARTTIME, ENDTIME, result_type='all')
         assert isinstance(results, list)
         assert len(results) > 0
-        assert isinstance(results[0].q, np.ndarray)
-        assert isinstance(results[0].j2fgs_matrix, np.ndarray)
-        assert isinstance(results[0].fsmcorr, np.ndarray)
-        assert results[0].obstime
+        assert np.isclose(results[0].q, Q_EXPECTED).all()
+        assert np.isclose(results[0].j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
+        assert np.isclose(results[0].fsmcorr, FSMCORR_EXPECTED).all()
+        assert results[0].obstime == STARTTIME
 
 
 def test_get_pointing_with_zeros(eng_db):
-    q, j2fgs_matrix, fsmcorr, obstime = stp.get_pointing(ZEROTIME_START, ENDTIME)
+    (q,
+     j2fgs_matrix,
+     fsmcorr,
+     obstime) = stp.get_pointing(ZEROTIME_START, ENDTIME)
     assert j2fgs_matrix.any()
     (q_desired,
      j2fgs_matrix_desired,
