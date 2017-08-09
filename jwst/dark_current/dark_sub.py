@@ -268,7 +268,7 @@ def average_MIRIdark_frames(input_dark, nints, ngroups, nframes, groupgap):
                 avg_dark.err[it, group] = input_dark.err[it, start]
 
             # Otherwise average nframes into a new group: take the mean of
-            # the SCI self.assertRaises(Exception, fun)rays and the quadratic sum of the ERR arrays.
+            # the SCI arrays and the quadratic sum of the ERR arrays.
             else:
                 log.debug('average dark frames %d to %d', start + 1, end)
                 avg_dark.data[it, group] = input_dark.data[it, start:end].mean(axis=0)
