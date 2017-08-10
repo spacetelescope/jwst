@@ -1,7 +1,7 @@
 """Set Telescope Pointing from quaternions"""
 import logging
 import numpy as np
-from numpy import cos, sin
+from numpy import (cos, sin)
 
 from namedlist import namedlist
 
@@ -14,6 +14,26 @@ from jwst.lib.engdb_tools import (
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+# ################################
+# Default transformation matricies
+# ################################
+FGS12SIFOV_DEFAULT = np.array(
+    [[0.9999994955442, 0.0000000000000, 0.0010044457459],
+     [0.0000011174826, 0.9999993811310, -0.0011125359826],
+     [-0.0010044451243, 0.0011125365439, 0.9999988766756]]
+)
+
+J2FGS_MATRIX_DEFAULT = np.array(
+    [[0.999997425983907, 0, -0.002268926080840],
+     [0., 1., 0.],
+     [0.002268926080840, 0., 0.999997425983907]]
+)
+
+SIFOV2V_DEFAULT = np.array(
+    [[0.99999742598, 0., 0.00226892608],
+     [0., 1., 0.],
+     [-0.00226892608, 0., 0.99999742598]]
+)
 
 # Degree, radian, angle transformations
 R2D = 180./np.pi
@@ -190,7 +210,7 @@ def calc_wcs(siaf, pointing):
     )
 
     # Calculate SI FOV to V1 matrix
-    m_sifov2v = calc_sifov2v_matrix(PITCH_V2)
+    m_sifov2v = calc_sifov2v_matrix()
 
     # Calculate the complete transform to the V1 reference
     m_eci2v = np.dot(m_sifov2v, m_eci2sifov)
@@ -231,6 +251,228 @@ def calc_wcs(siaf, pointing):
 
     # That's all folks
     return (wcsinfo, vinfo)
+
+
+def calc_eci2j_matrix(q):
+    """Calculate ECI to J-frame matrix from quaternions
+
+    Parameters
+    ----------
+    q: np.array(q1, q2, q3, q4)
+        Array of quaternions from the engineering database
+
+    Returns
+    -------
+    transform: np.array((3, 3))
+        The transform matrix representing the transformation
+        from observatory orientation to J-Frame
+    """
+    q1, q2, q3, q4 = q
+    transform = np.array(
+        [[1. - 2.*q2*q2 - 2.*q3*q3,
+          2.*(q1*q2 + q3*q4),
+          2.*(q3*q1 - q2*q4)],
+         [2.*(q1*q2 - q3*q4),
+          1. - 2.*q3*q3 - 2.*q1*q1,
+          2.*(q2*q3 + q1*q4)],
+         [2.*(q3*q1 + q2*q4),
+          2.*(q2*q3 - q1*q4),
+          1. - 2.*q1*q1 - 2.*q2*q2]]
+    )
+
+    return transform
+
+
+def calc_j2fgs1_matrix(j2fgs_matrix):
+    """Calculate the J-frame to FGS1 transformation
+
+    Parameters
+    ----------
+    j2fgs_matrix: n.array((9,))
+        Matrix parameters from the engineering database.
+        If all zeros, a predefined matrix is used.
+
+    Returns
+    -------
+    transform: np.array((3, 3))
+        The transformation matrix
+    """
+    if np.isclose(j2fgs_matrix, 0.).all():
+        logger.warning(
+            'J-Frame to FGS1 engineering parameters are all zero.'
+            '\nUsing default matrix'
+        )
+        m_partial = np.asarray(
+            [
+                [0., 1., 0.],
+                [0., 0., 1.],
+                [1., 0., 0.]
+            ]
+        )
+        transform = np.dot(
+            m_partial,
+            J2FGS_MATRIX_DEFAULT
+        )
+
+    else:
+        logger.info(
+            'Using J-Frame to FGS1 engineering parameters'
+            'for the J-Frame to FGS1 transformation.'
+        )
+        transform = np.array(j2fgs_matrix).reshape((3, 3)).transpose()
+
+    return transform
+
+
+def calc_sifov_fsm_delta_matrix(fsmcorr):
+    """Calculate Fine Steering Mirror correction matrix
+
+    Parameters
+    ----------
+    fsmcorr: np.array((2,))
+        The FSM correction parameters
+
+    Returns
+    -------
+    transform: np.array((3, 3))
+        The transformation matrix
+    """
+    transform = np.array(
+        [
+            [1.,                fsmcorr[0]/22.01, fsmcorr[1]/21.68],
+            [-fsmcorr[0]/22.01,               1.,               0.],
+            [-fsmcorr[1]/21.68,               0.,               1.]
+        ]
+    )
+
+    return transform
+
+
+def calc_fgs1_to_sifov_mastrix():
+    """
+    Calculate the FGS! to SI-FOV matrix
+
+    Currently, this is a defined matrix
+    """
+    return FGS12SIFOV_DEFAULT
+
+
+def calc_sifov2v_matrix():
+    """Calculate the SI-FOV to V-Frame matrix
+
+    This is currently defined as the inverse Euler rotation
+    about an angle of 7.8 arcmin. Here returns the pre-calculate
+    matrix.
+    """
+    return SIFOV2V_DEFAULT
+
+
+def calc_v2siaf_matrix(siaf):
+    """Calculate the SIAF transformation matrix
+
+    Parameters
+    ----------
+    siaf: SIAF
+        The SIAF parameters
+
+    Returns
+    -------
+    transform: np.array((3, 3))
+        The V1 to SIAF transformation matrix
+    """
+    v2, v3, v3idlyang, vparity = siaf
+    v2 *= A2R
+    v3 *= A2R
+    v3idlyang *= D2R
+
+    mat = np.array(
+        [[cos(v3)*cos(v2),
+          cos(v3)*sin(v2),
+          sin(v3)],
+         [-cos(v3idlyang)*sin(v2)+sin(v3idlyang)*sin(v3)*cos(v2),
+          cos(v3idlyang)*cos(v2)+sin(v3idlyang)*sin(v3)*sin(v2),
+          -sin(v3idlyang)*cos(v3)],
+         [-sin(v3idlyang)*sin(v2)-cos(v3idlyang)*sin(v3)*cos(v2),
+          sin(v3idlyang)*cos(v2)-cos(v3idlyang)*sin(v3)*sin(v2),
+          cos(v3idlyang)*cos(v3)]])
+    pmat = np.array([[0., vparity, 0.],
+                     [0., 0., 1.],
+                     [1., 0., 0.]])
+
+    transform = np.dot(pmat, mat)
+    return transform
+
+
+def calc_position_angle(v1, v3):
+    """Calculate V3 position angle @V1
+
+    Parameters
+    ----------
+    v1: WCSRef
+        The V1 wcs parameters
+
+    v3: WCSRef
+        The V3 wcs parameters
+
+    Returns
+    -------
+    v3_pa: float
+      The V3 position angle, in radians
+    """
+    y = cos(v3.dec) * sin(v3.ra-v1.ra)
+    x = sin(v3.dec) * cos(v1.dec) - \
+        cos(v3.dec) * sin(v1.dec) * cos((v3.ra - v1.ra))
+    v3_pa = np.arctan2(y, x)
+
+    return v3_pa
+
+
+def calc_aperture_wcs(siaf, m_eci2siaf):
+    """Calculate the aperture WCS
+
+    Parameters
+    ----------
+    siaf: SIAF
+        The SIAF transform
+
+    m_eci2siaf: np.array((3, 3))
+        The ECI to SIAF transformation matrix
+
+    Returns
+    -------
+    wcsinfo: WCSRef
+        The aperturn wcs information
+    """
+
+    # Calculate point on sky.
+    # Note, the SIAF referenct point is hardcoded to
+    # (0, 0). The calculation is left here in case
+    # this is not desired.
+    wcsinfo = WCSRef()
+    siaf_x = 0. * A2R
+    siaf_y = 0. * A2R
+    refpos = np.array(
+        [siaf_x,
+         siaf_y,
+         np.sqrt(1.-siaf_x * siaf_x - siaf_y * siaf_y)]
+    )
+    msky = np.dot(m_eci2siaf.transpose(), refpos)
+    wcsinfo.ra, wcsinfo.dec = vector_to_ra_dec(msky)
+
+    # Calculate the position angle
+    vysiaf = np.array([0., 1., 0.])
+    myeci = np.dot(m_eci2siaf.transpose(), vysiaf)
+
+    # The Y axis of the aperture is given by
+    vy_ra, vy_dec = vector_to_ra_dec(myeci)
+
+    # The VyPA @ xref,yref is given by
+    y = cos(vy_dec) * sin(vy_ra-wcsinfo.ra)
+    x = sin(vy_dec) * cos(wcsinfo.dec) - \
+        cos(vy_dec) * sin(wcsinfo.dec) * cos((vy_ra - wcsinfo.ra))
+    wcsinfo.pa = np.arctan2(y, x)
+
+    return wcsinfo
 
 
 def get_pointing(obsstart, obsend, result_type='first'):
@@ -369,3 +611,73 @@ def get_pointing(obsstart, obsend, result_type='first'):
         return results[0]
     else:
         return results
+
+
+def vector_to_ra_dec(v):
+    """Returns tuple of spherical angles from unit direction Vector
+
+    Parameters
+    ----------
+    v: [v0, v1, v2]
+
+    Returns
+    -------
+    ra, dec: float, float
+        The spherical angles, in radians
+    """
+    ra = np.arctan2(v[1], v[0])
+    dec = np.arcsin(v[2])
+    if ra < 0.:
+        ra += 2. * np.pi
+    return(ra, dec)
+
+
+def compute_local_roll(pa_v3, ra_ref, dec_ref, v2_ref, v3_ref):
+    """
+    Computes the position angle of V3 (measured N to E)
+    at the center af an aperture.
+
+    Parameters
+    ----------
+    pa_v3 : float
+        Position angle of V3 at (V2, V3) = (0, 0) [in deg]
+    v2_ref, v3_ref : float
+        Reference point in the V2, V3 frame [in arcsec]
+    ra_ref, dec_ref : float
+        RA and DEC corresponding to V2_REF and V3_REF, [in deg]
+
+    Returns
+    -------
+    new_roll : float
+        The value of ROLL_REF (in deg)
+
+    """
+    v2 = np.deg2rad(v2_ref / 3600)
+    v3 = np.deg2rad(v3_ref / 3600)
+    ra_ref = np.deg2rad(ra_ref)
+    dec_ref = np.deg2rad(dec_ref)
+    pa_v3 = np.deg2rad(pa_v3)
+
+    M = np.array(
+        [[cos(ra_ref) * cos(dec_ref),
+          -sin(ra_ref) * cos(pa_v3) + cos(ra_ref) * sin(dec_ref) * sin(pa_v3),
+          -sin(ra_ref) * sin(pa_v3) - cos(ra_ref) * sin(dec_ref) * cos(pa_v3)],
+         [sin(ra_ref) * cos(dec_ref),
+          cos(ra_ref) * cos(pa_v3) + sin(ra_ref) * sin(dec_ref) * sin(pa_v3),
+          cos(ra_ref) * sin(pa_v3) - sin(ra_ref) * sin(dec_ref) * cos(pa_v3)],
+         [sin(dec_ref),
+          -cos(dec_ref) * sin(pa_v3),
+          cos(dec_ref) * cos(pa_v3)]]
+    )
+
+    return _roll_angle_from_matrix(M, v2, v3)
+
+
+def _roll_angle_from_matrix(matrix, v2, v3):
+    X = -(matrix[2, 0] * np.cos(v2) + matrix[2, 1] * np.sin(v2)) * np.sin(v3) + matrix[2, 2] * np.cos(v3)
+    Y = (matrix[0, 0] *  matrix[1, 2] - matrix[1, 0] * matrix[0, 2]) * np.cos(v2) + \
+      (matrix[0, 1] * matrix[1, 2] - matrix[1, 1] * matrix[0, 2]) * np.sin(v2)
+    new_roll = np.rad2deg(np.arctan2(Y, X))
+    if new_roll < 0:
+        new_roll += 360
+    return new_roll
