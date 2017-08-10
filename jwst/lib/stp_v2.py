@@ -354,7 +354,14 @@ def calc_fgs1_to_sifov_mastrix():
 
     Currently, this is a defined matrix
     """
-    return FGS12SIFOV_DEFAULT
+    m_partial = np.array(
+        [[0, 0, 1],
+         [1, 0, 0],
+         [0, 1, 0]]
+    )
+
+    transform = np.dot(m_partial, FGS12SIFOV_DEFAULT)
+    return transform
 
 
 def calc_sifov2v_matrix():
