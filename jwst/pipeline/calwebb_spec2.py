@@ -85,7 +85,7 @@ class Spec2Pipeline(Pipeline):
 
             # Save result
             suffix = 'cal'
-            if isinstance(input, datamodels.CubeModel):
+            if isinstance(result, datamodels.CubeModel):
                 suffix = 'calints'
             self.save_model(result, suffix)
 
