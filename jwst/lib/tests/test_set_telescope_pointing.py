@@ -176,10 +176,6 @@ def test_get_pointing(eng_db):
          j2fgs_matrix,
          fsmcorr,
          obstime) = stp.get_pointing(STARTTIME, ENDTIME)
-        print(q)
-        print(j2fgs_matrix)
-        print(fsmcorr)
-        print(obstime)
         assert np.isclose(q, Q_EXPECTED).all()
         assert np.isclose(j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
         assert np.isclose(fsmcorr, FSMCORR_EXPECTED).all()
