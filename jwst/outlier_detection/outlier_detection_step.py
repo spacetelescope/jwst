@@ -91,29 +91,22 @@ class OutlierDetectionStep(Step):
 
         a ModelContainer with corresponding reference files for each input model
         """
-
         reffile_to_model = {'gain': datamodels.GainModel,
             'readnoise': datamodels.ReadnoiseModel}
+        reffile_model = reffile_to_model[reftype]           
 
-        if reftype in self.input_models[0].meta.ref_file._instance:
-            reffile_names = [tm.meta.ref_file._instance[reftype]['name'] for tm in self.input_models]
-            if len(set(reffile_names)) == 1:
-               reffiles = [self.get_reference_file(self.input_models[0],reftype)]*len(reffile_names)
-            else:
-                reffiles = [self.get_reference_file(im, reftype) for im in self.input_models]                 
-        else:
-            reffiles = [self.get_reference_file(im, reftype) for im in self.input_models]
-
+        reffiles = [im.meta.ref_file.instance[reftype]['name'] for im in self.input_models]
         self.log.debug("Using {} reffile(s):".format(reftype.upper()))
         for r in set(reffiles):
             self.log.debug("    {}".format(r))
+
         # Check if all the ref files are the same.  If so build it by reading
         # the reference file just once.
         if len(set(reffiles)) <= 1:
             length = len(self.input_models)
-            ref_list = [reffile_to_model.get(reftype)(reffiles[0])] * length
+            ref_list = [reffile_model(self.reference_uri_to_cache_path(reffiles[0]))]*length
         else:
-            ref_list = [reffile_to_model.get(reftype)(ref) for ref in reffiles]
+            ref_list = [reffile_model(self.reference_uri_to_cache_path(ref)) for ref in reffiles]
         return datamodels.ModelContainer(ref_list)
 
 
