@@ -34,8 +34,8 @@ def do_dqinit(input_model, mask_model):
     check_dimensions(input_model)
 
     # Make sure the mask array is not smaller than the science array
-    if (input_model.dq.shape[-1] > mask_model.dq.shape[-1]) or \
-       (input_model.dq.shape[-2] > mask_model.dq.shape[-2]):
+    if (input_model.data.shape[-1] > mask_model.dq.shape[-1]) or \
+       (input_model.data.shape[-2] > mask_model.dq.shape[-2]):
         log.warning("Reference data shape is smaller than science data")
         log.warning("Step will be skipped")
         input_model.meta.cal_step.dq_init = 'SKIPPED'
