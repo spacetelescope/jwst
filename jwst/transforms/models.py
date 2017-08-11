@@ -842,29 +842,25 @@ class IdealToV2V3(Model):
         Parameters
         ----------
         xidl, yidl : ndarray-like
-            Coordinates in Ideal System [in deg]
+            Coordinates in Ideal System [in arcsec]
         v3idlyangle : float
             Angle between Ideal Y-axis and V3 [ in deg]
         v2ref, v3ref : ndarray-like
-            Coordinates in V2, V3 [in deg]
+            Coordinates in V2, V3 [in arcsec]
         vparity : int
             Parity.
 
         Returns
         -------
         v2, v3 : ndarray-like
-            Coordinates in the (V2, V3) telescope system [in deg].
+            Coordinates in the (V2, V3) telescope system [in arcsec].
 
         """
-        v2ref = np.deg2rad(v2ref / 3600)
-        v3ref = np.deg2rad(v3ref / 3600)
         v3idlyangle = np.deg2rad(v3idlyangle)
-        xidl = np.deg2rad(xidl)
-        yidl = np.deg2rad(yidl)
         
         v2 = v2ref + vparity * xidl * np.cos(v3idlyangle) + yidl * np.sin(v3idlyangle)
         v3 = v3ref - vparity * xidl * np.sin(v3idlyangle) + yidl * np.cos(v3idlyangle)
-        return np.rad2deg(v2), np.rad2deg(v3)
+        return v2, v3
 
     def inverse(self):
         return V2V3ToIdeal(self.v3idlyangle, self.v2ref, self.v3ref, self.vparity)
@@ -898,32 +894,28 @@ class V2V3ToIdeal(Model):
         Parameters
         ----------
         xidl, yidl : ndarray-like
-            Coordinates in Ideal System [in deg]
+            Coordinates in Ideal System [in arcsec]
         v3idlyangle : float
             Angle between Ideal Y-axis and V3 [ in deg]
         v2ref, v3ref : ndarray-like
-            Coordinates in V2, V3 [in deg]
+            Coordinates in V2, V3 [in arcsec]
         vparity : int
             Parity.
 
         Returns
         -------
         xidl, yidl : ndarray-like
-            Coordinates in the Ideal telescope system [in deg]. 
+            Coordinates in the Ideal telescope system [in arcsec]. 
 
         """
-        v2ref = np.deg2rad(v2ref / 3600)
-        v3ref = np.deg2rad(v3ref / 3600)
         v3idlyangle = np.deg2rad(v3idlyangle)
-        v2 = np.deg2rad(v2)
-        v3 = np.deg2rad(v3)
-        
+
         xidl = vparity * ((v2 - v2ref) * np.cos(v3idlyangle) -
-                          (v3 - v3ref) * np.sin(v3idlyangle)) + v2ref
+                          (v3 - v3ref) * np.sin(v3idlyangle))
         yidl = ((v2 - v2ref) * np.sin(v3idlyangle) +
-                (v3 - v3ref) * np.cos(v3idlyangle)) + v3_ref
+                (v3 - v3ref) * np.cos(v3idlyangle))
         
-        return np.rad2deg(xidl), np.rad2deg(yidl)
+        return xidl, yidl
     
     def inverse(self):
         return IdealToV2V3(self.v3idlyangle, self.v2ref, self.v3ref, self.vparity)
