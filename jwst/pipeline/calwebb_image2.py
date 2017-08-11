@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from collections import defaultdict
-import logging
 
 from .. import datamodels
 from ..associations.load_as_asn import LoadAsLevel2Asn
@@ -36,19 +35,7 @@ class Image2Pipeline(Pipeline):
         self.log.info('Starting calwebb_image2 ...')
 
         # Retrieve the input(s)
-        asn = LoadAsLevel2Asn.load(input)
-
-        # If `output_file` is specified and there is only
-        # one product, go ahead an apply
-        if self.output_file:
-            if len(asn['products']) > 1:
-                self.log.warn(
-                    '"output_file" specified, but more than one product'
-                    'will be created. Ignoring.'
-                    '\nConsider using "output_dir" instead'
-                )
-            else:
-                asn['products'][0]['name'] = self.output_file
+        asn = LoadAsLevel2Asn.load(input, basename=self.output_file)
 
         # Each exposure is a product in the association.
         # Process each exposure.
@@ -63,7 +50,11 @@ class Image2Pipeline(Pipeline):
 
             # Save result
             suffix = 'cal'
+            if isinstance(result, datamodels.CubeModel):
+                suffix = 'calints'
             self.save_model(result, suffix)
+
+            self.closeout(to_close=[result])
 
         self.log.info('... ending calwebb_image2')
 

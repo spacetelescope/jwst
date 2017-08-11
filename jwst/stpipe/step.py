@@ -3,12 +3,12 @@ Step
 """
 from __future__ import absolute_import, division, print_function
 
-from astropy.extern import six
-import contextlib
 import gc
 from os.path import dirname, join, basename, splitext, abspath, split
 import re
 import sys
+
+from astropy.extern import six
 
 try:
     from astropy.io import fits
@@ -23,7 +23,7 @@ from . import utilities
 from .. import __version_commit__, __version__
 
 SUFFIX_LIST = ['rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
-    'jump', 'ramp', 'x1d', 'x2d', 'x1dints', 'calints', 'rateints']
+               'jump', 'ramp', 'x1d', 'x2d', 'x1dints', 'calints', 'rateints']
 REMOVE_SUFFIX = '^(.+?)(_(' + '|'.join(SUFFIX_LIST) + '))?$'
 
 
@@ -144,7 +144,7 @@ class Step(object):
 
     @classmethod
     def _parse_class_and_name(
-        cls, config, parent=None, name=None, config_file=None):
+            cls, config, parent=None, name=None, config_file=None):
         if 'class' in config:
             step_class = utilities.import_class(config['class'],
                                                 config_file=config_file)
@@ -332,7 +332,7 @@ class Step(object):
         result = None
 
         try:
-            if len(args):
+            if len(args) and len(self.reference_file_types) and not self.skip:
                 self._precache_reference_files(args[0])
 
             self.log.info(
@@ -382,7 +382,7 @@ class Step(object):
             else:
                 results = result
 
-            if len(self._reference_files_used) and not self._is_association_file(args[0]):
+            if len(self._reference_files_used) and not self._is_container(args[0]):
                 for result in results:
                     if isinstance(result, datamodels.DataModel):
                         for ref_name, filename in self._reference_files_used:
@@ -514,8 +514,10 @@ class Step(object):
             return value
 
     @classmethod
-    def _is_association_file(cls, input_file):
-        """Return True IFF `input_file` is an association file."""
+    def _is_container(cls, input_file):
+        """Return True IFF `input_file` is a ModelContainer or successfully
+        loads as an association.
+        """
         from ..associations import load_asn
         from .. import datamodels
         if isinstance(input_file, datamodels.ModelContainer):
@@ -531,53 +533,65 @@ class Step(object):
         """
         Precache all of the expected reference files before the Step's
         process method is called.
+
+        Perform's garbage collection before and after prefetching.
+
+        Handles opening `input_file` as a model if it is a filename.
+
+        input_file:  filename, model container, or model
+
+        returns:  None
         """
         gc.collect()
-        if self.skip:
-            return
-        if self._is_association_file(input_file):
-            return
-        if len(self.reference_file_types):
-            from .. import datamodels
-            try:
-                model = datamodels.open(input_file)
-            except (ValueError, TypeError, IOError):
-                self.log.info(
-                    'First argument {0} does not appear to be a '
-                    'model'.format(input_file))
-            else:
-                self._precache_reference_files_impl(model)
-                model.close()
+        from .. import datamodels
+        try:
+            with datamodels.open(input_file) as model:
+                self._precache_reference_files_opened(model)
+        except (ValueError, TypeError, IOError):
+            self.log.info(
+                'First argument {0} does not appear to be a '
+                'model'.format(input_file))
         gc.collect()
 
-    @classmethod
-    def list_reference_files(cls, input_file):
-        """
-        List reference types and files name for a particular input file.
-        """
-        if cls._is_association_file(input_file):
-            return
-        return crds_client.get_multiple_reference_paths(
-            input_file, cls.reference_file_types)
+    def _precache_reference_files_opened(self, model_or_container):
+        """Pre-fetches references for `model_or_container`.   
 
+        Handles recursive pre-fetches for any models inside a container,
+        or just a single model.
+        
+        Assumes model_or_container is an open model or container object,
+        not a filename.
+
+        No garbage collection.
+        """
+        if self._is_container(model_or_container):
+            # recurse on each contained model
+            for contained_model in model_or_container:
+                self._precache_reference_files_opened(contained_model)
+        else:
+            # precache a single model object
+            self._precache_reference_files_impl(model_or_container)    
+            
     def _precache_reference_files_impl(self, model):
         """Given open data `model`,  determine and cache reference files for
         any reference types which are not overridden on the command line.
 
         Verify that all CRDS and overridden reference files are readable.
+
+        model:  An open Model object;  not a filename, ModelContainer, etc.
         """
-        if self.skip:
-            return
-        if self._is_association_file(model):
-            return
         ovr_refs = {
             reftype: self._get_ref_override(reftype)
             for reftype in self.reference_file_types
             if self._get_ref_override(reftype) is not None
             }
+        
         fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
+
         crds_refs = crds_client.get_multiple_reference_paths(model, fetch_types)
+
         ref_path_map = dict(list(crds_refs.items()) + list(ovr_refs.items()))
+
         for (reftype, refpath) in sorted(ref_path_map.items()):
             how = "Override" if reftype in ovr_refs else "Prefetch"
             self.log.info("{0} for {1} reference file is '{2}'.".format(how, reftype.upper(), refpath))
@@ -611,14 +625,11 @@ class Step(object):
 
         reference_file_type : string
             The type of reference file to retrieve.  For example, to
-            retrieve a flat field reference file, this would be
-            'flat_field'.
+            retrieve a flat field reference file, this would be 'flat'.
 
         Returns
         -------
-        reference_file : readable file-like object
-            A readable file-like object with the contents of the
-            reference file.
+        reference_file : path of reference file,  a string
         """
         override = self._get_ref_override(reference_file_type)
         if override is not None:
@@ -652,38 +663,6 @@ class Step(object):
         with default value /grp/crds/cache.   See also https://jwst-crds.stsci.edu
         """
         return crds_client.reference_uri_to_cache_path(reference_uri)
-
-    @contextlib.contextmanager
-    def get_reference_file_model(self, input_file, reference_file_type):
-        """
-        Get a reference file from CRDS as a jwst.datamodels.ModelBase
-        object.  If the configuration file or commandline parameters
-        override the reference file, it will be automatically used
-        when calling this function.
-
-        Parameters
-        ----------
-        input_file : jwst.datamodels.ModelBase instance
-            A model of the input file.  Metadata on this input file
-            will be used by the CRDS "bestref" algorithm to obtain a
-            reference file.
-
-        reference_file_type : string
-            The type of reference file to retrieve.  For example, to
-            retrieve a flat field reference file, this would be
-            'flat_field'.
-
-        Returns
-        -------
-        reference_file_model : jwst.datamodels.ModelBase instance
-            A model to access the contents of the reference file.
-        """
-        from .. import datamodels
-
-        filename = self.get_reference_file(input, reference_file_type)
-        with datamodels.open(filename) as model:
-            yield model
-        gc.collect()
 
     def set_input_filename(self, path):
         """
@@ -828,6 +807,46 @@ class Step(object):
         if output_dir is not None:
             output_path = join(output_dir, output_path)
         return output_path
+
+    def closeout(self, to_close=None, to_del=None):
+        """Close out step processing
+
+        Parameters
+        ----------
+        to_close: [object(, ...)]
+            List of objects with a `close` method to execute
+            The objects will also be deleted
+
+        to_del: [object(, ...)]
+            List of objects to simply delete
+
+        Notes
+        -----
+        Other operations, such as forced garbage collection
+        will also be done.
+        """
+        if to_close is None:
+            to_close = []
+        if to_del is None:
+            to_del = []
+        to_del += to_close
+        for item in to_close:
+            try:
+                item.close()
+            except Exception as exception:
+                self.logger.debug(
+                    'Could not close "{}"'
+                    'Reason:\n{}'.format(item, exception)
+                )
+        for item in to_del:
+            try:
+                del item
+            except Exception as exception:
+                self.logger.debug(
+                    'Could not delete "{}"'
+                    'Reason:\n{}'.format(item, exception)
+                )
+        gc.collect()
 
 
 # #########

@@ -41,4 +41,3 @@ def load_wcs(input_model, reference_files={}):
         output_model.meta.cal_step.assign_wcs = 'COMPLETE'
         log.info("COMPLETED assign_wcs")
     return output_model
-
