@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 from collections import defaultdict
 
+from .. import datamodels
 from ..associations.load_as_asn import LoadAsLevel2Asn
 from ..stpipe import Pipeline
-from .. import datamodels
 
 # step imports
 from ..assign_wcs import assign_wcs_step
@@ -85,9 +85,11 @@ class Spec2Pipeline(Pipeline):
 
             # Save result
             suffix = 'cal'
-            if isinstance(input, datamodels.CubeModel):
+            if isinstance(result, datamodels.CubeModel):
                 suffix = 'calints'
             self.save_model(result, suffix)
+
+            self.closeout(to_close=[result])
 
         # We're done
         self.log.info('Ending calwebb_spec2')
