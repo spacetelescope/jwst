@@ -782,7 +782,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         self._instance['history'] = value
 
-    def get_fits_wcs(self, hdu_name='PRIMARY', key=' '):
+    def get_fits_wcs(self, hdu_name='SCI', key=' '):
         """
         Get a `astropy.wcs.WCS` object created from the FITS WCS
         information in the model.
@@ -794,8 +794,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         ----------
         hdu_name : str, optional
             The name of the HDU to get the WCS from.  This must use
-            named HDU's, not numerical order HDUs.  To get the primary HDU,
-            pass ``'PRIMARY'`` (default).
+            named HDU's, not numerical order HDUs. To get the primary
+            HDU, pass ``'PRIMARY'``.
 
         key : str, optional
             The name of a particular WCS transform to use.  This may
@@ -814,10 +814,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                                   extensions=extensions)
         hdu = fits_support.get_hdu(ff._hdulist, hdu_name)
         header = hdu.header
-
         return WCS(header, key=key, relax=True, fix=True)
 
-    def set_fits_wcs(self, wcs, hdu_name='PRIMARY'):
+
+    def set_fits_wcs(self, wcs, hdu_name='SCI'):
         """
         Sets the FITS WCS information on the model using the given
         `astropy.wcs.WCS` object.
@@ -833,7 +833,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         hdu_name : str, optional
             The name of the HDU to set the WCS from.  This must use
             named HDU's, not numerical order HDUs.  To set the primary
-            HDU, pass ``'PRIMARY'`` (default).
+            HDU, pass ``'PRIMARY'``.
         """
         header = wcs.to_header()
         if hdu_name == 'PRIMARY':
