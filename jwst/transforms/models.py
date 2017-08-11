@@ -19,7 +19,7 @@ __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
            'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa',
            'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit',
-           'MIRI_AB2Slice']
+           'MIRI_AB2Slice', 'V2V3ToIdeal', 'IdealToV2V3']
 
 
 # Number of shutters per quadrant
@@ -813,6 +813,120 @@ class V23ToSky(Rotation3D):
         return self.prepare_outputs(format_info, *outputs)
 
 
+class IdealToV2V3(Model):
+    """
+    Performs the transform from Ideal to telescope V2,V3 coordinate system.
+
+    Note: This model has no schema implemented - add schema if needed.
+    """
+    
+    inputs = ('xidl', 'yidl')
+
+    outputs = ('v2', 'v3')
+
+    v3idlyangle = Parameter() # in deg
+    v2ref = Parameter() # in arcsec
+    v3ref = Parameter() # in arcsec
+    vparity = Parameter()
+
+    
+    def __init__(self, v3idlyangle, v2ref, v3ref, vparity, name='idl2V', **kwargs):
+        super(IdealToV2V3, self).__init__(v3idlyangle=v3idlyangle, v2ref=v2ref,
+                                          v3ref=v3ref, vparity=vparity, name=name,
+                                          **kwargs)
+
+    @staticmethod
+    def evaluate(xidl, yidl, v3idlyangle, v2ref, v3ref, vparity):
+        """
+        Parameters
+        ----------
+        xidl, yidl : ndarray-like
+            Coordinates in Ideal System [in deg]
+        v3idlyangle : float
+            Angle between Ideal Y-axis and V3 [ in deg]
+        v2ref, v3ref : ndarray-like
+            Coordinates in V2, V3 [in deg]
+        vparity : int
+            Parity.
+
+        Returns
+        -------
+        v2, v3 : ndarray-like
+            Coordinates in the (V2, V3) telescope system [in deg].
+
+        """
+        v2ref = np.deg2rad(v2ref / 3600)
+        v3ref = np.deg2rad(v3ref / 3600)
+        v3idlyangle = np.deg2rad(v3idlyangle)
+        xidl = np.deg2rad(xidl)
+        yidl = np.deg2rad(yidl)
+        
+        v2 = v2ref + vparity * xidl * np.cos(v3idlyangle) + yidl * np.sin(v3idlyangle)
+        v3 = v3ref - vparity * xidl * np.sin(v3idlyangle) + yidl * np.cos(v3idlyangle)
+        return np.rad2deg(v2), np.rad2deg(v3)
+
+    def inverse(self):
+        return V2V3ToIdeal(self.v3idlyangle, self.v2ref, self.v3ref, self.vparity)
+    
+
+class V2V3ToIdeal(Model):
+    """
+    Performs the transform from telescope V2,V3 to Ideal coordinate system.
+
+    Note: This model has no schema implemented - add if needed.
+    """
+    
+    inputs = ('v2', 'v3')
+
+    outputs = ('xidl', 'yidl')
+
+    v3idlyangle = Parameter() # in deg
+    v2ref = Parameter() # in arcsec
+    v3ref = Parameter() # in arcsec
+    vparity = Parameter()
+
+    def __init__(self, v3idlyangle, v2ref, v3ref, vparity, name='V2idl', **kwargs):
+        super(V2V3ToIdeal, self).__init__(v3idlyangle=v3idlyangle, v2ref=v2ref,
+                                          v3ref=v3ref, vparity=vparity, name=name,
+                                          **kwargs)
+
+    @staticmethod
+    def evaluate(v2, v3, v3idlyangle, v2ref, v3ref, vparity):
+        """
+        Parameters
+        ----------
+        xidl, yidl : ndarray-like
+            Coordinates in Ideal System [in deg]
+        v3idlyangle : float
+            Angle between Ideal Y-axis and V3 [ in deg]
+        v2ref, v3ref : ndarray-like
+            Coordinates in V2, V3 [in deg]
+        vparity : int
+            Parity.
+
+        Returns
+        -------
+        xidl, yidl : ndarray-like
+            Coordinates in the Ideal telescope system [in deg]. 
+
+        """
+        v2ref = np.deg2rad(v2ref / 3600)
+        v3ref = np.deg2rad(v3ref / 3600)
+        v3idlyangle = np.deg2rad(v3idlyangle)
+        v2 = np.deg2rad(v2)
+        v3 = np.deg2rad(v3)
+        
+        xidl = vparity * ((v2 - v2ref) * np.cos(v3idlyangle) -
+                          (v3 - v3ref) * np.sin(v3idlyangle))
+        yidl = ((v2 - v2ref) * np.sin(v3idlyangle) +
+                (v3 - v3ref) * np.cos(v3idlyangle))
+        
+        return np.rad2deg(xidl), np.rad2deg(yidl)
+    
+    def inverse(self):
+        return IdealToV2V3(self.v3idlyangle, self.v2ref, self.v3ref, self.vparity)
+
+    
 def _toindex(value):
     """
     Convert value to an int or an int array.

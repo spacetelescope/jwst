@@ -672,6 +672,14 @@ properties:
             title: Spatial offset from IFU center (arcsec)
             type: number
             fits_keyword: SPAT_OFF
+          xoffset:
+            title: x offset from pattern starting position
+            type: number
+            fits_keyword: XOFFSET
+          yoffset:
+            title: y offset from pattern starting position
+            type: number
+            fits_keyword: YOFFSET
       ephemeris:
         title: JWST ephemeris information
         type: object
