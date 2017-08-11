@@ -214,8 +214,11 @@ def test_get_pointing_with_zeros(eng_db):
 def test_add_wcs_default(fits_file):
     try:
         stp.add_wcs(fits_file)
-    except:
-        pytest.skip('Live ENGDB service is not accessible.')
+    except Exception as e:
+        pytest.skip(
+            'Live ENGDB service is not accessible.'
+            '\nException={}'.format(e)
+        )
 
     hdul = fits.open(fits_file)
     header = hdul[0].header
@@ -224,10 +227,10 @@ def test_add_wcs_default(fits_file):
     assert header['PA_V3'] == 0.
     assert header['CRVAL1'] == TARG_RA
     assert header['CRVAL2'] == TARG_DEC
-    assert np.isclose(header['PC1_1'], -0.7558009)
-    assert np.isclose(header['PC1_2'], 0.6548015)
-    assert np.isclose(header['PC2_1'], 0.6548015)
-    assert np.isclose(header['PC2_2'], 0.7558009)
+    assert np.isclose(header['PC1_1'], -1.0)
+    assert np.isclose(header['PC1_2'], 0.0)
+    assert np.isclose(header['PC2_1'], 0.0)
+    assert np.isclose(header['PC2_2'], 1.0)
     assert header['RA_REF'] == TARG_RA
     assert header['DEC_REF'] == TARG_DEC
     assert np.isclose(header['ROLL_REF'], 358.9045979379)
@@ -235,20 +238,20 @@ def test_add_wcs_default(fits_file):
 
 
 def test_add_wcs_with_db(eng_db, fits_file):
-        stp.add_wcs(fits_file)
+    stp.add_wcs(fits_file)
 
-        hdul = fits.open(fits_file)
-        header = hdul[0].header
-        assert np.isclose(header['RA_V1'], 348.9278669)
-        assert np.isclose(header['DEC_V1'], -38.749239)
-        assert np.isclose(header['PA_V3'], 50.1767077)
-        assert np.isclose(header['CRVAL1'], 348.8776709)
-        assert np.isclose(header['CRVAL2'], -38.854159)
-        assert np.isclose(header['PC1_1'], 0.0385309)
-        assert np.isclose(header['PC1_2'], 0.9992574)
-        assert np.isclose(header['PC2_1'], 0.9992574)
-        assert np.isclose(header['PC2_2'], -0.0385309)
-        assert np.isclose(header['RA_REF'], 348.8776709)
-        assert np.isclose(header['DEC_REF'], -38.854159)
-        assert np.isclose(header['ROLL_REF'], 50.20832726650)
-        assert header['WCSAXES'] == 0.
+    hdul = fits.open(fits_file)
+    header = hdul[0].header
+    assert np.isclose(header['RA_V1'], 348.9278669)
+    assert np.isclose(header['DEC_V1'], -38.749239)
+    assert np.isclose(header['PA_V3'], 50.1767077)
+    assert np.isclose(header['CRVAL1'], 348.8776709)
+    assert np.isclose(header['CRVAL2'], -38.854159)
+    assert np.isclose(header['PC1_1'], 0.0385309)
+    assert np.isclose(header['PC1_2'], 0.9992574)
+    assert np.isclose(header['PC2_1'], 0.9992574)
+    assert np.isclose(header['PC2_2'], -0.0385309)
+    assert np.isclose(header['RA_REF'], 348.8776709)
+    assert np.isclose(header['DEC_REF'], -38.854159)
+    assert np.isclose(header['ROLL_REF'], 50.20832726650)
+    assert header['WCSAXES'] == 0.

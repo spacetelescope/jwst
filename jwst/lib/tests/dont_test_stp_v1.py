@@ -23,7 +23,7 @@ from astropy.table import Table
 from astropy.time import Time
 
 from .. import engdb_tools
-from .. import stp_v2 as stp
+from .. import set_telescope_pointing as stp
 
 # Setup mock engineering service
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
@@ -163,7 +163,7 @@ def fits_file():
     with TemporaryDirectory() as path:
         file_path = os.path.join(path, 'fits.fits')
         hdul.writeto(file_path)
-        yield file_path, hdul
+        yield file_path
 
 
 def test_get_pointing_fail():
@@ -212,14 +212,13 @@ def test_get_pointing_with_zeros(eng_db):
 
 
 def test_add_wcs_default(fits_file):
-    file_path, hdul = fits_file
-    primary_hdu = hdul[0]
     try:
-        stp.update_wcs(primary_hdu)
+        stp.add_wcs(fits_file)
     except:
         pytest.skip('Live ENGDB service is not accessible.')
 
-    header = primary_hdu.header
+    hdul = fits.open(fits_file)
+    header = hdul[0].header
     assert header['RA_V1'] == TARG_RA
     assert header['DEC_V1'] == TARG_DEC
     assert header['PA_V3'] == 0.
@@ -236,22 +235,20 @@ def test_add_wcs_default(fits_file):
 
 
 def test_add_wcs_with_db(eng_db, fits_file):
-    file_path, hdul = fits_file
-    primary_hdu = hdul[0]
+        stp.add_wcs(fits_file)
 
-    stp.update_wcs(primary_hdu)
-
-    header = primary_hdu.header
-    assert np.isclose(header['RA_V1'], 348.9278669)
-    assert np.isclose(header['DEC_V1'], -38.749239)
-    assert np.isclose(header['PA_V3'], 50.1767077)
-    assert np.isclose(header['CRVAL1'], 348.8776709)
-    assert np.isclose(header['CRVAL2'], -38.854159)
-    assert np.isclose(header['PC1_1'], 0.0385309)
-    assert np.isclose(header['PC1_2'], 0.9992574)
-    assert np.isclose(header['PC2_1'], 0.9992574)
-    assert np.isclose(header['PC2_2'], -0.0385309)
-    assert np.isclose(header['RA_REF'], 348.8776709)
-    assert np.isclose(header['DEC_REF'], -38.854159)
-    assert np.isclose(header['ROLL_REF'], 50.20832726650)
-    assert header['WCSAXES'] == 0.
+        hdul = fits.open(fits_file)
+        header = hdul[0].header
+        assert np.isclose(header['RA_V1'], 348.9278669)
+        assert np.isclose(header['DEC_V1'], -38.749239)
+        assert np.isclose(header['PA_V3'], 50.1767077)
+        assert np.isclose(header['CRVAL1'], 348.8776709)
+        assert np.isclose(header['CRVAL2'], -38.854159)
+        assert np.isclose(header['PC1_1'], 0.0385309)
+        assert np.isclose(header['PC1_2'], 0.9992574)
+        assert np.isclose(header['PC2_1'], 0.9992574)
+        assert np.isclose(header['PC2_2'], -0.0385309)
+        assert np.isclose(header['RA_REF'], 348.8776709)
+        assert np.isclose(header['DEC_REF'], -38.854159)
+        assert np.isclose(header['ROLL_REF'], 50.20832726650)
+        assert header['WCSAXES'] == 0.
