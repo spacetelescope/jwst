@@ -816,6 +816,7 @@ class V23ToSky(Rotation3D):
 class IdealToV2V3(Model):
     """
     Performs the transform from Ideal to telescope V2,V3 coordinate system.
+    The two systems have the same origin - V2_REF, V3_REF.
 
     Note: This model has no schema implemented - add schema if needed.
     """
@@ -872,6 +873,7 @@ class IdealToV2V3(Model):
 class V2V3ToIdeal(Model):
     """
     Performs the transform from telescope V2,V3 to Ideal coordinate system.
+    The two systems have the same origin - V2_REF, V3_REF.
 
     Note: This model has no schema implemented - add if needed.
     """
@@ -917,9 +919,9 @@ class V2V3ToIdeal(Model):
         v3 = np.deg2rad(v3)
         
         xidl = vparity * ((v2 - v2ref) * np.cos(v3idlyangle) -
-                          (v3 - v3ref) * np.sin(v3idlyangle))
+                          (v3 - v3ref) * np.sin(v3idlyangle)) + v2ref
         yidl = ((v2 - v2ref) * np.sin(v3idlyangle) +
-                (v3 - v3ref) * np.cos(v3idlyangle))
+                (v3 - v3ref) * np.cos(v3idlyangle)) + v3_ref
         
         return np.rad2deg(xidl), np.rad2deg(yidl)
     
