@@ -25,6 +25,6 @@ class WhiteLightStep(Step):
             # Write the output catalog
             index = input_model.meta.filename.rfind('_')
             cat_name = input_model.meta.filename[:index + 1] + 'cat.ecsv'
-            result.write(cat_name, format='ascii.ecsv')
+            #result.write(cat_name, format='ascii.ecsv')
 
-        return
+        return result
