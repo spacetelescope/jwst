@@ -30,16 +30,28 @@ def correct_model(input_model, mask_model):
 def do_dqinit(input_model, mask_model):
     """Do the DQ initialization"""
 
+    # Inflate empty DQ array, if necessary
     check_dimensions(input_model)
+
+    # Make sure the mask array is not smaller than the science array
+    if (input_model.dq.shape[-1] > mask_model.dq.shape[-1]) or \
+       (input_model.dq.shape[-2] > mask_model.dq.shape[-2]):
+        log.warning("Reference data shape is smaller than science data")
+        log.warning("Step will be skipped")
+        input_model.meta.cal_step.dq_init = 'SKIPPED'
+        return input_model
+
+    # Create output model as copy of input
     output_model = input_model.copy()
 
+    # Extract subarray from reference data, if necessary
     if is_subarray(output_model):
         log.debug('input exposure is a subarray readout')
         mask_array = get_mask_subarray(mask_model, output_model)
     else:
         mask_array = mask_model.dq
 
-    # set model-specific data quality in output
+    # Set model-specific data quality in output
     if input_model.meta.exposure.type in guider_list:
         dq = np.bitwise_or(input_model.dq, mask_array)
         output_model.dq = dq
@@ -116,16 +128,17 @@ def check_dimensions(input_model):
 
     if isinstance(input_model, datamodels.GuiderRawModel):
         if input_model.dq.shape != input_shape[-2:]:
-            # 
+
             # If the shape is different, then the mask model should have a shape of (0,0)
             # If that's the case, create the array
             if input_model.dq.shape == (0, 0):
                 input_model.dq = np.zeros((input_shape[-2:])).astype('uint32')
             else:
-                log.error("DQ array has the wrong shape: (%d, %d)" % input_model.dq.shape) 
+                log.error("DQ array has the wrong shape: (%d, %d)" % input_model.dq.shape)
+
     else:   # RampModel
         if input_model.pixeldq.shape != input_shape[-2:]:
-            #
+
             # If the shape is different, then the mask model should have a shape of (0,0)
             # If that's the case, create the array
             if input_model.pixeldq.shape == (0, 0):

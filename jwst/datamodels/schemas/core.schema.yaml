@@ -1595,7 +1595,7 @@ properties:
             type: string
             fits_keyword: S_RESAMP
           cube_build:
-            title: IFU  resampling
+            title: IFU resampling
             type: string
             fits_keyword: S_IFUCUB
           source_catalog:
@@ -1603,7 +1603,7 @@ properties:
             type: string
             fits_keyword: S_SRCCAT
           guider_cds:
-            title: Guider CDS Calculation
+            title: Guide Mode CDS Computation
             type: string
             fits_keyword: S_GUICDS
       background:
