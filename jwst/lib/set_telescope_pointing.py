@@ -99,11 +99,13 @@ def add_wcs(filename, default_pa_v3=0.):
         The V3 position angle to use if the pointing information
         is not found.
     """
+    logger.info('Updating WCS info for file {}'.format(filename))
     hdul = fits.open(filename, mode='update')
     primary_header = hdul[0].header
     update_header_wcs(primary_header, default_pa_v3=default_pa_v3)
     hdul.flush()
     hdul.close()
+    logger.info('...update completed')
 
 
 def update_header_wcs(header, default_pa_v3=0.):
@@ -170,6 +172,7 @@ def update_header_wcs(header, default_pa_v3=0.):
     header['PA_V3'] = vinfo.pa
 
     # Update Aperture pointing
+    header['PA_APER'] = wcsinfo.pa
     header['CRVAL1'] = wcsinfo.ra
     header['CRVAL2'] = wcsinfo.dec
     header['PC1_1'] = -np.cos(wcsinfo.pa * D2R)
@@ -182,8 +185,6 @@ def update_header_wcs(header, default_pa_v3=0.):
         vinfo.pa, wcsinfo.ra, wcsinfo.dec, siaf.v2ref, siaf.v3ref
     )
     header['WCSAXES'] = len(header['CTYPE*'])
-
-    logger.info('Header successfully updated')
 
 
 def calc_wcs(pointing, siaf):
@@ -407,7 +408,7 @@ def calc_aperture_wcs(m_eci2siaf):
         dec=wcsinfo.dec * R2D,
         pa=wcsinfo.pa * R2D
     )
-    
+
     return wcsinfo
 
 
