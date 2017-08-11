@@ -203,14 +203,6 @@ def _assert_non_primary_hdu(hdu_name):
         raise ValueError(
             "Schema for data property does not specify a non-primary hdu name")
 
-def _move_wcsinfo(path):
-    # This is a temporary patch to change a path containing wcsinfo_primary
-    # to wcsinfo. It will no longer be needed after all data files have their
-    # wcs fields in the SCI extension instead of the primary header
-    for i, field in enumerate(path):
-        if field == "wcsinfo_primary":
-            path[i] = "wcsinfo"
-    return path
 
 ##############################################################################
 # WRITER
@@ -454,19 +446,6 @@ def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
     known_keywords = {}
     known_datas = set()
     invalid_values = set()
-    # Only move wcsinfo to the SCI extension if there is only a
-    # single extension. The flag single_sci triggers this. This
-    # is temporaray code and can be deleted, along with _move_wcsinfo,
-    # when the WCS block is no longer in the primary header
-    single_sci = False
-    for index in range(3):
-        try:
-            pair = ("SCI", index+1)
-            hdu = hdulist[pair]
-        except (KeyError, IndexError, AttributeError):
-            if index == 1:
-                single_sci = True
-            break
 
     def prefix_filename(errmsg):
         # Prefix filename to error message where it can be found
@@ -498,8 +477,6 @@ def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
                         invalid_values.add(fits_keyword)
                         
                 else:
-                    if single_sci:
-                        path = _move_wcsinfo(path)
                     properties.put_value(path, result, tree)
                     
         elif 'fits_hdu' in schema and (
