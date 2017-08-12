@@ -724,140 +724,6 @@ properties:
         title: WCS parameters
         type: object
         properties:
-          wcsaxes:
-            title: number of World Coordinate System axes
-            type: integer
-            fits_keyword: WCSAXES
-          crpix1:
-            title: axis 1 coordinate of the reference pixel
-            type: number
-            default: 0.0
-            fits_keyword: CRPIX1
-          crpix2:
-            title: axis 2 coordinate of the reference pixel
-            type: number
-            default: 0.0
-            fits_keyword: CRPIX2
-          crpix3:
-            title: axis 3 coordinate of the reference pixel
-            type: number
-            default: 0.0
-            fits_keyword: CRPIX3
-          crval1:
-            title: RA at the reference pixel (deg)
-            type: number
-            default: 0.0
-            fits_keyword: CRVAL1
-          crval2:
-            title: Dec at the reference pixel (deg)
-            type: number
-            default: 0.0
-            fits_keyword: CRVAL2
-          crval3:
-            title: Wavelength at the reference pixel (microns)
-            type: number
-            default: 0.0
-            fits_keyword: CRVAL3
-          ctype1:
-            title: first axis coordinate type
-            type: string
-            fits_keyword: CTYPE1
-          ctype2:
-            title: second axis coordinate type
-            type: string
-            fits_keyword: CTYPE2
-          ctype3:
-            title: third axis coordinate type
-            type: string
-            fits_keyword: CTYPE3
-          cunit1:
-            title: first axis units
-            type: string
-            fits_keyword: CUNIT1
-          cunit2:
-            title: second axis units
-            type: string
-            fits_keyword: CUNIT2
-          cunit3:
-            title: third axis units
-            type: string
-            fits_keyword: CUNIT3
-          cdelt1:
-            title: first axis increment per pixel (deg)
-            type: number
-            default: 1.0
-            fits_keyword: CDELT1
-          cdelt2:
-            title: second axis increment per pixel (deg)
-            type: number
-            default: 1.0
-            fits_keyword: CDELT2
-          cdelt3:
-            title: third axis increment per pixel (microns)
-            type: number
-            default: 1.0
-            fits_keyword: CDELT3
-          pc1_1:
-            title: linear transformation matrix element
-            type: number
-            default: 1.0
-            fits_keyword: PC1_1
-          pc1_2:
-            title: linear transformation matrix element
-            type: number
-            default: 0.0
-            fits_keyword: PC1_2
-          pc1_3:
-            title: linear transformation matrix element
-            type: number
-            default: 0.0
-            fits_keyword: PC1_3
-          pc2_1:
-            title: linear transformation matrix element
-            type: number
-            default: 0.0
-            fits_keyword: PC2_1
-          pc2_2:
-            title: linear transformation matrix element
-            type: number
-            default: 1.0
-            fits_keyword: PC2_2
-          pc2_3:
-            title: linear transformation matrix element
-            type: number
-            default: 0.0
-            fits_keyword: PC2_3
-          pc3_1:
-            title: linear transformation matrix element
-            type: number
-            default: 0.0
-            fits_keyword: PC3_1
-          pc3_2:
-            title: linear transformation matrix element
-            type: number
-            default: 0.0
-            fits_keyword: PC3_2
-          pc3_3:
-            title: linear transformation matrix element
-            type: number
-            default: 1.0
-            fits_keyword: PC3_3
-          s_region:
-            title: spatial extent of the observation
-            type: string
-            fits_keyword: S_REGION
-          waverange_start:
-            title: lower bound of the default wavelength range
-            type: number
-            fits_keyword: WAVSTART
-          waverange_end:
-            title: upper bound of the default wavelength range
-            type: number
-            fits_keyword: WAVEND
-          spectral_order:
-            title: default spectral order
-            type: number
-            fits_keyword: SPORDER
           v2_ref:
             title: Telescope v2 coordinate of the reference point (arcsec)
             type: number
@@ -893,6 +759,165 @@ properties:
             type: number
             default: 0.0
             fits_keyword: ROLL_REF
+          s_region:
+            title: spatial extent of the observation
+            type: string
+            fits_keyword: S_REGION
+          waverange_start:
+            title: lower bound of the default wavelength range
+            type: number
+            fits_keyword: WAVSTART
+          waverange_end:
+            title: upper bound of the default wavelength range
+            type: number
+            fits_keyword: WAVEND
+          spectral_order:
+            title: default spectral order
+            type: number
+            fits_keyword: SPORDER
+          wcsaxes:
+            title: number of World Coordinate System axes
+            type: integer
+            fits_keyword: WCSAXES
+            fits_hdu: SCI
+          crpix1:
+            title: axis 1 coordinate of the reference pixel
+            type: number
+            default: 0.0
+            fits_keyword: CRPIX1
+            fits_hdu: SCI
+          crpix2:
+            title: axis 2 coordinate of the reference pixel
+            type: number
+            default: 0.0
+            fits_keyword: CRPIX2
+            fits_hdu: SCI
+          crpix3:
+            title: axis 3 coordinate of the reference pixel
+            type: number
+            default: 0.0
+            fits_keyword: CRPIX3
+            fits_hdu: SCI
+          crval1:
+            title: RA at the reference pixel (deg)
+            type: number
+            default: 0.0
+            fits_keyword: CRVAL1
+            fits_hdu: SCI
+          crval2:
+            title: Dec at the reference pixel (deg)
+            type: number
+            default: 0.0
+            fits_keyword: CRVAL2
+            fits_hdu: SCI
+          crval3:
+            title: Wavelength at the reference pixel (microns)
+            type: number
+            default: 0.0
+            fits_keyword: CRVAL3
+            fits_hdu: SCI
+          ctype1:
+            title: first axis coordinate type
+            type: string
+            fits_keyword: CTYPE1
+            fits_hdu: SCI
+          ctype2:
+            title: second axis coordinate type
+            type: string
+            fits_keyword: CTYPE2
+            fits_hdu: SCI
+          ctype3:
+            title: third axis coordinate type
+            type: string
+            fits_keyword: CTYPE3
+            fits_hdu: SCI
+          cunit1:
+            title: first axis units
+            type: string
+            fits_keyword: CUNIT1
+            fits_hdu: SCI
+          cunit2:
+            title: second axis units
+            type: string
+            fits_keyword: CUNIT2
+            fits_hdu: SCI
+          cunit3:
+            title: third axis units
+            type: string
+            fits_keyword: CUNIT3
+            fits_hdu: SCI
+          cdelt1:
+            title: first axis increment per pixel (deg)
+            type: number
+            default: 1.0
+            fits_keyword: CDELT1
+            fits_hdu: SCI
+          cdelt2:
+            title: second axis increment per pixel (deg)
+            type: number
+            default: 1.0
+            fits_keyword: CDELT2
+            fits_hdu: SCI
+          cdelt3:
+            title: third axis increment per pixel (microns)
+            type: number
+            default: 1.0
+            fits_keyword: CDELT3
+            fits_hdu: SCI
+          pc1_1:
+            title: linear transformation matrix element
+            type: number
+            default: 1.0
+            fits_keyword: PC1_1
+            fits_hdu: SCI
+          pc1_2:
+            title: linear transformation matrix element
+            type: number
+            default: 0.0
+            fits_keyword: PC1_2
+            fits_hdu: SCI
+          pc1_3:
+            title: linear transformation matrix element
+            type: number
+            default: 0.0
+            fits_keyword: PC1_3
+            fits_hdu: SCI
+          pc2_1:
+            title: linear transformation matrix element
+            type: number
+            default: 0.0
+            fits_keyword: PC2_1
+            fits_hdu: SCI
+          pc2_2:
+            title: linear transformation matrix element
+            type: number
+            default: 1.0
+            fits_keyword: PC2_2
+            fits_hdu: SCI
+          pc2_3:
+            title: linear transformation matrix element
+            type: number
+            default: 0.0
+            fits_keyword: PC2_3
+            fits_hdu: SCI
+          pc3_1:
+            title: linear transformation matrix element
+            type: number
+            default: 0.0
+            fits_keyword: PC3_1
+            fits_hdu: SCI
+          pc3_2:
+            title: linear transformation matrix element
+            type: number
+            default: 0.0
+            fits_keyword: PC3_2
+            fits_hdu: SCI
+          pc3_3:
+            title: linear transformation matrix element
+            type: number
+            default: 1.0
+            fits_keyword: PC3_3
+            fits_hdu: SCI
       pointing:
         title: Spacecraft pointing information
         type: object
