@@ -107,8 +107,14 @@ def do_flat_field(output_model, flat_model):
 
     any_updated = False # will set True if any flats applied
 
+    # Check to see if flat data array is smaller than science data
+    if (output_model.data.shape[-1] > flat_model.data.shape[-1]) or \
+       (output_model.data.shape[-2] > flat_model.data.shape[-2]):
+        log.warning('Reference data array is smaller than science data')
+        log.warning('Step will be skipped')
+
     # Apply flat to MultiSlits
-    if isinstance(output_model, datamodels.MultiSlitModel):
+    elif isinstance(output_model, datamodels.MultiSlitModel):
 
         # Apply flat to each slit contained in the input
         for slit in output_model.slits:
