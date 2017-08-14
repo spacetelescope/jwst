@@ -107,11 +107,11 @@ def do_flat_field(output_model, flat_model):
 
     any_updated = False # will set True if any flats applied
 
-    # Apply flat to simple ImageModels
-    if isinstance(output_model, datamodels.ImageModel):
-        log.debug('Applying flat to ImageModel ...')
-        apply_flat_field(output_model, flat_model)
-        any_updated = True
+    # Check to see if flat data array is smaller than science data
+    if (output_model.data.shape[-1] > flat_model.data.shape[-1]) or \
+       (output_model.data.shape[-2] > flat_model.data.shape[-2]):
+        log.warning('Reference data array is smaller than science data')
+        log.warning('Step will be skipped')
 
     # Apply flat to MultiSlits
     elif isinstance(output_model, datamodels.MultiSlitModel):
@@ -122,9 +122,8 @@ def do_flat_field(output_model, flat_model):
             apply_flat_field(slit, flat_model)
             any_updated = True
 
-    # Apply flat to multiple-integration dataset
-    elif isinstance(output_model, datamodels.CubeModel):
-        log.debug('Applying flat to CubeModel')
+    # Apply flat to all other models
+    else:
         apply_flat_field(output_model, flat_model)
         any_updated = True
 
@@ -178,8 +177,16 @@ def apply_flat_field(science, flat):
     wh_dq = np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD'])
     flat_data[wh_dq == dqflags.pixel['NO_FLAT_FIELD']] = 1.0
 
+    # For GuiderCalModel data, only apply flat to science data array;
+    # there isn't an error array.
+    if isinstance(science, datamodels.GuiderCalModel):
+            # Flatten data array
+            science.data /= flat_data
+            # Combine the science and flat DQ arrays
+            science.dq = np.bitwise_or(science.dq, flat_dq)
+
     # For CubeModel science data, apply flat to each integration
-    if isinstance(science, datamodels.CubeModel):
+    elif isinstance(science, datamodels.CubeModel):
         for integ in range(science.data.shape[0]):
             # Flatten data and error arrays
             science.data[integ] /= flat_data
@@ -187,8 +194,8 @@ def apply_flat_field(science, flat):
             # Combine the science and flat DQ arrays
             science.dq[integ] = np.bitwise_or(science.dq[integ], flat_dq)
 
+    # For 2D ImageModel science data, apply flat to entire arrays
     else:
-
         # Flatten data and error arrays
         science.data /= flat_data
         science.err /= flat_data

@@ -672,6 +672,14 @@ properties:
             title: Spatial offset from IFU center (arcsec)
             type: number
             fits_keyword: SPAT_OFF
+          xoffset:
+            title: x offset from pattern starting position
+            type: number
+            fits_keyword: XOFFSET
+          yoffset:
+            title: y offset from pattern starting position
+            type: number
+            fits_keyword: YOFFSET
       ephemeris:
         title: JWST ephemeris information
         type: object
@@ -1139,9 +1147,33 @@ properties:
             type: object
             properties:
               name:
-                title: NIRSpec bad shutter reference file name
+                title: NIRSpec operability reference file name
                 type: string
                 fits_keyword: R_MSAOPE
+          camera:
+            title: Nirspec Camera reference file information
+            type: object
+            properties:
+              name:
+                title: Nirspec Camera reference file name
+                type: string
+                fits_keyword: R_CAMERA
+          collimator:
+            title: Nirspec Collimator reference file information
+            type: object
+            properties:
+              name:
+                title: Nirspec Collimator reference file name
+                type: string
+                fits_keyword: R_COLLIM
+          cubepar:
+            title: IFU cube reference file information
+            type: object
+            properties:
+              name:
+                title: IFU cube parameters reference file name
+                type: string
+                fits_keyword: R_CUBPAR
           dark:
             title: Dark reference file information
             type: object
@@ -1150,6 +1182,46 @@ properties:
                 title: Dark reference file name
                 type: string
                 fits_keyword: R_DARK
+          disperser:
+            title: Disperser reference file information
+            type: object
+            properties:
+              name:
+                title: Disperser reference file name
+                type: string
+                fits_keyword: R_DISPER
+          distortion:
+            title: Distortion reference file information
+            type: object
+            properties:
+              name:
+                title: Distortion reference file name
+                type: string
+                fits_keyword: R_DISTOR
+          drizpars:
+            title: Drizzle parameters reference file information
+            type: object
+            properties:
+              name:
+                title: Drizzle parameters reference file name
+                type: string
+                fits_keyword: R_DRZPAR
+          extract1d:
+            title: 1-D extraction parameters reference file information
+            type: object
+            properties:
+              name:
+                title: 1-D extraction parameters reference file name
+                type: string
+                fits_keyword: R_EXTR1D
+          filteroffset:
+            title: Filter Offset reference file information
+            type: object
+            properties:
+              name:
+                title: Filter Offset reference file name
+                type: string
+                fits_keyword: R_FILOFF
           flat:
             title: Flat reference file information
             type: object
@@ -1182,6 +1254,22 @@ properties:
                 title: SFlat reference file name
                 type: string
                 fits_keyword: R_SFLAT
+          fore:
+            title: Nirspec FORE Model reference file information
+            type: object
+            properties:
+              name:
+                title: Nirspec FORE Model reference file name
+                type: string
+                fits_keyword: R_FORE
+          fpa:
+            title: Nirspec FPA Model reference file information
+            type: object
+            properties:
+              name:
+                title: Nirspec FPA Model reference file name
+                type: string
+                fits_keyword: R_FPA
           fringe:
             title: Fringe reference file information
             type: object
@@ -1254,6 +1342,22 @@ properties:
                 title: Mask reference file name
                 type: string
                 fits_keyword: R_MASK
+          msa:
+            title: Nirspec MSA Model reference file information
+            type: object
+            properties:
+              name:
+                title: Nirspec MSA Model reference file name
+                type: string
+                fits_keyword: R_MSA
+          ote:
+            title: Nirspec OTE Model reference file information
+            type: object
+            properties:
+              name:
+                title: Nirspec OTE Model reference file name
+                type: string
+                fits_keyword: R_OTE
           pathloss:
             title: Pathloss reference file information
             type: object
@@ -1262,6 +1366,14 @@ properties:
                 title: Pathloss reference file name
                 type: string
                 fits_keyword: R_PTHLOS
+          persat:
+            title: Persistence saturation reference file information
+            type: object
+            properties:
+              name:
+                title: Persistence saturation reference file name
+                type: string
+                fits_keyword: R_PERSAT
           photom:
             title: Photometric reference file information
             type: object
@@ -1286,6 +1398,38 @@ properties:
                 title: Read noise reference file name
                 type: string
                 fits_keyword: R_READNO
+          refpix:
+            title: Reference pixels reference file information
+            type: object
+            properties:
+              name:
+                title: Reference pixels reference file name
+                type: string
+                fits_keyword: R_REFPIX
+          regions:
+            title: Regions reference file information
+            type: object
+            properties:
+              name:
+                title: Regions reference file name
+                type: string
+                fits_keyword: R_REGION
+          resample:
+            title: Resample processing reference file information
+            type: object
+            properties:
+              name:
+                title: Resample parameters reference file name
+                type: string
+                fits_keyword: R_RESAMP
+          resolution:
+            title: MRS resolution reference file information
+            type: object
+            properties:
+              name:
+                title: MRS resolution reference file name
+                type: string
+                fits_keyword: R_RESOL
           reset:
             title: Reset reference file information
             type: object
@@ -1310,6 +1454,14 @@ properties:
                 title: Saturation reference file name
                 type: string
                 fits_keyword: R_SATURA
+          specwcs:
+            title: Spectral distortion reference file information
+            type: object
+            properties:
+              name:
+                title: Spectral distortion reference file name
+                type: string
+                fits_keyword: R_SPCWCS
           straylight:
             title: Straylight reference file information
             type: object
@@ -1326,46 +1478,30 @@ properties:
                 title: Superbias reference file name
                 type: string
                 fits_keyword: R_SUPERB
-          distortion:
-            title: Distortion reference file information
+          throughput:
+            title: Filter throughput reference file information
             type: object
             properties:
               name:
-                title: Distortion reference file name
+                title: Filter throughput reference file name
                 type: string
-                fits_keyword: R_DISTOR
-          filteroffset:
-            title: Filter Offset reference file information
+                fits_keyword: R_THRPUT
+          trapdensity:
+            title: Trap density reference file information
             type: object
             properties:
               name:
-                title: Filter Offset reference file name
+                title: Trap density reference file name
                 type: string
-                fits_keyword: R_FILOFF
-          specwcs:
-            title: Spectral distortion reference file information
+                fits_keyword: R_TRPDEN
+          trappars:
+            title: Trap parameters reference file information
             type: object
             properties:
               name:
-                title: Spectral distortion reference file name
+                title: Trap parameters reference file name
                 type: string
-                fits_keyword: R_SPCWCS
-          regions:
-            title: Regions reference file information
-            type: object
-            properties:
-              name:
-                title: Regions reference file name
-                type: string
-                fits_keyword: R_REGION
-          wavelengthrange:
-            title: Wavelength Range reference file information
-            type: object
-            properties:
-              name:
-                title: Wavelength Range reference file name
-                type: string
-                fits_keyword: R_WAVRAN
+                fits_keyword: R_TRPPAR
           v2v3:
             title: V2_V3 Model reference file information
             type: object
@@ -1374,166 +1510,66 @@ properties:
                 title: V2_V3 Model reference file name
                 type: string
                 fits_keyword: R_V2V3
-          camera:
-            title: Nirspec Camera reference file information
+          wavelengthrange:
+            title: Wavelength Range reference file information
             type: object
             properties:
               name:
-                title: Nirspec Camera reference file name
+                title: Wavelength Range reference file name
                 type: string
-                fits_keyword: R_CAMERA
-          collimator:
-            title: Nirspec Collimator reference file information
-            type: object
-            properties:
-              name:
-                title: Nirspec Collimator reference file name
-                type: string
-                fits_keyword: R_COLLIM
-          disperser:
-            title: Disperser reference file information
-            type: object
-            properties:
-              name:
-                title: Disperser reference file name
-                type: string
-                fits_keyword: R_DISPER
-          fore:
-            title: Nirspec FORE Model reference file information
-            type: object
-            properties:
-              name:
-                title: Nirspec FORE Model reference file name
-                type: string
-                fits_keyword: R_FORE
-          fpa:
-            title: Nirspec FPA Model reference file information
-            type: object
-            properties:
-              name:
-                title: Nirspec FPA Model reference file name
-                type: string
-                fits_keyword: R_FPA
-          msa:
-            title: Nirspec MSA Model reference file information
-            type: object
-            properties:
-              name:
-                title: Nirspec MSA Model reference file name
-                type: string
-                fits_keyword: R_MSA
-          ote:
-            title: Nirspec OTE Model reference file information
-            type: object
-            properties:
-              name:
-                title: Nirspec OTE Model reference file name
-                type: string
-                fits_keyword: R_OTE
-          resample:
-            title: Resample processing reference file information
-            type: object
-            properties:
-              name:
-                title: Resample parameters reference file name
-                type: string
-                fits_keyword: R_RESAMP
+                fits_keyword: R_WAVRAN
       cal_step:
         title: Calibration step information
         type: object
         properties:
-          ipc:
-            title: Interpixel Capacitance Correction
+          align_psfs:
+            title: Coronagraphic PSF Alignment
             type: string
-            fits_keyword: S_IPC
-          reset:
-            title: Reset Anomaly Correction
+            fits_keyword: S_PSFALI
+          ami_analyze:
+            title: AMI Fringe Analysis
             type: string
-            fits_keyword: S_RESET
-          rscd:
-            title: RSCD Correction
+            fits_keyword: S_AMIANA
+          ami_average:
+            title: AMI Fringe Averaging
             type: string
-            fits_keyword: S_RSCD
-          lastframe:
-            title: Last Frame Correction
+            fits_keyword: S_AMIAVG
+          ami_normalize:
+            title: AMI Fringe Normalization
             type: string
-            fits_keyword: S_LASTFR
-          group_scale:
-            title: Group Scale Correction
-            type: string
-            fits_keyword: S_GRPSCL
-          dq_init:
-            title: Data Quality Initialization
-            type: string
-            fits_keyword: S_DQINIT
-          superbias:
-            title: Superbias Subtraction
-            type: string
-            fits_keyword: S_SUPERB
-          bias_drift:
-            title: Reference Pixel Correction
-            type: string
-            fits_keyword: S_BSDRFT
-          refpix:
-            title: Reference Pixel Correction
-            type: string
-            fits_keyword: S_REFPIX
-          err_init:
-            title: Error Initialization
-            type: string
-            fits_keyword: S_ERRINI
-          dark_sub:
-            title: Dark Subtraction
-            type: string
-            fits_keyword: S_DARK
-          saturation:
-            title: Saturation Checking
-            type: string
-            fits_keyword: S_SATURA
-          linearity:
-            title: Linearity Correction
-            type: string
-            fits_keyword: S_LINEAR
-          jump:
-            title: Jump Detection
-            type: string
-            fits_keyword: S_JUMP
-          ramp_fit:
-            title: Ramp Fitting
-            type: string
-            fits_keyword: S_RAMP
+            fits_keyword: S_AMINOR
           assign_wcs:
             title: Assign World Coordinate System
             type: string
             fits_keyword: S_WCS
-          flat_field:
-            title: Flat Field Correction
+          back_sub:
+            title: Background subtraction
             type: string
-            fits_keyword: S_FLAT
-          fringe:
-            title: Fringe Correction
+            fits_keyword: S_BKDSUB
+          combine_1d:
+            title: 1-D Spectral Combination
             type: string
-            fits_keyword: S_FRINGE
-          persistence:
-            title: Persistence Correction
+            fits_keyword: S_COMB1D
+          cube_build:
+            title: IFU Cube Creation
             type: string
-            fits_keyword: S_PERSIS
-          straylight:
-            title: Straylight Correction
+            fits_keyword: S_IFUCUB
+          dark_sub:
+            title: Dark Subtraction
             type: string
-            fits_keyword: S_STRAY
+            fits_keyword: S_DARK
+          dq_init:
+            title: Data Quality Initialization
+            type: string
+            fits_keyword: S_DQINIT
           emission:
             title: Telescope Emission Correction
             type: string
             fits_keyword: S_TELEMI
-          photom:
-            title: Photometric Calibration
+          err_init:
+            title: Error Initialization
             type: string
-            fits_keyword: S_PHOTOM
-          wfs_combine:
-            title: Wavefront Sensing Combination
-            type: string
-            fits_keyword: S_WFSCOM
+            fits_keyword: S_ERRINI
           extract_1d:
             title: 1-D Spectral Extraction
             type: string
@@ -1542,26 +1578,106 @@ properties:
             title: 2-D Spectral Extraction
             type: string
             fits_keyword: S_EXTR2D
-          combine_1d:
-            title: 1-D Spectral Combination
+          flat_field:
+            title: Flat Field Correction
             type: string
-            fits_keyword: S_COMB1D
-          back_sub:
-            title: Background subtraction
+            fits_keyword: S_FLAT
+          fringe:
+            title: Fringe Correction
             type: string
-            fits_keyword: S_BKDSUB
+            fits_keyword: S_FRINGE
+          gain_scale:
+            title: Gain Scale Correction
+            type: string
+            fits_keyword: S_GANSCL
+          group_scale:
+            title: Group Scale Correction
+            type: string
+            fits_keyword: S_GRPSCL
+          guider_cds:
+            title: Guide Mode CDS Computation
+            type: string
+            fits_keyword: S_GUICDS
           imprint:
             title: NIRSpec MSA Imprint Subtraction
             type: string
             fits_keyword: S_IMPRNT
+          ipc:
+            title: Interpixel Capacitance Correction
+            type: string
+            fits_keyword: S_IPC
+          jump:
+            title: Jump Detection
+            type: string
+            fits_keyword: S_JUMP
+          klip:
+            title: Coronagraphic PSF Subtraction
+            type: string
+            fits_keyword: S_KLIP
+          lastframe:
+            title: Last Frame Correction
+            type: string
+            fits_keyword: S_LASTFR
+          linearity:
+            title: Linearity Correction
+            type: string
+            fits_keyword: S_LINEAR
+          mrs_imatch:
+            title: MIRI MRS background matching
+            type: string
+            fits_keyword: S_MRSMAT
           msa_flagging:
             title: NIRSpec MSA Stuck Shutter Flagging
             type: string
             fits_keyword: S_MSAFLG
+          outlier_detection:
+            title: Outlier Detection
+            type: string
+            fits_keyword: S_OUTLIR
           pathloss:
             title: Pathloss Correction
             type: string
             fits_keyword: S_PTHLOS
+          persistence:
+            title: Persistence Correction
+            type: string
+            fits_keyword: S_PERSIS
+          photom:
+            title: Photometric Calibration
+            type: string
+            fits_keyword: S_PHOTOM
+          ramp_fit:
+            title: Ramp Fitting
+            type: string
+            fits_keyword: S_RAMP
+          refpix:
+            title: Reference Pixel Correction
+            type: string
+            fits_keyword: S_REFPIX
+          resample:
+            title: Image resampling
+            type: string
+            fits_keyword: S_RESAMP
+          reset:
+            title: Reset Anomaly Correction
+            type: string
+            fits_keyword: S_RESET
+          rscd:
+            title: RSCD Correction
+            type: string
+            fits_keyword: S_RSCD
+          saturation:
+            title: Saturation Checking
+            type: string
+            fits_keyword: S_SATURA
+          skymatch:
+            title: Sky Background Equalization or Subtraction
+            type: string
+            fits_keyword: S_SKYMAT
+          source_catalog:
+            title: Source Photometry and Morphology
+            type: string
+            fits_keyword: S_SRCCAT
           srctype:
             title: Source Type Determination
             type: string
@@ -1570,42 +1686,30 @@ properties:
             title: Coronagraphic PSF Stacking
             type: string
             fits_keyword: S_PSFSTK
-          align_psfs:
-            title: Coronagraphic PSF Alignment
+          straylight:
+            title: Straylight Correction
             type: string
-            fits_keyword: S_PSFALI
-          klip:
-            title: Coronagraphic PSF Subtraction
+            fits_keyword: S_STRAY
+          superbias:
+            title: Superbias Subtraction
             type: string
-            fits_keyword: S_KLIP
+            fits_keyword: S_SUPERB
+          tso_photometry:
+            title: TSO Imaging Photometry
+            type: string
+            fits_keyword: S_TSPHOT
           tweakreg:
             title: Image Alignment via Astronomical Sources
             type: string
             fits_keyword: S_TWKREG
-          skymatch:
-            title: Sky Background Equalization or Subtraction
+          wfs_combine:
+            title: Wavefront Sensing Combination
             type: string
-            fits_keyword: S_SKYMAT
-          outlier_detection:
-            title: Outlier Detection
+            fits_keyword: S_WFSCOM
+          white_light:
+            title: TSO White-Light Curve
             type: string
-            fits_keyword: S_OUTLIR
-          resample:
-            title: Image resampling
-            type: string
-            fits_keyword: S_RESAMP
-          cube_build:
-            title: IFU  resampling
-            type: string
-            fits_keyword: S_IFUCUB
-          source_catalog:
-            title: Source Photometry and Morphology
-            type: string
-            fits_keyword: S_SRCCAT
-          guider_cds:
-            title: Guider CDS Calculation
-            type: string
-            fits_keyword: S_GUICDS
+            fits_keyword: S_WHTLIT
       background:
         title: Background information
         type: object

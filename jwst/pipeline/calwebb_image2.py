@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 from collections import defaultdict
-import logging
 
 from .. import datamodels
 from ..associations.load_as_asn import LoadAsLevel2Asn
@@ -51,7 +50,11 @@ class Image2Pipeline(Pipeline):
 
             # Save result
             suffix = 'cal'
+            if isinstance(result, datamodels.CubeModel):
+                suffix = 'calints'
             self.save_model(result, suffix)
+
+            self.closeout(to_close=[result])
 
         self.log.info('... ending calwebb_image2')
 

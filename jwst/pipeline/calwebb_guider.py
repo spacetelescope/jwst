@@ -28,13 +28,18 @@ class GuiderPipeline(Pipeline):
                  'flat_field': flat_field_step.FlatFieldStep,
                  }
 
-    # start the actual processing
+    # Start the processing
     def process(self, input):
+
+        # Set the output product type
+        self.suffix = 'cal'
 
         log.info('Starting calwebb_guider ...')
 
-        # open the input
+        # Open the input
         input = datamodels.GuiderRawModel(input) 
+
+        # Apply the steps
         input = self.dq_init(input)  
         input = self.guider_cds(input)
         input = self.flat_field(input)
