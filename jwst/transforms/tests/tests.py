@@ -9,14 +9,14 @@ from __future__ import (absolute_import, unicode_literals, division,
 import numpy as np
 from numpy.testing.utils import assert_allclose
 from astropy.utils import NumpyRNGContext
-from .. import models
+from ..import models
 
 
 #_RANDOM_SEED = 0x1337
 
-
+"""
 def test_logical():
-    assert_allclose(res, np.greater(a))
+
     with NumpyRNGContext(0x1337):
         compareto = np.random.randn(10)
     with NumpyRNGContext(0x1338):
@@ -24,7 +24,7 @@ def test_logical():
     with NumpyRNGContext(0x1339):
         x = np.random.randn(10)
     l = models.Logical('GT', .5, 10)
-    #x = np.arange(10, dtype=np.float)
+
     res = l(x)
     y = x.copy()
     y[np.greater(x, .5)] = 10
@@ -34,3 +34,12 @@ def test_logical():
     y = x.copy()
     y[cond] = val[cond]
     assert_allclose(res, npres)
+"""
+
+def test_ideal_to_v23_roundtrip():
+    """
+    Test roundtripping of the transforms.
+    """
+    v2i = models.V2V3ToIdeal(.4, 450, 730, 1)
+    x, y = 450, 730
+    assert_allclose(v2i.inverse(*v2i(x, y)), (x, y))
