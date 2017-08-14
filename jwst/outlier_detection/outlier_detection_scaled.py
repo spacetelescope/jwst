@@ -118,7 +118,7 @@ class OutlierDetectionScaled(object):
         # TSO imaging mode (for all subarrays).
         # Meanwhile, this is a placeholder representing the geometric
         # center of the image.
-        nint, ny, nx = self.input_models.data.shape
+        nints, ny, nx = self.input_models.data.shape
         xcenter = (ny - 1) / 2.
         ycenter = (ny - 1) / 2.
 

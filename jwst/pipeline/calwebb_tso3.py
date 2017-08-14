@@ -7,7 +7,7 @@ from astropy.table import vstack
 from ..stpipe import Pipeline
 from .. import datamodels
 
-from ..outlier_detection import outlier_detection_tso_step
+from ..outlier_detection import outlier_detection_step
 from ..outlier_detection import outlier_detection_scaled_step
 from ..tso_photometry import tso_photometry_step
 from ..extract_1d import extract_1d_step
@@ -16,7 +16,7 @@ from ..white_light import white_light_step
 __version__ = "0.7.8"
 
 
-class TSO3Pipeline(Pipeline):
+class Tso3Pipeline(Pipeline):
     """
     TSO3Pipeline: Applies level 3 processing to TSO-mode data from
                     any JWST instrument.
@@ -29,19 +29,19 @@ class TSO3Pipeline(Pipeline):
     """
 
     spec = """
-        suffix = string(default='i2d')
         scale_detection = boolean(default=False)
     """
 
     # Define alias to steps
     step_defs = {'outlier_detection': 
-                        outlier_detection_tso_step.OutlierDetectionTSOStep,
+                        outlier_detection_step.OutlierDetectionStep,
                  'outlier_detection_scaled': 
                         outlier_detection_scaled_step.OutlierDetectionScaledStep,
                  'tso_photometry': tso_photometry_step.TSOPhotometryStep,
                  'extract_1d': extract_1d_step.Extract1dStep,
                  'white_light': white_light_step.WhiteLightStep
                  }
+    image_exptypes = ['NRC_TSIMAGE']
 
     def process(self, input):
         """
@@ -54,8 +54,6 @@ class TSO3Pipeline(Pipeline):
         """
 
         self.log.info('Starting calwebb_tso3 ...')
-        print("scale_detection set to : {}".format(self.scale_detection))
-        
         input_asn = datamodels.open(input)
         product_name = input_asn.meta.asn_table.products[0].name
 
@@ -63,8 +61,11 @@ class TSO3Pipeline(Pipeline):
         #self.output_basename = product['name']
         self.output_basename = product_name 
         
+        input_exptype = None
         # Input may consist of multiple exposures, so loop over each of them
         for cube in input_asn:
+            if input_exptype is None:
+                input_exptype = cube.meta.exposure.type
             # Convert CubeModel into ModelContainer of 2-D DataModels
             input_models = datamodels.ModelContainer()
             for i in range(cube.data.shape[0]):
@@ -77,19 +78,23 @@ class TSO3Pipeline(Pipeline):
             
             if not self.scale_detection:
                 self.log.info("Performing outlier detection on input images...")
+                self.outlier_detection.resample_data=False
                 results = self.outlier_detection(input_models)
+
+                # Transfer updated DQ values to original input observation
+                for i in range(cube.data.shape[0]):
+                    # preserve output filename 
+                    orig_filename = cube.meta.filename
+                    # Update DQ arrays with those from outlier_detection step
+                    cube.dq[i] = results[i].dq
+                    # reset output filename to original value
+                    cube.meta.filename = orig_filename
+
             else:
                 self.log.info("Performing scaled outlier detection on input images...")
-                results = self.outlier_detection_scaled(input_models)
+                self.log.info("input cube has type: {}".format(type(cube)))
+                cube = self.outlier_detection_scaled(cube)
                 
-            # Transfer updated DQ values to original input observation
-            for i in range(cube.data.shape[0]):
-                # preserve output filename 
-                orig_filename = cube.meta.filename
-                # Update DQ arrays with those from outlier_detection step
-                cube.dq[i] = input_models[i].dq
-                # reset output filename to original value
-                cube.meta.filename = orig_filename
 
         self.log.info("Writing Level 2c images with updated DQ arrays...")
         suffix_2c = 'crfints'
@@ -100,7 +105,7 @@ class TSO3Pipeline(Pipeline):
         # Create final photometry results as a single output
         # regardless of how many members their may be...
         phot_result_list = []
-        if 'image' in results[0].meta.exposure.type.lower():
+        if input_exptype in self.image_exptypes:
             # Create name for extracted photometry (Level 3) products
             phot_tab_name = "{}_phot.ecsv".format(product_name)
 
@@ -110,10 +115,9 @@ class TSO3Pipeline(Pipeline):
                 phot_result_list.append(self.tso_photometry(cube))
         else:
             # Working with spectroscopic TSO data...
-            # define output for x1d (level 2c/3) products
+            # define output for x1d (level 3) products
             x1d_models = datamodels.ModelContainer()
             x1d_models.update(input_asn)
-            #x1d_models.meta = input_asn.meta
 
             # Create name for extracted white-light (Level 3) products
             phot_tab_name = "{}_whtlt.ecsv".format(product_name)
@@ -131,10 +135,10 @@ class TSO3Pipeline(Pipeline):
                 self.log.info("Performing white-light photometry...")
                 phot_result_list.append(self.white_light(result))
                 
-            # Define suffix for stack of extracted 1d (level 2b) products
+            # Define suffix for stack of extracted 1d (level 3) products
             #self.save_model(x1d_models,suffix="x1dints") # did not work!!!
             x1d_prod_name = "{}_x1dints.fits".format(product_name)
-            self.log.info("Writing Level 3 X1DINTS product {}...".format(x1d_prod_name))
+            self.log.info("Writing Level 3 X1DINTS product...")
             x1d_models.write(x1d_prod_name)
                         
         phot_results = vstack(phot_result_list)
