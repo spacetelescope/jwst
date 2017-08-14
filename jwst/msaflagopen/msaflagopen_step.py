@@ -27,7 +27,7 @@ class MSAFlagOpenStep(Step):
                 self.log.warning('No reference file found')
                 self.log.warning('Step will be skipped')
                 result = input_model.copy()
-                result.meta.cal_step.msaflagopen = 'SKIPPED'
+                result.meta.cal_step.msa_flagging = 'SKIPPED'
                 return result
 
 

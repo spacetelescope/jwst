@@ -54,7 +54,7 @@ def do_correction(input_model, shutter_refname, wcs_refnames):
     # Flag the stuck open hutters
     output_model = flag(input_model, failed_slitlets, wcs_refnames)
 
-    output_model.meta.cal_step.msaflagopen = 'COMPLETE'
+    output_model.meta.cal_step.msa_flagging = 'COMPLETE'
 
     return output_model
 
