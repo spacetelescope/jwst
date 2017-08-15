@@ -3,10 +3,10 @@ import logging
 import numpy as np
 from numpy import (cos, sin)
 
-from astropy.io import fits
 from namedlist import namedlist
 
-from jwst.lib.engdb_tools import (
+from ..datamodels import open as dm_open
+from ..lib.engdb_tools import (
     ENGDB_BASE_URL,
     ENGDB_Service,
 )
@@ -93,7 +93,7 @@ def add_wcs(filename, default_pa_v3=0., **kwargs):
     Parameters
     ----------
     filename: str
-        The path to a FITS file
+        The path to a data file
 
     default_pa_v3: float
         The V3 position angle to use if the pointing information
@@ -103,58 +103,55 @@ def add_wcs(filename, default_pa_v3=0., **kwargs):
         Keyword arguments used by matrix calculation routines
     """
     logger.info('Updating WCS info for file {}'.format(filename))
-    hdul = fits.open(filename, mode='update')
-    primary_header = hdul[0].header
-    update_header_wcs(
-        primary_header,
+    model = dm_open(filename)
+    update_wcs(
+        model,
         default_pa_v3=default_pa_v3,
         **kwargs
     )
-    hdul.flush()
-    hdul.close()
+    model.save(filename)
+    model.close()
     logger.info('...update completed')
 
 
-def update_header_wcs(header, default_pa_v3=0., **kwargs):
+def update_wcs(model, default_pa_v3=0., **kwargs):
     """Update WCS pointing information
 
-    Given a FITS Header Data Unit, determine the simple WCS parameters
-    from the SIAF keywords in the HDU and the engineering parameters
+    Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
+    from the SIAF keywords in the model and the engineering parameters
     that contain information about the telescope pointing.
 
     It presumes all the accessed keywords are present (see first block).
 
     Parameters
     ----------
-    header: dict-like
-        The header to update. Most likely
-        a FITS header such as
-        `astropy.io.fits.ImageHDU.header`
+    model: jwst.datamodels.DataModel
+        The model to update.
 
     default_pa_v3: float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
 
     kwargs: dict
-        Keyword arguments used by matrix calculation routines
+        Keyword arguments used by matrix calculation routines.
     """
 
     # Get the SIAF and observation parameters
-    obsstart = float(header['EXPSTART'])
-    obsend = float(header['EXPEND'])
+    obsstart = model.meta.exposure.start_time
+    obsend = model.meta.exposure.end_time
     siaf = SIAF(
-        v2ref=float(header['V2_REF']),
-        v3ref=float(header['V3_REF']),
-        v3idlyang=float(header['V3I_YANG']),
-        vparity=int(header['VPARITY'])
+        v2ref=model.meta.wcsinfo.v2_ref,
+        v3ref=model.meta.wcsinfo.v3_ref,
+        v3idlyang=model.meta.wcsinfo.v3yangle,
+        vparity=model.meta.wcsinfo.vparity
     )
 
     # Get the pointing information
     try:
         pointing = get_pointing(obsstart, obsend)
     except ValueError as exception:
-        ra = header['TARG_RA']
-        dec = header['TARG_DEC']
+        ra = model.meta.target.ra
+        dec = model.meta.target.dec
         roll = default_pa_v3
 
         logger.warning(
@@ -177,24 +174,27 @@ def update_header_wcs(header, default_pa_v3=0., **kwargs):
     logger.info('V1 WCS info: {}'.format(vinfo))
 
     # Update V1 pointing
-    header['RA_V1'] = vinfo.ra
-    header['DEC_V1'] = vinfo.dec
-    header['PA_V3'] = vinfo.pa
+    model.meta.pointing.ra_v1 = vinfo.ra
+    model.meta.pointing.dec_v1 = vinfo.dec
+    model.meta.pointing.pa_v3 = vinfo.pa
 
     # Update Aperture pointing
-    header['PA_APER'] = wcsinfo.pa
-    header['CRVAL1'] = wcsinfo.ra
-    header['CRVAL2'] = wcsinfo.dec
-    header['PC1_1'] = -np.cos(wcsinfo.pa * D2R)
-    header['PC1_2'] = np.sin(wcsinfo.pa * D2R)
-    header['PC2_1'] = np.sin(wcsinfo.pa * D2R)
-    header['PC2_2'] = np.cos(wcsinfo.pa * D2R)
-    header['RA_REF'] = wcsinfo.ra
-    header['DEC_REF'] = wcsinfo.dec
-    header['ROLL_REF'] = compute_local_roll(
+    model.meta.aperture.pa_aper = wcsinfo.pa
+    model.meta.wcsinfo.crval1 = wcsinfo.ra
+    model.meta.wcsinfo.crval2 = wcsinfo.dec
+    model.meta.wcsinfo.pc1_1 = -np.cos(wcsinfo.pa * D2R)
+    model.meta.wcsinfo.pc1_2 = np.sin(wcsinfo.pa * D2R)
+    model.meta.wcsinfo.pc2_1 = np.sin(wcsinfo.pa * D2R)
+    model.meta.wcsinfo.pc2_2 = np.cos(wcsinfo.pa * D2R)
+    model.meta.wcsinfo.ra_ref = wcsinfo.ra
+    model.meta.wcsinfo.dec_ref = wcsinfo.dec
+    model.meta.wcsinfo.roll_ref = compute_local_roll(
         vinfo.pa, wcsinfo.ra, wcsinfo.dec, siaf.v2ref, siaf.v3ref
     )
-    header['WCSAXES'] = len(header['CTYPE*'])
+    wcsaxes = model.meta.wcsinfo.wcsaxes
+    if wcsaxes is None:
+        wcsaxes = 2
+    model.meta.wcsinfo.wcsaxes = max(2, wcsaxes)
 
 
 def calc_wcs(pointing, siaf, **kwargs):
