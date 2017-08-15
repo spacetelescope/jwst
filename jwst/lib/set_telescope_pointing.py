@@ -81,7 +81,7 @@ WCSRef = namedlist(
 )
 
 
-def add_wcs(filename, default_pa_v3=0.):
+def add_wcs(filename, default_pa_v3=0., **kwargs):
     """Add WCS information to a FITS file
 
     Telescope orientation is attempted to be obtained from
@@ -98,17 +98,24 @@ def add_wcs(filename, default_pa_v3=0.):
     default_pa_v3: float
         The V3 position angle to use if the pointing information
         is not found.
+
+    kwargs: dict
+        Keyword arguments used by matrix calculation routines
     """
     logger.info('Updating WCS info for file {}'.format(filename))
     hdul = fits.open(filename, mode='update')
     primary_header = hdul[0].header
-    update_header_wcs(primary_header, default_pa_v3=default_pa_v3)
+    update_header_wcs(
+        primary_header,
+        default_pa_v3=default_pa_v3,
+        **kwargs
+    )
     hdul.flush()
     hdul.close()
     logger.info('...update completed')
 
 
-def update_header_wcs(header, default_pa_v3=0.):
+def update_header_wcs(header, default_pa_v3=0., **kwargs):
     """Update WCS pointing information
 
     Given a FITS Header Data Unit, determine the simple WCS parameters
@@ -127,6 +134,9 @@ def update_header_wcs(header, default_pa_v3=0.):
     default_pa_v3: float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
+
+    kwargs: dict
+        Keyword arguments used by matrix calculation routines
     """
 
     # Get the SIAF and observation parameters
@@ -161,7 +171,7 @@ def update_header_wcs(header, default_pa_v3=0.):
         # compute relevant WCS information
         logger.info('Successful read of engineering quaternions:')
         logger.info('\tPointing = {}'.format(pointing))
-        wcsinfo, vinfo = calc_wcs(pointing, siaf)
+        wcsinfo, vinfo = calc_wcs(pointing, siaf, **kwargs)
 
     logger.info('Aperture WCS info: {}'.format(wcsinfo))
     logger.info('V1 WCS info: {}'.format(vinfo))
@@ -187,7 +197,7 @@ def update_header_wcs(header, default_pa_v3=0.):
     header['WCSAXES'] = len(header['CTYPE*'])
 
 
-def calc_wcs(pointing, siaf):
+def calc_wcs(pointing, siaf, **kwargs):
     """Transform from the given SIAF information and Pointing
     the aperture and V1 wcs
 
@@ -195,8 +205,12 @@ def calc_wcs(pointing, siaf):
     ----------
     siaf: SIAF
         The SIAF transformation. See ref:`Notes` for further details
+
     pointing: Pointing
         The telescope pointing. See ref:`Notes` for further details
+
+    kwargs: dict
+        Keyword arguments used by matrix calculation routines
 
     Returns
     -------
@@ -231,7 +245,7 @@ def calc_wcs(pointing, siaf):
     """
 
     # Calculate transforms
-    tforms = calc_transforms(pointing, siaf)
+    tforms = calc_transforms(pointing, siaf, **kwargs)
 
     # Calculate the V1 WCS information
     vinfo = calc_v1_wcs(tforms.m_eci2v)
@@ -243,7 +257,7 @@ def calc_wcs(pointing, siaf):
     return (wcsinfo, vinfo)
 
 
-def calc_transforms(pointing, siaf):
+def calc_transforms(pointing, siaf, fsmcorr_version='latest'):
     """Calculate transforms from pointing to SIAF
 
     Given the spacecraft pointing parameters and the
@@ -257,6 +271,10 @@ def calc_transforms(pointing, siaf):
 
     siaf: SIAF
         Aperture information
+
+    fsmcorr_version: str
+        The version of the FSM correction calculation to use.
+        See :ref:`calc_sifov_fsm_delta_matrix`
 
     Returns
     -------
@@ -287,7 +305,9 @@ def calc_transforms(pointing, siaf):
     tforms.m_j2fgs1 = calc_j2fgs1_matrix(pointing.j2fgs_matrix)
 
     # Calculate the FSM corrections to the SI_FOV frame
-    tforms.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(pointing.fsmcorr)
+    tforms.m_sifov_fsm_delta = calc_sifov_fsm_delta_matrix(
+        pointing.fsmcorr, fsmcorr_version=fsmcorr_version
+    )
 
     # Calculate the FGS1 ICS to SI-FOV matrix
     tforms.m_fgs12sifov = calc_fgs1_to_sifov_mastrix()
@@ -483,26 +503,67 @@ def calc_j2fgs1_matrix(j2fgs_matrix):
     return transform
 
 
-def calc_sifov_fsm_delta_matrix(fsmcorr):
+def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version='latest'):
     """Calculate Fine Steering Mirror correction matrix
 
     Parameters
     ----------
     fsmcorr: np.array((2,))
-        The FSM correction parameters
+        The FSM correction parameters:
+            0: SA_ZADUCMDX
+            1: SA_ZADUCMDY
+
+    fsmcorr_version: str
+        The version of the FSM correction calculation to use.
+        Versions available:
+            latest: The state-of-art. Currently `v2`
+            v2: Update 201708 to use actual spherical calculations
+            v1: Original linear approximation
 
     Returns
     -------
     transform: np.array((3, 3))
         The transformation matrix
     """
-    transform = np.array(
-        [
-            [1.,                fsmcorr[0]/22.01, fsmcorr[1]/21.68],
-            [-fsmcorr[0]/22.01,               1.,               0.],
-            [-fsmcorr[1]/21.68,               0.,               1.]
-        ]
-    )
+    version = fsmcorr_version.lower()
+    logger.debug('Using version {}'.format(version))
+
+    x = fsmcorr[0]  # SA_ZADUCMDX
+    y = fsmcorr[1]  # SA_ZADUCMDY
+
+    # `V1`: Linear approximation calcuation
+    if version == 'v1':
+        transform = np.array(
+            [
+                [1.,       x/22.01, y/21.68],
+                [-x/22.01, 1.,      0.],
+                [-y/21.68, 0.,      1.]
+            ]
+        )
+
+    # Default or `V2`: Direct spherical calculation
+    # Note: With the "0.0" in the lower middle Y transform
+    else:
+        if version not in ('latest', 'v2'):
+            logger.warning(
+                'Unknown version "{}" specified.'
+                ' Using the latest (spherical) calculation.'
+            )
+        m_x_partial = np.array(
+            [
+                [1., 0.,      0.],
+                [0., cos(x),  sin(x)],
+                [0., -sin(x), cos(x)]
+            ]
+        )
+        m_y_partial = np.array(
+            [
+                [cos(y), 0., -sin(y)],
+                [0.,     1., 0.],
+                [sin(y), 0., cos(y)]
+            ]
+        )
+        transform = np.dot(m_x_partial, m_y_partial)
 
     return transform
 

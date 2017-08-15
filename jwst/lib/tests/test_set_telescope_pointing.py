@@ -233,8 +233,57 @@ def test_add_wcs_default(fits_file):
     assert header['WCSAXES'] == 0.
 
 
+def test_add_wcs_fsmcorr_v1(fits_file):
+    """Test with default value using FSM original correction"""
+    try:
+        stp.add_wcs(fits_file, fsmcorr_version='v1')
+    except Exception as e:
+        pytest.skip(
+            'Live ENGDB service is not accessible.'
+            '\nException={}'.format(e)
+        )
+
+    hdul = fits.open(fits_file)
+    header = hdul[0].header
+    assert header['RA_V1'] == TARG_RA
+    assert header['DEC_V1'] == TARG_DEC
+    assert header['PA_V3'] == 0.
+    assert header['CRVAL1'] == TARG_RA
+    assert header['CRVAL2'] == TARG_DEC
+    assert np.isclose(header['PC1_1'], -1.0)
+    assert np.isclose(header['PC1_2'], 0.0)
+    assert np.isclose(header['PC2_1'], 0.0)
+    assert np.isclose(header['PC2_2'], 1.0)
+    assert header['RA_REF'] == TARG_RA
+    assert header['DEC_REF'] == TARG_DEC
+    assert np.isclose(header['ROLL_REF'], 358.9045979379)
+    assert header['WCSAXES'] == 0.
+
+
 def test_add_wcs_with_db(eng_db, fits_file):
+    """Test using the database"""
     stp.add_wcs(fits_file)
+
+    hdul = fits.open(fits_file)
+    header = hdul[0].header
+    assert np.isclose(header['RA_V1'], 348.9278669)
+    assert np.isclose(header['DEC_V1'], -38.749239)
+    assert np.isclose(header['PA_V3'], 50.1767077)
+    assert np.isclose(header['CRVAL1'], 348.8776709)
+    assert np.isclose(header['CRVAL2'], -38.854159)
+    assert np.isclose(header['PC1_1'], 0.0385309)
+    assert np.isclose(header['PC1_2'], 0.9992574)
+    assert np.isclose(header['PC2_1'], 0.9992574)
+    assert np.isclose(header['PC2_2'], -0.0385309)
+    assert np.isclose(header['RA_REF'], 348.8776709)
+    assert np.isclose(header['DEC_REF'], -38.854159)
+    assert np.isclose(header['ROLL_REF'], 50.20832726650)
+    assert header['WCSAXES'] == 0.
+
+
+def test_add_wcs_with_db_fsmcorr_v1(eng_db, fits_file):
+    """Test using the database with original FSM correction"""
+    stp.add_wcs(fits_file, fsmcorr_version='v1')
 
     hdul = fits.open(fits_file)
     header = hdul[0].header
