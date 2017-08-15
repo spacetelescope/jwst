@@ -3,6 +3,8 @@ import logging
 import numpy as np
 from numpy import (cos, sin)
 
+from astropy.io.fits import Header
+from astropy.wcs import WCS
 from namedlist import namedlist
 
 from ..datamodels import open as dm_open
@@ -195,6 +197,50 @@ def update_wcs(model, default_pa_v3=0., **kwargs):
     if wcsaxes is None:
         wcsaxes = 2
     model.meta.wcsinfo.wcsaxes = max(2, wcsaxes)
+
+    # Calculate S_REGION with the footprint
+    # information
+    update_s_region(model)
+
+
+def update_s_region(model):
+    """Update S_REGION sky footprint information
+
+    The S_REGION keyword is intended to store the spatial footprint of
+    an imaging observation using the VO standard STCS representation.
+
+    Parameters
+    ----------
+    model: jwst.datamodels.DataModel
+        The model to update in-place.
+    """
+
+    # Get the WCS info from the model
+    wcsinfo = model.meta.wcsinfo
+
+    # Using astropy.wcs, the most fullproof method
+    # of getting the wcs is to put everything in a FITS
+    # header and initialize from that.
+    header = Header(wcsinfo.instance)
+    wcs = WCS(header)
+    footprint = wcs.calc_footprint(undistort=True, center=True)
+
+    # Format the region string
+    s_region = (
+        'POLYGON ICRS'
+        ' {} {}'
+        ' {} {}'
+        ' {} {}'
+        ' {} {}'
+        ' {} {}'.format(
+            footprint[0][0], footprint[0][1],
+            footprint[1][0], footprint[1][1],
+            footprint[2][0], footprint[2][1],
+            footprint[3][0], footprint[3][1],
+            footprint[0][0], footprint[0][1]
+        )
+    )
+    wcsinfo.s_region = s_region
 
 
 def calc_wcs(pointing, siaf, **kwargs):
