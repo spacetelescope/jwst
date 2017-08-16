@@ -22,8 +22,11 @@ from . import log
 from . import utilities
 from .. import __version_commit__, __version__
 
-SUFFIX_LIST = ['rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
-               'jump', 'ramp', 'x1d', 'x2d', 'x1dints', 'calints', 'rateints']
+SUFFIX_LIST = [
+    'rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
+    'jump', 'ramp', 'x1d', 'x1dints', 'calints', 'rateints',
+    'crf', 'crfints'
+]
 REMOVE_SUFFIX = '^(?P<root>.+?)((?P<separator>_|-)(' \
                 + '|'.join(SUFFIX_LIST) + '))?$'
 
