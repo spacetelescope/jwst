@@ -130,6 +130,9 @@ setup(
             include_dirs=[np_include()],
             define_macros=[('NUMPY', '1')]),
     ],
+    install_requires=[
+        'namedlist'
+    ],
     tests_require=[
         'backports.tempfile',
         'pytest',
