@@ -3,7 +3,6 @@ import logging
 import numpy as np
 from numpy import (cos, sin)
 
-from astropy.io.fits import Header
 from astropy.wcs import WCS
 from namedlist import namedlist
 
@@ -214,15 +213,8 @@ def update_s_region(model):
     model: jwst.datamodels.DataModel
         The model to update in-place.
     """
-
-    # Get the WCS info from the model
     wcsinfo = model.meta.wcsinfo
-
-    # Using astropy.wcs, the most fullproof method
-    # of getting the wcs is to put everything in a FITS
-    # header and initialize from that.
-    header = Header(wcsinfo.instance)
-    wcs = WCS(header)
+    wcs = WCS(wcsinfo.instance)
     footprint = wcs.calc_footprint(undistort=True, center=True)
 
     # Format the region string
