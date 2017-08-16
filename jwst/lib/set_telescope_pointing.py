@@ -147,29 +147,36 @@ def update_wcs(model, default_pa_v3=0., **kwargs):
         vparity=model.meta.wcsinfo.vparity
     )
 
+    # Setup default WCS info if actual pointing and calculations fail.
+    wcsinfo = WCSRef(
+        model.meta.target.ra,
+        model.meta.target.dec,
+        default_pa_v3
+    )
+    vinfo = wcsinfo
+
     # Get the pointing information
     try:
         pointing = get_pointing(obsstart, obsend)
     except ValueError as exception:
-        ra = model.meta.target.ra
-        dec = model.meta.target.dec
-        roll = default_pa_v3
-
         logger.warning(
             'Cannot retrieve telescope pointing.'
-            '\n{}'
-            '\nUsing TARG_RA={}, TARG_DEC={} and PA_V3={} '
-            'to set pointing.'.format(exception, ra, dec, roll)
+            'Default pointing parameters will be used.'
+            '\nException is {}'
+            'to set pointing.'.format(exception)
         )
-
-        wcsinfo = WCSRef(ra, dec, roll)
-        vinfo = WCSRef(ra, dec, roll)
-
     else:
         # compute relevant WCS information
         logger.info('Successful read of engineering quaternions:')
         logger.info('\tPointing = {}'.format(pointing))
-        wcsinfo, vinfo = calc_wcs(pointing, siaf, **kwargs)
+        try:
+            wcsinfo, vinfo = calc_wcs(pointing, siaf, **kwargs)
+        except Exception as e:
+            logger.warning(
+                'WCS calculation has failed and will be skipped.'
+                'Default pointing parameters will be used.'
+                '\nException is {}'.format(e)
+            )
 
     logger.info('Aperture WCS info: {}'.format(wcsinfo))
     logger.info('V1 WCS info: {}'.format(vinfo))
@@ -199,7 +206,13 @@ def update_wcs(model, default_pa_v3=0., **kwargs):
 
     # Calculate S_REGION with the footprint
     # information
-    update_s_region(model)
+    try:
+        update_s_region(model)
+    except Exception as e:
+        logger.warning(
+            'Calculation of S_REGION failed and will be skipped.'
+            '\nException is {}'.format(e)
+        )
 
 
 def update_s_region(model):
