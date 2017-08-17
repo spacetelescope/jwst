@@ -945,14 +945,17 @@ properties:
             title: RA of telescope V1 axis [deg]
             type: number
             fits_keyword: RA_V1
+            fits_hdu: SCI
           dec_v1:
             title: Dec of telescope V1 axis [deg]
             type: number
             fits_keyword: DEC_V1
+            fits_hdu: SCI
           pa_v3:
             title: Position angle of telescope V3 axis [deg]
             type: number
             fits_keyword: PA_V3
+            fits_hdu: SCI
       velocity_aberration:
         title: Velocity aberration correction information
         type: object
