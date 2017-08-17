@@ -63,6 +63,7 @@ properties:
             default: ICRS
             fits_keyword: RADESYS
             enum: [ICRS]
+            fits_hdu: SCI
       asn:
         title: Association information
         type: object
@@ -728,6 +729,7 @@ properties:
             title: Position angle of aperture used (deg)
             type: number
             fits_keyword: PA_APER
+            fits_hdu: SCI
       wcsinfo:
         title: WCS parameters
         type: object
@@ -972,6 +974,7 @@ properties:
             title: Velocity aberration scale factor
             type: number
             fits_keyword: VA_SCALE
+            fits_hdu: SCI
       time:
         title: Time information
         type: object
