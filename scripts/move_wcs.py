@@ -22,6 +22,15 @@ def move_wcs(files):
         new_hdr = _collect_wcs_keywords(f)
         update_sci_extension(f, new_hdr)
         clean_primary_header(f, new_hdr)
+
+        # Remove ASDF extension if present:
+        for i, hdu in enumerate(f):
+            try:
+                if hdu.header['EXTNAME'] == 'ASDF':
+                    break
+            except KeyError:
+                continue
+        del f[i]
         f.close()
     
     
