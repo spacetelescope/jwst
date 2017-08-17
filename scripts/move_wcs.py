@@ -24,13 +24,14 @@ def move_wcs(files, remove_asdf=False):
         clean_primary_header(f, new_hdr)
 
         # Remove ASDF extension if present:
-        for i, hdu in enumerate(f):
-            try:
-                if hdu.header['EXTNAME'] == 'ASDF':
-                    break
-            except KeyError:
-                continue
-        del f[i]
+        if remove_asdf:
+            for i, hdu in enumerate(f):
+                try:
+                    if hdu.header['EXTNAME'] == 'ASDF':
+                        break
+                except KeyError:
+                    continue
+            del f[i]
         f.close()
     
     
