@@ -4,14 +4,7 @@ from astropy import wcs
 from astropy.wcs import InvalidTransformError
 import six
 
-"""
-More Kw to consider 
-radesys - I think it should be moved - "OTHER" in HST
-velocity aberrration related kw - move them
-  DVA_RA< DVA_DEC, VA_SCALE
 
-TARG_RA, TARG_DEC
-"""
 stsci_wcs_kw = ['PA_V3', 'V2_REF', 'V3_REF', 'PA_APER', 'VPARITY',
                 'RA_V1', 'DEC_V1', 'ROLL_REF', 'RA_REF', 'DEC_REF']
 
@@ -52,6 +45,7 @@ def _collect_wcs_keywords(f):
             new_hdr[kw] = f[0].header[kw]
         except KeyError:
             pass
+    new_hdr = add_default_keywords(new_hdr)
     return new_hdr
         
 
@@ -74,14 +68,45 @@ def update_sci_extension(f, new_hdr):
             pass
 
 
+def add_default_keywords(new_hdr):
+    """
+    Add keywords with default values which wcslib does not write out.
+
+    PC, CUNIT, CTYPE
+    """
+    wcsaxes = new_hdr['WCSAXES']
+    if wcsaxes == 3:
+        default_pc = {"PC1_1": 1, "PC1_2": 0, "PC1_3": 0,
+                      "PC2_1": 0 , "PC2_2": 1, "PC2_3": 0,
+                      "PC3_1": 0, "PC3_2": 0, "PC3_3": 1
+                     }
+        default_cunit = {"CUNIT1": "deg", "CUNIT2": "deg", "CUNIT3": "um"}
+        default_ctype = {"CTYPE1": "RA---TAN", "CTYPE2": "DEC--TAN", "CTYPE3": "WAVE"}
+    elif wcsaxes == 2:
+        default_pc = {"PC1_1": 1, "PC1_2": 0,
+                      "PC2_1": 0 , "PC2_2": 1,
+                     }
+        default_cunit = {"CUNIT1": "deg", "CUNIT2": "deg"}
+        default_ctype = {"CTYPE1": "RA---TAN", "CTYPE2": "DEC--TAN"}
+    
+    if "PC1_1" not in new_hdr:
+        new_hdr.update(default_pc)
+    if "CUNIT1" not in new_hdr:
+        new_hdr.update(default_cunit)
+    if "CTYPE1" not in new_hdr:
+        new_hdr.update(default_ctype)
+
+    return new_hdr
 
 
 if __name__ == '__main__':
     import argparse
     import os
     import six
-    parser = argparse.ArgumentParser(description="Move WCS keywords from Primary to SCI extension.")
-    parser.add_argument('files', help='A list of FITS filenames or a path to a directory with FITS files.')
+    parser = argparse.ArgumentParser(description="Move WCS keywords "
+                                     "from Primary to SCI extension.")
+    parser.add_argument('files', help="A list of FITS filenames or a path "
+                        "to a directory with FITS files.")
     res = parser.parse_args()
     files = res.files
 
