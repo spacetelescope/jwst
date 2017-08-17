@@ -47,7 +47,10 @@ def _collect_wcs_keywords(f):
 
     # Remove kw added by wcslib from the new header
     for kw in wcslib_kw_to_remove:
-        del new_hdr[kw]
+        try:
+            del new_hdr[kw]
+        except KeyError:
+            continue
 
     # Add STScI specific kw to new_hdr
     for kw in stsci_wcs_kw:
