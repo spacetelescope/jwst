@@ -11,7 +11,7 @@ stsci_wcs_kw = ['PA_V3', 'V2_REF', 'V3_REF', 'PA_APER', 'VPARITY',
 wcslib_kw_to_remove = ['LONPOLE', 'LATPOLE', 'MJD-OBS', 'DATE-OBS']
 
 
-def move_wcs(files):
+def move_wcs(files, remove_asdf=False):
     for name in files:
         print('Working on file {0}.'.format(name))
         f = fits.open(name, mode='update')
