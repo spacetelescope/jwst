@@ -54,6 +54,7 @@ from asdf import treeutil
 from . import model_base
 from . import schema as mschema
 
+
 def dated_directory(directory, prefix):
     """
     Create a dated directory in a specified directory
@@ -86,7 +87,7 @@ def find_directory(directory, prefix):
     else:
         chosen_dir = None
         for subdirectory in os.listdir(directory):
-            if subdirectory.startswith(prefix):
+            if os.path.isdir(subdirectory) and subdirectory.startswith(prefix):
                 if chosen_dir is None:
                     chosen_dir = subdirectory
                 elif subdirectory > chosen_dir:
@@ -424,34 +425,65 @@ class Model_db(object):
             for value in values:
                 save_dictionary(fd, value, leading=leading+'- ')
             
-        def save_simple_list(leading, name, values, max_length=80):
+        def is_long_line(leading, name, value, max_length=80):
+            long_line = leading + name + ': ' + str(value)
+            return len(long_line) > max_length
+    
+        def save_long_line(leading, name, value, sep1, sep2, max_length=80):
+            long_line = leading + name + ': '
+            values = value.split(sep1)
+                
             start = True
             line_start = 0
             prefix = leading + '  '
-            long_line = leading + name + ": ["
 
-            for value in sorted(values):
-                if not isinstance(value, six.string_types):
-                    value = str(value)
-                value = value.strip()
-                
+            for value in values:
+                nl = value.find('\n')
+                if nl >= 0:
+                    long_line += value[0:nl+1]
+                    value = value[nl+1:]
+                    line_start = len(long_line)
+
                 if start:
                     long_line += value
                     start = False
                 else:
-                    line_length = len(long_line) + len(value) + 2 - line_start
+                    line_length = (len(long_line) + len(value) + len(sep1)
+                                    - line_start)
+
                     if line_length < max_length:
-                        long_line += ", " + value
+                        long_line += sep1 + value
                     else:
-                        line_start = len(long_line) + 2
-                        long_line += ",\n" + prefix + value
+                        line_start = len(long_line) + len(sep2)
+                        long_line +=  sep2 + prefix + value
                     
-            long_line += "]\n"
+            long_line += '\n'
+
             return long_line
 
+        def save_short_line(leading, name, value):
+            short_line = leading + name + ': ' + str(value) + '\n'
+            return short_line
+            
+        def save_simple_list(leading, name, values, max_length=80):
+            sep1 = ', '
+            sep2 = sep1 + '\n'
+            vstr = [str(v) for v in values]
+            value = '[' + sep1.join(vstr) + ']'
+            if is_long_line(leading, name, value):
+                line = save_long_line(leading, name, value, sep1, sep2)
+            else:
+                line = save_short_line(leading, name, value)
+            return line
     
         def save_scalar(leading, name, value):
-            return leading + name + ": " + str(value) + "\n"
+            sep = '|'
+            if is_long_line(leading, name, value):
+                value = '"\n' + value + '"\\'
+                line = save_long_line(leading, name, value, '|', '|\\\n')
+            else:
+                line = save_short_line(leading, name, value)
+            return line
     
         with open(schema_file, mode='w') as fd:
             save_dictionary(fd, schema)
@@ -588,11 +620,12 @@ class Options(object):
         else:
             if self.first_time:
                 if not self.query_run(self.preamble, self.run_script):
-                    return
+                    return False
             
             parameters = self.query_options(parameters)
 
         self.set_parameters(editor, parameters)
+        return True
         
     def get_parameters(self, editor):
         """
@@ -868,7 +901,8 @@ class Schema_editor(object):
         if self.options is None:
             self.query = False
         else:
-            self.options.get(self)
+            if not self.options.get(self):
+                return
         
         # Parse the keyword database files            
         keyword_db = Keyword_db(self.input)
@@ -1110,7 +1144,12 @@ class Schema_editor(object):
         if perform:
             if self.report_and_query(keyword_value, model_value, path, field):
                 done = True
+                if field == "pattern":
+                    keyword_value = (r'^((' +
+                                     '|'.join(keyword_value) +
+                                     r')\\s*\\|\\s*)+$')
                 model_schema[field] = keyword_value
+
         return done
     
     def schema_rename_value(self, model_schema, keyword_name, model_name, path):
@@ -1155,13 +1194,19 @@ class Schema_editor(object):
                 fits_name = self.get_keyword_value(model_subschema,
                                                    "fits_keyword")
                 if fits_name is not None:
+                    # Special case for reference file keywords
+                    p_name = fits_name[0:2] == "P_"
+                    if p_name:
+                        fits_name = fits_name[2:]
+
                     keyword_path = keyword_dict.get(fits_name)
 
                     if keyword_path is None:
-                        done = self.schema_del_value(model_subschema,
-                                                     model_name,
-                                                     new_path(model_path,
-                                                              model_name))
+                        if not p_name:
+                            done = self.schema_del_value(model_subschema,
+                                                         model_name,
+                                                         new_path(model_path,
+                                                                  model_name))
                     else:
                         found = True
                         keyword_subschema = keyword_schema
@@ -1184,7 +1229,8 @@ class Schema_editor(object):
                                                              model_subschema,
                                                              new_path(model_path,
                                                                       model_name))
-                            if model_name != keyword_path[-1]:
+                            
+                            if model_name != keyword_path[-1] and not p_name:
                                 done = self.schema_rename_value(model_schema,
                                                                 keyword_path[-1],
                                                                 model_name,
@@ -1356,19 +1402,27 @@ class Schema_editor(object):
         and the keyword database and update when they differ
         """
         done = False
-        for keyword_field in ('type', 'enum', 'default_value'):
-            keyword_value = keyword_schema.get(keyword_field)
-    
+        for model_field in ('type', 'enum', 'pattern', 'default'):
+
             # Bridge differences in terminology between
             # keyword db and model schema
 
-            if keyword_field == "default_value":
-                model_field = "default"
+            if model_field == "pattern":
+                keyword_field = "enum"
+            elif model_field == "default":
+                keyword_field = "default_value"
             else:
                 model_field = keyword_field
                 
+            keyword_value = keyword_schema.get(keyword_field)
             model_value = model_schema.get(model_field)
-    
+  
+            if model_field == "pattern":
+                # Pattern is inside innermost set of parentehses
+                patstart = model_value.rfind('(') + 1
+                patend = model_value.find(')')
+                model_value = model_value.split[patstart:patend]('|')
+
             if keyword_value == "float" and model_value == "number":
                 keyword_value = "number"
                 
