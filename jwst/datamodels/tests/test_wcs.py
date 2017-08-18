@@ -49,7 +49,7 @@ def test_wcs():
 
     wcs1.wcs.crpix[0] = 42.0
 
-    dm2.set_fits_wcs(wcs1)
+    dm2.set_fits_wcs(wcs1, hdu_name="PRIMARY")
     header = _header_to_dict(dm2.extra_fits.PRIMARY.header)
     assert header['CRPIX1'] == 42.0
 

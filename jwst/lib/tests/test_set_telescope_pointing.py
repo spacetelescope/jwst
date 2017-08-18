@@ -18,12 +18,13 @@ import os
 import pytest
 import requests_mock
 
-from astropy.io import fits
 from astropy.table import Table
 from astropy.time import Time
 
 from .. import engdb_tools
 from .. import set_telescope_pointing as stp
+from ... import datamodels
+from ...tests.helpers import word_precision_check
 
 # Setup mock engineering service
 GOOD_MNEMONIC = 'INRSI_GWA_Y_TILT_AVGED'
@@ -43,6 +44,19 @@ VPARITY = -1
 # Get the mock DB
 db_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_mock.csv')
 mock_db = Table.read(db_path)
+
+
+# Some expected falues
+Q_EXPECTED = np.asarray(
+    [-0.36915286, 0.33763282, 0.05758533, 0.86395264]
+)
+J2FGS_MATRIX_EXPECTED = np.asarray(
+    [-1.00444000e-03,   3.38145836e-03,   9.99993778e-01,
+     9.99999496e-01,  -3.90000000e-14,   1.00444575e-03,
+     3.39649146e-06,   9.99994283e-01,  -3.38145665e-03]
+)
+FSMCORR_EXPECTED = np.zeros((2,))
+OBSTIME_EXPECTED = STARTTIME
 
 
 def register_responses(mocker, response_db, starttime, endtime):
@@ -134,22 +148,20 @@ def eng_db():
 
 
 @pytest.fixture
-def fits_file():
-    hdu = fits.PrimaryHDU()
-    header = hdu.header
-    header['EXPSTART'] = STARTTIME.mjd
-    header['EXPEND'] = ENDTIME.mjd
-    header['TARG_RA'] = TARG_RA
-    header['TARG_DEC'] = TARG_DEC
-    header['V2_REF'] = V2_REF
-    header['V3_REF'] = V3_REF
-    header['V3I_YANG'] = V3I_YANG
-    header['VPARITY'] = VPARITY
-    hdul = fits.HDUList([hdu])
+def data_file():
+    model = datamodels.DataModel()
+    model.meta.exposure.start_time = STARTTIME.mjd
+    model.meta.exposure.end_time = ENDTIME.mjd
+    model.meta.target.ra = TARG_RA
+    model.meta.target.dec = TARG_DEC
+    model.meta.wcsinfo.v2_ref = V2_REF
+    model.meta.wcsinfo.v3_ref = V3_REF
+    model.meta.wcsinfo.v3yangle = V3I_YANG
+    model.meta.wcsinfo.vparity = VPARITY
 
     with TemporaryDirectory() as path:
         file_path = os.path.join(path, 'fits.fits')
-        hdul.writeto(file_path)
+        model.save(file_path)
         yield file_path
 
 
@@ -159,25 +171,31 @@ def test_get_pointing_fail():
 
 
 def test_get_pointing(eng_db):
-        q, j2fgs_matrix, fsmcorr, obstime = stp.get_pointing(STARTTIME, ENDTIME)
-        assert isinstance(q, np.ndarray)
-        assert isinstance(j2fgs_matrix, np.ndarray)
-        assert isinstance(fsmcorr, np.ndarray)
-        assert obstime
+        (q,
+         j2fgs_matrix,
+         fsmcorr,
+         obstime) = stp.get_pointing(STARTTIME, ENDTIME)
+        assert np.isclose(q, Q_EXPECTED).all()
+        assert np.isclose(j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
+        assert np.isclose(fsmcorr, FSMCORR_EXPECTED).all()
+        assert obstime == STARTTIME
 
 
 def test_get_pointing_list(eng_db):
         results = stp.get_pointing(STARTTIME, ENDTIME, result_type='all')
         assert isinstance(results, list)
         assert len(results) > 0
-        assert isinstance(results[0].q, np.ndarray)
-        assert isinstance(results[0].j2fgs_matrix, np.ndarray)
-        assert isinstance(results[0].fsmcorr, np.ndarray)
-        assert results[0].obstime
+        assert np.isclose(results[0].q, Q_EXPECTED).all()
+        assert np.isclose(results[0].j2fgs_matrix, J2FGS_MATRIX_EXPECTED).all()
+        assert np.isclose(results[0].fsmcorr, FSMCORR_EXPECTED).all()
+        assert results[0].obstime == STARTTIME
 
 
 def test_get_pointing_with_zeros(eng_db):
-    q, j2fgs_matrix, fsmcorr, obstime = stp.get_pointing(ZEROTIME_START, ENDTIME)
+    (q,
+     j2fgs_matrix,
+     fsmcorr,
+     obstime) = stp.get_pointing(ZEROTIME_START, ENDTIME)
     assert j2fgs_matrix.any()
     (q_desired,
      j2fgs_matrix_desired,
@@ -188,44 +206,136 @@ def test_get_pointing_with_zeros(eng_db):
     assert np.array_equal(fsmcorr, fsmcorr_desired)
 
 
-def test_add_wcs_default(fits_file):
+def test_add_wcs_default(data_file):
     try:
-        stp.add_wcs(fits_file)
-    except:
-        pytest.skip('Live ENGDB service is not accessible.')
+        stp.add_wcs(data_file)
+    except Exception as e:
+        pytest.skip(
+            'Live ENGDB service is not accessible.'
+            '\nException={}'.format(e)
+        )
 
-    hdul = fits.open(fits_file)
-    header = hdul[0].header
-    assert header['RA_V1'] == TARG_RA
-    assert header['DEC_V1'] == TARG_DEC
-    assert header['PA_V3'] == 0.
-    assert header['CRVAL1'] == TARG_RA
-    assert header['CRVAL2'] == TARG_DEC
-    assert np.isclose(header['PC1_1'], -0.7558009)
-    assert np.isclose(header['PC1_2'], 0.6548015)
-    assert np.isclose(header['PC2_1'], 0.6548015)
-    assert np.isclose(header['PC2_2'], 0.7558009)
-    assert header['RA_REF'] == TARG_RA
-    assert header['DEC_REF'] == TARG_DEC
-    assert np.isclose(header['ROLL_REF'], 358.9045979379)
-    assert header['WCSAXES'] == 0.
+    model = datamodels.open(data_file)
+    assert model.meta.pointing.ra_v1 == TARG_RA
+    assert model.meta.pointing.dec_v1 == TARG_DEC
+    assert model.meta.pointing.pa_v3 == 0.
+    assert model.meta.wcsinfo.crval1 == TARG_RA
+    assert model.meta.wcsinfo.crval2 == TARG_DEC
+    assert np.isclose(model.meta.wcsinfo.pc1_1, -1.0)
+    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.0)
+    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.0)
+    assert np.isclose(model.meta.wcsinfo.pc2_2, 1.0)
+    assert model.meta.wcsinfo.ra_ref == TARG_RA
+    assert model.meta.wcsinfo.dec_ref == TARG_DEC
+    assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
+    assert model.meta.wcsinfo.wcsaxes == 2
+    assert word_precision_check(
+        model.meta.wcsinfo.s_region,
+        (
+            'POLYGON ICRS'
+            ' 344.0 -86.0'
+            ' 344.0 -87.0'
+            ' 345.0 -87.0'
+            ' 345.0 -86.0'
+            ' 344.0 -86.0'
+        )
+    )
 
 
-def test_add_wcs_with_db(eng_db, fits_file):
-        stp.add_wcs(fits_file)
+def test_add_wcs_fsmcorr_v1(data_file):
+    """Test with default value using FSM original correction"""
+    try:
+        stp.add_wcs(data_file, fsmcorr_version='v1')
+    except Exception as e:
+        pytest.skip(
+            'Live ENGDB service is not accessible.'
+            '\nException={}'.format(e)
+        )
 
-        hdul = fits.open(fits_file)
-        header = hdul[0].header
-        assert np.isclose(header['RA_V1'], 348.9278669)
-        assert np.isclose(header['DEC_V1'], -38.749239)
-        assert np.isclose(header['PA_V3'], 50.1767077)
-        assert np.isclose(header['CRVAL1'], 348.8776709)
-        assert np.isclose(header['CRVAL2'], -38.854159)
-        assert np.isclose(header['PC1_1'], 0.0385309)
-        assert np.isclose(header['PC1_2'], 0.9992574)
-        assert np.isclose(header['PC2_1'], 0.9992574)
-        assert np.isclose(header['PC2_2'], -0.0385309)
-        assert np.isclose(header['RA_REF'], 348.8776709)
-        assert np.isclose(header['DEC_REF'], -38.854159)
-        assert np.isclose(header['ROLL_REF'], 50.20832726650)
-        assert header['WCSAXES'] == 0.
+    model = datamodels.open(data_file)
+    assert model.meta.pointing.ra_v1 == TARG_RA
+    assert model.meta.pointing.dec_v1 == TARG_DEC
+    assert model.meta.pointing.pa_v3 == 0.
+    assert model.meta.wcsinfo.crval1 == TARG_RA
+    assert model.meta.wcsinfo.crval2 == TARG_DEC
+    assert np.isclose(model.meta.wcsinfo.pc1_1, -1.0)
+    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.0)
+    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.0)
+    assert np.isclose(model.meta.wcsinfo.pc2_2, 1.0)
+    assert model.meta.wcsinfo.ra_ref == TARG_RA
+    assert model.meta.wcsinfo.dec_ref == TARG_DEC
+    assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
+    assert model.meta.wcsinfo.wcsaxes == 2
+    assert word_precision_check(
+        model.meta.wcsinfo.s_region,
+        (
+            'POLYGON ICRS'
+            ' 344.0 -86.0'
+            ' 344.0 -87.0'
+            ' 345.0 -87.0'
+            ' 345.0 -86.0'
+            ' 344.0 -86.0'
+        )
+    )
+
+
+def test_add_wcs_with_db(eng_db, data_file):
+    """Test using the database"""
+    stp.add_wcs(data_file)
+
+    model = datamodels.open(data_file)
+    assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
+    assert np.isclose(model.meta.pointing.dec_v1, -38.749239)
+    assert np.isclose(model.meta.pointing.pa_v3, 50.1767077)
+    assert np.isclose(model.meta.wcsinfo.crval1, 348.8776709)
+    assert np.isclose(model.meta.wcsinfo.crval2, -38.854159)
+    assert np.isclose(model.meta.wcsinfo.pc1_1, 0.0385309)
+    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992574)
+    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992574)
+    assert np.isclose(model.meta.wcsinfo.pc2_2, -0.0385309)
+    assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709)
+    assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
+    assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
+    assert model.meta.wcsinfo.wcsaxes == 2
+    assert word_precision_check(
+        model.meta.wcsinfo.s_region,
+        (
+            'POLYGON ICRS'
+            ' 349.9154593139086 -37.89343325428542'
+            ' 348.9162019077701 -37.854902276134595'
+            ' 348.8776709296192 -38.85415968227314'
+            ' 349.8769283357578 -38.892690660423966'
+            ' 349.9154593139086 -37.89343325428542'
+        )
+    )
+
+
+def test_add_wcs_with_db_fsmcorr_v1(eng_db, data_file):
+    """Test using the database with original FSM correction"""
+    stp.add_wcs(data_file, fsmcorr_version='v1')
+
+    model = datamodels.open(data_file)
+    assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
+    assert np.isclose(model.meta.pointing.dec_v1, -38.749239)
+    assert np.isclose(model.meta.pointing.pa_v3, 50.1767077)
+    assert np.isclose(model.meta.wcsinfo.crval1, 348.8776709)
+    assert np.isclose(model.meta.wcsinfo.crval2, -38.854159)
+    assert np.isclose(model.meta.wcsinfo.pc1_1, 0.0385309)
+    assert np.isclose(model.meta.wcsinfo.pc1_2, 0.9992574)
+    assert np.isclose(model.meta.wcsinfo.pc2_1, 0.9992574)
+    assert np.isclose(model.meta.wcsinfo.pc2_2, -0.0385309)
+    assert np.isclose(model.meta.wcsinfo.ra_ref, 348.8776709)
+    assert np.isclose(model.meta.wcsinfo.dec_ref, -38.854159)
+    assert np.isclose(model.meta.wcsinfo.roll_ref, 50.20832726650)
+    assert model.meta.wcsinfo.wcsaxes == 2
+    assert word_precision_check(
+        model.meta.wcsinfo.s_region,
+        (
+            'POLYGON ICRS'
+            ' 349.9154593139086 -37.89343325428542'
+            ' 348.9162019077701 -37.854902276134595'
+            ' 348.8776709296192 -38.85415968227314'
+            ' 349.8769283357578 -38.892690660423966'
+            ' 349.9154593139086 -37.89343325428542'
+        )
+    )

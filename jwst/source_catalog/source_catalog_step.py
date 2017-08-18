@@ -2,6 +2,7 @@
 
 from ..stpipe import Step, cmdline
 from ..datamodels import DrizProductModel
+from ..lib.catalog_utils import replace_suffix_ext
 from . import source_catalog
 
 
@@ -41,9 +42,10 @@ class SourceCatalogStep(Step):
 
             old_suffixes = ['i2d']
             output_dir = self.search_attr('output_dir')
-            cat_filepath = source_catalog._replace_suffix_ext(
-                model.meta.filename, old_suffixes, 'cat', output_ext='escv',
-                output_dir=output_dir)
+            cat_filepath = replace_suffix_ext(model.meta.filename,
+                                              old_suffixes, 'cat',
+                                              output_ext='escv',
+                                              output_dir=output_dir)
             catalog.write(cat_filepath, format='ascii.ecsv', overwrite=True)
             self.log.info('Wrote source catalog: {0}'
                           .format(cat_filepath))
