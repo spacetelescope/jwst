@@ -2,6 +2,7 @@
 
 from ..stpipe import Step, cmdline
 from .. import datamodels
+from ..lib.catalog_utils import replace_suffix_ext
 from .white_light import white_light
 
 
@@ -23,8 +24,13 @@ class WhiteLightStep(Step):
             result = white_light(input_model)
 
             # Write the output catalog
-            index = input_model.meta.filename.rfind('_')
-            cat_name = input_model.meta.filename[:index + 1] + 'cat.ecsv'
-            #result.write(cat_name, format='ascii.ecsv')
+
+            old_suffixes = ['x1dints']
+            output_dir = self.search_attr('output_dir')
+            cat_filepath = replace_suffix_ext(input_model.meta.filename,
+                                              old_suffixes, 'whtlt',
+                                              output_ext='ecsv',
+                                              output_dir=output_dir)
+            result.write(cat_filepath, format='ascii.ecsv', overwrite=True)
 
         return result

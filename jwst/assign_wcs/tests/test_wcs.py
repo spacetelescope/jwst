@@ -105,7 +105,7 @@ def test_create_fitwcs():
     gra, gdec, glam = w3d(1, 1, 1)
 
     ff = fits_support.to_fits(im._instance, im._schema)
-    hdu = fits_support.get_hdu(ff._hdulist, "PRIMARY")
+    hdu = fits_support.get_hdu(ff._hdulist, "SCI")
     w = wcs.WCS(hdu.header)
     wcel = w.sub(['celestial'])
     ra, dec = wcel.all_pix2world(1, 1, 1)

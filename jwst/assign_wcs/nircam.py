@@ -56,7 +56,7 @@ def imaging_distortion(input_model, reference_files):
         shape = input_model.data.shape
         # Note: Since bounding_box is attached to the model here it's in reverse order.
         transform.bounding_box = ((-0.5, shape[0] - 0.5),
-                                  (-0.5 , shape[1] - 0.5))
+                                  (-0.5, shape[1] - 0.5))
     return transform
 
 
