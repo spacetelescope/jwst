@@ -220,12 +220,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         self.close()
 
     def close(self):
-        if not self._iscopy:
-            for fd in self._files_to_close:
-                if fd is not None:
-                    fd.close()
-            if self._asdf is not None:
-                self._asdf.close()
+        for fd in self._files_to_close:
+            if fd is not None:
+                fd.close()
+        if not self._iscopy and self._asdf is not None:
+            self._asdf.close()
 
     @staticmethod
     def clone(target, source, deepcopy=False, memo=None):
@@ -239,7 +238,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             target._instance = source._instance
             target._iscopy = True
 
-        target._files_to_close = source._files_to_close[:]
+        target._files_to_close = []
         target._schema = source._schema
         target._shape = source._shape
         target._ctx = target
