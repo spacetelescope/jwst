@@ -2,7 +2,7 @@
 
 from ..stpipe import Step, cmdline
 from ..datamodels import CubeModel
-from ..source_catalog.source_catalog import _replace_suffix_ext
+from ..lib.catalog_utils import replace_suffix_ext
 from .tso_photometry import tso_aperture_photometry
 
 
@@ -44,14 +44,15 @@ class TSOPhotometryStep(Step):
 
             old_suffixes = ['calints', 'crfints']
             output_dir = self.search_attr('output_dir')
-            cat_filepath = _replace_suffix_ext(
-                model.meta.filename, old_suffixes, 'phot', output_ext='ecsv',
-                output_dir=output_dir)
+            cat_filepath = replace_suffix_ext(model.meta.filename,
+                                              old_suffixes, 'phot',
+                                              output_ext='ecsv',
+                                              output_dir=output_dir)
             catalog.write(cat_filepath, format='ascii.ecsv', overwrite=True)
             self.log.info('Wrote TSO photometry catalog: {0}'.
                           format(cat_filepath))
 
-        return
+        return catalog
 
 
 if __name__ == '__main__':

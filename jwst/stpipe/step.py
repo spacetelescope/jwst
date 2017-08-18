@@ -22,9 +22,13 @@ from . import log
 from . import utilities
 from .. import __version_commit__, __version__
 
-SUFFIX_LIST = ['rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
-               'jump', 'ramp', 'x1d', 'x2d', 'x1dints', 'calints', 'rateints']
-REMOVE_SUFFIX = '^(.+?)(_(' + '|'.join(SUFFIX_LIST) + '))?$'
+SUFFIX_LIST = [
+    'rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
+    'jump', 'ramp', 'x1d', 'x1dints', 'calints', 'rateints',
+    'crf', 'crfints'
+]
+REMOVE_SUFFIX = '^(?P<root>.+?)((?P<separator>_|-)(' \
+                + '|'.join(SUFFIX_LIST) + '))?$'
 
 
 class Step(object):
@@ -554,11 +558,11 @@ class Step(object):
         gc.collect()
 
     def _precache_reference_files_opened(self, model_or_container):
-        """Pre-fetches references for `model_or_container`.   
+        """Pre-fetches references for `model_or_container`.
 
         Handles recursive pre-fetches for any models inside a container,
         or just a single model.
-        
+
         Assumes model_or_container is an open model or container object,
         not a filename.
 
@@ -570,8 +574,8 @@ class Step(object):
                 self._precache_reference_files_opened(contained_model)
         else:
             # precache a single model object
-            self._precache_reference_files_impl(model_or_container)    
-            
+            self._precache_reference_files_impl(model_or_container)
+
     def _precache_reference_files_impl(self, model):
         """Given open data `model`,  determine and cache reference files for
         any reference types which are not overridden on the command line.
@@ -585,7 +589,7 @@ class Step(object):
             for reftype in self.reference_file_types
             if self._get_ref_override(reftype) is not None
             }
-        
+
         fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
 
         crds_refs = crds_client.get_multiple_reference_paths(model, fetch_types)
@@ -785,7 +789,10 @@ class Step(object):
 
                     # Remove any known, previous suffixes.
                     match = re.match(REMOVE_SUFFIX, name)
-                    name = match.group(1)
+                    name = match.group('root')
+                    separator = match.group('separator')
+                    if separator is None:
+                        separator = '_'
 
                     # Rebuild the path.
                     output_name = [name]
@@ -793,7 +800,7 @@ class Step(object):
                         suffix, step=step, default_suffix=result_id
                     )
                     if suffix is not None:
-                        output_name.append('_' + suffix)
+                        output_name.append(separator + suffix)
                     if ext is None:
                         ext = step.search_attr('output_ext')
                         if ext is None:

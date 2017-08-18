@@ -269,7 +269,7 @@ def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None,
     # TODO: generalize an approach to do this for more than one wcs.  For
     # now, we just do it for one, using the api for a list of wcs.
     # Compute a fiducial point for the output frame at center of input data
-    fiducial = compute_spec_fiducial(wcslist, bounding_box=bounding_box)
+    fiducial = compute_spec_fiducial(wcslist)
     # Create transform for output frame
     transform = compute_spec_transform(fiducial, refwcs)
     output_frame = refwcs.output_frame

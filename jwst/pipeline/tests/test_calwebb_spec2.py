@@ -19,12 +19,6 @@ from ...datamodels import open as dm_open
 from ..calwebb_spec2 import Spec2Pipeline
 from ...stpipe.step import Step
 
-
-def abspath(filepath):
-    """Get the absolute file path"""
-    return path.abspath(path.expanduser(path.expandvars(filepath)))
-
-
 DATAPATH = abspath(
     '$TEST_BIGDATA/pipelines'
 )

@@ -123,7 +123,8 @@ class Coron3Pipeline(Pipeline):
                 target_models.append(image)
 
             # Call outlier_detection
-            target_models = self.outlier_detection(target_models, resample_data=False)
+            self.outlier_detection.resample_data=False
+            target_models = self.outlier_detection(target_models)
 
             # Create a level-2c output product
             log.debug('Creating and saving Level-2C result')
