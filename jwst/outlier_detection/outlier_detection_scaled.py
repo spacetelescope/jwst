@@ -203,9 +203,12 @@ class OutlierDetectionScaled(object):
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
-        detect_outliers(self.input_models, blot_models,
+        detect_outliers(input_models, blot_models,
             self.reffiles, **self.outlierpars)
 
+        for i in range(self.input_models.data.shape[0]):
+            self.input_models.dq[i] = input_models[i].dq
+            
         # clean-up (just to be explicit about being finished with these results)
         del median_model, blot_models
 

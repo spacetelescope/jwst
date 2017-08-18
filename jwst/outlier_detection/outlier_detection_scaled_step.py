@@ -31,7 +31,7 @@ class OutlierDetectionScaledStep(Step):
         snr = string(default='4.0 3.0')
         scale = string(default='0.5 0.4')
         backg = float(default=0.0)
-        save_intermediate_results = boolean(default=False),
+        save_intermediate_results = boolean(default=False)
         good_bits = integer(default=4)
     """
     reference_file_types = ['gain', 'readnoise']
@@ -40,8 +40,8 @@ class OutlierDetectionScaledStep(Step):
 
         with datamodels.open(input) as input_models:
 
-            if not isinstance(input_models, datamodels.ModelContainer):
-                self.log.warning("Input is not a ModelContainer.")
+            if not isinstance(input_models, datamodels.CubeModel):
+                self.log.warning("Input is not a CubeModel.")
                 self.log.warning("Outlier detection step will be skipped.")
                 result = input_models.copy()
                 result.meta.cal_step.outlier_detection = "SKIPPED"
@@ -101,7 +101,7 @@ class OutlierDetectionScaledStep(Step):
                             'readnoise': datamodels.ReadnoiseModel}
         reffile_model = reffile_to_model[reftype]           
 
-        reffiles = [im.meta.ref_file.instance[reftype]['name'] for im in self.input_models]
+        reffiles = [self.input_models.meta.ref_file.instance[reftype]['name']]
         self.log.debug("Using {} reffile(s):".format(reftype.upper()))
         for r in set(reffiles):
             self.log.debug("    {}".format(r))
@@ -109,8 +109,7 @@ class OutlierDetectionScaledStep(Step):
         # Check if all the ref files are the same.  If so build it by reading
         # the reference file just once.
         if len(set(reffiles)) <= 1:
-            length = len(self.input_models)
-            ref_list = [reffile_model(self.reference_uri_to_cache_path(reffiles[0]))]*length
+            ref_list = [reffile_model(self.reference_uri_to_cache_path(reffiles[0]))]
         else:
             ref_list = [reffile_model(self.reference_uri_to_cache_path(ref)) for ref in reffiles]
         return datamodels.ModelContainer(ref_list)
