@@ -1196,6 +1196,8 @@ class Schema_editor(object):
                 if fits_name is not None:
                     # Special case for reference file keywords
                     p_name = fits_name[0:2] == "P_"
+                    import pdb ## DBG
+                    pdb.set_trace() ## DBG
                     if p_name:
                         fits_name = fits_name[2:]
 
