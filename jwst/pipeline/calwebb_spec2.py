@@ -9,7 +9,7 @@ from ..stpipe import Pipeline
 from ..assign_wcs import assign_wcs_step
 from ..background import background_step
 from ..imprint import imprint_step
-#from jwst.msaflagging import msa_flag_step
+from ..msaflagopen import msaflagopen_step
 from ..extract_2d import extract_2d_step
 from ..flatfield import flat_field_step
 from ..srctype import srctype_step
@@ -45,7 +45,7 @@ class Spec2Pipeline(Pipeline):
         'assign_wcs': assign_wcs_step.AssignWcsStep,
         'bkg_subtract': background_step.BackgroundStep,
         'imprint_subtract': imprint_step.ImprintStep,
-        #'msa_flagging' : msa_flag_step.MsaFlagStep,
+        'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'extract_2d': extract_2d_step.Extract2dStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'srctype': srctype_step.SourceTypeStep,
@@ -85,7 +85,7 @@ class Spec2Pipeline(Pipeline):
 
             # Save result
             suffix = 'cal'
-            if isinstance(input, datamodels.CubeModel):
+            if isinstance(result, datamodels.CubeModel):
                 suffix = 'calints'
             self.save_model(result, suffix)
 
@@ -171,9 +171,8 @@ class Spec2Pipeline(Pipeline):
             input = self.imprint_subtract(input, imprint)
 
         # Apply NIRSpec MSA bad shutter flagging
-        # Stubbed out as placeholder until step module is created
-        #if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
-        #    input = self.msa_flagging(input)
+        if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
+            input = self.msa_flagging(input)
 
         # Extract 2D sub-windows for NIRSpec slit and MSA
         if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC']:

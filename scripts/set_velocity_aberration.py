@@ -169,11 +169,12 @@ def add_dva(filename):
     '''
     hdulist = fits.open(filename, 'update')
     pheader = hdulist[0].header
+    sheader = hdulist[1].header
     jwst_dx = float(pheader['JWST_DX'])
     jwst_dy = float(pheader['JWST_DY'])
     jwst_dz = float(pheader['JWST_DZ'])
-    ra_ref = float(pheader['RA_REF'])
-    dec_ref = float(pheader['DEC_REF'])
+    ra_ref = float(sheader['RA_REF'])
+    dec_ref = float(sheader['DEC_REF'])
 
     # compute the velocity aberration information
     scale_factor = aberration_scale(jwst_dx, jwst_dy, jwst_dz,
@@ -184,7 +185,7 @@ def add_dva(filename):
     # update header
     pheader['DVA_RA'] = ra_off
     pheader['DVA_DEC'] = dec_off
-    pheader['VA_SCALE'] = scale_factor
+    sheader['VA_SCALE'] = scale_factor
     hdulist.flush()
     hdulist.close()
 

@@ -142,6 +142,14 @@ def _get_schema_for_index(schema, i):
     else:
         return items
 
+def _find_property(schema, attr):
+    subschema = _get_schema_for_property(schema, attr)
+    if subschema == {}:
+        find = False
+    else:
+        find = 'default' in subschema
+    return find
+
 class ValidationWarning(Warning):
     pass
 
