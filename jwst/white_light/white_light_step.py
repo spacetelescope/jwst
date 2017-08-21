@@ -24,6 +24,7 @@ class WhiteLightStep(Step):
             result = white_light(input_model)
 
             # Write the output catalog
+
             old_suffixes = ['x1dints']
             output_dir = self.search_attr('output_dir')
             cat_filepath = replace_suffix_ext(input_model.meta.filename,
@@ -32,4 +33,4 @@ class WhiteLightStep(Step):
                                               output_dir=output_dir)
             result.write(cat_filepath, format='ascii.ecsv', overwrite=True)
 
-        return
+        return result

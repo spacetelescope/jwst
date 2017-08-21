@@ -52,7 +52,7 @@ class TSOPhotometryStep(Step):
             self.log.info('Wrote TSO photometry catalog: {0}'.
                           format(cat_filepath))
 
-        return
+        return catalog
 
 
 if __name__ == '__main__':

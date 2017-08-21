@@ -8,12 +8,12 @@ allOf:
       title: Saturation threshold
       fits_hdu: SCI
       default: 100000.0
+      ndim: 2
       datatype: float32
     dq:
       title: 2-D data quality array for all planes
       fits_hdu: DQ
       default: 0
-      ndim: 2
       datatype: uint32
     dq_def:
       $ref: dq_def.schema.yaml
