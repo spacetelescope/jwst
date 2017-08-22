@@ -1,6 +1,7 @@
 title: Traps-filled map
 allOf:
 - $ref: core.schema.yaml
+- $ref: wcsinfo.schema.yaml
 - $ref: subarray.schema.yaml
 - type: object
   properties:

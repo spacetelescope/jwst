@@ -149,7 +149,7 @@ def eng_db():
 
 @pytest.fixture
 def data_file():
-    model = datamodels.DataModel()
+    model = datamodels.ImageModel()
     model.meta.exposure.start_time = STARTTIME.mjd
     model.meta.exposure.end_time = ENDTIME.mjd
     model.meta.target.ra = TARG_RA
