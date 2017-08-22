@@ -34,7 +34,7 @@ def do_correction(input_model, gain_factor):
     output_model = input_model.copy()
 
     # Apply the rescaling to the entire data array
-    log.info('Rescaling by %g'.format(gain_factor))
+    log.info('Rescaling by {0}'.format(gain_factor))
     output_model.data *= gain_factor
     output_model.err *= gain_factor
 

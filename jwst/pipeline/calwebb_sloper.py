@@ -17,6 +17,7 @@ from ..dark_current import dark_current_step
 from ..persistence import persistence_step
 from ..jump import jump_step
 from ..ramp_fitting import ramp_fit_step
+from ..gain_scale import gain_scale_step
 
 
 __version__ = "7.1.0"
@@ -33,7 +34,7 @@ class SloperPipeline(Pipeline):
     ramps to produce a 2-D slope product. Included steps are:
     group_scale, dq_init, saturation, ipc, superbias, refpix, rscd,
     lastframe, linearity, dark_current, persistence, jump detection,
-    and ramp_fit.
+    ramp_fit, and gain_scale.
 
     """
 
@@ -55,6 +56,7 @@ class SloperPipeline(Pipeline):
                  'persistence': persistence_step.PersistenceStep,
                  'jump': jump_step.JumpStep,
                  'ramp_fit': ramp_fit_step.RampFitStep,
+                 'gain_scale': gain_scale_step.GainScaleStep,
                  }
 
 
@@ -111,6 +113,9 @@ class SloperPipeline(Pipeline):
 
         # apply the ramp_fit step
         input = self.ramp_fit(input)
+
+        # apply the gain_scale step
+        input = self.gain_scale(input)
 
         # setup output_file for saving
         self.setup_output(input)
