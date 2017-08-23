@@ -371,11 +371,11 @@ slits:
                         forward:
                         - !transform/concatenate-1.1.0
                           forward:
-                          - !transform/multiply-1.0.0
+                          - !transform/multiply-1.1.0
                             forward:
                             - !transform/constant-1.1.0 {value: 0.0}
                             - !transform/identity-1.1.0 {}
-                          - !transform/multiply-1.0.0
+                          - !transform/multiply-1.1.0
                             forward:
                             - !transform/constant-1.1.0 {value: -1.0}
                             - !transform/identity-1.1.0 {}
@@ -708,7 +708,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_forward
-                      - !transform/multiply-1.0.0
+                      - !transform/multiply-1.1.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
@@ -741,7 +741,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_forward
-                      - !transform/multiply-1.0.0
+                      - !transform/multiply-1.1.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
@@ -845,7 +845,7 @@ slits:
                               byteorder: little
                               shape: [6, 6]
                             name: x_poly_backward
-                        - !transform/multiply-1.0.0
+                        - !transform/multiply-1.1.0
                           forward:
                           - !transform/compose-1.1.0
                             forward:
@@ -878,7 +878,7 @@ slits:
                               byteorder: little
                               shape: [6, 6]
                             name: y_poly_backward
-                        - !transform/multiply-1.0.0
+                        - !transform/multiply-1.1.0
                           forward:
                           - !transform/compose-1.1.0
                             forward:
@@ -1369,11 +1369,11 @@ slits:
                         forward:
                         - !transform/concatenate-1.1.0
                           forward:
-                          - !transform/multiply-1.0.0
+                          - !transform/multiply-1.1.0
                             forward:
                             - !transform/constant-1.1.0 {value: 0.0}
                             - !transform/identity-1.1.0 {}
-                          - !transform/multiply-1.0.0
+                          - !transform/multiply-1.1.0
                             forward:
                             - !transform/constant-1.1.0 {value: -1.0}
                             - !transform/identity-1.1.0 {}
@@ -1706,7 +1706,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_forward
-                      - !transform/multiply-1.0.0
+                      - !transform/multiply-1.1.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
@@ -1739,7 +1739,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_forward
-                      - !transform/multiply-1.0.0
+                      - !transform/multiply-1.1.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
@@ -1843,7 +1843,7 @@ slits:
                               byteorder: little
                               shape: [6, 6]
                             name: x_poly_backward
-                        - !transform/multiply-1.0.0
+                        - !transform/multiply-1.1.0
                           forward:
                           - !transform/compose-1.1.0
                             forward:
@@ -1876,7 +1876,7 @@ slits:
                               byteorder: little
                               shape: [6, 6]
                             name: y_poly_backward
-                        - !transform/multiply-1.0.0
+                        - !transform/multiply-1.1.0
                           forward:
                           - !transform/compose-1.1.0
                             forward:
@@ -2367,11 +2367,11 @@ slits:
                         forward:
                         - !transform/concatenate-1.1.0
                           forward:
-                          - !transform/multiply-1.0.0
+                          - !transform/multiply-1.1.0
                             forward:
                             - !transform/constant-1.1.0 {value: 0.0}
                             - !transform/identity-1.1.0 {}
-                          - !transform/multiply-1.0.0
+                          - !transform/multiply-1.1.0
                             forward:
                             - !transform/constant-1.1.0 {value: -1.0}
                             - !transform/identity-1.1.0 {}
@@ -2704,7 +2704,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_forward
-                      - !transform/multiply-1.0.0
+                      - !transform/multiply-1.1.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
@@ -2737,7 +2737,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_forward
-                      - !transform/multiply-1.0.0
+                      - !transform/multiply-1.1.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
@@ -2841,7 +2841,7 @@ slits:
                               byteorder: little
                               shape: [6, 6]
                             name: x_poly_backward
-                        - !transform/multiply-1.0.0
+                        - !transform/multiply-1.1.0
                           forward:
                           - !transform/compose-1.1.0
                             forward:
@@ -2874,7 +2874,7 @@ slits:
                               byteorder: little
                               shape: [6, 6]
                             name: y_poly_backward
-                        - !transform/multiply-1.0.0
+                        - !transform/multiply-1.1.0
                           forward:
                           - !transform/compose-1.1.0
                             forward:
@@ -3365,11 +3365,11 @@ slits:
                         forward:
                         - !transform/concatenate-1.1.0
                           forward:
-                          - !transform/multiply-1.0.0
+                          - !transform/multiply-1.1.0
                             forward:
                             - !transform/constant-1.1.0 {value: 0.0}
                             - !transform/identity-1.1.0 {}
-                          - !transform/multiply-1.0.0
+                          - !transform/multiply-1.1.0
                             forward:
                             - !transform/constant-1.1.0 {value: -1.0}
                             - !transform/identity-1.1.0 {}
@@ -3702,7 +3702,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_forward
-                      - !transform/multiply-1.0.0
+                      - !transform/multiply-1.1.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
@@ -3735,7 +3735,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_forward
-                      - !transform/multiply-1.0.0
+                      - !transform/multiply-1.1.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
@@ -3839,7 +3839,7 @@ slits:
                               byteorder: little
                               shape: [6, 6]
                             name: x_poly_backward
-                        - !transform/multiply-1.0.0
+                        - !transform/multiply-1.1.0
                           forward:
                           - !transform/compose-1.1.0
                             forward:
@@ -3872,7 +3872,7 @@ slits:
                               byteorder: little
                               shape: [6, 6]
                             name: y_poly_backward
-                        - !transform/multiply-1.0.0
+                        - !transform/multiply-1.1.0
                           forward:
                           - !transform/compose-1.1.0
                             forward:
@@ -4363,11 +4363,11 @@ slits:
                         forward:
                         - !transform/concatenate-1.1.0
                           forward:
-                          - !transform/multiply-1.0.0
+                          - !transform/multiply-1.1.0
                             forward:
                             - !transform/constant-1.1.0 {value: 0.0}
                             - !transform/identity-1.1.0 {}
-                          - !transform/multiply-1.0.0
+                          - !transform/multiply-1.1.0
                             forward:
                             - !transform/constant-1.1.0 {value: -1.0}
                             - !transform/identity-1.1.0 {}
@@ -4700,7 +4700,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_forward
-                      - !transform/multiply-1.0.0
+                      - !transform/multiply-1.1.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
@@ -4733,7 +4733,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_forward
-                      - !transform/multiply-1.0.0
+                      - !transform/multiply-1.1.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
@@ -4837,7 +4837,7 @@ slits:
                               byteorder: little
                               shape: [6, 6]
                             name: x_poly_backward
-                        - !transform/multiply-1.0.0
+                        - !transform/multiply-1.1.0
                           forward:
                           - !transform/compose-1.1.0
                             forward:
@@ -4870,7 +4870,7 @@ slits:
                               byteorder: little
                               shape: [6, 6]
                             name: y_poly_backward
-                        - !transform/multiply-1.0.0
+                        - !transform/multiply-1.1.0
                           forward:
                           - !transform/compose-1.1.0
                             forward:
