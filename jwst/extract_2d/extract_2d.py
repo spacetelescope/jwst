@@ -9,9 +9,9 @@ import numpy as np
 from astropy.io import fits
 from astropy.modeling.models import Shift
 from gwcs.utils import _toindex
+from gwcs import wcstools
 
 from .. import datamodels
-from asdf import AsdfFile
 from ..assign_wcs import nirspec
 
 
@@ -39,9 +39,11 @@ def extract2d(input_model, which_subarray=None):
         if which_subarray is not None:
             open_slits = [sub for sub in open_slits if sub.name==which_subarray]
         log.debug('open slits {0}'.format(open_slits))
-
+        
+        slits = []
         for slit in open_slits:
             slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
+           
             xlo, xhi = _toindex(slit_wcs.bounding_box[0])
             ylo, yhi = _toindex(slit_wcs.bounding_box[1])
 
@@ -57,33 +59,40 @@ def extract2d(input_model, which_subarray=None):
             ext_data = input_model.data[ylo: yhi + 1, xlo: xhi + 1].copy()
             ext_err = input_model.err[ylo: yhi + 1, xlo: xhi + 1].copy()
             ext_dq = input_model.dq[ylo: yhi + 1, xlo: xhi + 1].copy()
-            new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
+
             shape = ext_data.shape
             bounding_box= ((0, shape[1] - 1), (0, shape[0] - 1))
             slit_wcs.bounding_box = bounding_box
+             # compute wavelengths
+            x, y = wcstools.grid_from_bounding_box(slit_wcs.bounding_box, step=(1, 1))
+            ra, dec, lam = slit_wcs(x, y)
+            new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam.astype(np.float32))
             new_model.meta.wcs = slit_wcs
-            output_model.slits.append(new_model)
+            #output_model.slits.append(new_model)
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
-            nslit = len(output_model.slits) - 1
+            #nslit = len(output_model.slits) - 1
+            nslit = len(slits) - 1
             xlo_ind, xhi_ind, ylo_ind, yhi_ind = _toindex((xlo, xhi, ylo, yhi)).astype(np.int16)
-            output_model.slits[nslit].name = str(slit.name)
-            output_model.slits[nslit].xstart = xlo_ind + 1
-            output_model.slits[nslit].xsize = (xhi_ind - xlo_ind) + 1
-            output_model.slits[nslit].ystart = ylo_ind + 1
-            output_model.slits[nslit].ysize = (yhi_ind - ylo_ind) + 1
+            new_model.name = str(slit.name)
+            new_model.xstart = xlo_ind + 1
+            new_model.xsize = (xhi_ind - xlo_ind) + 1
+            new_model.ystart = ylo_ind + 1
+            new_model.ysize = (yhi_ind - ylo_ind) + 1
             if exp_type.lower() == 'nrs_msaspec':
-                output_model.slits[nslit].source_id = int(slit.source_id)
-                output_model.slits[nslit].source_name = slit.source_name
-                output_model.slits[nslit].source_alias = slit.source_alias
-                output_model.slits[nslit].catalog_id  = slit.catalog_id
-                output_model.slits[nslit].stellarity = float(slit.stellarity)
-                output_model.slits[nslit].source_xpos = float(slit.source_xpos)
-                output_model.slits[nslit].source_ypos = float(slit.source_ypos)
-                output_model.slits[nslit].slitlet_id = int(slit.name)
+                new_model.source_id = int(slit.source_id)
+                new_model.source_name = slit.source_name
+                new_model.source_alias = slit.source_alias
+                new_model.catalog_id  = slit.catalog_id
+                new_model.stellarity = float(slit.stellarity)
+                new_model.source_xpos = float(slit.source_xpos)
+                new_model.source_ypos = float(slit.source_ypos)
+                new_model.slitlet_id = int(slit.name)
                 # for pathloss correction
-                output_model.slits[nslit].nshutters = int(slit.nshutters)
+                new_model.nshutters = int(slit.nshutters)
+            slits.append(new_model)
     del input_model
+    output_model.slits.extend(slits)
     # Set the step status to COMPLETE
     output_model.meta.cal_step.extract_2d = 'COMPLETE'
     return output_model

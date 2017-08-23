@@ -38,28 +38,6 @@ allOf:
       datatype: float32
 - type: object
   properties:
-    pathloss_pointsource:
-      title: pathloss array for point sources
-      fits_hdu: PATHLOSS_POINTSOURCE
-      ndim: 1
-      datatype: float32
-    wavelength_pointsource:
-      title: wavelength array for point sources
-      fits_hdu: WAVELENGTH_POINTSOURCE
-      ndim: 1
-      datatype: float32
-    pathloss_uniformsource:
-      title: pathloss_array for uniform sources
-      fits_hdu: PATHLOSS_UNIFORMSOURCE
-      ndim: 1
-      datatype: float32
-    wavelength_uniformsource:
-      title: wavelength array for uniform sources
-      fits_hdu: WAVELENGTH_UNIFORMSOURCE
-      ndim: 1
-      datatype: float32
-- type: object
-  properties:
     meta:
       title: Level 3 Schema Metadata
       type: object
