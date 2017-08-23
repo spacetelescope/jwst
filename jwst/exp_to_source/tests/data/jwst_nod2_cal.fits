@@ -254,7 +254,7 @@ slits:
                     forward:
                     - !transform/shift-1.1.0 {offset: 0.000143898033}
                     - !transform/shift-1.1.0 {offset: 0.293606022006}
-            - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+            - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
               name: unitless2directional_cosines}
           - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
             angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -269,7 +269,7 @@ slits:
               axes_order: yzyx
             - !transform/compose-1.1.0
               forward:
-              - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: from_dircos}
+              - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: from_dircos}
               - !transform/compose-1.1.0
                 forward:
                 - !transform/compose-1.1.0
@@ -474,7 +474,7 @@ slits:
                                       shape: [6, 6]
                                     name: y_poly_backward
                                 - !transform/identity-1.1.0 {n_dims: 2}
-                          - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+                          - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
                             name: unitless2directional_cosines}
                         - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
                           angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -614,7 +614,7 @@ slits:
                                   shape: [6, 6]
                                 name: y_poly_backward
                             - !transform/identity-1.1.0 {n_dims: 2}
-                      - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+                      - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
                         name: unitless2directional_cosines}
                     - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
                       angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -1252,7 +1252,7 @@ slits:
                     forward:
                     - !transform/shift-1.1.0 {offset: 0.000143898033}
                     - !transform/shift-1.1.0 {offset: 0.293606022006}
-            - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+            - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
               name: unitless2directional_cosines}
           - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
             angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -1267,7 +1267,7 @@ slits:
               axes_order: yzyx
             - !transform/compose-1.1.0
               forward:
-              - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: from_dircos}
+              - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: from_dircos}
               - !transform/compose-1.1.0
                 forward:
                 - !transform/compose-1.1.0
@@ -1472,7 +1472,7 @@ slits:
                                       shape: [6, 6]
                                     name: y_poly_backward
                                 - !transform/identity-1.1.0 {n_dims: 2}
-                          - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+                          - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
                             name: unitless2directional_cosines}
                         - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
                           angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -1612,7 +1612,7 @@ slits:
                                   shape: [6, 6]
                                 name: y_poly_backward
                             - !transform/identity-1.1.0 {n_dims: 2}
-                      - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+                      - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
                         name: unitless2directional_cosines}
                     - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
                       angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -2250,7 +2250,7 @@ slits:
                     forward:
                     - !transform/shift-1.1.0 {offset: 0.000143898033}
                     - !transform/shift-1.1.0 {offset: 0.293606022006}
-            - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+            - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
               name: unitless2directional_cosines}
           - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
             angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -2265,7 +2265,7 @@ slits:
               axes_order: yzyx
             - !transform/compose-1.1.0
               forward:
-              - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: from_dircos}
+              - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: from_dircos}
               - !transform/compose-1.1.0
                 forward:
                 - !transform/compose-1.1.0
@@ -2470,7 +2470,7 @@ slits:
                                       shape: [6, 6]
                                     name: y_poly_backward
                                 - !transform/identity-1.1.0 {n_dims: 2}
-                          - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+                          - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
                             name: unitless2directional_cosines}
                         - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
                           angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -2610,7 +2610,7 @@ slits:
                                   shape: [6, 6]
                                 name: y_poly_backward
                             - !transform/identity-1.1.0 {n_dims: 2}
-                      - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+                      - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
                         name: unitless2directional_cosines}
                     - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
                       angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -3248,7 +3248,7 @@ slits:
                     forward:
                     - !transform/shift-1.1.0 {offset: 0.000143898033}
                     - !transform/shift-1.1.0 {offset: 0.293606022006}
-            - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+            - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
               name: unitless2directional_cosines}
           - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
             angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -3263,7 +3263,7 @@ slits:
               axes_order: yzyx
             - !transform/compose-1.1.0
               forward:
-              - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: from_dircos}
+              - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: from_dircos}
               - !transform/compose-1.1.0
                 forward:
                 - !transform/compose-1.1.0
@@ -3468,7 +3468,7 @@ slits:
                                       shape: [6, 6]
                                     name: y_poly_backward
                                 - !transform/identity-1.1.0 {n_dims: 2}
-                          - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+                          - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
                             name: unitless2directional_cosines}
                         - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
                           angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -3608,7 +3608,7 @@ slits:
                                   shape: [6, 6]
                                 name: y_poly_backward
                             - !transform/identity-1.1.0 {n_dims: 2}
-                      - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+                      - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
                         name: unitless2directional_cosines}
                     - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
                       angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -4246,7 +4246,7 @@ slits:
                     forward:
                     - !transform/shift-1.1.0 {offset: 0.000143898033}
                     - !transform/shift-1.1.0 {offset: 0.293606022006}
-            - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+            - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
               name: unitless2directional_cosines}
           - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
             angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -4261,7 +4261,7 @@ slits:
               axes_order: yzyx
             - !transform/compose-1.1.0
               forward:
-              - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: from_dircos}
+              - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: from_dircos}
               - !transform/compose-1.1.0
                 forward:
                 - !transform/compose-1.1.0
@@ -4466,7 +4466,7 @@ slits:
                                       shape: [6, 6]
                                     name: y_poly_backward
                                 - !transform/identity-1.1.0 {n_dims: 2}
-                          - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+                          - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
                             name: unitless2directional_cosines}
                         - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
                           angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
@@ -4606,7 +4606,7 @@ slits:
                                   shape: [6, 6]
                                 name: y_poly_backward
                             - !transform/identity-1.1.0 {n_dims: 2}
-                      - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
+                      - !<tag:stsci.edu:jwst_pipeline/coords-0.7.0> {model_type: to_dircos,
                         name: unitless2directional_cosines}
                     - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.7.0>
                       angles: [0.029426712198611111, 0.45801628591914306, -0.25232698487888888,
