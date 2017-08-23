@@ -490,7 +490,7 @@ slits:
               - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/compose-1.1.0
                 forward:
-                - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
+                - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
                   name: lambda_from_gratingeq, order: -1.0, output: wavelength}
                 - !transform/scale-1.0.0 {factor: 1000000.0}
           - !transform/compose-1.1.0
@@ -624,7 +624,7 @@ slits:
                 - !transform/identity-1.1.0 {}
               - !transform/remap_axes-1.0.0
                 mapping: [3, 0, 1, 2]
-            - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
+            - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
@@ -1488,7 +1488,7 @@ slits:
               - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/compose-1.1.0
                 forward:
-                - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
+                - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
                   name: lambda_from_gratingeq, order: -1.0, output: wavelength}
                 - !transform/scale-1.0.0 {factor: 1000000.0}
           - !transform/compose-1.1.0
@@ -1622,7 +1622,7 @@ slits:
                 - !transform/identity-1.1.0 {}
               - !transform/remap_axes-1.0.0
                 mapping: [3, 0, 1, 2]
-            - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
+            - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
@@ -2486,7 +2486,7 @@ slits:
               - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/compose-1.1.0
                 forward:
-                - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
+                - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
                   name: lambda_from_gratingeq, order: -1.0, output: wavelength}
                 - !transform/scale-1.0.0 {factor: 1000000.0}
           - !transform/compose-1.1.0
@@ -2620,7 +2620,7 @@ slits:
                 - !transform/identity-1.1.0 {}
               - !transform/remap_axes-1.0.0
                 mapping: [3, 0, 1, 2]
-            - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
+            - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
@@ -3484,7 +3484,7 @@ slits:
               - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/compose-1.1.0
                 forward:
-                - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
+                - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
                   name: lambda_from_gratingeq, order: -1.0, output: wavelength}
                 - !transform/scale-1.0.0 {factor: 1000000.0}
           - !transform/compose-1.1.0
@@ -3618,7 +3618,7 @@ slits:
                 - !transform/identity-1.1.0 {}
               - !transform/remap_axes-1.0.0
                 mapping: [3, 0, 1, 2]
-            - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
+            - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
@@ -4482,7 +4482,7 @@ slits:
               - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/compose-1.1.0
                 forward:
-                - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
+                - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
                   name: lambda_from_gratingeq, order: -1.0, output: wavelength}
                 - !transform/scale-1.0.0 {factor: 1000000.0}
           - !transform/compose-1.1.0
@@ -4616,7 +4616,7 @@ slits:
                 - !transform/identity-1.1.0 {}
               - !transform/remap_axes-1.0.0
                 mapping: [3, 0, 1, 2]
-            - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
+            - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
