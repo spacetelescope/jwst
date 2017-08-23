@@ -1089,7 +1089,7 @@ slits:
           name: v2v3
         transform: !transform/concatenate-1.1.0
           forward:
-          - !<tag:stsci.edu:jwst_pipeline/v23tosky-0.1.0>
+          - !<tag:stsci.edu:jwst_pipeline/v23tosky-0.7.0>
             angles: [-0.0, 0.0, -0.0, -0.0, 0.0]
             axes_order: zyxyz
             name: v23tosky
@@ -2087,7 +2087,7 @@ slits:
           name: v2v3
         transform: !transform/concatenate-1.1.0
           forward:
-          - !<tag:stsci.edu:jwst_pipeline/v23tosky-0.1.0>
+          - !<tag:stsci.edu:jwst_pipeline/v23tosky-0.7.0>
             angles: [-0.0, 0.0, -0.0, -0.0, 0.0]
             axes_order: zyxyz
             name: v23tosky
@@ -3085,7 +3085,7 @@ slits:
           name: v2v3
         transform: !transform/concatenate-1.1.0
           forward:
-          - !<tag:stsci.edu:jwst_pipeline/v23tosky-0.1.0>
+          - !<tag:stsci.edu:jwst_pipeline/v23tosky-0.7.0>
             angles: [-0.0, 0.0, -0.0, -0.0, 0.0]
             axes_order: zyxyz
             name: v23tosky
@@ -4083,7 +4083,7 @@ slits:
           name: v2v3
         transform: !transform/concatenate-1.1.0
           forward:
-          - !<tag:stsci.edu:jwst_pipeline/v23tosky-0.1.0>
+          - !<tag:stsci.edu:jwst_pipeline/v23tosky-0.7.0>
             angles: [-0.0, 0.0, -0.0, -0.0, 0.0]
             axes_order: zyxyz
             name: v23tosky
@@ -5081,7 +5081,7 @@ slits:
           name: v2v3
         transform: !transform/concatenate-1.1.0
           forward:
-          - !<tag:stsci.edu:jwst_pipeline/v23tosky-0.1.0>
+          - !<tag:stsci.edu:jwst_pipeline/v23tosky-0.7.0>
             angles: [-0.0, 0.0, -0.0, -0.0, 0.0]
             axes_order: zyxyz
             name: v23tosky
