@@ -633,7 +633,7 @@ slits:
             axes_names: [x_slit, y_slit]
             name: slit_spatial
             unit: [!unit/unit-1.0.0 '', !unit/unit-1.0.0 '']
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -668,7 +668,7 @@ slits:
             axes_names: [x_msa, y_msa]
             name: msa_spatial
             unit: [!unit/unit-1.0.0 m, !unit/unit-1.0.0 m]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -908,7 +908,7 @@ slits:
             axes_names: [X_OTEIP, Y_OTEIP]
             name: oteip
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -1081,7 +1081,7 @@ slits:
             axes_names: [V2, V3]
             name: v2v3_spatial
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -1102,7 +1102,7 @@ slits:
             name: sky
             reference_frame: {type: ICRS}
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -1631,7 +1631,7 @@ slits:
             axes_names: [x_slit, y_slit]
             name: slit_spatial
             unit: [!unit/unit-1.0.0 '', !unit/unit-1.0.0 '']
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -1666,7 +1666,7 @@ slits:
             axes_names: [x_msa, y_msa]
             name: msa_spatial
             unit: [!unit/unit-1.0.0 m, !unit/unit-1.0.0 m]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -1906,7 +1906,7 @@ slits:
             axes_names: [X_OTEIP, Y_OTEIP]
             name: oteip
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -2079,7 +2079,7 @@ slits:
             axes_names: [V2, V3]
             name: v2v3_spatial
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -2100,7 +2100,7 @@ slits:
             name: sky
             reference_frame: {type: ICRS}
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -2629,7 +2629,7 @@ slits:
             axes_names: [x_slit, y_slit]
             name: slit_spatial
             unit: [!unit/unit-1.0.0 '', !unit/unit-1.0.0 '']
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -2664,7 +2664,7 @@ slits:
             axes_names: [x_msa, y_msa]
             name: msa_spatial
             unit: [!unit/unit-1.0.0 m, !unit/unit-1.0.0 m]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -2904,7 +2904,7 @@ slits:
             axes_names: [X_OTEIP, Y_OTEIP]
             name: oteip
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -3077,7 +3077,7 @@ slits:
             axes_names: [V2, V3]
             name: v2v3_spatial
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -3098,7 +3098,7 @@ slits:
             name: sky
             reference_frame: {type: ICRS}
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -3627,7 +3627,7 @@ slits:
             axes_names: [x_slit, y_slit]
             name: slit_spatial
             unit: [!unit/unit-1.0.0 '', !unit/unit-1.0.0 '']
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -3662,7 +3662,7 @@ slits:
             axes_names: [x_msa, y_msa]
             name: msa_spatial
             unit: [!unit/unit-1.0.0 m, !unit/unit-1.0.0 m]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -3902,7 +3902,7 @@ slits:
             axes_names: [X_OTEIP, Y_OTEIP]
             name: oteip
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -4075,7 +4075,7 @@ slits:
             axes_names: [V2, V3]
             name: v2v3_spatial
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -4096,7 +4096,7 @@ slits:
             name: sky
             reference_frame: {type: ICRS}
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -4625,7 +4625,7 @@ slits:
             axes_names: [x_slit, y_slit]
             name: slit_spatial
             unit: [!unit/unit-1.0.0 '', !unit/unit-1.0.0 '']
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -4660,7 +4660,7 @@ slits:
             axes_names: [x_msa, y_msa]
             name: msa_spatial
             unit: [!unit/unit-1.0.0 m, !unit/unit-1.0.0 m]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -4900,7 +4900,7 @@ slits:
             axes_names: [X_OTEIP, Y_OTEIP]
             name: oteip
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -5073,7 +5073,7 @@ slits:
             axes_names: [V2, V3]
             name: v2v3_spatial
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
@@ -5094,7 +5094,7 @@ slits:
             name: sky
             reference_frame: {type: ICRS}
             unit: [!unit/unit-1.0.0 deg, !unit/unit-1.0.0 deg]
-          - !wcs/spectral_frame-1.0.0
+          - !wcs/spectral_frame-1.1.0
             axes_names: [wavelength]
             axes_order: [2]
             name: spectral
