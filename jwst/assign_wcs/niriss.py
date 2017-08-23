@@ -154,11 +154,12 @@ def imaging_distortion(input_model, reference_files):
     transform = distortion | Scale(1 / 3600) & Scale(1 / 3600)
 
     try:
-        bb = distortion.bounding_box
+        # assign the bounding box to the entire compound model
+        transform.bounding_box = distortion.bounding_box
     except NotImplementedError:
         shape = input_model.data.shape
         # Note: Since bounding_box is attached to the model here it's in reverse order.
-        distortion.bounding_box = ((-0.5, shape[0] - 0.5),
+        transform.bounding_box = ((-0.5, shape[0] - 0.5),
                                    (-0.5, shape[1] - 0.5))
     return transform
 
