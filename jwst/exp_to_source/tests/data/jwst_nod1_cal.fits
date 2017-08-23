@@ -191,7 +191,7 @@ slits:
                   forward:
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
@@ -226,7 +226,7 @@ slits:
                           name: y_poly_backward
                         name: y_poly_forward
                   - !transform/identity-1.1.0
-                    inverse: !transform/remap_axes-1.0.0
+                    inverse: !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
                     name: output_mapping
@@ -300,7 +300,7 @@ slits:
                         - !transform/shift-1.0.0 {offset: 0.00021834726279700001}
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     - !transform/compose-1.1.0
                       forward:
@@ -364,7 +364,7 @@ slits:
                     forward:
                     - !transform/compose-1.1.0
                       forward:
-                      - !transform/remap_axes-1.0.0
+                      - !transform/remap_axes-1.1.0
                         mapping: [0, 1, 0, 1]
                         n_inputs: 3
                       - !transform/concatenate-1.1.0
@@ -393,7 +393,7 @@ slits:
                             shape: [2]
                           name: interpolation
                       - !transform/identity-1.1.0 {n_dims: 2}
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0, 1, 0, 1, 2, 3]
                 - !transform/concatenate-1.1.0
                   forward:
@@ -453,7 +453,7 @@ slits:
                                   - !transform/shift-1.0.0 {offset: -0.29360593311200001}
                             - !transform/compose-1.1.0
                               forward:
-                              - !transform/remap_axes-1.0.0
+                              - !transform/remap_axes-1.1.0
                                 mapping: [0, 1, 0, 1]
                               - !transform/compose-1.1.0
                                 forward:
@@ -482,7 +482,7 @@ slits:
                           axes_order: xyzy
                           name: rotaton
                   - !transform/identity-1.1.0 {n_dims: 2}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 3, 5]
                 n_inputs: 7
             - !transform/concatenate-1.1.0
@@ -499,7 +499,7 @@ slits:
               forward:
               - !transform/compose-1.1.0
                 forward:
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [0, 1, 2, 1]
                 - !transform/concatenate-1.1.0
                   forward:
@@ -513,7 +513,7 @@ slits:
                       - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: -0.5,
                         condition: LT, value: .nan}
                     - !transform/scale-1.0.0 {factor: 0.0}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 3, 2, 3]
             - !transform/concatenate-1.1.0
               forward:
@@ -522,17 +522,17 @@ slits:
                 - !transform/identity-1.1.0 {}
                 - !transform/add-1.0.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0]
                     n_inputs: 2
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [1]
               - !transform/add-1.0.0
                 forward:
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [0]
                   n_inputs: 2
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [1]
           inverse: !transform/compose-1.1.0
             forward:
@@ -593,7 +593,7 @@ slits:
                               - !transform/shift-1.0.0 {offset: -0.29360593311200001}
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1, 0, 1]
                           - !transform/compose-1.1.0
                             forward:
@@ -622,7 +622,7 @@ slits:
                       axes_order: xyzy
                       name: rotaton
                 - !transform/identity-1.1.0 {}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
@@ -676,7 +676,7 @@ slits:
           name: msa_frame
         transform: !transform/compose-1.1.0
           forward:
-          - !transform/remap_axes-1.0.0
+          - !transform/remap_axes-1.1.0
             inverse: !transform/identity-1.1.0 {n_dims: 3}
             mapping: [0, 1, 2, 2]
             name: msa2fore_mapping
@@ -688,7 +688,7 @@ slits:
                 forward:
                 - !transform/compose-1.1.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     inverse: !transform/identity-1.1.0 {n_dims: 2}
                     mapping: [0, 1, 2, 0, 1, 2]
                     name: input_mapping
@@ -698,7 +698,7 @@ slits:
                       forward:
                       - !transform/compose-1.1.0
                         forward:
-                        - !transform/remap_axes-1.0.0
+                        - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
                         - !transform/polynomial-1.0.0
@@ -712,7 +712,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -724,14 +724,14 @@ slits:
                             name: x_forward_distortion
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [2]
                           - !transform/identity-1.1.0 {}
                     - !transform/add-1.0.0
                       forward:
                       - !transform/compose-1.1.0
                         forward:
-                        - !transform/remap_axes-1.0.0
+                        - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
                         - !transform/polynomial-1.0.0
@@ -745,7 +745,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -757,11 +757,11 @@ slits:
                             name: y_forward_distortion
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [2]
                           - !transform/identity-1.1.0 {}
                 - !transform/identity-1.1.0
-                  inverse: !transform/remap_axes-1.0.0
+                  inverse: !transform/remap_axes-1.1.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   n_dims: 2
                   name: output_mapping
@@ -825,7 +825,7 @@ slits:
                   - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   - !transform/compose-1.1.0
                     forward:
@@ -835,7 +835,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -849,7 +849,7 @@ slits:
                           forward:
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
                             - !transform/polynomial-1.0.0
@@ -861,14 +861,14 @@ slits:
                               name: x_backward_distortion
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [2]
                             - !transform/identity-1.1.0 {}
                       - !transform/add-1.0.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -882,7 +882,7 @@ slits:
                           forward:
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
                             - !transform/polynomial-1.0.0
@@ -894,7 +894,7 @@ slits:
                               name: y_backward_distortion
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [2]
                             - !transform/identity-1.1.0 {}
                     - !transform/identity-1.1.0 {n_dims: 2}
@@ -919,7 +919,7 @@ slits:
           - !transform/compose-1.1.0
             forward:
             - !transform/identity-1.1.0
-              inverse: !transform/remap_axes-1.0.0
+              inverse: !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
               n_dims: 3
               name: fore2ote_mapping
@@ -931,7 +931,7 @@ slits:
                   forward:
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
@@ -966,7 +966,7 @@ slits:
                           name: y_poly_backward
                         name: y_poly_forward
                   - !transform/identity-1.1.0
-                    inverse: !transform/remap_axes-1.0.0
+                    inverse: !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
                     name: output_mapping
@@ -1049,7 +1049,7 @@ slits:
                         - !transform/shift-1.0.0 {offset: -1.9270453239700001e-09}
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     - !transform/compose-1.1.0
                       forward:
@@ -1071,7 +1071,7 @@ slits:
                           name: y_poly_backward
                       - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/scale-1.0.0 {factor: 9.9999999999999995e-07}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
       - !wcs/step-1.0.0
@@ -1189,7 +1189,7 @@ slits:
                   forward:
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
@@ -1224,7 +1224,7 @@ slits:
                           name: y_poly_backward
                         name: y_poly_forward
                   - !transform/identity-1.1.0
-                    inverse: !transform/remap_axes-1.0.0
+                    inverse: !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
                     name: output_mapping
@@ -1298,7 +1298,7 @@ slits:
                         - !transform/shift-1.0.0 {offset: 0.00021834726279700001}
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     - !transform/compose-1.1.0
                       forward:
@@ -1362,7 +1362,7 @@ slits:
                     forward:
                     - !transform/compose-1.1.0
                       forward:
-                      - !transform/remap_axes-1.0.0
+                      - !transform/remap_axes-1.1.0
                         mapping: [0, 1, 0, 1]
                         n_inputs: 3
                       - !transform/concatenate-1.1.0
@@ -1391,7 +1391,7 @@ slits:
                             shape: [2]
                           name: interpolation
                       - !transform/identity-1.1.0 {n_dims: 2}
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0, 1, 0, 1, 2, 3]
                 - !transform/concatenate-1.1.0
                   forward:
@@ -1451,7 +1451,7 @@ slits:
                                   - !transform/shift-1.0.0 {offset: -0.29360593311200001}
                             - !transform/compose-1.1.0
                               forward:
-                              - !transform/remap_axes-1.0.0
+                              - !transform/remap_axes-1.1.0
                                 mapping: [0, 1, 0, 1]
                               - !transform/compose-1.1.0
                                 forward:
@@ -1480,7 +1480,7 @@ slits:
                           axes_order: xyzy
                           name: rotaton
                   - !transform/identity-1.1.0 {n_dims: 2}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 3, 5]
                 n_inputs: 7
             - !transform/concatenate-1.1.0
@@ -1497,7 +1497,7 @@ slits:
               forward:
               - !transform/compose-1.1.0
                 forward:
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [0, 1, 2, 1]
                 - !transform/concatenate-1.1.0
                   forward:
@@ -1511,7 +1511,7 @@ slits:
                       - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: -0.5,
                         condition: LT, value: .nan}
                     - !transform/scale-1.0.0 {factor: 0.0}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 3, 2, 3]
             - !transform/concatenate-1.1.0
               forward:
@@ -1520,17 +1520,17 @@ slits:
                 - !transform/identity-1.1.0 {}
                 - !transform/add-1.0.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0]
                     n_inputs: 2
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [1]
               - !transform/add-1.0.0
                 forward:
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [0]
                   n_inputs: 2
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [1]
           inverse: !transform/compose-1.1.0
             forward:
@@ -1591,7 +1591,7 @@ slits:
                               - !transform/shift-1.0.0 {offset: -0.29360593311200001}
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1, 0, 1]
                           - !transform/compose-1.1.0
                             forward:
@@ -1620,7 +1620,7 @@ slits:
                       axes_order: xyzy
                       name: rotaton
                 - !transform/identity-1.1.0 {}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
@@ -1674,7 +1674,7 @@ slits:
           name: msa_frame
         transform: !transform/compose-1.1.0
           forward:
-          - !transform/remap_axes-1.0.0
+          - !transform/remap_axes-1.1.0
             inverse: !transform/identity-1.1.0 {n_dims: 3}
             mapping: [0, 1, 2, 2]
             name: msa2fore_mapping
@@ -1686,7 +1686,7 @@ slits:
                 forward:
                 - !transform/compose-1.1.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     inverse: !transform/identity-1.1.0 {n_dims: 2}
                     mapping: [0, 1, 2, 0, 1, 2]
                     name: input_mapping
@@ -1696,7 +1696,7 @@ slits:
                       forward:
                       - !transform/compose-1.1.0
                         forward:
-                        - !transform/remap_axes-1.0.0
+                        - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
                         - !transform/polynomial-1.0.0
@@ -1710,7 +1710,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -1722,14 +1722,14 @@ slits:
                             name: x_forward_distortion
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [2]
                           - !transform/identity-1.1.0 {}
                     - !transform/add-1.0.0
                       forward:
                       - !transform/compose-1.1.0
                         forward:
-                        - !transform/remap_axes-1.0.0
+                        - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
                         - !transform/polynomial-1.0.0
@@ -1743,7 +1743,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -1755,11 +1755,11 @@ slits:
                             name: y_forward_distortion
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [2]
                           - !transform/identity-1.1.0 {}
                 - !transform/identity-1.1.0
-                  inverse: !transform/remap_axes-1.0.0
+                  inverse: !transform/remap_axes-1.1.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   n_dims: 2
                   name: output_mapping
@@ -1823,7 +1823,7 @@ slits:
                   - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   - !transform/compose-1.1.0
                     forward:
@@ -1833,7 +1833,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -1847,7 +1847,7 @@ slits:
                           forward:
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
                             - !transform/polynomial-1.0.0
@@ -1859,14 +1859,14 @@ slits:
                               name: x_backward_distortion
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [2]
                             - !transform/identity-1.1.0 {}
                       - !transform/add-1.0.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -1880,7 +1880,7 @@ slits:
                           forward:
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
                             - !transform/polynomial-1.0.0
@@ -1892,7 +1892,7 @@ slits:
                               name: y_backward_distortion
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [2]
                             - !transform/identity-1.1.0 {}
                     - !transform/identity-1.1.0 {n_dims: 2}
@@ -1917,7 +1917,7 @@ slits:
           - !transform/compose-1.1.0
             forward:
             - !transform/identity-1.1.0
-              inverse: !transform/remap_axes-1.0.0
+              inverse: !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
               n_dims: 3
               name: fore2ote_mapping
@@ -1929,7 +1929,7 @@ slits:
                   forward:
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
@@ -1964,7 +1964,7 @@ slits:
                           name: y_poly_backward
                         name: y_poly_forward
                   - !transform/identity-1.1.0
-                    inverse: !transform/remap_axes-1.0.0
+                    inverse: !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
                     name: output_mapping
@@ -2047,7 +2047,7 @@ slits:
                         - !transform/shift-1.0.0 {offset: -1.9270453239700001e-09}
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     - !transform/compose-1.1.0
                       forward:
@@ -2069,7 +2069,7 @@ slits:
                           name: y_poly_backward
                       - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/scale-1.0.0 {factor: 9.9999999999999995e-07}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
       - !wcs/step-1.0.0
@@ -2187,7 +2187,7 @@ slits:
                   forward:
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
@@ -2222,7 +2222,7 @@ slits:
                           name: y_poly_backward
                         name: y_poly_forward
                   - !transform/identity-1.1.0
-                    inverse: !transform/remap_axes-1.0.0
+                    inverse: !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
                     name: output_mapping
@@ -2296,7 +2296,7 @@ slits:
                         - !transform/shift-1.0.0 {offset: 0.00021834726279700001}
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     - !transform/compose-1.1.0
                       forward:
@@ -2360,7 +2360,7 @@ slits:
                     forward:
                     - !transform/compose-1.1.0
                       forward:
-                      - !transform/remap_axes-1.0.0
+                      - !transform/remap_axes-1.1.0
                         mapping: [0, 1, 0, 1]
                         n_inputs: 3
                       - !transform/concatenate-1.1.0
@@ -2389,7 +2389,7 @@ slits:
                             shape: [2]
                           name: interpolation
                       - !transform/identity-1.1.0 {n_dims: 2}
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0, 1, 0, 1, 2, 3]
                 - !transform/concatenate-1.1.0
                   forward:
@@ -2449,7 +2449,7 @@ slits:
                                   - !transform/shift-1.0.0 {offset: -0.29360593311200001}
                             - !transform/compose-1.1.0
                               forward:
-                              - !transform/remap_axes-1.0.0
+                              - !transform/remap_axes-1.1.0
                                 mapping: [0, 1, 0, 1]
                               - !transform/compose-1.1.0
                                 forward:
@@ -2478,7 +2478,7 @@ slits:
                           axes_order: xyzy
                           name: rotaton
                   - !transform/identity-1.1.0 {n_dims: 2}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 3, 5]
                 n_inputs: 7
             - !transform/concatenate-1.1.0
@@ -2495,7 +2495,7 @@ slits:
               forward:
               - !transform/compose-1.1.0
                 forward:
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [0, 1, 2, 1]
                 - !transform/concatenate-1.1.0
                   forward:
@@ -2509,7 +2509,7 @@ slits:
                       - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: -0.5,
                         condition: LT, value: .nan}
                     - !transform/scale-1.0.0 {factor: 0.0}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 3, 2, 3]
             - !transform/concatenate-1.1.0
               forward:
@@ -2518,17 +2518,17 @@ slits:
                 - !transform/identity-1.1.0 {}
                 - !transform/add-1.0.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0]
                     n_inputs: 2
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [1]
               - !transform/add-1.0.0
                 forward:
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [0]
                   n_inputs: 2
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [1]
           inverse: !transform/compose-1.1.0
             forward:
@@ -2589,7 +2589,7 @@ slits:
                               - !transform/shift-1.0.0 {offset: -0.29360593311200001}
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1, 0, 1]
                           - !transform/compose-1.1.0
                             forward:
@@ -2618,7 +2618,7 @@ slits:
                       axes_order: xyzy
                       name: rotaton
                 - !transform/identity-1.1.0 {}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
@@ -2672,7 +2672,7 @@ slits:
           name: msa_frame
         transform: !transform/compose-1.1.0
           forward:
-          - !transform/remap_axes-1.0.0
+          - !transform/remap_axes-1.1.0
             inverse: !transform/identity-1.1.0 {n_dims: 3}
             mapping: [0, 1, 2, 2]
             name: msa2fore_mapping
@@ -2684,7 +2684,7 @@ slits:
                 forward:
                 - !transform/compose-1.1.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     inverse: !transform/identity-1.1.0 {n_dims: 2}
                     mapping: [0, 1, 2, 0, 1, 2]
                     name: input_mapping
@@ -2694,7 +2694,7 @@ slits:
                       forward:
                       - !transform/compose-1.1.0
                         forward:
-                        - !transform/remap_axes-1.0.0
+                        - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
                         - !transform/polynomial-1.0.0
@@ -2708,7 +2708,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -2720,14 +2720,14 @@ slits:
                             name: x_forward_distortion
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [2]
                           - !transform/identity-1.1.0 {}
                     - !transform/add-1.0.0
                       forward:
                       - !transform/compose-1.1.0
                         forward:
-                        - !transform/remap_axes-1.0.0
+                        - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
                         - !transform/polynomial-1.0.0
@@ -2741,7 +2741,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -2753,11 +2753,11 @@ slits:
                             name: y_forward_distortion
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [2]
                           - !transform/identity-1.1.0 {}
                 - !transform/identity-1.1.0
-                  inverse: !transform/remap_axes-1.0.0
+                  inverse: !transform/remap_axes-1.1.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   n_dims: 2
                   name: output_mapping
@@ -2821,7 +2821,7 @@ slits:
                   - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   - !transform/compose-1.1.0
                     forward:
@@ -2831,7 +2831,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -2845,7 +2845,7 @@ slits:
                           forward:
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
                             - !transform/polynomial-1.0.0
@@ -2857,14 +2857,14 @@ slits:
                               name: x_backward_distortion
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [2]
                             - !transform/identity-1.1.0 {}
                       - !transform/add-1.0.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -2878,7 +2878,7 @@ slits:
                           forward:
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
                             - !transform/polynomial-1.0.0
@@ -2890,7 +2890,7 @@ slits:
                               name: y_backward_distortion
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [2]
                             - !transform/identity-1.1.0 {}
                     - !transform/identity-1.1.0 {n_dims: 2}
@@ -2915,7 +2915,7 @@ slits:
           - !transform/compose-1.1.0
             forward:
             - !transform/identity-1.1.0
-              inverse: !transform/remap_axes-1.0.0
+              inverse: !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
               n_dims: 3
               name: fore2ote_mapping
@@ -2927,7 +2927,7 @@ slits:
                   forward:
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
@@ -2962,7 +2962,7 @@ slits:
                           name: y_poly_backward
                         name: y_poly_forward
                   - !transform/identity-1.1.0
-                    inverse: !transform/remap_axes-1.0.0
+                    inverse: !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
                     name: output_mapping
@@ -3045,7 +3045,7 @@ slits:
                         - !transform/shift-1.0.0 {offset: -1.9270453239700001e-09}
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     - !transform/compose-1.1.0
                       forward:
@@ -3067,7 +3067,7 @@ slits:
                           name: y_poly_backward
                       - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/scale-1.0.0 {factor: 9.9999999999999995e-07}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
       - !wcs/step-1.0.0
@@ -3185,7 +3185,7 @@ slits:
                   forward:
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
@@ -3220,7 +3220,7 @@ slits:
                           name: y_poly_backward
                         name: y_poly_forward
                   - !transform/identity-1.1.0
-                    inverse: !transform/remap_axes-1.0.0
+                    inverse: !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
                     name: output_mapping
@@ -3294,7 +3294,7 @@ slits:
                         - !transform/shift-1.0.0 {offset: 0.00021834726279700001}
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     - !transform/compose-1.1.0
                       forward:
@@ -3358,7 +3358,7 @@ slits:
                     forward:
                     - !transform/compose-1.1.0
                       forward:
-                      - !transform/remap_axes-1.0.0
+                      - !transform/remap_axes-1.1.0
                         mapping: [0, 1, 0, 1]
                         n_inputs: 3
                       - !transform/concatenate-1.1.0
@@ -3387,7 +3387,7 @@ slits:
                             shape: [2]
                           name: interpolation
                       - !transform/identity-1.1.0 {n_dims: 2}
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0, 1, 0, 1, 2, 3]
                 - !transform/concatenate-1.1.0
                   forward:
@@ -3447,7 +3447,7 @@ slits:
                                   - !transform/shift-1.0.0 {offset: -0.29360593311200001}
                             - !transform/compose-1.1.0
                               forward:
-                              - !transform/remap_axes-1.0.0
+                              - !transform/remap_axes-1.1.0
                                 mapping: [0, 1, 0, 1]
                               - !transform/compose-1.1.0
                                 forward:
@@ -3476,7 +3476,7 @@ slits:
                           axes_order: xyzy
                           name: rotaton
                   - !transform/identity-1.1.0 {n_dims: 2}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 3, 5]
                 n_inputs: 7
             - !transform/concatenate-1.1.0
@@ -3493,7 +3493,7 @@ slits:
               forward:
               - !transform/compose-1.1.0
                 forward:
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [0, 1, 2, 1]
                 - !transform/concatenate-1.1.0
                   forward:
@@ -3507,7 +3507,7 @@ slits:
                       - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: -0.5,
                         condition: LT, value: .nan}
                     - !transform/scale-1.0.0 {factor: 0.0}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 3, 2, 3]
             - !transform/concatenate-1.1.0
               forward:
@@ -3516,17 +3516,17 @@ slits:
                 - !transform/identity-1.1.0 {}
                 - !transform/add-1.0.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0]
                     n_inputs: 2
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [1]
               - !transform/add-1.0.0
                 forward:
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [0]
                   n_inputs: 2
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [1]
           inverse: !transform/compose-1.1.0
             forward:
@@ -3587,7 +3587,7 @@ slits:
                               - !transform/shift-1.0.0 {offset: -0.29360593311200001}
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1, 0, 1]
                           - !transform/compose-1.1.0
                             forward:
@@ -3616,7 +3616,7 @@ slits:
                       axes_order: xyzy
                       name: rotaton
                 - !transform/identity-1.1.0 {}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
@@ -3670,7 +3670,7 @@ slits:
           name: msa_frame
         transform: !transform/compose-1.1.0
           forward:
-          - !transform/remap_axes-1.0.0
+          - !transform/remap_axes-1.1.0
             inverse: !transform/identity-1.1.0 {n_dims: 3}
             mapping: [0, 1, 2, 2]
             name: msa2fore_mapping
@@ -3682,7 +3682,7 @@ slits:
                 forward:
                 - !transform/compose-1.1.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     inverse: !transform/identity-1.1.0 {n_dims: 2}
                     mapping: [0, 1, 2, 0, 1, 2]
                     name: input_mapping
@@ -3692,7 +3692,7 @@ slits:
                       forward:
                       - !transform/compose-1.1.0
                         forward:
-                        - !transform/remap_axes-1.0.0
+                        - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
                         - !transform/polynomial-1.0.0
@@ -3706,7 +3706,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -3718,14 +3718,14 @@ slits:
                             name: x_forward_distortion
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [2]
                           - !transform/identity-1.1.0 {}
                     - !transform/add-1.0.0
                       forward:
                       - !transform/compose-1.1.0
                         forward:
-                        - !transform/remap_axes-1.0.0
+                        - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
                         - !transform/polynomial-1.0.0
@@ -3739,7 +3739,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -3751,11 +3751,11 @@ slits:
                             name: y_forward_distortion
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [2]
                           - !transform/identity-1.1.0 {}
                 - !transform/identity-1.1.0
-                  inverse: !transform/remap_axes-1.0.0
+                  inverse: !transform/remap_axes-1.1.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   n_dims: 2
                   name: output_mapping
@@ -3819,7 +3819,7 @@ slits:
                   - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   - !transform/compose-1.1.0
                     forward:
@@ -3829,7 +3829,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -3843,7 +3843,7 @@ slits:
                           forward:
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
                             - !transform/polynomial-1.0.0
@@ -3855,14 +3855,14 @@ slits:
                               name: x_backward_distortion
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [2]
                             - !transform/identity-1.1.0 {}
                       - !transform/add-1.0.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -3876,7 +3876,7 @@ slits:
                           forward:
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
                             - !transform/polynomial-1.0.0
@@ -3888,7 +3888,7 @@ slits:
                               name: y_backward_distortion
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [2]
                             - !transform/identity-1.1.0 {}
                     - !transform/identity-1.1.0 {n_dims: 2}
@@ -3913,7 +3913,7 @@ slits:
           - !transform/compose-1.1.0
             forward:
             - !transform/identity-1.1.0
-              inverse: !transform/remap_axes-1.0.0
+              inverse: !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
               n_dims: 3
               name: fore2ote_mapping
@@ -3925,7 +3925,7 @@ slits:
                   forward:
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
@@ -3960,7 +3960,7 @@ slits:
                           name: y_poly_backward
                         name: y_poly_forward
                   - !transform/identity-1.1.0
-                    inverse: !transform/remap_axes-1.0.0
+                    inverse: !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
                     name: output_mapping
@@ -4043,7 +4043,7 @@ slits:
                         - !transform/shift-1.0.0 {offset: -1.9270453239700001e-09}
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     - !transform/compose-1.1.0
                       forward:
@@ -4065,7 +4065,7 @@ slits:
                           name: y_poly_backward
                       - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/scale-1.0.0 {factor: 9.9999999999999995e-07}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
       - !wcs/step-1.0.0
@@ -4183,7 +4183,7 @@ slits:
                   forward:
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
@@ -4218,7 +4218,7 @@ slits:
                           name: y_poly_backward
                         name: y_poly_forward
                   - !transform/identity-1.1.0
-                    inverse: !transform/remap_axes-1.0.0
+                    inverse: !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
                     name: output_mapping
@@ -4292,7 +4292,7 @@ slits:
                         - !transform/shift-1.0.0 {offset: 0.00021834726279700001}
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     - !transform/compose-1.1.0
                       forward:
@@ -4356,7 +4356,7 @@ slits:
                     forward:
                     - !transform/compose-1.1.0
                       forward:
-                      - !transform/remap_axes-1.0.0
+                      - !transform/remap_axes-1.1.0
                         mapping: [0, 1, 0, 1]
                         n_inputs: 3
                       - !transform/concatenate-1.1.0
@@ -4385,7 +4385,7 @@ slits:
                             shape: [2]
                           name: interpolation
                       - !transform/identity-1.1.0 {n_dims: 2}
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0, 1, 0, 1, 2, 3]
                 - !transform/concatenate-1.1.0
                   forward:
@@ -4445,7 +4445,7 @@ slits:
                                   - !transform/shift-1.0.0 {offset: -0.29360593311200001}
                             - !transform/compose-1.1.0
                               forward:
-                              - !transform/remap_axes-1.0.0
+                              - !transform/remap_axes-1.1.0
                                 mapping: [0, 1, 0, 1]
                               - !transform/compose-1.1.0
                                 forward:
@@ -4474,7 +4474,7 @@ slits:
                           axes_order: xyzy
                           name: rotaton
                   - !transform/identity-1.1.0 {n_dims: 2}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 3, 5]
                 n_inputs: 7
             - !transform/concatenate-1.1.0
@@ -4491,7 +4491,7 @@ slits:
               forward:
               - !transform/compose-1.1.0
                 forward:
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [0, 1, 2, 1]
                 - !transform/concatenate-1.1.0
                   forward:
@@ -4505,7 +4505,7 @@ slits:
                       - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: -0.5,
                         condition: LT, value: .nan}
                     - !transform/scale-1.0.0 {factor: 0.0}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 3, 2, 3]
             - !transform/concatenate-1.1.0
               forward:
@@ -4514,17 +4514,17 @@ slits:
                 - !transform/identity-1.1.0 {}
                 - !transform/add-1.0.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0]
                     n_inputs: 2
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [1]
               - !transform/add-1.0.0
                 forward:
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [0]
                   n_inputs: 2
-                - !transform/remap_axes-1.0.0
+                - !transform/remap_axes-1.1.0
                   mapping: [1]
           inverse: !transform/compose-1.1.0
             forward:
@@ -4585,7 +4585,7 @@ slits:
                               - !transform/shift-1.0.0 {offset: -0.29360593311200001}
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1, 0, 1]
                           - !transform/compose-1.1.0
                             forward:
@@ -4614,7 +4614,7 @@ slits:
                       axes_order: xyzy
                       name: rotaton
                 - !transform/identity-1.1.0 {}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.7.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
@@ -4668,7 +4668,7 @@ slits:
           name: msa_frame
         transform: !transform/compose-1.1.0
           forward:
-          - !transform/remap_axes-1.0.0
+          - !transform/remap_axes-1.1.0
             inverse: !transform/identity-1.1.0 {n_dims: 3}
             mapping: [0, 1, 2, 2]
             name: msa2fore_mapping
@@ -4680,7 +4680,7 @@ slits:
                 forward:
                 - !transform/compose-1.1.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     inverse: !transform/identity-1.1.0 {n_dims: 2}
                     mapping: [0, 1, 2, 0, 1, 2]
                     name: input_mapping
@@ -4690,7 +4690,7 @@ slits:
                       forward:
                       - !transform/compose-1.1.0
                         forward:
-                        - !transform/remap_axes-1.0.0
+                        - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
                         - !transform/polynomial-1.0.0
@@ -4704,7 +4704,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -4716,14 +4716,14 @@ slits:
                             name: x_forward_distortion
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [2]
                           - !transform/identity-1.1.0 {}
                     - !transform/add-1.0.0
                       forward:
                       - !transform/compose-1.1.0
                         forward:
-                        - !transform/remap_axes-1.0.0
+                        - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
                         - !transform/polynomial-1.0.0
@@ -4737,7 +4737,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -4749,11 +4749,11 @@ slits:
                             name: y_forward_distortion
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [2]
                           - !transform/identity-1.1.0 {}
                 - !transform/identity-1.1.0
-                  inverse: !transform/remap_axes-1.0.0
+                  inverse: !transform/remap_axes-1.1.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   n_dims: 2
                   name: output_mapping
@@ -4817,7 +4817,7 @@ slits:
                   - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
-                  - !transform/remap_axes-1.0.0
+                  - !transform/remap_axes-1.1.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   - !transform/compose-1.1.0
                     forward:
@@ -4827,7 +4827,7 @@ slits:
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -4841,7 +4841,7 @@ slits:
                           forward:
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
                             - !transform/polynomial-1.0.0
@@ -4853,14 +4853,14 @@ slits:
                               name: x_backward_distortion
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [2]
                             - !transform/identity-1.1.0 {}
                       - !transform/add-1.0.0
                         forward:
                         - !transform/compose-1.1.0
                           forward:
-                          - !transform/remap_axes-1.0.0
+                          - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
                           - !transform/polynomial-1.0.0
@@ -4874,7 +4874,7 @@ slits:
                           forward:
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
                             - !transform/polynomial-1.0.0
@@ -4886,7 +4886,7 @@ slits:
                               name: y_backward_distortion
                           - !transform/compose-1.1.0
                             forward:
-                            - !transform/remap_axes-1.0.0
+                            - !transform/remap_axes-1.1.0
                               mapping: [2]
                             - !transform/identity-1.1.0 {}
                     - !transform/identity-1.1.0 {n_dims: 2}
@@ -4911,7 +4911,7 @@ slits:
           - !transform/compose-1.1.0
             forward:
             - !transform/identity-1.1.0
-              inverse: !transform/remap_axes-1.0.0
+              inverse: !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
               n_dims: 3
               name: fore2ote_mapping
@@ -4923,7 +4923,7 @@ slits:
                   forward:
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
@@ -4958,7 +4958,7 @@ slits:
                           name: y_poly_backward
                         name: y_poly_forward
                   - !transform/identity-1.1.0
-                    inverse: !transform/remap_axes-1.0.0
+                    inverse: !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
                     name: output_mapping
@@ -5041,7 +5041,7 @@ slits:
                         - !transform/shift-1.0.0 {offset: -1.9270453239700001e-09}
                   - !transform/compose-1.1.0
                     forward:
-                    - !transform/remap_axes-1.0.0
+                    - !transform/remap_axes-1.1.0
                       mapping: [0, 1, 0, 1]
                     - !transform/compose-1.1.0
                       forward:
@@ -5063,7 +5063,7 @@ slits:
                           name: y_poly_backward
                       - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/scale-1.0.0 {factor: 9.9999999999999995e-07}
-              - !transform/remap_axes-1.0.0
+              - !transform/remap_axes-1.1.0
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
       - !wcs/step-1.0.0
