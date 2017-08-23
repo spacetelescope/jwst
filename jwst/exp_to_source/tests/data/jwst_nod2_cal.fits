@@ -197,13 +197,13 @@ slits:
                       name: input_mapping
                     - !transform/concatenate-1.1.0
                       forward:
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 1
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 2
                             datatype: float64
@@ -211,13 +211,13 @@ slits:
                             shape: [6, 6]
                           name: x_poly_backward
                         name: x_poly_forward
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 3
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 4
                             datatype: float64
@@ -306,14 +306,14 @@ slits:
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 7
                             datatype: float64
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_backward
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 8
                             datatype: float64
@@ -385,7 +385,7 @@ slits:
                       - !transform/concatenate-1.1.0
                         forward:
                         - !transform/identity-1.1.0 {}
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 10
                             datatype: float64
@@ -459,14 +459,14 @@ slits:
                                 forward:
                                 - !transform/concatenate-1.1.0
                                   forward:
-                                  - !transform/polynomial-1.0.0
+                                  - !transform/polynomial-1.1.0
                                     coefficients: !core/ndarray-1.0.0
                                       source: 12
                                       datatype: float64
                                       byteorder: little
                                       shape: [6, 6]
                                     name: x_poly_backward
-                                  - !transform/polynomial-1.0.0
+                                  - !transform/polynomial-1.1.0
                                     coefficients: !core/ndarray-1.0.0
                                       source: 13
                                       datatype: float64
@@ -599,14 +599,14 @@ slits:
                             forward:
                             - !transform/concatenate-1.1.0
                               forward:
-                              - !transform/polynomial-1.0.0
+                              - !transform/polynomial-1.1.0
                                 coefficients: !core/ndarray-1.0.0
                                   source: 15
                                   datatype: float64
                                   byteorder: little
                                   shape: [6, 6]
                                 name: x_poly_backward
-                              - !transform/polynomial-1.0.0
+                              - !transform/polynomial-1.1.0
                                 coefficients: !core/ndarray-1.0.0
                                   source: 16
                                   datatype: float64
@@ -701,7 +701,7 @@ slits:
                         - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 17
                             datatype: float64
@@ -715,7 +715,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 18
                               datatype: float64
@@ -734,7 +734,7 @@ slits:
                         - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 19
                             datatype: float64
@@ -748,7 +748,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 20
                               datatype: float64
@@ -838,7 +838,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 23
                               datatype: float64
@@ -852,7 +852,7 @@ slits:
                             - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
-                            - !transform/polynomial-1.0.0
+                            - !transform/polynomial-1.1.0
                               coefficients: !core/ndarray-1.0.0
                                 source: 24
                                 datatype: float64
@@ -871,7 +871,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 25
                               datatype: float64
@@ -885,7 +885,7 @@ slits:
                             - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
-                            - !transform/polynomial-1.0.0
+                            - !transform/polynomial-1.1.0
                               coefficients: !core/ndarray-1.0.0
                                 source: 26
                                 datatype: float64
@@ -937,13 +937,13 @@ slits:
                       name: input_mapping
                     - !transform/concatenate-1.1.0
                       forward:
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 27
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 28
                             datatype: float64
@@ -951,13 +951,13 @@ slits:
                             shape: [6, 6]
                           name: x_poly_backward
                         name: x_poly_forward
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 29
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 30
                             datatype: float64
@@ -1055,14 +1055,14 @@ slits:
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 33
                             datatype: float64
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_backward
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 34
                             datatype: float64
@@ -1195,13 +1195,13 @@ slits:
                       name: input_mapping
                     - !transform/concatenate-1.1.0
                       forward:
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 35
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 36
                             datatype: float64
@@ -1209,13 +1209,13 @@ slits:
                             shape: [6, 6]
                           name: x_poly_backward
                         name: x_poly_forward
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 37
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 38
                             datatype: float64
@@ -1304,14 +1304,14 @@ slits:
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 39
                             datatype: float64
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_backward
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 40
                             datatype: float64
@@ -1383,7 +1383,7 @@ slits:
                       - !transform/concatenate-1.1.0
                         forward:
                         - !transform/identity-1.1.0 {}
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 41
                             datatype: float64
@@ -1457,14 +1457,14 @@ slits:
                                 forward:
                                 - !transform/concatenate-1.1.0
                                   forward:
-                                  - !transform/polynomial-1.0.0
+                                  - !transform/polynomial-1.1.0
                                     coefficients: !core/ndarray-1.0.0
                                       source: 42
                                       datatype: float64
                                       byteorder: little
                                       shape: [6, 6]
                                     name: x_poly_backward
-                                  - !transform/polynomial-1.0.0
+                                  - !transform/polynomial-1.1.0
                                     coefficients: !core/ndarray-1.0.0
                                       source: 43
                                       datatype: float64
@@ -1597,14 +1597,14 @@ slits:
                             forward:
                             - !transform/concatenate-1.1.0
                               forward:
-                              - !transform/polynomial-1.0.0
+                              - !transform/polynomial-1.1.0
                                 coefficients: !core/ndarray-1.0.0
                                   source: 44
                                   datatype: float64
                                   byteorder: little
                                   shape: [6, 6]
                                 name: x_poly_backward
-                              - !transform/polynomial-1.0.0
+                              - !transform/polynomial-1.1.0
                                 coefficients: !core/ndarray-1.0.0
                                   source: 45
                                   datatype: float64
@@ -1699,7 +1699,7 @@ slits:
                         - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 46
                             datatype: float64
@@ -1713,7 +1713,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 47
                               datatype: float64
@@ -1732,7 +1732,7 @@ slits:
                         - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 48
                             datatype: float64
@@ -1746,7 +1746,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 49
                               datatype: float64
@@ -1836,7 +1836,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 50
                               datatype: float64
@@ -1850,7 +1850,7 @@ slits:
                             - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
-                            - !transform/polynomial-1.0.0
+                            - !transform/polynomial-1.1.0
                               coefficients: !core/ndarray-1.0.0
                                 source: 51
                                 datatype: float64
@@ -1869,7 +1869,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 52
                               datatype: float64
@@ -1883,7 +1883,7 @@ slits:
                             - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
-                            - !transform/polynomial-1.0.0
+                            - !transform/polynomial-1.1.0
                               coefficients: !core/ndarray-1.0.0
                                 source: 53
                                 datatype: float64
@@ -1935,13 +1935,13 @@ slits:
                       name: input_mapping
                     - !transform/concatenate-1.1.0
                       forward:
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 54
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 55
                             datatype: float64
@@ -1949,13 +1949,13 @@ slits:
                             shape: [6, 6]
                           name: x_poly_backward
                         name: x_poly_forward
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 56
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 57
                             datatype: float64
@@ -2053,14 +2053,14 @@ slits:
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 58
                             datatype: float64
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_backward
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 59
                             datatype: float64
@@ -2193,13 +2193,13 @@ slits:
                       name: input_mapping
                     - !transform/concatenate-1.1.0
                       forward:
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 60
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 61
                             datatype: float64
@@ -2207,13 +2207,13 @@ slits:
                             shape: [6, 6]
                           name: x_poly_backward
                         name: x_poly_forward
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 62
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 63
                             datatype: float64
@@ -2302,14 +2302,14 @@ slits:
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 64
                             datatype: float64
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_backward
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 65
                             datatype: float64
@@ -2381,7 +2381,7 @@ slits:
                       - !transform/concatenate-1.1.0
                         forward:
                         - !transform/identity-1.1.0 {}
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 66
                             datatype: float64
@@ -2455,14 +2455,14 @@ slits:
                                 forward:
                                 - !transform/concatenate-1.1.0
                                   forward:
-                                  - !transform/polynomial-1.0.0
+                                  - !transform/polynomial-1.1.0
                                     coefficients: !core/ndarray-1.0.0
                                       source: 67
                                       datatype: float64
                                       byteorder: little
                                       shape: [6, 6]
                                     name: x_poly_backward
-                                  - !transform/polynomial-1.0.0
+                                  - !transform/polynomial-1.1.0
                                     coefficients: !core/ndarray-1.0.0
                                       source: 68
                                       datatype: float64
@@ -2595,14 +2595,14 @@ slits:
                             forward:
                             - !transform/concatenate-1.1.0
                               forward:
-                              - !transform/polynomial-1.0.0
+                              - !transform/polynomial-1.1.0
                                 coefficients: !core/ndarray-1.0.0
                                   source: 69
                                   datatype: float64
                                   byteorder: little
                                   shape: [6, 6]
                                 name: x_poly_backward
-                              - !transform/polynomial-1.0.0
+                              - !transform/polynomial-1.1.0
                                 coefficients: !core/ndarray-1.0.0
                                   source: 70
                                   datatype: float64
@@ -2697,7 +2697,7 @@ slits:
                         - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 71
                             datatype: float64
@@ -2711,7 +2711,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 72
                               datatype: float64
@@ -2730,7 +2730,7 @@ slits:
                         - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 73
                             datatype: float64
@@ -2744,7 +2744,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 74
                               datatype: float64
@@ -2834,7 +2834,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 75
                               datatype: float64
@@ -2848,7 +2848,7 @@ slits:
                             - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
-                            - !transform/polynomial-1.0.0
+                            - !transform/polynomial-1.1.0
                               coefficients: !core/ndarray-1.0.0
                                 source: 76
                                 datatype: float64
@@ -2867,7 +2867,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 77
                               datatype: float64
@@ -2881,7 +2881,7 @@ slits:
                             - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
-                            - !transform/polynomial-1.0.0
+                            - !transform/polynomial-1.1.0
                               coefficients: !core/ndarray-1.0.0
                                 source: 78
                                 datatype: float64
@@ -2933,13 +2933,13 @@ slits:
                       name: input_mapping
                     - !transform/concatenate-1.1.0
                       forward:
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 79
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 80
                             datatype: float64
@@ -2947,13 +2947,13 @@ slits:
                             shape: [6, 6]
                           name: x_poly_backward
                         name: x_poly_forward
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 81
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 82
                             datatype: float64
@@ -3051,14 +3051,14 @@ slits:
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 83
                             datatype: float64
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_backward
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 84
                             datatype: float64
@@ -3191,13 +3191,13 @@ slits:
                       name: input_mapping
                     - !transform/concatenate-1.1.0
                       forward:
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 85
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 86
                             datatype: float64
@@ -3205,13 +3205,13 @@ slits:
                             shape: [6, 6]
                           name: x_poly_backward
                         name: x_poly_forward
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 87
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 88
                             datatype: float64
@@ -3300,14 +3300,14 @@ slits:
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 89
                             datatype: float64
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_backward
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 90
                             datatype: float64
@@ -3379,7 +3379,7 @@ slits:
                       - !transform/concatenate-1.1.0
                         forward:
                         - !transform/identity-1.1.0 {}
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 91
                             datatype: float64
@@ -3453,14 +3453,14 @@ slits:
                                 forward:
                                 - !transform/concatenate-1.1.0
                                   forward:
-                                  - !transform/polynomial-1.0.0
+                                  - !transform/polynomial-1.1.0
                                     coefficients: !core/ndarray-1.0.0
                                       source: 92
                                       datatype: float64
                                       byteorder: little
                                       shape: [6, 6]
                                     name: x_poly_backward
-                                  - !transform/polynomial-1.0.0
+                                  - !transform/polynomial-1.1.0
                                     coefficients: !core/ndarray-1.0.0
                                       source: 93
                                       datatype: float64
@@ -3593,14 +3593,14 @@ slits:
                             forward:
                             - !transform/concatenate-1.1.0
                               forward:
-                              - !transform/polynomial-1.0.0
+                              - !transform/polynomial-1.1.0
                                 coefficients: !core/ndarray-1.0.0
                                   source: 94
                                   datatype: float64
                                   byteorder: little
                                   shape: [6, 6]
                                 name: x_poly_backward
-                              - !transform/polynomial-1.0.0
+                              - !transform/polynomial-1.1.0
                                 coefficients: !core/ndarray-1.0.0
                                   source: 95
                                   datatype: float64
@@ -3695,7 +3695,7 @@ slits:
                         - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 96
                             datatype: float64
@@ -3709,7 +3709,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 97
                               datatype: float64
@@ -3728,7 +3728,7 @@ slits:
                         - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 98
                             datatype: float64
@@ -3742,7 +3742,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 99
                               datatype: float64
@@ -3832,7 +3832,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 100
                               datatype: float64
@@ -3846,7 +3846,7 @@ slits:
                             - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
-                            - !transform/polynomial-1.0.0
+                            - !transform/polynomial-1.1.0
                               coefficients: !core/ndarray-1.0.0
                                 source: 101
                                 datatype: float64
@@ -3865,7 +3865,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 102
                               datatype: float64
@@ -3879,7 +3879,7 @@ slits:
                             - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
-                            - !transform/polynomial-1.0.0
+                            - !transform/polynomial-1.1.0
                               coefficients: !core/ndarray-1.0.0
                                 source: 103
                                 datatype: float64
@@ -3931,13 +3931,13 @@ slits:
                       name: input_mapping
                     - !transform/concatenate-1.1.0
                       forward:
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 104
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 105
                             datatype: float64
@@ -3945,13 +3945,13 @@ slits:
                             shape: [6, 6]
                           name: x_poly_backward
                         name: x_poly_forward
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 106
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 107
                             datatype: float64
@@ -4049,14 +4049,14 @@ slits:
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 108
                             datatype: float64
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_backward
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 109
                             datatype: float64
@@ -4189,13 +4189,13 @@ slits:
                       name: input_mapping
                     - !transform/concatenate-1.1.0
                       forward:
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 110
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 111
                             datatype: float64
@@ -4203,13 +4203,13 @@ slits:
                             shape: [6, 6]
                           name: x_poly_backward
                         name: x_poly_forward
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 112
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 113
                             datatype: float64
@@ -4298,14 +4298,14 @@ slits:
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 114
                             datatype: float64
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_backward
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 115
                             datatype: float64
@@ -4377,7 +4377,7 @@ slits:
                       - !transform/concatenate-1.1.0
                         forward:
                         - !transform/identity-1.1.0 {}
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 116
                             datatype: float64
@@ -4451,14 +4451,14 @@ slits:
                                 forward:
                                 - !transform/concatenate-1.1.0
                                   forward:
-                                  - !transform/polynomial-1.0.0
+                                  - !transform/polynomial-1.1.0
                                     coefficients: !core/ndarray-1.0.0
                                       source: 117
                                       datatype: float64
                                       byteorder: little
                                       shape: [6, 6]
                                     name: x_poly_backward
-                                  - !transform/polynomial-1.0.0
+                                  - !transform/polynomial-1.1.0
                                     coefficients: !core/ndarray-1.0.0
                                       source: 118
                                       datatype: float64
@@ -4591,14 +4591,14 @@ slits:
                             forward:
                             - !transform/concatenate-1.1.0
                               forward:
-                              - !transform/polynomial-1.0.0
+                              - !transform/polynomial-1.1.0
                                 coefficients: !core/ndarray-1.0.0
                                   source: 119
                                   datatype: float64
                                   byteorder: little
                                   shape: [6, 6]
                                 name: x_poly_backward
-                              - !transform/polynomial-1.0.0
+                              - !transform/polynomial-1.1.0
                                 coefficients: !core/ndarray-1.0.0
                                   source: 120
                                   datatype: float64
@@ -4693,7 +4693,7 @@ slits:
                         - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 121
                             datatype: float64
@@ -4707,7 +4707,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 122
                               datatype: float64
@@ -4726,7 +4726,7 @@ slits:
                         - !transform/remap_axes-1.1.0
                           mapping: [0, 1]
                           n_inputs: 3
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 123
                             datatype: float64
@@ -4740,7 +4740,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 124
                               datatype: float64
@@ -4830,7 +4830,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 125
                               datatype: float64
@@ -4844,7 +4844,7 @@ slits:
                             - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
-                            - !transform/polynomial-1.0.0
+                            - !transform/polynomial-1.1.0
                               coefficients: !core/ndarray-1.0.0
                                 source: 126
                                 datatype: float64
@@ -4863,7 +4863,7 @@ slits:
                           - !transform/remap_axes-1.1.0
                             mapping: [0, 1]
                             n_inputs: 3
-                          - !transform/polynomial-1.0.0
+                          - !transform/polynomial-1.1.0
                             coefficients: !core/ndarray-1.0.0
                               source: 127
                               datatype: float64
@@ -4877,7 +4877,7 @@ slits:
                             - !transform/remap_axes-1.1.0
                               mapping: [0, 1]
                               n_inputs: 3
-                            - !transform/polynomial-1.0.0
+                            - !transform/polynomial-1.1.0
                               coefficients: !core/ndarray-1.0.0
                                 source: 128
                                 datatype: float64
@@ -4929,13 +4929,13 @@ slits:
                       name: input_mapping
                     - !transform/concatenate-1.1.0
                       forward:
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 129
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 130
                             datatype: float64
@@ -4943,13 +4943,13 @@ slits:
                             shape: [6, 6]
                           name: x_poly_backward
                         name: x_poly_forward
-                      - !transform/polynomial-1.0.0
+                      - !transform/polynomial-1.1.0
                         coefficients: !core/ndarray-1.0.0
                           source: 131
                           datatype: float64
                           byteorder: little
                           shape: [6, 6]
-                        inverse: !transform/polynomial-1.0.0
+                        inverse: !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 132
                             datatype: float64
@@ -5047,14 +5047,14 @@ slits:
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 133
                             datatype: float64
                             byteorder: little
                             shape: [6, 6]
                           name: x_poly_backward
-                        - !transform/polynomial-1.0.0
+                        - !transform/polynomial-1.1.0
                           coefficients: !core/ndarray-1.0.0
                             source: 134
                             datatype: float64
