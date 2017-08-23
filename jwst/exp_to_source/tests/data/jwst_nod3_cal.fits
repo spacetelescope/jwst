@@ -627,7 +627,7 @@ slits:
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [x_slit, y_slit]
@@ -662,7 +662,7 @@ slits:
                 - !transform/shift-1.0.0 {name: slit_yref, offset: 0.0}
           - !transform/identity-1.0.0 {}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [x_msa, y_msa]
@@ -902,7 +902,7 @@ slits:
             - !transform/identity-1.0.0 {n_dims: 3}
           name: msa2oteip
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [X_OTEIP, Y_OTEIP]
@@ -1075,7 +1075,7 @@ slits:
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [V2, V3]
@@ -1095,7 +1095,7 @@ slits:
             name: v23tosky
           - !transform/identity-1.0.0 {}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/celestial_frame-1.0.0
             axes_names: [lon, lat]
@@ -1625,7 +1625,7 @@ slits:
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [x_slit, y_slit]
@@ -1660,7 +1660,7 @@ slits:
                 - !transform/shift-1.0.0 {name: slit_yref, offset: 0.0}
           - !transform/identity-1.0.0 {}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [x_msa, y_msa]
@@ -1900,7 +1900,7 @@ slits:
             - !transform/identity-1.0.0 {n_dims: 3}
           name: msa2oteip
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [X_OTEIP, Y_OTEIP]
@@ -2073,7 +2073,7 @@ slits:
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [V2, V3]
@@ -2093,7 +2093,7 @@ slits:
             name: v23tosky
           - !transform/identity-1.0.0 {}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/celestial_frame-1.0.0
             axes_names: [lon, lat]
@@ -2623,7 +2623,7 @@ slits:
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [x_slit, y_slit]
@@ -2658,7 +2658,7 @@ slits:
                 - !transform/shift-1.0.0 {name: slit_yref, offset: 0.0}
           - !transform/identity-1.0.0 {}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [x_msa, y_msa]
@@ -2898,7 +2898,7 @@ slits:
             - !transform/identity-1.0.0 {n_dims: 3}
           name: msa2oteip
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [X_OTEIP, Y_OTEIP]
@@ -3071,7 +3071,7 @@ slits:
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [V2, V3]
@@ -3091,7 +3091,7 @@ slits:
             name: v23tosky
           - !transform/identity-1.0.0 {}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/celestial_frame-1.0.0
             axes_names: [lon, lat]
@@ -3621,7 +3621,7 @@ slits:
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [x_slit, y_slit]
@@ -3656,7 +3656,7 @@ slits:
                 - !transform/shift-1.0.0 {name: slit_yref, offset: 0.0}
           - !transform/identity-1.0.0 {}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [x_msa, y_msa]
@@ -3896,7 +3896,7 @@ slits:
             - !transform/identity-1.0.0 {n_dims: 3}
           name: msa2oteip
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [X_OTEIP, Y_OTEIP]
@@ -4069,7 +4069,7 @@ slits:
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [V2, V3]
@@ -4089,7 +4089,7 @@ slits:
             name: v23tosky
           - !transform/identity-1.0.0 {}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/celestial_frame-1.0.0
             axes_names: [lon, lat]
@@ -4619,7 +4619,7 @@ slits:
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
               name: alpha_from_greq, order: -1.0, output: angle}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [x_slit, y_slit]
@@ -4654,7 +4654,7 @@ slits:
                 - !transform/shift-1.0.0 {name: slit_yref, offset: 0.0}
           - !transform/identity-1.0.0 {}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [x_msa, y_msa]
@@ -4894,7 +4894,7 @@ slits:
             - !transform/identity-1.0.0 {n_dims: 3}
           name: msa2oteip
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [X_OTEIP, Y_OTEIP]
@@ -5067,7 +5067,7 @@ slits:
                 mapping: [0, 1, 2, 2]
           name: oteip2v23
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/frame-1.1.0
             axes_names: [V2, V3]
@@ -5087,7 +5087,7 @@ slits:
             name: v23tosky
           - !transform/identity-1.0.0 {}
       - !wcs/step-1.0.0
-        frame: !wcs/composite_frame-1.0.0
+        frame: !wcs/composite_frame-1.1.0
           frames:
           - !wcs/celestial_frame-1.0.0
             axes_names: [lon, lat]
