@@ -3,6 +3,54 @@ properties:
   meta:
     type: object
     properties:
+      coordinates:
+        title: Information about the coordinates in the file
+        type: object
+        properties:
+          reference_frame:
+            title: Name of the coordinate reference frame
+            type: string
+            default: ICRS
+            fits_keyword: RADESYS
+            enum: [ICRS]
+            fits_hdu: SCI
+      aperture:
+        title: Aperture information
+        type: object
+        properties:
+          position_angle:
+            title: Position angle of aperture used (deg)
+            type: number
+            fits_keyword: PA_APER
+            fits_hdu: SCI
+      pointing:
+        title: Spacecraft pointing information
+        type: object
+        properties:
+          ra_v1:
+            title: RA of telescope V1 axis [deg]
+            type: number
+            fits_keyword: RA_V1
+            fits_hdu: SCI
+          dec_v1:
+            title: Dec of telescope V1 axis [deg]
+            type: number
+            fits_keyword: DEC_V1
+            fits_hdu: SCI
+          pa_v3:
+            title: Position angle of telescope V3 axis [deg]
+            type: number
+            fits_keyword: PA_V3
+            fits_hdu: SCI
+      velocity_aberration:
+        title: Velocity aberration correction information
+        type: object
+        properties:
+          scale_factor:
+            title: Velocity aberration scale factor
+            type: number
+            fits_keyword: VA_SCALE
+            fits_hdu: SCI
       wcsinfo:
         title: WCS parameters
         type: object
