@@ -147,7 +147,7 @@ slits:
             forward:
             - !transform/shift-1.0.0 {offset: 0.0}
             - !transform/shift-1.0.0 {offset: 0.0}
-          - !transform/identity-1.0.0 {n_dims: 2}
+          - !transform/identity-1.1.0 {n_dims: 2}
           name: dms2sca
       - !wcs/step-1.0.0
         frame: !wcs/frame-1.1.0
@@ -192,7 +192,7 @@ slits:
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/remap_axes-1.0.0
-                      inverse: !transform/identity-1.0.0 {n_dims: 2}
+                      inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
                     - !transform/concatenate-1.1.0
@@ -225,7 +225,7 @@ slits:
                             shape: [6, 6]
                           name: y_poly_backward
                         name: y_poly_forward
-                  - !transform/identity-1.0.0
+                  - !transform/identity-1.1.0
                     inverse: !transform/remap_axes-1.0.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
@@ -320,7 +320,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_backward
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/compose-1.1.0
@@ -374,17 +374,17 @@ slits:
                           - !transform/multiply-1.0.0
                             forward:
                             - !transform/constant-1.0.0 {value: 0.0}
-                            - !transform/identity-1.0.0 {}
+                            - !transform/identity-1.1.0 {}
                           - !transform/multiply-1.0.0
                             forward:
                             - !transform/constant-1.0.0 {value: -1.0}
-                            - !transform/identity-1.0.0 {}
-                        - !transform/identity-1.0.0 {n_dims: 2}
+                            - !transform/identity-1.1.0 {}
+                        - !transform/identity-1.1.0 {n_dims: 2}
                     - !transform/concatenate-1.1.0
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/identity-1.0.0 {}
+                        - !transform/identity-1.1.0 {}
                         - !transform/polynomial-1.0.0
                           coefficients: !core/ndarray-1.0.0
                             source: 10
@@ -392,14 +392,14 @@ slits:
                             byteorder: little
                             shape: [2]
                           name: interpolation
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                   - !transform/remap_axes-1.0.0
                     mapping: [0, 1, 0, 1, 2, 3]
                 - !transform/concatenate-1.1.0
                   forward:
                   - !transform/concatenate-1.1.0
                     forward:
-                    - !transform/identity-1.0.0 {n_dims: 2}
+                    - !transform/identity-1.1.0 {n_dims: 2}
                     - !transform/compose-1.1.0
                       forward:
                       - !transform/compose-1.1.0
@@ -473,7 +473,7 @@ slits:
                                       byteorder: little
                                       shape: [6, 6]
                                     name: y_poly_backward
-                                - !transform/identity-1.0.0 {n_dims: 2}
+                                - !transform/identity-1.1.0 {n_dims: 2}
                           - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
                             name: unitless2directional_cosines}
                         - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.1.0>
@@ -481,13 +481,13 @@ slits:
                             -8.8000000000000007]
                           axes_order: xyzy
                           name: rotaton
-                  - !transform/identity-1.0.0 {n_dims: 2}
+                  - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 3, 5]
                 n_inputs: 7
             - !transform/concatenate-1.1.0
               forward:
-              - !transform/identity-1.0.0 {n_dims: 2}
+              - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/compose-1.1.0
                 forward:
                 - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
@@ -503,7 +503,7 @@ slits:
                   mapping: [0, 1, 2, 1]
                 - !transform/concatenate-1.1.0
                   forward:
-                  - !transform/identity-1.0.0 {n_dims: 3}
+                  - !transform/identity-1.1.0 {n_dims: 3}
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/compose-1.1.0
@@ -519,7 +519,7 @@ slits:
               forward:
               - !transform/concatenate-1.1.0
                 forward:
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
                 - !transform/add-1.0.0
                   forward:
                   - !transform/remap_axes-1.0.0
@@ -613,7 +613,7 @@ slits:
                                   byteorder: little
                                   shape: [6, 6]
                                 name: y_poly_backward
-                            - !transform/identity-1.0.0 {n_dims: 2}
+                            - !transform/identity-1.1.0 {n_dims: 2}
                       - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
                         name: unitless2directional_cosines}
                     - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.1.0>
@@ -621,7 +621,7 @@ slits:
                         -8.8000000000000007]
                       axes_order: xyzy
                       name: rotaton
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
               - !transform/remap_axes-1.0.0
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
@@ -660,7 +660,7 @@ slits:
                 forward:
                 - !transform/shift-1.0.0 {name: slit_xref, offset: 0.0}
                 - !transform/shift-1.0.0 {name: slit_yref, offset: 0.0}
-          - !transform/identity-1.0.0 {}
+          - !transform/identity-1.1.0 {}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
           frames:
@@ -677,7 +677,7 @@ slits:
         transform: !transform/compose-1.1.0
           forward:
           - !transform/remap_axes-1.0.0
-            inverse: !transform/identity-1.0.0 {n_dims: 3}
+            inverse: !transform/identity-1.1.0 {n_dims: 3}
             mapping: [0, 1, 2, 2]
             name: msa2fore_mapping
           - !transform/concatenate-1.1.0
@@ -689,7 +689,7 @@ slits:
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/remap_axes-1.0.0
-                    inverse: !transform/identity-1.0.0 {n_dims: 2}
+                    inverse: !transform/identity-1.1.0 {n_dims: 2}
                     mapping: [0, 1, 2, 0, 1, 2]
                     name: input_mapping
                   - !transform/concatenate-1.1.0
@@ -726,7 +726,7 @@ slits:
                           forward:
                           - !transform/remap_axes-1.0.0
                             mapping: [2]
-                          - !transform/identity-1.0.0 {}
+                          - !transform/identity-1.1.0 {}
                     - !transform/add-1.0.0
                       forward:
                       - !transform/compose-1.1.0
@@ -759,8 +759,8 @@ slits:
                           forward:
                           - !transform/remap_axes-1.0.0
                             mapping: [2]
-                          - !transform/identity-1.0.0 {}
-                - !transform/identity-1.0.0
+                          - !transform/identity-1.1.0 {}
+                - !transform/identity-1.1.0
                   inverse: !transform/remap_axes-1.0.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   n_dims: 2
@@ -789,7 +789,7 @@ slits:
                   forward:
                   - !transform/shift-1.0.0 {offset: -2.2796199999999999e-07}
                   - !transform/shift-1.0.0 {offset: -2.6094000000000001e-07}
-            - !transform/identity-1.0.0 {}
+            - !transform/identity-1.1.0 {}
           inverse: !transform/compose-1.1.0
             forward:
             - !transform/concatenate-1.1.0
@@ -822,7 +822,7 @@ slits:
                         forward:
                         - !transform/shift-1.0.0 {offset: 5.5268459141299997e-06}
                         - !transform/shift-1.0.0 {offset: -0.00034602887288100003}
-                  - !transform/identity-1.0.0 {}
+                  - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/remap_axes-1.0.0
@@ -863,7 +863,7 @@ slits:
                             forward:
                             - !transform/remap_axes-1.0.0
                               mapping: [2]
-                            - !transform/identity-1.0.0 {}
+                            - !transform/identity-1.1.0 {}
                       - !transform/add-1.0.0
                         forward:
                         - !transform/compose-1.1.0
@@ -896,10 +896,10 @@ slits:
                             forward:
                             - !transform/remap_axes-1.0.0
                               mapping: [2]
-                            - !transform/identity-1.0.0 {}
-                    - !transform/identity-1.0.0 {n_dims: 2}
-              - !transform/identity-1.0.0 {}
-            - !transform/identity-1.0.0 {n_dims: 3}
+                            - !transform/identity-1.1.0 {}
+                    - !transform/identity-1.1.0 {n_dims: 2}
+              - !transform/identity-1.1.0 {}
+            - !transform/identity-1.1.0 {n_dims: 3}
           name: msa2oteip
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
@@ -918,7 +918,7 @@ slits:
           forward:
           - !transform/compose-1.1.0
             forward:
-            - !transform/identity-1.0.0
+            - !transform/identity-1.1.0
               inverse: !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 2]
               n_dims: 3
@@ -932,7 +932,7 @@ slits:
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/remap_axes-1.0.0
-                      inverse: !transform/identity-1.0.0 {n_dims: 2}
+                      inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
                     - !transform/concatenate-1.1.0
@@ -965,7 +965,7 @@ slits:
                             shape: [6, 6]
                           name: y_poly_backward
                         name: y_poly_forward
-                  - !transform/identity-1.0.0
+                  - !transform/identity-1.1.0
                     inverse: !transform/remap_axes-1.0.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
@@ -999,24 +999,24 @@ slits:
             forward:
             - !transform/concatenate-1.1.0
               forward:
-              - !transform/identity-1.0.0 {}
+              - !transform/identity-1.1.0 {}
               - !transform/compose-1.1.0
                 forward:
                 - !transform/shift-1.0.0 {offset: 0.13}
                 - !transform/scale-1.0.0 {factor: -1.0}
-            - !transform/identity-1.0.0 {}
+            - !transform/identity-1.1.0 {}
           inverse: !transform/compose-1.1.0
             forward:
             - !transform/concatenate-1.1.0
               forward:
               - !transform/concatenate-1.1.0
                 forward:
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/scale-1.0.0 {factor: -1.0}
                   - !transform/shift-1.0.0 {offset: -0.13}
-              - !transform/identity-1.0.0 {}
+              - !transform/identity-1.1.0 {}
             - !transform/compose-1.1.0
               forward:
               - !transform/concatenate-1.1.0
@@ -1069,7 +1069,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_backward
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/scale-1.0.0 {factor: 9.9999999999999995e-07}
               - !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 2]
@@ -1093,7 +1093,7 @@ slits:
             angles: [-0.0, 0.0, -0.0, -0.0, 0.0]
             axes_order: zyxyz
             name: v23tosky
-          - !transform/identity-1.0.0 {}
+          - !transform/identity-1.1.0 {}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
           frames:
@@ -1145,7 +1145,7 @@ slits:
             forward:
             - !transform/shift-1.0.0 {offset: 0.0}
             - !transform/shift-1.0.0 {offset: 0.0}
-          - !transform/identity-1.0.0 {n_dims: 2}
+          - !transform/identity-1.1.0 {n_dims: 2}
           name: dms2sca
       - !wcs/step-1.0.0
         frame: !wcs/frame-1.1.0
@@ -1190,7 +1190,7 @@ slits:
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/remap_axes-1.0.0
-                      inverse: !transform/identity-1.0.0 {n_dims: 2}
+                      inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
                     - !transform/concatenate-1.1.0
@@ -1223,7 +1223,7 @@ slits:
                             shape: [6, 6]
                           name: y_poly_backward
                         name: y_poly_forward
-                  - !transform/identity-1.0.0
+                  - !transform/identity-1.1.0
                     inverse: !transform/remap_axes-1.0.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
@@ -1318,7 +1318,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_backward
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/compose-1.1.0
@@ -1372,17 +1372,17 @@ slits:
                           - !transform/multiply-1.0.0
                             forward:
                             - !transform/constant-1.0.0 {value: 0.0}
-                            - !transform/identity-1.0.0 {}
+                            - !transform/identity-1.1.0 {}
                           - !transform/multiply-1.0.0
                             forward:
                             - !transform/constant-1.0.0 {value: -1.0}
-                            - !transform/identity-1.0.0 {}
-                        - !transform/identity-1.0.0 {n_dims: 2}
+                            - !transform/identity-1.1.0 {}
+                        - !transform/identity-1.1.0 {n_dims: 2}
                     - !transform/concatenate-1.1.0
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/identity-1.0.0 {}
+                        - !transform/identity-1.1.0 {}
                         - !transform/polynomial-1.0.0
                           coefficients: !core/ndarray-1.0.0
                             source: 41
@@ -1390,14 +1390,14 @@ slits:
                             byteorder: little
                             shape: [2]
                           name: interpolation
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                   - !transform/remap_axes-1.0.0
                     mapping: [0, 1, 0, 1, 2, 3]
                 - !transform/concatenate-1.1.0
                   forward:
                   - !transform/concatenate-1.1.0
                     forward:
-                    - !transform/identity-1.0.0 {n_dims: 2}
+                    - !transform/identity-1.1.0 {n_dims: 2}
                     - !transform/compose-1.1.0
                       forward:
                       - !transform/compose-1.1.0
@@ -1471,7 +1471,7 @@ slits:
                                       byteorder: little
                                       shape: [6, 6]
                                     name: y_poly_backward
-                                - !transform/identity-1.0.0 {n_dims: 2}
+                                - !transform/identity-1.1.0 {n_dims: 2}
                           - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
                             name: unitless2directional_cosines}
                         - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.1.0>
@@ -1479,13 +1479,13 @@ slits:
                             -8.8000000000000007]
                           axes_order: xyzy
                           name: rotaton
-                  - !transform/identity-1.0.0 {n_dims: 2}
+                  - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 3, 5]
                 n_inputs: 7
             - !transform/concatenate-1.1.0
               forward:
-              - !transform/identity-1.0.0 {n_dims: 2}
+              - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/compose-1.1.0
                 forward:
                 - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
@@ -1501,7 +1501,7 @@ slits:
                   mapping: [0, 1, 2, 1]
                 - !transform/concatenate-1.1.0
                   forward:
-                  - !transform/identity-1.0.0 {n_dims: 3}
+                  - !transform/identity-1.1.0 {n_dims: 3}
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/compose-1.1.0
@@ -1517,7 +1517,7 @@ slits:
               forward:
               - !transform/concatenate-1.1.0
                 forward:
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
                 - !transform/add-1.0.0
                   forward:
                   - !transform/remap_axes-1.0.0
@@ -1611,7 +1611,7 @@ slits:
                                   byteorder: little
                                   shape: [6, 6]
                                 name: y_poly_backward
-                            - !transform/identity-1.0.0 {n_dims: 2}
+                            - !transform/identity-1.1.0 {n_dims: 2}
                       - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
                         name: unitless2directional_cosines}
                     - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.1.0>
@@ -1619,7 +1619,7 @@ slits:
                         -8.8000000000000007]
                       axes_order: xyzy
                       name: rotaton
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
               - !transform/remap_axes-1.0.0
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
@@ -1658,7 +1658,7 @@ slits:
                 forward:
                 - !transform/shift-1.0.0 {name: slit_xref, offset: 0.0}
                 - !transform/shift-1.0.0 {name: slit_yref, offset: 0.0}
-          - !transform/identity-1.0.0 {}
+          - !transform/identity-1.1.0 {}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
           frames:
@@ -1675,7 +1675,7 @@ slits:
         transform: !transform/compose-1.1.0
           forward:
           - !transform/remap_axes-1.0.0
-            inverse: !transform/identity-1.0.0 {n_dims: 3}
+            inverse: !transform/identity-1.1.0 {n_dims: 3}
             mapping: [0, 1, 2, 2]
             name: msa2fore_mapping
           - !transform/concatenate-1.1.0
@@ -1687,7 +1687,7 @@ slits:
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/remap_axes-1.0.0
-                    inverse: !transform/identity-1.0.0 {n_dims: 2}
+                    inverse: !transform/identity-1.1.0 {n_dims: 2}
                     mapping: [0, 1, 2, 0, 1, 2]
                     name: input_mapping
                   - !transform/concatenate-1.1.0
@@ -1724,7 +1724,7 @@ slits:
                           forward:
                           - !transform/remap_axes-1.0.0
                             mapping: [2]
-                          - !transform/identity-1.0.0 {}
+                          - !transform/identity-1.1.0 {}
                     - !transform/add-1.0.0
                       forward:
                       - !transform/compose-1.1.0
@@ -1757,8 +1757,8 @@ slits:
                           forward:
                           - !transform/remap_axes-1.0.0
                             mapping: [2]
-                          - !transform/identity-1.0.0 {}
-                - !transform/identity-1.0.0
+                          - !transform/identity-1.1.0 {}
+                - !transform/identity-1.1.0
                   inverse: !transform/remap_axes-1.0.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   n_dims: 2
@@ -1787,7 +1787,7 @@ slits:
                   forward:
                   - !transform/shift-1.0.0 {offset: -2.2796199999999999e-07}
                   - !transform/shift-1.0.0 {offset: -2.6094000000000001e-07}
-            - !transform/identity-1.0.0 {}
+            - !transform/identity-1.1.0 {}
           inverse: !transform/compose-1.1.0
             forward:
             - !transform/concatenate-1.1.0
@@ -1820,7 +1820,7 @@ slits:
                         forward:
                         - !transform/shift-1.0.0 {offset: 5.5268459141299997e-06}
                         - !transform/shift-1.0.0 {offset: -0.00034602887288100003}
-                  - !transform/identity-1.0.0 {}
+                  - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/remap_axes-1.0.0
@@ -1861,7 +1861,7 @@ slits:
                             forward:
                             - !transform/remap_axes-1.0.0
                               mapping: [2]
-                            - !transform/identity-1.0.0 {}
+                            - !transform/identity-1.1.0 {}
                       - !transform/add-1.0.0
                         forward:
                         - !transform/compose-1.1.0
@@ -1894,10 +1894,10 @@ slits:
                             forward:
                             - !transform/remap_axes-1.0.0
                               mapping: [2]
-                            - !transform/identity-1.0.0 {}
-                    - !transform/identity-1.0.0 {n_dims: 2}
-              - !transform/identity-1.0.0 {}
-            - !transform/identity-1.0.0 {n_dims: 3}
+                            - !transform/identity-1.1.0 {}
+                    - !transform/identity-1.1.0 {n_dims: 2}
+              - !transform/identity-1.1.0 {}
+            - !transform/identity-1.1.0 {n_dims: 3}
           name: msa2oteip
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
@@ -1916,7 +1916,7 @@ slits:
           forward:
           - !transform/compose-1.1.0
             forward:
-            - !transform/identity-1.0.0
+            - !transform/identity-1.1.0
               inverse: !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 2]
               n_dims: 3
@@ -1930,7 +1930,7 @@ slits:
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/remap_axes-1.0.0
-                      inverse: !transform/identity-1.0.0 {n_dims: 2}
+                      inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
                     - !transform/concatenate-1.1.0
@@ -1963,7 +1963,7 @@ slits:
                             shape: [6, 6]
                           name: y_poly_backward
                         name: y_poly_forward
-                  - !transform/identity-1.0.0
+                  - !transform/identity-1.1.0
                     inverse: !transform/remap_axes-1.0.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
@@ -1997,24 +1997,24 @@ slits:
             forward:
             - !transform/concatenate-1.1.0
               forward:
-              - !transform/identity-1.0.0 {}
+              - !transform/identity-1.1.0 {}
               - !transform/compose-1.1.0
                 forward:
                 - !transform/shift-1.0.0 {offset: 0.13}
                 - !transform/scale-1.0.0 {factor: -1.0}
-            - !transform/identity-1.0.0 {}
+            - !transform/identity-1.1.0 {}
           inverse: !transform/compose-1.1.0
             forward:
             - !transform/concatenate-1.1.0
               forward:
               - !transform/concatenate-1.1.0
                 forward:
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/scale-1.0.0 {factor: -1.0}
                   - !transform/shift-1.0.0 {offset: -0.13}
-              - !transform/identity-1.0.0 {}
+              - !transform/identity-1.1.0 {}
             - !transform/compose-1.1.0
               forward:
               - !transform/concatenate-1.1.0
@@ -2067,7 +2067,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_backward
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/scale-1.0.0 {factor: 9.9999999999999995e-07}
               - !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 2]
@@ -2091,7 +2091,7 @@ slits:
             angles: [-0.0, 0.0, -0.0, -0.0, 0.0]
             axes_order: zyxyz
             name: v23tosky
-          - !transform/identity-1.0.0 {}
+          - !transform/identity-1.1.0 {}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
           frames:
@@ -2143,7 +2143,7 @@ slits:
             forward:
             - !transform/shift-1.0.0 {offset: 0.0}
             - !transform/shift-1.0.0 {offset: 0.0}
-          - !transform/identity-1.0.0 {n_dims: 2}
+          - !transform/identity-1.1.0 {n_dims: 2}
           name: dms2sca
       - !wcs/step-1.0.0
         frame: !wcs/frame-1.1.0
@@ -2188,7 +2188,7 @@ slits:
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/remap_axes-1.0.0
-                      inverse: !transform/identity-1.0.0 {n_dims: 2}
+                      inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
                     - !transform/concatenate-1.1.0
@@ -2221,7 +2221,7 @@ slits:
                             shape: [6, 6]
                           name: y_poly_backward
                         name: y_poly_forward
-                  - !transform/identity-1.0.0
+                  - !transform/identity-1.1.0
                     inverse: !transform/remap_axes-1.0.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
@@ -2316,7 +2316,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_backward
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/compose-1.1.0
@@ -2370,17 +2370,17 @@ slits:
                           - !transform/multiply-1.0.0
                             forward:
                             - !transform/constant-1.0.0 {value: 0.0}
-                            - !transform/identity-1.0.0 {}
+                            - !transform/identity-1.1.0 {}
                           - !transform/multiply-1.0.0
                             forward:
                             - !transform/constant-1.0.0 {value: -1.0}
-                            - !transform/identity-1.0.0 {}
-                        - !transform/identity-1.0.0 {n_dims: 2}
+                            - !transform/identity-1.1.0 {}
+                        - !transform/identity-1.1.0 {n_dims: 2}
                     - !transform/concatenate-1.1.0
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/identity-1.0.0 {}
+                        - !transform/identity-1.1.0 {}
                         - !transform/polynomial-1.0.0
                           coefficients: !core/ndarray-1.0.0
                             source: 66
@@ -2388,14 +2388,14 @@ slits:
                             byteorder: little
                             shape: [2]
                           name: interpolation
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                   - !transform/remap_axes-1.0.0
                     mapping: [0, 1, 0, 1, 2, 3]
                 - !transform/concatenate-1.1.0
                   forward:
                   - !transform/concatenate-1.1.0
                     forward:
-                    - !transform/identity-1.0.0 {n_dims: 2}
+                    - !transform/identity-1.1.0 {n_dims: 2}
                     - !transform/compose-1.1.0
                       forward:
                       - !transform/compose-1.1.0
@@ -2469,7 +2469,7 @@ slits:
                                       byteorder: little
                                       shape: [6, 6]
                                     name: y_poly_backward
-                                - !transform/identity-1.0.0 {n_dims: 2}
+                                - !transform/identity-1.1.0 {n_dims: 2}
                           - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
                             name: unitless2directional_cosines}
                         - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.1.0>
@@ -2477,13 +2477,13 @@ slits:
                             -8.8000000000000007]
                           axes_order: xyzy
                           name: rotaton
-                  - !transform/identity-1.0.0 {n_dims: 2}
+                  - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 3, 5]
                 n_inputs: 7
             - !transform/concatenate-1.1.0
               forward:
-              - !transform/identity-1.0.0 {n_dims: 2}
+              - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/compose-1.1.0
                 forward:
                 - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
@@ -2499,7 +2499,7 @@ slits:
                   mapping: [0, 1, 2, 1]
                 - !transform/concatenate-1.1.0
                   forward:
-                  - !transform/identity-1.0.0 {n_dims: 3}
+                  - !transform/identity-1.1.0 {n_dims: 3}
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/compose-1.1.0
@@ -2515,7 +2515,7 @@ slits:
               forward:
               - !transform/concatenate-1.1.0
                 forward:
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
                 - !transform/add-1.0.0
                   forward:
                   - !transform/remap_axes-1.0.0
@@ -2609,7 +2609,7 @@ slits:
                                   byteorder: little
                                   shape: [6, 6]
                                 name: y_poly_backward
-                            - !transform/identity-1.0.0 {n_dims: 2}
+                            - !transform/identity-1.1.0 {n_dims: 2}
                       - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
                         name: unitless2directional_cosines}
                     - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.1.0>
@@ -2617,7 +2617,7 @@ slits:
                         -8.8000000000000007]
                       axes_order: xyzy
                       name: rotaton
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
               - !transform/remap_axes-1.0.0
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
@@ -2656,7 +2656,7 @@ slits:
                 forward:
                 - !transform/shift-1.0.0 {name: slit_xref, offset: 0.0}
                 - !transform/shift-1.0.0 {name: slit_yref, offset: 0.0}
-          - !transform/identity-1.0.0 {}
+          - !transform/identity-1.1.0 {}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
           frames:
@@ -2673,7 +2673,7 @@ slits:
         transform: !transform/compose-1.1.0
           forward:
           - !transform/remap_axes-1.0.0
-            inverse: !transform/identity-1.0.0 {n_dims: 3}
+            inverse: !transform/identity-1.1.0 {n_dims: 3}
             mapping: [0, 1, 2, 2]
             name: msa2fore_mapping
           - !transform/concatenate-1.1.0
@@ -2685,7 +2685,7 @@ slits:
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/remap_axes-1.0.0
-                    inverse: !transform/identity-1.0.0 {n_dims: 2}
+                    inverse: !transform/identity-1.1.0 {n_dims: 2}
                     mapping: [0, 1, 2, 0, 1, 2]
                     name: input_mapping
                   - !transform/concatenate-1.1.0
@@ -2722,7 +2722,7 @@ slits:
                           forward:
                           - !transform/remap_axes-1.0.0
                             mapping: [2]
-                          - !transform/identity-1.0.0 {}
+                          - !transform/identity-1.1.0 {}
                     - !transform/add-1.0.0
                       forward:
                       - !transform/compose-1.1.0
@@ -2755,8 +2755,8 @@ slits:
                           forward:
                           - !transform/remap_axes-1.0.0
                             mapping: [2]
-                          - !transform/identity-1.0.0 {}
-                - !transform/identity-1.0.0
+                          - !transform/identity-1.1.0 {}
+                - !transform/identity-1.1.0
                   inverse: !transform/remap_axes-1.0.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   n_dims: 2
@@ -2785,7 +2785,7 @@ slits:
                   forward:
                   - !transform/shift-1.0.0 {offset: -2.2796199999999999e-07}
                   - !transform/shift-1.0.0 {offset: -2.6094000000000001e-07}
-            - !transform/identity-1.0.0 {}
+            - !transform/identity-1.1.0 {}
           inverse: !transform/compose-1.1.0
             forward:
             - !transform/concatenate-1.1.0
@@ -2818,7 +2818,7 @@ slits:
                         forward:
                         - !transform/shift-1.0.0 {offset: 5.5268459141299997e-06}
                         - !transform/shift-1.0.0 {offset: -0.00034602887288100003}
-                  - !transform/identity-1.0.0 {}
+                  - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/remap_axes-1.0.0
@@ -2859,7 +2859,7 @@ slits:
                             forward:
                             - !transform/remap_axes-1.0.0
                               mapping: [2]
-                            - !transform/identity-1.0.0 {}
+                            - !transform/identity-1.1.0 {}
                       - !transform/add-1.0.0
                         forward:
                         - !transform/compose-1.1.0
@@ -2892,10 +2892,10 @@ slits:
                             forward:
                             - !transform/remap_axes-1.0.0
                               mapping: [2]
-                            - !transform/identity-1.0.0 {}
-                    - !transform/identity-1.0.0 {n_dims: 2}
-              - !transform/identity-1.0.0 {}
-            - !transform/identity-1.0.0 {n_dims: 3}
+                            - !transform/identity-1.1.0 {}
+                    - !transform/identity-1.1.0 {n_dims: 2}
+              - !transform/identity-1.1.0 {}
+            - !transform/identity-1.1.0 {n_dims: 3}
           name: msa2oteip
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
@@ -2914,7 +2914,7 @@ slits:
           forward:
           - !transform/compose-1.1.0
             forward:
-            - !transform/identity-1.0.0
+            - !transform/identity-1.1.0
               inverse: !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 2]
               n_dims: 3
@@ -2928,7 +2928,7 @@ slits:
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/remap_axes-1.0.0
-                      inverse: !transform/identity-1.0.0 {n_dims: 2}
+                      inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
                     - !transform/concatenate-1.1.0
@@ -2961,7 +2961,7 @@ slits:
                             shape: [6, 6]
                           name: y_poly_backward
                         name: y_poly_forward
-                  - !transform/identity-1.0.0
+                  - !transform/identity-1.1.0
                     inverse: !transform/remap_axes-1.0.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
@@ -2995,24 +2995,24 @@ slits:
             forward:
             - !transform/concatenate-1.1.0
               forward:
-              - !transform/identity-1.0.0 {}
+              - !transform/identity-1.1.0 {}
               - !transform/compose-1.1.0
                 forward:
                 - !transform/shift-1.0.0 {offset: 0.13}
                 - !transform/scale-1.0.0 {factor: -1.0}
-            - !transform/identity-1.0.0 {}
+            - !transform/identity-1.1.0 {}
           inverse: !transform/compose-1.1.0
             forward:
             - !transform/concatenate-1.1.0
               forward:
               - !transform/concatenate-1.1.0
                 forward:
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/scale-1.0.0 {factor: -1.0}
                   - !transform/shift-1.0.0 {offset: -0.13}
-              - !transform/identity-1.0.0 {}
+              - !transform/identity-1.1.0 {}
             - !transform/compose-1.1.0
               forward:
               - !transform/concatenate-1.1.0
@@ -3065,7 +3065,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_backward
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/scale-1.0.0 {factor: 9.9999999999999995e-07}
               - !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 2]
@@ -3089,7 +3089,7 @@ slits:
             angles: [-0.0, 0.0, -0.0, -0.0, 0.0]
             axes_order: zyxyz
             name: v23tosky
-          - !transform/identity-1.0.0 {}
+          - !transform/identity-1.1.0 {}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
           frames:
@@ -3141,7 +3141,7 @@ slits:
             forward:
             - !transform/shift-1.0.0 {offset: 0.0}
             - !transform/shift-1.0.0 {offset: 0.0}
-          - !transform/identity-1.0.0 {n_dims: 2}
+          - !transform/identity-1.1.0 {n_dims: 2}
           name: dms2sca
       - !wcs/step-1.0.0
         frame: !wcs/frame-1.1.0
@@ -3186,7 +3186,7 @@ slits:
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/remap_axes-1.0.0
-                      inverse: !transform/identity-1.0.0 {n_dims: 2}
+                      inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
                     - !transform/concatenate-1.1.0
@@ -3219,7 +3219,7 @@ slits:
                             shape: [6, 6]
                           name: y_poly_backward
                         name: y_poly_forward
-                  - !transform/identity-1.0.0
+                  - !transform/identity-1.1.0
                     inverse: !transform/remap_axes-1.0.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
@@ -3314,7 +3314,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_backward
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/compose-1.1.0
@@ -3368,17 +3368,17 @@ slits:
                           - !transform/multiply-1.0.0
                             forward:
                             - !transform/constant-1.0.0 {value: 0.0}
-                            - !transform/identity-1.0.0 {}
+                            - !transform/identity-1.1.0 {}
                           - !transform/multiply-1.0.0
                             forward:
                             - !transform/constant-1.0.0 {value: -1.0}
-                            - !transform/identity-1.0.0 {}
-                        - !transform/identity-1.0.0 {n_dims: 2}
+                            - !transform/identity-1.1.0 {}
+                        - !transform/identity-1.1.0 {n_dims: 2}
                     - !transform/concatenate-1.1.0
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/identity-1.0.0 {}
+                        - !transform/identity-1.1.0 {}
                         - !transform/polynomial-1.0.0
                           coefficients: !core/ndarray-1.0.0
                             source: 91
@@ -3386,14 +3386,14 @@ slits:
                             byteorder: little
                             shape: [2]
                           name: interpolation
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                   - !transform/remap_axes-1.0.0
                     mapping: [0, 1, 0, 1, 2, 3]
                 - !transform/concatenate-1.1.0
                   forward:
                   - !transform/concatenate-1.1.0
                     forward:
-                    - !transform/identity-1.0.0 {n_dims: 2}
+                    - !transform/identity-1.1.0 {n_dims: 2}
                     - !transform/compose-1.1.0
                       forward:
                       - !transform/compose-1.1.0
@@ -3467,7 +3467,7 @@ slits:
                                       byteorder: little
                                       shape: [6, 6]
                                     name: y_poly_backward
-                                - !transform/identity-1.0.0 {n_dims: 2}
+                                - !transform/identity-1.1.0 {n_dims: 2}
                           - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
                             name: unitless2directional_cosines}
                         - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.1.0>
@@ -3475,13 +3475,13 @@ slits:
                             -8.8000000000000007]
                           axes_order: xyzy
                           name: rotaton
-                  - !transform/identity-1.0.0 {n_dims: 2}
+                  - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 3, 5]
                 n_inputs: 7
             - !transform/concatenate-1.1.0
               forward:
-              - !transform/identity-1.0.0 {n_dims: 2}
+              - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/compose-1.1.0
                 forward:
                 - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
@@ -3497,7 +3497,7 @@ slits:
                   mapping: [0, 1, 2, 1]
                 - !transform/concatenate-1.1.0
                   forward:
-                  - !transform/identity-1.0.0 {n_dims: 3}
+                  - !transform/identity-1.1.0 {n_dims: 3}
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/compose-1.1.0
@@ -3513,7 +3513,7 @@ slits:
               forward:
               - !transform/concatenate-1.1.0
                 forward:
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
                 - !transform/add-1.0.0
                   forward:
                   - !transform/remap_axes-1.0.0
@@ -3607,7 +3607,7 @@ slits:
                                   byteorder: little
                                   shape: [6, 6]
                                 name: y_poly_backward
-                            - !transform/identity-1.0.0 {n_dims: 2}
+                            - !transform/identity-1.1.0 {n_dims: 2}
                       - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
                         name: unitless2directional_cosines}
                     - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.1.0>
@@ -3615,7 +3615,7 @@ slits:
                         -8.8000000000000007]
                       axes_order: xyzy
                       name: rotaton
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
               - !transform/remap_axes-1.0.0
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
@@ -3654,7 +3654,7 @@ slits:
                 forward:
                 - !transform/shift-1.0.0 {name: slit_xref, offset: 0.0}
                 - !transform/shift-1.0.0 {name: slit_yref, offset: 0.0}
-          - !transform/identity-1.0.0 {}
+          - !transform/identity-1.1.0 {}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
           frames:
@@ -3671,7 +3671,7 @@ slits:
         transform: !transform/compose-1.1.0
           forward:
           - !transform/remap_axes-1.0.0
-            inverse: !transform/identity-1.0.0 {n_dims: 3}
+            inverse: !transform/identity-1.1.0 {n_dims: 3}
             mapping: [0, 1, 2, 2]
             name: msa2fore_mapping
           - !transform/concatenate-1.1.0
@@ -3683,7 +3683,7 @@ slits:
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/remap_axes-1.0.0
-                    inverse: !transform/identity-1.0.0 {n_dims: 2}
+                    inverse: !transform/identity-1.1.0 {n_dims: 2}
                     mapping: [0, 1, 2, 0, 1, 2]
                     name: input_mapping
                   - !transform/concatenate-1.1.0
@@ -3720,7 +3720,7 @@ slits:
                           forward:
                           - !transform/remap_axes-1.0.0
                             mapping: [2]
-                          - !transform/identity-1.0.0 {}
+                          - !transform/identity-1.1.0 {}
                     - !transform/add-1.0.0
                       forward:
                       - !transform/compose-1.1.0
@@ -3753,8 +3753,8 @@ slits:
                           forward:
                           - !transform/remap_axes-1.0.0
                             mapping: [2]
-                          - !transform/identity-1.0.0 {}
-                - !transform/identity-1.0.0
+                          - !transform/identity-1.1.0 {}
+                - !transform/identity-1.1.0
                   inverse: !transform/remap_axes-1.0.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   n_dims: 2
@@ -3783,7 +3783,7 @@ slits:
                   forward:
                   - !transform/shift-1.0.0 {offset: -2.2796199999999999e-07}
                   - !transform/shift-1.0.0 {offset: -2.6094000000000001e-07}
-            - !transform/identity-1.0.0 {}
+            - !transform/identity-1.1.0 {}
           inverse: !transform/compose-1.1.0
             forward:
             - !transform/concatenate-1.1.0
@@ -3816,7 +3816,7 @@ slits:
                         forward:
                         - !transform/shift-1.0.0 {offset: 5.5268459141299997e-06}
                         - !transform/shift-1.0.0 {offset: -0.00034602887288100003}
-                  - !transform/identity-1.0.0 {}
+                  - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/remap_axes-1.0.0
@@ -3857,7 +3857,7 @@ slits:
                             forward:
                             - !transform/remap_axes-1.0.0
                               mapping: [2]
-                            - !transform/identity-1.0.0 {}
+                            - !transform/identity-1.1.0 {}
                       - !transform/add-1.0.0
                         forward:
                         - !transform/compose-1.1.0
@@ -3890,10 +3890,10 @@ slits:
                             forward:
                             - !transform/remap_axes-1.0.0
                               mapping: [2]
-                            - !transform/identity-1.0.0 {}
-                    - !transform/identity-1.0.0 {n_dims: 2}
-              - !transform/identity-1.0.0 {}
-            - !transform/identity-1.0.0 {n_dims: 3}
+                            - !transform/identity-1.1.0 {}
+                    - !transform/identity-1.1.0 {n_dims: 2}
+              - !transform/identity-1.1.0 {}
+            - !transform/identity-1.1.0 {n_dims: 3}
           name: msa2oteip
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
@@ -3912,7 +3912,7 @@ slits:
           forward:
           - !transform/compose-1.1.0
             forward:
-            - !transform/identity-1.0.0
+            - !transform/identity-1.1.0
               inverse: !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 2]
               n_dims: 3
@@ -3926,7 +3926,7 @@ slits:
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/remap_axes-1.0.0
-                      inverse: !transform/identity-1.0.0 {n_dims: 2}
+                      inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
                     - !transform/concatenate-1.1.0
@@ -3959,7 +3959,7 @@ slits:
                             shape: [6, 6]
                           name: y_poly_backward
                         name: y_poly_forward
-                  - !transform/identity-1.0.0
+                  - !transform/identity-1.1.0
                     inverse: !transform/remap_axes-1.0.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
@@ -3993,24 +3993,24 @@ slits:
             forward:
             - !transform/concatenate-1.1.0
               forward:
-              - !transform/identity-1.0.0 {}
+              - !transform/identity-1.1.0 {}
               - !transform/compose-1.1.0
                 forward:
                 - !transform/shift-1.0.0 {offset: 0.13}
                 - !transform/scale-1.0.0 {factor: -1.0}
-            - !transform/identity-1.0.0 {}
+            - !transform/identity-1.1.0 {}
           inverse: !transform/compose-1.1.0
             forward:
             - !transform/concatenate-1.1.0
               forward:
               - !transform/concatenate-1.1.0
                 forward:
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/scale-1.0.0 {factor: -1.0}
                   - !transform/shift-1.0.0 {offset: -0.13}
-              - !transform/identity-1.0.0 {}
+              - !transform/identity-1.1.0 {}
             - !transform/compose-1.1.0
               forward:
               - !transform/concatenate-1.1.0
@@ -4063,7 +4063,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_backward
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/scale-1.0.0 {factor: 9.9999999999999995e-07}
               - !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 2]
@@ -4087,7 +4087,7 @@ slits:
             angles: [-0.0, 0.0, -0.0, -0.0, 0.0]
             axes_order: zyxyz
             name: v23tosky
-          - !transform/identity-1.0.0 {}
+          - !transform/identity-1.1.0 {}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
           frames:
@@ -4139,7 +4139,7 @@ slits:
             forward:
             - !transform/shift-1.0.0 {offset: 0.0}
             - !transform/shift-1.0.0 {offset: 0.0}
-          - !transform/identity-1.0.0 {n_dims: 2}
+          - !transform/identity-1.1.0 {n_dims: 2}
           name: dms2sca
       - !wcs/step-1.0.0
         frame: !wcs/frame-1.1.0
@@ -4184,7 +4184,7 @@ slits:
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/remap_axes-1.0.0
-                      inverse: !transform/identity-1.0.0 {n_dims: 2}
+                      inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
                     - !transform/concatenate-1.1.0
@@ -4217,7 +4217,7 @@ slits:
                             shape: [6, 6]
                           name: y_poly_backward
                         name: y_poly_forward
-                  - !transform/identity-1.0.0
+                  - !transform/identity-1.1.0
                     inverse: !transform/remap_axes-1.0.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
@@ -4312,7 +4312,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_backward
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/compose-1.1.0
@@ -4366,17 +4366,17 @@ slits:
                           - !transform/multiply-1.0.0
                             forward:
                             - !transform/constant-1.0.0 {value: 0.0}
-                            - !transform/identity-1.0.0 {}
+                            - !transform/identity-1.1.0 {}
                           - !transform/multiply-1.0.0
                             forward:
                             - !transform/constant-1.0.0 {value: -1.0}
-                            - !transform/identity-1.0.0 {}
-                        - !transform/identity-1.0.0 {n_dims: 2}
+                            - !transform/identity-1.1.0 {}
+                        - !transform/identity-1.1.0 {n_dims: 2}
                     - !transform/concatenate-1.1.0
                       forward:
                       - !transform/concatenate-1.1.0
                         forward:
-                        - !transform/identity-1.0.0 {}
+                        - !transform/identity-1.1.0 {}
                         - !transform/polynomial-1.0.0
                           coefficients: !core/ndarray-1.0.0
                             source: 116
@@ -4384,14 +4384,14 @@ slits:
                             byteorder: little
                             shape: [2]
                           name: interpolation
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                   - !transform/remap_axes-1.0.0
                     mapping: [0, 1, 0, 1, 2, 3]
                 - !transform/concatenate-1.1.0
                   forward:
                   - !transform/concatenate-1.1.0
                     forward:
-                    - !transform/identity-1.0.0 {n_dims: 2}
+                    - !transform/identity-1.1.0 {n_dims: 2}
                     - !transform/compose-1.1.0
                       forward:
                       - !transform/compose-1.1.0
@@ -4465,7 +4465,7 @@ slits:
                                       byteorder: little
                                       shape: [6, 6]
                                     name: y_poly_backward
-                                - !transform/identity-1.0.0 {n_dims: 2}
+                                - !transform/identity-1.1.0 {n_dims: 2}
                           - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
                             name: unitless2directional_cosines}
                         - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.1.0>
@@ -4473,13 +4473,13 @@ slits:
                             -8.8000000000000007]
                           axes_order: xyzy
                           name: rotaton
-                  - !transform/identity-1.0.0 {n_dims: 2}
+                  - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 3, 5]
                 n_inputs: 7
             - !transform/concatenate-1.1.0
               forward:
-              - !transform/identity-1.0.0 {n_dims: 2}
+              - !transform/identity-1.1.0 {n_dims: 2}
               - !transform/compose-1.1.0
                 forward:
                 - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
@@ -4495,7 +4495,7 @@ slits:
                   mapping: [0, 1, 2, 1]
                 - !transform/concatenate-1.1.0
                   forward:
-                  - !transform/identity-1.0.0 {n_dims: 3}
+                  - !transform/identity-1.1.0 {n_dims: 3}
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/compose-1.1.0
@@ -4511,7 +4511,7 @@ slits:
               forward:
               - !transform/concatenate-1.1.0
                 forward:
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
                 - !transform/add-1.0.0
                   forward:
                   - !transform/remap_axes-1.0.0
@@ -4605,7 +4605,7 @@ slits:
                                   byteorder: little
                                   shape: [6, 6]
                                 name: y_poly_backward
-                            - !transform/identity-1.0.0 {n_dims: 2}
+                            - !transform/identity-1.1.0 {n_dims: 2}
                       - !<tag:stsci.edu:jwst_pipeline/coords-0.1.0> {model_type: to_dircos,
                         name: unitless2directional_cosines}
                     - !<tag:stsci.edu:jwst_pipeline/rotation_sequence-0.1.0>
@@ -4613,7 +4613,7 @@ slits:
                         -8.8000000000000007]
                       axes_order: xyzy
                       name: rotaton
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
               - !transform/remap_axes-1.0.0
                 mapping: [3, 0, 1, 2]
             - !<tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0> {groove_density: 252285.79999999999,
@@ -4652,7 +4652,7 @@ slits:
                 forward:
                 - !transform/shift-1.0.0 {name: slit_xref, offset: 0.0}
                 - !transform/shift-1.0.0 {name: slit_yref, offset: 0.0}
-          - !transform/identity-1.0.0 {}
+          - !transform/identity-1.1.0 {}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
           frames:
@@ -4669,7 +4669,7 @@ slits:
         transform: !transform/compose-1.1.0
           forward:
           - !transform/remap_axes-1.0.0
-            inverse: !transform/identity-1.0.0 {n_dims: 3}
+            inverse: !transform/identity-1.1.0 {n_dims: 3}
             mapping: [0, 1, 2, 2]
             name: msa2fore_mapping
           - !transform/concatenate-1.1.0
@@ -4681,7 +4681,7 @@ slits:
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/remap_axes-1.0.0
-                    inverse: !transform/identity-1.0.0 {n_dims: 2}
+                    inverse: !transform/identity-1.1.0 {n_dims: 2}
                     mapping: [0, 1, 2, 0, 1, 2]
                     name: input_mapping
                   - !transform/concatenate-1.1.0
@@ -4718,7 +4718,7 @@ slits:
                           forward:
                           - !transform/remap_axes-1.0.0
                             mapping: [2]
-                          - !transform/identity-1.0.0 {}
+                          - !transform/identity-1.1.0 {}
                     - !transform/add-1.0.0
                       forward:
                       - !transform/compose-1.1.0
@@ -4751,8 +4751,8 @@ slits:
                           forward:
                           - !transform/remap_axes-1.0.0
                             mapping: [2]
-                          - !transform/identity-1.0.0 {}
-                - !transform/identity-1.0.0
+                          - !transform/identity-1.1.0 {}
+                - !transform/identity-1.1.0
                   inverse: !transform/remap_axes-1.0.0
                     mapping: [0, 1, 2, 0, 1, 2]
                   n_dims: 2
@@ -4781,7 +4781,7 @@ slits:
                   forward:
                   - !transform/shift-1.0.0 {offset: -2.2796199999999999e-07}
                   - !transform/shift-1.0.0 {offset: -2.6094000000000001e-07}
-            - !transform/identity-1.0.0 {}
+            - !transform/identity-1.1.0 {}
           inverse: !transform/compose-1.1.0
             forward:
             - !transform/concatenate-1.1.0
@@ -4814,7 +4814,7 @@ slits:
                         forward:
                         - !transform/shift-1.0.0 {offset: 5.5268459141299997e-06}
                         - !transform/shift-1.0.0 {offset: -0.00034602887288100003}
-                  - !transform/identity-1.0.0 {}
+                  - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/remap_axes-1.0.0
@@ -4855,7 +4855,7 @@ slits:
                             forward:
                             - !transform/remap_axes-1.0.0
                               mapping: [2]
-                            - !transform/identity-1.0.0 {}
+                            - !transform/identity-1.1.0 {}
                       - !transform/add-1.0.0
                         forward:
                         - !transform/compose-1.1.0
@@ -4888,10 +4888,10 @@ slits:
                             forward:
                             - !transform/remap_axes-1.0.0
                               mapping: [2]
-                            - !transform/identity-1.0.0 {}
-                    - !transform/identity-1.0.0 {n_dims: 2}
-              - !transform/identity-1.0.0 {}
-            - !transform/identity-1.0.0 {n_dims: 3}
+                            - !transform/identity-1.1.0 {}
+                    - !transform/identity-1.1.0 {n_dims: 2}
+              - !transform/identity-1.1.0 {}
+            - !transform/identity-1.1.0 {n_dims: 3}
           name: msa2oteip
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
@@ -4910,7 +4910,7 @@ slits:
           forward:
           - !transform/compose-1.1.0
             forward:
-            - !transform/identity-1.0.0
+            - !transform/identity-1.1.0
               inverse: !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 2]
               n_dims: 3
@@ -4924,7 +4924,7 @@ slits:
                   - !transform/compose-1.1.0
                     forward:
                     - !transform/remap_axes-1.0.0
-                      inverse: !transform/identity-1.0.0 {n_dims: 2}
+                      inverse: !transform/identity-1.1.0 {n_dims: 2}
                       mapping: [0, 1, 0, 1]
                       name: input_mapping
                     - !transform/concatenate-1.1.0
@@ -4957,7 +4957,7 @@ slits:
                             shape: [6, 6]
                           name: y_poly_backward
                         name: y_poly_forward
-                  - !transform/identity-1.0.0
+                  - !transform/identity-1.1.0
                     inverse: !transform/remap_axes-1.0.0
                       mapping: [0, 1, 0, 1]
                     n_dims: 2
@@ -4991,24 +4991,24 @@ slits:
             forward:
             - !transform/concatenate-1.1.0
               forward:
-              - !transform/identity-1.0.0 {}
+              - !transform/identity-1.1.0 {}
               - !transform/compose-1.1.0
                 forward:
                 - !transform/shift-1.0.0 {offset: 0.13}
                 - !transform/scale-1.0.0 {factor: -1.0}
-            - !transform/identity-1.0.0 {}
+            - !transform/identity-1.1.0 {}
           inverse: !transform/compose-1.1.0
             forward:
             - !transform/concatenate-1.1.0
               forward:
               - !transform/concatenate-1.1.0
                 forward:
-                - !transform/identity-1.0.0 {}
+                - !transform/identity-1.1.0 {}
                 - !transform/compose-1.1.0
                   forward:
                   - !transform/scale-1.0.0 {factor: -1.0}
                   - !transform/shift-1.0.0 {offset: -0.13}
-              - !transform/identity-1.0.0 {}
+              - !transform/identity-1.1.0 {}
             - !transform/compose-1.1.0
               forward:
               - !transform/concatenate-1.1.0
@@ -5061,7 +5061,7 @@ slits:
                             byteorder: little
                             shape: [6, 6]
                           name: y_poly_backward
-                      - !transform/identity-1.0.0 {n_dims: 2}
+                      - !transform/identity-1.1.0 {n_dims: 2}
                 - !transform/scale-1.0.0 {factor: 9.9999999999999995e-07}
               - !transform/remap_axes-1.0.0
                 mapping: [0, 1, 2, 2]
@@ -5085,7 +5085,7 @@ slits:
             angles: [-0.0, 0.0, -0.0, -0.0, 0.0]
             axes_order: zyxyz
             name: v23tosky
-          - !transform/identity-1.0.0 {}
+          - !transform/identity-1.1.0 {}
       - !wcs/step-1.0.0
         frame: !wcs/composite_frame-1.1.0
           frames:
