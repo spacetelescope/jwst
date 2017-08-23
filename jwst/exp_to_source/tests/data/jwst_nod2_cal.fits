@@ -508,9 +508,9 @@ slits:
                     forward:
                     - !transform/compose-1.1.0
                       forward:
-                      - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: 0.5,
+                      - !<tag:stsci.edu:jwst_pipeline/logical-0.7.0> {compareto: 0.5,
                         condition: GT, value: .nan}
-                      - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: -0.5,
+                      - !<tag:stsci.edu:jwst_pipeline/logical-0.7.0> {compareto: -0.5,
                         condition: LT, value: .nan}
                     - !transform/scale-1.1.0 {factor: 0.0}
               - !transform/remap_axes-1.1.0
@@ -1506,9 +1506,9 @@ slits:
                     forward:
                     - !transform/compose-1.1.0
                       forward:
-                      - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: 0.5,
+                      - !<tag:stsci.edu:jwst_pipeline/logical-0.7.0> {compareto: 0.5,
                         condition: GT, value: .nan}
-                      - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: -0.5,
+                      - !<tag:stsci.edu:jwst_pipeline/logical-0.7.0> {compareto: -0.5,
                         condition: LT, value: .nan}
                     - !transform/scale-1.1.0 {factor: 0.0}
               - !transform/remap_axes-1.1.0
@@ -2504,9 +2504,9 @@ slits:
                     forward:
                     - !transform/compose-1.1.0
                       forward:
-                      - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: 0.5,
+                      - !<tag:stsci.edu:jwst_pipeline/logical-0.7.0> {compareto: 0.5,
                         condition: GT, value: .nan}
-                      - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: -0.5,
+                      - !<tag:stsci.edu:jwst_pipeline/logical-0.7.0> {compareto: -0.5,
                         condition: LT, value: .nan}
                     - !transform/scale-1.1.0 {factor: 0.0}
               - !transform/remap_axes-1.1.0
@@ -3502,9 +3502,9 @@ slits:
                     forward:
                     - !transform/compose-1.1.0
                       forward:
-                      - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: 0.5,
+                      - !<tag:stsci.edu:jwst_pipeline/logical-0.7.0> {compareto: 0.5,
                         condition: GT, value: .nan}
-                      - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: -0.5,
+                      - !<tag:stsci.edu:jwst_pipeline/logical-0.7.0> {compareto: -0.5,
                         condition: LT, value: .nan}
                     - !transform/scale-1.1.0 {factor: 0.0}
               - !transform/remap_axes-1.1.0
@@ -4500,9 +4500,9 @@ slits:
                     forward:
                     - !transform/compose-1.1.0
                       forward:
-                      - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: 0.5,
+                      - !<tag:stsci.edu:jwst_pipeline/logical-0.7.0> {compareto: 0.5,
                         condition: GT, value: .nan}
-                      - !<tag:stsci.edu:jwst_pipeline/logical-0.1.0> {compareto: -0.5,
+                      - !<tag:stsci.edu:jwst_pipeline/logical-0.7.0> {compareto: -0.5,
                         condition: LT, value: .nan}
                     - !transform/scale-1.1.0 {factor: 0.0}
               - !transform/remap_axes-1.1.0
