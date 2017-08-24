@@ -79,11 +79,6 @@ allOf:
               type: string
               fits_keyword: SRCALIAS
               fits_hdu: SCI
-            catalog_id:
-              title: Catalog ID
-              type: string
-              fits_keyword: CATLOGID
-              fits_hdu: SCI
             stellarity:
               title: Source stellarity
               type: number

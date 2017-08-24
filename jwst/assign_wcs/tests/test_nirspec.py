@@ -31,7 +31,7 @@ slit_fields_num = ["shutter_id", "xcen", "ycen",
                    "stellarity", "source_xpos", "source_ypos"]
 
 
-slit_fields_str = ["name", "source_name", "source_alias", "catalog_id"]
+slit_fields_str = ["name", "source_name", "source_alias"]
 
 
 def _compare_slits(s1, s2):
@@ -290,7 +290,7 @@ def test_msa_configuration_normal():
     msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
     ref_slit = Slit(55, 9376, 251, 26, -5.15, 0.55, 4, 1, 5, '95065_1', '2122',
-                      '2122', 0.13, -0.31716078999999997, -0.18092266)
+                      0.13, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -315,7 +315,7 @@ def test_msa_configuration_all_background():
     msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
     ref_slit = Slit(57, 616, 251, 2, 22.45, 25.85, 4, 1, 3, '95065_1', '2122',
-                    '2122', 0.13, -0.5, -0.5)
+                    0.13, -0.5, -0.5)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -330,7 +330,7 @@ def test_msa_configuration_row_skipped():
     msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
     ref_slit = Slit(58, 8646, 251, 24, -2.85, 5.15, 4, 1, 6, '95065_1', '2122',
-                      '2122', 0.130, -0.31716078999999997, -0.18092266)
+                      0.130, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -343,8 +343,8 @@ def test_msa_configuration_multiple_returns():
     msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
     ref_slit1 = Slit(59, 8651, 256, 24, -2.85, 5.15, 4, 1, 6, '95065_1', '2122',
-                     '2122', 0.13000000000000003, -0.31716078999999997, -0.18092266)
+                     0.13000000000000003, -0.31716078999999997, -0.18092266)
     ref_slit2 = Slit(60, 11573, 258, 32, -2.85, 4, 4, 2, 6, '95065_2', '172',
-                     '172', 0.70000000000000007, -0.31716078999999997, -0.18092266)
+                     0.70000000000000007, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit1)
     _compare_slits(slitlet_info[1], ref_slit2)
