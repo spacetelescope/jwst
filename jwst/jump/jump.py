@@ -5,6 +5,7 @@ import logging
 
 import numpy as np
 from ..datamodels import dqflags 
+from ..lib import reffile_utils
 from . import twopoint_difference as twopt
 from . import yintercept as yint
 
@@ -42,27 +43,18 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     ngroups = data.shape[1]
     nframes = input_model.meta.exposure.nframes
 
-    # Get subarray limits from metadata of input model
-    xstart = input_model.meta.subarray.xstart
-    xsize  = input_model.meta.subarray.xsize
-    xstop  = xstart + xsize - 1
-    ystart = input_model.meta.subarray.ystart
-    ysize  = input_model.meta.subarray.ysize
-    ystop  = ystart + ysize - 1
-
     # Get 2D gain and read noise values from their respective models
-    gain_2d = gain_model.data[ystart-1:ystop,xstart-1:xstop]
-
-    if (readnoise_model.meta.subarray.xstart==xstart and
-        readnoise_model.meta.subarray.xsize==xsize   and
-        readnoise_model.meta.subarray.ystart==ystart and
-        readnoise_model.meta.subarray.ysize==ysize):
-
-        log.debug('Readnoise subarray matches science data')
-        readnoise_2d = readnoise_model.data
+    if reffile_utils.is_subarray(input_model):
+        log.info('Extracting gain subarray to match science data')
+        gain_2d = reffile_utils.get_subarray_data(input_model, gain_model)
     else:
-        log.debug('Extracting readnoise subarray to match science data')
-        readnoise_2d = readnoise_model.data[ystart-1:ystop,xstart-1:xstop]
+        gain_2d = gain_model.data
+
+    if reffile_utils.is_subarray(input_model):
+        log.info('Extracting readnoise subarray to match science data')
+        readnoise_2d = reffile_utils.get_subarray_data(input_model, readnoise_model)
+    else:
+        readnoise_2d = readnoise_model.data
 
     # Flag the pixeldq where the gain is <=0 or NaN so they will be ignored
     wh_g = np.where( gain_2d <= 0.)  

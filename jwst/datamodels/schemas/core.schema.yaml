@@ -520,6 +520,10 @@ properties:
             title: data compressed on-board (T/F)
             type: boolean
             fits_keyword: COMPRSSD
+          gain_factor:
+            title: Gain scale factor
+            type: number
+            fits_keyword: GAINFACT
       subarray:
         title: Subarray parameters
         type: object
