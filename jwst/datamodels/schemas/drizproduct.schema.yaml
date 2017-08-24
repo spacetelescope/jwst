@@ -1,5 +1,6 @@
 allOf:
 - $ref: core.schema.yaml
+- $ref: wcsinfo.schema.yaml
 - $ref: lev3_prod.schema.yaml
 - type: object
   properties:
