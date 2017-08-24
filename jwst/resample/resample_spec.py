@@ -469,8 +469,8 @@ class ResampleSpecData(object):
             try:
                 for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
                     'slitlet_id', 'source_id', 'source_name', 'source_alias',
-                    'catalog_id', 'stellarity', 'source_type', 'source_xpos',
-                    'source_ypos', 'nshutters', 'relsens']:
+                    'stellarity', 'source_type', 'source_xpos', 'source_ypos',
+                    'nshutters', 'relsens']:
                     if hasattr(img, attr):
                         setattr(output_model, attr, getattr(img, attr))
             except:

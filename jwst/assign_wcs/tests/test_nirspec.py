@@ -31,7 +31,7 @@ slit_fields_num = ["shutter_id", "xcen", "ycen",
                    "stellarity", "source_xpos", "source_ypos"]
 
 
-slit_fields_str = ["name", "source_name", "source_alias", "catalog_id"]
+slit_fields_str = ["name", "source_name", "source_alias"]
 
 
 def _compare_slits(s1, s2):
