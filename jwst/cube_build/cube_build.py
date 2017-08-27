@@ -23,6 +23,8 @@ from . import spaxel
 from . import cube_overlap
 from . import cube_cloud
 from . import data_types
+from ..mrs_imatch import mrs_imatch_step
+
 
 from gwcs import wcstools
 
@@ -667,6 +669,24 @@ class CubeData(object):
                 c2_offset = self.master_table.FileOffset[this_par1][this_par2]['C2'][k]
 # Open the input data model
             with datamodels.ImageModel(ifile) as input_model:
+                # check if background sky matching as been done
+                # mrs_imatch step. THis is only for MRS data at this time
+                # but go head and check it before splitting by instrument
+                # the polynomial should be empty for NIRSPEC
+                do_background_subtraction = False
+                num_ch_bgk = len(input_model.meta.background.polynomial_info)
+
+                if(num_ch_bgk> 0):
+
+                    do_background_subtraction = True
+                    for ich_num in range(num_ch_bgk):
+                        poly = input_model.meta.background.polynomial_info[ich_num]
+                        poly_ch = poly.channel
+                        if(poly_ch == this_par1):
+                            print('*****Going to subtract background *******')
+                            mrs_imatch_step._apply_sky_2d(input_model,poly_ch)
+
+                
 #********************************************************************************
                 if self.instrument == 'MIRI':
 #________________________________________________________________________________
