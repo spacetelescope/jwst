@@ -241,13 +241,11 @@ class DataSet():
 
         slc = self.get_slice(self.trap_density, self.output_obj)
         if not self.ref_matches_sci(self.trap_density, slc):
-            self.trap_density = self.get_subarray_trapdensity(
-                                        self.trap_density, slc)
+            self.trap_density = self.get_subarray(self.trap_density, slc)
 
         slc = self.get_slice(self.persistencesat, self.output_obj)
         if not self.ref_matches_sci(self.persistencesat, slc):
-            self.persistencesat = self.get_subarray_persat(
-                                        self.persistencesat, slc)
+            self.persistencesat = self.get_subarray(self.persistencesat, slc)
 
         # Initialize the optional output.
         if self.save_persistence:
@@ -397,7 +395,7 @@ class DataSet():
         Parameters
         ----------
         ref: data model
-            A reference image.
+            Reference data.
 
         slc: tuple of two slice objects
             The Y and X slices that can be used to extract a subarray from
@@ -416,13 +414,13 @@ class DataSet():
             return False
 
 
-    def get_subarray_trapdensity(self, ref, slc):
+    def get_subarray(self, ref, slc):
         """Extract a subarray from a reference file.
 
         Parameters
         ----------
-        ref: a TrapDensityModel object
-            Reference data for trap density.
+        ref: a data model object
+            Reference data.
 
         slc: tuple of two slice objects
             The Y and X slices that can be used to extract a subarray from
@@ -431,45 +429,16 @@ class DataSet():
         Returns
         -------
         refsub: data model
-            `refsub` is the subarray extracted from `ref`.  `refsub` will
-            sometimes be 2-D and other times 3-D.
+            `refsub` is the subarray extracted from `ref`.
         """
 
-        sci = ref.data[slc[0], slc[1]].copy()
-        if hasattr(ref, "dq"):
-            dq = ref.dq[slc[0], slc[1]].copy()
-        else:
-            dq = np.zeros(sci.shape, dtype=np.int32)
-        refsub = datamodels.TrapDensityModel(data=sci, dq=dq)
-
-        return refsub
-
-
-    def get_subarray_persat(self, ref, slc):
-        """Extract a subarray from a reference file.
-
-        Parameters
-        ----------
-        ref: a PersistenceSatModel object
-            Reference data for the persistence saturation limit.
-
-        slc: tuple of two slice objects
-            The Y and X slices that can be used to extract a subarray from
-            the reference file.  This was returned by function get_slice.
-
-        Returns
-        -------
-        refsub: data model
-            `refsub` is the subarray extracted from `ref`.  `refsub` will
-            sometimes be 2-D and other times 3-D.
-        """
-
-        sci = ref.data[slc[0], slc[1]].copy()
-        if hasattr(ref, "dq"):
-            dq = ref.dq[slc[0], slc[1]].copy()
-        else:
-            dq = np.zeros(sci.shape, dtype=np.int32)
-        refsub = datamodels.PersistenceSatModel(data=sci, dq=dq)
+        refsub = ref.copy()
+        # If the reference file data might have a dimension greater than
+        # two, use this syntax:
+        # refsub.data = ref.data[..., slc[0], slc[1]].copy()
+        refsub.data = ref.data[slc[0], slc[1]].copy()
+        if "dq" in ref:
+            refsub.dq = ref.dq[slc[0], slc[1]].copy()
 
         return refsub
 
