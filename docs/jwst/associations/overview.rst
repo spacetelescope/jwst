@@ -31,6 +31,30 @@ relationships are show in the figure below.
 .. figure:: graphics/overview.png
    :scale: 75%
 
+.. _asn-association-types:
+
+Association Types
+=================
+
+Each association is intended to make a specific science
+product. The type of science product is indicated by the `ATYPE` field
+in the association file name (see :ref:`asn-DMS-naming`), and in the `asn_type` meta
+keyword of the association itself (see :ref:`asn-association-meta-keywords`).
+
+The pipeline uses this type as the key to indicate which Level 2 or
+Level 3 pipeline module to use to process this association.
+
+The current association types are:
+
+  * `image3`: Intended for `calwebb_image3` processing
+  * `spec3`: Intended for `calwebb_spec3` processing
+  * `wfs`: Wave front sensing data, used by `wfs_combine`
+  * `ami3`: Intended for `calwebb_ami3` processing
+  * `coron3`: Intended for `calwebb_coron3` processing
+  * `tso3`: Intended for `calwebb_tso3` processing
+  * `image2`: Intended for `calwebb_image2` processing
+  * `spec2`: Intended for `calwebb_spec2` processing
+
 .. _association-generator:
 
 Association Generator Overview
@@ -42,13 +66,13 @@ rows from the originating table that created the association are
 actually in the association. The generator was initially developed to
 support the JWST pipeline, which requires two types of rules. These
 predefined rules, called :ref:`Level2 <level2-associations>` and
-:ref:`Level3 <level3-associations>` associations, produce very
-different association structures.
+:ref:`Level3 <level3-associations>`, produce associations targeted to
+specific level2 and level3 pipelines.
 
-As the structures of the associations are determined by the rules,
-so is the output. For the JWST predefined rules, the output are a series
-of `JSON` or `YAML` formatted files for each association created.
-The naming of these files are determined by strict rules.
+As they define the structures of the associations, the rules also
+define the format of how the associations are written. For the JWST
+predefined rules, the output are a series of `JSON` or `YAML`
+formatted files for each association created.
 
 Usage
 -----
@@ -56,7 +80,8 @@ Usage
 Users should not need to run the generator. Instead, it is expected
 that one edits an already existing association that accompanies the
 user's JWST data. Or, if need be, an association can be created based
-on the :ref:`Level3 example <asn-level3-example>`.
+on the existing :ref:`Level2 <asn-level2-example>` or
+:ref:`Level3 <asn-level3-example>` examples.
 
 Once an association is in-hand, one can pass it as input to a pipeline
 routine. For example::
@@ -128,7 +153,7 @@ processing. Due to the nature of the individual instruments, observing
 modes, and the interruptability of the observatory itself, how to
 group the right exposures together is not straight-forward.
 
-Enter the :ref:`association-generator`. Given a set of exposures,
+Enter the :ref:`Association Generator <association-generator>`. Given a set of exposures,
 called the :ref:`Association Pool <asn-pool>`, and a set of rules found in an
 :ref:`Association Registry <asn-registry>`, the generator groups the exposures into
 individual :ref:`associations <association>`. These associations are
