@@ -45,7 +45,7 @@ class Step(object):
     suffix = string(default=None)           # Default suffix for output files
     """
 
-    # Reference types for both command line override definitiion and reference prefetch
+    # Reference types for both command line override definition and reference prefetch
     reference_file_types = []
     
     # Set to False in subclasses to skip prefetch,  but by default attempt to prefetch
