@@ -97,6 +97,8 @@ def ifu_extract1d(input_model, refname, source_type):
                     dtype=spec.spec_table.dtype)
     spec = datamodels.SpecModel(spec_table=otab)
     spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
+    spec.slit_ra = ra
+    spec.slit_dec = dec
     output_model.spec.append(spec)
 
     # See output_model.spec[0].meta.wcs instead.

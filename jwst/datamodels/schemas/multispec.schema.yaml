@@ -28,4 +28,71 @@ allOf:
               datatype: float64
             - name: BERROR
               datatype: float64
+          name:
+            title: Name of the slit
+            type: string
+            fits_keyword: SLTNAME
+            fits_hdu: EXTRACT1D
+          slitlet_id:
+            title: Slitlet ID
+            type: integer
+            default: 0
+            fits_keyword: SLITID
+            fits_hdu: EXTRACT1D
+          source_id:
+            title: Source ID
+            type: integer
+            default: 0
+            fits_keyword: SOURCEID
+            fits_hdu: EXTRACT1D
+          source_name:
+            title: Source name
+            type: string
+            fits_keyword: SRCNAME
+            fits_hdu: EXTRACT1D
+          source_alias:
+            title: Source alias
+            type: string
+            fits_keyword: SRCALIAS
+            fits_hdu: EXTRACT1D
+          stellarity:
+            title: Source stellarity
+            type: number
+            fits_keyword: STLARITY
+            fits_hdu: EXTRACT1D
+          source_type:
+            title: Source type (point/extended)
+            type: string
+            fits_keyword: SRCTYPE
+            fits_hdu: EXTRACT1D
+          source_xpos:
+            title: Source position in slit (x-axis)
+            type: number
+            default: 0.0
+            fits_keyword: SRCXPOS
+            fits_hdu: EXTRACT1D
+          source_ypos:
+            title: Source position in slit (y-axis)
+            type: number
+            default: 0.0
+            fits_keyword: SRCYPOS
+            fits_hdu: EXTRACT1D
+          nshutters:
+            title: Number of open shutters
+            type: integer
+            default: 0
+            fits_keyword: NSHUT
+            fits_hdu: EXTRACT1D
+          slit_ra:
+            title: Right ascension (deg) at middle of slit
+            type: number
+            default: 0.0
+            fits_keyword: SLIT_RA
+            fits_hdu: EXTRACT1D
+          slit_dec:
+            title: Declination (deg) at middle of slit
+            type: number
+            default: 0.0
+            fits_keyword: SLIT_DEC
+            fits_hdu: EXTRACT1D
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

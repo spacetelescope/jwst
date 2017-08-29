@@ -1081,6 +1081,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
+            spec.slit_ra = ra
+            spec.slit_dec = dec
             output_model.spec.append(spec)
     else:
         slitname = input_model.meta.exposure.type
@@ -1126,6 +1128,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
+            spec.slit_ra = ra
+            spec.slit_dec = dec
             output_model.spec.append(spec)
 
         elif isinstance(input_model, datamodels.CubeModel):
@@ -1171,6 +1175,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 spec = datamodels.SpecModel(spec_table=otab)
                 spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec,
                                                              wavelength)
+                spec.slit_ra = ra
+                spec.slit_dec = dec
                 output_model.spec.append(spec)
 
         elif isinstance(input_model, datamodels.IFUCubeModel):
