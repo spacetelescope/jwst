@@ -2,10 +2,12 @@
 #  Module for 2d saturation
 #
 import logging
-from ..datamodels import dqflags
-import numpy as np
 
+from ..datamodels import dqflags
+from ..lib import reffile_utils
 from . import x_irs2
+
+import numpy as np
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -43,13 +45,16 @@ def do_correction(input_model, ref_model):
     output_model = input_model.copy()
     groupdq = output_model.groupdq
 
-    # Check for subarray mode
-    if ref_matches_sci(ref_model, input_model):
+    # Extract subarray from reference file, if necessary
+    if reffile_utils.ref_matches_sci(input_model, ref_model):
         satmask = ref_model.data
         dqmask = ref_model.dq
     else:
-        satmask = get_subarray(ref_model.data, input_model)
-        dqmask = get_subarray(ref_model.dq, input_model)
+        log.info('Extracting reference file subarray to match science data')
+        ref_sub_model = reffile_utils.get_subarray_model(input_model, ref_model)
+        satmask = ref_sub_model.data.copy()
+        dqmask = ref_sub_model.dq.copy()
+        ref_sub_model.close()
 
     # For pixels flagged in reference file as NO_SAT_CHECK, set the dq mask
     #   and saturation mask
@@ -126,70 +131,3 @@ def correct_for_NaN(satmask, dqmask):
                  " detected in the ref file; for those affected pixels no"
                  " saturation check will be made.")
 
-
-def ref_matches_sci(ref_model, sci_model):
-    """
-    Short Summary
-    -------------
-    Determine whether or not the reference file data are from the same
-    subarray region as the science data model. Currently this is done by
-    simply comparing the sizes of the two arrays. In the future, the
-    actual subarray corners will be checked to verify that they are from the
-    same range of pixel indices.
-
-    Parameters
-    ----------
-    ref_model: data model object
-        The reference data model
-
-    sci_model: data model object
-        The science data model
-
-    Returns
-    -------
-    True or False
-    """
-
-    detector = sci_model.meta.instrument.detector
-    sci_shape = x_irs2.normal_shape(sci_model, detector=detector)
-    if ref_model.data.shape == sci_shape[-2:]:
-        return True
-    else:
-        return False
-
-
-def get_subarray(input_array, reference):
-    """
-    Short Summary
-    -------------
-    Get a 2d subarray of an input array. The subarray is extracted from the
-    last two dimensions of the input array. The input array can have
-    any number of dimensions >= 2.
-
-    Parameters
-    ----------
-    input_array: numpy array
-        input array from which subarray is to be extracted
-
-    reference: data model
-        data model to be used as a reference for the subarray
-        to be extracted
-
-    Returns
-    -------
-    input_array: numpy array
-        subarray slice of the input array
-    """
-    if (reference.meta.subarray.xstart is None or
-        reference.meta.subarray.xsize is None or
-        reference.meta.subarray.ystart is None or
-        reference.meta.subarray.ysize is None):
-        raise ValueError('subarray metadata values not found')
-
-    xstart = reference.meta.subarray.xstart - 1
-    xstop = xstart + reference.meta.subarray.xsize
-    ystart = reference.meta.subarray.ystart - 1
-    ystop = ystart + reference.meta.subarray.ysize
-    log.debug("xstart=%d, xstop=%d, ystart=%d, ystop=%d" % (xstart, xstop, ystart, ystop))
-
-    return input_array[..., ystart:ystop, xstart:xstop]

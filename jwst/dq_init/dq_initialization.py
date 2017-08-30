@@ -11,6 +11,7 @@ import logging
 import numpy as np
 
 from .. import datamodels
+from ..lib import reffile_utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -33,23 +34,17 @@ def do_dqinit(input_model, mask_model):
     # Inflate empty DQ array, if necessary
     check_dimensions(input_model)
 
-    # Make sure the mask array is not smaller than the science array
-    if (input_model.data.shape[-1] > mask_model.dq.shape[-1]) or \
-       (input_model.data.shape[-2] > mask_model.dq.shape[-2]):
-        log.warning("Reference data shape is smaller than science data")
-        log.warning("Step will be skipped")
-        input_model.meta.cal_step.dq_init = 'SKIPPED'
-        return input_model
-
     # Create output model as copy of input
     output_model = input_model.copy()
 
     # Extract subarray from reference data, if necessary
-    if is_subarray(output_model):
-        log.debug('input exposure is a subarray readout')
-        mask_array = get_mask_subarray(mask_model, output_model)
-    else:
+    if reffile_utils.ref_matches_sci(output_model, mask_model):
         mask_array = mask_model.dq
+    else:
+        log.info('Extracting mask subarray to match science data')
+        mask_sub_model = reffile_utils.get_subarray_model(output_model, mask_model)
+        mask_array = mask_sub_model.dq.copy()
+        mask_sub_model.close()
 
     # Set model-specific data quality in output
     if input_model.meta.exposure.type in guider_list:
@@ -62,58 +57,6 @@ def do_dqinit(input_model, mask_model):
     output_model.meta.cal_step.dq_init = 'COMPLETE'
 
     return output_model
-
-
-def is_subarray(input_model):
-
-    # get model-specific data quality dimensions
-    if input_model.meta.exposure.type in guider_list:
-        nrows, ncols = input_model.dq.shape
-    else:
-        nrows, ncols = input_model.pixeldq.shape
-
-    instrument = input_model.meta.instrument.name
-
-    if instrument == 'MIRI':
-        if ncols < 1032 or nrows < 1024: return True
-        return False
-    else:
-        if ncols < 2048 or nrows < 2048: return True
-        return False
-
-
-def get_mask_subarray(mask_model, output_model):
-
-    if (output_model.meta.subarray.xstart is None or
-        output_model.meta.subarray.ystart is None):
-        raise ValueError('xstart or ystart metadata values not found')
-
-    # get model-specific data quality array sizes
-    if output_model.meta.exposure.type in guider_list:
-        ysize, xsize = output_model.dq.shape
-    else:
-        ysize, xsize = output_model.pixeldq.shape
-
-    xstart = output_model.meta.subarray.xstart
-    xstop = xstart + xsize - 1
-    ystart = output_model.meta.subarray.ystart
-    ystop = ystart + ysize - 1
-
-    log.debug('science xstart=%d, xstop=%d, ystart=%d, ystop=%d',
-              xstart, xstop, ystart, ystop)
-    log.debug('ref xsize=%d, ysize=%d',
-              mask_model.dq.shape[1], mask_model.dq.shape[0])
-
-    if (xstart < 1 or ystart < 1 or
-        xstop > mask_model.dq.shape[1] or ystop > mask_model.dq.shape[0]):
-        log.error('Computed reference file subarray indexes are incompatible with size of reference data array')
-        log.error('xstart=%d, xstop=%d, ystart=%d, ystop=%d',
-                   xstart, xstop, ystart, ystop)
-        log.error('Reference xsize=%d, ysize=%d',
-                   mask_model.dq.shape[1], mask_model.dq.shape[0])
-        raise ValueError('Bad subarray indexes')
-
-    return mask_model.dq[ystart - 1:ystop, xstart - 1:xstop]
 
 
 def check_dimensions(input_model):
