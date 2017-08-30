@@ -1,6 +1,7 @@
 from __future__ import division
 
 from ..datamodels import dqflags
+from ..lib import reffile_utils
 from .linearity_func import apply_linearity_func
 
 import numpy as np
@@ -63,10 +64,13 @@ def propagate_dq_info(input, linearity_ref_model):
     """
 
     # Retrieve 2D DQ subarray from linearity reference file, if necessary
-    if ref_matches_sci(linearity_ref_model, input):
+    if reffile_utils.ref_matches_sci(input, linearity_ref_model):
         lindq = linearity_ref_model.dq
     else:
-        lindq = get_subarray(linearity_ref_model.dq, input)
+        log.info('Extracting linearity subarray to match science data')
+        sub_lin_model = reffile_utils.get_subarray_model(input, linearity_ref_model)
+        lindq = sub_lin_model.dq.copy()
+        sub_lin_model.close()
 
     # Combine the DQ arrays using bitwise_or
     input.pixeldq = np.bitwise_or(input.pixeldq, lindq)
@@ -99,12 +103,13 @@ def apply_linearity(input, linearity_ref_model):
         dq = (ramp * 0).astype(np.uint32)
 
     # Check for subarray mode
-    if ref_matches_sci(linearity_ref_model, input):
+    if reffile_utils.ref_matches_sci(input, linearity_ref_model):
         lin_coeffs = linearity_ref_model.coeffs
         lin_dq = linearity_ref_model.dq
     else:
-        lin_coeffs = get_subarray(linearity_ref_model.coeffs, input)
-        lin_dq = get_subarray(linearity_ref_model.dq, input)
+        sub_lin_model = reffile_utils.get_subarray_model(input, linearity_ref_model)
+        lin_coeffs = sub_lin_model.coeffs.copy()
+        lin_dq = sub_lin_model.dq.copy()
 
     # Check for NO_LIN_CORR flags in the DQ extension of the ref file
     lin_coeffs = correct_for_flag(lin_coeffs, lin_dq)
@@ -117,36 +122,6 @@ def apply_linearity(input, linearity_ref_model):
 
     # Apply the correction function
     input.data = apply_linearity_func(ramp, dq, lin_coeffs, sat_val)
-
-
-def ref_matches_sci(ref_model, sci_model):
-    """
-    Short Summary
-    -------------
-    Determine whether or not reference file data are from the same
-    subarray region as a science data model. Currently this is done by
-    simply comparing the sizes of the two arrays. In the future, the
-    actual subarray corners will be checked to verify that it's from the
-    exact same range of pixel indices.
-
-    Parameters
-    ----------
-    ref_model: data model object
-        The reference data model
-
-    sci_model: data model object
-        The science data model
-
-    Returns
-    -------
-    True or False
-
-    """
-
-    if ref_model.coeffs.shape[1:] == sci_model.data.shape[2:]:
-        return True
-    else:
-        return False
 
 
 def correct_for_NaN(lin_coeffs, input):
@@ -267,43 +242,3 @@ def ben_coeffs(lin_coeffs):
     ben_cor[1] = 1.0
 
     return ben_cor
-
-
-def get_subarray(input_array, reference):
-    """
-    Short Summary
-    -------------
-    Get a 2-d subarray of an input array. The subarray is extracted from the
-    last two dimensions of the input array. The input array can have
-    any number of dimensions >= 2.
-
-    Parameters
-    ----------
-    input_array: array like
-        input array from which subarray is to be extracted
-
-    reference: data model
-        data model to be used as a reference for the subarray
-        to be extracted
-
-    Returns
-    -------
-    input_array slice: array like
-        subarray slice of the input array
-
-    """
-
-    if (reference.meta.subarray.xstart is None or
-        reference.meta.subarray.xsize is None or
-        reference.meta.subarray.ystart is None or
-        reference.meta.subarray.ysize is None):
-        raise ValueError('subarray metadata values not found')
-
-    xstart = reference.meta.subarray.xstart - 1
-    xstop = xstart + reference.meta.subarray.xsize
-    ystart = reference.meta.subarray.ystart - 1
-    ystop = ystart + reference.meta.subarray.ysize
-    log.debug("xstart=%d, xstop=%d, ystart=%d, ystop=%d" \
-              % (xstart, xstop, ystart, ystop))
-
-    return input_array[..., ystart:ystop, xstart:xstop]

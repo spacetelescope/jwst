@@ -861,17 +861,17 @@ def get_ref_subs(model, readnoise_model, gain_model):
         gain subarray
     """
 
-    if reffile_utils.is_subarray(model):
-        log.info('Extracting readnoise subarray to match science data')
-        readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
+    if reffile_utils.ref_matches_sci(model, gain_model):
+        gain_2d = gain_model.data
     else:
-        readnoise_2d = readnoise_model.data
-
-    if reffile_utils.is_subarray(model):
         log.info('Extracting gain subarray to match science data')
         gain_2d = reffile_utils.get_subarray_data(model, gain_model)
+
+    if reffile_utils.ref_matches_sci(model, readnoise_model):
+        readnoise_2d = readnoise_model.data
     else:
-        gain_2d = gain_model.data
+        log.info('Extracting readnoise subarray to match science data')
+        readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
 
     readnoise_2d *= gain_2d # convert read noise to correct units
 

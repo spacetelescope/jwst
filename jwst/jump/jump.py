@@ -44,17 +44,17 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     nframes = input_model.meta.exposure.nframes
 
     # Get 2D gain and read noise values from their respective models
-    if reffile_utils.is_subarray(input_model):
+    if reffile_utils.ref_matches_sci(input_model, gain_model):
+        gain_2d = gain_model.data
+    else:
         log.info('Extracting gain subarray to match science data')
         gain_2d = reffile_utils.get_subarray_data(input_model, gain_model)
-    else:
-        gain_2d = gain_model.data
 
-    if reffile_utils.is_subarray(input_model):
+    if reffile_utils.ref_matches_sci(input_model, readnoise_model):
+        readnoise_2d = readnoise_model.data
+    else:
         log.info('Extracting readnoise subarray to match science data')
         readnoise_2d = reffile_utils.get_subarray_data(input_model, readnoise_model)
-    else:
-        readnoise_2d = readnoise_model.data
 
     # Flag the pixeldq where the gain is <=0 or NaN so they will be ignored
     wh_g = np.where( gain_2d <= 0.)  
@@ -105,6 +105,3 @@ def detect_jumps (input_model, gain_model, readnoise_model,
     output_model.pixeldq = pdq
 
     return output_model
-
-
-
