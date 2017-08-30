@@ -19,10 +19,8 @@ class RampFitStep (Step):
     """
 
     spec = """
-        int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
-
     """
 
     # Prior to 04/26/17, the following were also in the spec above:
@@ -49,14 +47,14 @@ class RampFitStep (Step):
             log.info('Using GAIN reference file: %s', gain_filename)
             gain_model = datamodels.GainModel(gain_filename)
 
-            # Try to retrieve the gain factor from the gain reference file
+            # Try to retrieve the gain factor from the gain reference file.
+            # If found, store it in the science model meta data, so that it's
+            # available later in the gain_scale step, which avoids having to
+            # load the gain ref file again in that step.
+            input_model.meta.exposure.gain_factor = None
             if gain_model.meta.gain_factor is not None:
-                gain_factor = gain_model.meta.gain_factor
-                input_model.meta.exposure.gain_factor = gain_factor
-            else:
-                self.log.warning('GAINFACT not found in gain reference file')
-                input_model.meta.exposure.gain_factor = None
-                gain_factor = None
+                input_model.meta.exposure.gain_factor = \
+                    gain_model.meta.gain_factor
 
             log.info('Using algorithm = %s' % self.algorithm)
             log.info('Using weighting = %s' % self.weighting)
@@ -71,22 +69,7 @@ class RampFitStep (Step):
                                            self.algorithm, self.weighting)
 
             readnoise_model.close()
-
-        # Save the multi-integration product, if it exists
-        if int_model is not None:
-
-            # Apply the gain scale to the multi-integration product
-            if gain_factor is not None:
-                int_model = gain_scale.do_correction(int_model, gain_factor)
-                int_model.meta.cal_step.gain_scale = 'COMPLETE'
-            else:
-                int_model.meta.cal_step.gain_scale = 'SKIPPED'
-
-            # Save the model
-            if self.int_name != '':
-                int_model.save(self.int_name)
-            else:
-                self.save_model(int_model, 'rateints')
+            gain_model.close()
 
         # Save the OLS optional fit product, if it exists
         if opt_model is not None:
@@ -103,8 +86,10 @@ class RampFitStep (Step):
                 self.save_model(gls_opt_model, 'fitoptgls')
 
         out_model.meta.cal_step.ramp_fit = 'COMPLETE'
+        if int_model is not None:
+            int_model.meta.cal_step.ramp_fit = 'COMPLETE'
 
-        return out_model
+        return out_model, int_model
 
 if __name__ == '__main__':
     cmdline.step_script(ramp_fit_step)
