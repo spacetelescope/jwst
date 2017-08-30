@@ -112,10 +112,16 @@ class SloperPipeline(Pipeline):
             self.save_model(input, 'ramp')
 
         # apply the ramp_fit step
-        input = self.ramp_fit(input)
+        input, ints_model = self.ramp_fit(input)
 
-        # apply the gain_scale step
+        # apply the gain_scale step to the exposure-level product
         input = self.gain_scale(input)
+
+        # apply the gain scale step to the multi-integration product,
+        # if it exists, and then save it
+        if ints_model is not None:
+            ints_model = self.gain_scale(ints_model)
+            self.save_model(ints_model, 'rateints')
 
         # setup output_file for saving
         self.setup_output(input)
