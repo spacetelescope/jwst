@@ -23,7 +23,7 @@ from . import spaxel
 from . import cube_overlap
 from . import cube_cloud
 from . import data_types
-#from ..mrs_imatch import mrs_imatch_step
+from jwst.mrs_imatch.mrs_imatch_step import _apply_sky_2d
 
 
 from gwcs import wcstools
@@ -684,7 +684,7 @@ class CubeData(object):
                         poly_ch = poly.channel
                         if(poly_ch == this_par1):
                             print('*****Going to subtract background *******')
-#                            mrs_imatch_step._apply_sky_2d(input_model,poly_ch)
+                            _apply_sky_2d(input_model,poly_ch)
 
                 
 #********************************************************************************
