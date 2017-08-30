@@ -36,5 +36,5 @@ header, which will cause the `gain_scale` step to be skipped. Alternatively,
 gain reference files for modes that use the standard gain can have
 `GAINFACT=1.0`, in which case the correction will be benign.
 
-Up successful completion of the step the `S_GANSCL' keyword in the
+Upon successful completion of the step, the `S_GANSCL` keyword in the
 science data will be set to "COMPLETE."
