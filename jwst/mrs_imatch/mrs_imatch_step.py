@@ -10,6 +10,7 @@ JWST pipeline step for image intensity matching for MIRI images.
 from __future__ import (absolute_import, division, unicode_literals,
                         print_function)
 
+import six
 import numpy as np
 
 from .. stpipe import Step, cmdline
@@ -92,9 +93,11 @@ class MRSIMatchStep(Step):
         for c in sorted(single_ch.keys()):
             matched_models = _match_models(single_ch[c], channel=str(c),
                                            degree=degree)
-            if self.subtract:
-                for m in matched_models:
-                    _apply_sky_2d(m, channel=str(c))
+
+        if self.subtract:
+            for m in all_models2d:
+                apply_background_2d(m)
+                m.meta.background.subtracted = True
 
         return images
 
@@ -120,8 +123,73 @@ class MRSIMatchStep(Step):
             del m.meta.background
 
 
-def _apply_sky_2d(model2d, channel):
-    """ Apply/subtract sky from 2D image data. """
+def apply_background_2d(model2d, channel=None, subtract=True):
+    """ Apply (subtract or add back) background values computed from
+        ``meta.background`` polynomials to 2D image data.
+
+        This function modifies the input ``model2d``'s data.
+
+        .. warning::
+           This function does not check whether background was previously
+           applied to image data (through ``meta.background.subtracted``).
+
+        .. warning::
+           This function does not modify input model's
+           ``meta.background.subtracted`` attribute to indicate that
+           background has been applied to model's data. User is responsible
+           for setting ``meta.background.subtracted`` after background
+           was applied to all channels. Partial application of background
+           (i.e., to only *some channels* as opposite to *all* channels) is
+           not recommended.
+
+        Parameters
+        ----------
+        model2d : jwst.datamodels.image.ImageModel
+            A `jwst.datamodels.image.ImageModel` from whose data background
+            needs to be subtracted (or added back).
+
+        channel : str, int, list, None, optional
+            This parameter indicates for which channel background values should
+            be applied. An integer value is automatically converted to a string
+            type. A string type input value indicates **a single** channel
+            to which background should be applied. ``channel`` can also be a
+            list of several string or integer single channel values.
+            The default value of `None` indicates that background should be
+            applied to all channels.
+
+        subtract : bool, optional
+            Indicates whether to subtract or add back background values to
+            input model data. By default background is subtracted from data.
+
+
+
+    """
+
+    mpolyinfo = model2d.meta.background.polynomial_info
+
+    if channel is None:
+        channel = [pi.channel for pi in mpolyinfo]
+        for ch in channel:
+            apply_background_2d(model2d, channel=ch, subtract=subtract)
+        return
+
+    if isinstance(channel, int):
+        channel = str(channel)
+
+    elif hasattr(channel, '__iter__'):
+        available_channels = [pi.channel for pi in mpolyinfo]
+        diff = sorted(set(map(str, channel)).difference(available_channels))
+        if len(diff) > 0:
+            missing_channels = ', '.join(diff)
+            raise ValueError("Background data for channel(s) '{}' not present "
+                             "in 2D model '{}'"
+                             .format(missing_channels, model2d.meta.filename))
+        for ch in channel:
+            apply_background_2d(model2d, channel=ch, subtract=subtract)
+        return
+
+    elif not isinstance(channel, six.string_types):
+        raise TypeError("Unsupported 'channel' type")
 
     index = _find_channel_bkg_index(model2d, channel)
     if index is None:
@@ -130,7 +198,7 @@ def _apply_sky_2d(model2d, channel):
                          .format(channel, model2d.meta.filename))
 
     # get may parameters of the background polynomial:
-    bkgmeta = model2d.meta.background.polynomial_info[index]
+    bkgmeta = mpolyinfo[index]
     degree = tuple(bkgmeta.degree)
     degree_p1 = tuple((i + 1 for i in degree))
     c = np.reshape(list(bkgmeta.coefficients), degree_p1)
@@ -163,7 +231,11 @@ def _apply_sky_2d(model2d, channel):
     bkg = np.polynomial.polynomial.polyval3d(r, d, l, c)
 
     # subtract background:
-    model2d.data[y, x] -= bkg
+    if subtract:
+        model2d.data[y, x] -= bkg
+        bkgmeta
+    else:
+        model2d.data[y, x] += bkg
 
 
 def _get_2d_pixgrid(model2d, channel):
