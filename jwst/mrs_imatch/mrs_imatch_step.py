@@ -161,8 +161,6 @@ def apply_background_2d(model2d, channel=None, subtract=True):
             Indicates whether to subtract or add back background values to
             input model data. By default background is subtracted from data.
 
-
-
     """
 
     mpolyinfo = model2d.meta.background.polynomial_info
