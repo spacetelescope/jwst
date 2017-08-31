@@ -536,7 +536,7 @@ class AsnMixin_Target(DMS_Level3_Base):
         self.add_constraints({
             'target': {
                 'value': None,
-                'inputs': ['targetid']
+                'inputs': ['targetid'],
             },
         })
 

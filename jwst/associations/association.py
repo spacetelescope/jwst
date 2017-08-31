@@ -401,6 +401,11 @@ class Association(MutableMapping):
         """
         reprocess = []
 
+        # Only perform check on specified `onlyif` condition
+        onlyif = conditions.get('onlyif', lambda member: True)
+        if not onlyif(member):
+            return True, reprocess
+
         # Get the condition information.
         try:
             input, value = self.member_getattr(

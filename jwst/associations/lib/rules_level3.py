@@ -358,6 +358,11 @@ class Asn_Coron(
                 'inputs': ['exp_type'],
                 'force_unique': True,
             },
+            'target': {
+                'value': None,
+                'inputs': ['targetid'],
+                'onlyif': lambda member: self.get_exposure_type(member) == 'science'
+            }
         })
 
         # PSF is required
