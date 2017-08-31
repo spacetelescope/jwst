@@ -25,7 +25,7 @@ except ImportError:
     from stsci.tools.bitmask import interpret_bits_value as interpret_bit_flags
 
 
-__all__ = ['MRSIMatchStep']
+__all__ = ['MRSIMatchStep', 'apply_background_2d']
 
 
 class MRSIMatchStep(Step):
