@@ -1,6 +1,7 @@
 """Association attributes common to DMS-based Rules"""
 from .counter import Counter
 
+from jwst.associations.association import getattr_from_list
 from jwst.associations.exceptions import (
     AssociationNotValidError,
 )
@@ -188,6 +189,16 @@ class DMSBaseMixin(ACIDMixin):
             When `default` is None and an exposure type cannot be determined
         """
         result = default
+
+        # Look for specific attributes
+        try:
+            self.member_getattr(member, ['IS_PSF'])
+        except KeyError:
+            pass
+        else:
+            return 'PSF'
+
+        # Base type off of exposure type.
         try:
             exp_type = member['exp_type']
         except KeyError:
@@ -195,3 +206,31 @@ class DMSBaseMixin(ACIDMixin):
 
         result = _EXPTYPE_MAP.get(exp_type, default)
         return result
+
+    def member_getattr(self, member, attributes):
+        """Return value from any of a list of attributes
+
+        Parameters
+        ----------
+        member: dict
+            member to retrieve from
+
+        attributes: list
+            List of attributes
+
+        Returns
+        -------
+        (attribute, value)
+            Returns the value and the attribute from
+            which the value was taken.
+
+        Raises
+        ------
+        KeyError
+            None of the attributes are found in the dict.
+        """
+        return getattr_from_list(
+            member,
+            attributes,
+            invalid_values=self.INVALID_VALUES
+        )

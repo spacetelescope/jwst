@@ -403,10 +403,9 @@ class Association(MutableMapping):
 
         # Get the condition information.
         try:
-            input, value = getattr_from_list(
+            input, value = self.member_getattr(
                 member,
                 conditions['inputs'],
-                invalid_values=self.INVALID_VALUES
             )
         except KeyError:
             if not conditions.get('force_undefined', False) and \

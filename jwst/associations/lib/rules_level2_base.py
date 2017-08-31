@@ -12,7 +12,6 @@ from jwst.associations import (
     AssociationRegistry,
     libpath
 )
-from jwst.associations.association import getattr_from_list
 from jwst.associations.lib.dms_base import (DMSBaseMixin, PRODUCT_NAME_DEFAULT)
 from jwst.associations.lib.rules_level3_base import _EMPTY
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
@@ -139,7 +138,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         if check_flags:
             for flag in check_flags:
                 try:
-                    getattr_from_list(member, [flag], self.INVALID_VALUES)
+                    self.member_getattr(member, [flag])
                 except KeyError:
                     continue
                 else:
