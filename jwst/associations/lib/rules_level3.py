@@ -355,7 +355,8 @@ class Asn_Coron(
                     '|mir_lyot'
                     '|mir_4qpm'
                 ),
-                'inputs': ['exp_type']
+                'inputs': ['exp_type'],
+                'force_unique': True,
             },
         })
 
@@ -369,3 +370,9 @@ class Asn_Coron(
 
         # Check and continue initialization.
         super(Asn_Coron, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, member):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'coron3'
+        super(Asn_Coron, self)._init_hook(member)
