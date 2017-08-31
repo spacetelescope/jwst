@@ -366,5 +366,6 @@ class Asn_Coron(
                 'check': lambda entry: entry['exptype'] == 'psf'
             }
         })
+
         # Check and continue initialization.
         super(Asn_Coron, self).__init__(*args, **kwargs)

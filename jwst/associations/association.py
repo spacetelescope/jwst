@@ -671,7 +671,7 @@ def getattr_from_list(adict, attributes, invalid_values=None):
             else:
                 continue
     else:
-        raise KeyError
+        raise KeyError('Object has no attributes in {}'.format(attributes))
 
 
 def evaluate(value):

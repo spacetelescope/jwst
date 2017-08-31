@@ -161,7 +161,7 @@ class DMSBaseMixin(ACIDMixin):
     def reset_sequence(cls):
         cls._sequence = Counter(start=1)
 
-    def get_exposure_type(self, member, default=None):
+    def get_exposure_type(self, member, default='science'):
         """Determine the exposure type of a pool member
 
         Parameters
@@ -192,11 +192,11 @@ class DMSBaseMixin(ACIDMixin):
 
         # Look for specific attributes
         try:
-            self.member_getattr(member, ['IS_PSF'])
+            self.member_getattr(member, ['is_psf'])
         except KeyError:
             pass
         else:
-            return 'PSF'
+            return 'psf'
 
         # Base type off of exposure type.
         try:
@@ -205,6 +205,9 @@ class DMSBaseMixin(ACIDMixin):
             raise LookupError('Exposure type cannot be determined')
 
         result = _EXPTYPE_MAP.get(exp_type, default)
+
+        if result is None:
+            raise LookupError('Cannot determine exposure type')
         return result
 
     def member_getattr(self, member, attributes):

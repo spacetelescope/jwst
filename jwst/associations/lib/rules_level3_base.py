@@ -195,7 +195,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             exposerr = None
         entry = {
             'expname': Utility.rename_to_level2b(member['filename']),
-            'exptype': self.get_exposure_type(member, default='science'),
+            'exptype': self.get_exposure_type(member),
             'exposerr': exposerr,
             'asn_candidate': member['asn_candidate']
         }
