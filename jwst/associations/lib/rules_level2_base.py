@@ -135,7 +135,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         -------
         exptype: str
         """
-        exptype = Utility.get_exposure_type(member, default='science')
+        exptype = self.get_exposure_type(member, default='science')
         if check_flags:
             for flag in check_flags:
                 try:
@@ -358,10 +358,6 @@ class Utility(object):
             match.group('extension')
         ])
         return level2a_name
-
-    @staticmethod
-    def get_exposure_type(*args, **kwargs):
-        return Utility_Level3.get_exposure_type(*args, **kwargs)
 
     @staticmethod
     def resequence(*args, **kwargs):

@@ -326,3 +326,45 @@ class Asn_NRS_IFU(
 
         # Check and continue initialization.
         super(Asn_NRS_IFU, self).__init__(*args, **kwargs)
+
+
+class Asn_Coron(
+        AsnMixin_OpticalPath,
+        AsnMixin_Base
+):
+    """Coronography
+
+    Notes
+    -----
+
+    Coronography is nearly completely defined by the association candidates
+    produced by APT.
+
+    Tracking Issues:
+
+    - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.add_constraints({
+            'exp_type': {
+                'value': (
+                    'nrc_coron'
+                    '|mir_lyot'
+                    '|mir_4qpm'
+                ),
+                'inputs': ['exp_type']
+            },
+        })
+
+        # PSF is required
+        self.validity.update({
+            'has_psf': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'psf'
+            }
+        })
+        # Check and continue initialization.
+        super(Asn_Coron, self).__init__(*args, **kwargs)

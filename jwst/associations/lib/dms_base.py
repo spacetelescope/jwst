@@ -13,6 +13,21 @@ PRODUCT_NAME_DEFAULT = 'undefined'
 _ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
 _ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 
+# Exposure EXP_TYPE to Association EXPTYPE mapping
+_EXPTYPE_MAP = {
+    'mir_tacq':      'target_acquistion',
+    'nis_tacq':      'target_acquistion',
+    'nis_taconfirm': 'target_acquistion',
+    'nrc_tacq':      'target_acquistion',
+    'nrc_taconfirm': 'target_acquistion',
+    'nrs_autoflat':  'autoflat',
+    'nrs_autowave':  'autowave',
+    'nrs_confirm':   'target_acquistion',
+    'nrs_tacq':      'target_acquistion',
+    'nrs_taconfirm': 'target_acquistion',
+    'nrs_taslit':    'target_acquistion',
+}
+
 __all__ = ['DMSBaseMixin']
 
 
@@ -144,3 +159,39 @@ class DMSBaseMixin(ACIDMixin):
     @classmethod
     def reset_sequence(cls):
         cls._sequence = Counter(start=1)
+
+    def get_exposure_type(self, member, default=None):
+        """Determine the exposure type of a pool member
+
+        Parameters
+        ----------
+        member: dict
+            The pool entry to determine the exposure type of
+
+        default: str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+
+        Returns
+        -------
+        exposure_type: str
+            Exposure type. Can be one of
+                'SCIENCE': Member contains science data
+                'TARGET_AQUISITION': Member contains target acquisition data.
+                'AUTOFLAT': NIRSpec AUTOFLAT
+                'AUTOWAVE': NIRSpec AUTOWAVE
+                'PSF': PSF
+
+        Raises
+        ------
+        LookupError
+            When `default` is None and an exposure type cannot be determined
+        """
+        result = default
+        try:
+            exp_type = member['exp_type']
+        except KeyError:
+            raise LookupError('Exposure type cannot be determined')
+
+        result = _EXPTYPE_MAP.get(exp_type, default)
+        return result
