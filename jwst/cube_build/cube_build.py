@@ -23,8 +23,6 @@ from . import spaxel
 from . import cube_overlap
 from . import cube_cloud
 from . import data_types
-from jwst.mrs_imatch.mrs_imatch_step import _apply_sky_2d
-
 
 from gwcs import wcstools
 
@@ -632,6 +630,8 @@ class CubeData(object):
 
 #********************************************************************************
     def map_detector_to_spaxel(self,this_par1, this_par2,spaxel):
+        from ..mrs_imatch.mrs_imatch_step import _apply_sky_2d 
+
 #********************************************************************************
         """
         Short Summary
