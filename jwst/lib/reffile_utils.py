@@ -75,11 +75,21 @@ def ref_matches_sci(sci_model, ref_model):
     # Make sure the attributes were populated
     if (xstart_ref is None) or (xsize_ref is None) or \
        (ystart_ref is None) or (ysize_ref is None):
-        log.error('Missing subarray corner/size keywords in reference file')
-        raise ValueError("Can't determine ref file subarray properties")
-    else:
-        log.debug(" ref xstart=%d, xsize=%d, ystart=%d, ysize=%d" % \
-            (xstart_ref, xsize_ref, ystart_ref, ysize_ref))
+
+        # If the ref file is full-frame, set the missing params to
+        # default values
+        if (ref_model.data.shape[-1] == 2048) and \
+           (ref_model.data.shape[-2] == 2048):
+            xstart_ref = 1
+            ystart_ref = 1
+            xsize_ref = 2048
+            ysize_ref = 2048
+        else:
+            log.error('Missing subarray corner/size keywords in reference file')
+            raise ValueError("Can't determine ref file subarray properties")
+
+    log.debug(" ref xstart=%d, xsize=%d, ystart=%d, ysize=%d" % \
+        (xstart_ref, xsize_ref, ystart_ref, ysize_ref))
 
     # Make sure the starting corners are valid
     if (xstart_ref < 1) or (ystart_ref < 1):
