@@ -93,7 +93,7 @@ def ref_matches_sci(sci_model, ref_model):
 
     # Make sure the starting corners are valid
     if (xstart_ref < 1) or (ystart_ref < 1):
-        log.errr("Reference file subarray corners are invalid")
+        log.error("Reference file subarray corners are invalid")
         raise ValueError("Bad subarray corners")
 
     # Make sure the size attributes are consistent with data array
@@ -136,7 +136,7 @@ def ref_matches_sci(sci_model, ref_model):
 
     # Make sure the starting corners are valid
     if (xstart_sci < 1) or (ystart_sci < 1):
-        log.errr("Science file subarray corners are invalid")
+        log.error("Science file subarray corners are invalid")
         raise ValueError("Bad subarray corners")
 
     # Make sure the size attributes are consistent with data array
