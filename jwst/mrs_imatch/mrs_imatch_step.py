@@ -15,7 +15,6 @@ import numpy as np
 from .. stpipe import Step, cmdline
 from .. import datamodels
 from .. wiimatch.match import *
-from .. cube_build import CubeBuildStep
 
 try:
     from stsci.tools.bitmask import bitfield_to_boolean_mask
@@ -137,8 +136,6 @@ def _apply_sky_2d(model2d, channel):
     c = np.reshape(list(bkgmeta.coefficients), degree_p1)
     refpt = tuple(bkgmeta.refpoint)
 
-    cs_type = bkgmeta.cs_type
-
     # get pixel grid for sky computations:
     x, y = _get_2d_pixgrid(model2d, channel)
     x = x.ravel()
@@ -158,14 +155,6 @@ def _apply_sky_2d(model2d, channel):
     r = r[m]
     d = d[m]
     l = l[m]
-
-    if cs_type == "image":
-        raise ValueError("Polynomials must be defined in world CS in "
-                         "order to be able to perform sky subtraction "
-                         "on 2D DataModel.")
-
-    elif cs_type != "world":
-        raise ValueError("Unsupported background polynomial's 'cs_type'.")
 
     # compute background values:
     r -= refpt[0]
@@ -192,6 +181,8 @@ def _get_2d_pixgrid(model2d, channel):
 
 
 def _match_models(models, channel, degree, center=None, center_cs='image'):
+    from .. cube_build import CubeBuildStep
+
     # create a list of cubes:
     cbs = CubeBuildStep()
     cbs.channel = str(channel)
@@ -284,8 +275,6 @@ def _match_models(models, channel, degree, center=None, center_cs='image'):
             {
                 'degree': degree,
                 'refpoint': center,
-                'cs_type': 'world',
-                'wcs': wcs,
                 'coefficients': poly.ravel().tolist(),
                 'channel': channel
             }

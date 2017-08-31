@@ -1634,12 +1634,6 @@ properties:
                   type: array
                   items:
                     type: number
-                cs_type:
-                  title: Type of coordinates
-                  type: string
-                  enum: [world, image]
-                wcs:
-                  $ref: http://stsci.edu/schemas/asdf/wcs/wcs-1.0.0
                 coefficients:
                   title: Polynomial Coefficients
                   type: array
