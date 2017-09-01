@@ -231,7 +231,6 @@ def apply_background_2d(model2d, channel=None, subtract=True):
     # subtract background:
     if subtract:
         model2d.data[y, x] -= bkg
-        bkgmeta
     else:
         model2d.data[y, x] += bkg
 
