@@ -409,6 +409,9 @@ class CubeData(object):
 
         """
         self.spaxel = CubeData.create_spaxel(self)
+
+#        CubeData.SubtractBackground(self)
+
         # now need to loop over every file that covers this channel/subchannel (MIRI)
         # or Grating/filter(NIRSPEC)
         #and map the detector pixels to the cube spaxel.
@@ -629,9 +632,14 @@ class CubeData(object):
         return roi
 
 #********************************************************************************
-    def map_detector_to_spaxel(self,this_par1, this_par2,spaxel):
-        from ..mrs_imatch.mrs_imatch_step import _apply_sky_2d 
 
+#    def subtract_background(self)
+
+
+#********************************************************************************
+
+    def map_detector_to_spaxel(self,this_par1, this_par2,spaxel):
+        from ..mrs_imatch.mrs_imatch_step import apply_background_2d 
 #********************************************************************************
         """
         Short Summary
@@ -684,7 +692,10 @@ class CubeData(object):
                         poly_ch = poly.channel
                         if(poly_ch == this_par1):
                             print('*****Going to subtract background *******')
-                            _apply_sky_2d(input_model,poly_ch)
+                            print('Filename',input_model.meta.filename)
+                            print('Poly channel',poly_ch,type(poly_ch))
+                            print('Channel',this_par1)
+                            apply_background_2d(input_model,poly_ch,subtract=True)
 
                 
 #********************************************************************************
