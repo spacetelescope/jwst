@@ -158,6 +158,45 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         return product_name.lower()
 
+    def update_asn(self, item=None, member=None):
+        """Update association meta information
+
+        Parameters
+        ----------
+        item: dict or None
+            Item to use as a source. If not given, item-specific
+            information will be left unchanged.
+
+        member: dict or None
+            An association member to use as source.
+            If not given, member-specific information will be update
+            from current association/product membership.
+
+        Notes
+        -----
+        If both `item` and `member` are given,
+        information in `member` will take precedence.
+        """
+        # Degraded status
+        #self.data['degraded_status'] = ?
+
+        # Program
+        #if self.data['program'] != 'noprogram':
+
+        # Constraints
+        self.data['constraints'] = '\n'.join(
+            [cc for cc in self.constraints_to_text()]
+        )
+
+        # ID
+        self.data['asn_id'] = self.acid.id
+
+        # Target
+        self.data['target'] = self._get_target()
+
+        # Pool
+        #if self.data['asn_pool'] == 'none':
+
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
         super(DMS_Level3_Base, self)._init_hook(item)
@@ -165,15 +204,10 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         # Set which sequence counter should be used.
         self._sequence = self._sequences[self.data['asn_type']]
 
-        self.data['target'] = item['targetid']
         self.data['program'] = str(item['program'])
         self.data['asn_pool'] = basename(
             item.meta['pool_file']
         ).split('.')[0]
-        self.data['constraints'] = '\n'.join(
-            [cc for cc in self.constraints_to_text()]
-        )
-        self.data['asn_id'] = self.acid.id
         self.new_product(product_name=self.dms_product_name())
 
         # Parse out information from the pool file name.
@@ -185,6 +219,9 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 'version': parsed_name.group(2)
             }
             self.meta['pool_meta'] = pool_meta
+
+        # Update meta data
+        self.update_asn(item=item)
 
     def _add(self, item):
         """Add item to this association."""
@@ -221,10 +258,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             The Level3 Product name representation
             of the target or source ID.
         """
-        try:
-            target = 's{0:0>5s}'.format(self.data['source_id'])
-        except KeyError:
-            target = 't{0:0>3s}'.format(self.data['target'])
+        target_id = self.constraints['target']['value']
+        target = 't{0:0>3s}'.format(str(target_id))
         return target
 
     def _get_instrument(self):
@@ -294,7 +329,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 exposure = '{0:0>2s}'.format(activity_id)
         return exposure
 
-    def _add_items(self, items, product_name=None, with_type=False):
+    def _add_items(self, items, product_name=None, with_exptype=False):
         """ Force adding items to the association
 
         Parameters
@@ -308,7 +343,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             If None, the default DMS Level3 naming
             conventions will be attempted.
 
-        with_type: bool
+        with_exptype: bool
             If True, each item is expected to be a 2-tuple with
             the first element being the item to add as `expname`
             and the second items is the `exptype`
@@ -327,12 +362,12 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         self.new_product(product_name)
         members = self.current_product['members']
         for item in items:
-            type_ = 'science'
-            if with_type:
-                item, type_ = item
+            exptype = 'science'
+            if with_exptype:
+                item, exptype = item
             member = {
                 'expname': item,
-                'exptype': type_
+                'exptype': exptype
             }
             self.update_validity(member)
             members.append(member)
