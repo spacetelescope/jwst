@@ -44,7 +44,7 @@ _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 _REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)'
 
-# Key that uniquely identfies members.
+# Key that uniquely identfies items.
 KEY = 'expname'
 
 
@@ -77,7 +77,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self.validity.update({
             'has_science': {
                 'validated': False,
-                'check': lambda entry: entry['exptype'] == 'science'
+                'check': lambda member: member['exptype'] == 'science'
             }
         })
 
@@ -97,48 +97,48 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         return result
 
-    def has_science(self, member, check_flags=None):
+    def has_science(self, item, check_flags=None):
         """Only allow a single science in the association
 
         Parameters
         ----------
-        member: dict
-            The member in question
+        item: dict
+            The item in question
 
         check_flags: None or [key[, ...]]
-            A list of extra keys to check for truthness in the member
+            A list of extra keys to check for truthness in the item
 
         Returns
         -------
         bool
-            True if member can be added
+            True if item can be added
         """
-        exptype = self.get_exptype(member, check_flags=check_flags)
+        exptype = self.get_exptype(item, check_flags=check_flags)
         limit_reached = len(self.members_by_type('science')) >= 1
         limit_reached = limit_reached and exptype == 'science'
         return limit_reached
 
-    def get_exptype(self, member, check_flags=None):
-        """Get the exposure type for member
+    def get_exptype(self, item, check_flags=None):
+        """Get the exposure type for item
 
         Parameters
         ----------
-        member: dict
-            The member to be adding.
+        item: dict
+            The item to be adding.
 
 
         check_flags: None or [key[, ...]]
-            A list of extra keys to check for truthness in the member
+            A list of extra keys to check for truthness in the item
 
         Returns
         -------
         exptype: str
         """
-        exptype = self.get_exposure_type(member, default='science')
+        exptype = self.get_exposure_type(item, default='science')
         if check_flags:
             for flag in check_flags:
                 try:
-                    self.member_getattr(member, [flag])
+                    self.item_getattr(item, [flag])
                 except KeyError:
                     continue
                 else:
@@ -179,12 +179,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         else:
             return science_path
 
-    def _init_hook(self, member):
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-        self.data['target'] = member['targetid']
-        self.data['program'] = str(member['program'])
+        self.data['target'] = item['targetid']
+        self.data['program'] = str(item['program'])
         self.data['asn_pool'] = basename(
-            member.meta['pool_file']
+            item.meta['pool_file']
         ).split('.')[0]
         self.data['constraints'] = '\n'.join(
             [cc for cc in self.constraints_to_text()]
@@ -192,27 +192,27 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self.data['asn_id'] = self.acid.id
         self.new_product(self.dms_product_name())
 
-    def _add(self, member, check_flags=None):
-        """Add member to this association.
+    def _add(self, item, check_flags=None):
+        """Add item to this association.
 
         Parameters
         ----------
-        member: dict
-            The member to be adding.
+        item: dict
+            The item to be adding.
 
         check_flags: None or [key[, ...]]
-            A list of extra keys to check for truthness in the member
+            A list of extra keys to check for truthness in the item
         """
-        entry = {
-            'expname': Utility.rename_to_level2a(member['filename']),
-            'exptype': self.get_exptype(member, check_flags=check_flags)
+        member = {
+            'expname': Utility.rename_to_level2a(item['filename']),
+            'exptype': self.get_exptype(item, check_flags=check_flags)
         }
         members = self.current_product['members']
-        members.append(entry)
-        self.update_validity(entry)
+        members.append(member)
+        self.update_validity(member)
 
-        # Add entry to the short list
-        self.members.add(entry[KEY])
+        # Add member to the short list
+        self.members.add(member[KEY])
 
         # Update association state due to new member
         self.update_asn()
@@ -260,12 +260,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         for idx, item in enumerate(items, start=1):
             self.new_product()
             members = self.current_product['members']
-            entry = {
+            member = {
                 'expname': item,
                 'exptype': 'science'
             }
-            members.append(entry)
-            self.update_validity(entry)
+            members.append(member)
+            self.update_validity(member)
             self.update_asn()
 
             # If a product name function is given, attempt
@@ -344,7 +344,7 @@ class Utility(object):
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group('type') != '_uncal':
             logger.warn((
-                'Member FILENAME="{}" is not a Level 1b name. '
+                'Item FILENAME="{}" is not a Level 1b name. '
                 'Cannot transform to Level 2a.'
             ).format(
                 level1b_name
@@ -458,10 +458,10 @@ class AsnMixin_Lv2Image(DMSLevel2bBase):
 
         super(AsnMixin_Lv2Image, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, member):
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
-        super(AsnMixin_Lv2Image, self)._init_hook(member)
+        super(AsnMixin_Lv2Image, self)._init_hook(item)
         self.data['asn_type'] = 'image2'
 
 
@@ -492,10 +492,10 @@ class AsnMixin_Lv2Spec(DMSLevel2bBase):
 
         super(AsnMixin_Lv2Spec, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, member):
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
-        super(AsnMixin_Lv2Spec, self)._init_hook(member)
+        super(AsnMixin_Lv2Spec, self)._init_hook(item)
         self.data['asn_type'] = 'spec2'
 
 
@@ -550,13 +550,13 @@ class AsnMixin_Lv2Singleton(DMSLevel2bBase):
             'single_science': {
                 'test': self.match_constraint,
                 'value': 'False',
-                'inputs': lambda member: str(
-                    self.has_science(member)
+                'inputs': lambda item: str(
+                    self.has_science(item)
                 ),
             }
         })
 
-        # Now, lets see if member belongs to us.
+        # Now, lets see if item belongs to us.
         super(AsnMixin_Lv2Singleton, self).__init__(*args, **kwargs)
 
 
@@ -577,17 +577,17 @@ class AsnMixin_Lv2Bkg(DMSLevel2bBase):
             'single_science': {
                 'test': self.match_constraint,
                 'value': 'False',
-                'inputs': lambda member: str(
-                    self.has_science(member, check_flags=['background'])
+                'inputs': lambda item: str(
+                    self.has_science(item, check_flags=['background'])
                 ),
             },
         })
 
-        # Now, lets see if member belongs to us.
+        # Now, lets see if item belongs to us.
         super(AsnMixin_Lv2Bkg, self).__init__(*args, **kwargs)
 
-    def _add(self, member, check_flags=None):
+    def _add(self, item, check_flags=None):
         if not check_flags:
             check_flags = []
         check_flags.append('background')
-        super(AsnMixin_Lv2Bkg, self)._add(member, check_flags)
+        super(AsnMixin_Lv2Bkg, self)._add(item, check_flags)

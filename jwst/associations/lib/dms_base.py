@@ -47,13 +47,13 @@ class DMSBaseMixin(ACIDMixin):
         })
 
     @classmethod
-    def create(cls, member, version_id=None):
-        """Create association if member belongs
+    def create(cls, item, version_id=None):
+        """Create association if item belongs
 
         Parameters
         ----------
-        member: dict
-            The member to initialize the association with.
+        item: dict
+            The item to initialize the association with.
 
         version_id: str or None
             Version_Id to use in the name of this association.
@@ -63,11 +63,11 @@ class DMSBaseMixin(ACIDMixin):
         -------
         (association, reprocess_list)
             2-tuple consisting of:
-            - association: The association or, if the member does not
+            - association: The association or, if the item does not
                 this rule, None
-            - [ProcessList[, ...]]: List of members to process again.
+            - [ProcessList[, ...]]: List of items to process again.
         """
-        asn, reprocess = super(DMSBaseMixin, cls).create(member, version_id)
+        asn, reprocess = super(DMSBaseMixin, cls).create(item, version_id)
         if not asn:
             return None, reprocess
         asn.sequence = next(asn._sequence)
@@ -161,12 +161,12 @@ class DMSBaseMixin(ACIDMixin):
     def reset_sequence(cls):
         cls._sequence = Counter(start=1)
 
-    def get_exposure_type(self, member, default='science'):
-        """Determine the exposure type of a pool member
+    def get_exposure_type(self, item, default='science'):
+        """Determine the exposure type of a pool item
 
         Parameters
         ----------
-        member: dict
+        item: dict
             The pool entry to determine the exposure type of
 
         default: str or None
@@ -177,8 +177,8 @@ class DMSBaseMixin(ACIDMixin):
         -------
         exposure_type: str
             Exposure type. Can be one of
-                'SCIENCE': Member contains science data
-                'TARGET_AQUISITION': Member contains target acquisition data.
+                'SCIENCE': Item contains science data
+                'TARGET_AQUISITION': Item contains target acquisition data.
                 'AUTOFLAT': NIRSpec AUTOFLAT
                 'AUTOWAVE': NIRSpec AUTOWAVE
                 'PSF': PSF
@@ -192,7 +192,7 @@ class DMSBaseMixin(ACIDMixin):
 
         # Look for specific attributes
         try:
-            self.member_getattr(member, ['is_psf'])
+            self.item_getattr(item, ['is_psf'])
         except KeyError:
             pass
         else:
@@ -200,7 +200,7 @@ class DMSBaseMixin(ACIDMixin):
 
         # Base type off of exposure type.
         try:
-            exp_type = member['exp_type']
+            exp_type = item['exp_type']
         except KeyError:
             raise LookupError('Exposure type cannot be determined')
 
@@ -210,13 +210,13 @@ class DMSBaseMixin(ACIDMixin):
             raise LookupError('Cannot determine exposure type')
         return result
 
-    def member_getattr(self, member, attributes):
+    def item_getattr(self, item, attributes):
         """Return value from any of a list of attributes
 
         Parameters
         ----------
-        member: dict
-            member to retrieve from
+        item: dict
+            item to retrieve from
 
         attributes: list
             List of attributes
@@ -233,7 +233,7 @@ class DMSBaseMixin(ACIDMixin):
             None of the attributes are found in the dict.
         """
         return getattr_from_list(
-            member,
+            item,
             attributes,
             invalid_values=self.INVALID_VALUES
         )

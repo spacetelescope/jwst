@@ -92,10 +92,9 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         self.validity.update({
             'has_science': {
                 'validated': False,
-                'check': lambda entry: entry['exptype'] == 'science'
+                'check': lambda member: member['exptype'] == 'science'
             }
         })
-
 
         # Other presumptions on the association
         if 'degraded_status' not in self.data:
@@ -159,17 +158,17 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         return product_name.lower()
 
-    def _init_hook(self, member):
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-        super(DMS_Level3_Base, self)._init_hook(member)
+        super(DMS_Level3_Base, self)._init_hook(item)
 
         # Set which sequence counter should be used.
         self._sequence = self._sequences[self.data['asn_type']]
 
-        self.data['target'] = member['targetid']
-        self.data['program'] = str(member['program'])
+        self.data['target'] = item['targetid']
+        self.data['program'] = str(item['program'])
         self.data['asn_pool'] = basename(
-            member.meta['pool_file']
+            item.meta['pool_file']
         ).split('.')[0]
         self.data['constraints'] = '\n'.join(
             [cc for cc in self.constraints_to_text()]
@@ -187,31 +186,31 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             }
             self.meta['pool_meta'] = pool_meta
 
-    def _add(self, member):
-        """Add member to this association."""
+    def _add(self, item):
+        """Add item to this association."""
         try:
-            exposerr = member['exposerr']
+            exposerr = item['exposerr']
         except KeyError:
             exposerr = None
-        entry = {
-            'expname': Utility.rename_to_level2b(member['filename']),
-            'exptype': self.get_exposure_type(member),
+        member = {
+            'expname': Utility.rename_to_level2b(item['filename']),
+            'exptype': self.get_exposure_type(item),
             'exposerr': exposerr,
-            'asn_candidate': member['asn_candidate']
+            'asn_candidate': item['asn_candidate']
         }
 
-        self.update_validity(entry)
+        self.update_validity(member)
         members = self.current_product['members']
-        members.append(entry)
+        members.append(member)
         if exposerr not in _EMPTY:
             logger.warn('Member {} has error "{}"'.format(
-                member['filename'],
+                item['filename'],
                 exposerr
             ))
             self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
 
-        # Add entry to the short list
-        self.members.add(entry[KEY])
+        # Add member to the short list
+        self.members.add(member[KEY])
 
     def _get_target(self):
         """Get string representation of the target
@@ -331,12 +330,12 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             type_ = 'science'
             if with_type:
                 item, type_ = item
-            entry = {
+            member = {
                 'expname': item,
                 'exptype': type_
             }
-            self.update_validity(entry)
-            members.append(entry)
+            self.update_validity(member)
+            members.append(member)
         self.sequence = next(self._sequence)
 
     def __repr__(self):
@@ -399,7 +398,7 @@ class Utility(object):
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group('type') != '_uncal':
             logger.warn((
-                'Member FILENAME="{}" is not a Level 1b name. '
+                'Item FILENAME="{}" is not a Level 1b name. '
                 'Cannot transform to Level 2b.'
             ).format(
                 level1b_name
@@ -415,13 +414,13 @@ class Utility(object):
 
     @staticmethod
     def get_candidate_list(value):
-        """Parse the candidate list from a member value
+        """Parse the candidate list from a item value
 
         Parameters
         ----------
         value: str
-            The value from the member to parse. Usually
-            member['ASN_CANDIDATE']
+            The value from the item to parse. Usually
+            item['ASN_CANDIDATE']
 
         Returns
         -------
@@ -627,21 +626,21 @@ class AsnMixin_Image(DMS_Level3_Base):
 
         super(AsnMixin_Image, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, member):
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'image3'
-        super(AsnMixin_Image, self)._init_hook(member)
+        super(AsnMixin_Image, self)._init_hook(item)
 
 
 class AsnMixin_Spectrum(DMS_Level3_Base):
     """All things that are spectrum"""
 
-    def _init_hook(self, member):
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'spec3'
-        super(AsnMixin_Spectrum, self)._init_hook(member)
+        super(AsnMixin_Spectrum, self)._init_hook(item)
 
 
 class AsnMixin_CrossCandidate(DMS_Level3_Base):

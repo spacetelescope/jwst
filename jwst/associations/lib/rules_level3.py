@@ -85,11 +85,11 @@ class Asn_WFSCMB(
         # Now check and continue initialization.
         super(Asn_WFSCMB, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, member):
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'wfs'
-        super(Asn_WFSCMB, self)._init_hook(member)
+        super(Asn_WFSCMB, self)._init_hook(item)
 
 
 # Spectrographic Associations
@@ -361,7 +361,7 @@ class Asn_Coron(
             'target': {
                 'value': None,
                 'inputs': ['targetid'],
-                'onlyif': lambda member: self.get_exposure_type(member) == 'science'
+                'onlyif': lambda item: self.get_exposure_type(item) == 'science'
             }
         })
 
@@ -376,8 +376,8 @@ class Asn_Coron(
         # Check and continue initialization.
         super(Asn_Coron, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, member):
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'coron3'
-        super(Asn_Coron, self)._init_hook(member)
+        super(Asn_Coron, self)._init_hook(item)
