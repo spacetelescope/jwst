@@ -177,12 +177,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         If both `item` and `member` are given,
         information in `member` will take precedence.
         """
-        # Degraded status
-        #self.data['degraded_status'] = ?
-
-        # Program
-        #if self.data['program'] != 'noprogram':
-
         # Constraints
         self.data['constraints'] = '\n'.join(
             [cc for cc in self.constraints_to_text()]
@@ -194,8 +188,34 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         # Target
         self.data['target'] = self._get_target()
 
-        # Pool
-        #if self.data['asn_pool'] == 'none':
+        # Degraded status
+        #self.data['degraded_status'] = ?
+
+        # Item-based information
+        if item is not None:
+
+            # Program
+            if self.data['program'] != 'noprogram':
+                self.data['program'] = str(item['program'])
+
+            # Pool
+            if self.data['asn_pool'] == 'none':
+                self.data['asn_pool'] = basename(
+                    item.meta['pool_file']
+                ).split('.')[0]
+                parsed_name = re.search(
+                    _DMS_POOLNAME_REGEX, self.data['asn_pool']
+                )
+                if parsed_name is not None:
+                    pool_meta = {
+                        'program_id': parsed_name.group(1),
+                        'version': parsed_name.group(2)
+                    }
+                    self.meta['pool_meta'] = pool_meta
+
+        # Product-based updates
+        product = self.current_product
+        product['name'] = self.dms_product_name()
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
@@ -204,21 +224,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         # Set which sequence counter should be used.
         self._sequence = self._sequences[self.data['asn_type']]
 
-        self.data['program'] = str(item['program'])
-        self.data['asn_pool'] = basename(
-            item.meta['pool_file']
-        ).split('.')[0]
-        self.new_product(product_name=self.dms_product_name())
-
-        # Parse out information from the pool file name.
-        # Necessary to carry information to the Level3 output.
-        parsed_name = re.search(_DMS_POOLNAME_REGEX, self.data['asn_pool'])
-        if parsed_name is not None:
-            pool_meta = {
-                'program_id': parsed_name.group(1),
-                'version': parsed_name.group(2)
-            }
-            self.meta['pool_meta'] = pool_meta
+        # Create the product.
+        self.new_product()
 
         # Update meta data
         self.update_asn(item=item)
