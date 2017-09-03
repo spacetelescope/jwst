@@ -188,9 +188,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         # Target
         self.data['target'] = self._get_target()
 
-        # Degraded status
-        #self.data['degraded_status'] = ?
-
         # Item-based information
         if item is not None:
 
@@ -212,6 +209,29 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                         'version': parsed_name.group(2)
                     }
                     self.meta['pool_meta'] = pool_meta
+
+            # Degrade exposure
+            if self.data['degraded_status'] == _DEGRADED_STATUS_OK:
+                try:
+                    exposerr = item['exposerr']
+                except KeyError:
+                    pass
+                else:
+                    if exposerr not in _EMPTY:
+                        self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
+
+        # Member-based info
+        if member is not None:
+
+            # Degraded exposure
+            if self.data['degraded_status'] == _DEGRADED_STATUS_OK:
+                try:
+                    exposerr = member['exposerr']
+                except KeyError:
+                    pass
+                else:
+                    if exposerr not in _EMPTY:
+                        self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
 
         # Product-based updates
         product = self.current_product
@@ -251,10 +271,12 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 item['filename'],
                 exposerr
             ))
-            self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
 
         # Add member to the short list
         self.members.add(member[KEY])
+
+        # Update meta info
+        self.update_asn(item=item, member=member)
 
     def _get_target(self):
         """Get string representation of the target

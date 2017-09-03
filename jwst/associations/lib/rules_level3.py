@@ -14,7 +14,7 @@ __all__ = [
     'Asn_NRS_MSA',
     'Asn_NIR_SO_SLITLESS',
     'Asn_WFSCMB',
-
+    'Asn_Coron',
 ]
 
 # Configure logging
