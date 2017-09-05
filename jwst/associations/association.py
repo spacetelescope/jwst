@@ -327,6 +327,10 @@ class Association(MutableMapping):
             - bool: True if the all constraints are satisfied
             - [ProcessList[, ...]]: List of items to process again.
         """
+
+        if self.is_item_member(item):
+            return False, []
+
         if check_constraints:
             matches, reprocess = self.test_and_set_constraints(item)
 
@@ -404,7 +408,10 @@ class Association(MutableMapping):
         # Only perform check on specified `onlyif` condition
         onlyif = conditions.get('onlyif', lambda item: True)
         if not onlyif(item):
-            return True, reprocess
+            #reprocess.append(
+            #    ProcessList([item], [type(self)])
+            #)
+            return (True, reprocess)
 
         # Get the condition information.
         try:
@@ -516,6 +523,23 @@ class Association(MutableMapping):
                 yield '    {:s}: Is Invalid'.format(name)
             else:
                 yield '    {:s}: {}'.format(name, conditions['value'])
+
+    def is_item_member(self, item):
+        """Check if item is already a member of this association
+
+        Parameters
+        ----------
+        item: dict
+            The item to add.
+
+        Returns
+        -------
+        is_item_member: bool
+            True if item is a member.
+        """
+        raise NotImplementedError(
+            'Association.is_item_member must be implemented by a specific association rule.'
+        )
 
     def _init_hook(self, item):
         """Post-check and pre-item-adding initialization."""

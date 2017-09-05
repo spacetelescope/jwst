@@ -237,3 +237,37 @@ class DMSBaseMixin(ACIDMixin):
             attributes,
             invalid_values=self.INVALID_VALUES
         )
+
+    def is_member(self, new_member):
+        """Check if member is already a member
+
+        Parameters
+        ----------
+        new_member: dict
+            The member to check for
+        """
+        try:
+            current_members = self.current_product['members']
+        except KeyError:
+            return False
+
+        for member in current_members:
+            if member == new_member:
+                return True
+        return False
+
+    def is_item_member(self, item):
+        """Check if item is already a member of this association
+
+        Parameters
+        ----------
+        item: dict
+            The item to check for.
+
+        Returns
+        -------
+        is_item_member: bool
+            True if item is a member.
+        """
+        member = self.make_member(item)
+        return self.is_member(member)

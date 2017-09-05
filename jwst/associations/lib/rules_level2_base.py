@@ -179,6 +179,28 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         else:
             return science_path
 
+    def make_member(self, item, check_flags=None):
+        """Create a member from the item
+
+        Parameters
+        ----------
+        item: dict
+            The item to create member from.
+
+        check_flags: None or [key[, ...]]
+            A list of extra keys to check for truthness in the item
+
+        Returns
+        -------
+        member: dict
+            The member
+        """
+        member = {
+            'expname': Utility.rename_to_level2a(item['filename']),
+            'exptype': self.get_exptype(item, check_flags=check_flags)
+        }
+        return member
+
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
         self.data['target'] = item['targetid']
@@ -203,10 +225,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         check_flags: None or [key[, ...]]
             A list of extra keys to check for truthness in the item
         """
-        member = {
-            'expname': Utility.rename_to_level2a(item['filename']),
-            'exptype': self.get_exptype(item, check_flags=check_flags)
-        }
+        member = self.make_member(item, check_flags=check_flags)
         members = self.current_product['members']
         members.append(member)
         self.update_validity(member)

@@ -237,6 +237,31 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         product = self.current_product
         product['name'] = self.dms_product_name()
 
+    def make_member(self, item):
+        """Create a member from the item
+
+        Parameters
+        ----------
+        item: dict
+            The item to create member from.
+
+        Returns
+        -------
+        member: dict
+            The member
+        """
+        try:
+            exposerr = item['exposerr']
+        except KeyError:
+            exposerr = None
+        member = {
+            'expname': Utility.rename_to_level2b(item['filename']),
+            'exptype': self.get_exposure_type(item),
+            'exposerr': exposerr,
+            'asn_candidate': item['asn_candidate']
+        }
+        return member
+
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
         super(DMS_Level3_Base, self)._init_hook(item)
@@ -252,24 +277,22 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
     def _add(self, item):
         """Add item to this association."""
-        try:
-            exposerr = item['exposerr']
-        except KeyError:
-            exposerr = None
-        member = {
-            'expname': Utility.rename_to_level2b(item['filename']),
-            'exptype': self.get_exposure_type(item),
-            'exposerr': exposerr,
-            'asn_candidate': item['asn_candidate']
-        }
+        member = self.make_member(item)
+        if self.is_member(member):
+            logger.debug(
+                'Member is already part of the association:'
+                '\n\tassociation: {}'
+                '\n]tmember: {}'.format(self, member)
+            )
+            return
 
         self.update_validity(member)
         members = self.current_product['members']
         members.append(member)
-        if exposerr not in _EMPTY:
+        if member['exposerr'] not in _EMPTY:
             logger.warn('Member {} has error "{}"'.format(
                 item['filename'],
-                exposerr
+                member['exposerr']
             ))
 
         # Add member to the short list
