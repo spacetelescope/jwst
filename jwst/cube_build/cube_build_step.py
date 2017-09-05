@@ -41,6 +41,7 @@ class CubeBuildStep (Step):
          ydebug = integer(default=None)
          zdebug = integer(default=None)
          single = boolean(default=false)
+         output_type = option('band','channel','grating','multi',default='band')
        """
     reference_file_types = ['cubepar','resol']
 
@@ -112,9 +113,27 @@ class CubeBuildStep (Step):
             self.log.info('Weighting method for point cloud: %s',self.weighting)
             self.log.info('Power Weighting distance : %f',self.weight_power)
 
+        if self.output_type == 'band':
+            self.log.info('Output IFUCubes are Single Bands')
+            self.log.info('For MIRI these are single channel, single sub-channel IFU Cubes')
+            self.log.info('For NIRSPEC these are single grating, single filter IFU Cubes')
+
+        if self.output_type == 'channel' or self.output_type == 'grating':
+            self.log.info('Output IFUCubes are %s', self.output_type)
+            self.log.info('For MIRI these are single channel and all subchannels in data')
+            self.log.info('   unless the the band option is used to select certain subchannels')
+            self.log.info('For NIRSPEC these are single grating and all filters in data')
+            self.log.info('   unless the the filter option is used to select certain filters')
+
+        if self.output_type == 'multi':
+            self.log.info('Output IFUcube are constructed from all the data unless:')
+            self.log.info('   channel, band, grating, or filter options are used')
+
+            
         if self.single :
             self.log.info(' Single = true, creating a set of single exposures mapped' +
                           ' to output IFUCube coordinate system')
+            self.output_type = 'single'
 #________________________________________________________________________________
     # read input parameters - Channel, Band (Subchannel), Grating, Filter
 #________________________________________________________________________________
@@ -189,6 +208,7 @@ class CubeBuildStep (Step):
             'debug_pixel': self.debug_pixel,
             'spaxel_debug':self.spaxel_debug,
             'output_file':self.output_file,
+            'output_type':self.output_type,
             'offset_list': self.offset_list}
 
 #________________________________________________________________________________

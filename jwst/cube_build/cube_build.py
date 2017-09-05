@@ -74,6 +74,7 @@ class CubeData(object):
         self.zdebug = pars.get('zdebug')
         self.debug_pixel = pars.get('debug_pixel')
         self.spaxel_debug = pars.get('spaxel_debug')
+        self.output_type = pars.get('output_type')
 
         self.ra_offset = []  # units arc seconds
         self.dec_offset = [] # units arc seconds
@@ -84,6 +85,10 @@ class CubeData(object):
         self.band_subchannel = []
         self.band_filter = []
         self.band_grating = []
+        self.this_channel = []
+        self.this_subchannel =[]
+        self.this_grating = []
+        self.this_filter = []
         self.num_bands = 0
         self.output_name = ''
         self.number_files = 0
@@ -408,6 +413,10 @@ class CubeData(object):
         each spaxel element with the mapped detector values associated with it
 
         """
+
+
+        CubeData.find_output_type(self)
+
         self.spaxel = CubeData.create_spaxel(self)
 
 #        CubeData.SubtractBackground(self)
@@ -416,7 +425,7 @@ class CubeData(object):
         # or Grating/filter(NIRSPEC)
         #and map the detector pixels to the cube spaxel.
         if(self.instrument == 'MIRI'):
-            parameter1 = self.band_channel
+            parameter1 = self.band_channel   
             parameter2 = self.band_subchannel
         elif(self.instrument == 'NIRSPEC'):
             parameter1 = self.band_grating
@@ -430,6 +439,7 @@ class CubeData(object):
 
             log.debug("Working on Band defined by:%s %s " ,this_par1,this_par2)
             CubeData.map_detector_to_spaxel(self,this_par1, this_par2,self.spaxel)
+
 
         t1 = time.time()
         log.info("Time Map All slices on Detector to Cube = %.1f.s" % (t1 - t0,))
@@ -547,7 +557,25 @@ class CubeData(object):
         return single_IFUCube
 
 #********************************************************************************
+    def find_output_type(self):
+        
+        ValidChannel = ['1', '2', '3', '4']
+        ValidSubchannel = ['SHORT', 'MEDIUM', 'LONG']
 
+        nchannels = len(ValidChannel)
+        nsubchannels = len(ValidSubchannel)
+
+
+        ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H',
+                    'G395M', 'G395H', 'PRISM']
+        ValidFWA = ['F070LP', 'F070LP', 'F100LP', 'F100LP', 'F170LP',
+                    'F170LP', 'F290LP', 'F290LP', 'CLEAR']
+
+        nbands = len(ValidFWA)
+
+
+
+#********************************************************************************
     def create_spaxel(self):
         """
         Short Summary
