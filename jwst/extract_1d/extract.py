@@ -1042,6 +1042,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
     output_model = datamodels.MultiSpecModel()
     output_model.update(input_model)
 
+    # More generally, one could use '"Multi" in str(type(input_model))'.
     if isinstance(input_model, datamodels.MultiSlitModel) or \
        isinstance(input_model, datamodels.MultiProductModel):
 
@@ -1081,6 +1082,9 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
+            spec.slit_ra = ra
+            spec.slit_dec = dec
+            copy_keyword_info(slit, slit.name, spec)
             output_model.spec.append(spec)
     else:
         slitname = input_model.meta.exposure.type
@@ -1126,6 +1130,10 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
+            spec.slit_ra = ra
+            spec.slit_dec = dec
+            if slitname is not None and slitname != "ANY":
+                spec.name = slitname
             output_model.spec.append(spec)
 
         elif isinstance(input_model, datamodels.CubeModel):
@@ -1171,6 +1179,8 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 spec = datamodels.SpecModel(spec_table=otab)
                 spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec,
                                                              wavelength)
+                spec.slit_ra = ra
+                spec.slit_dec = dec
                 output_model.spec.append(spec)
 
         elif isinstance(input_model, datamodels.IFUCubeModel):
@@ -1189,6 +1199,52 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
     output_model.meta.wcs = None
 
     return output_model
+
+
+def copy_keyword_info(slit, slitname, spec):
+    """Copy metadata from the input to the output spectrum.
+
+    Parameters
+    ----------
+    slit: An element of MultiSlitModel.slits or MultiProductModel.products
+        A 2-D array containing a spectrum.
+
+    slitname: string or None
+        The name of the slit.
+
+    spec: One element of MultiSpecModel.spec
+        Metadata attributes will be updated in-place.
+    """
+
+    if slitname is not None and slitname != "ANY":
+        spec.name = slitname
+
+    if "slitlet_id" in slit:
+        spec.slitlet_id = slit.slitlet_id
+
+    if "source_id" in slit:
+        spec.source_id = slit.source_id
+
+    if "source_name" in slit and slit.source_name is not None:
+        spec.source_name = slit.source_name
+
+    if "source_alias" in slit and slit.source_alias is not None:
+        spec.source_alias = slit.source_alias
+
+    if "source_type" in slit and slit.source_type is not None:
+        spec.source_type = slit.source_type
+
+    if "stellarity" in slit and slit.stellarity is not None:
+        spec.stellarity = slit.stellarity
+
+    if "source_xpos" in slit:
+        spec.source_xpos = slit.source_xpos
+
+    if "source_ypos" in slit:
+        spec.source_ypos = slit.source_ypos
+
+    if "nshutters" in slit:
+        spec.nshutters = slit.nshutters
 
 
 def extract_one_slit(input_model, slit, integ, **extract_params):

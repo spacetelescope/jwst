@@ -444,8 +444,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
 
             shutter_id = xcen + (ycen - 1) * 365
             source_id = slitlets_sid[0]['source_id']
-            source_name, source_alias, catalog_id, stellarity = [
-                (s['source_name'], s['alias'], s['catalog_id'], s['stellarity']) \
+            source_name, source_alias, stellarity = [
+                (s['source_name'], s['alias'], s['stellarity']) \
                 for s in msa_source if s['source_id'] == source_id][0]
             # Create the output list of tuples that contain the required
             # data for further computations
@@ -462,7 +462,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
             source_ypos = source_ypos - 0.5
             slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax,
                                  quadrant, source_id, nshutters, source_name, source_alias,
-                                 catalog_id, stellarity, source_xpos, source_ypos))
+                                 stellarity, source_xpos, source_ypos))
     return slitlets
 
 
