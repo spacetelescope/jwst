@@ -7,6 +7,7 @@ import re
 from jwst.associations import (
     Association,
     AssociationRegistry,
+    ProcessList,
     libpath
 )
 from jwst.associations.association import (
@@ -35,6 +36,7 @@ __all__ = [
     'AsnMixin_Target',
     'ASN_SCHEMA',
     'DMS_Level3_Base',
+    'ProcessList',
     'Utility',
 ]
 

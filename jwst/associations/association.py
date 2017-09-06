@@ -103,6 +103,7 @@ class Association(MutableMapping):
         self.add_constraints(deepcopy(self.GLOBAL_CONSTRAINTS))
         self.run_init_hook = True
         self.meta = {}
+        self.force_reprocess = False
 
         self.version_id = version_id
 
@@ -381,6 +382,10 @@ class Association(MutableMapping):
                 break
         else:
             self.constraints = constraints
+            if self.force_reprocess:
+                reprocess.append(ProcessList(
+                    [item], [type(self)], work_over=self.force_reprocess
+                ))
         return matches, reprocess
 
     def match_item(self, item, constraint, conditions):
@@ -409,9 +414,7 @@ class Association(MutableMapping):
         # Only perform check on specified `onlyif` condition
         onlyif = conditions.get('onlyif', lambda item: True)
         if not onlyif(item):
-            #reprocess.append(
-            #    ProcessList([item], [type(self)])
-            #)
+            self.force_reprocess = conditions.get('force_reprocess', False)
             return (True, reprocess)
 
         # Get the condition information.
@@ -612,11 +615,24 @@ class ProcessList(object):
 
     rules: [Association[, ...]]
         List of rules to process the items against.
+
+    work_over: int
+        What the reprocessing should work on:
+        - `ProcessList.EXISTING`: Only existing associations
+        - `ProcessList.RULES`: Only on the rules to create new associations
+        - `ProcessList.BOTH`: Compare to both existing and rules
     """
 
-    def __init__(self, items, rules):
+    (
+        BOTH,
+        EXISTING,
+        RULES
+    ) = range(1, 4)
+
+    def __init__(self, items, rules, work_over=BOTH):
         self.items = items
         self.rules = rules
+        self.work_over = work_over
 
 
 # #########

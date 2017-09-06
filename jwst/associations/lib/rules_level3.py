@@ -361,7 +361,8 @@ class Asn_Coron(
             'target': {
                 'value': None,
                 'inputs': ['targetid'],
-                'onlyif': lambda item: self.get_exposure_type(item) == 'science'
+                'onlyif': lambda item: self.get_exposure_type(item) == 'science',
+                'force_reprocess': ProcessList.EXISTING,
             }
         })
 

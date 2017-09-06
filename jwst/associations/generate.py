@@ -56,11 +56,20 @@ def generate(pool, rules, version_id=None):
 
     for process_idx, process_item in enumerate(process_list):
         for item in process_item.items:
+
+            # Determine against what the item should be compared
+            # against.
+            use_rules = rules
+            use_associations = associations
+            if process_item.work_over == process_item.EXISTING:
+                use_rules = None
+            if process_item.work_over == process_item.RULES:
+                use_associations = []
             existing_asns, new_asns, to_process = generate_from_item(
                 item,
                 version_id,
-                associations,
-                rules,
+                use_associations,
+                use_rules,
                 process_item.rules
             )
             associations.extend(new_asns)
@@ -99,7 +108,7 @@ def generate_from_item(
         If the item matches any of these, it will be added
         to them.
 
-    rules: AssociationRegistry
+    rules: AssociationRegistry or None
         List of rules to create new associations
 
     allowed_rules: [rule, ...]
@@ -130,15 +139,18 @@ def generate_from_item(
     # Now see if this item will create new associatons.
     # By default, a item will not be allowed to create
     # an association based on rules of existing associations.
-    ignore_asns = set([type(asn) for asn in existing_asns])
-    new_asns, to_process = rules.match(
-        item,
-        version_id=version_id,
-        allow=allowed_rules,
-        ignore=ignore_asns,
-    )
-
+    to_process = []
+    new_asns = []
+    if rules is not None:
+        ignore_asns = set([type(asn) for asn in existing_asns])
+        new_asns, to_process = rules.match(
+            item,
+            version_id=version_id,
+            allow=allowed_rules,
+            ignore=ignore_asns,
+        )
     process_list.extend(to_process)
+
     return existing_asns, new_asns, process_list
 
 
