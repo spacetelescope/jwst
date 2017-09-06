@@ -56,9 +56,16 @@ class Image3Pipeline(Pipeline):
 
         input_models = datamodels.open(input)
 
-        # Check if input is multiple exposures, as required by some steps
+        # Check if input is single or multiple exposures
         is_container = isinstance(input_models, datamodels.ModelContainer)
         if is_container and len(input_models.group_names) > 1:
+
+            # Set up Level 2c suffix to be used later
+            suffix_2c_end = 'crf'
+            if isinstance(input_models[0], datamodels.CubeModel):
+                suffix_2c_end = 'crfints'
+            asn_id = input_models.meta.asn_table.asn_id
+            suffix_2c = '{}_{}'.format(asn_id, suffix_2c_end)
 
             self.log.info("Generating source catalogs for alignment...")
             input_models = self.tweakreg_catalog(input_models)
@@ -81,7 +88,6 @@ class Image3Pipeline(Pipeline):
             input_models = self.outlier_detection(input_models)
 
             self.log.info("Writing Level 2c images with updated DQ arrays...")
-            suffix_2c = 'cal-{}'.format(input_models.meta.asn_table.asn_id)
             for model in input_models:
                 self.save_model(model, suffix=suffix_2c)
 
@@ -91,7 +97,6 @@ class Image3Pipeline(Pipeline):
         product = input_models.meta.asn_table.products[0].name + '.fits'
         output.meta.filename = product
         self.save_model(output, suffix=self.suffix)
-        self.log.info('Saved resampled image to %s', output.meta.filename)
 
         self.log.info("Creating source catalog...")
         out_catalog = self.source_catalog(output)
