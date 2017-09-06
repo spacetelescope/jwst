@@ -144,7 +144,7 @@ def apply_background_2d(model2d, channel=None, subtract=True):
 
         Parameters
         ----------
-        model2d : jwst.datamodels.image.ImageModel
+        model2d : `jwst.datamodels.image.ImageModel`
             A `jwst.datamodels.image.ImageModel` from whose data background
             needs to be subtracted (or added back).
 
