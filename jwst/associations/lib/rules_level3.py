@@ -382,3 +382,54 @@ class Asn_Coron(
 
         self.data['asn_type'] = 'coron3'
         super(Asn_Coron, self)._init_hook(item)
+
+
+class Asn_AMI(
+        AsnMixin_OpticalPath,
+        AsnMixin_Base
+):
+    """Aperture Mask Interferometry
+
+    Notes
+    -----
+
+    AMI is nearly completely defined by the association candidates
+    produced by APT.
+
+    Tracking Issues:
+
+    - `github #310 <https://github.com/STScI-JWST/jwst/issues/310>`
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.add_constraints({
+            'exp_type': {
+                'value': 'nis_ami',
+                'inputs': ['exp_type'],
+            },
+            'target': {
+                'value': None,
+                'inputs': ['targetid'],
+                'onlyif': lambda item: self.get_exposure_type(item) == 'science',
+                'force_reprocess': ProcessList.EXISTING,
+            }
+        })
+
+        # PSF is required
+        self.validity.update({
+            'has_psf': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'psf'
+            }
+        })
+
+        # Check and continue initialization.
+        super(Asn_AMI, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'ami3'
+        super(Asn_AMI, self)._init_hook(item)
