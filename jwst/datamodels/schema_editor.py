@@ -34,6 +34,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 # options, invoke the script with --help on the command line.
 
 import os
+import re
 import sys
 import os.path
 import inspect
@@ -53,6 +54,17 @@ from asdf import treeutil
 
 from . import model_base
 from . import schema as mschema
+
+def comparable_names(model_name, keyword_name):
+    model_suffix = re.compile(r'_[^_]*$')
+    keyword_suffix = re.compile(r'_groupdq_image$')
+    (truncated_keyword_name, count) = keyword_suffix.subn('', keyword_name)
+    if count:
+        truncated_model_name = model_suffix.sub('', model_name)
+        comparable = truncated_model_name == truncated_keyword_name
+    else:
+        comparable = model_name == keyword_name
+    return comparable
 
 
 def dated_directory(directory, prefix):
@@ -100,6 +112,19 @@ def find_directory(directory, prefix):
 
     return chosen_dir
 
+def find_subschema(schema, path):
+    """
+    Trace a path thru the schema, return None if not found
+    """
+    subschema = schema
+    for name in path:
+        if "properties" in subschema:
+            subschema = subschema["properties"]
+        if name in subschema:
+            subschema = subschema[name]
+        else:
+            return None
+    return subschema     
 
 def merge_schemas(schema):
     """
@@ -1005,15 +1030,22 @@ class Schema_editor(object):
         Top level call to edit model schema to match keyword_db
         """
         path = []
-        if schema_file == "core.schema.yaml":
-            model_dict = {}
-            self.update_model_schema(model_schema, keyword_schema, 
-                                     model_dict, path)
-        else:
-            self.update_fits_keywords(model_schema, keyword_schema, 
-                                      keyword_dict, path)            
-        
-        
+        self.update_fits_keywords(model_schema, keyword_schema, 
+                                  keyword_dict, path)            
+        if self.list:
+            ordering = 1
+            for fits_name in keyword_dict:
+                keyword_path = keyword_dict[fits_name].split('.')
+                keyword_subschema = find_subschema(keyword_schema,
+                                                   keyword_path)
+                if keyword_subschema is not None:
+                    self.schmea_add_value(model_schema,
+                                          keyword_subschema,
+                                          keyword_path[-1],
+                                          ordering,
+                                          keyword_path)
+                    ordering = ordering + 1
+                        
     def get_keyword_value(self, submodel, keyword_name):
         """
         Lppk for keyword name in submodel, return value if found
@@ -1063,7 +1095,7 @@ class Schema_editor(object):
         Report the differences between the values of a field in the 
         datamodels schema and the keywords database
         """
-        print("=== {0} {1} ===".format(self.current_file_name, '.'.join(path)))
+        print("=== {0} ===".format('.'.join(path)))
         
         if isinstance(keyword_value, list) and isinstance(model_value, list):
             (keyword_value, model_value) = self.sort_for_report(keyword_value,
@@ -1081,7 +1113,10 @@ class Schema_editor(object):
             if schema_value is None:
                 print("%s not found" % schema_name)
             else:
-                print("%s found" % schema_name)
+                schema_value = schema_value.get('fits_keyword')
+                if schema_value:
+                    schema_value = schema_value.lower()
+                print("%s found as %s" % (schema_name, str(schema_value)))
     
         else:
             print("%s %s = %s" % (schema_name, field, str(schema_value)))
@@ -1196,8 +1231,6 @@ class Schema_editor(object):
                 if fits_name is not None:
                     # Special case for reference file keywords
                     p_name = fits_name[0:2] == "P_"
-                    import pdb ## DBG
-                    pdb.set_trace() ## DBG
                     if p_name:
                         fits_name = fits_name[2:]
 
@@ -1210,43 +1243,25 @@ class Schema_editor(object):
                                                          new_path(model_path,
                                                                   model_name))
                     else:
-                        found = True
-                        keyword_subschema = keyword_schema
-                        keyword_path = keyword_path.split(".")
-                        for keyword_name in keyword_path:
-                            if "properties" in keyword_subschema:
-                                keyword_subschema = \
-                                    keyword_subschema["properties"]
-                                
-                            if keyword_name in keyword_subschema:
-                                keyword_subschema = \
-                                    keyword_subschema[keyword_name]
-
-                            else:
-                                found = False
-                                break
-                            
-                        if found:
+                        keyword_path = keyword_path.split('.')
+                        keyword_subschema = find_subschema(keyword_schema,
+                                                           keyword_path)
+                        if keyword_subschema is not None:
+                            del keyword_dict[fits_name]
                             done = self.update_schema_fields(keyword_subschema,
                                                              model_subschema,
-                                                             new_path(model_path,
-                                                                      model_name))
-                            
-                            if model_name != keyword_path[-1] and not p_name:
+                                                             keyword_path)
+                            if (not p_name and
+                                not comparable_names(model_name, keyword_path[-1])):
                                 done = self.schema_rename_value(model_schema,
                                                                 keyword_path[-1],
                                                                 model_name,
-                                                                new_path(model_path,
-                                                                         model_name))
+                                                                keyword_path)
 
                 else:
                     fits_hdu = self.get_keyword_value(model_subschema,
                                                    "fits_hdu")
-                    if fits_hdu is not None:
-                        # No info on hdu in keyword database
-                        pass
-                
-                    else:
+                    if fits_hdu is None:
                         self.update_fits_keywords(model_subschema,
                                                   keyword_schema,
                                                   keyword_dict,                                          
@@ -1262,131 +1277,6 @@ class Schema_editor(object):
                                                   model_path)
                     
                 
-    def update_model_schema(self, model_schema, keyword_schema, 
-                            model_dict, path):
-        """
-        Update the model file to agree with the keyword db
-        """
-        properties = self.get_keyword_value(keyword_schema, "properties")
-        if properties is not None:
-            keyword_schema = properties
-
-        properties = self.get_keyword_value(model_schema, "properties")
-        if properties is not None:
-            model_schema = properties
-            model_dict = self.create_model_dict(model_schema)
-    
-        ordering = 0
-        for keyword_name, keyword_subschema in six.iteritems(keyword_schema):
-            # Find the item in the model schema (model_name and model_subschema) 
-            # that corresponds to an item in the keyword database
-
-            fits_name = self.get_keyword_value(keyword_subschema, "fits_keyword")
-            if fits_name is not None:
-                model_name = model_dict.get(fits_name)
-        
-                if model_name is None:
-                    model_subschema = None
-                    # Value in keyword db but not in model schema
-                    ordering += 1
-                    done = self.schema_add_value(model_schema,
-                                                 keyword_subschema,
-                                                 keyword_name,
-                                                 ordering,
-                                                 new_path(path,
-                                                          keyword_name))
-                    
-                else:
-                    del model_dict[fits_name]
-                    model_subschema = model_schema[model_name]
-                    if keyword_name != model_name:
-                        # Name in keyword db differs from name in model schema
-                        done = self.schema_rename_value(model_schema,
-                                                        keyword_name,
-                                                        model_name,
-                                                        new_path(path,
-                                                                 model_name))
-            else:
-                model_subschema = self.get_keyword_value(model_schema,
-                                                         keyword_name)
-                if model_subschema is not None:
-                    model_name = keyword_name
-                    
-                else:
-                    if keyword_name in ("standard", "misc", "basic", "allOf"):
-                        model_name = None
-                        
-                    else:
-                        # Name in keyword db differs from name in model schema
-                        model_name = most_similar(model_schema, keyword_name)
-                        if model_name is None:
-                            ordering += 1
-                            done = self.schema_add_value(model_schema,
-                                                         keyword_subschema,
-                                                         keyword_name,
-                                                         ordering,
-                                                         new_path(path,
-                                                                  keyword_name))
-                            if done:
-                                model_name = keyword_name
-                                
-                        else:
-                            done = self.schema_rename_value(model_schema,
-                                                            keyword_name,
-                                                            model_name,
-                                                            new_path(path,
-                                                                     model_name))
-                                
-                    if model_name:
-                        if model_name in model_schema:
-                            model_subschema = model_schema[model_name]
-                        else:
-                            model_subschema = model_schema[keyword_name]
-                    else:
-                        model_subschema = model_schema
-
-            if model_subschema:
-                # If a subschema of the model schema was found that matches
-                # the suschema of the keyword database, descend into both
-                # to check for further updates
-
-                ordering = model_subschema.get("ordering", ordering)
-
-                if isinstance(keyword_subschema, dict):
-                    if "properties" in keyword_subschema:
-                        # Skip "standard" and "misc",
-                        # they are not in the model schema
-                        
-                        if keyword_name not in ("standard", "misc"):
-                            self.update_model_schema(model_subschema,
-                                                     keyword_subschema,
-                                                     model_dict,
-                                                     new_path(path, model_name))
-                            
-                    else:
-                        done = self.update_schema_fields(keyword_subschema,
-                                                        model_subschema,
-                                                        new_path(path,
-                                                                 model_name))
-    
-                elif (isinstance(keyword_subschema,list) and
-                      keyword_name == "allOf"):
-                    # Need to merge keyword db schemas if they are under
-                    # an "allOf"
-                    merged_subschema = merge_schemas(keyword_subschema)
-                    
-                    self.update_model_schema(model_subschema,
-                                             merged_subschema,
-                                             model_dict,
-                                             path)
-    
-        for model_name in model_dict.values():
-            # Name in model schema but not in keyword database
-            done = self.schema_del_value(model_schema,
-                                         model_name,
-                                         new_path(path, model_name))
-    
-
     def update_omit(self, choice, path):
         """
         Update the omit parameter based on user input
@@ -1414,12 +1304,12 @@ class Schema_editor(object):
             elif model_field == "default":
                 keyword_field = "default_value"
             else:
-                model_field = keyword_field
+                keyword_field = model_field
                 
             keyword_value = keyword_schema.get(keyword_field)
             model_value = model_schema.get(model_field)
   
-            if model_field == "pattern":
+            if model_field == "pattern" and model_value is not None:
                 # Pattern is inside innermost set of parentehses
                 patstart = model_value.rfind('(') + 1
                 patend = model_value.find(')')
