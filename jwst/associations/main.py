@@ -97,7 +97,7 @@ class Main(object):
         parser.add_argument(
             '--save-orphans', dest='save_orphans',
             nargs='?', const='orphaned.csv', default=False,
-            help='Save orphaned members into the specified table. Default: "%(default)s"'
+            help='Save orphaned items into the specified table. Default: "%(default)s"'
         )
         parser.add_argument(
             '--version-id', dest='version_id',
@@ -262,7 +262,7 @@ class Main(object):
         result = []
         result.append((
             'There where {:d} associations '
-            'and {:d} orphaned members found.\n'
+            'and {:d} orphaned items found.\n'
             'Associations found are:'
         ).format(len(self.associations), len(self.orphaned)))
         for assocs in self.associations:

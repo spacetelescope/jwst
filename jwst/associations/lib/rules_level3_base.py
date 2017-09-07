@@ -7,6 +7,7 @@ import re
 from jwst.associations import (
     Association,
     AssociationRegistry,
+    ProcessList,
     libpath
 )
 from jwst.associations.association import (
@@ -35,6 +36,7 @@ __all__ = [
     'AsnMixin_Target',
     'ASN_SCHEMA',
     'DMS_Level3_Base',
+    'ProcessList',
     'Utility',
 ]
 
@@ -67,21 +69,6 @@ _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
 # Key that uniquely identfies members.
 KEY = 'expname'
 
-# Exposure EXP_TYPE to Association EXPTYPE mapping
-_EXPTYPE_MAP = {
-    'mir_tacq':      'target_acquistion',
-    'nis_tacq':      'target_acquistion',
-    'nis_taconfirm': 'target_acquistion',
-    'nrc_tacq':      'target_acquistion',
-    'nrc_taconfirm': 'target_acquistion',
-    'nrs_autoflat':  'autoflat',
-    'nrs_autowave':  'autowave',
-    'nrs_confirm':   'target_acquistion',
-    'nrs_tacq':      'target_acquistion',
-    'nrs_taconfirm': 'target_acquistion',
-    'nrs_taslit':    'target_acquistion',
-}
-
 
 class DMS_Level3_Base(DMSBaseMixin, Association):
     """Basic class for DMS Level3 associations."""
@@ -107,10 +94,9 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         self.validity.update({
             'has_science': {
                 'validated': False,
-                'check': lambda entry: entry['exptype'] == 'science'
+                'check': lambda member: member['exptype'] == 'science'
             }
         })
-
 
         # Other presumptions on the association
         if 'degraded_status' not in self.data:
@@ -174,59 +160,148 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         return product_name.lower()
 
-    def _init_hook(self, member):
+    def update_asn(self, item=None, member=None):
+        """Update association meta information
+
+        Parameters
+        ----------
+        item: dict or None
+            Item to use as a source. If not given, item-specific
+            information will be left unchanged.
+
+        member: dict or None
+            An association member to use as source.
+            If not given, member-specific information will be update
+            from current association/product membership.
+
+        Notes
+        -----
+        If both `item` and `member` are given,
+        information in `member` will take precedence.
+        """
+        # Constraints
+        self.data['constraints'] = '\n'.join(
+            [cc for cc in self.constraints_to_text()]
+        )
+
+        # ID
+        self.data['asn_id'] = self.acid.id
+
+        # Target
+        self.data['target'] = self._get_target()
+
+        # Item-based information
+        if item is not None:
+
+            # Program
+            if self.data['program'] != 'noprogram':
+                self.data['program'] = str(item['program'])
+
+            # Pool
+            if self.data['asn_pool'] == 'none':
+                self.data['asn_pool'] = basename(
+                    item.meta['pool_file']
+                ).split('.')[0]
+                parsed_name = re.search(
+                    _DMS_POOLNAME_REGEX, self.data['asn_pool']
+                )
+                if parsed_name is not None:
+                    pool_meta = {
+                        'program_id': parsed_name.group(1),
+                        'version': parsed_name.group(2)
+                    }
+                    self.meta['pool_meta'] = pool_meta
+
+            # Degrade exposure
+            if self.data['degraded_status'] == _DEGRADED_STATUS_OK:
+                try:
+                    exposerr = item['exposerr']
+                except KeyError:
+                    pass
+                else:
+                    if exposerr not in _EMPTY:
+                        self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
+
+        # Member-based info
+        if member is not None:
+
+            # Degraded exposure
+            if self.data['degraded_status'] == _DEGRADED_STATUS_OK:
+                try:
+                    exposerr = member['exposerr']
+                except KeyError:
+                    pass
+                else:
+                    if exposerr not in _EMPTY:
+                        self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
+
+        # Product-based updates
+        product = self.current_product
+        product['name'] = self.dms_product_name()
+
+    def make_member(self, item):
+        """Create a member from the item
+
+        Parameters
+        ----------
+        item: dict
+            The item to create member from.
+
+        Returns
+        -------
+        member: dict
+            The member
+        """
+        try:
+            exposerr = item['exposerr']
+        except KeyError:
+            exposerr = None
+        member = {
+            'expname': Utility.rename_to_level2b(item['filename']),
+            'exptype': self.get_exposure_type(item),
+            'exposerr': exposerr,
+            'asn_candidate': item['asn_candidate']
+        }
+        return member
+
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-        super(DMS_Level3_Base, self)._init_hook(member)
+        super(DMS_Level3_Base, self)._init_hook(item)
 
         # Set which sequence counter should be used.
         self._sequence = self._sequences[self.data['asn_type']]
 
-        self.data['target'] = member['targetid']
-        self.data['program'] = str(member['program'])
-        self.data['asn_pool'] = basename(
-            member.meta['pool_file']
-        ).split('.')[0]
-        self.data['constraints'] = '\n'.join(
-            [cc for cc in self.constraints_to_text()]
-        )
-        self.data['asn_id'] = self.acid.id
-        self.new_product(product_name=self.dms_product_name())
+        # Create the product.
+        self.new_product()
 
-        # Parse out information from the pool file name.
-        # Necessary to carry information to the Level3 output.
-        parsed_name = re.search(_DMS_POOLNAME_REGEX, self.data['asn_pool'])
-        if parsed_name is not None:
-            pool_meta = {
-                'program_id': parsed_name.group(1),
-                'version': parsed_name.group(2)
-            }
-            self.meta['pool_meta'] = pool_meta
+        # Update meta data
+        self.update_asn(item=item)
 
-    def _add(self, member):
-        """Add member to this association."""
-        try:
-            exposerr = member['exposerr']
-        except KeyError:
-            exposerr = None
-        entry = {
-            'expname': Utility.rename_to_level2b(member['filename']),
-            'exptype': Utility.get_exposure_type(member, default='science'),
-            'exposerr': exposerr,
-            'asn_candidate': member['asn_candidate']
-        }
+    def _add(self, item):
+        """Add item to this association."""
+        member = self.make_member(item)
+        if self.is_member(member):
+            logger.debug(
+                'Member is already part of the association:'
+                '\n\tassociation: {}'
+                '\n]tmember: {}'.format(self, member)
+            )
+            return
 
-        self.update_validity(entry)
+        self.update_validity(member)
         members = self.current_product['members']
-        members.append(entry)
-        if exposerr not in _EMPTY:
+        members.append(member)
+        if member['exposerr'] not in _EMPTY:
             logger.warn('Member {} has error "{}"'.format(
-                member['filename'],
-                exposerr
+                item['filename'],
+                member['exposerr']
             ))
-            self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
 
-        # Add entry to the short list
-        self.members.add(entry[KEY])
+        # Add member to the short list
+        self.members.add(member[KEY])
+
+        # Update meta info
+        self.update_asn(item=item, member=member)
 
     def _get_target(self):
         """Get string representation of the target
@@ -237,10 +312,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             The Level3 Product name representation
             of the target or source ID.
         """
-        try:
-            target = 's{0:0>5s}'.format(self.data['source_id'])
-        except KeyError:
-            target = 't{0:0>3s}'.format(self.data['target'])
+        target_id = self.constraints['target']['value']
+        target = 't{0:0>3s}'.format(str(target_id))
         return target
 
     def _get_instrument(self):
@@ -310,7 +383,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 exposure = '{0:0>2s}'.format(activity_id)
         return exposure
 
-    def _add_items(self, items, product_name=None, with_type=False):
+    def _add_items(self, items, product_name=None, with_exptype=False):
         """ Force adding items to the association
 
         Parameters
@@ -324,7 +397,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             If None, the default DMS Level3 naming
             conventions will be attempted.
 
-        with_type: bool
+        with_exptype: bool
             If True, each item is expected to be a 2-tuple with
             the first element being the item to add as `expname`
             and the second items is the `exptype`
@@ -343,15 +416,15 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         self.new_product(product_name)
         members = self.current_product['members']
         for item in items:
-            type_ = 'science'
-            if with_type:
-                item, type_ = item
-            entry = {
+            exptype = 'science'
+            if with_exptype:
+                item, exptype = item
+            member = {
                 'expname': item,
-                'exptype': type_
+                'exptype': exptype
             }
-            self.update_validity(entry)
-            members.append(entry)
+            self.update_validity(member)
+            members.append(member)
         self.sequence = next(self._sequence)
 
     def __repr__(self):
@@ -414,7 +487,7 @@ class Utility(object):
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group('type') != '_uncal':
             logger.warn((
-                'Member FILENAME="{}" is not a Level 1b name. '
+                'Item FILENAME="{}" is not a Level 1b name. '
                 'Cannot transform to Level 2b.'
             ).format(
                 level1b_name
@@ -430,13 +503,13 @@ class Utility(object):
 
     @staticmethod
     def get_candidate_list(value):
-        """Parse the candidate list from a member value
+        """Parse the candidate list from a item value
 
         Parameters
         ----------
         value: str
-            The value from the member to parse. Usually
-            member['ASN_CANDIDATE']
+            The value from the item to parse. Usually
+            item['ASN_CANDIDATE']
 
         Returns
         -------
@@ -450,42 +523,6 @@ class Utility(object):
                 ACID(v)
                 for v in evaled
             ]
-        return result
-
-    @staticmethod
-    def get_exposure_type(member, default=None):
-        """Determine the exposure type of a pool member
-
-        Parameters
-        ----------
-        member: dict
-            The pool entry to determine the exposure type of
-
-        default: str or None
-            The default exposure type.
-            If None, routine will raise LookupError
-
-        Returns
-        -------
-        exposure_type: str
-            Exposure type. Can be one of
-                'SCIENCE': Member contains science data
-                'TARGET_AQUISITION': Member contains target acquisition data.
-                'AUTOFLAT': NIRSpec AUTOFLAT
-                'AUTOWAVE': NIRSpec AUTOWAVE
-
-        Raises
-        ------
-        LookupError
-            When `default` is None and an exposure type cannot be determined
-        """
-        result = default
-        try:
-            exp_type = member['exp_type']
-        except KeyError:
-            raise LookupError('Exposure type cannot be determined')
-
-        result = _EXPTYPE_MAP.get(exp_type, default)
         return result
 
     @staticmethod
@@ -587,7 +624,7 @@ class AsnMixin_Target(DMS_Level3_Base):
         self.add_constraints({
             'target': {
                 'value': None,
-                'inputs': ['targetid']
+                'inputs': ['targetid'],
             },
         })
 
@@ -678,21 +715,21 @@ class AsnMixin_Image(DMS_Level3_Base):
 
         super(AsnMixin_Image, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, member):
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'image3'
-        super(AsnMixin_Image, self)._init_hook(member)
+        super(AsnMixin_Image, self)._init_hook(item)
 
 
 class AsnMixin_Spectrum(DMS_Level3_Base):
     """All things that are spectrum"""
 
-    def _init_hook(self, member):
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'spec3'
-        super(AsnMixin_Spectrum, self)._init_hook(member)
+        super(AsnMixin_Spectrum, self)._init_hook(item)
 
 
 class AsnMixin_CrossCandidate(DMS_Level3_Base):
