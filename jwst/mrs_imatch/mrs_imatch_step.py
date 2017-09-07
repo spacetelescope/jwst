@@ -174,6 +174,9 @@ def apply_background_2d(model2d, channel=None, subtract=True):
     if isinstance(channel, int):
         channel = str(channel)
 
+    elif isinstance(channel, six.string_types):
+        pass
+
     elif hasattr(channel, '__iter__'):
         available_channels = [pi.channel for pi in mpolyinfo]
         diff = sorted(set(map(str, channel)).difference(available_channels))
@@ -186,7 +189,7 @@ def apply_background_2d(model2d, channel=None, subtract=True):
             apply_background_2d(model2d, channel=ch, subtract=subtract)
         return
 
-    elif not isinstance(channel, six.string_types):
+    else:
         raise TypeError("Unsupported 'channel' type")
 
     index = _find_channel_bkg_index(model2d, channel)
