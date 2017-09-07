@@ -22,7 +22,7 @@ class KeyValueRegistry(UserDict):
     """Provide a dict-like registry
 
     Differences from just a `dict`:
-        - Can be given single items or a 2-tuple.
+        - Can be given single item or a 2-tuple.
           If an item, attempts to read the `__name__` attribute
           and use that as the key.
 
@@ -33,17 +33,17 @@ class KeyValueRegistry(UserDict):
 
     Parameters
     ----------
-    members: object or (str, object) or dict
-        Initializing members.
+    items: object or (str, object) or dict
+        Initializing items.
 
     default: str or object
         The default to use when key is `None`
     """
 
-    def __init__(self, members=None, default=None):
+    def __init__(self, items=None, default=None):
         super_args = ()
-        if members is not None:
-            super_args = (make_dict(members), )
+        if items is not None:
+            super_args = (make_dict(items), )
         super(KeyValueRegistry, self).__init__(*super_args)
 
         self.default = None

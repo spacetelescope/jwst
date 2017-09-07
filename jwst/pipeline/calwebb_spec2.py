@@ -37,13 +37,13 @@ class Spec2Pipeline(Pipeline):
     """
 
     spec = """
-        save_bsub = boolean(default=False)
+        save_bsub = boolean(default=False) # Save background-subracted science
     """
 
     # Define aliases to steps
     step_defs = {
-        'assign_wcs': assign_wcs_step.AssignWcsStep,
         'bkg_subtract': background_step.BackgroundStep,
+        'assign_wcs': assign_wcs_step.AssignWcsStep,
         'imprint_subtract': imprint_step.ImprintStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'extract_2d': extract_2d_step.Extract2dStep,

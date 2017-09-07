@@ -10,7 +10,7 @@ from ..resample import blend
 from ..coron import stack_refs_step
 from ..coron import align_refs_step
 from ..coron import klip_step
-from ..outlier_detection import outlier_detection_step
+from ..outlier_detection import outlier_detection_stack_step
 from ..resample import resample_step
 
 
@@ -39,7 +39,7 @@ class Coron3Pipeline(Pipeline):
     step_defs = {'stack_refs': stack_refs_step.StackRefsStep,
                  'align_refs': align_refs_step.AlignRefsStep,
                  'klip': klip_step.KlipStep,
-                 'outlier_detection': outlier_detection_step.OutlierDetectionStep,
+                 'outlier_detection': outlier_detection_stack_step.OutlierDetectionStackStep,
                  'resample': resample_step.ResampleStep
                  }
 
@@ -123,7 +123,6 @@ class Coron3Pipeline(Pipeline):
                 target_models.append(image)
 
             # Call outlier_detection
-            self.outlier_detection.resample_data=False
             target_models = self.outlier_detection(target_models)
 
             # Create a level-2c output product

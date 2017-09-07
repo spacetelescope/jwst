@@ -35,6 +35,7 @@ class OutlierDetectionScaledStep(Step):
         good_bits = integer(default=4)
     """
     reference_file_types = ['gain', 'readnoise']
+    prefetch_references = False
 
     def process(self, input):
 
@@ -98,10 +99,9 @@ class OutlierDetectionScaledStep(Step):
         """
 
         reffile_to_model = {'gain': datamodels.GainModel,
-                            'readnoise': datamodels.ReadnoiseModel}
-        reffile_model = reffile_to_model[reftype]           
+                            'readnoise': datamodels.ReadnoiseModel}          
 
-        reffiles = [self.input_models.meta.ref_file.instance[reftype]['name']]
+        reffiles = [im.meta.ref_file.instance[reftype]['name'] for im in self.input_models]
         self.log.debug("Using {} reffile(s):".format(reftype.upper()))
         for r in set(reffiles):
             self.log.debug("    {}".format(r))
@@ -109,9 +109,12 @@ class OutlierDetectionScaledStep(Step):
         # Check if all the ref files are the same.  If so build it by reading
         # the reference file just once.
         if len(set(reffiles)) <= 1:
-            ref_list = [reffile_model(self.reference_uri_to_cache_path(reffiles[0]))]
+            length = len(self.input_models)
+            # This call to reference_uri_to_cache_path expects a reference
+            # filename as a URI(crds://), not a file path(/path/to/file)
+            ref_list = [reffile_to_model[reftype](self.reference_uri_to_cache_path(reffiles[0]))]*length
         else:
-            ref_list = [reffile_model(self.reference_uri_to_cache_path(ref)) for ref in reffiles]
+            ref_list = [self.get_reference_file(im, reftype) for im in self.input_models] 
         return datamodels.ModelContainer(ref_list)
 
 

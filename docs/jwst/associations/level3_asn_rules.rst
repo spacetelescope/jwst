@@ -56,30 +56,6 @@ follows:
   instrument for a single *snap*. Note that a single integration
   actually is a number of readouts of the detector during the integration.
 
-.. _level3-asn-association-types:
-
-Association Types
------------------
-
-Each Level3 association is intended to make a specific science
-product. The type of science product is indicated by the `ATYPE` field
-in the association file name (see :ref:`asn-DMS-naming`), and in the `asn_type` meta
-keyword of the association itself (see :ref:`asn-association-meta-keywords`).
-
-The pipeline uses this type as the key to indicate which Level 3
-pipeline module to use to process this association.
-
-The current association types are:
-
-  * `image3`: Intended for `calwebb_image3` processing
-  * `spec3`: Intended for `calwebb_spec3` processing
-  * `wfs`: Wave front sensing data, used by `wfs_combine`
-  * `ami3`: Intended for `calwebb_ami3` processing
-  * `coron3`: Intended for `calwebb_coron3` processing
-  * `tso3`: Intended for `calwebb_tso3` processing
-  * `image2`: Intended for `calwebb_image2` processing
-  * `spec2`: Intended for `calwebb_spec2` processing
-
 .. _level3-asn-rule-definitions:
 
 Rules

@@ -17,8 +17,7 @@ import sys
 from . import libpath
 from .exceptions import (
     AssociationError,
-    AssociationNotValidError,
-    AssociationProcessMembers,
+    AssociationNotValidError
 )
 from .lib.callback_registry import CallbackRegistry
 
@@ -93,7 +92,7 @@ class AssociationRegistry(dict):
             module = import_from_file(fname)
             self.schemas += [
                 schema
-                for schema in find_member(module, 'ASN_SCHEMA')
+                for schema in find_object(module, 'ASN_SCHEMA')
             ]
             for class_name, class_object in get_classes(module):
                 if include_bases or class_name.startswith(USER_ASN):
@@ -114,13 +113,13 @@ class AssociationRegistry(dict):
     def rule_set(self):
         return self._rule_set
 
-    def match(self, member, version_id=None, allow=None, ignore=None):
-        """See if member belongs to any of the associations defined.
+    def match(self, item, version_id=None, allow=None, ignore=None):
+        """See if item belongs to any of the associations defined.
 
         Parameters
         ----------
-        member: dict
-            A member, like from a Pool, to find assocations for.
+        item: dict
+            A item, like from a Pool, to find assocations for.
 
         version_id: str
             If specified, a string appened to association names.
@@ -139,7 +138,7 @@ class AssociationRegistry(dict):
         -------
         (associations, reprocess_list): 2-tuple
             associations: [association,...]
-                List of associations member belongs to. Empty if none match
+                List of associations item belongs to. Empty if none match
             reprocess_list: [AssociationReprocess, ...]
                 List of reprocess events.
         """
@@ -151,7 +150,7 @@ class AssociationRegistry(dict):
         process_list = []
         for name, rule in self.items():
             if rule not in ignore and rule in allow:
-                asn, reprocess = rule.create(member, version_id)
+                asn, reprocess = rule.create(item, version_id)
                 process_list.extend(reprocess)
                 if asn is not None:
                     associations.append(asn)
@@ -294,27 +293,27 @@ def import_from_file(filename):
     return module
 
 
-def find_member(module, member):
-    """Find all instances of member in module or sub-modules
+def find_object(module, obj):
+    """Find all instances of object in module or sub-modules
 
     Parameters
     ----------
     module: module
         The module to recursively search through.
 
-    member: str
-        The member to find.
+    obj: str
+        The object to find.
 
     Returns
     -------
     values: iterator
-        Iterator that returns all values of the member
+        Iterator that returns all values of the object
     """
     for name, value in getmembers(module):
         if ismodule(value) and name.startswith('asn_'):
-            for inner_value in find_member(value, member):
+            for inner_value in find_object(value, obj):
                 yield inner_value
-        elif name == member:
+        elif name == obj:
             yield value
 
 
@@ -328,7 +327,7 @@ def get_classes(module):
 
     Returns
     -------
-    class members: generator
+    class object: generator
         A generator that will yield all class members in the module.
     """
     for class_name, class_object in getmembers(
