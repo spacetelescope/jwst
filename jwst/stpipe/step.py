@@ -45,7 +45,11 @@ class Step(object):
     suffix = string(default=None)           # Default suffix for output files
     """
 
+    # Reference types for both command line override definition and reference prefetch
     reference_file_types = []
+    
+    # Set to False in subclasses to skip prefetch,  but by default attempt to prefetch
+    prefetch_references = True
 
     @classmethod
     def merge_config(cls, config, config_file):
@@ -336,7 +340,8 @@ class Step(object):
         result = None
 
         try:
-            if len(args) and len(self.reference_file_types) and not self.skip:
+            if (len(args) and len(self.reference_file_types) and not self.skip
+                and self.prefetch_references):
                 self._precache_reference_files(args[0])
 
             self.log.info(

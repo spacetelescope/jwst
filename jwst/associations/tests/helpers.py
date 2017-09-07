@@ -222,7 +222,7 @@ def fmt_cand(candidate_list):
         if isinstance(cid, int):
             if ctype == 'observation' and cid < 1000:
                 cid_format = 'o{:0>3d}'
-            elif ctype in ['mosaic'] and cid >= 1000 and cid < 3000:
+            elif cid >= 1000 and cid < 3000:
                 cid_format = 'c{:0>4d}'
             else:
                 cid_format = 'r{:0>4d}'

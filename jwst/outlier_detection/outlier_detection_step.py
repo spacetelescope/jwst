@@ -36,8 +36,7 @@ class OutlierDetectionStep(Step):
         good_bits = integer(default=4)
     """
     reference_file_types = ['gain', 'readnoise']
-    prefetch_references = False
-    
+
     def process(self, input):
 
         with datamodels.open(input) as input_models:

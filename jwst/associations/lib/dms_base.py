@@ -1,6 +1,7 @@
 """Association attributes common to DMS-based Rules"""
 from .counter import Counter
 
+from jwst.associations.association import getattr_from_list
 from jwst.associations.exceptions import (
     AssociationNotValidError,
 )
@@ -12,6 +13,21 @@ PRODUCT_NAME_DEFAULT = 'undefined'
 # DMS file name templates
 _ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn'
 _ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
+
+# Exposure EXP_TYPE to Association EXPTYPE mapping
+_EXPTYPE_MAP = {
+    'mir_tacq':      'target_acquistion',
+    'nis_tacq':      'target_acquistion',
+    'nis_taconfirm': 'target_acquistion',
+    'nrc_tacq':      'target_acquistion',
+    'nrc_taconfirm': 'target_acquistion',
+    'nrs_autoflat':  'autoflat',
+    'nrs_autowave':  'autowave',
+    'nrs_confirm':   'target_acquistion',
+    'nrs_tacq':      'target_acquistion',
+    'nrs_taconfirm': 'target_acquistion',
+    'nrs_taslit':    'target_acquistion',
+}
 
 __all__ = ['DMSBaseMixin']
 
@@ -31,13 +47,13 @@ class DMSBaseMixin(ACIDMixin):
         })
 
     @classmethod
-    def create(cls, member, version_id=None):
-        """Create association if member belongs
+    def create(cls, item, version_id=None):
+        """Create association if item belongs
 
         Parameters
         ----------
-        member: dict
-            The member to initialize the association with.
+        item: dict
+            The item to initialize the association with.
 
         version_id: str or None
             Version_Id to use in the name of this association.
@@ -47,11 +63,11 @@ class DMSBaseMixin(ACIDMixin):
         -------
         (association, reprocess_list)
             2-tuple consisting of:
-            - association: The association or, if the member does not
+            - association: The association or, if the item does not
                 this rule, None
-            - [ProcessList[, ...]]: List of members to process again.
+            - [ProcessList[, ...]]: List of items to process again.
         """
-        asn, reprocess = super(DMSBaseMixin, cls).create(member, version_id)
+        asn, reprocess = super(DMSBaseMixin, cls).create(item, version_id)
         if not asn:
             return None, reprocess
         asn.sequence = next(asn._sequence)
@@ -144,3 +160,114 @@ class DMSBaseMixin(ACIDMixin):
     @classmethod
     def reset_sequence(cls):
         cls._sequence = Counter(start=1)
+
+    def get_exposure_type(self, item, default='science'):
+        """Determine the exposure type of a pool item
+
+        Parameters
+        ----------
+        item: dict
+            The pool entry to determine the exposure type of
+
+        default: str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+
+        Returns
+        -------
+        exposure_type: str
+            Exposure type. Can be one of
+                'SCIENCE': Item contains science data
+                'TARGET_AQUISITION': Item contains target acquisition data.
+                'AUTOFLAT': NIRSpec AUTOFLAT
+                'AUTOWAVE': NIRSpec AUTOWAVE
+                'PSF': PSF
+
+        Raises
+        ------
+        LookupError
+            When `default` is None and an exposure type cannot be determined
+        """
+        result = default
+
+        # Look for specific attributes
+        try:
+            self.item_getattr(item, ['is_psf'])
+        except KeyError:
+            pass
+        else:
+            return 'psf'
+
+        # Base type off of exposure type.
+        try:
+            exp_type = item['exp_type']
+        except KeyError:
+            raise LookupError('Exposure type cannot be determined')
+
+        result = _EXPTYPE_MAP.get(exp_type, default)
+
+        if result is None:
+            raise LookupError('Cannot determine exposure type')
+        return result
+
+    def item_getattr(self, item, attributes):
+        """Return value from any of a list of attributes
+
+        Parameters
+        ----------
+        item: dict
+            item to retrieve from
+
+        attributes: list
+            List of attributes
+
+        Returns
+        -------
+        (attribute, value)
+            Returns the value and the attribute from
+            which the value was taken.
+
+        Raises
+        ------
+        KeyError
+            None of the attributes are found in the dict.
+        """
+        return getattr_from_list(
+            item,
+            attributes,
+            invalid_values=self.INVALID_VALUES
+        )
+
+    def is_member(self, new_member):
+        """Check if member is already a member
+
+        Parameters
+        ----------
+        new_member: dict
+            The member to check for
+        """
+        try:
+            current_members = self.current_product['members']
+        except KeyError:
+            return False
+
+        for member in current_members:
+            if member == new_member:
+                return True
+        return False
+
+    def is_item_member(self, item):
+        """Check if item is already a member of this association
+
+        Parameters
+        ----------
+        item: dict
+            The item to check for.
+
+        Returns
+        -------
+        is_item_member: bool
+            True if item is a member.
+        """
+        member = self.make_member(item)
+        return self.is_member(member)
