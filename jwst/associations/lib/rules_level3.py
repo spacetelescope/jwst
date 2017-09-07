@@ -417,14 +417,6 @@ class Asn_AMI(
             }
         })
 
-        # PSF is required
-        self.validity.update({
-            'has_psf': {
-                'validated': False,
-                'check': lambda entry: entry['exptype'] == 'psf'
-            }
-        })
-
         # Check and continue initialization.
         super(Asn_AMI, self).__init__(*args, **kwargs)
 
