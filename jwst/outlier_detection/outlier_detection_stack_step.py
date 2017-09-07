@@ -5,13 +5,20 @@ from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import outlier_detection
 
-
-class OutlierDetectionTSOStep(Step):
+class OutlierDetectionStackStep(Step):
     """
-    Flag outlier bad pixels and cosmic rays in the DQ array of each input image
+    Flag outlier bad pixels and cosmic rays in the DQ array of each input image 
+    of a stack of exposures, which in the case of TSO data are from the same 
+    data cube.
 
     Input images can listed in an input association file or already opened
-    with a ModelContainer.  DQ arrays are modified in place.
+    with a ModelContainer.
+    
+    DQ arrays are modified in place.
+    
+    By default, resampling has been disabled.  The 'resample_data' attribute
+    can be reset to 'True' to turn on resampling if desired for the data.
+    
 
     Parameters
     -----------
@@ -36,20 +43,21 @@ class OutlierDetectionTSOStep(Step):
         good_bits = integer(default=4)
     """
     reference_file_types = ['gain', 'readnoise']
-
+    prefetch_references = False
+    
     def process(self, input):
 
         with datamodels.open(input) as input_models:
 
             if not isinstance(input_models, datamodels.ModelContainer):
                 self.log.warning("Input is not a ModelContainer.")
-                self.log.warning("Outlier detection step will be skipped.")
+                self.log.warning("Outlier detection stack step will be skipped.")
                 result = input_models.copy()
                 result.meta.cal_step.outlier_detection = "SKIPPED"
                 return result
 
+            self.log.info("Performing outlier detection on stack of {} inputs".format(len(input_models)))
             self.input_models = input_models
-
             reffiles= {}
             reffiles['gain'] = self._build_reffile_container('gain')
             reffiles['readnoise'] = self._build_reffile_container('readnoise')
@@ -99,7 +107,6 @@ class OutlierDetectionTSOStep(Step):
 
         reffile_to_model = {'gain': datamodels.GainModel,
                             'readnoise': datamodels.ReadnoiseModel}
-        reffile_model = reffile_to_model[reftype]           
 
         reffiles = [im.meta.ref_file.instance[reftype]['name'] for im in self.input_models]
         self.log.debug("Using {} reffile(s):".format(reftype.upper()))
@@ -110,12 +117,14 @@ class OutlierDetectionTSOStep(Step):
         # the reference file just once.
         if len(set(reffiles)) <= 1:
             length = len(self.input_models)
-            ref_list = [reffile_model(self.reference_uri_to_cache_path(reffiles[0]))]*length
+            # This call to reference_uri_to_cache_path expects a reference
+            # filename as a URI(crds://), not a file path(/path/to/file)
+            ref_list = [reffile_to_model[reftype](self.reference_uri_to_cache_path(reffiles[0]))]*length
         else:
-            ref_list = [reffile_model(self.reference_uri_to_cache_path(ref)) for ref in reffiles]
+            ref_list = [self.get_reference_file(im, reftype) for im in self.input_models] 
         return datamodels.ModelContainer(ref_list)
 
 
 
 if __name__ == '__main__':
-    cmdline.step_script(OutlierDetectionStep)
+    cmdline.step_script(OutlierDetectionStackStep)

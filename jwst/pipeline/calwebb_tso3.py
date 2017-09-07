@@ -7,7 +7,7 @@ from astropy.table import vstack
 from ..stpipe import Pipeline
 from .. import datamodels
 
-from ..outlier_detection import outlier_detection_step
+from ..outlier_detection import outlier_detection_stack_step
 from ..outlier_detection import outlier_detection_scaled_step
 from ..tso_photometry import tso_photometry_step
 from ..extract_1d import extract_1d_step
@@ -34,7 +34,7 @@ class Tso3Pipeline(Pipeline):
 
     # Define alias to steps
     step_defs = {'outlier_detection': 
-                        outlier_detection_step.OutlierDetectionStep,
+                        outlier_detection_stack_step.OutlierDetectionStackStep,
                  'outlier_detection_scaled': 
                         outlier_detection_scaled_step.OutlierDetectionScaledStep,
                  'tso_photometry': tso_photometry_step.TSOPhotometryStep,
@@ -42,7 +42,8 @@ class Tso3Pipeline(Pipeline):
                  'white_light': white_light_step.WhiteLightStep
                  }
     image_exptypes = ['NRC_TSIMAGE']
-
+    reference_file_types = ['gain', 'readnoise']
+    
     def process(self, input):
         """
         Run the TSO3Pipeline
@@ -78,7 +79,6 @@ class Tso3Pipeline(Pipeline):
             
             if not self.scale_detection:
                 self.log.info("Performing outlier detection on input images...")
-                self.outlier_detection.resample_data=False
                 results = self.outlier_detection(input_models)
 
                 # Transfer updated DQ values to original input observation
