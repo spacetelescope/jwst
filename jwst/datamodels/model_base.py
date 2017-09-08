@@ -189,11 +189,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         
         # if the input model doesn't have a date set, use the current date/time
         if self.meta.date is None:
-            self.meta.date = Time(datetime.datetime.now())
-            if hasattr(self.meta.date, 'value'):
-                self.meta.date.format = 'isot'
-                self.meta.date = str(self.meta.date.value)
-
+            current_date = Time(datetime.datetime.now())
+            current_date.format = 'isot'
+            self.meta.date = current_date.value
+        
         # store the data model type, if not already set
         if hasattr(self.meta, 'model_type'):
             if self.meta.model_type is None:
