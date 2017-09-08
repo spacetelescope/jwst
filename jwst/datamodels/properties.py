@@ -378,6 +378,7 @@ class ListNode(Node):
     def extend(self, other):
         for part in _unmake_node(other):
             self.append(part)
+        self._validate()
 
     def item(self, **kwargs):
         assert isinstance(self._schema['items'], dict)
