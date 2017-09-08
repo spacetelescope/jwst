@@ -7,7 +7,7 @@ from os.path import split, splitext, join, abspath, expanduser
 
 
 def replace_suffix_ext(filename, old_suffix_list, new_suffix,
-                       output_ext='escv', output_dir=None):
+                       output_ext='ecsv', output_dir=None):
     """
     Replace the suffix and extension of a filename.
 
@@ -27,7 +27,7 @@ def replace_suffix_ext(filename, old_suffix_list, new_suffix,
         The new filename suffix.
 
     output_ext : str, optional
-        The extension of the output filename.  The default is 'escv'.
+        The extension of the output filename.  The default is 'ecsv'.
 
     output_dir : str or `None`, optional
         The output directory name.  If `None` then the current directory
@@ -42,23 +42,23 @@ def replace_suffix_ext(filename, old_suffix_list, new_suffix,
     --------
     >>> from jwst.lib.catalog_utils import replace_suffix_ext
     >>> replace_suffix_ext('jw12345_nrca_i2d.fits', ['i2d'], 'cat')
-    >>> 'jw12345_nrca_cat.escv'
+    >>> 'jw12345_nrca_cat.ecsv'
 
     >>> replace_suffix_ext('jw12345_nrca_cal.fits', ['i2d'], 'cat')
-    >>> 'jw12345_nrca_cal_cat.escv'
+    >>> 'jw12345_nrca_cal_cat.ecsv'
 
     >>> replace_suffix_ext('my_custom_file.fits', ['i2d'], 'cat')
-    'my_custom_file_cat.escv'
+    'my_custom_file_cat.ecsv'
 
     >>> old_suffixes = ['calints', 'crfints']
     >>> replace_suffix_ext('jw12345_nrca_calints.fits', old_suffixes, 'phot')
-    >>> 'jw12345_nrca_phot.escv'
+    >>> 'jw12345_nrca_phot.ecsv'
     >>> replace_suffix_ext('jw12345_nrca_crfints.fits', old_suffixes, 'phot')
-    >>> 'jw12345_nrca_phot.escv'
+    >>> 'jw12345_nrca_phot.ecsv'
 
     >>> replace_suffix_ext('jw12345_nrca_i2d.fits', ['i2d'], 'cat',
     ...                    output_dir='/jwst/my_catalogs')
-    >>> '/jwst/my_catalogs/jw12345_nrca_cat.escv'
+    >>> '/jwst/my_catalogs/jw12345_nrca_cat.ecsv'
     """
 
     path, filename = split(filename)
