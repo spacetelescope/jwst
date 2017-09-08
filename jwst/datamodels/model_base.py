@@ -282,9 +282,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         if isinstance(path, six.string_types):
             self.meta.filename = os.path.basename(path)
 
-        self.meta.date = Time(datetime.datetime.now())
-        self.meta.date.format = 'isot'
-        self.meta.date = self.meta.date.value
+        # self.meta.date = Time(datetime.datetime.now())
+        # self.meta.date.format = 'isot'
+        # self.meta.date = self.meta.date.value
+        current_date = Time(datetime.datetime.now()) # DBG
+        current_date.format = 'isot' ## DBG
+        self.meta.date = current_date.value # DBG
         self.meta.model_type = self.__class__.__name__
 
     def save(self, path, *args, **kwargs):
