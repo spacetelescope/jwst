@@ -8,7 +8,7 @@ from astropy.modeling.models import Scale, Identity
 import gwcs.coordinate_frames as cf
 
 from . import pointing
-from .util import not_implemented_mode, subarray_transform, get_object_info
+from .util import not_implemented_mode, subarray_transform,
 from ..datamodels import ImageModel, NIRCAMGrismModel
 from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
                                  NIRCAMForwardColumnGrismDispersion,
@@ -18,30 +18,25 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def create_pipeline(input_model, reference_files, catalog=None):
-    """Get reference files from crds."""
+def create_pipeline(input_model, reference_files):
+    '''
+    get reference files from crds
+
+    '''
     exp_type = input_model.meta.exposure.type.lower()
-    if catalog is not None:
-        pipeline = exp_type2transform[exp_type](input_model,
-                                                reference_files,
-                                                catalog)
-    else:
-        pipeline = exp_type2transform[exp_type](input_model, reference_files)
+    pipeline = exp_type2transform[exp_type](input_model, reference_files)
 
     return pipeline
 
 
 def imaging(input_model, reference_files):
     """
-    The NIRCAM imaging pipeline
+    The NIRCAM imaging pipeline includes 3 coordinate frames -
+    detector, focal plane and sky
 
-    This includes 3 coordinate frames - detector, focal plane and sky
-
-    reference_files={'distortion': 'test.asdf'}
+    reference_files={'distortion': 'test.asdf', 'filter_offsets': 'filter_offsets.asdf'}
     """
-    detector = cf.Frame2D(name='detector',
-                          axes_order=(0, 1),
-                          unit=(u.pix, u.pix))
+    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
@@ -66,8 +61,7 @@ def imaging_distortion(input_model, reference_files):
         bb = transform.bounding_box
     except NotImplementedError:
         shape = input_model.data.shape
-        # Note: Since bounding_box is attached to the model
-        # here it's in reverse order.
+        # Note: Since bounding_box is attached to the model here it's in reverse order.
         transform.bounding_box = ((-0.5, shape[0] - 0.5),
                                   (-0.5, shape[1] - 0.5))
     return transform

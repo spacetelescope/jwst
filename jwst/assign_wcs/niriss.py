@@ -26,7 +26,7 @@ log.setLevel(logging.DEBUG)
 def create_pipeline(input_model, reference_files):
     '''
     get reference files from crds
-    
+
     '''
 
     exp_type = input_model.meta.exposure.type.lower()
