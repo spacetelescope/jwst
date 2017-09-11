@@ -10,7 +10,7 @@ from .. import datamodels
 from ..ami import ami_analyze_step
 from ..ami import ami_average_step
 from ..ami import ami_normalize_step
-
+from ..resample import blend
 
 __version__ = "1.2"
 
@@ -112,6 +112,11 @@ class Ami3Pipeline(Pipeline):
                 targ_avg.meta.asn.table_name = asn.filename
                 output_file = mk_prodname(self.output_dir, prod['name'], 'amiavg')
                 self.log.info('Saving averaged target results to %s', output_file)
+
+                # Perform blending of metadata for all inputs to this output file
+                log.debug('Blending metadata for {}'.format(output_file))
+                blend.blendfitsdata(targ_files, result)
+               
                 targ_avg.save(output_file)
 
         # Now that all LGAVG products have been produced, do normalization of
@@ -125,6 +130,11 @@ class Ami3Pipeline(Pipeline):
             result.meta.asn.table_name = asn.filename
             output_file = mk_prodname(self.output_dir, prod['name'], 'aminorm')
             self.log.info('Saving normalized result to %s', output_file)
+            
+            # Perform blending of metadata for all inputs to this output file
+            log.debug('Blending metadata for {}'.format(output_file))
+            blend.blendfitsdata([targ_avg, psf_avg], result)
+
             result.save(output_file)
             result.close()
 
