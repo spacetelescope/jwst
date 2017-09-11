@@ -117,12 +117,7 @@ class Tso3Pipeline(Pipeline):
             # Working with spectroscopic TSO data...
             # define output for x1d (level 3) products
             x1d_models = datamodels.MultiSpecModel()
-            # xxx dummy = type(x1d_models.spec)       # xxx should not be needed
-            print("xxx about to call 'x1d_models.update(input_asn)'",
-                  flush=True)
             x1d_models.update(input_asn)
-            print("xxx 'x1d_models.update(input_asn)' called", flush=True)
-            # xxx del dummy
 
             # Create name for extracted white-light (Level 3) products
             phot_tab_name = "{}_whtlt.ecsv".format(product_name)
