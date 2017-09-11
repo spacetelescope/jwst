@@ -11,7 +11,7 @@ import numpy as np
 
 import jsonschema
 
-from astropy.extern import six
+import six
 from astropy.io import fits
 from astropy import time
 

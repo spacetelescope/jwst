@@ -8,7 +8,7 @@ import logging
 from nose.tools import nottest
 import re
 
-from astropy.extern import six
+import six
 from numpy.ma import masked
 
 from . import __version__

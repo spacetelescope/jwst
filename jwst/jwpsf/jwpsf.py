@@ -9,7 +9,7 @@ import types
 import numpy as np
 import math
 from astropy.io import fits as pyfits
-from astropy.extern import six
+import six
 
 if six.PY2:
     from Tkinter import *

@@ -33,7 +33,7 @@ __version__ = '0.7.4'
 
 import numpy as np
 from os.path import basename
-from astropy.extern import six
+import six
 from astropy.io import registry
 
 from . import ndmodel

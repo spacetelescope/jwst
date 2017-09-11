@@ -62,7 +62,7 @@ __version__ = "1.5.5"
 __versionTime__ = "12 Aug 2010 03:56"
 __author__ = "Paul McGuire <ptmcg@users.sourceforge.net>"
 
-from astropy.extern import six
+import six
 
 import string
 from weakref import ref as wkref
