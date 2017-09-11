@@ -22,7 +22,6 @@ logger.addHandler(logging.NullHandler())
 
 __all__ = [
     'ASN_SCHEMA',
-    'AsnMixin_Lv2Bkg',
     'AsnMixin_Lv2Image',
     'AsnMixin_Lv2Mode',
     'AsnMixin_Lv2Singleton',
@@ -372,14 +371,36 @@ class Utility(object):
             else:
                 finalized.append(asn)
 
-        # Merge all the associations into common types
-        merged_asns = Utility.merge_asns(lv2_asns)
-
-        # Merge lists and return
-        return finalized + merged_asns
+        return finalized + lv2_asns
 
     @staticmethod
-    def merge_asns(asns):
+    def merge_asns(associations):
+        """merge level2 associations
+
+        Parameters
+        ----------
+        associations: [asn(, ...)]
+            Associations to search for merging.
+
+        Returns
+        -------
+        associatons: [association(, ...)]
+            List of associations, some of which may be merged.
+        """
+        others = []
+        lv2_asns = []
+        for asn in associations:
+            if isinstance(asn, DMSLevel2bBase):
+                lv2_asns.append(asn)
+            else:
+                others.append(asn)
+
+        lv2_asns = Utility._merge_asns(lv2_asns)
+
+        return others + lv2_asns
+
+    @staticmethod
+    def _merge_asns(asns):
         # Merge all the associations into common types
         merged_by_type = {}
         for asn in asns:

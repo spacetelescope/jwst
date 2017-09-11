@@ -107,31 +107,31 @@ def test_from_cmdline(pool_path, args, n_asns, n_products, n_members):
             'image2', ['Asn_Lv2Image'], []
         ),
         (
-            generate_from_pool('data/pool_002_image_miri.csv'), 1, 8,
+            generate_from_pool('data/pool_002_image_miri.csv'), 8, 1,
             'image2', ['Asn_Lv2Image'], []
         ),
         (
-            generate_from_pool('data/pool_007_spec_miri.csv'), 1, 11,
+            generate_from_pool('data/pool_007_spec_miri.csv'), 11, 1,
             'spec2', ['Asn_Lv2Spec'], []
         ),
         (
-            generate_from_pool('data/pool_011_spec_miri_lv2bkg_lrs.csv'), 1, 2,
+            generate_from_pool('data/pool_011_spec_miri_lv2bkg_lrs.csv'), 1, 1,
             'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
         ),
         (
-            generate_from_pool('data/pool_009_spec_miri_lv2bkg.csv'), 1, 9,
+            generate_from_pool('data/pool_009_spec_miri_lv2bkg.csv'), 9, 1,
             'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
         ),
         (
-            generate_from_pool('data/pool_010_spec_nirspec_lv2bkg.csv'), 1, 8,
+            generate_from_pool('data/pool_010_spec_nirspec_lv2bkg.csv'), 8, 1,
             'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
         ),
         (
-            generate_from_pool('data/pool_015_spec_nirspec_lv2bkg_reversed.csv'), 1, 8,
+            generate_from_pool('data/pool_015_spec_nirspec_lv2bkg_reversed.csv'), 8, 1,
             'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
         ),
         (
-            generate_from_pool('data/pool_016_spec_nirspec_lv2bkg_double.csv'), 1, 8,
+            generate_from_pool('data/pool_016_spec_nirspec_lv2bkg_double.csv'), 8, 1,
             'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
         ),
     ]
@@ -178,7 +178,6 @@ def test_level2(
 
 def test_level2_productname():
     asns = generate_from_pool('data/pool_002_image_miri.csv')
-    assert len(asns) == 1
     for asn in asns:
         for product in asn['products']:
             science = [
