@@ -8,7 +8,7 @@ import numpy as np
 import jsonschema
 import warnings
 
-from astropy.extern import six
+import six
 from astropy.utils.compat.misc import override__dir__
 
 from asdf import schema

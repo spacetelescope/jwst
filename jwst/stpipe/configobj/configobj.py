@@ -22,7 +22,7 @@ import os
 import re
 import sys
 
-from astropy.extern import six
+import six
 from codecs import BOM_UTF8, BOM_UTF16, BOM_UTF16_BE, BOM_UTF16_LE
 
 from ast import parse

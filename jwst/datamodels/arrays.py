@@ -10,7 +10,7 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 import re
 
 import numpy as np
-from astropy.extern import six
+import six
 
 def _schema_dtype_to_numpy_dtype_single(dtype):
     names = {

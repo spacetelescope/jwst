@@ -8,7 +8,7 @@ from os.path import dirname, join, basename, splitext, abspath, split
 import re
 import sys
 
-from astropy.extern import six
+import six
 
 try:
     from astropy.io import fits

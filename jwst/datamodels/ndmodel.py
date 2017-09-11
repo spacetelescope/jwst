@@ -8,7 +8,7 @@ import os.path
 import numpy as np
 import collections
 
-from astropy.extern import six
+import six
 from astropy.units import Quantity
 from astropy.nddata import nddata_base
 

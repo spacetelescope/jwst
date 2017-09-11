@@ -14,7 +14,7 @@ import warnings
 import numpy as np
 import jsonschema
 
-from astropy.extern import six
+import six
 from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
