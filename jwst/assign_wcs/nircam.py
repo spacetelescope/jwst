@@ -8,8 +8,8 @@ from astropy.modeling.models import Scale, Identity
 import gwcs.coordinate_frames as cf
 
 from . import pointing
-from .util import not_implemented_mode, subarray_transform,
-from ..datamodels import ImageModel, NIRCAMGrismModel
+from .util import not_implemented_mode, subarray_transform
+from ..datamodels import ImageModel, NIRCAMGrismModel, DistortionModel
 from ..transforms.models import (NIRCAMForwardRowGrismDispersion,
                                  NIRCAMForwardColumnGrismDispersion,
                                  NIRCAMBackwardGrismDispersion)
@@ -199,7 +199,6 @@ def grism(input_model, reference_files):
     # and are fed to the wcs to calculate the ra,dec, pix offsets
     # and order are used to calculate the wavelength of the pixel
     grism_pipeline = [(gdetector, det2det)]
-    print(grism_pipeline)
 
     # pass the x0,y0, wave, order, through the pipeline
     imagepipe = []
