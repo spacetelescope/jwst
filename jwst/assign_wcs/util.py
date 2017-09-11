@@ -10,6 +10,7 @@ import numpy as np
 from astropy.utils.misc import isiterable
 from astropy.io import fits
 from astropy.modeling import models as astmodels
+from astropy.modeling import projections
 from astropy.table import Table
 
 
