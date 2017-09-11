@@ -58,18 +58,23 @@ def cmd_from_pool(pool_path, args):
 
 
 @pytest.mark.parametrize(
-    'pool_path, args, n_asns, n_products, n_members',
+    'pool_path, args, n_asns, n_products',
     [
         (
             t_path('data/pool_010_spec_nirspec_lv2bkg.csv'),
             [],
             1,
-            [8],
-            [3]*8
-        )
+            8,
+        ),
+        (
+            t_path('data/pool_010_spec_nirspec_lv2bkg.csv'),
+            ['--no-merge'],
+            16,
+            1,
+        ),
     ]
 )
-def test_from_cmdline(pool_path, args, n_asns, n_products, n_members):
+def test_from_cmdline(pool_path, args, n_asns, n_products):
     """Test results from commandline
 
     Parameters
@@ -95,8 +100,6 @@ def test_from_cmdline(pool_path, args, n_asns, n_products, n_members):
     for asn in results.associations:
         products = asn['products']
         assert len(products) == n_products
-        for product in products:
-            assert len(product['members']) == n_members
 
 
 @pytest.mark.parametrize(
@@ -115,24 +118,24 @@ def test_from_cmdline(pool_path, args, n_asns, n_products, n_members):
             'spec2', ['Asn_Lv2Spec'], []
         ),
         (
-            generate_from_pool('data/pool_011_spec_miri_lv2bkg_lrs.csv'), 1, 1,
-            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
+            generate_from_pool('data/pool_011_spec_miri_lv2bkg_lrs.csv'), 2, 1,
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg', 'Asn_Lv2SpecSpecial'], ['background']
         ),
         (
             generate_from_pool('data/pool_009_spec_miri_lv2bkg.csv'), 9, 1,
-            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg', 'Asn_Lv2SpecSpecial'], ['background']
         ),
         (
             generate_from_pool('data/pool_010_spec_nirspec_lv2bkg.csv'), 8, 1,
-            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg', 'Asn_Lv2SpecSpecial'], ['background']
         ),
         (
             generate_from_pool('data/pool_015_spec_nirspec_lv2bkg_reversed.csv'), 8, 1,
-            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg', 'Asn_Lv2SpecSpecial'], ['background']
         ),
         (
-            generate_from_pool('data/pool_016_spec_nirspec_lv2bkg_double.csv'), 8, 1,
-            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
+            generate_from_pool('data/pool_016_spec_nirspec_lv2bkg_double.csv'), 12, 1,
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg', 'Asn_Lv2SpecSpecial'], ['background']
         ),
     ]
 )

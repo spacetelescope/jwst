@@ -26,6 +26,7 @@ __all__ = [
     'AsnMixin_Lv2Mode',
     'AsnMixin_Lv2Singleton',
     'AsnMixin_Lv2Spec',
+    'AsnMixin_Lv2Special',
     'DMSLevel2bBase',
     'Utility'
 ]
@@ -562,3 +563,42 @@ class AsnMixin_Lv2Singleton(DMSLevel2bBase):
 
         # Now, lets see if item belongs to us.
         super(AsnMixin_Lv2Singleton, self).__init__(*args, **kwargs)
+
+
+class AsnMixin_Lv2Special(DMSLevel2bBase):
+    """Process special exposures as science
+
+    Spectral exposures that are marked as backgrounds, imprints, etc.,
+    still get 2b processing just as normal science. However, no other
+    exposures should get included into the association.
+
+    """
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'is_special': {
+                'value': None,
+                'inputs': ['background', 'is_imprint'],
+                'force_unique': False,
+            }
+        })
+
+        super(AsnMixin_Lv2Special, self).__init__(*args, **kwargs)
+
+    def get_exposure_type(self, item, default='science'):
+        """Override to force exposure type to always be science
+
+        Parameters
+        ----------
+        item: dict
+            The pool entry to determine the exposure type of
+
+        default: str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+
+        Returns
+        -------
+        exposure_type: 'science'
+            Always returns as science
+        """
+        return 'science'
