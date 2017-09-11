@@ -97,7 +97,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         return result
 
-    def has_science(self, item, check_flags=None):
+    def has_science(self, item):
         """Only allow a single science in the association
 
         Parameters
@@ -105,45 +105,15 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         item: dict
             The item in question
 
-        check_flags: None or [key[, ...]]
-            A list of extra keys to check for truthness in the item
-
         Returns
         -------
         bool
             True if item can be added
         """
-        exptype = self.get_exptype(item, check_flags=check_flags)
+        exptype = self.get_exposure_type(item)
         limit_reached = len(self.members_by_type('science')) >= 1
         limit_reached = limit_reached and exptype == 'science'
         return limit_reached
-
-    def get_exptype(self, item, check_flags=None):
-        """Get the exposure type for item
-
-        Parameters
-        ----------
-        item: dict
-            The item to be adding.
-
-
-        check_flags: None or [key[, ...]]
-            A list of extra keys to check for truthness in the item
-
-        Returns
-        -------
-        exptype: str
-        """
-        exptype = self.get_exposure_type(item, default='science')
-        if check_flags:
-            for flag in check_flags:
-                try:
-                    self.item_getattr(item, [flag])
-                except KeyError:
-                    continue
-                else:
-                    exptype = FLAG_TO_EXPTYPE[flag]
-        return exptype
 
     def __eq__(self, other):
         """Compare equality of two assocaitions"""
@@ -179,16 +149,13 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         else:
             return science_path
 
-    def make_member(self, item, check_flags=None):
+    def make_member(self, item):
         """Create a member from the item
 
         Parameters
         ----------
         item: dict
             The item to create member from.
-
-        check_flags: None or [key[, ...]]
-            A list of extra keys to check for truthness in the item
 
         Returns
         -------
@@ -197,7 +164,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         """
         member = {
             'expname': Utility.rename_to_level2a(item['filename']),
-            'exptype': self.get_exptype(item, check_flags=check_flags)
+            'exptype': self.get_exposure_type(item)
         }
         return member
 
@@ -214,18 +181,15 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self.data['asn_id'] = self.acid.id
         self.new_product(self.dms_product_name())
 
-    def _add(self, item, check_flags=None):
+    def _add(self, item):
         """Add item to this association.
 
         Parameters
         ----------
         item: dict
             The item to be adding.
-
-        check_flags: None or [key[, ...]]
-            A list of extra keys to check for truthness in the item
         """
-        member = self.make_member(item, check_flags=check_flags)
+        member = self.make_member(item)
         members = self.current_product['members']
         members.append(member)
         self.update_validity(member)
@@ -579,7 +543,7 @@ class AsnMixin_Lv2Singleton(DMSLevel2bBase):
         super(AsnMixin_Lv2Singleton, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_Lv2Bkg(DMSLevel2bBase):
+class AsnMixin_Lv2BkgCandidate(DMSLevel2bBase):
     """Acquire backgrounds"""
 
     def __init__(self, *args, **kwargs):
@@ -597,16 +561,24 @@ class AsnMixin_Lv2Bkg(DMSLevel2bBase):
                 'test': self.match_constraint,
                 'value': 'False',
                 'inputs': lambda item: str(
-                    self.has_science(item, check_flags=['background'])
+                    self.has_science(item)
                 ),
             },
         })
 
         # Now, lets see if item belongs to us.
-        super(AsnMixin_Lv2Bkg, self).__init__(*args, **kwargs)
+        super(AsnMixin_Lv2BkgCandidate, self).__init__(*args, **kwargs)
 
-    def _add(self, item, check_flags=None):
-        if not check_flags:
-            check_flags = []
-        check_flags.append('background')
-        super(AsnMixin_Lv2Bkg, self)._add(item, check_flags)
+
+class AsnMixin_Lv2Bkg(DMSLevel2bBase):
+    """Acquire background exposures"""
+
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'background': {
+                'inputs': ['background'],
+                'value': 'background'
+            }
+        })
+
+        super(AsnMixin_Lv2Bkg, self).__init__(*args, **kwargs)

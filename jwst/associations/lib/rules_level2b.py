@@ -26,24 +26,6 @@ class Asn_Lv2Image(
 class Asn_Lv2Spec(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spec,
-        AsnMixin_Lv2Mode
+        AsnMixin_Lv2Mode,
 ):
     """Level2b Spectra"""
-
-
-class Asn_Lv2SpecBkg(
-        AsnMixin_Lv2Spec,
-        AsnMixin_Lv2Bkg,
-        AsnMixin_Lv2Mode
-):
-    """Level2b Spectra with backgrounds"""
-
-    def __init__(self, *args, **kwargs):
-        self.validity.update({
-            'has_background': {
-                'validated': False,
-                'check': lambda entry: entry['exptype'] == 'background'
-            }
-        })
-
-        super(Asn_Lv2SpecBkg, self).__init__(*args, **kwargs)

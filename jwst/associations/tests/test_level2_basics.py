@@ -60,6 +60,14 @@ def generate_from_pool(pool_path):
             generate_from_pool('data/pool_010_spec_nirspec_lv2bkg.csv'), 1, 8,
             'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
         ),
+        (
+            generate_from_pool('data/pool_015_spec_nirspec_lv2bkg_reversed.csv'), 1, 8,
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
+        ),
+        (
+            generate_from_pool('data/pool_016_spec_nirspec_lv2bkg_double.csv'), 1, 8,
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
+        ),
     ]
 )
 def test_level2(

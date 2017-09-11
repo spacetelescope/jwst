@@ -177,11 +177,12 @@ class DMSBaseMixin(ACIDMixin):
         -------
         exposure_type: str
             Exposure type. Can be one of
-                'SCIENCE': Item contains science data
-                'TARGET_AQUISITION': Item contains target acquisition data.
-                'AUTOFLAT': NIRSpec AUTOFLAT
-                'AUTOWAVE': NIRSpec AUTOWAVE
-                'PSF': PSF
+                'science': Item contains science data
+                'target_aquisition': Item contains target acquisition data.
+                'autoflat': NIRSpec AUTOFLAT
+                'autowave': NIRSpec AUTOWAVE
+                'psf': PSF
+                'imprint': MSA/IFU Imprint/Leakcal
 
         Raises
         ------
@@ -197,6 +198,18 @@ class DMSBaseMixin(ACIDMixin):
             pass
         else:
             return 'psf'
+        try:
+            self.item_getattr(item, ['is_imprint'])
+        except KeyError:
+            pass
+        else:
+            return 'imprint'
+        try:
+            self.item_getattr(item, ['background'])
+        except KeyError:
+            pass
+        else:
+            return 'background'
 
         # Base type off of exposure type.
         try:
