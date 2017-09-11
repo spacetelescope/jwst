@@ -720,8 +720,6 @@ class CubeData(object):
                         poly_ch = poly.channel
                         if(poly_ch == this_par1):
                             print('*****Going to subtract background *******')
-                            print('Filename',input_model.meta.filename)
-                            print('Poly channel',poly_ch,type(poly_ch))
                             print('Channel',this_par1)
                             apply_background_2d(input_model,poly_ch,subtract=True)
 
