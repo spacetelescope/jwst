@@ -278,12 +278,15 @@ c_{1,0,\\ldots}^2,\\ldots).
     return a, b, coord_arrays, eff_center, coord_system
 
 
-def lsq_solve(matrix, free_term, nimages=None):
+def lsq_solve(matrix, free_term, nimages=None, tol=None):
     """
     Computes least-square solution of a system of linear equations
 
     .. math::
         a \\cdot c = b.
+
+    This function uses Moore-Penrose pseudoinverse to solve the above system
+    of equations.
 
     Parameters
     ----------
@@ -295,6 +298,13 @@ def lsq_solve(matrix, free_term, nimages=None):
 
     nimages : int, None, optional
         Number of images for which the system is being solved.
+
+    tol : float, None, optional
+        Cutoff for small singular values for Moore-Penrose pseudoinverse.
+        When provided, singular values smaller (in modulus) than
+        ``tol * |largest_singular_value|`` are set to zero. When
+        ``tol`` is `None` (default), cutoff value is determined based on
+        the type of the input ``matrix`` argument.
 
     Returns
     -------
@@ -327,7 +337,9 @@ array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
          -7.43849426e-15,   1.77635684e-15]])
 
     """
-    v = np.dot(np.linalg.pinv(matrix), free_term)
+    if tol is None:
+        tol = np.finfo(matrix.dtype).eps**(2.0/3.0)
+    v = np.dot(np.linalg.pinv(matrix, rcond=tol), free_term)
     bkg_poly_coeff = v.reshape((nimages, v.size // nimages))
     return bkg_poly_coeff
 
