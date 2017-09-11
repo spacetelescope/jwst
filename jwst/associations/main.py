@@ -241,6 +241,11 @@ class Main(object):
         )
 
         if parsed.discover:
+            logger.debug(
+                '# asns found before discover filtering={}'.format(
+                    len(self.associations)
+                )
+            )
             self.associations = filter_discovered_only(
                 self.associations,
                 DISCOVER_RULESET,

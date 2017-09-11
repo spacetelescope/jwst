@@ -12,8 +12,9 @@ from .helpers import (
 
 from .. import (
     generate,
-    load_asn
+    load_asn,
 )
+from ..main import Main
 
 NONSSCIENCE = ['background']
 REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)'
@@ -31,6 +32,71 @@ def generate_from_pool(pool_path):
     pool = combine_pools(t_path(pool_path))
     asns, orphaned = generate(pool, rules)
     return asns
+
+
+def cmd_from_pool(pool_path, args):
+    """Run commandline on pool
+
+    Parameters
+    ---------
+    pool_path: str
+        The pool to run on.
+
+    args: [arg(, ...)]
+        Additional command line arguments in the form `sys.argv`
+    """
+    full_args = [
+        '--dry-run',
+        '-D',
+        '-r',
+        t_path('../lib/rules_level2b.py'),
+        '--ignore-default'
+    ]
+    full_args.extend(args)
+    result = Main(full_args, pool=pool_path)
+    return result
+
+
+@pytest.mark.parametrize(
+    'pool_path, args, n_asns, n_products, n_members',
+    [
+        (
+            t_path('data/pool_010_spec_nirspec_lv2bkg.csv'),
+            [],
+            1,
+            [8],
+            [3]*8
+        )
+    ]
+)
+def test_from_cmdline(pool_path, args, n_asns, n_products, n_members):
+    """Test results from commandline
+
+    Parameters
+    ----------
+    pool_path: str
+        Pool to run on.
+
+    args: [arg(, ...)]
+        Other command-line arguments
+
+    n_asns: int
+        Number of associations that should be produced
+
+    n_products: [int(, ...)]
+        Number of products for each association
+
+    n_members: [int(, ...)]
+        Number of members for each product
+    """
+    pool = combine_pools([pool_path])
+    results = cmd_from_pool(pool, args)
+    assert len(results.associations) == n_asns
+    for asn in results.associations:
+        products = asn['products']
+        assert len(products) == n_products
+        for product in products:
+            assert len(product['members']) == n_members
 
 
 @pytest.mark.parametrize(
