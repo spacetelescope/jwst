@@ -25,7 +25,7 @@ from .. import __version_commit__, __version__
 SUFFIX_LIST = [
     'rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
     'jump', 'ramp', 'x1d', 'x1dints', 'calints', 'rateints',
-    'crf', 'crfints'
+    'crf', 'crfints', 'psfsub', 'psfalign', 'psfstack'
 ]
 REMOVE_SUFFIX = '^(?P<root>.+?)((?P<separator>_|-)(' \
                 + '|'.join(SUFFIX_LIST) + '))?$'
