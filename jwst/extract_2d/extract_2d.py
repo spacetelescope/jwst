@@ -27,14 +27,14 @@ def extract2d(input_model, which_subarray=None, apply_wavecorr=False, reffile=""
     exp_type = input_model.meta.exposure.type.upper()
     log.info('EXP_TYPE is {0}'.format(exp_type))
 
-    wavecorr_supportd_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']
+    wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']
     if exp_type in wavecorr_supported_modes:
-        if refftype and refftype.strip().upper() == 'N/A':
+        if reffile and reffile.strip().upper() == 'N/A':
             apply_wavecorr = False
             log.info("WAVECORR reference file missing - skipping correction")
     else:
         apply_wavecorr = False
-        log.info("Skipping wavecorr correction for EXP_TYPE {0}".format(exp_type)
+        log.info("Skipping wavecorr correction for EXP_TYPE {0}".format(exp_type))
 
     if exp_type not in supported_modes:
         input_model.meta.cal_step.extract_2d = 'SKIPPED'
