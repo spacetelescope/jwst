@@ -1054,7 +1054,7 @@ class NIRCAMForwardRowGrismDispersion(Model):
     dependence)
     """
     standard_broadcasting = False
-    seperable = False
+    separable = False
     fittable = False
     linear = False
 
@@ -1132,7 +1132,7 @@ class NIRCAMForwardColumnGrismDispersion(Model):
     dependence)
     """
     standard_broadcasting = False
-    seperable = False
+    separable = False
     fittable = False
     linear = False
 
@@ -1209,7 +1209,7 @@ class NIRCAMBackwardGrismDispersion(Model):
     (NIRCAM polynomials currently do not have any field dependence)
     """
     standard_broadcasting = False
-    seperable = False
+    separable = False
     fittable = False
     linear = False
 
@@ -1289,7 +1289,7 @@ class NIRISSBackwardGrismDispersion(Model):
     """
 
     standard_broadcasting = False
-    seperable = False
+    separable = False
     fittable = False
     linear = False
 
@@ -1387,7 +1387,7 @@ class NIRISSForwardRowGrismDispersion(Model):
     """
 
     standard_broadcasting = False
-    seperable = False
+    separable = False
     fittable = False
     linear = False
 
@@ -1491,7 +1491,7 @@ class NIRISSForwardColumnGrismDispersion(Model):
     """
 
     standard_broadcasting = False
-    seperable = False
+    separable = False
     fittable = False
     linear = False
 

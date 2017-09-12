@@ -294,7 +294,7 @@ def wfss(input_model, reference_files):
 
     # use the imaging_distortion reference file here
     img_reference = deepcopy(reference_files)
-    img_reference['distortion'] = reference_files['imaging_distortion']
+    img_reference['distortion'] = reference_files['distortion']
     image_pipeline = imaging(input_model, img_reference)
     del img_reference
 
