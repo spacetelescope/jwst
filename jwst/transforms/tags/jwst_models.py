@@ -323,14 +323,8 @@ class SnellType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        return Snell(node['prism_angle'],
-                     node['kcoef'],
-                     node['lcoef'],
-                     node['tcoef'],
-                     node['ref_temp'],
-                     node['ref_pressure'],
-                     node['temp'],
-                     node['pressure'])
+        return Snell(node['prism_angle'], node['kcoef'], node['lcoef'], node['tcoef'],
+                     node['ref_temp'], node['ref_pressure'], node['temp'], node['pressure'])
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
@@ -368,9 +362,7 @@ class MIRI_AB2SliceType(TransformType):
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
-        return MIRI_AB2Slice(node['beta_zero'],
-                             node['beta_del'],
-                             node['channel'])
+        return MIRI_AB2Slice(node['beta_zero'], node['beta_del'], node['channel'])
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
