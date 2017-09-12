@@ -45,7 +45,7 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # Non-specified values found in DMS Association Pools
-_EMPTY = (None, 'NULL', 'Null', 'null', '--')
+_EMPTY = (None, 'NULL', 'Null', 'null', '--', 'N', 'n')
 
 # The schema that these associations must adhere to.
 ASN_SCHEMA = libpath('asn_schema_jw_level3.json')

@@ -16,9 +16,25 @@ from ..main import Main
     'pool_path, asn_standard_path',
     [
         (
+            t_path('data/pool_009_spec_miri_lv2bkg.csv'),
+            t_path('data/pool_009_spec2_001_asn.json')
+        ),
+        (
             t_path('data/pool_010_spec_nirspec_lv2bkg.csv'),
             t_path('data/pool_010_spec2_001_asn.json')
-        )
+        ),
+        (
+            t_path('data/pool_011_spec_miri_lv2bkg_lrs.csv'),
+            t_path('data/pool_011_spec2_001_asn.json')
+        ),
+        (
+            t_path('data/pool_015_spec_nirspec_lv2bkg_reversed.csv'),
+            t_path('data/pool_015_spec2_001_asn.json')
+        ),
+        (
+            t_path('data/pool_016_spec_nirspec_lv2bkg_double.csv'),
+            t_path('data/pool_016_spec2_001_asn.json')
+        ),
     ]
 )
 def test_background(pool_path, asn_standard_path):
