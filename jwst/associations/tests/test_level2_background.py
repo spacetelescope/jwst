@@ -4,10 +4,39 @@ import pytest
 
 from .helpers import (
     combine_pools,
-    registry_level2_only,
-    t_path
+    compare_membership,
+    t_path,
 )
-from .. import generate
+
+from .. import load_asn
+from ..main import Main
+
+
+@pytest.mark.parametrize(
+    'pool_path, asn_standard_path',
+    [
+        (
+            t_path('data/pool_010_spec_nirspec_lv2bkg.csv'),
+            t_path('data/pool_010_spec2_001_asn.json')
+        )
+    ]
+)
+def test_background(pool_path, asn_standard_path):
+    """Test to ensure backgrounds get added"""
+    with open(asn_standard_path) as fp:
+        asn_standard = load_asn(fp)
+    pool = combine_pools([pool_path])
+    results = Main(
+        [
+            '--dry-run',
+            '-r',
+            t_path('../lib/rules_level2b.py'),
+            '--ignore-default'
+        ],
+        pool=pool
+    )
+    assert compare_membership(results.associations[0], asn_standard)
+
 
 @pytest.mark.xfail(
     reason='Not determined yet',
