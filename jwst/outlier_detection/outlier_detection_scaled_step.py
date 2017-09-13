@@ -100,6 +100,7 @@ class OutlierDetectionScaledStep(Step):
 
         reffile_to_model = {'gain': datamodels.GainModel,
                             'readnoise': datamodels.ReadnoiseModel}          
+        reffile_model = reffile_to_model[reftype]
 
         reffiles = [self.input_models.meta.ref_file.instance[reftype]['name']]
         
@@ -107,10 +108,10 @@ class OutlierDetectionScaledStep(Step):
         for r in set(reffiles):
             self.log.debug("    {}".format(r))
 
-        # Check if all the ref files are the same.  If so build it by reading
-        # the reference file just once.
-
-        ref_list = [self.get_reference_file(self.input_models, reftype)] 
+        # Use get_reference_file method to insure latest reference file
+        # always gets used...especially since only one name will ever be needed
+        ref_list = [reffile_model(self.get_reference_file(self.input_models, reftype))] 
+        
         return datamodels.ModelContainer(ref_list)
 
 

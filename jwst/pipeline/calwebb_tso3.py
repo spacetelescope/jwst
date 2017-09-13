@@ -92,7 +92,6 @@ class Tso3Pipeline(Pipeline):
 
             else:
                 self.log.info("Performing scaled outlier detection on input images...")
-                self.log.info("input cube has type: {}".format(type(cube)))
                 cube = self.outlier_detection_scaled(cube)
                 
 
@@ -140,7 +139,8 @@ class Tso3Pipeline(Pipeline):
             x1d_prod_name = "{}_x1dints.fits".format(product_name)
             self.log.info("Writing Level 3 X1DINTS product...")
             x1d_models.write(x1d_prod_name)
-                        
+        
+        self.log.info("Writing Level 3 photometry catalog {}...".format(phot_tab_name))                 
         phot_results = vstack(phot_result_list)
         phot_results.write(phot_tab_name, format='ascii.ecsv')
             
