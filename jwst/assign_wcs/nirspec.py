@@ -10,7 +10,7 @@ import logging
 import numpy as np
 
 from astropy.modeling import models, fitting
-from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Shift
+from astropy.modeling.models import Mapping, Identity, Const1D, Scale
 from astropy import units as u
 from astropy import coordinates as coord
 from astropy.io import fits
@@ -604,9 +604,6 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     ymin = -.55
     ymax = .55
 
-    wrange = (input_model.meta.wcsinfo.waverange_start,
-              input_model.meta.wcsinfo.waverange_end),
-    order = input_model.meta.wcsinfo.spectral_order
     agreq = angle_from_disperser(disperser, input_model)
     lgreq = wavelength_from_disperser(disperser, input_model)
 
@@ -673,10 +670,6 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
     """
-    wrange = (input_model.meta.wcsinfo.waverange_start,
-                     input_model.meta.wcsinfo.waverange_end),
-    order = input_model.meta.wcsinfo.spectral_order
-
     agreq = angle_from_disperser(disperser, input_model)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     lgreq = wavelength_from_disperser(disperser, input_model)
@@ -724,8 +717,6 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
 
 
 def angle_from_disperser(disperser, input_model):
-    lmin = input_model.meta.wcsinfo.waverange_start
-    lmax = input_model.meta.wcsinfo.waverange_end
     sporder = input_model.meta.wcsinfo.spectral_order
     if input_model.meta.instrument.grating.lower() != 'prism':
         agreq = AngleFromGratingEquation(disperser.groovedensity,
