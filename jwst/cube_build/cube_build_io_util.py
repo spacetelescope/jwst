@@ -91,36 +91,53 @@ def determine_band_coverage(self, master_table):
 #________________________________________________________________________________
         # neither parameters not set
                     if user_clen == 0 and  user_slen == 0:
-                        self.band_channel.append(ValidChannel[i])
-                        self.band_subchannel.append(ValidSubchannel[j])
+#                        self.band_channel.append(ValidChannel[i])
+#                        self.band_subchannel.append(ValidSubchannel[j])
+
+                        self.all_channel.append(ValidChannel[i])
+                        self.all_subchannel.append(ValidSubchannel[j])
 #________________________________________________________________________________
 # channel was set by user but not sub-channel
                     elif user_clen !=0 and user_slen ==0:
                         # now check if this channel was set by user
                         if (ValidChannel[i] in self.channel ):
-                            self.band_channel.append(ValidChannel[i])
-                            self.band_subchannel.append(ValidSubchannel[j])
+#                            self.band_channel.append(ValidChannel[i])
+#                            self.band_subchannel.append(ValidSubchannel[j])
+
+                            self.all_channel.append(ValidChannel[i])
+                            self.all_subchannel.append(ValidSubchannel[j])
 #________________________________________________________________________________
 # sub-channel was set by user but not channel
                     elif user_clen ==0 and user_slen !=0:
                         if (ValidSubchannel[j] in self.subchannel):
-                            self.band_channel.append(ValidChannel[i])
-                            self.band_subchannel.append(ValidSubchannel[j])
+#                            self.band_channel.append(ValidChannel[i])
+#                            self.band_subchannel.append(ValidSubchannel[j])
+
+                            self.all_channel.append(ValidChannel[i])
+                            self.all_subchannel.append(ValidSubchannel[j])
 #________________________________________________________________________________
 # both parameters set
                     else:
                         if (ValidChannel[i] in self.channel and
                            ValidSubchannel[j] in self.subchannel):
-                            self.band_channel.append(ValidChannel[i])
-                            self.band_subchannel.append(ValidSubchannel[j])
+#                            self.band_channel.append(ValidChannel[i])
+#                            self.band_subchannel.append(ValidSubchannel[j])
+
+                            self.all_channel.append(ValidChannel[i])
+                            self.all_subchannel.append(ValidSubchannel[j])
 
         log.info('The desired cubes covers the MIRI Channels: %s',
-                 self.band_channel)
+                 self.all_channel)
+#                 self.band_channel)
         log.info('The desired cubes covers the MIRI subchannels: %s',
-                 self.band_subchannel)
+                 self.all_subchannel)
+#                 self.band_subchannel)
 
-        number_channels = len(self.band_channel)
-        number_subchannels = len(self.band_subchannel)
+        number_channels = len(self.all_channel)
+        number_subchannels = len(self.all_subchannel)
+
+#        number_channels = len(self.band_channel)
+#        number_subchannels = len(self.band_subchannel)
 
         if number_channels == 0:
             raise ErrorNoChannels(
@@ -157,8 +174,10 @@ def determine_band_coverage(self, master_table):
 
                 nfiles = len(master_table.FileMap['NIRSPEC'][ValidGWA[i]][ValidFWA[i]])
                 if nfiles > 0:
-                    self.band_grating.append(ValidGWA[i])
-                    self.band_filter.append(ValidFWA[i])
+#                    self.band_grating.append(ValidGWA[i])
+#                    self.band_filter.append(ValidFWA[i])
+                    self.all_grating.append(ValidGWA[i])
+                    self.all_filter.append(ValidFWA[i])
 
         # Both filter and grating input parameter have been set
         # Find the files that have these parameters set
@@ -170,12 +189,17 @@ def determine_band_coverage(self, master_table):
                         # now check if THESE Filter and Grating input parameters were set
                     if (ValidFWA[i] in self.filter and
                        ValidGWA[i] in self.grating):
-                        self.band_grating.append(ValidGWA[i])
-                        self.band_filter.append(ValidFWA[i])
+#                        self.band_grating.append(ValidGWA[i])
+#                        self.band_filter.append(ValidFWA[i])
+
+                        self.all_grating.append(ValidGWA[i])
+                        self.all_filter.append(ValidFWA[i])
 
 
-        number_filters = len(self.band_filter)
-        number_gratings = len(self.band_grating)
+#        number_filters = len(self.band_filter)
+#        number_gratings = len(self.band_grating)
+        number_filters = len(self.all_filter)
+        number_gratings = len(self.all_grating)
 
         self.num_bands = number_gratings # which is = number_filters
         if number_filters == 0:
@@ -192,7 +216,8 @@ def check_cube_type(self):
             raise IncorrectInput("For interpolation = area, only one file can" +
                                  " be used to created the cube")
 
-        if(len(self.band_channel) > 1):
+#        if(len(self.band_channel) > 1):
+        if(len(self.all_channel) > 1):
             raise IncorrectInput("For interpolation = area, only a single channel" +
                                  " can be used to created the cube. Use --channel=# option")
 

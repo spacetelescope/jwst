@@ -57,6 +57,7 @@ class CubeBuildStep (Step):
         if(not self.filter.isupper()): self.filter = self.filter.upper()
         if(not self.grating.isupper()): self.grating = self.grating.upper()
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
+        if(not self.output_type.islower()): self.output_type = self.output_type.lower()
         if(not self.weighting.islower()): self.weighting = self.weighting.lower()
 
         if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
@@ -113,26 +114,7 @@ class CubeBuildStep (Step):
             self.log.info('Weighting method for point cloud: %s',self.weighting)
             self.log.info('Power Weighting distance : %f',self.weight_power)
 
-        if self.output_type == 'band':
-            self.log.info('Output IFUCubes are Single Bands')
-            self.log.info('For MIRI these are single channel, single sub-channel IFU Cubes')
-            self.log.info('For NIRSPEC these are single grating, single filter IFU Cubes')
-
-        if self.output_type == 'channel' or self.output_type == 'grating':
-            self.log.info('Output IFUCubes are %s', self.output_type)
-            self.log.info('For MIRI these are single channel and all subchannels in data')
-            self.log.info('   unless the the band option is used to select certain subchannels')
-            self.log.info('For NIRSPEC these are single grating and all filters in data')
-            self.log.info('   unless the the filter option is used to select certain filters')
-
-        if self.output_type == 'multi':
-            self.log.info('Output IFUcube are constructed from all the data unless:')
-            self.log.info('   channel, band, grating, or filter options are used')
-
-            
         if self.single :
-            self.log.info(' Single = true, creating a set of single exposures mapped' +
-                          ' to output IFUCube coordinate system')
             self.output_type = 'single'
 #________________________________________________________________________________
     # read input parameters - Channel, Band (Subchannel), Grating, Filter
@@ -145,6 +127,8 @@ class CubeBuildStep (Step):
         self.pars_input['grating'] = []  # input parameter
         read_user_input(self)  # see if options channel, band,grating filter are set
                                # if they are filling par_input with values
+
+
 #________________________________________________________________________________
 #data_types: DataTypes: Read in the input data - 4 formats are allowed:
 # 1. filename
@@ -170,6 +154,8 @@ class CubeBuildStep (Step):
         if par_filename == 'N/A':
             self.log.warning('No default cube parameters reference file found')
             return
+
+
 #________________________________________________________________________________
 # If miripsf weight is set then set up reference file
         # identify what reference file has been associated with these inputs
@@ -229,7 +215,22 @@ class CubeBuildStep (Step):
 
         self.output_file = cubeinfo.setup()
 
-#        print('in cube_build_step',self.output_file)
+#________________________________________________________________________________
+# How many and what type of cubes will be made
+
+        num_cubes,cube_pars= cubeinfo.number_cubes()
+#        num_cubes,cube_pars = cpar
+        self.log.info(' Number of IFUCubes produced by a this run %i',num_cubes)
+
+
+        for i in range(num_cubes):
+            icube = str(i+1)
+            
+            list_ch = cube_pars[icube]['par1'] 
+            list_sub = cube_pars[icube]['par2']
+            print('ch',len(list_ch))
+            print('sub',list_sub)
+    
 
 #________________________________________________________________________________
 # find the min & max final coordinates of cube: map each slice to cube
@@ -303,7 +304,8 @@ def read_user_input(self):
         self.channel = ''
 
     if self.channel:  # self.channel is false if it is empty
-
+        if not self.single: 
+            self.output_type = 'user'
         channellist = self.channel.split(',')
         user_clen = len(channellist)
 
@@ -333,6 +335,8 @@ def read_user_input(self):
         self.subchannel = ''
 
     if self.subchannel : #  not empty it has been set
+        if not self.single:
+            self.output_type = 'user'
         subchannellist = self.subchannel.split(',')
         user_blen = len(subchannellist)
         for j in range(user_blen):
@@ -356,6 +360,8 @@ def read_user_input(self):
     if self.filter == 'ALL':
         self.filter = ''
     if self.filter:
+        if not self.single:
+            self.output_type = 'user'
         filterlist = self.filter.split(',')
         user_flen = len(filterlist)
         for j in range(user_flen):
@@ -380,6 +386,8 @@ def read_user_input(self):
         self.grating = ''
 
     if self.grating:
+        if not self.single:
+            self.output_type = 'user'
         gratinglist = self.grating.split(',')
         user_glen = len(gratinglist)
         for j in range(user_glen):

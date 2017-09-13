@@ -30,7 +30,7 @@ from gwcs import wcstools
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-class CubeData(object):
+class IFUCube(object):
 # CubeData - holds all the importatn informtion for IFU Cube Building:
 # wcs, data, reference data
 
@@ -48,14 +48,15 @@ class CubeData(object):
         self.input_filenames = input_filenames
         self.output_name_base = output_name_base
         self.data_type = data_type
-        self.par_filename = par_filename
-        self.resol_filename = resol_filename
-        
-        self.single = pars.get('single')
-        self.channel = pars.get('channel')
-        self.subchannel = pars.get('subchannel')
-        self.grating = pars.get('grating')
-        self.filter = pars.get('filter')
+#        self.par_filename = par_filename
+#        self.resol_filename = resol_filename
+        self.output_type = output_type
+
+#        self.single = pars.get('single')
+#        self.channel = pars.get('channel')
+#        self.subchannel = pars.get('subchannel')
+#        self.grating = pars.get('grating')
+#        self.filter = pars.get('filter')
         self.scale1 = pars.get('scale1')
         self.scale2 = pars.get('scale2')
         self.scalew = pars.get('scalew')
@@ -74,24 +75,19 @@ class CubeData(object):
         self.zdebug = pars.get('zdebug')
         self.debug_pixel = pars.get('debug_pixel')
         self.spaxel_debug = pars.get('spaxel_debug')
-        self.output_type = pars.get('output_type')
+#        self.output_type = pars.get('output_type')
 
         self.ra_offset = []  # units arc seconds
         self.dec_offset = [] # units arc seconds
         self.detector = None
         self.instrument = None
         self.num_bands = 0
-
         self.band_channel = []
         self.band_subchannel = []
         self.band_filter = []
         self.band_grating = []
 
-        self.all_channel = []
-        self.all_subchannel =[]
-        self.all_grating = []
-        self.all_filter = []
-
+        self.num_bands = 0
         self.output_name = ''
         self.number_files = 0
 
@@ -119,8 +115,6 @@ class CubeData(object):
         self.zcoord = None
 
         self.spaxel = []        # list of spaxel classes
-#********************************************************************************
-
 #********************************************************************************
     def setup(self):
 
@@ -182,27 +176,17 @@ class CubeData(object):
     # fills in band_channel, band_subchannel, band_grating, band_filer
 #________________________________________________________________________________
         cube_build_io_util.determine_band_coverage(self, master_table)
-
-        # temp code
-        self.band_channel = self.all_channel
-        self.band_subchannel = self.all_subchannel
-        self.band_grating = self.all_grating
-        self.band_filter = self.all_filter
-        print('*****band channel*****',self.band_channel)
 #________________________________________________________________________________
-
     # check on interpolation = area and coord_system=alpha-beta types of cubes
     # if interpolation = area also checks that the use did not supply a scale2
     # values (beta dim)
 #________________________________________________________________________________
-### move these routines  to individual cube checking 
+        cube_build_io_util.check_cube_type(self)
 
-###        cube_build_io_util.check_cube_type(self)
-###
-###        self.output_name = cube_build_io_util.update_output_name(self)
-###        if not self.single:
-###            log.info('Output Name %s',self.output_name)
-
+        self.output_name = cube_build_io_util.update_output_name(self)
+        if not self.single:
+            log.info('Output Name %s',self.output_name)
+#            log.info('Output Base %s ', self.output_name_base)
 #________________________________________________________________________________
 # InstrumentDefaults is an  dictionary that holds default parameters for
 # difference instruments and for each band
@@ -246,147 +230,6 @@ class CubeData(object):
         
         return self.output_file
 
-#********************************************************************************
-# Determine the number of cubes going to create based on:
-# self.output_type
-# MIRI: self.band_channel, self.band_subchannel
-# NIRSPEC: self.band_grating, self.band_filter
-
-    def number_cubes(self):
-
-# check which type of cubes to create: A user selected one, single, or default set 
-
-        num_cubes = 0
-        cube_pars = {}
-#______________________________________________________________________                        
-# MIRI
-#______________________________________________________________________
-        if self.instrument == 'MIRI':
-            band_channel = list(set(self.all_channel))
-            band_subchannel =list( set(self.all_subchannel))
-#user and single
-            if (self.output_type == 'user' or self.output_type =='single' or
-                self.output_type =='multi') :
-                
-                if self.output_type == 'multi':
-                    log.info('Output IFUcube are constructed from all the data ')
-                if self.single :
-                    log.info(' Single = true, creating a set of single exposures mapped' +
-                          ' to output IFUCube coordinate system')
-                if self.output_type == 'user':
-                    log.info(' The user has selected the type of IFU cube to make')
-
-                num_cubes = 1
-                cube_pars['1'] = {}
-                cube_pars['1']['par1'] = {}
-                cube_pars['1']['par2'] = {}
-                cube_pars['1']['par1'] = self.all_channel
-                cube_pars['1']['par2'] = self.all_subchannel
-
-# default band cubes 
-            if self.output_type == 'band':
-                log.info('Output Cubes are single channel, single sub-channel IFU Cubes')
-                for i in range(len(band_channel)):
-                    for j in range(len(band_subchannel)):
-                        num_cubes = num_cubes+1
-                        cube_no = str(num_cubes)
-                        cube_pars[cube_no] = {}
-                        cube_pars[cube_no]['pars1'] = {}
-                        cube_pars[cube_no]['pars2'] = {}
-                        this_channel  = []
-                        this_subchannel = []
-                        this_channel.append(band_channel[i])
-                        this_subchannel.append(band_subchannel[j])
-                        cube_pars[cube_no]['par1'] = this_channel
-                        cube_pars[cube_no]['par2'] = this_subchannel
-
-# default channel cubes 
-            if self.output_type  == 'channel':
-                log.info('Output cubes are single channel and all subchannels in data')
-                num_cubes = 0 
-                for i in range(len(band_channel)):
-                        num_cubes = num_cubes+1
-                        cube_no = str(num_cubes)
-                        cube_pars[cube_no] = {}
-                        cube_pars[cube_no]['pars1'] = {}
-                        cube_pars[cube_no]['pars2'] = {}
-                        this_channel  = []
-                        this_subchannel = band_subchannel
-                        this_channel.append(i)
-                        cube_pars[cube_no]['par1'] = this_channel
-                        cube_pars[cube_no]['par2'] = this_subchannel
-#______________________________________________________________________                        
-# NIRSPEC
-#______________________________________________________________________
-        if self.instrument == 'NIRSPEC':
-
-            band_grating = list(set(self.all_grating))
-            band_filter =list( set(self.all_filter))
-            if (self.output_type == 'user' or self.output_type =='single' or
-                self.output_type =='multi'):
-                if self.output_type == 'multi':
-                    log.info('Output IFUcube are constructed from all the data ')
-                if self.single :
-                    log.info(' Single = true, creating a set of single exposures mapped' +
-                          ' to output IFUCube coordinate system')
-                if self.output_type == 'user':
-                    log.info(' The user has selected the type of IFU cube to make')
-
-                num_cubes = 1
-                cube_pars['1'] = {}
-                cube_pars['1']['par1'] = {}
-                cube_pars['1']['par2'] = {}
-                cube_pars['1']['par1'] = self.all_grating
-                cube_pars['1']['par2'] = self.all_filter
-
-# default band cubes 
-            if self.output_type == 'band':
-                log.info('Output Cubes are single grating, single filter IFU Cubes')
-                for i in range(len(band_grating)):
-                    for j in range(len(band_filter)):
-                        num_cubes = num_cubes+1
-                        cube_no = str(num_cubes)
-                        cube_pars[cube_no] = {}
-                        cube_pars[cube_no]['pars1'] = {}
-                        cube_pars[cube_no]['pars2'] = {}
-                        this_grating  = []
-                        this_filter = []
-                        this_grating.append(band_grating[i])
-                        this_filter.append(band_filter[j])
-                        cube_pars[cube_no]['par1'] = this_grating
-                        cube_pars[cube_no]['par2'] = this_filter
-                    
-# default grating cubes 
-            if self.output_type  == 'grating':
-                log.info('Output cubes are single grating and all filters in data')
-                num_cubes = 0 
-                for i in range(len(band_grating)):
-                        num_cubes = num_cubes+1
-                        cube_no = str(num_cubes)
-                        cube_pars[cube_no] = {}
-                        cube_pars[cube_no]['pars1'] = {}
-                        cube_pars[cube_no]['pars2'] = {}
-                        this_grating  = []
-                        this_filter = band_subchannel
-                        this_grating.append(i)
-                        cube_pars[cube_no]['par1'] = this_grating
-                        cube_pars[cube_no]['par2'] = this_filter
-
-                        
-        list1 = cube_pars['1']['par1']
-        list2 = cube_pars['1']['par2']
-        print('channel for cube 1',list1)
-        print('subchannel for cube 1',list2)
-
-        self.num_cubes = num_cubes
-        self.cube_pars = cube_pars
-
-        print(cube_pars['1']['par1'])
-        print(cube_pars['1']['par2'])
-
-#        print(cube_pars['2']['par1'])
-#        print(cube_pars['2']['par2'])
-        return self.num_cubes,self.cube_pars
 #********************************************************************************
 
     def setup_wcs(self):
@@ -441,7 +284,7 @@ class CubeData(object):
         lambda_max = []
 
         log.info('Number of bands in cube  %i',self.num_bands)
-        print('band channel',self.band_channel)
+
         for i in range(self.num_bands):
             this_a = parameter1[i]
             this_b = parameter2[i]
