@@ -91,7 +91,8 @@ class Tso3Pipeline(Pipeline):
                     cube.meta.filename = orig_filename
 
             else:
-                self.log.info("Performing scaled outlier detection on input images...")
+                self.log.info("Performing scaled outlier detection "
+                              "on input images...")
                 self.log.info("input cube has type: {}".format(type(cube)))
                 cube = self.outlier_detection_scaled(cube)
 
