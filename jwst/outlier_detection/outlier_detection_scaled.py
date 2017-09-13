@@ -20,7 +20,7 @@ from ..tso_photometry.tso_photometry import tso_aperture_photometry
 
 import logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 
