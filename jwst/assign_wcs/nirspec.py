@@ -494,8 +494,8 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
         keyword = filter + '_' + grating
     try:
         index = wrange_selector.index(keyword)
-        # order = wave_range.tree['filter_grating'][keyword]['order']
-        # wrange = wave_range.tree['filter_grating'][keyword]['range']
+        #order = wave_range.tree['filter_grating'][keyword]['order']
+        #wrange = wave_range.tree['filter_grating'][keyword]['range']
     except (KeyError, ValueError):
         index = None
     if index is not None:
@@ -527,7 +527,7 @@ def ifuslit_to_msa(slits, reference_files):
         Transform from slit_frame to msa_frame.
     """
 
-    # ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
+    #ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
     ifuslicer = IFUSlicerModel(reference_files['ifuslicer'])
     models = []
     #ifuslicer_model = (ifuslicer.tree['model']).rename('ifuslicer_model')
@@ -560,7 +560,7 @@ def slit_to_msa(open_slits, msafile):
     model : `~jwst.transforms.Slit2Msa` model.
         Transform from slit_frame to msa_frame.
     """
-    # msa = AsdfFile.open(msafile)
+    #msa = AsdfFile.open(msafile)
     msa = MSAModel(msafile)
     models = []
     for quadrant in range(1, 6):
@@ -619,22 +619,22 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     mask = mask_slit(ymin, ymax)
 
-    # ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
-    # ifupost = AsdfFile.open(reference_files['ifupost'])
+    #ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
+    #ifupost = AsdfFile.open(reference_files['ifupost'])
     ifuslicer = IFUSlicerModel(reference_files['ifuslicer'])
     ifupost = IFUPostModel(reference_files['ifupost'])
     slit_models = []
-    # ifuslicer_model = ifuslicer.tree['model']
+    #ifuslicer_model = ifuslicer.tree['model']
     ifuslicer_model = ifuslicer.model
     for slit in slits:
         #slitdata = ifuslicer.tree['data'][slit]
         slitdata = ifuslicer.data[slit]
         slitdata_model = get_slit_location_model(slitdata)
         ifuslicer_transform = (slitdata_model | ifuslicer_model)
-        # ifupost_transform = ifupost.tree[slit]['model']
+        #ifupost_transform = ifupost.tree[slit]['model']
         ifupost_transform = getattr(ifupost, "slice_{0}".format(slit))
         msa2gwa = ifuslicer_transform | ifupost_transform | collimator2gwa
-        gwa2msa = gwa_to_ymsa(msa2gwa)  # TODO: Use model sets here
+        gwa2msa = gwa_to_ymsa(msa2gwa)# TODO: Use model sets here
         bgwa2msa = Mapping((0, 1, 0, 1), n_inputs=3) | \
                  Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                  Identity(1) & gwa2msa & Identity(2) | \
