@@ -64,38 +64,38 @@ class Tso3Pipeline(Pipeline):
             if input_exptype is None:
                 input_exptype = cube.meta.exposure.type
             # Convert CubeModel into ModelContainer of 2-D DataModels
-            input_asn = datamodels.ModelContainer()
+            input_models = datamodels.ModelContainer()
             for i in range(cube.data.shape[0]):
                 # convert each plane of data cube into it own array
                 # for outlier detection...
                 image = datamodels.ImageModel(data=cube.data[i],
                         err=cube.err[i], dq=cube.dq[i])
                 image.meta = cube.meta
-                input_asn.append(image)
+                input_models.append(image)
 
             if not self.scale_detection:
                 self.log.info("Performing outlier detection on input images...")
-                results = self.outlier_detection(input_asn)
+                results = self.outlier_detection(input_models)
 
                 # Transfer updated DQ values to original input observation
                 for i in range(cube.data.shape[0]):
-                    # preserve output filename
-                    original_filename = cube.meta.filename
                     # Update DQ arrays with those from outlier_detection step
                     cube.dq[i] = results[i].dq
-                    cube.meta.filename = original_filename
 
             else:
-                self.log.info("Performing scaled outlier detection on input images...")
-                self.log.debug("input cube has type: {}".format(type(cube)))
+                self.log.info("Performing scaled outlier detection "
+                              "on input images...")
+                self.log.info("input cube has type: {}".format(type(cube)))
                 cube = self.outlier_detection_scaled(cube)
-
 
         if input_asn[0].meta.cal_step.outlier_detection == 'COMPLETE':
             self.log.info("Writing Level 2c cubes with updated DQ arrays...")
             suffix_2c = 'crfints'
             for cube in input_asn:
+                # preserve output filename
+                original_filename = cube.meta.filename
                 self.save_model(cube, suffix=suffix_2c)
+                cube.meta.filename = original_filename
 
         # Create final photometry results as a single output
         # regardless of how many members there may be...
