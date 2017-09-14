@@ -5,7 +5,7 @@ from numpy.testing import assert_array_equal
 from asdf import yamlutil
 from asdf.tags.transform.basic import TransformType
 from .. import models
-from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation, NRSZCoord,
+from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
                       Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA, LRSWavelength, Gwa2Slit,
                       Slit2Msa, Logical, NirissSOSSModel, V23ToSky, RefractionIndexFromPrism,
                       Snell, NIRCAMForwardRowGrismDispersion, NIRCAMForwardColumnGrismDispersion,
@@ -136,16 +136,14 @@ class V23ToSkyType(TransformType):
 
 class CoordsType(TransformType):
     name = "coords"
-    types = [Unitless2DirCos, DirCos2Unitless, NRSZCoord]
+    types = [Unitless2DirCos, DirCos2Unitless]
     standard = "jwst_pipeline"
     version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
         model_type = node['model_type']
-        if model_type == 'nrszcoord':
-            return NRSZCoord()
-        elif model_type == 'to_dircos':
+        if model_type == 'to_dircos':
             return Unitless2DirCos()
         elif model_type == 'from_dircos':
             return DirCos2Unitless()
@@ -154,9 +152,7 @@ class CoordsType(TransformType):
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
-        if isinstance(model, NRSZCoord):
-            model_type = 'nrszcoord'
-        elif isinstance(model, DirCos2Unitless):
+        if isinstance(model, DirCos2Unitless):
             model_type = 'from_dircos'
         elif isinstance(model, Unitless2DirCos):
             model_type = 'to_dircos'
