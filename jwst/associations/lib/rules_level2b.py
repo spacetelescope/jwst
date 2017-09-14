@@ -4,7 +4,14 @@ import logging
 
 from jwst.associations.lib.rules_level2_base import *
 
-__all__ = ['Asn_Lv2_Image']
+__all__ = [
+    'Asn_Lv2_Image',
+    'Asn_Lv2ImageNonScience',
+    'Asn_Lv2ImageSpecial',
+    'Asn_Lv2Spec',
+    'Asn_Lv2SpecNonScience',
+    'Asn_Lv2SpecSpecial'
+]
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -18,6 +25,14 @@ logger.addHandler(logging.NullHandler())
 class Asn_Lv2Image(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Image,
+        AsnMixin_Lv2Mode
+):
+    """Level2b Image"""
+
+
+class Asn_Lv2ImageNonScience(
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2ImageNonScience,
         AsnMixin_Lv2Mode
 ):
     """Level2b Image"""
@@ -41,6 +56,14 @@ class Asn_Lv2ImageSpecial(
 class Asn_Lv2Spec(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spec,
+        AsnMixin_Lv2Mode,
+):
+    """Level2b Spectra"""
+
+
+class Asn_Lv2SpecNonScience(
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2SpecNonScience,
         AsnMixin_Lv2Mode,
 ):
     """Level2b Spectra"""

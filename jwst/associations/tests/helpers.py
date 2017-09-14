@@ -16,6 +16,30 @@ from ..lib.counter import Counter
 
 
 # Compare associations
+def compare_asns(left, right):
+    """Compare two associations
+
+    This comparison will include metadata such as
+    `asn_type` and membership
+
+    Parameters
+    ---------
+    left, right: dict
+        Two, individual, associations to compare
+
+    Returns
+    -------
+    equality: boolean
+    """
+
+    # Metadata
+    if left['asn_type'] != right['asn_type']:
+        return False
+
+    # Membership
+    return compare_membership(left, right)
+
+
 def compare_membership(left, right):
     """Compare two associations' membership
 

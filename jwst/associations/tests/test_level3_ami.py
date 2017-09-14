@@ -51,4 +51,4 @@ def test_discover():
         ],
         pool=pool
     )
-    assert len(results.associations) == 6
+    assert len(results.associations) == 7
