@@ -47,7 +47,7 @@ class Step(object):
 
     # Reference types for both command line override definition and reference prefetch
     reference_file_types = []
-    
+
     # Set to False in subclasses to skip prefetch,  but by default attempt to prefetch
     prefetch_references = True
 
@@ -419,13 +419,26 @@ class Step(object):
                 )
                 for idx, result in enumerate(results):
                     if hasattr(result, 'save'):
-                        output_path = make_output_path(
-                            self, result,
-                            basepath=self.output_file,
-                            result_id=result_id(idx)
-                        )
-                        self.log.info('Saving file {0}'.format(output_path))
-                        result.save(output_path, overwrite=True)
+                        try:
+                            output_path = make_output_path(
+                                self, result,
+                                basepath=self.output_file,
+                                result_id=result_id(idx)
+                            )
+                        except AttributeError:
+                            self.log.warning(
+                                '`save_results` has been requested,'
+                                ' but cannot determine filename.'
+                            )
+                            self.log.warning(
+                                'Specify an output file with `--output_file`'
+                                ' or set `--save_results=false`'
+                            )
+                        else:
+                            self.log.info(
+                                'Saving file {0}'.format(output_path)
+                            )
+                            result.save(output_path, overwrite=True)
 
             self.log.info(
                 'Step {0} done'.format(self.name))
