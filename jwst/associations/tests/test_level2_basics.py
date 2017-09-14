@@ -12,8 +12,9 @@ from .helpers import (
 
 from .. import (
     generate,
-    load_asn
+    load_asn,
 )
+from ..main import Main
 
 NONSSCIENCE = ['background']
 REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)'
@@ -33,6 +34,74 @@ def generate_from_pool(pool_path):
     return asns
 
 
+def cmd_from_pool(pool_path, args):
+    """Run commandline on pool
+
+    Parameters
+    ---------
+    pool_path: str
+        The pool to run on.
+
+    args: [arg(, ...)]
+        Additional command line arguments in the form `sys.argv`
+    """
+    full_args = [
+        '--dry-run',
+        '-D',
+        '-r',
+        t_path('../lib/rules_level2b.py'),
+        '--ignore-default'
+    ]
+    full_args.extend(args)
+    result = Main(full_args, pool=pool_path)
+    return result
+
+
+@pytest.mark.parametrize(
+    'pool_path, args, n_asns, n_products',
+    [
+        (
+            t_path('data/pool_010_spec_nirspec_lv2bkg.csv'),
+            [],
+            1,
+            8,
+        ),
+        (
+            t_path('data/pool_010_spec_nirspec_lv2bkg.csv'),
+            ['--no-merge'],
+            16,
+            1,
+        ),
+    ]
+)
+def test_from_cmdline(pool_path, args, n_asns, n_products):
+    """Test results from commandline
+
+    Parameters
+    ----------
+    pool_path: str
+        Pool to run on.
+
+    args: [arg(, ...)]
+        Other command-line arguments
+
+    n_asns: int
+        Number of associations that should be produced
+
+    n_products: [int(, ...)]
+        Number of products for each association
+
+    n_members: [int(, ...)]
+        Number of members for each product
+    """
+    pool = combine_pools([pool_path])
+    results = cmd_from_pool(pool, args)
+    assert len(results.associations) == n_asns
+    for asn in results.associations:
+        products = asn['products']
+        assert len(products) == n_products
+
+
 @pytest.mark.parametrize(
     'asns, n_asns, n_products, asn_type, required_rules, required_members',
     [
@@ -41,24 +110,32 @@ def generate_from_pool(pool_path):
             'image2', ['Asn_Lv2Image'], []
         ),
         (
-            generate_from_pool('data/pool_002_image_miri.csv'), 1, 8,
+            generate_from_pool('data/pool_002_image_miri.csv'), 8, 1,
             'image2', ['Asn_Lv2Image'], []
         ),
         (
-            generate_from_pool('data/pool_007_spec_miri.csv'), 1, 11,
+            generate_from_pool('data/pool_007_spec_miri.csv'), 11, 1,
             'spec2', ['Asn_Lv2Spec'], []
         ),
         (
-            generate_from_pool('data/pool_011_spec_miri_lv2bkg_lrs.csv'), 1, 2,
-            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
+            generate_from_pool('data/pool_011_spec_miri_lv2bkg_lrs.csv'), 2, 1,
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg', 'Asn_Lv2SpecSpecial'], ['background']
         ),
         (
-            generate_from_pool('data/pool_009_spec_miri_lv2bkg.csv'), 1, 9,
-            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
+            generate_from_pool('data/pool_009_spec_miri_lv2bkg.csv'), 9, 1,
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg', 'Asn_Lv2SpecSpecial'], ['background']
         ),
         (
-            generate_from_pool('data/pool_010_spec_nirspec_lv2bkg.csv'), 1, 8,
-            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg'], ['background']
+            generate_from_pool('data/pool_010_spec_nirspec_lv2bkg.csv'), 8, 1,
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg', 'Asn_Lv2SpecSpecial'], ['background']
+        ),
+        (
+            generate_from_pool('data/pool_015_spec_nirspec_lv2bkg_reversed.csv'), 8, 1,
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg', 'Asn_Lv2SpecSpecial'], ['background']
+        ),
+        (
+            generate_from_pool('data/pool_016_spec_nirspec_lv2bkg_double.csv'), 12, 1,
+            'spec2', ['Asn_Lv2Spec', 'Asn_Lv2SpecBkg', 'Asn_Lv2SpecSpecial'], ['background']
         ),
     ]
 )
@@ -104,7 +181,6 @@ def test_level2(
 
 def test_level2_productname():
     asns = generate_from_pool('data/pool_002_image_miri.csv')
-    assert len(asns) == 1
     for asn in asns:
         for product in asn['products']:
             science = [

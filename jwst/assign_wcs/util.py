@@ -10,7 +10,6 @@ import numpy as np
 from astropy.utils.misc import isiterable
 from astropy.io import fits
 from astropy.modeling import models as astmodels
-from astropy.modeling import projections
 from astropy.table import Table
 
 
@@ -21,7 +20,7 @@ from gwcs import utils as gwutils
 from . import pointing
 from ..lib.catalog_utils import SkyObject
 from ..transforms.models import GrismObject
-from ..datamodels.wcs_ref_models import WavelengthrangeModel
+from ..datamodels import WavelengthrangeModel, DataModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -162,7 +161,6 @@ def compute_fiducial(wcslist, bounding_box=None, domain=None):
     if domain is not None:
         warnings.warning("'domain' was deprecated in 0.8 and will be removed from next"
                          "version. Use 'bounding_box' instead.")
-    output_frame = wcslist[0].output_frame
     axes_types = wcslist[0].output_frame.axes_type
     spatial_axes = np.array(axes_types) == 'SPATIAL'
     spectral_axes = np.array(axes_types) == 'SPECTRAL'

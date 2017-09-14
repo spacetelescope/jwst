@@ -109,7 +109,7 @@ def test_base_instatiation():
                 }
             },
             helpers.t_path('data/pool_001_candidates.csv'),
-            3,
+            22,
         ),
         (
             {
@@ -120,7 +120,7 @@ def test_base_instatiation():
                 }
             },
             helpers.t_path('data/pool_001_candidates.csv'),
-            5,
+            24,
         ),
     ]
 )

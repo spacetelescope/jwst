@@ -23,27 +23,39 @@ class Asn_Lv2Image(
     """Level2b Image"""
 
 
+class Asn_Lv2ImageSpecial(
+        AsnMixin_Lv2Special,
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Image,
+        AsnMixin_Lv2Mode,
+):
+    """Level2b Image that are marked special
+
+    Image exposures that are marked as backgrounds, imprints, etc.,
+    still get 2b processing just as normal science. However, no other
+    exposures should get included into the association.
+
+    """
+
+
 class Asn_Lv2Spec(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spec,
-        AsnMixin_Lv2Mode
+        AsnMixin_Lv2Mode,
 ):
     """Level2b Spectra"""
 
 
-class Asn_Lv2SpecBkg(
+class Asn_Lv2SpecSpecial(
+        AsnMixin_Lv2Special,
+        AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spec,
-        AsnMixin_Lv2Bkg,
-        AsnMixin_Lv2Mode
+        AsnMixin_Lv2Mode,
 ):
-    """Level2b Spectra with backgrounds"""
+    """Level2b Spectra that are marked special
 
-    def __init__(self, *args, **kwargs):
-        self.validity.update({
-            'has_background': {
-                'validated': False,
-                'check': lambda entry: entry['exptype'] == 'background'
-            }
-        })
+    Spectral exposures that are marked as backgrounds, imprints, etc.,
+    still get 2b processing just as normal science. However, no other
+    exposures should get included into the association.
 
-        super(Asn_Lv2SpecBkg, self).__init__(*args, **kwargs)
+    """
