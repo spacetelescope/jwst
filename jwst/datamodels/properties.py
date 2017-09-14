@@ -8,7 +8,7 @@ import numpy as np
 import jsonschema
 import warnings
 
-from astropy.extern import six
+import six
 from astropy.utils.compat.misc import override__dir__
 
 from asdf import schema
@@ -378,6 +378,7 @@ class ListNode(Node):
     def extend(self, other):
         for part in _unmake_node(other):
             self.append(part)
+        self._validate()
 
     def item(self, **kwargs):
         assert isinstance(self._schema['items'], dict)

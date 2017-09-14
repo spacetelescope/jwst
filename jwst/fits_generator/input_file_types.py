@@ -46,7 +46,7 @@ import zipfile
 
 # THIRD-PARTY
 from astropy.io import fits as pyfits
-from astropy.extern import six
+import six
 
 # LOCAL
 from ..fits_generator import objects

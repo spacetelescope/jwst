@@ -254,7 +254,8 @@ array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
     )
 
     # solve the system:
-    bkg_poly_coef = lsq_solve(a, b, nimages)
+    tol = np.finfo(images[0].dtype).eps**(2.0/3.0)
+    bkg_poly_coef = lsq_solve(a, b, nimages, tol)
 
     if ext_return:
         return bkg_poly_coef, a, b, coord_arrays, eff_center, coord_system

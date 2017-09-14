@@ -89,20 +89,19 @@ Upon successful completion of this step, the status keyword S_RAMP will be set
 to COMPLETE.
 
 
-After the upcoming DMS build, the MIRI last frame correction step will be
-updated to flag all the pixels in the last group of data in each integration
-of a MIRI exposure, so that those data do not get used in either the jump
-detection or ramp fitting steps.  As a result, the ramp fitting step will be
-updated to make sure it handles the flagged group properly and does not include
-any data from the last group of each integration in its calculations; for MIRI
+The MIRI last frame correction step flags all pixels in the last group of data
+in each integration of a MIRI exposure, so that those data do not get used in
+either the jump detection or ramp fitting steps.  As a result, the ramp fitting
+step does not include
+any data from the last group of an integration in its calculations; for MIRI
 exposures that have original values of 2 and 3 groups per integration, ramp
-fitting processing will proceed using only the first 1 and 2 groups,
+fitting processing proceeds using only the first 1 and 2 groups,
 respectively, using the calculations described above.  For MIRI exposures that
-have an original value of only 1 group per integration, the last group will NOT
+originally have only 1 group per integration, that group will NOT
 be flagged by the last frame correction step, so that there will always be at
 least 1 group of data to work with in subsequent steps.  Hence the special ramp
-fitting processing that's applied to exposures that only have a single group
-will be applied to MIRI exposures that originally have 1 and 2 groups.
+fitting processing that's applied to exposures that have only 1 group
+will be applied to MIRI exposures that originally have 1 or 2 groups.
 
 Step Arguments
 ==============
@@ -117,5 +116,3 @@ The ramp fitting step has three optional arguments that can be set by the user:
 * ``--int_name``: A string that can be used to override the default name
   for the integration-by-integration slopes, for the case that the input
   file contains more than one integration.
-
-

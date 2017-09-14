@@ -168,7 +168,7 @@ __all__ = (
 
 
 import re
-from astropy.extern import six
+import six
 
 _list_arg = re.compile(r'''
     (?:

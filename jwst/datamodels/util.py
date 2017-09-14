@@ -6,7 +6,7 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 import sys
 from os.path import basename
 import numpy as np
-from astropy.extern import six
+import six
 from astropy.io import fits
 
 import logging

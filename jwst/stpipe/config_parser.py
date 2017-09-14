@@ -34,7 +34,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import os.path
 import textwrap
-from astropy.extern import six
+import six
 
 from .configobj.configobj import ConfigObj, Section, \
      flatten_errors, get_extra_values
