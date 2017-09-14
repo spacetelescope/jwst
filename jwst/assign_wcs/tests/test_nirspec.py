@@ -302,7 +302,7 @@ def test_msa_configuration_no_background():
     msa_meta_id = 13
     msaconfl = get_file_path('msa_configuration.fits')
     with pytest.raises(ValueError):
-        slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
+        nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
 
 
 def test_msa_configuration_all_background():

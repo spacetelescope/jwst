@@ -3,7 +3,7 @@ from __future__ import (absolute_import, unicode_literals, division,
 from numpy.testing import utils
 from astropy import units as u
 from astropy import wcs
-from astropy.tests.helper import pytest, assert_quantity_allclose
+from astropy.tests.helper import  assert_quantity_allclose
 from .. import pointing
 from ...transforms import models
 from ...datamodels import ImageModel, fits_support

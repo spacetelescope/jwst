@@ -1,11 +1,10 @@
 from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
-import six
 import numpy as np
 from astropy import units as u
 from astropy import coordinates as coords
 from astropy.modeling import models as astmodels
-from ..datamodels import fits_support, DataModel
+from ..datamodels import DataModel
 from gwcs import utils as gwutils
 from gwcs import coordinate_frames as cf
 from gwcs import wcs
@@ -206,7 +205,6 @@ def create_fitswcs(inp, input_frame=None):
     else:
         raise TypeError("Input is expected to be a DataModel instance or a FITS file.")
 
-    n_input_axes = len(wcsinfo['CRPIX'])
     if input_frame is None:
         input_frame = "detector"
     pipeline = [(input_frame, transform),
