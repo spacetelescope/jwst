@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 
-from ..stpipe import Step
+from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import extract_2d
 
@@ -28,4 +28,4 @@ class Extract2dStep(Step):
 
 
 if __name__ == '__main__':
-    cmdline.step_script(extract_2d_step)
+    cmdline.step_script(Extract2dStep)

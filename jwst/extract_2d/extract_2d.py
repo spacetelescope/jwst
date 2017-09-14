@@ -4,16 +4,13 @@
 from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
 import logging
-import copy
 import numpy as np
-from astropy.io import fits
 from astropy.modeling.models import Shift
 from gwcs.utils import _toindex
 from gwcs import wcstools
 
 from .. import datamodels
 from ..transforms import models as trmodels
-from asdf import AsdfFile
 from ..assign_wcs import nirspec
 
 
@@ -165,7 +162,8 @@ def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, s
             if ap.aperture_name == aperture_name:
                 log.info("Using wavelength zero-point correction for aperture {0}".format(ap.aperture_name))
                 offset_model = ap.zero_point_offset.copy()
-                variance = ap.variance.copy()
+                # TODO: implement variance
+                #variance = ap.variance.copy()
                 width = ap.width
                 break
         else:

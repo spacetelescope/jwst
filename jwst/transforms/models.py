@@ -11,12 +11,11 @@ from collections import namedtuple
 import numpy as np
 from astropy.modeling.core import Model
 from astropy.modeling.parameters import Parameter, InputParameterError
-from astropy.modeling.models import Polynomial2D
 from astropy.modeling.rotations import Rotation2D
 from astropy.utils import isiterable
 
 
-__all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation', 'NRSZCoord',
+__all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
            'Unitless2DirCos', 'DirCos2Unitless', 'Rotation3DToGWA', 'Gwa2Slit',
            'Slit2Msa', 'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit',
            'NIRCAMForwardRowGrismDispersion', 'NIRCAMForwardColumnGrismDispersion',
@@ -113,31 +112,6 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                         self.decmax,
                         self.xcenter,
                         self.ycenter))
-
-
-class MIRISelector(Model):
-    """
-    """
-    inputs = ('x' , 'y', 'slice')
-    outputs = ('alpha', 'beta')
-
-    def __init__(self, selector, **kwargs):
-        #self._inputs = inputs
-        #self._outputs = outputs
-        self._selector = selector
-        super(MIRISelector, self).__init__(**kwargs)
-
-    def evaluate(x, y, slice_id):
-        slice_id = np.unique(slice_id)
-        # remove 0
-        res = np.zeros(x.shape) + np.nan
-        for sid in slice_id:
-            if sid != 0:
-                sid_ind = slice_id == sid
-                res[sid_ind] = self._selector[sid](x[sid_ind], y[sid_ind])
-            else:
-                pass
-        return res
 
 
 class MIRI_AB2Slice(Model):
@@ -308,18 +282,6 @@ class RefractionIndexFromPrism(Model):
         return np.sqrt(nsq)
 
 
-class NRSChromaticCorrection(Polynomial2D):
-
-    def __init__(self, degree, **coeffs):
-        super(NRSChromaticCorrection, self).__init__(degree, **coeffs)
-
-    def evaluate(self, x, y, lam, *coeffs):
-        """For each input multiply the distortion coefficients by the computed lambda.
-        """
-        coeffs *= lam
-        return super(NRSChromaticCorrection, self).evaluate(x, y, *coeffs)
-
-
 class AngleFromGratingEquation(Model):
     """
     Grating Equation Model. Computes the diffracted/refracted angle.
@@ -375,20 +337,6 @@ class WavelengthFromGratingEquation(Model):
         # needed for the prism computation. Currently these two computations
         # need to have the same interface.
         return -(alpha_in + alpha_out) / (groove_density * order)
-
-
-class NRSZCoord(Model):
-    """
-    Class to compute the z coordinate through the NIRSPEC grating wheel.
-
-    """
-    separable = False
-
-    inputs = ("x", "y")
-    outputs = ("z",)
-
-    def evaluate(self, x, y):
-        return np.sqrt(1 - (x**2 + y**2))
 
 
 class Unitless2DirCos(Model):
