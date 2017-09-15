@@ -155,8 +155,8 @@ class Coron3Pipeline(Pipeline):
             # The resample step blends headers already...
             log.debug('Blending metadata for {}'.format(output_file))
             blend.blendfitsdata(targ_files, result)
-            result.meta.asn.pool_name = asn['asn_pool']
-            result.meta.asn.table_name = input
+        result.meta.asn.pool_name = asn['asn_pool']
+        result.meta.asn.table_name = input
 
         result.meta.cal_step.outlier_detection = 'COMPLETE'
         result.meta.cal_step.resample = 'COMPLETE'
