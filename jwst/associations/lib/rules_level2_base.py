@@ -23,9 +23,11 @@ logger.addHandler(logging.NullHandler())
 __all__ = [
     'ASN_SCHEMA',
     'AsnMixin_Lv2Image',
+    'AsnMixin_Lv2ImageNonScience',
     'AsnMixin_Lv2Mode',
     'AsnMixin_Lv2Singleton',
     'AsnMixin_Lv2Spec',
+    'AsnMixin_Lv2SpecNonScience',
     'AsnMixin_Lv2Special',
     'DMSLevel2bBase',
     'Utility'
@@ -453,8 +455,13 @@ class AsnMixin_Lv2Image(DMSLevel2bBase):
                 'value': (
                     'fgs_image'
                     '|mir_image'
+                    '|mir_lyot'
+                    '|mir_4qpm'
+                    '|nis_ami'
                     '|nis_image'
                     '|nrc_image'
+                    '|nrc_coron'
+                    '|nrc_tsimage'
                 ),
                 'inputs': ['exp_type'],
                 'force_unique': True,
@@ -577,12 +584,127 @@ class AsnMixin_Lv2Special(DMSLevel2bBase):
         self.add_constraints({
             'is_special': {
                 'value': None,
-                'inputs': ['background', 'is_imprint'],
+                'inputs': [
+                    'background',
+                    'is_imprint',
+                    'is_psf'
+                ],
                 'force_unique': False,
             }
         })
 
         super(AsnMixin_Lv2Special, self).__init__(*args, **kwargs)
+
+    def get_exposure_type(self, item, default='science'):
+        """Override to force exposure type to always be science
+
+        Parameters
+        ----------
+        item: dict
+            The pool entry to determine the exposure type of
+
+        default: str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+
+        Returns
+        -------
+        exposure_type: 'science'
+            Always returns as science
+        """
+        return 'science'
+
+
+class AsnMixin_Lv2ImageNonScience(DMSLevel2bBase):
+    """Process selected non-science exposures
+
+    Exposures, such as target acquisitions,
+    though considered non-science, still get 2b processing.
+
+    """
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'non_science': {
+                'value': (
+                    'fgs_focus'
+                    '|fgs_image'
+                    '|mir_coroncal'
+                    '|mir_tacq'
+                    '|nis_focus'
+                    '|nis_lamp'
+                    '|nis_tacq'
+                    '|nis_taconfirm'
+                    '|nrc_tacq'
+                    '|nrc_taconfirm'
+                    '|nrc_focus'
+                    '|nrc_led'
+                    '|nrs_bota'
+                    '|nrs_confirm'
+                    '|nrs_focus'
+                    '|nrs_lamp'
+                    '|nrs_mimf'
+                    '|nrs_taslit'
+                    '|nrs_tacq'
+                    '|nrs_taconfirm'
+                ),
+                'inputs': ['exp_type'],
+                'force_unique': False,
+            }
+        })
+
+        super(AsnMixin_Lv2ImageNonScience, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(AsnMixin_Lv2ImageNonScience, self)._init_hook(item)
+        self.data['asn_type'] = 'image2'
+
+    def get_exposure_type(self, item, default='science'):
+        """Override to force exposure type to always be science
+
+        Parameters
+        ----------
+        item: dict
+            The pool entry to determine the exposure type of
+
+        default: str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+
+        Returns
+        -------
+        exposure_type: 'science'
+            Always returns as science
+        """
+        return 'science'
+
+
+class AsnMixin_Lv2SpecNonScience(DMSLevel2bBase):
+    """Process selected non-science exposures
+
+    Exposures, such as target acquisitions,
+    though considered non-science, still get 2b processing.
+
+    """
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'non_science': {
+                'value': (
+                    'nrs_autowave'
+                ),
+                'inputs': ['exp_type'],
+                'force_unique': False,
+            }
+        })
+
+        super(AsnMixin_Lv2SpecNonScience, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(AsnMixin_Lv2SpecNonScience, self)._init_hook(item)
+        self.data['asn_type'] = 'spec2'
 
     def get_exposure_type(self, item, default='science'):
         """Override to force exposure type to always be science

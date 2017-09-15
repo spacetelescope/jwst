@@ -114,6 +114,24 @@
             ]
         },
         {
+            "name": "jw_00011",
+            "members": [
+                {
+                    "expname": "jw_00011_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw_00018",
+            "members": [
+                {
+                    "expname": "jw_00018_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
             "name": "jw_00019",
             "members": [
                 {
