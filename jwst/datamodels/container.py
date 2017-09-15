@@ -7,7 +7,7 @@ import warnings
 from collections import OrderedDict
 
 from asdf import AsdfFile
-from astropy.extern import six
+import six
 
 from ..associations import (
     AssociationError,

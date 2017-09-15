@@ -29,19 +29,17 @@
 """
 A client library for CRDS
 """
-import contextlib
-from os.path import dirname, join
 import re
-from astropy.extern import six
-
-# ----------------------------------------------------------------------
-
 import gc
 
 # ----------------------------------------------------------------------
 
+import six
+
+# ----------------------------------------------------------------------
+
 import crds
-from crds import log, config
+from crds.core import log, config, exceptions, heavy_client
 
 try:
     from crds.core import crds_cache_locking
@@ -52,7 +50,13 @@ except ImportError:
 # ----------------------------------------------------------------------
 
 def _flatten_dict(nested):
+    """Takes a hierarchical arbitrarily nested dictionary of dictionaries, much
+    like a data model, and flattens it.  The end result has only non-dictionary
+    values referred to by the dotted paths that describe the traversal down
+    through the nested dictionaries to their values.
+    """
     def flatten(root, path, output):
+        """Private worker function for _flatten_dict()."""
         for key, val in root.items():
             if isinstance(key, six.string_types):
                 if isinstance(val, dict):
@@ -104,7 +108,7 @@ def get_multiple_reference_paths(input_file, reference_file_types):
         raise crds.CrdsBadReferenceError(str(exc))
 
     refpaths = {filetype: filepath if "N/A" not in filepath.upper() else "N/A"
-                 for (filetype, filepath) in bestrefs.items()}
+                for (filetype, filepath) in bestrefs.items()}
 
     return refpaths
 
@@ -171,7 +175,7 @@ def get_svn_version():
 
 def get_context_used():
     """Return the context (.pmap) used for determining best references."""
-    _connected, final_context = crds.heavy_client.get_processing_mode("jwst")
+    _connected, final_context = heavy_client.get_processing_mode("jwst")
     return final_context
 
 def reference_uri_to_cache_path(reference_uri):
@@ -187,6 +191,7 @@ def reference_uri_to_cache_path(reference_uri):
 
     The default CRDS_PATH value is /grp/crds/cache, currently on the Central Store.
     """
-    assert reference_uri.startswith("crds://"), "CRDS file URI's should start with 'crds://'"
+    if not reference_uri.startswith("crds://"):
+        raise exceptions.CrdsError("CRDS reference URI's should start with 'crds://' but got", repr(reference_uri))
     basename = config.pop_crds_uri(reference_uri)
     return crds.locate_file(basename, "jwst")

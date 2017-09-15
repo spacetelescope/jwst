@@ -9,8 +9,8 @@ Terminology
 As :ref:`has been described <what-are-associations>`, an `Association`
 is a Python dict or list that is a list of things that belong together
 and are created by association rules. However, as will be described,
-the association rules are Python classes which inherit from a class
-called `Association`.
+the association rules are Python classes which inherit from the
+`Association` class.
 
 Associations created from these rule classes, refered to as just
 `rules`, have the type of the class they are created from and have all

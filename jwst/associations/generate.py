@@ -35,7 +35,7 @@ def generate(pool, rules, version_id=None):
         A 2-tuple consisting of:
 
         * List of associations
-        * Table of members from the pool that
+        * Table of items from the pool that
           do not belong to any association.
 
     Notes
@@ -49,25 +49,34 @@ def generate(pool, rules, version_id=None):
         version_id = make_timestamp()
     process_list = [
         ProcessList(
-            members=pool,
+            items=pool,
             rules=[rule for _, rule in rules.items()]
         )
     ]
 
     for process_idx, process_item in enumerate(process_list):
-        for member in process_item.members:
-            existing_asns, new_asns, to_process = generate_from_member(
-                member,
+        for item in process_item.items:
+
+            # Determine against what the item should be compared
+            # against.
+            use_rules = rules
+            use_associations = associations
+            if process_item.work_over == process_item.EXISTING:
+                use_rules = None
+            if process_item.work_over == process_item.RULES:
+                use_associations = []
+            existing_asns, new_asns, to_process = generate_from_item(
+                item,
                 version_id,
-                associations,
-                rules,
+                use_associations,
+                use_rules,
                 process_item.rules
             )
             associations.extend(new_asns)
             process_list.extend(to_process)
             if len(existing_asns) +\
                len(new_asns) > 0:
-                in_an_asn[member.index] = True
+                in_an_asn[item.index] = True
 
     # Finalize found associations
     finalized_asns = rules.finalize(associations)
@@ -76,8 +85,8 @@ def generate(pool, rules, version_id=None):
     return finalized_asns, orphaned
 
 
-def generate_from_member(
-        member,
+def generate_from_item(
+        item,
         version_id,
         associations,
         rules,
@@ -86,8 +95,8 @@ def generate_from_member(
 
     Parameters
     ----------
-    member: dict
-        The member to match to existing associations
+    item: dict
+        The item to match to existing associations
         or generate new associations from
 
     version_id: str or None
@@ -96,10 +105,10 @@ def generate_from_member(
 
     associations: [association, ...]
         List of already existing associations.
-        If the member matches any of these, it will be added
+        If the item matches any of these, it will be added
         to them.
 
-    rules: AssociationRegistry
+    rules: AssociationRegistry or None
         List of rules to create new associations
 
     allowed_rules: [rule, ...]
@@ -111,10 +120,10 @@ def generate_from_member(
     -------
     (associations, process_list): 3-tuple where
         existing_asns: [association,...]
-            List of existing associations member belongs to.
+            List of existing associations item belongs to.
             Empty if none match
         new_asns: [association,...]
-            List of new associations member creates. Empty if none match
+            List of new associations item creates. Empty if none match
         process_list: [ProcessList, ...]
             List of process events.
     """
@@ -125,51 +134,54 @@ def generate_from_member(
         for asn in associations
         if type(asn) in allowed_rules
     ]
-    existing_asns, process_list = match_member(member, associations)
+    existing_asns, process_list = match_item(item, associations)
 
-    # Now see if this member will create new associatons.
-    # By default, a member will not be allowed to create
+    # Now see if this item will create new associatons.
+    # By default, a item will not be allowed to create
     # an association based on rules of existing associations.
-    ignore_asns = set([type(asn) for asn in existing_asns])
-    new_asns, to_process = rules.match(
-        member,
-        version_id=version_id,
-        allow=allowed_rules,
-        ignore=ignore_asns,
-    )
-
+    to_process = []
+    new_asns = []
+    if rules is not None:
+        ignore_asns = set([type(asn) for asn in existing_asns])
+        new_asns, to_process = rules.match(
+            item,
+            version_id=version_id,
+            allow=allowed_rules,
+            ignore=ignore_asns,
+        )
     process_list.extend(to_process)
+
     return existing_asns, new_asns, process_list
 
 
-def match_member(member, associations):
-    """Match member to a list of associations
+def match_item(item, associations):
+    """Match item to a list of associations
 
     Parameters
     ----------
-    member: dict
-        The member to match to the associations.
+    item: dict
+        The item to match to the associations.
 
     associations: [association, ...]
         List of already existing associations.
-        If the member matches any of these, it will be added
+        If the item matches any of these, it will be added
         to them.
 
     Returns
     -------
     (associations, process_list): 2-tuple where
         associations: [association,...]
-            List of associations member belongs to. Empty if none match
+            List of associations item belongs to. Empty if none match
         process_list: [ProcessList, ...]
             List of process events.
     """
-    member_associations = []
+    item_associations = []
     process_list = []
     for asn in associations:
-        if asn in member_associations:
+        if asn in item_associations:
             continue
-        matches, reprocess = asn.add(member)
+        matches, reprocess = asn.add(item)
         process_list.extend(reprocess)
         if matches:
-            member_associations.append(asn)
-    return member_associations, process_list
+            item_associations.append(asn)
+    return item_associations, process_list

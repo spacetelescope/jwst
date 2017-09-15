@@ -18,6 +18,10 @@ class TSOPhotometryStep(Step):
         `CubeModel`.
     """
 
+    spec = """
+        save_catalog = boolean(default=False)  # save exposure-level catalog
+    """
+
     def process(self, input):
         with CubeModel(input) as model:
             # TODO:  need information about the actual source position in
@@ -42,15 +46,17 @@ class TSOPhotometryStep(Step):
                                               radius, radius_inner,
                                               radius_outer)
 
-            old_suffixes = ['calints', 'crfints']
-            output_dir = self.search_attr('output_dir')
-            cat_filepath = replace_suffix_ext(model.meta.filename,
-                                              old_suffixes, 'phot',
-                                              output_ext='ecsv',
-                                              output_dir=output_dir)
-            catalog.write(cat_filepath, format='ascii.ecsv', overwrite=True)
-            self.log.info('Wrote TSO photometry catalog: {0}'.
-                          format(cat_filepath))
+            if self.save_catalog:
+                old_suffixes = ['calints', 'crfints']
+                output_dir = self.search_attr('output_dir')
+                cat_filepath = replace_suffix_ext(model.meta.filename,
+                                                  old_suffixes, 'phot',
+                                                  output_ext='ecsv',
+                                                  output_dir=output_dir)
+                catalog.write(cat_filepath, format='ascii.ecsv',
+                              overwrite=True)
+                self.log.info('Wrote TSO photometry catalog: {0}'.
+                              format(cat_filepath))
 
         return catalog
 

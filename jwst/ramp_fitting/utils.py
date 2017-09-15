@@ -113,7 +113,6 @@ class OptRes(object):
 
         Returns
         -------
-
         """
 
         for ii_seg in range(0, self.yint_seg.shape[1]):
@@ -389,7 +388,6 @@ def calc_slope_int(slope_int, m_by_var_int, inv_var_int, num_int):
     -------
     slope_slice: float, 2D array
         slope image for given integration
-
     """
     slope_slice = slope_int[num_int, :, :].copy()
     m_slice = m_by_var_int[num_int, :, :]
@@ -860,7 +858,6 @@ def get_ref_subs(model, readnoise_model, gain_model):
     gain_2d: float, 2D array
         gain subarray
     """
-
     if reffile_utils.ref_matches_sci(model, gain_model):
         gain_2d = gain_model.data
     else:

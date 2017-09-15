@@ -22,6 +22,7 @@ Package Index
    fits_generator/index.rst
    flatfield/index.rst
    fringe/index.rst
+   gain_scale/index.rst
    group_scale/index.rst
    imprint/index.rst
    ipc/index.rst

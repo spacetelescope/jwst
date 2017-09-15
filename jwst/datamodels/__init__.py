@@ -33,7 +33,7 @@ __version__ = '0.7.4'
 
 import numpy as np
 from os.path import basename
-from astropy.extern import six
+import six
 from astropy.io import registry
 
 from . import ndmodel
@@ -127,6 +127,7 @@ __all__ = [
     'PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel', 'NirspecIfuAreaModel',
     'ThroughputModel',
     'PhotomModel', 'FgsPhotomModel', 'MiriImgPhotomModel', 'MiriMrsPhotomModel',
+    'NIRCAMGrismModel','NIRISSGrismModel',
     'NircamPhotomModel', 'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
     'QuadModel', 'RampModel', 'MIRIRampModel',
     'RampFitOutputModel', 'ReadnoiseModel',
@@ -136,7 +137,7 @@ __all__ = [
     'RSCDModel', 'SaturationModel', 'SpecModel',
     'StrayLightModel', 'SuperBiasModel', 'SpecwcsModel',
     'TrapDensityModel', 'TrapParsModel', 'TrapsFilledModel',
-    'WavelengthrangeModel']
+    'WavelengthrangeModel', 'WaveCorrModel']
 
 _all_models = __all__[1:]
 _local_dict = dict(locals())

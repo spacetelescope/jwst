@@ -7,7 +7,7 @@ import tempfile
 from nose.tools import raises
 
 from astropy.io import fits
-from astropy.extern import six
+import six
 
 from jwst.stpipe import Step
 import crds

@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from .. import datamodels
 from ..associations.load_as_asn import LoadAsLevel2Asn
+from ..background import background_step
 from ..stpipe import Pipeline
 
 # calwebb IMAGE2 step imports
@@ -23,8 +24,13 @@ class Image2Pipeline(Pipeline):
     assign_wcs, flat_field, and photom.
     """
 
+    spec = """
+        save_bsub = boolean(default=False) # Save background-subracted science
+    """
+
     # Define alias to steps
     step_defs = {
+        'bkg_subtract': background_step.BackgroundStep,
         'assign_wcs': assign_wcs_step.AssignWcsStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'photom': photom_step.PhotomStep,
@@ -99,6 +105,21 @@ class Image2Pipeline(Pipeline):
         # Record ASN pool and table names in output
         input.meta.asn.pool_name = pool_name
         input.meta.asn.table_name = asn_file
+
+        # Do background processing, if necessary
+        if len(members_by_type['background']) > 0:
+
+            # Setup for saving
+            self.bkg_subtract.suffix = 'bsub'
+            if isinstance(input, datamodels.CubeModel):
+                self.bkg_subtract.suffix = 'bsubints'
+
+            # Backwards compatibility
+            if self.save_bsub:
+                self.bkg_subtract.save_results = True
+
+            # Call the background subtraction step
+            input = self.bkg_subtract(input, members_by_type['background'])
 
         # work on slope images
         input = self.assign_wcs(input)

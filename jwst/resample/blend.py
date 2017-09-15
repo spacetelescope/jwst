@@ -27,6 +27,12 @@ def blendfitsdata(input_list, output_model):
     # start by building dict which maps all FITS keywords in schema to their 
     # attribute in the schema
     fits_dict = schema.build_fits_dict(output_model.schema)
+    # Need to insure that output_model does not already have an instance
+    # of hdrtab from previous processing, an instance that would be
+    # incompatible with the new table generated now...
+    if hasattr(output_model,'hdrtab'):
+        # If found, remove it to be replaced by new instance
+        del output_model.hdrtab
     # Now assign values from new_hdrs to output_model.meta using fits_dict map
     for hdr in new_hdrs:
         for kw in hdr:
@@ -35,6 +41,7 @@ def blendfitsdata(input_list, output_model):
 
     # Now, append HDRTAB as new element in datamodel
     new_schema = build_tab_schema(new_table)
+
     output_model.add_schema_entry('hdrtab', new_schema)
     output_model.hdrtab = fits_support.from_fits_hdu(new_table, new_schema)
         
@@ -68,6 +75,14 @@ def blendmetadata(input_models, output_model):
     # start by building dict which maps all FITS keywords in schema to their
     # attribute in the schema
     fits_dict = schema.build_fits_dict(output_model.schema)
+
+    # Need to insure that output_model does not already have an instance
+    # of hdrtab from previous processing, an instance that would be
+    # incompatible with the new table generated now...
+    if hasattr(output_model,'hdrtab'):
+        # If found, remove it to be replaced by new instance
+        del output_model.hdrtab
+
     # Now assign values from new_hdrs to output_model.meta using fits_dict map
     for hdr in new_hdrs:
         for kw in hdr:

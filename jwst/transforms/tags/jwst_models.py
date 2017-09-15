@@ -1,18 +1,99 @@
 
-from __future__ import absolute_import, division, unicode_literals, print_function
-import numpy as np
+from __future__ import (absolute_import, division, unicode_literals,
+                        print_function)
+from numpy.testing import assert_array_equal
 from asdf import yamlutil
 from asdf.tags.transform.basic import TransformType
-
+from .. import models
 from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
-                      NRSZCoord, Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA,
-                      LRSWavelength, Gwa2Slit, Slit2Msa, Logical, NirissSOSSModel, V23ToSky,
-                      RefractionIndexFromPrism, Snell, MIRI_AB2Slice)
+                      Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA, LRSWavelength, Gwa2Slit,
+                      Slit2Msa, Logical, NirissSOSSModel, V23ToSky, RefractionIndexFromPrism,
+                      Snell, NIRCAMForwardRowGrismDispersion, NIRCAMForwardColumnGrismDispersion,
+                      NIRISSForwardRowGrismDispersion, NIRISSForwardColumnGrismDispersion,
+                      NIRCAMBackwardGrismDispersion, NIRISSBackwardGrismDispersion, MIRI_AB2Slice)
 
 
 __all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
            'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSky',
-           'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType']
+           'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType', 'NIRCAMGrismDispersionType',
+           'NIRISSGrismDispersionType']
+
+
+class NIRCAMGrismDispersionType(TransformType):
+    name = "nircam_grism_dispersion"
+    types = [NIRCAMForwardRowGrismDispersion, NIRCAMForwardColumnGrismDispersion,
+             NIRCAMBackwardGrismDispersion]
+    standard = "jwst_pipeline"
+    version = "0.7.0"
+
+    @classmethod
+    def from_tree_transform(cls, node, ctx):
+        _fname = getattr(models, node["class_name"])
+        return _fname(list(node['orders']),
+                      list(node['lmodels']),
+                      list(node['xmodels']),
+                      list(node['ymodels']),
+                      )
+
+    @classmethod
+    def to_tree_transform(cls, model, ctx):
+        node = {'orders': list(model.orders),
+                'lmodels': list(model.lmodels),
+                'xmodels': list(model.xmodels),
+                'ymodels': list(model.ymodels),
+                'class_name': type(model).name
+                }
+        return yamlutil.custom_tree_to_tagged_tree(node, ctx)
+
+    @classmethod
+    def assert_equal(cls, a, b):
+        TransformType.assert_equal(a, b)
+        assert (isinstance(a, type(b)))
+        assert_array_equal(a.xmodels, b.xmodels)
+        assert_array_equal(a.ymodels, b.ymodels)
+        assert_array_equal(a.lmodels, b.lmodels)
+        assert_array_equal(a.orders, b.orders)
+
+
+class NIRISSGrismDispersionType(TransformType):
+    name = "niriss_grism_dispersion"
+    types = [NIRISSForwardRowGrismDispersion, NIRISSForwardColumnGrismDispersion,
+             NIRISSBackwardGrismDispersion]
+    standard = "jwst_pipeline"
+    version = "0.7.0"
+
+    @classmethod
+    def from_tree_transform(cls, node, ctx):
+        _fname = getattr(models, node["model_type"])
+        return _fname(list(node['orders']),
+                      list(node['lmodels']),
+                      list(node['xmodels']),
+                      list(node['ymodels']),
+                      node['fwcpos_ref'],
+                      )
+
+    @classmethod
+    def to_tree_transform(cls, model, ctx):
+        xll=[list(m) for m in model.xmodels]
+        yll=[list(m) for m in model.ymodels]
+        node = {'orders': list(model.orders),
+                'xmodels': xll,
+                'ymodels': yll,
+                'lmodels': list(model.lmodels),
+                'fwcpos_ref': model.fwcpos_ref,
+                'model_type': type(model).name
+                }
+        return yamlutil.custom_tree_to_tagged_tree(node, ctx)
+
+    @classmethod
+    def assert_equal(cls, a, b):
+        TransformType.assert_equal(a, b)
+        assert (isinstance(a, type(b)))
+        assert_array_equal(a.xmodels, b.xmodels)
+        assert_array_equal(a.ymodels, b.ymodels)
+        assert_array_equal(a.lmodels, b.lmodels)
+        assert_array_equal(a.orders, b.orders)
+        assert_array_equal(a.fwcpos_ref, b.fwcpos_ref)
 
 
 class RotationSequenceType(TransformType):
@@ -55,16 +136,14 @@ class V23ToSkyType(TransformType):
 
 class CoordsType(TransformType):
     name = "coords"
-    types = [Unitless2DirCos, DirCos2Unitless, NRSZCoord]
+    types = [Unitless2DirCos, DirCos2Unitless]
     standard = "jwst_pipeline"
     version = "0.7.0"
 
     @classmethod
     def from_tree_transform(cls, node, ctx):
         model_type = node['model_type']
-        if model_type == 'nrszcoord':
-            return NRSZCoord()
-        elif model_type == 'to_dircos':
+        if model_type == 'to_dircos':
             return Unitless2DirCos()
         elif model_type == 'from_dircos':
             return DirCos2Unitless()
@@ -73,14 +152,13 @@ class CoordsType(TransformType):
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
-        if isinstance(model, NRSZCoord):
-            model_type = 'nrszcoord'
-        elif isinstance(model, DirCos2Unitless):
+        if isinstance(model, DirCos2Unitless):
             model_type = 'from_dircos'
         elif isinstance(model, Unitless2DirCos):
             model_type = 'to_dircos'
         else:
-            raise TypeError("Model of type {0} i snot supported.".format(model.__class__))
+            raise TypeError("Model of type {0} i snot supported."
+                            .format(model.__class__))
         node = {'model_type': model_type}
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
@@ -101,7 +179,8 @@ class GratingEquationType(TransformType):
         elif output == "angle":
             model = AngleFromGratingEquation(groove_density, order)
         else:
-            raise ValueError("Can't create a GratingEquation model with output {0}".format(output))
+            raise ValueError("Can't create a GratingEquation model with"
+                             "output {0}".format(output))
         return model
 
     @classmethod
@@ -114,17 +193,9 @@ class GratingEquationType(TransformType):
         elif isinstance(model, WavelengthFromGratingEquation):
             node['output'] = 'wavelength'
         else:
-            raise TypeError("Can't serialize an instance of {0}".format(model.__class__.__name__))
+            raise TypeError("Can't serialize an instance of {0}"
+                            .format(model.__class__.__name__))
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
-
-    #@classmethod
-    #def assert_equal(cls, a, b):
-        #from astropy import modeling
-
-        #TransformType.assert_equal(a, b)
-        #assert (isinstance(a, modeling.models.Shift) and
-                #isinstance(b, modeling.models.Shift))
-        #assert_array_equal(a.offset.value, b.offset.value)
 
 
 class LRSWavelengthType(TransformType):

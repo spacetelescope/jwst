@@ -74,8 +74,8 @@ def imaging(input_model, reference_files):
     except NotImplementedError:
         shape = input_model.data.shape
         # Note: Since bounding_box is attached to the model here it's in reverse order.
-        distortion.bounding_box = ((-0.5, shape[0] - 0.5), (3.5, shape[1] - 4.5))
-
+        bb = ((-0.5, shape[0] - 0.5), (3.5, shape[1] - 4.5))
+    distortion.bounding_box = bb
     # Create the pipeline
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),
@@ -298,7 +298,6 @@ def detector_to_abl(input_model, reference_files):
     band = input_model.meta.instrument.band
     channel = input_model.meta.instrument.channel
     # used to read the wavelength range
-    channels = [c + band for c in channel]
 
     with DistortionMRSModel(reference_files['distortion']) as dist:
         alpha_model = dist.alpha_model
@@ -444,7 +443,7 @@ def get_wavelength_range(input_model, path=None):
         raise IOError("Reference file {0} not found. Please specify a path.".format(fname))
     else:
         fname = os.path.join(path, fname)
-        f = AsdfFile.open(fname)
+        f = WavelengthrangeModel(fname)
 
     wave_range = f.tree['wavelengthrange'].copy()
     wave_channels = f.tree['channels']

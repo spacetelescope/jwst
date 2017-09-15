@@ -97,7 +97,7 @@ class Main(object):
         parser.add_argument(
             '--save-orphans', dest='save_orphans',
             nargs='?', const='orphaned.csv', default=False,
-            help='Save orphaned members into the specified table. Default: "%(default)s"'
+            help='Save orphaned items into the specified table. Default: "%(default)s"'
         )
         parser.add_argument(
             '--version-id', dest='version_id',
@@ -166,6 +166,10 @@ class Main(object):
             '--version', action='version',
             version='%(prog)s {}'.format(__version__),
             help='Version of the generator.'
+        )
+        parser.add_argument(
+            '--no-merge', action='store_true',
+            help='Do not merge Level2 associations into one'
         )
 
         parsed = parser.parse_args(args=args)
@@ -241,6 +245,11 @@ class Main(object):
         )
 
         if parsed.discover:
+            logger.debug(
+                '# asns found before discover filtering={}'.format(
+                    len(self.associations)
+                )
+            )
             self.associations = filter_discovered_only(
                 self.associations,
                 DISCOVER_RULESET,
@@ -248,6 +257,14 @@ class Main(object):
                 keep_candidates=parsed.all_candidates,
             )
             self.rules.Utility.resequence(self.associations)
+
+        # Do a grand merging. This is done particularly for
+        # Level2 associations.
+        if not parsed.no_merge:
+            try:
+                self.associations = self.rules.Utility.merge_asns(self.associations)
+            except AttributeError:
+                pass
 
         logger.info(self.__str__())
 
@@ -262,7 +279,7 @@ class Main(object):
         result = []
         result.append((
             'There where {:d} associations '
-            'and {:d} orphaned members found.\n'
+            'and {:d} orphaned items found.\n'
             'Associations found are:'
         ).format(len(self.associations), len(self.orphaned)))
         for assocs in self.associations:

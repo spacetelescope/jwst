@@ -2,26 +2,28 @@
 Utility function for WCS
 
 """
-
+import warnings
 import logging
 import functools
 import numpy as np
 
 from astropy.utils.misc import isiterable
 from astropy.io import fits
-from astropy.modeling import projections
 from astropy.modeling import models as astmodels
+from astropy.table import Table
+
 
 from gwcs import WCS
 from gwcs.wcstools import wcs_from_fiducial
 from gwcs import utils as gwutils
 
 from . import pointing
+from ..lib.catalog_utils import SkyObject
+from ..transforms.models import GrismObject
+from ..datamodels import WavelengthrangeModel, DataModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-import warnings
 
 
 def _domain_to_bounding_box(domain):
@@ -159,7 +161,6 @@ def compute_fiducial(wcslist, bounding_box=None, domain=None):
     if domain is not None:
         warnings.warning("'domain' was deprecated in 0.8 and will be removed from next"
                          "version. Use 'bounding_box' instead.")
-    output_frame = wcslist[0].output_frame
     axes_types = wcslist[0].output_frame.axes_type
     spatial_axes = np.array(axes_types) == 'SPATIAL'
     spectral_axes = np.array(axes_types) == 'SPECTRAL'
@@ -264,5 +265,162 @@ def not_implemented_mode(input_model, ref):
     exp_type = input_model.meta.exposure.type
     message = "WCS for EXP_TYPE of {0} is not implemented.".format(exp_type)
     log.critical(message)
-    #raise AttributeError(message)
+    # raise AttributeError(message)
     return None
+
+
+def get_object_info(catalog_name=''):
+    """Return a list of SkyObjects from the direct image
+
+    the source_catalog step are read into a list of  SkyObjects
+    which can be referenced by catalog id.
+
+    Parameters
+    ----------
+    catalog_name : str
+        The name of the photutils catalog
+
+    Returns
+    -------
+    objects : list[jwst.transforms.models.SkyObject]
+        A list of SkyObject tuples
+
+    Notes
+    -----
+    In [360]: !more jw96090_t001_nircam_f322w2_mosaic_cat.ecsv
+    # %ECSV 0.9
+    # ---
+    # datatype:
+    # - {name: id, datatype: int64}
+    # - {name: xcentroid, unit: pix, datatype: float64}
+    # - {name: ycentroid, unit: pix, datatype: float64}
+    # - {name: ra_icrs_centroid, unit: deg, datatype: float64}
+    # - {name: dec_icrs_centroid, unit: deg, datatype: float64}
+    # - {name: area, unit: pix2, datatype: float64}
+    # - {name: source_sum, datatype: float32}
+    # - {name: source_sum_err, datatype: float32}
+    # - {name: semimajor_axis_sigma, unit: pix, datatype: float64}
+    # - {name: semiminor_axis_sigma, unit: pix, datatype: float64}
+    # - {name: orientation, unit: deg, datatype: float64}
+    # - {name: orientation_sky, unit: deg, datatype: float64}
+    # - {name: abmag, datatype: float64}
+    # - {name: abmag_error, datatype: float32}
+    id xcentroid ycentroid ra_icrs_centroid dec_icrs_centroid area source_sum source_sum_err semimajor_axis_sigma semiminor_axis_sigma orientation orientation_sky abmag abmag_error
+    1 1478.79057591 8.20729790816 150.158383692 2.30276751202 77.0 20.0082 0.167517 3.25911081809 2.05169541295 -84.7150877614 185.284912239 0.0 0.00909026
+
+    """
+    objects = []
+    catalog = Table.read(catalog_name, format='ascii.ecsv')
+
+    # validate that the expected columns are there
+    # id is just a bad name for a param, but it's used in the catalog
+    required_fields = list(SkyObject()._fields)
+    if "sid" in required_fields:
+        required_fields[required_fields.index("sid")] = "id"
+
+    try:
+        if not set(required_fields).issubset(set(catalog.colnames)):
+            difference = set(catalog.colnames).difference(required_fields)
+            raise KeyError("Missing required columns in source catalog ({}): {}"
+                           .format(catalog_name, difference))
+    except AttributeError as e:
+        print("Problem validating object catalog column {0:s}: {1}"
+              .format(catalog_name, e))
+
+    for row in catalog:
+        objects.append(SkyObject(sid=row['id'],
+                                 xcentroid=row['xcentroid'],
+                                 ycentroid=row['ycentroid'],
+                                 ra_icrs_centroid=row['ra_icrs_centroid'],
+                                 dec_icrs_centroid=row['dec_icrs_centroid'],
+                                 abmag=row['abmag'],
+                                 abmag_error=row['abmag_error'],
+                                 ramin=row['ramin'],
+                                 decmin=row['decmin'],
+                                 ramax=row['ramax'],
+                                 decmax=row['decmax'],
+                                 )
+                       )
+    return objects
+
+
+def create_grism_objects(input_model, reference_files, mmag_extract=99.0):
+    """Create bounding boxes for each sky object
+
+    The detector coordinates in the grism image are first related
+    to the trace. They need to go through the trace polynomials
+    in order to find the "direct image" pixel location, which is
+    also in a detector pixel coordinate frame.
+
+    Parameters
+    ----------
+    input_model : `jwst.datamodels.ImagingModel`
+        Data model.
+    reference_files : dict
+        Dictionary of reference files
+    mmag_extract : float
+        The faintest magnitude to extract
+
+
+    Returns
+    -------
+    A list of GrismObject(s) for every source in the catalog
+    Each grism object contains information about it's
+    spectral extent
+    """
+
+    # get the filter that was used
+    filter_name = input_model.meta.instrument.filter
+
+    # get the catalog objects
+    skyobject_list = get_object_info(input_model.meta.source_catalog.filename)
+
+    # get the imaging transform to record the center of the object in the image
+    # here, image is in the imaging reference frame, before going through the
+    # dispersion coefficients
+    sky_to_detector = input_model.meta.wcs.get_transform('world', 'detector')
+    sky_to_grism = input_model.meta.wcs.get_transform('world', 'grism_detector')
+
+    # Get the disperser parameters which have the wave limits
+    with WavelengthrangeModel(reference_files['wavelengthrange']) as f:
+        wrange = f.wrange
+        wrange_selector = f.wrange_selector
+        orders = f.order
+
+
+    grism_objects = []
+    for obj in skyobject_list:
+        if obj.abmag < mmag_extract:
+            # save the image frame center of the object
+            xcenter, ycenter, _, _ = sky_to_detector(obj.ra_icrs_centroid,
+                                                     obj.dec_icrs_centroid,
+                                                     1, 1)
+
+            # could add logic to ignore object if too far off image,
+            order_bounding = {}
+            for oidx, order in enumerate(orders):
+                # The orders of the bounding box in the non-dispersed image
+                # drive the extraction extent. The location of the min and
+                # max wavelengths for each order are used to get the location
+                # of the +/- sides of the bounding box in the grism image
+                fselect = wrange_selector.index(filter_name)
+                lmin, lmax = wrange[oidx][fselect]
+                xmin, ymin, _, _ = sky_to_grism(obj.ramin, obj.decmin, lmin, order)
+                xmax, ymax, _, _ = sky_to_grism(obj.ramax, obj.decmax, lmax, order)
+                order_bounding[order] = ((xmin, xmax), (ymin, ymax))
+
+            # add lmin and lmax used for the orders here?
+            # input_model.meta.wcsinfo.waverange_start keys covers the
+            # full range of all the orders
+            grism_objects.append(GrismObject(sid=obj.sid,
+                                             order_bounding=order_bounding,
+                                             ra_icrs_centroid=obj.ra_icrs_centroid,
+                                             dec_icrs_centroid=obj.dec_icrs_centroid,
+                                             xcenter=xcenter,
+                                             ycenter=ycenter,
+                                             ramin=obj.ramin,
+                                             decmin=obj.decmin,
+                                             ramax=obj.ramax,
+                                             decmax=obj.decmax))
+
+    return grism_objects

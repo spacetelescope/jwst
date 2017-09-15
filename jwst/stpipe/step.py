@@ -8,7 +8,7 @@ from os.path import dirname, join, basename, splitext, abspath, split
 import re
 import sys
 
-from astropy.extern import six
+import six
 
 try:
     from astropy.io import fits
@@ -25,7 +25,7 @@ from .. import __version_commit__, __version__
 SUFFIX_LIST = [
     'rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
     'jump', 'ramp', 'x1d', 'x1dints', 'calints', 'rateints',
-    'crf', 'crfints'
+    'crf', 'crfints', 'psfsub', 'psfalign', 'psfstack'
 ]
 REMOVE_SUFFIX = '^(?P<root>.+?)((?P<separator>_|-)(' \
                 + '|'.join(SUFFIX_LIST) + '))?$'
@@ -45,7 +45,11 @@ class Step(object):
     suffix = string(default=None)           # Default suffix for output files
     """
 
+    # Reference types for both command line override definition and reference prefetch
     reference_file_types = []
+
+    # Set to False in subclasses to skip prefetch,  but by default attempt to prefetch
+    prefetch_references = True
 
     @classmethod
     def merge_config(cls, config, config_file):
@@ -336,7 +340,8 @@ class Step(object):
         result = None
 
         try:
-            if len(args) and len(self.reference_file_types) and not self.skip:
+            if (len(args) and len(self.reference_file_types) and not self.skip
+                and self.prefetch_references):
                 self._precache_reference_files(args[0])
 
             self.log.info(
@@ -414,13 +419,26 @@ class Step(object):
                 )
                 for idx, result in enumerate(results):
                     if hasattr(result, 'save'):
-                        output_path = make_output_path(
-                            self, result,
-                            basepath=self.output_file,
-                            result_id=result_id(idx)
-                        )
-                        self.log.info('Saving file {0}'.format(output_path))
-                        result.save(output_path, overwrite=True)
+                        try:
+                            output_path = make_output_path(
+                                self, result,
+                                basepath=self.output_file,
+                                result_id=result_id(idx)
+                            )
+                        except AttributeError:
+                            self.log.warning(
+                                '`save_results` has been requested,'
+                                ' but cannot determine filename.'
+                            )
+                            self.log.warning(
+                                'Specify an output file with `--output_file`'
+                                ' or set `--save_results=false`'
+                            )
+                        else:
+                            self.log.info(
+                                'Saving file {0}'.format(output_path)
+                            )
+                            result.save(output_path, overwrite=True)
 
             self.log.info(
                 'Step {0} done'.format(self.name))

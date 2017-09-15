@@ -37,13 +37,13 @@ class Spec2Pipeline(Pipeline):
     """
 
     spec = """
-        save_bsub = boolean(default=False)
+        save_bsub = boolean(default=False) # Save background-subracted science
     """
 
     # Define aliases to steps
     step_defs = {
-        'assign_wcs': assign_wcs_step.AssignWcsStep,
         'bkg_subtract': background_step.BackgroundStep,
+        'assign_wcs': assign_wcs_step.AssignWcsStep,
         'imprint_subtract': imprint_step.ImprintStep,
         'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'extract_2d': extract_2d_step.Extract2dStep,
@@ -134,6 +134,11 @@ class Spec2Pipeline(Pipeline):
         exp_type = input.meta.exposure.type
 
         # Apply WCS info
+        # check the datamodel to see if it's
+        # a grism image, if so get the catalog
+        # name from the asn and record it to the meta
+        if exp_type in ["NIS_WFSS", "NRC_GRISM"]:
+            input.meta.source_catalog.filename = members_by_type['sourcecat']
         input = self.assign_wcs(input)
 
         # Do background processing, if necessary
