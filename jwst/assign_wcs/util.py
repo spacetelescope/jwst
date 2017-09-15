@@ -327,6 +327,13 @@ def get_object_info(catalog_name=''):
         print("Problem validating object catalog column {0:s}: {1}"
               .format(catalog_name, e))
 
+    # The columns are named sky_bbox_ll, sky_bbox_ul, sky_bbox_lr, and sky_bbox_ur, each of
+    # which is a SkyCoord (i.e. RA & Dec & frame) at one corner of the minimal bounding box.
+    # There will also be a sky_bbox property as a 4-tuple of SkyCoord, but that is not
+    # serializable (hence, the four separate columns). This is not yet merged in photutils
+    # -- I discovered some bugs with SkyCoord and serialization, some of which have just been
+    # fixed in astropy.
+
     for row in catalog:
         objects.append(SkyObject(sid=row['id'],
                                  xcentroid=row['xcentroid'],
@@ -335,10 +342,10 @@ def get_object_info(catalog_name=''):
                                  dec_icrs_centroid=row['dec_icrs_centroid'],
                                  abmag=row['abmag'],
                                  abmag_error=row['abmag_error'],
-                                 ramin=row['ramin'],
-                                 decmin=row['decmin'],
-                                 ramax=row['ramax'],
-                                 decmax=row['decmax'],
+                                 box_ll=row['sky_bbox_ll'],
+                                 box_lr=row['sky_bbox_lr'],
+                                 box_ul=row['sky_bbox_ul'],
+                                 box_ur=row['sky_bbox_ur'],
                                  )
                        )
     return objects
