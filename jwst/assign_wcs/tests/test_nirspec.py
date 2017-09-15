@@ -27,11 +27,11 @@ wcs_kw = {'wcsaxes': 2, 'ra_ref': 165, 'dec_ref': 54,
 
 
 slit_fields_num = ["shutter_id", "xcen", "ycen",
-                   "ymin", "ymax", "quadrant", "source_id", "nshutters",
+                   "ymin", "ymax", "quadrant", "source_id",
                    "stellarity", "source_xpos", "source_ypos"]
 
 
-slit_fields_str = ["name", "source_name", "source_alias"]
+slit_fields_str = ["name", "shutter_state", "source_name", "source_alias"]
 
 
 def _compare_slits(s1, s2):
@@ -289,7 +289,7 @@ def test_msa_configuration_normal():
     msa_meta_id = 12
     msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    ref_slit = Slit(55, 9376, 251, 26, -5.15, 0.55, 4, 1, 5, '95065_1', '2122',
+    ref_slit = Slit(55, 9376, 251, 26, -5.15, 0.55, 4, 1, '1111x', '95065_1', '2122',
                       0.13, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
@@ -314,7 +314,7 @@ def test_msa_configuration_all_background():
     msa_meta_id = 14
     msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    ref_slit = Slit(57, 616, 251, 2, 22.45, 25.85, 4, 1, 3, '95065_1', '2122',
+    ref_slit = Slit(57, 8646, 251, 24, -2.85, .55, 4, 1, '11x', '95065_1', '2122',
                     0.13, -0.5, -0.5)
     _compare_slits(slitlet_info[0], ref_slit)
 
@@ -329,7 +329,7 @@ def test_msa_configuration_row_skipped():
     msa_meta_id = 15
     msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    ref_slit = Slit(58, 8646, 251, 24, -2.85, 5.15, 4, 1, 6, '95065_1', '2122',
+    ref_slit = Slit(58, 8646, 251, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
                       0.130, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
@@ -342,9 +342,21 @@ def test_msa_configuration_multiple_returns():
     msa_meta_id = 16
     msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    ref_slit1 = Slit(59, 8651, 256, 24, -2.85, 5.15, 4, 1, 6, '95065_1', '2122',
+    ref_slit1 = Slit(59, 8651, 256, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
                      0.13000000000000003, -0.31716078999999997, -0.18092266)
-    ref_slit2 = Slit(60, 11573, 258, 32, -2.85, 4, 4, 2, 6, '95065_2', '172',
+    ref_slit2 = Slit(60, 11573, 258, 32, -2.85, 4, 4, 2, '11x111', '95065_2', '172',
                      0.70000000000000007, -0.31716078999999997, -0.18092266)
     _compare_slits(slitlet_info[0], ref_slit1)
     _compare_slits(slitlet_info[1], ref_slit2)
+
+
+open_shutters = [[24], [23, 24], [22, 23, 25, 27], [22, 23, 25, 27, 28]]
+main_shutter = [24, 23, 25, 28]
+result = ["x", "x1", "110x01", "110101x"]
+test_data = list(zip(open_shutters, main_shutter, result))
+
+@pytest.mark.parametrize(('open_shutters', 'main_shutter', 'result'),
+                         test_data)
+def test_shutter_state(open_shutters, main_shutter, result):
+    shutter_state = nirspec._shutter_id_to_str(open_shutters, main_shutter)
+    assert shutter_state == result

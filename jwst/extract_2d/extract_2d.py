@@ -20,7 +20,7 @@ log.setLevel(logging.DEBUG)
 
 def extract2d(input_model, which_subarray=None, apply_wavecorr=False, reffile=""):
     supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ', 'NRS_LAMP']
-    
+
     exp_type = input_model.meta.exposure.type.upper()
     log.info('EXP_TYPE is {0}'.format(exp_type))
 
@@ -113,7 +113,7 @@ def extract2d(input_model, which_subarray=None, apply_wavecorr=False, reffile=""
                 output_model.slits[nslit].source_ypos = float(slit.source_ypos)
                 output_model.slits[nslit].slitlet_id = int(slit.name)
                 # for pathloss correction
-                output_model.slits[nslit].nshutters = int(slit.nshutters)
+                output_model.slits[nslit].shutter_state = slit.shutter_state
     del input_model
     # Set the step status to COMPLETE
     output_model.meta.cal_step.extract_2d = 'COMPLETE'
@@ -134,7 +134,7 @@ def extract2d(input_model, which_subarray=None, apply_wavecorr=False, reffile=""
 def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, slit_wcs):
     """
     Compute the Nirspec wavelength zero-point correction.
-    
+
     Parameters
     ----------
     lam : nd-array like
@@ -168,7 +168,7 @@ def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, s
                 break
         else:
             log.info("No wavelength zero-point correction found for slit {0}".format(aperture_name))
-        
+
     dispersion = compute_dispersion(slit_wcs)
     deltax = source_xpos * width
     lam = lam.copy()
@@ -229,7 +229,7 @@ def _is_point_source(slit, exp_type, user_type):
 
     return result
 
-    
+
 def get_source_xpos(input_model, slit, slit_wcs, lam, msa_model):
     """
     Compute the source position within the slit for a NIRSPEC FS.
@@ -256,14 +256,14 @@ def get_source_xpos(input_model, slit, slit_wcs, lam, msa_model):
     v3ref = input_model.meta.wcsinfo.v3_ref # in arcsec
     v3idlyangle = input_model.meta.wcsinfo.v3yangle # in deg
     vparity = input_model.meta.wcsinfo.vparity
-    
+
     idl2v23 = trmodels.IdealToV2V3(v3idlyangle, v2ref, v3ref, vparity)
     # Compute the location in V2,V3 [in arcsec]
     xv, yv = idl2v23(xoffset, yoffset)
     # The NIRSPEC transforms expect V2,V3 positions in deg
     xv = xv / 3600.
     yv = yv / 3600.
-    
+
     v2v3_to_msa_frame = slit_wcs.get_transform("v2v3", "msa_frame")
     xpos_abs, ypos_abs, lam = v2v3_to_msa_frame(xv, yv, lam)
     xpos_frac = absolute2fractional(msa_model, slit, xpos_abs, ypos_abs)
@@ -282,7 +282,7 @@ def get_msa_model(input_model):
 
 def absolute2fractional(msa_model, slit, xposabs, yposabs):
     """
-    Compute the fractional position in ``x`` within the slit in MSA coordinates. 
+    Compute the fractional position in ``x`` within the slit in MSA coordinates.
 
     Parameters
     ----------
