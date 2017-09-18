@@ -235,9 +235,7 @@ class CubeBuildStep (Step):
         print('outfile',self.output_file)
         if num_cubes > 1 and self.output_file != None :
             self.log.info('More than 1 cube is going to be created in this run and --output_file is set')
-            sys.exit('STOP') # figure this out later, user can not set the output file if more than 
-                             # one cube is to be created. 
-
+            raise InputFileError("--output_file can not be set if building more than 1 IFUCube")
 
         Final_IFUCube = datamodels.ModelContainer() # stick IFUcubes in 
 
@@ -288,14 +286,23 @@ class CubeBuildStep (Step):
                 result =  thiscube.build_ifucube()
                # blendheaders.blendheaders(self.output_file,self.input_filenames)
 
-                print('test meta.filename',result.meta.filenaname)
+                print('test meta.filename',result.meta.filename)
                 Final_IFUCube.append(result)
 
             if(self.debug_pixel ==1):
                 self.spaxel_debug.close()
 
         print('going to return result')
+        print('len(Final_IFUCube)'len(Final_IFUCube))
+
+        print('type of Final_IFUCube',type(Final_IFUCube))
+        print('First filename',Final_IFUCube[0].meta.filename)
+        print('Second filename',Final_IFUCube[1].meta.filename)
         return Final_IFUCube
+
+#********************************************************************************
+class InputFileError(Exception):
+    pass
 
 #********************************************************************************
 # Read in the User input options for Channel, Subchannel, Filter, Grating
@@ -442,6 +449,7 @@ def read_user_input(self):
 # remove duplicates if needed
         self.pars_input['grating'] = list(set(self.pars_input['grating']))
 
+#________________________________________________________________________________
 
 
 

@@ -163,70 +163,71 @@ class IFUCubeData(object):
 #________________________________________________________________________________
 
 # update the output name
-    def define_cubenaame(self):
-        print('cube_type',self.cube_type)
-        if self.cube_type == 'Model':
-            newname = self.output_name_base
-            print('new name from model',newname)
-        else:
-            if self.instrument == 'MIRI':
-                channels = []
-                for ch in self.list_par1:
-                    if ch not in channels:
-                       channels.append(ch)
+    def define_cubename(self):
+#        print('cube_type',self.cube_type)
+#        if self.cube_type == 'Model':
+#            newname = self.output_name_base
+#            print('new name from model',newname)
+#        else:
+        if self.instrument == 'MIRI':
+            channels = []
+            for ch in self.list_par1:
+                if ch not in channels:
+                    channels.append(ch)
 
                 number_channels = len(channels)
                 ch_name = '_ch'
                 for i in range(number_channels):
                     ch_name = ch_name + channels[i]
-                    if i < number_channels-1:
-                        ch_name = ch_name + '-'
+                if i < number_channels-1:
+                    ch_name = ch_name + '-'
 
-                subchannels = list(set(self.list_par2))
-                number_subchannels = len(subchannels)
-                b_name = ''
-                for i in range(number_subchannels):
-                    b_name = b_name + subchannels[i] 
-                    if(i > 1): b_name = b_name + '-'
-                b_name  = b_name.lower()
-                newname = self.output_name_base + ch_name+'-'+ b_name + '_s3d.fits'
-                if self.coord_system == 'alpha-beta': 
-                    newname = self.output_name_base + ch_name+'-'+ b_name + '_ab_s3d.fits'
-                if self.output_type == 'single':
-                    newname = self.output_name_base + ch_name+'-'+ b_name + 'single_s3d.fits'
+            subchannels = list(set(self.list_par2))
+            number_subchannels = len(subchannels)
+            b_name = ''
+            for i in range(number_subchannels):
+                b_name = b_name + subchannels[i] 
+                if(i > 1): b_name = b_name + '-'
+            b_name  = b_name.lower()
+            newname = self.output_name_base + ch_name+'-'+ b_name + '_s3d.fits'
+            if self.coord_system == 'alpha-beta': 
+                newname = self.output_name_base + ch_name+'-'+ b_name + '_ab_s3d.fits'
+            if self.output_type == 'single':
+                newname = self.output_name_base + ch_name+'-'+ b_name + 'single_s3d.fits'
 #________________________________________________________________________________
-            elif self.instrument == 'NIRSPEC':
-                fg_name = '_'
+        elif self.instrument == 'NIRSPEC':
+            fg_name = '_'
 
-                for i in range( len(self.list_par1)):
-                        fg_name = fg_name + self.band_grating[i] + '-'+ self.band_filter[i]
-                        if(i < self.num_bands -1):
-                            fg_name = fg_name + '-'
-                fg_name = fg_name.lower()
-                newname = self.output_name_base + fg_name+ '_s3d.fits'
-                if self.output_type == 'single':
-                    newname = self.output_name_base + fg_name+ 'single_s3d.fits'
+            for i in range( len(self.list_par1)):
+                fg_name = fg_name + self.band_grating[i] + '-'+ self.band_filter[i]
+                if(i < self.num_bands -1):
+                    fg_name = fg_name + '-'
+            fg_name = fg_name.lower()
+            newname = self.output_name_base + fg_name+ '_s3d.fits'
+            if self.output_type == 'single':
+                newname = self.output_name_base + fg_name+ 'single_s3d.fits'
 #________________________________________________________________________________
 # check and see if one is provided by the user
 # self.output_file is automatically filled in by step class
 
-            print('output_file',self.output_file)
-            if(self.output_file == None):
+#        print('output_file',self.output_file)
+        if(self.output_file == None):
+            self.output_file = newname
+        else: 
+            root, ext = os.path.splitext(self.output_file)
+            default = root.find('cube_build') # the user has not provided a name
+            if(default != -1):
                 self.output_file = newname
-            else: 
-                root, ext = os.path.splitext(self.output_file)
-                default = root.find('cube_build') # the user has not provided a name
-                if(default != -1):
-                    self.output_file = newname
-                else:
-                    newname = self.output_file
+            else:
+                newname = self.output_file
 
 
-        #self.output_name = newname
+                
         if self.output_type != 'single':
             log.info('Output Name %s',self.output_name)
 
-        print('****new name******',newname)
+        print('****Name of IFUCube******',newname)
+#        sys.exit('STOP')
         return newname
 
 
