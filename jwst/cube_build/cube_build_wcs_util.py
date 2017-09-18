@@ -20,9 +20,161 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 #********************************************************************************
-# HELPER ROUTINES for CubeData class defined in cube_build.py
+# HELPER ROUTINES for IFUCubeData class defined in ifu_cube.py
 # these methods relate to wcs type procedures.  
 # determine_scale
+
+#********************************************************************************
+def setup_wcs(self):
+
+#********************************************************************************
+    """
+    Short Summary
+    -------------
+    Function to determine the min and max coordinates of the spectral
+    cube,given channel & subchannel
+
+
+    Parameter
+    ----------
+    self.master_table:  A table that contains the channel/subchannel or
+    filter/grating for each input file
+    self.instrument_info: Default information on the MIRI and NIRSPEC instruments.
+
+    Returns
+    -------
+    Cube Dimension Information:
+    Footprint of cube: min and max of coordinates of cube.
+    If an offset list is provided then these values are applied.
+    If the coordinate system is alpha-beta (MIRI) then min and max
+    coordinates of alpha (arc sec), beta (arc sec) and lambda (microns)
+    If the coordinate system is ra-dec then the min and max of
+    ra(degress), dec (degrees) and lambda (microns) is returned.
+    """
+
+#________________________________________________________________________________
+    if self.cube_type == 'File' or self.cube_type == 'ASN' :
+        log.info('Building Cube %s ', self.output_name)
+
+        # Scale is 3 dimensions and is determined from values held in  instrument_info.GetScale
+    scale = determine_scale(self)
+    self.Cdelt1 = scale[0]
+    self.Cdelt2 = scale[1]
+    self.Cdelt3 = scale[2]
+
+    parameter1 = self.list_par1
+    parameter2 = self.list_par2
+    a_min = []
+    a_max = []
+    b_min = []
+    b_max = []
+    lambda_min = []
+    lambda_max = []
+
+    self.num_bands = len(self.list_par1)
+    log.info('Number of bands in cube  %i',self.num_bands)
+
+    for i in range(self.num_bands):
+        this_a = parameter1[i]
+        this_b = parameter2[i]
+        log.debug('Working on data  from %s,%s',this_a,this_b)
+        n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
+        log.debug('number of files %d ', n)
+    # each file find the min and max a and lambda (OFFSETS NEED TO BE APPLIED TO THESE VALUES)
+        for k in range(n):
+            amin = 0.0
+            amax = 0.0
+            bmin = 0.0
+            bmax = 0.0
+            lmin = 0.0
+            lmax = 0.0
+            c1_offset = 0.0
+            c2_offset = 0.0
+            ifile = self.master_table.FileMap[self.instrument][this_a][this_b][k]
+            ioffset = len(self.master_table.FileOffset[this_a][this_b]['C1'])
+            if ioffset == n:
+                c1_offset = self.master_table.FileOffset[this_a][this_b]['C1'][k]
+                c2_offset = self.master_table.FileOffset[this_a][this_b]['C2'][k]
+#________________________________________________________________________________
+# Open the input data model
+# Find the footprint of the image
+
+            with datamodels.ImageModel(ifile) as input_model:
+                if self.instrument == 'NIRSPEC':
+                    flag_data = 0
+                    ch_footprint = find_footprint_NIRSPEC(self,
+                                                          input_model,
+                                                          flag_data)
+                    amin, amax, bmin, bmax, lmin, lmax = ch_footprint
+#________________________________________________________________________________
+                if self.instrument == 'MIRI':
+                    ch_footprint = find_footprint_MIRI(self,
+                                                       input_model,
+                                                       this_a,
+                                                       self.instrument_info)
+                    amin, amax, bmin, bmax, lmin, lmax = ch_footprint
+
+# If a dither offset list exists then apply the dither offsets (offsets in arc seconds)
+
+                amin = amin - c1_offset/3600.0
+                amax = amax - c1_offset/3600.0
+
+                bmin = bmin - c2_offset/3600.0
+                bmax = bmax - c2_offset/3600.0
+
+                a_min.append(amin)
+                a_max.append(amax)
+                b_min.append(bmin)
+                b_max.append(bmax)
+                lambda_min.append(lmin)
+                lambda_max.append(lmax)
+#________________________________________________________________________________
+    # done looping over files determine final size of cube
+
+    final_a_min = min(a_min)
+    final_a_max = max(a_max)
+    final_b_min = min(b_min)
+    final_b_max = max(b_max)
+    final_lambda_min = min(lambda_min)
+    final_lambda_max = max(lambda_max)
+
+    if(self.wavemin != None and self.wavemin > final_lambda_min):
+        final_lambda_min = self.wavemin
+        log.info('Changed min wavelength of cube to %f ',final_lambda_min)
+
+    if(self.wavemax != None and self.wavemax < final_lambda_max):
+        final_lambda_max = self.wavemax
+        log.info('Changed max wavelength of cube to %f ',final_lambda_max)
+#________________________________________________________________________________
+    if self.instrument =='MIRI' and self.coord_system=='alpha-beta':
+        #  we have a 1 to 1 mapping in beta dimension.
+        nslice = self.instrument_info.GetNSlice(parameter1[0])
+        log.info('Beta Scale %f ',self.Cdelt2)
+        self.Cdelt2 = (final_b_max - final_b_min)/nslice
+        final_b_max = final_b_min + (nslice)*self.Cdelt2
+        log.info('Changed the Beta Scale dimension so we have 1 -1 mapping between beta and slice #')
+        log.info('New Beta Scale %f ',self.Cdelt2)
+#________________________________________________________________________________
+# Test that we have data (NIRSPEC NRS2 only has IFU data for 3 configurations)
+    test_a = final_a_max - final_a_min
+    test_b = final_b_max - final_b_min
+    test_w = final_lambda_max - final_lambda_min
+    tolerance1 = 0.00001
+    tolerance2 = 0.1
+    if(test_a < tolerance1 or test_b < tolerance1 or test_w < tolerance2):
+        log.info('No Valid IFU slice data found %f %f %f ',test_a,test_b,test_w)
+#________________________________________________________________________________
+    cube_footprint = (final_a_min, final_a_max, final_b_min, final_b_max,
+                      final_lambda_min, final_lambda_max)
+#________________________________________________________________________________
+    # Based on Scaling and Min and Max values determine naxis1, naxis2, naxis3
+    # set cube CRVALs, CRPIXs and xyz coords (center  x,y,z vector spaxel centers)
+
+    if(self.coord_system == 'ra-dec'):
+        set_geometry(self,cube_footprint)
+    else:
+        set_geometryAB(self,cube_footprint) # local coordinate system
+    print_cube_geometry(self)
 
 #********************************************************************************
 def determine_scale(self):
@@ -47,14 +199,14 @@ def determine_scale(self):
     """
     scale = [0, 0, 0]
     if self.instrument == 'MIRI':
-        number_bands = len(self.band_channel)
+        number_bands = len(self.list_par1)
         min_a = 1000.00
         min_b = 1000.00
         min_w = 1000.00
 
         for i in range(number_bands):
-            this_channel = self.band_channel[i]
-            this_sub = self.band_subchannel[i]
+            this_channel = self.list_par1[i]
+            this_sub = self.list_par2[i]
             a_scale, b_scale, w_scale = self.instrument_info.GetScale(this_channel,this_sub)
             if a_scale < min_a:
                 min_a = a_scale
@@ -65,13 +217,13 @@ def determine_scale(self):
         scale = [min_a, min_b, min_w]
 
     elif self.instrument == 'NIRSPEC':
-        number_gratings = len(self.band_grating)
+        number_gratings = len(self.list_par1)
         min_a = 1000.00
         min_b = 1000.00
         min_w = 1000.00
 
         for i in range(number_gratings):
-            this_gwa = self.band_grating[i]
+            this_gwa = self.list_par1[i]
             a_scale, b_scale, w_scale = self.instrument_info.GetScale(this_gwa)
             if a_scale < min_a:
                 min_a = a_scale
@@ -142,19 +294,7 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
 
     if self.coord_system == 'alpha-beta':
         detector2alpha_beta = input.meta.wcs.get_transform('detector', 'alpha_beta')
-
-#        shift = models.Shift(1) & models.Shift(1)
-#        for key in detector2alpha_beta.selector:
-#            detector2alpha_beta.selector[key] = shift | detector2alpha_beta.selector[key]
-
-#        input.meta.wcs.set_transform('detector','alpha_beta',detector2alpha_beta)
-
         coord1, coord2, lam = detector2alpha_beta(x, y)
-
-#        xtest = 28.310396-1 # test pixel to compare with Distortion doc 
-#        ytest = 512.0-1     # test pixel to compare with Distortion doc
-#        coord1_test,coord2_test,lam_test = detector2alpha_beta(xtest,ytest)
-#        print('test values',xtest+1,ytest+1,coord1_test,coord2_test,lam_test)
 
 
     elif self.coord_system == 'ra-dec':
@@ -459,17 +599,17 @@ def print_cube_geometry(self):
 
         if(self.instrument == 'MIRI'):
             # length of channel and subchannel are the same 
-            number_bands = len(self.band_channel)
+            number_bands = len(self.list_par1)
 
             for i in range(number_bands):
-                this_channel = self.band_channel[i]
-                this_subchannel = self.band_subchannel[i]
+                this_channel = self.list_par1[i]
+                this_subchannel = self.list_par2[i]
                 log.info('Cube covers channel, subchannel: %s %s ', this_channel,this_subchannel)
         elif(self.instrument == 'NIRSPEC'):
             # number of filters and gratings are the same
-            number_bands = len(self.band_filter)
+            number_bands = len(self.list_par1)
 
             for i in range(number_bands):
-                this_fwa = self.band_filter[i]
-                this_gwa = self.band_grating[i]
+                this_fwa = self.list_par2[i]
+                this_gwa = self.list_par1[i]
                 log.info('Cube covers grating, filter: %s %s ', this_gwa,this_fwa)

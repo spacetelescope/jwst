@@ -61,6 +61,7 @@ class DataTypes(object):
             self.input_type = 'Model'
             self.data_type = 'singleton'
             self.output_name = self.build_product_name(self.filenames[0])
+            print('the name of the output file', self.output_name) 
         elif isinstance(input,datamodels.ModelContainer):
 #            print('this is a model container type')
             self.input_type='Container'
@@ -75,7 +76,7 @@ class DataTypes(object):
                 self.input_models.append(model)
                 self.filenames.append(model.meta.filename)
 #            print('number of models',len(self.filenames))
-#            print('the name of the output file', self.output_name) 
+
         elif isinstance(input, str):
             try:
                 # The name of an association table

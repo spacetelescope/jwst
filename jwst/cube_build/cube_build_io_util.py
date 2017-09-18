@@ -22,9 +22,6 @@ log.setLevel(logging.DEBUG)
 # HELPER ROUTINES for CubeData class defined in cube_build.py
 # these methods relate to I/O type procedures.  
 # read_offset_file
-# determine_band_coverage
-# check_cube_type
-# update_output_name
 # read_cubepars
 # read_resolution_file
 #********************************************************************************
@@ -46,271 +43,9 @@ def read_offset_file(self):
         i = i + 1
     f.close()
 
-#********************************************************************************
-def determine_band_coverage(self, master_table):
-#********************************************************************************
-    """
-    Short Summary
-    -------------
-    Function to determine which files contain channels and subchannels are used
-    in the creation of the cubes.
-    For MIRI The channels  to be used are set by the association and the
-    subchannels are  determined from the data
-
-    Parameter
-    ----------
-    self containing user set input parameters:
-    self.channel, self.subchannel
-
-    Returns
-    -------
-    fills in self.band_channel, self.band_subchannel
-    self.band_grating, self.band_filter
-
-    """
-#________________________________________________________________________________
-# IF INSTRUMENT = MIRI
-# loop over the file names
-
-    if self.instrument == 'MIRI':
-        ValidChannel = ['1', '2', '3', '4']
-        ValidSubchannel = ['SHORT', 'MEDIUM', 'LONG']
-
-        nchannels = len(ValidChannel)
-        nsubchannels = len(ValidSubchannel)
-#________________________________________________________________________________
-        # for MIRI we can set the channel and subchannel
-
-        user_clen = len(self.channel)
-        user_slen = len(self.subchannel)
-#________________________________________________________________________________
-        for i in range(nchannels):
-            for j in range(nsubchannels):
-                nfiles = len(master_table.FileMap['MIRI'][ValidChannel[i]][ValidSubchannel[j]])
-                if nfiles > 0 :
-#________________________________________________________________________________
-        # neither parameters not set
-                    if user_clen == 0 and  user_slen == 0:
-#                        self.band_channel.append(ValidChannel[i])
-#                        self.band_subchannel.append(ValidSubchannel[j])
-
-                        self.all_channel.append(ValidChannel[i])
-                        self.all_subchannel.append(ValidSubchannel[j])
-#________________________________________________________________________________
-# channel was set by user but not sub-channel
-                    elif user_clen !=0 and user_slen ==0:
-                        # now check if this channel was set by user
-                        if (ValidChannel[i] in self.channel ):
-#                            self.band_channel.append(ValidChannel[i])
-#                            self.band_subchannel.append(ValidSubchannel[j])
-
-                            self.all_channel.append(ValidChannel[i])
-                            self.all_subchannel.append(ValidSubchannel[j])
-#________________________________________________________________________________
-# sub-channel was set by user but not channel
-                    elif user_clen ==0 and user_slen !=0:
-                        if (ValidSubchannel[j] in self.subchannel):
-#                            self.band_channel.append(ValidChannel[i])
-#                            self.band_subchannel.append(ValidSubchannel[j])
-
-                            self.all_channel.append(ValidChannel[i])
-                            self.all_subchannel.append(ValidSubchannel[j])
-#________________________________________________________________________________
-# both parameters set
-                    else:
-                        if (ValidChannel[i] in self.channel and
-                           ValidSubchannel[j] in self.subchannel):
-#                            self.band_channel.append(ValidChannel[i])
-#                            self.band_subchannel.append(ValidSubchannel[j])
-
-                            self.all_channel.append(ValidChannel[i])
-                            self.all_subchannel.append(ValidSubchannel[j])
-
-        log.info('The desired cubes covers the MIRI Channels: %s',
-                 self.all_channel)
-#                 self.band_channel)
-        log.info('The desired cubes covers the MIRI subchannels: %s',
-                 self.all_subchannel)
-#                 self.band_subchannel)
-
-        number_channels = len(self.all_channel)
-        number_subchannels = len(self.all_subchannel)
-
-#        number_channels = len(self.band_channel)
-#        number_subchannels = len(self.band_subchannel)
-
-        if number_channels == 0:
-            raise ErrorNoChannels(
-                "The cube  does not cover any channels, change parameter channel")
-        if number_subchannels == 0:
-            raise ErrorNoSubchannels(
-                "The cube  does not cover any subchannels, change parameter subchannel")
-
-        self.num_bands = number_channels # which is = number_subchannels
-#______________________________________________________________________
-    if self.instrument == 'NIRSPEC':
-
-        # 1 to 1 mapping VALIDGWA[i] -> VALIDFWA[i]
-        ValidGWA = ['G140M', 'G140H', 'G140M', 'G140H', 'G235M', 'G235H',
-                    'G395M', 'G395H', 'PRISM']
-        ValidFWA = ['F070LP', 'F070LP', 'F100LP', 'F100LP', 'F170LP',
-                    'F170LP', 'F290LP', 'F290LP', 'CLEAR']
-
-        nbands = len(ValidFWA)
-#________________________________________________________________________________
-        # check if input filter or grating has been set
-        user_glen = len(self.grating)
-        user_flen = len(self.filter)
-
-        if user_glen ==0 and user_flen !=0:
-            raise ErrorMissingParameter("Filter specified, but Grating was not")
-
-        if user_glen !=0 and user_flen ==0:
-            raise ErrorMissingParameter("Grating specified, but Filter was not")
-        # Grating and Filter not set - read in from files and create a list of all
-        # the filters and grating contained in the files
-        if user_glen == 0 and  user_flen == 0:
-            for i in range(nbands):
-
-                nfiles = len(master_table.FileMap['NIRSPEC'][ValidGWA[i]][ValidFWA[i]])
-                if nfiles > 0:
-#                    self.band_grating.append(ValidGWA[i])
-#                    self.band_filter.append(ValidFWA[i])
-                    self.all_grating.append(ValidGWA[i])
-                    self.all_filter.append(ValidFWA[i])
-
-        # Both filter and grating input parameter have been set
-        # Find the files that have these parameters set
-
-        else:
-            for i in range(nbands):
-                nfiles = len(master_table.FileMap['NIRSPEC'][ValidGWA[i]][ValidFWA[i]])
-                if nfiles > 0:
-                        # now check if THESE Filter and Grating input parameters were set
-                    if (ValidFWA[i] in self.filter and
-                       ValidGWA[i] in self.grating):
-#                        self.band_grating.append(ValidGWA[i])
-#                        self.band_filter.append(ValidFWA[i])
-
-                        self.all_grating.append(ValidGWA[i])
-                        self.all_filter.append(ValidFWA[i])
-
-
-#        number_filters = len(self.band_filter)
-#        number_gratings = len(self.band_grating)
-        number_filters = len(self.all_filter)
-        number_gratings = len(self.all_grating)
-
-        self.num_bands = number_gratings # which is = number_filters
-        if number_filters == 0:
-            raise ErrorNoFilters("The cube  does not cover any filters")
-        if number_gratings == 0:
-            raise ErrorNoGratings("The cube  does not cover any gratings")
 
 
 #********************************************************************************
-def check_cube_type(self):
-
-    if(self.interpolation == "area"):
-        if(self.number_files > 1):
-            raise IncorrectInput("For interpolation = area, only one file can" +
-                                 " be used to created the cube")
-
-#        if(len(self.band_channel) > 1):
-        if(len(self.all_channel) > 1):
-            raise IncorrectInput("For interpolation = area, only a single channel" +
-                                 " can be used to created the cube. Use --channel=# option")
-
-        if(self.scale2 !=0):
-            raise AreaInterpolation("When using interpolation = area, the output" +
-                                    " coordinate system is alpha-beta" +
-                                    " The beta dimension (naxis2) has a one to one" +
-                                    " mapping between slice and " +
-                                    " beta coordinate.")
-                                    
-
-    if(self.coord_system == "alpha-beta"):
-        if(self.number_files > 1):
-            raise IncorrectInput("Cubes built in alpha-beta coordinate system" +
-                                 " are built from a single file")
-
-#********************************************************************************
-
-class IncorrectInput(Exception):
-    pass
-
-class NoCoordSystem(Exception):
-    pass
-
-class ErrorNoIFUData(Exception):
-    pass
-
-class AreaInterpolation(Exception):
-    pass
-
-#********************************************************************************
-def update_output_name(self):
-
-    if self.cube_type == 'Model':
-        newname = self.output_name
-    else:
-        if self.instrument == 'MIRI':
-
-            channels = []
-            for ch in self.band_channel:
-                if ch not in channels:
-                       channels.append(ch)
-
-            number_channels = len(channels)
-            ch_name = '_ch'
-            for i in range(number_channels):
-                ch_name = ch_name + channels[i]
-                if i < number_channels-1:
-                    ch_name = ch_name + '-'
-
-
-            subchannels = list(set(self.band_subchannel))
-            number_subchannels = len(subchannels)
-            b_name = ''
-            for i in range(number_subchannels):
-                b_name = b_name + subchannels[i] 
-                if(i > 1): b_name = b_name + '-'
-            b_name  = b_name.lower()
-            newname = self.output_name_base + ch_name+ '-' + b_name +  '_s3d.fits'
-            if(self.coord_system == 'alpha-beta'): 
-                newname = self.output_name_base + ch_name+ '-' + b_name +  '_ab_s3d.fits'
-
-
-        elif self.instrument == 'NIRSPEC':
-            fg_name = '_'
-
-            for i in range(self.num_bands):
-                fg_name = fg_name + self.band_grating[i] + '-'+ self.band_filter[i]
-                if(i < self.num_bands -1):
-                    fg_name = fg_name + '-'
-            fg_name = fg_name.lower()
-
-            newname = self.output_name_base + fg_name+ '_s3d.fits'
-
-#________________________________________________________________________________
-# check and see if one is provided by the user
-# self.output_file is automatically filled in by step class
-
-        if(self.output_file == None):
-            self.output_file = newname
-        else: 
-            root, ext = os.path.splitext(self.output_file)
-            default = root.find('cube_build') # the user has not provided a name
-            if(default != -1):
-                self.output_file = newname
-            else:
-                newname = self.output_file
-
-    return newname
-
-
-#********************************************************************************
-
 def read_cubepars(self, instrument_info):
 #********************************************************************************
     """
@@ -333,13 +68,13 @@ def read_cubepars(self, instrument_info):
     """
     if self.instrument == 'MIRI':
         ptab = datamodels.MiriIFUCubeParsModel(self.par_filename)
-        number_bands = len(self.band_channel)
+        number_bands = len(self.all_channel)
 
         # pull out the channels and subcahnnels that cover the data making up the cube
         for i in range(number_bands):
-            this_channel = self.band_channel[i]
+            this_channel = self.all_channel[i]
             compare_channel = 'CH'+this_channel
-            this_sub = self.band_subchannel[i]
+            this_sub = self.all_subchannel[i]
                 # find the table entries for this combination
             for tabdata in ptab.ifucubepars_table:
                 table_channel = tabdata['channel']
@@ -357,10 +92,10 @@ def read_cubepars(self, instrument_info):
         
     elif self.instrument == 'NIRSPEC':
         ptab = datamodels.NirspecIFUCubeParsModel(self.par_filename)
-        number_gratings = len(self.band_grating)
+        number_gratings = len(self.all_grating)
 
         for i in range(number_gratings):
-            this_gwa = self.band_grating[i]
+            this_gwa = self.all_grating[i]
             for tabdata in ptab.ifucubepars_table:
                 table_grating = tabdata['grating']
                 table_filter = tabdata['filter']
@@ -410,8 +145,8 @@ def read_resolution_file(self,instrument_info):
 
         # pull out the channels and subcahnnels that cover the data making up the cube
     for i in range(number_bands):
-        this_channel = self.band_channel[i]
-        this_sub = self.band_subchannel[i]    
+        this_channel = self.all_channel[i]
+        this_sub = self.all_subchannel[i]    
         compare_band = this_channel+this_sub
         for tabdata in ptab.resolving_power_table:
             table_sub_band = tabdata['SUB_BAND']
