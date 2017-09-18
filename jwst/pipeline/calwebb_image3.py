@@ -56,7 +56,7 @@ class Image3Pipeline(Pipeline):
 
         input_models = datamodels.open(input)
 
-        # Check if input is multiple exposures, as required by some steps
+        # Check if input is single or multiple exposures
         is_container = isinstance(input_models, datamodels.ModelContainer)
         if is_container and len(input_models.group_names) > 1:
 
@@ -80,21 +80,29 @@ class Image3Pipeline(Pipeline):
             self.log.info("Performing outlier detection on input images...")
             input_models = self.outlier_detection(input_models)
 
-            self.log.info("Writing Level 2c images with updated DQ arrays...")
-            suffix_2c = 'cal-{}'.format(input_models.meta.asn_table.asn_id)
-            for model in input_models:
-                self.save_model(model, suffix=suffix_2c)
+            if input_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
+                self.log.info("Writing Level 2c images with updated DQ arrays...")
+                # Set up Level 2c suffix to be used later
+                asn_id = input_models.meta.asn_table.asn_id
+                suffix_2c = '{}_{}'.format(asn_id, 'crf')
+                for model in input_models:
+                    self.save_model(model, suffix=suffix_2c)
 
-        self.log.info("Resampling images to final output...")
-        output = self.resample(input_models)
+        self.log.info("Resampling images to final result...")
+        result = self.resample(input_models)
 
-        product = input_models.meta.asn_table.products[0].name + '.fits'
-        output.meta.filename = product
-        self.save_model(output, suffix=self.suffix)
-        self.log.info('Saved resampled image to %s', output.meta.filename)
+        try:
+            result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
+            result.meta.asn.table_name = input
+        except:
+            pass
+
+        product = input_models.meta.asn_table.products[0].name
+        result.meta.filename = product
+        self.save_model(result, suffix=self.suffix)
 
         self.log.info("Creating source catalog...")
-        out_catalog = self.source_catalog(output)
+        out_catalog = self.source_catalog(result)
         # NOTE: source_catalog step writes out the catalog in .ecsv format
         # In the future it would be nice if it was returned to the pipeline,
         # and then written here.  A datamodel for .ecsv might be required.

@@ -6,12 +6,13 @@ Overview
 --------
 The ``extract_2d`` step extracts 2D arrays from spectral images. The extractions
 are performed within all of the SCI, ERR, and DQ arrays of the input image
-model. The extracted SCI, ERR, and DQ arrays are stored as one or more ``slit``
-objects in an output MultiSlitModel.
+model. It also computes an array of wavelengths. The SCI, ERR, DQ and WAVELENGTH
+arrays are stored as one or more ``slit`` objects in an output MultiSlitModel
+and saved as separate extensions in the output FITS file.
 
 Assumptions
 -----------
-This step uses the ``domain`` attribute of the WCS stored in the data model,
+This step uses the ``bounding_box`` attribute of the WCS stored in the data model,
 which is populated by the ``assign_wcs`` step. Hence the ``assign_wcs`` step
 must be applied to the science exposure before running this step.
 
@@ -32,7 +33,7 @@ To find out what slits are available for extraction:
 
 
 The corner locations of the regions to be extracted are determined from the
-``domain`` contained in the exposure's WCS, which defines the range of valid inputs
+``bounding_box`` contained in the exposure's WCS, which defines the range of valid inputs
 along each axis. The input coordinates are in the image frame, i.e. subarray shifts
 are accounted for.
 
@@ -50,6 +51,13 @@ The extract_2d step has one optional argument:
   instrument mode to be extracted. Currently only used for NIRspec fixed slit
   exposures.
 
+* ``--apply_wavecorr``: bool (default is True). Flag indicating whether to apply the
+   Nirspec wavelength zero-point correction.
+
 Reference Files
 ===============
-This step does not require any reference files.
+To apply the Nirspec wavelength zero-point correction, this step uses the
+WAVECORR reference file. The zero-point correction is applied to observations
+with EXP_TYPE of "NRS_FIXEDSLT", "NRS_BRIGHTOBJ" or "NRS_MSASPEC". This is an optional
+correction (on by default). It can be turned off by specifying ``apply_wavecorr=False``
+when running the step.

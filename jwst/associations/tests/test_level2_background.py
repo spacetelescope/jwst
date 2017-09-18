@@ -2,12 +2,6 @@
 from __future__ import absolute_import
 import pytest
 
-from .helpers import (
-    combine_pools,
-    registry_level2_only,
-    t_path
-)
-from .. import generate
 
 @pytest.mark.xfail(
     reason='Not determined yet',

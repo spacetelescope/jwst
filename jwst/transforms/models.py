@@ -4,22 +4,24 @@ Some of these may go in astropy.modeling in the future.
 """
 # -*- coding: utf-8 -*-
 
-from __future__ import absolute_import, division, unicode_literals, print_function
+from __future__ import (absolute_import, division, unicode_literals,
+                        print_function)
 import math
 from collections import namedtuple
 import numpy as np
 from astropy.modeling.core import Model
 from astropy.modeling.parameters import Parameter, InputParameterError
-from astropy.modeling.models import Polynomial2D
+from astropy.modeling.rotations import Rotation2D
 from astropy.utils import isiterable
-from astropy import units as u
 
 
 __all__ = ['AngleFromGratingEquation', 'WavelengthFromGratingEquation',
-           'NRSZCoord', 'Unitless2DirCos', 'DirCos2Unitless',
-           'Rotation3DToGWA', 'Gwa2Slit', 'Slit2Msa',
-           'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit',
-           'MIRI_AB2Slice', 'V2V3ToIdeal', 'IdealToV2V3']
+           'Unitless2DirCos', 'DirCos2Unitless', 'Rotation3DToGWA', 'Gwa2Slit',
+           'Slit2Msa', 'Snell', 'Logical', 'NirissSOSSModel', 'V23ToSky', 'Slit',
+           'NIRCAMForwardRowGrismDispersion', 'NIRCAMForwardColumnGrismDispersion',
+           'NIRCAMBackwardGrismDispersion', 'MIRI_AB2Slice', 'GrismObject',
+           'NIRISSForwardRowGrismDispersion', 'NIRISSForwardColumnGrismDispersion',
+           'NIRISSBackwardGrismDispersion', 'V2V3ToIdeal', 'IdealToV2V3']
 
 
 # Number of shutters per quadrant
@@ -27,35 +29,89 @@ N_SHUTTERS_QUADRANT = 62415
 
 # Nirspec slit definition
 Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
-                           "ymin", "ymax", "quadrant", "source_id", "nshutters",
+                           "ymin", "ymax", "quadrant", "source_id", "shutter_state",
                            "source_name", "source_alias", "stellarity",
                            "source_xpos", "source_ypos"])
-Slit.__new__.__defaults__= ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, "", "", "", 0.0, 0.0, 0.0)
+Slit.__new__.__defaults__ = ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "", "",
+                             0.0, 0.0, 0.0)
 
 
-class MIRISelector(Model):
+class GrismObject(namedtuple('GrismObject', ("sid",
+                                             "order_bounding",
+                                             "ra_icrs_centroid",
+                                             "dec_icrs_centroid",
+                                             "ramin",
+                                             "decmin",
+                                             "ramax",
+                                             "decmax",
+                                             "xcenter",
+                                             "ycenter",
+                                             ), rename=False)):
+
+    """ Grism Objects identified from a direct image catalog and segment map.
+
+    Notes
+    -----
+    The object bounding box is computed from the segementation map,
+    using the min and max wavelegnth for each of the orders that
+    are available. The order_bounding member is a dictionary of
+    bounding boxes for the object keyed by order
+
+    ra and dec are the sky ra and dec of the center of the object as measured
+    from the non-dispersed image.
+
+    the segment_[ra/dec][min/max] are also as measured on the direct image
+
+    order_bounding is stored as a lookup dictionary per order:
+    GrismObject(order_bounding={"+1":((1,2),(1,2)),"+2":((2,3),(2,3))})
+
     """
-    """
-    inputs = ('x' , 'y', 'slice')
-    outputs = ('alpha', 'beta')
+    __slots__ = ()  # prevent instance dictionary for lower memory
 
-    def __init__(self, selector, **kwargs):
-        #self._inputs = inputs
-        #self._outputs = outputs
-        self._selector = selector
-        super(MIRISelector, self).__init__(**kwargs)
+    def __new__(cls,
+                sid=None,
+                order_bounding={},
+                ra_icrs_centroid=None,
+                dec_icrs_centroid=None,
+                ramin=None,
+                decmin=None,
+                ramax=None,
+                decmax=None,
+                xcenter=None,
+                ycenter=None):
 
-    def evaluate(x, y, slice_id):
-        slice_id = np.unique(slice_id)
-        # remove 0
-        res = np.zeros(x.shape) + np.nan
-        for sid in slice_id:
-            if sid != 0:
-                sid_ind = slice_id == sid
-                res[sid_ind] = self._selector[sid](x[sid_ind], y[sid_ind])
-            else:
-                pass
-        return res
+        return super(GrismObject, cls).__new__(cls,
+                                               sid,
+                                               order_bounding,
+                                               ra_icrs_centroid,
+                                               dec_icrs_centroid,
+                                               ramin,
+                                               decmin,
+                                               ramax,
+                                               decmax,
+                                               xcenter,
+                                               ycenter)
+
+    def __str__(self):
+        """Return a pretty print for the object information."""
+        return ("id: {0}\n"
+                "order_bounding {1}\n",
+                "ramin: {2}\n"
+                "decmin: {3}\n"
+                "ramax: {4}\n"
+                "decmax: {5}\n"
+                "xcenter: {6}\n"
+                "ycenter: {7}\n"
+                .format(self.sid,
+                        self.order_bounding,
+                        self.ra_icrs_centroid,
+                        self.dec_icrs_centroid,
+                        self.ramin,
+                        self.decmin,
+                        self.ramax,
+                        self.decmax,
+                        self.xcenter,
+                        self.ycenter))
 
 
 class MIRI_AB2Slice(Model):
@@ -226,18 +282,6 @@ class RefractionIndexFromPrism(Model):
         return np.sqrt(nsq)
 
 
-class NRSChromaticCorrection(Polynomial2D):
-
-    def __init__(self, degree, **coeffs):
-        super(NRSChromaticCorrection, self).__init__(degree, **coeffs)
-
-    def evaluate(self, x, y, lam, *coeffs):
-        """For each input multiply the distortion coefficients by the computed lambda.
-        """
-        coeffs *= lam
-        return super(NRSChromaticCorrection, self).evaluate(x, y, *coeffs)
-
-
 class AngleFromGratingEquation(Model):
     """
     Grating Equation Model. Computes the diffracted/refracted angle.
@@ -293,20 +337,6 @@ class WavelengthFromGratingEquation(Model):
         # needed for the prism computation. Currently these two computations
         # need to have the same interface.
         return -(alpha_in + alpha_out) / (groove_density * order)
-
-
-class NRSZCoord(Model):
-    """
-    Class to compute the z coordinate through the NIRSPEC grating wheel.
-
-    """
-    separable = False
-
-    inputs = ("x", "y")
-    outputs = ("z",)
-
-    def evaluate(self, x, y):
-        return np.sqrt(1 - (x**2 + y**2))
 
 
 class Unitless2DirCos(Model):
@@ -820,7 +850,7 @@ class IdealToV2V3(Model):
 
     Note: This model has no schema implemented - add schema if needed.
     """
-    
+
     inputs = ('xidl', 'yidl')
 
     outputs = ('v2', 'v3')
@@ -830,7 +860,7 @@ class IdealToV2V3(Model):
     v3ref = Parameter() # in arcsec
     vparity = Parameter()
 
-    
+
     def __init__(self, v3idlyangle, v2ref, v3ref, vparity, name='idl2V', **kwargs):
         super(IdealToV2V3, self).__init__(v3idlyangle=v3idlyangle, v2ref=v2ref,
                                           v3ref=v3ref, vparity=vparity, name=name,
@@ -857,14 +887,14 @@ class IdealToV2V3(Model):
 
         """
         v3idlyangle = np.deg2rad(v3idlyangle)
-        
+
         v2 = v2ref + vparity * xidl * np.cos(v3idlyangle) + yidl * np.sin(v3idlyangle)
         v3 = v3ref - vparity * xidl * np.sin(v3idlyangle) + yidl * np.cos(v3idlyangle)
         return v2, v3
 
     def inverse(self):
         return V2V3ToIdeal(self.v3idlyangle, self.v2ref, self.v3ref, self.vparity)
-    
+
 
 class V2V3ToIdeal(Model):
     """
@@ -873,7 +903,7 @@ class V2V3ToIdeal(Model):
 
     Note: This model has no schema implemented - add if needed.
     """
-    
+
     inputs = ('v2', 'v3')
 
     outputs = ('xidl', 'yidl')
@@ -905,7 +935,7 @@ class V2V3ToIdeal(Model):
         Returns
         -------
         xidl, yidl : ndarray-like
-            Coordinates in the Ideal telescope system [in arcsec]. 
+            Coordinates in the Ideal telescope system [in arcsec].
 
         """
         v3idlyangle = np.deg2rad(v3idlyangle)
@@ -914,13 +944,13 @@ class V2V3ToIdeal(Model):
                           (v3 - v3ref) * np.sin(v3idlyangle))
         yidl = ((v2 - v2ref) * np.sin(v3idlyangle) +
                 (v3 - v3ref) * np.cos(v3idlyangle))
-        
+
         return xidl, yidl
-    
+
     def inverse(self):
         return IdealToV2V3(self.v3idlyangle, self.v2ref, self.v3ref, self.vparity)
 
-    
+
 def _toindex(value):
     """
     Convert value to an int or an int array.
@@ -941,3 +971,538 @@ def _toindex(value):
     """
     indx = np.asarray(np.floor(np.asarray(value) + 0.5), dtype=np.int)
     return indx
+
+
+class NIRCAMForwardRowGrismDispersion(Model):
+    """Return the transform from grism to image for the given spectral order.
+
+    Parameters
+    ----------
+    orders : list [int]
+        List of orders which are available
+
+    lmodels : list [astropy.modeling.Model]
+        List of models which govern the wavelength solutions for each order
+
+    xmodels : list [astropy.modeling.Model]
+        List of models which govern the x solutions for each order
+
+    ymodels : list [astropy.modeling.Model]
+        List of models which givern the y solutions for each order
+
+    Returns:
+    --------
+    x, y, wavelength, order in the grism image for the pixel at x0,y0 that was
+    specified as input using the input delta pix for the specified order
+
+    Notes:
+    ------
+    The evaluation here is linear currently because higher orders have not yet been
+    defined for NIRCAM (NIRCAM polynomials currently do not have any field
+    dependence)
+    """
+    standard_broadcasting = False
+    separable = False
+    fittable = False
+    linear = False
+
+    inputs = ("x", "y", "x0", "y0", "order")
+    outputs = ("x", "y", "wavelength", "order")
+
+    def __init__(self, orders, lmodels=None, xmodels=None,
+                 ymodels=None, name=None, meta=None):
+        self.orders = orders
+        self.lmodels = lmodels
+        self.xmodels = xmodels
+        self.ymodels = ymodels
+        self._order_mapping = {int(k): v for v, k in enumerate(orders)}
+        meta = {"orders": orders}  # informational for users
+        if name is None:
+            name = 'nircam_forward_row_grism_dispersion'
+        super(NIRCAMForwardRowGrismDispersion, self).__init__(name=name,
+                                                              meta=meta)
+
+    def evaluate(self, x, y, x0, y0, order):
+        """Return the transform from grism to image for the given spectral order.
+
+        Parameters
+        ----------
+        x : float
+            input x pixel
+        y : float
+            intput y pixel
+        x0 : float
+            input x-center of object
+        y0 : float
+            input y-center of object
+        order : int
+            the spectral order to use
+        """
+        try:
+            iorder = self._order_mapping[int(order)]
+        except KeyError:
+            raise ValueError("Specified order is not available")
+
+        # for accepting the dy and known source object center
+        t = self.xmodels[iorder](x-x0)
+        dy = self.ymodels[iorder](t)
+        wavelength = self.lmodels[iorder](t)
+
+        return (x0, y0+dy, wavelength, order)
+
+
+class NIRCAMForwardColumnGrismDispersion(Model):
+    """Return the transform from grism to image for the given spectral order.
+
+    Parameters
+    ----------
+    orders : list [int]
+        List of orders which are available
+
+    lmodels : list [astropy.modeling.Model]
+        List of models which govern the wavelength solutions
+
+    xmodels : list [astropy.modeling.Model]
+        List of models which govern the x solutions
+
+    ymodels : list [astropy.modeling.Model]
+        List of models which givern the y solutions
+
+    Returns:
+    --------
+    x, y, lam, order in the grism image for the pixel at x0,y0 that was
+    specified as input using the input delta pix for the specified order
+
+    Notes:
+    ------
+    The evaluation here is lineaer because higher orders have not yet been
+    defined for NIRCAM (NIRCAM polynomials currently do not have any field
+    dependence)
+    """
+    standard_broadcasting = False
+    separable = False
+    fittable = False
+    linear = False
+
+    inputs = ("x", "y", "x0", "y0", "order")
+    outputs = ("x", "y", "wavelength", "order")
+
+    def __init__(self, orders, lmodels=None, xmodels=None,
+                 ymodels=None, name=None, meta=None):
+        self.orders = orders
+        self.lmodels = lmodels
+        self.xmodels = xmodels
+        self.ymodels = ymodels
+        self._order_mapping = {int(k): v for v, k in enumerate(orders)}
+        meta = {"orders": orders}  # informational for users
+        if name is None:
+            name = 'nircam_forward_column_grism_dispersion'
+        super(NIRCAMForwardColumnGrismDispersion, self).__init__(name=name,
+                                                                 meta=meta)
+
+    def evaluate(self, x, y, x0, y0, order):
+        """Return the transform from grism to image for the given spectral order.
+
+        Parameters
+        ----------
+        x : float
+            input x pixel
+        y : float
+            intput y pixel
+        x0 : float
+            input x-center of object
+        y0 : float
+            input y-center of object
+        order : int
+            the spectral order to use
+        """
+        try:
+            iorder = self._order_mapping[int(order)]
+        except KeyError:
+            raise ValueError("Specified order is not available")
+
+        # for accepting the dy and known source object center
+        t = self.ymodels[iorder](y-y0)
+        dx = self.xmodels[iorder](t)
+        wavelength = self.lmodels[iorder](t)
+
+        return (x0+dx, y0, wavelength, order)
+
+
+class NIRCAMBackwardGrismDispersion(Model):
+    """Return the valid pixel(s) and wavelengths given center x,y and lam
+
+    Parameters
+    ----------
+    orders : list [int]
+        List of orders which are available
+
+    lmodels : list [astropy.modeling.Model]
+        List of models which govern the wavelength solutions
+
+    xmodels : list [astropy.modeling.Model]
+        List of models which govern the x solutions
+
+    ymodels : list [astropy.modeling.Model]
+        List of models which givern the y solutions
+
+    Returns:
+    --------
+    x, y, lam, order in the grism image for the pixel at x0,y0 that was
+    specified as input using the wavelength l for the specified order
+
+    Notes:
+    ------
+    The evaluation here is lineaer because higher orders have not yet been defined for NIRCAM
+    (NIRCAM polynomials currently do not have any field dependence)
+    """
+    standard_broadcasting = False
+    separable = False
+    fittable = False
+    linear = False
+
+    inputs = ("x", "y", "wavelength", "order")
+    outputs = ("x", "y", "x0", "y0", "order")
+
+    def __init__(self, orders, lmodels=None, xmodels=None,
+                 ymodels=None, name=None, meta=None):
+        self._order_mapping = {int(k): v for v, k in enumerate(orders)}
+        self.lmodels = lmodels
+        self.xmodels = xmodels
+        self.ymodels = ymodels
+        self.orders = orders
+        meta = {"orders": orders}
+        if name is None:
+            name = "nircam_backward_grism_dispersion"
+        super(NIRCAMBackwardGrismDispersion, self).__init__(name=name,
+                                                            meta=meta)
+
+    def evaluate(self, x, y, wavelength, order):
+        """Return the tranfrom from image to grism for the given spectral order.
+
+        Parameters
+        ----------
+        x : float
+            input x pixel
+        y : float
+            intput y pixel
+        wavelength : float
+            input wavelength in angstroms
+        order : int
+            specifies the spectral order
+        """
+        try:
+            iorder = self._order_mapping[int(order)]
+        except KeyError:
+            raise ValueError("Specified order is not available")
+
+        if wavelength < 0:
+            raise ValueError("wavelength should be greater than zero")
+
+        t = self.lmodels[iorder](float(wavelength))
+        dx = self.xmodels[iorder](float(t))
+        dy = self.ymodels[iorder](float(t))
+        return (x+dx, y+dy, x, y, order)
+
+
+class NIRISSBackwardGrismDispersion(Model):
+    """This model calculates the dispersion extent of NIRISS pixels.
+
+    The dispersion is relative to the input x,y for a given wavelength.
+
+    Parameters:
+    -----------
+    xmodels : list[tuple]
+        The list of tuple(models) for the polynomial model in x
+    ymodels : list[tuple]
+        The list of tuple(models) for the polynomial model in y
+    lmodels : list
+        The list of models for the polynomial model in l
+    orders : list
+        The list of orders which are available to the model
+    fwcpos_ref : float
+        The reference filter wheel position
+
+    Notes:
+    ------
+    Given the x,y, wave, order as known on the direct image,
+    it returns the tuple of x, y, wave, order for that wave in the dispersed image.
+
+    This model needs to be generalized, at the moment it satisfies the
+    2t x 6(xy)th order polynomial currently used by NIRISS.
+
+    There's spatial dependence for NIRISS so the forward transform is
+    iterative
+
+    """
+
+    standard_broadcasting = False
+    separable = False
+    fittable = False
+    linear = False
+
+    inputs = ("x", "y", "wavelength", "order", "theta")
+    outputs = ("x", "y", "x0", "y0", "order")
+
+    def __init__(self, orders, lmodels=None, xmodels=None,
+                 ymodels=None, fwcpos_ref=None, name=None, meta=None):
+        self._order_mapping = {int(k): v for v, k in enumerate(orders)}
+        self.xmodels = xmodels
+        self.ymodels = ymodels
+        self.lmodels = lmodels
+        self.orders = orders
+        self.fwcpos_ref = fwcpos_ref
+        meta = {"orders": orders}
+        if name is None:
+            name = 'niriss_backward_grism_dispersion'
+        super(NIRISSBackwardGrismDispersion, self).__init__(name=name,
+                                                            meta=meta)
+
+    def evaluate(self, x, y, wavelength, order, theta):
+        """Return the valid pixel(s) and wavelengths given center x,y and lam
+
+        Parameters:
+        -----------
+        wavelength : int,float
+            Input wavelength you want to know about, will be converted to float
+        x :  int,float
+            Input x location
+        y :  int,float
+            Input y location
+        wavelength : float
+            Wavelength to disperse
+        order : list
+            The order to use
+        theta : float
+            rotation in degrees (from the filter wheel offset fwcpos_ref)
+
+
+        Returns:
+        --------
+        x, y, wavelength, order in the grism image for the pixel at x,y that was
+        specified as input using the wavelength and order specified
+
+        Notes:
+        ------
+        There's spatial dependence for NIRISS so the forward transform
+        dependes on x,y as well as the filter wheel rotation
+
+        """
+        if wavelength < 0:
+            raise ValueError("Wavelength should be greater than zero")
+        try:
+            iorder = self._order_mapping[int(order)]
+        except KeyError:
+            raise ValueError("Specified order is not available")
+
+        t = self.lmodels[iorder](wavelength)
+        # use that t to compute the dx and dy
+        dx = self.xmodels[iorder][0](x, y) + t * self.xmodels[iorder][1](x, y)
+        dy = self.ymodels[iorder][0](x, y) + t * self.ymodels[iorder][1](x, y)
+        # rotate by theta
+        if theta != 0.0:
+            rotate = Rotation2D(self.fwcpos_ref - theta)
+            dx, dy = rotate(dx, dy)
+
+        return (x+dx, y+dy, x, y, order)
+
+
+class NIRISSForwardRowGrismDispersion(Model):
+    """This model calculates the dispersion extent of NIRISS pixels.
+
+    The dispersion polynomial is relative to the input x,y pixels
+    in the direct image for a given wavelength.
+
+    Parameters:
+    -----------
+    xmodels : list[tuples]
+        The list of tuple(models) for the polynomial model in x
+    ymodels : list[tuples]
+        The list of tuple(models) for the polynomial model in y
+    lmodels : list
+        The list of models for the polynomial model in l
+    orders : list
+        The list of orders which are available to the model
+
+    Notes:
+    ------
+    Given the x,y, source location as known on the dispersed image, as well as order,
+    it returns the tuple of x,y,wavelength,order.
+
+    This model needs to be generalized, at the moment it satisfies the
+    2t x 6(xy)th order polynomial currently used by NIRISS.
+
+    """
+
+    standard_broadcasting = False
+    separable = False
+    fittable = False
+    linear = False
+
+    # starts with the backwards pixel and calculates the forward pixel
+    inputs = ("x", "y", "x0", "y0", "order", "theta")
+    outputs = ("x", "y", "wavelength", "order")
+
+    def __init__(self, orders, lmodels=None, xmodels=None,
+                 ymodels=None, fwcpos_ref=0., name=None, meta=None):
+        self._order_mapping = {int(k): v for v, k in enumerate(orders)}
+        self.xmodels = xmodels
+        self.ymodels = ymodels
+        self.lmodels = lmodels
+        self.fwcpos_ref = fwcpos_ref
+        self.orders = orders
+        meta = {"orders": orders}
+        if name is None:
+            name = 'niriss_forward_row_grism_dispersion'
+        super(NIRISSForwardRowGrismDispersion, self).__init__(name=name,
+                                                              meta=meta)
+
+    def evaluate(self, x, y, x0, y0, order, theta):
+        """Return the valid pixel(s) and wavelengths given center x,y and lam
+
+        Parameters:
+        -----------
+        x0: int,float,list
+            Source object x-center
+
+        y0: int,float,list
+            Source object y-center
+
+        x :  int,float,list
+            Input x location
+
+        y :  int,float,list
+            Input y location
+
+        order : int
+            Spectral order to use
+
+        theta : float
+            input rotation angle in degrees
+
+        Returns:
+        --------
+        x, y, lambda, order, theta,  in the direct image for the pixel that was
+        specified as input using the wavelength l and spectral order
+
+        Notes:
+        ------
+        There's spatial dependence for NIRISS as well as dependence on the
+        filter wheel rotation during the exposure.
+
+        """
+        try:
+            iorder = self._order_mapping[int(order)]
+        except KeyError:
+            raise ValueError("Specified order is not available")
+
+        dxr = x-x0  # delta x in rotated trace coordinates
+
+        t = np.linspace(0, 1, 10)  #sample t
+        dx = self.xmodels[iorder][0](x0, y0) + t * self.xmodels[iorder][1](x0, y0)
+        dy = self.ymodels[iorder][0](x0, y0) + t * self.ymodels[iorder][1](x0, y0)
+        if theta != 0.0:
+            rotate = Rotation2D(self.fwcpos_ref - theta)
+            dx, dy = rotate(dx, dy)
+        so = np.argsort(dx)
+        tr = np.interp(dxr, dx[so], t[so])
+        print(tr, self.lmodels[iorder])
+        wavelength = self.lmodels[iorder](tr)
+
+        return (x0, y0, wavelength, order)
+
+
+class NIRISSForwardColumnGrismDispersion(Model):
+    """This model calculates the dispersion extent of NIRISS pixels.
+
+    The dispersion polynomial is relative to the input x,y pixels
+    in the direct image for a given wavelength.
+
+    Parameters:
+    -----------
+    xmodels : list[tuple]
+        The list of tuple(models) for the polynomial model in x
+    ymodels : list[tuple]
+        The list of tuple(models) for the polynomial model in y
+    lmodels : list
+        The list of models for the polynomial model in l
+    orders : list
+        The list of orders which are available to the model
+
+    Notes:
+    ------
+    Given the x,y, source location, order, it returns the tuple of
+    x,y,wavelength,order on the dispersed image. It also requires
+    FWCPOS from the image header, this is the filter wheel position
+    in degrees.
+
+    """
+
+    standard_broadcasting = False
+    separable = False
+    fittable = False
+    linear = False
+
+    # starts with the backwards pixel and calculates the forward pixel
+    inputs = ("x", "y", "x0", "y0", "order", "theta")
+    outputs = ("x", "y", "wavelength", "order", "theta")
+
+    def __init__(self, orders, lmodels=None, xmodels=None,
+                 ymodels=None, fwcpos_ref=None, name=None, meta=None):
+        self._order_mapping = {int(k): v for v, k in enumerate(orders)}
+        self.xmodels = xmodels
+        self.ymodels = ymodels
+        self.lmodels = lmodels
+        self.orders = orders
+        self.fwcpos_ref = fwcpos_ref
+        meta = {"orders": orders}
+        if name is None:
+            name = 'niriss_forward_column_grism_dispersion'
+        super(NIRISSForwardColumnGrismDispersion, self).__init__(name=name,
+                                                                 meta=meta)
+
+    def evaluate(self, x, y, x0, y0, order, theta):
+        """Return the valid pixel(s) and wavelengths given center x,y and lam
+
+        Parameters:
+        -----------
+        x0: int,float
+            Source object x-center
+        y0: int,float
+            Source object y-center
+        x :  int,float
+            Input x location
+        y :  int,float
+            Input y location
+        order : int
+            Spectral order to use
+        theta : float
+            input filter wheel rotation angle in degrees
+
+        Returns:
+        --------
+        x, y, lambda, order,  in the direct image for the pixel that was
+        specified as input using the wavelength l and spectral order
+
+        Notes:
+        ------
+        There's spatial dependence for NIRISS as well as rotation for the filter wheel
+
+        """
+        try:
+            iorder = self._order_mapping[int(order)]
+        except KeyError:
+            raise ValueError("Specified order is not available")
+
+        dyr = y - y0  # delta x in rotated trace coordinate
+        t = np.linspace(0, 1, 10)
+        dx = self.xmodels[iorder][0](x0, y0) + t * self.xmodels[iorder][1](x0, y0)
+        dy = self.ymodels[iorder][0](x0, y0) + t * self.ymodels[iorder][1](x0, y0)
+        if theta != 0.0:
+            rotate = Rotation2D(self.fwcpos_ref - theta)
+            dx, dy = rotate(dx, dy)
+        so = np.argsort(dy)
+        tr = np.interp(dyr, dy[so], t[so])
+        wavelength = self.lmodels[iorder](tr)
+
+        return (x0, y0, wavelength, order)

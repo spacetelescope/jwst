@@ -56,11 +56,7 @@ class Tso3Pipeline(Pipeline):
 
         self.log.info('Starting calwebb_tso3 ...')
         input_asn = datamodels.open(input)
-        product_name = input_asn.meta.asn_table.products[0].name
-
-        # Setup output creation
-        #self.output_basename = product['name']
-        self.output_basename = product_name
+        self.output_basename = input_asn.meta.asn_table.products[0].name
 
         input_exptype = None
         # Input may consist of multiple exposures, so loop over each of them
@@ -83,64 +79,65 @@ class Tso3Pipeline(Pipeline):
 
                 # Transfer updated DQ values to original input observation
                 for i in range(cube.data.shape[0]):
-                    # preserve output filename
-                    orig_filename = cube.meta.filename
                     # Update DQ arrays with those from outlier_detection step
                     cube.dq[i] = results[i].dq
-                    # reset output filename to original value
-                    cube.meta.filename = orig_filename
 
             else:
                 self.log.info("Performing scaled outlier detection on input images...")
                 cube = self.outlier_detection_scaled(cube)
 
-
-        self.log.info("Writing Level 2c images with updated DQ arrays...")
-        suffix_2c = 'crfints'
-        for cube in input_asn:
-            self.output_basename = cube.meta.filename
-            self.save_model(cube, suffix=suffix_2c)
+        if input_asn[0].meta.cal_step.outlier_detection == 'COMPLETE':
+            self.log.info("Writing Level 2c cubes with updated DQ arrays...")
+            suffix_2c = 'crfints'
+            for cube in input_asn:
+                # preserve output filename
+                original_filename = cube.meta.filename
+                self.save_model(cube, suffix=suffix_2c)
+                cube.meta.filename = original_filename
 
         # Create final photometry results as a single output
-        # regardless of how many members their may be...
+        # regardless of how many members there may be...
         phot_result_list = []
         if input_exptype in self.image_exptypes:
-            # Create name for extracted photometry (Level 3) products
-            phot_tab_name = "{}_phot.ecsv".format(product_name)
+            # Create name for extracted photometry (Level 3) product
+            phot_tab_name = "{}_phot.ecsv".format(self.output_basename)
 
-            # For each cube, extract photometry...
             for cube in input_asn:
                 # Extract Photometry from imaging data
                 phot_result_list.append(self.tso_photometry(cube))
         else:
+            # Create name for extracted white-light (Level 3) product
+            phot_tab_name = "{}_whtlt.ecsv".format(self.output_basename)
+
             # Working with spectroscopic TSO data...
             # define output for x1d (level 3) products
-            x1d_models = datamodels.MultiSpecModel()
-            x1d_models.update(input_asn)
-
-            # Create name for extracted white-light (Level 3) products
-            phot_tab_name = "{}_whtlt.ecsv".format(product_name)
+            x1d_result = datamodels.MultiSpecModel()
+            # TODO: check to make sure the following line is working
+            x1d_result.update(input_asn)
 
             # For each exposure in the TSO...
             for cube in input_asn:
                 # Process spectroscopic TSO data
                 # extract 1D
                 self.log.info("Extracting 1-D spectra...")
-                self.extract_1d.suffix = 'x1dints'
                 result = self.extract_1d(cube)
-                x1d_models.spec.extend(result.spec)
+                x1d_result.spec.extend(result.spec)
 
                 # perform white-light photometry on 1d extracted data
                 self.log.info("Performing white-light photometry...")
                 phot_result_list.append(self.white_light(result))
 
-            # Define suffix for stack of extracted 1d (level 3) products
-            #self.save_model(x1d_models,suffix="x1dints") # did not work!!!
-            x1d_prod_name = "{}_x1dints.fits".format(product_name)
-            self.log.info("Writing Level 3 X1DINTS product...")
-            x1d_models.write(x1d_prod_name)
-        
-        self.log.info("Writing Level 3 photometry catalog {}...".format(phot_tab_name))                 
+
+            self.log.info("Writing Level 3 photometry catalog {}...".format(phot_tab_name))                 
+
+            self.log.info("Writing Level 3 X1DINTS product...")      
+            # Update some metadata from the association
+            x1d_result.meta.asn.pool_name = asn['asn_pool']
+            x1d_result.meta.asn.table_name = input
+
+            # Save the final x1d Multispec model
+            self.save_model(x1d_result, suffix='x1dints')
+
         phot_results = vstack(phot_result_list)
         phot_results.write(phot_tab_name, format='ascii.ecsv')
 
