@@ -83,9 +83,7 @@ class Tso3Pipeline(Pipeline):
                     cube.dq[i] = results[i].dq
 
             else:
-                self.log.info("Performing scaled outlier detection "
-                              "on input images...")
-                self.log.info("input cube has type: {}".format(type(cube)))
+                self.log.info("Performing scaled outlier detection on input images...")
                 cube = self.outlier_detection_scaled(cube)
 
         if input_asn[0].meta.cal_step.outlier_detection == 'COMPLETE':
@@ -129,6 +127,10 @@ class Tso3Pipeline(Pipeline):
                 self.log.info("Performing white-light photometry...")
                 phot_result_list.append(self.white_light(result))
 
+
+            self.log.info("Writing Level 3 photometry catalog {}...".format(phot_tab_name))                 
+
+            self.log.info("Writing Level 3 X1DINTS product...")      
             # Update some metadata from the association
             x1d_result.meta.asn.pool_name = asn['asn_pool']
             x1d_result.meta.asn.table_name = input
