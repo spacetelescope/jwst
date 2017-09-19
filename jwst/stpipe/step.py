@@ -386,12 +386,12 @@ class Step(object):
             result_return = result
 
             # Update meta information
-            if not isinstance(result, (list, tuple)):
+            if not isinstance(result, (list, tuple, datamodels.ModelContainer)):
                 results = [result]
             else:
                 results = result
 
-            if len(self._reference_files_used) and not self._is_container(args[0]):
+            if len(self._reference_files_used):
                 for result in results:
                     if isinstance(result, datamodels.DataModel):
                         for ref_name, filename in self._reference_files_used:
