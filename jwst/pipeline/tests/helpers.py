@@ -11,6 +11,7 @@ import tempfile
 from ...tests.helpers import (
     abspath,
     require_bigdata,
+    require_crds_context,
     runslow,
 )
 

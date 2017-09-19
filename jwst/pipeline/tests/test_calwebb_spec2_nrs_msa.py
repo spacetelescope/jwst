@@ -1,6 +1,7 @@
 """Test calwebb_spec2 for NIRSpec MSA"""
 
 from os import path
+import pytest
 from shutil import copy as file_copy
 
 from .helpers import (
@@ -8,6 +9,7 @@ from .helpers import (
     abspath,
     mk_tmp_dirs,
     require_bigdata,
+    require_crds_context,
     runslow,
     update_asn_basedir,
 )
@@ -20,6 +22,7 @@ DATAPATH = abspath(
 )
 
 
+@require_crds_context(365)
 @runslow
 @require_bigdata
 def test_run_msaflagging(mk_tmp_dirs, caplog):
