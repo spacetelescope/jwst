@@ -75,7 +75,6 @@ class ResampleData(object):
         self.blank_output = datamodels.DrizProductModel(self.output_wcs.data_size)
         self.blank_output.meta.wcs = self.output_wcs
 
-        self.blank_output.meta = self.input_models[0].meta
         self.output_models = datamodels.ModelContainer()
 
 
