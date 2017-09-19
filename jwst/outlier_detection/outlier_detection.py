@@ -119,10 +119,10 @@ class OutlierDetection(object):
             sdriz.do_drizzle(**pars)
             drizzled_models = sdriz.output_models
             for model in drizzled_models:
-                model.meta.filename += ".fits"
-            if save_intermediate_results:
-                log.info("Writing out resampled exposures...")
-                drizzled_models.save()
+                model.meta.filename += "_i2d.fits"
+                if save_intermediate_results:
+                    log.info("Writing out resampled exposures...")
+                    model.save(model.meta.filename)
         else:
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
@@ -147,8 +147,9 @@ class OutlierDetection(object):
             # the original input list/ASN/ModelContainer
             blot_models = blot_median(median_model, self.input_models, **pars)
             if save_intermediate_results:
-                log.info("Writing out BLOT images...")
-                blot_models.save()
+                for model in blot_models:
+                    log.info("Writing out BLOT images...")
+                    model.save(model.meta.filename)
         else:
             # Median image will serve as blot image
             blot_models = datamodels.ModelContainer()
