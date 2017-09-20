@@ -8,6 +8,8 @@ against are built in the jupyter notebook
 ./notebooks/make_tests.ipynb
 """
 from __future__ import absolute_import
+from glob import glob
+from os import path
 import pytest
 
 from .helpers import (
@@ -38,80 +40,58 @@ GENERAL_ARGS = []
     params=[
         (
             LV2_ONLY_ARGS,
-            t_path('data/pool_009_spec_miri_lv2bkg.csv'),
-            [
-                t_path('data/pool_009_spec2_001_asn.json'),
-                t_path('data/pool_009_image2_001_asn.json')
-            ]
+            'pool_009_spec_miri_lv2bkg'
         ),
         (
             LV2_ONLY_ARGS,
-            t_path('data/pool_010_spec_nirspec_lv2bkg.csv'),
-            [
-                t_path('data/pool_010_spec2_001_asn.json'),
-                t_path('data/pool_010_image2_001_asn.json')
-            ]
+            'pool_010_spec_nirspec_lv2bkg'
         ),
         (
             LV2_ONLY_ARGS,
-            t_path('data/pool_011_spec_miri_lv2bkg_lrs.csv'),
-            [
-                t_path('data/pool_011_spec2_001_asn.json'),
-            ]
-        ),
-        (
-            LV2_ONLY_ARGS,
-            t_path('data/pool_015_spec_nirspec_lv2bkg_reversed.csv'),
-            [
-                t_path('data/pool_015_spec2_001_asn.json'),
-                t_path('data/pool_015_image2_001_asn.json')
-            ]
-        ),
-        (
-            LV2_ONLY_ARGS,
-            t_path('data/pool_016_spec_nirspec_lv2bkg_double.csv'),
-            [
-                t_path('data/pool_016_spec2_001_asn.json'),
-                t_path('data/pool_016_image2_001_asn.json')
-            ]
-        ),
-        (
-            LV2_ONLY_ARGS,
-            t_path('data/pool_017_spec_nirspec_lv2imprint.csv'),
-            [
-                t_path('data/pool_017_spec2_001_asn.json'),
-                t_path('data/pool_017_image2_001_asn.json')
-            ]
-        ),
-        (
-            LV2_ONLY_ARGS,
-            t_path('data/pool_018_all_exptypes.csv'),
-            [
-                t_path('data/pool_018_spec2_001_asn.json'),
-                t_path('data/pool_018_image2_001_asn.json')
-            ]
+            'pool_011_spec_miri_lv2bkg_lrs'
         ),
         (
             GENERAL_ARGS,
-            t_path('data/pool_019_niriss_wfss.csv'),
-            [
-                t_path('data/pool_019_spec2_001_asn.json'),
-                t_path('data/pool_019_image2_001_asn.json'),
-                t_path('data/pool_019_image3_001_asn.json'),
-            ]
+            'pool_013_coron_nircam'
+        ),
+        (
+            GENERAL_ARGS,
+            'pool_014_ami_niriss'
+        ),
+        (
+            LV2_ONLY_ARGS,
+            'pool_015_spec_nirspec_lv2bkg_reversed'
+        ),
+        (
+            LV2_ONLY_ARGS,
+            'pool_016_spec_nirspec_lv2bkg_double'
+        ),
+        (
+            LV2_ONLY_ARGS,
+            'pool_017_spec_nirspec_lv2imprint'
+        ),
+        (
+            LV2_ONLY_ARGS,
+            'pool_018_all_exptypes'
+        ),
+        (
+            GENERAL_ARGS,
+            'pool_019_niriss_wfss'
         ),
     ]
 )
 def generate_asns(request):
     """Test exp_type inclusion based on standard associations"""
-    main_args, pool_path, standards_paths = request.param
+    main_args, pool_root = request.param
 
-    standards = {}
+    standards_paths = glob(t_path(path.join('data', pool_root + '*_asn.json')))
+    standards = []
     for standard_path in standards_paths:
         with open(standard_path) as fp:
             asn = load_asn(fp)
-        standards[asn['asn_type']] = asn
+        standards.append(asn)
 
+    pool_path = t_path(path.join('data', pool_root + '.csv'))
     pool = combine_pools([pool_path])
     args = TEST_ARGS + main_args
     results = Main(args, pool=pool)
@@ -126,4 +106,9 @@ def test_against_standard(generate_asns):
     """
     generated, standards = generate_asns
     for asn in generated:
-        assert compare_asns(asn, standards[asn['asn_type']])
+        for idx, standard in enumerate(standards):
+            if compare_asns(asn, standard):
+                del standards[idx]
+                break
+        else:
+            assert False

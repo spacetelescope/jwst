@@ -1,0 +1,25 @@
+{
+    "asn_type": "ami3",
+    "asn_rule": "candidate_Asn_AMI",
+    "version_id": null,
+    "code_version": "0.7.1.beta5",
+    "program": "10005",
+    "degraded_status": "No known degraded exposures in association.",
+    "constraints": "Constraints:\n    exp_type: nis_ami\n    target: 1\n    opt_elem: f430m\n    opt_elem2: maskrnd\n    program: 10005\n    instrument: nircam\n    asn_candidate: \\(\\'o007\\'\\,\\ \\'observation\\'\\)",
+    "asn_id": "o007",
+    "target": "t001",
+    "asn_pool": "pool_014_ami_niriss",
+    "products": [
+        {
+            "name": "jw10005-o007_t001_nircam_f430m-maskrnd",
+            "members": [
+                {
+                    "expname": "jw10005006001_02102_00001_nrcalong_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o007', 'observation')"
+                }
+            ]
+        }
+    ]
+}

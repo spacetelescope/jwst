@@ -1,0 +1,43 @@
+{
+    "asn_type": "ami3",
+    "asn_rule": "discover_Asn_AMI",
+    "version_id": null,
+    "code_version": "0.7.1.beta5",
+    "program": "10005",
+    "degraded_status": "No known degraded exposures in association.",
+    "constraints": "Constraints:\n    exp_type: nis_ami\n    target: 1\n    opt_elem: f210m\n    opt_elem2: maskrnd\n    program: 10005\n    instrument: nircam",
+    "asn_id": "a3001",
+    "target": "t001",
+    "asn_pool": "pool_014_ami_niriss",
+    "products": [
+        {
+            "name": "jw10005-a3001_t001_nircam_f210m-maskrnd",
+            "members": [
+                {
+                    "expname": "jw10005007001_02102_00001_nrca2_cal.fits",
+                    "exptype": "psf",
+                    "exposerr": "null",
+                    "asn_candidate": "[('c1000', 'group'), ('c1004', 'coronagraphy'), ('c1006', 'coronagraphy'), ('c1010', 'group'), ('c1014', 'coronagraphy'), ('c1016', 'coronagraphy'), ('o001', 'observation')]"
+                },
+                {
+                    "expname": "jw10005027001_02102_00001_nrca2_cal.fits",
+                    "exptype": "psf",
+                    "exposerr": "null",
+                    "asn_candidate": "[('c1020', 'group'), ('c1024', 'coronagraphy'), ('c1026', 'coronagraphy'), ('o003', 'observation')]"
+                },
+                {
+                    "expname": "jw10005004001_02102_00001_nrca2_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('c1000', 'group'), ('c1002', 'group'), ('c1006', 'coronagraphy'), ('o005', 'observation')]"
+                },
+                {
+                    "expname": "jw10005001001_02102_00001_nrca2_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "[('c1000', 'group'), ('c1002', 'group'), ('c1004', 'coronagraphy'), ('o006', 'observation')]"
+                }
+            ]
+        }
+    ]
+}
