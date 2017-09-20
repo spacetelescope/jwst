@@ -24,6 +24,7 @@ logger.addHandler(logging.NullHandler())
 
 class Asn_Lv2Image(
         AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2ImageScience,
         AsnMixin_Lv2Image,
         AsnMixin_Lv2Mode
 ):
@@ -33,6 +34,7 @@ class Asn_Lv2Image(
 class Asn_Lv2ImageNonScience(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2ImageNonScience,
+        AsnMixin_Lv2Image,
         AsnMixin_Lv2Mode
 ):
     """Level2b Image"""
@@ -41,6 +43,7 @@ class Asn_Lv2ImageNonScience(
 class Asn_Lv2ImageSpecial(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2ImageScience,
         AsnMixin_Lv2Image,
         AsnMixin_Lv2Mode,
 ):
@@ -55,6 +58,7 @@ class Asn_Lv2ImageSpecial(
 
 class Asn_Lv2Spec(
         AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2SpecScience,
         AsnMixin_Lv2Spec,
         AsnMixin_Lv2Mode,
 ):
@@ -64,6 +68,7 @@ class Asn_Lv2Spec(
 class Asn_Lv2SpecNonScience(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2SpecNonScience,
+        AsnMixin_Lv2Spec,
         AsnMixin_Lv2Mode,
 ):
     """Level2b Spectra"""
@@ -72,6 +77,7 @@ class Asn_Lv2SpecNonScience(
 class Asn_Lv2SpecSpecial(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2SpecScience,
         AsnMixin_Lv2Spec,
         AsnMixin_Lv2Mode,
 ):
