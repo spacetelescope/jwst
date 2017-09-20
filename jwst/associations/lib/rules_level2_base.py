@@ -460,6 +460,10 @@ class AsnMixin_Lv2Mode(DMSLevel2bBase):
                 'value': None,
                 'inputs': ['program']
             },
+            'target': {
+                'value': None,
+                'inputs': ['targetid'],
+            },
             'instrument': {
                 'value': None,
                 'inputs': ['instrume']
@@ -680,7 +684,6 @@ class AsnMixin_Lv2SpecScience(DMSLevel2bBase):
                     '|nrs_ifu'
                     '|nrs_msaspec'
                     '|nrs_brightobj'
-                    '|nis_wfss'
                     '|nis_soss'
                 ),
                 'inputs': ['exp_type'],

@@ -1,4 +1,12 @@
-"""Test against Level2 standard associations"""
+"""Test against Level2 standard associations
+
+Notes
+-----
+Most of the standard associations which are compared
+against are built in the jupyter notebook
+
+./notebooks/make_tests.ipynb
+"""
 from __future__ import absolute_import
 import pytest
 
@@ -89,7 +97,6 @@ GENERAL_ARGS = []
             [
                 t_path('data/pool_019_spec2_001_asn.json'),
                 t_path('data/pool_019_image2_001_asn.json'),
-                t_path('data/pool_019_spec3_001_asn.json'),
                 t_path('data/pool_019_image3_001_asn.json'),
             ]
         ),
