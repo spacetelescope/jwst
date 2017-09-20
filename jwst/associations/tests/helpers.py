@@ -303,7 +303,7 @@ def fmt_cand(candidate_list):
 
 def fmt_fname(expnum):
     """Format the filename"""
-    return 'jw_{:0>5d}_uncal.fits'.format(next(expnum))
+    return 'jw_{:0>5d}_uncal.fits'.format(expnum)
 
 
 def generate_params(request):
