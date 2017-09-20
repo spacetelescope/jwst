@@ -293,7 +293,7 @@ class CubeBuildStep (Step):
                 self.spaxel_debug.close()
 
         print('going to return result')
-        print('len(Final_IFUCube)'len(Final_IFUCube))
+        print('len(Final_IFUCube)',len(Final_IFUCube))
 
         print('type of Final_IFUCube',type(Final_IFUCube))
         print('First filename',Final_IFUCube[0].meta.filename)
