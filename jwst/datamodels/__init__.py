@@ -41,6 +41,7 @@ from . import ndmodel
 from .model_base import DataModel
 from .amilg import AmiLgModel
 from .asn import AsnModel
+from .barshadow import BarshadowModel
 from .combinedspec import CombinedSpecModel
 from .container import ModelContainer
 from .contrast import ContrastModel

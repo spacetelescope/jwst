@@ -58,7 +58,7 @@ def do_correction(input_model, barshadow_model):
     # Create the pieces that are put together to make the barshadow model
     shutter_elements = create_shutter_elements(barshadow_model)
     w0 = barshadow_model.crval1
-    wave_increment = barshadow_model.cdelt2
+    wave_increment = barshadow_model.cdelt1
     if exp_type == 'NRS_MSASPEC':
         # For each slitlet
         for slitlet in input_model.slits:
@@ -83,8 +83,8 @@ def do_correction(input_model, barshadow_model):
                     yslit = yslit * SLITRATIO
                     #   Convert the Y and wavelength to a pixel location
                     #   in the  bar shadow array
-                    index_of_fiducial = shutter_status.find('X')
-                    index_of_fiducial_in_array = 1001 + index_of_fiducial*500
+                    index_of_fiducial = shutter_status.find('x')
+                    index_of_fiducial_in_array = 501 + index_of_fiducial*500
                     yrow = index_of_fiducial_in_array - yslit*500.0
                     wcol = (wavelength - w0)/wave_increment
                     #   Interpolate the bar shadow correction for non-Nan pixels
@@ -249,7 +249,7 @@ def create_shadow(shutter_elements, shutter_status):
         String describing the shutter status:
            0:  Closed
            1:  Open
-           X:  Contains source
+           x:  Contains source
 
     Returns:
 
@@ -342,7 +342,7 @@ def add_next_shutter(shadow, shadow_element, first_row):
     # the single internal shutter array
     shadow[first_row, :] = 0.5 * (shadow[first_row, :] + shadow_element[0, :])
     first_row = first_row + 1
-    last_row = first_row + shadow_element.shape[0]
+    last_row = first_row + shadow_element.shape[0] - 1
     shadow[first_row:last_row, :] = shadow_element[1:, :]
     return shadow
 
@@ -370,9 +370,9 @@ def add_last_half_shutter(shadow, shadow_element, first_row):
     #
     # Average the last row in the current bar shadow array with the first row of
     # the shutter element array
-    shadow[first_row, :] = 0.5 * (shadow[first_row, :] + shadow_element[500, :])
+    shadow[first_row, :] = 0.5 * (shadow[first_row, :] + shadow_element[0, :])
     first_row = first_row + 1
-    last_row = first_row + shadow_element.shape[0]
+    last_row = first_row + shadow_element.shape[0] - 1
     shadow[first_row:last_row, :] = shadow_element[1:, :]
     return shadow
 
@@ -394,9 +394,28 @@ def interpolate(rows, columns, array):
     correction = np.ones((nrows, ncolumns))
     rows = (rows + 0.5).astype(np.int)
     columns = (columns + 0.5).astype(np.int)
-    for row in rows:
-        for column in columns:
+    for row in range(nrows):
+        for column in range(ncolumns):
             if ~np.isnan(rows[row, column]):
                 correction[row, column] = array[rows[row, column],
                                                 columns[row, column]]
     return correction
+
+def has_uniform_source(slitlet):
+    """Determine whether the slitlet contains a uniform source
+
+    Parameters:
+
+    slitlet: slitlet object
+        The slitlet being interrogated
+
+    Returns:
+
+    answer: boolean
+        True if the slitlet contains a uniform source
+    """
+
+    if slitlet.stellarity > 0.75:
+        return False
+    else:
+        return True

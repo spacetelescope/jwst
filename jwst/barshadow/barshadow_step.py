@@ -40,7 +40,7 @@ class BarShadowStep(Step):
 
             instrument = input_model.meta.instrument.name
             # Open the barshadow ref file data model
-            barshadow_model = datamodels.BarShadowModel(self.barshadow_name)
+            barshadow_model = datamodels.BarshadowModel(self.barshadow_name)
 
             # Do the bar shadow correction     
             result = bar_shadow.do_correction(input_model, barshadow_model)
