@@ -10,6 +10,7 @@ from photutils import CircularAperture, CircularAnnulus, \
 
 from .. import datamodels
 from .. datamodels import dqflags
+from . import spec_wcs
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -49,13 +50,12 @@ def ifu_extract1d(input_model, refname, source_type):
     slitname = input_model.meta.exposure.type
     if slitname is None:
         slitname = "ANY"
-    log.debug('slitname=%s' % slitname)
 
     extract_params = ifu_extract_parameters(refname, slitname, source_type)
 
     if extract_params:
-        (wavelength, net, background, dq) = extract_ifu(input_model,
-                                source_type, extract_params)
+        (ra, dec, wavelength, net, background, dq) = extract_ifu(
+                        input_model, source_type, extract_params)
     else:
         log.critical('Missing extraction parameters.')
         raise ValueError('Missing extraction parameters.')
@@ -95,7 +95,15 @@ def ifu_extract1d(input_model, refname, source_type):
                          net, nerror, background, berror)),
                     dtype=spec.spec_table.dtype)
     spec = datamodels.SpecModel(spec_table=otab)
+    spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
+    spec.slit_ra = ra
+    spec.slit_dec = dec
+    if slitname is not None and slitname != "ANY":
+        spec.name = slitname
     output_model.spec.append(spec)
+
+    # See output_model.spec[0].meta.wcs instead.
+    output_model.meta.wcs = None
 
     return output_model
 
@@ -146,7 +154,7 @@ def extract_ifu(input_model, source_type, extract_params):
 
     Returns
     -------
-        (wavelength, net, background, dq)
+        (ra, dec, wavelength, net, background, dq)
     """
 
     data = input_model.data
@@ -248,9 +256,10 @@ def extract_ifu(input_model, source_type, extract_params):
             log.error("Background region extends outside the image.")
 
     if outside:
+        (ra, dec) = (0., 0.)
         wavelength = np.zeros(shape[0], dtype=np.float64)
         dq[:] = dqflags.pixel['DO_NOT_USE']
-        return (wavelength, net, background, dq)        # all bad
+        return (ra, dec, wavelength, net, background, dq)       # all bad
 
     if hasattr(input_model.meta, 'wcs'):
         wcs = input_model.meta.wcs
@@ -264,8 +273,12 @@ def extract_ifu(input_model, source_type, extract_params):
         y_array = np.empty(shape[0], dtype=np.float64)
         y_array.fill(float(shape[1]) / 2.)
         z_array = np.arange(shape[0], dtype=np.float64) # for wavelengths
-        _, _, wavelength = wcs(x_array, y_array, z_array)
+        ra, dec, wavelength = wcs(x_array, y_array, z_array)
+        nelem = len(wavelength)
+        ra = ra[nelem // 2]
+        dec = dec[nelem // 2]
     else:
+        (ra, dec) = (0., 0.)
         wavelength = np.arange(1, shape[0] + 1, dtype=np.float64)
 
     position = (x_center, y_center)
@@ -289,4 +302,4 @@ def extract_ifu(input_model, source_type, extract_params):
             background[k] = float(bkg_table['aperture_sum'][0])
             net[k] = net[k] - background[k] * normalization
 
-    return (wavelength, net, background, dq)
+    return (ra, dec, wavelength, net, background, dq)

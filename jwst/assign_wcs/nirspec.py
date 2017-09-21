@@ -10,7 +10,7 @@ import logging
 import numpy as np
 
 from astropy.modeling import models, fitting
-from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Shift
+from astropy.modeling.models import Mapping, Identity, Const1D, Scale
 from astropy import units as u
 from astropy import coordinates as coord
 from astropy.io import fits
@@ -72,7 +72,7 @@ def imaging(input_model, reference_files):
     dircos2unitless = DirCos2Unitless(name='directional_cosines2unitless')
 
     col_model = CollimatorModel(reference_files['collimator'])
-    col = col.model
+    col = col_model.model
     col_model.close()
 
     # Get the default spectral order and wavelength range and record them in the model.
@@ -305,7 +305,7 @@ def get_open_fixed_slits(input_model):
     s2b1 = Slit('S200B1', 4, 0, 0, -.5, .5, 5)
 
     subarray = input_model.meta.subarray.name.upper()
-    if  subarray == "S200A1":
+    if subarray == "S200A1":
         slits.append(s2a1)
     elif subarray == "S200A2":
         slits.append(s2a2)
@@ -313,7 +313,7 @@ def get_open_fixed_slits(input_model):
         slits.append(s4a1)
     elif subarray == "S1600A1":
         slits.append(s16a1)
-    elif  subarray == "S200B1":
+    elif subarray == "S200B1":
         slits.append(s2b1)
     else:
         slits.extend([s2a1, s2a2, s4a1, s16a1, s2b1])
@@ -370,7 +370,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
     -------
     slitlets : list
         A list of slitlets. Each slitlet is a tuple with
-        ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax", "quadrant", "source_id", "nshutters")
+        ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax", "quadrant", "source_id", "shutter_state")
 
     """
     slitlets = []
@@ -397,7 +397,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
 
             # Get the rows for the current slitlet_id
             slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
-            nshutters = len(slitlets_sid)
+            open_shutters = [x['shutter_column'] for x in slitlets_sid]
+
             # Count the number of backgrounds that have an 'N' (meaning main shutter)
             # This needs to be 0 or 1 and we will have to deal with those differently
             # See: https://github.com/STScI-JWST/jwst/commit/7588668b44b77486cdafb35f7e2eb2dcfa7d1b63#commitcomment-18987564
@@ -413,7 +414,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
             if n_main_shutter == 0:
                 jmin = min([s['shutter_column'] for s in slitlets_sid])
                 jmax = max([s['shutter_column'] for s in slitlets_sid])
-                j = (jmax - jmin) // 2 + 1
+                j = jmin + (jmax - jmin) // 2 + 1
                 ymax = 0.5 + margin + (jmax - j) * 1.15
                 ## TODO: check this formula - it is different (assuming it's incorrect in the report).
                 ymin = -(0.5 + margin) + (jmin - j) * 1.15
@@ -444,8 +445,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
 
             shutter_id = xcen + (ycen - 1) * 365
             source_id = slitlets_sid[0]['source_id']
-            source_name, source_alias, catalog_id, stellarity = [
-                (s['source_name'], s['alias'], s['catalog_id'], s['stellarity']) \
+            source_name, source_alias, stellarity = [
+                (s['source_name'], s['alias'], s['stellarity']) \
                 for s in msa_source if s['source_id'] == source_id][0]
             # Create the output list of tuples that contain the required
             # data for further computations
@@ -460,10 +461,42 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
             """
             source_xpos = source_xpos - 0.5
             source_ypos = source_ypos - 0.5
+
+            # Create the shutter_state string
+            all_shutters = _shutter_id_to_str(open_shutters, ycen)
+
             slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax,
-                                 quadrant, source_id, nshutters, source_name, source_alias,
-                                 catalog_id, stellarity, source_xpos, source_ypos))
+                                 quadrant, source_id, all_shutters, source_name, source_alias,
+                                 stellarity, source_xpos, source_ypos))
     return slitlets
+
+
+def _shutter_id_to_str(open_shutters, ycen):
+    """
+    Return a string representing the open and closed shutters in a slitlet.
+
+    Parameters
+    ----------
+    open_shutters : list
+        List of IDs (shutter_id) of open shutters.
+    xcen : int
+        X coordinate of main shutter.
+
+    Returns
+    -------
+    all_shutters : str
+        String representing the state of the shutters.
+        "1" indicates an open shutter, "0" - a closed one, and
+        "x" - the main shutter.
+    """
+    all_shutters = np.array(range(min(open_shutters), max(open_shutters) + 1))
+    cen_ind = (all_shutters == ycen).nonzero()[0].item()
+    for i in open_shutters:
+        all_shutters[all_shutters == i] = 1
+    all_shutters[all_shutters != 1] = 0
+    all_shutters = all_shutters.astype(np.str)
+    all_shutters[cen_ind] = 'x'
+    return  "".join(all_shutters)
 
 
 def get_spectral_order_wrange(input_model, wavelengthrange_file):
@@ -564,7 +597,7 @@ def slit_to_msa(open_slits, msafile):
     msa = MSAModel(msafile)
     models = []
     for quadrant in range(1, 6):
-        slits_in_quadrant = [s for s in open_slits if s.quadrant==quadrant]
+        slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
         if any(slits_in_quadrant):
             msa_data = msa_quadrant.data
@@ -604,9 +637,6 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     ymin = -.55
     ymax = .55
 
-    wrange = (input_model.meta.wcsinfo.waverange_start,
-              input_model.meta.wcsinfo.waverange_end),
-    order = input_model.meta.wcsinfo.spectral_order
     agreq = angle_from_disperser(disperser, input_model)
     lgreq = wavelength_from_disperser(disperser, input_model)
 
@@ -673,10 +703,6 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
     """
-    wrange = (input_model.meta.wcsinfo.waverange_start,
-                     input_model.meta.wcsinfo.waverange_end),
-    order = input_model.meta.wcsinfo.spectral_order
-
     agreq = angle_from_disperser(disperser, input_model)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     lgreq = wavelength_from_disperser(disperser, input_model)
@@ -691,7 +717,7 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     msa = MSAModel(reference_files['msa'])
     slit_models = []
     for quadrant in range(1, 6):
-        slits_in_quadrant = [s for s in open_slits if s.quadrant==quadrant]
+        slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         log.info("There are {0} open slits in quadrant {1}".format(len(slits_in_quadrant), quadrant))
         msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
         if any(slits_in_quadrant):
@@ -724,8 +750,6 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
 
 
 def angle_from_disperser(disperser, input_model):
-    lmin = input_model.meta.wcsinfo.waverange_start
-    lmax = input_model.meta.wcsinfo.waverange_end
     sporder = input_model.meta.wcsinfo.spectral_order
     if input_model.meta.instrument.grating.lower() != 'prism':
         agreq = AngleFromGratingEquation(disperser.groovedensity,
@@ -890,11 +914,11 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.5, slit_ym
     y_range = np.hstack((y_range_low, y_range_high))
     # add 10 px margin
     # The -1 is technically because the output of slit2detector is 1-based coordinates.
-    x0 = max(0, x_range.min() -1 -10)
-    x1 = min(2047, x_range.max() -1 + 10)
+    x0 = max(0, x_range.min() - 1 - 10)
+    x1 = min(2047, x_range.max() - 1 + 10)
     # add 2 px margin
-    y0 = y_range.min() -1 -2
-    y1 = y_range.max() -1 + 2
+    y0 = y_range.min() - 1 - 2
+    y1 = y_range.max() - 1 + 2
 
     bounding_box = ((x0, x1), (y0, y1))
     return bounding_box
@@ -1267,7 +1291,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
     col2det = collimator2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq | \
             gwa2det | det2dms
     for quadrant in range(1, 6):
-        slits_in_quadrant = [s for s in open_slits if s.quadrant==quadrant]
+        slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         if any(slits_in_quadrant):
             msa_quadrant = getattr(msa, "Q{0}".format(quadrant))
             #msa_model = msa.tree[quadrant]['model']
@@ -1286,7 +1310,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
                     log.info("Removing slit {0} from the list of open slits because the"
                              "WCS bounding_box is completely outside the detector.".format(slit.name))
                     log.debug("Slit bounding_box is {0}".format(bb))
-                    idx = np.nonzero([s.name==slit.name for s in open_slits])[0][0]
+                    idx = np.nonzero([s.name == slit.name for s in open_slits])[0][0]
                     open_slits.pop(idx)
 
     msa.close()

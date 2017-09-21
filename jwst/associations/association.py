@@ -8,7 +8,7 @@ import logging
 from nose.tools import nottest
 import re
 
-from astropy.extern import six
+import six
 from numpy.ma import masked
 
 from . import __version__
@@ -41,7 +41,7 @@ class Association(MutableMapping):
     Raises
     ------
     AssociationError
-        If a member doesn't match any of the registered associations.
+        If a item doesn't match any of the registered associations.
 
     Attributes
     ----------
@@ -103,6 +103,7 @@ class Association(MutableMapping):
         self.add_constraints(deepcopy(self.GLOBAL_CONSTRAINTS))
         self.run_init_hook = True
         self.meta = {}
+        self.force_reprocess = False
 
         self.version_id = version_id
 
@@ -114,13 +115,13 @@ class Association(MutableMapping):
         })
 
     @classmethod
-    def create(cls, member, version_id=None):
-        """Create association if member belongs
+    def create(cls, item, version_id=None):
+        """Create association if item belongs
 
         Parameters
         ----------
-        member: dict
-            The member to initialize the association with.
+        item: dict
+            The item to initialize the association with.
 
         version_id: str or None
             Version_Id to use in the name of this association.
@@ -130,12 +131,12 @@ class Association(MutableMapping):
         -------
         (association, reprocess_list)
             2-tuple consisting of:
-            - association: The association or, if the member does not
+            - association: The association or, if the item does not
                 this rule, None
-            - [ProcessList[, ...]]: List of members to process again.
+            - [ProcessList[, ...]]: List of items to process again.
         """
         asn = cls(version_id=version_id)
-        matches, reprocess = asn.add(member)
+        matches, reprocess = asn.add(item)
         if not matches:
             return None, reprocess
         return asn, reprocess
@@ -308,16 +309,16 @@ class Association(MutableMapping):
             return False
         return True
 
-    def add(self, member, check_constraints=True):
-        """Add the member to the association
+    def add(self, item, check_constraints=True):
+        """Add the item to the association
 
         Parameters
         ----------
-        member: dict
-            The member to add.
+        item: dict
+            The item to add.
 
         check_constraints: bool
-            If True, see if the member should belong to this association.
+            If True, see if the item should belong to this association.
             If False, just add it.
 
         Returns
@@ -325,27 +326,32 @@ class Association(MutableMapping):
         (matches, reprocess_list)
             2-tuple consisting of:
             - bool: True if the all constraints are satisfied
-            - [ProcessList[, ...]]: List of members to process again.
+            - [ProcessList[, ...]]: List of items to process again.
         """
+
+        if self.is_item_member(item):
+            return False, []
+
+        matches = True
         if check_constraints:
-            matches, reprocess = self.test_and_set_constraints(member)
+            matches, reprocess = self.test_and_set_constraints(item)
 
         if matches:
             if self.run_init_hook:
-                self._init_hook(member)
-            self._add(member)
+                self._init_hook(item)
+            self._add(item)
             self.run_init_hook = False
 
         return matches, reprocess
 
     @nottest
-    def test_and_set_constraints(self, member):
+    def test_and_set_constraints(self, item):
         """Test whether the given dictionaries match parameters for
         for this association
 
         Parameters
         ----------
-        member: dict
+        item: dict
             The parameters to check/set for this association.
             This can be a list of dictionaries.
 
@@ -354,7 +360,7 @@ class Association(MutableMapping):
         (matches, reprocess_list)
             2-tuple consisting of:
             - bool: True if the all constraints are satisfied
-            - [ProcessMember[, ...]]: List of members to process again.
+            - [ProcessItem[, ...]]: List of items to process again.
 
         Notes
         -----
@@ -369,22 +375,26 @@ class Association(MutableMapping):
         reprocess = []
         constraints = deepcopy(self.constraints)
         for constraint, conditions in constraints.items():
-            test = conditions.get('test', self.match_member)
-            matches, new_reprocess = test(member, constraint, conditions)
+            test = conditions.get('test', self.match_item)
+            matches, new_reprocess = test(item, constraint, conditions)
             reprocess.extend(new_reprocess)
             if not matches:
                 break
         else:
             self.constraints = constraints
+            if self.force_reprocess:
+                reprocess.append(ProcessList(
+                    [item], [type(self)], work_over=self.force_reprocess
+                ))
         return matches, reprocess
 
-    def match_member(self, member, constraint, conditions):
-        """Use member info to match to the conditions
+    def match_item(self, item, constraint, conditions):
+        """Use item info to match to the conditions
 
         Parameters
         ----------
-        member: dict
-            The member to retrieve the values from
+        item: dict
+            The item to retrieve the values from
 
         constraint: str
             The name of the constraint
@@ -397,16 +407,21 @@ class Association(MutableMapping):
         (matches, reprocess_list)
             2-tuple consisting of:
             - bool: True if the all constraints are satisfied
-            - [ProcessList[, ...]]: List of members to process again.
+            - [ProcessList[, ...]]: List of items to process again.
         """
         reprocess = []
 
+        # Only perform check on specified `onlyif` condition
+        onlyif = conditions.get('onlyif', lambda item: True)
+        if not onlyif(item):
+            self.force_reprocess = conditions.get('force_reprocess', False)
+            return (True, reprocess)
+
         # Get the condition information.
         try:
-            input, value = getattr_from_list(
-                member,
+            input, value = self.item_getattr(
+                item,
                 conditions['inputs'],
-                invalid_values=self.INVALID_VALUES
             )
         except KeyError:
             if not conditions.get('force_undefined', False) and \
@@ -425,13 +440,13 @@ class Association(MutableMapping):
         if conditions.get('evaluate', self.DEFAULT_EVALUATE):
             evaled = evaluate(value)
             if is_iterable(evaled):
-                process_members = []
+                process_items = []
                 for avalue in evaled:
-                    new_member = deepcopy(member)
-                    new_member[input] = str(avalue)
-                    process_members.append(new_member)
+                    new_item = deepcopy(item)
+                    new_item[input] = str(avalue)
+                    process_items.append(new_item)
                 reprocess.append(ProcessList(
-                    process_members,
+                    process_items,
                     [type(self)]
                 ))
                 return False, reprocess
@@ -455,13 +470,13 @@ class Association(MutableMapping):
         # That's all folks
         return True, reprocess
 
-    def match_constraint(self, member, constraint, conditions):
+    def match_constraint(self, item, constraint, conditions):
         """Generic constraint checking
 
         Parameters
         ----------
-        member: dict
-            The member to retrieve the values from
+        item: dict
+            The item to retrieve the values from
 
         constraint: str
             The name of the constraint
@@ -474,10 +489,10 @@ class Association(MutableMapping):
         (matches, reprocess_list)
             2-tuple consisting of:
             - bool: True if the all constraints are satisfied
-            - [ProcessList[, ...]]: List of members to process again.
+            - [ProcessList[, ...]]: List of items to process again.
         """
         reprocess = []
-        evaled_str = conditions['inputs'](member)
+        evaled_str = conditions['inputs'](item)
         if conditions['value'] is not None:
             if not meets_conditions(
                     evaled_str, conditions['value']
@@ -513,12 +528,29 @@ class Association(MutableMapping):
             else:
                 yield '    {:s}: {}'.format(name, conditions['value'])
 
-    def _init_hook(self, member):
-        """Post-check and pre-member-adding initialization."""
+    def is_item_member(self, item):
+        """Check if item is already a member of this association
+
+        Parameters
+        ----------
+        item: dict
+            The item to add.
+
+        Returns
+        -------
+        is_item_member: bool
+            True if item is a member.
+        """
+        raise NotImplementedError(
+            'Association.is_item_member must be implemented by a specific association rule.'
+        )
+
+    def _init_hook(self, item):
+        """Post-check and pre-item-adding initialization."""
         pass
 
-    def _add(self, member):
-        """Add a member, association-specific"""
+    def _add(self, item):
+        """Add a item, association-specific"""
         raise NotImplementedError(
             'Association._add must be implemented by a specific assocation rule.'
         )
@@ -578,16 +610,29 @@ class ProcessList(object):
 
     Parameters
     ----------
-    members: [member[, ...]]
-        The list of members to process
+    items: [item[, ...]]
+        The list of items to process
 
     rules: [Association[, ...]]
-        List of rules to process the members against.
+        List of rules to process the items against.
+
+    work_over: int
+        What the reprocessing should work on:
+        - `ProcessList.EXISTING`: Only existing associations
+        - `ProcessList.RULES`: Only on the rules to create new associations
+        - `ProcessList.BOTH`: Compare to both existing and rules
     """
 
-    def __init__(self, members, rules):
-        self.members = members
+    (
+        BOTH,
+        EXISTING,
+        RULES
+    ) = range(1, 4)
+
+    def __init__(self, items, rules, work_over=BOTH):
+        self.items = items
         self.rules = rules
+        self.work_over = work_over
 
 
 # #########
@@ -672,7 +717,7 @@ def getattr_from_list(adict, attributes, invalid_values=None):
             else:
                 continue
     else:
-        raise KeyError
+        raise KeyError('Object has no attributes in {}'.format(attributes))
 
 
 def evaluate(value):

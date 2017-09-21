@@ -1,6 +1,7 @@
 from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
+
 import time
 import numpy as np
 from collections import OrderedDict
@@ -111,17 +112,21 @@ class OutlierDetection(object):
         """
         pars = self.outlierpars
         save_intermediate_results = pars['save_intermediate_results']
-
-        # Start by creating resampled/mosaic images for each group of exposures
-        sdriz = resample.ResampleData(self.input_models, single=True,
-            blendheaders=False, **pars)
-        sdriz.do_drizzle(**pars)
-        drizzled_models = sdriz.output_models
-        for model in drizzled_models:
-            model.meta.filename += ".fits"
-        if save_intermediate_results:
-            log.info("Writing out resampled exposures...")
-            drizzled_models.save()
+        if pars['resample_data'] is True:
+            # Start by creating resampled/mosaic images for each group of exposures
+            sdriz = resample.ResampleData(self.input_models, single=True,
+                blendheaders=False, **pars)
+            sdriz.do_drizzle(**pars)
+            drizzled_models = sdriz.output_models
+            for model in drizzled_models:
+                model.meta.filename += "_i2d.fits"
+                if save_intermediate_results:
+                    log.info("Writing out resampled exposures...")
+                    model.save(model.meta.filename)
+        else:
+            drizzled_models = self.input_models
+            for i in range(len(self.input_models)):
+                drizzled_models[i].wht = resample.build_driz_weight(self.input_models[i], wht_type='exptime', good_bits=pars['good_bits'])
 
         # Initialize intermediate products used in the outlier detection
         median_model = datamodels.ImageModel(init=drizzled_models[0].data.shape)
@@ -137,12 +142,19 @@ class OutlierDetection(object):
             log.info("Writing out MEDIAN image to: {}".format(median_model.meta.filename))
             median_model.save(median_model.meta.filename)
 
-        # Blot the median image back to recreate each input image specified in
-        # the original input list/ASN/ModelContainer
-        blot_models = blot_median(median_model, self.input_models, **pars)
-        if save_intermediate_results:
-            log.info("Writing out BLOT images...")
-            blot_models.save()
+        if pars['resample_data'] is True:
+            # Blot the median image back to recreate each input image specified in
+            # the original input list/ASN/ModelContainer
+            blot_models = blot_median(median_model, self.input_models, **pars)
+            if save_intermediate_results:
+                for model in blot_models:
+                    log.info("Writing out BLOT images...")
+                    model.save(model.meta.filename)
+        else:
+            # Median image will serve as blot image
+            blot_models = datamodels.ModelContainer()
+            for i in range(len(self.input_models)):
+                blot_models.append(median_model)
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
@@ -307,8 +319,31 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     # specified by the user to be ignored.
     # dq_mask = build_mask(sci_image.dq, CRBIT)
 
-    gain = gain_image.data
-    rn = readnoise_image.data
+    # This logic trims these reference files down to match
+    # input file shape to allow this step to apply to subarray readout
+    # modes such as CORONOGRAPHIC data
+    # logic copied from jwst.jump step...
+    # Get subarray limits from metadata of input model
+    xstart = blot_image.meta.subarray.xstart
+    xsize  = blot_image.data.shape[1]
+    xstop  = xstart + xsize - 1
+    ystart = blot_image.meta.subarray.ystart
+    ysize  = blot_image.data.shape[0]
+    ystop  = ystart + ysize - 1
+    if (readnoise_image.meta.subarray.xstart==xstart and
+        readnoise_image.meta.subarray.xsize==xsize   and
+        readnoise_image.meta.subarray.ystart==ystart and
+        readnoise_image.meta.subarray.ysize==ysize):
+
+        log.debug('Readnoise and gain subarrays match science data')
+        rn = readnoise_image.data
+        gain = gain_image.data
+        
+    else:
+        log.debug('Extracting readnoise and gain subarrays to match science data')
+        rn = readnoise_image.data[ystart-1:ystop,xstart-1:xstop]
+        gain = gain_image.data[ystart-1:ystop,xstart-1:xstop]
+        
     # TODO: for JWST, the actual readnoise at a given pixel depends on the
     # number of reads going into that pixel.  So we need to account for that
     # using the meta.exposure.nints, ngroups and nframes keywords.

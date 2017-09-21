@@ -14,7 +14,7 @@ import warnings
 import numpy as np
 import jsonschema
 
-from astropy.extern import six
+import six
 from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
@@ -189,11 +189,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         
         # if the input model doesn't have a date set, use the current date/time
         if self.meta.date is None:
-            self.meta.date = Time(datetime.datetime.now())
-            if hasattr(self.meta.date, 'value'):
-                self.meta.date.format = 'isot'
-                self.meta.date = str(self.meta.date.value)
-
+            current_date = Time(datetime.datetime.now())
+            current_date.format = 'isot'
+            self.meta.date = current_date.value
+        
         # store the data model type, if not already set
         if hasattr(self.meta, 'model_type'):
             if self.meta.model_type is None:
@@ -220,12 +219,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         self.close()
 
     def close(self):
-        if not self._iscopy:
-            for fd in self._files_to_close:
-                if fd is not None:
-                    fd.close()
-            if self._asdf is not None:
-                self._asdf.close()
+        for fd in self._files_to_close:
+            if fd is not None:
+                fd.close()
+        if not self._iscopy and self._asdf is not None:
+            self._asdf.close()
 
     @staticmethod
     def clone(target, source, deepcopy=False, memo=None):
@@ -239,7 +237,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             target._instance = source._instance
             target._iscopy = True
 
-        target._files_to_close = source._files_to_close[:]
+        target._files_to_close = []
         target._schema = source._schema
         target._shape = source._shape
         target._ctx = target
@@ -283,9 +281,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         if isinstance(path, six.string_types):
             self.meta.filename = os.path.basename(path)
 
-        self.meta.date = Time(datetime.datetime.now())
-        self.meta.date.format = 'isot'
-        self.meta.date = self.meta.date.value
+        current_date = Time(datetime.datetime.now())
+        current_date.format = 'isot'
+        self.meta.date = current_date.value
         self.meta.model_type = self.__class__.__name__
 
     def save(self, path, *args, **kwargs):
@@ -782,7 +780,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         self._instance['history'] = value
 
-    def get_fits_wcs(self, hdu_name='PRIMARY', key=' '):
+    def get_fits_wcs(self, hdu_name='SCI', hdu_ver=1, key=' '):
         """
         Get a `astropy.wcs.WCS` object created from the FITS WCS
         information in the model.
@@ -794,14 +792,19 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         ----------
         hdu_name : str, optional
             The name of the HDU to get the WCS from.  This must use
-            named HDU's, not numerical order HDUs.  To get the primary HDU,
-            pass ``'PRIMARY'`` (default).
+            named HDU's, not numerical order HDUs. To get the primary
+            HDU, pass ``'PRIMARY'``.
 
         key : str, optional
             The name of a particular WCS transform to use.  This may
             be either ``' '`` or ``'A'``-``'Z'`` and corresponds to
             the ``"a"`` part of the ``CTYPEia`` cards.  *key* may only
             be provided if *header* is also provided.
+
+        hdu_ver: int, optional
+            The extension version. Used when there is more than one
+            extension with the same name. The default value, 1,
+            is the first.
 
         Returns
         -------
@@ -812,12 +815,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         extensions = self._asdf._extensions
         ff = fits_support.to_fits(self._instance, self._schema,
                                   extensions=extensions)
-        hdu = fits_support.get_hdu(ff._hdulist, hdu_name)
+        hdu = fits_support.get_hdu(ff._hdulist, hdu_name, index=hdu_ver-1)
         header = hdu.header
-
         return WCS(header, key=key, relax=True, fix=True)
 
-    def set_fits_wcs(self, wcs, hdu_name='PRIMARY'):
+
+    def set_fits_wcs(self, wcs, hdu_name='SCI'):
         """
         Sets the FITS WCS information on the model using the given
         `astropy.wcs.WCS` object.
@@ -833,7 +836,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         hdu_name : str, optional
             The name of the HDU to set the WCS from.  This must use
             named HDU's, not numerical order HDUs.  To set the primary
-            HDU, pass ``'PRIMARY'`` (default).
+            HDU, pass ``'PRIMARY'``.
         """
         header = wcs.to_header()
         if hdu_name == 'PRIMARY':

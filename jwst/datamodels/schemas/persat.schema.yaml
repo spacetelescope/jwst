@@ -8,12 +8,12 @@ allOf:
       title: Persistence saturation threshold
       fits_hdu: SCI
       default: 90000.0
+      ndim: 2
       datatype: float32
     dq:
       title: data quality array
       fits_hdu: DQ
       default: 0
-      ndim: 2
       datatype: uint32
     dq_def:
       $ref: dq_def.schema.yaml

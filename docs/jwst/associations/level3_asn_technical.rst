@@ -3,38 +3,6 @@
 Level 3 Associations: Technical Specifications
 ==============================================
 
-.. _asn-DMS-naming:
-
-DMS Naming
-----------
-
-When produced through the DMS workflow, all association files are
-named according to the following scheme::
-
-  jwPPPPP-TNNNN_YYYYMMDDtHHMMSS_ATYPE_MMM_asn.json
-
-where:
-
-  * `PPPPP`: 5 digit proposal number
-  * `TNNNN`: Canididat Identifier. Can be on of the following:
-
-    * `oNNN`: Observation candidate specified by the letter `o` followed
-      by a 3 digit number.
-    * `c1NNN`: Association candidate, specified by the letter 'c',
-      followed by a
-      number starting at 1001.
-    * `a3NNN`: Discovered whole program associations, specified by the
-      letter 'a', followed by a number starting at 3001
-    * `rNNNN`: Reserverd for future use. If you see this in practice,
-      file an issue to have this document updated.
-
-  * `YYYYMMDDtHHMMSS`: This is generically referred to as the `version_id`.
-    A timestamp provided the DMS workflow. Note:
-    When used outside the workflow, this field is user-specifiable.
-  * `ATYPE`: The type of association. See
-    :ref:`level3-asn-association-types`
-  * `MMM`: A counter for each type of association created.
-
 Logical Structure
 -----------------
 

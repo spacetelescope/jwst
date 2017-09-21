@@ -94,8 +94,8 @@ class MultiExposureModel(model_base.DataModel):
         # FITS HDU.
         core_meta_schema = deepcopy(core_schema['properties']['meta'])
         treeutil.walk(core_meta_schema, remove_fits)
-        exposure_schema = schema['allOf'][1]['properties']['exposures']
-        exposure_meta_schema = exposure_schema['items']['properties']['meta']
+        exposure_schema = schema['allOf'][1]['properties']['exposures']['items']
+        exposure_meta_schema = exposure_schema['allOf'][1]['properties']['meta']
         exposure_meta_schema.update(core_meta_schema)
 
         # That's all folks

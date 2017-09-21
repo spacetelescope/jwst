@@ -12,12 +12,12 @@ from .. import datamodels
 from . import cube_build
 from . import data_types
 
-1
+
 class CubeBuildStep (Step):
     """
-    CubeBuildStep: Creates a 3-D spectral cube from a given association, single model, 
-    single input file, or model container. 
-    Input parameters allow the spectral cube to be built from a provided  
+    CubeBuildStep: Creates a 3-D spectral cube from a given association, single model,
+    single input file, or model container.
+    Input parameters allow the spectral cube to be built from a provided
     channel/subchannel (MIRI) or grating/filer  (NIRSPEC)
     """
 
@@ -29,8 +29,7 @@ class CubeBuildStep (Step):
          scale1 = float(default=0.0)
          scale2 = float(default=0.0)
          scalew = float(default=0.0)
-         interpolation = option(,'pointcloud','area','POINTCLOUD','AREA',default='pointcloud')
-         weighting = option('standard','miripsf','STANDARD','MIRIPSF',default = 'standard')
+         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm')
          coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec')
          rois = float(default=0.0)
          roiw = float(default=0.0)
@@ -39,7 +38,7 @@ class CubeBuildStep (Step):
          wavemin = float(default=None)
          wavemax = float(default=None)
          xdebug = integer(default=None)
-         ydebug = integer(default=None) 
+         ydebug = integer(default=None)
          zdebug = integer(default=None)
          single = boolean(default=false)
        """
@@ -57,7 +56,6 @@ class CubeBuildStep (Step):
         if(not self.filter.isupper()): self.filter = self.filter.upper()
         if(not self.grating.isupper()): self.grating = self.grating.upper()
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
-        if(not self.interpolation.islower()): self.interpolation = self.interpolation.lower()
         if(not self.weighting.islower()): self.weighting = self.weighting.lower()
 
         if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
@@ -91,13 +89,20 @@ class CubeBuildStep (Step):
         # valid coord_system:
         # 1. alpha-beta (only valid for MIRI Single Cubes)
         # 2. ra-dec
+        self.interpolation = 'pointcloud' # true for self.weighting  = 'msm' or 'miripsf'
 
-        if self.interpolation == 'area':
+        # if the weighting is area then interpolation is area
+        if self.weighting == 'area':
+            self.interpolation = 'area'
             self.coord_system = 'alpha-beta'
 
         if self.coord_system == 'alpha-beta':
+            self.weighting = 'area'
             self.interpolation = 'area'
 
+        # if interpolation is point cloud then weighting can be
+        # 1. MSM: modified shepard method
+        # 2. miripsf - weighting for MIRI based on PSF and LSF
         if self.coord_system == 'ra-dec':
             self.interpolation = 'pointcloud'  # can not be area
 
@@ -105,29 +110,29 @@ class CubeBuildStep (Step):
         self.log.info('Coordinate system to use: %s', self.coord_system)
         if self.interpolation =='pointcloud':
             self.log.info('Weighting method for point cloud: %s',self.weighting)
-            self.log.info('Power Weighting distance : %f',self.weight_power) 
+            self.log.info('Power Weighting distance : %f',self.weight_power)
 
         if self.single :
             self.log.info(' Single = true, creating a set of single exposures mapped' +
-                          ' to output IFUCube coordinate system') 
+                          ' to output IFUCube coordinate system')
 #________________________________________________________________________________
     # read input parameters - Channel, Band (Subchannel), Grating, Filter
 #________________________________________________________________________________
         self.pars_input = {}
         self.pars_input['channel'] = []     # input parameter or determined from reading in files
-        self.pars_input['subchannel'] = []  # inputparameter or determined from reading in files 
+        self.pars_input['subchannel'] = []  # inputparameter or determined from reading in files
 
         self.pars_input['filter'] = []   # input parameter
         self.pars_input['grating'] = []  # input parameter
         read_user_input(self)  # see if options channel, band,grating filter are set
-                               # if they are filling par_input with values 
+                               # if they are filling par_input with values
 #________________________________________________________________________________
 #data_types: DataTypes: Read in the input data - 4 formats are allowed:
 # 1. filename
 # 2. single model
 # 3. ASN table
 # 4. model containter
-# figure out what type of data we have an fill in the 
+# figure out what type of data we have an fill in the
 # input_table.input_models - which is used in the rest of IFU Cube Building
 # We need to do this in cube_build_step because we need to pass the data_model to
 # CRDS to figure out what type of reference files to grab (MIRI or NIRSPEC)
@@ -137,7 +142,7 @@ class CubeBuildStep (Step):
         self.input_models = input_table.input_models
         self.input_filenames = input_table.filenames
         self.output_name_base = input_table.output_name
-        self.data_type = input_table.data_type 
+        self.data_type = input_table.data_type
 #________________________________________________________________________________
 # Read in Cube Parameter Reference file
         # identify what reference file has been associated with these input
@@ -147,7 +152,7 @@ class CubeBuildStep (Step):
             self.log.warning('No default cube parameters reference file found')
             return
 #________________________________________________________________________________
-# If miripsf weight is set then set up reference file 
+# If miripsf weight is set then set up reference file
         # identify what reference file has been associated with these inputs
         resol_filename = None
         if(self.weighting == 'miripsf'):
@@ -158,7 +163,7 @@ class CubeBuildStep (Step):
                 self.log.warning('Run again and turn off miripsf')
                 return
 #________________________________________________________________________________
-# shove the input parameters in to pars to pull out in work horse module - 
+# shove the input parameters in to pars to pull out in work horse module -
 # cube_build.py
 
         pars = {
@@ -216,7 +221,7 @@ class CubeBuildStep (Step):
 #________________________________________________________________________________
 # build the IFU Cube
 
-# If single = True: map each file to output grid and return single mapped file 
+# If single = True: map each file to output grid and return single mapped file
 #to output grid
 # this option is used for background matching and outlier rejection
 
@@ -243,7 +248,7 @@ def read_user_input(self):
     Short Summary
     -------------
     figure out if any of the input paramters channel,band,filter or grating
-    have been set. If they have been  check that they are valid and fill in 
+    have been set. If they have been  check that they are valid and fill in
     input_pars paramters
 
     Parameters

@@ -36,7 +36,7 @@ import re
 
 # THIRD-PARTY
 import numpy as np
-from astropy.extern import six
+import six
 
 # LOCAL
 from . import objects

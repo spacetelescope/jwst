@@ -9,6 +9,7 @@ import numpy as np
 import logging
 from .. import datamodels
 from .. datamodels import dqflags
+from .. lib import reffile_utils
 from .. assign_wcs import nirspec       # for NIRSpec IFU data
 
 log = logging.getLogger(__name__)
@@ -107,11 +108,11 @@ def do_flat_field(output_model, flat_model):
 
     any_updated = False # will set True if any flats applied
 
-    # Apply flat to simple ImageModels
-    if isinstance(output_model, datamodels.ImageModel):
-        log.debug('Applying flat to ImageModel ...')
-        apply_flat_field(output_model, flat_model)
-        any_updated = True
+    # Check to see if flat data array is smaller than science data
+    if (output_model.data.shape[-1] > flat_model.data.shape[-1]) or \
+       (output_model.data.shape[-2] > flat_model.data.shape[-2]):
+        log.warning('Reference data array is smaller than science data')
+        log.warning('Step will be skipped')
 
     # Apply flat to MultiSlits
     elif isinstance(output_model, datamodels.MultiSlitModel):
@@ -122,9 +123,8 @@ def do_flat_field(output_model, flat_model):
             apply_flat_field(slit, flat_model)
             any_updated = True
 
-    # Apply flat to multiple-integration dataset
-    elif isinstance(output_model, datamodels.CubeModel):
-        log.debug('Applying flat to CubeModel')
+    # Apply flat to all other models
+    else:
         apply_flat_field(output_model, flat_model)
         any_updated = True
 
@@ -155,15 +155,16 @@ def apply_flat_field(science, flat):
     None
     """
 
-    # If the input science data model is a subarray, extract the same
-    # subarray from the flatfield model
-    if ref_matches_sci(flat, science):
+    # Extract subarray from reference data, if necessary
+    if reffile_utils.ref_matches_sci(science, flat):
         flat_data = flat.data
         flat_dq = flat.dq
     else:
         log.info("Extracting matching subarray from flat")
-        flat_data = get_subarray(flat.data, science)
-        flat_dq = get_subarray(flat.dq, science)
+        sub_flat = reffile_utils.get_subarray_model(science, flat)
+        flat_data = sub_flat.data.copy()
+        flat_dq = sub_flat.dq.copy()
+        sub_flat.close()
 
     # For pixels whose flat is either NaN or NO_FLAT_FIELD, update their DQ to
     # indicate that no flat is applied to those pixels
@@ -178,8 +179,16 @@ def apply_flat_field(science, flat):
     wh_dq = np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD'])
     flat_data[wh_dq == dqflags.pixel['NO_FLAT_FIELD']] = 1.0
 
+    # For GuiderCalModel data, only apply flat to science data array;
+    # there isn't an error array.
+    if isinstance(science, datamodels.GuiderCalModel):
+            # Flatten data array
+            science.data /= flat_data
+            # Combine the science and flat DQ arrays
+            science.dq = np.bitwise_or(science.dq, flat_dq)
+
     # For CubeModel science data, apply flat to each integration
-    if isinstance(science, datamodels.CubeModel):
+    elif isinstance(science, datamodels.CubeModel):
         for integ in range(science.data.shape[0]):
             # Flatten data and error arrays
             science.data[integ] /= flat_data
@@ -187,118 +196,14 @@ def apply_flat_field(science, flat):
             # Combine the science and flat DQ arrays
             science.dq[integ] = np.bitwise_or(science.dq[integ], flat_dq)
 
+    # For 2D ImageModel science data, apply flat to entire arrays
     else:
-
         # Flatten data and error arrays
         science.data /= flat_data
         science.err /= flat_data
 
         # Combine the science and flat DQ arrays
         science.dq = np.bitwise_or(science.dq, flat_dq)
-
-
-def ref_matches_sci(ref_model, sci_model):
-    """
-    Short Summary
-    -------------
-    Check if the science model has the same subarray parameters as the
-    reference model.
-
-    Parameters
-    ----------
-    ref_model: JWST data model
-        data model containing flat-field
-
-    sci_model: JWST data model
-        input science data model to be flat-fielded
-
-    Returns
-    -------
-    True if the science model has the same subarray parameters as the
-    reference model, False otherwise.
-
-    """
-    # Get the science model subarray parameters
-    try:
-        sxstart = sci_model.xstart
-        sxsize = sci_model.xsize
-        systart = sci_model.ystart
-        sysize = sci_model.ysize
-    except:
-        sxstart = sci_model.meta.subarray.xstart
-        sxsize = sci_model.meta.subarray.xsize
-        systart = sci_model.meta.subarray.ystart
-        sysize = sci_model.meta.subarray.ysize
-
-    # Get the flat model subarray parameters
-    rxstart = ref_model.meta.subarray.xstart
-    rxsize = ref_model.meta.subarray.xsize
-    rystart = ref_model.meta.subarray.ystart
-    rysize = ref_model.meta.subarray.ysize
-
-    if rxstart is None:
-        rxstart = 1
-    if rxsize is None:
-        rxsize = ref_model.data.shape[-1]
-    if rystart is None:
-        rystart = 1
-    if rysize is None:
-        rysize = ref_model.data.shape[-2]
-
-    log.debug(' sci xstart=%d, xsize=%d', sxstart, sxsize)
-    log.debug(' sci ystart=%d, ysize=%d', systart, sysize)
-    log.debug(' ref xstart=%d, xsize=%d', rxstart, rxsize)
-    log.debug(' ref ystart=%d, ysize=%d', rystart, rysize)
-
-    # See if they match the reference model subarray parameters
-    if (rxstart == sxstart and rxsize == sxsize and
-        rystart == systart and rysize == sysize):
-        return True
-    else:
-        return False
-
-
-def get_subarray(input_array, sci_model):
-    """
-    Short Summary
-    -------------
-    Return the slice from the input array using the subarray parameters of the
-    science model.
-
-    Parameters
-    ----------
-    input_array: 2D numpy array
-        input array from which a subarray is extracted
-
-    sci_model: JWST data model
-        input science data model
-
-    Returns
-    -------
-    A slice: 2D numpy array
-        slice from the input array
-    """
-
-    # Get the science model subarray parameters
-    try:
-        xstart = sci_model.xstart
-        xsize = sci_model.xsize
-        ystart = sci_model.ystart
-        ysize = sci_model.ysize
-    except:
-        xstart = sci_model.meta.subarray.xstart
-        xsize = sci_model.meta.subarray.xsize
-        ystart = sci_model.meta.subarray.ystart
-        ysize = sci_model.meta.subarray.ysize
-
-    # Compute the slicing indexes
-    xstart = xstart - 1
-    xstop = xstart + xsize
-    ystart = ystart - 1
-    ystop = ystart + ysize
-
-    # Return the slice from the input array
-    return input_array[ystart:ystop, xstart:xstop]
 
 
 #

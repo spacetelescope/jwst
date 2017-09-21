@@ -74,8 +74,8 @@ def imaging(input_model, reference_files):
     except NotImplementedError:
         shape = input_model.data.shape
         # Note: Since bounding_box is attached to the model here it's in reverse order.
-        distortion.bounding_box = ((-0.5, shape[0] - 0.5), (3.5, shape[1] - 4.5))
-
+        bb = ((-0.5, shape[0] - 0.5), (3.5, shape[1] - 4.5))
+    distortion.bounding_box = bb
     # Create the pipeline
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),
@@ -298,7 +298,6 @@ def detector_to_abl(input_model, reference_files):
     band = input_model.meta.instrument.band
     channel = input_model.meta.instrument.channel
     # used to read the wavelength range
-    channels = [c + band for c in channel]
 
     with DistortionMRSModel(reference_files['distortion']) as dist:
         alpha_model = dist.alpha_model
@@ -394,7 +393,7 @@ def abl_to_v2v3l(input_model, reference_files):
         del chan_v23.inverse
         # This is the spatial part of the transform; tack on additional conversion to degrees
         # Remove this degrees conversion once pipeline can handle v2,v3 in arcsec
-        v23_spatial=chan_v23 | models.Scale(1 / 3600) & models.Scale(1 / 3600)
+        v23_spatial = chan_v23 | models.Scale(1 / 3600) & models.Scale(1 / 3600)
         v23_spatial.inverse = models.Scale(3600) & models.Scale(3600) | v23chan_backward
         # Tack on passing the third wavelength component
         v23c = v23_spatial & ident1
@@ -444,7 +443,7 @@ def get_wavelength_range(input_model, path=None):
         raise IOError("Reference file {0} not found. Please specify a path.".format(fname))
     else:
         fname = os.path.join(path, fname)
-        f = AsdfFile.open(fname)
+        f = WavelengthrangeModel(fname)
 
     wave_range = f.tree['wavelengthrange'].copy()
     wave_channels = f.tree['channels']
@@ -454,4 +453,4 @@ def get_wavelength_range(input_model, path=None):
     channel = input_model.meta.instrument.channel
     band = input_model.meta.instrument.band
 
-    return dict([(ch+band, wr[ch+band]) for ch in channel ])
+    return dict([(ch + band, wr[ch + band]) for ch in channel])

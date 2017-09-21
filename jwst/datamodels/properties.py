@@ -8,7 +8,7 @@ import numpy as np
 import jsonschema
 import warnings
 
-from astropy.extern import six
+import six
 from astropy.utils.compat.misc import override__dir__
 
 from asdf import schema
@@ -141,6 +141,14 @@ def _get_schema_for_index(schema, i):
             return items[i]
     else:
         return items
+
+def _find_property(schema, attr):
+    subschema = _get_schema_for_property(schema, attr)
+    if subschema == {}:
+        find = False
+    else:
+        find = 'default' in subschema
+    return find
 
 class ValidationWarning(Warning):
     pass
@@ -370,6 +378,7 @@ class ListNode(Node):
     def extend(self, other):
         for part in _unmake_node(other):
             self.append(part)
+        self._validate()
 
     def item(self, **kwargs):
         assert isinstance(self._schema['items'], dict)

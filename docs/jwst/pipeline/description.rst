@@ -50,7 +50,7 @@ exposure at a time. The pipeline module for level-2a processing is
 often referred to as ``ramps-to-slopes`` processing, because the input raw data
 are in the form of one or more ramps (integrations) containing accumulating
 counts from the non-destructive detector readouts and the output is a corrected
-countrate (slope) image. The list of steps applied by the Build 7 calwebb_sloper
+countrate (slope) image. The list of steps applied by the Build 7.1 calwebb_sloper
 pipeline is as follows.
 
 ==============  ==============
@@ -64,10 +64,12 @@ ipc             ipc
 superbias       linearity
 refpix          rscd
 linearity       lastframe
-dark_current    dark_current
-\               refpix
+persistence     dark_current
+dark_current    refpix
+\               persistence
 jump            jump
 ramp_fit        ramp_fit
+gain_scale      gain_scale
 ==============  ==============
 
 Inputs

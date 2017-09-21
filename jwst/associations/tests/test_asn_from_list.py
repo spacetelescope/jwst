@@ -98,7 +98,7 @@ def test_default_with_type():
     asn = asn_from_list(
         [(item, type_) for item, type_ in items.items()],
         product_name=product_name,
-        with_type=True
+        with_exptype=True
     )
     assert asn['asn_rule'] == 'DMS_Level3_Base'
     assert asn['asn_type'] == 'None'
@@ -132,7 +132,7 @@ def test_default_roundtrip():
     asn = asn_from_list(
         [(item, type_) for item, type_ in items.items()],
         product_name=product_name,
-        with_type=True
+        with_exptype=True
     )
     name, serialized = asn.dump()
     reloaded = load_asn(serialized)
@@ -222,7 +222,7 @@ def test_api_with_type():
         ('c', 'science')
     ]
 
-    asn = asn_from_list(inlist, product_name=product_name, with_type=True)
+    asn = asn_from_list(inlist, product_name=product_name, with_exptype=True)
     assert len(asn['products']) == 1
     assert asn['products'][0]['name'] == product_name
     members = asn['products'][0]['members']

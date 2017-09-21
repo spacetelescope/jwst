@@ -76,14 +76,15 @@ def imaging_distortion(input_model, reference_files):
     except NotImplementedError:
         shape = input_model.data.shape
         # Note: Since bounding_box is attached to the model here it's in reverse order.
-        transform.bounding_box = ((-0.5, shape[0] - 0.5),
-                                  (-0.5 , shape[1] - 0.5))
+        bb = ((-0.5, shape[0] - 0.5),
+              (-0.5, shape[1] - 0.5))
+    transform.bounding_box = bb
     return transform
 
 
 exp_type2transform = {'fgs_image': imaging,
                       'fgs_focus': imaging,
-                      'fgs_skyflat': imaging,
-                      'fgs_intflat': imaging,
+                      'fgs_skyflat': not_implemented_mode,
+                      'fgs_intflat': not_implemented_mode,
                       'fgs_dark': not_implemented_mode
                       }

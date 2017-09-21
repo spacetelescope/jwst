@@ -41,7 +41,7 @@ def test_run_outlier_only(mk_tmp_dirs):
 
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'jw80600-a3002_20170227t160430_spec3_001_asn.json'),
-        root=DATAPATH
+        root=path.join(DATAPATH, 'level2b')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
@@ -63,7 +63,7 @@ def test_run_resample_mock_only(mk_tmp_dirs):
 
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'jw80600-a3002_20170227t160430_spec3_001_asn.json'),
-        root=DATAPATH
+        root=path.join(DATAPATH, 'level2b')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_mock.cfg'),
@@ -90,7 +90,7 @@ def test_run_extract_1d_resample_mock_only(mk_tmp_dirs):
 
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'jw80600-a3002_20170227t160430_spec3_001_asn.json'),
-        root=DATAPATH
+        root=path.join(DATAPATH, 'level2b')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_mock.cfg'),
@@ -123,7 +123,7 @@ def test_run_resample_only(mk_tmp_dirs):
 
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'jw80600-a3002_20170227t160430_spec3_001_asn.json'),
-        root=DATAPATH
+        root=path.join(DATAPATH, 'level2b')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
@@ -152,7 +152,7 @@ def test_run_extract_1d_only(mk_tmp_dirs):
 
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'jw80600-a3002_20170227t160430_spec3_001_asn.json'),
-        root=DATAPATH
+        root=path.join(DATAPATH, 'level2b')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
@@ -179,7 +179,7 @@ def test_run_nosteps(mk_tmp_dirs):
 
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'jw80600-a3002_20170227t160430_spec3_001_asn.json'),
-        root=DATAPATH
+        root=path.join(DATAPATH, 'level2b')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
@@ -212,7 +212,7 @@ def test_run_mir_lrs_fixedslit(mk_tmp_dirs):
 
     asn_path = update_asn_basedir(
         path.join(DATAPATH, 'jw80600-a3002_20170227t160430_spec3_001_asn.json'),
-        root=DATAPATH
+        root=path.join(DATAPATH, 'level2b')
     )
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),

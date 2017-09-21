@@ -48,6 +48,8 @@ class FlatFieldStep(Step):
             self.log.debug('Input is an ImageModel')
         elif isinstance(input_model, datamodels.MultiSlitModel):
             self.log.debug('Input is a MultiSlitModel')
+        elif isinstance(input_model, datamodels.GuiderCalModel):
+            self.log.debug('Input is a GuiderCalModel')
 
         if input_model.meta.instrument.name.upper() == "NIRSPEC":
             if (exposure_type not in NRS_SPEC_MODES and

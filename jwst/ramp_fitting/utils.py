@@ -9,6 +9,7 @@ import logging
 
 from .. import datamodels
 from ..datamodels import dqflags
+from ..lib import reffile_utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -112,7 +113,6 @@ class OptRes(object):
 
         Returns
         -------
-
         """
 
         for ii_seg in range(0, self.yint_seg.shape[1]):
@@ -388,7 +388,6 @@ def calc_slope_int(slope_int, m_by_var_int, inv_var_int, num_int):
     -------
     slope_slice: float, 2D array
         slope image for given integration
-
     """
     slope_slice = slope_int[num_int, :, :].copy()
     m_slice = m_by_var_int[num_int, :, :]
@@ -859,36 +858,17 @@ def get_ref_subs(model, readnoise_model, gain_model):
     gain_2d: float, 2D array
         gain subarray
     """
-    xstart = model.meta.subarray.xstart
-    xsize = model.meta.subarray.xsize
-    ystart = model.meta.subarray.ystart
-    ysize = model.meta.subarray.ysize
-
-    if (readnoise_model.meta.subarray.xstart == xstart and
-        readnoise_model.meta.subarray.xsize == xsize and
-        readnoise_model.meta.subarray.ystart == ystart and
-        readnoise_model.meta.subarray.ysize == ysize):
-
-        log.debug('Readnoise subarray matches science data')
-        readnoise_2d = readnoise_model.data
-    else:
-        log.debug('Extracting readnoise subarray to match science data')
-        xstop = xstart + xsize - 1
-        ystop = ystart + ysize - 1
-        readnoise_2d = readnoise_model.data[ystart - 1:ystop, xstart - 1:xstop]
-
-    if (gain_model.meta.subarray.xstart == xstart and
-        gain_model.meta.subarray.xsize == xsize and
-        gain_model.meta.subarray.ystart == ystart and
-        gain_model.meta.subarray.ysize == ysize):
-
-        log.debug('Gain subarray matches science data')
+    if reffile_utils.ref_matches_sci(model, gain_model):
         gain_2d = gain_model.data
     else:
-        log.debug('Extracting gain subarray to match science data')
-        xstop = xstart + xsize - 1
-        ystop = ystart + ysize - 1
-        gain_2d = gain_model.data[ystart - 1:ystop, xstart - 1:xstop]
+        log.info('Extracting gain subarray to match science data')
+        gain_2d = reffile_utils.get_subarray_data(model, gain_model)
+
+    if reffile_utils.ref_matches_sci(model, readnoise_model):
+        readnoise_2d = readnoise_model.data
+    else:
+        log.info('Extracting readnoise subarray to match science data')
+        readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
 
     readnoise_2d *= gain_2d # convert read noise to correct units
 

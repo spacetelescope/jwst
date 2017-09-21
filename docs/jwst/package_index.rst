@@ -22,12 +22,14 @@ Package Index
    fits_generator/index.rst
    flatfield/index.rst
    fringe/index.rst
+   gain_scale/index.rst
    group_scale/index.rst
    imprint/index.rst
    ipc/index.rst
    jump/index.rst
    lastframe/index.rst
    linearity/index.rst
+   mrs_imatch/index.rst
    outlier_detection/index.rst
    pathloss/index.rst
    persistence/index.rst

@@ -395,11 +395,11 @@ class DataSet():
         Parameters
         ----------
         ref: data model
-            A reference image.
+            Reference data.
 
         slc: tuple of two slice objects
             The Y and X slices that can be used to extract a subarray from
-            the reference file.  This is returned by function get_slice.
+            the reference file.  This was returned by function get_slice.
 
         Returns
         -------
@@ -419,26 +419,26 @@ class DataSet():
 
         Parameters
         ----------
-        ref: data model
-            A reference image.
+        ref: a data model object
+            Reference data.
 
         slc: tuple of two slice objects
             The Y and X slices that can be used to extract a subarray from
-            the reference file.  This is returned by function get_slice.
+            the reference file.  This was returned by function get_slice.
 
         Returns
         -------
         refsub: data model
-            `refsub` is the subarray extracted from `ref`.  `refsub` will
-            sometimes be 2-D and other times 3-D.
+            `refsub` is the subarray extracted from `ref`.
         """
 
         refsub = ref.copy()
-        refsub.data = ref.data[..., slc[0], slc[1]].copy()
-        if ref.__hasattr__(err):
-            refsub.err = ref.err[..., slc[0], slc[1]].copy()
-        if ref.__hasattr__(dq):
-            refsub.dq = ref.dq[..., slc[0], slc[1]].copy()
+        # If the reference file data might have a dimension greater than
+        # two, use this syntax:
+        # refsub.data = ref.data[..., slc[0], slc[1]].copy()
+        refsub.data = ref.data[slc[0], slc[1]].copy()
+        if "dq" in ref:
+            refsub.dq = ref.dq[slc[0], slc[1]].copy()
 
         return refsub
 

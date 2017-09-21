@@ -39,7 +39,7 @@ from ..main import Main
         # Discovered only
         (
             ['--discover'],
-            1
+            0
         ),
         # Candidates only
         (

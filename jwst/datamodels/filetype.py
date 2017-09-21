@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals, division, print_function
 
 import os.path
-from astropy.extern import six
+import six
 
 def check(init):
     """

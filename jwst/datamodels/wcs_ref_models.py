@@ -12,7 +12,8 @@ from .reference import ReferenceFileModel
 __all__ = ['DistortionModel', 'DistortionMRSModel', 'SpecwcsModel', 'RegionsModel',
            'WavelengthrangeModel', 'CameraModel', 'CollimatorModel', 'OTEModel',
            'FOREModel', "FPAModel", 'IFUPostModel', 'IFUFOREModel', 'IFUSlicerModel',
-           'MSAModel', 'FilteroffsetModel', 'DisperserModel']
+           'MSAModel', 'FilteroffsetModel', 'DisperserModel',
+           'NIRCAMGrismModel', 'NIRISSGrismModel', 'WaveCorrModel']
 
 
 class _SimpleModel(ReferenceFileModel):
@@ -145,7 +146,116 @@ class SpecwcsModel(_SimpleModel):
     def validate(self):
         assert isinstance(self.meta.input_units, (str, u.NamedUnit))
         assert isinstance(self.meta.output_units, (str, u.NamedUnit))
-        assert self.meta.instrument.name in ["NIRCAM", "NIRSPEC", "MIRI", "TFI", "FGS", "NIRISS"]
+        assert self.meta.instrument.name in ["NIRCAM",
+                                             "NIRSPEC",
+                                             "MIRI",
+                                             "TFI",
+                                             "FGS",
+                                             "NIRISS"]
+
+
+class NIRCAMGrismModel(ReferenceFileModel):
+    """
+    A model for a reference file of type "specwcs" for NIRCAM grisms.
+
+    This reference file contains the models for wave, x, and y polynomial
+    solutions that describe dispersion through the grism
+    """
+    schema_url = "specwcs_nircam_grism.schema.yaml"
+    reftype = "specwcs"
+
+    def __init__(self, init=None,
+                       displ=None,
+                       dispx=None,
+                       dispy=None,
+                       invdispl=None,
+                       invdispx=None,
+                       invdispy=None,
+                       orders=None,
+                       **kwargs):
+        super(NIRCAMGrismModel, self).__init__(init=init, **kwargs)
+
+        if init is None:
+            self.populate_meta()
+        if displ is not None:
+            self.displ = displ
+        if dispx is not None:
+            self.dispx = dispx
+        if dispy is not None:
+            self.dispy = dispy
+        if invdispl is not None:
+            self.invdispl = invdispl
+        if invdispx is not None:
+            self.invdispx = invdispx
+        if invdispy is not None:
+            self.invdispy = invdispy
+        if orders is not None:
+            self.orders = orders
+
+    def populate_meta(self):
+        self.meta.instrument.name = "NIRCAM"
+        self.meta.exposure.type = "NRC_GRISM"
+        self.meta.reftype = self.reftype
+
+    def validate(self):
+        assert isinstance(self.meta.input_units, (str, u.NamedUnit))
+        assert isinstance(self.meta.output_units, (str, u.NamedUnit))
+        assert self.meta.instrument.name == "NIRCAM"
+        assert self.meta.exposure.type == "NRC_GRISM"
+        assert self.meta.reftype == self.reftype
+
+    def to_fits(self):
+        raise NotImplementedError("FITS format is not supported for this file.")
+
+
+class NIRISSGrismModel(ReferenceFileModel):
+    """
+    A model for a reference file of type "specwcs" for NIRISS grisms.
+    """
+    schema_url = "specwcs_niriss_grism.schema.yaml"
+    reftype = "specwcs"
+
+    def __init__(self, init=None,
+                       displ=None,
+                       dispx=None,
+                       dispy=None,
+                       invdispl=None,
+                       orders=None,
+                       fwcpos_ref=None,
+                       **kwargs):
+        super(NIRISSGrismModel, self).__init__(init=init, **kwargs)
+
+        if init is None:
+            self.populate_meta()
+        if displ is not None:
+            self.displ = displ
+        if dispx is not None:
+            self.dispx = dispx
+        if dispy is not None:
+            self.dispy = dispy
+        if invdispl is not None:
+            self.invdispl = invdispl
+        if orders is not None:
+            self.orders = orders
+        if fwcpos_ref is not None:
+            self.fwcpos_ref = fwcpos_ref
+
+    def populate_meta(self):
+        self.meta.instrument.name = "NIRISS"
+        self.meta.instrument.detector = "NIS"
+        self.meta.exposure.type = "NIS_WFSS"
+        self.meta.reftype = self.reftype
+
+    def validate(self):
+        assert isinstance(self.meta.input_units, (str, u.NamedUnit))
+        assert isinstance(self.meta.output_units, (str, u.NamedUnit))
+        assert self.meta.instrument.name == "NIRISS"
+        assert self.meta.exposure.type == "NIS_WFSS"
+        assert self.meta.instrument.detector == "NIS"
+        assert self.meta.reftype == self.reftype
+
+    def to_fits(self):
+        raise NotImplementedError("FITS format is not supported for this file.")
 
 
 class RegionsModel(ReferenceFileModel):
@@ -181,7 +291,7 @@ class RegionsModel(ReferenceFileModel):
 class WavelengthrangeModel(ReferenceFileModel):
     """
     A model for a reference file of type "wavelengthrange".
-    The model is used by MIRI and NIRSPEC.
+    The model is used by MIRI, NIRSPEC, NIRCAM, and NIRISS
     """
     schema_url = "wavelengthrange.schema.yaml"
     reftype = "wavelengthrange"
@@ -206,7 +316,7 @@ class WavelengthrangeModel(ReferenceFileModel):
 
     def validate(self):
         super(WavelengthrangeModel, self).validate()
-        assert self.meta.instrument.name in ("MIRI", "NIRSPEC")
+        assert self.meta.instrument.name in ("MIRI", "NIRSPEC", "NIRCAM", "NIRISS")
 
 
 class FPAModel(ReferenceFileModel):
@@ -524,3 +634,31 @@ class FOREModel(_SimpleModel):
         super(FOREModel, self).validate()
         assert self.meta.instrument.filter in ["CLEAR", "F070LP", "F100LP", "F110W",
                                                "F140X", "F170LP", "F290LP"]
+
+
+class WaveCorrModel(ReferenceFileModel):
+
+    reftype = "wavecorr"
+    schema_url = "wavecorr.schema.yaml"
+
+    def __init__(self, init=None, apertures=None, **kwargs):
+        super(WaveCorrModel, self).__init__(init, **kwargs)
+        if apertures is not None:
+            self.apertures = apertures
+        if init is None:
+            self.populate_meta()
+
+    @property
+    def aperture_names(self):
+        return [getattr(ap, 'aperture_name') for ap in self.apertures]
+        
+    def populate_meta(self):
+        self.meta.instrument.name = "NIRSPEC"
+
+    def on_save(self, path=None):
+        self.meta.reftype = self.reftype
+
+    def validate(self):
+        super(WaveCorrModel, self).validate()
+        assert self.aperture_names is not None
+        assert self.apertures is not None

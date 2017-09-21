@@ -13,7 +13,7 @@ import io
 import os
 import os.path
 import textwrap
-from astropy.extern import six
+import six
 
 from . import config_parser
 from . import log

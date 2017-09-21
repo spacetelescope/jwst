@@ -29,19 +29,17 @@
 """
 A client library for CRDS
 """
-import contextlib
-from os.path import dirname, join
 import re
-from astropy.extern import six
-
-# ----------------------------------------------------------------------
-
 import gc
 
 # ----------------------------------------------------------------------
 
+import six
+
+# ----------------------------------------------------------------------
+
 import crds
-from crds import log, config
+from crds.core import log, config, exceptions, heavy_client
 
 try:
     from crds.core import crds_cache_locking
@@ -52,7 +50,13 @@ except ImportError:
 # ----------------------------------------------------------------------
 
 def _flatten_dict(nested):
+    """Takes a hierarchical arbitrarily nested dictionary of dictionaries, much
+    like a data model, and flattens it.  The end result has only non-dictionary
+    values referred to by the dotted paths that describe the traversal down
+    through the nested dictionaries to their values.
+    """
     def flatten(root, path, output):
+        """Private worker function for _flatten_dict()."""
         for key, val in root.items():
             if isinstance(key, six.string_types):
                 if isinstance(val, dict):
@@ -72,10 +76,8 @@ def get_multiple_reference_paths(input_file, reference_file_types):
     get_multiple_reference_paths() layers these additional tasks onto
     crds.getreferences():
 
-    1. It converts an input file into a flat dictionary of JWST data
-    model dotted parameters.
-
-    2. It verifies than any true filepath (not N/A) returned is openable.
+    It converts an input file into a flat dictionary of JWST data
+    model dotted parameters for defining CRDS best references.
 
     Returns { filetype : filepath or "N/A", ... }
     """
@@ -86,14 +88,10 @@ def get_multiple_reference_paths(input_file, reference_file_types):
     if not reference_file_types:   # [] interpreted as *all types*.
         return {}
 
-    if six.PY2:
-        model_types = (str, unicode, datamodels.DataModel)
-    else:
-        model_types = (str, datamodels.DataModel)
-    if isinstance(input_file, model_types):
+    if isinstance(input_file, (six.string_types, datamodels.DataModel)):
         with datamodels.open(input_file) as dm:
             data_dict = dm.to_flat_dict(include_arrays=False)
-    else:
+    else:  # XXX not sure what this does... seems unneeded.
         data_dict = _flatten_dict(input_file)
 
     gc.collect()
@@ -110,7 +108,7 @@ def get_multiple_reference_paths(input_file, reference_file_types):
         raise crds.CrdsBadReferenceError(str(exc))
 
     refpaths = {filetype: filepath if "N/A" not in filepath.upper() else "N/A"
-                 for (filetype, filepath) in bestrefs.items()}
+                for (filetype, filepath) in bestrefs.items()}
 
     return refpaths
 
@@ -138,16 +136,14 @@ def get_reference_file(input_file, reference_file_type):
 
     reference_file_type : string
         The type of reference file to retrieve.  For example, to
-        retrieve a flat field reference file, this would be
-        'flat_field'.
+        retrieve a flat field reference file, this would be 'flat'.
 
     Returns
     -------
     reference_filepath : string
         The path of the reference in the CRDS file cache.
     """
-    # First item = 0,  tuple name element = 1
-    return list(get_multiple_reference_paths(input_file, [reference_file_type]).items())[0][1]
+    return get_multiple_reference_paths(input_file, [reference_file_type])[reference_file_type]
 
 def get_override_name(reference_file_type):
     """
@@ -179,7 +175,7 @@ def get_svn_version():
 
 def get_context_used():
     """Return the context (.pmap) used for determining best references."""
-    _connected, final_context = crds.heavy_client.get_processing_mode("jwst")
+    _connected, final_context = heavy_client.get_processing_mode("jwst")
     return final_context
 
 def reference_uri_to_cache_path(reference_uri):
@@ -195,6 +191,7 @@ def reference_uri_to_cache_path(reference_uri):
 
     The default CRDS_PATH value is /grp/crds/cache, currently on the Central Store.
     """
-    assert reference_uri.startswith("crds://"), "CRDS file URI's should start with 'crds://'"
+    if not reference_uri.startswith("crds://"):
+        raise exceptions.CrdsError("CRDS reference URI's should start with 'crds://' but got", repr(reference_uri))
     basename = config.pop_crds_uri(reference_uri)
     return crds.locate_file(basename, "jwst")

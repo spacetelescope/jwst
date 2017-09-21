@@ -12,8 +12,9 @@ from .. import (
     generate)
 from ..registry import (
     import_from_file,
-    find_member
+    find_object
 )
+
 
 # Basic Association object
 def test_read_assoc_defs():
@@ -108,7 +109,7 @@ def test_base_instatiation():
                 }
             },
             helpers.t_path('data/pool_001_candidates.csv'),
-            3,
+            22,
         ),
         (
             {
@@ -119,7 +120,7 @@ def test_base_instatiation():
                 }
             },
             helpers.t_path('data/pool_001_candidates.csv'),
-            5,
+            24,
         ),
     ]
 )
@@ -139,8 +140,8 @@ def test_global_constraints(constraints, pool, n_asns):
 
 
 def test_rulesets():
-    """Test finding members in a ruleset"""
+    """Test finding objects in a ruleset"""
     rule_file = helpers.t_path('../lib/association_rules.py')
     module = import_from_file(rule_file)
-    schemas = [schema for schema in find_member(module, 'ASN_SCHEMA')]
+    schemas = [schema for schema in find_object(module, 'ASN_SCHEMA')]
     assert len(schemas) == 2

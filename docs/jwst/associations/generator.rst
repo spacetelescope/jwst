@@ -22,14 +22,13 @@ that have not already been created are checked for. This is to prevent
 cyclical creation of associations.
 
 As discussed in :ref:`design-association`, associations are Python
-classes, often referred to as the `association rules`, and their
-instantiations, referred to as the `associations`. The check on
-whether a member would create an association is done by trying to
-instantiate the association rule with the member in question. If the
-instantiation succeeds, the newly created association is added to the
-list of existing associations. Otherwise, the next association class
-(rule) is tried. This process of checking whether a member would
-create any associations is encapsulated in the
+classes, often referred to as `association rules`, and their
+instantiations, referred to as `associations`. An association is
+created by calling the :meth:`Association.create
+<jwst.associations.association.Association.create>` class method for each
+association rule. If the member matches the rule, an association is
+returned. Each defined rule tried. This process of checking whether a
+member would create any associations is encapsulated in the
 :meth:`AssociationRegistry.match
 <jwst.associations.registry.AssociationRegistry.match>` method
 
@@ -38,9 +37,9 @@ association, an attempt is made to add the member using the
 :meth:`Association.add
 <jwst.associations.association.Association.add>` method. If the
 addition succeeds, the member has been added to the association
-instance. Otherwise an exception is raised. The generator uses
-:func:`match_member <jwst.associations.generate.match_member>` function
-to loop through its list of existing associations.
+instance. The generator uses :func:`match_member
+<jwst.associations.generate.match_member>` function to loop through
+its list of existing associations.
 
 Output
 ------
@@ -72,7 +71,7 @@ like a list::
 
 When this is the case, a *mini pool* is created. This pool consists of
 duplicates of the original member. However, for each copy of the
-member, the attribute that was the list is no populated with
+member, the attribute that was the list is now populated with
 consecutive members of that list. This mini pool and the rule or
 association in which this was found, is passed back up to the
 :ref:`generate` function to be reconsidered for membership. Each value

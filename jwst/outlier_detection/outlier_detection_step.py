@@ -32,13 +32,14 @@ class OutlierDetectionStep(Step):
         scale = string(default='0.5 0.4')
         backg = float(default=0.0)
         save_intermediate_results = boolean(default=False)
+        resample_data = boolean(default=True)
+        good_bits = integer(default=4)
     """
     reference_file_types = ['gain', 'readnoise']
 
     def process(self, input):
 
         with datamodels.open(input) as input_models:
-
             if not isinstance(input_models, datamodels.ModelContainer):
                 self.log.warning("Input is not a ModelContainer.")
                 self.log.warning("Outlier detection step will be skipped.")
@@ -46,8 +47,9 @@ class OutlierDetectionStep(Step):
                 result.meta.cal_step.outlier_detection = "SKIPPED"
                 return result
 
+            self.log.info("Performing outlier detection on {} inputs".format(len(input_models)))
             self.input_models = input_models
-
+            
             reffiles= {}
             reffiles['gain'] = self._build_reffile_container('gain')
             reffiles['readnoise'] = self._build_reffile_container('readnoise')
@@ -64,13 +66,18 @@ class OutlierDetectionStep(Step):
                 'snr': self.snr,
                 'scale': self.scale,
                 'backg': self.backg,
-                'save_intermediate_results': self.save_intermediate_results
+                'save_intermediate_results': self.save_intermediate_results,
+                'resample_data': self.resample_data,
+                'good_bits': self.good_bits
                 }
 
             # Set up outlier detection, then do detection
             step = outlier_detection.OutlierDetection(self.input_models,
                 reffiles=reffiles, **pars)
             step.do_detection()
+
+            for model in self.input_models:
+                model.meta.cal_step.outlier_detection = 'COMPLETE'
 
             return self.input_models
 
@@ -96,7 +103,7 @@ class OutlierDetectionStep(Step):
         reffile_to_model = {'gain': datamodels.GainModel,
             'readnoise': datamodels.ReadnoiseModel}
 
-        reffiles = [self.get_reference_file(im, reftype) for im in self.input_models]
+        reffiles = [self.get_reference_file(im, reftype) for im in self.input_models] 
         self.log.debug("Using {} reffile(s):".format(reftype.upper()))
         for r in set(reffiles):
             self.log.debug("    {}".format(r))
@@ -108,6 +115,7 @@ class OutlierDetectionStep(Step):
             ref_list = [reffile_to_model.get(reftype)(reffiles[0])] * length
         else:
             ref_list = [reffile_to_model.get(reftype)(ref) for ref in reffiles]
+            
         return datamodels.ModelContainer(ref_list)
 
 

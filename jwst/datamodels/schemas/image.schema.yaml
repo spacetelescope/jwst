@@ -1,5 +1,6 @@
 allOf:
 - $ref: core.schema.yaml
+- $ref: wcsinfo.schema.yaml
 - $ref: bunit.schema.yaml
 - type: object
   properties:
@@ -35,6 +36,12 @@ allOf:
       title: Sensitivity array
       fits_hdu: RELSENS2D
       default: 1.0
+      datatype: float32
+    wavelength:
+      title: wavelength array 
+      fits_hdu: WAVELENGTH
+      ndim: 2
+      default: 0.0
       datatype: float32
 - type: object
   properties:

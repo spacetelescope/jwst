@@ -9,5 +9,5 @@ properties:
           p_grating:
             title: Name of the grating element used
             type: string
-            enum: ^((G140M|G235M|G395M|G140H|G235H|G395H|PRISM|MIRROR|N/A|ANY)\\s*\\|\\s*)+$
+            pattern: ^((G140M|G235M|G395M|G140H|G235H|G395H|PRISM|MIRROR|N/A|ANY)\\s*\\|\\s*)+$
             fits_keyword: P_GRATIN

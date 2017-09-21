@@ -16,10 +16,10 @@ class GuiderCalModel( model_base.DataModel):
         Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     data: numpy array
-        The science data. 4-D
+        The science data. 3-D
 
     dq: numpy array
-        The data quality array. 2-D.
+        The data quality array. 2-D
 
     plan_star_table: table
         The planned reference star table

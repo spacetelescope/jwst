@@ -1,7 +1,6 @@
 from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
-import logging
 import numpy as np
 import numpy.ma as ma
 from scipy import interpolate
@@ -16,14 +15,9 @@ from gwcs import WCS, utils, wcstools
 
 from .. import assign_wcs
 
+import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-
-DEFAULT_DOMAIN = {'lower': None,
-                  'upper': None,
-                  'includes_lower': True,
-                  'includes_upper': False}
 
 
 def make_output_wcs(input_models):
@@ -275,7 +269,7 @@ def wcs_from_spec_footprints(wcslist, refwcs=None, transform=None,
     # TODO: generalize an approach to do this for more than one wcs.  For
     # now, we just do it for one, using the api for a list of wcs.
     # Compute a fiducial point for the output frame at center of input data
-    fiducial = compute_spec_fiducial(wcslist, bounding_box=bounding_box)
+    fiducial = compute_spec_fiducial(wcslist)
     # Create transform for output frame
     transform = compute_spec_transform(fiducial, refwcs)
     output_frame = refwcs.output_frame

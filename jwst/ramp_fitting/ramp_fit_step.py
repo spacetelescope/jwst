@@ -4,6 +4,7 @@ from __future__ import division
 
 from ..stpipe import Step, cmdline
 from .. import datamodels
+from ..gain_scale import gain_scale
 from . import ramp_fit
 
 import logging
@@ -18,10 +19,8 @@ class RampFitStep (Step):
     """
 
     spec = """
-        int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
-
     """
 
     # Prior to 04/26/17, the following were also in the spec above:
@@ -41,13 +40,21 @@ class RampFitStep (Step):
 
             readnoise_filename = self.get_reference_file(input_model,
                                                           'readnoise')
-            gain_filename = self.get_reference_file(input_model,
-                                                     'gain')
+            gain_filename = self.get_reference_file(input_model, 'gain')
 
             log.info('Using READNOISE reference file: %s', readnoise_filename)
             readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)
             log.info('Using GAIN reference file: %s', gain_filename)
             gain_model = datamodels.GainModel(gain_filename)
+
+            # Try to retrieve the gain factor from the gain reference file.
+            # If found, store it in the science model meta data, so that it's
+            # available later in the gain_scale step, which avoids having to
+            # load the gain ref file again in that step.
+            input_model.meta.exposure.gain_factor = None
+            if gain_model.meta.gain_factor is not None:
+                input_model.meta.exposure.gain_factor = \
+                    gain_model.meta.gain_factor
 
             log.info('Using algorithm = %s' % self.algorithm)
             log.info('Using weighting = %s' % self.weighting)
@@ -55,24 +62,28 @@ class RampFitStep (Step):
             buffsize = ramp_fit.BUFSIZE
             if self.algorithm == "GLS":
                 buffsize //= 10
-            out_model, int_model, opt_model, gls_opt_model = \
-                        ramp_fit.ramp_fit(input_model,
-                                           buffsize, self.save_opt,
-                                           readnoise_model, gain_model,
-                                           self.algorithm, self.weighting)
+
+            out_model, int_model, opt_model, gls_opt_model, \
+               var_slope_r, var_slope_p, var_r_s_4d, var_p_s_4d = \
+                            ramp_fit.ramp_fit(input_model,
+                                               buffsize, self.save_opt,
+                                               readnoise_model, gain_model,
+                                               self.algorithm, self.weighting)
+
+            out_model.instance['extra_fits']['PoissonNoise'] = {'data': var_p_s_4d}
+            out_model.instance['extra_fits']['ReadNoise'] = {'data': var_r_s_4d}
 
             readnoise_model.close()
+            gain_model.close()
 
-        if int_model is not None:
-            if self.int_name != '':
-                int_model.save(self.int_name)
-            else:
-                self.save_model(int_model, 'rateints')
+        # Save the OLS optional fit product, if it exists
         if opt_model is not None:
             if self.opt_name != '':
                 opt_model.save(self.opt_name)
             else:
                 self.save_model(opt_model, 'fitopt')
+
+        # Save the GLS optional fit product, if it exists
         if gls_opt_model is not None:
             if self.opt_name != '':
                 gls_opt_model.save(self.opt_name)
@@ -80,8 +91,10 @@ class RampFitStep (Step):
                 self.save_model(gls_opt_model, 'fitoptgls')
 
         out_model.meta.cal_step.ramp_fit = 'COMPLETE'
+        if int_model is not None:
+            int_model.meta.cal_step.ramp_fit = 'COMPLETE'
 
-        return out_model
+        return out_model, int_model
 
 if __name__ == '__main__':
     cmdline.step_script(ramp_fit_step)

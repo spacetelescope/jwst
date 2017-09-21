@@ -41,7 +41,7 @@ import datetime
 import argparse
 from collections import OrderedDict
 
-from astropy.extern import six
+import six
 from six.moves.urllib import parse as urlparse
 from six.moves import input
 

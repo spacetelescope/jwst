@@ -12,7 +12,6 @@ from jwst.associations import (
     AssociationRegistry,
     libpath
 )
-from jwst.associations.association import getattr_from_list
 from jwst.associations.lib.dms_base import (DMSBaseMixin, PRODUCT_NAME_DEFAULT)
 from jwst.associations.lib.rules_level3_base import _EMPTY
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
@@ -23,11 +22,13 @@ logger.addHandler(logging.NullHandler())
 
 __all__ = [
     'ASN_SCHEMA',
-    'AsnMixin_Lv2Bkg',
     'AsnMixin_Lv2Image',
+    'AsnMixin_Lv2ImageNonScience',
     'AsnMixin_Lv2Mode',
     'AsnMixin_Lv2Singleton',
     'AsnMixin_Lv2Spec',
+    'AsnMixin_Lv2SpecNonScience',
+    'AsnMixin_Lv2Special',
     'DMSLevel2bBase',
     'Utility'
 ]
@@ -45,7 +46,7 @@ _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{3})_(\d{8}[Tt]\d{6})_pool'
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 _REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)'
 
-# Key that uniquely identfies members.
+# Key that uniquely identfies items.
 KEY = 'expname'
 
 
@@ -78,7 +79,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self.validity.update({
             'has_science': {
                 'validated': False,
-                'check': lambda entry: entry['exptype'] == 'science'
+                'check': lambda member: member['exptype'] == 'science'
             }
         })
 
@@ -98,53 +99,23 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         return result
 
-    def has_science(self, member, check_flags=None):
+    def has_science(self, item):
         """Only allow a single science in the association
 
         Parameters
         ----------
-        member: dict
-            The member in question
-
-        check_flags: None or [key[, ...]]
-            A list of extra keys to check for truthness in the member
+        item: dict
+            The item in question
 
         Returns
         -------
         bool
-            True if member can be added
+            True if item can be added
         """
-        exptype = self.get_exptype(member, check_flags=check_flags)
+        exptype = self.get_exposure_type(item)
         limit_reached = len(self.members_by_type('science')) >= 1
         limit_reached = limit_reached and exptype == 'science'
         return limit_reached
-
-    def get_exptype(self, member, check_flags=None):
-        """Get the exposure type for member
-
-        Parameters
-        ----------
-        member: dict
-            The member to be adding.
-
-
-        check_flags: None or [key[, ...]]
-            A list of extra keys to check for truthness in the member
-
-        Returns
-        -------
-        exptype: str
-        """
-        exptype = Utility.get_exposure_type(member, default='science')
-        if check_flags:
-            for flag in check_flags:
-                try:
-                    getattr_from_list(member, [flag], self.INVALID_VALUES)
-                except KeyError:
-                    continue
-                else:
-                    exptype = FLAG_TO_EXPTYPE[flag]
-        return exptype
 
     def __eq__(self, other):
         """Compare equality of two assocaitions"""
@@ -180,12 +151,31 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         else:
             return science_path
 
-    def _init_hook(self, member):
+    def make_member(self, item):
+        """Create a member from the item
+
+        Parameters
+        ----------
+        item: dict
+            The item to create member from.
+
+        Returns
+        -------
+        member: dict
+            The member
+        """
+        member = {
+            'expname': Utility.rename_to_level2a(item['filename']),
+            'exptype': self.get_exposure_type(item)
+        }
+        return member
+
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-        self.data['target'] = member['targetid']
-        self.data['program'] = str(member['program'])
+        self.data['target'] = item['targetid']
+        self.data['program'] = str(item['program'])
         self.data['asn_pool'] = basename(
-            member.meta['pool_file']
+            item.meta['pool_file']
         ).split('.')[0]
         self.data['constraints'] = '\n'.join(
             [cc for cc in self.constraints_to_text()]
@@ -193,33 +183,27 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self.data['asn_id'] = self.acid.id
         self.new_product(self.dms_product_name())
 
-    def _add(self, member, check_flags=None):
-        """Add member to this association.
+    def _add(self, item):
+        """Add item to this association.
 
         Parameters
         ----------
-        member: dict
-            The member to be adding.
-
-        check_flags: None or [key[, ...]]
-            A list of extra keys to check for truthness in the member
+        item: dict
+            The item to be adding.
         """
-        entry = {
-            'expname': Utility.rename_to_level2a(member['filename']),
-            'exptype': self.get_exptype(member, check_flags=check_flags)
-        }
+        member = self.make_member(item)
         members = self.current_product['members']
-        members.append(entry)
-        self.update_validity(entry)
+        members.append(member)
+        self.update_validity(member)
 
-        # Add entry to the short list
-        self.members.add(entry[KEY])
+        # Add member to the short list
+        self.members.add(member[KEY])
 
         # Update association state due to new member
         self.update_asn()
 
     def _add_items(self, items, meta=None, product_name_func=None, **kwargs):
-        """ Force adding items to the association
+        """Force adding items to the association
 
         Parameters
         ----------
@@ -247,25 +231,38 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         This is a low-level shortcut into adding members, such as file names,
         to an association. All defined shortcuts and other initializations are
         by-passed, resulting in a potentially unusable association.
+
+        `product_name_func` is used to define the product names instead of
+        the default methods. The call signature is:
+
+            product_name_func(item, idx)
+
+        where `item` is each item being added and `idx` is the count of items.
+
         """
         if meta is None:
             meta = {}
-        for item in items:
+        for idx, item in enumerate(items, start=1):
             self.new_product()
             members = self.current_product['members']
-            entry = {
+            member = {
                 'expname': item,
                 'exptype': 'science'
             }
-            members.append(entry)
-            self.update_validity(entry)
+            members.append(member)
+            self.update_validity(member)
             self.update_asn()
 
-            # If product name is still undefined, try
-            # the function, if given
-            if self.current_product['name'] == PRODUCT_NAME_DEFAULT and \
-               product_name_func is not None:
-                self.current_product['name'] = product_name_func(item)
+            # If a product name function is given, attempt
+            # to use.
+            if product_name_func is not None:
+                try:
+                    self.current_product['name'] = product_name_func(item, idx)
+                except Exception:
+                    logger.debug(
+                        'Attempted use of product_name_func failed.'
+                        ' Default product name used.'
+                    )
 
         self.data.update(meta)
         self.sequence = next(self._sequence)
@@ -332,7 +329,7 @@ class Utility(object):
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group('type') != '_uncal':
             logger.warn((
-                'Member FILENAME="{}" is not a Level 1b name. '
+                'Item FILENAME="{}" is not a Level 1b name. '
                 'Cannot transform to Level 2a.'
             ).format(
                 level1b_name
@@ -345,10 +342,6 @@ class Utility(object):
             match.group('extension')
         ])
         return level2a_name
-
-    @staticmethod
-    def get_exposure_type(*args, **kwargs):
-        return Utility_Level3.get_exposure_type(*args, **kwargs)
 
     @staticmethod
     def resequence(*args, **kwargs):
@@ -381,14 +374,36 @@ class Utility(object):
             else:
                 finalized.append(asn)
 
-        # Merge all the associations into common types
-        merged_asns = Utility.merge_asns(lv2_asns)
-
-        # Merge lists and return
-        return finalized + merged_asns
+        return finalized + lv2_asns
 
     @staticmethod
-    def merge_asns(asns):
+    def merge_asns(associations):
+        """merge level2 associations
+
+        Parameters
+        ----------
+        associations: [asn(, ...)]
+            Associations to search for merging.
+
+        Returns
+        -------
+        associatons: [association(, ...)]
+            List of associations, some of which may be merged.
+        """
+        others = []
+        lv2_asns = []
+        for asn in associations:
+            if isinstance(asn, DMSLevel2bBase):
+                lv2_asns.append(asn)
+            else:
+                others.append(asn)
+
+        lv2_asns = Utility._merge_asns(lv2_asns)
+
+        return others + lv2_asns
+
+    @staticmethod
+    def _merge_asns(asns):
         # Merge all the associations into common types
         merged_by_type = {}
         for asn in asns:
@@ -440,8 +455,13 @@ class AsnMixin_Lv2Image(DMSLevel2bBase):
                 'value': (
                     'fgs_image'
                     '|mir_image'
+                    '|mir_lyot'
+                    '|mir_4qpm'
+                    '|nis_ami'
                     '|nis_image'
                     '|nrc_image'
+                    '|nrc_coron'
+                    '|nrc_tsimage'
                 ),
                 'inputs': ['exp_type'],
                 'force_unique': True,
@@ -450,10 +470,10 @@ class AsnMixin_Lv2Image(DMSLevel2bBase):
 
         super(AsnMixin_Lv2Image, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, member):
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
-        super(AsnMixin_Lv2Image, self)._init_hook(member)
+        super(AsnMixin_Lv2Image, self)._init_hook(item)
         self.data['asn_type'] = 'image2'
 
 
@@ -484,10 +504,10 @@ class AsnMixin_Lv2Spec(DMSLevel2bBase):
 
         super(AsnMixin_Lv2Spec, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, member):
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
-        super(AsnMixin_Lv2Spec, self)._init_hook(member)
+        super(AsnMixin_Lv2Spec, self)._init_hook(item)
         self.data['asn_type'] = 'spec2'
 
 
@@ -542,44 +562,165 @@ class AsnMixin_Lv2Singleton(DMSLevel2bBase):
             'single_science': {
                 'test': self.match_constraint,
                 'value': 'False',
-                'inputs': lambda member: str(
-                    self.has_science(member)
+                'inputs': lambda item: str(
+                    self.has_science(item)
                 ),
             }
         })
 
-        # Now, lets see if member belongs to us.
+        # Now, lets see if item belongs to us.
         super(AsnMixin_Lv2Singleton, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_Lv2Bkg(DMSLevel2bBase):
-    """Acquire backgrounds"""
+class AsnMixin_Lv2Special(DMSLevel2bBase):
+    """Process special exposures as science
 
+    Spectral exposures that are marked as backgrounds, imprints, etc.,
+    still get 2b processing just as normal science. However, no other
+    exposures should get included into the association.
+
+    """
     def __init__(self, *args, **kwargs):
-
-        # I am defined by the following constraints
         self.add_constraints({
-            'background': {
-                'inputs': ['asn_candidate'],
-                'value': '.+background.+',
-                'force_unique': True,
-                'is_acid': False,
-                'required': False,
-            },
-            'single_science': {
-                'test': self.match_constraint,
-                'value': 'False',
-                'inputs': lambda member: str(
-                    self.has_science(member, check_flags=['background'])
-                ),
-            },
+            'is_special': {
+                'value': None,
+                'inputs': [
+                    'background',
+                    'is_imprint',
+                    'is_psf'
+                ],
+                'force_unique': False,
+            }
         })
 
-        # Now, lets see if member belongs to us.
-        super(AsnMixin_Lv2Bkg, self).__init__(*args, **kwargs)
+        super(AsnMixin_Lv2Special, self).__init__(*args, **kwargs)
 
-    def _add(self, member, check_flags=None):
-        if not check_flags:
-            check_flags = []
-        check_flags.append('background')
-        super(AsnMixin_Lv2Bkg, self)._add(member, check_flags)
+    def get_exposure_type(self, item, default='science'):
+        """Override to force exposure type to always be science
+
+        Parameters
+        ----------
+        item: dict
+            The pool entry to determine the exposure type of
+
+        default: str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+
+        Returns
+        -------
+        exposure_type: 'science'
+            Always returns as science
+        """
+        return 'science'
+
+
+class AsnMixin_Lv2ImageNonScience(DMSLevel2bBase):
+    """Process selected non-science exposures
+
+    Exposures, such as target acquisitions,
+    though considered non-science, still get 2b processing.
+
+    """
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'non_science': {
+                'value': (
+                    'fgs_focus'
+                    '|fgs_image'
+                    '|mir_coroncal'
+                    '|mir_tacq'
+                    '|nis_focus'
+                    '|nis_lamp'
+                    '|nis_tacq'
+                    '|nis_taconfirm'
+                    '|nrc_tacq'
+                    '|nrc_taconfirm'
+                    '|nrc_focus'
+                    '|nrc_led'
+                    '|nrs_bota'
+                    '|nrs_confirm'
+                    '|nrs_focus'
+                    '|nrs_lamp'
+                    '|nrs_mimf'
+                    '|nrs_taslit'
+                    '|nrs_tacq'
+                    '|nrs_taconfirm'
+                ),
+                'inputs': ['exp_type'],
+                'force_unique': False,
+            }
+        })
+
+        super(AsnMixin_Lv2ImageNonScience, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(AsnMixin_Lv2ImageNonScience, self)._init_hook(item)
+        self.data['asn_type'] = 'image2'
+
+    def get_exposure_type(self, item, default='science'):
+        """Override to force exposure type to always be science
+
+        Parameters
+        ----------
+        item: dict
+            The pool entry to determine the exposure type of
+
+        default: str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+
+        Returns
+        -------
+        exposure_type: 'science'
+            Always returns as science
+        """
+        return 'science'
+
+
+class AsnMixin_Lv2SpecNonScience(DMSLevel2bBase):
+    """Process selected non-science exposures
+
+    Exposures, such as target acquisitions,
+    though considered non-science, still get 2b processing.
+
+    """
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'non_science': {
+                'value': (
+                    'nrs_autowave'
+                ),
+                'inputs': ['exp_type'],
+                'force_unique': False,
+            }
+        })
+
+        super(AsnMixin_Lv2SpecNonScience, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(AsnMixin_Lv2SpecNonScience, self)._init_hook(item)
+        self.data['asn_type'] = 'spec2'
+
+    def get_exposure_type(self, item, default='science'):
+        """Override to force exposure type to always be science
+
+        Parameters
+        ----------
+        item: dict
+            The pool entry to determine the exposure type of
+
+        default: str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+
+        Returns
+        -------
+        exposure_type: 'science'
+            Always returns as science
+        """
+        return 'science'

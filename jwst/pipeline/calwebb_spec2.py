@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 from collections import defaultdict
 
+from .. import datamodels
 from ..associations.load_as_asn import LoadAsLevel2Asn
 from ..stpipe import Pipeline
-from .. import datamodels
 
 # step imports
 from ..assign_wcs import assign_wcs_step
 from ..background import background_step
 from ..imprint import imprint_step
-#from jwst.msaflagging import msa_flag_step
+from ..msaflagopen import msaflagopen_step
 from ..extract_2d import extract_2d_step
 from ..flatfield import flat_field_step
 from ..srctype import srctype_step
@@ -37,15 +37,15 @@ class Spec2Pipeline(Pipeline):
     """
 
     spec = """
-        save_bsub = boolean(default=False)
+        save_bsub = boolean(default=False) # Save background-subracted science
     """
 
     # Define aliases to steps
     step_defs = {
-        'assign_wcs': assign_wcs_step.AssignWcsStep,
         'bkg_subtract': background_step.BackgroundStep,
+        'assign_wcs': assign_wcs_step.AssignWcsStep,
         'imprint_subtract': imprint_step.ImprintStep,
-        #'msa_flagging' : msa_flag_step.MsaFlagStep,
+        'msa_flagging': msaflagopen_step.MSAFlagOpenStep,
         'extract_2d': extract_2d_step.Extract2dStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'srctype': srctype_step.SourceTypeStep,
@@ -70,16 +70,10 @@ class Spec2Pipeline(Pipeline):
         self.log.info('Starting calwebb_spec2 ...')
 
         # Retrieve the input(s)
-        asn = LoadAsLevel2Asn.load(input)
-
-        # Setup output creation
-        make_output_path = self.search_attr(
-            'make_output_path', parent_first=True
-        )
+        asn = LoadAsLevel2Asn.load(input, basename=self.output_file)
 
         # Each exposure is a product in the association.
         # Process each exposure.
-        results = []
         for product in asn['products']:
             self.log.info('Processing product {}'.format(product['name']))
             self.output_basename = product['name']
@@ -88,22 +82,17 @@ class Spec2Pipeline(Pipeline):
                 asn['asn_pool'],
                 asn.filename
             )
-            results.append(result)
 
-            # Setup filename
+            # Save result
             suffix = 'cal'
-            if isinstance(input, datamodels.CubeModel):
+            if isinstance(result, datamodels.CubeModel):
                 suffix = 'calints'
-            result.meta.filename = make_output_path(
-                self,
-                result,
-                suffix=suffix,
-                ignore_use_model=True
-            )
+            self.save_model(result, suffix)
+
+            self.closeout(to_close=[result])
 
         # We're done
         self.log.info('Ending calwebb_spec2')
-        return results
 
     # Process each exposure
     def process_exposure_product(
@@ -145,6 +134,11 @@ class Spec2Pipeline(Pipeline):
         exp_type = input.meta.exposure.type
 
         # Apply WCS info
+        # check the datamodel to see if it's
+        # a grism image, if so get the catalog
+        # name from the asn and record it to the meta
+        if exp_type in ["NIS_WFSS", "NRC_GRISM"]:
+            input.meta.source_catalog.filename = members_by_type['sourcecat']
         input = self.assign_wcs(input)
 
         # Do background processing, if necessary
@@ -182,9 +176,8 @@ class Spec2Pipeline(Pipeline):
             input = self.imprint_subtract(input, imprint)
 
         # Apply NIRSpec MSA bad shutter flagging
-        # Stubbed out as placeholder until step module is created
-        #if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
-        #    input = self.msa_flagging(input)
+        if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
+            input = self.msa_flagging(input)
 
         # Extract 2D sub-windows for NIRSpec slit and MSA
         if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC']:
