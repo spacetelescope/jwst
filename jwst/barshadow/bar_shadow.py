@@ -58,7 +58,7 @@ def do_correction(input_model, barshadow_model):
     # Create the pieces that are put together to make the barshadow model
     shutter_elements = create_shutter_elements(barshadow_model)
     w0 = barshadow_model.crval1
-    wavelength_increment = barshadow_model.cdelt2
+    wave_increment = barshadow_model.cdelt2
     if exp_type == 'NRS_MSASPEC':
         # For each slitlet
         for slitlet in input_model.slits:
