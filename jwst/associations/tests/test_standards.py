@@ -31,6 +31,13 @@ LV2_ONLY_ARGS = [
     '--ignore-default'
 ]
 
+# Produce Level3 only associations
+LV3_ONLY_ARGS = [
+    '-r',
+    t_path('../lib/rules_level3.py'),
+    '--ignore-default'
+]
+
 # Produce general associations
 GENERAL_ARGS = []
 
@@ -38,6 +45,10 @@ GENERAL_ARGS = []
 @pytest.yield_fixture(
     scope='module',
     params=[
+        (
+            LV3_ONLY_ARGS,
+            'pool_002_image_miri'
+        ),
         (
             LV2_ONLY_ARGS,
             'pool_009_spec_miri_lv2bkg'

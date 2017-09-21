@@ -148,7 +148,7 @@ class Asn_Lv2WFSS(
         """
         opt_elem = ''
         try:
-            value = self.constraints['opt_elem']['value']
+            value = '-'.join(self.constraints['opt_elem']['_actuals'])
         except KeyError:
             pass
         else:

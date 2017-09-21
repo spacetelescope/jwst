@@ -4,7 +4,6 @@ from collections import namedtuple
 from contextlib import contextmanager
 from copy import copy
 from glob import glob
-import logging
 import os
 import pytest
 import re
@@ -64,8 +63,9 @@ def compare_membership(left, right):
     products_right = copy(right['products'])
     assert len(products_left) == len(products_right)
     for left_product in products_left:
+        left_product_name = components(left_product['name'])
         for right_product in products_right:
-            if right_product['name'] != left_product['name']:
+            if components(right_product['name']) != left_product_name:
                 continue
             assert len(right_product['members']) == len(left_product['members'])
             members_right = copy(right_product['members'])
@@ -81,6 +81,11 @@ def compare_membership(left, right):
             break
     assert len(products_right) == 0
     return True
+
+
+def components(s):
+    """split string into its components"""
+    return set(re.split('[_-]', s))
 
 
 # Define how to setup initial conditions with pools.

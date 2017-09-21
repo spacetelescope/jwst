@@ -40,7 +40,7 @@ LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX = (
 )
 
 # Null values
-EMPTY = (None, 'NULL', 'Null', 'null', 'CLEAR', 'Clear', 'clear')
+EMPTY = (None, '', 'NULL', 'Null', 'null', 'CLEAR', 'Clear', 'clear')
 
 
 pool_file = func_fixture(
@@ -146,7 +146,7 @@ def test_multiple_optelems(pool_file):
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
             assert m is not None
             try:
-                value = asn.constraints['opt_elem2']['value']
+                value = '-'.join(asn.constraints['opt_elem2']['_actuals'])
             except KeyError:
                 value = None
             if value in EMPTY:

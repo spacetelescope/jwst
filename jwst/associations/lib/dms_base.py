@@ -31,7 +31,7 @@ _EXPTYPE_MAP = {
 }
 
 # Non-specified values found in DMS Association Pools
-_EMPTY = (None, 'NULL', 'Null', 'null', '--', 'N', 'n')
+_EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n')
 
 __all__ = ['DMSBaseMixin']
 
@@ -298,7 +298,7 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the target or source ID.
         """
-        target_id = self.constraints['target']['value']
+        target_id = '-'.join(self.constraints['target']['_actuals'])
         target = 't{0:0>3s}'.format(str(target_id))
         return target
 
@@ -311,7 +311,7 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the instrument
         """
-        instrument = self.constraints['instrument']['value']
+        instrument = '-'.join(self.constraints['instrument']['_actuals'])
         return instrument
 
     def _get_opt_element(self):
@@ -326,7 +326,7 @@ class DMSBaseMixin(ACIDMixin):
         opt_elem = ''
         join_char = ''
         try:
-            value = self.constraints['opt_elem']['value']
+            value = '-'.join(self.constraints['opt_elem']['_actuals'])
         except KeyError:
             pass
         else:
@@ -334,7 +334,7 @@ class DMSBaseMixin(ACIDMixin):
                 opt_elem = value
                 join_char = '-'
         try:
-            value = self.constraints['opt_elem2']['value']
+            value = '-'.join(self.constraints['opt_elem2']['_actuals'])
         except KeyError:
             pass
         else:
@@ -361,7 +361,7 @@ class DMSBaseMixin(ACIDMixin):
             No constraints produce this value
         """
         try:
-            activity_id = self.constraints['activity_id']['value']
+            activity_id = '-'.join(self.constraints['activity_id']['_actuals'])
         except KeyError:
             raise AssociationNotAConstraint
         else:
