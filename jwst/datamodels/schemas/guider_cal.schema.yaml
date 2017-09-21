@@ -5,7 +5,7 @@ allOf:
 - type: object
   properties:
     data:
-      title: The output science data
+      title: The science data
       fits_hdu: SCI
       default: 0.0
       ndim: 3
@@ -18,12 +18,12 @@ allOf:
       datatype: uint32
     planned_star_table: 
       title: Planned reference star table
-      fits_hdu: PLANNED_STARS
+      fits_hdu: Planned Reference Stars
       datatype:
       - name: guide_star_order
         datatype: int32
       - name: reference_star_id
-        datatype: string
+        datatype: [ascii, 10]
       - name: ra
         datatype: float64
       - name: dec
@@ -42,10 +42,10 @@ allOf:
         datatype: float64
     flight_star_table: 
       title: Flight reference star table
-      fits_hdu: FLIGHT_STARS
+      fits_hdu: Flight Reference Stars
       datatype:
       - name: reference_star_id
-        datatype: string
+        datatype: [ascii, 2]
       - name: id_x
         datatype: float64
       - name: id_y
@@ -54,7 +54,7 @@ allOf:
         datatype: float64
     pointing_table:
       title: Pointing table
-      fits_hdu: POINTING
+      fits_hdu: Pointing
       datatype:
       - name: time
         datatype: float64
@@ -80,17 +80,17 @@ allOf:
         datatype: float64
     centroid_table: 
       title: Centroid packet table
-      fits_hdu: CENTROID_PACKET
+      fits_hdu: FGS Centroid Packet
       datatype:
       - name: observatory_time   
-        datatype: string
+        datatype: [ascii, 23]
       - name: centroid_time   
-        datatype: string
+        datatype: [ascii, 23]
       - name: guide_star_position_x
         datatype: float64
       - name: guide_star_position_y
         datatype: float64
-      - name: guide_star_instrument_counts_per_second
+      - name: guide_star_instrument_counts_per_sec
         datatype: float64
       - name: signal_to_noise_current_frame
         datatype: float64
@@ -105,23 +105,23 @@ allOf:
       - name: data_quality
         datatype: int32
       - name: bad_pixel_flag
-        datatype: string
+        datatype: [ascii, 4]
       - name: bad_centroid_dq_flag
         datatype: int32
       - name: cosmic_ray_hit_flag
-        datatype: int32
+        datatype: [ascii, 5]
       - name: sw_subwindow_loc_change_flag
-        datatype: int32
+        datatype: [ascii, 5]
       - name: guide_star_at_detector_subwindow_boundary_flag
-        datatype: int32
+        datatype: [ascii, 5]
       - name: subwindow_out_of_FOV_flag
-        datatype: int32
+        datatype: [ascii, 5]
     track_sub_table:
       title: Track subarray data table
-      fits_hdu: TRACK_SUBARRAY
+      fits_hdu: Track subarray table
       datatype:
       - name: observatory_time   
-        datatype: string
+        datatype: [ascii, 23]
       - name: x_corner
         datatype: float64
       - name: y_corner
