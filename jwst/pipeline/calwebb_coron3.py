@@ -133,20 +133,19 @@ class Coron3Pipeline(Pipeline):
 
         # Call the resample step to combine all the psf-subtracted target images
         result = self.resample(resample_input)
-        output_file = mk_prodname(self.output_dir, prod['name'], 'i2d')
-
 
         if result == resample_input:
         # Resampling was skipped, 
         #  yet we need to return a DrizProductModel, so...
-            log.warning('Creating fake resample results until step is available')
+            self.log.warning('Creating fake resample results until step is available')
             result = datamodels.DrizProductModel(data=resample_input[0].data,
                                              con=resample_input[0].dq,
                                              wht=resample_input[0].err)
             result.update(resample_input[0])
             # The resample step blends headers already...
-            log.debug('Blending metadata for {}'.format(output_file))
+            self.log.debug('Blending metadata for {}'.format(output_file))
             blend.blendfitsdata(targ_files, result)
+
         result.meta.asn.pool_name = asn['asn_pool']
         result.meta.asn.table_name = input
 
@@ -155,6 +154,6 @@ class Coron3Pipeline(Pipeline):
         self.save_model(result, suffix=self.suffix)
 
         # We're done
-        self.log.info('... ending calwebb_coron3')
+        self.log.info('...ending calwebb_coron3')
 
         return
