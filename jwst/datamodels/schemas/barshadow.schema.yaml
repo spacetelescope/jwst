@@ -1,0 +1,56 @@
+title: Bar shadow correction data model
+allOf:
+- $ref: referencefile.schema.yaml
+- $ref: keyword_pexptype.schema.yaml
+- $ref: keyword_exptype.schema.yaml
+- type: object
+  properties:
+    data1x1:
+        title: Bar Shadow 1x1 data array
+        fits_hdu: data1x1
+        default: 1.0
+        ndim: 2
+        datatype: float32
+    var1x1:
+        title: Bar Shadow 1x1 correction variance
+        fits_hdu: var1x1
+        default: 0.0
+        ndim: 2
+        datatype: float32
+    data1x3:
+        title: Bar Shadow 1x3 data array
+        fits_hdu: data1x3
+        default: 1.0
+        ndim: 2
+        datatype: float32
+    var1x3:
+        title: Bar Shadow 1x3 correction variance
+        fits_hdu: var1x3
+        default: 0.0
+        ndim: 2
+        datatype: float32
+    wcs:
+	title: WCS information
+	type: object
+	properties:
+	    crval1:
+		title: Value at reference pixel for coord 1
+		type: number
+		fits_keyword: CRVAL1
+		fits_hdu: data1x1
+	    crval2:
+	        title: Value at reference pixel for coord 2
+		type: number
+		fits_keyword: CRVAL2
+		fits_hdu: data1x1
+	    cdelt1:
+	        title: Step in coordinate 1
+		type: number
+		fits_keyword: CDELT1
+		fits_hdu: data1x1
+	    cdelt2
+	        title: Step in coordinate 2
+		type: number
+		fits_keyword: CDELT2
+		fits_hdu: data1x1
+schema: http://stsci.edu/schemas/fits-schema/fits-schema
