@@ -4,6 +4,7 @@ from collections import namedtuple
 from contextlib import contextmanager
 from copy import copy
 from glob import glob
+import logging
 import os
 import pytest
 import re
@@ -30,11 +31,14 @@ def compare_asns(left, right):
     Returns
     -------
     equality: boolean
+
+    Raises
+    ------
+    AssertionError
     """
 
     # Metadata
-    if left['asn_type'] != right['asn_type']:
-        return False
+    assert left['asn_type'] == right['asn_type']
 
     # Membership
     return compare_membership(left, right)
@@ -51,32 +55,31 @@ def compare_membership(left, right):
     Returns
     -------
     equality: boolean
+
+    Raises
+    ------
+    AssertionError
     """
     products_left = left['products']
     products_right = copy(right['products'])
-    if len(products_left) != len(products_right):
-        return False
+    assert len(products_left) == len(products_right)
     for left_product in products_left:
         for right_product in products_right:
             if right_product['name'] != left_product['name']:
                 continue
-            if len(right_product['members']) != len(left_product['members']):
-                return False
+            assert len(right_product['members']) == len(left_product['members'])
             members_right = copy(right_product['members'])
             for left_member in left_product['members']:
                 for right_member in members_right:
                     if left_member['expname'] != right_member['expname']:
                         continue
-                    if left_member['exptype'] != right_member['exptype']:
-                        return False
+                    assert left_member['exptype'] == right_member['exptype']
                     members_right.remove(right_member)
                     break
-            if len(members_right) > 0:
-                return False
+            assert len(members_right) == 0
             products_right.remove(right_product)
             break
-    if len(products_right) > 0:
-        return False
+    assert len(products_right) == 0
     return True
 
 

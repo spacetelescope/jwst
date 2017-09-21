@@ -107,8 +107,12 @@ def test_against_standard(generate_asns):
     generated, standards = generate_asns
     for asn in generated:
         for idx, standard in enumerate(standards):
-            if compare_asns(asn, standard):
+            try:
+                compare_asns(asn, standard)
+            except AssertionError as e:
+                last_err = e
+            else:
                 del standards[idx]
                 break
         else:
-            assert False
+            raise last_err
