@@ -59,48 +59,48 @@ def do_correction(input_model, barshadow_model):
     shutter_elements = create_shutter_elements(barshadow_model)
     w0 = barshadow_model.crval1
     wave_increment = barshadow_model.cdelt1
-    if exp_type == 'NRS_MSASPEC':
-        # For each slitlet
-        for slitlet in input_model.slits:
-            slitlet_number = slitlet.slitlet_id
-            log.info('Working on slitlet %d' % slitlet_number)
-            if has_uniform_source(slitlet):
+    # For each slitlet
+    for slitlet in input_model.slits:
+        slitlet_number = slitlet.slitlet_id
+        log.info('Working on slitlet %d' % slitlet_number)
+        if has_uniform_source(slitlet):
+            #
+            # As Y increases, the pixel row number decreases, so the shutter_state is
+            # 'upside down'
+            shutter_status = slitlet.shutter_state[::-1]
+            if len(shutter_status) > 0:
+                shadow = create_shadow(shutter_elements, shutter_status)
                 #
-                # As Y increases, the pixel row number decreases, so the shutter_state is
-                # 'upside down'
-                shutter_status = slitlet.shutter_state[::-1]
-                if len(shutter_status) > 0:
-                    shadow = create_shadow(shutter_elements, shutter_status)
-                    #
-                    # For each pixel in the slit subarray
-                    #   Make a grid of indices for pixels in the subarray
-                    x, y = wcstools.grid_from_bounding_box(slitlet.meta.wcs.bounding_box, step=(1,1))
-                    #   Create the transformation from slit_frame to detector
-                    det2slit = slitlet.meta.wcs.get_transform('detector', 'slit_frame')
-                    #   Use this transformation to calculate x, y and wavelength
-                    xslit, yslit, wavelength = det2slit(x, y)
-                    #   Scale the yslit values by the ratio of slit spacing to slit height
-                    yslit = yslit * SLITRATIO
-                    #   Convert the Y and wavelength to a pixel location
-                    #   in the  bar shadow array
-                    index_of_fiducial = shutter_status.find('x')
-                    index_of_fiducial_in_array = 501 + index_of_fiducial*500
-                    yrow = index_of_fiducial_in_array - yslit*500.0
-                    wcol = (wavelength - w0)/wave_increment
-                    nonnan = np.where(~np.isnan(yrow))
-                    ymin = yrow[nonnan].min()
-                    ymax = yrow[nonnan].max()
-                    wmin = wcol[nonnan].min()
-                    wmax = wcol[nonnan].max()
-                    print(ymin, ymax, wmin, wmax, shutter_status)
-                    #   Interpolate the bar shadow correction for non-Nan pixels
-                    correction = interpolate(yrow, wcol, shadow)
-                    #   Divide the data by the correction
-                    slitlet.data = slitlet.data / correction
-                    # Add the correction array to the datamodel?
-        input_model.meta.cal_step.barshadow = 'COMPLETE'
-    else:
-        input_model.meta.cal_step.barshadow = 'SKIPPED'
+                # For each pixel in the slit subarray
+                #   Make a grid of indices for pixels in the subarray
+                x, y = wcstools.grid_from_bounding_box(slitlet.meta.wcs.bounding_box, step=(1,1))
+                #   Create the transformation from slit_frame to detector
+                det2slit = slitlet.meta.wcs.get_transform('detector', 'slit_frame')
+                #   Use this transformation to calculate x, y and wavelength
+                xslit, yslit, wavelength = det2slit(x, y)
+                #   Scale the yslit values by the ratio of slit spacing to slit height
+                yslit = yslit * SLITRATIO
+                #   Convert the Y and wavelength to a pixel location
+                #   in the  bar shadow array
+                index_of_fiducial = shutter_status.find('x')
+                index_of_fiducial_in_array = 501 + index_of_fiducial*500
+                yrow = index_of_fiducial_in_array - yslit*500.0
+                wcol = (wavelength - w0)/wave_increment
+                nonnan = np.where(~np.isnan(yrow))
+                #   Interpolate the bar shadow correction for non-Nan pixels
+                correction = interpolate(yrow, wcol, shadow)
+                # Add the correction array and variance to the datamodel
+                slitlet.barshadow = correction
+            else:
+                log.info("Slitlet %d has zero length, correction skipped" % slitlet_number)
+                #
+                # Put an array of ones in a correction extension
+                slitlet.barshadow = np.ones(slitlet.data.shape)
+        else:
+            log.info("Bar shadow correction skipped for slitlet %d (source not uniform)" % slitlet_number)
+            #
+            # Put an array of ones in a correction extension
+            slitlet.barshadow = np.ones(slitlet.data.shape)
     return input_model.copy()
 #
 def create_shutter_elements(barshadow_model):

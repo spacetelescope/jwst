@@ -104,7 +104,7 @@ from .util import open
 __all__ = [
     'open',
     'DataModel', 'AmiLgModel', 'AsnModel',
-    'CameraModel', 'CollimatorModel',
+    'BarshadowModel', 'CameraModel', 'CollimatorModel',
     'CombinedSpecModel', 'ContrastModel', 'CubeModel',
     'DarkModel', 'DarkMIRIModel',
     'DisperserModel', 'DistortionModel', 'DistortionMRSModel',
