@@ -87,6 +87,12 @@ def do_correction(input_model, barshadow_model):
                     index_of_fiducial_in_array = 501 + index_of_fiducial*500
                     yrow = index_of_fiducial_in_array - yslit*500.0
                     wcol = (wavelength - w0)/wave_increment
+                    nonnan = np.where(~np.isnan(yrow))
+                    ymin = yrow[nonnan].min()
+                    ymax = yrow[nonnan].max()
+                    wmin = wcol[nonnan].min()
+                    wmax = wcol[nonnan].max()
+                    print(ymin, ymax, wmin, wmax, shutter_status)
                     #   Interpolate the bar shadow correction for non-Nan pixels
                     correction = interpolate(yrow, wcol, shadow)
                     #   Divide the data by the correction
@@ -397,8 +403,21 @@ def interpolate(rows, columns, array):
     for row in range(nrows):
         for column in range(ncolumns):
             if ~np.isnan(rows[row, column]):
-                correction[row, column] = array[rows[row, column],
-                                                columns[row, column]]
+                array_row = rows[row, column]
+                array_column = columns[row, column]
+                if array_row >= array.shape[0]:
+#                    print("Row out of range: %d %d %d" % (array_row, row, column))
+                    array_row = 0
+                if array_column >= array.shape[1]:
+#                    print("Column out of range: %d %d %d" % (array_row, row, column))
+                    array_column = 0
+                if array_row < 0:
+#                    print("Row out of range: %d %d %d" % (array_row, row, column))
+                    array_row = 0
+                if array_column < 0:
+#                    print("Column out of range: %d %d %d" % (array_row, row, column))
+                    array_column = 0
+                correction[row, column] = array[array_row, array_column]
     return correction
 
 def has_uniform_source(slitlet):
