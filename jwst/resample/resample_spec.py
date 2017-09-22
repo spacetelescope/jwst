@@ -185,7 +185,7 @@ class ResampleSpecData(object):
                     bounds_error=False, fill_value='extrapolate')
                 xpos.append(f(lam[y_center, x_center]))
         x_arg = np.array(xpos)[~np.isnan(lam[:, x_center])]
-        y_arg = y[~np.isnan(lam[:,x_center]), x_center]
+        y_arg = y[~np.isnan(lam[:, x_center]), x_center]
         # slit_coords, spect0 = refwcs(x_arg, y_arg, output='numericals_plus')
         slit_ra, slit_dec, slit_spec_ref = refwcs(x_arg, y_arg)
         slit_coords = SkyCoord(ra=slit_ra, dec=slit_dec, unit=u.deg)
