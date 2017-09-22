@@ -38,12 +38,11 @@ Slit.__new__.__defaults__ = ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "", "",
 
 class GrismObject(namedtuple('GrismObject', ("sid",
                                              "order_bounding",
-                                             "ra_icrs_centroid",
-                                             "dec_icrs_centroid",
-                                             "ramin",
-                                             "decmin",
-                                             "ramax",
-                                             "decmax",
+                                             "icrs_centroid",
+                                             "sky_bbox_ll",
+                                             "sky_bbox_lr",
+                                             "sky_bbox_ur",
+                                             "sky_bbox_ul",
                                              "xcenter",
                                              "ycenter",
                                              ), rename=False)):
@@ -62,8 +61,12 @@ class GrismObject(namedtuple('GrismObject', ("sid",
 
     the segment_[ra/dec][min/max] are also as measured on the direct image
 
-    order_bounding is stored as a lookup dictionary per order:
+    order_bounding is stored as a lookup dictionary per order and contains
+    the object x,y bounding location on the grism image
     GrismObject(order_bounding={"+1":((1,2),(1,2)),"+2":((2,3),(2,3))})
+
+
+    sky_bbox_?? contains the ra,dec,frame information for the bbox from the catalog
 
     """
     __slots__ = ()  # prevent instance dictionary for lower memory
@@ -71,24 +74,22 @@ class GrismObject(namedtuple('GrismObject', ("sid",
     def __new__(cls,
                 sid=None,
                 order_bounding={},
-                ra_icrs_centroid=None,
-                dec_icrs_centroid=None,
-                ramin=None,
-                decmin=None,
-                ramax=None,
-                decmax=None,
+                icrs_centroid=None,
+                sky_bbox_ll=None,
+                sky_bbox_lr=None,
+                sky_bbox_ur=None,
+                sky_bbox_ul=None,
                 xcenter=None,
                 ycenter=None):
 
         return super(GrismObject, cls).__new__(cls,
                                                sid,
                                                order_bounding,
-                                               ra_icrs_centroid,
-                                               dec_icrs_centroid,
-                                               ramin,
-                                               decmin,
-                                               ramax,
-                                               decmax,
+                                               icrs_centroid,
+                                               sky_bbox_ll,
+                                               sky_bbox_lr,
+                                               sky_bbox_ur,
+                                               sky_bbox_ul,
                                                xcenter,
                                                ycenter)
 
@@ -96,20 +97,20 @@ class GrismObject(namedtuple('GrismObject', ("sid",
         """Return a pretty print for the object information."""
         return ("id: {0}\n"
                 "order_bounding {1}\n",
-                "ramin: {2}\n"
-                "decmin: {3}\n"
-                "ramax: {4}\n"
-                "decmax: {5}\n"
-                "xcenter: {6}\n"
-                "ycenter: {7}\n"
+                "icrs_centroid: {2}\n",
+                "sky_bbox_ll(ra,dec): {3} {4}\n"
+                "sky_bbox_lr(ra,dec): {5} {6}\n"
+                "sky_bbox_ur(ra,dec): {7} {8}\n"
+                "sky_bbox_ul(ra,dec): {9} {10}\n"
+                "xcenter: {11}\n"
+                "ycenter: {12}\n"
                 .format(self.sid,
                         self.order_bounding,
-                        self.ra_icrs_centroid,
-                        self.dec_icrs_centroid,
-                        self.ramin,
-                        self.decmin,
-                        self.ramax,
-                        self.decmax,
+                        self.icrs_centroid,
+                        self.sky_bbox_ll.ra.value,self.sky_bbox_ll.dec.value,
+                        self.sky_bbox_lr.ra.value,self.sky_bbox_lr.dec.value,
+                        self.sky_bbox_ur.ra.value,self.sky_bbox_ur.dec.value,
+                        self.sky_bbox_ul.ra.value,self.sky_bbox_ul.dec.value,
                         self.xcenter,
                         self.ycenter))
 
@@ -1408,7 +1409,6 @@ class NIRISSForwardRowGrismDispersion(Model):
             dx, dy = rotate(dx, dy)
         so = np.argsort(dx)
         tr = np.interp(dxr, dx[so], t[so])
-        print(tr, self.lmodels[iorder])
         wavelength = self.lmodels[iorder](tr)
 
         return (x0, y0, wavelength, order)
