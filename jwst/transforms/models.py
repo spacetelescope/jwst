@@ -622,7 +622,8 @@ class Gwa2Slit(Model):
         open slits
         a slit is a namedtupe
         Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
-             "quadrant", "source_id", "nshutters")
+             "quadrant", "source_id", "shutter_state", "source_name",
+             "source_alias", "stellarity", "source_xpos", "source_ypos"])
     models : list
         an instance of `~astropy.modeling.core.Model`
     """
@@ -666,7 +667,8 @@ class Slit2Msa(Model):
         open slits
         a slit is a namedtupe
         Slit("name", "shutter_id", "xcen", "ycen", "ymin", "ymax",
-             "quadrant", "source_id", "nshutters")
+             "quadrant", "source_id", "shutter_state", "source_name",
+             "source_alias", "stellarity", "source_xpos", "source_ypos")
     models : list
         an instance of `~astropy.modeling.core.Model`
     """

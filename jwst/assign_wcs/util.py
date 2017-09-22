@@ -424,3 +424,19 @@ def create_grism_objects(input_model, reference_files, mmag_extract=99.0):
                                              decmax=obj.decmax))
 
     return grism_objects
+
+
+def get_num_msa_open_shutters(shutter_state):
+    """
+    Return the number of open shutters in a slitlet.
+
+    Parameters
+    ----------
+    shutter_state : str
+        ``Slit.shutter_state`` attribute - a combination of
+        ``1`` - open shutter, ``0`` - closed shutter, ``x`` - main shutter.
+    """
+    num = shutter_state.count('1')
+    if 'x' in shutter_state:
+        num += 1
+    return num

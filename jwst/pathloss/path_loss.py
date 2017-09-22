@@ -7,7 +7,7 @@ from __future__ import division
 import numpy as np
 import logging
 from .. import datamodels
-from jwst.assign_wcs import nirspec
+from jwst.assign_wcs import nirspec, util
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -82,7 +82,7 @@ def calculate_pathloss_vector(pathloss_refdata, pathloss_wcs, xcenter, ycenter):
     The y-center of the target (-0.5 to 0.5)
 
     """
-    
+
     wavesize = pathloss_refdata.shape[0]
     wavelength = np.zeros(wavesize, dtype=np.float32)
     #
@@ -91,7 +91,7 @@ def calculate_pathloss_vector(pathloss_refdata, pathloss_wcs, xcenter, ycenter):
     if len(pathloss_refdata.shape) == 1:
         crpix1 = pathloss_wcs.crpix1
         crval1 = pathloss_wcs.crval1
-        cdelt1 = pathloss_wcs.cdelt1    
+        cdelt1 = pathloss_wcs.cdelt1
         for i in np.arange(wavesize):
             wavelength[i] = crval1 +(float(i) - crpix1)*cdelt1
         return wavelength, pathloss_refdata
@@ -101,7 +101,7 @@ def calculate_pathloss_vector(pathloss_refdata, pathloss_wcs, xcenter, ycenter):
     else:
         crpix3 = pathloss_wcs.crpix3
         crval3 = pathloss_wcs.crval3
-        cdelt3 = pathloss_wcs.cdelt3    
+        cdelt3 = pathloss_wcs.cdelt3
         for i in np.arange(wavesize):
             wavelength[i] = crval3 +(float(i) - crpix3)*cdelt3
         # Calculate python index of object center
@@ -164,7 +164,8 @@ def do_correction(input_model, pathloss_model):
                 # Calculate the 1-d wavelength and pathloss vectors
                 # for the source position
                 # Get the aperture from the reference file that matches the slit
-                aperture = getApertureFromModel(pathloss_model, slit.nshutters)
+                nshutters = util.get_num_msa_open_shutters(slit.shutter_state)
+                aperture = getApertureFromModel(pathloss_model, nshutters)
                 if aperture is not None:
                     wavelength_pointsource, pathloss_pointsource_vector = \
                         calculate_pathloss_vector(aperture.pointsource_data,
@@ -184,7 +185,7 @@ def do_correction(input_model, pathloss_model):
                     slit.pathloss_uniformsource = pathloss_uniform_vector
                     slit.wavelength_uniformsource = wavelength_uniformsource
                 else:
-                    log.warning("Cannot find matching pathloss model for slit with size %d" % slit.nshutters)
+                    log.warning("Cannot find matching pathloss model for slit with size %d" % nshutters)
                     continue
         input_model.meta.cal_step.pathloss = 'COMPLETE'
     elif exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
@@ -245,5 +246,5 @@ def do_correction(input_model, pathloss_model):
         input_model.wavelength_uniformsource = wavelength_uniformsource
         input_model.pathloss_uniformsource = pathloss_uniform_vector
         input_model.meta.cal_step.pathloss = 'COMPLETE'
-            
+
     return input_model.copy()
