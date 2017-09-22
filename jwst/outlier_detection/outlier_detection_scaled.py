@@ -132,10 +132,10 @@ class OutlierDetectionScaled(object):
             radius_inner = 4
             radius_outer = 5
 
-        apertures = CircularAperture((xcenter,ycenter),r=radius)
+        apertures = CircularAperture((xcenter, ycenter), r=radius)
         aperture_mask = apertures.to_mask(method='center')[0]
         # This mask has 1 for mask region, 0 for outside of mask
-        median_mask = aperture_mask.to_image((ny,nx))
+        median_mask = aperture_mask.to_image((ny, nx))
         inv_median_mask = np.abs(median_mask - 1)
         # Perform photometry
         catalog = tso_aperture_photometry(self.input_models, xcenter, ycenter,
@@ -144,7 +144,7 @@ class OutlierDetectionScaled(object):
 
         # Extract net photometry for the source
         # This will be the value used for scaling the median image within
-        # the aperture region 
+        # the aperture region
         phot_values = catalog['net_aperture_sum']
 
         # Convert CubeModel into ModelContainer of 2-D DataModels
@@ -162,7 +162,6 @@ class OutlierDetectionScaled(object):
         base_filename = self.input_models.meta.filename
         median_model.meta.filename = '_'.join(base_filename.split('_')[:2] +
             ['median.fits'])
-        
 
         # Perform median combination on set of drizzled mosaics
         median_model.data = create_median(input_models, **pars)
@@ -170,10 +169,10 @@ class OutlierDetectionScaled(object):
                             r_out=radius_outer)
 
         tbl1 = aperture_photometry(median_model.data, apertures,
-                                   error=median_model.data*0.0 + 1.0)
+                                   error=median_model.data * 0.0 + 1.0)
         tbl2 = aperture_photometry(median_model.data, aper2,
-                                   error=median_model.data*0.0 + 1.0)
-        
+                                   error=median_model.data * 0.0 + 1.0)
+
         aperture_sum = u.Quantity(tbl1['aperture_sum'][0])
         annulus_sum = u.Quantity(tbl2['aperture_sum'][0])
         annulus_mean = annulus_sum / aper2.area()
@@ -189,14 +188,14 @@ class OutlierDetectionScaled(object):
         # Area outside of aperture in median will remain unchanged
         blot_models = datamodels.ModelContainer()
         for i in range(self.input_models.data.shape[0]):
-            scale_factor = float(phot_values[i]/median_phot_value)
+            scale_factor = float(phot_values[i] / median_phot_value)
             scaled_image = datamodels.ImageModel(init=median_model.data.shape)
             scaled_image.meta = median_model.meta
-            scaled_data = median_model.data*(scale_factor*median_mask) + \
-                    (median_model.data*inv_median_mask)
+            scaled_data = median_model.data * (scale_factor * median_mask) + \
+                    (median_model.data * inv_median_mask)
             scaled_image.data = scaled_data
             blot_models.append(scaled_image)
-        
+
         if save_intermediate_results:
             log.info("Writing out Scaled Median images...")
             blot_models.save()
@@ -208,7 +207,6 @@ class OutlierDetectionScaled(object):
 
         for i in range(self.input_models.data.shape[0]):
             self.input_models.dq[i] = input_models[i].dq
-            
+
         # clean-up (just to be explicit about being finished with these results)
         del median_model, blot_models
-

@@ -49,8 +49,8 @@ class OutlierDetectionStep(Step):
 
             self.log.info("Performing outlier detection on {} inputs".format(len(input_models)))
             self.input_models = input_models
-            
-            reffiles= {}
+
+            reffiles = {}
             reffiles['gain'] = self._build_reffile_container('gain')
             reffiles['readnoise'] = self._build_reffile_container('readnoise')
 
@@ -103,7 +103,7 @@ class OutlierDetectionStep(Step):
         reffile_to_model = {'gain': datamodels.GainModel,
             'readnoise': datamodels.ReadnoiseModel}
 
-        reffiles = [self.get_reference_file(im, reftype) for im in self.input_models] 
+        reffiles = [self.get_reference_file(im, reftype) for im in self.input_models]
         self.log.debug("Using {} reffile(s):".format(reftype.upper()))
         for r in set(reffiles):
             self.log.debug("    {}".format(r))
@@ -115,9 +115,8 @@ class OutlierDetectionStep(Step):
             ref_list = [reffile_to_model.get(reftype)(reffiles[0])] * length
         else:
             ref_list = [reffile_to_model.get(reftype)(ref) for ref in reffiles]
-            
-        return datamodels.ModelContainer(ref_list)
 
+        return datamodels.ModelContainer(ref_list)
 
 
 if __name__ == '__main__':

@@ -85,6 +85,7 @@ class ResampleSpecStep(Step):
                     result = self.step.output_models
 
         result.meta.cal_step.resample = 'COMPLETE'
+
         return result
 
 

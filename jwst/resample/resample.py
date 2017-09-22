@@ -192,10 +192,10 @@ class ResampleData(object):
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
 
-                # apply sky subtraction 
+                # apply sky subtraction
                 if 'skybg' in img.meta._instance:
                     img.data -= img.meta.skybg
-                    
+
                 outwcs_pscale = output_model.meta.wcsinfo.cdelt1
                 wcslin_pscale = img.meta.wcsinfo.cdelt1
 
