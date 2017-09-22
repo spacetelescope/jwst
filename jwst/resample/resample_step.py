@@ -62,14 +62,13 @@ class ResampleStep(Step):
         resamp.do_drizzle()
 
         if len(resamp.output_models) == 1:
-            output_model = resamp.output_models[0]
+            result = resamp.output_models[0]
         else:
-            output_model = resamp.output_models
+            result = resamp.output_models
 
+        result.meta.cal_step.resample = "COMPLETE"
 
-        output_model.meta.cal_step.resample = "COMPLETE"
-
-        return output_model
+        return result
 
 
 if __name__ == '__main__':
