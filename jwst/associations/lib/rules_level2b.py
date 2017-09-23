@@ -2,6 +2,7 @@
 """
 import logging
 
+from jwst.associations.lib.dms_base import format_list
 from jwst.associations.lib.rules_level2_base import *
 from jwst.associations.lib.rules_level3_base import (DMS_Level3_Base, _EMPTY)
 
@@ -148,7 +149,7 @@ class Asn_Lv2WFSS(
         """
         opt_elem = ''
         try:
-            value = '-'.join(self.constraints['opt_elem']['found_values'])
+            value = format_list(self.constraints['opt_elem']['found_values'])
         except KeyError:
             pass
         else:

@@ -298,7 +298,7 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the target or source ID.
         """
-        target_id = '-'.join(self.constraints['target']['found_values'])
+        target_id = format_list(self.constraints['target']['found_values'])
         target = 't{0:0>3s}'.format(str(target_id))
         return target
 
@@ -311,7 +311,7 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the instrument
         """
-        instrument = '-'.join(self.constraints['instrument']['found_values'])
+        instrument = format_list(self.constraints['instrument']['found_values'])
         return instrument
 
     def _get_opt_element(self):
@@ -326,7 +326,7 @@ class DMSBaseMixin(ACIDMixin):
         opt_elem = ''
         join_char = ''
         try:
-            value = '-'.join(self.constraints['opt_elem']['found_values'])
+            value = format_list(self.constraints['opt_elem']['found_values'])
         except KeyError:
             pass
         else:
@@ -334,7 +334,7 @@ class DMSBaseMixin(ACIDMixin):
                 opt_elem = value
                 join_char = '-'
         try:
-            value = '-'.join(self.constraints['opt_elem2']['found_values'])
+            value = format_list(self.constraints['opt_elem2']['found_values'])
         except KeyError:
             pass
         else:
@@ -361,10 +361,19 @@ class DMSBaseMixin(ACIDMixin):
             No constraints produce this value
         """
         try:
-            activity_id = '-'.join(self.constraints['activity_id']['found_values'])
+            activity_id = format_list(self.constraints['activity_id']['found_values'])
         except KeyError:
             raise AssociationNotAConstraint
         else:
             if activity_id not in _EMPTY:
                 exposure = '{0:0>2s}'.format(activity_id)
         return exposure
+
+# #########
+# Utilities
+# #########
+
+
+def format_list(alist):
+    """Format a list according to DMS naming specs"""
+    return '-'.join(alist)
