@@ -146,7 +146,7 @@ def test_multiple_optelems(pool_file):
             m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
             assert m is not None
             try:
-                value = '-'.join(asn.constraints['opt_elem2']['_actuals'])
+                value = '-'.join(asn.constraints['opt_elem2']['found_values'])
             except KeyError:
                 value = None
             if value in EMPTY:

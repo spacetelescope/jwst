@@ -462,7 +462,7 @@ class Association(MutableMapping):
         # At this point, the constraint has passed.
         # Fix the conditions.
         escaped_value = re.escape(value)
-        conditions['_actuals'].add(escaped_value)
+        conditions['found_values'].add(escaped_value)
         if conditions['value'] is None or \
            conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
             conditions['value'] = escaped_value
@@ -504,7 +504,7 @@ class Association(MutableMapping):
         # At this point, the constraint has passed.
         # Fix the conditions.
         escaped_value = re.escape(evaled_str)
-        conditions['_actuals'].add(escaped_value)
+        conditions['found_values'].add(escaped_value)
         if conditions['value'] is None or \
            conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
             conditions['value'] = escaped_value
@@ -522,7 +522,7 @@ class Association(MutableMapping):
             constraints = {}
             self.constraints = constraints
         for constraint, conditions in six.iteritems(new_constraints):
-            conditions['_actuals'] = set()
+            conditions['found_values'] = set()
             constraints[constraint] = constraints.get(constraint, conditions)
 
     def constraints_to_text(self):
@@ -531,7 +531,7 @@ class Association(MutableMapping):
             if conditions.get('force_undefined', False):
                 yield '    {:s}: Is Invalid'.format(name)
             else:
-                yield '    {:s}: {}'.format(name, conditions['_actuals'])
+                yield '    {:s}: {}'.format(name, conditions['found_values'])
 
     def is_item_member(self, item):
         """Check if item is already a member of this association
