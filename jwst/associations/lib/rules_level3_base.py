@@ -132,23 +132,45 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         return result
 
     def dms_product_name(self):
-        """Define product name."""
-        target = self._get_target()
+        """Define product name.
 
-        instrument = self._get_instrument()
+        Returns
+        -------
+        product_name: str
+            The product name
+        """
+        return self._dms_product_name(self)
 
-        opt_elem = self._get_opt_element()
+    @staticmethod
+    def _dms_product_name(association):
+        """Define product name.
+
+        Parameters
+        ----------
+        association: `Association`
+            Association to get the name from.
+
+        Returns
+        -------
+        product_name: str
+            The product name
+        """
+        target = association._get_target()
+
+        instrument = association._get_instrument()
+
+        opt_elem = association._get_opt_element()
 
         try:
-            exposure = self._get_exposure()
+            exposure = association._get_exposure()
         except AssociationNotAConstraint:
             exposure = ''
         else:
             exposure = '-' + exposure
 
         product_name = 'jw{}-{}_{}_{}_{}'.format(
-            self.data['program'],
-            self.acid.id,
+            association.data['program'],
+            association.acid.id,
             target,
             instrument,
             opt_elem,

@@ -122,7 +122,7 @@ class Asn_Lv2WFSS(
         # Get the Level3 product name of this association.
         # Except for the grism component, it should be what
         # the Level3 direct image name is.
-        lv3_direct_image_catalog = DMS_Level3_Base.dms_product_name(self) + '.ecsv'
+        lv3_direct_image_catalog = DMS_Level3_Base._dms_product_name(self) + '.ecsv'
 
         # Insert the needed catalog member
         member = {
