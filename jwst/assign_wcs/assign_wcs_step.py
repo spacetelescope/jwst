@@ -25,7 +25,7 @@ class AssignWcsStep(Step):
 
     camera             NIRSPEC Camera model
     collimator         NIRSPEC Collimator Model
-    disperser          Disperser parameters
+    disperser          Disperser model
     distortion         Spatial distortion model
     filteroffset       MIRI Imager fiter offsets
     fore               Transform through the NIRSPEC FORE optics
@@ -57,6 +57,7 @@ class AssignWcsStep(Step):
             for reftype in self.reference_file_types:
                 reffile = self.get_reference_file(input_model, reftype)
                 reference_file_names[reftype] = reffile if reffile else ""
+
             result = load_wcs(input_model, reference_file_names)
 
         return result

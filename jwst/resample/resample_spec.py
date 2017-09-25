@@ -1,4 +1,4 @@
-from __future__ import (division, print_function, unicode_literals, 
+from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
 import time
@@ -470,7 +470,7 @@ class ResampleSpecData(object):
                 for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
                     'slitlet_id', 'source_id', 'source_name', 'source_alias',
                     'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                    'nshutters', 'relsens']:
+                    'shutter_state', 'relsens']:
                     if hasattr(img, attr):
                         setattr(output_model, attr, getattr(img, attr))
             except:

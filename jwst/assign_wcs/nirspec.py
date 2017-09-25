@@ -10,7 +10,7 @@ import logging
 import numpy as np
 
 from astropy.modeling import models, fitting
-from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Shift
+from astropy.modeling.models import Mapping, Identity, Const1D, Scale
 from astropy import units as u
 from astropy import coordinates as coord
 from astropy.io import fits
@@ -370,7 +370,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
     -------
     slitlets : list
         A list of slitlets. Each slitlet is a tuple with
-        ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax", "quadrant", "source_id", "nshutters")
+        ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax", "quadrant", "source_id", "shutter_state")
 
     """
     slitlets = []
@@ -397,7 +397,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
 
             # Get the rows for the current slitlet_id
             slitlets_sid = [x for x in msa_data if x['slitlet_id'] == slitlet_id]
-            nshutters = len(slitlets_sid)
+            open_shutters = [x['shutter_column'] for x in slitlets_sid]
+
             # Count the number of backgrounds that have an 'N' (meaning main shutter)
             # This needs to be 0 or 1 and we will have to deal with those differently
             # See: https://github.com/STScI-JWST/jwst/commit/7588668b44b77486cdafb35f7e2eb2dcfa7d1b63#commitcomment-18987564
@@ -413,7 +414,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
             if n_main_shutter == 0:
                 jmin = min([s['shutter_column'] for s in slitlets_sid])
                 jmax = max([s['shutter_column'] for s in slitlets_sid])
-                j = (jmax - jmin) // 2 + 1
+                j = jmin + (jmax - jmin) // 2 + 1
                 ymax = 0.5 + margin + (jmax - j) * 1.15
                 ## TODO: check this formula - it is different (assuming it's incorrect in the report).
                 ymin = -(0.5 + margin) + (jmin - j) * 1.15
@@ -460,10 +461,42 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
             """
             source_xpos = source_xpos - 0.5
             source_ypos = source_ypos - 0.5
+
+            # Create the shutter_state string
+            all_shutters = _shutter_id_to_str(open_shutters, ycen)
+
             slitlets.append(Slit(slitlet_id, shutter_id, xcen, ycen, ymin, ymax,
-                                 quadrant, source_id, nshutters, source_name, source_alias,
+                                 quadrant, source_id, all_shutters, source_name, source_alias,
                                  stellarity, source_xpos, source_ypos))
     return slitlets
+
+
+def _shutter_id_to_str(open_shutters, ycen):
+    """
+    Return a string representing the open and closed shutters in a slitlet.
+
+    Parameters
+    ----------
+    open_shutters : list
+        List of IDs (shutter_id) of open shutters.
+    xcen : int
+        X coordinate of main shutter.
+
+    Returns
+    -------
+    all_shutters : str
+        String representing the state of the shutters.
+        "1" indicates an open shutter, "0" - a closed one, and
+        "x" - the main shutter.
+    """
+    all_shutters = np.array(range(min(open_shutters), max(open_shutters) + 1))
+    cen_ind = (all_shutters == ycen).nonzero()[0].item()
+    for i in open_shutters:
+        all_shutters[all_shutters == i] = 1
+    all_shutters[all_shutters != 1] = 0
+    all_shutters = all_shutters.astype(np.str)
+    all_shutters[cen_ind] = 'x'
+    return  "".join(all_shutters)
 
 
 def get_spectral_order_wrange(input_model, wavelengthrange_file):
@@ -604,9 +637,6 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     ymin = -.55
     ymax = .55
 
-    wrange = (input_model.meta.wcsinfo.waverange_start,
-              input_model.meta.wcsinfo.waverange_end),
-    order = input_model.meta.wcsinfo.spectral_order
     agreq = angle_from_disperser(disperser, input_model)
     lgreq = wavelength_from_disperser(disperser, input_model)
 
@@ -673,10 +703,6 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     model : `~jwst.transforms.Gwa2Slit` model.
         Transform from GWA frame to SLIT frame.
     """
-    wrange = (input_model.meta.wcsinfo.waverange_start,
-                     input_model.meta.wcsinfo.waverange_end),
-    order = input_model.meta.wcsinfo.spectral_order
-
     agreq = angle_from_disperser(disperser, input_model)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     lgreq = wavelength_from_disperser(disperser, input_model)
@@ -724,8 +750,6 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
 
 
 def angle_from_disperser(disperser, input_model):
-    lmin = input_model.meta.wcsinfo.waverange_start
-    lmax = input_model.meta.wcsinfo.waverange_end
     sporder = input_model.meta.wcsinfo.spectral_order
     if input_model.meta.instrument.grating.lower() != 'prism':
         agreq = AngleFromGratingEquation(disperser.groovedensity,

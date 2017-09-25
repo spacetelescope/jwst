@@ -43,7 +43,8 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
 
     # Reset saturated values in input data array to NaN, so they don't get
     # used in any of the subsequent calculations
-    data[gdq == dqflags.group['SATURATED']] = np.NaN
+    wh_sat = np.where(np.bitwise_and(gdq, dqflags.group['SATURATED']))
+    data[wh_sat] = np.NaN
 
     # Loop over multiple integrations
     for integration in range(nints):

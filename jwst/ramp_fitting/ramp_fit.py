@@ -94,11 +94,15 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                                 readnoise_model, gain_model)
         opt_model = None
     else:
-        new_model, int_model, opt_model, var_slope_r, var_slope_p,\
+        new_model, int_model, opt_model, \
         var_r_s_4d, var_p_s_4d = ols_ramp_fit(model,\
                                 buffsize, save_opt,
                                 readnoise_model, gain_model, weighting)
         gls_opt_model = None
+
+    # placeholders
+    var_slope_r = 0.
+    var_slope_p = 0.
 
     return new_model, int_model, opt_model, gls_opt_model, var_slope_r, \
           var_slope_p, var_r_s_4d, var_p_s_4d  
@@ -213,8 +217,6 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     # Poisson noise only (per segment); Read noise only, per segment
     var_p_s_4d = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32) 
     var_r_s_4d = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32) 
-    var_p_2d = np.zeros((max_seg, npix), dtype=np.float32)
-    var_r_2d = np.zeros((max_seg, npix), dtype=np.float32)
 
     # Get Pixel DQ array from input file. The incoming RampModel has uint8
     #   PIXELDQ, but ramp fitting will update this array here by flagging
@@ -246,6 +248,12 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
             data_sect = model.get_section('data')[num_int, :, rlo:rhi, :]
 
+            # Poisson noise only; read noise only
+            var_p_2d = np.zeros((max_seg, (rhi - rlo) * imshape[-1]),
+                                dtype=np.float32)
+            var_r_2d = np.zeros((max_seg, (rhi - rlo) * imshape[-1]),
+                                dtype=np.float32)
+
             # first frame section for 1st read of current integration
             ff_sect = model.get_section('data')[num_int,
                                                 0, rlo:rhi, :].astype(np.float32)
@@ -254,11 +262,10 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
             rn_sect = readnoise_2d[rlo:rhi, :]
             gain_sect = gain_2d[rlo:rhi, :]
 
-            t_err_cube, t_dq_cube, m_by_var, inv_var, opt_res, f_max_seg, \
-                 sig_slope_p, var_p_s_4d, sig_slope_r, var_r_s_4d = \
-                 calc_slope(data_sect, gdq_sect, frame_time, opt_res, \
-                     rn_sect, gain_sect, max_seg, ngroups, weighting, f_max_seg,\
-                     var_p_2d, var_p_s_4d, var_r_2d, var_r_s_4d)
+            t_err_cube, t_dq_cube, m_by_var, inv_var, opt_res, f_max_seg = \
+                 calc_slope(data_sect, gdq_sect, frame_time, opt_res,
+                     rn_sect, gain_sect, max_seg, ngroups, weighting, f_max_seg,
+                     var_p_2d, var_r_2d)
 
             err_cube[num_int, :, rlo:rhi, :] += t_err_cube
             gdq_cube[num_int, :, rlo:rhi, :] = t_dq_cube
@@ -361,7 +368,7 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     new_model.update(model)  # ... and add all keys from input
 
-    return new_model, int_model, opt_model, sig_slope_r, sig_slope_p,\
+    return new_model, int_model, opt_model, \
             var_r_s_4d, var_p_s_4d
 
 
@@ -785,9 +792,8 @@ def calc_nrows(model, buffsize, cubeshape, nreads):
 
 
 def calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect, gain_sect,
-                i_max_seg, ngroups, weighting, f_max_seg, \
-                var_p_2d, var_p_s_4d, \
-                var_r_2d, var_r_s_4d): 
+                i_max_seg, ngroups, weighting, f_max_seg,
+                var_p_2d, var_r_2d):
 
     """
     Short Summary
@@ -949,11 +955,11 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect, gain_sect,
         mask_2d[gdq_sect_r != 0] = False # exclude bad group dq values
 
         # for all pixels, update arrays, summing slope and variance
-        f_max_seg, var_p_2d, var_r_2d = \
+        f_max_seg = \
               fit_next_segment(start, end_st, end_heads, pixel_done, \
               data_sect, mask_2d, inv_var, m_by_var, num_seg, opt_res, rn_sect,\
               gain_sect, ngroups, weighting, total_mask_sum, f_max_seg, \
-              var_p_2d, var_p_s_4d, var_r_2d, var_r_s_4d)
+              var_p_2d, var_r_2d)
 
         if f_max_seg is None:
             f_max_seg = 1
@@ -967,16 +973,13 @@ def calc_slope(data_sect, gdq_sect, frame_time, opt_res, rn_sect, gain_sect,
     for ii in range(cubeshape[0]):
         err_sect[ii, :, :] = err_2d_array
 
-    return err_sect, gdq_sect, m_by_var, inv_var, opt_res, f_max_seg,\
-           var_p_2d, var_p_s_4d,\
-           var_r_2d, var_r_s_4d
+    return err_sect, gdq_sect, m_by_var, inv_var, opt_res, f_max_seg
 
 
 def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
                       inv_var, m_by_var, num_seg, opt_res, rn_sect, gain_sect,
                       ngroups, weighting, total_mask_sum, f_max_seg, \
-                      var_p_2d, var_p_s_4d, \
-                      var_r_2d, var_r_s_4d):
+                      var_p_2d, var_r_2d):
     """
     Extended Summary
     ----------------
@@ -1163,7 +1166,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
             num_seg[g_pix] = 1
 
-        return 1, var_p_2d, var_r_2d  # 1, for f_max_seg 
+        return 1        # 1, for f_max_seg 
 
     # CASE D) - dataset has NGROUPS=2; so special fitting is done for all pixels,
     #    and all intervals are at the end of the array.
@@ -1191,7 +1194,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
 
             num_seg[g_pix] = 1
         
-            return 1, var_p_2d, var_r_2d    # 1, for f_max_seg
+            return 1        # 1, for f_max_seg 
 
     # CASE E) - interval too short to fit normally (only 2 good reads),
     #    at end of array, NGROUPS>1, but exclude NGROUPS==2 datasets
@@ -1377,7 +1380,7 @@ def fit_next_segment(start, end_st, end_heads, pixel_done, data_sect, mask_2d,
         wh_neg = (end_heads < 0.)
         end_heads[wh_neg] = 0.
 
-    return f_max_seg, var_p_2d, var_r_2d
+    return f_max_seg
 
 
 def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):

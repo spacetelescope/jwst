@@ -28,6 +28,7 @@ def load_wcs(input_model, reference_files={}):
     mod = importlib.import_module('.' + instrument, 'jwst.assign_wcs')
 
     pipeline = mod.create_pipeline(input_model, reference_files)
+
     # Initialize the output model as a copy of the input
     # Make the copy after the WCS pipeline is created in order to pass updates to the model.
     if pipeline is None:

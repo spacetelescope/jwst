@@ -25,7 +25,7 @@ from .. import __version_commit__, __version__
 SUFFIX_LIST = [
     'rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
     'jump', 'ramp', 'x1d', 'x1dints', 'calints', 'rateints',
-    'crf', 'crfints'
+    'crf', 'crfints', 'psfsub', 'psfalign', 'psfstack'
 ]
 REMOVE_SUFFIX = '^(?P<root>.+?)((?P<separator>_|-)(' \
                 + '|'.join(SUFFIX_LIST) + '))?$'
@@ -47,7 +47,7 @@ class Step(object):
 
     # Reference types for both command line override definition and reference prefetch
     reference_file_types = []
-    
+
     # Set to False in subclasses to skip prefetch,  but by default attempt to prefetch
     prefetch_references = True
 
@@ -386,12 +386,12 @@ class Step(object):
             result_return = result
 
             # Update meta information
-            if not isinstance(result, (list, tuple)):
+            if not isinstance(result, (list, tuple, datamodels.ModelContainer)):
                 results = [result]
             else:
                 results = result
 
-            if len(self._reference_files_used) and not self._is_container(args[0]):
+            if len(self._reference_files_used):
                 for result in results:
                     if isinstance(result, datamodels.DataModel):
                         for ref_name, filename in self._reference_files_used:
@@ -419,13 +419,26 @@ class Step(object):
                 )
                 for idx, result in enumerate(results):
                     if hasattr(result, 'save'):
-                        output_path = make_output_path(
-                            self, result,
-                            basepath=self.output_file,
-                            result_id=result_id(idx)
-                        )
-                        self.log.info('Saving file {0}'.format(output_path))
-                        result.save(output_path, overwrite=True)
+                        try:
+                            output_path = make_output_path(
+                                self, result,
+                                basepath=self.output_file,
+                                result_id=result_id(idx)
+                            )
+                        except AttributeError:
+                            self.log.warning(
+                                '`save_results` has been requested,'
+                                ' but cannot determine filename.'
+                            )
+                            self.log.warning(
+                                'Specify an output file with `--output_file`'
+                                ' or set `--save_results=false`'
+                            )
+                        else:
+                            self.log.info(
+                                'Saving file {0}'.format(output_path)
+                            )
+                            result.save(output_path, overwrite=True)
 
             self.log.info(
                 'Step {0} done'.format(self.name))

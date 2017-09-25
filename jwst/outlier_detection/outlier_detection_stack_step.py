@@ -84,6 +84,9 @@ class OutlierDetectionStackStep(Step):
                 reffiles=reffiles, **pars)
             step.do_detection()
 
+            for model in self.input_models:
+                model.meta.cal_step.outlier_detection = 'COMPLETE'
+
             return self.input_models
 
     def _build_reffile_container(self, reftype):
@@ -121,7 +124,7 @@ class OutlierDetectionStackStep(Step):
             # filename as a URI(crds://), not a file path(/path/to/file)
             ref_list = [reffile_to_model[reftype](self.reference_uri_to_cache_path(reffiles[0]))]*length
         else:
-            ref_list = [self.get_reference_file(im, reftype) for im in self.input_models] 
+            ref_list = [reffile_to_model[reftype](self.get_reference_file(im, reftype)) for im in self.input_models] 
         return datamodels.ModelContainer(ref_list)
 
 

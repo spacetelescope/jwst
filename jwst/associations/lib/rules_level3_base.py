@@ -20,7 +20,7 @@ from jwst.associations.exceptions import (
 )
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.counter import Counter
-from jwst.associations.lib.dms_base import DMSBaseMixin
+from jwst.associations.lib.dms_base import (DMSBaseMixin, _EMPTY)
 from jwst.associations.lib.format_template import FormatTemplate
 
 __all__ = [
@@ -43,9 +43,6 @@ __all__ = [
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
-
-# Non-specified values found in DMS Association Pools
-_EMPTY = (None, 'NULL', 'Null', 'null', '--')
 
 # The schema that these associations must adhere to.
 ASN_SCHEMA = libpath('asn_schema_jw_level3.json')
@@ -135,23 +132,45 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         return result
 
     def dms_product_name(self):
-        """Define product name."""
-        target = self._get_target()
+        """Define product name.
 
-        instrument = self._get_instrument()
+        Returns
+        -------
+        product_name: str
+            The product name
+        """
+        return self._dms_product_name(self)
 
-        opt_elem = self._get_opt_element()
+    @staticmethod
+    def _dms_product_name(association):
+        """Define product name.
+
+        Parameters
+        ----------
+        association: `Association`
+            Association to get the name from.
+
+        Returns
+        -------
+        product_name: str
+            The product name
+        """
+        target = association._get_target()
+
+        instrument = association._get_instrument()
+
+        opt_elem = association._get_opt_element()
 
         try:
-            exposure = self._get_exposure()
+            exposure = association._get_exposure()
         except AssociationNotAConstraint:
             exposure = ''
         else:
             exposure = '-' + exposure
 
         product_name = 'jw{}-{}_{}_{}_{}'.format(
-            self.data['program'],
-            self.acid.id,
+            association.data['program'],
+            association.acid.id,
             target,
             instrument,
             opt_elem,
@@ -302,86 +321,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         # Update meta info
         self.update_asn(item=item, member=member)
-
-    def _get_target(self):
-        """Get string representation of the target
-
-        Returns
-        -------
-        target: str
-            The Level3 Product name representation
-            of the target or source ID.
-        """
-        target_id = self.constraints['target']['value']
-        target = 't{0:0>3s}'.format(str(target_id))
-        return target
-
-    def _get_instrument(self):
-        """Get string representation of the instrument
-
-        Returns
-        -------
-        instrument: str
-            The Level3 Product name representation
-            of the instrument
-        """
-        instrument = self.constraints['instrument']['value']
-        return instrument
-
-    def _get_opt_element(self):
-        """Get string representation of the optical elements
-
-        Returns
-        -------
-        opt_elem: str
-            The Level3 Product name representation
-            of the optical elements.
-        """
-        opt_elem = ''
-        join_char = ''
-        try:
-            value = self.constraints['opt_elem']['value']
-        except KeyError:
-            pass
-        else:
-            if value not in _EMPTY and value != 'clear':
-                opt_elem = value
-                join_char = '-'
-        try:
-            value = self.constraints['opt_elem2']['value']
-        except KeyError:
-            pass
-        else:
-            if value not in _EMPTY and value != 'clear':
-                opt_elem = join_char.join(
-                    [opt_elem, value]
-                )
-        if opt_elem == '':
-            opt_elem = 'clear'
-        return opt_elem
-
-    def _get_exposure(self):
-        """Get string representation of the exposure id
-
-        Returns
-        -------
-        exposure: str
-            The Level3 Product name representation
-            of the exposure & activity id.
-
-        Raises
-        ------
-        AssociationNotAConstraint
-            No constraints produce this value
-        """
-        try:
-            activity_id = self.constraints['activity_id']['value']
-        except KeyError:
-            raise AssociationNotAConstraint
-        else:
-            if activity_id not in _EMPTY:
-                exposure = '{0:0>2s}'.format(activity_id)
-        return exposure
 
     def _add_items(self, items, product_name=None, with_exptype=False):
         """ Force adding items to the association

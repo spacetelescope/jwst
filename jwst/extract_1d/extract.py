@@ -1243,8 +1243,8 @@ def copy_keyword_info(slit, slitname, spec):
     if "source_ypos" in slit:
         spec.source_ypos = slit.source_ypos
 
-    if "nshutters" in slit:
-        spec.nshutters = slit.nshutters
+    if "shutter_state" in slit:
+        spec.shutter_state = slit.shutter_state
 
 
 def extract_one_slit(input_model, slit, integ, **extract_params):
