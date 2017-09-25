@@ -13,31 +13,25 @@ from gwcs import wcstools
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-slit_spacing = 202.0
-slit_height = 175.0
-SLITRATIO = slit_spacing/slit_height     # Approximate value until we have something better
+SLITRATIO = 1.15     # Ratio of slit spacing to slit height
 
 def do_correction(input_model, barshadow_model):
-    """
-    Short Summary
-    -------------
-    Execute all tasks for Bar Shadow Correction
+    """Do the Bar Shadow Correction
 
     Parameters
     ----------
-    input_model: data model object
-        science data to be corrected
+    input_model: MultiSlitModel datamodel object
+        science data model to be corrected
 
-    barshadow_model: barshadow model object
-        bar shadow correction data
+    barshadow_model: BarshadowModel datamodel object
+        bar shadow datamodel from reference file
 
     Returns
     -------
-    output_model: data model object
-        Science data with bar shadow extensions added
+    output_model: MultiSlitModel datamodel object
+        Science datamodel with bar shadow extensions added
 
     """
-
 #
 # Input is a MultiSlitModel science data model 
 # A MultislitModel has a member .slits that behaves like
@@ -86,7 +80,6 @@ def do_correction(input_model, barshadow_model):
                 index_of_fiducial_in_array = 501 + index_of_fiducial*500
                 yrow = index_of_fiducial_in_array - yslit*500.0
                 wcol = (wavelength - w0)/wave_increment
-                nonnan = np.where(~np.isnan(yrow))
                 #   Interpolate the bar shadow correction for non-Nan pixels
                 correction = interpolate(yrow, wcol, shadow)
                 # Add the correction array and variance to the datamodel
@@ -101,7 +94,7 @@ def do_correction(input_model, barshadow_model):
             #
             # Put an array of ones in a correction extension
             slitlet.barshadow = np.ones(slitlet.data.shape)
-    return input_model.copy()
+    return input_model
 #
 def create_shutter_elements(barshadow_model):
     """Create the pieces that will be put together to make the barshadow
@@ -298,7 +291,7 @@ def create_empty_shadow_array(nshutters):
     #
     # Assume the reference files have a shape of 1001 rows by 101 columns
     # and go from -1 to +1 in Y
-    nrows = nshutters*500 + 501
+    nrows = nshutters*500 + 500
     ncolumns = 101
     empty_shadow = np.zeros((nrows, ncolumns))
     return empty_shadow
@@ -398,26 +391,39 @@ def interpolate(rows, columns, array):
     """
     nrows, ncolumns = rows.shape
     correction = np.ones((nrows, ncolumns))
-    rows = (rows + 0.5).astype(np.int)
-    columns = (columns + 0.5).astype(np.int)
+    nrows_out, ncols_out = array.shape
+    #
+    # Extend the boundary of array by 1 row and column to handle end cases
+    augmented_array = np.ones((nrows_out+1, ncols_out+1))
+    augmented_array[:nrows_out, :ncols_out] = array
+    augmented_array[nrows_out,:ncols_out] = array[nrows_out-1, :]
+    augmented_array[:nrows_out, ncols_out] = array[:, ncols_out-1]
+    augmented_array[nrows_out, ncols_out] = array[nrows_out-1, ncols_out-1]
     for row in range(nrows):
         for column in range(ncolumns):
             if ~np.isnan(rows[row, column]):
                 array_row = rows[row, column]
                 array_column = columns[row, column]
-                if array_row >= array.shape[0]:
-#                    print("Row out of range: %d %d %d" % (array_row, row, column))
-                    array_row = 0
-                if array_column >= array.shape[1]:
-#                    print("Column out of range: %d %d %d" % (array_row, row, column))
-                    array_column = 0
+                #
+                # Deal with out-of-bounds pixels
+                if array_row >= nrows_out:
+                    array_row = nrows_out - 1
+                if array_column >= ncols_out:
+                    array_column = ncols_out - 1
                 if array_row < 0:
-#                    print("Row out of range: %d %d %d" % (array_row, row, column))
                     array_row = 0
                 if array_column < 0:
-#                    print("Column out of range: %d %d %d" % (array_row, row, column))
                     array_column = 0
-                correction[row, column] = array[array_row, array_column]
+                ix = int(array_column)
+                iy = int(array_row)
+                a11 = augmented_array[iy, ix]
+                a12 = augmented_array[iy, ix+1]
+                a21 = augmented_array[iy+1, ix+1]
+                a22 = augmented_array[iy+1, ix+1]
+                dx = array_column%1
+                dy = array_row%1
+                correction[row, column] = a11*(1.0-dx)*(1.0-dy) + a12*dx*(1.0-dy) + \
+                    a21*(1.0-dx)*dy + a22*dx*dy
     return correction
 
 def has_uniform_source(slitlet):
