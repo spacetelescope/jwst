@@ -33,29 +33,28 @@ class ResampleStep(Step):
 
         input_models = datamodels.open(input)
         # If single input, insert into a ModelContainer
-        if input_models.__class__ is not datamodels.ModelContainer:
+        if not isinstance(input_models, datamodels.ModelContainer):
             s = datamodels.ModelContainer()
             s.append(input_models)
             s.assign_group_ids()
             s.meta.resample.output = s.group_names[0].replace('_resamp', '_drz')
-
             self.input_models = s
         else:
             self.input_models = input_models
 
         # identify what reference file has been associated with these inputs
         try:
-            self.ref_filename = self.get_reference_file(self.input_models[0],
+            ref_filename = self.get_reference_file(self.input_models[0],
                 self.reference_file_types[0])
             self.log.info('{} reffile is {}'.format(self.reference_file_types[0],
-                self.ref_filename))
+                ref_filename))
         except:
             self.log.error('{} reffile is not found.'.format(
                 self.reference_file_types[0]))
 
         # Call the resampling routine
         resamp = resample.ResampleData(self.input_models,
-            ref_filename=self.ref_filename,
+            ref_filename=ref_filename,
             single=self.single, wht_type=self.wht_type, pixfrac=self.pixfrac,
             kernel=self.kernel, fillval=self.fillval, good_bits=self.good_bits,
             blendheaders=self.blendheaders)
@@ -63,10 +62,11 @@ class ResampleStep(Step):
 
         if len(resamp.output_models) == 1:
             result = resamp.output_models[0]
+            result.meta.cal_step.resample = "COMPLETE"
         else:
             result = resamp.output_models
-
-        result.meta.cal_step.resample = "COMPLETE"
+            for model in result:
+                model.meta.cal_step.resample = "COMPLETE"
 
         return result
 
