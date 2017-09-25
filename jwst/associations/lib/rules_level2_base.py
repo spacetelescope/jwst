@@ -24,10 +24,12 @@ __all__ = [
     'ASN_SCHEMA',
     'AsnMixin_Lv2Image',
     'AsnMixin_Lv2ImageNonScience',
+    'AsnMixin_Lv2ImageScience',
     'AsnMixin_Lv2Mode',
     'AsnMixin_Lv2Singleton',
     'AsnMixin_Lv2Spec',
     'AsnMixin_Lv2SpecNonScience',
+    'AsnMixin_Lv2SpecScience',
     'AsnMixin_Lv2Special',
     'DMSLevel2bBase',
     'Utility'
@@ -445,72 +447,9 @@ class Utility(object):
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
 # ---------------------------------------------
-class AsnMixin_Lv2Image(DMSLevel2bBase):
-    """Level 2 Image association base"""
 
-    def __init__(self, *args, **kwargs):
-
-        self.add_constraints({
-            'exp_type': {
-                'value': (
-                    'fgs_image'
-                    '|mir_image'
-                    '|mir_lyot'
-                    '|mir_4qpm'
-                    '|nis_ami'
-                    '|nis_image'
-                    '|nrc_image'
-                    '|nrc_coron'
-                    '|nrc_tsimage'
-                ),
-                'inputs': ['exp_type'],
-                'force_unique': True,
-            }
-        })
-
-        super(AsnMixin_Lv2Image, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        super(AsnMixin_Lv2Image, self)._init_hook(item)
-        self.data['asn_type'] = 'image2'
-
-
-class AsnMixin_Lv2Spec(DMSLevel2bBase):
-    """Level 2 Spectral association base"""
-
-    def __init__(self, *args, **kwargs):
-
-        self.add_constraints({
-            'exp_type': {
-                'value': (
-                    'nrc_grism'
-                    '|nrc_tsgrism'
-                    '|mir_lrs-fixedslit'
-                    '|mir_lrs-slitless'
-                    '|mir_mrs'
-                    '|nrs_fixedslit'
-                    '|nrs_ifu'
-                    '|nrs_msaspec'
-                    '|nrs_brightobj'
-                    '|nis_wfss'
-                    '|nis_soss'
-                ),
-                'inputs': ['exp_type'],
-                'force_unique': True,
-            }
-        })
-
-        super(AsnMixin_Lv2Spec, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        super(AsnMixin_Lv2Spec, self)._init_hook(item)
-        self.data['asn_type'] = 'spec2'
-
-
+# General constraints
+# -------------------
 class AsnMixin_Lv2Mode(DMSLevel2bBase):
     """Fix the instrument configuration"""
     def __init__(self, *args, **kwargs):
@@ -520,6 +459,10 @@ class AsnMixin_Lv2Mode(DMSLevel2bBase):
             'program': {
                 'value': None,
                 'inputs': ['program']
+            },
+            'target': {
+                'value': None,
+                'inputs': ['targetid'],
             },
             'instrument': {
                 'value': None,
@@ -615,6 +558,44 @@ class AsnMixin_Lv2Special(DMSLevel2bBase):
         return 'science'
 
 
+# Image-like Exposures
+# --------------------
+class AsnMixin_Lv2Image(DMSLevel2bBase):
+    """Level 2 Image association base"""
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(AsnMixin_Lv2Image, self)._init_hook(item)
+        self.data['asn_type'] = 'image2'
+
+
+class AsnMixin_Lv2ImageScience(DMSLevel2bBase):
+    """Level 2 Image association base"""
+
+    def __init__(self, *args, **kwargs):
+
+        self.add_constraints({
+            'exp_type': {
+                'value': (
+                    'fgs_image'
+                    '|mir_image'
+                    '|mir_lyot'
+                    '|mir_4qpm'
+                    '|nis_ami'
+                    '|nis_image'
+                    '|nrc_image'
+                    '|nrc_coron'
+                    '|nrc_tsimage'
+                ),
+                'inputs': ['exp_type'],
+                'force_unique': True,
+            }
+        })
+
+        super(AsnMixin_Lv2ImageScience, self).__init__(*args, **kwargs)
+
+
 class AsnMixin_Lv2ImageNonScience(DMSLevel2bBase):
     """Process selected non-science exposures
 
@@ -654,12 +635,6 @@ class AsnMixin_Lv2ImageNonScience(DMSLevel2bBase):
 
         super(AsnMixin_Lv2ImageNonScience, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        super(AsnMixin_Lv2ImageNonScience, self)._init_hook(item)
-        self.data['asn_type'] = 'image2'
-
     def get_exposure_type(self, item, default='science'):
         """Override to force exposure type to always be science
 
@@ -678,6 +653,45 @@ class AsnMixin_Lv2ImageNonScience(DMSLevel2bBase):
             Always returns as science
         """
         return 'science'
+
+
+# Spectral-like exposures
+# -----------------------
+class AsnMixin_Lv2Spec(DMSLevel2bBase):
+    """Level 2 Spectral association base"""
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        super(AsnMixin_Lv2Spec, self)._init_hook(item)
+        self.data['asn_type'] = 'spec2'
+
+
+class AsnMixin_Lv2SpecScience(DMSLevel2bBase):
+    """Level 2 Spectral association base"""
+
+    def __init__(self, *args, **kwargs):
+
+        self.add_constraints({
+            'exp_type': {
+                'value': (
+                    'nrc_grism'
+                    '|nrc_tsgrism'
+                    '|mir_lrs-fixedslit'
+                    '|mir_lrs-slitless'
+                    '|mir_mrs'
+                    '|nrs_fixedslit'
+                    '|nrs_ifu'
+                    '|nrs_msaspec'
+                    '|nrs_brightobj'
+                    '|nis_soss'
+                ),
+                'inputs': ['exp_type'],
+                'force_unique': True,
+            }
+        })
+
+        super(AsnMixin_Lv2SpecScience, self).__init__(*args, **kwargs)
 
 
 class AsnMixin_Lv2SpecNonScience(DMSLevel2bBase):
@@ -699,12 +713,6 @@ class AsnMixin_Lv2SpecNonScience(DMSLevel2bBase):
         })
 
         super(AsnMixin_Lv2SpecNonScience, self).__init__(*args, **kwargs)
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        super(AsnMixin_Lv2SpecNonScience, self)._init_hook(item)
-        self.data['asn_type'] = 'spec2'
 
     def get_exposure_type(self, item, default='science'):
         """Override to force exposure type to always be science

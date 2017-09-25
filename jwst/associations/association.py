@@ -461,9 +461,11 @@ class Association(MutableMapping):
 
         # At this point, the constraint has passed.
         # Fix the conditions.
+        escaped_value = re.escape(value)
+        conditions['found_values'].add(escaped_value)
         if conditions['value'] is None or \
            conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
-            conditions['value'] = re.escape(value)
+            conditions['value'] = escaped_value
             conditions['inputs'] = [input]
             conditions['force_unique'] = False
 
@@ -501,9 +503,11 @@ class Association(MutableMapping):
 
         # At this point, the constraint has passed.
         # Fix the conditions.
+        escaped_value = re.escape(evaled_str)
+        conditions['found_values'].add(escaped_value)
         if conditions['value'] is None or \
            conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
-            conditions['value'] = re.escape(evaled_str)
+            conditions['value'] = escaped_value
             conditions['force_unique'] = False
 
         # That's all folks
@@ -517,8 +521,9 @@ class Association(MutableMapping):
         except AttributeError:
             constraints = {}
             self.constraints = constraints
-        for constraint, value in six.iteritems(new_constraints):
-            constraints[constraint] = constraints.get(constraint, value)
+        for constraint, conditions in six.iteritems(new_constraints):
+            conditions['found_values'] = set()
+            constraints[constraint] = constraints.get(constraint, conditions)
 
     def constraints_to_text(self):
         yield 'Constraints:'
@@ -526,7 +531,7 @@ class Association(MutableMapping):
             if conditions.get('force_undefined', False):
                 yield '    {:s}: Is Invalid'.format(name)
             else:
-                yield '    {:s}: {}'.format(name, conditions['value'])
+                yield '    {:s}: {}'.format(name, conditions['found_values'])
 
     def is_item_member(self, item):
         """Check if item is already a member of this association
