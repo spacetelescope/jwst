@@ -67,7 +67,7 @@ class IFUCubeData(object):
         self.scalew = pars_cube.get('scalew')
         self.rois = pars_cube.get('rois')
         self.roiw = pars_cube.get('roiw')
-        self.output_file = pars_cube.get('output_file')
+#        self.output_file = pars_cube.get('output_file')
         self.interpolation = pars_cube.get('interpolation')
         self.coord_system = pars_cube.get('coord_system')
         self.offset_list = pars_cube.get('offset_list')
@@ -118,7 +118,7 @@ class IFUCubeData(object):
         for i in range(num1):
             this_a = self.list_par1[i]
             this_b = self.list_par2[i]
-            print('parameters',this_a,this_b)
+#            print('parameters',this_a,this_b)
             n = len(self.master_table.FileMap[self.instrument][this_a][this_b])        
             num_files = num_files + n
 
@@ -164,11 +164,7 @@ class IFUCubeData(object):
 
 # update the output name
     def define_cubename(self):
-#        print('cube_type',self.cube_type)
-#        if self.cube_type == 'Model':
-#            newname = self.output_name_base
-#            print('new name from model',newname)
-#        else:
+
         if self.instrument == 'MIRI':
             channels = []
             for ch in self.list_par1:
@@ -179,15 +175,14 @@ class IFUCubeData(object):
                 ch_name = '_ch'
                 for i in range(number_channels):
                     ch_name = ch_name + channels[i]
-                if i < number_channels-1:
-                    ch_name = ch_name + '-'
+                    if i < number_channels-1: ch_name = ch_name + '-'
 
             subchannels = list(set(self.list_par2))
             number_subchannels = len(subchannels)
             b_name = ''
             for i in range(number_subchannels):
                 b_name = b_name + subchannels[i] 
-                if(i > 1): b_name = b_name + '-'
+                if i > 1 : b_name = b_name + '-'
             b_name  = b_name.lower()
             newname = self.output_name_base + ch_name+'-'+ b_name + '_s3d.fits'
             if self.coord_system == 'alpha-beta': 
@@ -207,27 +202,10 @@ class IFUCubeData(object):
             if self.output_type == 'single':
                 newname = self.output_name_base + fg_name+ 'single_s3d.fits'
 #________________________________________________________________________________
-# check and see if one is provided by the user
-# self.output_file is automatically filled in by step class
-
-#        print('output_file',self.output_file)
-        if(self.output_file == None):
-            self.output_file = newname
-        else: 
-            root, ext = os.path.splitext(self.output_file)
-            default = root.find('cube_build') # the user has not provided a name
-            if(default != -1):
-                self.output_file = newname
-            else:
-                newname = self.output_file
-
-
                 
         if self.output_type != 'single':
-            log.info('Output Name %s',self.output_name)
+            log.info('Output Name %s',newname)
 
-        print('****Name of IFUCube******',newname)
-#        sys.exit('STOP')
         return newname
 
 
@@ -295,7 +273,7 @@ class IFUCubeData(object):
 # shove Flux and iflux in the  final IFU cube
         IFUCubeData.update_IFUCube(self,IFUCube, self.spaxel)
 
-        print('done update_IFUcube') 
+
         return IFUCube
 
 #********************************************************************************
@@ -492,7 +470,7 @@ class IFUCubeData(object):
 
         instrument  = self.instrument
         nfiles = len(self.master_table.FileMap[instrument][this_par1][this_par2])
-        log.info('Number of files/models in band %i', nfiles)
+#        log.info('Number of files/models in band %i', nfiles)
 
     # loop over the files that cover the spectral range the cube is for
 
@@ -523,10 +501,7 @@ class IFUCubeData(object):
                         poly = input_model.meta.background.polynomial_info[ich_num]
                         poly_ch = poly.channel
                         if(poly_ch == this_par1):
-                            print('*****Going to subtract background *******')
-                            print('Channel',this_par1)
                             apply_background_2d(input_model,poly_ch,subtract=True)
-
                 
 #********************************************************************************
                 if self.instrument == 'MIRI':
@@ -594,7 +569,6 @@ class IFUCubeData(object):
                     regions = list(range(start_slice, end_slice + 1))
                     log.info("Mapping each NIRSPEC slice to sky, this takes a while for NIRSPEC data")
                     for i in regions:
-#                    print('on region ',i)
                         slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
                         yrange = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
                         xrange = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]

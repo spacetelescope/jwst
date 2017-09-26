@@ -139,14 +139,18 @@ class CubeBuildStep (Step):
 # input_table.input_models - which is used in the rest of IFU Cube Building
 # We need to do this in cube_build_step because we need to pass the data_model to
 # CRDS to figure out what type of reference files to grab (MIRI or NIRSPEC)
+# if the user has provided the filename - strip out .fits and pull out the base name
+# the cube_build software will attached the needed information on channel, sub-channel
+# grating or filter. 
 #________________________________________________________________________________
-        input_table = data_types.DataTypes(input,self.single)
+        input_table = data_types.DataTypes(input,self.single,self.output_file)
+        
         self.cube_type = input_table.input_type
         self.input_models = input_table.input_models
         self.input_filenames = input_table.filenames
         self.output_name_base = input_table.output_name
 
-        print('after calling data_types output base name',self.output_name_base)
+        #print('after calling data_types output base name',self.output_name_base)
 
         self.data_type = input_table.data_type
 #________________________________________________________________________________
@@ -191,7 +195,6 @@ class CubeBuildStep (Step):
             'weighting': self.weighting,
             'weight_power': self.weight_power,
             'coord_system': self.coord_system,
-            'output_file': self.output_file,     # set by user - part of the step class 
             'rois': self.rois,
             'roiw': self.roiw,
             'wavemin': self.wavemin,
@@ -230,22 +233,16 @@ class CubeBuildStep (Step):
 # or (grating,filter)
 
         num_cubes,cube_pars= cubeinfo.number_cubes()
-        self.log.info(' Number of IFUCubes produced by a this run %i',num_cubes)
+        self.log.info('Number of IFUCubes produced by a this run %i',num_cubes)
         
-        print('outfile',self.output_file)
-        if num_cubes > 1 and self.output_file != None :
-            self.log.info('More than 1 cube is going to be created in this run and --output_file is set')
-            raise InputFileError("--output_file can not be set if building more than 1 IFUCube")
-
         Final_IFUCube = datamodels.ModelContainer() # stick IFUcubes in 
 
         for i in range(num_cubes):
-            icube = str(i+1)
-            
+            icube = str(i+1)            
             list_par1 = cube_pars[icube]['par1'] 
             list_par2 = cube_pars[icube]['par2']
-            print('par1',list_par1)
-            print('par2',list_par2)
+#            print('par1',list_par1)
+#            print('par2',list_par2)
     
             thiscube = ifu_cube.IFUCubeData(self.cube_type,
                                             self.input_filenames,
@@ -267,7 +264,6 @@ class CubeBuildStep (Step):
 # Foot print is returned in ra,dec coordinates
 
             thiscube.setup_cube()
-
             thiscube.setup_ifucube_wcs()
 #________________________________________________________________________________
 # build the IFU Cube
@@ -285,19 +281,28 @@ class CubeBuildStep (Step):
             else:
                 result =  thiscube.build_ifucube()
                # blendheaders.blendheaders(self.output_file,self.input_filenames)
-
-                print('test meta.filename',result.meta.filename)
                 Final_IFUCube.append(result)
 
             if(self.debug_pixel ==1):
                 self.spaxel_debug.close()
 
-        print('going to return result')
-        print('len(Final_IFUCube)',len(Final_IFUCube))
+#        print('self.save_results',self.save_results)
+#        print('self.output_file',self.output_file)
+#        print('len(Final_IFUCube)',len(Final_IFUCube))        
+#        print('First filename',Final_IFUCube[0].meta.filename)
+#        if len(Final_IFUCube) > 1:
+#            print('Next filename',Final_IFUCube[1].meta.filename)
+        save_IFU = False
+        if self.save_results == True or self.output_file !=None:
+            self.save_results = False # turn off the Step class functions
+                                      # cause new output_file names
+                                      # to be determined. Cube_build handles all this
+            self.output_file = None
+            save_IFU = True
 
-        print('type of Final_IFUCube',type(Final_IFUCube))
-        print('First filename',Final_IFUCube[0].meta.filename)
-        print('Second filename',Final_IFUCube[1].meta.filename)
+        if save_IFU == True:
+            Final_IFUCube.save(None)
+#            print('going to save FINAL_IFUCube')
         return Final_IFUCube
 
 #********************************************************************************

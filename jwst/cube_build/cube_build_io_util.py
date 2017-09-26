@@ -254,7 +254,6 @@ class IFUCubeASN(object):
                 model = input[i]
                 self.input_models.append(model)
                 self.filenames.append(model.meta.filename)
-#            print('number of models',len(self.filenames))
 
         elif isinstance(input, str):
             try:
