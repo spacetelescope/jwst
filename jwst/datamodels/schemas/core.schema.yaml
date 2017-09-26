@@ -947,6 +947,14 @@ properties:
                 title: NIRSpec operability reference file name
                 type: string
                 fits_keyword: R_MSAOPE
+          barshadow:
+            title: Nirspec Bar shadow reference file information
+            type: object
+            properties:
+              name:
+                title: Nirspec Barshadow reference file name
+                type: string
+                fits_keyword: R_BARSHA
           camera:
             title: Nirspec Camera reference file information
             type: object
@@ -1343,6 +1351,10 @@ properties:
             title: Background subtraction
             type: string
             fits_keyword: S_BKDSUB
+          barshadow:
+            title: Bar shadow correction
+            type: string
+            fits_keyword: S_BARSHA
           combine_1d:
             title: 1-D Spectral Combination
             type: string
