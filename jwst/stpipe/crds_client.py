@@ -93,13 +93,13 @@ def get_multiple_reference_paths(input_file, reference_file_types):
 
     exc = None
     bestrefs = {}
-    for reftype in reference_file_types:
-        try:
-            with crds_cache_locking.get_cache_lock():
+    with crds_cache_locking.get_cache_lock():
+        for reftype in reference_file_types:
+            try:
                 ref = crds.getreferences(data_dict, reftypes=[reftype], observatory="jwst")
                 bestrefs.update(ref)
-        except Exception as exc:
-            log.error(str(exc))
+            except Exception as exc:
+                log.error(str(exc))
 
     if exc is not None:
         raise exceptions.CrdsError("One or more reference file fetches failed,  review CRDS ERROR messages.")
