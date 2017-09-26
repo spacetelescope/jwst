@@ -53,6 +53,11 @@ properties:
         title: High Gain Antenna moved during data collection
         type: boolean
         fits_keyword: HGA_MOVE
+      engineering_quality:
+        title: Engineering data quality indicator from EngDB
+        type: string
+        enum: [OK, SUSPECT]
+        fits_keyword: ENG_QUAL
       asn:
         title: Association information
         type: object
@@ -143,6 +148,10 @@ properties:
             title: Exposure request number
             type: string
             fits_keyword: EXPOSURE
+          bkgdtarg:
+            title: Background target
+            type: boolean
+            fits_keyword: BKGDTARG
           template:
             title: Proposal instruction template used
             type: string
@@ -158,6 +167,11 @@ properties:
           type:
             title: Visit type
             type: string
+            enum: [GENERIC, PARALLEL_DARK_CALIBRATION, PARALLEL_EXTERNAL_CALIBRATION, 
+                   PARALLEL_PURE, PARALLEL_SLEW_CALIBRATION, PRIME_STATION_KEEPING,
+                   PRIME_TARGETED_FIXED, PRIME_TARGETED_MOVING, PRIME_UNTARGETED, 
+                   PRIME_WFSC_ROUTINE, PRIME_WFSC_SENSING_CONTROL,
+                   PRIME_WFSC_SENSING_ONLY, PRIOR_MOMENTUM_UNLOAD]
             fits_keyword: VISITYPE
           start_time:
             title: UTC visit start time
@@ -183,6 +197,10 @@ properties:
             title: Visit scheduled as target of opportunity
             type: boolean
             fits_keyword: TARGOOPP
+          tsovisit:
+            title: Time Series Observation visit indicator
+            type: boolean
+            fits_keyword: TSOVISIT
       target:
         title: Target information
         type: object
@@ -516,6 +534,14 @@ properties:
             title: post-processing method used in FPAP
             type: integer
             fits_keyword: DATAMODE
+          nrs_normal:
+            title: Number of normal pixels in IRS2 readout
+            type: integer
+            fits_keyword: NRS_NORM
+          nrs_reference:
+            title: Number of reference pixels in IRS2 readout
+            type: integer
+            fits_keyword: NRS_REF
           comprssd:
             title: data compressed on-board (T/F)
             type: boolean
@@ -524,6 +550,18 @@ properties:
             title: Gain scale factor
             type: number
             fits_keyword: GAINFACT
+          imprint:
+            title: NIRSpec imprint exposure
+            type: boolean
+            fits_keyword: IS_IMPRT
+          psf_reference:
+            title: exposure is PSF reference
+            type: boolean
+            fits_keyword: PSFREF
+          self_reference_survey:
+            title: self-referencing PSF
+            type: boolean
+            fits_keyword: SELFREF
       subarray:
         title: Subarray parameters
         type: object
@@ -582,8 +620,8 @@ properties:
           primary_type:
             title: Primary dither pattern type
             type: string
-            enum: [CYCLING, EXTENDED_TARGET, FULL, GAUSSIAN, INTRAMODULE,
-              INTRASCA, NONE, POINT_SOURCE, REULEAUX]
+            enum: [CYCLING, EXTENDED_TARGET, FULL, FULL-TIGHT, GAUSSIAN,
+              INTRAMODULE, INTRASCA, NONE, POINT_SOURCE, REULEAUX]
             fits_keyword: PATTTYPE
           position_number:
             title: Position number in primary pattern
@@ -594,8 +632,8 @@ properties:
             type: integer
             fits_keyword: PATTSTRT
           total_points:
-            title: Total number of point in pattern
-            type: string
+            title: Total number of points in pattern
+            type: integer
             fits_keyword: NUMDTHPT
           pattern_size:
             title: Primary dither pattern size (arcsec)
@@ -605,10 +643,6 @@ properties:
             title: Subpixel dither type
             type: string
             fits_keyword: SUBPXTYP
-          subpixel_sampling:
-            title: Subpixel sampling performed
-            type: boolean
-            fits_keyword: SUBPIXEL
           subpixel_number:
             title: Subpixel pattern number
             type: integer
@@ -683,7 +717,7 @@ properties:
             type: string
             fits_keyword: COORDSYS
           time:
-            title: UTC time from ephemeris start time (sec)
+            title: UTC time of position and velocity vectors in ephemeris (MJD)
             type: number
             fits_keyword: EPH_TIME
           spatial_x:
