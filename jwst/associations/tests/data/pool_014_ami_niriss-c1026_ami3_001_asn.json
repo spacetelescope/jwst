@@ -5,7 +5,7 @@
     "code_version": "0.7.1.beta5",
     "program": "10005",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    exp_type: nis_ami\n    target: 4\n    opt_elem: f210m\n    opt_elem2: maskrnd\n    program: 10005\n    instrument: nircam\n    asn_candidate: \\(\\'c1026\\'\\,\\ \\'coronagraphy\\'\\)",
+    "constraints": "Constraints:\n    exp_type: {'nis_ami'}\n    target: {'4'}\n    opt_elem: {'f210m'}\n    opt_elem2: {'maskrnd'}\n    program: {'10005'}\n    instrument: {'nircam'}\n    asn_candidate: {\"\\\\(\\\\'c1026\\\\'\\\\,\\\\ \\\\'coronagraphy\\\\'\\\\)\"}",
     "asn_id": "c1026",
     "target": "t004",
     "asn_pool": "pool_014_ami_niriss",

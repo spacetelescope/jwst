@@ -6,7 +6,7 @@
     "program": "10005",
     "target": "2",
     "asn_pool": "pool_014_ami_niriss",
-    "constraints": "Constraints:\n    is_special: true\n    single_science: False\n    exp_type: nis_ami\n    program: 10005\n    target: 2\n    instrument: nircam\n    detector: nrca2\n    opt_elem: f210m\n    opt_elem2: maskrnd\n    subarray: maska210r\n    channel: short\n    asn_candidate: \\(\\'c1000\\'\\,\\ \\'group\\'\\)",
+    "constraints": "Constraints:\n    is_special: {'true'}\n    single_science: {'False'}\n    exp_type: {'nis_ami'}\n    program: {'10005'}\n    target: {'2'}\n    instrument: {'nircam'}\n    detector: {'nrca2'}\n    opt_elem: {'f210m'}\n    opt_elem2: {'maskrnd'}\n    subarray: {'maska210r'}\n    channel: {'short'}\n    asn_candidate: {\"\\\\(\\\\'c1000\\\\'\\\\,\\\\ \\\\'group\\\\'\\\\)\"}",
     "asn_id": "c1000",
     "products": [
         {

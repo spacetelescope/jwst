@@ -68,15 +68,6 @@ class Asn_Lv2Spec(
     """Level2b Spectra"""
 
 
-class Asn_Lv2SpecNonScience(
-        AsnMixin_Lv2Singleton,
-        AsnMixin_Lv2SpecNonScience,
-        AsnMixin_Lv2Spec,
-        AsnMixin_Lv2Mode,
-):
-    """Level2b Spectra"""
-
-
 class Asn_Lv2SpecSpecial(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Singleton,

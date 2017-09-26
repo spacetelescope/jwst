@@ -28,7 +28,6 @@ __all__ = [
     'AsnMixin_Lv2Mode',
     'AsnMixin_Lv2Singleton',
     'AsnMixin_Lv2Spec',
-    'AsnMixin_Lv2SpecNonScience',
     'AsnMixin_Lv2SpecScience',
     'AsnMixin_Lv2Special',
     'DMSLevel2bBase',
@@ -612,17 +611,14 @@ class AsnMixin_Lv2ImageNonScience(DMSLevel2bBase):
                     '|mir_coroncal'
                     '|mir_tacq'
                     '|nis_focus'
-                    '|nis_lamp'
                     '|nis_tacq'
                     '|nis_taconfirm'
                     '|nrc_tacq'
                     '|nrc_taconfirm'
                     '|nrc_focus'
-                    '|nrc_led'
                     '|nrs_bota'
                     '|nrs_confirm'
                     '|nrs_focus'
-                    '|nrs_lamp'
                     '|nrs_mimf'
                     '|nrs_taslit'
                     '|nrs_tacq'
@@ -692,43 +688,3 @@ class AsnMixin_Lv2SpecScience(DMSLevel2bBase):
         })
 
         super(AsnMixin_Lv2SpecScience, self).__init__(*args, **kwargs)
-
-
-class AsnMixin_Lv2SpecNonScience(DMSLevel2bBase):
-    """Process selected non-science exposures
-
-    Exposures, such as target acquisitions,
-    though considered non-science, still get 2b processing.
-
-    """
-    def __init__(self, *args, **kwargs):
-        self.add_constraints({
-            'non_science': {
-                'value': (
-                    'nrs_autowave'
-                ),
-                'inputs': ['exp_type'],
-                'force_unique': False,
-            }
-        })
-
-        super(AsnMixin_Lv2SpecNonScience, self).__init__(*args, **kwargs)
-
-    def get_exposure_type(self, item, default='science'):
-        """Override to force exposure type to always be science
-
-        Parameters
-        ----------
-        item: dict
-            The pool entry to determine the exposure type of
-
-        default: str or None
-            The default exposure type.
-            If None, routine will raise LookupError
-
-        Returns
-        -------
-        exposure_type: 'science'
-            Always returns as science
-        """
-        return 'science'
