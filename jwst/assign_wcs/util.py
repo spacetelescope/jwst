@@ -363,7 +363,9 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     for each object. The name of the catalog has been stored in the input models meta
     information under the source_catalog key.
 
-    Consider vectorizing this whole function 
+    It's left to the calling routine to cut the bounding boxes at the extent of the 
+    detector (for example, extract 2d would only extract the on-detector portion of
+    the bounding box)
     """
 
     # get the filter that was used with the observation
