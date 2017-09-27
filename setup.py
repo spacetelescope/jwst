@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import os
+from os.path import basename
 import subprocess
 import sys
 from setuptools import setup, find_packages, Extension, Command
@@ -48,7 +49,7 @@ except ImportError:
 
 
 NAME = 'jwst'
-SCRIPTS = glob('scripts/*')
+SCRIPTS = [s for s in glob('scripts/*') if basename(s) != '__pycache__']
 PACKAGE_DATA = {
     '': [
         '*.fits',
