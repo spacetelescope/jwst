@@ -63,7 +63,7 @@ class GrismObject(namedtuple('GrismObject', ("sid",
 
     order_bounding is stored as a lookup dictionary per order and contains
     the object x,y bounding location on the grism image
-    GrismObject(order_bounding={"+1":((1,2),(1,2)),"+2":((2,3),(2,3))})
+    GrismObject(order_bounding={"+1":((xmin,xmax),(ymin,ymax)),"+2":((2,3),(2,3))})
 
 
     sky_bbox_?? contains the ra,dec,frame information for the bbox from the catalog
@@ -83,34 +83,34 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                 ycenter=None):
 
         return super(GrismObject, cls).__new__(cls,
-                                               sid,
-                                               order_bounding,
-                                               icrs_centroid,
-                                               sky_bbox_ll,
-                                               sky_bbox_lr,
-                                               sky_bbox_ur,
-                                               sky_bbox_ul,
-                                               xcenter,
-                                               ycenter)
+                                               sid=sid,
+                                               order_bounding=order_bounding,
+                                               icrs_centroid=icrs_centroid,
+                                               sky_bbox_ll=sky_bbox_ll,
+                                               sky_bbox_lr=sky_bbox_lr,
+                                               sky_bbox_ur=sky_bbox_ur,
+                                               sky_bbox_ul=sky_bbox_ul,
+                                               xcenter=xcenter,
+                                               ycenter=ycenter)
 
     def __str__(self):
         """Return a pretty print for the object information."""
         return ("id: {0}\n"
-                "order_bounding {1}\n",
-                "icrs_centroid: {2}\n",
-                "sky_bbox_ll(ra,dec): {3} {4}\n"
-                "sky_bbox_lr(ra,dec): {5} {6}\n"
-                "sky_bbox_ur(ra,dec): {7} {8}\n"
-                "sky_bbox_ul(ra,dec): {9} {10}\n"
-                "xcenter: {11}\n"
-                "ycenter: {12}\n"
+                "order_bounding {1}\n"
+                "icrs_centroid: {2}\n"
+                "sky_bbox_ll: {3}\n"
+                "sky_bbox_lr: {4}\n"
+                "sky_bbox_ur: {5}\n"
+                "sky_bbox_ul:{6}\n"
+                "xcenter: {7}\n"
+                "ycenter: {8}\n"
                 .format(self.sid,
-                        self.order_bounding,
-                        self.icrs_centroid,
-                        self.sky_bbox_ll.ra.value,self.sky_bbox_ll.dec.value,
-                        self.sky_bbox_lr.ra.value,self.sky_bbox_lr.dec.value,
-                        self.sky_bbox_ur.ra.value,self.sky_bbox_ur.dec.value,
-                        self.sky_bbox_ul.ra.value,self.sky_bbox_ul.dec.value,
+                        str(self.order_bounding),
+                        str(self.icrs_centroid),
+                        str(self.sky_bbox_ll),
+                        str(self.sky_bbox_lr),
+                        str(self.sky_bbox_ur),
+                        str(self.sky_bbox_ul),
                         self.xcenter,
                         self.ycenter))
 
@@ -1223,8 +1223,8 @@ class NIRISSBackwardGrismDispersion(Model):
         The list of models for the polynomial model in l
     orders : list
         The list of orders which are available to the model
-    fwcpos_ref : float
-        The reference filter wheel position
+    theta : float
+        The rotation to apply
 
     Notes:
     ------
@@ -1244,24 +1244,24 @@ class NIRISSBackwardGrismDispersion(Model):
     fittable = False
     linear = False
 
-    inputs = ("x", "y", "wavelength", "order", "theta")
+    inputs = ("x", "y", "wavelength", "order")
     outputs = ("x", "y", "x0", "y0", "order")
 
     def __init__(self, orders, lmodels=None, xmodels=None,
-                 ymodels=None, fwcpos_ref=None, name=None, meta=None):
+                 ymodels=None, theta=None, name=None, meta=None):
         self._order_mapping = {int(k): v for v, k in enumerate(orders)}
         self.xmodels = xmodels
         self.ymodels = ymodels
         self.lmodels = lmodels
         self.orders = orders
-        self.fwcpos_ref = fwcpos_ref
+        self.theta = theta
         meta = {"orders": orders}
         if name is None:
             name = 'niriss_backward_grism_dispersion'
         super(NIRISSBackwardGrismDispersion, self).__init__(name=name,
                                                             meta=meta)
 
-    def evaluate(self, x, y, wavelength, order, theta):
+    def evaluate(self, x, y, wavelength, order):
         """Return the valid pixel(s) and wavelengths given center x,y and lam
 
         Parameters:
@@ -1276,8 +1276,6 @@ class NIRISSBackwardGrismDispersion(Model):
             Wavelength to disperse
         order : list
             The order to use
-        theta : float
-            rotation in degrees (from the filter wheel offset fwcpos_ref)
 
 
         Returns:
@@ -1288,7 +1286,9 @@ class NIRISSBackwardGrismDispersion(Model):
         Notes:
         ------
         There's spatial dependence for NIRISS so the forward transform
-        dependes on x,y as well as the filter wheel rotation
+        dependes on x,y as well as the filter wheel rotation. Theta is 
+        usu. taken to be the different between fwcpos_ref in the specwcs
+        reference file and fwcpos from the input image.
 
         """
         if wavelength < 0:
@@ -1303,8 +1303,8 @@ class NIRISSBackwardGrismDispersion(Model):
         dx = self.xmodels[iorder][0](x, y) + t * self.xmodels[iorder][1](x, y)
         dy = self.ymodels[iorder][0](x, y) + t * self.ymodels[iorder][1](x, y)
         # rotate by theta
-        if theta != 0.0:
-            rotate = Rotation2D(self.fwcpos_ref - theta)
+        if self.theta != 0.0:
+            rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
 
         return (x+dx, y+dy, x, y, order)
@@ -1343,16 +1343,16 @@ class NIRISSForwardRowGrismDispersion(Model):
     linear = False
 
     # starts with the backwards pixel and calculates the forward pixel
-    inputs = ("x", "y", "x0", "y0", "order", "theta")
+    inputs = ("x", "y", "x0", "y0", "order")
     outputs = ("x", "y", "wavelength", "order")
 
     def __init__(self, orders, lmodels=None, xmodels=None,
-                 ymodels=None, fwcpos_ref=0., name=None, meta=None):
+                 ymodels=None, theta=0., name=None, meta=None):
         self._order_mapping = {int(k): v for v, k in enumerate(orders)}
         self.xmodels = xmodels
         self.ymodels = ymodels
         self.lmodels = lmodels
-        self.fwcpos_ref = fwcpos_ref
+        self.theta = theta
         self.orders = orders
         meta = {"orders": orders}
         if name is None:
@@ -1360,7 +1360,7 @@ class NIRISSForwardRowGrismDispersion(Model):
         super(NIRISSForwardRowGrismDispersion, self).__init__(name=name,
                                                               meta=meta)
 
-    def evaluate(self, x, y, x0, y0, order, theta):
+    def evaluate(self, x, y, x0, y0, order):
         """Return the valid pixel(s) and wavelengths given center x,y and lam
 
         Parameters:
@@ -1380,8 +1380,6 @@ class NIRISSForwardRowGrismDispersion(Model):
         order : int
             Spectral order to use
 
-        theta : float
-            input rotation angle in degrees
 
         Returns:
         --------
@@ -1404,8 +1402,8 @@ class NIRISSForwardRowGrismDispersion(Model):
         t = np.linspace(0, 1, 10)  #sample t
         dx = self.xmodels[iorder][0](x0, y0) + t * self.xmodels[iorder][1](x0, y0)
         dy = self.ymodels[iorder][0](x0, y0) + t * self.ymodels[iorder][1](x0, y0)
-        if theta != 0.0:
-            rotate = Rotation2D(self.fwcpos_ref - theta)
+        if self.theta != 0.0:
+            rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
         so = np.argsort(dx)
         tr = np.interp(dxr, dx[so], t[so])
@@ -1446,24 +1444,24 @@ class NIRISSForwardColumnGrismDispersion(Model):
     linear = False
 
     # starts with the backwards pixel and calculates the forward pixel
-    inputs = ("x", "y", "x0", "y0", "order", "theta")
-    outputs = ("x", "y", "wavelength", "order", "theta")
+    inputs = ("x", "y", "x0", "y0", "order")
+    outputs = ("x", "y", "wavelength", "order")
 
     def __init__(self, orders, lmodels=None, xmodels=None,
-                 ymodels=None, fwcpos_ref=None, name=None, meta=None):
+                 ymodels=None, theta=None, name=None, meta=None):
         self._order_mapping = {int(k): v for v, k in enumerate(orders)}
         self.xmodels = xmodels
         self.ymodels = ymodels
         self.lmodels = lmodels
         self.orders = orders
-        self.fwcpos_ref = fwcpos_ref
+        self.theta = theta
         meta = {"orders": orders}
         if name is None:
             name = 'niriss_forward_column_grism_dispersion'
         super(NIRISSForwardColumnGrismDispersion, self).__init__(name=name,
                                                                  meta=meta)
 
-    def evaluate(self, x, y, x0, y0, order, theta):
+    def evaluate(self, x, y, x0, y0, order):
         """Return the valid pixel(s) and wavelengths given center x,y and lam
 
         Parameters:
@@ -1500,8 +1498,8 @@ class NIRISSForwardColumnGrismDispersion(Model):
         t = np.linspace(0, 1, 10)
         dx = self.xmodels[iorder][0](x0, y0) + t * self.xmodels[iorder][1](x0, y0)
         dy = self.ymodels[iorder][0](x0, y0) + t * self.ymodels[iorder][1](x0, y0)
-        if theta != 0.0:
-            rotate = Rotation2D(self.fwcpos_ref - theta)
+        if self.theta != 0.0:
+            rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
         so = np.argsort(dy)
         tr = np.interp(dyr, dy[so], t[so])
