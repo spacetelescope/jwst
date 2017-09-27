@@ -29,15 +29,18 @@ class ResampleSpecStep(Step):
 
     def process(self, input):
 
-        input_models = datamodels.open(input)
+        input = datamodels.open(input)
 
-        # Put single input into a ModelContainer
-        if not isinstance(input_models, datamodels.ModelContainer):
-            s = datamodels.ModelContainer()
-            s.append(input_models)
-            input_models = s
+        # If single input, wrap in a ModelContainer
+        if not isinstance(input, datamodels.ModelContainer):
+            input_models = datamodels.ModelContainer([input])
+            input_models.meta.resample.output = input.meta.filename
+            self.blendheaders = False
+        else:
+            input_models = input
 
-        self.driz_filename = self.get_reference_file(input_models[0], 'drizpars')
+        for reftype in self.reference_file_types:
+            ref_filename = self.get_reference_file(input_models[0], reftype)
 
         # Multislits get converted to a ModelContainer per slit
         if all([isinstance(i, datamodels.MultiSlitModel) for i in input_models]):
