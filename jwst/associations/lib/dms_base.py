@@ -3,6 +3,7 @@ from .counter import Counter
 
 from jwst.associations.association import getattr_from_list
 from jwst.associations.exceptions import (
+    AssociationNotAConstraint,
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACIDMixin
@@ -28,6 +29,9 @@ _EXPTYPE_MAP = {
     'nrs_taconfirm': 'target_acquistion',
     'nrs_taslit':    'target_acquistion',
 }
+
+# Non-specified values found in DMS Association Pools
+_EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n')
 
 __all__ = ['DMSBaseMixin']
 
@@ -284,3 +288,92 @@ class DMSBaseMixin(ACIDMixin):
         """
         member = self.make_member(item)
         return self.is_member(member)
+
+    def _get_target(self):
+        """Get string representation of the target
+
+        Returns
+        -------
+        target: str
+            The Level3 Product name representation
+            of the target or source ID.
+        """
+        target_id = format_list(self.constraints['target']['found_values'])
+        target = 't{0:0>3s}'.format(str(target_id))
+        return target
+
+    def _get_instrument(self):
+        """Get string representation of the instrument
+
+        Returns
+        -------
+        instrument: str
+            The Level3 Product name representation
+            of the instrument
+        """
+        instrument = format_list(self.constraints['instrument']['found_values'])
+        return instrument
+
+    def _get_opt_element(self):
+        """Get string representation of the optical elements
+
+        Returns
+        -------
+        opt_elem: str
+            The Level3 Product name representation
+            of the optical elements.
+        """
+        opt_elem = ''
+        join_char = ''
+        try:
+            value = format_list(self.constraints['opt_elem']['found_values'])
+        except KeyError:
+            pass
+        else:
+            if value not in _EMPTY and value != 'clear':
+                opt_elem = value
+                join_char = '-'
+        try:
+            value = format_list(self.constraints['opt_elem2']['found_values'])
+        except KeyError:
+            pass
+        else:
+            if value not in _EMPTY and value != 'clear':
+                opt_elem = join_char.join(
+                    [opt_elem, value]
+                )
+        if opt_elem == '':
+            opt_elem = 'clear'
+        return opt_elem
+
+    def _get_exposure(self):
+        """Get string representation of the exposure id
+
+        Returns
+        -------
+        exposure: str
+            The Level3 Product name representation
+            of the exposure & activity id.
+
+        Raises
+        ------
+        AssociationNotAConstraint
+            No constraints produce this value
+        """
+        try:
+            activity_id = format_list(self.constraints['activity_id']['found_values'])
+        except KeyError:
+            raise AssociationNotAConstraint
+        else:
+            if activity_id not in _EMPTY:
+                exposure = '{0:0>2s}'.format(activity_id)
+        return exposure
+
+# #########
+# Utilities
+# #########
+
+
+def format_list(alist):
+    """Format a list according to DMS naming specs"""
+    return '-'.join(alist)
