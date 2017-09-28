@@ -112,7 +112,7 @@ class OutlierDetectionScaledStep(Step):
 
         # Use get_reference_file method to insure latest reference file
         # always gets used...especially since only one name will ever be needed
-        ref_list = [reffile_model(self.get_reference_file(self.input_models, reftype))] 
+        ref_list = [reffile_model(self.get_reference_file(self.input_models, reftype))]
 
         return datamodels.ModelContainer(ref_list)
 
