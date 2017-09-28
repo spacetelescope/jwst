@@ -4,6 +4,7 @@
 from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
 import logging
+import warnings
 import numpy as np
 from astropy.modeling.models import Shift
 from gwcs.utils import _toindex
@@ -28,7 +29,7 @@ def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, reffil
     if exp_type in wavecorr_supported_modes:
         if reffile and reffile.strip().upper() == 'N/A':
             apply_wavecorr = False
-            log.info("WAVECORR reference file missing - skipping correction")
+            warnings.warn("WAVECORR reference file missing - skipping correction")
     else:
         apply_wavecorr = False
         log.info("Skipping wavecorr correction for EXP_TYPE {0}".format(exp_type))
