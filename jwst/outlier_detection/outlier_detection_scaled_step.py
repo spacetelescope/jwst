@@ -50,7 +50,7 @@ class OutlierDetectionScaledStep(Step):
 
             self.input_models = input_models
 
-            reffiles = {}
+            reffiles= {}
             reffiles['gain'] = self._build_reffile_container('gain')
             reffiles['readnoise'] = self._build_reffile_container('readnoise')
 
@@ -73,12 +73,11 @@ class OutlierDetectionScaledStep(Step):
             # Set up outlier detection, then do detection
             step = outlier_detection_scaled.OutlierDetectionScaled(
                         self.input_models,
-                        reffiles=reffiles,
+                        reffiles=reffiles, 
                         **pars)
             step.do_detection()
 
-            for model in self.input_models:
-                model.meta.cal_step.outlier_detection = 'COMPLETE'
+            self.input_models.meta.cal_step.outlier_detection = 'COMPLETE'
 
             return self.input_models
 
@@ -102,19 +101,19 @@ class OutlierDetectionScaledStep(Step):
         """
 
         reffile_to_model = {'gain': datamodels.GainModel,
-                            'readnoise': datamodels.ReadnoiseModel}
+                            'readnoise': datamodels.ReadnoiseModel}          
         reffile_model = reffile_to_model[reftype]
 
         reffiles = [self.input_models.meta.ref_file.instance[reftype]['name']]
-
+        
         self.log.debug("Using {} reffile(s):".format(reftype.upper()))
         for r in set(reffiles):
             self.log.debug("    {}".format(r))
 
         # Use get_reference_file method to insure latest reference file
         # always gets used...especially since only one name will ever be needed
-        ref_list = [reffile_model(self.get_reference_file(self.input_models, reftype))]
-
+        ref_list = [reffile_model(self.get_reference_file(self.input_models, reftype))] 
+        
         return datamodels.ModelContainer(ref_list)
 
 

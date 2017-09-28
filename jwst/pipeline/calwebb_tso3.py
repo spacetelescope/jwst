@@ -20,7 +20,6 @@ class Tso3Pipeline(Pipeline):
     """
     TSO3Pipeline: Applies level 3 processing to TSO-mode data from
                     any JWST instrument.
-
     Included steps are:
         outlier_detection
         tso_photometry
@@ -47,7 +46,6 @@ class Tso3Pipeline(Pipeline):
     def process(self, input):
         """
         Run the TSO3Pipeline
-
         Parameters
         ----------
         input: Level3 Association, json format
@@ -81,6 +79,7 @@ class Tso3Pipeline(Pipeline):
                 for i in range(cube.data.shape[0]):
                     # Update DQ arrays with those from outlier_detection step
                     cube.dq[i] = input_2dmodels[i].dq
+
                 cube.meta.cal_step.outlier_detection = \
                     input_2dmodels[0].meta.cal_step.outlier_detection
 
@@ -88,6 +87,7 @@ class Tso3Pipeline(Pipeline):
                 self.log.info("Performing scaled outlier detection on input images...")
                 cube = self.outlier_detection_scaled(cube)
 
+        
         if input_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
             self.log.info("Writing Level 2c cubes with updated DQ arrays...")
             for cube in input_models:
@@ -114,7 +114,7 @@ class Tso3Pipeline(Pipeline):
             # define output for x1d (level 3) products
             x1d_result = datamodels.MultiSpecModel()
             # TODO: check to make sure the following line is working
-            x1d_result.update(input_models)
+            x1d_result.update(input_models[0])
 
             # For each exposure in the TSO...
             for cube in input_models:
