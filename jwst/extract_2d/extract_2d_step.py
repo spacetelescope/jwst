@@ -16,14 +16,14 @@ class Extract2dStep(Step):
     """
 
     reference_file_types = ['wavecorr']
-    
 
-    def process(self, input_model):
+
+    def process(self, input_model, *args, **kwargs):
         reffile = self.get_reference_file(input_model, "wavecorr")
         with datamodels.open(input_model) as dm:
             output_model = extract_2d.extract2d(dm, self.which_subarray,
                                                 self.apply_wavecorr, reffile=reffile)
-            
+
         return output_model
 
 
