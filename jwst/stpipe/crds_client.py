@@ -40,7 +40,12 @@ import six
 
 import crds
 from crds.core import log, config, exceptions, heavy_client
-from crds.core import crds_cache_locking
+
+try:
+    from crds.core import crds_cache_locking
+except ImportError:
+    crds_cache_locking = None
+    log.warning("CRDS needs to be updated to v7.1.4 or greater to support cache locking and association based CRDS cache updates.  Try 'conda update crds'.")
 
 # ----------------------------------------------------------------------
 
@@ -80,7 +85,7 @@ def get_multiple_reference_paths(input_file, reference_file_types):
 
     gc.collect()
 
-    if not reference_file_types:   # [] interpreted in CRDS as *all types*, intercept to handle *no types*.
+    if not reference_file_types:   # [] interpreted as *all types*.
         return {}
 
     if isinstance(input_file, (six.string_types, datamodels.DataModel)):
@@ -91,24 +96,21 @@ def get_multiple_reference_paths(input_file, reference_file_types):
 
     gc.collect()
 
-    exc = None
-    bestrefs = {}
-    with crds_cache_locking.get_cache_lock():
-        for reftype in reference_file_types:
-            try:
-                ref = crds.getreferences(data_dict, reftypes=[reftype], observatory="jwst")
-                bestrefs.update(ref)
-            except Exception as exc:
-                log.error(str(exc))
-
-    if exc is not None:
-        raise exceptions.CrdsError("One or more reference file fetches failed,  review CRDS ERROR messages.")
+    try:
+        if crds_cache_locking is not None:
+            with crds_cache_locking.get_cache_lock():
+                bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
+        else:
+            bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")            
+    except crds.CrdsBadRulesError as exc:
+        raise crds.CrdsBadRulesError(str(exc))
+    except crds.CrdsBadReferenceError as exc:
+        raise crds.CrdsBadReferenceError(str(exc))
 
     refpaths = {filetype: filepath if "N/A" not in filepath.upper() else "N/A"
                 for (filetype, filepath) in bestrefs.items()}
 
     return refpaths
-
 
 def check_reference_open(refpath):
     """Verify that `refpath` exists and is readable for the current user.
