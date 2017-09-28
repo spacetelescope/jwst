@@ -138,7 +138,7 @@ class Spec2Pipeline(Pipeline):
         # a grism image, if so get the catalog
         # name from the asn and record it to the meta
         if exp_type in ["NIS_WFSS", "NRC_GRISM"]:
-            input.meta.source_catalog.filename = members_by_type['sourcecat']
+            input.meta.source_catalog.filename = members_by_type['sourcecat'][0]
         input = self.assign_wcs(input)
 
         # Do background processing, if necessary
