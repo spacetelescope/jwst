@@ -44,7 +44,7 @@ def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, reffil
         # This model keeps open_slits as an attribute.
         open_slits = slit2msa[1].slits[:]
         if which_subarray is not None:
-            open_slits = [sub for sub in open_slits if sub.name==which_subarray]
+            open_slits = [sub for sub in open_slits if sub.name == which_subarray]
         log.debug('open slits {0}'.format(open_slits))
         if len(open_slits) == 1:
             # the output model is the same as the input - ImageModel or CubeModel
@@ -163,13 +163,13 @@ def extract_slit(input_model, slit, exp_type):
         ext_err = input_model.err[ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_dq = input_model.dq[ylo: yhi + 1, xlo: xhi + 1].copy()
         shape = ext_data.shape
-        bounding_box= ((0, shape[1] - 1), (0, shape[0] - 1))
+        bounding_box = ((0, shape[1] - 1), (0, shape[0] - 1))
     elif lenshape == 3:
-        ext_data = input_model.data[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_err = input_model.err[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
-        ext_dq = input_model.dq[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_data = input_model.data[:, ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_err = input_model.err[:, ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_dq = input_model.dq[:, ylo: yhi + 1, xlo: xhi + 1].copy()
         shape = ext_data.shape
-        bounding_box= ((0, shape[2] - 1), (0, shape[1] - 1))
+        bounding_box = ((0, shape[2] - 1), (0, shape[1] - 1))
     else:
         raise ValueError("extract_2d does not work with "
                          "{0} dimensional data".format(lenshape))
@@ -263,7 +263,7 @@ def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, d
     lam = lam.copy()
     l = lam[~np.isnan(lam)]
     offset_model.bounds_error = False
-    correction = offset_model(l * 10 ** -6, [deltax]*l.size)
+    correction = offset_model(l * 10 ** -6, [deltax] * l.size)
     lam[~np.isnan(lam)] = correction
     # The correction for pixels outside the slit and wavelengths
     # outside the wave_range is 0.
@@ -287,7 +287,7 @@ def compute_dispersion(wcs):
         The pixel dispersion [in m].
 
     """
-    xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1,1))
+    xpix, ypix = wcstools.grid_from_bounding_box(wcs.bounding_box, step=(1, 1))
     xleft = xpix - 0.5
     xright = xpix + 0.5
     _, _, lamright = wcs(xright, ypix)
@@ -388,4 +388,4 @@ def absolute2fractional(msa_model, slit, xposabs, yposabs):
         The fractional X coordinates within the slit.
     """
     num, xcenter, ycenter, xsize, ysize = msa_model.Q5.data[slit.shutter_id]
-    return (xposabs - xcenter) / (xsize/ 2.)
+    return (xposabs - xcenter) / (xsize / 2.)

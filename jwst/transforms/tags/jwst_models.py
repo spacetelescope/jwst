@@ -74,8 +74,8 @@ class NIRISSGrismDispersionType(TransformType):
 
     @classmethod
     def to_tree_transform(cls, model, ctx):
-        xll=[list(m) for m in model.xmodels]
-        yll=[list(m) for m in model.ymodels]
+        xll = [list(m) for m in model.xmodels]
+        yll = [list(m) for m in model.ymodels]
         node = {'orders': list(model.orders),
                 'xmodels': xll,
                 'ymodels': yll,

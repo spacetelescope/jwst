@@ -496,7 +496,7 @@ def _shutter_id_to_str(open_shutters, ycen):
     all_shutters[all_shutters != 1] = 0
     all_shutters = all_shutters.astype(np.str)
     all_shutters[cen_ind] = 'x'
-    return  "".join(all_shutters)
+    return "".join(all_shutters)
 
 
 def get_spectral_order_wrange(input_model, wavelengthrange_file):

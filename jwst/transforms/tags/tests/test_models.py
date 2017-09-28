@@ -17,7 +17,7 @@ m2 = Shift(2) & Shift(2) | Rotation2D(23.1)
 test_models = [DirCos2Unitless(), Unitless2DirCos(),
                Rotation3DToGWA(angles=[12.1, 1.3, 0.5, 3.4], axes_order='xyzx'),
                AngleFromGratingEquation(20000, -1), WavelengthFromGratingEquation(25000, 2),
-               Logical('GT', 5, 10), Logical('LT', np.ones((10,))* 5, np.arange(10))
+               Logical('GT', 5, 10), Logical('LT', np.ones((10,)) * 5, np.arange(10))
                ]
 
 

@@ -207,9 +207,9 @@ class Snell(Model):
         K1, K2, K3 = kcoef
         L1, L2, L3 = lcoef
         nrel = np.sqrt(1. +
-                       K1 * lamrel**2 / (lamrel ** 2 - L1) +
-                       K2 * lamrel **2 / (lamrel **2 - L2) +
-                       K3 * lamrel **2 / (lamrel ** 2 -L3)
+                       K1 * lamrel ** 2 / (lamrel ** 2 - L1) +
+                       K2 * lamrel ** 2 / (lamrel ** 2 - L2) +
+                       K3 * lamrel ** 2 / (lamrel ** 2 - L3)
                        )
         # Convert the relative index of refraction at the reference temperature and pressure
         # to absolute.
@@ -220,7 +220,7 @@ class Snell(Model):
         D0, D1, D2, E0, E1, lam_tk = tcoef
         delnabs = 0.5 * (nrel ** 2 - 1.) / nrel * \
                 (D0 * delt + D1 * delt**2 + D2 * delt**3 + \
-                 (E0 * delt + E1 * delt**2) / (lamrel**2  - lam_tk**2))
+                 (E0 * delt + E1 * delt**2) / (lamrel**2 - lam_tk**2))
         nabs_obs = nabs_ref + delnabs
 
         # Define the relative index at the system's operating T and P.
@@ -278,7 +278,7 @@ class RefractionIndexFromPrism(Model):
     def evaluate(self, alpha_in, beta_in, alpha_out, prism_angle):
         sangle = math.sin(prism_angle)
         cangle = math.cos(prism_angle)
-        nsq = ((alpha_out + alpha_in * (1 - 2 * sangle**2)) / (2 * sangle * cangle)) **2 + \
+        nsq = ((alpha_out + alpha_in * (1 - 2 * sangle**2)) / (2 * sangle * cangle)) ** 2 + \
             alpha_in ** 2 + beta_in ** 2
         return np.sqrt(nsq)
 
@@ -824,7 +824,7 @@ class V23ToSky(Rotation3D):
         Convert cartesian coordinates to spherical coordinates (in deg).
         """
         h = np.hypot(x, y)
-        alpha  = np.rad2deg(np.arctan2(y, x))
+        alpha = np.rad2deg(np.arctan2(y, x))
         delta = np.rad2deg(np.arctan2(z, h))
         return alpha, delta
 
@@ -1047,11 +1047,11 @@ class NIRCAMForwardRowGrismDispersion(Model):
             raise ValueError("Specified order is not available")
 
         # for accepting the dy and known source object center
-        t = self.xmodels[iorder](x-x0)
+        t = self.xmodels[iorder](x - x0)
         dy = self.ymodels[iorder](t)
         wavelength = self.lmodels[iorder](t)
 
-        return (x0, y0+dy, wavelength, order)
+        return (x0, y0 + dy, wavelength, order)
 
 
 class NIRCAMForwardColumnGrismDispersion(Model):
@@ -1125,11 +1125,11 @@ class NIRCAMForwardColumnGrismDispersion(Model):
             raise ValueError("Specified order is not available")
 
         # for accepting the dy and known source object center
-        t = self.ymodels[iorder](y-y0)
+        t = self.ymodels[iorder](y - y0)
         dx = self.xmodels[iorder](t)
         wavelength = self.lmodels[iorder](t)
 
-        return (x0+dx, y0, wavelength, order)
+        return (x0 + dx, y0, wavelength, order)
 
 
 class NIRCAMBackwardGrismDispersion(Model):
@@ -1205,7 +1205,7 @@ class NIRCAMBackwardGrismDispersion(Model):
         t = self.lmodels[iorder](float(wavelength))
         dx = self.xmodels[iorder](float(t))
         dy = self.ymodels[iorder](float(t))
-        return (x+dx, y+dy, x, y, order)
+        return (x + dx, y + dy, x, y, order)
 
 
 class NIRISSBackwardGrismDispersion(Model):
@@ -1286,7 +1286,7 @@ class NIRISSBackwardGrismDispersion(Model):
         Notes:
         ------
         There's spatial dependence for NIRISS so the forward transform
-        dependes on x,y as well as the filter wheel rotation. Theta is 
+        dependes on x,y as well as the filter wheel rotation. Theta is
         usu. taken to be the different between fwcpos_ref in the specwcs
         reference file and fwcpos from the input image.
 
@@ -1307,7 +1307,7 @@ class NIRISSBackwardGrismDispersion(Model):
             rotate = Rotation2D(self.theta)
             dx, dy = rotate(dx, dy)
 
-        return (x+dx, y+dy, x, y, order)
+        return (x + dx, y + dy, x, y, order)
 
 
 class NIRISSForwardRowGrismDispersion(Model):
@@ -1397,7 +1397,7 @@ class NIRISSForwardRowGrismDispersion(Model):
         except KeyError:
             raise ValueError("Specified order is not available")
 
-        dxr = x-x0  # delta x in rotated trace coordinates
+        dxr = x - x0  # delta x in rotated trace coordinates
 
         t = np.linspace(0, 1, 10)  #sample t
         dx = self.xmodels[iorder][0](x0, y0) + t * self.xmodels[iorder][1](x0, y0)

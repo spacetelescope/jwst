@@ -12,13 +12,11 @@ import sys
 import warnings
 
 import numpy as np
-import jsonschema
 
 import six
 from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
-from astropy.nddata import nddata_base
 
 from asdf import AsdfFile
 from asdf import yamlutil
@@ -114,11 +112,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         # proper code to intiailize the model
         self._files_to_close = []
         self._iscopy = False
-    
+
         is_array = False
         is_shape = False
         shape = None
-        
+
         if init is None:
             asdf = AsdfFile(extensions=extensions)
         elif isinstance(init, dict):
@@ -151,13 +149,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
             file_type = filetype.check(init)
-     
+
             if file_type == "fits":
                 hdulist = fits.open(init)
                 asdf = fits_support.from_fits(hdulist, self._schema,
                                               extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
-     
+
             elif file_type == "asdf":
                 asdf = AsdfFile.open(init, extensions=extensions)
 
@@ -165,7 +163,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 # TODO handle json files as well
                 raise IOError(
                         "File does not appear to be a FITS or ASDF file.")
-            
+
         else:
             raise ValueError(
                 "Can't initialize datamodel using {0}".format(str(type(init))))
@@ -186,13 +184,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 filename = info.get('filename')
                 if filename is not None:
                     self.meta.filename = os.path.basename(filename)
-        
+
         # if the input model doesn't have a date set, use the current date/time
         if self.meta.date is None:
             current_date = Time(datetime.datetime.now())
             current_date.format = 'isot'
             self.meta.date = current_date.value
-        
+
         # store the data model type, if not already set
         if hasattr(self.meta, 'model_type'):
             if self.meta.model_type is None:

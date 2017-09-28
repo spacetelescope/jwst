@@ -2,7 +2,6 @@ from __future__ import (absolute_import, unicode_literals, division,
                         print_function)
 
 import logging
-from copy import deepcopy
 
 from asdf import AsdfFile
 from astropy import coordinates as coord
@@ -284,19 +283,19 @@ def wfss(input_model, reference_files):
                                                   lmodels=displ,
                                                   xmodels=dispx,
                                                   ymodels=dispy,
-                                                  theta=fwcpos_ref-fwcpos)
+                                                  theta=fwcpos_ref - fwcpos)
     else:
         det2det = NIRISSForwardColumnGrismDispersion(orders,
                                                      lmodels=displ,
                                                      xmodels=dispx,
                                                      ymodels=dispy,
-                                                     theta=fwcpos_ref-fwcpos)
+                                                     theta=fwcpos_ref - fwcpos)
 
     backward = NIRISSBackwardGrismDispersion(orders,
                                              lmodels=invdispl,
                                              xmodels=dispx,
                                              ymodels=dispy,
-                                             theta=fwcpos_ref-fwcpos)
+                                             theta=fwcpos_ref - fwcpos)
     det2det.inverse = backward
 
     # create the pipeline to construct a WCS object for the whole image
@@ -315,7 +314,7 @@ def wfss(input_model, reference_files):
     grism_pipeline = [(gdetector, det2det)]
 
     # pass through the wave, beam  and theta in the pipeline
-    # Theta is a constant for each grism exposure and is in the 
+    # Theta is a constant for each grism exposure and is in the
     # meta information for the input_model, pass it to the model
     # so the user doesn't have to
 

@@ -2,11 +2,7 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 import numpy as np
 from astropy.modeling.core import Model
 from astropy import units as u
-from . import model_base
 
-from .extension import BaseExtension
-from jwst.transforms.jwextension import JWSTExtension
-from gwcs.extension import GWCSExtension
 from .reference import ReferenceFileModel
 
 __all__ = ['DistortionModel', 'DistortionMRSModel', 'SpecwcsModel', 'RegionsModel',
@@ -404,7 +400,7 @@ class IFUSlicerModel(ReferenceFileModel):
         if model is not None:
             self.model = model
         if data is not None:
-            seld.data = data
+            self.data = data
         if init is None:
             self.populate_meta()
 
@@ -469,7 +465,7 @@ class DisperserModel(ReferenceFileModel):
 
     def __init__(self, init=None, angle=None, gwa_tiltx=None, gwa_tilty=None,
                  kcoef=None, lcoef=None, tcoef=None, pref=None, tref=None,
-                 theta_x=None, theta_y=None,theta_z=None,
+                 theta_x=None, theta_y=None, theta_z=None,
                  groovedensity=None, **kwargs):
         super(DisperserModel, self).__init__(init=init, **kwargs)
         if groovedensity is not None:
@@ -651,7 +647,7 @@ class WaveCorrModel(ReferenceFileModel):
     @property
     def aperture_names(self):
         return [getattr(ap, 'aperture_name') for ap in self.apertures]
-        
+
     def populate_meta(self):
         self.meta.instrument.name = "NIRSPEC"
 
