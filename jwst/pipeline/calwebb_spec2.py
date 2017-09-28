@@ -186,8 +186,7 @@ class Spec2Pipeline(Pipeline):
             # Apply flat-field correction
             input = self.flat_field(input)
 
-            if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC',
-                            'NRC_GRISM', 'NIS_WFSS']:   # but not NRC_TSGRISM
+            if exp_type != 'NRC_TSGRISM':
                 input = self.extract_2d(input)
 
         else:
