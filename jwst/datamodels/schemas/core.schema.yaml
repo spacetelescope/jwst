@@ -21,10 +21,6 @@ properties:
         title: Name of the file
         type: string
         fits_keyword: FILENAME
-      filetype:
-        title: Type of data in the file
-        type: string
-        fits_keyword: FILETYPE
       data_processing_software_version:
         title: Data processing software version number
         type: string
@@ -49,10 +45,11 @@ properties:
         title: Telescope used to acquire the data
         type: string
         fits_keyword: TELESCOP
-      hga_move:
-        title: High Gain Antenna moved during data collection
-        type: boolean
-        fits_keyword: HGA_MOVE
+      engineering_quality:
+        title: Engineering data quality indicator from EngDB
+        type: string
+        enum: [OK, SUSPECT]
+        fits_keyword: ENG_QUAL
       asn:
         title: Association information
         type: object
@@ -65,6 +62,26 @@ properties:
             title: Name of the ASN table
             type: string
             fits_keyword: ASNTABLE
+      basic:
+        title: Basic information
+        type: object
+        properties:
+          filetype:
+            title: Type of data in the file
+            type: string
+            fits_keyword: FILETYPE
+          hga_move:
+            title: High Gain Antenna moved during data collection
+            type: boolean
+            fits_keyword: HGA_MOVE
+          hga_start_time:
+            title: Start time of HGA motion
+            type: string
+            fits_keyword: HGA_STRT
+          hga_stop_time:
+            title: Stop time of HGA motion
+            type: string
+            fits_keyword: HGA_STOP
       program:
         title: Programmatic information
         type: object
@@ -107,9 +124,17 @@ properties:
             title: (hh:mm:ss.ssssss) UTC time at start of exposure
             type: string
             fits_keyword: TIME-OBS
+          date_end:
+            title: UTC date at end of exposure
+            type: string
+            fits_keyword: DATE-END
+          time_end:
+            title: UTC time at end of exposure
+            type: string
+            fits_keyword: TIME-END
           obs_id:
             title: Programmatic observation identifier
-            type: [string, 'null']
+            type: string
             fits_keyword: OBS_ID
           visit_id:
             title: Visit identifier
@@ -143,6 +168,10 @@ properties:
             title: Exposure request number
             type: string
             fits_keyword: EXPOSURE
+          bkgdtarg:
+            title: Background target
+            type: boolean
+            fits_keyword: BKGDTARG
           template:
             title: Proposal instruction template used
             type: string
@@ -158,6 +187,11 @@ properties:
           type:
             title: Visit type
             type: string
+            enum: [GENERIC, PARALLEL_DARK_CALIBRATION, PARALLEL_EXTERNAL_CALIBRATION, 
+                   PARALLEL_PURE, PARALLEL_SLEW_CALIBRATION, PRIME_STATION_KEEPING,
+                   PRIME_TARGETED_FIXED, PRIME_TARGETED_MOVING, PRIME_UNTARGETED, 
+                   PRIME_WFSC_ROUTINE, PRIME_WFSC_SENSING_CONTROL,
+                   PRIME_WFSC_SENSING_ONLY, PRIOR_MOMENTUM_UNLOAD]
             fits_keyword: VISITYPE
           start_time:
             title: UTC visit start time
@@ -183,6 +217,10 @@ properties:
             title: Visit scheduled as target of opportunity
             type: boolean
             fits_keyword: TARGOOPP
+          tsovisit:
+            title: Time Series Observation visit indicator
+            type: boolean
+            fits_keyword: TSOVISIT
       target:
         title: Target information
         type: object
@@ -225,7 +263,7 @@ properties:
             fits_keyword: PROP_DEC
           proper_motion_epoch:
             title: Target proper motion epoch
-            type: string
+            type: number
             fits_keyword: PROPEPOC
           source_type:
             title: Advised source type (point/extended)
@@ -320,7 +358,7 @@ properties:
             type: string
             #enum: [ALL OPEN, ALL CLOSED, CONFIGURED]
             fits_keyword: MSASTATE
-          msa_configuration_file:
+          msa_metadata_file:
             title: MSA metadata file name
             type: string
             fits_keyword: MSAMETFL
@@ -394,7 +432,7 @@ properties:
               MIR_FLAT-MRS, MIR_FLATMRS, MIR_CORONCAL, NIS_AMI, NIS_DARK,
               NIS_FOCUS, NIS_IMAGE, NIS_LAMP, NIS_SOSS, NIS_TACQ, NIS_TACONFIRM,
               NIS_WFSS, N/A, ANY, NRC_IMAGE, NRC_GRISM, NRC_TACQ, NRC_CORON,
-              NRC_FOCUS, NRC_DARK, NRC_FLAT, NRC_LED, NRC_WFSC, NRC_TACONFIRM,
+              NRC_FOCUS, NRC_DARK, NRC_FLAT, NRC_LED, NRC_TACONFIRM,
               NRC_TSIMAGE, NRC_TSGRISM, NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BOTA,
               NRS_BRIGHTOBJ, NRS_CONFIRM, NRS_DARK, NRS_FIXEDSLIT, NRS_FOCUS,
               NRS_IFU, NRS_IMAGE, NRS_LAMP, NRS_MIMF, NRS_MSASPEC, NRS_TACONFIRM,
@@ -446,7 +484,7 @@ properties:
             fits_keyword: NGROUPS
           nframes:
             title: Number of frames per group
-            type: number
+            type: integer
             fits_keyword: NFRAMES
           frame_divisor:
             title: Divisor applied to frame-averaged groups
@@ -456,11 +494,11 @@ properties:
             title: Number of frames dropped between groups
             type: integer
             fits_keyword: GROUPGAP
-          dropframes1:
+          drop_frames1:
             title: Frames dropped at start of each integration
             type: integer
             fits_keyword: DRPFRMS1
-          dropframes3:
+          drop_frames3:
             title: Frames dropped at end of each integration
             type: integer
             fits_keyword: DRPFRMS3
@@ -516,6 +554,14 @@ properties:
             title: post-processing method used in FPAP
             type: integer
             fits_keyword: DATAMODE
+          nrs_normal:
+            title: Number of normal pixels in IRS2 readout
+            type: integer
+            fits_keyword: NRS_NORM
+          nrs_reference:
+            title: Number of reference pixels in IRS2 readout
+            type: integer
+            fits_keyword: NRS_REF
           comprssd:
             title: data compressed on-board (T/F)
             type: boolean
@@ -524,6 +570,18 @@ properties:
             title: Gain scale factor
             type: number
             fits_keyword: GAINFACT
+          imprint:
+            title: NIRSpec imprint exposure
+            type: boolean
+            fits_keyword: IS_IMPRT
+          psf_reference:
+            title: exposure is PSF reference
+            type: boolean
+            fits_keyword: PSFREF
+          self_reference_survey:
+            title: self-referencing PSF
+            type: boolean
+            fits_keyword: SELFREF
       subarray:
         title: Subarray parameters
         type: object
@@ -539,7 +597,7 @@ properties:
               SUB1024A, SUB1024B, SUB128, SUB128LLCORNER, SUB128DIAGONAL,
               SUB128CENTER, SUB16, SUB160, SUB160P, SUB1A, SUB1B,
               SUB2048, SUB256, SUB32, SUB32LLCORNER, SUB32DIAGONAL, SUB32CENTER,
-              SUB320, SUB400P, SUB512, SUB64, SUB640,
+              SUB320, SUB400P, SUB512, SUB512S, SUB64, SUB640,
               SUB64P, SUB80, SUB8LLCORNER, SUB8DIAGONAL, SUB8CENTER, SUB96,
               SUBAMPCAL, SUBFP1A, SUBFP1B, SUBGRISM128,
               SUBGRISM256, SUBGRISM64, SUBSTRIP256, SUBSTRIPE256, SUBSTRIP96,
@@ -574,6 +632,22 @@ properties:
             title: Slow readout axis direction
             type: integer
             fits_keyword: SLOWAXIS
+          detxcor:
+            title: Starting pixel in detector x-axis direction
+            type: integer
+            fits_keyword: DETXCOR
+          detycor:
+            title: Starting pixel in detector y-axis direction
+            type: integer
+            fits_keyword: DETYCOR
+          detxsiz:
+            title: Number of pixels in detector x-axis direction
+            type: integer
+            fits_keyword: DETXSIZ
+          detysiz:
+            title: Number of pixels in detector y-axis direction
+            type: integer
+            fits_keyword: DETYSIZ
         additionalProperties: false
       dither:
         title: Dither information
@@ -582,8 +656,8 @@ properties:
           primary_type:
             title: Primary dither pattern type
             type: string
-            enum: [CYCLING, EXTENDED_TARGET, FULL, GAUSSIAN, INTRAMODULE,
-              INTRASCA, NONE, POINT_SOURCE, REULEAUX]
+            enum: [CYCLING, EXTENDED_TARGET, FULL, FULL-TIGHT, GAUSSIAN,
+              INTRAMODULE, INTRASCA, NONE, POINT_SOURCE, REULEAUX]
             fits_keyword: PATTTYPE
           position_number:
             title: Position number in primary pattern
@@ -594,8 +668,8 @@ properties:
             type: integer
             fits_keyword: PATTSTRT
           total_points:
-            title: Total number of point in pattern
-            type: string
+            title: Total number of points in pattern
+            type: integer
             fits_keyword: NUMDTHPT
           pattern_size:
             title: Primary dither pattern size (arcsec)
@@ -605,10 +679,6 @@ properties:
             title: Subpixel dither type
             type: string
             fits_keyword: SUBPXTYP
-          subpixel_sampling:
-            title: Subpixel sampling performed
-            type: boolean
-            fits_keyword: SUBPIXEL
           subpixel_number:
             title: Subpixel pattern number
             type: integer
@@ -658,19 +728,11 @@ properties:
             title: Number of slitlet offsets in spectral direction
             type: integer
             fits_keyword: SLIT_OFF
-          ifu_spectral_offset:
-            title: Spectral offset from IFU center (arcsec)
-            type: number
-            fits_keyword: SPEC_OFF
-          ifu_spatial_offset:
-            title: Spatial offset from IFU center (arcsec)
-            type: number
-            fits_keyword: SPAT_OFF
-          xoffset:
+          x_offset:
             title: x offset from pattern starting position
             type: number
             fits_keyword: XOFFSET
-          yoffset:
+          y_offset:
             title: y offset from pattern starting position
             type: number
             fits_keyword: YOFFSET
@@ -678,12 +740,16 @@ properties:
         title: JWST ephemeris information
         type: object
         properties:
-          coord_system:
-            title: Ephemeris coordinate system
+          reference_frame:
+            title: Ephemeris reference frame
             type: string
-            fits_keyword: COORDSYS
+            fits_keyword: REFFRAME
+          type:
+            title: Definitive or Predicted
+            type: string
+            fits_keyword: EPH_TYPE
           time:
-            title: UTC time from ephemeris start time (sec)
+            title: UTC time of position and velocity vectors in ephemeris (MJD)
             type: number
             fits_keyword: EPH_TIME
           spatial_x:
@@ -856,13 +922,13 @@ properties:
         properties:
           rma_pos:
             title: Refocus Mechanism Assembly hall-position sensor value
-            type: number
+            type: integer
             fits_keyword: RMA_POS
           rma_step:
             title: Refocus Mechanism Assembly relative position
             type: string
             fits_keyword: FCSRLPOS
-      guide_star:
+      guidestar:
         title: Guide star information
         type: object
         properties:
@@ -915,6 +981,74 @@ properties:
             title: Observatory UTC time when the visit completed
             type: string
             fits_keyword: VISITEND
+          gs_acq_exec_stat:
+            title: Guide star acquisition execution status
+            type: string
+            fits_keyword: GSACSTAT
+          gs_ctd_x:
+            title: guide star centroid x position in FGS ideal frame (arcsec)
+            type: number
+            fits_keyword: GSCENTX
+          gs_ctd_y:
+            title: guide star centroid y position in FGS ideal frame (arcsec)
+            type: number
+            fits_keyword: GSCENTY
+          gs_epoch:
+            title: Epoch of guide star coordinates
+            type: number
+            fits_keyword: GS_EPOCH
+          gs_jmag:
+            title: Guide star NIR J magnitude
+            type: number
+            fits_keyword: GS_JMAG
+          gs_hmag:
+            title: Guide star NIR H magnitude
+            type: number
+            fits_keyword: GS_HMAG
+          gs_kmag:
+            title: Guide star NIR K magnitude
+            type: number
+            fits_keyword: GS_KMAG
+          gs_jitter_rms:
+            title: RMS jitter over the exposure (arcsec)
+            type: number
+            fits_keyword: JITTERMS
+          gs_mudec:
+            title: Guide star IRCS declination proper motion
+            type: number
+            fits_keyword: GS_MUDEC
+          gs_mura:
+            title: Guide star IRCS right ascension proper motion
+            type: number
+            fits_keyword: GS_MURA
+          gs_para:
+            title: Guide star annual parallax 
+            type: number
+            fits_keyword: GS_PARA
+          gs_srcjm:
+            title: Guide star NIR J magnitude source
+            type: number
+            fits_keyword: GS_SRCJM
+          gs_srchm:
+            title: Guide star NIR H magnitude source
+            type: number
+            fits_keyword: GS_SRCHM
+          gs_srckm:
+            title: Guide star NIR K magnitude source
+            type: number
+            fits_keyword: GS_SRCKM
+          gs_ujmag:
+            title: Guide star NIR J magnitude uncertainy
+            type: number
+            fits_keyword: GS_UJMAG
+          gs_uhmag:
+            title: Guide star NIR H magnitude uncertainy
+            type: number
+            fits_keyword: GS_UHMAG
+          gs_ukmag:
+            title: Guide star NIR K magnitude uncertainy
+            type: number
+            fits_keyword: GS_UKMAG
       ref_file:
         title: Reference file information
         type: object
