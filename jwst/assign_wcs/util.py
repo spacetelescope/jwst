@@ -369,8 +369,14 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     """
 
     # get the filter that was used with the observation
-    filter_name = input_model.meta.instrument.filter
-
+    instr_name = input_model.meta.instrument.name
+    if instr_name == 'NIRCAM':
+        filter_name = input_model.meta.instrument.filter
+    elif instr_name == 'NIRISS':
+        filter_name = input_model.meta.instrument.pupil
+    else:
+        raise ValueError("Unsupported instrument specified in input_model")
+        
     # extract the catalog objects
     skyobject_list = get_object_info(input_model.meta.source_catalog.filename)
 
