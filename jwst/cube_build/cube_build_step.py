@@ -10,6 +10,7 @@ from ..stpipe import Step, cmdline
 from fitsblender import blendheaders
 from .. import datamodels
 from . import cube_build
+from . import ifu_cube
 from . import data_types
 
 
@@ -41,6 +42,7 @@ class CubeBuildStep (Step):
          ydebug = integer(default=None)
          zdebug = integer(default=None)
          single = boolean(default=false)
+         output_type = option('band','channel','grating','multi',default='band')
        """
     reference_file_types = ['cubepar','resol']
 
@@ -56,6 +58,7 @@ class CubeBuildStep (Step):
         if(not self.filter.isupper()): self.filter = self.filter.upper()
         if(not self.grating.isupper()): self.grating = self.grating.upper()
         if(not self.coord_system.islower()): self.coord_system = self.coord_system.lower()
+        if(not self.output_type.islower()): self.output_type = self.output_type.lower()
         if(not self.weighting.islower()): self.weighting = self.weighting.lower()
 
         if(self.scale1 != 0.0): self.log.info('Input Scale of axis 1 %f', self.scale1)
@@ -113,8 +116,7 @@ class CubeBuildStep (Step):
             self.log.info('Power Weighting distance : %f',self.weight_power)
 
         if self.single :
-            self.log.info(' Single = true, creating a set of single exposures mapped' +
-                          ' to output IFUCube coordinate system')
+            self.output_type = 'single'
 #________________________________________________________________________________
     # read input parameters - Channel, Band (Subchannel), Grating, Filter
 #________________________________________________________________________________
@@ -125,6 +127,7 @@ class CubeBuildStep (Step):
         self.pars_input['filter'] = []   # input parameter
         self.pars_input['grating'] = []  # input parameter
         read_user_input(self)  # see if options channel, band,grating filter are set
+                               # is they are then self.output_type = 'user' 
                                # if they are filling par_input with values
 #________________________________________________________________________________
 #data_types: DataTypes: Read in the input data - 4 formats are allowed:
@@ -136,12 +139,19 @@ class CubeBuildStep (Step):
 # input_table.input_models - which is used in the rest of IFU Cube Building
 # We need to do this in cube_build_step because we need to pass the data_model to
 # CRDS to figure out what type of reference files to grab (MIRI or NIRSPEC)
+# if the user has provided the filename - strip out .fits and pull out the base name
+# the cube_build software will attached the needed information on channel, sub-channel
+# grating or filter. 
 #________________________________________________________________________________
-        input_table = data_types.DataTypes(input,self.single)
+        input_table = data_types.DataTypes(input,self.single,self.output_file)
+        
         self.cube_type = input_table.input_type
         self.input_models = input_table.input_models
         self.input_filenames = input_table.filenames
         self.output_name_base = input_table.output_name
+
+        #print('after calling data_types output base name',self.output_name_base)
+
         self.data_type = input_table.data_type
 #________________________________________________________________________________
 # Read in Cube Parameter Reference file
@@ -163,14 +173,21 @@ class CubeBuildStep (Step):
                 self.log.warning('Run again and turn off miripsf')
                 return
 #________________________________________________________________________________
-# shove the input parameters in to pars to pull out in work horse module -
-# cube_build.py
+# shove the input parameters in to pars to pull out general cube_build.py
 
         pars = {
             'channel': self.pars_input['channel'],
             'subchannel': self.pars_input['subchannel'],
             'grating': self.pars_input['grating'],
             'filter': self.pars_input['filter'],
+            'weighting': self.weighting,
+            'single': self.single,
+            'output_type':self.output_type,
+            'offset_list': self.offset_list}
+
+# shove the input parameters in to pars_cube to pull out ifu_cube.py
+# these parameters are related to the IFUCube 
+        pars_cube = {
             'scale1': self.scale1,
             'scale2': self.scale2,
             'scalew': self.scalew,
@@ -180,44 +197,74 @@ class CubeBuildStep (Step):
             'coord_system': self.coord_system,
             'rois': self.rois,
             'roiw': self.roiw,
-            'single': self.single,
             'wavemin': self.wavemin,
             'wavemax': self.wavemax,
             'xdebug': self.xdebug,
             'ydebug': self.ydebug,
             'zdebug': self.zdebug,
             'debug_pixel': self.debug_pixel,
-            'spaxel_debug':self.spaxel_debug,
-            'output_file':self.output_file,
-            'offset_list': self.offset_list}
-
+            'spaxel_debug':self.spaxel_debug}
 #________________________________________________________________________________
 # create an instance of class CubeData
 
         cubeinfo = cube_build.CubeData(self.cube_type,
                                        self.input_models,
                                        self.input_filenames,
-                                       self.output_name_base,
                                        self.data_type,
                                        par_filename,
                                        resol_filename,
                                        **pars)
 #________________________________________________________________________________
+# cubeinfo.setup:
 # read in all the input files, information from cube_pars, read in input data and
 # fill in master_table holding what files are associationed with each ch/sub-ch
-# or grating/filter
+# or grating/filter -> fills in all_channel, all_subchannel,all_filter, all_grating
+# instrument and detector
 
-        self.output_file = cubeinfo.setup()
+        result = cubeinfo.setup()
+        instrument = result['instrument']
+        detector = result['detector']
+        instrument_info = result['instrument_info']
+        master_table = result['master_table']
+#________________________________________________________________________________
+# How many and what type of cubes will be made
+# send self.output_type, all_channel, all_subchannel, all_grating, all_filter
+# return number of cubes and for each cube the list_pars1, list_pars2 (channel,subchannel)
+# or (grating,filter)
 
-#        print('in cube_build_step',self.output_file)
+        num_cubes,cube_pars= cubeinfo.number_cubes()
+        self.log.info('Number of IFUCubes produced by a this run %i',num_cubes)
+        
+        Final_IFUCube = datamodels.ModelContainer() # stick IFUcubes in 
+
+        for i in range(num_cubes):
+            icube = str(i+1)            
+            list_par1 = cube_pars[icube]['par1'] 
+            list_par2 = cube_pars[icube]['par2']
+#            print('par1',list_par1)
+#            print('par2',list_par2)
+    
+            thiscube = ifu_cube.IFUCubeData(self.cube_type,
+                                            self.input_filenames,
+                                            self.input_models,
+                                            self.output_name_base,
+                                            self.data_type,
+                                            self.output_type,
+                                            instrument,
+                                            detector,
+                                            list_par1,
+                                            list_par2,
+                                            instrument_info,
+                                            master_table,
+                                            **pars_cube)
 
 #________________________________________________________________________________
 # find the min & max final coordinates of cube: map each slice to cube
 # add any dither offsets, then find the min & max value in each dimension
 # Foot print is returned in ra,dec coordinates
 
-        cubeinfo.setup_wcs()
-
+            thiscube.setup_cube()
+            thiscube.setup_ifucube_wcs()
 #________________________________________________________________________________
 # build the IFU Cube
 
@@ -225,20 +272,42 @@ class CubeBuildStep (Step):
 #to output grid
 # this option is used for background matching and outlier rejection
 
-        if self.single:
-            self.output_file = None
-            result = cubeinfo.build_ifucube_single()
-            self.log.info("Number of IFUCube models returned from building single IFUCubes %i ",len(result))
+            if self.single:
+                self.output_file = None
+                result = thiscube.build_ifucube_single()
+                self.log.info("Number of IFUCube models returned from building single IFUCubes %i ",len(result))
 
 # Else standard IFU cube building
-        else:
-           result =  cubeinfo.build_ifucube()
-           blendheaders.blendheaders(self.output_file,self.input_filenames)
+            else:
+                result =  thiscube.build_ifucube()
+               # blendheaders.blendheaders(self.output_file,self.input_filenames)
+                Final_IFUCube.append(result)
 
+            if(self.debug_pixel ==1):
+                self.spaxel_debug.close()
 
-        if(self.debug_pixel ==1):
-            self.spaxel_debug.close()
-        return result
+#        print('self.save_results',self.save_results)
+#        print('self.output_file',self.output_file)
+#        print('len(Final_IFUCube)',len(Final_IFUCube))        
+#        print('First filename',Final_IFUCube[0].meta.filename)
+#        if len(Final_IFUCube) > 1:
+#            print('Next filename',Final_IFUCube[1].meta.filename)
+        save_IFU = False
+        if self.save_results == True or self.output_file !=None:
+            self.save_results = False # turn off the Step class functions
+                                      # cause new output_file names
+                                      # to be determined. Cube_build handles all this
+            self.output_file = None
+            save_IFU = True
+
+        if save_IFU == True:
+            Final_IFUCube.save(None)
+#            print('going to save FINAL_IFUCube')
+        return Final_IFUCube
+
+#********************************************************************************
+class InputFileError(Exception):
+    pass
 
 #********************************************************************************
 # Read in the User input options for Channel, Subchannel, Filter, Grating
@@ -283,7 +352,8 @@ def read_user_input(self):
         self.channel = ''
 
     if self.channel:  # self.channel is false if it is empty
-
+        if not self.single: 
+            self.output_type = 'user'
         channellist = self.channel.split(',')
         user_clen = len(channellist)
 
@@ -313,6 +383,8 @@ def read_user_input(self):
         self.subchannel = ''
 
     if self.subchannel : #  not empty it has been set
+        if not self.single:
+            self.output_type = 'user'
         subchannellist = self.subchannel.split(',')
         user_blen = len(subchannellist)
         for j in range(user_blen):
@@ -336,6 +408,8 @@ def read_user_input(self):
     if self.filter == 'ALL':
         self.filter = ''
     if self.filter:
+        if not self.single:
+            self.output_type = 'user'
         filterlist = self.filter.split(',')
         user_flen = len(filterlist)
         for j in range(user_flen):
@@ -360,6 +434,8 @@ def read_user_input(self):
         self.grating = ''
 
     if self.grating:
+        if not self.single:
+            self.output_type = 'user'
         gratinglist = self.grating.split(',')
         user_glen = len(gratinglist)
         for j in range(user_glen):
@@ -378,6 +454,7 @@ def read_user_input(self):
 # remove duplicates if needed
         self.pars_input['grating'] = list(set(self.pars_input['grating']))
 
+#________________________________________________________________________________
 
 
 

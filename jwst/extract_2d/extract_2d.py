@@ -250,8 +250,8 @@ def get_source_xpos(input_model, slit, slit_wcs, lam, msa_model):
     xpos : float
         X coordinate of the source as a fraction of the slit size.
     """
-    xoffset = input_model.meta.dither.xoffset # in arcsec
-    yoffset = input_model.meta.dither.yoffset # in arcsec
+    xoffset = input_model.meta.dither.x_offset # in arcsec
+    yoffset = input_model.meta.dither.y_offset # in arcsec
     v2ref = input_model.meta.wcsinfo.v2_ref # in arcsec
     v3ref = input_model.meta.wcsinfo.v3_ref # in arcsec
     v3idlyangle = input_model.meta.wcsinfo.v3yangle # in deg

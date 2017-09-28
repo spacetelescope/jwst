@@ -69,7 +69,7 @@ class NIRISSGrismDispersionType(TransformType):
                       list(node['lmodels']),
                       list(node['xmodels']),
                       list(node['ymodels']),
-                      node['fwcpos_ref'],
+                      node['theta'],
                       )
 
     @classmethod
@@ -80,7 +80,7 @@ class NIRISSGrismDispersionType(TransformType):
                 'xmodels': xll,
                 'ymodels': yll,
                 'lmodels': list(model.lmodels),
-                'fwcpos_ref': model.fwcpos_ref,
+                'theta': model.theta,
                 'model_type': type(model).name
                 }
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
@@ -93,7 +93,7 @@ class NIRISSGrismDispersionType(TransformType):
         assert_array_equal(a.ymodels, b.ymodels)
         assert_array_equal(a.lmodels, b.lmodels)
         assert_array_equal(a.orders, b.orders)
-        assert_array_equal(a.fwcpos_ref, b.fwcpos_ref)
+        assert_array_equal(a.theta, b.theta)
 
 
 class RotationSequenceType(TransformType):

@@ -79,14 +79,14 @@ def replace_suffix_ext(filename, old_suffix_list, new_suffix,
 class SkyObject(namedtuple('SkyObject', ("sid",
                                          "xcentroid",
                                          "ycentroid",
-                                         "ra_icrs_centroid",
-                                         "dec_icrs_centroid",
+                                         "icrs_centroid",
                                          "abmag",
                                          "abmag_error",
-                                         "ramin",
-                                         "decmin",
-                                         "ramax",
-                                         "decmax"), rename=False)):
+                                         "sky_bbox_ll",
+                                         "sky_bbox_lr",
+                                         "sky_bbox_ul",
+                                         "sky_bbox_ur",
+                                         ), rename=False)):
 
     """ Sky Object
 
@@ -97,54 +97,51 @@ class SkyObject(namedtuple('SkyObject', ("sid",
     the minimum information needed by the WFSS modes in nircam and niriss.
     """
 
-    __slots__ = ()  # prevent instance dictionary creation for low mem
+    __slots__ = ()  # prevent instance dictionary creation for lower mem
 
     def __new__(cls, sid=None,
                      xcentroid=None,
                      ycentroid=None,
-                     ra_icrs_centroid=None,
-                     dec_icrs_centroid=None,
+                     icrs_centroid=None,
                      abmag=None,
                      abmag_error=None,
-                     ramin=None,
-                     decmin=None,
-                     ramax=None,
-                     decmax=None):
+                     sky_bbox_ll=None,
+                     sky_bbox_lr=None,
+                     sky_bbox_ul=None,
+                     sky_bbox_ur=None):
 
         return super(SkyObject, cls).__new__(cls,
-                                             sid,
-                                             xcentroid,
-                                             ycentroid,
-                                             ra_icrs_centroid,
-                                             dec_icrs_centroid,
-                                             abmag,
-                                             abmag_error,
-                                             ramin,
-                                             decmin,
-                                             ramax,
-                                             decmax)
+                                             sid=sid,
+                                             xcentroid=xcentroid,
+                                             ycentroid=ycentroid,
+                                             icrs_centroid=icrs_centroid,
+                                             abmag=abmag,
+                                             abmag_error=abmag_error,
+                                             sky_bbox_ll=sky_bbox_ll,
+                                             sky_bbox_lr=sky_bbox_lr,
+                                             sky_bbox_ul=sky_bbox_ul,
+                                             sky_bbox_ur=sky_bbox_ur)
 
     def __str__(self):
         """Return a pretty print for the object information."""
         return ("id: {0}\n"
                 "xcentroid: {1}\n"
                 "ycentroid: {2}\n"
-                "ra_icrs_centroid: {3}\n"
-                "dec_icrs_centroid: {4}\n"
-                "abmag: {5}\n"
-                "abmag_error: {6}\n"
-                "ramin: {7}\n"
-                "decmin: {8}\n"
-                "ramax: {9}\n"
-                "decmax: {10}\n"
+                "icrs_centroid: {3}\n"
+                "abmag: {4}\n"
+                "abmag_error: {5}\n"
+                "sky_bbox_ll: {6}\n"
+                "sky_bbox_lr: {7}\n"
+                "sky_bbox_ul: {8}\n"
+                "sky_bbox_ur: {9}\n"
                 .format(self.sid,
                         self.xcentroid,
                         self.ycentroid,
-                        self.ra_icrs_centroid,
-                        self.dec_icrs_centroid,
+                        str(self.icrs_centroid),
                         self.abmag,
                         self.abmag_error,
-                        self.ramin,
-                        self.decmin,
-                        self.ramax,
-                        self.decmax))
+                        str(self.sky_bbox_ll),
+                        str(self.sky_bbox_lr),
+                        str(self.sky_bbox_ul),
+                        str(self.sky_bbox_ur)))
+        
