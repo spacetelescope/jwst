@@ -64,23 +64,25 @@ class Tso3Pipeline(Pipeline):
             if input_exptype is None:
                 input_exptype = cube.meta.exposure.type
             # Convert CubeModel into ModelContainer of 2-D DataModels
-            input_models = datamodels.ModelContainer()
+            input_2dmodels = datamodels.ModelContainer()
             for i in range(cube.data.shape[0]):
                 # convert each plane of data cube into it own array
                 # for outlier detection...
                 image = datamodels.ImageModel(data=cube.data[i],
                         err=cube.err[i], dq=cube.dq[i])
-                image.meta = cube.meta
-                input_models.append(image)
+                image.update(cube)
+                input_2dmodels.append(image)
 
             if not self.scale_detection:
                 self.log.info("Performing outlier detection on input images...")
-                results = self.outlier_detection(input_models)
+                input_2dmodels = self.outlier_detection(input_2dmodels)
 
                 # Transfer updated DQ values to original input observation
                 for i in range(cube.data.shape[0]):
                     # Update DQ arrays with those from outlier_detection step
-                    cube.dq[i] = results[i].dq
+                    cube.dq[i] = input_2dmodels[i].dq
+                cube.meta.cal_step.outlier_detection = \
+                    input_2dmodels[0].meta.cal_step.outlier_detection
 
             else:
                 self.log.info("Performing scaled outlier detection on input images...")
@@ -88,11 +90,10 @@ class Tso3Pipeline(Pipeline):
 
         if input_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
             self.log.info("Writing Level 2c cubes with updated DQ arrays...")
-            suffix_2c = 'crfints'
             for cube in input_models:
                 # preserve output filename
                 original_filename = cube.meta.filename
-                self.save_model(cube, suffix=suffix_2c)
+                self.save_model(cube, suffix='crfints')
                 cube.meta.filename = original_filename
 
         # Create final photometry results as a single output

@@ -66,7 +66,7 @@ class ModelContainer(model_base.DataModel):
     # does not describe the data contents of the container.
     schema_url = "container.schema.yaml"
 
-    def __init__(self, init=None, persist=False, **kwargs):
+    def __init__(self, init=None, persist=True, **kwargs):
 
         super(ModelContainer, self).__init__(init=None, **kwargs)
         self._persist = persist

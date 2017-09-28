@@ -325,7 +325,7 @@ def get_msa_metadata(input_model):
     Get the MSA metadata file (MSAMTFL) and the msa metadata id (MSAMETID).
 
     """
-    msa_config = input_model.meta.instrument.msa_configuration_file
+    msa_config = input_model.meta.instrument.msa_metadata_file
     if msa_config is None:
         message = "MSA metadata file is not available (keyword MSAMETFL)."
         log.critical(message)

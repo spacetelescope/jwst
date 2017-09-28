@@ -80,7 +80,7 @@ class GWCSBlot(object):
         # Compute the mapping between the input and output pixel coordinates
         pixmap = resample_utils.calc_gwcs_pixmap(blot_wcs, self.source_wcs,
             outsci.shape)
-        log.debug("Pixmap shape: {}".format(pixmap[:,:,0].shape))
+        log.debug("Pixmap shape: {}".format(pixmap[:, :, 0].shape))
         log.debug("Sci shape: {}".format(outsci.shape))
 
         source_pscale = self.source_model.meta.wcsinfo.cdelt1
