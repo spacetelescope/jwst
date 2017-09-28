@@ -87,7 +87,7 @@ class Tso3Pipeline(Pipeline):
             else:
                 self.log.info("Performing scaled outlier detection on input images...")
                 cube = self.outlier_detection_scaled(cube)
-        
+
         if input_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
             self.log.info("Writing Level 2c cubes with updated DQ arrays...")
             for cube in input_models:
