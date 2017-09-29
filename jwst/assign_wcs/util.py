@@ -377,6 +377,10 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     else:
         raise ValueError("Unsupported instrument specified in input_model")
         
+    # get the array extent to exclude boxes not contained on the detector
+    xsize = input_model.meta.subarray.xsize
+    ysize = input_model.meta.subarray.ysize
+
     # extract the catalog objects
     skyobject_list = get_object_info(input_model.meta.source_catalog.filename)
 
@@ -422,15 +426,33 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
             # add lmin and lmax used for the orders here?
             # input_model.meta.wcsinfo.waverange_start keys covers the
             # full range of all the orders
-            grism_objects.append(GrismObject(sid=obj.sid,
-                                             order_bounding=order_bounding,
-                                             icrs_centroid=obj.icrs_centroid,
-                                             xcenter=xcenter,
-                                             ycenter=ycenter,
-                                             sky_bbox_ll=obj.sky_bbox_ll,
-                                             sky_bbox_lr=obj.sky_bbox_lr,
-                                             sky_bbox_ul=obj.sky_bbox_ul,
-                                             sky_bbox_ur=obj.sky_bbox_ur))
+
+            # don't add objects which are entirely off the detector
+            # this could also live in extrac2d
+            # possible improvement is to add a member to GrismObject which
+            # marks off-detector objects which are near enough to cause
+            # spectra to be observed for later contamination removal, the
+            # rest of the objects can then be removed from the list which are
+            # much futher away
+            exclude = False
+            if (0 >= (ymin and ymax) <= ysize):
+                exclude = True
+            if (0 >= (xmin and xmax) <= xsize):
+                exclude = True
+            
+
+            if not exclude:
+                grism_objects.append(GrismObject(sid=obj.sid,
+                                                 order_bounding=order_bounding,
+                                                 icrs_centroid=obj.icrs_centroid,
+                                                 xcenter=xcenter,
+                                                 ycenter=ycenter,
+                                                 sky_bbox_ll=obj.sky_bbox_ll,
+                                                 sky_bbox_lr=obj.sky_bbox_lr,
+                                                 sky_bbox_ul=obj.sky_bbox_ul,
+                                                 sky_bbox_ur=obj.sky_bbox_ur))
+            else:
+                log.info("Excluding off-image object: {}".format(obj.sid))
 
     return grism_objects
 
