@@ -98,7 +98,7 @@ def tsgrism(input_model, reference_files):
     if "NRC_TSGRISM" != input_model.meta.exposure.type:
         raise TypeError('The input exposure is not a NIRCAM time series grism')
 
-    if input_model.meta.instrument.module  != "A":
+    if input_model.meta.instrument.module != "A":
         raise ValueError('TSGRISM mode only supports module A')
 
     if input_model.meta.instrument.pupil != "GRISMR":
@@ -110,10 +110,9 @@ def tsgrism(input_model, reference_files):
     v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
     world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
 
-    # get the shift to full frame coordinates 
+    # get the shift to full frame coordinates
     subarray2full = subarray_transform(input_model)
 
-    
     # translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
     # spectral order
@@ -143,12 +142,11 @@ def tsgrism(input_model, reference_files):
 
 
     # input into the forward transform is x,y,x0,y0,order
-    # 
     sub2direct = (subarray2full & Identity(3)) | det2det
     imdistortion = imaging_distortion(input_model, reference_files)
     distortion = imdistortion & Identity(2)
     tel2sky = pointing.v23tosky(input_model) & Identity(2)
-    
+
     pipeline = [(gdetector, sub2direct),
                 (detector, distortion),
                 (v2v3, tel2sky),
