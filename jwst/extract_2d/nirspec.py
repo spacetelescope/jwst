@@ -20,12 +20,10 @@ log.setLevel(logging.DEBUG)
 
 
 def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, reffile=""):
-    supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ', 'NRS_LAMP']
-
     exp_type = input_model.meta.exposure.type.upper()
-    log.info('EXP_TYPE is {0}'.format(exp_type))
-
+    
     wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']
+    
     if exp_type in wavecorr_supported_modes:
         if reffile and reffile.strip().upper() == 'N/A':
             apply_wavecorr = False
@@ -34,38 +32,31 @@ def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, reffil
         apply_wavecorr = False
         log.info("Skipping wavecorr correction for EXP_TYPE {0}".format(exp_type))
 
-    if exp_type not in supported_modes:
-        input_model.meta.cal_step.extract_2d = 'SKIPPED'
-        return input_model
+    
+    slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
+    # This is a cludge but will work for now.
+    # This model keeps open_slits as an attribute.
+    open_slits = slit2msa[1].slits[:]
+    if which_subarray is not None:
+        open_slits = [sub for sub in open_slits if sub.name==which_subarray]
+    log.debug('open slits {0}'.format(open_slits))
+    if len(open_slits) == 1:
+        # the output model is the same as the input - ImageModel or CubeModel
+        output_model, xlo, xhi, ylo, yhi = process_slit(input_model, open_slits[0],
+                                                        exp_type, apply_wavecorr, reffile)
+    else:
+        output_model = datamodels.MultiSlitModel()
+        output_model.update(input_model)
+        for slit in open_slits:
+            new_model, xlo, xhi, ylo, yhi = process_slit(input_model, slit,
+                                                         exp_type, apply_wavecorr, reffile)
 
-    if exp_type in supported_modes:
-        slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
-        # This is a cludge but will work for now.
-        # This model keeps open_slits as an attribute.
-        open_slits = slit2msa[1].slits[:]
-        if which_subarray is not None:
-            open_slits = [sub for sub in open_slits if sub.name==which_subarray]
-        log.debug('open slits {0}'.format(open_slits))
-        if len(open_slits) == 1:
-            # the output model is the same as the input - ImageModel or CubeModel
-            output_model, xlo, xhi, ylo, yhi = process_slit(input_model, open_slits[0],
-                                                            exp_type, apply_wavecorr, reffile)
-        else:
-            output_model = datamodels.MultiSlitModel()
-            output_model.update(input_model)
-            for slit in open_slits:
-                new_model, xlo, xhi, ylo, yhi = process_slit(input_model, slit,
-                                                             exp_type, apply_wavecorr, reffile)
+            output_model.slits.append(new_model)
+            # set x/ystart values relative to the image (screen) frame.
+            # The overall subarray offset is recorded in model.meta.subarray.
+            nslit = len(output_model.slits) - 1
+            set_slit_attributes(output_model, nslit, slit, xlo, xhi, ylo, yhi)
 
-                output_model.slits.append(new_model)
-                # set x/ystart values relative to the image (screen) frame.
-                # The overall subarray offset is recorded in model.meta.subarray.
-                nslit = len(output_model.slits) - 1
-                set_slit_attributes(output_model, nslit, slit, xlo, xhi, ylo, yhi)
-
-    del input_model
-    # Set the step status to COMPLETE
-    output_model.meta.cal_step.extract_2d = 'COMPLETE'
     return output_model
 
 

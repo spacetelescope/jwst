@@ -38,6 +38,8 @@ def extract_grism_objects(input_model, grism_objects=[], reffile=""):
 
     Notes
     -----
+    This method supports NRC_GRISM and NIS_WFSS only
+
     GrismObject is a named tuple which contains distilled
     information about each catalog object. It can be created
     by calling jwst.assign_wcs.util.create_grism_bbox() which
@@ -45,8 +47,6 @@ def extract_grism_objects(input_model, grism_objects=[], reffile=""):
     boxes needed for extraction.
 
     """
-
-    supported_modes = ['NIS_WFSS', 'NRC_GRISM']
     if not grism_objects:
         # get the wavelengthrange reference file from the input_model
         if not reffile:
@@ -54,18 +54,9 @@ def extract_grism_objects(input_model, grism_objects=[], reffile=""):
         else:
             grism_objects = util.create_grism_bbox(input_model, {"wavelengthrange": reffile})
 
-    exp_type = input_model.meta.exposure.type.upper()
-    log.info('EXP_TYPE is {0}'.format(exp_type))
 
-
-    # Setup the output file
-    if exp_type not in supported_modes:
-        input_model.meta.cal_step.extract_2d = 'SKIPPED'
-        log.info('EXP_TYPE {0} is not supported for this method'.format(exp_type))
-        return input_model
-    else:
-        output_model = datamodels.MultiSlitModel()
-        output_model.update(input_model)
+    output_model = datamodels.MultiSlitModel()
+    output_model.update(input_model)
 
     # One WCS model can be used to govern all the extractions
     # and in fact the model transforms rely on the full frame
@@ -130,9 +121,6 @@ def extract_grism_objects(input_model, grism_objects=[], reffile=""):
     
     # memory reduction for pipeline chain        
     del subwcs
-    del input_model
-    # Set the step status to COMPLETE
-    output_model.meta.cal_step.extract_2d = 'COMPLETE'
     return output_model
 
 
