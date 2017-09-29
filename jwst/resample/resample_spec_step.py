@@ -52,34 +52,34 @@ class ResampleSpecStep(Step):
                 input_models = v
 
                 # Set up the resampling object as part of this step
-                self.step = resample_spec.ResampleSpecData(input_models,
-                    self.driz_filename, single=self.single,
+                resamp = resample_spec.ResampleSpecData(input_models,
+                    ref_filename, single=self.single,
                     wht_type=self.wht_type, pixfrac=self.pixfrac,
                     kernel=self.kernel, fillval=self.fillval,
                     good_bits=self.good_bits)
                 # Do the resampling
-                self.step.do_drizzle()
-                if len(self.step.output_models) == 1:
-                    out_slit = self.step.output_models[0]
+                resamp.do_drizzle()
+                if len(resamp.output_models) == 1:
+                    out_slit = resamp.output_models[0]
                     output_product.products.append(out_slit)
                 else:
-                    out_slit = self.step.output_models
+                    out_slit = resamp.output_models
             result = output_product
         else:
             # Set up the resampling object as part of this step
-            self.step = resample_spec.ResampleSpecData(input_models,
-                self.driz_filename, single=self.single, wht_type=self.wht_type,
+            resamp = resample_spec.ResampleSpecData(input_models,
+                ref_filename, single=self.single, wht_type=self.wht_type,
                 pixfrac=self.pixfrac, kernel=self.kernel,
                 fillval=self.fillval, good_bits=self.good_bits)
             # Do the resampling
-            self.step.do_drizzle()
+            resamp.do_drizzle()
 
             # Return either the single resampled datamodel, or the container
             # of datamodels.
-            if len(self.step.output_models) == 1:
-                result = self.step.output_models[0]
+            if len(resamp.output_models) == 1:
+                result = resamp.output_models[0]
             else:
-                result = self.step.output_models
+                result = resamp.output_models
 
         result.meta.cal_step.resample = 'COMPLETE'
 
