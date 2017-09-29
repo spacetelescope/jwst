@@ -1146,13 +1146,15 @@ class Schema_editor(object):
                             keyword_path = keyword_path.split('.')
                             done = self.update_schema_fields(keyword_subschema,
                                                              model_subschema,
-                                                             keyword_path)
+                                                             new_path(model_path,
+                                                                  model_name))
                             if (not p_name and
                                 not comparable_names(model_name, keyword_path[-1])):
                                 done = self.schema_rename_value(model_schema,
                                                                 keyword_path[-1],
                                                                 model_name,
-                                                                keyword_path)
+                                                                new_path(model_path,
+                                                                  model_name))
 
                 else:
                     fits_hdu = self.get_keyword_value(model_subschema,
@@ -1272,7 +1274,8 @@ class Schema_editor(object):
                                                           model_name))
 
 
-    def report_and_query(self, verb, keyword_value, model_value, path, field):
+    def report_and_query(self, verb, title, keyword_value, model_value,
+                         path, field):
         """
         Report a difference and optionally wait for use input
         """
@@ -1281,7 +1284,8 @@ class Schema_editor(object):
    
         else:
             if self.query or self.list:
-                self.report_schema_difference(keyword_value,
+                self.report_schema_difference(title,
+                                              keyword_value,
                                               model_value,
                                               path,
                                               field)      
@@ -1297,13 +1301,16 @@ class Schema_editor(object):
         return choice
 
     
-    def report_schema_difference(self, keyword_value, model_value, path, field):
+    def report_schema_difference(self, title, keyword_value, model_value,
+                                 path, field):
         """
         Report the differences between the values of a field in the 
         datamodels schema and the keywords database
         """
         self.fd.write("=== {0} ===\n".format('.'.join(path)))
-        
+        if title is not None:
+            self.fd.write(title + "\n")
+
         if isinstance(keyword_value, list) and isinstance(model_value, list):
             (keyword_value, model_value) = self.sort_for_report(keyword_value,
                                                                 model_value)
@@ -1345,7 +1352,8 @@ class Schema_editor(object):
         
         done = False
         if self.list and self.add:
-            self.report_and_query("Add", keyword_schema, None,
+            title = keyword_schema.get('title')
+            self.report_and_query("Add", title, keyword_schema, None,
                                   keyword_path, None)
         return done
 
@@ -1356,8 +1364,9 @@ class Schema_editor(object):
         """
         done = False
         if self.delete:
-            if self.report_and_query("Delete", None, model_schema[model_name],
-                                     path, None):
+            title = model_schema.get('title')
+            if self.report_and_query("Delete", title, None,
+                                    model_schema[model_name], path, None):
                 done = True
                 del model_schema[model_name]
         return done
@@ -1376,7 +1385,8 @@ class Schema_editor(object):
                    model_value is not None)
     
         if perform:
-            if self.report_and_query("Change", keyword_value, model_value,
+            title = model_schema.get('title')
+            if self.report_and_query("Change", title, keyword_value, model_value,
                                      path, field):
                 done = True
                 if field == "pattern":
@@ -1393,7 +1403,8 @@ class Schema_editor(object):
         """
         done = False
         if self.rename:
-            if self.report_and_query("Rename", keyword_name, model_name,
+            title = model_schema.get('title')
+            if self.report_and_query("Rename", title, keyword_name, model_name,
                                      path, "name"):
                 done = True
                 model_schema[keyword_name] = model_schema[model_name]
