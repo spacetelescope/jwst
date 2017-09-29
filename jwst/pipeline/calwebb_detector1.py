@@ -87,7 +87,9 @@ class Detector1Pipeline(Pipeline):
             input = self.lastframe(input)
             input = self.dark_current(input)
             input = self.refpix(input)
-            input = self.persistence(input)
+
+            # skip until MIRI team has figured out an algorithm
+            #input = self.persistence(input)
 
         else:
 
@@ -101,7 +103,11 @@ class Detector1Pipeline(Pipeline):
             input = self.superbias(input)
             input = self.refpix(input)
             input = self.linearity(input)
-            input = self.persistence(input)
+
+            # skip persistence for NIRSpec
+            if input.meta.instrument.name != 'NIRSPEC':
+                input = self.persistence(input)
+
             input = self.dark_current(input)
 
         # apply the jump step
