@@ -11,7 +11,7 @@ import logging
 
 from astropy.io import fits
 from astropy.modeling import models
-
+from fitsblender import blendheaders
 from ..associations import Association
 from .. import datamodels
 from ..assign_wcs import nirspec
@@ -50,6 +50,7 @@ class IFUCubeData(object):
 
         self.cube_type = cube_type
         self.input_filenames = input_filenames
+
         self.input_models = input_models # needed when building single mode IFU cubes 
         self.output_name_base = output_name_base
 
@@ -67,7 +68,7 @@ class IFUCubeData(object):
         self.scalew = pars_cube.get('scalew')
         self.rois = pars_cube.get('rois')
         self.roiw = pars_cube.get('roiw')
-#        self.output_file = pars_cube.get('output_file')
+
         self.interpolation = pars_cube.get('interpolation')
         self.coord_system = pars_cube.get('coord_system')
         self.offset_list = pars_cube.get('offset_list')
@@ -83,6 +84,7 @@ class IFUCubeData(object):
 
         self.num_bands = 0
         self.output_name = ''
+        self.this_cube_filenames = []
 
         self.Cdelt1 = None
         self.Cdelt2 = None
@@ -109,17 +111,17 @@ class IFUCubeData(object):
 
         self.spaxel = []        # list of spaxel classes
 #********************************************************************************
+# first define the number of file names that will be used to construct this cube
+# do some checks on the IFUCube to be made
+# find the ROI size 
 
     def setup_cube(self):
-# first define the number of file names that will be used to construct this cube
-
         num1= len(self.list_par1)
         num_files = 0 
         for i in range(num1):
             this_a = self.list_par1[i]
             this_b = self.list_par2[i]
-#            print('parameters',this_a,this_b)
-            n = len(self.master_table.FileMap[self.instrument][this_a][this_b])        
+            n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
             num_files = num_files + n
 
 # do some basic checks on the cubes 
@@ -194,7 +196,7 @@ class IFUCubeData(object):
             fg_name = '_'
 
             for i in range( len(self.list_par1)):
-                fg_name = fg_name + self.band_grating[i] + '-'+ self.band_filter[i]
+                fg_name = fg_name + self.list_par1[i] + '-'+ self.list_par2[i]
                 if(i < self.num_bands -1):
                     fg_name = fg_name + '-'
             fg_name = fg_name.lower()
@@ -272,6 +274,7 @@ class IFUCubeData(object):
 #_______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
         IFUCubeData.update_IFUCube(self,IFUCube, self.spaxel)
+#        blendheaders.blendheaders(self.output_name,self.this_cube_filenames)
 
 
         return IFUCube
@@ -313,6 +316,7 @@ class IFUCubeData(object):
             spaxel = IFUCubeData.create_spaxel(self)
 
             with datamodels.ImageModel(self.input_models[j]) as input_model:
+                
 #********************************************************************************
 # pulled necessary routines from   CubeData.map_detector_to_spaxel
                 if self.instrument == 'MIRI':
@@ -322,6 +326,7 @@ class IFUCubeData(object):
                     y = np.reshape(y, y.size)
                     x = np.reshape(x, x.size)
 
+                    
                     cube_cloud.match_det2cube(self,input_model,
                                               x, y, j,
                                               this_par1,this_par2,
@@ -470,13 +475,14 @@ class IFUCubeData(object):
 
         instrument  = self.instrument
         nfiles = len(self.master_table.FileMap[instrument][this_par1][this_par2])
-#        log.info('Number of files/models in band %i', nfiles)
 
     # loop over the files that cover the spectral range the cube is for
 
         for k in range(nfiles):
             ifile = self.master_table.FileMap[instrument][this_par1][this_par2][k]
             ioffset = len(self.master_table.FileOffset[this_par1][this_par2]['C1'])
+
+            self.this_cube_filenames.append(ifile)
 
             c1_offset = 0.0
             c2_offset = 0.0
@@ -660,7 +666,6 @@ class IFUCubeData(object):
         naxis2 = self.naxis2
         naxis3 = self.naxis3
 
-
         data = np.zeros((naxis3, naxis2, naxis1))
         idata = np.zeros((naxis3, naxis2, naxis1))
 
@@ -671,6 +676,8 @@ class IFUCubeData(object):
         IFUCube.update(self.input_models[j])
 
         IFUCube.meta.filename = self.output_name
+
+        
         if self.output_type == 'single':
             with datamodels.open(self.input_models[j]) as input:
                 # define the cubename for each single 
@@ -720,6 +727,10 @@ class IFUCubeData(object):
         IFUCube.meta.weighting = self.weighting
         IFUCube.meta.weight_power = self.weight_power
 
+        with datamodels.open(self.input_models[j]) as input:
+            IFUCube.meta.bunit_data = input.meta.bunit_data
+            IFUCube.meta.bunit_err = input.meta.bunit_err
+
 #        IFUCube.meta.data_model_type = 'IFUCubeModel'
         IFUCube.error_type = 'ERR'
 
@@ -765,8 +776,6 @@ class IFUCubeData(object):
             if self.channel == '4' and self.band == 'LONG':
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL4C'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE4C'
-
-
 
 
         wcsobj = pointing.create_fitswcs(IFUCube)
