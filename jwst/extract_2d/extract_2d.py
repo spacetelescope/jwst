@@ -26,13 +26,13 @@ def extract2d(input_model, which_subarray=None, apply_wavecorr=False, reffile=""
     elif exp_type in grism_modes:
         output_model = extract_grism_objects(input_model, grism_objects=[], reffile="")
 
-    elif exp_type not in supported_modes:
+    else:
         log.info("'EXP_TYPE {} not supported for extract 2D".format(exp_type))
         input_model.meta.cal_step.extract_2d = 'SKIPPED'
         return input_model
 
-    else:
-        # Set the step status to COMPLETE
-        output_model.meta.cal_step.extract_2d = 'COMPLETE'
-        del input_model
-        return output_model
+    
+    # Set the step status to COMPLETE
+    output_model.meta.cal_step.extract_2d = 'COMPLETE'
+    del input_model
+    return output_model
