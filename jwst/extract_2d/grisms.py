@@ -87,9 +87,11 @@ def extract_grism_objects(input_model, grism_objects=[], reffile=""):
             # This is changes the user input to the model from (x,y,x0,y0,order) -> (x,y,order)
             #
             # The bounding boxes here are also limited to the size of the detector
+            # The check for boxes entirely off the detector is done in create_grism_bbox right now
             bb = obj.order_bounding[order]
             xmin, xmax = int(round(max(bb[0][0], 0))), int(round(min(bb[0][1], input_model.meta.subarray.xsize)))  # limit the boxes to the detector
             ymin, ymax = int(round(max(bb[1][0], 0))), int(round(min(bb[1][1], input_model.meta.subarray.ysize))) # limit the boxes to the detector
+            
 
             tr = inwcs.get_transform('grism_detector', 'detector')
             tr = Identity(3) | (Mapping((0, 1, 0, 1, 2)) | Shift(xmin) & Shift(ymin) &
