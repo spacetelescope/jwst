@@ -77,8 +77,7 @@ class OutlierDetectionScaledStep(Step):
                         **pars)
             step.do_detection()
 
-            for model in self.input_models:
-                model.meta.cal_step.outlier_detection = 'COMPLETE'
+            self.input_models.meta.cal_step.outlier_detection = 'COMPLETE'
 
             return self.input_models
 

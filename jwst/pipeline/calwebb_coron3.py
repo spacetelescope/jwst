@@ -143,7 +143,7 @@ class Coron3Pipeline(Pipeline):
                                              wht=resample_input[0].err)
             result.update(resample_input[0])
             # The resample step blends headers already...
-            self.log.debug('Blending metadata for {}'.format(output_file))
+            self.log.debug('Blending metadata for {}'.format(result.meta.filename))
             blend.blendfitsdata(targ_files, result)
 
         result.meta.asn.pool_name = asn['asn_pool']

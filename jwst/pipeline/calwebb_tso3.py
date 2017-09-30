@@ -114,7 +114,7 @@ class Tso3Pipeline(Pipeline):
             # define output for x1d (level 3) products
             x1d_result = datamodels.MultiSpecModel()
             # TODO: check to make sure the following line is working
-            x1d_result.update(input_models)
+            x1d_result.update(input_models[0])
 
             # For each exposure in the TSO...
             for cube in input_models:
