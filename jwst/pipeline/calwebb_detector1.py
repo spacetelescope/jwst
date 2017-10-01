@@ -20,17 +20,17 @@ from ..ramp_fitting import ramp_fit_step
 from ..gain_scale import gain_scale_step
 
 
-__version__ = "7.1.0"
+__version__ = "7.1.1"
 
 # Define logging
 import logging
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
 
-class SloperPipeline(Pipeline):
+class Detector1Pipeline(Pipeline):
     """
 
-    SloperPipeline: Apply all calibration steps to raw JWST
+    Detector1Pipeline: Apply all calibration steps to raw JWST
     ramps to produce a 2-D slope product. Included steps are:
     group_scale, dq_init, saturation, ipc, superbias, refpix, rscd,
     lastframe, linearity, dark_current, persistence, jump detection,
@@ -63,7 +63,7 @@ class SloperPipeline(Pipeline):
     # start the actual processing
     def process(self, input):
 
-        log.info('Starting calwebb_sloper ...')
+        log.info('Starting calwebb_detector1 ...')
 
         # open the input
         input = datamodels.open(input)
@@ -87,7 +87,9 @@ class SloperPipeline(Pipeline):
             input = self.lastframe(input)
             input = self.dark_current(input)
             input = self.refpix(input)
-            input = self.persistence(input)
+
+            # skip until MIRI team has figured out an algorithm
+            #input = self.persistence(input)
 
         else:
 
@@ -101,7 +103,11 @@ class SloperPipeline(Pipeline):
             input = self.superbias(input)
             input = self.refpix(input)
             input = self.linearity(input)
-            input = self.persistence(input)
+
+            # skip persistence for NIRSpec
+            if input.meta.instrument.name != 'NIRSPEC':
+                input = self.persistence(input)
+
             input = self.dark_current(input)
 
         # apply the jump step
@@ -126,7 +132,7 @@ class SloperPipeline(Pipeline):
         # setup output_file for saving
         self.setup_output(input)
 
-        log.info('... ending calwebb_sloper')
+        log.info('... ending calwebb_detector1')
 
         return input
 

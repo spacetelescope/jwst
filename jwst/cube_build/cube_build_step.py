@@ -7,7 +7,7 @@ import json
 import os
 import numpy as np
 from ..stpipe import Step, cmdline
-from fitsblender import blendheaders
+
 from .. import datamodels
 from . import cube_build
 from . import ifu_cube
@@ -173,7 +173,7 @@ class CubeBuildStep (Step):
                 self.log.warning('Run again and turn off miripsf')
                 return
 #________________________________________________________________________________
-# shove the input parameters in to pars to pull out general cube_build.py
+# shove the input parameters in to pars to pull out in general cube_build.py
 
         pars = {
             'channel': self.pars_input['channel'],
@@ -280,7 +280,6 @@ class CubeBuildStep (Step):
 # Else standard IFU cube building
             else:
                 result =  thiscube.build_ifucube()
-               # blendheaders.blendheaders(self.output_file,self.input_filenames)
                 Final_IFUCube.append(result)
 
             if(self.debug_pixel ==1):
