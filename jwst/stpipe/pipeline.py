@@ -79,6 +79,11 @@ class Pipeline(Step):
 
             setattr(self, key, new_step)
 
+        self.reference_file_types = []
+        for name in self.step_defs.keys():
+            step = getattr(self, name)
+            self.reference_file_types += step.reference_file_types
+
     @classmethod
     def merge_config(cls, config, config_file):
         steps = config.get('steps', {})
@@ -137,9 +142,6 @@ class Pipeline(Step):
         try:
             with datamodels.open(input_file) as model:
                 super(Pipeline, self)._precache_reference_files_opened(model)
-                for name in self.step_defs.keys():
-                    step = getattr(self, name)
-                    step._precache_reference_files_opened(model)
         except (ValueError, TypeError, IOError):
             self.log.info(
                 'First argument {0} does not appear to be a '
