@@ -16,6 +16,7 @@ from ..srctype import srctype_step
 from ..straylight import straylight_step
 from ..fringe import fringe_step
 from ..pathloss import pathloss_step
+from ..barshadow import barshadow_step
 from ..photom import photom_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
@@ -32,8 +33,8 @@ class Spec2Pipeline(Pipeline):
     Included steps are:
     assign_wcs, background subtraction, NIRSpec MSA imprint subtraction,
     NIRSpec MSA bad shutter flagging, 2-D subwindow extraction, flat field,
-    source type decision, straylight, fringe, pathloss, photom, resample_spec,
-    cube_build, and extract_1d.
+    source type decision, straylight, fringe, pathloss, barshadow,  photom,
+    resample_spec, cube_build, and extract_1d.
     """
 
     spec = """
@@ -52,6 +53,7 @@ class Spec2Pipeline(Pipeline):
         'straylight': straylight_step.StraylightStep,
         'fringe': fringe_step.FringeStep,
         'pathloss': pathloss_step.PathLossStep,
+        'barshadow': barshadow_step.BarShadowStep,
         'photom': photom_step.PhotomStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'cube_build': cube_build_step.CubeBuildStep,
@@ -201,6 +203,10 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC',
                         'NRS_IFU']:
             input = self.pathloss(input)
+
+        # Apply barshadow correction to NIRSPEC MSA exposures
+        if exp_type == 'NRS_MSASPEC':
+            input = self.barshadow(input)
 
         # Apply flux calibration
         input = self.photom(input)
