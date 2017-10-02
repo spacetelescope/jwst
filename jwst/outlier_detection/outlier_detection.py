@@ -325,25 +325,25 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     # logic copied from jwst.jump step...
     # Get subarray limits from metadata of input model
     xstart = blot_image.meta.subarray.xstart
-    xsize  = blot_image.data.shape[1]
-    xstop  = xstart + xsize - 1
+    xsize = blot_image.data.shape[1]
+    xstop = xstart + xsize - 1
     ystart = blot_image.meta.subarray.ystart
-    ysize  = blot_image.data.shape[0]
-    ystop  = ystart + ysize - 1
-    if (readnoise_image.meta.subarray.xstart==xstart and
-        readnoise_image.meta.subarray.xsize==xsize   and
-        readnoise_image.meta.subarray.ystart==ystart and
-        readnoise_image.meta.subarray.ysize==ysize):
+    ysize = blot_image.data.shape[0]
+    ystop = ystart + ysize - 1
+    if (readnoise_image.meta.subarray.xstart == xstart and
+        readnoise_image.meta.subarray.xsize == xsize and
+        readnoise_image.meta.subarray.ystart == ystart and
+        readnoise_image.meta.subarray.ysize == ysize):
 
         log.debug('Readnoise and gain subarrays match science data')
         rn = readnoise_image.data
         gain = gain_image.data
-        
+
     else:
         log.debug('Extracting readnoise and gain subarrays to match science data')
-        rn = readnoise_image.data[ystart-1:ystop,xstart-1:xstop]
-        gain = gain_image.data[ystart-1:ystop,xstart-1:xstop]
-        
+        rn = readnoise_image.data[ystart - 1:ystop, xstart - 1:xstop]
+        gain = gain_image.data[ystart - 1:ystop, xstart - 1:xstop]
+
     # TODO: for JWST, the actual readnoise at a given pixel depends on the
     # number of reads going into that pixel.  So we need to account for that
     # using the meta.exposure.nints, ngroups and nframes keywords.
@@ -441,14 +441,14 @@ def abs_deriv(array):
     tmp = np.zeros(array.shape, dtype=np.float64)
     out = np.zeros(array.shape, dtype=np.float64)
 
-    tmp[1:,:] = array[:-1,:]
+    tmp[1:, :] = array[:-1, :]
     tmp, out = _absolute_subtract(array, tmp, out)
-    tmp[:-1,:] = array[1:,:]
+    tmp[:-1, :] = array[1:, :]
     tmp, out = _absolute_subtract(array, tmp, out)
 
-    tmp[:,1:] = array[:,:-1]
+    tmp[:, 1:] = array[:, :-1]
     tmp, out = _absolute_subtract(array, tmp, out)
-    tmp[:,:-1] = array[:,1:]
+    tmp[:, :-1] = array[:, 1:]
     tmp, out = _absolute_subtract(array, tmp, out)
 
     return out

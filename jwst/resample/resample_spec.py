@@ -1,4 +1,4 @@
-from __future__ import (division, print_function, unicode_literals, 
+from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
 import time
@@ -185,7 +185,7 @@ class ResampleSpecData(object):
                     bounds_error=False, fill_value='extrapolate')
                 xpos.append(f(lam[y_center, x_center]))
         x_arg = np.array(xpos)[~np.isnan(lam[:, x_center])]
-        y_arg = y[~np.isnan(lam[:,x_center]), x_center]
+        y_arg = y[~np.isnan(lam[:, x_center]), x_center]
         # slit_coords, spect0 = refwcs(x_arg, y_arg, output='numericals_plus')
         slit_ra, slit_dec, slit_spec_ref = refwcs(x_arg, y_arg)
         slit_coords = SkyCoord(ra=slit_ra, dec=slit_dec, unit=u.deg)
@@ -470,7 +470,7 @@ class ResampleSpecData(object):
                 for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
                     'slitlet_id', 'source_id', 'source_name', 'source_alias',
                     'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                    'nshutters', 'relsens']:
+                    'shutter_state', 'relsens']:
                     if hasattr(img, attr):
                         setattr(output_model, attr, getattr(img, attr))
             except:

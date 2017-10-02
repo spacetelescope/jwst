@@ -140,7 +140,7 @@ class Spec2Pipeline(Pipeline):
         # a grism image, if so get the catalog
         # name from the asn and record it to the meta
         if exp_type in ["NIS_WFSS", "NRC_GRISM"]:
-            input.meta.source_catalog.filename = members_by_type['sourcecat']
+            input.meta.source_catalog.filename = members_by_type['sourcecat'][0]
         input = self.assign_wcs(input)
 
         # Do background processing, if necessary
@@ -181,12 +181,23 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
             input = self.msa_flagging(input)
 
-        # Extract 2D sub-windows for NIRSpec slit and MSA
-        if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC']:
-            input = self.extract_2d(input)
+        # It isn't really necessary to include 'NRC_TSGRISM' in this list,
+        # but it doesn't hurt, and it makes it clear that flat_field
+        # should be done before extract_2d for all WFSS/GRISM data.
+        if exp_type in ['NRC_GRISM', 'NIS_WFSS', 'NRC_TSGRISM']:
+            # Apply flat-field correction
+            input = self.flat_field(input)
 
-        # Apply flat-field correction
-        input = self.flat_field(input)
+            if exp_type != 'NRC_TSGRISM':
+                input = self.extract_2d(input)
+
+        else:
+            # Extract 2D sub-windows for NIRSpec slit and MSA
+            if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC']:
+                input = self.extract_2d(input)
+
+            # Apply flat-field correction
+            input = self.flat_field(input)
 
         # Apply the source type decision step
         input = self.srctype(input)
@@ -200,8 +211,7 @@ class Spec2Pipeline(Pipeline):
             input = self.fringe(input)
 
         # Apply pathloss correction to NIRSpec exposures
-        if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC',
-                        'NRS_IFU']:
+        if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU']:
             input = self.pathloss(input)
 
         # Apply barshadow correction to NIRSPEC MSA exposures
@@ -224,9 +234,8 @@ class Spec2Pipeline(Pipeline):
         # "regular" spectra or cube_build for IFU data. No resampled
         # product is produced for time-series modes.
         if input.meta.exposure.type in [
-                'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ',
-                'NRS_MSASPEC', 'NIS_WFSS', 'NRC_GRISM'
-        ]:
+            'NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NIS_WFSS', 'NRC_GRISM'
+            ]:
 
             # Call the resample_spec step
             self.resample_spec.suffix = 's2d'

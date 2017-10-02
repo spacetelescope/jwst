@@ -56,8 +56,8 @@ class CubeSkyMatchStep(Step):
     reference_file_types = []
 
     def process(self, input1, input2):
-        cube_models = datamodels.ModelContainer(input1)
-        models2d = datamodels.ModelContainer(input2)
+        cube_models = datamodels.ModelContainer(input1, persist=False)
+        models2d = datamodels.ModelContainer(input2, persist=False)
         dqbits = interpret_bit_flags(self.dqbits)
 
         # set sky stattistics:
