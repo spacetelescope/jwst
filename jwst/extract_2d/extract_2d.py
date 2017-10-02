@@ -15,10 +15,6 @@ log.setLevel(logging.DEBUG)
 
 def extract2d(input_model, which_subarray=None, apply_wavecorr=False, reference_files={}, grism_objects=[]):
 
-    if not any(reference_files.values()):
-        log.critical("extract2d needs reference files to make extractions, none were passed")
-        raise ValueError("extract2d needs reference files to make extractions, none were passed")
-
     nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ', 'NRS_LAMP']
     grism_modes = ['NIS_WFSS', 'NRC_GRISM']
     
