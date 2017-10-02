@@ -648,7 +648,6 @@ properties:
             title: Number of pixels in detector y-axis direction
             type: integer
             fits_keyword: DETYSIZ
-        additionalProperties: false
       dither:
         title: Dither information
         type: object
