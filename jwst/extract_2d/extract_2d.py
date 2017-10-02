@@ -13,18 +13,20 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def extract2d(input_model, which_subarray=None, apply_wavecorr=False, reffile="", grism_objects=[]):
+def extract2d(input_model, which_subarray=None, apply_wavecorr=False, reference_files={}, grism_objects=[]):
+
     nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ', 'NRS_LAMP']
     grism_modes = ['NIS_WFSS', 'NRC_GRISM']
+    
     exp_type = input_model.meta.exposure.type.upper()
     log.info('EXP_TYPE is {0}'.format(exp_type))
     
     if exp_type in nrs_modes:
-        output_model = nrs_extract2d(input_model, which_subarray=None,
-                              apply_wavecorr=False, reffile="")
+        output_model = nrs_extract2d(input_model, which_subarray=which_subarray,
+                              apply_wavecorr=apply_wavecorr, reference_files=reference_files)
 
     elif exp_type in grism_modes:
-        output_model = extract_grism_objects(input_model, grism_objects=grism_objects, reffile=reffile)
+        output_model = extract_grism_objects(input_model, grism_objects=grism_objects, reference_files=reference_files)
 
     else:
         log.info("'EXP_TYPE {} not supported for extract 2D".format(exp_type))
