@@ -19,12 +19,13 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, reffile=""):
+def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, reference_files={}):
     exp_type = input_model.meta.exposure.type.upper()
     
     wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']
     
     if exp_type in wavecorr_supported_modes:
+        reffile = reference_files['wavecorr']
         if reffile and reffile.strip().upper() == 'N/A':
             apply_wavecorr = False
             warnings.warn("WAVECORR reference file missing - skipping correction")

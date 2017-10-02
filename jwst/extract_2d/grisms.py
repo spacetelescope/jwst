@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def extract_grism_objects(input_model, grism_objects=[], reffile=""):
+def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
     """
     Extract 2d boxes around each objects spectra per order.
 
@@ -49,10 +49,10 @@ def extract_grism_objects(input_model, grism_objects=[], reffile=""):
     """
     if not grism_objects:
         # get the wavelengthrange reference file from the input_model
-        if not reffile:
+        if (not reference_files['wavelengthrange'] or reference_files['wavelengthrange'] == 'N/A'):
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
-            grism_objects = util.create_grism_bbox(input_model, {"wavelengthrange": reffile})
+            grism_objects = util.create_grism_bbox(input_model, reference_files)
 
 
     output_model = datamodels.MultiSlitModel()
