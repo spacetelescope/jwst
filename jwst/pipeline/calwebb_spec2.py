@@ -241,7 +241,10 @@ class Spec2Pipeline(Pipeline):
 
         elif exp_type in ['MIR_MRS', 'NRS_IFU']:
 
-            # Call the cube_build step for IFU data
+            # Call the cube_build step for IFU data;
+            # always create a single cube containing multiple
+            # wavelength bands
+            self.cube_build.output_type = 'multi'
             self.cube_build.suffix = 's3d'
             cube = self.cube_build(input)
 
