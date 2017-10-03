@@ -252,7 +252,9 @@ class Spec2Pipeline(Pipeline):
             # wavelength bands
             self.cube_build.output_type = 'multi'
             self.cube_build.suffix = 's3d'
+            self.cube_build.save_results = False
             cube = self.cube_build(input)
+            self.save_model(cube[0], 's3d')
 
             # Pass the cube along for input to 1D extraction
             x1d_input = cube.copy()
