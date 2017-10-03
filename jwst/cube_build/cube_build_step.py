@@ -146,7 +146,7 @@ class CubeBuildStep (Step):
         input_table = data_types.DataTypes(input,self.single,self.output_file)
         
         self.cube_type = input_table.input_type
-        self.input_models = input_table.input_models
+        self.input_models = input_table.input_models.copy()
         self.input_filenames = input_table.filenames
         self.output_name_base = input_table.output_name
 
@@ -285,12 +285,7 @@ class CubeBuildStep (Step):
             if(self.debug_pixel ==1):
                 self.spaxel_debug.close()
 
-#        print('self.save_results',self.save_results)
-#        print('self.output_file',self.output_file)
-#        print('len(Final_IFUCube)',len(Final_IFUCube))        
-#        print('First filename',Final_IFUCube[0].meta.filename)
-#        if len(Final_IFUCube) > 1:
-#            print('Next filename',Final_IFUCube[1].meta.filename)
+
         save_IFU = False
         if self.save_results == True or self.output_file !=None:
             self.save_results = False # turn off the Step class functions
@@ -301,7 +296,6 @@ class CubeBuildStep (Step):
 
         if save_IFU == True:
             Final_IFUCube.save(None)
-#            print('going to save FINAL_IFUCube')
         return Final_IFUCube
 
 #********************************************************************************

@@ -677,9 +677,18 @@ class IFUCubeData(object):
 
         IFUCube.meta.filename = self.output_name
 
-        
+
+#        with datamodels.open(self.input_models[j]) as input:
+#            print('********',j)
+#            print('********',input.meta.ref_file.crds.sw_version)
+#            print('********',input.meta.ref_file.cubepar)
+#            sys.exit('STOP')
+#        print('********',IFUCube.meta.ref_file.crds.sw_version)
+#        print('********',IFUCube.meta.ref_file.cubepar)        
         if self.output_type == 'single':
             with datamodels.open(self.input_models[j]) as input:
+
+#                print('**************',input.meta.ref_file.crds.sw_version)
                 # define the cubename for each single 
                 filename = self.input_filenames[j]
                 indx = filename.rfind('.fits')
