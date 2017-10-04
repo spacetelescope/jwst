@@ -137,7 +137,6 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
     catalog = photutils.properties_table(source_props, columns=columns)
 
     # convert orientation to degrees
-    catalog = QTable(catalog)
     orient_deg = catalog['orientation'].to(u.deg)
     catalog.replace_column('orientation', orient_deg)
 
