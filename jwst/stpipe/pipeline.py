@@ -79,11 +79,36 @@ class Pipeline(Step):
 
             setattr(self, key, new_step)
 
-        self.reference_file_types = []
-        for name in self.step_defs.keys():
-            step = getattr(self, name)
-            self.reference_file_types += step.reference_file_types
+        self.reference_file_types = self._collect_active_reftypes()
 
+    def _collect_active_reftypes(self):
+        """Collect the list of non-overridden reftypes for all child
+        Steps that are not skipped.
+        """
+        return [reftype for step in self._unskipped_steps
+                for reftype in step.reference_file_types]
+
+    @property 
+    def _unskipped_steps(self):
+        """Return a list of the unskipped Step objects launched by `self`."""
+        return [getattr(self, name) for name in self.step_defs.keys()
+                if not getattr(self, name).skip]
+
+    def _get_ref_override(self, reference_file_type):
+        """Return any override for `reference_file_type` for any of the steps in
+        Pipeline `self`.  OVERRIDES Step.
+        
+        Returns
+        -------
+        override_filepath or None.
+
+        """
+        for step in self._unskipped_steps:
+            override = step._get_ref_override(reference_file_type)
+            if override is not None:
+                return override
+        return None
+            
     @classmethod
     def merge_config(cls, config, config_file):
         steps = config.get('steps', {})
