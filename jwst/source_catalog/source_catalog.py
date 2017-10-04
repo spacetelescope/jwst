@@ -129,9 +129,8 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
     source_props = photutils.source_properties(
         model.data, segm, error=total_error, filter_kernel=kernel, wcs=wcs)
 
-    columns = ['id', 'xcentroid', 'ycentroid', 'ra_icrs_centroid',
-               'dec_icrs_centroid', 'area', 'source_sum',
-               'source_sum_err', 'semimajor_axis_sigma',
+    columns = ['id', 'xcentroid', 'ycentroid', 'sky_centroid', 'area',
+               'source_sum', 'source_sum_err', 'semimajor_axis_sigma',
                'semiminor_axis_sigma', 'orientation',
                'sky_bbox_ll', 'sky_bbox_ul', 'sky_bbox_lr', 'sky_bbox_ur']
     catalog = photutils.properties_table(source_props, columns=columns)
