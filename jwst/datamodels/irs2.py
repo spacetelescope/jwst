@@ -16,8 +16,10 @@ class IRS2Model(model_base.DataModel):
         Any of the initializers supported by `~jwst.datamodels.DataModel`.
 
     irs2_table : numpy array
-        A table with 8 columns and 1458176 (2048 * 712) rows; all values
-        are complex.  There are four columns for ALPHA and four for BETA.
+        A table with 8 columns and 2916352 (2048 * 712 * 2) rows.  All
+        values are float, but these are interpreted as alternating real
+        and imaginary parts (real, imag, real, imag, ...) of complex
+        values.  There are four columns for ALPHA and four for BETA.
     """
     schema_url = "irs2.schema.yaml"
 
