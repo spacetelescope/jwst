@@ -82,8 +82,9 @@ class Pipeline(Step):
         self.reference_file_types = self._collect_active_reftypes()
 
     def _collect_active_reftypes(self):
-        """Collect the list of non-overridden reftypes for all child
-        Steps that are not skipped.
+        """Collect the list of all reftypes for child Steps that are not skipped.
+        Overridden reftypes are included but handled normally later by the Pipeline 
+        version of the _get_ref_override() method defined below.
         """
         return [reftype for step in self._unskipped_steps
                 for reftype in step.reference_file_types]
