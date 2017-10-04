@@ -104,7 +104,7 @@ class Pipeline(Step):
 
         """
         for step in self._unskipped_steps:
-            override = step._get_ref_override(reference_file_type):
+            override = step._get_ref_override(reference_file_type)
             if override is not None:
                 return override
         return None
