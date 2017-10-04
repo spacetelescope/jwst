@@ -61,12 +61,12 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
     # One WCS model can be used to govern all the extractions
     # and in fact the model transforms rely on the full frame
     # coordinates of the input pixel location. So the WCS
-    # attached to the extraction is just a copy of the 
+    # attached to the extraction is just a copy of the
     # input_model WCS with a shift transform to the corner
     # of the subarray. They also depend on the source object
     # center, this information will be saved to the meta of
     # the output model as source_[x/y]pos
-    inwcs = input_model.meta.wcs 
+    inwcs = input_model.meta.wcs
     subwcs = copy.deepcopy(inwcs)
 
     # For easy reference here, GrismObjects has:
@@ -91,7 +91,7 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             bb = obj.order_bounding[order]
             xmin, xmax = int(round(max(bb[0][0], 0))), int(round(min(bb[0][1], input_model.meta.subarray.xsize)))  # limit the boxes to the detector
             ymin, ymax = int(round(max(bb[1][0], 0))), int(round(min(bb[1][1], input_model.meta.subarray.ysize))) # limit the boxes to the detector
-            
+
 
             tr = inwcs.get_transform('grism_detector', 'detector')
             tr = Identity(3) | (Mapping((0, 1, 0, 1, 2)) | Shift(xmin) & Shift(ymin) &
@@ -106,9 +106,10 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             ext_err = input_model.err[ymin : ymax + 1, xmin : xmax + 1].copy()
             ext_dq = input_model.dq[ymin : ymax + 1, xmin : xmax + 1].copy()
 
-            
+
             new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
             new_model.meta.wcs = subwcs
+            util.update_s_region(new_model)
             output_model.slits.append(new_model)
 
             # set x/ystart values relative to the image (screen) frame.
@@ -119,9 +120,9 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             output_model.slits[-1].xsize = (xmax - xmin) + 1
             output_model.slits[-1].ystart = ymin + 1
             output_model.slits[-1].ysize = (ymax - ymin) + 1
-        
-    
-    # memory reduction for pipeline chain        
+
+
+    # memory reduction for pipeline chain
     del subwcs
     return output_model
 

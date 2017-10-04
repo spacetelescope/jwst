@@ -15,6 +15,7 @@ from backports.tempfile import TemporaryDirectory
 import copy
 import numpy as np
 import os
+import sqlite3
 import pytest
 import requests_mock
 
@@ -44,7 +45,7 @@ VPARITY = -1
 # Get the mock DB
 db_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_mock.csv')
 mock_db = Table.read(db_path)
-
+siaf_db = os.path.join(os.path.dirname(__file__), 'data', 'siaf.db')
 
 # Some expected falues
 Q_EXPECTED = np.asarray(
@@ -158,6 +159,8 @@ def data_file():
     model.meta.wcsinfo.v3_ref = V3_REF
     model.meta.wcsinfo.v3yangle = V3I_YANG
     model.meta.wcsinfo.vparity = VPARITY
+    model.meta.aperture.name = "MIRIM_FULL"
+    model.meta.observation.date = '1/1/2009'
 
     with TemporaryDirectory() as path:
         file_path = os.path.join(path, 'fits.fits')
@@ -208,7 +211,7 @@ def test_get_pointing_with_zeros(eng_db):
 
 def test_add_wcs_default(data_file):
     try:
-        stp.add_wcs(data_file)
+        stp.add_wcs(data_file, siaf_path=siaf_db)
     except Exception as e:
         pytest.skip(
             'Live ENGDB service is not accessible.'
@@ -229,15 +232,16 @@ def test_add_wcs_default(data_file):
     assert model.meta.wcsinfo.dec_ref == TARG_DEC
     assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
     assert model.meta.wcsinfo.wcsaxes == 2
+    print('sregion', model.meta.wcsinfo.s_region)
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 344.0 -86.0'
-            ' 344.0 -87.0'
-            ' 345.0 -87.0'
-            ' 345.0 -86.0'
-            ' 344.0 -86.0'
+            ' -123.3 -24.41'
+            ' -11.95 -19.78'
+            ' 83.28 4.437'
+            ' 165.0 0.334'
+            ' -123.34 -24.41'
         )
     )
 
@@ -245,7 +249,7 @@ def test_add_wcs_default(data_file):
 def test_add_wcs_fsmcorr_v1(data_file):
     """Test with default value using FSM original correction"""
     try:
-        stp.add_wcs(data_file, fsmcorr_version='v1')
+        stp.add_wcs(data_file, fsmcorr_version='v1', siaf_path=siaf_db)
     except Exception as e:
         pytest.skip(
             'Live ENGDB service is not accessible.'
@@ -270,18 +274,18 @@ def test_add_wcs_fsmcorr_v1(data_file):
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 344.0 -86.0'
-            ' 344.0 -87.0'
-            ' 345.0 -87.0'
-            ' 345.0 -86.0'
-            ' 344.0 -86.0'
+            ' -123.3 -24.41'
+            ' -11.95 -19.78'
+            ' 83.28 4.437'
+            ' 165.0 0.334'
+            ' -123.34 -24.41'
         )
     )
 
 
-def test_add_wcs_with_db(eng_db, data_file):
+def test_add_wcs_with_db(eng_db, data_file, siaf_file=siaf_db):
     """Test using the database"""
-    stp.add_wcs(data_file)
+    stp.add_wcs(data_file, siaf_path=siaf_db)
 
     model = datamodels.open(data_file)
     assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
@@ -301,18 +305,18 @@ def test_add_wcs_with_db(eng_db, data_file):
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 349.9154593139086 -37.89343325428542'
-            ' 348.9162019077701 -37.854902276134595'
-            ' 348.8776709296192 -38.85415968227314'
-            ' 349.8769283357578 -38.892690660423966'
-            ' 349.9154593139086 -37.89343325428542'
+            ' -130.33585634084557 -26.66147652284684'
+            ' -63.01845474332184 7.231824977911466'
+            ' 38.50506189722329 10.0549598464577'
+            ' 128.80356504750668 -37.90478088917278'
+            ' -130.33585634084557 -26.66147652284684'
         )
     )
 
 
 def test_add_wcs_with_db_fsmcorr_v1(eng_db, data_file):
     """Test using the database with original FSM correction"""
-    stp.add_wcs(data_file, fsmcorr_version='v1')
+    stp.add_wcs(data_file, fsmcorr_version='v1', siaf_path=siaf_db)
 
     model = datamodels.open(data_file)
     assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
@@ -332,10 +336,10 @@ def test_add_wcs_with_db_fsmcorr_v1(eng_db, data_file):
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 349.9154593139086 -37.89343325428542'
-            ' 348.9162019077701 -37.854902276134595'
-            ' 348.8776709296192 -38.85415968227314'
-            ' 349.8769283357578 -38.892690660423966'
-            ' 349.9154593139086 -37.89343325428542'
+            ' -130.33585634084557 -26.66147652284684'
+            ' -63.01845474332184 7.231824977911466'
+            ' 38.50506189722329 10.0549598464577'
+            ' 128.80356504750668 -37.90478088917278'
+            ' -130.33585634084557 -26.66147652284684'
         )
     )

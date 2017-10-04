@@ -1,5 +1,8 @@
 """Set Telescope Pointing from quaternions"""
 import logging
+import sqlite3
+import os.path
+
 import numpy as np
 from numpy import (cos, sin)
 
@@ -11,6 +14,7 @@ from ..lib.engdb_tools import (
     ENGDB_BASE_URL,
     ENGDB_Service,
 )
+
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -82,7 +86,7 @@ WCSRef = namedlist(
 )
 
 
-def add_wcs(filename, default_pa_v3=0., **kwargs):
+def add_wcs(filename, default_pa_v3=0., siaf_path=None, **kwargs):
     """Add WCS information to a FITS file
 
     Telescope orientation is attempted to be obtained from
@@ -108,6 +112,7 @@ def add_wcs(filename, default_pa_v3=0., **kwargs):
     update_wcs(
         model,
         default_pa_v3=default_pa_v3,
+        siaf_path=siaf_path,
         **kwargs
     )
     model.save(filename)
@@ -115,7 +120,7 @@ def add_wcs(filename, default_pa_v3=0., **kwargs):
     logger.info('...update completed')
 
 
-def update_wcs(model, default_pa_v3=0., **kwargs):
+def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
     """Update WCS pointing information
 
     Given a `jwst.datamodels.DataModel`, determine the simple WCS parameters
@@ -207,7 +212,7 @@ def update_wcs(model, default_pa_v3=0., **kwargs):
     # Calculate S_REGION with the footprint
     # information
     try:
-        update_s_region(model)
+        update_s_region(model, prd_db_filepath=siaf_path)
     except Exception as e:
         logger.warning(
             'Calculation of S_REGION failed and will be skipped.'
@@ -215,37 +220,64 @@ def update_wcs(model, default_pa_v3=0., **kwargs):
         )
 
 
-def update_s_region(model):
-    """Update S_REGION sky footprint information
+def update_s_region(model, prd_db_filepath=None):
+    """Update ``S_REGION`` sky footprint information.
 
-    The S_REGION keyword is intended to store the spatial footprint of
-    an imaging observation using the VO standard STCS representation.
+    The ``S_REGION`` keyword is intended to store the spatial footprint of
+    an observation using the VO standard STCS representation.
 
     Parameters
     ----------
-    model: jwst.datamodels.DataModel
+    model : `~jwst.datamodels.DataModel`
         The model to update in-place.
+    prd_db_filepath : str
+        The filepath to the SIAF file (PRD database).
+        If None, attempt to get the path from the ``XML_DATA`` environment variable.
     """
-    wcsinfo = model.meta.wcsinfo
-    wcs = WCS(wcsinfo.instance)
-    footprint = wcs.calc_footprint(undistort=True, center=True)
+    if prd_db_filepath is None:
+        try:
+            prd_db_filepath = os.path.join(os.environ['XML_DATA'], "prd.db")
+        except KeyError:
+            logger.info("Unknown path to PRD DB file: {0}".format(prd_db_filepath))
+            return
+    if not os.path.exists(prd_db_filepath):
+        logger.info("Invalid path to PRD DB file: {0}".format(prd_db_filepath))
+        return
+    aperture_name = model.meta.aperture.name
+    useafter = model.meta.observation.date
+    vertices = _get_vertices_idl(aperture_name, useafter, prd_db_filepath=prd_db_filepath)
+    vertices = list(vertices.values())[0]
+    xvert = vertices[:4]
+    yvert = vertices[4:]
+    logger.info("Vertices for aperture {0}: {1}".format(aperture_name, vertices))
+    # Execute IdealToV2V3, followed by V23ToSky
+    from ..transforms.models import IdealToV2V3, V23ToSky
+    v2_ref = model.meta.wcsinfo.v2_ref / 3600
+    v3_ref = model.meta.wcsinfo.v3_ref / 3600
+    roll_ref = model.meta.wcsinfo.roll_ref
+    ra_ref = model.meta.wcsinfo.ra_ref
+    dec_ref = model.meta.wcsinfo.dec_ref
+    vparity = model.meta.wcsinfo.vparity
+    v3yangle = model.meta.wcsinfo.v3yangle
 
-    # Format the region string
+    idltov23 = IdealToV2V3(v3yangle, v2_ref, v3_ref, vparity)
+
+    angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
+    axes = "zyxyz"
+    v23tosky = V23ToSky(angles, axes_order=axes)
+    idl2sky = idltov23 | v23tosky
+
+    ra_vert, dec_vert = idl2sky(xvert, yvert)
+    ind = np.argsort(ra_vert)
+    footprint = np.array([ra_vert[ind], dec_vert[ind]]).T
     s_region = (
-        'POLYGON ICRS'
-        ' {} {}'
-        ' {} {}'
-        ' {} {}'
-        ' {} {}'
-        ' {} {}'.format(
-            footprint[0][0], footprint[0][1],
-            footprint[1][0], footprint[1][1],
-            footprint[2][0], footprint[2][1],
-            footprint[3][0], footprint[3][1],
-            footprint[0][0], footprint[0][1]
-        )
-    )
-    wcsinfo.s_region = s_region
+        "POLYGON ICRS "
+        " {0} {1}"
+        " {2} {3}"
+        " {4} {5}"
+        " {6} {7}"
+        " {0} {1}".format(*footprint.flatten()))
+    model.meta.wcsinfo.s_region = s_region
 
 
 def calc_wcs(pointing, siaf, **kwargs):
@@ -911,3 +943,28 @@ def _roll_angle_from_matrix(matrix, v2, v3):
     if new_roll < 0:
         new_roll += 360
     return new_roll
+
+
+def _get_vertices_idl(aperture_name, useafter, prd_db_filepath=None):
+    prd_db_filepath = "file:{0}?mode=ro".format(prd_db_filepath)
+    aperture = (aperture_name, useafter)
+
+    RESULT = {}
+    try:
+        PRD_DB = sqlite3.connect(prd_db_filepath, uri=True)
+
+        cursor = PRD_DB.cursor()
+        cursor.execute("SELECT Apername, XIdlVert1, XIdlVert2, XIdlVert3, XIdlVert4, "
+                       "YIdlVert1, YIdlVert2, YIdlVert3, YIdlVert4 "
+                       "FROM Aperture WHERE Apername = ? and UseAfterDate > ?", aperture)
+        for row in cursor:
+            RESULT[row[0]] = tuple(row[1:9])
+        PRD_DB.commit()
+    except sqlite3.Error as err:
+        print("Error" + err.args[0])
+        raise
+    finally:
+        if PRD_DB:
+            PRD_DB.close()
+    logger.info("loaded {0} table rows from {1}".format(len(RESULT), prd_db_filepath))
+    return RESULT

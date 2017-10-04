@@ -13,7 +13,7 @@ from gwcs import wcstools
 from .. import datamodels
 from ..transforms import models as trmodels
 from ..assign_wcs import nirspec
-
+from ..assign_wcs import util
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -53,6 +53,7 @@ def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, refere
                                                          exp_type, apply_wavecorr, reffile)
 
             output_model.slits.append(new_model)
+            util.update_s_region(new_model)
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
             nslit = len(output_model.slits) - 1

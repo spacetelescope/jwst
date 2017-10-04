@@ -4,7 +4,7 @@ from __future__ import (absolute_import, unicode_literals, division,
 import logging
 import importlib
 from gwcs.wcs import WCS
-
+from.util import update_s_region
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -40,5 +40,6 @@ def load_wcs(input_model, reference_files={}):
         wcs = WCS(pipeline)
         output_model.meta.wcs = wcs
         output_model.meta.cal_step.assign_wcs = 'COMPLETE'
+        update_s_region(output_model)
         log.info("COMPLETED assign_wcs")
     return output_model
