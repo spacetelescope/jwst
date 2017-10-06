@@ -30,7 +30,6 @@ from __future__ import division
 import numpy as np
 from scipy import stats
 import logging
-import math
 from .. import datamodels
 from ..datamodels import dqflags
 
