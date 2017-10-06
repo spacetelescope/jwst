@@ -30,6 +30,7 @@ from __future__ import division
 import numpy as np
 from scipy import stats
 import logging
+import math
 from .. import datamodels
 from ..datamodels import dqflags
 
@@ -134,6 +135,7 @@ class Dataset(object):
         self.side_smoothing_length = side_smoothing_length
         self.side_gain = side_gain
         self.odd_even_rows = odd_even_rows
+        self.bad_reference_pixels = False
 
     def sigma_clip(self, data, dq, low=3.0, high=3.0):
         """Wrap the scipy.stats.sigmaclip so that data with zero variance
@@ -166,6 +168,10 @@ class Dataset(object):
         # Only calculate the clipped mean for pixels that don't have the DO_NOT_USE
         # DQ bit set
         goodpixels = np.where(np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']) == 0)
+        #
+        # If there are no good pixels, return None
+        if len(goodpixels[0]) == 0:
+            return None
         #
         # scipy routine fails if the pixels all have exactly the same value
         if np.std(data[goodpixels], dtype=np.float64) != 0.0:
@@ -384,6 +390,7 @@ class NIRDataset(Dataset):
         if self.odd_even_columns:
             odd = self.get_odd_refvalue(group, amplifier, top_or_bottom)
             even = self.get_even_refvalue(group, amplifier, top_or_bottom)
+            if odd is None or even is None: self.bad_reference_pixels = True
             return odd, even
         else:
             rowstart, rowstop, colstart, colstop = \
@@ -391,6 +398,7 @@ class NIRDataset(Dataset):
             ref = group[rowstart:rowstop, colstart:colstop]
             dq = self.pixeldq[rowstart:rowstop, colstart:colstop]
             mean = self.sigma_clip(ref, dq)
+            if mean is None: self.bad_reference_pixels = True
             return mean
 
     def get_refvalues(self, group):
@@ -452,7 +460,6 @@ class NIRDataset(Dataset):
         top and bottom reference pixels
 
         """
-
         for amplifier in 'ABCD':
             datarowstart, datarowstop, datacolstart, datacolstop = \
                 NIR_reference_sections[amplifier]['data']
@@ -675,6 +682,8 @@ class NIRDataset(Dataset):
                 #
                 thisgroup = self.data[integration, group].copy()
                 refvalues = self.get_refvalues(thisgroup)
+                if self.bad_reference_pixels:
+                    break
                 self.do_top_bottom_correction(thisgroup, refvalues)
                 if self.use_side_ref_pixels:
                     corrected_group = self.do_side_correction(thisgroup)
@@ -1447,9 +1456,11 @@ def correct_model(input_model, odd_even_columns,
                                    side_gain,
                                    odd_even_rows)
     result_dataset = reference_pixel_correction(input_dataset)
-    output_model = input_model.copy()
-    output_model.data = result_dataset.data.copy()
-    return output_model
+    if result_dataset.bad_reference_pixels:
+        return None
+    else:
+        input_model.data = result_dataset.data.copy()
+        return input_model
 
 def reference_pixel_correction(input_dataset):
     """
