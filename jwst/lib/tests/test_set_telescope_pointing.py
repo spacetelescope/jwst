@@ -15,6 +15,7 @@ from backports.tempfile import TemporaryDirectory
 import copy
 import numpy as np
 import os
+import sys
 import sqlite3
 import pytest
 import requests_mock
@@ -209,6 +210,8 @@ def test_get_pointing_with_zeros(eng_db):
     assert np.array_equal(fsmcorr, fsmcorr_desired)
 
 
+@pytest.mark.skipif(sys.version_info.major<3,
+                    reason="No URI support in sqlite3")
 def test_add_wcs_default(data_file):
     try:
         stp.add_wcs(data_file, siaf_path=siaf_db)
@@ -246,6 +249,8 @@ def test_add_wcs_default(data_file):
     )
 
 
+@pytest.mark.skipif(sys.version_info.major<3,
+                    reason="No URI support in sqlite3")
 def test_add_wcs_fsmcorr_v1(data_file):
     """Test with default value using FSM original correction"""
     try:
@@ -283,6 +288,8 @@ def test_add_wcs_fsmcorr_v1(data_file):
     )
 
 
+@pytest.mark.skipif(sys.version_info.major<3,
+                    reason="No URI support in sqlite3")
 def test_add_wcs_with_db(eng_db, data_file, siaf_file=siaf_db):
     """Test using the database"""
     stp.add_wcs(data_file, siaf_path=siaf_db)
@@ -314,6 +321,8 @@ def test_add_wcs_with_db(eng_db, data_file, siaf_file=siaf_db):
     )
 
 
+@pytest.mark.skipif(sys.version_info.major<3,
+                    reason="No URI support in sqlite3")
 def test_add_wcs_with_db_fsmcorr_v1(eng_db, data_file):
     """Test using the database with original FSM correction"""
     stp.add_wcs(data_file, fsmcorr_version='v1', siaf_path=siaf_db)

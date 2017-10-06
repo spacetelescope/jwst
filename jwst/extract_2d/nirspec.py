@@ -54,6 +54,7 @@ def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, refere
 
             output_model.slits.append(new_model)
             util.update_s_region(new_model)
+            log.info('extract_2d updated S_REGION to {0}'.format(new_model.meta.wcsinfo.s_region))
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
             nslit = len(output_model.slits) - 1

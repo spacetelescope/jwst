@@ -492,4 +492,3 @@ def update_s_region(model):
         " {6} {7}"
         " {0} {1}".format(*footprint.flatten()))
     model.meta.wcsinfo.s_region = s_region
-    log.info("updated sky footprint to {0}".format(s_region))
