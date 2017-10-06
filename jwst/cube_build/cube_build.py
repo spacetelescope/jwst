@@ -304,8 +304,6 @@ class CubeData(object):
             band_channel = self.all_channel
             band_subchannel =self.all_subchannel
 
-#            print('all_channel ',band_channel)
-#            print('all_subchannel',band_subchannel)
 #user and single
             if (self.output_type == 'user' or self.output_type =='single' or
                 self.output_type =='multi') :

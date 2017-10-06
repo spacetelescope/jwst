@@ -27,6 +27,7 @@ class CubeBuildStep (Step):
          band = option('SHORT','MEDIUM','LONG','ALL','short','medium','long','all',default='ALL')
          grating   = option('PRISIM','G140M','G140H','G235M','G235H',G395M','G395H','ALL','all',default='ALL')
          filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL','all',default='ALL')
+         pipeline = integer(2,3,default=3)
          scale1 = float(default=0.0)
          scale2 = float(default=0.0)
          scalew = float(default=0.0)
@@ -117,6 +118,9 @@ class CubeBuildStep (Step):
 
         if self.single :
             self.output_type = 'single'
+
+        if self.pipeline == 2:
+            self.output_type = 'multi'
 #________________________________________________________________________________
     # read input parameters - Channel, Band (Subchannel), Grating, Filter
 #________________________________________________________________________________
@@ -146,11 +150,9 @@ class CubeBuildStep (Step):
         input_table = data_types.DataTypes(input,self.single,self.output_file)
         
         self.cube_type = input_table.input_type
-        self.input_models = input_table.input_models.copy()
+        self.input_models = input_table.input_models
         self.input_filenames = input_table.filenames
         self.output_name_base = input_table.output_name
-
-        #print('after calling data_types output base name',self.output_name_base)
 
         self.data_type = input_table.data_type
 #________________________________________________________________________________
@@ -245,6 +247,7 @@ class CubeBuildStep (Step):
 #            print('par2',list_par2)
     
             thiscube = ifu_cube.IFUCubeData(self.cube_type,
+                                            self.pipeline,
                                             self.input_filenames,
                                             self.input_models,
                                             self.output_name_base,
@@ -259,12 +262,13 @@ class CubeBuildStep (Step):
                                             **pars_cube)
 
 #________________________________________________________________________________
+
+            thiscube.setup_cube() # basic checks and get roi size
+
 # find the min & max final coordinates of cube: map each slice to cube
 # add any dither offsets, then find the min & max value in each dimension
-# Foot print is returned in ra,dec coordinates
 
-            thiscube.setup_cube()
-            thiscube.setup_ifucube_wcs()
+            thiscube.setup_ifucube_wcs() 
 #________________________________________________________________________________
 # build the IFU Cube
 
@@ -274,12 +278,14 @@ class CubeBuildStep (Step):
 
             if self.single:
                 self.output_file = None
-                result = thiscube.build_ifucube_single()
-                self.log.info("Number of IFUCube models returned from building single IFUCubes %i ",len(result))
+                Final_IFUCube = thiscube.build_ifucube_single()
+                self.log.info("Number of IFUCube models returned from building single IFUCubes %i ",len(Final_IFUCube))
 
 # Else standard IFU cube building
             else:
                 result =  thiscube.build_ifucube()
+#                print('returning',result.meta.filename)
+#                print('********',result.meta.ref_file.crds.sw_version)
                 Final_IFUCube.append(result)
 
             if(self.debug_pixel ==1):
@@ -287,15 +293,19 @@ class CubeBuildStep (Step):
 
 
         save_IFU = False
-        if self.save_results == True or self.output_file !=None:
-            self.save_results = False # turn off the Step class functions
+#        print('cube_build_step',self.save_results)
+
+        if self.pipeline == 3:
+            if self.save_results == True or self.output_file !=None:
+                self.save_results = False # turn off the Step class functions
                                       # cause new output_file names
                                       # to be determined. Cube_build handles all this
-            self.output_file = None
-            save_IFU = True
-
+                self.output_file = None
+                save_IFU = True
+            
         if save_IFU == True:
             Final_IFUCube.save(None)
+#            print('at the end',Final_IFUCube[0].meta.ref_file.crds.sw_version)
         return Final_IFUCube
 
 #********************************************************************************
@@ -361,7 +371,6 @@ def read_user_input(self):
 
             if ch in ValidChannel:
                 self.pars_input['channel'].append(ch)
-#                print('found channel',ch)
             else:
                 raise ErrorInvalidParameter("Invalid Channel %s",ch)
 # remove duplicates if needed
