@@ -114,15 +114,15 @@ def wcsinfo_from_model(input_model):
     return wcsinfo
 
 
-def fitswcs_transform_from_model(wcsinfo):
+def fitswcs_transform_from_model(model):
     """
     Create a WCS object using from datamodel.meta.wcsinfo.
     Transforms assume 0-based coordinates.
 
     Parameters
     ----------
-    wcsinfo : dict-like
-        `~jwst.meta.wcsinfo`` structure.
+    model : `~jwst.datamodels.DataModel``
+        a Data Model
 
     Return
     ------
@@ -130,11 +130,14 @@ def fitswcs_transform_from_model(wcsinfo):
         WCS forward transform - from pixel to world coordinates.
 
     """
+    wcsinfo = wcsinfo_from_model(model)
     spatial_axes, spectral_axes, unknown = gwutils.get_axes(wcsinfo)
-    sp_axis = spectral_axes[0]
+    #sp_axis = spectral_axes[0]
 
     transform = gwutils.make_fitswcs_transform(wcsinfo)
-    if wcsinfo['WCSAXES'] == 3:
+    #if wcsinfo['WCSAXES'] == 3:
+    if spectral_axes:
+        sp_axis = spectral_axes[0]
         # Subtract one from CRPIX which is 1-based.
         spectral_transform = astmodels.Shift(-(wcsinfo['CRPIX'][sp_axis] - 1)) | \
                            astmodels.Scale(wcsinfo['CDELT'][sp_axis]) | \
