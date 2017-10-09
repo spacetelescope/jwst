@@ -144,7 +144,13 @@ class Spec2Pipeline(Pipeline):
         input = self.assign_wcs(input)
 
         # Do background processing, if necessary
-        if len(members_by_type['background']) > 0:
+        if (exp_type in ["NIS_WFSS", "NRC_GRISM"] or
+            len(members_by_type['background']) > 0):
+
+            if exp_type in ["NIS_WFSS", "NRC_GRISM"]:
+                bkg_list = []           # will be overwritten by the step
+            else:
+                bkg_list = members_by_type['background']
 
             # Setup for saving
             self.bkg_subtract.suffix = 'bsub'
@@ -156,7 +162,7 @@ class Spec2Pipeline(Pipeline):
                 self.bkg_subtract.save_results = True
 
             # Call the background subtraction step
-            input = self.bkg_subtract(input, members_by_type['background'])
+            input = self.bkg_subtract(input, bkg_list)
 
         # If assign_wcs was skipped, abort the rest of processing,
         # because so many downstream steps depend on the WCS
