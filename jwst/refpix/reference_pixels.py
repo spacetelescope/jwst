@@ -1112,12 +1112,14 @@ class MIRIDataset(Dataset):
         if self.odd_even_rows:
             odd = self.get_odd_refvalue(group, amplifier, left_or_right)
             even = self.get_even_refvalue(group, amplifier, left_or_right)
+            if odd is None or even is None: self.bad_reference_pixels = True
             return odd, even
         else:
             rowstart, rowstop, column = MIR_reference_sections[amplifier][left_or_right]
             ref = group[rowstart:rowstop, column]
             dq = self.pixeldq[rowstart:rowstop, column]
             mean = self.sigma_clip(ref, dq)
+            if mean is None: self.bad_reference_pixels = True
             return mean
 
     def get_refvalues(self, group):
@@ -1238,6 +1240,8 @@ class MIRIDataset(Dataset):
                 #
                 thisgroup = self.data[integration, group].copy()
                 refvalues = self.get_refvalues(thisgroup)
+                if self.bad_reference_pixels:
+                    break
                 self.do_left_right_correction(thisgroup, refvalues)
                 self.data[integration, group] = thisgroup
         #
