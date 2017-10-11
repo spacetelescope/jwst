@@ -119,6 +119,9 @@ def subtract_wfss_bkg(input_model, bkg_ref):
     input_model: JWST data model
         input target exposure data model
 
+    bkg_ref: reference file model
+        master background file for WFSS/GRISM
+
     Returns
     -------
     result: JWST data model
@@ -144,7 +147,7 @@ def subtract_wfss_bkg(input_model, bkg_ref):
 
     # Compute the mean values of science image and background reference
     # image, including only regions where there are no identified sources.
-    # Exclude pixel values in the lower 25% and upper 25% of the histogram.
+    # Exclude pixel values in the lower and upper 25% of the histogram.
     lowlim = 25.
     highlim = 75.
     sci_mean = robust_mean(input_model.data[bkg_mask],
@@ -159,7 +162,10 @@ def subtract_wfss_bkg(input_model, bkg_ref):
 
     result = input_model.copy()
     if bkg_mean != 0.:
-        result.data = input_model.data - (sci_mean / bkg_mean) * bkg_ref.data
+        subtract_this = (sci_mean / bkg_mean) * bkg_ref.data
+        result.data = input_model.data - subtract_this
+        log.debug("Average of values subtracted = {}"
+                  .format(subtract_this.mean(dtype=np.float)))
     else:
         log.warning("Background file has zero mean; "
                     "nothing will be subtracted.")
@@ -168,23 +174,29 @@ def subtract_wfss_bkg(input_model, bkg_ref):
 
 
 def no_NaN(model, fill_value=0.):
-    """Replace NaN's with a harmless value.
+    """Replace NaNs with a harmless value.
 
     Parameters
     ----------
     model: JWST data model
         Reference file model.
 
+    fill_value: float
+        NaNs will be replaced with this value.
+
     Returns
     -------
     result: JWST data model
-        Reference file model without NaN's in data array.
+        Reference file model without NaNs in data array.
     """
 
-    mask = (np.isnan(model.data))
-    temp = model.copy()
-    temp.data[mask] = fill_value
-    return temp
+    mask = np.isnan(model.data)
+    if mask.sum(dtype=np.intp) == 0:
+        return model
+    else:
+        temp = model.copy()
+        temp.data[mask] = fill_value
+        return temp
 
 
 def mask_from_source_cat(shape, source_catalog):

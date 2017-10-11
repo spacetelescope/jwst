@@ -135,19 +135,20 @@ class Spec2Pipeline(Pipeline):
             input = datamodels.open(science)
         exp_type = input.meta.exposure.type
 
+        WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM"]
+
         # Apply WCS info
         # check the datamodel to see if it's
         # a grism image, if so get the catalog
         # name from the asn and record it to the meta
-        if exp_type in ["NIS_WFSS", "NRC_GRISM"]:
+        if exp_type in WFSS_TYPES:
             input.meta.source_catalog.filename = members_by_type['sourcecat'][0]
         input = self.assign_wcs(input)
 
         # Do background processing, if necessary
-        if (exp_type in ["NIS_WFSS", "NRC_GRISM"] or
-            len(members_by_type['background']) > 0):
+        if exp_type in WFSS_TYPES or len(members_by_type['background']) > 0:
 
-            if exp_type in ["NIS_WFSS", "NRC_GRISM"]:
+            if exp_type in WFSS_TYPES:
                 bkg_list = []           # will be overwritten by the step
             else:
                 bkg_list = members_by_type['background']
