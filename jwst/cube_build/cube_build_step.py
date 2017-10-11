@@ -27,7 +27,6 @@ class CubeBuildStep (Step):
          band = option('SHORT','MEDIUM','LONG','ALL','short','medium','long','all',default='ALL')
          grating   = option('PRISIM','G140M','G140H','G235M','G235H',G395M','G395H','ALL','all',default='ALL')
          filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL','all',default='ALL')
-         pipeline = integer(2,3,default=3)
          scale1 = float(default=0.0)
          scale2 = float(default=0.0)
          scalew = float(default=0.0)
@@ -119,8 +118,6 @@ class CubeBuildStep (Step):
         if self.single :
             self.output_type = 'single'
 
-        if self.pipeline == 2:
-            self.output_type = 'multi'
 #________________________________________________________________________________
     # read input parameters - Channel, Band (Subchannel), Grating, Filter
 #________________________________________________________________________________
@@ -155,6 +152,9 @@ class CubeBuildStep (Step):
         self.output_name_base = input_table.output_name
 
         self.data_type = input_table.data_type
+        self.pipeline = 3
+        if self.output_type =='multi' and len(self.input_filenames) ==1 :
+            self.pipeline = 2
 #________________________________________________________________________________
 # Read in Cube Parameter Reference file
         # identify what reference file has been associated with these input
