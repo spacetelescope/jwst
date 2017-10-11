@@ -135,16 +135,23 @@ class Spec2Pipeline(Pipeline):
             input = datamodels.open(science)
         exp_type = input.meta.exposure.type
 
+        WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM"]
+
         # Apply WCS info
         # check the datamodel to see if it's
         # a grism image, if so get the catalog
         # name from the asn and record it to the meta
-        if exp_type in ["NIS_WFSS", "NRC_GRISM"]:
+        if exp_type in WFSS_TYPES:
             input.meta.source_catalog.filename = members_by_type['sourcecat'][0]
         input = self.assign_wcs(input)
 
         # Do background processing, if necessary
-        if len(members_by_type['background']) > 0:
+        if exp_type in WFSS_TYPES or len(members_by_type['background']) > 0:
+
+            if exp_type in WFSS_TYPES:
+                bkg_list = []           # will be overwritten by the step
+            else:
+                bkg_list = members_by_type['background']
 
             # Setup for saving
             self.bkg_subtract.suffix = 'bsub'
@@ -156,7 +163,7 @@ class Spec2Pipeline(Pipeline):
                 self.bkg_subtract.save_results = True
 
             # Call the background subtraction step
-            input = self.bkg_subtract(input, members_by_type['background'])
+            input = self.bkg_subtract(input, bkg_list)
 
         # If assign_wcs was skipped, abort the rest of processing,
         # because so many downstream steps depend on the WCS

@@ -13,6 +13,9 @@ class BackgroundStep(Step):
     spec = """
     """
 
+    # This reference file is only used for WFSS/GRISM data.
+    # xxx can't be used yet xxx reference_file_types = ["wfssbkg"]
+
     def process(self, input, bkg_list):
 
         """
@@ -36,8 +39,15 @@ class BackgroundStep(Step):
         # Load the input data model
         with datamodels.open(input) as input_model:
 
+            if input_model.meta.exposure.type in ["NIS_WFSS", "NRC_GRISM"]:
+                # xxx self.bkg_filename = self.get_reference_file(
+                # xxx                 input_model, "wfssbkg")
+                # xxx bkg_list = [self.bkg_filename]
+                bkg_list = []
+
             # Do the background subtraction
             result = background_sub.background_sub(input_model, bkg_list)
-            result.meta.cal_step.back_sub = 'COMPLETE'
+            if result.meta.cal_step.back_sub != 'SKIPPED':
+                result.meta.cal_step.back_sub = 'COMPLETE'
 
         return result
