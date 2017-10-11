@@ -130,7 +130,7 @@ class Spec3Pipeline(Pipeline):
             if exptype in IFU_EXPTYPES:
                 result = self.cube_build(result)
                 try:
-                    resample_complete = result.meta.cal_step.cube_build
+                    resample_complete = result[0].meta.cal_step.cube_build
                 except AttributeError:
                     pass
             else:
