@@ -478,11 +478,19 @@ def update_s_region(model):
     Update the ``S_REGION`` keyword usiong ``WCS.footprint``.
 
     """
+    bbox = None
+    def _bbox_from_shape(model):
+        shape = model.data.shape
+        bbox = ((0, shape[1]), (0, shape[0]))
+        return bbox
     try:
         bbox = model.meta.wcs.bounding_box
     except NotImplementedError:
-        shape = model.data.shape
-        bbox = ((0, shape[1]), (0, shape[0]))
+        bbox = _bbox_from_shape(model)
+
+    if bbox is None:
+        bbox = _bbox_from_shape(model)
+
     footprint = model.meta.wcs.footprint(bbox, center=True).T
     s_region = (
         "POLYGON ICRS "

@@ -4,7 +4,7 @@ from __future__ import (division, print_function, unicode_literals,
 from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import resample
-from.resample_utils import update_s_region_resampled
+from .. assign_wcs.util import update_s_region
 
 
 class ResampleStep(Step):
@@ -54,12 +54,12 @@ class ResampleStep(Step):
         if len(resamp.output_models) == 1:
             result = resamp.output_models[0]
             result.meta.cal_step.resample = "COMPLETE"
-            update_s_region_resampled(result)
+            update_s_region(result)
         else:
             result = resamp.output_models
             for model in result:
                 model.meta.cal_step.resample = "COMPLETE"
-                update_s_region_resampled(model)
+                update_s_region(model)
         return result
 
 

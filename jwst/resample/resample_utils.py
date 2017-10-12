@@ -14,7 +14,6 @@ from gwcs import WCS, utils, wcstools
 
 
 from .. import assign_wcs
-from ..assign_wcs.pointing import fitswcs_transform_from_model
 
 import logging
 log = logging.getLogger(__name__)
@@ -362,33 +361,3 @@ def compute_spec_fiducial(wcslist):
     if (spectral_footprint).any():
         fiducial[spectral_axes] = spectral_footprint.min()
     return ((fiducial[spatial_axes]), fiducial[spectral_axes])
-
-
-def update_s_region_resampled(model):
-    #transform = fitswcs_transform_from_model(model)
-    #transform = model.meta.wcs.forward_transform
-    #shape = model.data.shape
-    #corners = np.array([[0, 0], 
-    #                    [0, shape[0]], 
-    #                    [shape[1], shape[0]], 
-    #                    [shape[1], 0]])
-    #footprint = np.array(transform(corners[:,0], corners[:,1])).T
-    try:
-        bbox = model.meta.wcs.bounding_box
-    except NotImplementedError:
-        shape = model.data.shape
-        bbox = np.array([[0, 0], 
-                        [0, shape[0]], 
-                        [shape[1], shape[0]], 
-                        [shape[1], 0]
-                     ])
-    footprint = model.meta.wcs.footprint(bbox)
-    s_region = (
-        "POLYGON ICRS "
-        " {0} {1}"
-        " {2} {3}"
-        " {4} {5}"
-        " {6} {7}"
-        " {0} {1}".format(*footprint.flatten()))
-    model.meta.wcsinfo.s_region = s_region
-    log.info("resampled step updated the footprint to {0}".format(s_region))

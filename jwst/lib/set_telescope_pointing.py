@@ -2,14 +2,15 @@
 import logging
 import sqlite3
 import os.path
+import inspect
 
 import numpy as np
 from numpy import (cos, sin)
 
-from astropy.wcs import WCS
 from namedlist import namedlist
+from asdf import schema as asdf_schema
 
-from ..datamodels import open as dm_open
+from ..datamodels import DataModel
 from ..lib.engdb_tools import (
     ENGDB_BASE_URL,
     ENGDB_Service,
@@ -108,7 +109,8 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, **kwargs):
         Keyword arguments used by matrix calculation routines
     """
     logger.info('Updating WCS info for file {}'.format(filename))
-    model = dm_open(filename)
+    model = DataModel(filename)
+    model = _extend_schema(model, 'wcsinfo.schema.yaml')
     update_wcs(
         model,
         default_pa_v3=default_pa_v3,
@@ -968,3 +970,22 @@ def _get_vertices_idl(aperture_name, useafter, prd_db_filepath=None):
             PRD_DB.close()
     logger.info("loaded {0} table rows from {1}".format(len(RESULT), prd_db_filepath))
     return RESULT
+
+
+def _extend_schema(model, new_schema):
+    """
+    Extend the core schema in a ``DataModel`` with the ``wcsinfo`` schema.
+
+    Parameters
+    ----------
+    model : `~jwst.datamodels.DataModel`
+        The base data model with which the file is opened.
+    new_schema : str
+        The name of the new schema.
+    """
+    filename = os.path.abspath(inspect.getfile(model.__class__))
+    base_url = os.path.join(
+        os.path.dirname(filename), 'schemas', '')
+    schema_path = os.path.join(base_url,'wcsinfo.schema.yaml')
+    new_schema = asdf_schema.load_schema(schema_path)
+    return model.extend_schema(new_schema)
