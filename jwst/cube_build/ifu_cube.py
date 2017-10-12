@@ -34,6 +34,7 @@ class IFUCubeData(object):
 
     def __init__(self, 
                  cube_type,
+                 pipeline,
                  input_filenames,
                  input_models,
                  output_name_base,
@@ -50,6 +51,7 @@ class IFUCubeData(object):
 
         self.cube_type = cube_type
         self.input_filenames = input_filenames
+        self.pipeline = pipeline
 
         self.input_models = input_models # needed when building single mode IFU cubes 
         self.output_name_base = output_name_base
@@ -167,42 +169,46 @@ class IFUCubeData(object):
 # update the output name
     def define_cubename(self):
 
-        if self.instrument == 'MIRI':
-            channels = []
-            for ch in self.list_par1:
-                if ch not in channels:
-                    channels.append(ch)
+#        print ('ifu_cube:define_cubename basename ',self.output_name_base)
 
-                number_channels = len(channels)
-                ch_name = '_ch'
-                for i in range(number_channels):
-                    ch_name = ch_name + channels[i]
-                    if i < number_channels-1: ch_name = ch_name + '-'
+        if self.pipeline == 2:
+            newname  = self.output_name_base + '_s3d.fits'
+        else:
+            if self.instrument == 'MIRI':
+                channels = []
+                for ch in self.list_par1:
+                    if ch not in channels:
+                        channels.append(ch)
+                    number_channels = len(channels)
+                    ch_name = '_ch'
+                    for i in range(number_channels):
+                        ch_name = ch_name + channels[i]
+                        if i < number_channels-1: ch_name = ch_name + '-'
 
-            subchannels = list(set(self.list_par2))
-            number_subchannels = len(subchannels)
-            b_name = ''
-            for i in range(number_subchannels):
-                b_name = b_name + subchannels[i] 
-                if i > 1 : b_name = b_name + '-'
-            b_name  = b_name.lower()
-            newname = self.output_name_base + ch_name+'-'+ b_name + '_s3d.fits'
-            if self.coord_system == 'alpha-beta': 
-                newname = self.output_name_base + ch_name+'-'+ b_name + '_ab_s3d.fits'
-            if self.output_type == 'single':
-                newname = self.output_name_base + ch_name+'-'+ b_name + 'single_s3d.fits'
+                subchannels = list(set(self.list_par2))
+                number_subchannels = len(subchannels)
+                b_name = ''
+                for i in range(number_subchannels):
+                    b_name = b_name + subchannels[i] 
+                    if i > 1 : b_name = b_name + '-'
+                b_name  = b_name.lower()
+                newname = self.output_name_base + ch_name+'-'+ b_name + '_s3d.fits'
+                if self.coord_system == 'alpha-beta': 
+                    newname = self.output_name_base + ch_name+'-'+ b_name + '_ab_s3d.fits'
+                if self.output_type == 'single':
+                    newname = self.output_name_base + ch_name+'-'+ b_name + 'single_s3d.fits'
 #________________________________________________________________________________
-        elif self.instrument == 'NIRSPEC':
-            fg_name = '_'
+            elif self.instrument == 'NIRSPEC':
+                fg_name = '_'
 
-            for i in range( len(self.list_par1)):
-                fg_name = fg_name + self.list_par1[i] + '-'+ self.list_par2[i]
-                if(i < self.num_bands -1):
-                    fg_name = fg_name + '-'
-            fg_name = fg_name.lower()
-            newname = self.output_name_base + fg_name+ '_s3d.fits'
-            if self.output_type == 'single':
-                newname = self.output_name_base + fg_name+ 'single_s3d.fits'
+                for i in range( len(self.list_par1)):
+                    fg_name = fg_name + self.list_par1[i] + '-'+ self.list_par2[i]
+                    if(i < self.num_bands -1):
+                        fg_name = fg_name + '-'
+                fg_name = fg_name.lower()
+                newname = self.output_name_base + fg_name+ '_s3d.fits'
+                if self.output_type == 'single':
+                    newname = self.output_name_base + fg_name+ 'single_s3d.fits'
 #________________________________________________________________________________
                 
         if self.output_type != 'single':
@@ -241,6 +247,8 @@ class IFUCubeData(object):
         """
 
         self.output_name = IFUCubeData.define_cubename(self)
+
+#        print('output name',self.output_name)
 
         IFUCubeData.find_output_type(self)
         self.spaxel = IFUCubeData.create_spaxel(self)
@@ -366,6 +374,7 @@ class IFUCubeData(object):
             log.info("Time Create Single IFUcube  = %.1f.s" % (t1 - t0,))
 #_______________________________________________________________________
             single_IFUCube.append(IFUCube)
+#            print('Len of single_IFUCube',len(single_IFUCube))
             del spaxel[:]
         return single_IFUCube
 #********************************************************************************
@@ -673,13 +682,21 @@ class IFUCubeData(object):
         err_cube = np.zeros((naxis3, naxis2, naxis1))
 
         IFUCube = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
+        
         IFUCube.update(self.input_models[j])
 
         IFUCube.meta.filename = self.output_name
+#        with datamodels.open(self.input_models[j]) as input:
+#            print('********',j)
+#            print('********',input.meta.ref_file.crds.sw_version)
+#            print('********',input.meta.ref_file.cubepar)
 
-        
+#        print('********',IFUCube.meta.ref_file.crds.sw_version)
+#        print('********',IFUCube.meta.ref_file.cubepar)        
         if self.output_type == 'single':
             with datamodels.open(self.input_models[j]) as input:
+
+
                 # define the cubename for each single 
                 filename = self.input_filenames[j]
                 indx = filename.rfind('.fits')
@@ -731,7 +748,6 @@ class IFUCubeData(object):
             IFUCube.meta.bunit_data = input.meta.bunit_data
             IFUCube.meta.bunit_err = input.meta.bunit_err
 
-#        IFUCube.meta.data_model_type = 'IFUCubeModel'
         IFUCube.error_type = 'ERR'
 
         if self.coord_system == 'alpha-beta' :

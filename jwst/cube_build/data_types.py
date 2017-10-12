@@ -61,7 +61,7 @@ class DataTypes(object):
             self.input_type = 'Model'
             self.data_type = 'singleton'
             self.output_name = self.build_product_name(self.filenames[0])
-#            print('the name of the output file', self.output_name) 
+
         elif isinstance(input,datamodels.ModelContainer):
 #            print('this is a model container type')
             self.input_type='Container'
@@ -119,7 +119,16 @@ class DataTypes(object):
 
     def build_product_name(self, filename):
         indx = filename.rfind('.fits')
-        single_product = filename[:indx]
+        indx_try = filename.rfind('_rate.fits') # standard expected filename in CalSpec2
+        indx_try2 = filename.rfind('_cal.fits') # standard expected filename 
+
+
+        if indx_try > 0:
+            single_product = filename[:indx_try]
+        elif indx_try2 > 0:
+            single_product = filename[:indx_try2]
+        else:
+            single_product = filename[:indx]
         return single_product
 
 
