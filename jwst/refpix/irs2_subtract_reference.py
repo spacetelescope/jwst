@@ -93,14 +93,14 @@ def correct_model(input_model, irs2_model,
         log.info("Using reference pixels only.")
 
     try:
-        scipix_n = input_model.meta.exposure.nrs_norm
+        scipix_n = input_model.meta.exposure.nrs_normal
     except AttributeError as errmsg:
         log.warning(errmsg)
         log.warning("Keyword NRS_NORM not found; using default value %d" %
                     scipix_n_default)
         scipix_n = scipix_n_default
     try:
-        refpix_r = input_model.meta.exposure.nrs_ref
+        refpix_r = input_model.meta.exposure.nrs_reference
     except AttributeError as errmsg:
         log.warning(errmsg)
         log.warning("Keyword NRS_REF not found; using default value %d" %
