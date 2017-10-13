@@ -13,8 +13,9 @@ class BackgroundStep(Step):
     spec = """
     """
 
-    # This reference file is only used for WFSS/GRISM data.
-    # xxx can't be used yet xxx reference_file_types = ["wfssbkg"]
+    # These reference files are only used for WFSS/GRISM data.
+    # xxx can't be used yet:
+    # xxx reference_file_types = ["wfssbkg", "wavelengthrange"]
 
     def process(self, input, bkg_list):
 
@@ -40,14 +41,24 @@ class BackgroundStep(Step):
         with datamodels.open(input) as input_model:
 
             if input_model.meta.exposure.type in ["NIS_WFSS", "NRC_GRISM"]:
-                # xxx self.bkg_filename = self.get_reference_file(
-                # xxx                 input_model, "wfssbkg")
-                # xxx bkg_list = [self.bkg_filename]
-                bkg_list = []
+                # Delete these four lines when reference files are available.
+                self.log.info("No 'wfssbkg' reference file available; "
+                              "skipping background subtraction.")
+                result = input_model.copy()
+                result.meta.cal_step.back_sub = 'SKIPPED'
 
-            # Do the background subtraction
-            result = background_sub.background_sub(input_model, bkg_list)
-            if result.meta.cal_step.back_sub != 'SKIPPED':
+                # Uncomment this block when reference files are available.
+                # bkg_filename = self.get_reference_file(
+                #                 input_model, "wfssbkg")
+                # wl_range_name = self.get_reference_file(
+                #                 input_model, "wavelengthrange")
+                # Do the background subtraction for WFSS/GRISM data
+                # result = background_sub.subtract_wfss_bkg(
+                #                 input_model, bkg_filename, wl_range_name)
+                # result.meta.cal_step.back_sub = 'COMPLETE'
+            else:
+                # Do the background subtraction
+                result = background_sub.background_sub(input_model, bkg_list)
                 result.meta.cal_step.back_sub = 'COMPLETE'
 
         return result
