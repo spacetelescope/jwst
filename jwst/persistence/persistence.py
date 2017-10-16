@@ -643,9 +643,9 @@ class DataSet():
         self.groupgap = self.output_obj.meta.exposure.groupgap
         try:
             if integ == 0:
-                self.nresets = self.output_obj.meta.exposure.nrststrt
+                self.nresets = self.output_obj.meta.exposure.nresets_at_start
             else:
-                self.nresets = self.output_obj.meta.exposure.nresets
+                self.nresets = self.output_obj.meta.exposure.nresets_between_ints
         except AttributeError:
             if self.output_obj.meta.instrument.detector == "MIRI":
                 self.nresets = 0
