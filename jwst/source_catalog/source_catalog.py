@@ -129,6 +129,9 @@ def make_source_catalog(model, kernel_fwhm, kernel_xsize, kernel_ysize,
     source_props = photutils.source_properties(
         model.data, segm, error=total_error, filter_kernel=kernel, wcs=wcs)
 
+    if len(source_props) == 0:
+        return QTable()    # empty table
+
     columns = ['id', 'xcentroid', 'ycentroid', 'sky_centroid', 'area',
                'source_sum', 'source_sum_err', 'semimajor_axis_sigma',
                'semiminor_axis_sigma', 'orientation',
