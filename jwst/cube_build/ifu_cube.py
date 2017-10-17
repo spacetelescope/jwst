@@ -709,9 +709,9 @@ class IFUCubeData(object):
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
         IFUCube.meta.wcsinfo.crval2 = self.Crval2
         IFUCube.meta.wcsinfo.crval3 = self.Crval3
-        IFUCube.meta.wcsinfo.crpix1 = self.Crpix1
-        IFUCube.meta.wcsinfo.crpix2 = self.Crpix2
-        IFUCube.meta.wcsinfo.crpix3 = self.Crpix3
+        IFUCube.meta.wcsinfo.crpix1 = self.Crpix1+1
+        IFUCube.meta.wcsinfo.crpix2 = self.Crpix2+1
+        IFUCube.meta.wcsinfo.crpix3 = self.Crpix3+1
         IFUCube.meta.wcsinfo.cdelt1 = self.Cdelt1/3600.0
         IFUCube.meta.wcsinfo.cdelt2 = self.Cdelt2/3600.0
         IFUCube.meta.wcsinfo.cdelt3 = self.Cdelt3
