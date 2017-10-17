@@ -11,6 +11,7 @@ from ..ipc import ipc_step
 from ..superbias import superbias_step
 from ..refpix import refpix_step
 from ..rscd import rscd_step
+from ..firstframe import firstframe_step
 from ..lastframe import lastframe_step
 from ..linearity import linearity_step
 from ..dark_current import dark_current_step
@@ -50,6 +51,7 @@ class Detector1Pipeline(Pipeline):
                  'superbias': superbias_step.SuperBiasStep,
                  'refpix': refpix_step.RefPixStep,
                  'rscd': rscd_step.RSCD_Step,
+                 'firstframe': firstframe_step.FirstFrameStep,
                  'lastframe': lastframe_step.LastFrameStep,
                  'linearity': linearity_step.LinearityStep,
                  'dark_current': dark_current_step.DarkCurrentStep,
@@ -84,6 +86,7 @@ class Detector1Pipeline(Pipeline):
             input = self.ipc(input)
             input = self.linearity(input)
             input = self.rscd(input)
+            input = self.firstframe(input)
             input = self.lastframe(input)
             input = self.dark_current(input)
             input = self.refpix(input)
