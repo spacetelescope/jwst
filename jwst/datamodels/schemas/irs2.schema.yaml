@@ -8,19 +8,19 @@ allOf:
       fits_hdu: IRS2
       datatype:
       - name: alpha_0
-        datatype: complex64
+        datatype: float32
       - name: alpha_1
-        datatype: complex64
+        datatype: float32
       - name: alpha_2
-        datatype: complex64
+        datatype: float32
       - name: alpha_3
-        datatype: complex64
+        datatype: float32
       - name: beta_0
-        datatype: complex64
+        datatype: float32
       - name: beta_1
-        datatype: complex64
+        datatype: float32
       - name: beta_2
-        datatype: complex64
+        datatype: float32
       - name: beta_3
-        datatype: complex64
+        datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

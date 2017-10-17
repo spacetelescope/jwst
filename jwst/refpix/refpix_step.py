@@ -43,8 +43,10 @@ class RefPixStep(Step):
                 irs2_model = datamodels.IRS2Model(self.irs2_name)
                 result = irs2_subtract_reference.correct_model(input_model,
                                                                irs2_model)
-                result.meta.cal_step.refpix = 'COMPLETE'
+                if result.meta.cal_step.refpix != 'SKIPPED':
+                    result.meta.cal_step.refpix = 'COMPLETE'
                 irs2_model.close()
+                return result
             else:
                 self.log.info('use_side_ref_pixels = %s' %
                               (self.use_side_ref_pixels,))
