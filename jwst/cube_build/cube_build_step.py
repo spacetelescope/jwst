@@ -25,23 +25,23 @@ class CubeBuildStep (Step):
     spec = """
          channel = option('1','2','3','4','ALL','all',default='ALL') # Options: 1,2,3,4,or All
          band = option('SHORT','MEDIUM','LONG','ALL','short','medium','long','all',default='ALL') # Options: \
-SHORT,MEDIUM,LONG, or ALL 
-         grating   = option('PRISIM','G140M','G140H','G235M','G235H',G395M','G395H','ALL','all',default='ALL')  # Options: PRISIM,G140M,G140H,G235M,G235H,G395M,G395H, or ALL 
+SHORT,MEDIUM,LONG, or ALL
+         grating   = option('PRISIM','G140M','G140H','G235M','G235H',G395M','G395H','ALL','all',default='ALL')  # Options: PRISIM,G140M,G140H,G235M,G235H,G395M,G395H, or ALL
          filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL','all',default='ALL') # Options: CLEAR,F100LP,F070LP,F170LP,F290LP, or ALL
-         scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds 
+         scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
          scalew = float(default=0.0) # cube sample size to use for axis 3, microns
-         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of weighting function, msm: modified Shepard Method, miripsf: use information on shape of miri psf in the msm method, Area: only used if coord_system = alpha-beta [advanced option] 
+         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of weighting function, msm: modified Shepard Method, miripsf: use information on shape of miri psf in the msm method, Area: only used if coord_system = alpha-beta [advanced option]
          coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec') # Coordinate system of the output IFUcube. Options: ra-dec or  alpha-beta
          rois = float(default=0.0) # region of interest spatial size, arc seconds
-         roiw = float(default=0.0) # region of interest wavelength size, microns  
+         roiw = float(default=0.0) # region of interest wavelength size, microns
          weight_power = float(default=2.0) # Weighting option to use when combining pixel surface brightness in the RIO centered on cube spaxial center
          offset_list = string(default='NA')  # A file for dithered data containing additional ra and dec offsets to be applied to files in the association. The offset tweaks the wcs of the input exposures. Offsets are given in arcseconds. EXPERIMENTAL OPTION - ADVANCED USERS ONLY
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
-         wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube 
-         xdebug = integer(default=None) # debug option, x spaxel value to report information on 
-         ydebug = integer(default=None) # debug option, y spaxel value to report information on 
-         zdebug = integer(default=None) # debug option, z spaxel value to report  information on 
+         wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
+         xdebug = integer(default=None) # debug option, x spaxel value to report information on
+         ydebug = integer(default=None) # debug option, y spaxel value to report information on
+         zdebug = integer(default=None) # debug option, z spaxel value to report  information on
          single = boolean(default=false) # Internal pipeline option used by mrs_imatch and outlier detection
          output_type = option('band','channel','grating','multi',default='band') # Type of output cube to create. Options = band,channel,grating, multi
 #         output_use_model = boolean(default=true)
@@ -130,7 +130,7 @@ SHORT,MEDIUM,LONG, or ALL
         self.pars_input['filter'] = []   # input parameter
         self.pars_input['grating'] = []  # input parameter
         read_user_input(self)  # see if options channel, band,grating filter are set
-                               # is they are then self.output_type = 'user' 
+                               # is they are then self.output_type = 'user'
                                # if they are filling par_input with values
 #________________________________________________________________________________
 #data_types: DataTypes: Read in the input data - 4 formats are allowed:
@@ -144,12 +144,12 @@ SHORT,MEDIUM,LONG, or ALL
 # CRDS to figure out what type of reference files to grab (MIRI or NIRSPEC)
 # if the user has provided the filename - strip out .fits and pull out the base name
 # the cube_build software will attached the needed information on channel, sub-channel
-# grating or filter. 
+# grating or filter.
 #________________________________________________________________________________
         input_table = data_types.DataTypes(input,self.single,
                                            self.output_file,
                                            self.output_dir)
-        
+
         self.cube_type = input_table.input_type
         self.input_models = input_table.input_models
         self.input_filenames = input_table.filenames
@@ -192,7 +192,7 @@ SHORT,MEDIUM,LONG, or ALL
             'offset_list': self.offset_list}
 
 # shove the input parameters in to pars_cube to pull out ifu_cube.py
-# these parameters are related to the IFUCube 
+# these parameters are related to the IFUCube
         pars_cube = {
             'scale1': self.scale1,
             'scale2': self.scale2,
@@ -240,16 +240,16 @@ SHORT,MEDIUM,LONG, or ALL
 
         num_cubes,cube_pars= cubeinfo.number_cubes()
         self.log.info('Number of IFUCubes produced by a this run %i',num_cubes)
-        
-        Final_IFUCube = datamodels.ModelContainer() # stick IFUcubes in 
+
+        Final_IFUCube = datamodels.ModelContainer() # stick IFUcubes in
 
         for i in range(num_cubes):
-            icube = str(i+1)            
-            list_par1 = cube_pars[icube]['par1'] 
+            icube = str(i+1)
+            list_par1 = cube_pars[icube]['par1']
             list_par2 = cube_pars[icube]['par2']
 #            print('par1',list_par1)
 #            print('par2',list_par2)
-    
+
             thiscube = ifu_cube.IFUCubeData(self.cube_type,
                                             self.pipeline,
                                             self.input_filenames,
@@ -272,7 +272,7 @@ SHORT,MEDIUM,LONG, or ALL
 # find the min & max final coordinates of cube: map each slice to cube
 # add any dither offsets, then find the min & max value in each dimension
 
-            thiscube.setup_ifucube_wcs() 
+            thiscube.setup_ifucube_wcs()
 #________________________________________________________________________________
 # build the IFU Cube
 
@@ -293,26 +293,6 @@ SHORT,MEDIUM,LONG, or ALL
             if(self.debug_pixel ==1):
                 self.spaxel_debug.close()
 
-#        save_IFU = False
-#        if self.pipeline == 31:
-#            if self.save_results == True or self.output_file !=None:
-#                self.save_results = False # turn off the Step class functions
-                                      # cause new output_file names
-                                      # to be determined. Cube_build handles all this
-#                self.output_file = None
-#                save_IFU = True
-#        if save_IFU == True:
-#            Final_IFUCube.save(None)
-
-
-#        print('save results',self.save_results,self.suffix)
-        if self.save_results == True:
-            self.suffix = 's3d'
-#            print(Final_IFUCube[0].meta.filename)
-            self.save_results = False
-            #self.save_model(Final_IFUCube,self.suffix)
-            self.output_file = None
-            Final_IFUCube.save(None)
         return Final_IFUCube
 
 #********************************************************************************
@@ -362,7 +342,7 @@ def read_user_input(self):
         self.channel = ''
 
     if self.channel:  # self.channel is false if it is empty
-        if not self.single: 
+        if not self.single:
             self.output_type = 'user'
         channellist = self.channel.split(',')
         user_clen = len(channellist)
@@ -464,4 +444,3 @@ def read_user_input(self):
         self.pars_input['grating'] = list(set(self.pars_input['grating']))
 
 #________________________________________________________________________________
-

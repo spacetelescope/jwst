@@ -76,11 +76,10 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     with open(asn_path) as fd:
         asn = load_asn(fd)
     product_name_base = asn['products'][0]['name']
-    product_name = product_name_base + '_ch3-4-long_s3d.fits'
-    assert path.isfile(product_name)
-    product_name = product_name_base + '_x1d.fits'
-    assert path.isfile(product_name)
-
+    product_name_glob = product_name_base + '_ch[34]-long_s3d.fits'
+    assert len(glob(product_name_glob)) == 2
+    product_name_glob = product_name_base + '_ch[34]-long_x1d.fits'
+    assert len(glob(product_name_glob)) == 2
 
 @runslow
 @require_bigdata
@@ -105,8 +104,8 @@ def test_run_resample_only(mk_tmp_dirs):
     with open(asn_path) as fd:
         asn = load_asn(fd)
     product_name_base = asn['products'][0]['name']
-    product_name = product_name_base + '_ch3-4-long_s3d.fits'
-    assert path.isfile(product_name)
+    product_name_glob = product_name_base + '_ch[34]-long_s3d.fits'
+    assert len(glob(product_name_glob)) == 2
 
 
 @pytest.mark.xfail(
