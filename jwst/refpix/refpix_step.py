@@ -46,6 +46,7 @@ class RefPixStep(Step):
                 if result.meta.cal_step.refpix != 'SKIPPED':
                     result.meta.cal_step.refpix = 'COMPLETE'
                 irs2_model.close()
+                return result
             else:
                 self.log.info('use_side_ref_pixels = %s' %
                               (self.use_side_ref_pixels,))
