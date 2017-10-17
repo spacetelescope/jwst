@@ -370,6 +370,10 @@ def _save_extra_fits(hdulist, tree):
                     continue
                 hdu.header.append((key, val, comment), end=True)
 
+    # Remove extra_fits so it is not written to the asdf extension
+    if 'extra_fits' in tree:
+        del tree['extra_fits']
+
 
 def _save_history(hdulist, tree):
     history = tree.get('history', [])
@@ -536,7 +540,11 @@ def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
 
 
 def _load_extra_fits(hdulist, known_keywords, known_datas, tree):
-    # Handle _extra_fits
+    # Remove any extra_fits from tree
+    if 'extra_fits' in tree:
+        del tree['extra_fits']
+
+    # Add header keywords and data not in schema to extra_fits
     for hdu in hdulist:
         known = known_keywords.get(hdu, set())
 
@@ -551,9 +559,10 @@ def _load_extra_fits(hdulist, known_keywords, known_datas, tree):
                 ['extra_fits', hdu.name, 'header'], cards, tree)
 
         if hdu not in known_datas:
-            if hdu.data is not None:
-                properties.put_value(
-                    ['extra_fits', hdu.name, 'data'], hdu.data, tree)
+            if hdu.name.lower() != 'asdf':
+                if hdu.data is not None:
+                    properties.put_value(
+                        ['extra_fits', hdu.name, 'data'], hdu.data, tree)
 
 
 def _load_history(hdulist, tree):

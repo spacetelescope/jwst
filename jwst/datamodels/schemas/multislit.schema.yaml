@@ -130,7 +130,7 @@ allOf:
               fits_hdu: SCI
             barshadow:
               title: Bar shadow correction
-              fits_hdu: BARSHADW
+              fits_hdu: BARSHADOW
               ndim: 2
               default: 1.0
               datatype: float32
