@@ -41,7 +41,7 @@ class ModelContainer(model_base.DataModel):
           DataModels can be added via the ``append()`` method.
 
     persist: boolean. If True, do not close model after opening it
-    
+
     Examples
     --------
     >>> container = datamodels.ModelContainer('example_asn.json')
@@ -104,7 +104,7 @@ class ModelContainer(model_base.DataModel):
                                    extensions=self._extensions,
                                    pass_invalid_values=self._pass_invalid_values)
             self._models[index] = model
-                
+
         return model
 
 
@@ -216,28 +216,28 @@ class ModelContainer(model_base.DataModel):
         self.meta.asn_rule = str(asn_data['asn_rule'])
 
 
-    def save(self, path_not_used, path=None, *args, **kwargs):
+    def save(self, path, dir_path=None, *args, **kwargs):
         """
         Write out models in container to FITS or ASDF.
 
         Parameters
         ----------
-        path_not_used : string
+        path : string
             This first argument is ignored in this implementation of the
             save method.  It is used by pipeline steps to save individual
             files, but that is not applicable here.  Instead, we use the path
             arg below and read the filename output from `meta.filename` in each
             file in the container.
 
-        path : string
+        dir_path : string
             Directory to write out files.  Defaults to current working dir.
             If directory does not exist, it creates it.  Filenames are pulled
             from `.meta.filename` of each datamodel in the container.
         """
-        if path is None:
-            path = os.getcwd()
+        if dir_path is None:
+            dir_path = os.getcwd()
         for model in self:
-            outpath = op.join(path, model.meta.filename)
+            outpath = op.join(dir_path, model.meta.filename)
             try:
                 model.save(outpath, *args, **kwargs)
             except IOError as err:
@@ -266,7 +266,7 @@ class ModelContainer(model_base.DataModel):
         group_dict = OrderedDict()
         for i in range(len(self)):
             model = self._open_model(i)
-            
+
             try:
                 model_attrs = []
                 model_attrs.append(model.meta.observation.program_number)
@@ -349,13 +349,13 @@ class ModelContainerIterator(six.Iterator):
     def __iter__(self):
         return self
 
-    
+
     def __next__(self):
         if self.open_filename is not None:
             self.container._close_model(self.open_filename, self.index)
             self.open_filename = None
-            
-        self.index += 1    
+
+        self.index += 1
         if self.index < len(self.container._models):
             model = self.container._models[self.index]
             if isinstance(model, six.string_types):

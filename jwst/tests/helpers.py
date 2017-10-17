@@ -14,11 +14,16 @@ def abspath(filepath):
 
 
 # Decorator to indicate slow tests
-runslow = pytest.mark.skipif(
-    not pytest.config.getoption("--runslow"),
-    reason="need --runslow option to run"
-)
-
+try:
+    runslow = pytest.mark.skipif(
+        not pytest.config.getoption("--runslow"),
+        reason="need --runslow option to run"
+    )
+except AttributeError:
+    runslow = pytest.mark.skipif(
+        True,
+        reason="No reason, just a dummy"
+    )
 
 # Decorator to indicate TEST_BIGDATA required
 require_bigdata = pytest.mark.skipif(

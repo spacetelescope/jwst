@@ -423,7 +423,7 @@ class Step(object):
                 for idx, result in enumerate(results_to_save):
                     if hasattr(result, 'save'):
                         try:
-                            output_path = make_output_path(
+                            output_path, out_name, out_dir = make_output_path(
                                 self, result,
                                 basepath=self.output_file,
                                 result_id=result_id(idx)
@@ -724,12 +724,12 @@ class Step(object):
         make_output_path = self.search_attr(
             'make_output_path', parent_first=True
         )
-        output_path = make_output_path(
+        output_path, output_name, output_dir = make_output_path(
             self, model, suffix=suffix, ignore_use_model=True
         )
 
         self.log.info('Step.save_model {}'.format(output_path))
-        model.save(output_path, *args, **kwargs)
+        model.save(output_name, dir_path=output_dir, *args, **kwargs)
 
     @staticmethod
     def make_output_path(
@@ -766,8 +766,11 @@ class Step(object):
 
         Returns
         -------
-        output_path: str
-            The fully qualified output path
+        output_path, file_name, path_name: str, str, str
+            3-tuple consisting of:
+            - output_path: The fully qualified output path
+            - file_name: File name
+            - path_name: Directory path
         """
         from ..datamodels import DataModel
 
@@ -834,7 +837,7 @@ class Step(object):
         output_dir = step.search_attr('output_dir')
         if output_dir is not None:
             output_path = join(output_dir, output_path)
-        return output_path
+        return output_path, output_name, output_dir
 
     def closeout(self, to_close=None, to_del=None):
         """Close out step processing
