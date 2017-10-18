@@ -43,7 +43,7 @@ class CubeBuildStep (Step):
          zdebug = integer(default=None)
          single = boolean(default=false)
          output_type = option('band','channel','grating','multi',default='band')
-#         output_use_model = boolean(default=true)
+         output_use_model = boolean(default=true)
        """
     reference_file_types = ['cubepar','resol']
 

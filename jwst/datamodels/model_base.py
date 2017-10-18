@@ -12,13 +12,11 @@ import sys
 import warnings
 
 import numpy as np
-import jsonschema
 
 import six
 from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
-from astropy.nddata import nddata_base
 
 from asdf import AsdfFile
 from asdf import yamlutil
@@ -106,8 +104,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
             extension_list = asdf_extension.AsdfExtensionList(self._extensions)
-            schema = asdf_schema.load_schema(schema_path,
-                resolver=extension_list.url_mapping, resolve_references=True)
+            schema = asdf_schema.load_schema(
+                schema_path,
+                resolver=extension_list.url_mapping,
+                resolve_references=True
+            )
 
         self._schema = mschema.flatten_combiners(schema)
         # Determine what kind of input we have (init) and execute the
@@ -292,30 +293,35 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         Parameters
         ----------
-        path : string
+        path : string or func
             File path to save to.
+            If function, passed with a single argument of the `DataModel`
+            that will be saved. func retuns 2-tuple of (dir_path, filename)
 
         dir_path: string
             Directory to save to. If not None, this will override
             any directory information in the `path`
         """
-        path_head, path_tail = os.path.split(path)
+        if callable(path):
+            path_head, path_tail = path(self)
+        else:
+            path_head, path_tail = os.path.split(path)
         base, ext = os.path.splitext(path_tail)
         if isinstance(ext, bytes):
             ext = ext.decode(sys.getfilesystemencoding())
 
         if dir_path:
             path_head = dir_path
-        path = os.path.join(path_head, path_tail)
+        save_path = os.path.join(path_head, path_tail)
 
         # TODO: Support gzip-compressed fits
         if ext == '.fits':
             # TODO: remove 'clobber' check once depreciated fully in astropy
             if 'clobber' not in kwargs:
                 kwargs.setdefault('overwrite', True)
-            self.to_fits(path, *args, **kwargs)
+            self.to_fits(save_path, *args, **kwargs)
         elif ext == '.asdf':
-            self.to_asdf(path, *args, **kwargs)
+            self.to_asdf(save_path, *args, **kwargs)
         else:
             raise ValueError("unknown filetype {0}".format(ext))
 
@@ -583,7 +589,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     # We are just going to define the items to return the iteritems
     items = iteritems
 
-
     def iterkeys(self):
         """
         Iterates over all of the schema keys in a flat way.
@@ -829,7 +834,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         header = hdu.header
         return WCS(header, key=key, relax=True, fix=True)
 
-
     def set_fits_wcs(self, wcs, hdu_name='SCI'):
         """
         Sets the FITS WCS information on the model using the given
@@ -859,10 +863,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
 
-    #--------------------------------------------------------
+    # --------------------------------------------------------
     # These two method aliases are here for astropy.registry
     # compatibility and should not be called directly
-    #--------------------------------------------------------
+    # --------------------------------------------------------
 
     read = __init__
     write = save
