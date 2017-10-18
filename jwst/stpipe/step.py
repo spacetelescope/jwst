@@ -3,6 +3,7 @@ Step
 """
 from __future__ import absolute_import, division, print_function
 
+from functools import partial
 import gc
 from os.path import dirname, join, basename, splitext, abspath, split
 import re
@@ -21,6 +22,7 @@ from . import crds_client
 from . import log
 from . import utilities
 from .. import __version_commit__, __version__
+from ..datamodels import DataModel
 
 SUFFIX_LIST = [
     'rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
@@ -36,13 +38,14 @@ class Step(object):
     Step
     """
     spec = """
-    pre_hooks = string_list(default=list())
-    post_hooks = string_list(default=list())
-    output_dir = string(default=None)       # Directory path for output files
-    output_file = output_file(default=None) # File to save output to.
-    skip = boolean(default=False)           # Skip this step
-    save_results = boolean(default=False)   # Force save results
-    suffix = string(default=None)           # Default suffix for output files
+    pre_hooks        = string_list(default=list())
+    post_hooks       = string_list(default=list())
+    output_file      = output_file(default=None)   # File to save output to.
+    output_dir       = string(default=None)        # Directory path for output files
+    output_use_model = boolean(default=False)      # When saving use `DataModel.meta.filename`
+    save_results     = boolean(default=False)      # Force save results
+    skip             = boolean(default=False)      # Skip this step
+    suffix           = string(default=None)        # Default suffix for output files
     """
 
     # Reference types for both command line override definition and reference prefetch
@@ -421,9 +424,16 @@ class Step(object):
                     'make_output_path', parent_first=True
                 )
                 for idx, result in enumerate(results_to_save):
-                    if hasattr(result, 'save'):
+                    if isinstance(result, DataModel):
+                        result.save(partial(
+                            make_output_path,
+                            self,
+                            basepath=self.output_file,
+                            result_id=result_id(idx)
+                        ))
+                    elif hasattr(result, 'save'):
                         try:
-                            output_path, out_name, out_dir = make_output_path(
+                            out_dir, out_name = make_output_path(
                                 self, result,
                                 basepath=self.output_file,
                                 result_id=result_id(idx)
@@ -438,10 +448,11 @@ class Step(object):
                                 ' or set `--save_results=false`'
                             )
                         else:
+                            out_path = join(out_dir, out_name)
                             self.log.info(
-                                'Saving file {0}'.format(output_path)
+                                'Saving file {0}'.format(out_path)
                             )
-                            result.save(output_path, overwrite=True)
+                            result.save(out_path, overwrite=True)
 
             self.log.info(
                 'Step {0} done'.format(self.name))
@@ -503,7 +514,7 @@ class Step(object):
             instance = cls(**kwargs)
         return instance.run(*args)
 
-    def search_attr(self, attribute, parent_first=False):
+    def search_attr(self, attribute, parent_first=False, default=None):
         """Return first non-None attribute in step heirarchy
 
         Parameters
@@ -514,10 +525,13 @@ class Step(object):
         parent_first: bool
             If `True`, allow parent definition to override step version
 
+        default: obj
+            If attribute is not found, the value to use
+
         Returns
         -------
         value: obj
-            Attribute value or None if not found
+            Attribute value or `default` if not found
         """
         if parent_first:
             try:
@@ -527,7 +541,7 @@ class Step(object):
             except AttributeError:
                 value = None
             if value is None:
-                value = getattr(self, attribute, None)
+                value = getattr(self, attribute, default)
             return value
         else:
             value = getattr(self, attribute, None)
@@ -536,6 +550,8 @@ class Step(object):
                     value = self.parent.search_attr(attribute)
                 except AttributeError:
                     pass
+            if value is None:
+                value = default
             return value
 
     @classmethod
@@ -724,12 +740,12 @@ class Step(object):
         make_output_path = self.search_attr(
             'make_output_path', parent_first=True
         )
-        output_path, output_name, output_dir = make_output_path(
-            self, model, suffix=suffix, ignore_use_model=True
+        make_output_path_partial = partial(
+            make_output_path,
+            self,
+            suffix=suffix,
         )
-
-        self.log.info('Step.save_model {}'.format(output_path))
-        model.save(output_name, dir_path=output_dir, *args, **kwargs)
+        model.save(make_output_path_partial, *args, **kwargs)
 
     @staticmethod
     def make_output_path(
@@ -745,7 +761,7 @@ class Step(object):
             The step which produced the data
 
         data: obj
-            Unused by this routine
+            Get filename info from the data to be saved.
 
         basepath: str or None
             The output file name. If `None` or empty string, create
@@ -767,10 +783,9 @@ class Step(object):
         Returns
         -------
         output_path, file_name, path_name: str, str, str
-            3-tuple consisting of:
-            - output_path: The fully qualified output path
-            - file_name: File name
+            2-tuple consisting of:
             - path_name: Directory path
+            - file_name: File name
         """
         from ..datamodels import DataModel
 
@@ -807,37 +822,37 @@ class Step(object):
                     if basepath is None:
                         basepath = data.meta.filename
 
-                    # Breakdown the components
-                    path, filename = split(basepath)
-                    name, filename_ext = splitext(filename)
+                # Breakdown the components
+                path, filename = split(basepath)
+                name, filename_ext = splitext(filename)
 
-                    # Remove any known, previous suffixes.
-                    match = re.match(REMOVE_SUFFIX, name)
-                    name = match.group('root')
-                    separator = match.group('separator')
-                    if separator is None:
-                        separator = '_'
+                # Remove any known, previous suffixes.
+                match = re.match(REMOVE_SUFFIX, name)
+                name = match.group('root')
+                separator = match.group('separator')
+                if separator is None:
+                    separator = '_'
 
-                    # Rebuild the path.
-                    output_name = [name]
-                    suffix = _get_suffix(
-                        suffix, step=step, default_suffix=result_id
-                    )
-                    if suffix is not None:
-                        output_name.append(separator + suffix)
+                # Rebuild the path.
+                output_name = [name]
+                suffix = _get_suffix(
+                    suffix, step=step, default_suffix=result_id
+                )
+                if suffix is not None:
+                    output_name.append(separator + suffix)
+                if ext is None:
+                    ext = step.search_attr('output_ext')
                     if ext is None:
-                        ext = step.search_attr('output_ext')
-                        if ext is None:
-                            ext = filename_ext
-                    if ext is not None:
-                        output_name.append(ext)
-                    output_name = ''.join(output_name)
+                        ext = filename_ext
+                if ext is not None:
+                    output_name.append(ext)
+                output_name = ''.join(output_name)
 
-        output_path = output_name
-        output_dir = step.search_attr('output_dir')
-        if output_dir is not None:
-            output_path = join(output_dir, output_path)
-        return output_path, output_name, output_dir
+        output_dir = step.search_attr('output_dir', default='')
+        step.log.info('Saving file {}'.format(
+            join(output_dir, output_name)
+        ))
+        return output_dir, output_name
 
     def closeout(self, to_close=None, to_del=None):
         """Close out step processing
