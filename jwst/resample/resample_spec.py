@@ -94,13 +94,14 @@ class ResampleSpecData(object):
         self.build_size_from_bounding_box()
         self.blank_output = datamodels.DrizProductModel(self.data_size)
         self.blank_output.meta.wcs = self.output_wcs
+        log.info("OUTPUT_WCS: {}".format(self.output_wcs))
 
         # Default to defining output models metadata as
         # a copy of the first input_model's metadata
         ### TO DO:
         ###    replace this with a call to a generalized version of fitsblender
         ###
-        self.blank_output.update(datamodels.ImageModel(self.input_models[0]._instance))
+        #self.blank_output.update(datamodels.ImageModel(self.input_models[0]._instance))
         self.output_models = datamodels.ModelContainer()
 
 
@@ -171,7 +172,7 @@ class ResampleSpecData(object):
         sky = ra, dec, lam = refwcs(*det)
         x_center = int((bb[0][1] - bb[0][0]) / 2)
         y_center = int((bb[1][1] - bb[1][0]) / 2)
-        log.debug("Center of bounding box: {}  {}".format(x_center, y_center))
+        log.info("Center of bounding box: {}  {}".format(x_center, y_center))
 
         # Compute slit angular size, slit center sky coords
         xpos = []
@@ -194,29 +195,29 @@ class ResampleSpecData(object):
         interpol_ra = interpolate.interp1d(pix_num, slit_ra)
         interpol_dec = interpolate.interp1d(pix_num, slit_dec)
         slit_center_pix = len(slit_spec_ref) / 2. - 1
-        log.debug('Slit center pix: {0}'.format(slit_center_pix))
+        log.info('Slit center pix: {0}'.format(slit_center_pix))
         slit_center_sky = SkyCoord(ra=interpol_ra(slit_center_pix),
             dec=interpol_dec(slit_center_pix), unit=u.deg)
-        log.debug('Slit center: {0}'.format(slit_center_sky))
-        log.debug('Fiducial: {0}'.format(resample_utils.compute_spec_fiducial([refwcs])))
+        log.info('Slit center: {0}'.format(slit_center_sky))
+        log.info('Fiducial: {0}'.format(resample_utils.compute_spec_fiducial([refwcs])))
         angular_slit_size = np.abs(slit_coords[0].separation(slit_coords[-1]))
-        log.debug('Slit angular size: {0}'.format(angular_slit_size.arcsec))
+        log.info('Slit angular size: {0}'.format(angular_slit_size.arcsec))
         dra, ddec = slit_coords[0].spherical_offsets_to(slit_coords[-1])
         offset_up_slit = (dra.to(u.arcsec), ddec.to(u.arcsec))
-        log.debug('Offset up the slit: {0}'.format(offset_up_slit))
+        log.info('Offset up the slit: {0}'.format(offset_up_slit))
 
         # Compute spatial and spectral scales
         xposn = np.array(xpos)[~np.isnan(xpos)]
         dx = xposn[-1] - xposn[0]
         slit_npix = np.sqrt(dx**2 + np.array(len(xposn) - 1)**2)
         spatial_scale = angular_slit_size / slit_npix
-        log.debug('Spatial scale: {0}'.format(spatial_scale.arcsec))
+        log.info('Spatial scale: {0}'.format(spatial_scale.arcsec))
         spectral_scale = lam[y_center, x_center] - lam[y_center, x_center - 1]
 
         # Compute slit angle relative (clockwise) to y axis
         slit_rot_angle = (np.arcsin(dx / slit_npix) * u.radian).to(u.degree)
         slit_rot_angle = slit_rot_angle.value
-        log.debug('Slit rotation angle: {0}'.format(slit_rot_angle))
+        log.info('Slit rotation angle: {0}'.format(slit_rot_angle))
 
         # Compute transform for output frame
         roll_ref = input_model.meta.wcsinfo.roll_ref
@@ -298,7 +299,7 @@ class ResampleSpecData(object):
         sky_coords = SkyCoord(ra=ra, dec=dec, unit=u.deg)
         slit_coords = sky_coords[int(sky_coords.shape[0] / 2)]
         slit_angular_size = slit_coords[0].separation(slit_coords[-1])
-        log.debug('Slit angular size: {0}'.format(slit_angular_size.arcsec))
+        log.info('Slit angular size: {0}'.format(slit_angular_size.arcsec))
 
         # Compute slit center from bounding_box
         dx0 = refwcs.bounding_box[0][0]
@@ -311,19 +312,19 @@ class ResampleSpecData(object):
             dispersion_center_pix)
         slit_center_sky = SkyCoord(ra=slit_center[0], dec=slit_center[1],
             unit=u.deg)
-        log.debug('slit center: {0}'.format(slit_center))
+        log.info('slit center: {0}'.format(slit_center))
 
         # Compute spatial and spectral scales
         spatial_scale = slit_angular_size / slit_coords.shape[0]
-        log.debug('Spatial scale: {0}'.format(spatial_scale.arcsec))
+        log.info('Spatial scale: {0}'.format(spatial_scale.arcsec))
         tcenter = int((dx1 - dx0) / 2)
         trace = lam[:, tcenter]
         trace = trace[~np.isnan(trace)]
         spectral_scale = np.abs((trace[-1] - trace[0]) / trace.shape[0])
-        log.debug('spectral scale: {0}'.format(spectral_scale))
+        log.info('spectral scale: {0}'.format(spectral_scale))
 
         # Compute transform for output frame
-        log.debug('Slit center %s' % slit_center_pix)
+        log.info('Slit center %s' % slit_center_pix)
         offset = Shift(-slit_center_pix) & Shift(-slit_center_pix)
         # TODO: double-check the signs on the following rotation angles
         roll_ref = input_model.meta.wcsinfo.roll_ref * u.deg
@@ -376,7 +377,7 @@ class ResampleSpecData(object):
         self.data_size = tuple(reversed(size))
 
 
-    def do_drizzle(self, **pars):
+    def do_drizzle(self):
         """ Perform drizzling operation on input images's to create a new output
         """
         # Set up information about what outputs we need to create: single or final

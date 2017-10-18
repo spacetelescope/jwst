@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
+DEFAULT_SUFFIX = 'i2d'
 
 
 class OutlierDetection(object):
@@ -43,7 +44,9 @@ class OutlierDetection(object):
 
     """
 
-    def __init__(self, input_models, reffiles=None, **pars):
+    def __init__(self, input_models, 
+                    reffiles=None,  
+                    **pars):
         """
         Parameters
         ----------
@@ -51,17 +54,23 @@ class OutlierDetection(object):
             list of data models as ModelContainer or ASN file,
             one data model for each input image
 
-        drizzled_models : list of objects
-            ModelContainer containing drizzled grouped input images
-
         reffiles : dict of `jwst.datamodels.DataModel`
             Dictionary of datamodels.  Keys are reffile_types.
+                        
+        pars : dict, optional 
+            Optional user-specified parameters to modify how outlier_detection will operate.  Valid parameters include: 
+            - resample_suffix 
+            
         """
         self.input_models = input_models
         self.reffiles = reffiles
-
+        
         self.num_groups = len(self.input_models.group_names)
 
+        # Parse any user-provided filename suffix for resampled products
+        self.resample_suffix = '_outlier_{}.fits'.format(pars.get('resample_suffix' , DEFAULT_SUFFIX))
+        if 'resample_suffix' in pars: del pars['resample_suffix']
+                
         self.outlierpars = {}
         if 'outlierpars' in reffiles:
             self._get_outlier_pars()
@@ -116,10 +125,10 @@ class OutlierDetection(object):
             # Start by creating resampled/mosaic images for each group of exposures
             sdriz = resample.ResampleData(self.input_models, single=True,
                 blendheaders=False, **pars)
-            sdriz.do_drizzle(**pars)
+            sdriz.do_drizzle()
             drizzled_models = sdriz.output_models
             for model in drizzled_models:
-                model.meta.filename += "_i2d.fits"
+                model.meta.filename += self.resample_suffix
                 if save_intermediate_results:
                     log.info("Writing out resampled exposures...")
                     model.save(model.meta.filename)
@@ -136,7 +145,7 @@ class OutlierDetection(object):
             ['median.fits'])
 
         # Perform median combination on set of drizzled mosaics
-        median_model.data = create_median(drizzled_models, **pars)
+        median_model.data = self.create_median(drizzled_models)
 
         if save_intermediate_results:
             log.info("Writing out MEDIAN image to: {}".format(median_model.meta.filename))
@@ -145,7 +154,7 @@ class OutlierDetection(object):
         if pars['resample_data'] is True:
             # Blot the median image back to recreate each input image specified in
             # the original input list/ASN/ModelContainer
-            blot_models = blot_median(median_model, self.input_models, **pars)
+            blot_models = self.blot_median(median_model)
             if save_intermediate_results:
                 for model in blot_models:
                     log.info("Writing out BLOT images...")
@@ -158,108 +167,106 @@ class OutlierDetection(object):
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
-        detect_outliers(self.input_models, blot_models,
-            self.reffiles, **self.outlierpars)
+        self.detect_outliers(blot_models)
 
         # clean-up (just to be explicit about being finished with these results)
         del median_model, blot_models
 
 
-def create_median(resampled_models, **pars):
-    """Create a median image from the singly resampled images.
+    def create_median(self,resampled_models):
+        """Create a median image from the singly resampled images.
 
-    NOTE: This version is simplified from astrodrizzle's version in the
-        following ways:
-        - type of combination: fixed to 'median'
-        - 'minmed' not implemented as an option
-        - does not use buffers to try to minimize memory usage
-        - astropy.stats.sigma_clipped_stats replaces stsci.imagestats.ImageStats
-        - stsci.image.median replaces stsci.image.numcombine.numCombine
-    """
-    resampled_sci = [i.data for i in resampled_models]
-    resampled_wht = [i.wht for i in resampled_models]
+        NOTE: This version is simplified from astrodrizzle's version in the
+            following ways:
+            - type of combination: fixed to 'median'
+            - 'minmed' not implemented as an option
+            - does not use buffers to try to minimize memory usage
+            - astropy.stats.sigma_clipped_stats replaces stsci.imagestats.ImageStats
+            - stsci.image.median replaces stsci.image.numcombine.numCombine
+        """
+        resampled_sci = [i.data for i in resampled_models]
+        resampled_wht = [i.wht for i in resampled_models]
 
-    nlow = pars.get('nlow', 0)
-    nhigh = pars.get('nhigh', 0)
-    maskpt = pars.get('maskpt', 0.7)
+        nlow = self.pars.get('nlow', 0)
+        nhigh = self.pars.get('nhigh', 0)
+        maskpt = self.pars.get('maskpt', 0.7)
 
-    badmasks = []
-    for w in resampled_wht:
-        mean_weight, _, _ = sigma_clipped_stats(w, sigma=3.0, mask_value=0.)
-        weight_threshold = mean_weight * maskpt
-        # Mask pixels were weight falls below MASKPT percent of the mean weight
-        mask = np.less(w, weight_threshold)
-        log.debug("Number of pixels with low weight: {}".format(np.sum(mask)))
-        badmasks.append(mask)
+        badmasks = []
+        for w in resampled_wht:
+            mean_weight, _, _ = sigma_clipped_stats(w, sigma=3.0, mask_value=0.)
+            weight_threshold = mean_weight * maskpt
+            # Mask pixels were weight falls below MASKPT percent of the mean weight
+            mask = np.less(w, weight_threshold)
+            log.debug("Number of pixels with low weight: {}".format(np.sum(mask)))
+            badmasks.append(mask)
 
-    # Compute median of stack os images using BADMASKS to remove low weight
-    # values
-    median_image = median(resampled_sci, nlow=nlow, nhigh=nhigh,
-        badmasks=badmasks)
+        # Compute median of stack os images using BADMASKS to remove low weight
+        # values
+        median_image = median(resampled_sci, nlow=nlow, nhigh=nhigh,
+            badmasks=badmasks)
 
-    return median_image
-
-
-def blot_median(median_model, input_models, **pars):
-    """Blot resampled median image back to the detector images
-    """
-    interp = pars.get('interp', 'poly5')
-    sinscl = pars.get('sinscl', 1.0)
-
-    # Initialize container for output blot images
-    blot_models = datamodels.ModelContainer()
-
-    log.info("Blotting median...")
-    blot = gwcs_blot.GWCSBlot(median_model)
-
-    for model in input_models:
-        blotted_median = model.copy()
-        blot_root = '_'.join(model.meta.filename.replace('.fits', '').split('_')[:-1])
-        blotted_median.meta.filename = '{}_blot.fits'.format(blot_root)
-
-        # clean out extra data not related to blot result
-        blotted_median.err = None
-        blotted_median.dq = None
-        # apply blot to re-create model.data from median image
-        blotted_median.data = blot.extract_image(model, interp=interp,
-            sinscl=sinscl)
-        blot_models.append(blotted_median)
-
-    return blot_models
+        return median_image
 
 
-def detect_outliers(input_models, blot_models, reffiles, **pars):
-    """
-    Flags DQ array for cosmic rays in input images.
+    def blot_median(self, median_model):
+        """Blot resampled median image back to the detector images
+        """
+        interp = self.pars.get('interp', 'poly5')
+        sinscl = self.pars.get('sinscl', 1.0)
 
-    The science frame in each ImageModel in input_models is compared to
-    the corresponding blotted median image in blot_models.  The result is
-    an updated DQ array in each ImageModel in input_models.
+        # Initialize container for output blot images
+        blot_models = datamodels.ModelContainer()
 
-    Parameters
-    ----------
-    input_models: JWST ModelContainer object
-        data model container holding science ImageModels, modified in place
+        log.info("Blotting median...")
+        blot = gwcs_blot.GWCSBlot(median_model)
 
-    blot_models : JWST ModelContainer object
-        data model container holding ImageModels of the median output frame
-        blotted back to the wcs and frame of the ImageModels in input_models
+        for model in self.input_models:
+            blotted_median = model.copy()
+            blot_root = '_'.join(model.meta.filename.replace('.fits', '').split('_')[:-1])
+            blotted_median.meta.filename = '{}_blot.fits'.format(blot_root)
 
-    reffiles : dict
-        Contains JWST ModelContainers for 'gain' and 'readnoise' reference files
+            # clean out extra data not related to blot result
+            blotted_median.err = None
+            blotted_median.dq = None
+            # apply blot to re-create model.data from median image
+            blotted_median.data = blot.extract_image(model, interp=interp,
+                sinscl=sinscl)
+            blot_models.append(blotted_median)
 
-    Returns
-    -------
-    None
-        The dq array in each input model is modified in place
-    """
+        return blot_models
 
-    gain_models = reffiles['gain']
-    rn_models = reffiles['readnoise']
 
-    for image, blot, gain, rn in zip(input_models, blot_models, gain_models,
-        rn_models):
-        flag_cr(image, blot, gain, rn, **pars)
+    def detect_outliers(self, blot_models):
+        """
+        Flags DQ array for cosmic rays in input images.
+
+        The science frame in each ImageModel in input_models is compared to
+        the corresponding blotted median image in blot_models.  The result is
+        an updated DQ array in each ImageModel in input_models.
+
+        Parameters
+        ----------
+        input_models: JWST ModelContainer object
+            data model container holding science ImageModels, modified in place
+
+        blot_models : JWST ModelContainer object
+            data model container holding ImageModels of the median output frame
+            blotted back to the wcs and frame of the ImageModels in input_models
+
+        reffiles : dict
+            Contains JWST ModelContainers for 'gain' and 'readnoise' reference files
+
+        Returns
+        -------
+        None
+            The dq array in each input model is modified in place
+        """
+
+        gain_models = self.reffiles['gain']
+        rn_models = self.reffiles['readnoise']
+
+        for image, blot, gain, rn in zip(self.input_models, blot_models,  gain_models, rn_models):
+            flag_cr(image, blot, gain, rn, **self.outlierpars)
 
 
 def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):

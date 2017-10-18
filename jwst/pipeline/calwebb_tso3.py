@@ -7,8 +7,7 @@ from astropy.table import vstack
 from ..stpipe import Pipeline
 from .. import datamodels
 
-from ..outlier_detection import outlier_detection_stack_step
-from ..outlier_detection import outlier_detection_scaled_step
+from ..outlier_detection import outlier_detection_step
 from ..tso_photometry import tso_photometry_step
 from ..extract_1d import extract_1d_step
 from ..white_light import white_light_step
@@ -34,9 +33,7 @@ class Tso3Pipeline(Pipeline):
 
     # Define alias to steps
     step_defs = {'outlier_detection':
-                        outlier_detection_stack_step.OutlierDetectionStackStep,
-                 'outlier_detection_scaled':
-                        outlier_detection_scaled_step.OutlierDetectionScaledStep,
+                        outlier_detection_step.OutlierDetectionStep,
                  'tso_photometry': tso_photometry_step.TSOPhotometryStep,
                  'extract_1d': extract_1d_step.Extract1dStep,
                  'white_light': white_light_step.WhiteLightStep
@@ -86,7 +83,8 @@ class Tso3Pipeline(Pipeline):
 
             else:
                 self.log.info("Performing scaled outlier detection on input images...")
-                cube = self.outlier_detection_scaled(cube)
+                self.outlier_detection.scale_detection = True
+                cube = self.outlier_detection(cube)
 
         if input_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
             self.log.info("Writing Level 2c cubes with updated DQ arrays...")

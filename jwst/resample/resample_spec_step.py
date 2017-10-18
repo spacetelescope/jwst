@@ -46,6 +46,7 @@ class ResampleSpecStep(Step):
         if all([isinstance(i, datamodels.MultiSlitModel) for i in input_models]):
             self.log.info('Converting MultiSlit to ModelContainer')
             container_dict = multislit_to_container(input_models)
+            self.log.info("INPUT_MODELS converted to: {}".format(container_dict))
             output_product = datamodels.MultiProductModel()
             output_product.update(input_models[0])
             for k, v in container_dict.items():

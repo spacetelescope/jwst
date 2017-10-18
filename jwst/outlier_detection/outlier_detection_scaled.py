@@ -15,17 +15,17 @@ from scipy import ndimage
 
 from .. import datamodels
 from ..resample import resample, gwcs_blot
-from .outlier_detection import create_median, detect_outliers
 from ..tso_photometry.tso_photometry import tso_aperture_photometry
+from .outlier_detection import OutlierDetection, CRBIT
 
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
+DEFAULT_SUFFIX = 'i2d'
 
-
-class OutlierDetectionScaled(object):
+#class OutlierDetectionScaled(object):
+class OutlierDetectionScaled(OutlierDetection):
     """
     This is the controlling routine for the outlier detection process.
     It loads and sets the various input data and parameters needed by
@@ -57,55 +57,8 @@ class OutlierDetectionScaled(object):
         reffiles : dict of `jwst.datamodels.DataModel`
             Dictionary of datamodels.  Keys are reffile_types.
         """
-        self.input_models = input_models
-        self.reffiles = reffiles
+        OutlierDetection.__init__(self, input_models, reffiles=reffiles, **pars)
 
-        self.num_groups = 1
-
-        self.outlierpars = {}
-        if 'outlierpars' in reffiles:
-            self._get_outlier_pars()
-        self.outlierpars.update(pars)
-
-
-    def _get_outlier_pars(self):
-        """ Extract outlier detection parameters from reference file
-        """
-        # start by interpreting input data models to define selection criteria
-        input_dm = self.input_models[0]
-        filtname = input_dm.meta.instrument.filter
-
-        ref_model = datamodels.OutlierParsModel(self.reffiles['outlierpars'])
-
-        # look for row that applies to this set of input data models
-        # NOTE:
-        #  This logic could be replaced by a method added to the DrizParsModel object
-        #  to select the correct row based on a set of selection parameters
-        row = None
-        outlierpars = ref_model.outlierpars_table
-
-        filter_match = False # flag to support wild-card rows in outlierpars table
-        for n, filt, num in zip(range(1, outlierpars.numimages.shape[0] + 1), outlierpars.filter,
-                            outlierpars.numimages):
-            # only remember this row if no exact match has already been made for
-            # the filter. This allows the wild-card row to be anywhere in the
-            # table; since it may be placed at beginning or end of table.
-
-            if filt == "ANY" and not filter_match and self.num_groups >= num:
-                row = n
-            # always go for an exact match if present, though...
-            if filtname == filt and self.num_groups >= num:
-                row = n
-                filter_match = True
-
-        # With presence of wild-card rows, code should never trigger this logic
-        if row is None:
-            log.error("No row found in %s that matches input data.", self.reffiles)
-            raise ValueError
-
-        # read in values from that row for each parameter
-        for kw in list(self.outlierpars.keys()):
-            self.outlierpars[kw] = ref_model['outlierpars_table.{0}'.format(kw)]
 
     def do_detection(self):
         """Flag outlier pixels in DQ of input images
@@ -164,7 +117,7 @@ class OutlierDetectionScaled(object):
             ['median.fits'])
 
         # Perform median combination on set of drizzled mosaics
-        median_model.data = create_median(input_models, **pars)
+        median_model.data = self.create_median(input_models)
         aper2 = CircularAnnulus((xcenter, ycenter), r_in=radius_inner,
                             r_out=radius_outer)
 
@@ -202,8 +155,7 @@ class OutlierDetectionScaled(object):
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
-        detect_outliers(input_models, blot_models,
-            self.reffiles, **self.outlierpars)
+        self.detect_outliers(blot_models)
 
         for i in range(self.input_models.data.shape[0]):
             self.input_models.dq[i] = input_models[i].dq
