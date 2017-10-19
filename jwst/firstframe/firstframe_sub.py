@@ -41,8 +41,8 @@ def do_correction(input_model):
     if sci_ngroups > 1:
         output.groupdq[:, 0, :, :] = \
             np.bitwise_or(output.groupdq[:,0,:,:], dqflags.group['DO_NOT_USE'])
-        log.debug("FirstFrame Sub: resetting GROUPDQ in last frame to DO_NOT_USE")
-        output.meta.cal_step.lastframe = 'COMPLETE'
+        log.debug("FirstFrame Sub: resetting GROUPDQ in first frame to DO_NOT_USE")
+        output.meta.cal_step.firstframe = 'COMPLETE'
     else:   # too few groups
         log.warning("FirstFrame Sub: too few groups, skipping step")
         output.meta.cal_step.firstframe = 'SKIPPED'

@@ -18,7 +18,7 @@ class FirstFrameStep(Step):
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
             if detector[:3] == 'MIR':
-                # Do the lastframe correction subtraction
+                # Do the firstframe correction subtraction
                 result = firstframe_sub.do_correction(input_model)
             else:
                 self.log.warning('First Frame Correction is only for MIRI data')
