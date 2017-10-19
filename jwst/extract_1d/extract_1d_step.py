@@ -24,8 +24,6 @@ class Extract1dStep(Step):
 
         # Open the input and figure out what type of model it is
         input_model = datamodels.open(input)
-        data_model_from_header = input_model.meta.model_type
-        self.log.debug("Data model from header = %s", data_model_from_header)
 
         if isinstance(input_model, datamodels.CubeModel):
             # It's a 3-D multi-integration model
@@ -57,10 +55,16 @@ class Extract1dStep(Step):
                 self.log.debug("Input contains %d items", len(input_model))
                 result = datamodels.ModelContainer()
                 for model in input_model:
-                    # Get the reference file name for each model in the input
-                    self.ref_file = self.get_reference_file(model, 'extract1d')
-                    self.log.info('Using EXTRACT1D reference file %s',
-                                  self.ref_file)
+                    if model.meta.exposure.type in ['NIS_WFSS', 'NRC_GRISM']:
+                        self.ref_file = 'N/A'
+                        self.log.info('No EXTRACT1D reference file '
+                                      'will be used')
+                    else:
+                        # Get the reference file name
+                        self.ref_file = self.get_reference_file(
+                                        model, 'extract1d')
+                        self.log.info('Using EXTRACT1D reference file %s',
+                                      self.ref_file)
                     temp = extract.do_extract1d(model, self.ref_file,
                                                 self.smoothing_length,
                                                 self.bkg_order)
@@ -69,11 +73,16 @@ class Extract1dStep(Step):
                     result.append(temp)
                     del temp
             elif len(input_model) == 1:
-                # Get the reference file name for the one model in the input
-                self.ref_file = self.get_reference_file(input_model[0],
-                                                        'extract1d')
-                self.log.info('Using EXTRACT1D reference file %s',
-                              self.ref_file)
+                if input_model[0].meta.exposure.type in ['NIS_WFSS',
+                                                         'NRC_GRISM']:
+                    self.ref_file = 'N/A'
+                    self.log.info('No EXTRACT1D reference file will be used')
+                else:
+                    # Get the reference file name for the one model in input
+                    self.ref_file = self.get_reference_file(input_model[0],
+                                                            'extract1d')
+                    self.log.info('Using EXTRACT1D reference file %s',
+                                  self.ref_file)
                 result = extract.do_extract1d(input_model[0], self.ref_file,
                                               self.smoothing_length,
                                               self.bkg_order)
@@ -85,8 +94,14 @@ class Extract1dStep(Step):
                 return input_model
         else:
             # Get the reference file name
-            self.ref_file = self.get_reference_file(input_model, 'extract1d')
-            self.log.info('Using EXTRACT1D reference file %s', self.ref_file)
+            if input_model.meta.exposure.type in ['NIS_WFSS', 'NRC_GRISM']:
+                self.ref_file = 'N/A'
+                self.log.info('No EXTRACT1D reference file will be used')
+            else:
+                self.ref_file = self.get_reference_file(input_model,
+                                                        'extract1d')
+                self.log.info('Using EXTRACT1D reference file %s',
+                              self.ref_file)
             result = extract.do_extract1d(input_model, self.ref_file,
                                           self.smoothing_length,
                                           self.bkg_order)
