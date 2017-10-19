@@ -304,7 +304,8 @@ class CubeBuildStep (Step):
                 save_IFU = True
             
         if save_IFU == True:
-            Final_IFUCube.save(None)
+#            Final_IFUCube.save(None)
+            self.save_model(Final_IFUCube,self.suffix)
 #            print('at the end',Final_IFUCube[0].meta.ref_file.crds.sw_version)
         return Final_IFUCube
 
