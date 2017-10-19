@@ -32,7 +32,6 @@ def test_firstframe_set_groupdq():
 
     # check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag
-
     dq_diff = dm_ramp_firstframe.groupdq[0,0,:,:] - dm_ramp.groupdq[0,0,:,:]
     
     np.testing.assert_array_equal(np.full((xsize,ysize),
@@ -42,6 +41,16 @@ def test_firstframe_set_groupdq():
                                   err_msg='Diff in groupdq flags is not ' \
                                            + 'equal to the DO_NOT_USE flag')
 
+    # test that the groupdq flags are not changed for the rest of the groups
+    dq_diff = (dm_ramp_firstframe.groupdq[0,1:ngroups,:,:]
+               - dm_ramp.groupdq[0,1:ngroups,:,:])
+    np.testing.assert_array_equal(np.full((ngroups-1,xsize,ysize),
+                                          0,
+                                          dtype=int),
+                                  dq_diff,
+                                  err_msg='n >= 2 groupdq flags changes ' \
+                                           + 'and they should not be')
+    
 def test_firstframe_single_group():
     """ 
     Test that the firstframe code does nothing when passed a single 
