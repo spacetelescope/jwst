@@ -1,6 +1,6 @@
 / Visit information
 
-VISITYPE = 'PRIME' / type of visit (prime or parallel) 
+VISITYPE = 'GENERIC' / type of visit 
 VSTSTART = input('DATE')   / UTC visit start time
 WFSVISIT = 'NO' / wavefront sensing and control visit indicator
 NEXPOSUR = 1    / total number of exposures in visit
