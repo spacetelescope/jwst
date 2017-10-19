@@ -40,48 +40,71 @@ def initialize_wave_model(model_name, degree):
     return getattr(polynomial, model_name)(degree)
 
 
-def get_extract_parameters(refname, slitname, meta,
-                           smoothing_length, bkg_order):
+def get_extract_parameters(refname, input_model, slitname,
+                           meta, smoothing_length, bkg_order):
+
     extract_params = {}
-    with open(refname) as f:
-        ref = json.load(f)
-    for aper in ref['apertures']:
-        if 'id' in aper and aper['id'] != "dummy" and \
-           (aper['id'] == slitname or aper['id'] == "ANY" or
-            slitname == "ANY"):
-            region_type = aper.get("region_type", "target")
-            if region_type == "target":
-                disp = aper.get('dispaxis')
-                if disp is None:
-                    log.warning("dispaxis not specified in %s;"
-                                " assuming horizontal dispersion", refname)
-                    disp = HORIZONTAL
-                if disp != HORIZONTAL and disp != VERTICAL:
-                    log.error("dispaxis = %d is not valid.", disp)
-                    raise ValueError('dispaxis must be 1 or 2.')
-                extract_params['dispaxis'] = disp
-                extract_params['src_coeff'] = aper.get('src_coeff')
-                extract_params['bkg_coeff'] = aper.get('bkg_coeff')
-                extract_params['independent_var'] = \
-                      aper.get('independent_var', 'pixel').lower()
-                if smoothing_length is None:
-                    extract_params['smoothing_length'] = \
-                          aper.get('smoothing_length', 0)
-                else:
-                    # If the user supplied a value, use that value.
-                    extract_params['smoothing_length'] = smoothing_length
-                if bkg_order is None:
-                    extract_params['bkg_order'] = aper.get('bkg_order', 0)
-                else:
-                    # If the user supplied a value, use that value.
-                    extract_params['bkg_order'] = bkg_order
-                extract_params['xstart'] = aper.get('xstart')
-                extract_params['xstop'] = aper.get('xstop')
-                extract_params['ystart'] = aper.get('ystart')
-                extract_params['ystop'] = aper.get('ystop')
-                extract_params['extract_width'] = aper.get('extract_width')
-                extract_params['nod_correction'] = get_nod_offset(aper, meta)
-            break
+
+    if refname == "N/A":
+        # There is no reference file; use "reasonable" default values.
+        shape = input_model.data.shape
+        extract_params['xstart'] = 0                    # first pixel in X
+        extract_params['xstop'] = shape[-1] - 1         # last pixel in X
+        extract_params['ystart'] = 0                    # first pixel in Y
+        extract_params['ystop'] = shape[-2] - 1         # last pixel in Y
+        extract_params['extract_width'] = None
+        extract_params['src_coeff'] = None
+        extract_params['bkg_coeff'] = None
+        extract_params['nod_correction'] = 0
+        if input_model.xsize >= input_model.ysize:
+            extract_params['dispaxis'] = HORIZONTAL
+        else:
+            extract_params['dispaxis'] = VERTICAL
+        extract_params['independent_var'] = 'pixel'
+        extract_params['smoothing_length'] = 0  # because no background sub.
+        extract_params['bkg_order'] = 0         # because no background sub.
+
+    else:
+        with open(refname) as f:
+            ref = json.load(f)
+        for aper in ref['apertures']:
+            if 'id' in aper and aper['id'] != "dummy" and \
+               (aper['id'] == slitname or aper['id'] == "ANY" or
+                slitname == "ANY"):
+                region_type = aper.get("region_type", "target")
+                if region_type == "target":
+                    disp = aper.get('dispaxis')
+                    if disp is None:
+                        log.warning("dispaxis not specified in %s;"
+                                    " assuming horizontal dispersion", refname)
+                        disp = HORIZONTAL
+                    if disp != HORIZONTAL and disp != VERTICAL:
+                        log.error("dispaxis = %d is not valid.", disp)
+                        raise ValueError('dispaxis must be 1 or 2.')
+                    extract_params['dispaxis'] = disp
+                    extract_params['src_coeff'] = aper.get('src_coeff')
+                    extract_params['bkg_coeff'] = aper.get('bkg_coeff')
+                    extract_params['independent_var'] = \
+                          aper.get('independent_var', 'pixel').lower()
+                    if smoothing_length is None:
+                        extract_params['smoothing_length'] = \
+                              aper.get('smoothing_length', 0)
+                    else:
+                        # If the user supplied a value, use that value.
+                        extract_params['smoothing_length'] = smoothing_length
+                    if bkg_order is None:
+                        extract_params['bkg_order'] = aper.get('bkg_order', 0)
+                    else:
+                        # If the user supplied a value, use that value.
+                        extract_params['bkg_order'] = bkg_order
+                    extract_params['xstart'] = aper.get('xstart')
+                    extract_params['xstop'] = aper.get('xstop')
+                    extract_params['ystart'] = aper.get('ystart')
+                    extract_params['ystop'] = aper.get('ystop')
+                    extract_params['extract_width'] = aper.get('extract_width')
+                    extract_params['nod_correction'] = get_nod_offset(aper,
+                                                                      meta)
+                break
 
     return extract_params
 
@@ -104,6 +127,7 @@ def log_initial_parameters(extract_params):
     """Log some of the initial extraction parameters."""
 
     log.debug("dispaxis = %d", extract_params["dispaxis"])
+    log.debug("spectral order = %d", extract_params["spectral_order"])
     log.debug("independent_var = %s", extract_params["independent_var"])
     log.debug("smoothing_length = %d", extract_params["smoothing_length"])
     log.debug("initial xstart = %s", str(extract_params["xstart"]))
@@ -590,7 +614,7 @@ def create_poly(coeff):
 class ExtractModel(object):
 
     def __init__(self, input_model, slit,
-                 dispaxis=HORIZONTAL,
+                 dispaxis=HORIZONTAL, spectral_order=1,
                  xstart=None, xstop=None, ystart=None, ystop=None,
                  extract_width=None, src_coeff=None, bkg_coeff=None,
                  independent_var="pixel",
@@ -610,7 +634,9 @@ class ExtractModel(object):
             will not be used.
         """
 
+        self.exp_type = input_model.meta.exposure.type
         self.dispaxis = dispaxis
+        self.spectral_order = spectral_order
 
         # xstart, xstop, ystart, or ystop may be overridden with src_coeff,
         # they may be limited by the input image size or by the WCS bounding
@@ -711,11 +737,10 @@ class ExtractModel(object):
         self.wcs = None                         # initial value
         if input_model.meta.exposure.type == "NIS_SOSS":
             if hasattr(input_model.meta, 'wcs'):
-                spectral_order = 1
                 log.info("NIRISS SOSS data, extracting spectral order %d",
-                         spectral_order)
-                self.wcs = niriss.niriss_soss_set_input(input_model,
-                                                        spectral_order)
+                         self.spectral_order)
+                self.wcs = niriss.niriss_soss_set_input(
+                                input_model, self.spectral_order)
         elif slit == DUMMY:
             if hasattr(input_model.meta, 'wcs'):
                 self.wcs = input_model.meta.wcs
@@ -907,6 +932,9 @@ class ExtractModel(object):
             slice0 = int(round(self.ystart))
             slice1 = int(round(self.ystop)) + 1
 
+        # We expect two (x and y), or three (x, y, spectral order).
+        n_inputs = self.wcs.forward_transform.n_inputs
+
         # x_array and y_array are just used for computing the wavelengths.
         if self.dispaxis == HORIZONTAL:
             x_array = np.arange(slice0, slice1, dtype=np.float64)
@@ -918,8 +946,25 @@ class ExtractModel(object):
             x_array.fill((self.xstart + self.xstop) / 2.)
 
         if self.wcs is not None:
-            ra, dec, wavelength = self.wcs(x_array, y_array)
-            nelem = len(wavelength)
+            nelem = slice1 - slice0
+            if self.exp_type in ['NIS_WFSS', 'NRC_GRISM']:
+                ra = np.zeros(nelem, dtype=np.float64)
+                dec = np.zeros(nelem, dtype=np.float64)
+                wavelength = np.zeros(nelem, dtype=np.float64)
+                if n_inputs == 2:
+                    for i in range(nelem):
+                        ra[i], dec[i], wavelength[i], _ = self.wcs(
+                                        x_array[i], y_array[i])
+                elif n_inputs == 3:
+                    for i in range(nelem):
+                        ra[i], dec[i], wavelength[i], _ = self.wcs(
+                                x_array[i], y_array[i], self.spectral_order)
+                else:
+                    log.error("n_inputs for wcs function is %d", n_inputs)
+                    raise ValueError("WCS function was expected to take "
+                                     "either 2 or 3 arguments.")
+            else:
+                ra, dec, wavelength = self.wcs(x_array, y_array)
             ra = ra[nelem // 2]
             dec = dec[nelem // 2]
 
@@ -1054,8 +1099,14 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
         # Loop over the slits in the input model
         for slit in slits:
             log.info('Working on slit %s' % slit.name)
-            extract_params = get_extract_parameters(refname, slit.name,
+            if np.size(slit.data) <= 0:
+                log.info('No data for slit %s, skipping ...' % slit.name)
+                continue
+            extract_params = get_extract_parameters(
+                                refname, slit, slit.name,
                                 input_model.meta, smoothing_length, bkg_order)
+            sp_order = get_spectral_order(slit)
+            extract_params["spectral_order"] = sp_order
             (ra, dec, wavelength, net, background) = \
                 extract_one_slit(input_model, slit, -1, **extract_params)
             got_relsens = True
@@ -1084,6 +1135,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
             spec.slit_ra = ra
             spec.slit_dec = dec
+            spec.spectral_order = sp_order
             copy_keyword_info(slit, slit.name, spec)
             output_model.spec.append(spec)
     else:
@@ -1096,10 +1148,13 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
 
         if isinstance(input_model, datamodels.ImageModel) or \
            isinstance(input_model, datamodels.DrizProductModel):
-            extract_params = get_extract_parameters(refname, slitname,
+            extract_params = get_extract_parameters(
+                                refname, input_model, slitname,
                                 input_model.meta, smoothing_length, bkg_order)
             if extract_params:
                 slit = DUMMY
+                sp_order = get_spectral_order(input_model)
+                extract_params["spectral_order"] = sp_order
                 (ra, dec, wavelength, net, background) = \
                         extract_one_slit(input_model, slit, -1,
                                          **extract_params)
@@ -1132,17 +1187,22 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
             spec.slit_ra = ra
             spec.slit_dec = dec
+            spec.spectral_order = sp_order
             if slitname is not None and slitname != "ANY":
                 spec.name = slitname
             output_model.spec.append(spec)
 
         elif isinstance(input_model, datamodels.CubeModel):
 
-            extract_params = get_extract_parameters(refname, slitname,
+            extract_params = get_extract_parameters(
+                                refname, input_model, slitname,
                                 input_model.meta, smoothing_length, bkg_order)
             if not extract_params:
                 log.critical('Missing extraction parameters.')
                 raise ValueError('Missing extraction parameters.')
+
+            sp_order = get_spectral_order(input_model)
+            extract_params["spectral_order"] = sp_order
 
             got_relsens = True
             try:
@@ -1181,6 +1241,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                                                              wavelength)
                 spec.slit_ra = ra
                 spec.slit_dec = dec
+                spec.spectral_order = sp_order
                 output_model.spec.append(spec)
 
         elif isinstance(input_model, datamodels.IFUCubeModel):
@@ -1199,6 +1260,21 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
     output_model.meta.wcs = None
 
     return output_model
+
+def get_spectral_order(slit):
+
+    if hasattr(slit.meta, 'wcsinfo'):
+        sp_order = slit.meta.wcsinfo.spectral_order
+        if sp_order is None or sp_order < 1:
+            log.warning("spectral_order is {}; using 1"
+                        .format(sp_order))
+            sp_order = 1
+    else:
+        log.warning("slit.meta doesn't have attribute wcsinfo; "
+                    "setting spectral order to 1")
+        sp_order = 1
+
+    return sp_order
 
 
 def copy_keyword_info(slit, slitname, spec):
