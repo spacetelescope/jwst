@@ -42,5 +42,40 @@ def test_firstframe_set_groupdq():
                                   err_msg='Diff in groupdq flags is not ' \
                                            + 'equal to the DO_NOT_USE flag')
 
+def test_firstframe_single_group():
+    """ 
+    Test that the firstframe code does nothing when passed a single 
+    group integration
+    """
+
+    # size of integration
+    ngroups = 1
+    xsize = 1032
+    ysize = 1024
+
+    # create the data and groupdq arrays
+    csize = (1, ngroups, xsize, ysize)
+    data = np.full(csize, 1.0)
+    groupdq = np.zeros(csize, dtype=int)
+
+    # create a JWST datamodel for MIRI data
+    dm_ramp = MIRIRampModel(data=data, groupdq=groupdq)
+
+    # run the first frame correction step
+    dm_ramp_firstframe = do_correction(dm_ramp)
+
+    # check that the difference in the groupdq flags is equal to
+    #   the 'do_not_use' flag
+
+    dq_diff = dm_ramp_firstframe.groupdq[0,0,:,:] - dm_ramp.groupdq[0,0,:,:]
+    
+    np.testing.assert_array_equal(np.full((xsize,ysize),
+                                          0,
+                                          dtype=int),
+                                  dq_diff,
+                                  err_msg='groupdq changed for single group ' \
+                                           + 'when it should not')
+    
 if __name__ == '__main__':
     test_firstframe_set_groupdq()
+    test_firstframe_single_group()
