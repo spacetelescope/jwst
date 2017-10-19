@@ -1,14 +1,7 @@
-from __future__ import (division, print_function, unicode_literals, 
+from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
-import os
-import os.path
-
 import numpy as np
-from astropy import wcs
-from astropy.io import fits
-
-from gwcs import wcs
 
 from drizzle import util
 from drizzle import doblot
@@ -24,17 +17,11 @@ class GWCSDrizzle(object):
     """
     Combine images using the drizzle algorithm
     """
-    def __init__(self, product="", outwcs=None, single=False,
+    def __init__(self, product, outwcs=None, single=False,
                  wt_scl="exptime", pixfrac=1.0, kernel="square",
                  fillval="INDEF"):
         """
         Create a new Drizzle output object and set the drizzle parameters.
-
-        All parameters are optional, but either infile or outwcs must be supplied.
-        If infile initializes the object from a file written after a
-        previous run of drizzle. Results from the previous run will be combined
-        with new results. The value passed in outwcs will be ignored. If infile is
-        not set, outwcs will be used to initilize a new run of drizzle.
 
         Parameters
         ----------
@@ -45,10 +32,9 @@ class GWCSDrizzle(object):
             and image id bitmap, repectively. The WCS of the combined image is
             also read from the SCI extension.
 
-        outwcs : wcs, optional
-            The world coordinate system (WCS) of the combined image. This
-            parameter must be present if no input file is given and is ignored if
-            one is.
+        outwcs : `gwcs.WCS`
+            The world coordinate system (WCS) of the resampled image.  If not
+            provided, the WCS is taken from product.
 
         wt_scl : str, optional
             How each input image should be scaled. The choices are `exptime`
@@ -83,7 +69,6 @@ class GWCSDrizzle(object):
         self.outexptime = 0.0
         self.uniqid = 0
 
-        self.outwcs = outwcs
         self.wt_scl = wt_scl
         self.kernel = kernel
         self.fillval = fillval
@@ -111,11 +96,13 @@ class GWCSDrizzle(object):
         self.out_units = out_units = product.meta.resample.drizzle_output_units or "cps"
 
         self.outsci = product.data
-        self.outwcs = product.meta.wcs
+        if outwcs:
+            self.outwcs = outwcs
+        else:
+            self.outwcs = product.meta.wcs
 
         self.outwht = product.wht
         self.outcon = product.con
-
 
         if self.outcon.ndim == 2:
             self.outcon = np.reshape(self.outcon, (1,
@@ -129,12 +116,8 @@ class GWCSDrizzle(object):
             raise ValueError("Drizzle context image has wrong dimensions: \
                 {0}".format(product))
 
-
         # Check field values
-
-        if self.outwcs:
-            pass
-        else:
+        if not self.outwcs:
             raise ValueError("Either an existing file or wcs must be supplied")
 
         if util.is_blank(self.wt_scl):
@@ -228,7 +211,7 @@ class GWCSDrizzle(object):
         elif self.wt_scl == "expsq":
             wt_scl = expin * expin
 
-        wt_scl = 1.0 # hard-coded for JWST count-rate data
+        wt_scl = 1.0  # hard-coded for JWST count-rate data
         self.increment_id()
 
         dodrizzle(insci, inwcs, inwht, self.outwcs,
@@ -292,6 +275,7 @@ class GWCSDrizzle(object):
 
         # Increment the id
         self.uniqid += 1
+
 
 def dodrizzle(insci, input_wcs, inwht,
               output_wcs, outsci, outwht, outcon,
@@ -458,10 +442,7 @@ def dodrizzle(insci, input_wcs, inwht,
     # Compute the mapping between the input and output pixel coordinates
     # for use in drizzle.cdrizzle.tdriz
     pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs, insci.shape)
-
-    # Temporary fix for tdriz not handling NaNs correctly; set NaNs to map
-    # off the output image and set the weight to zero
-    pixmap[np.isnan(pixmap)] = -10
+    # pixmap[np.isnan(pixmap)] = -10
     # print("Number of NaNs: ", len(np.isnan(pixmap)) / 2)
     # inwht[np.isnan(pixmap[:,:,0])] = 0.
 

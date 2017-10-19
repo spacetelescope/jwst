@@ -1,7 +1,6 @@
 from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
-import time
 import numpy as np
 from collections import OrderedDict
 
@@ -199,8 +198,9 @@ class ResampleData(object):
                 outwcs_pscale = output_model.meta.wcsinfo.cdelt1
                 wcslin_pscale = img.meta.wcsinfo.cdelt1
 
-                inwht = build_driz_weight(img, wht_type=self.drizpars['wht_type'],
-                                    good_bits=self.drizpars['good_bits'])
+                inwht = self.build_driz_weight(img,
+                    wht_type=self.drizpars['wht_type'],
+                    good_bits=self.drizpars['good_bits'])
                 driz.add_image(img.data, img.meta.wcs, inwht=inwht,
                         expin=img.meta.exposure.exposure_time,
                         pscale_ratio=outwcs_pscale / wcslin_pscale)
@@ -222,52 +222,55 @@ class ResampleData(object):
             output_model.meta.resample.weight_type = self.drizpars['wht_type']
             output_model.meta.resample.pointings = pointings
 
-            build_fits_wcs(output_model)
+            self.update_fits_wcs(output_model)
 
             self.output_models.append(output_model)
 
 
-def _buildMask(dqarr, bitvalue):
-    """ Build a bit-mask from an input DQ array and a bitvalue flag
-    """
+    def build_driz_weight(self, model, wht_type=None, good_bits=None):
+        """ Create input weighting image
+        """
+        if good_bits is not None and good_bits < 0:
+            good_bits = None
+        dqmask = self.build_mask(model.dq, good_bits)
+        exptime = model.meta.exposure.exposure_time
 
-    bitvalue = bitmask.interpret_bits_value(bitvalue)
+        if wht_type.lower()[:3] == 'err':
+            inwht = (exptime / model.err)**2 * dqmask
+            log.debug("DEBUG weight mask: {} {}".format(type(inwht), np.sum(inwht)))
+        # elif wht_type == 'IVM':
+        #     _inwht = img.buildIVMmask(chip._chip,dqarr,pix_ratio)
+        elif wht_type.lower()[:3] == 'exp':
+            inwht = exptime * dqmask
+        else:
+            inwht = np.ones(model.data.shape, dtype=model.data.dtype)
+        return inwht
 
-    if bitvalue is None:
-        return (np.ones(dqarr.shape, dtype=np.uint8))
-    return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)
+
+    @staticmethod
+    def build_mask(dqarr, bitvalue):
+        """ Builds a bit-mask from an input DQ array and a bitvalue flag
+        """
+
+        bitvalue = bitmask.interpret_bits_value(bitvalue)
+
+        if bitvalue is None:
+            return (np.ones(dqarr.shape, dtype=np.uint8))
+        return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)
 
 
-def build_driz_weight(model, wht_type=None, good_bits=None):
-    """ Create input weighting image based on user inputs
-    """
-
-    if good_bits is not None and good_bits < 0: good_bits = None
-    dqmask = _buildMask(model.dq, good_bits)
-    exptime = model.meta.exposure.exposure_time
-
-    if wht_type.lower()[:3] == 'err':
-        # Multiply the scaled ERR file by the input mask in place.
-        inwht = (exptime / model.err)**2 * dqmask
-    #elif wht_type == 'IVM':
-    #    _inwht = img.buildIVMmask(chip._chip,dqarr,pix_ratio)
-    elif wht_type.lower()[:3] == 'exp':# or wht_type is None, as used for single=True
-        inwht = exptime * dqmask
-    else:
-        # Create an identity input weight map
-        inwht = np.ones(model.data.shape, dtype=model.data.dtype)
-    return inwht
-
-def build_fits_wcs(model):
-    """Update FITS WCS keywords of the resampled image based on the gwcs"""
-    transform = model.meta.wcs.forward_transform
-    model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
-    model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
-    model.meta.wcsinfo.cdelt1 = transform[3].factor.value
-    model.meta.wcsinfo.cdelt2 = transform[4].factor.value
-    model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref = transform[6].lon.value
-    model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref = transform[6].lat.value
-    model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
-    model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
-    model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
-    model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
+    def update_fits_wcs(self, model):
+        """Update FITS WCS keywords of the resampled image"""
+        transform = model.meta.wcs.forward_transform
+        model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
+        model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
+        model.meta.wcsinfo.cdelt1 = transform[3].factor.value
+        model.meta.wcsinfo.cdelt2 = transform[4].factor.value
+        model.meta.wcsinfo.ra_ref = transform[6].lon.value
+        model.meta.wcsinfo.dec_ref = transform[6].lat.value
+        model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
+        model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
+        model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
+        model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
+        model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
+        model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
