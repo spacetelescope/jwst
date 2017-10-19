@@ -33,7 +33,8 @@ class ImageModel(model_base.DataModel):
     schema_url = "image.schema.yaml"
 
     def __init__(self, init=None, data=None, dq=None, err=None, relsens=None,
-                 relsens2d=None, zeroframe=None, area=None, wavelength=None, **kwargs):
+                 relsens2d=None, zeroframe=None, area=None, wavelength=None, 
+                 var_p2d, var_r2d, **kwargs):
         super(ImageModel, self).__init__(init=init, **kwargs)
 
         if data is not None:
@@ -59,6 +60,13 @@ class ImageModel(model_base.DataModel):
 
         if wavelength is not None:
             self.wavelength = wavelength
+
+        if var_p2d is not None:
+            self.var_p2d = var_p2d
+
+        if var_r2d is not None:
+            self.var_r2d = var_r2d
+
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err

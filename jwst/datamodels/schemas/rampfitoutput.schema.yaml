@@ -14,6 +14,18 @@ allOf:
       default: 0.0
       ndim: 4
       datatype: float32
+    var_p:
+      title: Variance due to poisson noise for segment-specific slope
+      fits_hdu: VAR_P
+      default: 0.0
+      ndim: 4
+      datatype: float32
+    var_r:
+      title: Variance due to read noise for segment-specific slope
+      fits_hdu: VAR_R
+      default: 0.0
+      ndim: 4
+      datatype: float32
     yint:
       title: Segment-specific y-intercept
       fits_hdu: YINT

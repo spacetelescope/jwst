@@ -43,6 +43,18 @@ allOf:
       ndim: 2
       default: 0.0
       datatype: float32
+    var_p2d:
+      title: variance due to poisson noise 
+      fits_hdu: VAR_P2D
+      ndim: 2
+      default: 0.0
+      datatype: float32
+    var_r2d:
+      title: variance due to read noise 
+      fits_hdu: VAR_R2D
+      ndim: 2
+      default: 0.0
+      datatype: float32
 - type: object
   properties:
     pathloss_pointsource:
