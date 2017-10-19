@@ -27,7 +27,8 @@ class CubeModel(model_base.DataModel):
     schema_url = "cube.schema.yaml"
 
     def __init__(self, init=None, data=None, dq=None, err=None, zeroframe=None,
-                 relsens=None, area=None, var_p_int=None, var_r_int=None, **kwargs):
+                 relsens=None, area=None, wavelength=None, var_p_int=None, 
+                 var_r_int=None, **kwargs):
         super(CubeModel, self).__init__(init=init, **kwargs)
 
         if data is not None:
@@ -53,6 +54,9 @@ class CubeModel(model_base.DataModel):
 
         if var_r_int is not None:
             self.var_r_int = var_r_int
+   
+        if wavelength is not None:
+            self.wavelength = wavelength
 
         # Implicitly create arrays
         self.dq = self.dq
