@@ -2,7 +2,7 @@
 Description
 ===========
 
-jwst.assign_wcs is one of the first steps in the level 2B JWST pipeline.
+``jwst.assign_wcs`` is one of the first steps in the level 2B JWST pipeline.
 It associates a WCS object with each science exposure. The WCS transforms
 positions on the detector to a world coordinate frame - ICRS and wavelength.
 In general there may be intermediate coordinate frames depending on the instrument.
@@ -46,10 +46,26 @@ Calling it as a function with detector positions as inputs returns the
 corresponding world coordinates. Using MIRI LRS fixed slit as an example:
 
 >>> from jwst.datamodels import ImageModel
->>> exp = ImagModel(miri_fixed_assign_wcs.fits')
+>>> exp = ImageModel('miri_fixed_assign_wcs.fits')
 >>> ra, dec, lam = exp.meta.wcs(x, y)
 >>> print(ra, dec, lam)
     (329.97260532549336, 372.0242999250267, 5.4176100046836675)
+
+The GRISM modes for NIRCAM and NIRISS have a slightly difference calling structure,
+in addition to the (x, y) coordinate, they need to know other information about the
+spectrum or source object. In the JWST backward direction (going from the sky to
+the detector) the WCS model also looks for the wavelength and order and returns
+the (x,y) location of that wavelength+order on the dispersed image and the original
+source pixel location, as entered, along with the order that was specified:
+
+>>> form jwst.datamodels import ImageModel
+>>> exp = ImageModel('nircam_grism_assign_wcs.fits')
+>>> x, y, x0, y0, order = exp.meta.wcs(x0, y0, wavelength, order)
+>>> print(x0, y0, wavelength, order)
+    (365.523884327, 11.6539963919, 2.557881113, 2.0)
+>>> print(x, y, x0, y0, order)
+    (1539.5898464615102, 11.6539963919, 365.523884327, 11.6539963919, 
+
 
 The WCS provides access to intermediate coordinate frames
 and transforms between any two frames in the WCS pipeline in forward or
@@ -73,7 +89,7 @@ multiple-integration datasets the step will accept either of these data products
 the slope results for each integration in the exposure, or the single slope image
 that is the result of averaging over all integrations.
 
-jwst.assign_wcsis based on gwcs and uses the modeling, units and coordinates subpackages in astropy.
+``jwst.assign_wcs`` is based on gwcs and uses the modeling, units and coordinates subpackages in astropy.
 
 Software dependencies:
 
