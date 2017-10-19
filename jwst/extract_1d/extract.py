@@ -634,6 +634,7 @@ class ExtractModel(object):
             will not be used.
         """
 
+        self.exp_type = input_model.meta.exposure.type
         self.dispaxis = dispaxis
         self.spectral_order = spectral_order
 
@@ -946,17 +947,24 @@ class ExtractModel(object):
 
         if self.wcs is not None:
             nelem = slice1 - slice0
-            if n_inputs == 2:
-                ra, dec, wavelength = self.wcs(x_array, y_array)
-            else:
+            if self.exp_type in ['NIS_WFSS', 'NRC_GRISM']:
                 ra = np.zeros(nelem, dtype=np.float64)
                 dec = np.zeros(nelem, dtype=np.float64)
                 wavelength = np.zeros(nelem, dtype=np.float64)
-                for i in range(nelem):
-                    # wcs apparently returns four values
-                    ra[i], dec[i], wavelength[i], _ = \
-                        self.wcs(x_array[i], y_array[i],
-                                 self.spectral_order)
+                if n_inputs == 2:
+                    for i in range(nelem):
+                        ra[i], dec[i], wavelength[i], _ = self.wcs(
+                                        x_array[i], y_array[i])
+                elif n_inputs == 3:
+                    for i in range(nelem):
+                        ra[i], dec[i], wavelength[i], _ = self.wcs(
+                                x_array[i], y_array[i], self.spectral_order)
+                else:
+                    log.error("n_inputs for wcs function is %d", n_inputs)
+                    raise ValueError("WCS function was expected to take "
+                                     "either 2 or 3 arguments.")
+            else:
+                ra, dec, wavelength = self.wcs(x_array, y_array)
             ra = ra[nelem // 2]
             dec = dec[nelem // 2]
 
