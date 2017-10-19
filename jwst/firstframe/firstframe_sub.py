@@ -15,8 +15,9 @@ def do_correction(input_model):
     """
     Short Summary
     -------------
-    The sole correction is to reset to DO_NOT_USE the GROUP data quality flags
-    for the first group, if the number of groups is greater than 1.
+    The sole correction is to add the DO_NOT_USE flat to the GROUP data 
+    quality flags for the first group, if the number of groups is greater 
+    than 1.
     
     Parameters
     ----------
@@ -44,7 +45,7 @@ def do_correction(input_model):
         log.debug("FirstFrame Sub: resetting GROUPDQ in first frame to DO_NOT_USE")
         output.meta.cal_step.firstframe = 'COMPLETE'
     else:   # too few groups
-        log.warning("FirstFrame Sub: too few groups, skipping step")
+        log.warning("FirstFrame Corr: too few groups, skipping step")
         output.meta.cal_step.firstframe = 'SKIPPED'
 
     return output

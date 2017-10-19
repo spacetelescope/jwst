@@ -1160,6 +1160,14 @@ properties:
                 title: Filter Offset reference file name
                 type: string
                 fits_keyword: R_FILOFF
+          firstframe:
+            title: First frame reference file information
+            type: object
+            properties:
+              name:
+                title: First Frame reference file name
+                type: string
+                fits_keyword: R_FRSTFR
           flat:
             title: Flat reference file information
             type: object
@@ -1520,6 +1528,10 @@ properties:
             title: 2-D Spectral Extraction
             type: string
             fits_keyword: S_EXTR2D
+          firstframe:
+            title: First Frame Correction
+            type: string
+            fits_keyword: S_FRSTFR
           flat_field:
             title: Flat Field Correction
             type: string

@@ -6,8 +6,8 @@ from . import firstframe_sub
 class FirstFrameStep(Step):
     """
     FirstFrameStep: This is a MIRI specific task.  If the number of groups
-    is greater than 1, the GROUP data quality flags for the first group will
-    be set to DO_NOT_USE.
+    is greater than 1, the DO_NOT_USE group data quality flag is added to 
+    first group.
     """
 
     def process(self, input):
@@ -16,7 +16,7 @@ class FirstFrameStep(Step):
         with datamodels.open(input) as input_model:
 
             # check the data is MIRI data
-            detector = input_model.meta.instrument.detector
+            detector = input_model.meta.instrument.detector.upper()
             if detector[:3] == 'MIR':
                 # Do the firstframe correction subtraction
                 result = firstframe_sub.do_correction(input_model)
