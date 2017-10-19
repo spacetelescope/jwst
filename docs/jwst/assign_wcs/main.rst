@@ -62,9 +62,9 @@ source pixel location, as entered, along with the order that was specified:
 >>> exp = ImageModel('nircam_grism_assign_wcs.fits')
 >>> x, y, x0, y0, order = exp.meta.wcs(x0, y0, wavelength, order)
 >>> print(x0, y0, wavelength, order)
-    (365.523884327, 11.6539963919, 2.557881113, 2.0)
+    (365.523884327, 11.6539963919, 2.557881113, 2)
 >>> print(x, y, x0, y0, order)
-    (1539.5898464615102, 11.6539963919, 365.523884327, 11.6539963919, 
+    (1539.5898464615102, 11.6539963919, 365.523884327, 11.6539963919, 2)
 
 
 The WCS provides access to intermediate coordinate frames
