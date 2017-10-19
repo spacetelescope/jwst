@@ -499,4 +499,8 @@ def update_s_region(model):
         " {4} {5}"
         " {6} {7}"
         " {0} {1}".format(*footprint.flatten()))
-    model.meta.wcsinfo.s_region = s_region
+    if "nan" in s_region:
+        # do not update s_region if there are NaNs.
+        log.info("There NaNs in s_region")
+    else:
+        model.meta.wcsinfo.s_region = s_region
