@@ -101,9 +101,8 @@ class DataSet(object):
         # Get the GRATING value from the input data model
         grating = self.input.meta.instrument.grating.upper()
 
-        # Handle fixed-slit exposures separately
-        if (isinstance(self.input, datamodels.MultiSlitModel) and
-            self.exptype in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']):
+        # Normal fixed-slit exposures get handled as a MultiSlitModel
+        if self.exptype == 'NRS_FIXEDSLIT':
 
             # We have to find and attach a separate set of flux cal
             # data for each of the fixed slits in the input
@@ -130,6 +129,36 @@ class DataSet(object):
 
                 if conv_factor is None:
                     log.warning('Did not find a match in the ref file')
+
+            if conv_factor is not None:
+                return float(conv_factor)
+            else:
+                return 0.0
+
+        # Bright object fixed-slit exposures use a CubeModel
+        elif self.exptype == 'NRS_BRIGHTOBJ':
+
+            # Bright object always uses S1600A1 slit
+            slit_name = 'S1600A1'
+            log.info('Working on slit %s' % slit_name)
+
+            # Loop through reference table to find matching row
+            for tabdata in ftab.phot_table:
+                ref_filter = tabdata['filter'].strip().upper()
+                ref_grating = tabdata['grating'].strip().upper()
+                ref_slit = tabdata['slit'].strip().upper()
+                log.debug(' Ref table data: %s %s %s' %
+                          (ref_filter, ref_grating, ref_slit))
+
+                # Match on filter, grating, and slit name
+                if (self.filter == ref_filter and
+                    grating == ref_grating and
+                    slit_name == ref_slit):
+                    conv_factor = self.photom_io(tabdata)
+                    break
+
+            if conv_factor is None:
+                log.warning('Did not find a match in the ref file')
 
             if conv_factor is not None:
                 return float(conv_factor)
