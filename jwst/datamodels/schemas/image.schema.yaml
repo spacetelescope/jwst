@@ -43,15 +43,15 @@ allOf:
       ndim: 2
       default: 0.0
       datatype: float32
-    var_p2d:
+    var_poisson:
       title: variance due to poisson noise 
-      fits_hdu: VAR_P2D
+      fits_hdu: VAR_POISSON
       ndim: 2
       default: 0.0
       datatype: float32
-    var_r2d:
+    var_rnoise:
       title: variance due to read noise 
-      fits_hdu: VAR_R2D
+      fits_hdu: VAR_RNOISE
       ndim: 2
       default: 0.0
       datatype: float32

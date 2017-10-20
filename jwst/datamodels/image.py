@@ -34,7 +34,7 @@ class ImageModel(model_base.DataModel):
 
     def __init__(self, init=None, data=None, dq=None, err=None, relsens=None,
                  relsens2d=None, zeroframe=None, area=None, wavelength=None, 
-                 var_p2d, var_r2d, **kwargs):
+                 var_p2d=None, var_r2d=None, **kwargs):
         super(ImageModel, self).__init__(init=init, **kwargs)
 
         if data is not None:
