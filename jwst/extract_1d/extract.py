@@ -1009,7 +1009,7 @@ class ExtractModel(object):
         return (ra, dec, wavelength, net, background)
 
 
-    def __del__(self):
+    def reset(self):
         self.dispaxis = None
         self.xstart = None
         self.xstop = None
