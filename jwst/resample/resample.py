@@ -239,7 +239,7 @@ def _buildMask(dqarr, bitvalue):
 def build_driz_weight(model, wht_type=None, good_bits=None):
     """ Create input weighting image based on user inputs
     """
-    
+
     if good_bits is not None and good_bits < 0: good_bits = None
     dqmask = _buildMask(model.dq, good_bits)
     exptime = model.meta.exposure.exposure_time

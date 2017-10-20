@@ -287,7 +287,7 @@ def get_object_info(catalog_name=''):
 
     Notes
     -----
-    
+
     """
     objects = []
     catalog = QTable.read(catalog_name, format='ascii.ecsv')
@@ -338,7 +338,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     in order to find the "direct image" pixel location, which is
     also in a detector pixel coordinate frame. This "direct image"
     location can then be sent through the trace polynomials to find
-    the spectral location on the grism image for that wavelength and order. 
+    the spectral location on the grism image for that wavelength and order.
 
 
     Parameters
@@ -363,7 +363,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     for each object. The name of the catalog has been stored in the input models meta
     information under the source_catalog key.
 
-    It's left to the calling routine to cut the bounding boxes at the extent of the 
+    It's left to the calling routine to cut the bounding boxes at the extent of the
     detector (for example, extract 2d would only extract the on-detector portion of
     the bounding box)
     """
@@ -376,7 +376,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
         filter_name = input_model.meta.instrument.pupil
     else:
         raise ValueError("Unsupported instrument specified in input_model")
-        
+
     # get the array extent to exclude boxes not contained on the detector
     xsize = input_model.meta.subarray.xsize
     ysize = input_model.meta.subarray.ysize
@@ -395,11 +395,11 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
         wrange = f.wrange
         wrange_selector = f.wrange_selector
         orders = f.order
-    
+
     # All objects in the catalog will use the same filter for translation
     # that filter is the one that was used in front of the grism
     fselect = wrange_selector.index(filter_name)
-    
+
     grism_objects = []  # the return list of GrismObjects
     for obj in skyobject_list:
         if obj.abmag < mmag_extract:
@@ -439,7 +439,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                 exclude = True
             if (0 >= (xmin and xmax) <= xsize):
                 exclude = True
-            
+
 
             if not exclude:
                 grism_objects.append(GrismObject(sid=obj.sid,
@@ -471,3 +471,36 @@ def get_num_msa_open_shutters(shutter_state):
     if 'x' in shutter_state:
         num += 1
     return num
+
+
+def update_s_region(model):
+    """
+    Update the ``S_REGION`` keyword usiong ``WCS.footprint``.
+
+    """
+    bbox = None
+    def _bbox_from_shape(model):
+        shape = model.data.shape
+        bbox = ((0, shape[1]), (0, shape[0]))
+        return bbox
+    try:
+        bbox = model.meta.wcs.bounding_box
+    except NotImplementedError:
+        bbox = _bbox_from_shape(model)
+
+    if bbox is None:
+        bbox = _bbox_from_shape(model)
+
+    footprint = model.meta.wcs.footprint(bbox, center=True).T
+    s_region = (
+        "POLYGON ICRS "
+        " {0} {1}"
+        " {2} {3}"
+        " {4} {5}"
+        " {6} {7}"
+        " {0} {1}".format(*footprint.flatten()))
+    if "nan" in s_region:
+        # do not update s_region if there are NaNs.
+        log.info("There NaNs in s_region")
+    else:
+        model.meta.wcsinfo.s_region = s_region
