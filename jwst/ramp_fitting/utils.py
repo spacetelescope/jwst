@@ -372,7 +372,6 @@ def alloc_int(n_int, imshape):
     dq_int = np.zeros((n_int,) + imshape, dtype=np.uint32)
     m_by_var_int = np.zeros((n_int,) + imshape, dtype=np.float64)
     inv_var_int = np.zeros((n_int,) + imshape, dtype=np.float64)
-
     var_p_int = np.zeros((n_int,) + imshape, dtype=np.float64)
     var_r_int = np.zeros((n_int,) + imshape, dtype=np.float64)
 

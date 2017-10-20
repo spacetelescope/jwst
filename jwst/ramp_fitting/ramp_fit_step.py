@@ -13,7 +13,6 @@ log.setLevel(logging.DEBUG)
 
 
 class RampFitStep (Step):
-
     """
     This step fits a straight line to the value of counts vs. time to
     determine the mean count rate for each pixel.

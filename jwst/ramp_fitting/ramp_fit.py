@@ -10,7 +10,7 @@
 #                determined from the input data quality arrays.
 #
 # Note:
-#  In this module, comments on the 'first read','second read', etc are 1-based.
+# In this module, comments on the 'first read','second read', etc are 1-based.
 
 from __future__ import division
 import time
@@ -93,12 +93,13 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                                 readnoise_model, gain_model)
         opt_model = None
     else:
-        new_model, int_model, opt_model = \
+        new_model, int_model, opt_model, var_p_2d_all, var_r_2d_all = \
                ols_ramp_fit(model, buffsize, save_opt, readnoise_model, \
                gain_model, weighting)
         gls_opt_model = None
 
-    return new_model, int_model, opt_model, gls_opt_model
+    return new_model, int_model, opt_model, gls_opt_model, \
+          var_p_2d_all, var_r_2d_all
 
 
 def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
@@ -184,8 +185,8 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     # For multiple-integration datasets, will output integration-specific
     #    results to separate file named <basename> + '_integ.fits'
-    slope_int, err_int, dq_int, m_by_var_int, inv_var_int, \
-            var_p_int, var_r_int = utils.alloc_int(n_int, imshape)
+    slope_int, err_int, dq_int, m_by_var_int, inv_var_int, var_p_int, var_r_int = \
+             utils.alloc_int(n_int, imshape)
 
     # Calculate effective integration time (once EFFINTIM has been populated
     #   and accessible, will use that instead), and other keywords that will
@@ -375,13 +376,14 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
 
     # Create new model...
     new_model = datamodels.ImageModel(data=c_rates.astype(np.float32),
-            dq=final_pixeldq.astype(np.int32), 
-            var_p2d=var_p_2d_all.astype(np.float32),
-            var_r2d=var_r_2d_all.astype(np.float32), err=err_2d_all.copy())
+                                   dq=final_pixeldq.astype(np.uint32),
+                                   err=err_2d_all.copy())
 
     new_model.update(model)  # ... and add all keys from input
 
-    return new_model, int_model, opt_model
+    return new_model, int_model, opt_model, \
+            var_p_2d_all, var_r_2d_all   # change names
+
 
 def gls_ramp_fit(model,
                  buffsize, save_opt,
