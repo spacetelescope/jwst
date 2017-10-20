@@ -29,6 +29,7 @@ class CubeModel(model_base.DataModel):
     def __init__(self, init=None, data=None, dq=None, err=None, zeroframe=None,
                  relsens=None, area=None, wavelength=None, var_p_int=None, 
                  var_r_int=None, **kwargs):
+      
         super(CubeModel, self).__init__(init=init, **kwargs)
 
         if data is not None:

@@ -38,6 +38,12 @@ class SourceCatalogStep(Step):
             catalog = source_catalog.make_source_catalog(
                 model, kernel_fwhm, kernel_xsize, kernel_ysize, snr_threshold,
                 npixels, deblend=deblend)
+
+            if len(catalog) == 0:
+                self.log.info('No sources were found.  Source catalog will '
+                              'not be written.')
+                return
+
             self.log.info('Detected {0} sources'.format(len(catalog)))
 
             old_suffixes = ['i2d']

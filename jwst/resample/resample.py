@@ -192,10 +192,10 @@ class ResampleData(object):
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
 
-                # apply sky subtraction 
+                # apply sky subtraction
                 if 'skybg' in img.meta._instance:
                     img.data -= img.meta.skybg
-                    
+
                 outwcs_pscale = output_model.meta.wcsinfo.cdelt1
                 wcslin_pscale = img.meta.wcsinfo.cdelt1
 
@@ -226,7 +226,8 @@ class ResampleData(object):
 
 
 def _buildMask(dqarr, bitvalue):
-    """ Builds a bit-mask from an input DQ array and a bitvalue flag"""
+    """ Build a bit-mask from an input DQ array and a bitvalue flag
+    """
 
     bitvalue = bitmask.interpret_bits_value(bitvalue)
 
@@ -237,8 +238,8 @@ def _buildMask(dqarr, bitvalue):
 
 def build_driz_weight(model, wht_type=None, good_bits=None):
     """ Create input weighting image based on user inputs
-
     """
+
     if good_bits is not None and good_bits < 0: good_bits = None
     dqmask = _buildMask(model.dq, good_bits)
     exptime = model.meta.exposure.exposure_time

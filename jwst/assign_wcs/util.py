@@ -10,7 +10,7 @@ import numpy as np
 from astropy.utils.misc import isiterable
 from astropy.io import fits
 from astropy.modeling import models as astmodels
-from astropy.table import Table
+from astropy.table import QTable
 
 
 from gwcs import WCS
@@ -287,30 +287,10 @@ def get_object_info(catalog_name=''):
 
     Notes
     -----
-    In [360]: !more jw96090_t001_nircam_f322w2_mosaic_cat.ecsv
-    # %ECSV 0.9
-    # ---
-    # datatype:
-    # - {name: id, datatype: int64}
-    # - {name: xcentroid, unit: pix, datatype: float64}
-    # - {name: ycentroid, unit: pix, datatype: float64}
-    # - {name: ra_icrs_centroid, unit: deg, datatype: float64}
-    # - {name: dec_icrs_centroid, unit: deg, datatype: float64}
-    # - {name: area, unit: pix2, datatype: float64}
-    # - {name: source_sum, datatype: float32}
-    # - {name: source_sum_err, datatype: float32}
-    # - {name: semimajor_axis_sigma, unit: pix, datatype: float64}
-    # - {name: semiminor_axis_sigma, unit: pix, datatype: float64}
-    # - {name: orientation, unit: deg, datatype: float64}
-    # - {name: orientation_sky, unit: deg, datatype: float64}
-    # - {name: abmag, datatype: float64}
-    # - {name: abmag_error, datatype: float32}
-    id xcentroid ycentroid ra_icrs_centroid dec_icrs_centroid area source_sum source_sum_err semimajor_axis_sigma semiminor_axis_sigma orientation orientation_sky abmag abmag_error
-    1 1478.79057591 8.20729790816 150.158383692 2.30276751202 77.0 20.0082 0.167517 3.25911081809 2.05169541295 -84.7150877614 185.284912239 0.0 0.00909026
 
     """
     objects = []
-    catalog = Table.read(catalog_name, format='ascii.ecsv')
+    catalog = QTable.read(catalog_name, format='ascii.ecsv')
 
     # validate that the expected columns are there
     # id is just a bad name for a param, but it's used in the catalog
@@ -324,42 +304,51 @@ def get_object_info(catalog_name=''):
             raise KeyError("Missing required columns in source catalog ({}): {}"
                            .format(catalog_name, difference))
     except AttributeError as e:
-        print("Problem validating object catalog column {0:s}: {1}"
+        print("Problem validating object catalog columns {0:s}: {1}"
               .format(catalog_name, e))
+
+    # The columns are named sky_bbox_ll, sky_bbox_ul, sky_bbox_lr, and sky_bbox_ur, each of
+    # which is a SkyCoord (i.e. RA & Dec & frame) at one corner of the minimal bounding box.
+    # There will also be a sky_bbox property as a 4-tuple of SkyCoord, but that is not
+    # serializable (hence, the four separate columns). This is not yet merged in photutils
+    # -- I discovered some bugs with SkyCoord and serialization, some of which have just been
+    # fixed in astropy.
 
     for row in catalog:
         objects.append(SkyObject(sid=row['id'],
                                  xcentroid=row['xcentroid'],
                                  ycentroid=row['ycentroid'],
-                                 ra_icrs_centroid=row['ra_icrs_centroid'],
-                                 dec_icrs_centroid=row['dec_icrs_centroid'],
+                                 icrs_centroid=row['icrs_centroid'],
                                  abmag=row['abmag'],
                                  abmag_error=row['abmag_error'],
-                                 ramin=row['ramin'],
-                                 decmin=row['decmin'],
-                                 ramax=row['ramax'],
-                                 decmax=row['decmax'],
+                                 sky_bbox_ll=row['sky_bbox_ll'],
+                                 sky_bbox_lr=row['sky_bbox_lr'],
+                                 sky_bbox_ul=row['sky_bbox_ul'],
+                                 sky_bbox_ur=row['sky_bbox_ur'],
                                  )
                        )
     return objects
 
 
-def create_grism_objects(input_model, reference_files, mmag_extract=99.0):
-    """Create bounding boxes for each sky object
+def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
+    """Create bounding boxes for each object in the catalog
 
-    The detector coordinates in the grism image are first related
-    to the trace. They need to go through the trace polynomials
+    The sky coordinates in the catalog image are first related
+    to the grism image. They need to go through the WCS object
     in order to find the "direct image" pixel location, which is
-    also in a detector pixel coordinate frame.
+    also in a detector pixel coordinate frame. This "direct image"
+    location can then be sent through the trace polynomials to find
+    the spectral location on the grism image for that wavelength and order.
+
 
     Parameters
     ----------
     input_model : `jwst.datamodels.ImagingModel`
-        Data model.
+        Data model which holds the grism image
     reference_files : dict
         Dictionary of reference files
     mmag_extract : float
-        The faintest magnitude to extract
+        The faintest magnitude to extract from the catalog
 
 
     Returns
@@ -367,12 +356,32 @@ def create_grism_objects(input_model, reference_files, mmag_extract=99.0):
     A list of GrismObject(s) for every source in the catalog
     Each grism object contains information about it's
     spectral extent
+
+    Notes
+    -----
+    The wavelengthrange reference file is used to govern the extent of the bounding box
+    for each object. The name of the catalog has been stored in the input models meta
+    information under the source_catalog key.
+
+    It's left to the calling routine to cut the bounding boxes at the extent of the
+    detector (for example, extract 2d would only extract the on-detector portion of
+    the bounding box)
     """
 
-    # get the filter that was used
-    filter_name = input_model.meta.instrument.filter
+    # get the filter that was used with the observation
+    instr_name = input_model.meta.instrument.name
+    if instr_name == 'NIRCAM':
+        filter_name = input_model.meta.instrument.filter
+    elif instr_name == 'NIRISS':
+        filter_name = input_model.meta.instrument.pupil
+    else:
+        raise ValueError("Unsupported instrument specified in input_model")
 
-    # get the catalog objects
+    # get the array extent to exclude boxes not contained on the detector
+    xsize = input_model.meta.subarray.xsize
+    ysize = input_model.meta.subarray.ysize
+
+    # extract the catalog objects
     skyobject_list = get_object_info(input_model.meta.source_catalog.filename)
 
     # get the imaging transform to record the center of the object in the image
@@ -387,40 +396,111 @@ def create_grism_objects(input_model, reference_files, mmag_extract=99.0):
         wrange_selector = f.wrange_selector
         orders = f.order
 
+    # All objects in the catalog will use the same filter for translation
+    # that filter is the one that was used in front of the grism
+    fselect = wrange_selector.index(filter_name)
 
-    grism_objects = []
+    grism_objects = []  # the return list of GrismObjects
     for obj in skyobject_list:
         if obj.abmag < mmag_extract:
+            # could add logic to ignore object if too far off image,
+
             # save the image frame center of the object
-            xcenter, ycenter, _, _ = sky_to_detector(obj.ra_icrs_centroid,
-                                                     obj.dec_icrs_centroid,
+            # takes in ra, dec, wavelength, order but wave and order
+            # don't get used until the detector->grism_detector transform
+            xcenter, ycenter, _, _ = sky_to_detector(obj.icrs_centroid.ra.value,
+                                                     obj.icrs_centroid.dec.value,
                                                      1, 1)
 
-            # could add logic to ignore object if too far off image,
             order_bounding = {}
             for oidx, order in enumerate(orders):
                 # The orders of the bounding box in the non-dispersed image
                 # drive the extraction extent. The location of the min and
                 # max wavelengths for each order are used to get the location
                 # of the +/- sides of the bounding box in the grism image
-                fselect = wrange_selector.index(filter_name)
                 lmin, lmax = wrange[oidx][fselect]
-                xmin, ymin, _, _ = sky_to_grism(obj.ramin, obj.decmin, lmin, order)
-                xmax, ymax, _, _ = sky_to_grism(obj.ramax, obj.decmax, lmax, order)
-                order_bounding[order] = ((xmin, xmax), (ymin, ymax))
+                xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value, obj.sky_bbox_ll.dec.value, lmin, order)
+                xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value, obj.sky_bbox_ur.dec.value, lmax, order)
+                order_bounding[order] = ((ymin, ymax), (xmin, xmax))
 
             # add lmin and lmax used for the orders here?
             # input_model.meta.wcsinfo.waverange_start keys covers the
             # full range of all the orders
-            grism_objects.append(GrismObject(sid=obj.sid,
-                                             order_bounding=order_bounding,
-                                             ra_icrs_centroid=obj.ra_icrs_centroid,
-                                             dec_icrs_centroid=obj.dec_icrs_centroid,
-                                             xcenter=xcenter,
-                                             ycenter=ycenter,
-                                             ramin=obj.ramin,
-                                             decmin=obj.decmin,
-                                             ramax=obj.ramax,
-                                             decmax=obj.decmax))
+
+            # don't add objects which are entirely off the detector
+            # this could also live in extrac2d
+            # possible improvement is to add a member to GrismObject which
+            # marks off-detector objects which are near enough to cause
+            # spectra to be observed for later contamination removal, the
+            # rest of the objects can then be removed from the list which are
+            # much futher away
+            exclude = False
+            if (0 >= (ymin and ymax) <= ysize):
+                exclude = True
+            if (0 >= (xmin and xmax) <= xsize):
+                exclude = True
+
+
+            if not exclude:
+                grism_objects.append(GrismObject(sid=obj.sid,
+                                                 order_bounding=order_bounding,
+                                                 icrs_centroid=obj.icrs_centroid,
+                                                 xcenter=xcenter,
+                                                 ycenter=ycenter,
+                                                 sky_bbox_ll=obj.sky_bbox_ll,
+                                                 sky_bbox_lr=obj.sky_bbox_lr,
+                                                 sky_bbox_ul=obj.sky_bbox_ul,
+                                                 sky_bbox_ur=obj.sky_bbox_ur))
+            else:
+                log.info("Excluding off-image object: {}".format(obj.sid))
 
     return grism_objects
+
+
+def get_num_msa_open_shutters(shutter_state):
+    """
+    Return the number of open shutters in a slitlet.
+
+    Parameters
+    ----------
+    shutter_state : str
+        ``Slit.shutter_state`` attribute - a combination of
+        ``1`` - open shutter, ``0`` - closed shutter, ``x`` - main shutter.
+    """
+    num = shutter_state.count('1')
+    if 'x' in shutter_state:
+        num += 1
+    return num
+
+
+def update_s_region(model):
+    """
+    Update the ``S_REGION`` keyword usiong ``WCS.footprint``.
+
+    """
+    bbox = None
+    def _bbox_from_shape(model):
+        shape = model.data.shape
+        bbox = ((0, shape[1]), (0, shape[0]))
+        return bbox
+    try:
+        bbox = model.meta.wcs.bounding_box
+    except NotImplementedError:
+        bbox = _bbox_from_shape(model)
+
+    if bbox is None:
+        bbox = _bbox_from_shape(model)
+
+    footprint = model.meta.wcs.footprint(bbox, center=True).T
+    s_region = (
+        "POLYGON ICRS "
+        " {0} {1}"
+        " {2} {3}"
+        " {4} {5}"
+        " {6} {7}"
+        " {0} {1}".format(*footprint.flatten()))
+    if "nan" in s_region:
+        # do not update s_region if there are NaNs.
+        log.info("There NaNs in s_region")
+    else:
+        model.meta.wcsinfo.s_region = s_region

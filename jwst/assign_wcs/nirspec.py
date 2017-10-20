@@ -325,7 +325,7 @@ def get_msa_metadata(input_model):
     Get the MSA metadata file (MSAMTFL) and the msa metadata id (MSAMETID).
 
     """
-    msa_config = input_model.meta.instrument.msa_configuration_file
+    msa_config = input_model.meta.instrument.msa_metadata_file
     if msa_config is None:
         message = "MSA metadata file is not available (keyword MSAMETFL)."
         log.critical(message)
@@ -917,8 +917,8 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.5, slit_ym
     x0 = max(0, x_range.min() - 1 - 10)
     x1 = min(2047, x_range.max() - 1 + 10)
     # add 2 px margin
-    y0 = y_range.min() - 1 - 2
-    y1 = y_range.max() - 1 + 2
+    y0 = max(0, y_range.min() - 1 - 2)
+    y1 = min(2047, y_range.max() - 1 + 2)
 
     bounding_box = ((x0, x1), (y0, y1))
     return bounding_box

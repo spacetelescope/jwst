@@ -13,9 +13,9 @@ anyOf:
   - $ref: ../asdf/transform/transform-1.1.0
   - type: object
     properties:
-      fwcpos_ref:
+      theta:
         description: |
-          NIRISS filter wheel reference position in degrees
+          NIRISS filter wheel differential position in degrees
         type: number
       xmodels:
         description: |
@@ -52,4 +52,4 @@ anyOf:
         items:
           minItems: 1
           maxItems: 1
-    required: [lmodels, xmodels, ymodels, fwcpos_ref, orders]
+    required: [lmodels, xmodels, ymodels, theta, orders]

@@ -122,7 +122,7 @@ def fitswcs_transform_from_model(wcsinfo):
     Parameters
     ----------
     wcsinfo : dict-like
-        `~jwst.meta.wcsinfo`` structure.
+        ``~jwst.meta.wcsinfo`` structure.
 
     Return
     ------
@@ -131,10 +131,12 @@ def fitswcs_transform_from_model(wcsinfo):
 
     """
     spatial_axes, spectral_axes, unknown = gwutils.get_axes(wcsinfo)
-    sp_axis = spectral_axes[0]
+    #sp_axis = spectral_axes[0]
 
     transform = gwutils.make_fitswcs_transform(wcsinfo)
-    if wcsinfo['WCSAXES'] == 3:
+    #if wcsinfo['WCSAXES'] == 3:
+    if spectral_axes:
+        sp_axis = spectral_axes[0]
         # Subtract one from CRPIX which is 1-based.
         spectral_transform = astmodels.Shift(-(wcsinfo['CRPIX'][sp_axis] - 1)) | \
                            astmodels.Scale(wcsinfo['CDELT'][sp_axis]) | \

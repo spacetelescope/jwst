@@ -20,17 +20,17 @@ def blendfitsdata(input_list, output_model):
     from the list of FITS objects generated from the input_list of filenames.
     """
     new_hdrs, new_table = blendheaders.get_blended_headers(input_list)
-    
+
     # Now merge the keyword values from new_hdrs into the metatdata for the
     # output datamodel
-    # 
-    # start by building dict which maps all FITS keywords in schema to their 
+    #
+    # start by building dict which maps all FITS keywords in schema to their
     # attribute in the schema
     fits_dict = schema.build_fits_dict(output_model.schema)
     # Need to insure that output_model does not already have an instance
     # of hdrtab from previous processing, an instance that would be
     # incompatible with the new table generated now...
-    if hasattr(output_model,'hdrtab'):
+    if hasattr(output_model, 'hdrtab'):
         # If found, remove it to be replaced by new instance
         del output_model.hdrtab
     # Now assign values from new_hdrs to output_model.meta using fits_dict map
@@ -44,17 +44,17 @@ def blendfitsdata(input_list, output_model):
 
     output_model.add_schema_entry('hdrtab', new_schema)
     output_model.hdrtab = fits_support.from_fits_hdu(new_table, new_schema)
-        
+
 
 def blendmetadata(input_models, output_model):
     final_rules = build_meta_rules(input_models)
 
     # Apply rules to each set of input headers
     new_headers = []
-    i=0
+    i = 0
     # apply rules to PRIMARY headers separately, since there is only
     # 1 PRIMARY header per image, yet many extension headers
-    newphdr,newtab = final_rules.apply(phdrlist)
+    newphdr, newtab = final_rules.apply(phdrlist)
     final_rules.add_rules_kws(newphdr) # Adds HISTORY comments on rules used
     new_headers.append(newphdr)
     for hdrs in hdrlist[1:]:
@@ -79,7 +79,7 @@ def blendmetadata(input_models, output_model):
     # Need to insure that output_model does not already have an instance
     # of hdrtab from previous processing, an instance that would be
     # incompatible with the new table generated now...
-    if hasattr(output_model,'hdrtab'):
+    if hasattr(output_model, 'hdrtab'):
         # If found, remove it to be replaced by new instance
         del output_model.hdrtab
 
@@ -134,10 +134,10 @@ def build_meta_rules(input_models, rules_file=None):
 def build_tab_schema(new_table):
     """
     Return new schema definition that describes the input table.
-    
+
     """
     hdrtab = OrderedDict()
-    hdrtab['title']='Combined header table'
+    hdrtab['title'] = 'Combined header table'
     hdrtab['fits_hdu'] = 'HDRTAB'
     datatype = []
     for col in new_table.columns:
@@ -147,8 +147,8 @@ def build_tab_schema(new_table):
         c['name'] = cname
         c['datatype'] = ctype
         datatype.append(c)
-    hdrtab['datatype']=datatype
-    
+    hdrtab['datatype'] = datatype
+
     return hdrtab
 
 
@@ -158,7 +158,7 @@ def convert_dtype(value):
     """
     if 'S' in value:
         # working with a string description
-        str_len = int(value[value.find('S')+1:])
+        str_len = int(value[value.find('S') + 1:])
         new_dtype = [u'ascii', str_len] ## CHANGED
     else:
         new_dtype = unicode(str(value))

@@ -4,17 +4,17 @@ from __future__ import (division, print_function, unicode_literals,
 from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import resample
+from .. assign_wcs.util import update_s_region
 
 
 class ResampleStep(Step):
     """
-    ResampleStep: Uses the drizzle process to resample (geometric correction)
-    a single 2D image or resample and combine a set of 2D images specified as
-    an association.
+    ResampleStep: Resample input data onto a regular grid using the
+    drizzle algorithm.
 
     Parameters
     -----------
-    input : str or model
+    input : DataModel or Association
         Single filename for either a single image or an association table.
     """
 
@@ -31,45 +31,36 @@ class ResampleStep(Step):
 
     def process(self, input):
 
-        input_models = datamodels.open(input)
-        # If single input, insert into a ModelContainer
-        if input_models.__class__ is not datamodels.ModelContainer:
-            s = datamodels.ModelContainer()
-            s.append(input_models)
-            s.assign_group_ids()
-            s.meta.resample.output = s.group_names[0].replace('_resamp', '_drz')
+        input = datamodels.open(input)
 
-            self.input_models = s
+        # If single input, wrap in a ModelContainer
+        if not isinstance(input, datamodels.ModelContainer):
+            input_models = datamodels.ModelContainer([input])
+            input_models.meta.resample.output = input.meta.filename
+            self.blendheaders = False
         else:
-            self.input_models = input_models
+            input_models = input
 
-        # identify what reference file has been associated with these inputs
-        try:
-            self.ref_filename = self.get_reference_file(self.input_models[0],
-                self.reference_file_types[0])
-            self.log.info('{} reffile is {}'.format(self.reference_file_types[0],
-                self.ref_filename))
-        except:
-            self.log.error('{} reffile is not found.'.format(
-                self.reference_file_types[0]))
+        for reftype in self.reference_file_types:
+            ref_filename = self.get_reference_file(input_models[0], reftype)
 
         # Call the resampling routine
-        resamp = resample.ResampleData(self.input_models,
-            ref_filename=self.ref_filename,
+        resamp = resample.ResampleData(input_models, ref_filename=ref_filename,
             single=self.single, wht_type=self.wht_type, pixfrac=self.pixfrac,
             kernel=self.kernel, fillval=self.fillval, good_bits=self.good_bits,
             blendheaders=self.blendheaders)
         resamp.do_drizzle()
 
         if len(resamp.output_models) == 1:
-            output_model = resamp.output_models[0]
+            result = resamp.output_models[0]
+            result.meta.cal_step.resample = "COMPLETE"
+            update_s_region(result)
         else:
-            output_model = resamp.output_models
-
-
-        output_model.meta.cal_step.resample = "COMPLETE"
-
-        return output_model
+            result = resamp.output_models
+            for model in result:
+                model.meta.cal_step.resample = "COMPLETE"
+                update_s_region(model)
+        return result
 
 
 if __name__ == '__main__':

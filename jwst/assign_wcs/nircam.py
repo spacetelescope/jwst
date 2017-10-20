@@ -68,6 +68,95 @@ def imaging_distortion(input_model, reference_files):
     return transform
 
 
+
+def tsgrism(input_model, reference_files):
+    """Create WCS pipeline for a NIRCAM Time Series Grism observation.
+
+    Parameters
+    ----------
+    input_model: jwst.datamodels.ImagingModel
+        The input datamodel, derived from datamodels
+    reference_files: dict
+        Dictionary {reftype: reference file name}.
+
+    Notes
+    -----
+    The TSGRISM mode should function effectively like the grism mode
+    except that subarrays will be allowed. Since the transform models
+    depend on the original full frame coordinates of the observation,
+    the regular grism transforms will need to be shifted to the full
+    frame coordinates around the trace transform.
+
+    TSGRISM is only slated to work with GRISMR and Mod A
+    """
+
+    # The input is the grism image
+    if not isinstance(input_model, ImageModel):
+        raise TypeError('The input data model must be an ImageModel.')
+
+    # make sure this is a grism image
+    if "NRC_TSGRISM" != input_model.meta.exposure.type:
+        raise TypeError('The input exposure is not a NIRCAM time series grism')
+
+    if input_model.meta.instrument.module  != "A":
+        raise ValueError('TSGRISM mode only supports module A')
+
+    if input_model.meta.instrument.pupil != "GRISMR":
+        raise ValueError('TSGRIM mode only supports GRISMR')
+
+
+    gdetector = cf.Frame2D(name='grism_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+    detector = cf.Frame2D(name='full_detector', axes_order=(0, 1), unit=(u.pix, u.pix))
+    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), unit=(u.deg, u.deg))
+    world = cf.CelestialFrame(reference_frame=coord.ICRS(), name='world')
+
+    # get the shift to full frame coordinates 
+    subarray2full = subarray_transform(input_model)
+
+    
+    # translate the x,y detector-in to x,y detector out coordinates
+    # Get the disperser parameters which are defined as a model for each
+    # spectral order
+    with NIRCAMGrismModel(reference_files['specwcs']) as f:
+        displ = f.displ
+        dispx = f.dispx
+        dispy = f.dispy
+        invdispx = f.invdispx
+        invdispy = f.invdispy
+        invdispl = f.invdispl
+        orders = f.orders
+
+    # now create the appropriate model for the grism[R/C]
+    if input_model.meta.instrument.pupil == "GRISMR":
+        det2det = NIRCAMForwardRowGrismDispersion(orders,
+                                                  lmodels=displ,
+                                                  xmodels=invdispx,
+                                                  ymodels=dispy)
+
+    else:
+        raise ValueError('TSGRISM mode only supports GRISMR')
+
+    det2det.inverse = NIRCAMBackwardGrismDispersion(orders,
+                                                    lmodels=invdispl,
+                                                    xmodels=dispx,
+                                                    ymodels=dispy)
+
+
+    # input into the forward transform is x,y,x0,y0,order
+    # 
+    sub2direct = (subarray2full & Identity(3)) | det2det
+    imdistortion = imaging_distortion(input_model, reference_files)
+    distortion = imdistortion & Identity(2)
+    tel2sky = pointing.v23tosky(input_model) & Identity(2)
+    
+    pipeline = [(gdetector, sub2direct),
+                (detector, distortion),
+                (v2v3, tel2sky),
+                (world, None)]
+
+
+    return pipeline
+
 def grism(input_model, reference_files):
     """
     Create the WCS pipeline for a NIRCAM grism observation.
@@ -150,6 +239,7 @@ def grism(input_model, reference_files):
     if "NRC_GRISM" not in input_model.meta.exposure.type:
             raise TypeError('The input exposure is not a NIRCAM grism')
 
+
     # Create the empty detector as a 2D coordinate frame in pixel units
     gdetector = cf.Frame2D(name='grism_detector',
                            axes_order=(0, 1),
@@ -219,7 +309,7 @@ exp_type2transform = {'nrc_image': imaging,
                       'nrc_coron': imaging,
                       'nrc_focus': imaging,
                       'nrc_tsimage': imaging,
-                      'nrc_tsgrism': not_implemented_mode,
+                      'nrc_tsgrism': tsgrism,
                       'nrc_led': not_implemented_mode,
                       'nrc_dark': not_implemented_mode,
                       'nrc_flat': not_implemented_mode,

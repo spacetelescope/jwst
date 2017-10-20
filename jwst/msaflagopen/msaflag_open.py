@@ -158,7 +158,7 @@ def boundingbox_to_indices(data_model, bounding_box):
 def wcs_to_dq(wcs_array, FLAG):
     #
     # Convert one of the arrays in the wcs_array tuple to a DQ array,
-    # which has zeros everywhere the wcs array has the value NaN, and 
+    # which has zeros everywhere the wcs array has the value NaN, and
     # has the value FLAG everywhere the wcs array is not NaN
     dq = np.zeros((wcs_array[0].shape), dtype=np.uint32)
     non_nan = np.where(~np.isnan(wcs_array[0]))
@@ -186,23 +186,24 @@ def get_failed_open_shutters(shutter_refname):
 def create_slitlets(input_model, shutter_refname):
     """
     A slitlet looks like this:
-    
+
     slitlets : list
         A list of slitlets. Each slitlet is a named tuple with
-        ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax", "quadrant", "source_id", "nshutters")
+        ("name", "shutter_id", "xcen", "ycen", "ymin", "ymax", "quadrant",
+        "source_id", "shutter_state")
 
     A slit is:
-    
+
     Slit = namedtuple('Slit', ["name", "shutter_id", "xcen", "ycen",
-                           "ymin", "ymax", "quadrant", "source_id", "nshutters",
+                           "ymin", "ymax", "quadrant", "source_id", "shutter_state",
                            "source_name", "source_alias", "stellarity",
                            "source_xpos", "source_ypos"])
     "shutter_id" is an integer that uniquely defines the shutter in the quadrant, it is calculated
-    from the x and y using the function 
-    Slit.__new__.__defaults__= ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, 0, "", "", 0.0, 0.0, 0.0)
+    from the x and y using the function
+    Slit.__new__.__defaults__= ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "", 0.0, 0.0, 0.0)
 
     The only ones that matter are "name" (must be unique), xcen, ycen, quadrant (from msaoper
-    file), ymin, ymax (should be -0.5, 0.5), nshutters (should be 1) 
+    file), ymin, ymax (should be -0.5, 0.5), nshutters (should be 1)
     """
 
     failedopenlist = get_failed_open_shutters(shutter_refname)

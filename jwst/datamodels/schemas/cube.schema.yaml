@@ -45,4 +45,10 @@ allOf:
       datatype: float32
     relsens:
       $ref: relsens.schema.yaml
+    wavelength:
+      title: Wavelength array
+      fits_hdu: WAVELENGTH
+      ndim: 2
+      default: 0.0
+      datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

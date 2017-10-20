@@ -425,3 +425,30 @@ class Asn_AMI(
 
         self.data['asn_type'] = 'ami3'
         super(Asn_AMI, self)._init_hook(item)
+
+
+class Asn_WFSS(
+        AsnMixin_Spectrum,
+        AsnMixin_OpticalPath,
+        AsnMixin_Target,
+        AsnMixin_Base
+):
+    """WFSS/Grism modes"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.add_constraints({
+            'exp_type': {
+                'value': 'nis_wfss',
+                'inputs': ['exp_type']
+            },
+            'opt_elem2': {
+                'value': 'gr150r|gr150c',
+                'inputs': ['grating'],
+                'force_unique': False,
+            },
+        })
+
+        # Check and continue initialization.
+        super(Asn_WFSS, self).__init__(*args, **kwargs)

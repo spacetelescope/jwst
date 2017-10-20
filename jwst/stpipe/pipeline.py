@@ -79,6 +79,37 @@ class Pipeline(Step):
 
             setattr(self, key, new_step)
 
+        self.reference_file_types = self._collect_active_reftypes()
+
+    def _collect_active_reftypes(self):
+        """Collect the list of all reftypes for child Steps that are not skipped.
+        Overridden reftypes are included but handled normally later by the Pipeline 
+        version of the _get_ref_override() method defined below.
+        """
+        return [reftype for step in self._unskipped_steps
+                for reftype in step.reference_file_types]
+
+    @property 
+    def _unskipped_steps(self):
+        """Return a list of the unskipped Step objects launched by `self`."""
+        return [getattr(self, name) for name in self.step_defs.keys()
+                if not getattr(self, name).skip]
+
+    def _get_ref_override(self, reference_file_type):
+        """Return any override for `reference_file_type` for any of the steps in
+        Pipeline `self`.  OVERRIDES Step.
+        
+        Returns
+        -------
+        override_filepath or None.
+
+        """
+        for step in self._unskipped_steps:
+            override = step._get_ref_override(reference_file_type)
+            if override is not None:
+                return override
+        return None
+            
     @classmethod
     def merge_config(cls, config, config_file):
         steps = config.get('steps', {})
@@ -137,9 +168,6 @@ class Pipeline(Step):
         try:
             with datamodels.open(input_file) as model:
                 super(Pipeline, self)._precache_reference_files_opened(model)
-                for name in self.step_defs.keys():
-                    step = getattr(self, name)
-                    step._precache_reference_files_opened(model)
         except (ValueError, TypeError, IOError):
             self.log.info(
                 'First argument {0} does not appear to be a '

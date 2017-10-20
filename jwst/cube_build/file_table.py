@@ -167,8 +167,7 @@ class FileTable(object):
                        input_models,
                        input_filenames,
                        input_ra_offset,
-                       input_dec_offset
-    ):
+                       input_dec_offset):
 #********************************************************************************
         """
         Short Summary

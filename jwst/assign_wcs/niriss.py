@@ -256,7 +256,7 @@ def wfss(input_model, reference_files):
         raise TypeError('The input data model must be an ImageModel.')
 
     # make sure this is a grism image
-    if "NIS_WFSS" not in input_model.meta.exposure.type:
+    if "NIS_WFSS" != input_model.meta.exposure.type:
             raise TypeError('The input exposure is not NIRISS grism')
 
     # Create the empty detector as a 2D coordinate frame in pixel units
@@ -275,13 +275,28 @@ def wfss(input_model, reference_files):
         orders = f.orders
         fwcpos_ref = f.fwcpos_ref
 
-    # sep the row and column grism models
-    if 'R' in input_model.instrument.pupil[-1]:
-        det2det = NIRISSForwardRowGrismDispersion(orders, displ, dispx, dispy, fwcpos_ref)
-    else:
-        det2det = NIRISSForwardColumnGrismDispersion(orders, displ, dispx, dispy, fwcpos_ref)
+    # This is the actual rotation from the input model
+    fwcpos = input_model.meta.instrument.filter_position
 
-    backward = NIRISSBackwardGrismDispersion(orders, invdispl, dispx, dispy, fwcpos_ref)
+    # sep the row and column grism models
+    if 'R' in input_model.meta.instrument.filter[-1]:
+        det2det = NIRISSForwardRowGrismDispersion(orders,
+                                                  lmodels=displ,
+                                                  xmodels=dispx,
+                                                  ymodels=dispy,
+                                                  theta=fwcpos_ref-fwcpos)
+    else:
+        det2det = NIRISSForwardColumnGrismDispersion(orders,
+                                                     lmodels=displ,
+                                                     xmodels=dispx,
+                                                     ymodels=dispy,
+                                                     theta=fwcpos_ref-fwcpos)
+
+    backward = NIRISSBackwardGrismDispersion(orders,
+                                             lmodels=invdispl,
+                                             xmodels=dispx,
+                                             ymodels=dispy,
+                                             theta=fwcpos_ref-fwcpos)
     det2det.inverse = backward
 
     # create the pipeline to construct a WCS object for the whole image
@@ -293,22 +308,23 @@ def wfss(input_model, reference_files):
     # pure ra/dec on the sky from the pointing wcs.
 
     # use the imaging_distortion reference file here
-    img_reference = deepcopy(reference_files)
-    img_reference['distortion'] = reference_files['distortion']
-    image_pipeline = imaging(input_model, img_reference)
-    del img_reference
+    image_pipeline = imaging(input_model, reference_files)
 
     # forward input is (x,y,lam,order) -> x, y
     # backward input needs to be the same ra, dec, lam, order -> x, y
     grism_pipeline = [(gdetector, det2det)]
 
-    # pass through the wave and beam on the pipeline
+    # pass through the wave, beam  and theta in the pipeline
+    # Theta is a constant for each grism exposure and is in the 
+    # meta information for the input_model, pass it to the model
+    # so the user doesn't have to
+
     imagepipe = []
-    world, _ = image_pipeline.pop()
+    world = image_pipeline.pop()
     for cframe, trans in image_pipeline:
         trans = trans & (Identity(2))
         imagepipe.append((cframe, trans))
-    imagepipe.append((world, None))
+    imagepipe.append((world))
     grism_pipeline.extend(imagepipe)
 
     return grism_pipeline

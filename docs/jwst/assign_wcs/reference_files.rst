@@ -30,7 +30,7 @@ reftype                                     description                         
 **specwcs**            Wavelength calibration models                                 MIRI, NIRCAM, NIRISS
 **regions**            Stores location of the regions on the detector                MIRI
 **v2v3**               Transform from MIRI instrument focal plane to V2V3 plane      MIRI
-**wavelengthrange**    Typical wavelength ranges                                     MIRI, NIRSPEC
+**wavelengthrange**    Typical wavelength ranges                                     MIRI, NIRSPEC, NIRCAM, NIRISS
 ===================    ==========================================================   ============================
 
 
@@ -111,10 +111,10 @@ DISTORTION
 CRDS Selection Criteria
 :::::::::::::::::::::::
 
-:MIRI: DETECTOR, EXP_TYPE. CHANNEL, BAND
+:MIRI: DETECTOR, EXP_TYPE, CHANNEL, BAND
 :FGS: DETECTOR, EXP_TYPE
-:NIRCAM: DETECTOR, EXP_TYPE. CHANNEL.
-:NIRISS: EXP_TYPE
+:NIRCAM: DETECTOR, EXP_TYPE,  CHANNEL, FILTER
+:NIRISS: EXP_TYPE, PUPIL
 
 Reference File Formats
 ::::::::::::::::::::::
@@ -311,6 +311,8 @@ CRDS Selection Criteria
 
 :MIRI: DETECTOR, CHANNEL, BAND, SUBARRAY, EXP_TYPE
 :NIRISS: EXP_TYPE, SUBARRAY
+:NIRCAM: EXP_TYPE, MODULE, PUPIL
+:NIRISS: EXP_TYPE, FILTER, PUPIL
 
 Reference File Formats
 ::::::::::::::::::::::
@@ -333,6 +335,27 @@ For the MIRI MRS the file is in ASDF format with the following structure.
 For NIRISS SOSS mode the file is in ASDF format with the following structure.
 
 :model: A tabular model with the wavelength solution.
+
+For NIRCAM GRISM and TSGRIM modes the file is in ASDF format with the following structure:
+
+:displ: The wavelength transform models
+:dispx: The x-dispersion models
+:dispy: The y-dispersion models
+:invdispx: The inverse x-dispersion models
+:invdispy: The inverse y-dispersion models
+:invdispl: The inverse wavelength transform models
+:orders: a list of order numbers that the models relate to, in the same order as the models
+
+For NIRISS WFSS mode the file is in ASDF format with the following structure:
+
+:displ: The wavelength transform models
+:dispx: The x-dispersion models
+:dispy: The y-dispersion models
+:invdispx: The inverse x-dispersion models
+:invdispl: The inverse wavelength transform models
+:fwcpos_ref: The reference filter wheel position in degrees
+:orders: a list of order numbers that the models relate to, in the same order as the models
+
 
 Regions
 -------
@@ -376,6 +399,9 @@ CRDS Selection Criteria
 
 :NIRSPEC: Match EXP_TYPE
 :MIRI: Match EXP_TYPE
+:NIRCAM: Match EXP_TYPE
+:NIRISS: Match EXP_TYPE
+
 
 Reference File Formats
 ::::::::::::::::::::::
@@ -390,3 +416,14 @@ For NIRSPEC the file is a dictionary storing information about default wavelengt
 :filter_grating:
                  :order: Default spectral order
                  :range: Default wavelength range
+
+For NIRCAM GRISM and TSGRIM modes and NIRISS WFSS mode the wavelengthrange file contains the wavelength limits to use when caluclating the minimum and maximum dispersion extents on the detector. The selection of the
+correct minimum and maximum wavelength range is done with the following logic, where the index of
+the desired filter is used as the reference into wrange_selector, and the same for the index of the order:
+
+wave_min, wave_max = wrange[order][wrange_selector[filter name]]
+
+:order: a list of orders
+:wrange: a 2D list of wavelength ranges, ordered in the same way as the orders
+:wrange_selector: The list of FILTER names, these are used to select the correct wavelength range
+

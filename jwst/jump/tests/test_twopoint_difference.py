@@ -57,7 +57,7 @@ def test_3grps_cr2_NoFlux():
     assert(np.array_equal([0, 4, 0], gdq[0, :, 100, 100]))
 
 
-#@pytest.mark.skip("testing skipping")
+#@pytest.mark.xfail("testing skipping")
 def test_4grps_cr2_NoFlux():
     ngroups=4
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -83,7 +83,7 @@ def test_5grps_cr2_nframe2():
     assert(4 == np.max(gdq)) #a CR was found
     assert(np.array_equal([0,4,4,0,0], gdq[0, :, 100, 100]) )
 
-@pytest.mark.xfail(run=False)
+@pytest.mark.xfail
 def test_4grps_twocrs_2nd_4th():
     ngroups=4
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
@@ -153,16 +153,16 @@ def test_10grps_twocrs_10percenthit():
     ngroups=10
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups)
     nframes=2
-    data[0, 0, 100, 100] = 10.0
-    data[0, 1, 100, 100] = 60
-    data[0, 2, 100, 100] = 60
-    data[0, 3, 100, 100] = 60
-    data[0, 4, 100, 100] = 60
-    data[0, 5, 100, 100] = 60
-    data[0, 6, 100, 100] = 60
-    data[0, 7, 100, 100] = 2115
-    data[0, 8, 100, 100] = 2115
-    data[0, 9, 100, 100] = 2115
+    data[0:200, 0, 100, 100] = 10.0
+    data[0:200, 1, 100, 100] = 60
+    data[0:200, 2, 100, 100] = 60
+    data[0:200, 3, 100, 100] = 60
+    data[0:200, 4, 100, 100] = 60
+    data[0:200, 5, 100, 100] = 60
+    data[0:200, 6, 100, 100] = 60
+    data[0:200, 7, 100, 100] = 2115
+    data[0:200, 8, 100, 100] = 2115
+    data[0:200, 9, 100, 100] = 2115
     medianDiff = find_CRs(data, gdq, read_noise, rej_threshold, nframes)
     print("calculated median diff of pixel is ", medianDiff[0, 100, 100])
     assert(4 == np.max(gdq)) #a CR was found
@@ -226,18 +226,18 @@ def test_6grps_twocrs_twopixels_nframes2():
     data[0, 3, 100, 100] = 60
     data[0, 4, 100, 100] = 115
     data[0, 5, 100, 100] = 115
-    data[0, 0, 120, 100] = 10.0
-    data[0, 1, 120, 100] = 10.0
-    data[0, 2, 120, 100] = 60
-    data[0, 3, 120, 100] = 60
-    data[0, 4, 120, 100] = 115
-    data[0, 5, 120, 100] = 115
+    data[0, 0, 200, 100] = 10.0
+    data[0, 1, 200, 100] = 10.0
+    data[0, 2, 200, 100] = 60
+    data[0, 3, 200, 100] = 60
+    data[0, 4, 200, 100] = 115
+    data[0, 5, 200, 100] = 115
     medianDiff = find_CRs(data, gdq, read_noise, rej_threshold, nframes)
     assert(4 == np.max(gdq)) #a CR was found
     print("100 100 dq",repr(gdq[0,:,100,100]))
-    print("120 100 dq",repr(gdq[0,:,120,100]))
+    print("200 100 dq",repr(gdq[0,:,200,100]))
     assert(np.array_equal([0,4,0,0,4,0] , gdq[0, :, 100, 100]) )
-    assert(np.array_equal([0, 0, 4, 0, 4, 0] , gdq[0, :, 120, 100]))
+    assert(np.array_equal([0, 0, 4, 0, 4, 0] , gdq[0, :, 200, 100]))
 
 #@pytest.mark.skip("testing skipping")
 def test_5grps_cr2_negslope():
@@ -253,7 +253,7 @@ def test_5grps_cr2_negslope():
     print("calculated median diff of pixel is ", medianDiff[0, 100, 100])
     assert(4 == np.max(gdq))  # a CR was found
     assert(np.array_equal([0, 0, 4, 0, 0] , gdq[0, :, 100, 100]))
-
+#@pytest.mark.skip
 def test_6grps_1CR():
     ngroups = 6
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=10)
@@ -267,7 +267,7 @@ def test_6grps_1CR():
     medianDiff = find_CRs(data, gdq, read_noise, rej_threshold, nframes)
     print("calculated median diff of pixel is ", medianDiff[0, 100, 100])
     assert(11 == medianDiff[0, 100, 100])
-
+#@pytest.mark.skip
 def test_7grps_1CR():
     ngroups = 7
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=10)
@@ -282,7 +282,7 @@ def test_7grps_1CR():
     medianDiff = find_CRs(data, gdq, read_noise, rej_threshold, nframes)
     print("calculated median diff of pixel is ", medianDiff[0, 100, 100])
     assert(11.5 == medianDiff[0, 100, 100])
-
+#@pytest.mark.skip
 def test_5grps_noCR():
     ngroups = 6
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=10)
@@ -295,7 +295,7 @@ def test_5grps_noCR():
     medianDiff = find_CRs(data, gdq, read_noise, rej_threshold, nframes)
     print("calculated median diff of pixel is ", medianDiff[0, 100, 100])
     assert(11 == medianDiff[0, 100, 100])
-
+#@pytest.mark.skip
 def test_6grps_noCR():
     ngroups = 6
     data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups,readnoise=10)
@@ -367,11 +367,11 @@ def test_10grps_noCR_2pixels_sigma0():
     nframes=1
     data[0, 0, 100, 100] = crmag
     data[0, 1:11, 100, 100] = crmag
-    read_noise[50, 50] = 0.0
-    read_noise[60, 60] = 0.0
+    read_noise[500, 500] = 0.0
+    read_noise[600, 600] = 0.0
     medianDiff = find_CRs(data, gdq, read_noise, rej_threshold, nframes)
     assert(0 == np.max(gdq))  # no CR was found
-
+#@pytest.mark.skip
 def test_5grps_Satat4_CRat3():
     ngroups = 5
     crmag = 1000
@@ -388,7 +388,57 @@ def test_5grps_Satat4_CRat3():
    # assert(4 == np.max(gdq))  # no CR was found
     assert (np.array_equal([0, 0, dqflags.group['JUMP_DET'],dqflags.group['SATURATED'], dqflags.group['SATURATED']], gdq[0, :, 100, 100]))
 
+#@pytest.mark.skip
+def test_6grps_Satat6_CRat1():
+    ngroups = 6
+    crmag = 1000
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2))
+    nframes=1
+    data[0, 0, 100, 100] = 10000
+    data[0, 1, 100, 100] = 35000 #CR
+    data[0, 2, 100, 100] = 40005
+    data[0, 3, 100, 100] = 45029
+    data[0, 4, 100, 100] = 50014
+    data[0, 5, 100, 101] = 61000
+    data[0, 0, 100, 101] = 10000
+    data[0, 1, 100, 101] = 15001
+    data[0, 2, 100, 101] = 20003
+    data[0, 3, 100, 101] = 25006
+    data[0, 4, 100, 101] = 30010
+    data[0, 5, 100, 101] = 35015
+    gdq[0, 5, 100, 100] = dqflags.group['SATURATED']
+    medianDiff = find_CRs(data, gdq, read_noise, rej_threshold, nframes)
+   # assert(4 == np.max(gdq))  # no CR was found
+    assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0,0,0, dqflags.group['SATURATED']], gdq[0, :, 100, 100]))
 
+
+@pytest.mark.xfail
+def test_6grps_Satat6_CRat1_flagadjpixels():
+    ngroups = 6
+    crmag = 1000
+    data, gdq, nframes, read_noise, rej_threshold = setup_cube(ngroups, readnoise=5 * np.sqrt(2))
+    nframes=1
+    data[0, 0, 100, 100] = 10000
+    data[0, 1, 100, 100] = 35000 #CR
+    data[0, 2, 100, 100] = 40005
+    data[0, 3, 100, 100] = 45029
+    data[0, 4, 100, 100] = 50014
+    data[0, 5, 100, 101] = 61000
+    data[0, 0, 100, 101] = 10000
+    data[0, 1, 100, 101] = 15001
+    data[0, 2, 100, 101] = 20003
+    data[0, 3, 100, 101] = 25006
+    data[0, 4, 100, 101] = 30010
+    data[0, 5, 100, 101] = 35015
+    gdq[0, 5, 100, 100] = dqflags.group['SATURATED']
+    medianDiff = find_CRs(data, gdq, read_noise, rej_threshold, nframes)
+   # assert(4 == np.max(gdq))  # no CR was found
+    assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0,0,0, dqflags.group['SATURATED']], gdq[0, :, 100, 100]))
+    assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], gdq[0, :, 99, 100]))
+    assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], gdq[0, :, 101, 100]))
+    assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], gdq[0, :, 100, 99]))
+    assert (np.array_equal([0, dqflags.group['JUMP_DET'], 0, 0, 0, dqflags.group['SATURATED']], gdq[0, :, 100, 101]))
+    
 #@pytest.mark.skip
 def test_10grps_Satat8_CRsat3and6():
     ngroups = 10
@@ -412,8 +462,8 @@ def test_10grps_Satat8_CRsat3and6():
 
 def setup_cube(ngroups,readnoise=10):
     nints = 1
-    nrows = 200
-    ncols = 200
+    nrows = 2048
+    ncols = 2048
     rej_threshold = 3
     nframes = 1
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)

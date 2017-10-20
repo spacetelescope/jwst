@@ -16,6 +16,7 @@ from ..srctype import srctype_step
 from ..straylight import straylight_step
 from ..fringe import fringe_step
 from ..pathloss import pathloss_step
+from ..barshadow import barshadow_step
 from ..photom import photom_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
@@ -32,8 +33,8 @@ class Spec2Pipeline(Pipeline):
     Included steps are:
     assign_wcs, background subtraction, NIRSpec MSA imprint subtraction,
     NIRSpec MSA bad shutter flagging, 2-D subwindow extraction, flat field,
-    source type decision, straylight, fringe, pathloss, photom, resample_spec,
-    cube_build, and extract_1d.
+    source type decision, straylight, fringe, pathloss, barshadow,  photom,
+    resample_spec, cube_build, and extract_1d.
     """
 
     spec = """
@@ -52,6 +53,7 @@ class Spec2Pipeline(Pipeline):
         'straylight': straylight_step.StraylightStep,
         'fringe': fringe_step.FringeStep,
         'pathloss': pathloss_step.PathLossStep,
+        'barshadow': barshadow_step.BarShadowStep,
         'photom': photom_step.PhotomStep,
         'resample_spec': resample_spec_step.ResampleSpecStep,
         'cube_build': cube_build_step.CubeBuildStep,
@@ -133,16 +135,23 @@ class Spec2Pipeline(Pipeline):
             input = datamodels.open(science)
         exp_type = input.meta.exposure.type
 
+        WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM"]
+
         # Apply WCS info
         # check the datamodel to see if it's
         # a grism image, if so get the catalog
         # name from the asn and record it to the meta
-        if exp_type in ["NIS_WFSS", "NRC_GRISM"]:
-            input.meta.source_catalog.filename = members_by_type['sourcecat']
+        if exp_type in WFSS_TYPES:
+            input.meta.source_catalog.filename = members_by_type['sourcecat'][0]
         input = self.assign_wcs(input)
 
         # Do background processing, if necessary
-        if len(members_by_type['background']) > 0:
+        if exp_type in WFSS_TYPES or len(members_by_type['background']) > 0:
+
+            if exp_type in WFSS_TYPES:
+                bkg_list = []           # will be overwritten by the step
+            else:
+                bkg_list = members_by_type['background']
 
             # Setup for saving
             self.bkg_subtract.suffix = 'bsub'
@@ -154,7 +163,7 @@ class Spec2Pipeline(Pipeline):
                 self.bkg_subtract.save_results = True
 
             # Call the background subtraction step
-            input = self.bkg_subtract(input, members_by_type['background'])
+            input = self.bkg_subtract(input, bkg_list)
 
         # If assign_wcs was skipped, abort the rest of processing,
         # because so many downstream steps depend on the WCS
@@ -179,12 +188,23 @@ class Spec2Pipeline(Pipeline):
         if exp_type in ['NRS_MSASPEC', 'NRS_IFU']:
             input = self.msa_flagging(input)
 
-        # Extract 2D sub-windows for NIRSpec slit and MSA
-        if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC']:
-            input = self.extract_2d(input)
+        # It isn't really necessary to include 'NRC_TSGRISM' in this list,
+        # but it doesn't hurt, and it makes it clear that flat_field
+        # should be done before extract_2d for all WFSS/GRISM data.
+        if exp_type in ['NRC_GRISM', 'NIS_WFSS', 'NRC_TSGRISM']:
+            # Apply flat-field correction
+            input = self.flat_field(input)
 
-        # Apply flat-field correction
-        input = self.flat_field(input)
+            if exp_type != 'NRC_TSGRISM':
+                input = self.extract_2d(input)
+
+        else:
+            # Extract 2D sub-windows for NIRSpec slit and MSA
+            if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC']:
+                input = self.extract_2d(input)
+
+            # Apply flat-field correction
+            input = self.flat_field(input)
 
         # Apply the source type decision step
         input = self.srctype(input)
@@ -198,9 +218,12 @@ class Spec2Pipeline(Pipeline):
             input = self.fringe(input)
 
         # Apply pathloss correction to NIRSpec exposures
-        if exp_type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_MSASPEC',
-                        'NRS_IFU']:
+        if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_IFU']:
             input = self.pathloss(input)
+
+        # Apply barshadow correction to NIRSPEC MSA exposures
+        if exp_type == 'NRS_MSASPEC':
+            input = self.barshadow(input)
 
         # Apply flux calibration
         input = self.photom(input)
@@ -218,9 +241,8 @@ class Spec2Pipeline(Pipeline):
         # "regular" spectra or cube_build for IFU data. No resampled
         # product is produced for time-series modes.
         if input.meta.exposure.type in [
-                'NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ',
-                'NRS_MSASPEC', 'NIS_WFSS', 'NRC_GRISM'
-        ]:
+            'NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NIS_WFSS', 'NRC_GRISM'
+            ]:
 
             # Call the resample_spec step
             self.resample_spec.suffix = 's2d'
@@ -232,9 +254,14 @@ class Spec2Pipeline(Pipeline):
 
         elif exp_type in ['MIR_MRS', 'NRS_IFU']:
 
-            # Call the cube_build step for IFU data
+            # Call the cube_build step for IFU data;
+            # always create a single cube containing multiple
+            # wavelength bands
+            self.cube_build.output_type = 'multi'
             self.cube_build.suffix = 's3d'
+            self.cube_build.save_results = False
             cube = self.cube_build(input)
+            self.save_model(cube[0], 's3d')
 
             # Pass the cube along for input to 1D extraction
             x1d_input = cube.copy()

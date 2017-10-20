@@ -2,7 +2,7 @@
 from ast import literal_eval
 import re
 
-from jwst.associations.lib.counter import Counter
+from .counter import Counter
 
 __all__ = [
     'ACID'
@@ -64,7 +64,7 @@ class ACIDMixin(object):
         """Determine ACID from constraints"""
         for _, constraint in self.constraints.items():
             if constraint.get('is_acid', False):
-                value = re.sub('\\\\', '', constraint['value'])
+                value = re.sub('\\\\', '', '-'.join(constraint['found_values']))
                 try:
                     acid = ACID(value)
                 except ValueError:

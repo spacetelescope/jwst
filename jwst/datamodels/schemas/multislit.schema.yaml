@@ -14,7 +14,6 @@ allOf:
             data:
               fits_hdu: SCI
               default: 0.0
-              ndim: 2
               datatype: float32
             dq:
               fits_hdu: DQ
@@ -129,4 +128,10 @@ allOf:
               default: ""
               fits_keyword: SHUTSTA
               fits_hdu: SCI
+            barshadow:
+              title: Bar shadow correction
+              fits_hdu: BARSHADOW
+              ndim: 2
+              default: 1.0
+              datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

@@ -4,28 +4,29 @@ Introduction
 This document provides instructions on running the JWST Science Calibration
 Pipeline (referred to as "the pipeline") and individual pipeline steps.
 
-The pipeline currently consists of ramps-to-slopes processing for all
-observing modes, Level-2b processing for all imaging modes, Level-2b
-processing for most spectroscopic modes (everything but Wide-Field
-Slitless Spectroscopy), and Level-3 processing for imaging.
+Pipeline modules are available for detector-level (stage 1) processing of
+data from all observing modes, stage 2 processing for imaging and
+spectroscopic modes, and stage 3 processing for imaging, spectroscopic,
+coronagraphic, Aperture Masking Interferometry (AMI), and Time Series
+Observations (TSO).
 
-The ramps-to-slopes (Level-2a) processing consists of detector-level
-corrections that are necessary to perform on a group-by-group basis
-before ramp fitting is applied. The output of Level-2a processing
-is a countrate image per exposure or per integration for some models.
-Details of this pipeline can be found at :ref:`level-2a-flow`.
+The stage 1 processing consists of detector-level
+corrections that must be performed on a group-by-group basis
+before ramp fitting is applied. The output of stage 1 processing
+is a countrate image per exposure or per integration for some modes.
+Details of this pipeline can be found at :ref:`stage1-flow`.
 
-Level-2b processing consists of additional corrections and
+Stage 2 processing consists of additional corrections and
 calibrations to produce a fully calibrated exposure. The details
 differ for imaging and spectroscopic exposures, and there are some
 corrections that are unique to certain instruments or modes.
-Details are at :ref:`level-2b-imaging-flow`
-and :ref:`level-2b-spectroscopic-flow`.
+Details are at :ref:`stage2-imaging-flow`
+and :ref:`stage2-spectroscopic-flow`.
 
-Level-3 processing consists of routines that combine the data from
-multiple exposures, for all observing modes. Level-3 processing is only
-available at this time for imaging observations. Details are at
-:ref:`level-3-imaging-flow`.
+Stage 3 processing consists of routines that combine the data from
+multiple exposures, for all observing modes.
+Details of stage 3 imaging processing are at
+:ref:`stage3-imaging-flow`.
 
 This document discusses pipeline configuration files and examples of running
 pipelines either as a whole or in individual steps.
@@ -70,7 +71,7 @@ For example, running the full ramps-to-slopes pipeline or an individual step by
 referencing their class names is done as follows:
 ::
 
-  $ strun jwst.pipeline.SloperPipeline jw00017001001_01101_00001_nrca1_uncal.fits
+  $ strun jwst.pipeline.Detector1Pipeline jw00017001001_01101_00001_nrca1_uncal.fits
   $ strun jwst.dq_init.DQInitStep jw00017001001_01101_00001_nrca1_uncal.fits
 
 When a pipeline or step is executed in this manner (i.e. by referencing the
@@ -79,7 +80,7 @@ can be accomplished by using the default configuration file corresponding to
 each:
 ::
 
-  $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+  $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
   $ strun dq_init.cfg jw00017001001_01101_00001_nrca1_uncal.fits
 
 If you want to use non-default parameter values, you can specify them as
@@ -91,9 +92,9 @@ For example, to override the default selection of a dark current reference
 file from CRDS when running a pipeline:
 ::
 
-    $ strun jwst.pipeline.SloperPipeline jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun jwst.pipeline.Detector1Pipeline jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.dark_current.override_dark='my_dark.fits'
-    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.dark_current.override_dark='my_dark.fits'
 
 You can get a list of all the available arguments for a given pipeline or
@@ -101,19 +102,19 @@ step by using the '-h' (help) argument to strun:
 ::
 
     $ strun dq_init.cfg -h
-    $ strun jwst.pipeline.SloperPipeline -h
+    $ strun jwst.pipeline.Detector1Pipeline -h
 
 If you want to consistently override the default values of certain arguments
 and don't want to have to specify them on the command line every time you
 execute ``strun``, you can specify them in the configuration (.cfg) file for
 either the pipeline or the individual step.
-For example, to always run ``SloperPipeline`` using the override in the
-previous example, you could edit your `calwebb_sloper.cfg` file to
+For example, to always run ``Detector1Pipeline`` using the override in the
+previous example, you could edit your `calwebb_detector1.cfg` file to
 contain the following:
 ::
 
- name = "SloperPipeline"
- class = "jwst.pipeline.SloperPipeline"
+ name = "Detector1Pipeline"
+ class = "jwst.pipeline.Detector1Pipeline"
 
     [steps]
       [[dark_current]]
@@ -129,8 +130,8 @@ step's configuration file and then reference those step cfg files in the pipelin
 cfg file, such as:
 ::
 
- name = "SloperPipeline"
- class = "jwst.pipeline.SloperPipeline"
+ name = "Detector1Pipeline"
+ class = "jwst.pipeline.Detector1Pipeline"
 
     [steps]
       [[dark_current]]
@@ -151,8 +152,8 @@ You can execute a pipeline or a step from within python by using the
 ``call`` method of the class:
 ::
 
- from jwst.pipeline import SloperPipeline
- result = SloperPipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits')
+ from jwst.pipeline import Detector1Pipeline
+ result = Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits')
 
  from jwst.linearity import LinearityStep
  result = LinearityStep.call('jw00001001001_01101_00001_mirimage_uncal.fits')
@@ -162,7 +163,7 @@ within python is to set those parameters in the pipeline cfg file and
 then supply the cfg file as a keyword argument:
 ::
 
- SloperPipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits', config_file='calwebb_sloper.cfg')
+ Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits', config_file='calwebb_detector1.cfg')
 
 
 Universal Parameters
@@ -186,27 +187,27 @@ individual steps, you have two options:
     This option will save the step results using the name specified.
 
 For example, to save the result from the dark current step of
-`calwebb_sloper` in a file named `dark_sub.fits`, use
+`calwebb_detector1` in a file named `dark_sub.fits`, use
 
 ::
 
-    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --steps.dark_current.output_file='dark_sub.fits'
 
 You can also specify a particular file name for saving the end result of
 the entire pipeline using the `--output_file` argument also
 ::
    
-    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
-        --output_file='sloper_processed.fits'
+    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+        --output_file='detector1_processed.fits'
 
 Output File and Associations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The Level 2 pipelines can take both individual file or an
+The stage 2 pipelines can take both individual file or an
 :ref:`association <associations>` as input. When given an association, `output_file` is
 ignored, in favor of using the product names defined in the
-associations. Level 3 pipelines always require an association, hence
+associations. Stage 3 pipelines always require an association, hence
 `output_file` is never used for them.
 
 Output Directory
@@ -215,11 +216,11 @@ Output Directory
 By default, all pipeline and step outputs will drop into the current
 working directory, i.e., the directory in which the process is
 running. To change this, use the `output_dir` argument. For example, to
-have all output from `calwebb_sloper`, including any saved
+have all output from `calwebb_detector1`, including any saved
 intermediate steps, appear in the sub-directory `calibrated`, use
 ::
 
-    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --output_dir=calibrated
 
 `output_dir` can be specified at the step level, overriding what was
@@ -228,7 +229,7 @@ and location of the `dark_current` step, use the following
 ::
 
 
-    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --output_dir=calibrated
         --steps.dark_current.output_file='dark_sub.fits'
         --steps.dark_current.output_dir='dark_calibrated'
@@ -249,7 +250,7 @@ To override the use of the default linearity file selection, for example,
 we would use:
 ::
 
-  $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+  $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.linearity.override_linearity='my_lin.fits'
 
 Skip
@@ -259,7 +260,7 @@ Another argument available to all steps in a pipeline is `skip`.
 If `skip=True` is set for any step, that step will be skipped, with the
 output of the previous step being automatically passed directly to the input
 of the step following the one that was skipped. For example, if you want to
-skip the linearity correction step, edit the calwebb_sloper.cfg file to
+skip the linearity correction step, edit the calwebb_detector1.cfg file to
 contain:
 ::
 
@@ -271,7 +272,7 @@ contain:
 Alternatively you can specify the `skip` argument on the command line:
 ::
 
-    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --steps.linearity.skip=True
 
 Logging Configuration
@@ -286,7 +287,7 @@ pipeline cfg file.
 For example:
 ::
 
-    $ strun calwebb_sloper.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --logcfg=pipeline-log.cfg
 
 and the file `pipeline-log.cfg` contains:
@@ -314,8 +315,8 @@ default output name, which are explained below.
 Pipeline Outputs
 ----------------
 
-In the absence of a user-specified output file name, the various level-2a,
-2b, and 3 pipeline modules will use the input root file name along with a set
+In the absence of a user-specified output file name, the various stage 1,
+2, and 3 pipeline modules will use the input root file name along with a set
 of predetermined suffixes to compose output file names. The output file name
 suffix will always replace the suffix of the input file name. Each pipeline
 module uses the appropriate suffix for the product(s) it is creating. The
@@ -324,14 +325,14 @@ list of suffixes is shown in the following table.
 =============================================  ========
 Product                                        Suffix
 =============================================  ========
-Uncalibrated Level-1b input                    uncal
-Corrected Level-2a ramp data                   ramp
-Corrected Level-2a countrate image             rate
-Level-2a countrate per integration             rateints
+Uncalibrated raw input                         uncal
+Corrected ramp data                            ramp
+Corrected countrate image                      rate
+Corrected countrate per integration            rateints
 Optional fitting results from ramp_fit step    fitopt
-Level-2b background-subtracted image           bsub
+Background-subtracted image                    bsub
 Per integration background-subtracted image    bsubints
-Calibrated Level-2b image                      cal
+Calibrated image                               cal
 Calibrated per integration images              calints
 1D extracted spectrum                          x1d
 1D extracted spectra per integration           x1dints

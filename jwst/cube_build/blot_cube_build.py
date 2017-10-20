@@ -63,7 +63,7 @@ class CubeBlot(object):
         self.cdelt2 = median_model.meta.wcsinfo.cdelt2*3600.0
         self.cdelt3 = median_model.meta.wcsinfo.cdelt3*3600.0
 
-        print('cdelts',self.cdelt1,self.cdelt2,self.cdelt3)
+#        print('cdelts',self.cdelt1,self.cdelt2,self.cdelt3)
 
         xcube,ycube,zcube = wcstools.grid_from_bounding_box(self.median_skycube.meta.wcs.bounding_box,
                                                 step=(1,1,1))
@@ -83,7 +83,7 @@ class CubeBlot(object):
 #        self.cube_dec = np.reshape(cube_pos2,num)
 #        self.cube_wave = np.reshape(cube_pos3,num)
 #        self.cube_flux = np.reshape(flux,num)
-        print('size of input cube',cube_pos1.shape,cube_pos2.shape,cube_pos3.shape)
+#        print('size of input cube',cube_pos1.shape,cube_pos2.shape,cube_pos3.shape)
 # initialize blotted images to be original input images
 
         self.input_models = input_models

@@ -41,7 +41,7 @@ class DataTypes(object):
                 ]
               }
 
-    def __init__(self, input,single):
+    def __init__(self, input,single,output_file):
 
         self.input_models = []
         self.filenames = []
@@ -61,6 +61,7 @@ class DataTypes(object):
             self.input_type = 'Model'
             self.data_type = 'singleton'
             self.output_name = self.build_product_name(self.filenames[0])
+
         elif isinstance(input,datamodels.ModelContainer):
 #            print('this is a model container type')
             self.input_type='Container'
@@ -75,7 +76,7 @@ class DataTypes(object):
                 self.input_models.append(model)
                 self.filenames.append(model.meta.filename)
 #            print('number of models',len(self.filenames))
-#            print('the name of the output file', self.output_name) 
+
         elif isinstance(input, str):
             try:
                 # The name of an association table
@@ -104,10 +105,30 @@ class DataTypes(object):
         else:
             raise TypeError
 
+# if the user has set the output name - strip out *.fits 
+# later suffixes will be added to this name to designate the
+# channel, subchannel or grating,filter the data is covers.
+
+        if output_file !=None :
+            basename,ext = os.path.splitext(os.path.basename(output_file))
+#            print('basename',basename)
+#            root, ext = os.path.splitext(output_file)
+#            default = root.find('cube_build') # the user has not provided a name
+            self.output_name = basename
+        
 
     def build_product_name(self, filename):
         indx = filename.rfind('.fits')
-        single_product = filename[:indx]
+        indx_try = filename.rfind('_rate.fits') # standard expected filename in CalSpec2
+        indx_try2 = filename.rfind('_cal.fits') # standard expected filename 
+
+
+        if indx_try > 0:
+            single_product = filename[:indx_try]
+        elif indx_try2 > 0:
+            single_product = filename[:indx_try2]
+        else:
+            single_product = filename[:indx]
         return single_product
 
 

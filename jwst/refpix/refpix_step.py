@@ -43,8 +43,10 @@ class RefPixStep(Step):
                 irs2_model = datamodels.IRS2Model(self.irs2_name)
                 result = irs2_subtract_reference.correct_model(input_model,
                                                                irs2_model)
-                result.meta.cal_step.refpix = 'COMPLETE'
+                if result.meta.cal_step.refpix != 'SKIPPED':
+                    result.meta.cal_step.refpix = 'COMPLETE'
                 irs2_model.close()
+                return result
             else:
                 self.log.info('use_side_ref_pixels = %s' %
                               (self.use_side_ref_pixels,))
@@ -54,18 +56,27 @@ class RefPixStep(Step):
                               (self.side_smoothing_length,))
                 self.log.info('side_gain = %f' % (self.side_gain,))
                 self.log.info('odd_even_rows = %s' % (self.odd_even_rows,))
-                result = reference_pixels.correct_model(input_model,
+                result = reference_pixels.correct_model(input_model.copy(),
                                                         self.odd_even_columns,
                                                         self.use_side_ref_pixels,
                                                         self.side_smoothing_length,
                                                         self.side_gain,
                                                         self.odd_even_rows)
-                if input_model.meta.subarray.name == 'FULL':
-                    result.meta.cal_step.refpix = 'COMPLETE'
-                else:
-                    result.meta.cal_step.refpix = 'SKIPPED'
+                #
+                # This returns None if there are NaNs in the output data, as would
+                # be the case if the code is unable to calculate the reference value
+                # due to a lack of valid reference pixels
+                if result is not None:
+                    if input_model.meta.subarray.name == 'FULL':
+                        result.meta.cal_step.refpix = 'COMPLETE'
+                    else:
+                        result.meta.cal_step.refpix = 'SKIPPED'
 
-        return result
+                    return result
+                else:
+                    self.log.warning("Invalid reference pixels, refpix step skipped")
+                    input_model.meta.cal_step.refpix = 'SKIPPED'
+                    return input_model
 
 def refpix_correction(input):
     a = RefPixStep()
