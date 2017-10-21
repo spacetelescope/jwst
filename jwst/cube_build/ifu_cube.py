@@ -686,16 +686,9 @@ class IFUCubeData(object):
         IFUCube.update(self.input_models[j])
 
         IFUCube.meta.filename = self.output_name
-#        with datamodels.open(self.input_models[j]) as input:
-#            print('********',j)
-#            print('********',input.meta.ref_file.crds.sw_version)
-#            print('********',input.meta.ref_file.cubepar)
 
-#        print('********',IFUCube.meta.ref_file.crds.sw_version)
-#        print('********',IFUCube.meta.ref_file.cubepar)        
         if self.output_type == 'single':
             with datamodels.open(self.input_models[j]) as input:
-
 
                 # define the cubename for each single 
                 filename = self.input_filenames[j]
