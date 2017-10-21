@@ -40,8 +40,9 @@ def load_wcs(input_model, reference_files={}):
         wcs = WCS(pipeline)
         output_model.meta.wcs = wcs
         output_model.meta.cal_step.assign_wcs = 'COMPLETE'
-        exclude_types = ['NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_MSASPEC',
-                         'NRS_LAMP', 'MIR_MRS']
+        exclude_types = ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_IFU',
+                         'NRS_MSASPEC', 'NRS_LAMP', 'MIR_MRS', 'NIS_SOSS',
+                         'NRC_GRISM', 'NRC_TSGRISM', 'NIS_WFSS']
         if output_model.meta.exposure.type not in exclude_types:
             update_s_region(output_model)
             log.info("assign_wcs updated S_REGION to {0}".format(output_model.meta.wcsinfo.s_region))
