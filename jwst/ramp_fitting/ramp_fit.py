@@ -376,8 +376,8 @@ def ols_ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
     # Create new model...
     new_model = datamodels.ImageModel(data=c_rates.astype(np.float32),
             dq=final_pixeldq.astype(np.uint32), 
-            var_p2d=var_p_2d_all.astype(np.float32),
-            var_r2d=var_r_2d_all.astype(np.float32), err=err_2d_all.copy())
+            var_poisson=var_p_2d_all.astype(np.float32),
+            var_rnoise=var_r_2d_all.astype(np.float32), err=err_2d_all.copy())
 
     new_model.update(model)  # ... and add all keys from input
 

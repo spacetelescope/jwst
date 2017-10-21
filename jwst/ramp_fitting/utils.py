@@ -623,8 +623,8 @@ def output_integ(model, slope_int, dq_int, effintim, var_p_int, var_r_int):
     cubemod.data = slope_int / effintim
     cubemod.err = np.sqrt(var_p_int + var_r_int)
     cubemod.dq = dq_int
-    cubemod.var_p_int = var_p_int
-    cubemod.var_r_int = var_r_int
+    cubemod.var_poisson = var_p_int
+    cubemod.var_rnoise = var_r_int
 
     cubemod.update(model) # keys from input needed for photom step
 
