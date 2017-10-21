@@ -108,10 +108,6 @@ def test_run_resample_only(mk_tmp_dirs):
     assert len(glob(product_name_glob)) == 2
 
 
-@pytest.mark.xfail(
-    reason='Saving mrs_imatch results fails',
-    run=False
-)
 @runslow
 @require_bigdata
 def test_run_mrs_imatch_only(mk_tmp_dirs):
@@ -127,6 +123,7 @@ def test_run_mrs_imatch_only(mk_tmp_dirs):
         asn_path,
         '--steps.outlier_detection.skip=true',
         '--steps.resample_spec.skip=true',
+        '--steps.cube_build.skip=true',
         '--steps.extract_1d.skip=true',
         '--steps.mrs_imatch.save_results=true',
     ]
@@ -136,7 +133,7 @@ def test_run_mrs_imatch_only(mk_tmp_dirs):
     with open(asn_path) as fd:
         asn = load_asn(fd)
     product_name_base = asn['products'][0]['name']
-    product_name = product_name_base + '_x1d.fits'
+    product_name = product_name_base + '_mrs_imatch.fits'
     assert path.isfile(product_name)
 
 
@@ -180,6 +177,7 @@ def test_run_outlier_only(mk_tmp_dirs):
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
+        '--steps.mrs_imatch.skip=true',
         '--steps.resample_spec.skip=true',
         '--steps.cube_build.skip=true',
         '--steps.extract_1d.skip=true',
