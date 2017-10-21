@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 
-import os
 from ..stpipe import Step
 from .. import datamodels
 from . import extract
+
 
 class Extract1dStep(Step):
     """
@@ -16,7 +16,6 @@ class Extract1dStep(Step):
     # Order of polynomial fit to one column (or row if the dispersion
     # direction is vertical) of background regions.
     bkg_order = integer(default=None, min=0)
-    output_use_model = boolean(default=true)
     """
 
     reference_file_types = ['extract1d']
@@ -110,6 +109,7 @@ class Extract1dStep(Step):
             result.meta.cal_step.extract_1d = 'COMPLETE'
 
         return result
+
 
 def extract_1d_correction(input):
     a = Extract1dStep()

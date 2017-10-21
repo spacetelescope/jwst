@@ -58,3 +58,38 @@ def test_run_cube_build_only(mk_tmp_dirs):
     assert path.isfile(product_name)
     product_name = product_name_base + '_ch2-short_s3d.fits'
     assert path.isfile(product_name)
+
+
+@runslow
+@require_bigdata
+def test_run_extract_1d_only(mk_tmp_dirs):
+    """Test only the extraction step.
+    """
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    asn_path = update_asn_basedir(
+        path.join(DATAPATH, 'cube_build_4dither_495_asn.json'),
+        root=path.join(DATAPATH, 'level2b')
+    )
+    args = [
+        path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
+        asn_path,
+        '--output_dir=' + tmp_data_path,
+        '--steps.mrs_imatch.skip=true',
+        '--steps.outlier_detection.skip=true',
+        '--steps.resample_spec.skip=true',
+    ]
+
+    Step.from_cmdline(args)
+
+    with open(asn_path) as fd:
+        asn = load_asn(fd)
+    product_name_base = path.join(tmp_data_path, asn['products'][0]['name'])
+    product_name = product_name_base + '_ch1-short_s3d.fits'
+    assert path.isfile(product_name)
+    product_name = product_name_base + '_ch2-short_s3d.fits'
+    assert path.isfile(product_name)
+    product_name = product_name_base + '_ch1-short_x1d.fits'
+    assert path.isfile(product_name)
+    product_name = product_name_base + '_ch2-short_x1d.fits'
+    assert path.isfile(product_name)
