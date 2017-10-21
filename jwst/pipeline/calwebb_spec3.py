@@ -141,7 +141,10 @@ class Spec3Pipeline(Pipeline):
                     pass
 
             # Do 1-D spectral extraction
-            if resample_complete is not None and resample_complete.upper() == 'COMPLETE':
+            if resample_complete is not None and \
+               resample_complete.upper() == 'COMPLETE':
+                if exptype in IFU_EXPTYPES:
+                    self.extract_1d.output_use_model = True
                 result = self.extract_1d(result)
             else:
                 self.log.warn(
