@@ -58,7 +58,11 @@ class Image3Pipeline(Pipeline):
 
         # Check if input is single or multiple exposures
         is_container = isinstance(input_models, datamodels.ModelContainer)
-        if is_container and len(input_models.group_names) > 1:
+        try:
+            has_groups = len(input_models.group_names) > 1
+        except:
+            has_groups = False
+        if is_container and has_groups:
 
             self.log.info("Generating source catalogs for alignment...")
             input_models = self.tweakreg_catalog(input_models)
@@ -97,8 +101,7 @@ class Image3Pipeline(Pipeline):
         except:
             pass
 
-        product = input_models.meta.asn_table.products[0].name
-        result.meta.filename = product
+        result.meta.filename = input_models.meta.asn_table.products[0].name
         self.save_model(result, suffix=self.suffix)
 
         self.log.info("Creating source catalog...")

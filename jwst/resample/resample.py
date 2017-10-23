@@ -222,6 +222,8 @@ class ResampleData(object):
             output_model.meta.resample.weight_type = self.drizpars['wht_type']
             output_model.meta.resample.pointings = pointings
 
+            build_fits_wcs(output_model)
+
             self.output_models.append(output_model)
 
 
@@ -255,3 +257,17 @@ def build_driz_weight(model, wht_type=None, good_bits=None):
         # Create an identity input weight map
         inwht = np.ones(model.data.shape, dtype=model.data.dtype)
     return inwht
+
+def build_fits_wcs(model):
+    """Update FITS WCS keywords of the resampled image based on the gwcs"""
+    transform = model.meta.wcs.forward_transform
+    model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
+    model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
+    model.meta.wcsinfo.cdelt1 = transform[3].factor.value
+    model.meta.wcsinfo.cdelt2 = transform[4].factor.value
+    model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref = transform[6].lon.value
+    model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref = transform[6].lat.value
+    model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
+    model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
+    model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
+    model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
