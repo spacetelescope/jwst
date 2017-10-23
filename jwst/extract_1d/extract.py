@@ -1246,9 +1246,8 @@ def get_spectral_order(slit):
 
     if hasattr(slit.meta, 'wcsinfo'):
         sp_order = slit.meta.wcsinfo.spectral_order
-        if sp_order is None or sp_order == 0:
-            log.warning("spectral_order is {}; using 1"
-                        .format(sp_order))
+        if sp_order is None:
+            log.warning("spectral_order is None; using 1")
             sp_order = 1
     else:
         log.warning("slit.meta doesn't have attribute wcsinfo; "
