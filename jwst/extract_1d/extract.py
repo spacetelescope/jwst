@@ -1009,25 +1009,6 @@ class ExtractModel(object):
         return (ra, dec, wavelength, net, background)
 
 
-    def __del__(self):
-        self.dispaxis = None
-        self.xstart = None
-        self.xstop = None
-        self.ystart = None
-        self.ystop = None
-        self.extract_width = None
-        self.independent_var = None
-        self.src_coeff = None
-        self.bkg_coeff = None
-        self.p_src = None
-        self.p_bkg = None
-        self.smoothing_length = None
-        self.bkg_order = None
-        self.nod_correction = None
-        self.wcs = None
-        self._wave_model = None
-
-
 def interpolate_response(wavelength, relsens):
     """Interpolate within the relative response table.
 

@@ -23,11 +23,31 @@ class CubeModel(model_base.DataModel):
 
     err : numpy array
         The error array.  3-D
+
+    zeroframe: numpy array
+        The zero-frame array.  3-D
+
+    relsens: numpy array
+        The relative sensitivity array.
+
+    area: numpy array
+        The pixel area array.  2-D
+
+    wavelength: numpy array
+        The wavelength array.  2-D
+
+    var_poisson: numpy array
+        The variance due to Poisson noise array.  3-D
+
+    var_rnoise: numpy array
+        The variance due to read noise array.  3-D
     """
     schema_url = "cube.schema.yaml"
 
     def __init__(self, init=None, data=None, dq=None, err=None, zeroframe=None,
-                 relsens=None, area=None, wavelength=None, **kwargs):
+                 relsens=None, area=None, wavelength=None, var_poisson=None, 
+                 var_rnoise=None, **kwargs):
+      
         super(CubeModel, self).__init__(init=init, **kwargs)
 
         if data is not None:
@@ -51,6 +71,12 @@ class CubeModel(model_base.DataModel):
         if wavelength is not None:
             self.wavelength = wavelength
 
+        if var_poisson is not None:
+            self.var_poisson = var_poisson
+
+        if var_rnoise is not None:
+            self.var_rnoise = var_rnoise
+   
         # Implicitly create arrays
         self.dq = self.dq
         self.err = self.err

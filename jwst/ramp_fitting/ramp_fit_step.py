@@ -11,6 +11,7 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+
 class RampFitStep (Step):
 
     """
@@ -19,6 +20,7 @@ class RampFitStep (Step):
     """
 
     spec = """
+        int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
     """
@@ -63,15 +65,10 @@ class RampFitStep (Step):
             if self.algorithm == "GLS":
                 buffsize //= 10
 
-            out_model, int_model, opt_model, gls_opt_model, \
-               var_slope_r, var_slope_p, var_r_s_4d, var_p_s_4d = \
-                            ramp_fit.ramp_fit(input_model,
-                                               buffsize, self.save_opt,
-                                               readnoise_model, gain_model,
-                                               self.algorithm, self.weighting)
-
-            out_model.instance['extra_fits']['PoissonNoise'] = {'data': var_p_s_4d}
-            out_model.instance['extra_fits']['ReadNoise'] = {'data': var_r_s_4d}
+            out_model, int_model, opt_model, gls_opt_model =\
+                ramp_fit.ramp_fit(input_model, buffsize, \
+                self.save_opt, readnoise_model, gain_model, self.algorithm, \
+                self.weighting)
 
             readnoise_model.close()
             gain_model.close()

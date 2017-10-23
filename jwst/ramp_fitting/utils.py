@@ -56,6 +56,8 @@ class OptRes(object):
         self.firstf_int = np.zeros((n_int,) + imshape, dtype=np.float32)
         self.ped_int = np.zeros((n_int,) + imshape, dtype=np.float32)
         self.cr_mag_seg = np.zeros((n_int,) + (nreads,) + imshape, dtype=np.int16)
+        self.var_p_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
+        self.var_r_seg = np.zeros((n_int,)+(max_seg,)+imshape,dtype=np.float32)
 
 
     def init_2d(self, npix, max_seg):
@@ -248,10 +250,11 @@ class OptRes(object):
         These results are the cosmic ray magnitudes in the
         segment-specific results for the count rates, y-intercept,
         uncertainty in the slope, uncertainty in the y-intercept,
-        pedestal image, and fitting weights, and the integration-
-        specific results for the pedestal image.  The slopes are
-        divided by the effective integration time here to yield the
-        count rates.
+        pedestal image, fitting weights, and the uncertainties in
+        the slope due to poisson noise only and read noise only, and
+        the integration-specific results for the pedestal image.  The
+        slopes are divided by the effective integration time here to
+        yield the count rates.
 
         Parameters
         ----------
@@ -264,18 +267,20 @@ class OptRes(object):
         Returns
         -------
         rfo_model: Data Model object
-
         """
 
         rfo_model = \
         datamodels.RampFitOutputModel(\
             slope=self.slope_seg.astype(np.float32) / effintim,
             sigslope=self.sigslope_seg.astype(np.float32),
+            var_p=self.var_p_seg.astype(np.float32),
+            var_r=self.var_r_seg.astype(np.float32),
             yint=self.yint_seg.astype(np.float32),
             sigyint=self.sigyint_seg.astype(np.float32),
             pedestal=self.ped_int.astype(np.float32),
             weights=self.weights.astype(np.float32),
             crmag=self.cr_mag_seg)
+
         rfo_model.meta.filename = model.meta.filename
 
         return rfo_model
@@ -353,6 +358,13 @@ def alloc_int(n_int, imshape):
     inv_var_int: float, 3D array
         Cube of integration-specific inverse variance values
 
+    var_p_int: float, 3D array
+        Cube of integration-specific values for the slope variance due to 
+        Poisson noise only
+
+    var_r_int: float, 3D array
+        Cube of integration-specific values for the slope variance due to 
+        read noise only
     """
 
     slope_int = np.zeros((n_int,) + imshape, dtype=np.float64)
@@ -361,7 +373,129 @@ def alloc_int(n_int, imshape):
     m_by_var_int = np.zeros((n_int,) + imshape, dtype=np.float64)
     inv_var_int = np.zeros((n_int,) + imshape, dtype=np.float64)
 
-    return slope_int, err_int, dq_int, m_by_var_int, inv_var_int
+    var_p_int = np.zeros((n_int,) + imshape, dtype=np.float64)
+    var_r_int = np.zeros((n_int,) + imshape, dtype=np.float64)
+
+    return slope_int, err_int, dq_int, m_by_var_int, inv_var_int, \
+           var_p_int, var_r_int
+
+
+def calc_vars_int(slope_int, readnoise_2d, gdq_4d, ii_int, var_p_int, \
+                   var_r_int):
+    """
+    Short Summary
+    -------------
+    Calculate the integration-specific variance arrays for the given
+    integration.
+
+    Parameters
+    ----------
+    slope_int: float, 3D array
+        cube of integration-specific slopes
+
+    readnoise_2d: float, 2D array; multiplied by gain
+        readnoise subarray
+
+    gdq_4d: 4-D ndarray
+        The group data quality array.
+
+    ii_int: int
+        integration number
+
+    var_p_int: float, 3D array
+        Cube of integration-specific values for the slope variance due to 
+        Poisson noise only
+
+    var_r_int: float, 3D array
+        Cube of integration-specific values for the slope variance due to 
+        read noise only
+
+    Returns
+    -------
+    var_poisson: float, 2D array
+        Slice (corresponding to the given integration) of the slope
+        variance array due to Poisson noise only
+
+    var_readnoise: float, 2D array
+        Slice (corresponding to the given integration) of the slope
+        variance array due to read noise only
+    """
+    (nint, nreads, asize2, asize1) = gdq_4d.shape
+    npix = asize1 * asize2
+    imshape = (asize2, asize1)
+
+    # create int-specific chunks of input arrays
+    gdq_2d = gdq_4d[ii_int,:,:,:].reshape(( nreads, npix ))
+    slope_1d = slope_int[ii_int,:,:].reshape( npix )
+    rn_1d = readnoise_2d.reshape( npix )
+
+    gdq_2d_nan = gdq_2d.copy()  # group dq with SATS will be replaced by nans
+    gdq_2d_nan = gdq_2d_nan.astype(np.float32)
+
+    wh_sat = np.where(np.bitwise_and(gdq_2d, dqflags.group['SATURATED']))
+    if (len( wh_sat[0]) > 0):
+        gdq_2d_nan[ wh_sat ] = np.nan  # set all SAT reads to nan
+
+    # get lengths of semiramps for all pix [number_of_semiramps, number_of_pix]
+    segments = gdq_2d.copy()* 0.
+
+    # counter of semiramp for each pixel
+    sr_index = np.zeros( npix, dtype=np.uint8 )
+    pix_not_done = np.ones( npix, dtype=np.bool)  # initialize to True
+
+    i_read = 0
+    # loop over reads for all pixels
+    while (i_read < nreads and np.any(pix_not_done)): 
+        gdq_1d = gdq_2d_nan[ i_read, :]
+
+        wh_good = np.where( gdq_1d == 0) # good reads
+        # if this read is good, increment that pixel's SR's length
+        if ( len( wh_good[0] > 0 )):
+            segments[ sr_index[ wh_good], wh_good ] += 1
+
+        # Locate any CRs that appear before the first SAT read...
+        wh_cr = np.where( gdq_2d_nan[ i_read, :] == dqflags.group['JUMP_DET'])
+
+        # ... but not on final read:
+        if (len(wh_cr[0] > 0 ) and (i_read < nreads-1) ):
+            sr_index[ wh_cr[0] ] += 1
+            segments[ sr_index[wh_cr], wh_cr ] += 1
+
+        wh_nan = np.where( np.isnan(gdq_2d_nan[ i_read, :]))
+        if ( len( wh_nan[0] > 0 )):
+            pix_not_done[ wh_nan[0]] = False
+
+        i_read += 1
+
+    segments = segments.astype(np.uint8)
+
+    ngroups_pix = segments.sum(0) # total number of groups per pixel
+    nsegs_pix = (segments != 0).sum(0) #  number of segments per pixel
+    sum_wgt_p = ngroups_pix - nsegs_pix # weight sum for poisson
+
+    # calculate variance due to poisson noise only
+    sum_p = nsegs_pix * slope_1d
+
+    var_poisson = sum_p / (sum_wgt_p * nsegs_pix)
+    var_poisson[ np.isnan( var_poisson )] = 0.
+    var_poisson[ np.isinf( var_poisson )] = 0.
+    var_poisson = var_poisson.reshape( imshape )
+
+    # calculate variance due to readnoise only
+    var_r = rn_1d**2 * 12./(segments**3. - segments)
+    var_r[ np.isinf(var_r)] = 0.
+    var_r[ np.isnan(var_r)] = 0.
+
+    sum_r = (segments*var_r[:]/((nsegs_pix)**3.)).sum(axis=0)
+    sum_r[ np.isnan( sum_r )] = 0.
+    sum_r[ np.isinf( sum_r )] = 0.
+
+    var_readnoise = sum_r/nsegs_pix
+    var_readnoise[ np.isnan( var_readnoise )] = 0.
+    var_readnoise[ np.isinf( var_readnoise )] = 0.
+    var_readnoise = var_readnoise.reshape( imshape )
+
+    return (var_poisson, var_readnoise)
 
 
 def calc_slope_int(slope_int, m_by_var_int, inv_var_int, num_int):
@@ -375,6 +509,7 @@ def calc_slope_int(slope_int, m_by_var_int, inv_var_int, num_int):
     ----------
     slope_int: float, 3D array
         cube of integration-specific slopes
+
     m_by_var_int: float, 3D array
         cube of integration-specific slopes divided by variance
 
@@ -398,7 +533,7 @@ def calc_slope_int(slope_int, m_by_var_int, inv_var_int, num_int):
     return slope_slice
 
 
-def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap, 
+def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap,
                   dropframes1):
     """
     Short Summary
@@ -431,7 +566,7 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap,
         number of frames dropped between groups, from the GROUPGAP keyword.
 
     dropframes1: int
-        number of frames dropped at the beginning of every integration. 
+        number of frames dropped at the beginning of every integration.
         Currently this is not stored as an available keyword, so the value
         is hardcoded to be 0.
 
@@ -450,7 +585,7 @@ def calc_pedestal(num_int, slope_int, firstf_int, dq_cube, nframes, groupgap,
     return ped
 
 
-def output_integ(model, slope_int, err_int, dq_int, effintim):
+def output_integ(model, slope_int, dq_int, effintim, var_p_int, var_r_int):
 
     """
     Short Summary
@@ -465,14 +600,19 @@ def output_integ(model, slope_int, err_int, dq_int, effintim):
     slope_int: float, 3D array
        Data cube of weighted slopes for each integration
 
-    err_int: float, 3D array
-       Data cube of error arrays for each integration
-
     dq_int: int, 3D array
        Data cube of DQ arrays for each integration
 
     effintim: float
        Effective integration time per integration
+
+    var_p_int: float, 3D array
+        Cube of integration-specific values for the slope variance due to
+        Poisson noise only
+
+    var_r_int: float, 3D array
+        Cube of integration-specific values for the slope variance due to
+        read noise only
 
     Returns
     -------
@@ -481,8 +621,10 @@ def output_integ(model, slope_int, err_int, dq_int, effintim):
     """
     cubemod = datamodels.CubeModel()
     cubemod.data = slope_int / effintim
-    cubemod.err = err_int / effintim
+    cubemod.err = np.sqrt(var_p_int + var_r_int)
     cubemod.dq = dq_int
+    cubemod.var_poisson = var_p_int
+    cubemod.var_rnoise = var_r_int
 
     cubemod.update(model) # keys from input needed for photom step
 
@@ -676,7 +818,6 @@ def get_efftim_ped(model):
     log.debug(' dropframes1: %s' % (dropframes1))
     log.info('Effective integration time per group: %s' % (effintim))
 
-
     return effintim, nframes, groupgap, dropframes1
 
 
@@ -718,7 +859,6 @@ def get_dataset_info(model):
 
     ngroups: int
         number of groups per integration
-
     """
 
     instrume = model.meta.instrument.name

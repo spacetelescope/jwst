@@ -43,6 +43,7 @@ class CubeBuildStep (Step):
          zdebug = integer(default=None)
          single = boolean(default=false)
          output_type = option('band','channel','grating','multi',default='band')
+#         output_use_model = boolean(default=true)
        """
     reference_file_types = ['cubepar','resol']
 
@@ -285,27 +286,30 @@ class CubeBuildStep (Step):
             else:
                 result =  thiscube.build_ifucube()
 #                print('returning',result.meta.filename)
-#                print('********',result.meta.ref_file.crds.sw_version)
                 Final_IFUCube.append(result)
-
             if(self.debug_pixel ==1):
                 self.spaxel_debug.close()
 
-
-        save_IFU = False
-#        print('cube_build_step',self.save_results)
-
-        if self.pipeline == 3:
-            if self.save_results == True or self.output_file !=None:
-                self.save_results = False # turn off the Step class functions
+#        save_IFU = False
+#        if self.pipeline == 31:
+#            if self.save_results == True or self.output_file !=None:
+#                self.save_results = False # turn off the Step class functions
                                       # cause new output_file names
                                       # to be determined. Cube_build handles all this
-                self.output_file = None
-                save_IFU = True
-            
-        if save_IFU == True:
+#                self.output_file = None
+#                save_IFU = True
+#        if save_IFU == True:
+#            Final_IFUCube.save(None)
+
+
+#        print('save results',self.save_results,self.suffix)
+        if self.save_results == True:
+            self.suffix = 's3d'
+#            print(Final_IFUCube[0].meta.filename)
+            self.save_results = False
+            #self.save_model(Final_IFUCube,self.suffix)
+            self.output_file = None
             Final_IFUCube.save(None)
-#            print('at the end',Final_IFUCube[0].meta.ref_file.crds.sw_version)
         return Final_IFUCube
 
 #********************************************************************************
