@@ -25,6 +25,9 @@ log.setLevel(logging.DEBUG)
 DEFAULT_SUFFIX = 's3d'
 cube_build_config = 'cube_build.cfg'
 
+# This only needs to specify the NUMBER of channels for each exptype 
+NUM_CHANNELS = {'MIRI_MRS':2, 'NRS_IFU':1}
+
 class OutlierDetectionIFU(OutlierDetection):
     """
     This is the controlling routine for the outlier detection process.
@@ -66,20 +69,23 @@ class OutlierDetectionIFU(OutlierDetection):
             
         """
         OutlierDetection.__init__(self, input_models, reffiles=reffiles, **pars)
+        # NOTE:  Need to confirm that this attribute accurately reports the
+        #        channel 'names' for both types of IFU data; MIRI and NRS
+        self.channels = self.input_models[0].meta.instrument.channel
 
     def do_detection(self):
         """Flag outlier pixels in DQ of input images
         """
-        pars = self.outlierpars
-        save_intermediate_results = pars['save_intermediate_results']
+        save_intermediate_results = self.outlierpars['save_intermediate_results']
 
         # Start by creating resampled/mosaic images for each group of exposures
-        #for ch in [1,2]:
-
-        single_IFUCube_result = CubeBuildStep.call(self.input_models,
-                                                   config_file=cube_build_config,
-                                                   channel=ch,
-                                                   single='true')
+        #
+        #for channel in range(NUM_CHANNELS[self.exptype]):
+        #    ch = self.channels[channel]
+        cubsestep = CubeBuildStep(config_file=cube_build_config,
+                                    channel=ch,
+                                    single='true')
+        single_IFUCube_result = cubestep.process(self.input_models)
 
         for model in single_IFUCube_result:
             model.meta.filename += self.resample_suffix
@@ -95,33 +101,43 @@ class OutlierDetectionIFU(OutlierDetection):
             ['median.fits'])
 
         # Perform median combination on set of drizzled mosaics
-        median_model.data = create_median(single_IFUCube_result, **pars)
+        median_model.data = self.create_median(single_IFUCube_result)
 
         if save_intermediate_results:
             log.info("Writing out MEDIAN image to: {}".format(median_model.meta.filename))
             median_model.save(median_model.meta.filename)
 
-        if pars['resample_data'] is True:
-            # Blot the median image back to recreate each input image specified in
-            # the original input list/ASN/ModelContainer
-            blot_models = blot_median(median_model, self.input_models, **pars)
-            if save_intermediate_results:
-                for model in blot_models:
-                    log.info("Writing out BLOT images...")
-                    model.save(model.meta.filename)
-        else:
-            # Median image will serve as blot image
-            blot_models = datamodels.ModelContainer()
-            for i in range(len(self.input_models)):
-                blot_models.append(median_model)
+        # Blot the median image back to recreate each input image specified in
+        # the original input list/ASN/ModelContainer
+        #
+        # need to override with IFU-specific version of blot for each channel
+        # this will need to combine the multiple channels of data into a single
+        # frame to match the original input...
+        blot_models = self.blot_median(median_model) 
+        if save_intermediate_results:
+            for model in blot_models:
+                log.info("Writing out BLOT images...")
+                model.save(model.meta.filename)
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image
-        detect_outliers(self.input_models, blot_models,
-            self.reffiles, **self.outlierpars)
+        self.detect_outliers(blot_models)
 
         # clean-up (just to be explicit about being finished with these results)
         del median_model, blot_models
 
+        def create_median(self, drizzled_inputs):
+            """ IFU-specific version of create_median 
+            """
+            pass
+        def blot_median(self, median_image):
+            """ IFU-specific version of blot_median 
+            """
+            pass
+        def detect_outliers(self,blot_models):
+            """ IFU-specific version of detect_outliers 
+            """
+            pass
+            
 
 

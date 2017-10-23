@@ -70,6 +70,8 @@ class OutlierDetection(object):
         # Parse any user-provided filename suffix for resampled products
         self.resample_suffix = '_outlier_{}.fits'.format(pars.get('resample_suffix' , DEFAULT_SUFFIX))
         if 'resample_suffix' in pars: del pars['resample_suffix']
+
+        self.exptype = self.input_models[0].meta.exposure.type
                 
         self.outlierpars = {}
         if 'outlierpars' in reffiles:
