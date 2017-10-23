@@ -41,7 +41,7 @@ class DataTypes(object):
                 ]
               }
 
-    def __init__(self, input,single,output_file):
+    def __init__(self, input,single,output_file,output_dir):
 
         self.input_models = []
         self.filenames = []
@@ -116,6 +116,9 @@ class DataTypes(object):
 #            default = root.find('cube_build') # the user has not provided a name
             self.output_name = basename
         
+
+        if output_dir !=None :
+            self.output_name= output_dir + '/' + self.output_name
 
     def build_product_name(self, filename):
         indx = filename.rfind('.fits')
