@@ -145,7 +145,9 @@ class CubeBuildStep (Step):
 # the cube_build software will attached the needed information on channel, sub-channel
 # grating or filter. 
 #________________________________________________________________________________
-        input_table = data_types.DataTypes(input,self.single,self.output_file)
+        input_table = data_types.DataTypes(input,self.single,
+                                           self.output_file,
+                                           self.output_dir)
         
         self.cube_type = input_table.input_type
         self.input_models = input_table.input_models
