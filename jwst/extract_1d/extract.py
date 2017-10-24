@@ -965,8 +965,28 @@ class ExtractModel(object):
                                      "either 2 or 3 arguments.")
             else:
                 ra, dec, wavelength = self.wcs(x_array, y_array)
-            ra = ra[nelem // 2]
-            dec = dec[nelem // 2]
+            mask = np.isnan(ra)
+            not_nan = np.logical_not(mask)
+            if np.any(not_nan):
+                ra2 = ra[not_nan]
+                min_ra = ra2.min()
+                max_ra = ra2.max()
+                ra = (min_ra + max_ra) / 2.
+            else:
+                log.warning("All right ascension values are NaN; "
+                            "assigning dummy value -999.")
+                ra = -999.
+            mask = np.isnan(dec)
+            not_nan = np.logical_not(mask)
+            if np.any(not_nan):
+                dec2 = dec[not_nan]
+                min_dec = dec2.min()
+                max_dec = dec2.max()
+                dec = (min_dec + max_dec) / 2.
+            else:
+                log.warning("All declination values are NaN; "
+                            "assigning dummy value -999.")
+                dec = -999.
 
         elif self._wave_model is not None:
             if self.dispaxis == HORIZONTAL:
