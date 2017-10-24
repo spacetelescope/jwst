@@ -44,8 +44,10 @@ def load_wcs(input_model, reference_files={}):
                          'NRS_MSASPEC', 'NRS_LAMP', 'MIR_MRS', 'NIS_SOSS',
                          'NRC_GRISM', 'NRC_TSGRISM', 'NIS_WFSS']
         if output_model.meta.exposure.type not in exclude_types:
+            orig_s_region = output_model.meta.wcsinfo.s_region.strip()
             update_s_region(output_model)
-            log.info("assign_wcs updated S_REGION to {0}".format(output_model.meta.wcsinfo.s_region))
+            if orig_s_region != output_model.meta.wcsinfo.s_region.strip():
+                log.info("assign_wcs updated S_REGION to {0}".format(output_model.meta.wcsinfo.s_region))
         else:
             log.info("assign_wcs did not update S_REGION for type {0}".format(output_model.meta.exposure.type))
         log.info("COMPLETED assign_wcs")
