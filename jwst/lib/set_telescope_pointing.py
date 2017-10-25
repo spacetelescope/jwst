@@ -194,7 +194,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
     model.meta.pointing.pa_v3 = vinfo.pa
 
     # Update Aperture pointing
-    model.meta.aperture.pa_aper = wcsinfo.pa
+    model.meta.aperture.position_angle = wcsinfo.pa
     model.meta.wcsinfo.crval1 = wcsinfo.ra
     model.meta.wcsinfo.crval2 = wcsinfo.dec
     model.meta.wcsinfo.pc1_1 = -np.cos(wcsinfo.pa * D2R)
