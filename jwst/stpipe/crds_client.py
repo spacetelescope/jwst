@@ -40,12 +40,7 @@ import six
 
 import crds
 from crds.core import log, config, exceptions, heavy_client
-
-try:
-    from crds.core import crds_cache_locking
-except ImportError:
-    crds_cache_locking = None
-    log.warning("CRDS needs to be updated to v7.1.4 or greater to support cache locking and association based CRDS cache updates.  Try 'conda update crds'.")
+from crds.core import crds_cache_locking
 
 # ----------------------------------------------------------------------
 
@@ -69,6 +64,27 @@ def _flatten_dict(nested):
 
 # ----------------------------------------------------------------------
 
+_HEADER_CACHE = {}
+
+def _input_name(input_file):
+    """
+    Return input_file.meta.filename IFF input_file is a DataModel and it works.
+    Return input_file IF input_file is a string,  assumed to be a filename.
+    Return input_file otherwise.
+    """
+    from .. import datamodels
+    if isinstance(input_file, six.string_types):
+        return input_file
+    elif isinstance(input_file, datamodels.DataModel):
+        try:
+            return input_file.meta.filename
+        except AttributeError:
+            return input_file
+    else:
+        return input_file
+
+import memory_profiler
+@memory_profiler.profile
 def get_multiple_reference_paths(input_file, reference_file_types):
     """Aligns JWST pipeline requirements with CRDS library top
     level interfaces.
@@ -83,25 +99,28 @@ def get_multiple_reference_paths(input_file, reference_file_types):
     """
     from .. import datamodels
 
-    gc.collect()
+    # gc.collect()
 
     if not reference_file_types:   # [] interpreted as *all types*.
         return {}
 
-    if isinstance(input_file, (six.string_types, datamodels.DataModel)):
-        with datamodels.open(input_file) as dm:
-            data_dict = dm.to_flat_dict(include_arrays=False)
+    name = _input_name(input_file)
+
+    if isinstance(name, six.string_types):
+        if name in _HEADER_CACHE:
+            log.verbose("Using cached CRDS matching header for", repr(name))
+            data_dict = _HEADER_CACHE[name]
+        else:
+            log.verbose("Caching CRDS matching header for", repr(name))
+            with datamodels.open(input_file) as dm:
+                data_dict = dm.to_flat_dict(include_arrays=False)
+                _HEADER_CACHE[name] = data_dict
     else:  # XXX not sure what this does... seems unneeded.
         data_dict = _flatten_dict(input_file)
 
-    gc.collect()
-
     try:
-        if crds_cache_locking is not None:
-            with crds_cache_locking.get_cache_lock():
-                bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
-        else:
-            bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")            
+        with crds_cache_locking.get_cache_lock():
+            bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
     except crds.CrdsBadRulesError as exc:
         raise crds.CrdsBadRulesError(str(exc))
     except crds.CrdsBadReferenceError as exc:
@@ -110,6 +129,8 @@ def get_multiple_reference_paths(input_file, reference_file_types):
     refpaths = {filetype: filepath if "N/A" not in filepath.upper() else "N/A"
                 for (filetype, filepath) in bestrefs.items()}
 
+    # gc.collect()
+    
     return refpaths
 
 def check_reference_open(refpath):
