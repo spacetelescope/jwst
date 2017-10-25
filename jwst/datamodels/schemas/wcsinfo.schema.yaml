@@ -201,6 +201,7 @@ properties:
           s_region:
             title: spatial extent of the observation
             type: string
+            default: " "
             fits_keyword: S_REGION
             fits_hdu: SCI
           waverange_start:

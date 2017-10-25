@@ -839,13 +839,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             HDU, pass ``'PRIMARY'``.
         """
         header = wcs.to_header()
+        extensions = self._asdf._extensions
         if hdu_name == 'PRIMARY':
             hdu = fits.PrimaryHDU(header=header)
         else:
             hdu = fits.ImageHDU(name=hdu_name, header=header)
         hdulist = fits.HDUList([hdu])
 
-        ff = fits_support.from_fits(hdulist, self._schema, validate=False)
+        ff = fits_support.from_fits(hdulist, self._schema, extensions=extensions,
+            pass_invalid_values=self._pass_invalid_values)
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
 
