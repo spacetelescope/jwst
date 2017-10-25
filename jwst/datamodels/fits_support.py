@@ -391,8 +391,8 @@ def to_fits(tree, schema, extensions=None):
     hdulist = fits.HDUList()
     hdulist.append(fits.PrimaryHDU())
 
-    _save_from_schema(hdulist, tree, schema)
     _save_extra_fits(hdulist, tree)
+    _save_from_schema(hdulist, tree, schema)
     _save_history(hdulist, tree)
 
     asdf = fits_embed.AsdfInFits(hdulist, tree, extensions=extensions)
