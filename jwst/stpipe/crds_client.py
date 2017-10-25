@@ -241,12 +241,13 @@ def init_multiprocessing(common_dataset_filepaths=()):
     parameters used by more than one process.  It can be empty.
     """
     # Determine the context to be used based on CRDS cache, CRDS server, and CRDS_CONTEXT.
+    # This can optimize away JSONRPC calls to the server for each subprocess when configured
+    # to interact with the server.
     with log.warn_on_exception("Failed determining context name"):
         final_context = get_context_used()
 
-    # Perform the load of `final_context`, in this case for all instruments, questionable
-    # since a header-based load will only mappings for load the required instrument.
-    # Should be around 2-12 seconds depending on file system performance.
+    # Load `final_context` from the file system.  Every subprocess should inherit the
+    # cached context rather than reloading it.
     with log.warn_on_exception("Failed loading context:", repr(final_context)):
         mapping = crds.get_symbolic_mapping(final_context)
         mapping.force_load()
