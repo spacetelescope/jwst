@@ -127,7 +127,9 @@ class OutlierDetectionStep(Step):
                 result = input_models.copy()
                 result.meta.cal_step.outlier_detection = "SKIPPED"
                 return result
-                
+
+            self.log.info("Using {} for outlier_detection".format(detection_step))    
+
             # Set up outlier detection, then do detection
             step = detection_step(self.input_models,
                 reffiles=reffiles, **pars)

@@ -22,7 +22,6 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-DEFAULT_SUFFIX = 'i2d'
 
 #class OutlierDetectionScaled(object):
 class OutlierDetectionScaled(OutlierDetection):
@@ -45,6 +44,7 @@ class OutlierDetectionScaled(OutlierDetection):
       5. Updates input data model DQ arrays with mask of detected outliers.
 
     """
+    DEFAULT_SUFFIX = 'i2d'
 
     def __init__(self, input_models, reffiles=None, **pars):
         """
@@ -63,6 +63,8 @@ class OutlierDetectionScaled(OutlierDetection):
     def do_detection(self):
         """Flag outlier pixels in DQ of input images
         """
+        self.build_suffix(**self.outlierpars)
+        
         pars = self.outlierpars
         save_intermediate_results = pars['save_intermediate_results']
 

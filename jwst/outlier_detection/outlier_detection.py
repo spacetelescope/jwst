@@ -19,8 +19,6 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
-DEFAULT_SUFFIX = 'i2d'
-
 
 class OutlierDetection(object):
     """
@@ -43,9 +41,10 @@ class OutlierDetection(object):
       6. Updates input data model DQ arrays with mask of detected outliers.
 
     """
+    DEFAULT_SUFFIX = 'i2d'
 
     def __init__(self, input_models, 
-                    reffiles=None,  
+                    reffiles=None,
                     **pars):
         """
         Parameters
@@ -64,20 +63,14 @@ class OutlierDetection(object):
         """
         self.input_models = input_models
         self.reffiles = reffiles
-        
+
         self.num_groups = len(self.input_models.group_names)
-
-        # Parse any user-provided filename suffix for resampled products
-        self.resample_suffix = '_outlier_{}.fits'.format(pars.get('resample_suffix' , DEFAULT_SUFFIX))
-        if 'resample_suffix' in pars: del pars['resample_suffix']
-
-        self.exptype = self.input_models[0].meta.exposure.type
-                
+        self.exptype = input_models[0].meta.exposure.type 
+        
         self.outlierpars = {}
         if 'outlierpars' in reffiles:
             self._get_outlier_pars()
         self.outlierpars.update(pars)
-
 
     def _get_outlier_pars(self):
         """ Extract outlier detection parameters from reference file
@@ -118,16 +111,27 @@ class OutlierDetection(object):
         for kw in list(self.outlierpars.keys()):
             self.outlierpars[kw] = ref_model['outlierpars_table.{0}'.format(kw)]
 
+    def build_suffix(self, **pars):
+        """ Class-specific method for defining the resample_suffix attribute
+            using a suffix specific to the sub-class.
+        """
+        # Parse any user-provided filename suffix for resampled products
+        self.resample_suffix = '_outlier_{}.fits'.format(pars.get('resample_suffix' , self.DEFAULT_SUFFIX))
+        if 'resample_suffix' in pars: del pars['resample_suffix']
+        log.info("Defined output product suffix as: {}".format(self.resample_suffix))
+        
     def do_detection(self):
         """Flag outlier pixels in DQ of input images
         """
+        self.build_suffix(**self.outlierpars)
+        
         pars = self.outlierpars
         save_intermediate_results = pars['save_intermediate_results']
         if pars['resample_data'] is True:
             # Start by creating resampled/mosaic images for each group of exposures
             sdriz = resample.ResampleData(self.input_models, single=True,
                 blendheaders=False, **pars)
-            sdriz.do_drizzle()
+            sdriz.do_drizzle(**pars)
             drizzled_models = sdriz.output_models
             for model in drizzled_models:
                 model.meta.filename += self.resample_suffix
@@ -174,7 +178,6 @@ class OutlierDetection(object):
         # clean-up (just to be explicit about being finished with these results)
         del median_model, blot_models
 
-
     def create_median(self,resampled_models):
         """Create a median image from the singly resampled images.
 
@@ -189,9 +192,9 @@ class OutlierDetection(object):
         resampled_sci = [i.data for i in resampled_models]
         resampled_wht = [i.wht for i in resampled_models]
 
-        nlow = self.pars.get('nlow', 0)
-        nhigh = self.pars.get('nhigh', 0)
-        maskpt = self.pars.get('maskpt', 0.7)
+        nlow = self.outlierpars.get('nlow', 0)
+        nhigh = self.outlierpars.get('nhigh', 0)
+        maskpt = self.outlierpars.get('maskpt', 0.7)
 
         badmasks = []
         for w in resampled_wht:
@@ -213,8 +216,8 @@ class OutlierDetection(object):
     def blot_median(self, median_model):
         """Blot resampled median image back to the detector images
         """
-        interp = self.pars.get('interp', 'poly5')
-        sinscl = self.pars.get('sinscl', 1.0)
+        interp = self.outlierpars.get('interp', 'poly5')
+        sinscl = self.outlierpars.get('sinscl', 1.0)
 
         # Initialize container for output blot images
         blot_models = datamodels.ModelContainer()
@@ -267,7 +270,8 @@ class OutlierDetection(object):
         gain_models = self.reffiles['gain']
         rn_models = self.reffiles['readnoise']
 
-        for image, blot, gain, rn in zip(self.input_models, blot_models,  gain_models, rn_models):
+        for image, blot, gain, rn in zip(self.input_models, blot_models, gain_models,
+            rn_models):
             flag_cr(image, blot, gain, rn, **self.outlierpars)
 
 

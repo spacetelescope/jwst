@@ -19,8 +19,6 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-DEFAULT_SUFFIX = 's2d'
-
 class OutlierDetectionSpec(OutlierDetection):
     """
     This is the controlling routine for the outlier detection process.
@@ -42,6 +40,7 @@ class OutlierDetectionSpec(OutlierDetection):
       6. Updates input data model DQ arrays with mask of detected outliers.
 
     """
+    DEFAULT_SUFFIX = 's2d'
 
     def __init__(self, input_models,
                      reffiles=None,
@@ -66,6 +65,8 @@ class OutlierDetectionSpec(OutlierDetection):
     def do_detection(self):
         """Flag outlier pixels in DQ of input images
         """
+        self.build_suffix(**self.outlierpars)
+
         pars = self.outlierpars
         save_intermediate_results = pars['save_intermediate_results']
         if pars['resample_data'] is True:
