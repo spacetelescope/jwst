@@ -284,7 +284,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         current_date = Time(datetime.datetime.now())
         current_date.format = 'isot'
         self.meta.date = current_date.value
-        self.meta.model_type = self.__class__.__name__
+        if self.meta.model_type is not None:
+            self.meta.model_type = self.__class__.__name__
 
     def save(self, path, *args, **kwargs):
         """

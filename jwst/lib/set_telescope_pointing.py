@@ -10,7 +10,7 @@ from numpy import (cos, sin)
 from namedlist import namedlist
 from asdf import schema as asdf_schema
 
-from ..datamodels import DataModel
+from ..datamodels import Level1bModel
 from ..lib.engdb_tools import (
     ENGDB_BASE_URL,
     ENGDB_Service,
@@ -109,14 +109,14 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, **kwargs):
         Keyword arguments used by matrix calculation routines
     """
     logger.info('Updating WCS info for file {}'.format(filename))
-    model = DataModel(filename)
-    model = _extend_schema(model, 'wcsinfo.schema.yaml')
+    model = Level1bModel(filename)
     update_wcs(
         model,
         default_pa_v3=default_pa_v3,
         siaf_path=siaf_path,
         **kwargs
     )
+    model.meta.model_type = None
     model.save(filename)
     model.close()
     logger.info('...update completed')
