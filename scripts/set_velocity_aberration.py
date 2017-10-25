@@ -169,7 +169,7 @@ def add_dva(filename):
     '''
     hdulist = fits.open(filename, 'update')
     pheader = hdulist[0].header
-    sheader = hdulist[1].header
+    sheader = hdulist['SCI'].header
     jwst_dx = float(pheader['JWST_DX'])
     jwst_dy = float(pheader['JWST_DY'])
     jwst_dz = float(pheader['JWST_DZ'])

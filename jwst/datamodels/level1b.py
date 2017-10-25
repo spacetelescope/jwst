@@ -56,8 +56,8 @@ class Level1bModel(model_base.DataModel):
         #
         # TODO: Hacky. Need solution which involves schema
         # specification and embedded in DataModel.
-        if 'zeroframe' not in self.instance and \
-           'data' in self.instance and \
-           len(self.data.shape) == 4:
-            nints, ngroups, ny, nx = self.data.shape
-            self.zeroframe = np.zeros((nints, ny, nx))
+        #if 'zeroframe' not in self.instance and \
+        #   'data' in self.instance and \
+        #   len(self.data.shape) == 4:
+        #    nints, ngroups, ny, nx = self.data.shape
+        #    self.zeroframe = np.zeros((nints, ny, nx))
