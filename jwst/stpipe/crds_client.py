@@ -44,94 +44,72 @@ from crds.core import crds_cache_locking
 
 # ----------------------------------------------------------------------
 
-# import memory_profiler
-# @memory_profiler.profile
-def get_multiple_reference_paths(input_file, reference_file_types):
-    """Aligns JWST pipeline requirements with CRDS library top
-    level interfaces.
-
-    `input_file` can be a simple data model, a filename, or a nested meta data dict.
-    `reference_file_types` is a list of reference type names to fetch bestrefs for.
-
-    Returns best references dict { filetype : filepath or "N/A", ... }
-    """
-    # gc.collect()
-    
-    data_dict = _get_data_dict(input_file)
-
-    refpaths = _get_refpaths(data_dict, tuple(reference_file_types))
-
-    # gc.collect()
-    
+def get_multiple_reference_paths_from_filename(filename, reference_file_types):
+    """Test wrapper to open/close data model for get_multiple_reference_paths."""
+    from .. import datamodels
+    with datamodels.open(filename) as model:
+        refpaths = get_multiple_reference_paths(model, reference_file_types)
     return refpaths
 
 # ......................
     
-def _input_name(input_file):
+_BESTREFS_CACHE = {}   # { model_filename : bestref_path or 'N/A', ... }
+
+# import memory_profiler
+# @memory_profiler.profile
+def get_multiple_reference_paths(dataset_model, reference_file_types):
+    """Aligns JWST pipeline requirements with CRDS library top level interfaces.
+    
+    `dataset_model` is an open data model.
+
+    Returns best references dict { filetype : filepath or "N/A", ... }
     """
-    Return input_file.meta.filename IFF input_file is a DataModel and it works.
-    Return input_file IF input_file is a string,  assumed to be a filename.
-    Return input_file otherwise.
-    """
-    from .. import datamodels
-    if isinstance(input_file, six.string_types):
-        return input_file
-    elif isinstance(input_file, datamodels.DataModel):
-        try:
-            return input_file.meta.filename
-        except AttributeError:
-            return input_file
-    else:
-        return input_file
+    filename = dataset_model.meta.filename
+    
+    key = (filename, tuple(reference_file_types))
+    
+    try:
+        refpaths = _BESTREFS_CACHE[key]
+        log.verbose("Using cached bestrefs for", repr(filename), "with types", repr(reference_file_types))
+    except KeyError:
+
+        data_dict = _get_data_dict(filename, dataset_model)
+
+        # Cache prefetch-like results
+        _BESTREFS_CACHE[key] = refpaths = _get_refpaths(data_dict, tuple(reference_file_types))
+
+        # Cache results for each individual reftype, as-in get_reference_file().
+        for reftype, path in refpaths.items():
+            _BESTREFS_CACHE[(filename, (reftype,))] = { reftype : path }
+
+    return refpaths
 
 # ......................
     
-_HEADER_CACHE = {}
+_HEADER_CACHE = {}   #  { model_filename : flat_model_pseudo_header, ... }
 
-def _get_data_dict(input_file):
-    """Return the data models header dictionary based on input_file.
-
-    `input_file` can be a filepath, an open data model, or a nested
-    data-model-like metadata dictionary.
+def _get_data_dict(filename, dataset_model):
+    """Return the data models header dictionary based on open data `dataset_model`.
 
     Returns a flat parameter dictionary used for CRDS bestrefs matching.
     """
     from .. import datamodels
-    name = _input_name(input_file)
-    if isinstance(name, six.string_types):
-        if name in _HEADER_CACHE:
-            log.verbose("Using cached CRDS matching header for", repr(name))
-        else:
-            log.verbose("Caching CRDS matching header for", repr(name))
-            with datamodels.open(input_file) as model:
-                _HEADER_CACHE[name] = model.to_flat_dict(include_arrays=False)
-    else:  # XXX not sure what this does... seems unneeded.
-        _HEADER_CACHE[name] = _flatten_dict(input_file)
-    return _HEADER_CACHE[name]
+    try:
+        header = _HEADER_CACHE[filename]
+        log.verbose("Using cached CRDS matching header for", repr(filename))
+    except KeyError:
+        log.verbose("Caching CRDS matching header for", repr(filename))
+        _HEADER_CACHE[filename] = header = dataset_model.to_flat_dict(include_arrays=False)
+    return header
 
-def _flatten_dict(nested):
-    """Takes a hierarchical arbitrarily nested dictionary of dictionaries, much
-    like a data model, and flattens it.  The end result has only non-dictionary
-    values referred to by the dotted paths that describe the traversal down
-    through the nested dictionaries to their values.
-    """
-    def flatten(root, path, output):
-        """Private worker function for _flatten_dict()."""
-        for key, val in root.items():
-            if isinstance(key, six.string_types):
-                if isinstance(val, dict):
-                    flatten(val, path + [key], output)
-                else:
-                    output['.'.join(path + [key])] = val
-    output = {}
-    flatten(nested, [], output)
-    return output
 
 # ......................
 
 def _get_refpaths(data_dict, reference_file_types):
     """Tailor the CRDS core library getreferences() call to the JWST CAL code by
-    adding locking and truncating expected exceptions.
+    adding locking and truncating expected exceptions.   Also simplify 'NOT FOUND n/a' to
+    'N/A'.  Re-interpret empty reference_file_types as "no types" instead of core
+    library default of "all types."
     """
     if not reference_file_types:   # [] interpreted as *all types*.
         return {}
@@ -158,7 +136,7 @@ def check_reference_open(refpath):
         fd.close()
     return refpath
 
-def get_reference_file(input_file, reference_file_type):
+def get_reference_file(dataset_model, reference_file_type):
     """
     Gets a reference file from CRDS as a readable file-like object.
     The actual file may be optionally overridden.
@@ -179,7 +157,7 @@ def get_reference_file(input_file, reference_file_type):
     reference_filepath : string
         The path of the reference in the CRDS file cache.
     """
-    return get_multiple_reference_paths(input_file, [reference_file_type])[reference_file_type]
+    return get_multiple_reference_paths(dataset_model, [reference_file_type])[reference_file_type]
 
 def get_override_name(reference_file_type):
     """
