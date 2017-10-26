@@ -14,7 +14,7 @@
 # Filters: F090W/F227W
 # Notes: detectors within ACT_ID witin VISIT
 # 
-filename|program|obs_num|wfsvisit|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|asn_candidate
+filename|program|obs_num|visitype|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|asn_candidate
 #
 # Initialize ACID. This is done with a dummy exposure that will not match any association
 set acid|program|obs_num|wfsvisit|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|@!next(acid)

@@ -37,6 +37,9 @@ class AssociationPool(Table):
             converters=_ConvertToStr(), **kwargs
         )
 
+        # If anything has been masked, just fill
+        table = table.filled('null')
+
         # Lowercase the column names
         # Note: Cannot do in-place because modifying the
         #       list while iterating.
