@@ -3,6 +3,8 @@ language: c
 os:
     - linux
 
+stage: Comprehensive tests
+
 sudo: false
 
 # The apt packages below are needed for sphinx builds, which can no longer
@@ -31,6 +33,12 @@ env:
         - PYTHON_VERSION=3.5 SETUP_CMD='install'
         - PYTHON_VERSION=3.5 SETUP_CMD='test'
 
+stages:
+   # Do the style check and a single test job, don't proceed if it fails
+   - name: Initial tests
+   # Do the rest of the tests
+   - name: Comprehensive tests
+
 matrix:
 
     # Don't wait for allowed failures
@@ -43,6 +51,7 @@ matrix:
 
         # PEP8 check with flake8 (only once, i.e. "os: linux")
         - os: linux
+          stage: Initial tests
           env: PYTHON_VERSION=3.5 MAIN_CMD='flake8 --count'
                SETUP_CMD='jwst' TEST_CMD='flake8 --version'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
