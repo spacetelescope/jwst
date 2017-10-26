@@ -142,6 +142,7 @@ setup(
     ],
     cmdclass={
         'test': PyTest,
-        'build_sphinx': BuildSphinx
+        'build_sphinx': BuildSphinx,  # Deprecate this and use build_docs?
+        'build_docs': BuildSphinx
     },
 )
