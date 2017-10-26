@@ -30,11 +30,6 @@
 A client library for CRDS
 """
 import re
-import gc
-
-# ----------------------------------------------------------------------
-
-import six
 
 # ----------------------------------------------------------------------
 
@@ -44,7 +39,10 @@ from crds.core import crds_cache_locking
 
 # ----------------------------------------------------------------------
 
-def get_multiple_reference_paths_from_filename(filename, reference_file_types):
+# This is really a testing and debug convenience function,  and notably now
+# the only place in this module that a direct import of datamodels occurs
+# or datamodels open() occurs.
+def get_refpaths_from_filename(filename, reference_file_types):
     """Test wrapper to open/close data model for get_multiple_reference_paths."""
     from .. import datamodels
     with datamodels.open(filename) as model:
@@ -65,8 +63,6 @@ def get_multiple_reference_paths(dataset_model, reference_file_types):
     Returns best references dict { filetype : filepath or "N/A", ... }
     """
     filename = dataset_model.meta.filename
-    
-    key = (filename, tuple(reference_file_types))
     
     try:
 
@@ -96,7 +92,6 @@ def _get_data_dict(filename, dataset_model):
 
     Returns a flat parameter dictionary used for CRDS bestrefs matching.
     """
-    from .. import datamodels
     try:
         header = _HEADER_CACHE[filename]
         log.verbose("Using cached CRDS matching header for", repr(filename))
@@ -135,8 +130,8 @@ def check_reference_open(refpath):
     Ignore reference path values of "N/A" or "" for checking.
     """
     if refpath != "N/A" and refpath.strip() != "":
-        fd = open(refpath, "rb")
-        fd.close()
+        opened = open(refpath, "rb")
+        opened.close()
     return refpath
 
 def get_reference_file(dataset_model, reference_file_type):
@@ -212,31 +207,3 @@ def get_context_used():
     """Return the context (.pmap) used for determining best references."""
     _connected, final_context = heavy_client.get_processing_mode("jwst")
     return final_context
-
-def init_multiprocessing(common_dataset_filepaths=()):
-    """Perform CRDS cached operations first in a multipocessing root process so that every 
-    subprocess inherits cached CRDS information as a consequence of UNIX forking semantics
-    and doesn't repeat expensive operations.
-
-    `common_dataset_filepaths` is a list of filepaths used to define reference matching
-    parameters used by more than one process.  It can be empty.
-    """
-    # Determine the context to be used based on CRDS cache, CRDS server, and CRDS_CONTEXT.
-    # This can optimize away JSONRPC calls to the server for each subprocess when configured
-    # to interact with the server.
-    with log.warn_on_exception("Failed determining context name"):
-        final_context = get_context_used()
-
-    # Load `final_context` from the file system.  Every subprocess should inherit the
-    # cached context rather than reloading it.
-    with log.warn_on_exception("Failed loading context:", repr(final_context)):
-        mapping = crds.get_symbolic_mapping(final_context)
-        mapping.force_load()
-    
-    # Perform header reads for all dataset_filepaths shared between processes
-    for filepath in common_dataset_filepaths:
-        with log.warn_on_exception("Failed reading file header for", repr(filepath)):
-            _get_data_dict(filepath)
-
-    # probably good to prevent inherited garbage,  do last.
-    gc.collect()
