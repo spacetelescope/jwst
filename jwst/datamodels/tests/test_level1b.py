@@ -5,6 +5,7 @@ import numpy as np
 from .. import Level1bModel
 
 
+@pytest.mark.xfail
 def test_no_zeroframe():
     """Test for default zeroframe"""
     nx = 10
