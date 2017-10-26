@@ -1,5 +1,6 @@
 """Test Level1bModel"""
 
+import pytest
 import numpy as np
 
 from .. import Level1bModel
