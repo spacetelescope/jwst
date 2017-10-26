@@ -10,21 +10,17 @@ from .helpers import (
     TemporaryDirectory,
     full_pool_rules,
 )
+from ...tests.helpers import runslow
 
 from ..main import Main
 from .. import load_asn
-
-# Temporarily skip if running under Travis
-# pytestmark = pytest.mark.skipif(
-#     "TRAVIS" in os.environ and os.environ["TRAVIS"] == "true",
-#     reason='Temporarily disable due to performance issues'
-# )
 
 
 @pytest.yield_fixture(
     scope='module',
     params=['yaml', 'json']
 )
+@runslow
 def make_asns(request):
     asn_format = request.param
     pool, rules, pool_fname = full_pool_rules(None)
@@ -38,6 +34,7 @@ def make_asns(request):
         yield generated, path, asn_format
 
 
+@runslow
 def test_roundtrip(make_asns):
     generated, path, asn_format = make_asns
     asn_files = glob(os.path.join(path, '*.' + asn_format))
@@ -57,6 +54,7 @@ def test_roundtrip(make_asns):
     assert len(orphaned) == len(generated.orphaned)
 
 
+@runslow
 def test_load_asn_all(make_asns):
     generated, path, asn_format = make_asns
     asn_files = glob(os.path.join(path, '*.' + asn_format))
