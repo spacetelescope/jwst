@@ -69,18 +69,21 @@ def get_multiple_reference_paths(dataset_model, reference_file_types):
     key = (filename, tuple(reference_file_types))
     
     try:
-        refpaths = _BESTREFS_CACHE[key]
+
+        refpaths = { reftype:_BESTREFS_CACHE[(filename, reftype)]
+                     for reftype in reference_file_types }
         log.verbose("Using cached bestrefs for", repr(filename), "with types", repr(reference_file_types))
+        
     except KeyError:
 
         data_dict = _get_data_dict(filename, dataset_model)
 
         # Cache prefetch-like results
-        _BESTREFS_CACHE[key] = refpaths = _get_refpaths(data_dict, tuple(reference_file_types))
+        refpaths = _get_refpaths(data_dict, tuple(reference_file_types))
 
         # Cache results for each individual reftype, as-in get_reference_file().
         for reftype, path in refpaths.items():
-            _BESTREFS_CACHE[(filename, (reftype,))] = { reftype : path }
+            _BESTREFS_CACHE[(filename, reftype)] = path
 
     return refpaths
 
