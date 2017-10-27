@@ -258,11 +258,11 @@ properties:
             type: string
             fits_keyword: MU_EPOCH
           proposer_ra:
-            title: Proposer target RA
+            title: Proposer's target RA
             type: number
             fits_keyword: PROP_RA
           proposer_dec:
-            title: Propose target Dec
+            title: Proposer's target Dec
             type: number
             fits_keyword: PROP_DEC
           source_type:
