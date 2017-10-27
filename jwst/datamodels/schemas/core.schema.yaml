@@ -38,9 +38,9 @@ properties:
         type: string
         fits_keyword: CAL_VER
       calibration_software_revision:
-        title: Calibration software revision number
+        title: Calibration software version control sys number
         type: string
-        fits_keyword: CAL_SVN
+        fits_keyword: CAL_VCS
       model_type:
         title: Type of data model
         type: string
