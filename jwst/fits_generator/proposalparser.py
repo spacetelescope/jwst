@@ -32,6 +32,12 @@ def get_detectors(filename):
     ObservationNum = 0
     detectors = []
     ProposalNum = filename.split('.')[0]
+    #
+    # Force ProposalNum to be eactly 5 characters long by either truncating or padding
+    if len(ProposalNum) > 5:
+        ProposalNum = ProposalNum[-5:]
+    elif len(ProposalNum) < 5:
+        ProposalNum = ProposalNum.zfill(5)
     for observation in proposal.getchildren():
         ObservationNum = ObservationNum + 1
         VisitNum = 0
