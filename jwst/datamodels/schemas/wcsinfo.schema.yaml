@@ -79,19 +79,19 @@ properties:
             fits_keyword: CRPIX3
             fits_hdu: SCI
           crval1:
-            title: RA at the reference pixel (deg)
+            title: first axis value at the reference pixel
             type: number
             default: 0.0
             fits_keyword: CRVAL1
             fits_hdu: SCI
           crval2:
-            title: Dec at the reference pixel (deg)
+            title: second axis value at the reference pixel
             type: number
             default: 0.0
             fits_keyword: CRVAL2
             fits_hdu: SCI
           crval3:
-            title: Wavelength at the reference pixel (microns)
+            title: third axis value at the reference pixel
             type: number
             default: 0.0
             fits_keyword: CRVAL3
@@ -127,19 +127,19 @@ properties:
             fits_keyword: CUNIT3
             fits_hdu: SCI
           cdelt1:
-            title: first axis increment per pixel (deg)
+            title: first axis increment per pixel
             type: number
             default: 1.0
             fits_keyword: CDELT1
             fits_hdu: SCI
           cdelt2:
-            title: second axis increment per pixel (deg)
+            title: second axis increment per pixel
             type: number
             default: 1.0
             fits_keyword: CDELT2
             fits_hdu: SCI
           cdelt3:
-            title: third axis increment per pixel (microns)
+            title: third axis increment per pixel
             type: number
             default: 1.0
             fits_keyword: CDELT3
