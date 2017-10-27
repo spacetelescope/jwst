@@ -10,6 +10,7 @@ from ..stpipe import Pipeline
 from ..assign_wcs import assign_wcs_step
 from ..flatfield import flat_field_step
 from ..photom import photom_step
+from ..resample import resample_step
 
 
 __version__ = "3.0"
@@ -21,7 +22,7 @@ class Image2Pipeline(Pipeline):
     Level-2b.
 
     Included steps are:
-    assign_wcs, flat_field, and photom.
+    assign_wcs, flat_field, photom and resample.
     """
 
     spec = """
@@ -34,6 +35,7 @@ class Image2Pipeline(Pipeline):
         'assign_wcs': assign_wcs_step.AssignWcsStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'photom': photom_step.PhotomStep,
+        'resample': resample_step.ResampleStep
         }
 
     def process(self, input):
@@ -126,6 +128,12 @@ class Image2Pipeline(Pipeline):
         input = self.flat_field(input)
         input = self.photom(input)
 
+        # Resample individual exposures
+        result = self.resample(input)
+
+        # write out resampled exposure
+        self.save_model(result, suffix='i2d')
+        
         # That's all folks
         self.log.info(
             'Finished processing product {}'.format(exp_product['name'])
