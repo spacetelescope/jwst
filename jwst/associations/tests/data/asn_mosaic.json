@@ -1,0 +1,210 @@
+{
+    "asn_rule": "Asn_Mosaic",
+    "target": "1",
+    "creation_time": "20160615T210324",
+    "asn_pool": "jw96090_20160406T233447_pool",
+    "degraded_status": "No known degraded exposures in association.",
+    "program": "96090",
+    "asn_id": "o001",
+    "products": [
+        {
+            "name": "jw96090_t001_nircam_f150w2_mosaic.fits",
+            "members": [
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001001_03101_00001_nrca1_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001004_03101_00001_nrca2_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001004_03101_00001_nrca3_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001004_03101_00001_nrcb2_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001004_03101_00001_nrca1_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001004_03101_00001_nrcb3_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001004_03101_00001_nrcb1_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001004_03101_00001_nrcb4_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001004_03101_00001_nrca4_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001003_03101_00001_nrcb3_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001003_03101_00001_nrcb4_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001003_03101_00001_nrcb2_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001003_03101_00001_nrcb1_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001003_03101_00001_nrca3_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001003_03101_00001_nrca2_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001003_03101_00001_nrca4_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001003_03101_00001_nrca1_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001002_03101_00001_nrcb3_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001002_03101_00001_nrcb2_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001002_03101_00001_nrcb1_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001002_03101_00001_nrcb4_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001002_03101_00001_nrca4_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001002_03101_00001_nrca2_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001002_03101_00001_nrca1_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001002_03101_00001_nrca3_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001001_03101_00001_nrcb2_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001001_03101_00001_nrcb1_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001001_03101_00001_nrcb3_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001001_03101_00001_nrcb4_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001001_03101_00001_nrca2_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001001_03101_00001_nrca4_cal.fits"
+                },
+                {
+                    "exposerr": null,
+                    "asn_candidate_id": "100",
+                    "exptype": "SCIENCE",
+                    "expname": "jw96090001001_03101_00001_nrca3_cal.fits"
+                }
+            ]
+        }
+    ],
+    "asn_type": "mosaic",
+    "constraints": "Constraints:\n    target_acq: (TARGET_ACQUISITION)?\n    target_name: 1\n    opt_elem2: CLEAR\n    opt_elem: F150W2\n    instrument: NIRCAM\n    program: 96090\n    wfsvisit: NULL\n    asn_candidate_id: 100\n    detector: (?!NULL).+\n    asn_candidate_type: MOSAIC"
+}

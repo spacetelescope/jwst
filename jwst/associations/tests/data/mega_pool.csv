@@ -1,0 +1,948 @@
+# Pool.Candidates
+# 
+# Examples of observation, candidates, and whole proposal associations
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# Columns are the minimum necessary, so as to more easily edit.
+# Based on NIRCam Mosaic where any single observation produces a minimum of two assocations: one for the short and long channels.
+# The basic exposure set will be repeated as needed to create other observations and candidates.
+# 
+# ########
+# Prposal 93065
+# Mosaic: 1 row by 2 columns
+# Filters: F090W/F227W
+# Notes: detectors within ACT_ID witin VISIT
+# 
+# 
+# Initialize ACID. This is done with a dummy exposure that will not match any association
+# 
+# There are 2 AC's defined. Set ACID to reflect this as a last dummy exposure
+# 
+# Base exposure set.
+# First observation, type==OBSERVATION
+# 
+# Second observation, type=OBSERVATION
+# 
+# Third observation, First, Second AC==MOSAIC
+# 
+# Forth observation, First, Second AC==MOSAIC
+# 
+# Fifth observation, Second AC==MOSAIC
+# 
+# Sixth observation, Third AC==MOSAIC
+# 
+# Seventh observation, Third AC==MOSAIC
+# 
+# Set ACID to how many have been used.
+# Pool.Candidates
+# 
+# Examples of observation, candidates, and whole proposal associations
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# Columns are the minimum necessary, so as to more easily edit.
+# Based on NIRCam Mosaic where any single observation produces a minimum of two assocations: one for the short and long channels.
+# The basic exposure set will be repeated as needed to create other observations and candidates.
+# 
+# ########
+# Prposal 93065
+# Mosaic: 1 row by 2 columns
+# Filters: F090W/F227W
+# Notes: detectors within ACT_ID witin VISIT
+# 
+# 
+# Initialize ACID. This is done with a dummy exposure that will not match any association
+# 
+# There are 2 AC's defined. Set ACID to reflect this as a last dummy exposure
+# 
+# Base exposure set.
+# First observation, type==OBSERVATION
+# 
+# second observation, type=OBSERVATION
+# 
+# Third observation, First, Second AC==MOSAIC
+# 
+# Forth observation, First, Second AC==MOSAIC
+# 
+# Fifth observation, Second AC==MOSAIC
+# 
+# Sixth observation, Third AC==MOSAIC
+# 
+# Seventh observation, Third AC==MOSAIC
+# 
+# Set ACID to how many have been used.
+# Pool.Image.MIRI
+# 
+# Examples of MIRI imaging proposals.
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Proposal 93065
+# Observataions: 1
+# Mosaic: 1 row by 2 columns
+# Dither: Cycling, 3point
+# Filters: 1 (F560W) 6 alternate SLOW and FAST readout
+# Notes: ACT_ID within VISIT
+# 
+# VISIT == 1
+# VISIT == 2
+# Pool.Image.NIRCAM
+# 
+# Example proposals of NIRCAM Imaging
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Porposal 93065
+# Observations: 2
+# Mosaic: 1 row by 2 columns
+# Dithers: None
+# Filters: F090W/F227W
+# Notes: detectors within ACT_ID witin VISIT
+# 
+# VISIT == 1 ACT_ID == 1
+# VISIT == 1 ACT_ID == 2
+# VISIT == 2 ACT_ID == 1
+# Pool.WFS
+# 
+# Examples of Wavefront Sensing proposals.
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# Proposal: 82600
+# Instrument: NIRCam
+# Observations: 2
+# Notes: Pairs are indicated by common ACT_ID
+# Pool.Spectrum.NIRISS
+# 
+# Examples of NIRISS Spectrographic observations
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Observataions: 1
+# Mode: SOSS
+# 
+# Pool.Spectrum.NIRSpec
+# 
+# Examples of NIRSpec spectroscopy
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Proposal 84500
+# Observataions: 3
+# Mode: Fixed Slit, MOS, IFU
+# 
+# Mode: Fixed Slit
+# 
+# Mode: MOS
+# 
+# Mode: IFU
+# Pool.Spectrum.MIRI
+# 
+# Examples of MIRI spectrum proposals.
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Proposal 80500, 80600
+# 
+# Mode: LRS Fixed Slit
+# 
+# Mode: LRS Slitless (80600)
+# 
+# 
+# Mode: MRS (80600)
+# 
+# 
+# 
+# 
+# Pool.Spectrum.MIRI.LRS.Background
+# 
+# Examples of MIRI LRS Fixed Slit with Background
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Proposal 80500, 80600
+# 
+# Initialize ACID. This is done with a dummy exposure that will not match any association
+# 
+# There are two AC's defined. Set ACID to reflect this as a last dummy exposure
+# 
+# Mode: LRS Fixed Slit with Background
+# 
+# Background
+# 
+# 
+# Mode: MRS (80600)
+# 
+# 
+# 
+# 
+# 
+# Background exposure
+# 
+# Set ACID to how many have been used.
+# Pool.Spectrum.NIRSpec
+# 
+# Examples of NIRSpec spectroscopy
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Proposal 84500
+# Observataions: 3
+# Mode: Fixed Slit, MOS, IFU
+# 
+# Initialize ACID. This is done with a dummy exposure that will not match any association
+# 
+# There are two AC's defined. Set ACID to reflect this as a last dummy exposure
+# 
+# Background exposures: Fixed Slit
+# 
+# Background exposures: IFU
+# 
+# Mode: Fixed Slit
+# 
+# Mode: IFU
+# 
+# Set ACID to how many have been used.
+# Pool.Spectrum.MIRI.LRS.Background
+# 
+# Examples of MIRI LRS Fixed Slit with Background
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Proposal 80500, 80600
+# 
+# Initialize ACID. This is done with a dummy exposure that will not match any association
+# 
+# There is on AC defined. Set ACID to reflect this as a last dummy exposure
+# 
+# Mode: LRS Fixed Slit with Background
+# 
+# Background
+# 
+# 
+# Set ACID to how many have been used.
+# Pool.Image.MIRI
+# 
+# Examples of MIRI imaging proposals.
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Proposal 93065
+# Observataions: 1
+# Mosaic: 1 row by 2 columns
+# Dither: Cycling, 3point
+# Filters: 1 (F560W) 6 alternate SLOW and FAST readout
+# Notes: ACT_ID within VISIT
+# 
+# VISIT == 1
+# Pool.Coron.NIRCam
+# 
+# Coronographic associations
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Proposal 10005
+# Observations: 6
+# PSF: 2
+# Filters: 2 (each orientation)
+# Targets: 3 (1 psf, 2 science)
+# 
+# Initialize ACID. This is done with a dummy exposure that will not match any association
+# 
+# Four PSF observations: Targets 1 and 5 in 2 orientations
+# 
+# 
+# 
+# Observations on target #1, two in each orientation
+# 
+# Observations on target #3, two in each orientation
+# 
+# 
+# Observations on target #4, two in each orientation
+# 
+# 
+# Set ACID to how many have been used.
+# Pool.AMI.NIRISS
+# 
+# AMI associations
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Proposal 10005
+# Observations: 6
+# PSF: 2
+# Filters: 2 (each orientation)
+# Targets: 5 (2 psf, 3 science)
+# 
+# Initialize ACID. This is done with a dummy exposure that will not match any association
+# 
+# Four PSF observations: Targets 1 and 5 in 2 orientations
+# 
+# 
+# 
+# Observations on target #1, two in each orientation
+# 
+# Observations on target #3, two in each orientation
+# 
+# 
+# Observations on target #4, two in each orientation
+# 
+# 
+# Set ACID to how many have been used.
+# Pool.Spectrum.NIRSpec
+# 
+# Examples of NIRSpec spectroscopy
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Proposal 84500
+# Observataions: 3
+# Mode: Fixed Slit, MOS, IFU
+# 
+# Initialize ACID. This is done with a dummy exposure that will not match any association
+# 
+# There are two AC's defined. Set ACID to reflect this as a last dummy exposure
+# 
+# Mode: Fixed Slit
+# 
+# Mode: IFU
+# 
+# Background exposures: Fixed Slit
+# 
+# Background exposures: IFU
+# 
+# Set ACID to how many have been used.
+# Pool.Spectrum.NIRSpec
+# 
+# Examples of NIRSpec spectroscopy
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Proposal 84500
+# Observataions: 3
+# Mode: Fixed Slit, MOS, IFU
+# 
+# Initialize ACID. This is done with a dummy exposure that will not match any association
+# 
+# There are two AC's defined. Set ACID to reflect this as a last dummy exposure
+# 
+# Background exposures: Fixed Slit
+# 
+# Background exposures: IFU
+# 
+# Mode: Fixed Slit
+# 
+# Mode: IFU
+# 
+# Background exposures: Fixed Slit
+# 
+# Background exposures: IFU
+# 
+# Set ACID to how many have been used.
+# Pool.Spectrum.NIRSpec
+# 
+# Examples of NIRSpec spectroscopy with IMPRINT
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# ########
+# Proposal 84500
+# Observataions: 3
+# Mode: Fixed Slit, MOS, IFU
+# 
+# Initialize ACID. This is done with a dummy exposure that will not match any association
+# 
+# There is one AC defined. Set ACID to reflect this as a last dummy exposure
+# 
+# Set the imprint exposures
+# 
+# 
+# Mode: Fixed Slit
+# 
+# Mode: IFU
+# 
+# Set ACID to how many have been used.
+# Pool.EXP_TYPE
+# 
+# Exposures representing all exposure types. Other attributes of each exposure do
+# not necessarily match the exposure type.
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# Initialize ACID. This is done with a dummy exposure that will not match any association
+# 
+# Following AC's defined:
+# - NRC Coronographic
+# - MIR Coronographic-LYOT
+# - MIR Coronographic-4QPM
+# - MIR LRS-Fixedslit Background
+# - MIR LRS-Slitless Background
+# - MIR MRS Background
+# - NRS Fixedslit Background
+# - NRS IFU Background
+# - NIS AMI
+# 
+# NIRCam
+# 
+# 
+# MIRI
+# 
+# 
+# 
+# NIRSpec
+# 
+# 
+# 
+# NIRISS
+# 
+# 
+# 
+# FGS
+# 
+# 
+# Set ACID to how many have been used.
+# Pool.niriss.wfss
+# 
+# Dummy-uped pool to mimic expected NIRISS WFSS exposures.
+# 
+# Proposal: Loosely based off of 95050
+# 
+# OBS_NUM and AC_CANDIDATE must be computed and inserted. Other columns which also incorporate these values are not modified.
+# 
+# 
+# Initialize ACID. This is done with a dummy exposure that will not match any association
+# 
+# 
+# A WFSS cycle: 1 Direct Image, 6 GRISM Images, 2 Direct Images, 6 Grism Images, 1 Direct Image
+# 
+# Set ACID to how many have been used.
+filename|program|obs_num|visitype|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|asn_candidate|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band|exposerr|background|is_imprint|gwa_xtil|gwa_ytil|is_psf
+set acid|program|obs_num|visitype|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1000||||||||||||||||||||||||||||||||||||||||
+jw_00001_uncal.fits|99009|1|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o001', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00002_uncal.fits|99009|1|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o001', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00003_uncal.fits|99009|1|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o001', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00004_uncal.fits|99009|1|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o001', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00005_uncal.fits|99009|1|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o001', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00006_uncal.fits|99009|1|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o001', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00007_uncal.fits|99009|1|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o001', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00008_uncal.fits|99009|1|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o001', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00009_uncal.fits|99009|1|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o001', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00010_uncal.fits|99009|1|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o001', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00011_uncal.fits|99009|2|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o002', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00012_uncal.fits|99009|2|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o002', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00013_uncal.fits|99009|2|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o002', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00014_uncal.fits|99009|2|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o002', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00015_uncal.fits|99009|2|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o002', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00016_uncal.fits|99009|2|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o002', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00017_uncal.fits|99009|2|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o002', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00018_uncal.fits|99009|2|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o002', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00019_uncal.fits|99009|2|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o002', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00020_uncal.fits|99009|2|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o002', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00021_uncal.fits|99009|3|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o003', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00022_uncal.fits|99009|3|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o003', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00023_uncal.fits|99009|3|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o003', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00024_uncal.fits|99009|3|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o003', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00025_uncal.fits|99009|3|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o003', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00026_uncal.fits|99009|3|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o003', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00027_uncal.fits|99009|3|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o003', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00028_uncal.fits|99009|3|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o003', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00029_uncal.fits|99009|3|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o003', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00030_uncal.fits|99009|3|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o003', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00031_uncal.fits|99009|4|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o004', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00032_uncal.fits|99009|4|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o004', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00033_uncal.fits|99009|4|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o004', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00034_uncal.fits|99009|4|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o004', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00035_uncal.fits|99009|4|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o004', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00036_uncal.fits|99009|4|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o004', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00037_uncal.fits|99009|4|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o004', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00038_uncal.fits|99009|4|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o004', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00039_uncal.fits|99009|4|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o004', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00040_uncal.fits|99009|4|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o004', 'observation'), ('c1000', 'mosaic'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00041_uncal.fits|99009|5|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o005', 'observation'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00042_uncal.fits|99009|5|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o005', 'observation'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00043_uncal.fits|99009|5|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o005', 'observation'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00044_uncal.fits|99009|5|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o005', 'observation'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00045_uncal.fits|99009|5|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o005', 'observation'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00046_uncal.fits|99009|5|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o005', 'observation'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00047_uncal.fits|99009|5|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o005', 'observation'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00048_uncal.fits|99009|5|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o005', 'observation'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00049_uncal.fits|99009|5|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o005', 'observation'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00050_uncal.fits|99009|5|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o005', 'observation'), ('c1001', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00051_uncal.fits|99009|6|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o006', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00052_uncal.fits|99009|6|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o006', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00053_uncal.fits|99009|6|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o006', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00054_uncal.fits|99009|6|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o006', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00055_uncal.fits|99009|6|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o006', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00056_uncal.fits|99009|6|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o006', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00057_uncal.fits|99009|6|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o006', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00058_uncal.fits|99009|6|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o006', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00059_uncal.fits|99009|6|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o006', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00060_uncal.fits|99009|6|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o006', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00061_uncal.fits|99009|7|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o007', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00062_uncal.fits|99009|7|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o007', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00063_uncal.fits|99009|7|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o007', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00064_uncal.fits|99009|7|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o007', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00065_uncal.fits|99009|7|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o007', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00066_uncal.fits|99009|7|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o007', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00067_uncal.fits|99009|7|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o007', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00068_uncal.fits|99009|7|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o007', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00069_uncal.fits|99009|7|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o007', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00070_uncal.fits|99009|7|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o007', 'observation'), ('c1002', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+set acid|program|obs_num|prime_targeted_fixed|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1002||||||||||||||||||||||||||||||||||||||||
+set acid|program|obs_num|wfsvisit|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1003||||||||||||||||||||||||||||||||||||||||
+jw_00071_uncal.fits|99009|8|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o008', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00072_uncal.fits|99009|8|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o008', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00073_uncal.fits|99009|8|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o008', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00074_uncal.fits|99009|8|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o008', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00075_uncal.fits|99009|8|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o008', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00076_uncal.fits|99009|8|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o008', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00077_uncal.fits|99009|8|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o008', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00078_uncal.fits|99009|8|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o008', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00079_uncal.fits|99009|8|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o008', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00080_uncal.fits|99009|8|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o008', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00081_uncal.fits|99009|9|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o009', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00082_uncal.fits|99009|9|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o009', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00083_uncal.fits|99009|9|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o009', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00084_uncal.fits|99009|9|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o009', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00085_uncal.fits|99009|9|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o009', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00086_uncal.fits|99009|9|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o009', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00087_uncal.fits|99009|9|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o009', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00088_uncal.fits|99009|9|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o009', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00089_uncal.fits|99009|9|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o009', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00090_uncal.fits|99009|9|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o009', 'observation')]||||||||||||||||||||||||||||||||||||||||
+jw_00091_uncal.fits|99009|10|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o010', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00092_uncal.fits|99009|10|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o010', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00093_uncal.fits|99009|10|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o010', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00094_uncal.fits|99009|10|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o010', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00095_uncal.fits|99009|10|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o010', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00096_uncal.fits|99009|10|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o010', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00097_uncal.fits|99009|10|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o010', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00098_uncal.fits|99009|10|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o010', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00099_uncal.fits|99009|10|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o010', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00100_uncal.fits|99009|10|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o010', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00101_uncal.fits|99009|11|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o011', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00102_uncal.fits|99009|11|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o011', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00103_uncal.fits|99009|11|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o011', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00104_uncal.fits|99009|11|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o011', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00105_uncal.fits|99009|11|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o011', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00106_uncal.fits|99009|11|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o011', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00107_uncal.fits|99009|11|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o011', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00108_uncal.fits|99009|11|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o011', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00109_uncal.fits|99009|11|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o011', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00110_uncal.fits|99009|11|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o011', 'observation'), ('c1003', 'mosaic'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00111_uncal.fits|99009|12|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o012', 'observation'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00112_uncal.fits|99009|12|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o012', 'observation'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00113_uncal.fits|99009|12|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o012', 'observation'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00114_uncal.fits|99009|12|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o012', 'observation'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00115_uncal.fits|99009|12|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o012', 'observation'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00116_uncal.fits|99009|12|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o012', 'observation'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00117_uncal.fits|99009|12|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o012', 'observation'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00118_uncal.fits|99009|12|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o012', 'observation'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00119_uncal.fits|99009|12|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o012', 'observation'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00120_uncal.fits|99009|12|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o012', 'observation'), ('c1004', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00121_uncal.fits|99009|13|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o013', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00122_uncal.fits|99009|13|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o013', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00123_uncal.fits|99009|13|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o013', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00124_uncal.fits|99009|13|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o013', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00125_uncal.fits|99009|13|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o013', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00126_uncal.fits|99009|13|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o013', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00127_uncal.fits|99009|13|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o013', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00128_uncal.fits|99009|13|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o013', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00129_uncal.fits|99009|13|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o013', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00130_uncal.fits|99009|13|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o013', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00131_uncal.fits|99009|14|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o014', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00132_uncal.fits|99009|14|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o014', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00133_uncal.fits|99009|14|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o014', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00134_uncal.fits|99009|14|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o014', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00135_uncal.fits|99009|14|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o014', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00136_uncal.fits|99009|14|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o014', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00137_uncal.fits|99009|14|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o014', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00138_uncal.fits|99009|14|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o014', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00139_uncal.fits|99009|14|prime_targeted_fixed|nrc_image|nircam|nrcb4|1|science|f090w|clear|null|[('o014', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+jw_00140_uncal.fits|99009|14|prime_targeted_fixed|nrc_image|nircam|nrcblong|1|science|f277w|clear|null|[('o014', 'observation'), ('c1005', 'mosaic')]||||||||||||||||||||||||||||||||||||||||
+set acid|program|obs_num|prime_targeted_fixed|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1005||||||||||||||||||||||||||||||||||||||||
+jw_00141_uncal.fits|99009|15|prime_targeted_fixed|mir_image|miri|mirimage|1|science|f560w|null|null|[('o015', 'observation')]|v99009001001p0000000002101|1|99009001001|2|1|1|1|0|0|null|null|dil-ngc-3603|fixed|miri imaging|1|1|1|1|1|null|null|null|0|0|null|null|0|0|false|mirim_full_illcntr|2015_2|full|null|null||||||
+jw_00142_uncal.fits|99009|15|prime_targeted_fixed|mir_image|miri|mirimage|1|science|f560w|null|null|[('o015', 'observation')]|v99009001001p0000000002102|1|99009001001|2|1|2|1|0|0|null|null|dil-ngc-3603|fixed|miri imaging|1|1|1|1|1|null|null|null|0|0|null|null|0|0|false|mirim_full_illcntr|2015_2|full|null|null||||||
+jw_00143_uncal.fits|99009|15|prime_targeted_fixed|mir_image|miri|mirimage|1|science|f560w|null|null|[('o015', 'observation')]|v99009001001p0000000002103|1|99009001001|2|1|3|1|0|0|null|null|dil-ngc-3603|fixed|miri imaging|1|1|1|1|1|null|null|null|0|0|null|null|0|0|false|mirim_full_illcntr|2015_2|full|null|null||||||
+jw_00144_uncal.fits|99009|15|prime_targeted_fixed|mir_image|miri|mirimage|1|science|f560w|null|null|[('o015', 'observation')]|v99009001001p0000000002104|1|99009001001|2|1|4|1|0|0|null|null|dil-ngc-3603|fixed|miri imaging|1|1|1|1|1|null|null|null|0|0|null|null|0|0|false|mirim_full_illcntr|2015_2|full|null|null||||||
+jw_00145_uncal.fits|99009|15|prime_targeted_fixed|mir_image|miri|mirimage|1|science|f560w|null|null|[('o015', 'observation')]|v99009001001p0000000002106|1|99009001001|2|1|6|1|0|0|null|null|dil-ngc-3603|fixed|miri imaging|1|1|1|1|1|null|null|null|0|0|null|null|0|0|false|mirim_full_illcntr|2015_2|full|null|null||||||
+jw_00146_uncal.fits|99009|15|prime_targeted_fixed|mir_image|miri|mirimage|1|science|f560w|null|null|[('o015', 'observation')]|v99009001002p0000000002103|2|99009001002|2|1|3|1|0|0|null|null|dil-ngc-3603|fixed|miri imaging|1|1|1|1|2|null|null|null|0|0|null|null|0|0|false|mirim_full_illcntr|2015_2|full|null|null||||||
+jw_00147_uncal.fits|99009|15|prime_targeted_fixed|mir_image|miri|mirimage|1|science|f560w|null|null|[('o015', 'observation')]|v99009001002p0000000002104|2|99009001002|2|1|4|1|0|0|null|null|dil-ngc-3603|fixed|miri imaging|1|1|1|1|2|null|null|null|0|0|null|null|0|0|false|mirim_full_illcntr|2015_2|full|null|null||||||
+jw_00148_uncal.fits|99009|15|prime_targeted_fixed|mir_image|miri|mirimage|1|science|f560w|null|null|[('o015', 'observation')]|v99009001002p0000000002106|2|99009001002|2|1|6|1|0|0|null|null|dil-ngc-3603|fixed|miri imaging|1|1|1|1|2|null|null|null|0|0|null|null|0|0|false|mirim_full_illcntr|2015_2|full|null|null||||||
+jw_00149_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002001p0000000002101|1|99009002001|2|1|1|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|1|a|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00150_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002001p0000000002101|1|99009002001|2|1|1|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|1|b|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00151_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002001p0000000002101|1|99009002001|2|1|1|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|1|a|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00152_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002001p0000000002101|1|99009002001|2|1|1|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|1|a|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00153_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o016', 'observation')]|v99009002001p0000000002101|1|99009002001|2|1|1|1|0|0|long|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|1|a|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00154_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002001p0000000002102|1|99009002001|2|1|2|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|1|a|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00155_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002001p0000000002102|1|99009002001|2|1|2|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|1|b|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00156_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002001p0000000002102|1|99009002001|2|1|2|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|1|a|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00157_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002001p0000000002102|1|99009002001|2|1|2|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|1|a|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00158_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002001p0000000002102|1|99009002001|2|1|2|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|1|a|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00159_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrcb2|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002001p0000000002102|1|99009002001|2|1|2|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|1|b|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00160_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrcb3|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002001p0000000002102|1|99009002001|2|1|2|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|1|b|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00161_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002002p0000000002101|2|99009002002|2|1|1|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|2|a|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00162_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrca4|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002002p0000000002101|2|99009002002|2|1|1|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|2|a|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00163_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrca3|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002002p0000000002101|2|99009002002|2|1|1|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|2|a|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00164_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002002p0000000002101|2|99009002002|2|1|1|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|2|a|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00165_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrcalong|1|science|f277w|clear|null|[('o016', 'observation')]|v99009002002p0000000002101|2|99009002002|2|1|1|1|0|0|long|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|2|a|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00166_uncal.fits|99009|16|prime_targeted_fixed|nrc_image|nircam|nrcb1|1|science|f090w|clear|null|[('o016', 'observation')]|v99009002002p0000000002101|2|99009002002|2|1|1|1|0|0|short|null|dil-ngc-3603|fixed|nircam imaging|1|1|1|1|2|b|null|null|null|0|null|null|null|null|null|nrcall_full_cntr|2015_2|full|null|null||||||
+jw_00167_uncal.fits|99009|17|prime_wfsc_sensing_control|nrc_image|nircam|nrca3|1|science|null|clear|null|[('o017', 'observation'), ('c1006', 'mosaic')]|v99009031001p0000000002101|1|99009031001|2|1|1|1|0|0|short|null|2mass-j00243075-6635527|fixed|wfsc global alignment|1|1|1|1|1|a|null|null|null|0|null|null|null|null|null|nrcas_full_cntr|2015_2|full|null|null||||||
+jw_00168_uncal.fits|99009|18|prime_wfsc_sensing_control|nrc_image|nircam|nrca3|1|science|null|clear|null|[('o018', 'observation'), ('c1006', 'mosaic')]|v99009032001p0000000002101|1|99009032001|2|1|1|1|0|0|short|null|2mass-j00243075-6635527|fixed|wfsc global alignment|1|1|1|1|1|a|null|null|null|0|null|null|null|null|null|nrcas_full_cntr|2015_2|full|null|null||||||
+jw_00169_uncal.fits|99009|19|prime_targeted_fixed|nis_soss|niriss|nis|1|science|clear|gr700xd|null|[('o019', 'observation')]|t710-g700-h-s1-3301114355|1|99009001001|1|1|1|1|null|null|null|unknown|n/a|n/a|niriss single-object slitless spectroscopy|1|null|null|null|null|null|null|null|null|null|null|null|null|null|null|#todo|null|full|null|null||||||
+jw_00170_uncal.fits|99009|19|prime_targeted_fixed|nis_soss|niriss|nis|1|science|clear|gr700xd|null|[('o019', 'observation')]|t710-g700-h-s1-3301114355|1|99009001001|1|1|1|2|null|null|null|unknown|n/a|n/a|niriss single-object slitless spectroscopy|1|null|null|null|null|null|null|null|null|null|null|null|null|null|null|#todo|null|full|null|null||||||
+jw_00171_uncal.fits|99009|19|prime_targeted_fixed|nis_tacq|niriss|nis|1|science|clear|gr700xd|null|[('o019', 'observation')]|t710-g700-h-s1-3301114355|1|99009001001|1|1|1|2|null|null|null|unknown|n/a|n/a|niriss single-object slitless spectroscopy|1|null|null|null|null|null|null|null|null|null|null|null|null|null|null|#todo|null|full|null|null||||||
+jw_00172_uncal.fits|99009|19|prime_targeted_fixed|nis_tacnfrm|niriss|nis|1|science|clear|gr700xd|null|[('o019', 'observation')]|t710-g700-h-s1-3301114355|1|99009001001|1|1|1|2|null|null|null|unknown|n/a|n/a|niriss single-object slitless spectroscopy|1|null|null|null|null|null|null|null|null|null|null|null|null|null|null|#todo|null|full|null|null||||||
+jw_00173_uncal.fits|99009|20|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o020', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||||||
+jw_00174_uncal.fits|99009|20|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o020', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||||||
+jw_00175_uncal.fits|99009|20|prime_targeted_fixed|nrs_taconfirm|nirspec|nrs2|1|science|f100lp|null|g140m|[('o020', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||||||
+jw_00176_uncal.fits|99009|20|prime_targeted_fixed|nrs_confirm|nirspec|nrs2|1|science|f100lp|null|g140m|[('o020', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||||||
+jw_00177_uncal.fits|99009|20|prime_targeted_fixed|nrs_taslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o020', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||||||
+jw_00178_uncal.fits|99009|20|prime_targeted_fixed|nrs_tacq|nirspec|nrs2|1|science|f100lp|null|g140m|[('o020', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||||||
+jw_00179_uncal.fits|99009|20|prime_targeted_fixed|nrs_autowave|nirspec|nrs2|1|science|f100lp|null|g140m|[('o020', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||||||
+jw_00180_uncal.fits|99009|21|prime_targeted_fixed|nrs_msaspec|nirspec|nrs1|3|science|f100lp|null|g140h|[('o021', 'observation')]|v99009012001p0000000002102|1|99009012001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec multiobject spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00181_uncal.fits|99009|21|prime_targeted_fixed|nrs_msaspec|nirspec|nrs2|3|science|f100lp|null|g140h|[('o021', 'observation')]|v99009012001p0000000002102|1|99009012001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec multiobject spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00182_uncal.fits|99009|21|prime_targeted_fixed|nrs_taslit|nirspec|nrs2|3|science|f100lp|null|g140h|[('o021', 'observation')]|v99009012001p0000000002102|1|99009012001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec multiobject spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00183_uncal.fits|99009|21|prime_targeted_fixed|nrs_tacq|nirspec|nrs2|3|science|f100lp|null|g140h|[('o021', 'observation')]|v99009012001p0000000002102|1|99009012001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec multiobject spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00184_uncal.fits|99009|21|prime_targeted_fixed|nrs_taconfirm|nirspec|nrs2|3|science|f100lp|null|g140h|[('o021', 'observation')]|v99009012001p0000000002102|1|99009012001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec multiobject spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00185_uncal.fits|99009|21|prime_targeted_fixed|nrs_confirm|nirspec|nrs2|3|science|f100lp|null|g140h|[('o021', 'observation')]|v99009012001p0000000002102|1|99009012001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec multiobject spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00186_uncal.fits|99009|21|prime_targeted_fixed|nrs_autowave|nirspec|nrs2|3|science|f100lp|null|g140h|[('o021', 'observation')]|v99009012001p0000000002102|1|99009012001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec multiobject spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00187_uncal.fits|99009|21|prime_targeted_fixed|nrs_autoflat|nirspec|nrs2|3|science|f100lp|null|g140h|[('o021', 'observation')]|v99009012001p0000000002102|1|99009012001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec multiobject spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00188_uncal.fits|99009|22|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|2|science|f170lp|null|g235h|[('o022', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00189_uncal.fits|99009|22|prime_targeted_fixed|nrs_ifu|nirspec|nrs2|2|science|f170lp|null|g235h|[('o022', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00190_uncal.fits|99009|22|prime_targeted_fixed|nrs_taslit|nirspec|nrs2|2|science|f170lp|null|g235h|[('o022', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00191_uncal.fits|99009|22|prime_targeted_fixed|nrs_tacq|nirspec|nrs2|2|science|f170lp|null|g235h|[('o022', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00192_uncal.fits|99009|22|prime_targeted_fixed|nrs_taconfirm|nirspec|nrs2|2|science|f170lp|null|g235h|[('o022', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00193_uncal.fits|99009|22|prime_targeted_fixed|nrs_confirm|nirspec|nrs2|2|science|f170lp|null|g235h|[('o022', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00194_uncal.fits|99009|22|prime_targeted_fixed|nrs_autowave|nirspec|nrs2|2|science|f170lp|null|g235h|[('o022', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||||||
+jw_00195_uncal.fits|99009|23|prime_targeted_fixed|mir_lrs-fixedslit|miri|mirimage|1|science|p750l|null|null|[('o023', 'observation')]|v99009013001p0000000002101|1|99009013001|2|1|1|1|null|null|null|fred-ab-dor-c|null|fixed|miri low resolution spectroscopy|1|1|1|1|1|null|null|point source|null|null|null|null|null|null|null|mirim_full_slitcntr|2015_1|full|null|null||||||
+jw_00196_uncal.fits|99009|24|prime_targeted_fixed|mir_lrs-fixedslit|miri|mirimage|1|science|p750l|null|null|[('o024', 'observation')]|v99009014001p0000000002101|1|99009014001|2|1|1|1|null|null|null|fred-ab-dor-c|null|fixed|miri low resolution spectroscopy|1|1|1|1|1|null|null|point source|null|null|null|null|null|null|null|mirim_full_slitcntr|2015_1|full|null|null||||||
+jw_00197_uncal.fits|99009|25|prime_targeted_fixed|mir_tacq|miri|mirimage|1|science|p750l|null|null|[('o025', 'observation')]|v99009014001p0000000002101|1|99009014001|2|1|1|1|null|null|null|fred-ab-dor-c|null|fixed|miri low resolution spectroscopy|1|1|1|1|1|null|null|point source|null|null|null|null|null|null|null|mirim_full_slitcntr|2015_1|full|null|null||||||
+jw99009015001_02101_00002_mirimage_uncal.fits|99009|26|prime_targeted_fixed|mir_lrs-slitless|miri|mirimage|1|science|p750l|null|null|[('o026', 'observation')]|v99009015001p0000000002101|1|99009015001|2|1|01|2|1|0|null|null|2mass-j00243075-6635527|fixed|miri low resolution spectroscopy|1|1|1|1|1|null|null|null|null|0|null|null|0|null|null|mirim_slitlessprism|2016_1|subprism|null|null||||||
+jw99009015001_02101_00003_mirimage_uncal.fits|99009|26|prime_targeted_fixed|mir_lrs-slitless|miri|mirimage|1|science|p750l|null|null|[('o026', 'observation')]|v99009015001p0000000002101|1|99009015001|2|1|01|3|1|0|null|null|2mass-j00243075-6635527|fixed|miri low resolution spectroscopy|1|1|1|1|1|null|null|null|null|0|null|null|0|null|null|mirim_slitlessprism|2016_1|subprism|null|null||||||
+jw99009015001_02101_00003_mirimage_uncal.fits|99009|26|prime_targeted_fixed|mir_tacq|miri|mirimage|1|science|p750l|null|null|[('o026', 'observation')]|v99009015001p0000000002101|1|99009015001|2|1|01|3|1|0|null|null|2mass-j00243075-6635527|fixed|miri low resolution spectroscopy|1|1|1|1|1|null|null|null|null|0|null|null|0|null|null|mirim_slitlessprism|2016_1|subprism|null|null||||||
+jw99009012001_02101_00002_mirimage_uncal.fits|99009|27|prime_targeted_fixed|mir_lrs-slitless|miri|mirimage|1|science|p750l|null|null|[('o027', 'observation')]|v99009012001p0000000002101|1|99009012001|2|1|01|2|1|0|null|null|2mass-j00243075-6635527|fixed|miri low resolution spectroscopy|1|1|1|1|1|null|null|null|null|0|null|null|0|null|null|mirim_slitlessprism|2016_1|subprism|null|null||||||
+jw99009012001_02101_00002_mirimage_uncal.fits|99009|28|prime_targeted_fixed|mir_tacq|miri|mirimage|1|science|p750l|null|null|[('o028', 'observation')]|v99009012001p0000000002101|1|99009012001|2|1|01|2|1|0|null|null|2mass-j00243075-6635527|fixed|miri low resolution spectroscopy|1|1|1|1|1|null|null|null|null|0|null|null|0|null|null|mirim_slitlessprism|2016_1|subprism|null|null||||||
+jw99009016001_02101_00001_mirifulong_uncal.fits|99009|29|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o029', 'observation')]|v99009016001p0000000002101|1|99009016001|2|1|01|1|1|0|34|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|short||||||
+jw99009016001_02101_00001_mirifushort_uncal.fits|99009|29|prime_targeted_fixed|mir_mrs|miri|mirifushort|1|science|null|null|null|[('o029', 'observation')]|v99009016001p0000000002101|1|99009016001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|short||||||
+jw99009016001_02101_00001_mirifushort_uncal.fits|99009|29|prime_targeted_fixed|mir_tacq|miri|mirifushort|1|science|null|null|null|[('o029', 'observation')]|v99009016001p0000000002101|1|99009016001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|short||||||
+jw99009018001_02101_00003_mirifulong_uncal.fits|99009|30|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o030', 'observation')]|v99009018001p0000000002101|1|99009018001|2|1|01|3|1|0|34|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|long||||||
+jw99009018001_02101_00001_mirifulong_uncal.fits|99009|30|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o030', 'observation')]|v99009018001p0000000002101|1|99009018001|2|1|01|1|1|0|34|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|short||||||
+jw99009018001_02101_00002_mirifushort_uncal.fits|99009|30|prime_targeted_fixed|mir_mrs|miri|mirifushort|1|science|null|null|null|[('o030', 'observation')]|v99009018001p0000000002101|1|99009018001|2|1|01|2|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|medium||||||
+jw99009018001_02101_00001_mirifushort_uncal.fits|99009|30|prime_targeted_fixed|mir_mrs|miri|mirifushort|1|science|null|null|null|[('o030', 'observation')]|v99009018001p0000000002101|1|99009018001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|short||||||
+jw99009018001_02101_00001_mirifushort_uncal.fits|99009|30|prime_targeted_fixed|mir_tacq|miri|mirifushort|1|science|null|null|null|[('o030', 'observation')]|v99009018001p0000000002101|1|99009018001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|short||||||
+jw99009020001_02101_00001_mirifulong_uncal.fits|99009|31|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o031', 'observation')]|v99009020001p0000000002101|1|99009020001|2|1|01|1|1|0|34|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|long||||||
+jw99009020001_02101_00001_mirifushort_uncal.fits|99009|31|prime_targeted_fixed|mir_mrs|miri|mirifushort|1|science|null|null|null|[('o031', 'observation')]|v99009020001p0000000002101|1|99009020001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|long||||||
+jw99009020001_02101_00001_mirifushort_uncal.fits|99009|31|prime_targeted_fixed|mir_tacq|miri|mirifushort|1|science|null|null|null|[('o031', 'observation')]|v99009020001p0000000002101|1|99009020001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|long||||||
+jw99009021001_02101_00001_mirifushort_uncal.fits|99009|32|prime_targeted_fixed|mir_mrs|miri|mirifushort|1|science|null|null|null|[('o032', 'observation')]|v99009021001p0000000002101|1|99009021001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|medium||||||
+jw99009021001_02101_00001_mirifulong_uncal.fits|99009|32|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o032', 'observation')]|v99009021001p0000000002101|1|99009021001|2|1|01|1|1|0|34|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|medium||||||
+jw99009021001_02101_00001_mirifulong_uncal.fits|99009|32|prime_targeted_fixed|mir_tacq|miri|mirifulong|1|science|null|null|null|[('o032', 'observation')]|v99009021001p0000000002101|1|99009021001|2|1|01|1|1|0|34|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|medium||||||
+jw99009050001_02107_00001_mirifushort_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002107|1|99009050001|2|1|07|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||||||
+jw99009050001_0210a_00001_mirifulong_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o033', 'observation')]|v99009050001p000000000210a|1|99009050001|2|1|0a|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||||||
+jw99009050001_0210e_00001_mirifulong_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o033', 'observation')]|v99009050001p000000000210e|1|99009050001|2|1|0e|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||||||
+jw99009050001_02107_00001_mirifulong_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002107|1|99009050001|2|1|07|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||||||
+jw99009050001_02109_00001_mirifushort_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002109|1|99009050001|2|1|09|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||||||
+jw99009050001_02108_00001_mirifulong_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002108|1|99009050001|2|1|08|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||||||
+jw99009050001_02104_00001_mirifulong_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002104|1|99009050001|2|1|04|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||||||
+jw99009050001_0210c_00001_mirifulong_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o033', 'observation')]|v99009050001p000000000210c|1|99009050001|2|1|0c|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||||||
+jw99009050001_02104_00001_mirifushort_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002104|1|99009050001|2|1|04|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||||||
+jw99009050001_02106_00001_mirifushort_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002106|1|99009050001|2|1|06|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||||||
+jw99009050001_0210a_00001_mirifushort_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o033', 'observation')]|v99009050001p000000000210a|1|99009050001|2|1|0a|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||||||
+jw99009050001_0210b_00001_mirifulong_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o033', 'observation')]|v99009050001p000000000210b|1|99009050001|2|1|0b|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||||||
+jw99009050001_02102_00001_mirifushort_uncal.fits|99009|33|prime_targeted_fixed|mir_mrs|miri|mirifushort|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002102|1|99009050001|2|1|02|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||||||
+jw99009050001_02105_00001_mirifushort_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002105|1|99009050001|2|1|05|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||||||
+jw99009050001_02102_00001_mirifulong_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002102|1|99009050001|2|1|02|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||||||
+jw99009050001_02105_00001_mirifulong_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002105|1|99009050001|2|1|05|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||||||
+jw99009050001_0210b_00001_mirifushort_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o033', 'observation')]|v99009050001p000000000210b|1|99009050001|2|1|0b|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||||||
+jw99009050001_02106_00001_mirifulong_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002106|1|99009050001|2|1|06|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||||||
+jw99009050001_02108_00001_mirifushort_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002108|1|99009050001|2|1|08|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||||||
+jw99009050001_0210c_00001_mirifushort_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o033', 'observation')]|v99009050001p000000000210c|1|99009050001|2|1|0c|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||||||
+jw99009050001_02109_00001_mirifulong_uncal.fits|99009|33|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002109|1|99009050001|2|1|09|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||||||
+jw99009050001_02109_00001_mirifulong_uncal.fits|99009|33|prime_targeted_fixed|mir_tacq|miri|mirifulong|1|science|null|null|null|[('o033', 'observation')]|v99009050001p0000000002109|1|99009050001|2|1|09|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||||||
+jw84600006001_02101_00001_nrs1_uncal.fits|84600|34|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|1|science|f170lp|null|g235m|[('o034', 'observation')]|v84600006001p0000000002101|1|84600006001|2|1|01|1|1|0|null|null|2mass-j00243075-6635527|fixed|nirspec ifu spectroscopy|1|1|1|1|1|null|null|null|null|0|null|null|0|null|null|nrs_full_ifu|2016_1|full|null|null|unsuccessful|||||
+jw84600006001_02101_00001_nrs2_uncal.fits|84600|34|prime_targeted_fixed|nrs_ifu|nirspec|nrs2|1|science|f170lp|null|g235m|[('o034', 'observation')]|v84600006001p0000000002101|1|84600006001|2|1|01|1|1|0|null|null|2mass-j00243075-6635527|fixed|nirspec ifu spectroscopy|1|1|1|1|1|null|null|null|null|0|null|null|0|null|null|nrs_full_ifu|2016_1|full|null|null|null|||||
+jw84600006001_02101_00002_nrs1_uncal.fits|84600|34|prime_targeted_fixed|nrs_autowave|nirspec|nrs1|1|science|f170lp|null|g235m|[('o034', 'observation')]|v84600006001p0000000002101|1|84600006001|2|1|01|2|1|0|null|null|2mass-j00243075-6635527|fixed|nirspec ifu spectroscopy|1|1|1|1|1|null|null|null|null|0|0.0|0|0|0|null|nrs_full_ifu|2016_1|full|null|null|null|||||
+jw84600006001_02101_00002_nrs2_uncal.fits|84600|34|prime_targeted_fixed|nrs_autowave|nirspec|nrs2|1|science|f170lp|null|g235m|[('o034', 'observation')]|v84600006001p0000000002101|1|84600006001|2|1|01|2|1|0|null|null|2mass-j00243075-6635527|fixed|nirspec ifu spectroscopy|1|1|1|1|1|null|null|null|null|0|0.0|0|0|0|null|nrs_full_ifu|2016_1|full|null|null|null|||||
+set acid|program|obs_num|wfsvisit|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1007|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||n||||
+jw_00198_uncal.fits|99009|35|prime_targeted_fixed|mir_lrs-fixedslit|miri|mirimage|1|science|p750l|null|null|[('o035', 'observation'), ('c1007', 'background')]|v99009013001p0000000002101|1|99009013001|2|1|1|1|null|null|null|fred-ab-dor-c|null|fixed|miri low resolution spectroscopy|1|1|1|1|1|null|null|point source|null|null|null|null|null|null|null|mirim_full_slitcntr|2015_1|full|null|null||n||||
+jw_00199_uncal.fits|99009|36|prime_targeted_fixed|mir_lrs-fixedslit|miri|mirimage|1|science|p750l|null|null|[('o036', 'observation'), ('c1007', 'background')]|v99009014001p0000000002101|1|99009014001|2|1|1|1|null|null|null|fred-ab-dor-c|null|fixed|miri low resolution spectroscopy|1|1|1|1|1|null|null|point source|null|null|null|null|null|null|null|mirim_full_slitcntr|2015_1|full|null|null||y||||
+jw_00200_uncal.fits|99009|37|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o037', 'observation'), ('c1008', 'background')]|v99009016001p0000000002101|1|99009016001|2|1|01|1|1|0|34|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|short||n||||
+jw_00201_uncal.fits|99009|37|prime_targeted_fixed|mir_mrs|miri|mirifushort|1|science|null|null|null|[('o037', 'observation'), ('c1008', 'background')]|v99009016001p0000000002101|1|99009016001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|short||n||||
+jw_00202_uncal.fits|99009|37|prime_targeted_fixed|mir_tacq|miri|mirifushort|1|science|null|null|null|[('o037', 'observation'), ('c1008', 'background')]|v99009016001p0000000002101|1|99009016001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|short||n||||
+jw_00203_uncal.fits|99009|38|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o038', 'observation'), ('c1008', 'background')]|v99009018001p0000000002101|1|99009018001|2|1|01|3|1|0|34|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|long||n||||
+jw_00204_uncal.fits|99009|38|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o038', 'observation'), ('c1008', 'background')]|v99009018001p0000000002101|1|99009018001|2|1|01|1|1|0|34|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|short||n||||
+jw_00205_uncal.fits|99009|38|prime_targeted_fixed|mir_mrs|miri|mirifushort|1|science|null|null|null|[('o038', 'observation'), ('c1008', 'background')]|v99009018001p0000000002101|1|99009018001|2|1|01|2|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|medium||n||||
+jw_00206_uncal.fits|99009|38|prime_targeted_fixed|mir_mrs|miri|mirifushort|1|science|null|null|null|[('o038', 'observation'), ('c1008', 'background')]|v99009018001p0000000002101|1|99009018001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|short||n||||
+jw_00207_uncal.fits|99009|38|prime_targeted_fixed|mir_tacq|miri|mirifushort|1|science|null|null|null|[('o038', 'observation'), ('c1008', 'background')]|v99009018001p0000000002101|1|99009018001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|short||n||||
+jw_00208_uncal.fits|99009|39|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o039', 'observation'), ('c1008', 'background')]|v99009020001p0000000002101|1|99009020001|2|1|01|1|1|0|34|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|long||n||||
+jw_00209_uncal.fits|99009|39|prime_targeted_fixed|mir_mrs|miri|mirifushort|1|science|null|null|null|[('o039', 'observation'), ('c1008', 'background')]|v99009020001p0000000002101|1|99009020001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|long||n||||
+jw_00210_uncal.fits|99009|39|prime_targeted_fixed|mir_tacq|miri|mirifushort|1|science|null|null|null|[('o039', 'observation'), ('c1008', 'background')]|v99009020001p0000000002101|1|99009020001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|long||n||||
+jw_00211_uncal.fits|99009|40|prime_targeted_fixed|mir_mrs|miri|mirifushort|1|science|null|null|null|[('o040', 'observation'), ('c1008', 'background')]|v99009021001p0000000002101|1|99009021001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|medium||n||||
+jw_00212_uncal.fits|99009|40|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o040', 'observation'), ('c1008', 'background')]|v99009021001p0000000002101|1|99009021001|2|1|01|1|1|0|34|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|medium||n||||
+jw_00213_uncal.fits|99009|40|prime_targeted_fixed|mir_tacq|miri|mirifulong|1|science|null|null|null|[('o040', 'observation'), ('c1008', 'background')]|v99009021001p0000000002101|1|99009021001|2|1|01|1|1|0|34|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|medium||n||||
+jw_00214_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002107|1|99009050001|2|1|07|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||n||||
+jw_00215_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p000000000210a|1|99009050001|2|1|0a|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||n||||
+jw_00216_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p000000000210e|1|99009050001|2|1|0e|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||n||||
+jw_00217_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002107|1|99009050001|2|1|07|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||n||||
+jw_00218_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002109|1|99009050001|2|1|09|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||n||||
+jw_00219_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002108|1|99009050001|2|1|08|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||n||||
+jw_00220_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002104|1|99009050001|2|1|04|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||n||||
+jw_00221_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p000000000210c|1|99009050001|2|1|0c|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||n||||
+jw_00222_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002104|1|99009050001|2|1|04|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||n||||
+jw_00223_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002106|1|99009050001|2|1|06|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||n||||
+jw_00224_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p000000000210a|1|99009050001|2|1|0a|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||n||||
+jw_00225_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p000000000210b|1|99009050001|2|1|0b|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||n||||
+jw_00226_uncal.fits|99009|41|prime_targeted_fixed|mir_mrs|miri|mirifushort|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002102|1|99009050001|2|1|02|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||n||||
+jw_00227_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002105|1|99009050001|2|1|05|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||n||||
+jw_00228_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002102|1|99009050001|2|1|02|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||n||||
+jw_00229_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002105|1|99009050001|2|1|05|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||n||||
+jw_00230_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p000000000210b|1|99009050001|2|1|0b|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||n||||
+jw_00231_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002106|1|99009050001|2|1|06|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|short||n||||
+jw_00232_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002108|1|99009050001|2|1|08|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||n||||
+jw_00233_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifushort|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p000000000210c|1|99009050001|2|1|0c|1|11|0|12|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|long||n||||
+jw_00234_uncal.fits|99009|41|prime_targeted_fixed|mir_flatmrs|miri|mirifulong|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002109|1|99009050001|2|1|09|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||n||||
+jw_00235_uncal.fits|99009|41|prime_targeted_fixed|mir_tacq|miri|mirifulong|1|science|null|null|null|[('o041', 'observation'), ('c1008', 'background')]|v99009050001p0000000002109|1|99009050001|2|1|09|1|11|0|34|null|2mass-j00243075-6635527|fixed|miri mrs flat|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirim_illum|2016_1|full|null|medium||n||||
+jw_00236_uncal.fits|99009|42|prime_targeted_fixed|mir_mrs|miri|mirifushort|1|science|null|null|null|[('o042', 'observation'), ('c1008', 'background')]|v99009016001p0000000002101|1|99009016001|2|1|01|1|1|0|12|null|2mass-j00243075-6635527|fixed|miri medium resolution spectroscopy|1|1|1|1|1|null|null|null|null|null|null|null|null|null|null|mirifu_channel1a|2016_1|full|null|short||y||||
+set acid|program|obs_num|prime_targeted_fixed|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1008|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||n||||
+set acid|program|obs_num|wfsvisit|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1009|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||n|n|||
+jw_00237_uncal.fits|99009|43|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o043', 'observation'), ('c1009', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||y|n|||
+jw_00238_uncal.fits|99009|43|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o043', 'observation'), ('c1009', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||y|n|||
+jw_00239_uncal.fits|99009|44|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|2|science|f170lp|null|g235h|[('o044', 'observation'), ('c1010', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||y|n|||
+jw_00240_uncal.fits|99009|44|prime_targeted_fixed|nrs_ifu|nirspec|nrs2|2|science|f170lp|null|g235h|[('o044', 'observation'), ('c1010', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||y|n|||
+jw_00241_uncal.fits|99009|45|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o045', 'observation'), ('c1009', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00242_uncal.fits|99009|45|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o045', 'observation'), ('c1009', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00243_uncal.fits|99009|45|prime_targeted_fixed|nrs_taconfirm|nirspec|nrs2|1|science|f100lp|null|g140m|[('o045', 'observation'), ('c1009', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00244_uncal.fits|99009|45|prime_targeted_fixed|nrs_confirm|nirspec|nrs2|1|science|f100lp|null|g140m|[('o045', 'observation'), ('c1009', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00245_uncal.fits|99009|45|prime_targeted_fixed|nrs_taslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o045', 'observation'), ('c1009', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00246_uncal.fits|99009|45|prime_targeted_fixed|nrs_tacq|nirspec|nrs2|1|science|f100lp|null|g140m|[('o045', 'observation'), ('c1009', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00247_uncal.fits|99009|45|prime_targeted_fixed|nrs_autowave|nirspec|nrs2|1|science|f100lp|null|g140m|[('o045', 'observation'), ('c1009', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00248_uncal.fits|99009|46|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|2|science|f170lp|null|g235h|[('o046', 'observation'), ('c1010', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00249_uncal.fits|99009|46|prime_targeted_fixed|nrs_ifu|nirspec|nrs2|2|science|f170lp|null|g235h|[('o046', 'observation'), ('c1010', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00250_uncal.fits|99009|46|prime_targeted_fixed|nrs_taslit|nirspec|nrs2|2|science|f170lp|null|g235h|[('o046', 'observation'), ('c1010', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00251_uncal.fits|99009|46|prime_targeted_fixed|nrs_tacq|nirspec|nrs2|2|science|f170lp|null|g235h|[('o046', 'observation'), ('c1010', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00252_uncal.fits|99009|46|prime_targeted_fixed|nrs_taconfirm|nirspec|nrs2|2|science|f170lp|null|g235h|[('o046', 'observation'), ('c1010', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00253_uncal.fits|99009|46|prime_targeted_fixed|nrs_confirm|nirspec|nrs2|2|science|f170lp|null|g235h|[('o046', 'observation'), ('c1010', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00254_uncal.fits|99009|46|prime_targeted_fixed|nrs_autowave|nirspec|nrs2|2|science|f170lp|null|g235h|[('o046', 'observation'), ('c1010', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+set acid|program|obs_num|prime_targeted_fixed|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1010|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||n|n|||
+set acid|program|obs_num|wfsvisit|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1011|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||n||||
+jw_00255_uncal.fits|99009|47|prime_targeted_fixed|mir_lrs-fixedslit|miri|mirimage|1|science|p750l|null|null|[('o047', 'observation'), ('c1011', 'background')]|v99009013001p0000000002101|1|99009013001|2|1|1|1|null|null|null|fred-ab-dor-c|null|fixed|miri low resolution spectroscopy|1|1|1|1|1|null|null|point source|null|null|null|null|null|null|null|mirim_full_slitcntr|2015_1|full|null|null||n||||
+jw_00256_uncal.fits|99009|48|prime_targeted_fixed|mir_lrs-fixedslit|miri|mirimage|1|science|p750l|null|null|[('o048', 'observation'), ('c1011', 'background')]|v99009014001p0000000002101|1|99009014001|2|1|1|1|null|null|null|fred-ab-dor-c|null|fixed|miri low resolution spectroscopy|1|1|1|1|1|null|null|point source|null|null|null|null|null|null|null|mirim_full_slitcntr|2015_1|full|null|null||y||||
+set acid|program|obs_num|prime_targeted_fixed|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1011|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||n||||
+jw_00257_uncal.fits|99009|49|prime_targeted_fixed|mir_image|miri|mirimage|1|science|f560w|null|null|[('o049', 'observation')]|v99009001001p0000000002101|1|99009001001|2|1|1|1|0|0|null|null|dil-ngc-3603|fixed|miri imaging|1|1|1|1|1|null|null|null|0|0|null|null|0|0|false|mirim_full_illcntr|2015_2|full|null|null||||||
+set acid|program|obs_num|wfsvisit|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1012|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band|exposerr|||gwa_xtil|gwa_ytil|is_psf
+jw10005007001_02102_00001_nrca2_uncal.fits|10005|50|prime_targeted_fixed|nrc_coron|nircam|nrca2|2|science|f210m|maskrnd|null|[('c1012', 'group'), ('c1016', 'coronagraphy'), ('c1018', 'coronagraphy'), ('c1022', 'group'), ('c1026', 'coronagraphy'), ('c1028', 'coronagraphy'), ('o050', 'observation')]|v10005007001p0000000002102|1|10005007001|2|1|02|1|1|1|short|dil-lhs-1220|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|true
+jw10005009001_02102_00001_nrcalong_uncal.fits|10005|51|prime_targeted_fixed|nrc_coron|nircam|nrcalong|2|science|f430m|maskrnd|null|[('c1013', 'group'), ('c1017', 'coronagraphy'), ('c1019', 'coronagraphy'), ('c1023', 'group'), ('c1027', 'coronagraphy'), ('c1029', 'coronagraphy'), ('o051', 'observation')]|v10005009001p0000000002102|1|10005009001|2|1|02|1|1|1|long|dil-lhs-1220|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|true
+jw10005027001_02102_00001_nrca2_uncal.fits|10005|52|prime_targeted_fixed|nrc_coron|nircam|nrca2|5|science|f210m|maskrnd|null|[('c1032', 'group'), ('c1036', 'coronagraphy'), ('c1038', 'coronagraphy'), ('o052', 'observation')]|v10005007001p0000000002102|1|10005007001|2|1|02|1|1|1|short|dil-lhs-1220|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|true
+jw10005029001_02102_00001_nrcalong_uncal.fits|10005|53|prime_targeted_fixed|nrc_coron|nircam|nrcalong|5|science|f430m|maskrnd|null|[('c1033', 'group'), ('c1037', 'coronagraphy'), ('c1039', 'coronagraphy'), ('o053', 'observation')]|v10005009001p0000000002102|1|10005009001|2|1|02|1|1|1|long|dil-lhs-1220|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|true
+jw10005004001_02102_00001_nrca2_uncal.fits|10005|54|prime_targeted_fixed|nrc_coron|nircam|nrca2|1|science|f210m|maskrnd|null|[('c1012', 'group'), ('c1014', 'group'), ('c1018', 'coronagraphy'), ('o054', 'observation')]|v10005004001p0000000002102|1|10005004001|2|1|02|1|1|1|short|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|null
+jw10005001001_02102_00001_nrca2_uncal.fits|10005|55|prime_targeted_fixed|nrc_coron|nircam|nrca2|1|science|f210m|maskrnd|null|[('c1012', 'group'), ('c1014', 'group'), ('c1016', 'coronagraphy'), ('o055', 'observation')]|v10005001001p0000000002102|1|10005001001|2|1|02|1|1|1|short|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|null
+jw10005006001_02102_00001_nrcalong_uncal.fits|10005|56|prime_targeted_fixed|nrc_coron|nircam|nrcalong|1|science|f430m|maskrnd|null|[('c1013', 'group'), ('c1015', 'group'), ('c1019', 'coronagraphy'), ('o056', 'observation')]|v10005006001p0000000002102|1|10005006001|2|1|02|1|1|1|long|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|null
+jw10005003001_02102_00001_nrcalong_uncal.fits|10005|57|prime_targeted_fixed|nrc_coron|nircam|nrcalong|1|science|f430m|maskrnd|null|[('c1013', 'group'), ('c1015', 'group'), ('c1017', 'coronagraphy'), ('o057', 'observation')]|v10005003001p0000000002102|1|10005003001|2|1|02|1|1|1|long|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|null
+jw10005014001_02102_00001_nrca2_uncal.fits|10005|58|prime_targeted_fixed|nrc_coron|nircam|nrca2|3|science|f210m|maskrnd|null|[('c1022', 'group'), ('c1024', 'group'), ('c1028', 'coronagraphy'), ('o058', 'observation')]|v10005004001p0000000002102|1|10005004001|2|1|02|1|1|1|short|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|null
+jw10005011001_02102_00001_nrca2_uncal.fits|10005|59|prime_targeted_fixed|nrc_coron|nircam|nrca2|3|science|f210m|maskrnd|null|[('c1022', 'group'), ('c1024', 'group'), ('c1026', 'coronagraphy'), ('o059', 'observation')]|v10005001001p0000000002102|1|10005001001|2|1|02|1|1|1|short|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|null
+jw10005016001_02102_00001_nrcalong_uncal.fits|10005|60|prime_targeted_fixed|nrc_coron|nircam|nrcalong|3|science|f430m|maskrnd|null|[('c1023', 'group'), ('c1025', 'group'), ('c1029', 'coronagraphy'), ('o060', 'observation')]|v10005006001p0000000002102|1|10005006001|2|1|02|1|1|1|long|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|null
+jw10005013001_02102_00001_nrcalong_uncal.fits|10005|61|prime_targeted_fixed|nrc_coron|nircam|nrcalong|3|science|f430m|maskrnd|null|[('c1023', 'group'), ('c1025', 'group'), ('c1027', 'coronagraphy'), ('o061', 'observation')]|v10005003001p0000000002102|1|10005003001|2|1|02|1|1|1|long|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|null
+jw10005024001_02102_00001_nrca2_uncal.fits|10005|62|prime_targeted_fixed|nrc_coron|nircam|nrca2|4|science|f210m|maskrnd|null|[('c1032', 'group'), ('c1034', 'group'), ('c1038', 'coronagraphy'), ('o062', 'observation')]|v10005004001p0000000002102|1|10005004001|2|1|02|1|1|1|short|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|null
+jw10005021001_02102_00001_nrca2_uncal.fits|10005|63|prime_targeted_fixed|nrc_coron|nircam|nrca2|4|science|f210m|maskrnd|null|[('c1032', 'group'), ('c1034', 'group'), ('c1036', 'coronagraphy'), ('o063', 'observation')]|v10005001001p0000000002102|1|10005001001|2|1|02|1|1|1|short|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|null
+jw10005026001_02102_00001_nrcalong_uncal.fits|10005|64|prime_targeted_fixed|nrc_coron|nircam|nrcalong|4|science|f430m|maskrnd|null|[('c1033', 'group'), ('c1035', 'group'), ('c1039', 'coronagraphy'), ('o064', 'observation')]|v10005006001p0000000002102|1|10005006001|2|1|02|1|1|1|long|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|null
+jw10005023001_02102_00001_nrcalong_uncal.fits|10005|65|prime_targeted_fixed|nrc_coron|nircam|nrcalong|4|science|f430m|maskrnd|null|[('c1033', 'group'), ('c1035', 'group'), ('c1037', 'coronagraphy'), ('o065', 'observation')]|v10005003001p0000000002102|1|10005003001|2|1|02|1|1|1|long|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|null
+set acid|program|obs_num|prime_targeted_fixed|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1039|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band|exposerr|||gwa_xtil|gwa_ytil|is_psf
+set acid|program|obs_num|wfsvisit|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1040|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band|exposerr|||gwa_xtil|gwa_ytil|is_psf
+jw10005007001_02102_00001_nrca2_uncal.fits|10005|66|prime_targeted_fixed|nis_ami|nircam|nrca2|2|science|f210m|maskrnd|null|[('c1040', 'group'), ('c1044', 'coronagraphy'), ('c1046', 'coronagraphy'), ('c1050', 'group'), ('c1054', 'coronagraphy'), ('c1056', 'coronagraphy'), ('o066', 'observation')]|v10005007001p0000000002102|1|10005007001|2|1|02|1|1|1|short|dil-lhs-1220|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|true
+jw10005009001_02102_00001_nrcalong_uncal.fits|10005|67|prime_targeted_fixed|nis_ami|nircam|nrcalong|2|science|f430m|maskrnd|null|[('c1041', 'group'), ('c1045', 'coronagraphy'), ('c1047', 'coronagraphy'), ('c1051', 'group'), ('c1055', 'coronagraphy'), ('c1057', 'coronagraphy'), ('o067', 'observation')]|v10005009001p0000000002102|1|10005009001|2|1|02|1|1|1|long|dil-lhs-1220|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|true
+jw10005027001_02102_00001_nrca2_uncal.fits|10005|68|prime_targeted_fixed|nis_ami|nircam|nrca2|5|science|f210m|maskrnd|null|[('c1060', 'group'), ('c1064', 'coronagraphy'), ('c1066', 'coronagraphy'), ('o068', 'observation')]|v10005007001p0000000002102|1|10005007001|2|1|02|1|1|1|short|dil-lhs-1220|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|true
+jw10005029001_02102_00001_nrcalong_uncal.fits|10005|69|prime_targeted_fixed|nis_ami|nircam|nrcalong|5|science|f430m|maskrnd|null|[('c1061', 'group'), ('c1065', 'coronagraphy'), ('c1067', 'coronagraphy'), ('o069', 'observation')]|v10005009001p0000000002102|1|10005009001|2|1|02|1|1|1|long|dil-lhs-1220|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|true
+jw10005004001_02102_00001_nrca2_uncal.fits|10005|70|prime_targeted_fixed|nis_ami|nircam|nrca2|1|science|f210m|maskrnd|null|[('c1040', 'group'), ('c1042', 'group'), ('c1046', 'coronagraphy'), ('o070', 'observation')]|v10005004001p0000000002102|1|10005004001|2|1|02|1|1|1|short|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|null
+jw10005001001_02102_00001_nrca2_uncal.fits|10005|71|prime_targeted_fixed|nis_ami|nircam|nrca2|1|science|f210m|maskrnd|null|[('c1040', 'group'), ('c1042', 'group'), ('c1044', 'coronagraphy'), ('o071', 'observation')]|v10005001001p0000000002102|1|10005001001|2|1|02|1|1|1|short|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|null
+jw10005006001_02102_00001_nrcalong_uncal.fits|10005|72|prime_targeted_fixed|nis_ami|nircam|nrcalong|1|science|f430m|maskrnd|null|[('c1041', 'group'), ('c1043', 'group'), ('c1047', 'coronagraphy'), ('o072', 'observation')]|v10005006001p0000000002102|1|10005006001|2|1|02|1|1|1|long|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|null
+jw10005003001_02102_00001_nrcalong_uncal.fits|10005|73|prime_targeted_fixed|nis_ami|nircam|nrcalong|1|science|f430m|maskrnd|null|[('c1041', 'group'), ('c1043', 'group'), ('c1045', 'coronagraphy'), ('o073', 'observation')]|v10005003001p0000000002102|1|10005003001|2|1|02|1|1|1|long|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|null
+jw10005014001_02102_00001_nrca2_uncal.fits|10005|74|prime_targeted_fixed|nis_ami|nircam|nrca2|3|science|f210m|maskrnd|null|[('c1050', 'group'), ('c1052', 'group'), ('c1056', 'coronagraphy'), ('o074', 'observation')]|v10005004001p0000000002102|1|10005004001|2|1|02|1|1|1|short|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|null
+jw10005011001_02102_00001_nrca2_uncal.fits|10005|75|prime_targeted_fixed|nis_ami|nircam|nrca2|3|science|f210m|maskrnd|null|[('c1050', 'group'), ('c1052', 'group'), ('c1054', 'coronagraphy'), ('o075', 'observation')]|v10005001001p0000000002102|1|10005001001|2|1|02|1|1|1|short|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|null
+jw10005016001_02102_00001_nrcalong_uncal.fits|10005|76|prime_targeted_fixed|nis_ami|nircam|nrcalong|3|science|f430m|maskrnd|null|[('c1051', 'group'), ('c1053', 'group'), ('c1057', 'coronagraphy'), ('o076', 'observation')]|v10005006001p0000000002102|1|10005006001|2|1|02|1|1|1|long|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|null
+jw10005013001_02102_00001_nrcalong_uncal.fits|10005|77|prime_targeted_fixed|nis_ami|nircam|nrcalong|3|science|f430m|maskrnd|null|[('c1051', 'group'), ('c1053', 'group'), ('c1055', 'coronagraphy'), ('o077', 'observation')]|v10005003001p0000000002102|1|10005003001|2|1|02|1|1|1|long|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|null
+jw10005024001_02102_00001_nrca2_uncal.fits|10005|78|prime_targeted_fixed|nis_ami|nircam|nrca2|4|science|f210m|maskrnd|null|[('c1060', 'group'), ('c1062', 'group'), ('c1066', 'coronagraphy'), ('o078', 'observation')]|v10005004001p0000000002102|1|10005004001|2|1|02|1|1|1|short|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|null
+jw10005021001_02102_00001_nrca2_uncal.fits|10005|79|prime_targeted_fixed|nis_ami|nircam|nrca2|4|science|f210m|maskrnd|null|[('c1060', 'group'), ('c1062', 'group'), ('c1064', 'coronagraphy'), ('o079', 'observation')]|v10005001001p0000000002102|1|10005001001|2|1|02|1|1|1|short|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca2_mask210r|2017_1|maska210r|null|null|null|||null|null|null
+jw10005026001_02102_00001_nrcalong_uncal.fits|10005|80|prime_targeted_fixed|nis_ami|nircam|nrcalong|4|science|f430m|maskrnd|null|[('c1061', 'group'), ('c1063', 'group'), ('c1067', 'coronagraphy'), ('o080', 'observation')]|v10005006001p0000000002102|1|10005006001|2|1|02|1|1|1|long|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|null
+jw10005023001_02102_00001_nrcalong_uncal.fits|10005|81|prime_targeted_fixed|nis_ami|nircam|nrcalong|4|science|f430m|maskrnd|null|[('c1061', 'group'), ('c1063', 'group'), ('c1065', 'coronagraphy'), ('o081', 'observation')]|v10005003001p0000000002102|1|10005003001|2|1|02|1|1|1|long|dil-hr-506|null|fixed|nircam coronagraphic imaging|2|1|1|1|1|a|null|none|null|null|null|0|0|0|null|nrca5_mask430r|2017_1|maska430r|null|null|null|||null|null|null
+set acid|program|obs_num|prime_targeted_fixed|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1067|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band|exposerr|||gwa_xtil|gwa_ytil|is_psf
+set acid|program|obs_num|wfsvisit|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1068|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||n|n|||
+jw_00258_uncal.fits|99009|82|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o082', 'observation'), ('c1068', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00259_uncal.fits|99009|82|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o082', 'observation'), ('c1068', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00260_uncal.fits|99009|82|prime_targeted_fixed|nrs_taconfirm|nirspec|nrs2|1|science|f100lp|null|g140m|[('o082', 'observation'), ('c1068', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00261_uncal.fits|99009|82|prime_targeted_fixed|nrs_confirm|nirspec|nrs2|1|science|f100lp|null|g140m|[('o082', 'observation'), ('c1068', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00262_uncal.fits|99009|82|prime_targeted_fixed|nrs_taslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o082', 'observation'), ('c1068', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00263_uncal.fits|99009|82|prime_targeted_fixed|nrs_tacq|nirspec|nrs2|1|science|f100lp|null|g140m|[('o082', 'observation'), ('c1068', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00264_uncal.fits|99009|82|prime_targeted_fixed|nrs_autowave|nirspec|nrs2|1|science|f100lp|null|g140m|[('o082', 'observation'), ('c1068', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00265_uncal.fits|99009|83|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|2|science|f170lp|null|g235h|[('o083', 'observation'), ('c1069', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00266_uncal.fits|99009|83|prime_targeted_fixed|nrs_ifu|nirspec|nrs2|2|science|f170lp|null|g235h|[('o083', 'observation'), ('c1069', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00267_uncal.fits|99009|83|prime_targeted_fixed|nrs_taslit|nirspec|nrs2|2|science|f170lp|null|g235h|[('o083', 'observation'), ('c1069', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00268_uncal.fits|99009|83|prime_targeted_fixed|nrs_tacq|nirspec|nrs2|2|science|f170lp|null|g235h|[('o083', 'observation'), ('c1069', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00269_uncal.fits|99009|83|prime_targeted_fixed|nrs_taconfirm|nirspec|nrs2|2|science|f170lp|null|g235h|[('o083', 'observation'), ('c1069', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00270_uncal.fits|99009|83|prime_targeted_fixed|nrs_confirm|nirspec|nrs2|2|science|f170lp|null|g235h|[('o083', 'observation'), ('c1069', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00271_uncal.fits|99009|83|prime_targeted_fixed|nrs_autowave|nirspec|nrs2|2|science|f170lp|null|g235h|[('o083', 'observation'), ('c1069', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00272_uncal.fits|99009|84|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o084', 'observation'), ('c1068', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||y|n|||
+jw_00273_uncal.fits|99009|84|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o084', 'observation'), ('c1068', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||y|n|||
+jw_00274_uncal.fits|99009|85|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|2|science|f170lp|null|g235h|[('o085', 'observation'), ('c1069', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||y|n|||
+jw_00275_uncal.fits|99009|85|prime_targeted_fixed|nrs_ifu|nirspec|nrs2|2|science|f170lp|null|g235h|[('o085', 'observation'), ('c1069', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||y|n|||
+set acid|program|obs_num|prime_targeted_fixed|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1069|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||n|n|||
+set acid|program|obs_num|wfsvisit|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1070|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||n|n|||
+jw_00276_uncal.fits|99009|86|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o086', 'observation'), ('c1070', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||y|n|||
+jw_00277_uncal.fits|99009|86|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o086', 'observation'), ('c1070', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||y|n|||
+jw_00278_uncal.fits|99009|87|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|2|science|f170lp|null|g235h|[('o087', 'observation'), ('c1071', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||y|n|||
+jw_00279_uncal.fits|99009|87|prime_targeted_fixed|nrs_ifu|nirspec|nrs2|2|science|f170lp|null|g235h|[('o087', 'observation'), ('c1071', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||y|n|||
+jw_00280_uncal.fits|99009|88|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o088', 'observation'), ('c1070', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00281_uncal.fits|99009|88|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o088', 'observation'), ('c1070', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00282_uncal.fits|99009|88|prime_targeted_fixed|nrs_taconfirm|nirspec|nrs2|1|science|f100lp|null|g140m|[('o088', 'observation'), ('c1070', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00283_uncal.fits|99009|88|prime_targeted_fixed|nrs_confirm|nirspec|nrs2|1|science|f100lp|null|g140m|[('o088', 'observation'), ('c1070', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00284_uncal.fits|99009|88|prime_targeted_fixed|nrs_taslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o088', 'observation'), ('c1070', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00285_uncal.fits|99009|88|prime_targeted_fixed|nrs_tacq|nirspec|nrs2|1|science|f100lp|null|g140m|[('o088', 'observation'), ('c1070', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00286_uncal.fits|99009|88|prime_targeted_fixed|nrs_autowave|nirspec|nrs2|1|science|f100lp|null|g140m|[('o088', 'observation'), ('c1070', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00287_uncal.fits|99009|89|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|2|science|f170lp|null|g235h|[('o089', 'observation'), ('c1071', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00288_uncal.fits|99009|89|prime_targeted_fixed|nrs_ifu|nirspec|nrs2|2|science|f170lp|null|g235h|[('o089', 'observation'), ('c1071', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00289_uncal.fits|99009|89|prime_targeted_fixed|nrs_taslit|nirspec|nrs2|2|science|f170lp|null|g235h|[('o089', 'observation'), ('c1071', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00290_uncal.fits|99009|89|prime_targeted_fixed|nrs_tacq|nirspec|nrs2|2|science|f170lp|null|g235h|[('o089', 'observation'), ('c1071', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00291_uncal.fits|99009|89|prime_targeted_fixed|nrs_taconfirm|nirspec|nrs2|2|science|f170lp|null|g235h|[('o089', 'observation'), ('c1071', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00292_uncal.fits|99009|89|prime_targeted_fixed|nrs_confirm|nirspec|nrs2|2|science|f170lp|null|g235h|[('o089', 'observation'), ('c1071', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00293_uncal.fits|99009|89|prime_targeted_fixed|nrs_autowave|nirspec|nrs2|2|science|f170lp|null|g235h|[('o089', 'observation'), ('c1071', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00294_uncal.fits|99009|90|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o090', 'observation'), ('c1070', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||y|n|||
+jw_00295_uncal.fits|99009|90|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o090', 'observation'), ('c1070', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||y|n|||
+jw_00296_uncal.fits|99009|91|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|2|science|f170lp|null|g235h|[('o091', 'observation'), ('c1071', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||y|n|||
+jw_00297_uncal.fits|99009|91|prime_targeted_fixed|nrs_ifu|nirspec|nrs2|2|science|f170lp|null|g235h|[('o091', 'observation'), ('c1071', 'background')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||y|n|||
+set acid|program|obs_num|prime_targeted_fixed|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1071|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||n|n|||
+set acid|program|obs_num|wfsvisit|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1072|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||n|n|||
+jw_00298_uncal.fits|99009|92|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o092', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|y|||
+jw_00299_uncal.fits|99009|93|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|2|science|f170lp|null|g235h|[('o093', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|y|||
+jw_00300_uncal.fits|99009|94|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o094', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00301_uncal.fits|99009|94|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o094', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00302_uncal.fits|99009|94|prime_targeted_fixed|nrs_taconfirm|nirspec|nrs2|1|science|f100lp|null|g140m|[('o094', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00303_uncal.fits|99009|94|prime_targeted_fixed|nrs_confirm|nirspec|nrs2|1|science|f100lp|null|g140m|[('o094', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00304_uncal.fits|99009|94|prime_targeted_fixed|nrs_taslit|nirspec|nrs2|1|science|f100lp|null|g140m|[('o094', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00305_uncal.fits|99009|94|prime_targeted_fixed|nrs_tacq|nirspec|nrs2|1|science|f100lp|null|g140m|[('o094', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00306_uncal.fits|99009|94|prime_targeted_fixed|nrs_autowave|nirspec|nrs2|1|science|f100lp|null|g140m|[('o094', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||
+jw_00307_uncal.fits|99009|95|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|2|science|f170lp|null|g235h|[('o095', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00308_uncal.fits|99009|95|prime_targeted_fixed|nrs_ifu|nirspec|nrs2|2|science|f170lp|null|g235h|[('o095', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00309_uncal.fits|99009|95|prime_targeted_fixed|nrs_taslit|nirspec|nrs2|2|science|f170lp|null|g235h|[('o095', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00310_uncal.fits|99009|95|prime_targeted_fixed|nrs_tacq|nirspec|nrs2|2|science|f170lp|null|g235h|[('o095', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00311_uncal.fits|99009|95|prime_targeted_fixed|nrs_taconfirm|nirspec|nrs2|2|science|f170lp|null|g235h|[('o095', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00312_uncal.fits|99009|95|prime_targeted_fixed|nrs_confirm|nirspec|nrs2|2|science|f170lp|null|g235h|[('o095', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+jw_00313_uncal.fits|99009|95|prime_targeted_fixed|nrs_autowave|nirspec|nrs2|2|science|f170lp|null|g235h|[('o095', 'observation')]|v99009007001p0000000002102|1|99009007001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec ifu spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|full|null|null||n|n|||
+set acid|program|obs_num|prime_targeted_fixed|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1072|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||n|n|||
+set acid|program|obs_num|wfsvisit|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1073|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||background|is_imprint|||is_psf
+jw_00314_uncal.fits|99009|96|prime_targeted_fixed|nrc_image|nirspec|nrs1|1|science|f100lp|null|g140m|[('o096', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00315_uncal.fits|99009|97|prime_targeted_fixed|nrc_grism|nirspec|nrs1|1|science|f100lp|null|g140m|[('o097', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00316_uncal.fits|99009|98|prime_targeted_fixed|nrc_tacq|nirspec|nrs1|1|science|f100lp|null|g140m|[('o098', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00317_uncal.fits|99009|99|prime_targeted_fixed|nrc_taconfirm|nirspec|nrs1|1|science|f100lp|null|g140m|[('o099', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00318_uncal.fits|99009|100|prime_targeted_fixed|nrc_coron|nirspec|nrs1|1|science|f100lp|null|g140m|[('o100', 'observation'), ('c1073', 'coronographic')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00319_uncal.fits|99009|101|prime_targeted_fixed|nrc_coron|nirspec|nrs1|1|science|f100lp|null|g140m|[('o101', 'observation'), ('c1073', 'coronographic')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||y
+jw_00320_uncal.fits|99009|102|prime_targeted_fixed|nrc_tsimage|nirspec|nrs1|1|science|f100lp|null|g140m|[('o102', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00321_uncal.fits|99009|103|prime_targeted_fixed|nrc_tsgrism|nirspec|nrs1|1|science|f100lp|null|g140m|[('o103', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00322_uncal.fits|99009|104|prime_targeted_fixed|nrc_focus|nirspec|nrs1|1|science|f100lp|null|g140m|[('o104', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00323_uncal.fits|99009|105|prime_targeted_fixed|nrc_dark|nirspec|nrs1|1|science|f100lp|null|g140m|[('o105', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00324_uncal.fits|99009|106|prime_targeted_fixed|nrc_flat|nirspec|nrs1|1|science|f100lp|null|g140m|[('o106', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00325_uncal.fits|99009|107|prime_targeted_fixed|nrc_led|nirspec|nrs1|1|science|f100lp|null|g140m|[('o107', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00326_uncal.fits|99009|108|prime_targeted_fixed|mir_image|nirspec|nrs1|1|science|f100lp|null|g140m|[('o108', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00327_uncal.fits|99009|109|prime_targeted_fixed|mir_tacq|nirspec|nrs1|1|science|f100lp|null|g140m|[('o109', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00328_uncal.fits|99009|110|prime_targeted_fixed|mir_lyot|nirspec|nrs1|1|science|f100lp|null|g140m|[('o110', 'observation'), ('c1074', 'coronographic')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00329_uncal.fits|99009|111|prime_targeted_fixed|mir_lyot|nirspec|nrs1|1|science|f100lp|null|g140m|[('o111', 'observation'), ('c1074', 'coronographic')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||y
+jw_00330_uncal.fits|99009|112|prime_targeted_fixed|mir_4qpm|nirspec|nrs1|1|science|f100lp|null|g140m|[('o112', 'observation'), ('c1075', 'coronographic')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00331_uncal.fits|99009|113|prime_targeted_fixed|mir_4qpm|nirspec|nrs1|1|science|f100lp|null|g140m|[('o113', 'observation'), ('c1075', 'coronographic')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||y
+jw_00332_uncal.fits|99009|114|prime_targeted_fixed|mir_lrs-fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o114', 'observation'), ('c1076', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00333_uncal.fits|99009|115|prime_targeted_fixed|mir_lrs-fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o115', 'observation'), ('c1076', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||y|n|||n
+jw_00334_uncal.fits|99009|116|prime_targeted_fixed|mir_lrs-slitless|nirspec|nrs1|1|science|f100lp|null|g140m|[('o116', 'observation'), ('c1077', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00335_uncal.fits|99009|117|prime_targeted_fixed|mir_lrs-slitless|nirspec|nrs1|1|science|f100lp|null|g140m|[('o117', 'observation'), ('c1076', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||y|n|||n
+jw_00336_uncal.fits|99009|118|prime_targeted_fixed|mir_mrs|nirspec|nrs1|1|science|f100lp|null|g140m|[('o118', 'observation'), ('c1078', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00337_uncal.fits|99009|119|prime_targeted_fixed|mir_mrs|nirspec|nrs1|1|science|f100lp|null|g140m|[('o119', 'observation'), ('c1078', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|y|||n
+jw_00338_uncal.fits|99009|120|prime_targeted_fixed|mir_mrs|nirspec|nrs1|1|science|f100lp|null|g140m|[('o120', 'observation'), ('c1078', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||y|n|||n
+jw_00339_uncal.fits|99009|121|prime_targeted_fixed|mir_dark|nirspec|nrs1|1|science|f100lp|null|g140m|[('o121', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00340_uncal.fits|99009|122|prime_targeted_fixed|mir_flatimage|nirspec|nrs1|1|science|f100lp|null|g140m|[('o122', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00341_uncal.fits|99009|123|prime_targeted_fixed|mir_flatmrs|nirspec|nrs1|1|science|f100lp|null|g140m|[('o123', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00342_uncal.fits|99009|124|prime_targeted_fixed|mir_coroncal|nirspec|nrs1|1|science|f100lp|null|g140m|[('o124', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00343_uncal.fits|99009|125|prime_targeted_fixed|nrs_taslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o125', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00344_uncal.fits|99009|126|prime_targeted_fixed|nrs_tacq|nirspec|nrs1|1|science|f100lp|null|g140m|[('o126', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00345_uncal.fits|99009|127|prime_targeted_fixed|nrs_taconfirm|nirspec|nrs1|1|science|f100lp|null|g140m|[('o127', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00346_uncal.fits|99009|128|prime_targeted_fixed|nrs_confirm|nirspec|nrs1|1|science|f100lp|null|g140m|[('o128', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00347_uncal.fits|99009|129|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o129', 'observation'), ('c1079', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00348_uncal.fits|99009|130|prime_targeted_fixed|nrs_fixedslit|nirspec|nrs1|1|science|f100lp|null|g140m|[('o130', 'observation'), ('c1079', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||y|n|||n
+jw_00349_uncal.fits|99009|131|prime_targeted_fixed|nrs_autowave|nirspec|nrs1|1|science|f100lp|null|g140m|[('o131', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00350_uncal.fits|99009|132|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|1|science|f100lp|null|g140m|[('o132', 'observation'), ('c1080', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00351_uncal.fits|99009|133|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|1|science|f100lp|null|g140m|[('o133', 'observation'), ('c1080', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|y|||n
+jw_00352_uncal.fits|99009|134|prime_targeted_fixed|nrs_ifu|nirspec|nrs1|1|science|f100lp|null|g140m|[('o134', 'observation'), ('c1080', 'background')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||y|n|||n
+jw_00353_uncal.fits|99009|135|prime_targeted_fixed|nrs_msaspec|nirspec|nrs1|1|science|f100lp|null|g140m|[('o135', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00354_uncal.fits|99009|136|prime_targeted_fixed|nrs_msaspec|nirspec|nrs1|1|science|f100lp|null|g140m|[('o136', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|y|||n
+jw_00355_uncal.fits|99009|137|prime_targeted_fixed|nrs_autoflat|nirspec|nrs1|1|science|f100lp|null|g140m|[('o137', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00356_uncal.fits|99009|138|prime_targeted_fixed|nrs_focus|nirspec|nrs1|1|science|f100lp|null|g140m|[('o138', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00357_uncal.fits|99009|139|prime_targeted_fixed|nrs_dark|nirspec|nrs1|1|science|f100lp|null|g140m|[('o139', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00358_uncal.fits|99009|140|prime_targeted_fixed|nrs_lamp|nirspec|nrs1|1|science|f100lp|null|g140m|[('o140', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00359_uncal.fits|99009|141|prime_targeted_fixed|nrs_bota|nirspec|nrs1|1|science|f100lp|null|g140m|[('o141', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00360_uncal.fits|99009|142|prime_targeted_fixed|nrs_brightobj|nirspec|nrs1|1|science|f100lp|null|g140m|[('o142', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00361_uncal.fits|99009|143|prime_targeted_fixed|nrs_mimf|nirspec|nrs1|1|science|f100lp|null|g140m|[('o143', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00362_uncal.fits|99009|144|prime_targeted_fixed|nis_image|nirspec|nrs1|1|science|f100lp|null|g140m|[('o144', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00363_uncal.fits|99009|145|prime_targeted_fixed|nis_wfss|nirspec|nrs1|1|science|f100lp|null|g140m|[('o145', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00364_uncal.fits|99009|146|prime_targeted_fixed|nis_tacq|nirspec|nrs1|1|science|f100lp|null|g140m|[('o146', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00365_uncal.fits|99009|147|prime_targeted_fixed|nis_taconfirm|nirspec|nrs1|1|science|f100lp|null|g140m|[('o147', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00366_uncal.fits|99009|148|prime_targeted_fixed|nis_soss|nirspec|nrs1|1|science|f100lp|null|g140m|[('o148', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00367_uncal.fits|99009|149|prime_targeted_fixed|nis_focus|nirspec|nrs1|1|science|f100lp|null|g140m|[('o149', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00368_uncal.fits|99009|150|prime_targeted_fixed|nis_dark|nirspec|nrs1|1|science|f100lp|null|g140m|[('o150', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00369_uncal.fits|99009|151|prime_targeted_fixed|nis_lamp|nirspec|nrs1|1|science|f100lp|null|g140m|[('o151', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00370_uncal.fits|99009|152|prime_targeted_fixed|nis_ami|nirspec|nrs1|1|science|f100lp|null|g140m|[('o152', 'observation'), ('c1081', 'ami')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00371_uncal.fits|99009|153|prime_targeted_fixed|nis_ami|nirspec|nrs1|1|science|f100lp|null|g140m|[('o153', 'observation'), ('c1081', 'ami')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||y
+jw_00372_uncal.fits|99009|154|prime_targeted_fixed|fgs_image|nirspec|nrs1|1|science|f100lp|null|g140m|[('o154', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00373_uncal.fits|99009|155|prime_targeted_fixed|fgs_focus|nirspec|nrs1|1|science|f100lp|null|g140m|[('o155', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00374_uncal.fits|99009|156|prime_targeted_fixed|fgs_skyflat|nirspec|nrs1|1|science|f100lp|null|g140m|[('o156', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00375_uncal.fits|99009|157|prime_targeted_fixed|fgs_intflat|nirspec|nrs1|1|science|f100lp|null|g140m|[('o157', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00376_uncal.fits|99009|158|prime_targeted_fixed|fgs_dark|nirspec|nrs1|1|science|f100lp|null|g140m|[('o158', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00377_uncal.fits|99009|159|prime_targeted_fixed|fgs_id-stack|nirspec|nrs1|1|science|f100lp|null|g140m|[('o159', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00378_uncal.fits|99009|160|prime_targeted_fixed|fgs_id-image|nirspec|nrs1|1|science|f100lp|null|g140m|[('o160', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00379_uncal.fits|99009|161|prime_targeted_fixed|fgs_id-acq1|nirspec|nrs1|1|science|f100lp|null|g140m|[('o161', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00380_uncal.fits|99009|162|prime_targeted_fixed|fgs_id-acq2|nirspec|nrs1|1|science|f100lp|null|g140m|[('o162', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00381_uncal.fits|99009|163|prime_targeted_fixed|fgs_id-track|nirspec|nrs1|1|science|f100lp|null|g140m|[('o163', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+jw_00382_uncal.fits|99009|164|prime_targeted_fixed|fgs_id-fineguide|nirspec|nrs1|1|science|f100lp|null|g140m|[('o164', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|nirspec fixed slit spectroscopy|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nrs_full_msacntr|2015_1|s200a2|s200a2|null||n|n|||n
+set acid|program|obs_num|prime_targeted_fixed|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1081|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||background|is_imprint|||is_psf
+set acid|program|obs_num|wfsvisit|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1082|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||background|is_imprint|||is_psf
+jw_00383_uncal.fits|99009|165|prime_targeted_fixed|nis_image|niriss|central|1|science|f140m|null|null|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00384_uncal.fits|99009|165|prime_targeted_fixed|nis_wfss|niriss|central|1|science|f140m|null|gr150r|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00385_uncal.fits|99009|165|prime_targeted_fixed|nis_wfss|niriss|central|1|science|f140m|null|gr150r|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00386_uncal.fits|99009|165|prime_targeted_fixed|nis_wfss|niriss|central|1|science|f140m|null|gr150r|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00387_uncal.fits|99009|165|prime_targeted_fixed|nis_wfss|niriss|central|1|science|f140m|null|gr150r|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00388_uncal.fits|99009|165|prime_targeted_fixed|nis_wfss|niriss|central|1|science|f140m|null|gr150r|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00389_uncal.fits|99009|165|prime_targeted_fixed|nis_wfss|niriss|central|1|science|f140m|null|gr150r|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00390_uncal.fits|99009|165|prime_targeted_fixed|nis_image|niriss|central|1|science|f140m|null|null|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00391_uncal.fits|99009|165|prime_targeted_fixed|nis_image|niriss|central|1|science|f140m|null|null|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00392_uncal.fits|99009|165|prime_targeted_fixed|nis_wfss|niriss|central|1|science|f140m|null|gr150c|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00393_uncal.fits|99009|165|prime_targeted_fixed|nis_wfss|niriss|central|1|science|f140m|null|gr150c|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00394_uncal.fits|99009|165|prime_targeted_fixed|nis_wfss|niriss|central|1|science|f140m|null|gr150c|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00395_uncal.fits|99009|165|prime_targeted_fixed|nis_wfss|niriss|central|1|science|f140m|null|gr150c|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00396_uncal.fits|99009|165|prime_targeted_fixed|nis_wfss|niriss|central|1|science|f140m|null|gr150c|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00397_uncal.fits|99009|165|prime_targeted_fixed|nis_wfss|niriss|central|1|science|f140m|null|gr150c|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+jw_00398_uncal.fits|99009|165|prime_targeted_fixed|nis_image|niriss|central|1|science|f140m|null|null|[('o165', 'observation')]|v99009003001p0000000002102|1|99009003001|2|1|2|1|null|null|null|m-33|null|fixed|niriss wfss|2|1|1|1|1|null|null|null|null|null|null|null|null|null|null|nis_cen|2015_1|null|null|null||n|n|||n
+set acid|program|obs_num|prime_targeted_fixed|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1082|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band||background|is_imprint|||is_psf
