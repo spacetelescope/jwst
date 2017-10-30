@@ -277,8 +277,7 @@ def update_s_region(model, prd_db_filepath=None):
         " {0} {1}"
         " {2} {3}"
         " {4} {5}"
-        " {6} {7}"
-        " {0} {1}".format(*footprint.flatten()))
+        " {6} {7}".format(*footprint.flatten()))
     model.meta.wcsinfo.s_region = s_region
 
 
