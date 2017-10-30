@@ -8,6 +8,8 @@ import os
 import pytest
 import re
 
+from ...tests.helpers import runslow
+
 from astropy.table import (Table, vstack)
 
 from .. import (AssociationRegistry, AssociationPool, generate)
