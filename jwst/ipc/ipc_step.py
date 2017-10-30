@@ -14,7 +14,7 @@ class IPCStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with datamodels.open(input) as input_model:
+        with datamodels.RampModel(input) as input_model:
 
             # Get the name of the ipc reference file to use
             self.ipc_name = self.get_reference_file(input_model, 'ipc')

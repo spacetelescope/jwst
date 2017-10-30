@@ -14,7 +14,7 @@ class RSCD_Step(Step):
     def process(self, input):
 
         # Open the input data model
-        with datamodels.open(input) as input_model:
+        with datamodels.RampModel(input) as input_model:
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
