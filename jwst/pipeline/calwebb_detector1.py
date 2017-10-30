@@ -65,8 +65,8 @@ class Detector1Pipeline(Pipeline):
 
         log.info('Starting calwebb_detector1 ...')
 
-        # open the input
-        input = datamodels.open(input)
+        # open the input as a RampModel
+        input = datamodels.RampModel(input)
 
         # propagate output_dir to steps that might need it
         self.dark_current.output_dir = self.output_dir

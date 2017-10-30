@@ -38,7 +38,7 @@ class RampFitStep (Step):
 
     def process(self, input):
 
-        with datamodels.open(input) as input_model:
+        with datamodels.RampModel(input) as input_model:
 
             readnoise_filename = self.get_reference_file(input_model,
                                                           'readnoise')
@@ -93,5 +93,3 @@ class RampFitStep (Step):
 
         return out_model, int_model
 
-if __name__ == '__main__':
-    cmdline.step_script(ramp_fit_step)

@@ -98,6 +98,13 @@ def ramp_fit(model, buffsize, save_opt, readnoise_model, gain_model,
                gain_model, weighting)
         gls_opt_model = None
 
+    # Update data units in output models
+    new_model.meta.bunit_data = 'DN/s'
+    new_model.meta.bunit_err = 'DN/s'
+    if int_model is not None:
+        int_model.meta.bunit_data = 'DN/s'
+        int_model.meta.bunit_err = 'DN/s'
+
     return new_model, int_model, opt_model, gls_opt_model
 
 

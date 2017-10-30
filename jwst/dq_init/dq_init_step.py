@@ -17,7 +17,7 @@ class DQInitStep(Step):
 
     def process(self, input):
         # Determine Model type from EXP_TYPE of RampModel
-        input_model = datamodels.open(input)
+        input_model = datamodels.RampModel(input)
 
         # Set flag for guider mode operations
         if input_model.meta.exposure.type in dq_initialization.guider_list: # Reopen as GuiderRawModel

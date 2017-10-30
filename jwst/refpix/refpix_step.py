@@ -24,7 +24,7 @@ class RefPixStep(Step):
 
     def process(self, input):
 
-        with datamodels.open(input) as input_model:
+        with datamodels.RampModel(input) as input_model:
             if input_model.meta.exposure.readpatt is not None and \
                input_model.meta.exposure.readpatt.find("IRS2") >= 0:
                 self.irs2_name = self.get_reference_file(input_model, 'refpix')
