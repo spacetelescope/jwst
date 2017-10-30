@@ -133,13 +133,13 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
 
     Parameters
     ----------
-    model: jwst.datamodels.DataModel
+    model : `~jwst.datamodels.DataModel`
         The model to update.
-
-    default_pa_v3: float
+    default_pa_v3 : float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
-
+    siaf_path : str
+        The path to the SIAF file, i.e. ``XML_DATA`` env variable.
     kwargs: dict
         Keyword arguments used by matrix calculation routines.
     """

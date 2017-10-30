@@ -491,14 +491,13 @@ def update_s_region(model):
     if bbox is None:
         bbox = _bbox_from_shape(model)
 
-    footprint = model.meta.wcs.footprint(bbox, center=True)
+    footprint = model.meta.wcs.footprint(bbox, center=True).T
     s_region = (
         "POLYGON ICRS "
         " {0} {1}"
         " {2} {3}"
         " {4} {5}"
-        " {6} {7}"
-        " {0} {1}".format(*footprint.flatten()))
+        " {6} {7}".format(*footprint.flatten()))
     if "nan" in s_region:
         # do not update s_region if there are NaNs.
         log.info("There NaNs in s_region")
