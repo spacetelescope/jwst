@@ -948,6 +948,9 @@ def _roll_angle_from_matrix(matrix, v2, v3):
 
 def _get_vertices_idl(aperture_name, useafter, prd_db_filepath=None):
     prd_db_filepath = "file:{0}?mode=ro".format(prd_db_filepath)
+    logger.info("Using SIAF database from {}".format(prd_db_filepath))
+    logger.info("Getting aperture vertices for aperture "
+             "{0} with USEAFTER {1}".format(aperture_name, useafter))
     aperture = (aperture_name, useafter)
 
     RESULT = {}
@@ -957,7 +960,7 @@ def _get_vertices_idl(aperture_name, useafter, prd_db_filepath=None):
         cursor = PRD_DB.cursor()
         cursor.execute("SELECT Apername, XIdlVert1, XIdlVert2, XIdlVert3, XIdlVert4, "
                        "YIdlVert1, YIdlVert2, YIdlVert3, YIdlVert4 "
-                       "FROM Aperture WHERE Apername = ? and UseAfterDate > ?", aperture)
+                       "FROM Aperture WHERE Apername = ? and UseAfterDate <= ? ORDER BY UseAfterDate LIMIT 1", aperture)
         for row in cursor:
             RESULT[row[0]] = tuple(row[1:9])
         PRD_DB.commit()
