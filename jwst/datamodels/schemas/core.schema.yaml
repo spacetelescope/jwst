@@ -7,7 +7,7 @@ properties:
         anyOf:
           - $ref: http://stsci.edu/schemas/asdf/time/time-1.0.0
           - type: string
-        title: Date this file was created (UTC)
+        title: Date this file was created [UTC]
         fits_keyword: DATE
       origin:
         title: Organization responsible for creating file
@@ -21,6 +21,10 @@ properties:
         title: Name of the file
         type: string
         fits_keyword: FILENAME
+      filetype:
+        title: Type of data in the file
+        type: string
+        fits_keyword: FILETYPE
       data_processing_software_version:
         title: Data processing software version number
         type: string
@@ -34,9 +38,9 @@ properties:
         type: string
         fits_keyword: CAL_VER
       calibration_software_revision:
-        title: Calibration software revision number
+        title: Calibration software version control sys number
         type: string
-        fits_keyword: CAL_SVN
+        fits_keyword: CAL_VCS
       model_type:
         title: Type of data model
         type: string
@@ -45,11 +49,18 @@ properties:
         title: Telescope used to acquire the data
         type: string
         fits_keyword: TELESCOP
-      engineering_quality:
-        title: Engineering data quality indicator from EngDB
+      hga_move:
+        title: High Gain Antenna moved during data collection
+        type: boolean
+        fits_keyword: HGA_MOVE
+      hga_start_time:
+        title: Start time of HGA motion
         type: string
-        enum: [OK, SUSPECT]
-        fits_keyword: ENG_QUAL
+        fits_keyword: HGA_STRT
+      hga_stop_time:
+        title: Stop time of HGA motion
+        type: string
+        fits_keyword: HGA_STOP
       asn:
         title: Association information
         type: object
@@ -62,28 +73,8 @@ properties:
             title: Name of the ASN table
             type: string
             fits_keyword: ASNTABLE
-      basic:
-        title: Basic information
-        type: object
-        properties:
-          filetype:
-            title: Type of data in the file
-            type: string
-            fits_keyword: FILETYPE
-          hga_move:
-            title: High Gain Antenna moved during data collection
-            type: boolean
-            fits_keyword: HGA_MOVE
-          hga_start_time:
-            title: Start time of HGA motion
-            type: string
-            fits_keyword: HGA_STRT
-          hga_stop_time:
-            title: Stop time of HGA motion
-            type: string
-            fits_keyword: HGA_STOP
       program:
-        title: Programmatic information
+        title: Program information
         type: object
         properties:
           title:
@@ -173,7 +164,7 @@ properties:
             type: boolean
             fits_keyword: BKGDTARG
           template:
-            title: Proposal instruction template used
+            title: Observation template used
             type: string
             fits_keyword: TEMPLATE
           observation_label:
@@ -184,6 +175,11 @@ properties:
         title: Visit information
         type: object
         properties:
+          engineering_quality:
+            title: Engineering data quality indicator from EngDB
+            type: string
+            enum: [OK, SUSPECT]
+            fits_keyword: ENG_QUAL
           type:
             title: Visit type
             type: string
@@ -197,10 +193,6 @@ properties:
             title: UTC visit start time
             type: string
             fits_keyword: VSTSTART
-          wfs_visit_indicator:
-            title: Wavefront sensing and control visit indicator
-            type: string
-            fits_keyword: WFSVISIT
           status:
             title: Status of a visit
             type: string
@@ -256,15 +248,23 @@ properties:
           proper_motion_ra:
             title: Target proper motion in RA
             type: number
-            fits_keyword: PROP_RA
+            fits_keyword: MU_RA
           proper_motion_dec:
             title: Target proper motion in Dec
             type: number
-            fits_keyword: PROP_DEC
+            fits_keyword: MU_DEC
           proper_motion_epoch:
             title: Target proper motion epoch
+            type: string
+            fits_keyword: MU_EPOCH
+          proposer_ra:
+            title: Proposer's target RA
             type: number
-            fits_keyword: PROPEPOC
+            fits_keyword: PROP_RA
+          proposer_dec:
+            title: Proposer's target Dec
+            type: number
+            fits_keyword: PROP_DEC
           source_type:
             title: Advised source type (point/extended)
             type: string
@@ -422,6 +422,11 @@ properties:
             title: Running count of exposures in visit
             type: integer
             fits_keyword: EXPCOUNT
+          prime_parallel:
+            title: Prime or parallel exposure
+            type: string
+            enum: [PRIME, PARALLEL_COORDINATED, PARALLEL_PURE]
+            fits_keyword: EXPRIPAR
           type:
             title: Type of data in the exposure
             type: string
@@ -438,11 +443,6 @@ properties:
               NRS_IFU, NRS_IMAGE, NRS_LAMP, NRS_MIMF, NRS_MSASPEC, NRS_TACONFIRM,
               NRS_TACQ, NRS_TASLIT]
             fits_keyword: EXP_TYPE
-          prime_parallel:
-            title: Prime or parallel exposure
-            type: string
-            enum: [PRIME, PARALLEL_COORDINATED, PARALLEL_PURE]
-            fits_keyword: EXPRIPAR
           start_time:
             allOf:
               - type: number
@@ -787,6 +787,10 @@ properties:
             title: PRD science aperture used
             type: string
             fits_keyword: APERNAME
+          pps_name:
+            title: original AperName supplied by PPS
+            type: string
+            fits_keyword: PPS_APER
       velocity_aberration:
         title: Velocity aberration correction information
         type: object

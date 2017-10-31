@@ -32,7 +32,7 @@ class PersistenceStep(Step):
                 len(self.input_trapsfilled) == 0):
                 self.input_trapsfilled = None
 
-        output_obj = datamodels.open(input).copy()
+        output_obj = datamodels.RampModel(input).copy()
 
         self.trap_density_filename = self.get_reference_file(output_obj,
                                                              "trapdensity")
@@ -103,6 +103,3 @@ class PersistenceStep(Step):
 
         return output_obj
 
-
-if __name__ == '__main__':
-    cmdline.step_script(persistence_step)

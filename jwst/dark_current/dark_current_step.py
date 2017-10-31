@@ -18,7 +18,7 @@ class DarkCurrentStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with datamodels.open(input) as input_model:
+        with datamodels.RampModel(input) as input_model:
 
             # Get the name of the dark reference file to use
             self.dark_name = self.get_reference_file(input_model, 'dark')

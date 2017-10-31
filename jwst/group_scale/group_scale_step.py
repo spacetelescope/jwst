@@ -13,7 +13,7 @@ class GroupScaleStep(Step):
     def process(self, input):
 
         # Open the input data model
-        with datamodels.open(input) as input_model:
+        with datamodels.RampModel(input) as input_model:
 
             # Try to get values of NFRAMES and FRMDIVSR to see
             # if we need to do any rescaling

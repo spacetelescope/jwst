@@ -136,16 +136,3 @@ def test_crds_failed_getreferences_reftype():
 #     assert_raises(crds.getreferences, header, reftypes=["foo"], context="jwst_9942.pmap")
 
 
-def test_crds_flatten():
-    from jwst.stpipe import crds_client
-
-    json = {
-        'meta': {
-            'instrument': {
-                'name': 'MIRI'
-                }
-            }
-        }
-    flat = crds_client._flatten_dict(json)
-    print(flat)
-    assert flat['meta.instrument.name'] == 'MIRI'

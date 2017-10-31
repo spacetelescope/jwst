@@ -155,25 +155,6 @@ class Pipeline(Step):
 
         return spec
 
-    def _precache_reference_files(self, input_file):
-        """
-        Precache all of the expected reference files in this Pipeline
-        and all of its constituent Steps process method is called.
-
-        input_file:  a filename string, model, or model container.
-
-        """
-        from .. import datamodels
-        gc.collect()
-        try:
-            with datamodels.open(input_file) as model:
-                super(Pipeline, self)._precache_reference_files_opened(model)
-        except (ValueError, TypeError, IOError):
-            self.log.info(
-                'First argument {0} does not appear to be a '
-                'model'.format(input_file))
-        gc.collect()
-
     def set_input_filename(self, path):
         self._input_filename = path
         for key, val in self.step_defs.items():
