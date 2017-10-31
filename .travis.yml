@@ -23,13 +23,15 @@ env:
         - PIP_DEPENDENCIES=''
         - CRDS_SERVER_URL='https://jwst-crds.stsci.edu'
         - CRDS_PATH='/tmp/crds_cache'
-        - NUMPY_VERSION=1.12
+        - PYTHON_VERSION=3.6
+        - NUMPY_VERSION=stable
+        - ASTROPY_VERSION=development
 
     matrix:
-        - PYTHON_VERSION=2.7 SETUP_CMD='install'
-        - PYTHON_VERSION=2.7 SETUP_CMD='test'
-        - PYTHON_VERSION=3.5 SETUP_CMD='install'
-        - PYTHON_VERSION=3.5 SETUP_CMD='test'
+        - SETUP_CMD='install'
+        - SETUP_CMD='test'
+        - PYTHON_VERSION=2.7 SETUP_CMD='install' ASTROPY_VERSION=stable
+        - PYTHON_VERSION=2.7 SETUP_CMD='test' ASTROPY_VERSION=stable
 
 matrix:
 
@@ -37,27 +39,23 @@ matrix:
     fast_finish: true
 
     include:
-        # Test numpy 1.13
-        #- os: linux
-        #  env: PYTHON_VERSION=3.5 NUMPY_VERSION=1.13 SETUP_CMD='test'
 
-        # PEP8 check with pycodestyle (only once, i.e. "os: linux")
+        # PEP8 check with flake8 (only once, i.e. "os: linux")
         - os: linux
-          env: PYTHON_VERSION=3.5 MAIN_CMD='pycodestyle --count'
-               SETUP_CMD='jwst' TEST_CMD='pycodestyle --version'
+          env: MAIN_CMD='flake8 --count'
+               SETUP_CMD='jwst' TEST_CMD='flake8 --version'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
 
         # build sphinx documentation with warnings
         - os: linux
-          env: PYTHON_VERSION=3.5
-               SETUP_CMD='build_sphinx'
+          env: SETUP_CMD='build_sphinx'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
                PIP_DEPENDENCIES='sphinx_rtd_theme sphinx-automodapi'
 
     allow_failures:
         # PEP8 will fail for numerous reasons. Ignore it.
-        - env: PYTHON_VERSION=3.5 MAIN_CMD='pycodestyle --count'
-               SETUP_CMD='jwst' TEST_CMD='pycodestyle --version'
+        - env: MAIN_CMD='flake8 --count'
+               SETUP_CMD='jwst' TEST_CMD='flake8 --version'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
 
 install:
