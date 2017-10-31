@@ -5,15 +5,13 @@ import os
 import pytest
 import re
 
-from .helpers import (
-    full_pool_rules,
-    runslow,
-)
+"""adding a comment"""
+
+from .helpers import full_pool_rules
 
 from ..main import Main
 
 
-@runslow
 def test_script(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
@@ -29,7 +27,6 @@ def test_script(full_pool_rules):
     assert 'candidate_Asn_WFSCMB' in found_rules
 
 
-@runslow
 def test_asn_candidates(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
@@ -86,7 +83,6 @@ def test_discovered(full_pool_rules):
     assert len(full.associations) == len(candidates.associations) + len(discovered.associations)
 
 
-@runslow
 def test_version_id(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
@@ -101,7 +97,6 @@ def test_version_id(full_pool_rules):
         assert version_id in asn.asn_name
 
 
-@runslow
 def test_pool_as_parameter(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
 
