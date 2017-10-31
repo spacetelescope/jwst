@@ -161,7 +161,7 @@ def data_file():
     model.meta.wcsinfo.v3yangle = V3I_YANG
     model.meta.wcsinfo.vparity = VPARITY
     model.meta.aperture.name = "MIRIM_FULL"
-    model.meta.observation.date = '1/1/2009'
+    model.meta.observation.date = '1/1/2017'
 
     with TemporaryDirectory() as path:
         file_path = os.path.join(path, 'fits.fits')
@@ -235,7 +235,6 @@ def test_add_wcs_default(data_file):
     assert model.meta.wcsinfo.dec_ref == TARG_DEC
     assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
     assert model.meta.wcsinfo.wcsaxes == 2
-    print('sregion', model.meta.wcsinfo.s_region)
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
