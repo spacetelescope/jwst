@@ -408,15 +408,8 @@ def NIRSpec_brightobj(output_model,
 
     exposure_type = output_model.meta.exposure.type
 
-    # Check whether there is a WCS.
-    got_wcs = True
-    if not hasattr(output_model.meta, "wcs") or output_model.meta.wcs is None:
-        got_wcs = False
-        log.warning("Input file does not have a WCS ...")
-        if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
-            log.warning("WCS was not found, but assign_wcs was run.")
-        else:
-            log.warning("The assign_wcs step has not been run.")
+    got_wcs = (hasattr(output_model.meta, "wcs") and
+               output_model.meta.wcs is not None)
 
     # Create an output model for the interpolated flat fields.
     if flat_suffix is not None:
@@ -438,12 +431,24 @@ def NIRSpec_brightobj(output_model,
 
     # The wavelength of each pixel in a plane of the data.
     wl = output_model.wavelength                # this is only 2-D
-    # There must be either a meta.wcs or a wavelength array.
-    if wl.min() == 0. and wl.max() == 0. and not got_wcs:
-        log.error("Skipping flat_field, because the wavelengths are "
-                  "all zero and there's no WCS.")
-        output_model.meta.cal_step.flat_field = 'SKIPPED'
-        return None
+
+    # There must be either a wavelength array or a meta.wcs.
+    if wl.min() == 0. and wl.max() == 0.:
+        log.warning("The wavelength array has not been populated,")
+        if got_wcs:
+            log.warning("so using wcs instead of the wavelength array.")
+            grid = np.indices((ysize, xsize), dtype=np.float64)
+            (ra, dec, wl) = output_model.meta.wcs(grid[1], grid[0])
+            del ra, dec, grid
+        else:
+            log.warning("and there is no 'wcs' attribute,")
+            if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
+                log.warning("assign_wcs has been run, however.")
+            else:
+                log.warning("likely because assign_wcs has not been run.")
+            log.error("Skipping flat_field.")
+            output_model.meta.cal_step.flat_field = 'SKIPPED'
+            return None
 
     nan_mask = np.isnan(wl)
     good_mask = np.logical_not(nan_mask)
