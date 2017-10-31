@@ -40,8 +40,9 @@ matrix:
 
     include:
 
-        - os: linux
+        - os: osx
           env: PYTHON_VERSION=3.5 SETUP_CMD='test'
+          compiler: clang
 
         # PEP8 check with flake8 (only once, i.e. "os: linux")
         - os: linux
