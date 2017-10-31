@@ -133,13 +133,13 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
 
     Parameters
     ----------
-    model: jwst.datamodels.DataModel
+    model : `~jwst.datamodels.DataModel`
         The model to update.
-
-    default_pa_v3: float
+    default_pa_v3 : float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
-
+    siaf_path : str
+        The path to the SIAF file, i.e. ``XML_DATA`` env variable.
     kwargs: dict
         Keyword arguments used by matrix calculation routines.
     """
@@ -277,8 +277,7 @@ def update_s_region(model, prd_db_filepath=None):
         " {0} {1}"
         " {2} {3}"
         " {4} {5}"
-        " {6} {7}"
-        " {0} {1}".format(*footprint.flatten()))
+        " {6} {7}".format(*footprint.flatten()))
     model.meta.wcsinfo.s_region = s_region
 
 
@@ -949,6 +948,9 @@ def _roll_angle_from_matrix(matrix, v2, v3):
 
 def _get_vertices_idl(aperture_name, useafter, prd_db_filepath=None):
     prd_db_filepath = "file:{0}?mode=ro".format(prd_db_filepath)
+    logger.info("Using SIAF database from {}".format(prd_db_filepath))
+    logger.info("Getting aperture vertices for aperture "
+             "{0} with USEAFTER {1}".format(aperture_name, useafter))
     aperture = (aperture_name, useafter)
 
     RESULT = {}
@@ -958,7 +960,7 @@ def _get_vertices_idl(aperture_name, useafter, prd_db_filepath=None):
         cursor = PRD_DB.cursor()
         cursor.execute("SELECT Apername, XIdlVert1, XIdlVert2, XIdlVert3, XIdlVert4, "
                        "YIdlVert1, YIdlVert2, YIdlVert3, YIdlVert4 "
-                       "FROM Aperture WHERE Apername = ? and UseAfterDate > ?", aperture)
+                       "FROM Aperture WHERE Apername = ? and UseAfterDate <= ? ORDER BY UseAfterDate LIMIT 1", aperture)
         for row in cursor:
             RESULT[row[0]] = tuple(row[1:9])
         PRD_DB.commit()
