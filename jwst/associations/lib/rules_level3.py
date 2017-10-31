@@ -41,8 +41,8 @@ class Asn_Image(
         # Setup for checking.
         self.add_constraints({
             'wfsvisit': {
-                'inputs': ['visitype'],
-                'value': '((?!wfsc).)*'
+                'inputs': ['wfsvisit'],
+                'force_undefined': True,
             },
         })
 
@@ -66,8 +66,8 @@ class Asn_WFSCMB(
         # Setup for checking.
         self.add_constraints({
             'wfsvisit': {
-                'value': '.+wfsc.+',
-                'inputs': ['visitype'],
+                'value': '(?!null).+',
+                'inputs': ['wfsvisit'],
             },
             'asn_candidate_wfs': {
                 'value': '.+mosaic.+',

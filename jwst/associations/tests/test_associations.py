@@ -88,7 +88,7 @@ def test_base_instatiation():
                 }
             },
             helpers.t_path('data/mega_pool.csv'),
-            3,
+            2,
         ),
         (
             {
