@@ -35,7 +35,11 @@ import re
 
 import crds
 from crds.core import log, config, exceptions, heavy_client
-from crds.core import crds_cache_locking
+from crds.core import crds_cache_locking, python23
+
+# ----------------------------------------------------------------------
+
+# from jwst import datamodels
 
 # ----------------------------------------------------------------------
 
@@ -134,7 +138,7 @@ def check_reference_open(refpath):
         opened.close()
     return refpath
 
-def get_reference_file(dataset_model, reference_file_type):
+def get_reference_file(dataset, reference_file_type):
     """
     Gets a reference file from CRDS as a readable file-like object.
     The actual file may be optionally overridden.
@@ -155,7 +159,13 @@ def get_reference_file(dataset_model, reference_file_type):
     reference_filepath : string
         The path of the reference in the CRDS file cache.
     """
-    return get_multiple_reference_paths(dataset_model, [reference_file_type])[reference_file_type]
+    if isinstance(dataset, python23.string_types):
+        from jwst import datamodels
+        with datamodels.open(dataset) as model:
+            return get_multiple_reference_paths(model, [reference_file_type])[reference_file_type]
+    else:
+        return get_multiple_reference_paths(dataset, [reference_file_type])[reference_file_type]
+        
 
 def get_override_name(reference_file_type):
     """
