@@ -161,7 +161,7 @@ def data_file():
     model.meta.wcsinfo.v3yangle = V3I_YANG
     model.meta.wcsinfo.vparity = VPARITY
     model.meta.aperture.name = "MIRIM_FULL"
-    model.meta.observation.date = '1/1/2009'
+    model.meta.observation.date = '1/1/2017'
 
     with TemporaryDirectory() as path:
         file_path = os.path.join(path, 'fits.fits')
@@ -235,7 +235,6 @@ def test_add_wcs_default(data_file):
     assert model.meta.wcsinfo.dec_ref == TARG_DEC
     assert np.isclose(model.meta.wcsinfo.roll_ref, 358.9045979379)
     assert model.meta.wcsinfo.wcsaxes == 2
-    print('sregion', model.meta.wcsinfo.s_region)
     assert word_precision_check(
         model.meta.wcsinfo.s_region,
         (
@@ -244,7 +243,6 @@ def test_add_wcs_default(data_file):
             ' -11.95 -19.78'
             ' 83.28 4.437'
             ' 165.0 0.334'
-            ' -123.34 -24.41'
         )
     )
 
@@ -283,7 +281,6 @@ def test_add_wcs_fsmcorr_v1(data_file):
             ' -11.95 -19.78'
             ' 83.28 4.437'
             ' 165.0 0.334'
-            ' -123.34 -24.41'
         )
     )
 
@@ -316,7 +313,6 @@ def test_add_wcs_with_db(eng_db, data_file, siaf_file=siaf_db):
             ' -63.01845474332184 7.231824977911466'
             ' 38.50506189722329 10.0549598464577'
             ' 128.80356504750668 -37.90478088917278'
-            ' -130.33585634084557 -26.66147652284684'
         )
     )
 
@@ -349,6 +345,5 @@ def test_add_wcs_with_db_fsmcorr_v1(eng_db, data_file):
             ' -63.01845474332184 7.231824977911466'
             ' 38.50506189722329 10.0549598464577'
             ' 128.80356504750668 -37.90478088917278'
-            ' -130.33585634084557 -26.66147652284684'
         )
     )
