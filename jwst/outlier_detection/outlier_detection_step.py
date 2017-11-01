@@ -1,33 +1,35 @@
+"""Public common step definition for OutlierDetection processing."""
 from __future__ import (division, print_function, unicode_literals,
-    absolute_import)
+                        absolute_import)
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
+
 from . import outlier_detection
 from . import outlier_detection_scaled
 from . import outlier_detection_ifu
 from . import outlier_detection_spec
-from ..resample import resample, resample_spec
 
 # Categorize all supported versions of outlier_detection
-outlier_registry = {'imaging' : outlier_detection.OutlierDetection,
-                    'scaled' : outlier_detection_scaled.OutlierDetectionScaled,
-                    'ifu' : outlier_detection_ifu.OutlierDetectionIFU,
-                    'slitspec' : outlier_detection_spec.OutlierDetectionSpec
+outlier_registry = {'imaging': outlier_detection.OutlierDetection,
+                    'scaled': outlier_detection_scaled.OutlierDetectionScaled,
+                    'ifu': outlier_detection_ifu.OutlierDetectionIFU,
+                    'slitspec': outlier_detection_spec.OutlierDetectionSpec
                     }
 
 # Categorize all supported modes
 IMAGE_MODES = ['NRC_IMAGE', 'MIR_IMAGE', 'NRS_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE']
-SLIT_SPEC_MODES = ['NRC_GRISM', 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NIS_WFSS']
-TSO_SPEC_MODES = ['NIS_SOSS','MIR_LRS-SLITLESS', 'NRC_TSGRISM', 'NRS_BRIGHTOBJ']
+SLIT_SPEC_MODES = ['NRC_GRISM', 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT',
+                   'NRS_MSASPEC', 'NIS_WFSS']
+TSO_SPEC_MODES = ['NIS_SOSS', 'MIR_LRS-SLITLESS', 'NRC_TSGRISM',
+                  'NRS_BRIGHTOBJ']
 IFU_SPEC_MODES = ['NRS_IFU', 'MIR_MRS']
 TSO_IMAGE_MODES = ['NRC_TSIMAGE']
 CORON_IMAGE_MODES = ['NRC_CORON', 'MIR_LYOT', 'MIR_4QPM']
 
 
 class OutlierDetectionStep(Step):
-    """
-    Flag outlier bad pixels and cosmic rays in the DQ array of each input image
+    """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
 
     Input images can listed in an input association file or already opened
     with a ModelContainer.  DQ arrays are modified in place.
@@ -36,9 +38,11 @@ class OutlierDetectionStep(Step):
     -----------
     input : asn file or ModelContainer
         Single filename association table, or a datamodels.ModelContainer.
+
     """
+
     # The members of spec needs to be a super-set of all parameters needed
-    # by the various versions of the outlier_detection algorithms, and each 
+    # by the various versions of the outlier_detection algorithms, and each
     # version will pick and choose what they need while ignoring the rest.
     spec = """
         wht_type = option('exptime','error',None,default='exptime')
@@ -61,21 +65,13 @@ class OutlierDetectionStep(Step):
     prefetch_references = False
 
     def process(self, input):
-
+        """Perform outlier detection processing on input data."""
         with datamodels.open(input) as input_models:
-            if not isinstance(input_models, datamodels.ModelContainer):
-                self.log.warning("Input is not a ModelContainer.")
-                self.log.warning("Outlier detection step will be skipped.")
-                result = input_models.copy()
-                result.meta.cal_step.outlier_detection = "SKIPPED"
-                return result
-
-            self.log.info("Performing outlier detection on {} inputs".format(len(input_models)))
             self.input_models = input_models
-
-            reffiles = {}
-            reffiles['gain'] = self._build_reffile_container('gain')
-            reffiles['readnoise'] = self._build_reffile_container('readnoise')
+            if not isinstance(self.input_models, datamodels.ModelContainer):
+                self.input_container = False
+            else:
+                self.input_container = True
 
             pars = {
                 'wht_type': self.wht_type,
@@ -93,60 +89,79 @@ class OutlierDetectionStep(Step):
                 'resample_data': self.resample_data,
                 'good_bits': self.good_bits
                 }
-            # Add logic here to select which version of OutlierDetection 
+
+            # Add logic here to select which version of OutlierDetection
             # needs to be used depending on the input data
-            exptype = input_models[0].meta.exposure.type 
-            
+            if self.input_container:
+                exptype = self.input_models[0].meta.exposure.type
+            else:
+                exptype = self.input_models.meta.exposure.type
+            self.check_input()
+
             if exptype in IMAGE_MODES:
                 # default mode: imaging with resampling
                 detection_step = outlier_registry['imaging']
                 pars['resample_suffix'] = 'i2d'
-            elif exptype in TSO_SPEC_MODES: 
+            elif exptype in TSO_SPEC_MODES:
                 # algorithm selected for TSO data (no resampling)
-                pars['resample_data'] = False # force resampling off...
+                pars['resample_data'] = False  # force resampling off...
                 detection_step = outlier_registry['imaging']
                 pars['resample_suffix'] = 'i2d'
-            elif exptype in TSO_IMAGE_MODES+CORON_IMAGE_MODES:
+            elif exptype in TSO_IMAGE_MODES+CORON_IMAGE_MODES and \
+                    not self.scale_detection:
                 # algorithm selected for TSO data (no resampling)
-                pars['resample_data'] = False # force resampling off...
+                pars['resample_data'] = False  # force resampling off...
                 detection_step = outlier_registry['imaging']
-                pars['resample_suffix'] = 's2d'                
+                pars['resample_suffix'] = 's2d'
             elif exptype in TSO_IMAGE_MODES and self.scale_detection:
-                # selected scaled algorithm for TSO data 
+                # selected scaled algorithm for TSO data
                 detection_step = outlier_registry['scaled']
                 pars['resample_suffix'] = 'i2d'
             elif exptype in SLIT_SPEC_MODES:
                 detection_step = outlier_registry['slit']
                 pars['resample_suffix'] = 's2d'
-            elif exptype in IFU_SPEC_MODES:  
+            elif exptype in IFU_SPEC_MODES:
                 # select algorithm for IFU data
                 detection_step = outlier_registry['ifu']
                 pars['resample_suffix'] = 's3d'
             else:
-                self.log.error("Outlier detection failed for unknown/unsupported exposure type: {}".format(exptype))
+                self.log.error("Outlier detection failed for \
+                                unknown/unsupported exposure type: {}".format(
+                                exptype))
+                self.valid_input = False
+
+            if not self.valid_input:
                 result = input_models.copy()
                 result.meta.cal_step.outlier_detection = "SKIPPED"
                 return result
 
-            self.log.info("Using {} for outlier_detection".format(detection_step))    
+            self.log.debug("Using {} class for outlier_detection".format(
+                           detection_step.__name__))
+
+            reffiles = {}
+            reffiles['gain'] = self._build_reffile_container('gain')
+            reffiles['readnoise'] = self._build_reffile_container('readnoise')
 
             # Set up outlier detection, then do detection
-            step = detection_step(self.input_models,
-                reffiles=reffiles, **pars)
+            step = detection_step(self.input_models, reffiles=reffiles, **pars)
             step.do_detection()
 
-            for model in self.input_models:
-                model.meta.cal_step.outlier_detection = 'COMPLETE'
+            if self.input_container:
+                for model in self.input_models:
+                    model.meta.cal_step.outlier_detection = 'COMPLETE'
+            else:
+                self.input_models.meta.cal_step.outlier_detection = 'COMPLETE'
 
             return self.input_models
 
     def _build_reffile_container(self, reftype):
-        """
-        Return a ModelContainer of reference file models.
+        """Return a ModelContainer of reference file models.
+
+        This method builds a ModelContainer object which contains all the
+        reference files needed for processing the inputs.
 
         Parameters
         ----------
-
         input_models: ModelContainer
             the science data, ImageModels in a ModelContainer
 
@@ -155,14 +170,19 @@ class OutlierDetectionStep(Step):
 
         Returns
         -------
+        ModelContainer with corresponding reference files for each input model
 
-        a ModelContainer with corresponding reference files for each input model
         """
-
         reffile_to_model = {'gain': datamodels.GainModel,
-            'readnoise': datamodels.ReadnoiseModel}
+                            'readnoise': datamodels.ReadnoiseModel}
+        if self.input_container:
+            reffiles = [self.get_reference_file(im, reftype)
+                        for im in self.input_models]
+            length = len(self.input_models)
+        else:
+            reffiles = [self.get_reference_file(self.input_models, reftype)]
+            length = 1
 
-        reffiles = [self.get_reference_file(im, reftype) for im in self.input_models]
         self.log.debug("Using {} reffile(s):".format(reftype.upper()))
         for r in set(reffiles):
             self.log.debug("    {}".format(r))
@@ -170,13 +190,37 @@ class OutlierDetectionStep(Step):
         # Check if all the ref files are the same.  If so build it by reading
         # the reference file just once.
         if len(set(reffiles)) <= 1:
-            length = len(self.input_models)
             ref_list = [reffile_to_model.get(reftype)(reffiles[0])] * length
         else:
             ref_list = [reffile_to_model.get(reftype)(ref) for ref in reffiles]
 
         return datamodels.ModelContainer(ref_list)
 
+    def check_input(self):
+        """Use this method to determine whether input is valid or not."""
+        if self.input_container:
+            self._check_input_container()
+        else:
+            self._check_input_cube()
 
-if __name__ == '__main__':
-    cmdline.step_script(OutlierDetectionStep)
+    def _check_input_container(self):
+        """Check to see whether input is the expected ModelContainer object."""
+        if not isinstance(self.input_models, datamodels.ModelContainer):
+            self.log.warning("Input is not a ModelContainer.")
+            self.log.warning("Outlier detection step will be skipped.")
+            self.valid_input = False
+        else:
+            self.valid_input = True
+            self.log.info("Performing outlier detection on {} inputs".format(
+                          len(self.input_models)))
+
+    def _check_input_cube(self):
+        """Check to see whether input is the expected CubeModel object."""
+        if not isinstance(self.input_models, datamodels.CubeModel):
+            self.log.warning("Input is not the expected CubeModel.")
+            self.log.warning("Outlier detection step will be skipped.")
+            self.valid_input = False
+        else:
+            self.valid_input = True
+            self.log.info("Performing outlier detection with {} inputs".
+                          format(self.input_models.shape[0]))
