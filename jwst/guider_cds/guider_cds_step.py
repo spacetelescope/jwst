@@ -24,6 +24,3 @@ class GuiderCdsStep (Step):
 
         return out_model
 
-if __name__ == '__main__':
-    cmdline.step_script(guider_cds_step)
-   

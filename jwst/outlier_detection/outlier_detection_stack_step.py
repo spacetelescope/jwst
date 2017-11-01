@@ -127,6 +127,3 @@ class OutlierDetectionStackStep(Step):
             ref_list = [reffile_to_model[reftype](self.get_reference_file(im, reftype)) for im in self.input_models]
         return datamodels.ModelContainer(ref_list)
 
-
-if __name__ == '__main__':
-    cmdline.step_script(OutlierDetectionStackStep)

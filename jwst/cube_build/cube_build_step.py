@@ -464,7 +464,3 @@ def read_user_input(self):
 
 #________________________________________________________________________________
 
-
-
-if __name__ == '__main__':
-    cmdline.step_script( cube_build_step )

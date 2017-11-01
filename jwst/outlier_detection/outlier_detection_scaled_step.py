@@ -116,7 +116,3 @@ class OutlierDetectionScaledStep(Step):
 
         return datamodels.ModelContainer(ref_list)
 
-
-
-if __name__ == '__main__':
-    cmdline.step_script(OutlierDetectionStep)

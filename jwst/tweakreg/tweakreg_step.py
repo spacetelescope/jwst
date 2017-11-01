@@ -147,6 +147,3 @@ def _get_filename(image_model):
     else:
         return os.path.splitext(os.path.basename(image_model.meta.filename))[0]
 
-
-if __name__ == '__main__':
-    cmdline.step_script(TweakRegStep)

@@ -60,6 +60,3 @@ class SourceCatalogStep(Step):
         # nothing is returned because this is the last step
         return
 
-
-if __name__ == '__main__':
-    cmdline.step_script(source_catalog_step)

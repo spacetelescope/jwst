@@ -27,6 +27,3 @@ class StackRefsStep(Step):
 
         return output_model
 
-
-if __name__ == '__main__':
-    cmdline.step_script(StackRefsStep)

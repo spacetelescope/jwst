@@ -54,6 +54,3 @@ class TweakregCatalogStep(Step):
 
         return model
 
-
-if __name__ == '__main__':
-    cmdline.step_script(tweakreg_catalog_step)

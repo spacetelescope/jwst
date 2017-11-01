@@ -62,6 +62,3 @@ class ResampleStep(Step):
                 update_s_region(model)
         return result
 
-
-if __name__ == '__main__':
-    cmdline.step_script(ResampleStep)
