@@ -14,7 +14,7 @@ import numpy as np
 
 __all__ = ['iter_linear_fit', 'build_fit_matrix']
 
-__version__ = '0.1.0'
+__version__ = '0.8.0'
 __vdate__ = '29-April-2016'
 __author__ = 'Mihai Cara, Warren Hack'
 

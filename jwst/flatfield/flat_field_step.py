@@ -170,5 +170,3 @@ class FlatFieldStep(Step):
         input_model.close()
         return result
 
-if __name__ == '__main__':
-    cmdline.step_script(flat_field_step)

@@ -24,7 +24,7 @@ from . import region
 
 
 __all__ = ['SkyImage', 'SkyGroup']
-__version__ = '0.1'
+__version__ = '0.8.0'
 __vdate__ = '01-March-2016'
 
 

@@ -12,7 +12,7 @@ import os
 
 
 __docformat__ = 'restructuredtext en'
-__version__ = '0.1.2'
+__version__ = '0.8.0'
 __version_date__ = '12-June-2017'
 __author__ = 'Mihai Cara'
 

@@ -368,6 +368,3 @@ def _find_channel_bkg_index(model2d, channel):
             index = k
     return index
 
-
-if __name__ == '__main__':
-    cmdline.step_script(SkyMatchStep)

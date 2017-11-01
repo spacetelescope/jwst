@@ -12,7 +12,7 @@ from ..flatfield import flat_field_step
 from ..photom import photom_step
 
 
-__version__ = "3.0"
+__version__ = '0.8.0'
 
 
 class Image2Pipeline(Pipeline):

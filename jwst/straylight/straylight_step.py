@@ -53,6 +53,3 @@ class StraylightStep (Step):
 
         return result
 
-
-if __name__ == '__main__':
-    cmdline.step_script(straylight_step)

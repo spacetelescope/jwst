@@ -12,7 +12,7 @@ from ..ami import ami_average_step
 from ..ami import ami_normalize_step
 from ..resample import blend
 
-__version__ = "1.2"
+__version__ = '0.8.0'
 
 # Define logging
 import logging

@@ -33,7 +33,7 @@ class SubtractImagesStep(Step):
             background-subtracted science data model
         """
 
-        # First, determine what kind of input model has been provided
+        # Open the first input
         model1 = datamodels.open(input1)
 
         if isinstance(model1, datamodels.CubeModel):
@@ -43,9 +43,7 @@ class SubtractImagesStep(Step):
         elif isinstance(model1, datamodels.MultiSlitModel):
             self.log.debug('Input is a MultiSlitModel')
 
-        # Assume that the second input model is always Image or MultiSlit with
-        # a single image, which is safe to open as MultiSlit for either case
-        #model2 = datamodels.MultiSlitModel(input2)
+        # Assume that the second input model is always an ImageModel
         model2 = datamodels.ImageModel(input2)
 
         # Call the subtraction routine
@@ -54,5 +52,8 @@ class SubtractImagesStep(Step):
         # Set the step status indicator in the output model
         result.meta.cal_step.back_sub = 'COMPLETE'
 
-        # We're done. Return the result.
+        # We're done. Close the models and return the result.
+        model1.close()
+        model2.close()
+
         return result

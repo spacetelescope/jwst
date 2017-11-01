@@ -24,7 +24,7 @@ from . import linearfit
 from . import simplewcs
 
 __taskname__ = 'tweakreg'
-__version__ = '0.7.0'
+__version__ = '0.8.0'
 __vdate__ = '17-April-2016'
 __author__ = 'Mihai Cara'
 

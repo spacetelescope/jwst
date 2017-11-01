@@ -12,7 +12,7 @@ from ..mrs_imatch import mrs_imatch_step
 from ..outlier_detection import outlier_detection_step
 from ..resample import resample_spec_step
 
-__version__ = "0.7.1"
+__version__ = '0.8.0'
 
 # Group exposure types
 MULTISOURCE_MODELS = ['MultiSlitModel']

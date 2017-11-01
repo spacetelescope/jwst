@@ -22,7 +22,7 @@ from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
 from ..resample import resample_spec_step
 
-__version__ = "3.0"
+__version__ = '0.8.0'
 
 
 class Spec2Pipeline(Pipeline):

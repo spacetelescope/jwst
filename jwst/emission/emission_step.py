@@ -18,6 +18,3 @@ class EmissionStep(Step):
 
         return output_obj
 
-
-if __name__ == '__main__':
-    cmdline.step_script(emission_step)

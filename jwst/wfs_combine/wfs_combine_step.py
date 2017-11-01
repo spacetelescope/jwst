@@ -52,6 +52,3 @@ def mk_prodname(output_dir, filename, suffix):
         ext = ".fits"
     return base + '_' + suffix + ext
 
-
-if __name__ == '__main__':
-    cmdline.step_script(wfs_combine_step)

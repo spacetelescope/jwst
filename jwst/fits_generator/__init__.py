@@ -1,4 +1,4 @@
 from __future__ import absolute_import
 
-__version__ = 'B7.0'
-__vdate__ = '2016-07-15'
+__version__ = '0.8.0'
+__vdate__ = '2017-11-01'
