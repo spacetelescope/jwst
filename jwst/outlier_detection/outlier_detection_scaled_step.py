@@ -1,14 +1,14 @@
+"""Step interface for performing scaled outlier_detection."""
 from __future__ import (division, print_function, unicode_literals,
-    absolute_import)
+                        absolute_import)
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 from . import outlier_detection_scaled
 
 
 class OutlierDetectionScaledStep(Step):
-    """
-    Flag outlier bad pixels and cosmic rays in the DQ array of each input image
+    """Flag outlier bad pixels and cosmic rays in DQ array of each input image.
 
     Input images can listed in an input association file or already opened
     with a ModelContainer.  DQ arrays are modified in place.
@@ -17,6 +17,7 @@ class OutlierDetectionScaledStep(Step):
     -----------
     input : asn file or ModelContainer
         Single filename association table, or a datamodels.ModelContainer.
+
     """
 
     spec = """
@@ -38,7 +39,7 @@ class OutlierDetectionScaledStep(Step):
     prefetch_references = False
 
     def process(self, input):
-
+        """Step interface to running outlier_detection."""
         with datamodels.open(input) as input_models:
 
             if not isinstance(input_models, datamodels.CubeModel):
@@ -82,12 +83,10 @@ class OutlierDetectionScaledStep(Step):
             return self.input_models
 
     def _build_reffile_container(self, reftype):
-        """
-        Return a ModelContainer of reference file models.
+        """Return a ModelContainer of reference file models.
 
         Parameters
         ----------
-
         input_models: ModelContainer
             the science data, ImageModels in a ModelContainer
 
@@ -96,10 +95,10 @@ class OutlierDetectionScaledStep(Step):
 
         Returns
         -------
+        a ModelContainer with corresponding reference files for
+            each input model
 
-        a ModelContainer with corresponding reference files for each input model
         """
-
         reffile_to_model = {'gain': datamodels.GainModel,
                             'readnoise': datamodels.ReadnoiseModel}
         reffile_model = reffile_to_model[reftype]
@@ -112,7 +111,7 @@ class OutlierDetectionScaledStep(Step):
 
         # Use get_reference_file method to insure latest reference file
         # always gets used...especially since only one name will ever be needed
-        ref_list = [reffile_model(self.get_reference_file(self.input_models, reftype))]
+        ref_list = [reffile_model(self.get_reference_file(
+                                  self.input_models, reftype))]
 
         return datamodels.ModelContainer(ref_list)
-
