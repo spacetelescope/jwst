@@ -29,7 +29,7 @@
 
 from __future__ import absolute_import, division, print_function
 
-__version__ = '0.7.1.4'
+__version__ = '0.8.0'
 
 import numpy as np
 from os.path import basename

@@ -19,7 +19,7 @@ from . import skyimage
 from . import skymatch_step
 
 __taskname__ = 'skymatch'
-__version__ = '0.7.1'
+__version__ = '0.8.0'
 __vdate__ = '29-February-2016'
 __author__ = 'Mihai Cara'
 

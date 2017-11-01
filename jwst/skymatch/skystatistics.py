@@ -14,7 +14,7 @@ from copy import deepcopy
 
 __all__ = ['SkyStats']
 __taskname__ = 'skystatistics'
-__version__ = '0.7.1'
+__version__ = '0.8.0'
 __vdate__ = '12-May-2016'
 __author__ = 'Mihai Cara'
 

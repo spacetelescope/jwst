@@ -14,7 +14,7 @@ from ..outlier_detection import outlier_detection_stack_step
 from ..resample import resample_step
 
 
-__version__ = "0.7.1"
+__version__ = '0.8.0'
 
 
 class Coron3Pipeline(Pipeline):

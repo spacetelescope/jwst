@@ -12,7 +12,7 @@ __docformat__ = 'restructuredtext'
 
 from . mrs_imatch_step import MRSIMatchStep
 
-__version__ = '0.7.1'
+__version__ = '0.8.0'
 __vdate__ = '1-June-2017'
 __author__ = 'Mihai Cara'
 

@@ -23,7 +23,7 @@ from . wcsutils import create_ref_wcs
 
 __all__ = ['align', 'overlap_matrix', 'max_overlap_pair', 'max_overlap_image']
 
-__version__ = '0.7.1'
+__version__ = '0.8.0'
 __vdate__ = '17-April-2016'
 __author__ = 'Mihai Cara'
 

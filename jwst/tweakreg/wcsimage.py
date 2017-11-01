@@ -27,7 +27,7 @@ from . import wcsutils
 
 
 __all__ = ['WCSImageCatalog', 'WCSGroupCatalog', 'RefCatalog', 'convex_hull']
-__version__ = '0.7.1'
+__version__ = '0.8.0'
 __vdate__ = '18-April-2016'
 
 
