@@ -140,7 +140,7 @@ class ResampleData(object):
         blend.blendfitsdata(input_list, output_model)
 
 
-    def do_drizzle(self, **pars):
+    def do_drizzle(self):
         """ Perform drizzling operation on input images's to create a new output
         """
         # Set up information about what outputs we need to create: single or final
