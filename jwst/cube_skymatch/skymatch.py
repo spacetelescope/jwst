@@ -21,7 +21,7 @@ from ..skymatch.skyimage import *
 
 __all__ = ['match']
 
-__version__ = '0.1.0'
+__version__ = '0.7.1'
 __vdate__ = '21-Sept-2016'
 __author__ = 'Mihai Cara'
 

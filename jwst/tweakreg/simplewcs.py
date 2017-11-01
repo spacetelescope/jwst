@@ -39,7 +39,7 @@ import gwcs
 
 __all__ = ['SimpleWCS']
 
-__version__ = '0.1.0'
+__version__ = '0.7.1'
 __vdate__ = '17-April-2016'
 __author__ = 'Mihai Cara'
 

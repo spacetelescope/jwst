@@ -18,20 +18,18 @@ class SourceTypeStep(Step):
 
     def process(self, input):
 
-        input_model = datamodels.open(input)
+        with datamodels.open(input) as input_model:
 
-        # Call the source selection routine
-        result = set_source_type(input_model)
+            # Call the source selection routine
+            result = set_source_type(input_model)
 
-        if result is None:
-            result = input_model.copy()
-            input_model.close()
-            result.meta.cal_step.srctype = 'SKIPPED'
-        else:
-            result.meta.cal_step.srctype = 'COMPLETE'
+            # Set the step status in the output model
+            if result is None:
+                result = input_model.copy()
+                input_model.close()
+                result.meta.cal_step.srctype = 'SKIPPED'
+            else:
+                result.meta.cal_step.srctype = 'COMPLETE'
 
         return result
 
-
-if __name__ == '__main__':
-    cmdline.step_script(SourceTypeStep)

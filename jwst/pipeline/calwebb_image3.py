@@ -12,7 +12,7 @@ from ..source_catalog import source_catalog_step
 from ..tweakreg_catalog import tweakreg_catalog_step
 from ..tweakreg import tweakreg_step
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 
 
 class Image3Pipeline(Pipeline):

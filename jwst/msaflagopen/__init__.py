@@ -1,5 +1,4 @@
 from __future__ import absolute_import
 from .msaflagopen_step import MSAFlagOpenStep
 
-__version__ = '0.7.0'
-
+__version__ = '0.7.1'

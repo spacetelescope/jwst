@@ -16,6 +16,7 @@ class DQInitStep(Step):
     reference_file_types = ['mask']
 
     def process(self, input):
+
         # Determine Model type from EXP_TYPE of RampModel
         input_model = datamodels.RampModel(input)
 
@@ -62,7 +63,8 @@ class DQInitStep(Step):
         # Apply the step
         result = dq_initialization.correct_model(input_model, mask_model)
 
-        # Close the reference file
+        # Close the data models for the input and ref file
+        input_model.close()
         mask_model.close()
 
         return result

@@ -17,7 +17,7 @@ from . import skycube
 from . import cube_skymatch_step
 
 __taskname__ = 'cube_skymatch'
-__version__ = '0.1.0'
+__version__ = '0.7.1'
 __vdate__ = '21-Sept-2016'
 __author__ = 'Mihai Cara'
 

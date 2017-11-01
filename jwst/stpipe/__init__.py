@@ -9,7 +9,7 @@ from .step import Step
 from .pipeline import Pipeline
 from .linear_pipeline import LinearPipeline
 
-__version__ = '0.7.0'
+__version__ = '0.7.1'
 
 #def test(verbose=False):
     #import nose

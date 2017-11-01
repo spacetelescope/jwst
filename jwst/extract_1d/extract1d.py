@@ -20,7 +20,7 @@ from astropy.modeling import models, fitting
 
 __all__ = ['extract1d']
 __taskname__ = 'extract1d'
-__version__ = '0.0.1'
+__version__ = '0.7.1'
 __vdate__ = '22-December-2015'
 __author__ = 'Mihai Cara'
 
