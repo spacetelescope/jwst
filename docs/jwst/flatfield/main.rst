@@ -22,6 +22,9 @@ applied to the corresponding slit in the science data.
 Multiple-integration datasets (the _rateints.fits products from the ramp_fit
 step) are handled by applying the flat-field to each integration.
 
+NIRSpec imaging data are corrected the same as non-NIRSpec data,
+i.e. they will just be divided by a flat-field reference image.
+
 For pixels whose DQ is NO_FLAT_FIELD in the reference file, the flat
 value is reset to 1.0. Similarly, for pixels whose flat value is NaN, the flat
 value is reset to 1.0 and DQ value in the output science data is set to
@@ -33,7 +36,8 @@ COMPLETE in the output science data.
 
 NIRSpec Data
 ------------
-The difference with NIRSpec data is that the flat field array that will be
+Flat-fielding of NIRSpec spectrographic data differs from other modes
+in that the flat field array that will be
 divided into the SCI and ERR arrays of the input science data set is not
 read directly from CRDS.  This is because the flat field varies with
 wavelength, and the wavelength of light that falls on any given pixel
@@ -43,6 +47,16 @@ by extracting the relevant section from the reference files, and then --
 for each pixel -- interpolating to the appropriate wavelength for that
 pixel.  See the Reference File section for further details.  There is
 an option to save the on-the-fly flat field to a file.
+
+NIRSpec NRS_BRIGHTOBJ data are processed much like other NIRSpec
+spectrographic data, except that NRS_BRIGHTOBJ data are in a CubeModel,
+rather than a MultiSlitModel or ImageModel (used for IFU data).  A 2-D
+flat field image will be constructed on-the-fly as usual, but this image
+will be divided into each plane of the 3-D science data and error array,
+resulting in an output CubeModel.
+
+When this step is called with NIRSpec imaging data as input, the data will be
+flat-fielded as described in the section for non-NIRSpec data.
 
 Subarrays
 ---------
