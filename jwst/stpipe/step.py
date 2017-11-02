@@ -43,6 +43,7 @@ class Step(object):
     output_file      = output_file(default=None)   # File to save output to.
     output_dir       = string(default=None)        # Directory path for output files
     output_use_model = boolean(default=False)      # When saving use `DataModel.meta.filename`
+    output_use_index = boolean(default=True)       # Append index.
     save_results     = boolean(default=False)      # Force save results
     skip             = boolean(default=False)      # Skip this step
     suffix           = string(default=None)        # Default suffix for output files
@@ -424,13 +425,10 @@ class Step(object):
                     'make_output_path', parent_first=True
                 )
                 for idx, result in enumerate(results_to_save):
+                    if len(results_to_save) <= 1:
+                        idx = None
                     if isinstance(result, DataModel):
-                        result.save(partial(
-                            make_output_path,
-                            self,
-                            basepath=self.output_file,
-                            result_id=result_id(idx)
-                        ))
+                        self.save_model(result, idx=idx)
                     elif hasattr(result, 'save'):
                         try:
                             out_dir, out_name = make_output_path(
@@ -712,7 +710,7 @@ class Step(object):
         """
         self._input_filename = path
 
-    def save_model(self, model, suffix, *args, **kwargs):
+    def save_model(self, model, suffix=None, idx=None):
         """
         Saves the given model using the step/pipeline's naming scheme
 
@@ -724,34 +722,33 @@ class Step(object):
         suffix : str
             The suffix to add to the filename.
 
-        Notes
-        -----
-        This routine is used to save data outside of the normal step
-        cycle, where results are saved at the end of a step.
-
-        Serious consideration should be given to the step design
-        if this call is needed. In particular, if such data
-        is important to save, consider making the producing code
-        its own step, such that it is subject to the output controls
-        of the step infrastructure.
+        idx: object
+            Index identifier.
         """
 
         # Get the output path as defined by the current step.
-        make_output_path = self.search_attr(
-            'make_output_path', parent_first=True
-        )
         make_output_path_partial = partial(
-            make_output_path,
+            self.make_output_path,
             self,
+            basepath=self.output_file,
             suffix=suffix,
+            idx=idx
         )
-        model.save(make_output_path_partial, *args, **kwargs)
+        model.save(make_output_path_partial)
+
+    @property
+    def make_output_path(self):
+        """Return function that creates the output path"""
+        make_output_path = self.search_attr(
+            '_make_output_path', parent_first=True
+        )
+        return make_output_path
 
     @staticmethod
-    def make_output_path(
+    def _make_output_path(
             step, data,
             basepath=None, suffix=None, ext=None,
-            result_id=None, ignore_use_model=False
+            idx=None, ignore_use_model=False
     ):
         """Make up a path based on data and user specification
 
@@ -773,9 +770,9 @@ class Step(object):
         ext: str or None
             The file format extension
 
-        result_id: str or None
-            If a suffix cannot be determined, use this as the suffix.
-            If the result is still None, raise ValueError
+        idx: object or None
+            An index to use. Index is not used if `output_use_model`
+            is True or `output_use_index` is False
 
         ignore_use_model: bool
             Ignore configuration parameter `output_use_model`
@@ -789,9 +786,20 @@ class Step(object):
         """
         from ..datamodels import DataModel
 
-        has_basepath = basepath is not None and len(basepath) > 0
-        use_model_name = not ignore_use_model and getattr(step, 'output_use_model', False)
+        # Determine source of the basepath
         output_path = basepath
+        has_basepath = basepath is not None and len(basepath) > 0
+        use_model_name = (not ignore_use_model) and \
+                         getattr(step, 'output_use_model', False)
+
+        # Determine if the index should be used
+        if idx is not None and (
+                use_model_name or not getattr(step, 'output_use_index', True)
+        ):
+            idx = None
+
+        # Get the suffix
+        suffix = _get_suffix(suffix, step=step)
 
         # If a basepath was specified, use that, but adding the
         # result_id if necessary
@@ -799,7 +807,8 @@ class Step(object):
             path, filename = split(output_path)
             name, filename_ext = splitext(filename)
             output_name = [name]
-            suffix = _get_suffix(suffix, default_suffix=result_id)
+            if idx is not None:
+                output_name.append('_' + str(idx))
             if suffix is not None:
                 output_name.append('_' + suffix)
             output_name.append(filename_ext)
@@ -835,9 +844,8 @@ class Step(object):
 
                 # Rebuild the path.
                 output_name = [name]
-                suffix = _get_suffix(
-                    suffix, step=step, default_suffix=result_id
-                )
+                if idx is not None:
+                    output_name.append(separator + str(idx))
                 if suffix is not None:
                     output_name.append(separator + suffix)
                 if ext is None:
@@ -930,6 +938,7 @@ def _make_result_id(output_file, n_results, default_name):
         result_id = lambda idx: None
     return result_id
 
+
 def _get_suffix(suffix, step=None, default_suffix=None):
     """Retrieve either specified or pipeline-supplied suffix
 
@@ -954,4 +963,6 @@ def _get_suffix(suffix, step=None, default_suffix=None):
         suffix = step.search_attr('suffix')
     if suffix is None:
         suffix = default_suffix
+    if suffix is None and step is not None:
+        suffix = step.name.lower()
     return suffix

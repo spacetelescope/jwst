@@ -64,7 +64,8 @@ def test_save_step_withoutput(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    assert isfile(output_file)
+    output_path, output_ext = splitext(output_file)
+    assert isfile(output_path + '_stepwithmodel' + output_ext)
 
 
 def test_save_step_withdir(mk_tmp_dirs):
@@ -101,11 +102,27 @@ def test_save_step_withdir_withoutput(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
+    output_path, output_ext = splitext(output_file)
     output_fn_path = join(
         tmp_data_path,
-        output_file
+        output_path + '_stepwithmodel' + output_ext
     )
     assert isfile(output_fn_path)
+
+
+def test_save_usemodel(mk_tmp_dirs):
+    """Step with output_use_model"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    args = [
+        'jwst.stpipe.tests.steps.StepWithModel',
+        data_fn_path,
+        '--steps.stepwithmodel.output_use_model=true'
+    ]
+
+    Step.from_cmdline(args)
+
+    assert False
 
 
 def test_save_pipeline_default(mk_tmp_dirs):
@@ -224,7 +241,8 @@ def test_save_proper_pipeline_withdir_withoutput(mk_tmp_dirs):
     ]
     Step.from_cmdline(args)
 
-    assert isfile(join(tmp_data_path, output_name))
+    output_path, output_ext = splitext(output_name)
+    assert isfile(join(tmp_data_path, output_path + '_pp' + output_ext))
 
 
 def test_save_proper_pipeline_substeps(mk_tmp_dirs):
