@@ -238,6 +238,8 @@ class ModelContainer(model_base.DataModel):
             path_func = partial(make_file_with_index, path=path)
 
         for idx, model in enumerate(self):
+            if len(self) <= 1:
+                idx = None
             outpath, filename = path_func(model, idx=idx)
             if dir_path:
                 outpath = dir_path
@@ -390,5 +392,6 @@ def make_file_with_index(model, idx, path):
     # Decompose path
     path_head, path_tail = op.split(path)
     base, ext = op.splitext(path_tail)
-    new_base = base + str(idx)
-    return (path_head, new_base + ext)
+    if idx is not None:
+        base = base + str(idx)
+    return (path_head, base + ext)
