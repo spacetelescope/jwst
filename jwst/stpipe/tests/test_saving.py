@@ -333,6 +333,7 @@ def test_save_proper_pipeline_substeps_withdir(mk_tmp_dirs):
     assert isfile(join(tmp_data_path, 'ppbase_swm.fits'))
     assert isfile(join(tmp_config_path, 'ppbase_aswm.fits'))
 
+
 def test_save_proper_pipeline_container(mk_tmp_dirs):
     """Test how pipeline saving should work"""
     args = [
@@ -440,3 +441,18 @@ def test_save_proper_pipeline_container_substeps_withdir(mk_tmp_dirs):
     assert isfile(join(tmp_config_path, 'ppbase_aswm.fits'))
     assert isfile(join(tmp_data_path, 'ppbase_0_swc.fits'))
     assert isfile(join(tmp_data_path, 'ppbase_1_swc.fits'))
+
+
+def test_save_proper_pipeline_container_usemodel(mk_tmp_dirs):
+    """Test how pipeline saving should work"""
+    args = [
+        'jwst.stpipe.tests.steps.ProperPipeline',
+        data_fn_path,
+        '--output_use_model=true',
+        '--steps.stepwithcontainer.output_use_model=true',
+    ]
+
+    Step.from_cmdline(args)
+
+    assert isfile('swc_model1_pp.fits')
+    assert isfile('swc_model2_pp.fits')

@@ -71,8 +71,8 @@ class StepWithContainer(Step):
         from ....datamodels import ImageModel
 
         container = ModelContainer()
-        model1 = ImageModel(args[0])
-        model2 = ImageModel(args[0])
+        model1 = ImageModel(args[0]).copy()
+        model2 = ImageModel(args[0]).copy()
         model1.meta.filename = 'swc_model1.fits'
         model2.meta.filename = 'swc_model2.fits'
         container.append(model1)
