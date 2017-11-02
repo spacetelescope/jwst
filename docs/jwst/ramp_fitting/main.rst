@@ -37,20 +37,21 @@ a given pixel, the final slope is determined as a weighted average from all
 intervals and is written to a file as the primary output product.  In this
 output product, the 4-D GROUPDQ from all integrations is compressed into 2-D,
 which is then merged (using a bitwise OR) with the input 2-D PIXELDQ to create
-the output PIXELDQ.  The 3-D VAR_POISSON and VAR_RNOISE arrays from all 
+the output DQ array.  The 3-D VAR_POISSON and VAR_RNOISE arrays from all 
 integrations are averaged into corresponding 2-D output arrays.  If the ramp 
 fitting step is run by itself, the output file name will have the suffix 
-'_RampFit' or the suffix '_RampFitStep'; if the ramp fitting step is run as the 
-final step in a pipeline, the final output file name will have the suffix '_rate'.
-In either case, the user can override this name by specifying an output file name.
+'_RampFit' or the suffix '_RampFitStep'; if the ramp fitting step is run as part 
+of the calwebb_detector1 pipeline, the final output file name will have the 
+suffix '_rate'.  In either case, the user can override this name by specifying 
+an output file name.
 
 
 If the input exposure contains more than one integration, the resulting slope
 images from each integration are stored as a data cube in a second output data
 product.  Each plane of the 3-D SCI, ERR, DQ, VAR_POISSON, and VAR_RNOISE arrays 
 in this product is the result for a given integration.  In this output product, 
-the 4-D GROUPDQ from an integration is compressed into 2-D, which is then merged 
-with the input 2-D PIXELDQ to create the output PIXELDQ for each integration. The 
+the GROUPDQ data for a given integration is compressed into 2-D, which is then merged 
+with the input 2-D PIXELDQ to create the output DQ array for each integration. The 
 3-D VAR_POISSON and VAR_RNOISE from an integration are calcuated by averaging over
 the fit segments in the corresponding 4-D arrays.  By default, the name of this 
 output product is based on the name of the input file and will have the suffix 
