@@ -128,11 +128,12 @@ class Image2Pipeline(Pipeline):
         input = self.flat_field(input)
         input = self.photom(input)
 
+        
         # Resample individual exposures
         result = self.resample(input)
-
-        # write out resampled exposure
-        self.save_model(result, suffix='i2d')
+        if result:
+            # write out resampled exposure
+            self.save_model(result, suffix='i2d')
         
         # That's all folks
         self.log.info(
