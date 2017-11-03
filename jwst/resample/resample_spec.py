@@ -305,8 +305,7 @@ class ResampleSpecData(object):
             axis_max = np.nanmax(bounding_box_grid[axis])
             bounding_box.append((axis_min, axis_max))
         wnew.bounding_box = tuple(bounding_box)
-
-        self.output_wcs = wnew
+        return wnew
 
 
     def build_size_from_bounding_box(self, refwcs=None):
