@@ -9,7 +9,7 @@ from photutils import aperture_photometry, CircularAperture, CircularAnnulus
 import astropy.units as u
 
 from .. import datamodels
-from ..resample import resample
+from ..resample import resample_utils
 from ..tso_photometry.tso_photometry import tso_aperture_photometry
 from .outlier_detection import OutlierDetection
 
@@ -100,7 +100,7 @@ class OutlierDetectionScaled(OutlierDetection):
 
         # Convert CubeModel into ModelContainer of 2-D DataModels
         for image in self.input_models:
-            image.wht = resample.build_driz_weight(image,
+            image.wht = resample_utils.build_driz_weight(image,
                                                    wht_type='exptime',
                                                    good_bits=pars['good_bits'])
 

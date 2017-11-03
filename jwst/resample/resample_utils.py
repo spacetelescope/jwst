@@ -9,9 +9,49 @@ from astropy.modeling.models import Scale, AffineTransformation2D
 from astropy.modeling import Model
 from gwcs import WCS, wcstools
 
+from ..assign_wcs.util import wcs_from_footprints
+
+from . import bitmask
+
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+
+def make_output_wcs(input_models):
+    """ Generate output WCS here based on footprints of all input WCS objects
+    Parameters
+    ----------
+    wcslist : list of gwcs.WCS objects
+
+    Returns
+    -------
+    output_wcs : object
+        WCS object, with defined domain, covering entire set of input frames
+
+    """
+
+    # The API needing input_models instead of just wcslist is because
+    # currently the domain is not defined in any of imaging modes for NIRCam
+    # NIRISS or MIRI
+    #
+    # TODO: change the API to take wcslist instead of input_models and
+    #       remove the following block
+    wcslist = [i.meta.wcs for i in input_models]
+    for w, i in zip(wcslist, input_models):
+        if w.bounding_box is None:
+            w.bounding_box = bounding_box_from_shape(i.data.shape)
+    naxes = wcslist[0].output_frame.naxes
+
+    if naxes == 3:
+        # THIS BLOCK CURRENTLY ISN"T USED BY resample_spec
+        pass
+    elif naxes == 2:
+        output_wcs = wcs_from_footprints(input_models)
+        data_size = shape_from_bounding_box(output_wcs.bounding_box)
+
+    output_wcs.data_size = (data_size[1], data_size[0])
+    return output_wcs
 
 
 def compute_output_transform(refwcs, filename, fiducial):
@@ -128,3 +168,34 @@ def reproject(wcs1, wcs2):
             det_reshaped.append(axis.reshape(x.shape))
         return tuple(det_reshaped)
     return _reproject
+
+
+def build_driz_weight(model, wht_type=None, good_bits=None):
+    """ Create input weighting image
+    """
+    if good_bits is not None and good_bits < 0:
+        good_bits = None
+    dqmask = build_mask(model.dq, good_bits)
+    exptime = model.meta.exposure.exposure_time
+
+    if wht_type.lower()[:3] == 'err':
+        inwht = (exptime / model.err)**2 * dqmask
+        log.debug("DEBUG weight mask: {} {}".format(type(inwht), np.sum(inwht)))
+    # elif wht_type == 'IVM':
+    #     _inwht = img.buildIVMmask(chip._chip,dqarr,pix_ratio)
+    elif wht_type.lower()[:3] == 'exp':
+        inwht = exptime * dqmask
+    else:
+        inwht = np.ones(model.data.shape, dtype=model.data.dtype)
+    return inwht
+
+
+def build_mask(dqarr, bitvalue):
+    """ Builds a bit-mask from an input DQ array and a bitvalue flag
+    """
+
+    bitvalue = bitmask.interpret_bits_value(bitvalue)
+
+    if bitvalue is None:
+        return (np.ones(dqarr.shape, dtype=np.uint8))
+    return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)

@@ -4,7 +4,7 @@ from __future__ import (division, print_function, unicode_literals,
                         absolute_import)
 
 from .. import datamodels
-from ..resample import resample_spec, resample
+from ..resample import resample_spec, resample_utils
 from .outlier_detection import OutlierDetection
 
 import logging
@@ -81,7 +81,7 @@ class OutlierDetectionSpec(OutlierDetection):
         else:
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
-                drizzled_models[i].wht = resample.build_driz_weight(
+                drizzled_models[i].wht = resample_utils.build_driz_weight(
                                             self.input_models[i],
                                             wht_type='exptime',
                                             good_bits=pars['good_bits'])

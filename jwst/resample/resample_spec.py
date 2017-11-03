@@ -17,7 +17,6 @@ from gwcs import coordinate_frames as cf
 
 from .. import datamodels
 from . import gwcs_drizzle
-from . import bitmask
 from . import resample_utils
 
 import logging
@@ -114,7 +113,7 @@ class ResampleSpecData(object):
         # Flag to support wild-card rows in drizpars table
         filter_match = False
         for n, filt, num in zip(range(1, drizpars.numimages.shape[0] + 1),
-            drizpars.filter, drizpars.numimages):
+                drizpars.filter, drizpars.numimages):
             # only remember this row if no exact match has already been made for
             # the filter. This allows the wild-card row to be anywhere in the
             # table; since it may be placed at beginning or end of table.
@@ -367,7 +366,7 @@ class ResampleSpecData(object):
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model,
-                                outwcs = outwcs,
+                                outwcs=outwcs,
                                 single=self.drizpars['single'],
                                 pixfrac=self.drizpars['pixfrac'],
                                 kernel=self.drizpars['kernel'],
@@ -377,7 +376,7 @@ class ResampleSpecData(object):
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
 
-                inwht = self.build_driz_weight(img,
+                inwht = resample_utils.build_driz_weight(img,
                     wht_type=self.drizpars['wht_type'],
                     good_bits=self.drizpars['good_bits'])
                 if hasattr(img, 'name'):
@@ -410,46 +409,12 @@ class ResampleSpecData(object):
             # Update mutlislit slit info on the output_model
             try:
                 for attr in ['name', 'xstart', 'xsize', 'ystart', 'ysize',
-                    'slitlet_id', 'source_id', 'source_name', 'source_alias',
-                    'stellarity', 'source_type', 'source_xpos', 'source_ypos',
-                    'shutter_state', 'relsens']:
+                        'slitlet_id', 'source_id', 'source_name', 'source_alias',
+                        'stellarity', 'source_type', 'source_xpos', 'source_ypos',
+                        'shutter_state', 'relsens']:
                     if hasattr(img, attr):
                         setattr(output_model, attr, getattr(img, attr))
             except:
                 pass
 
             self.output_models.append(output_model)
-
-
-    def build_driz_weight(self, model, wht_type=None, good_bits=None):
-        """ Create input weighting image
-        """
-        if good_bits is not None and good_bits < 0:
-            good_bits = None
-        dqmask = self.build_mask(model.dq, good_bits)
-        exptime = model.meta.exposure.exposure_time
-
-        if wht_type.lower()[:3] == 'err':
-            inwht = (exptime / model.err)**2 * dqmask
-        # elif wht_type == 'IVM':
-        #     _inwht = img.buildIVMmask(chip._chip,dqarr,pix_ratio)
-        elif wht_type.lower()[:3] == 'exp':
-            # inwht = exptime * dqmask
-            inwht = np.ones(model.data.shape, dtype=model.data.dtype) * exptime
-        else:
-            inwht = np.ones(model.data.shape, dtype=model.data.dtype)
-        return inwht
-
-
-    @staticmethod
-    def build_mask(dqarr, bitvalue):
-        """ Builds a bit-mask from an input DQ array and a bitvalue flag
-        """
-
-        bitvalue = bitmask.interpret_bits_value(bitvalue)
-
-        if bitvalue is None:
-            return (np.ones(dqarr.shape, dtype=np.uint8))
-        return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)
-
-
