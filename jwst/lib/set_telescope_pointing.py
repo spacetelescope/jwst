@@ -116,6 +116,10 @@ def add_wcs(filename, default_pa_v3=0., siaf_path=None, **kwargs):
         siaf_path=siaf_path,
         **kwargs
     )
+    try:
+        _add_axis_3(model)
+    except:
+        pass
     model.meta.model_type = None
     model.save(filename)
     model.close()
@@ -974,20 +978,12 @@ def _get_vertices_idl(aperture_name, useafter, prd_db_filepath=None):
     return RESULT
 
 
-def _extend_schema(model, new_schema):
+def _add_axis_3(model):
     """
-    Extend the core schema in a ``DataModel`` with the ``wcsinfo`` schema.
-
-    Parameters
-    ----------
-    model : `~jwst.datamodels.DataModel`
-        The base data model with which the file is opened.
-    new_schema : str
-        The name of the new schema.
+    Adds CTYPE3 and CUNIT3 for spectral observations.
+    This is temporary, may be moved to SDP proccessing later.
     """
-    filename = os.path.abspath(inspect.getfile(model.__class__))
-    base_url = os.path.join(
-        os.path.dirname(filename), 'schemas', '')
-    schema_path = os.path.join(base_url,'wcsinfo.schema.yaml')
-    new_schema = asdf_schema.load_schema(schema_path)
-    return model.extend_schema(new_schema)
+    wcsaxes = model.meta.wcsinfo.wcsaxes
+    if wcsaxes is not None and wcsaxes == 3:
+        model.meta.wcsinfo.ctype3 = "WAVE"
+        model.meta.wcsinfo.cunit3 = "um"
