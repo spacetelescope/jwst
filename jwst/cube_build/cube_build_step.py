@@ -30,32 +30,29 @@ class CubeBuildStep (Step):
              # Options: PRISIM,G140M,G140H,G235M,G235H,G395M,G395H, or ALL 
          filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL','all',default='ALL') \
              # Options: CLEAR,F100LP,F070LP,F170LP,F290LP, or ALL
-         scale1 = float(default=0.0)    # cube sample size to use for axis 1 (arc seconds) 
-         scale2 = float(default=0.0)    # cube sample size to use for axis 2 (arc seconds)
-         scalew = float(default=0.0)    # cube sample size to use for wavelength axis (axis 3, in mircons)
-         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') \
-             # Type of weighting function, msm: modified Shepard Method, miripsf: use information on shape \
-             # of miri psf in the msm method, Area: only used if coord_system = alpha-beta (advanced option) 
-         coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec') \
-             # Coordinate system of the output IFUcube. Options: ra-dec or  alpha-beta
-         rois = float(default=0.0)      #region of interest spatial size (in arc seconds)
-         roiw = float(default=0.0)      #region of interest wavelength size (in microns) 
+         scale1 = float(default=0.0)    # cube sample size to use for axis 1, arc seconds 
+         scale2 = float(default=0.0)    # cube sample size to use for axis 2, arc seconds
+         scalew = float(default=0.0)    # cube sample size to use for axis 3, microns
+         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of \
+             weighting function, msm: modified Shepard Method, miripsf: use information on shape \
+             of miri psf in the msm method, Area: only used if coord_system = alpha-beta [advanced option] 
+         coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec') # Coordinate system of \
+             the output IFUcube. Options: ra-dec or  alpha-beta
+         rois = float(default=0.0)      #region of interest spatial size, arc seconds
+         roiw = float(default=0.0)      #region of interest wavelength size, microns  
          weight_power = float(default=2.0) # Weighting option to use when combining pixel surface brightness \
-                # in the RIO centered on cube spaxial center
+                 in the RIO centered on cube spaxial center
          offset_list = string(default='NA')  #A file for dithered data containing additional ra and dec offsets \
-                # to be applied to files in the association tweak the wcs of the input exposures. \
-                # offsets are given in arcseconds 
+                 to be applied to files in the association. The offset tweaks the wcs of the input exposures. \
+                 Offsets are given in arcseconds. EXPERIMENTAL OPTION - ADVANCED USERS ONLY
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube 
-         xdebug = integer(default=None) # in debug mode, the x spaxel value to report information on 
-         ydebug = integer(default=None) # in debug mode, the y spaxel value to report information on 
-         zdebug = integer(default=None) # in debug mode, the z spaxel value to report  information on 
+         xdebug = integer(default=None) # debug option, x spaxel value to report information on 
+         ydebug = integer(default=None) # debug option, y spaxel value to report information on 
+         zdebug = integer(default=None) # debug option, z spaxel value to report  information on 
          single = boolean(default=false) # Internal pipeline option used by mrs_imatch and outlier detection
-         output_type = option('band','channel','grating','multi',default='band') \
-         # Type of cube to create. Band = single channel and sub-channel (MIRI), single grating and filter (NIRSPEC) \
-         # Channel (MIRI option) : single channel but all sub-channels contained in assocation 
-         # Grating (NIRSPEC option): single grating but all filters contained in association
-         # Multi (Both MIRI and NIRSPEC): use all the data in the assocation.
+         output_type = option('band','channel','grating','multi',default='band') # Type of output cube \
+            to create. Options = band,channel,grating, multi
 #         output_use_model = boolean(default=true)
        """
     reference_file_types = ['cubepar','resol']
