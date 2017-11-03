@@ -214,7 +214,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
             # Program
             if self.data['program'] != 'noprogram':
-                self.data['program'] = str(item['program'])
+                self.data['program'] = '{:0>5s}'.format(item['program'])
 
             # Pool
             if self.data['asn_pool'] == 'none':

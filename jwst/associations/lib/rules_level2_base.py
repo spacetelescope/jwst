@@ -174,7 +174,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
         self.data['target'] = item['targetid']
-        self.data['program'] = str(item['program'])
+        self.data['program'] = '{:0>5s}'.format(item['program'])
         self.data['asn_pool'] = basename(
             item.meta['pool_file']
         ).split('.')[0]
