@@ -11,7 +11,7 @@ from astropy.stats import sigma_clipped_stats
 from scipy import ndimage
 
 from .. import datamodels
-from ..resample import resample, gwcs_blot
+from ..resample import resample, gwcs_blot, resample_utils
 
 import logging
 log = logging.getLogger(__name__)
@@ -102,7 +102,7 @@ class OutlierDetection(object):
                                               err=self.inputs.err[i],
                                               dq=self.inputs.dq[i])
                 image.meta = self.inputs.meta
-                image.wht = resample.build_driz_weight(image,
+                image.wht = resample_utils.build_driz_weight(image,
                                                        wht_type='exptime',
                                                        good_bits=bits)
                 self.input_models.append(image)
@@ -193,7 +193,7 @@ class OutlierDetection(object):
         else:
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
-                drizzled_models[i].wht = resample.build_driz_weight(
+                drizzled_models[i].wht = resample_utils.build_driz_weight(
                                         self.input_models[i],
                                         wht_type='exptime',
                                         good_bits=pars['good_bits'])

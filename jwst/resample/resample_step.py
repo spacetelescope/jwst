@@ -1,7 +1,7 @@
 from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 from . import resample
 from .. assign_wcs.util import update_s_region
@@ -61,4 +61,3 @@ class ResampleStep(Step):
                 model.meta.cal_step.resample = "COMPLETE"
                 update_s_region(model)
         return result
-
