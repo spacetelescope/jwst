@@ -24,11 +24,11 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
     ----------
     input_model : jwst.datamodels.ImageModel
 
-    grism_objects : list[GrismObject]
+    grism_objects : list(GrismObject)
         A list of GrismObjects
 
-    reffile : str
-        The name of the wavelengthrange reference file
+    reffile : dict
+        Needs to include the name of the wavelengthrange reference file
 
 
     Returns
@@ -44,7 +44,7 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
     information about each catalog object. It can be created
     by calling jwst.assign_wcs.util.create_grism_bbox() which
     will return a list of GrismObjects that countain the bounding
-    boxes needed for extraction.
+    boxes that will be used to define the 2d extraction area.
 
     """
     if not grism_objects:
@@ -53,8 +53,13 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
             grism_objects = util.create_grism_bbox(input_model, reference_files)
+            log.info("Grism object list created from source catalog: {0:s}"
+                     .format(input_model.meta.source_catalog.filename))
 
+    if not isinstance(grism_objects, list):
+            raise ValueError("Expected input grism objects to be a list")
 
+    log.info("Creating output model")
     output_model = datamodels.MultiSlitModel()
     output_model.update(input_model)
 
@@ -83,33 +88,57 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             # Add the shift to the lower corner to each subarray WCS object
             # The shift should just be the lower bounding box corner
             # also replace the object center location inputs to the GrismDispersion
-            # model with the known object center information (in pixels of direct image)
-            # This is changes the user input to the model from (x,y,x0,y0,order) -> (x,y,order)
+            # model with the known object center and order information (in pixels of direct image)
+            # This is changes the user input to the model from (x,y,x0,y0,order) -> (x,y)
             #
             # The bounding boxes here are also limited to the size of the detector
             # The check for boxes entirely off the detector is done in create_grism_bbox right now
             bb = obj.order_bounding[order]
-            xmin, xmax = int(round(max(bb[0][0], 0))), int(round(min(bb[0][1], input_model.meta.subarray.xsize)))  # limit the boxes to the detector
-            ymin, ymax = int(round(max(bb[1][0], 0))), int(round(min(bb[1][1], input_model.meta.subarray.ysize))) # limit the boxes to the detector
 
-
+            # limit the boxes to the detector
+            ymin, ymax = (max(bb[0][0], 0), min(bb[0][1], input_model.meta.subarray.ysize))
+            xmin, xmax = (max(bb[1][0], 0), min(bb[1][1], input_model.meta.subarray.xsize))
+            
+            # only the first two numbers in the Mapping are used
+            # the order and source position are put directly into
+            # the new wcs for the subarray for the forward transform
             tr = inwcs.get_transform('grism_detector', 'detector')
-            tr = Identity(3) | (Mapping((0, 1, 0, 1, 2)) | Shift(xmin) & Shift(ymin) &
-                                                           Const1D(obj.xcenter) & Const1D(obj.ycenter) &
-                                                           Identity(1)) | tr
+            tr = Identity(2) | Mapping((0, 1, 0, 1, 0)) | (Shift(xmin) & Shift(ymin) &
+                                                           Const1D(obj.xcenter) &
+                                                           Const1D(obj.ycenter) &
+                                                           Const1D(order)) | tr
+
             subwcs.set_transform('grism_detector', 'detector', tr)
 
-            log.info("Subarray extracted for obj: {} order: {}:".format(obj.sid, order))
-            log.info("Subarray extents are: ({}, {}), ({}, {})".format(xmin,ymin,xmax,ymax))
+            # now do the same thing for the backwards transform
+            # this sends wavelength along with known x0, y0, order
+            # This needs to update the distortion, v2v3 transforms as well?
+            # figure out how to match the inputs and outputs correctly
+            # going this direction
+            # tr = inwcs.get_transform('detector', 'grism_detector')
+            # tr = Identity(4) | Mapping((0, 1, 2, 3)) | (Const1D(obj.xcenter) &
+            #                                             Const1D(obj.ycenter) &
+            #                                             Identity(1) &
+            #                                             Const1D(order)) | tr
 
-            ext_data = input_model.data[ymin : ymax + 1, xmin : xmax+ 1].copy()
+            # subwcs.set_transform('detector', 'grism_detector', tr)
+
+            log.info("Subarray extracted for obj: {} order: {}:".format(obj.sid, order))
+            log.info("Subarray extents are: (xmin:{}, ymin:{}), (xmax:{}, ymax:{})".format(xmin,ymin,xmax,ymax))
+
+            ext_data = input_model.data[ymin : ymax + 1, xmin : xmax + 1].copy()
             ext_err = input_model.err[ymin : ymax + 1, xmin : xmax + 1].copy()
             ext_dq = input_model.dq[ymin : ymax + 1, xmin : xmax + 1].copy()
 
 
             new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
             new_model.meta.wcs = subwcs
-            util.update_s_region(new_model)
+            # Not sure this makes sense for grism exposures since the trace
+            # doesn't really have a footprint itself, it relates back to the
+            # size of the object in the direct image. So what is really wanted
+            # here?
+            # util.update_s_region(new_model)
+            new_model.meta.wcsinfo.spectral_order = order
             output_model.slits.append(new_model)
 
             # set x/ystart values relative to the image (screen) frame.
@@ -120,21 +149,13 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             output_model.slits[-1].xsize = (xmax - xmin) + 1
             output_model.slits[-1].ystart = ymin + 1
             output_model.slits[-1].ysize = (ymax - ymin) + 1
-
-
-    # memory reduction for pipeline chain
+            output_model.slits[-1].source_xpos = obj.xcenter
+            output_model.slits[-1].source_ypos = obj.ycenter
+            output_model.slits[-1].source_id = obj.sid
+        
     del subwcs
     return output_model
 
-
-# move to extract 2d for grism exposures
-# add the wavelength range using the far left and far right orders?
-# fselect1 = wrange_selector[0].index(input_model.meta.instrument.filter)
-# fselect2 = wrange_selector[-1].index(input_model.meta.instrument.filter)
-# lower_lam = wrange[0][fselect1][0]
-# upper_lam = wrange[-1][fselect2][1]
-# input_model.meta.wcsinfo.waverange_start = lower_lam
-# input_model.meta.wcsinfo.waverange_end = upper_lam
 
 def compute_dispersion(wcs):
     """
