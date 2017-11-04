@@ -3,10 +3,10 @@ from collections import defaultdict
 
 from .. import datamodels
 from ..associations.load_as_asn import LoadAsLevel2Asn
-from ..background import background_step
 from ..stpipe import Pipeline
 
 # calwebb IMAGE2 step imports
+from ..background import background_step
 from ..assign_wcs import assign_wcs_step
 from ..flatfield import flat_field_step
 from ..photom import photom_step
@@ -22,7 +22,7 @@ class Image2Pipeline(Pipeline):
     Level-2b.
 
     Included steps are:
-    assign_wcs, flat_field, photom and resample.
+    background_subtraction, assign_wcs, flat_field, photom and resample.
     """
 
     spec = """
@@ -37,6 +37,9 @@ class Image2Pipeline(Pipeline):
         'photom': photom_step.PhotomStep,
         'resample': resample_step.ResampleStep
         }
+
+    # List of imaging exp_types that are time-series observations
+    tso_exptypes = ['NRC_TSIMAGE']
 
     def process(self, input):
 
@@ -127,13 +130,15 @@ class Image2Pipeline(Pipeline):
         input = self.assign_wcs(input)
         input = self.flat_field(input)
         input = self.photom(input)
-
         
-        # Resample individual exposures
-        result = self.resample(input)
-        if result:
-            # write out resampled exposure
-            self.save_model(result, suffix='i2d')
+        # Resample individual exposures, but only if it's not one of
+        # the time-series modes.
+        if input.meta.exposure.type.upper() not in tso_exptypes:
+            result = self.resample(input)
+            if result:
+                # write out resampled exposure
+                self.save_model(result, suffix='i2d')
+                result.close()
         
         # That's all folks
         self.log.info(
