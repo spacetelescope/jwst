@@ -38,8 +38,8 @@ class Image2Pipeline(Pipeline):
         'resample': resample_step.ResampleStep
         }
 
-    # List of imaging exp_types that are time-series observations
-    tso_exptypes = ['NRC_TSIMAGE']
+    # List of normal imaging exp_types
+    image_exptypes = ['MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE']
 
     def process(self, input):
 
@@ -131,9 +131,9 @@ class Image2Pipeline(Pipeline):
         input = self.flat_field(input)
         input = self.photom(input)
         
-        # Resample individual exposures, but only if it's not one of
-        # the time-series modes.
-        if input.meta.exposure.type.upper() not in tso_exptypes:
+        # Resample individual exposures, but only if it's one of the
+        # regular science image types.
+        if input.meta.exposure.type.upper() in self.image_exptypes:
             result = self.resample(input)
             if result:
                 # write out resampled exposure
