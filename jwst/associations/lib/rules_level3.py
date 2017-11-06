@@ -452,3 +452,30 @@ class Asn_WFSS(
 
         # Check and continue initialization.
         super(Asn_WFSS, self).__init__(*args, **kwargs)
+
+
+class Asn_TSO(
+        AsnMixin_OpticalPath,
+        AsnMixin_Target,
+        AsnMixin_Base
+):
+    """Time-Series observations"""
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'is_tso': {
+                'value': 't',
+                'inputs': ['is_tso']
+            },
+            'exp_type': {
+                'value': None,
+                'inputs': ['exp_type']
+            }
+        })
+
+        super(Asn_TSO, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'tso3'
+        super(Asn_TSO, self)._init_hook(item)

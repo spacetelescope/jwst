@@ -74,6 +74,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 'value': None,
                 'inputs': ['program']
             },
+            'is_tso': {
+                'value': '^t$',
+                'inputs': ['is_tso'],
+                'required': False,
+                'force_unique': True,
+            }
         })
 
         # Initialize validity checks
@@ -165,8 +171,11 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         member: dict
             The member
         """
+        is_tso = self.constraints['is_tso']['value'] == 't'
         member = {
-            'expname': Utility.rename_to_level2a(item['filename']),
+            'expname': Utility.rename_to_level2a(
+                item['filename'], is_tso=is_tso
+            ),
             'exptype': self.get_exposure_type(item)
         }
         return member
@@ -314,13 +323,17 @@ class Utility(object):
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
-    def rename_to_level2a(level1b_name):
+    def rename_to_level2a(level1b_name, is_tso=False):
         """Rename a Level 1b Exposure to another level
 
         Parameters
         ----------
         level1b_name: str
             The Level 1b exposure name.
+
+        is_tso: boolean
+            Use 'rateints' instead of 'rate' as
+            the suffix.
 
         Returns
         -------
@@ -337,9 +350,13 @@ class Utility(object):
             ))
             return level1b_name
 
+        suffix = 'rate'
+        if is_tso:
+            suffix = 'rateints'
         level2a_name = ''.join([
             match.group('path'),
-            '_rate',
+            '_',
+            suffix,
             match.group('extension')
         ])
         return level2a_name

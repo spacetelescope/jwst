@@ -89,6 +89,10 @@ GENERAL_ARGS = []
             GENERAL_ARGS,
             'pool_019_niriss_wfss'
         ),
+        (
+            GENERAL_ARGS,
+            'pool_021_tso'
+        ),
     ]
 )
 def generate_asns(request):
