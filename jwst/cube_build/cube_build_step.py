@@ -44,7 +44,7 @@ SHORT,MEDIUM,LONG, or ALL
          zdebug = integer(default=None) # debug option, z spaxel value to report  information on
          single = boolean(default=false) # Internal pipeline option used by mrs_imatch and outlier detection
          output_type = option('band','channel','grating','multi',default='band') # Type of output cube to create. Options = band,channel,grating, multi
-#         output_use_model = boolean(default=true)
+         output_use_model = boolean(default=true)
        """
     reference_file_types = ['cubepar','resol']
 
