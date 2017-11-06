@@ -51,7 +51,7 @@ class DarkPipeline(Pipeline):
         log.info('Starting calwebb_dark ...')
 
         # open the input
-        input = datamodels.open(input)
+        input = datamodels.RampModel(input)
 
         if input.meta.instrument.name == 'MIRI':
 
