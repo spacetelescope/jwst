@@ -275,8 +275,16 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             exposerr = item['exposerr']
         except KeyError:
             exposerr = None
+
+        try:
+            is_tso = self.constraints['is_tso']['value'] == 't'
+        except KeyError:
+            is_tso = False
+
         member = {
-            'expname': Utility.rename_to_level2b(item['filename']),
+            'expname': Utility.rename_to_level2b(
+                item['filename'], is_tso=is_tso
+            ),
             'exptype': self.get_exposure_type(item),
             'exposerr': exposerr,
             'asn_candidate': item['asn_candidate']
@@ -410,13 +418,17 @@ class Utility(object):
             )
 
     @staticmethod
-    def rename_to_level2b(level1b_name):
+    def rename_to_level2b(level1b_name, is_tso=False):
         """Rename a Level 1b Exposure to another level
 
         Parameters
         ----------
         level1b_name: str
             The Level 1b exposure name.
+
+        is_tso: boolean
+            Use 'calints' instead of 'cal' as
+            the suffix.
 
         Returns
         -------
@@ -433,9 +445,13 @@ class Utility(object):
             ))
             return level1b_name
 
+        suffix = 'cal'
+        if is_tso:
+            suffix = 'calints'
         level2b_name = ''.join([
             match.group('path'),
-            '_cal',
+            '_',
+            suffix,
             match.group('extension')
         ])
         return level2b_name
@@ -571,6 +587,20 @@ class AsnMixin_Target(DMS_Level3_Base):
         super(AsnMixin_Target, self).__init__(*args, **kwargs)
 
 
+class AsnMixin_NotTSO(DMS_Level3_Base):
+    """Ensure exposure is not a TSO"""
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'is_not_tso': {
+                'value': '[^t]',
+                'inputs': ['is_tso'],
+                'required': False
+            }
+        })
+
+        super(AsnMixin_NotTSO, self).__init__(*args, **kwargs)
+
+
 class AsnMixin_MIRI(DMS_Level3_Base):
     """All things that belong to MIRI"""
 
@@ -639,7 +669,7 @@ class AsnMixin_NIRCAM(DMS_Level3_Base):
         super(AsnMixin_NIRCAM, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_Image(DMS_Level3_Base):
+class AsnMixin_Image(AsnMixin_NotTSO):
     """All things that are in imaging mode"""
 
     def __init__(self, *args, **kwargs):
@@ -661,7 +691,7 @@ class AsnMixin_Image(DMS_Level3_Base):
         super(AsnMixin_Image, self)._init_hook(item)
 
 
-class AsnMixin_Spectrum(DMS_Level3_Base):
+class AsnMixin_Spectrum(AsnMixin_NotTSO):
     """All things that are spectrum"""
 
     def _init_hook(self, item):
