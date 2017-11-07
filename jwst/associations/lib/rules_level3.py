@@ -49,9 +49,16 @@ class Asn_Image(
         # Now check and continue initialization.
         super(Asn_Image, self).__init__(*args, **kwargs)
 
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'image3'
+        super(Asn_Image, self)._init_hook(item)
+
 
 class Asn_WFSCMB(
         AsnMixin_Image,
+        AsnMixin_OpticalPath,
         AsnMixin_Target,
         AsnMixin_Base
 ):
@@ -464,7 +471,7 @@ class Asn_TSO(
         self.add_constraints({
             'is_tso': {
                 'value': 't',
-                'inputs': ['is_tso']
+                'inputs': ['tsovisit']
             },
             'exp_type': {
                 'value': None,

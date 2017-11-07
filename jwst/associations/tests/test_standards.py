@@ -50,6 +50,10 @@ GENERAL_ARGS = []
             'pool_002_image_miri'
         ),
         (
+            GENERAL_ARGS,
+            'pool_004_wfs'
+        ),
+        (
             LV2_ONLY_ARGS,
             'pool_009_spec_miri_lv2bkg'
         ),
