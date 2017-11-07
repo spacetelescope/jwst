@@ -593,7 +593,7 @@ class AsnMixin_NotTSO(DMS_Level3_Base):
         self.add_constraints({
             'is_not_tso': {
                 'value': '[^t]',
-                'inputs': ['is_tso'],
+                'inputs': ['tsovisit'],
                 'required': False
             }
         })

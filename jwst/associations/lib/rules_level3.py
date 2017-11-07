@@ -471,7 +471,7 @@ class Asn_TSO(
         self.add_constraints({
             'is_tso': {
                 'value': 't',
-                'inputs': ['is_tso']
+                'inputs': ['tsovisit']
             },
             'exp_type': {
                 'value': None,

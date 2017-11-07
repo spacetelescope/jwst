@@ -76,7 +76,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             },
             'is_tso': {
                 'value': '^t$',
-                'inputs': ['is_tso'],
+                'inputs': ['tsovisit'],
                 'required': False,
                 'force_unique': True,
             }
@@ -544,8 +544,8 @@ class AsnMixin_Lv2Special(DMSLevel2bBase):
             'is_special': {
                 'value': None,
                 'inputs': [
-                    'background',
-                    'is_imprint',
+                    'bkgdtarg',
+                    'is_imprt',
                     'is_psf'
                 ],
                 'force_unique': False,

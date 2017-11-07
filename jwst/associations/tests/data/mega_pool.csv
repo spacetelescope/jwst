@@ -446,7 +446,7 @@
 # A WFSS cycle: 1 Direct Image, 6 GRISM Images, 2 Direct Images, 6 Grism Images, 1 Direct Image
 # 
 # Set ACID to how many have been used.
-filename|program|obs_num|visitype|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|asn_candidate|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band|exposerr|background|is_imprint|gwa_xtil|gwa_ytil|is_psf
+filename|program|obs_num|visitype|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|asn_candidate|obs_id|visit|visit_id|visitgrp|seq_id|act_id|exposure|nexposur|expcount|channel|targprop|targname|targtype|template|pntg_seq|targordn|expspcin|dithptin|mostilno|module|ditherid|patttype|pattstrt|numdthpt|pattsize|subpxpns|patt_num|subpxnum|subpixel|apername|sdp_ver|subarray|fxd_slit|band|exposerr|bkgdtarg|is_imprt|gwa_xtil|gwa_ytil|is_psf
 set acid|program|obs_num|visitype|exp_type|instrume|detector|targetid|pntgtype|filter|pupil|grating|1000||||||||||||||||||||||||||||||||||||||||
 jw_00001_uncal.fits|99009|1|prime_targeted_fixed|nrc_image|nircam|nrca1|1|science|f090w|clear|null|[('o001', 'observation')]||||||||||||||||||||||||||||||||||||||||
 jw_00002_uncal.fits|99009|1|prime_targeted_fixed|nrc_image|nircam|nrca2|1|science|f090w|clear|null|[('o001', 'observation')]||||||||||||||||||||||||||||||||||||||||
