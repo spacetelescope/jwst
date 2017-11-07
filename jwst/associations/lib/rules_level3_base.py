@@ -684,11 +684,6 @@ class AsnMixin_Image(AsnMixin_NotTSO):
 
         super(AsnMixin_Image, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'image3'
-        super(AsnMixin_Image, self)._init_hook(item)
 
 
 class AsnMixin_Spectrum(AsnMixin_NotTSO):
