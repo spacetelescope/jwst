@@ -87,6 +87,27 @@ def test_save_step_withdir(mk_tmp_dirs):
     assert isfile(output_fn_path)
 
 
+def test_save_step_withdir_environment(mk_tmp_dirs):
+    """Save to specified folder"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    os.environ['TSSWE_OUTPATH'] = tmp_data_path
+
+    args = [
+        'jwst.stpipe.tests.steps.StepWithModel',
+        data_fn_path,
+        '--output_dir=$TSSWE_OUTPATH'
+    ]
+
+    Step.from_cmdline(args)
+
+    output_fn_path = join(
+        tmp_data_path,
+        data_name + '_stepwithmodel' + data_ext,
+    )
+    assert isfile(output_fn_path)
+
+
 def test_save_step_withdir_withoutput(mk_tmp_dirs):
     """Save to specified folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

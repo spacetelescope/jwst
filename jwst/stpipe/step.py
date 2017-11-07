@@ -5,7 +5,16 @@ from __future__ import absolute_import, division, print_function
 
 from functools import partial
 import gc
-from os.path import dirname, join, basename, splitext, abspath, split
+from os.path import (
+    abspath,
+    basename,
+    dirname,
+    expanduser,
+    expandvars,
+    join,
+    split,
+    splitext,
+)
 import re
 import sys
 
@@ -857,6 +866,7 @@ class Step(object):
                 output_name = ''.join(output_name)
 
         output_dir = step.search_attr('output_dir', default='')
+        output_dir = expandvars(expanduser(output_dir))
         step.log.info('Saving file {}'.format(
             join(output_dir, output_name)
         ))
