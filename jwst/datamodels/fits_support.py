@@ -362,7 +362,7 @@ def _save_extra_fits(hdulist, tree):
     for hdu_name, parts in six.iteritems(tree.get('extra_fits', {})):
         hdu_name = fits_hdu_name(hdu_name)
         if 'data' in parts:
-            hdu = _make_new_hdu(hdulist, parts['data'], hdu_name)
+            hdu = _get_or_make_hdu(hdulist, hdu_name, value=parts['data'])
         if 'header' in parts:
             hdu = _get_or_make_hdu(hdulist, hdu_name)
             for key, val, comment in parts['header']:
@@ -391,8 +391,8 @@ def to_fits(tree, schema, extensions=None):
     hdulist = fits.HDUList()
     hdulist.append(fits.PrimaryHDU())
 
-    _save_extra_fits(hdulist, tree)
     _save_from_schema(hdulist, tree, schema)
+    _save_extra_fits(hdulist, tree)
     _save_history(hdulist, tree)
 
     asdf = fits_embed.AsdfInFits(hdulist, tree, extensions=extensions)
