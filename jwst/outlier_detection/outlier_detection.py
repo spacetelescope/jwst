@@ -202,7 +202,6 @@ class OutlierDetection(object):
         # Initialize intermediate products used in the outlier detection
         median_model = datamodels.ImageModel(
                                         init=drizzled_models[0].data.shape)
-#        median_model.meta = copy.deepcopy(drizzled_models[0].meta)
         median_model.update(drizzled_models[0])
         base_filename = self.input_models[0].meta.filename
         median_model.meta.filename = '_'.join(
