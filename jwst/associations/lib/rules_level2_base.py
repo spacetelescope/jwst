@@ -75,7 +75,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 'inputs': ['program']
             },
             'is_tso': {
-                'value': '^t$',
+                'value': None,
                 'inputs': ['tsovisit'],
                 'required': False,
                 'force_unique': True,
