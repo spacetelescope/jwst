@@ -4,7 +4,6 @@ from __future__ import (division, print_function, unicode_literals,
                         absolute_import)
 
 import numpy as np
-import copy
 
 from stsci.image import median
 from stsci.tools import bitmask
@@ -203,7 +202,8 @@ class OutlierDetection(object):
         # Initialize intermediate products used in the outlier detection
         median_model = datamodels.ImageModel(
                                         init=drizzled_models[0].data.shape)
-        median_model.meta = copy.deepcopy(drizzled_models[0].meta)
+#        median_model.meta = copy.deepcopy(drizzled_models[0].meta)
+        median_model.update(drizzled_models[0])
         base_filename = self.input_models[0].meta.filename
         median_model.meta.filename = '_'.join(
                         base_filename.split('_')[:2] + ['median.fits'])
