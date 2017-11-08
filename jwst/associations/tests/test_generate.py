@@ -10,7 +10,7 @@ from .. import (generate, load_asn)
 def test_generate(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
     (asns, orphaned) = generate(pool, rules)
-    assert len(asns) == 424
+    assert len(asns) == 426
     assert len(orphaned) == 43
     for asn in asns:
         asn_name, asn_store = asn.dump()

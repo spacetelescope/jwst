@@ -203,13 +203,13 @@ class DMSBaseMixin(ACIDMixin):
         else:
             return 'psf'
         try:
-            self.item_getattr(item, ['is_imprint'])
+            self.item_getattr(item, ['is_imprt'])
         except KeyError:
             pass
         else:
             return 'imprint'
         try:
-            self.item_getattr(item, ['background'])
+            self.item_getattr(item, ['bkgdtarg'])
         except KeyError:
             pass
         else:
