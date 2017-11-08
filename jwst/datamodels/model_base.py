@@ -194,11 +194,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             self.meta.date = current_date.value
         
         # store the data model type, if not already set
+        klass = self.__class__.__name__
+        if klass == 'DataModel':
+            klass = None
+            
         if hasattr(self.meta, 'model_type'):
             if self.meta.model_type is None:
-                self.meta.model_type = self.__class__.__name__
+                self.meta.model_type = klass
         else:
-            self.meta.model_type = None
+            self.meta.model_type = klass
 
         if is_array:
             primary_array_name = self.get_primary_array_name()
@@ -284,8 +288,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         current_date = Time(datetime.datetime.now())
         current_date.format = 'isot'
         self.meta.date = current_date.value
-        if self.meta.model_type is not None:
-            self.meta.model_type = self.__class__.__name__
 
     def save(self, path, *args, **kwargs):
         """
