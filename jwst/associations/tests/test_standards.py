@@ -119,7 +119,11 @@ def generate_asns(request):
     """Test exp_type inclusion based on standard associations"""
     main_args, pool_root = request.param
 
-    standards_paths = glob(t_path(path.join('data', pool_root + '*_asn.json')))
+    standards_paths = glob(t_path(path.join(
+        'data',
+        'asn_standards',
+        pool_root + '*_asn.json'))
+    )
     standards = []
     for standard_path in standards_paths:
         with open(standard_path) as fp:
