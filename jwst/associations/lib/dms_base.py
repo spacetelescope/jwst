@@ -31,7 +31,7 @@ _EXPTYPE_MAP = {
 }
 
 # Non-specified values found in DMS Association Pools
-_EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n')
+_EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f')
 
 __all__ = ['DMSBaseMixin']
 

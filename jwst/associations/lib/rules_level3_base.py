@@ -66,6 +66,15 @@ _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
 # Key that uniquely identfies members.
 KEY = 'expname'
 
+# Exposures that are always TSO
+TSO_EXP_TYPES = (
+    'mir_lrs-slitless',
+    'nis_soss',
+    'nrc_tsimage',
+    'nrc_tsgrism',
+    'nrs_brightobj'
+)
+
 
 class DMS_Level3_Base(DMSBaseMixin, Association):
     """Basic class for DMS Level3 associations."""
@@ -279,7 +288,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         try:
             is_tso = self.constraints['is_tso']['value'] == 't'
         except KeyError:
-            is_tso = False
+            is_tso = item['exp_type'] in TSO_EXP_TYPES
 
         member = {
             'expname': Utility.rename_to_level2b(

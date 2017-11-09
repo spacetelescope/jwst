@@ -1,0 +1,85 @@
+{
+    "asn_type": "image2",
+    "asn_rule": "candidate_Asn_Lv2ImageNonScience",
+    "version_id": null,
+    "code_version": "0.8.0",
+    "program": "99009",
+    "target": "1",
+    "asn_pool": "pool_007_spec_miri",
+    "constraints": "Constraints:\n    single_science: {'False'}\n    non_science: {'mir_tacq'}\n    program: {'99009'}\n    target: {'1'}\n    instrument: {'miri'}\n    detector: {'mirimage'}\n    opt_elem: {'p750l'}\n    opt_elem2: set()\n    subarray: {'full'}\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o003\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "asn_id": "o003",
+    "products": [
+        {
+            "name": "jw_00003",
+            "members": [
+                {
+                    "expname": "jw_00003_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw99009015001_02101_00003_mirimage",
+            "members": [
+                {
+                    "expname": "jw99009015001_02101_00003_mirimage_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw99009012001_02101_00002_mirimage",
+            "members": [
+                {
+                    "expname": "jw99009012001_02101_00002_mirimage_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw99009016001_02101_00001_mirifushort",
+            "members": [
+                {
+                    "expname": "jw99009016001_02101_00001_mirifushort_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw99009018001_02101_00001_mirifushort",
+            "members": [
+                {
+                    "expname": "jw99009018001_02101_00001_mirifushort_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw99009020001_02101_00001_mirifushort",
+            "members": [
+                {
+                    "expname": "jw99009020001_02101_00001_mirifushort_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw99009021001_02101_00001_mirifulong",
+            "members": [
+                {
+                    "expname": "jw99009021001_02101_00001_mirifulong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw99009050001_02109_00001_mirifulong",
+            "members": [
+                {
+                    "expname": "jw99009050001_02109_00001_mirifulong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}

@@ -97,6 +97,10 @@ GENERAL_ARGS = []
             GENERAL_ARGS,
             'pool_021_tso'
         ),
+        (
+            GENERAL_ARGS,
+            'pool_022_tso_noflag'
+        ),
     ]
 )
 def generate_asns(request):
