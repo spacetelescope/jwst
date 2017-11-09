@@ -114,12 +114,23 @@ def _get_hdu_name(schema):
     return hdu_name
 
 
+def _get_hdu_type(hdu_name, value):
+    if hdu_name in (0, 'PRIMARY'):
+        hdu_type = fits.PrimaryHDU
+    elif value is None:
+        hdu_type = fits.ImageHDU
+    else:
+        try:
+            defs = fits.ColDefs(value) # just to test if value is a table
+            hdu_type = fits.BinTableHDU
+        except TypeError:
+            hdu_type = fits.ImageHDU
+    return hdu_type
+
+
 def _make_new_hdu(hdulist, value, hdu_name, index=None):
-    try:
-        defs = fits.ColDefs(value) # just to test if value is a table
-        hdu = fits.BinTableHDU(value, name=hdu_name)
-    except TypeError:
-        hdu = fits.ImageHDU(value, name=hdu_name)
+    hdu_type = _get_hdu_type(hdu_name, value)
+    hdu = hdu_type(value, name=hdu_name)
     if index is not None:
         hdu.ver = index + 1
     hdulist.append(hdu)
@@ -164,10 +175,7 @@ def get_hdu(hdulist, hdu_name, index=None):
 
 def _make_hdu(hdulist, hdu_name, index=None, hdu_type=None, value=None):
     if hdu_type is None:
-        if hdu_name in (0, 'PRIMARY'):
-            hdu_type = fits.PrimaryHDU
-        else:
-            hdu_type = fits.ImageHDU
+        hdu_type = _get_hdu_type(hdu_name, value)
     if hdu_type == fits.PrimaryHDU:
         hdu = hdu_type(value)
     else:
