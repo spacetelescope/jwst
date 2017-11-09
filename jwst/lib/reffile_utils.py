@@ -81,20 +81,32 @@ def ref_matches_sci(sci_model, ref_model):
         if ref_model.meta.instrument.name.upper() == 'MIRI':
             if (ref_model.data.shape[-1] == 1032 and \
                 ref_model.data.shape[-2] == 1024):
+                log.warning('Missing subarray corner/size keywords in reference file')
+                log.warning('Setting them to full-frame default values')
                 xstart_ref = 1
                 ystart_ref = 1
                 xsize_ref = 1032
                 ysize_ref = 1024
+                ref_model.meta.subarray.xstart = xstart_ref
+                ref_model.meta.subarray.ystart = ystart_ref
+                ref_model.meta.subarray.xsize = xsize_ref
+                ref_model.meta.subarray.ysize = ysize_ref
             else:
                 log.error('Missing subarray corner/size keywords in reference file')
                 raise ValueError("Can't determine ref file subarray properties")
         else:
             if (ref_model.data.shape[-1] == 2048) and \
                (ref_model.data.shape[-2] == 2048):
+                log.warning('Missing subarray corner/size keywords in reference file')
+                log.warning('Setting them to full-frame default values')
                 xstart_ref = 1
                 ystart_ref = 1
                 xsize_ref = 2048
                 ysize_ref = 2048
+                ref_model.meta.subarray.xstart = xstart_ref
+                ref_model.meta.subarray.ystart = ystart_ref
+                ref_model.meta.subarray.xsize = xsize_ref
+                ref_model.meta.subarray.ysize = ysize_ref
             else:
                 log.error('Missing subarray corner/size keywords in reference file')
                 raise ValueError("Can't determine ref file subarray properties")
