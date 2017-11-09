@@ -14,7 +14,7 @@
             "name": "jw99009-o005_t001_miri_p750l",
             "members": [
                 {
-                    "expname": "jw99009012001_02101_00002_mirimage_cal.fits",
+                    "expname": "jw99009012001_02101_00002_mirimage_calints.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o005', 'observation')"

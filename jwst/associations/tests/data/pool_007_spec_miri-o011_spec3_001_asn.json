@@ -5,7 +5,7 @@
     "code_version": "0.8.0",
     "program": "99009",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    exp_type: {'mir_mrs', 'mir_tacq', 'mir_flatmrs'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'1'}\n    program: {'99009'}\n    asn_candidate: {\"\\\\(\\\\'o011\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "constraints": "Constraints:\n    exp_type: {'mir_tacq', 'mir_mrs', 'mir_flatmrs'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'1'}\n    program: {'99009'}\n    asn_candidate: {\"\\\\(\\\\'o011\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
     "asn_id": "o011",
     "target": "t001",
     "asn_pool": "pool_007_spec_miri",

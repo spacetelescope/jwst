@@ -5,7 +5,7 @@
     "code_version": "0.8.0",
     "program": "99009",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    exp_type: {'mir_lrs\\\\-fixedslit', 'mir_tacq'}\n    opt_elem: {'p750l'}\n    subarray: {'full'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'1'}\n    program: {'99009'}",
+    "constraints": "Constraints:\n    exp_type: {'mir_tacq', 'mir_lrs\\\\-fixedslit'}\n    opt_elem: {'p750l'}\n    subarray: {'full'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'1'}\n    program: {'99009'}",
     "asn_id": "a3001",
     "target": "t001",
     "asn_pool": "pool_007_spec_miri",

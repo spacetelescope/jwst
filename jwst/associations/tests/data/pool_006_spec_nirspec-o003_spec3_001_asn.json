@@ -5,7 +5,7 @@
     "code_version": "0.8.0",
     "program": "99009",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    exp_type: {'nrs_taslit', 'nrs_autowave', 'nrs_ifu', 'nrs_confirm', 'nrs_taconfirm', 'nrs_tacq'}\n    is_not_tso: set()\n    instrument: {'nirspec'}\n    target: {'2'}\n    program: {'99009'}\n    asn_candidate: {\"\\\\(\\\\'o003\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "constraints": "Constraints:\n    exp_type: {'nrs_tacq', 'nrs_taslit', 'nrs_ifu', 'nrs_confirm', 'nrs_autowave', 'nrs_taconfirm'}\n    is_not_tso: set()\n    instrument: {'nirspec'}\n    target: {'2'}\n    program: {'99009'}\n    asn_candidate: {\"\\\\(\\\\'o003\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
     "asn_id": "o003",
     "target": "t002",
     "asn_pool": "pool_006_spec_nirspec",

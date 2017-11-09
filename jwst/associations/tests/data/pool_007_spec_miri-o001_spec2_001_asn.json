@@ -31,7 +31,7 @@
             "name": "jw99009015001_02101_00002_mirimage",
             "members": [
                 {
-                    "expname": "jw99009015001_02101_00002_mirimage_rate.fits",
+                    "expname": "jw99009015001_02101_00002_mirimage_rateints.fits",
                     "exptype": "science"
                 }
             ]
@@ -40,7 +40,7 @@
             "name": "jw99009015001_02101_00003_mirimage",
             "members": [
                 {
-                    "expname": "jw99009015001_02101_00003_mirimage_rate.fits",
+                    "expname": "jw99009015001_02101_00003_mirimage_rateints.fits",
                     "exptype": "science"
                 }
             ]
@@ -49,7 +49,7 @@
             "name": "jw99009012001_02101_00002_mirimage",
             "members": [
                 {
-                    "expname": "jw99009012001_02101_00002_mirimage_rate.fits",
+                    "expname": "jw99009012001_02101_00002_mirimage_rateints.fits",
                     "exptype": "science"
                 }
             ]
