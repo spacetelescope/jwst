@@ -11,7 +11,8 @@ from astropy.stats import sigma_clipped_stats
 from scipy import ndimage
 
 from .. import datamodels
-from ..resample import resample, gwcs_blot, resample_utils
+from ..resample import resample, gwcs_blot
+from ..resample.resample_utils import build_driz_weight
 
 import logging
 log = logging.getLogger(__name__)
@@ -102,9 +103,9 @@ class OutlierDetection(object):
                                               err=self.inputs.err[i],
                                               dq=self.inputs.dq[i])
                 image.meta = self.inputs.meta
-                image.wht = resample_utils.build_driz_weight(image,
-                                                       wht_type='exptime',
-                                                       good_bits=bits)
+                image.wht = build_driz_weight(image,
+                                              wht_type='exptime',
+                                              good_bits=bits)
                 self.input_models.append(image)
             self.converted = True
 
@@ -193,7 +194,7 @@ class OutlierDetection(object):
         else:
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
-                drizzled_models[i].wht = resample_utils.build_driz_weight(
+                drizzled_models[i].wht = build_driz_weight(
                                         self.input_models[i],
                                         wht_type='exptime',
                                         good_bits=pars['good_bits'])
@@ -201,7 +202,7 @@ class OutlierDetection(object):
         # Initialize intermediate products used in the outlier detection
         median_model = datamodels.ImageModel(
                                         init=drizzled_models[0].data.shape)
-        median_model.meta = drizzled_models[0].meta
+        median_model.update(drizzled_models[0])
         base_filename = self.input_models[0].meta.filename
         median_model.meta.filename = '_'.join(
                         base_filename.split('_')[:2] + ['median.fits'])
