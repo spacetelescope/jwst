@@ -272,14 +272,16 @@ def update_s_region(model, prd_db_filepath=None):
                            vparity)
     v2, v3 = idltov23(xvert, yvert) # in arcsec
     # Convert to deg
+    v2 = v2 / 3600
+    v3 = v3 / 3600
     angles = [-v2_ref_deg, v3_ref_deg, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
     v23tosky = V23ToSky(angles, axes_order=axes)
     ra_vert, dec_vert = v23tosky(v2, v3)
     negative_ind = ra_vert < 0
     ra_vert[negative_ind] = ra_vert[negative_ind] + 360
-    ind = np.argsort(ra_vert)
-    footprint = np.array([ra_vert[ind], dec_vert[ind]]).T
+    # Do not do any sorting, use the vertices in the SIAF order.
+    footprint = np.array([ra_vert, dec_vert]).T
     s_region = (
         "POLYGON ICRS "
         " {0} {1}"
