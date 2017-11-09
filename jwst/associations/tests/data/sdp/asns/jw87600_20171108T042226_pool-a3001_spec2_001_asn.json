@@ -1,0 +1,70 @@
+{
+    "asn_type": "spec2",
+    "asn_rule": "discover_Asn_Lv2WFSS",
+    "version_id": null,
+    "code_version": "0.8.0",
+    "program": "87600",
+    "target": "1",
+    "asn_pool": "jw87600_20171108T042226_pool",
+    "constraints": "Constraints:\n    exp_type: {'nis_wfss'}\n    single_science: {'False'}\n    program: {'87600'}\n    target: {'1'}\n    instrument: {'niriss'}\n    detector: {'nis'}\n    opt_elem: {'gr150c'}\n    opt_elem2: {'f200w'}\n    subarray: {'full'}\n    channel: set()\n    is_tso: set()",
+    "asn_id": "a3001",
+    "products": [
+        {
+            "name": "jw87600019001_02101_00003_nis",
+            "members": [
+                {
+                    "expname": "jw87600-a3001_t001_niriss_gr150c.ecsv",
+                    "exptype": "catalog"
+                },
+                {
+                    "expname": "jw87600019001_02101_00003_nis_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw87600024001_02101_00001_nis",
+            "members": [
+                {
+                    "expname": "jw87600024001_02101_00001_nis_rateints.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw87600017001_02101_00002_nis",
+            "members": [
+                {
+                    "expname": "jw87600-a3001_t001_niriss_gr150r.ecsv",
+                    "exptype": "catalog"
+                },
+                {
+                    "expname": "jw87600017001_02101_00002_nis_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw87600026001_02101_00001_nis",
+            "members": [
+                {
+                    "expname": "jw87600026001_02101_00001_nis_rateints.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw87600019001_02101_00002_nis",
+            "members": [
+                {
+                    "expname": "jw87600-a3001_t001_niriss_gr150r.ecsv",
+                    "exptype": "catalog"
+                },
+                {
+                    "expname": "jw87600019001_02101_00002_nis_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}
