@@ -1,0 +1,61 @@
+{
+    "asn_type": "spec3",
+    "asn_rule": "candidate_Asn_NRS_IFU",
+    "version_id": null,
+    "code_version": "0.8.0",
+    "program": "99009",
+    "degraded_status": "No known degraded exposures in association.",
+    "constraints": "Constraints:\n    exp_type: {'nrs_taslit', 'nrs_autowave', 'nrs_ifu', 'nrs_confirm', 'nrs_taconfirm', 'nrs_tacq'}\n    is_not_tso: set()\n    instrument: {'nirspec'}\n    target: {'2'}\n    program: {'99009'}\n    asn_candidate: {\"\\\\(\\\\'o003\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "asn_id": "o003",
+    "target": "t002",
+    "asn_pool": "pool_006_spec_nirspec",
+    "products": [
+        {
+            "name": "jw99009-o003_t002_nirspec_clear",
+            "members": [
+                {
+                    "expname": "jw_00016_cal.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o003', 'observation')"
+                },
+                {
+                    "expname": "jw_00017_cal.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o003', 'observation')"
+                },
+                {
+                    "expname": "jw_00018_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": null,
+                    "asn_candidate": "('o003', 'observation')"
+                },
+                {
+                    "expname": "jw_00019_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": null,
+                    "asn_candidate": "('o003', 'observation')"
+                },
+                {
+                    "expname": "jw_00020_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": null,
+                    "asn_candidate": "('o003', 'observation')"
+                },
+                {
+                    "expname": "jw_00021_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": null,
+                    "asn_candidate": "('o003', 'observation')"
+                },
+                {
+                    "expname": "jw_00022_cal.fits",
+                    "exptype": "autowave",
+                    "exposerr": null,
+                    "asn_candidate": "('o003', 'observation')"
+                }
+            ]
+        }
+    ]
+}

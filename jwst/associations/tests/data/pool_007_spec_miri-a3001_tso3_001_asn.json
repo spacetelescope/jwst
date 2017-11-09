@@ -1,0 +1,37 @@
+{
+    "asn_type": "tso3",
+    "asn_rule": "discover_Asn_TSO_EXPTYPE",
+    "version_id": null,
+    "code_version": "0.8.0",
+    "program": "99009",
+    "degraded_status": "No known degraded exposures in association.",
+    "constraints": "Constraints:\n    exp_type: {'mir_lrs\\\\-slitless'}\n    no_tso_flag: Is Invalid\n    opt_elem: {'p750l'}\n    opt_elem2: set()\n    target: {'1'}\n    program: {'99009'}\n    instrument: {'miri'}",
+    "asn_id": "a3001",
+    "target": "t001",
+    "asn_pool": "pool_007_spec_miri",
+    "products": [
+        {
+            "name": "jw99009-a3001_t001_miri_p750l",
+            "members": [
+                {
+                    "expname": "jw99009015001_02101_00002_mirimage_cal.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "[('o004', 'observation')]"
+                },
+                {
+                    "expname": "jw99009015001_02101_00003_mirimage_cal.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "[('o004', 'observation')]"
+                },
+                {
+                    "expname": "jw99009012001_02101_00002_mirimage_cal.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "[('o005', 'observation')]"
+                }
+            ]
+        }
+    ]
+}

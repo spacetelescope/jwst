@@ -50,6 +50,15 @@ _REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)'
 # Key that uniquely identfies items.
 KEY = 'expname'
 
+# Exposures that are always TSO
+TSO_EXP_TYPES = (
+    'mir_lrs-slitless',
+    'nis_soss',
+    'nrc_tsimage',
+    'nrc_tsgrism',
+    'nrs_brightobj'
+)
+
 
 class DMSLevel2bBase(DMSBaseMixin, Association):
     """Basic class for DMS Level2 associations."""
@@ -172,6 +181,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             The member
         """
         is_tso = self.constraints['is_tso']['value'] == 't'
+        if not is_tso:
+            is_tso = item['exp_type'] in TSO_EXP_TYPES
         member = {
             'expname': Utility.rename_to_level2a(
                 item['filename'], is_tso=is_tso
