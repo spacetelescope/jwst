@@ -258,22 +258,26 @@ def update_s_region(model, prd_db_filepath=None):
     logger.info("Vertices for aperture {0}: {1}".format(aperture_name, vertices))
     # Execute IdealToV2V3, followed by V23ToSky
     from ..transforms.models import IdealToV2V3, V23ToSky
-    v2_ref = model.meta.wcsinfo.v2_ref / 3600
-    v3_ref = model.meta.wcsinfo.v3_ref / 3600
+    v2_ref_deg = model.meta.wcsinfo.v2_ref / 3600
+    v3_ref_deg = model.meta.wcsinfo.v3_ref / 3600
     roll_ref = model.meta.wcsinfo.roll_ref
     ra_ref = model.meta.wcsinfo.ra_ref
     dec_ref = model.meta.wcsinfo.dec_ref
     vparity = model.meta.wcsinfo.vparity
     v3yangle = model.meta.wcsinfo.v3yangle
 
-    idltov23 = IdealToV2V3(v3yangle, v2_ref, v3_ref, vparity)
-
-    angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
+    # V2_ref and v3_ref should be in arcsec
+    idltov23 = IdealToV2V3(v3yangle,
+                           model.meta.wcsinfo.v2_ref, model.meta.wcsinfo.v2_ref,
+                           vparity)
+    v2, v3 = idltov23(xvert, yvert) # in arcsec
+    # Convert to deg
+    angles = [-v2_ref_deg, v3_ref_deg, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
     v23tosky = V23ToSky(angles, axes_order=axes)
-    idl2sky = idltov23 | v23tosky
-
-    ra_vert, dec_vert = idl2sky(xvert, yvert)
+    ra_vert, dec_vert = v23tosky(v2, v3)
+    negative_ind = ra_vert < 0
+    ra_vert[negative_ind] = ra_vert[negative_ind] + 360
     ind = np.argsort(ra_vert)
     footprint = np.array([ra_vert[ind], dec_vert[ind]]).T
     s_region = (
