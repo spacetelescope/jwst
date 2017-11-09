@@ -13,7 +13,7 @@
             "name": "jw_00001",
             "members": [
                 {
-                    "expname": "jw_00001_rate.fits",
+                    "expname": "jw_00001_rateints.fits",
                     "exptype": "science"
                 }
             ]
@@ -22,7 +22,7 @@
             "name": "jw_00002",
             "members": [
                 {
-                    "expname": "jw_00002_rate.fits",
+                    "expname": "jw_00002_rateints.fits",
                     "exptype": "science"
                 }
             ]

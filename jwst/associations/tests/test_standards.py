@@ -54,6 +54,18 @@ GENERAL_ARGS = []
             'pool_004_wfs'
         ),
         (
+            GENERAL_ARGS,
+            'pool_005_spec_niriss'
+        ),
+        (
+            GENERAL_ARGS,
+            'pool_006_spec_nirspec'
+        ),
+        (
+            GENERAL_ARGS,
+            'pool_007_spec_miri'
+        ),
+        (
             LV2_ONLY_ARGS,
             'pool_009_spec_miri_lv2bkg'
         ),

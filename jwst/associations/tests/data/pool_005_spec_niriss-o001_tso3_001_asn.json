@@ -14,13 +14,13 @@
             "name": "jw99009-o001_t001_niriss_gr700xd",
             "members": [
                 {
-                    "expname": "jw_00001_cal.fits",
+                    "expname": "jw_00001_calints.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 },
                 {
-                    "expname": "jw_00002_cal.fits",
+                    "expname": "jw_00002_calints.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
