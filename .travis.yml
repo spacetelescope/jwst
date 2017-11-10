@@ -25,13 +25,13 @@ env:
         - CRDS_PATH='/tmp/crds_cache'
         - PYTHON_VERSION=3.6
         - NUMPY_VERSION=stable
-        - ASTROPY_VERSION=development
+        - ASTROPY_VERSION=stable
 
     matrix:
         - SETUP_CMD='install'
         - SETUP_CMD='test'
-        - PYTHON_VERSION=2.7 SETUP_CMD='install' ASTROPY_VERSION=stable
-        - PYTHON_VERSION=2.7 SETUP_CMD='test' ASTROPY_VERSION=stable
+        - PYTHON_VERSION=2.7 SETUP_CMD='install'
+        - PYTHON_VERSION=2.7 SETUP_CMD='test'
 
 matrix:
 
@@ -39,6 +39,10 @@ matrix:
     fast_finish: true
 
     include:
+
+        # Test with astropy dev
+        - os: linux
+          env: PYTHON_VERSION=3.6 SETUP_CMD='test' ASTROPY_VERSION=development
 
         # PEP8 check with flake8 (only once, i.e. "os: linux")
         - os: linux
@@ -53,6 +57,9 @@ matrix:
                PIP_DEPENDENCIES='sphinx_rtd_theme sphinx-automodapi'
 
     allow_failures:
+        # Allow astropy dev to fail (remove when remotedata is fixed?)
+        - env: PYTHON_VERSION=3.6 SETUP_CMD='test' ASTROPY_VERSION=development
+
         # PEP8 will fail for numerous reasons. Ignore it.
         - env: MAIN_CMD='flake8 --count'
                SETUP_CMD='jwst' TEST_CMD='flake8 --version'
@@ -66,4 +73,5 @@ after_install:
     - conda list astropy
 
 script:
+    # Run the tests.
     - $MAIN_CMD $SETUP_CMD
