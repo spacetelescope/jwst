@@ -73,7 +73,7 @@ class ResampleData(object):
         self.blank_output = datamodels.DrizProductModel(self.output_wcs.data_size)
 
         # update meta data and wcs
-        self.blank_output.update(input_models[1])
+        self.blank_output.update(input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
 
         self.output_models = datamodels.ModelContainer()
