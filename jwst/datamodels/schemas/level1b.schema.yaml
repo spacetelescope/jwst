@@ -1,0 +1,27 @@
+allOf:
+- $ref: core.schema.yaml
+- $ref: wcsinfo.schema.yaml
+- $ref: bunit.schema.yaml
+- type: object
+  properties:
+    data:
+      title: The science data
+      fits_hdu: SCI
+      default: 0.0
+      ndim: 4
+      datatype: uint16
+    zeroframe:
+      title: Zeroframe array
+      fits_hdu: ZEROFRAME
+      default: 0.0
+      ndim: 3
+      datatype: uint16
+    refout:
+      title: Reference Output
+      fits_hdu: REFOUT
+      default: 0.0
+      ndim: 4
+      datatype: uint16
+    group:
+      $ref: group.schema.yaml
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

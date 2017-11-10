@@ -1,5 +1,7 @@
-from ... import Step
+from ... import (Pipeline, Step)
 from .... import datamodels
+from ....datamodels import ImageModel
+
 
 class AnotherDummyStep(Step):
     """
@@ -28,6 +30,7 @@ class AnotherDummyStep(Step):
 
         return a + b
 
+
 class OptionalRefTypeStep(Step):
     """
     This is a do-nothing step that demonstrates optionally omitting
@@ -41,9 +44,8 @@ class OptionalRefTypeStep(Step):
         assert ref_file == ""
 
 
-class SaveStep(Step):
-    """
-    """
+class StepWithModel(Step):
+    """A step with a model"""
 
     spec = """
     """
@@ -53,6 +55,109 @@ class SaveStep(Step):
 
         model = ImageModel(args[0])
 
+        return model
+
+
+class SaveStep(Step):
+    """
+    Step with explicit save.
+    """
+
+    spec = """
+    """
+
+    def process(self, *args):
+        model = ImageModel(args[0])
+
+        self.log.info('Saving model as "processed"')
         self.save_model(model, 'processed')
 
         return model
+
+
+class SavePipeline(Pipeline):
+    """Save model in pipeline"""
+
+    spec = """
+    """
+
+    step_defs = {
+        'stepwithmodel': StepWithModel,
+        'savestep': SaveStep
+    }
+
+    def process(self, *args):
+        model = ImageModel(args[0])
+
+        r = self.stepwithmodel(model)
+        r = self.savestep(r)
+
+        return r
+
+
+class ProperPipeline(Pipeline):
+    """Pipeline with proper output setupt"""
+
+    spec = """
+    """
+
+    step_defs = {
+        'stepwithmodel': StepWithModel,
+        'another_stepwithmodel': StepWithModel,
+    }
+
+    def process(self, *args):
+
+        self.output_basename = 'ppbase'
+        self.suffix = 'pp'
+
+        model = ImageModel(args[0])
+
+        self.stepwithmodel.suffix = 'swm'
+        r = self.stepwithmodel(model)
+        self.another_stepwithmodel.suffix = 'aswm'
+        r = self.another_stepwithmodel(r)
+
+        return r
+
+
+class PreHookStep(Step):
+    """A step to try out hooks"""
+
+    spec = """
+    """
+
+    def process(self, *args):
+        self.log.info('Received args: "{}"'.format(args))
+        self.log.info('Self.parent = "{}"'.format(self.parent))
+
+        args[0].pre_hook_run = True
+        self.parent.pre_hook_run = True
+
+
+class PostHookStep(Step):
+    """A step to try out hooks"""
+
+    spec = """
+    """
+
+    def process(self, *args):
+        self.log.info('Received args: "{}"'.format(args))
+        self.log.info('Self.parent = "{}"'.format(self.parent))
+
+        args[0].post_hook_run = True
+        self.parent.post_hook_run = True
+
+
+class PostHookWithReturnStep(Step):
+    """A step to try out hooks"""
+
+    spec = """
+    """
+
+    def process(self, *args):
+        self.log.info('Received args: "{}"'.format(args))
+        self.log.info('Self.parent = "{}"'.format(self.parent))
+
+        self.parent.post_hook_run = True
+        return 'PostHookWithReturnStep executed'

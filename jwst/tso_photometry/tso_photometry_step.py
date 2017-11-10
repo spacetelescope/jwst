@@ -2,6 +2,7 @@
 
 from ..stpipe import Step, cmdline
 from ..datamodels import CubeModel
+from ..lib.catalog_utils import replace_suffix_ext
 from .tso_photometry import tso_aperture_photometry
 
 
@@ -17,18 +18,22 @@ class TSOPhotometryStep(Step):
         `CubeModel`.
     """
 
+    spec = """
+        save_catalog = boolean(default=False)  # save exposure-level catalog
+    """
+
     def process(self, input):
-        with CubeModel(input) as datamodel:
+        with CubeModel(input) as model:
             # TODO:  need information about the actual source position in
             # TSO imaging mode (for all subarrays).
             # Meanwhile, this is a placeholder representing the geometric
             # center of the image.
-            nint, ny, nx = datamodel.data.shape
+            nint, ny, nx = model.data.shape
             xcenter = (ny - 1) / 2.
             ycenter = (ny - 1) / 2.
 
             # all radii are in pixel units
-            if datamodel.meta.instrument.pupil == 'WLP8':
+            if model.meta.instrument.pupil == 'WLP8':
                 radius = 50
                 radius_inner = 60
                 radius_outer = 70
@@ -37,20 +42,21 @@ class TSOPhotometryStep(Step):
                 radius_inner = 4
                 radius_outer = 5
 
-            catalog = tso_aperture_photometry(datamodel, xcenter, ycenter,
+            catalog = tso_aperture_photometry(model, xcenter, ycenter,
                                               radius, radius_inner,
                                               radius_outer)
-            catalog_format = 'ecsv'
-            fmt = 'ascii.ecsv'
-            catalog_filename = datamodel.meta.filename.replace(
-                '.fits', '_cat.{0}'.format(catalog_format))
 
-            catalog.write(catalog_filename, format=fmt)
-            self.log.info('Wrote source catalog: {0}'.
-                          format(catalog_filename))
+            if self.save_catalog:
+                old_suffixes = ['calints', 'crfints']
+                output_dir = self.search_attr('output_dir')
+                cat_filepath = replace_suffix_ext(model.meta.filename,
+                                                  old_suffixes, 'phot',
+                                                  output_ext='ecsv',
+                                                  output_dir=output_dir)
+                catalog.write(cat_filepath, format='ascii.ecsv',
+                              overwrite=True)
+                self.log.info('Wrote TSO photometry catalog: {0}'.
+                              format(cat_filepath))
 
-        return
+        return catalog
 
-
-if __name__ == '__main__':
-    cmdline.step_script(tso_photometry_step)

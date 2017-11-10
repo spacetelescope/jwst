@@ -61,7 +61,7 @@ class TweakRegStep(Step):
 
     def process(self, input):
 
-        img = datamodels.ModelContainer(input)
+        img = datamodels.ModelContainer(input, persist=True)
 
         if len(img) == 0:
             raise ValueError("Input must contain at least one image model.")
@@ -147,6 +147,3 @@ def _get_filename(image_model):
     else:
         return os.path.splitext(os.path.basename(image_model.meta.filename))[0]
 
-
-if __name__ == '__main__':
-    cmdline.step_script(TweakRegStep)

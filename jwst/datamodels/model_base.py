@@ -9,11 +9,12 @@ import datetime
 import inspect
 import os
 import sys
+import warnings
 
 import numpy as np
 import jsonschema
 
-from astropy.extern import six
+import six
 from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
@@ -24,6 +25,8 @@ from asdf import yamlutil
 from asdf import schema as asdf_schema
 from asdf import extension as asdf_extension
 
+from . import ndmodel
+from . import filetype
 from . import fits_support
 from . import properties
 from . import schema as mschema
@@ -35,7 +38,8 @@ from gwcs.extension import GWCSExtension
 
 jwst_extensions = [GWCSExtension(), JWSTExtension(), BaseExtension()]
 
-class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
+
+class DataModel(properties.ObjectNode, ndmodel.NDModel):
     """
     Base class of all of the data models.
     """
@@ -90,7 +94,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
                 pass_invalid_values = bool(int(pass_invalid_values))
             except ValueError:
                 pass_invalid_values = False
-    
+
         self._pass_invalid_values = pass_invalid_values
 
         # Construct the path to the schema files
@@ -102,17 +106,19 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
             extension_list = asdf_extension.AsdfExtensionList(self._extensions)
-            schema = asdf_schema.load_schema(schema_path, 
+            schema = asdf_schema.load_schema(schema_path,
                 resolver=extension_list.url_mapping, resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
-
         # Determine what kind of input we have (init) and execute the
         # proper code to intiailize the model
         self._files_to_close = []
+        self._iscopy = False
+    
         is_array = False
         is_shape = False
         shape = None
+        
         if init is None:
             asdf = AsdfFile(extensions=extensions)
         elif isinstance(init, dict):
@@ -122,13 +128,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
             shape = init.shape
             is_array = True
         elif isinstance(init, self.__class__):
-            instance = copy.deepcopy(init._instance)
-            self._schema = init._schema
-            self._shape = init._shape
-            self._asdf = AsdfFile(instance, extensions=self._extensions)
-            self._instance = instance
-            self._ctx = self
-            self.__class__ = init.__class__
+            self.clone(self, init)
             return
         elif isinstance(init, DataModel):
             raise TypeError(
@@ -147,28 +147,31 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
             asdf = fits_support.from_fits(init, self._schema, extensions,
                                           pass_invalid_values)
 
-        elif isinstance(init, six.string_types):
+        elif isinstance(init, (six.string_types, bytes)):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
-            try:
+            file_type = filetype.check(init)
+     
+            if file_type == "fits":
                 hdulist = fits.open(init)
-            except IOError:
-                try:
-                    asdf = AsdfFile.open(init, extensions=self._extensions)
-                    # TODO: Add json support
-                except ValueError:
-                    raise IOError(
-                        "File does not appear to be a FITS or ASDF file.")
-            else:
-                asdf = fits_support.from_fits(hdulist, self._schema, 
+                asdf = fits_support.from_fits(hdulist, self._schema,
                                               extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
+     
+            elif file_type == "asdf":
+                asdf = AsdfFile.open(init, extensions=extensions)
+
+            else:
+                # TODO handle json files as well
+                raise IOError(
+                        "File does not appear to be a FITS or ASDF file.")
+            
         else:
             raise ValueError(
                 "Can't initialize datamodel using {0}".format(str(type(init))))
 
         # Initialize object fields as determined fro the code above
-        
+
         self._shape = shape
         self._instance = asdf.tree
         self._asdf = asdf
@@ -177,14 +180,19 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         # if the input is from a file, set the filename attribute
         if isinstance(init, six.string_types):
             self.meta.filename = os.path.basename(init)
-
+        elif isinstance(init, fits.HDUList):
+            info = init.fileinfo(0)
+            if info is not None:
+                filename = info.get('filename')
+                if filename is not None:
+                    self.meta.filename = os.path.basename(filename)
+        
         # if the input model doesn't have a date set, use the current date/time
         if self.meta.date is None:
-            self.meta.date = Time(datetime.datetime.now())
-            if hasattr(self.meta.date, 'value'):
-                self.meta.date.format = 'isot'
-                self.meta.date = str(self.meta.date.value)
-
+            current_date = Time(datetime.datetime.now())
+            current_date.format = 'isot'
+            self.meta.date = current_date.value
+        
         # store the data model type, if not already set
         if hasattr(self.meta, 'model_type'):
             if self.meta.model_type is None:
@@ -214,16 +222,34 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         for fd in self._files_to_close:
             if fd is not None:
                 fd.close()
+        if not self._iscopy and self._asdf is not None:
+            self._asdf.close()
+
+    @staticmethod
+    def clone(target, source, deepcopy=False, memo=None):
+        if deepcopy:
+            instance = copy.deepcopy(source._instance, memo=memo)
+            target._asdf = AsdfFile(instance, extensions=source._extensions)
+            target._instance = instance
+            target._iscopy = source._iscopy
+        else:
+            target._asdf = source._asdf
+            target._instance = source._instance
+            target._iscopy = True
+
+        target._files_to_close = []
+        target._schema = source._schema
+        target._shape = source._shape
+        target._ctx = target
 
     def copy(self, memo=None):
         """
         Returns a deep copy of this model.
         """
-        result = self.__class__(
-            init=copy.deepcopy(self._instance, memo=memo),
-            schema=self._schema,
-            extensions=self._extensions)
-        result._shape = self._shape
+        result = self.__class__(init=None,
+                                extensions=self._extensions,
+                                pass_invalid_values=self._pass_invalid_values)
+        self.clone(result, self, deepcopy=True, memo=memo)
         return result
 
     __copy__ = __deepcopy__ = copy
@@ -255,10 +281,11 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         if isinstance(path, six.string_types):
             self.meta.filename = os.path.basename(path)
 
-        self.meta.date = Time(datetime.datetime.now())
-        self.meta.date.format = 'isot'
-        self.meta.date = self.meta.date.value
-        self.meta.model_type = self.__class__.__name__
+        current_date = Time(datetime.datetime.now())
+        current_date.format = 'isot'
+        self.meta.date = current_date.value
+        if self.meta.model_type is not None:
+            self.meta.model_type = self.__class__.__name__
 
     def save(self, path, *args, **kwargs):
         """
@@ -303,17 +330,17 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         -------
         model : DataModel instance
         """
-        return cls(init, schema=schema, extensions=self._extensions)
+        return cls(init, schema=schema, extensions=jwst_extensions)
 
     def to_asdf(self, init, *args, **kwargs):
         """
-        Write a DataModel to a ASDF file.
+        Write a DataModel to an ASDF file.
 
         Parameters
         ----------
         init : file path or file object
 
-        *args, **kwargs
+        args, kwargs
             Any additional arguments are passed along to
             `asdf.AsdfFile.write_to`.
         """
@@ -351,7 +378,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         ----------
         init : file path or file object
 
-        *args, **kwargs
+        args, kwargs
             Any additional arguments are passed along to
             `astropy.io.fits.writeto`.
         """
@@ -359,7 +386,9 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
 
         with fits_support.to_fits(self._instance, self._schema,
                                   extensions=self._extensions) as ff:
-            ff.write_to(init, *args, **kwargs)
+            with warnings.catch_warnings():
+                warnings.filterwarnings('ignore', message='Card is too long')
+                ff.write_to(init, *args, **kwargs)
 
     @property
     def shape(self):
@@ -370,11 +399,17 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
                 return None
         return self._shape
 
+    def my_attribute(self, attr):
+        properties = frozenset(("shape", "history", "_extra_fits", "schema"))
+        return attr in properties
+
     def __setattr__(self, attr, value):
-        if attr == 'shape':
+        if self.my_attribute(attr):
             object.__setattr__(self, attr, value)
+        elif ndmodel.NDModel.my_attribute(self, attr):
+            ndmodel.NDModel.__setattr__(self, attr, value)
         else:
-            super(DataModel, self).__setattr__(attr, value)
+            properties.ObjectNode.__setattr__(self, attr, value)
 
     def extend_schema(self, new_schema):
         """
@@ -423,7 +458,7 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         -------
         locations : list of str
 
-            If `return_result` is `True, a list of the locations in
+            If `return_result` is `True`, a list of the locations in
             the schema where this FITS keyword is used.  Each element
             is a dot-separated path.
 
@@ -732,10 +767,21 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         return self._instance.setdefault('history', [])
 
     @history.setter
-    def history(self, v):
-        self._instance['history'] = v
+    def history(self, value):
+        """
+        Set a history entry.
 
-    def get_fits_wcs(self, hdu_name='PRIMARY', key=' '):
+        Parameters
+        ----------
+        value : list
+            For FITS files this should be a list of strings.
+            For ASDF files use a list of ``HistoryEntry`` object. It can be created
+            with `~jwst.datamodels.util.create_history_entry`.
+
+        """
+        self._instance['history'] = value
+
+    def get_fits_wcs(self, hdu_name='SCI', hdu_ver=1, key=' '):
         """
         Get a `astropy.wcs.WCS` object created from the FITS WCS
         information in the model.
@@ -747,14 +793,19 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         ----------
         hdu_name : str, optional
             The name of the HDU to get the WCS from.  This must use
-            named HDU's, not numerical order HDUs.  To get the primary HDU,
-            pass ``'PRIMARY'`` (default).
+            named HDU's, not numerical order HDUs. To get the primary
+            HDU, pass ``'PRIMARY'``.
 
         key : str, optional
             The name of a particular WCS transform to use.  This may
             be either ``' '`` or ``'A'``-``'Z'`` and corresponds to
             the ``"a"`` part of the ``CTYPEia`` cards.  *key* may only
             be provided if *header* is also provided.
+
+        hdu_ver: int, optional
+            The extension version. Used when there is more than one
+            extension with the same name. The default value, 1,
+            is the first.
 
         Returns
         -------
@@ -765,12 +816,12 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         extensions = self._asdf._extensions
         ff = fits_support.to_fits(self._instance, self._schema,
                                   extensions=extensions)
-        hdu = fits_support.get_hdu(ff._hdulist, hdu_name)
+        hdu = fits_support.get_hdu(ff._hdulist, hdu_name, index=hdu_ver-1)
         header = hdu.header
-
         return WCS(header, key=key, relax=True, fix=True)
 
-    def set_fits_wcs(self, wcs, hdu_name='PRIMARY'):
+
+    def set_fits_wcs(self, wcs, hdu_name='SCI'):
         """
         Sets the FITS WCS information on the model using the given
         `astropy.wcs.WCS` object.
@@ -786,84 +837,25 @@ class DataModel(properties.ObjectNode, nddata_base.NDDataBase):
         hdu_name : str, optional
             The name of the HDU to set the WCS from.  This must use
             named HDU's, not numerical order HDUs.  To set the primary
-            HDU, pass ``'PRIMARY'`` (default).
+            HDU, pass ``'PRIMARY'``.
         """
         header = wcs.to_header()
+        extensions = self._asdf._extensions
         if hdu_name == 'PRIMARY':
             hdu = fits.PrimaryHDU(header=header)
         else:
             hdu = fits.ImageHDU(name=hdu_name, header=header)
         hdulist = fits.HDUList([hdu])
 
-        ff = fits_support.from_fits(hdulist, self._schema, validate=False)
+        ff = fits_support.from_fits(hdulist, self._schema, extensions=extensions,
+            pass_invalid_values=self._pass_invalid_values)
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
 
-    #---------------------------------------
-    # Nddata interface compatibility methods
-    #---------------------------------------
+    #--------------------------------------------------------
+    # These two method aliases are here for astropy.registry
+    # compatibility and should not be called directly
+    #--------------------------------------------------------
 
-    @property
-    def data(self):
-        """The stored dataset.
-        """
-        return self.__getattr__('data')
-
-    @property
-    def mask(self):
-        """Mask for the dataset.
-        """
-        return self.dq
-
-    @property
-    def unit(self):
-        """Unit for the dataset.
-        """
-        try:
-            val = self.meta.bunit_data
-        except AttributeError:
-            val = None
-        return val
-
-    @property
-    def wcs(self):
-        """World coordinate system (WCS) for the dataset.
-        """
-        return self.__getattr__('wcs')
-
-
-    @property
-    def meta(self):
-        """Additional meta information about the dataset.
-        """
-        return self.__getattr__('meta')
-
-
-    @property
-    def uncertainty(self):
-        """Uncertainty in the dataset.
-        """
-        err = self.err
-        try:
-            val = self.meta.bunit_err
-        except AttributeError:
-            val = None
-        return Uncertainty(err, uncertainty_type=val)
-
-
-class Uncertainty(np.ndarray):
-    """
-    Subclass ndarray to include an additional property, uncertainty_type
-    """
-    def __new__(cls, err, uncertainty_type=None):
-        # info on how to subclass np.ndarray is at
-        # https://docs.scipy.org/doc/numpy/user/basics.subclassing.html
-        # this code is taken from there
-        obj = np.asarray(err).view(cls)
-        obj.uncertainty_type = uncertainty_type
-        return obj
-
-    def __array_finalize__(self, obj):
-        if obj is None:
-            return
-        self.uncertainty_type = getattr(obj, 'uncertainty_type', None)
+    read = __init__
+    write = save

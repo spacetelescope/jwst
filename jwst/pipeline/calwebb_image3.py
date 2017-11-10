@@ -1,12 +1,10 @@
-#!/usr/bin/env python
-import os
+from __future__ import unicode_literals, absolute_import
 
-from fitsblender import blendheaders
+import os
 
 from ..stpipe import Pipeline
 from .. import datamodels
 
-# calwebb Image3 step imports
 from ..resample import resample_step
 from ..skymatch import skymatch_step
 from ..outlier_detection import outlier_detection_step
@@ -14,15 +12,11 @@ from ..source_catalog import source_catalog_step
 from ..tweakreg_catalog import tweakreg_catalog_step
 from ..tweakreg import tweakreg_step
 
-__version__ = "0.7.0"
-# Define logging
-import logging
-log = logging.getLogger()
-log.setLevel(logging.DEBUG)
+__version__ = '0.8.0'
+
 
 class Image3Pipeline(Pipeline):
     """
-
     Image3Pipeline: Applies level 3 processing to imaging-mode data from
                     any JWST instrument.
 
@@ -33,125 +27,87 @@ class Image3Pipeline(Pipeline):
         outlier_detection
         resample
         source_catalog
+    """
 
+    spec = """
+        suffix = string(default='i2d')
     """
 
     # Define alias to steps
-    step_defs = {'resample': resample_step.ResampleStep,
+    step_defs = {'tweakreg_catalog': tweakreg_catalog_step.TweakregCatalogStep,
+                 'tweakreg': tweakreg_step.TweakRegStep,
                  'skymatch': skymatch_step.SkyMatchStep,
                  'outlier_detection': outlier_detection_step.OutlierDetectionStep,
-                 'tweakreg': tweakreg_step.TweakRegStep,
-                 'source_catalog': source_catalog_step.SourceCatalogStep,
-                 'tweakreg_catalog': tweakreg_catalog_step.TweakregCatalogStep
+                 'resample': resample_step.ResampleStep,
+                 'source_catalog': source_catalog_step.SourceCatalogStep
                  }
 
     def process(self, input):
+        """
+        Run the Image3Pipeline
 
-        log.info('Starting calwebb_image3 ...')
+        Parameters
+        ----------
+        input: Level3 Association, or ModelContainer
+            The exposures to process
+        """
+
+        self.log.info('Starting calwebb_image3 ...')
 
         input_models = datamodels.open(input)
 
-        is_container = (type(input_models) == type(datamodels.ModelContainer()))
-        if is_container and len(input_models.group_names) > 1:
+        # Check if input is single or multiple exposures
+        is_container = isinstance(input_models, datamodels.ModelContainer)
+        try:
+            has_groups = len(input_models.group_names) > 1
+        except:
+            has_groups = False
+        if is_container and has_groups:
 
-            generate_2c_names(input_models)
-
-            # perform full outlier_detection of ASN data
-            log.info("Generating source catalogs for alignment...")
+            self.log.info("Generating source catalogs for alignment...")
             input_models = self.tweakreg_catalog(input_models)
-            log.info("Aligning input images...")
+
+            self.log.info("Aligning input images...")
             input_models = self.tweakreg(input_models)
-            log.info("Matching sky values across all input images...")
-            input_models = self.skymatch(input_models)
-            log.info("Performing outlier detection on input images...")
-            input_models = self.outlier_detection(input_models)
-            
-            # Now clean up intermediate products which no are no longer needed
-            for i in input_models:
+
+            # Clean up tweakreg catalogs which no are no longer needed
+            for model in input_models:
                 try:
-                    catalog_name = i.meta.tweakreg_catalog.filename
+                    catalog_name = model.meta.tweakreg_catalog.filename
                     os.remove(catalog_name)
                 except:
                     pass
 
-            log.info("Resampling ASN to create combined product: {}".format(input_models.meta.resample.output))
+            self.log.info("Matching sky values across all input images...")
+            input_models = self.skymatch(input_models)
 
-        # Setup output file name for subsequent use
-        # TODO: fix single resample to do what outlier detection does
-        # in updating meta.resample.*
-        output_file = mk_prodname(self.output_dir,
-            input_models.meta.resample.output, 'i2d')
-        input_models.meta.resample.output = output_file
+            self.log.info("Performing outlier detection on input images...")
+            input_models = self.outlier_detection(input_models)
 
-        # Resample step always returns ModelContainer,
-        # yet we only need the DataModel result
-        output = self.resample(input_models)
+            if input_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
+                self.log.info("Writing Level 2c images with updated DQ arrays...")
+                # Set up Level 2c suffix to be used later
+                asn_id = input_models.meta.asn_table.asn_id
+                suffix_2c = '{}_{}'.format(asn_id, 'crf')
+                for model in input_models:
+                    self.save_model(model, suffix=suffix_2c)
 
-        # create final source catalog from resampled output
-        out_catalog = self.source_catalog(output)
+        self.log.info("Resampling images to final result...")
+        result = self.resample(input_models)
 
+        try:
+            result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
+            result.meta.asn.table_name = input
+        except:
+            pass
 
-        # Save the final image product
-        log.info('Saving final image product to %s', output_file)
-        output.save(output_file)
+        result.meta.filename = input_models.meta.asn_table.products[0].name
+        self.save_model(result, suffix=self.suffix)
 
-        # Run fitsblender on output product
-        input_files = [i.meta.filename for i in input_models]
-        blendheaders.blendheaders(output_file, input_files)
-
-        # close all inputs and outputs
-        output.close()
-        input_models.close()
-        log.info('... ending calwebb_image3')
+        self.log.info("Creating source catalog...")
+        out_catalog = self.source_catalog(result)
+        # NOTE: source_catalog step writes out the catalog in .ecsv format
+        # In the future it would be nice if it was returned to the pipeline,
+        # and then written here.  A datamodel for .ecsv might be required.
 
         return
-
-def generate_2c_names(input_models):
-    """ Update the names of the input files with Level 2C names
-    """
-
-    if hasattr(input_models.meta,'asn_id'):
-        asn_id = input_models.meta.asn_table.asn_id
-    else:
-        asn_id = "a3001"
-        
-    for i in input_models:
-        i.meta.filename = i.meta.filename.replace('.fits','-{}.fits'.format(asn_id))
-
-def mk_prodname(output_dir, filename, suffix):
-
-    """
-    Build a file name based on an ASN product name template.
-
-    The input ASN product name is used as a template. A user-specified
-    output directory path is prepended to the root of the product name.
-    The input product type suffix is appended to the root of the input
-    product name, preserving any existing file name extension 
-    (e.g. ".fits").
-
-    Args:
-        output_dir (str): The output_dir requested by the user
-        filename (str): The input file name, to be reworked
-        suffix (str): The desired file type suffix for the new file name
-
-    Returns:
-        string: The new file name
-
-    Examples:
-        For output_dir='/my/path', filename='jw12345_nrca_cal.fits', and
-        suffix='i2d', the returned file name will be
-        '/my/path/jw12345_nrca_cal_i2d.fits'
-    """
-
-    # If the user specified an output_dir, replace any existing
-    # path with output_dir
-    if output_dir is not None:
-        dirname, filename = os.path.split(filename)
-        filename = os.path.join(output_dir, filename)
-
-    # Now append the new suffix to the root name, preserving
-    # any existing extension
-    base, ext = os.path.splitext(filename)
-    if len(ext) == 0:
-        ext = ".fits"
-    return base + '_' + suffix + ext

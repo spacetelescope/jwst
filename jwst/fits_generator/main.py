@@ -31,7 +31,7 @@ from __future__ import absolute_import, print_function, with_statement
 
 # THIRD-PARTY
 from astropy.io import fits as pyfits
-from astropy.extern import six
+import six
 
 # STDLIB
 import glob

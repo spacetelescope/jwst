@@ -18,7 +18,7 @@ from . import steps  # REQUIRED: in order to load all packages for inspect
 from . import __name__ as jwst_pkg_name
 from . import __file__ as jwst_pkg_file
 
-__version__ = "0.7.0.dev"
+__version__ = "0.8.0"
 
 STDOUT = sys.stdout
 

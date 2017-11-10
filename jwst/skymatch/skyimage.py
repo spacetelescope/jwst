@@ -1,7 +1,8 @@
 """
-This module provides support for working with footprints
-on the sky. Primary use case would use the following
-generalized steps:
+The ``skyimage`` module contains algorithms that are used by
+``skymatch`` to manage all of the information for footprints (image outlines)
+on the sky as well as perform useful operations on these outlines such as
+computing intersections and statistics in the overlap regions.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
@@ -23,7 +24,7 @@ from . import region
 
 
 __all__ = ['SkyImage', 'SkyGroup']
-__version__ = '0.1'
+__version__ = '0.8.0'
 __vdate__ = '01-March-2016'
 
 
@@ -275,7 +276,7 @@ class SkyImage(object):
         borderx[-1] = borderx[0]
         bordery[-1] = bordery[0]
 
-        ra, dec = self.wcs_fwd(borderx, bordery, 0)
+        ra, dec = self.wcs_fwd(borderx, bordery, with_bounding_box=False)
         # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
         #       dec[0] != dec[-1] (even though we close the polygon in the
         #       previous two lines). Then SphericalPolygon fails because
@@ -429,7 +430,7 @@ None, optional
                     continue
 
                 # set pixels in 'fill_mask' that are inside a polygon to True:
-                x, y = self.wcs_inv(ra, dec, 0)
+                x, y = self.wcs_inv(ra, dec)
                 poly_vert = list(zip(*[x, y]))
 
                 polygon = region.Polygon(True, poly_vert)
@@ -531,7 +532,7 @@ None, optional
                     continue
 
                 # set pixels in 'fill_mask' that are inside a polygon to True:
-                x, y = self.wcs_inv(ra, dec, 0)
+                x, y = self.wcs_inv(ra, dec)
                 poly_vert = list(zip(*[x, y]))
 
                 polygon = region.Polygon(True, poly_vert)

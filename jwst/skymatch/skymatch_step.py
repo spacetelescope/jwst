@@ -17,7 +17,12 @@ import logging
 from ..stpipe import Step, cmdline
 from .. import datamodels
 
-from stsci.tools import bitmask
+try:
+    from stsci.tools.bitmask import bitfield_to_boolean_mask
+    from stsci.tools.bitmask import interpret_bit_flags
+except ImportError:
+    from stsci.tools.bitmask import bitmask2mask as bitfield_to_boolean_mask
+    from stsci.tools.bitmask import interpret_bits_value as interpret_bit_flags
 
 #LOCAL:
 from . skymatch import match
@@ -58,7 +63,7 @@ class SkyMatchStep(Step):
         self.log.setLevel(logging.DEBUG)
         img = datamodels.ModelContainer(input)
 
-        self._dqbits = bitmask.interpret_bit_flags(self.dqbits)
+        self._dqbits = interpret_bit_flags(self.dqbits)
 
         # set sky stattistics:
         self._skystat = SkyStats(
@@ -129,12 +134,41 @@ class SkyMatchStep(Step):
         if self._dqbits is None:
             dqmask = None
         else:
-            dqmask = bitmask.bitmask2mask(
-                bitmask=image_model.dq,
-                ignore_bits=self._dqbits,
+            dqmask = bitfield_to_boolean_mask(
+                image_model.dq,
+                self._dqbits,
                 good_mask_value=1,
                 dtype=np.uint8
             )
+
+        # see if 'skymatch' was previously run and raise an exception
+        # if 'subtract' mode has changed compared to the previous pass:
+        if image_model.meta.background.subtracted is None:
+            if image_model.meta.background.level is not None:
+                # report inconsistency:
+                raise ValueError("Background level was set but the "
+                                 "'subtracted' property is undefined (None).")
+            level = 0.0
+
+        else:
+            level = image_model.meta.background.level
+            if level is None:
+                # NOTE: In principle we could assume that level is 0 and
+                # possibly add a log entry documenting this, however,
+                # at this moment I think it is saver to quit and...
+                #
+                # report inconsistency:
+                raise ValueError("Background level was subtracted but the "
+                                 "'level' property is undefined (None).")
+
+            if image_model.meta.background.subtracted != self.subtract:
+                # cannot run 'skymatch' step on already "skymatched" images
+                # when 'subtract' spec is inconsistent with
+                # meta.background.subtracted:
+                raise ValueError("'subtract' step's specification is "
+                                 "inconsistent with background info already "
+                                 "present in image '{:s}' meta."
+                                 .format(image_model.meta.filename))
 
         sky_im = SkyImage(
             image=image_model.data,
@@ -150,22 +184,11 @@ class SkyMatchStep(Step):
         )
 
         if self.subtract:
-            if hasattr(image_model.meta, 'bkglevel'):
-                sky_im.sky = image_model.meta.bkglevel
+            sky_im.sky = level
 
         return sky_im
 
     def _set_sky_background(self, image, sky):
-        #skybg_schema = {
-            #"meta.bkglevel":
-            #{
-                #"title": "Computed sky background value",
-                #"type": "float",
-                #"fits_keyword": "BKGLEVEL"
-            #}
-        #}
-        #image.extend_schema(skybg_schema)
-        image.meta.bkglevel = sky
+        image.meta.background.level = sky
+        image.meta.background.subtracted = self.subtract
 
-if __name__ == '__main__':
-    cmdline.step_script(SkyMatchStep)

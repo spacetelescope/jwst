@@ -1,13 +1,11 @@
 """
 Two-Point Difference method for finding outliers in a 3-d ramp data cube.
-
 The scheme used in this variation of the method uses numpy array methods
 to compute first-differences and find the max outlier in each pixel while
 still working in the full 3-d data array. This makes detection of the first
 outlier very fast. We then iterate pixel-by-pixel over only those pixels
 that are already known to contain an outlier, to look for any additional
 outliers and set the appropriate DQ mask for all outliers in the pixel.
-
 This is MUCH faster than doing all the work on a pixel-by-pixel basis.
 """
 
@@ -26,7 +24,6 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
 
     """
     Find CRs/Jumps in each integration within the input data array.
-
     The input data array is assumed to be in units of electrons, i.e. already
     multiplied by the gain. We also assume that the read noise is in units of
     electrons.
@@ -43,7 +40,8 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
 
     # Reset saturated values in input data array to NaN, so they don't get
     # used in any of the subsequent calculations
-    data[gdq == dqflags.group['SATURATED']] = np.NaN
+    wh_sat = np.where(np.bitwise_and(gdq, dqflags.group['SATURATED']))
+    data[wh_sat] = np.NaN
 
     # Loop over multiple integrations
     for integration in range(nints):
@@ -95,15 +93,21 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
         # negative outliers
         ratio = np.abs(first_diffs - med_diffs[:, :, np.newaxis]) / sigma[:, :, np.newaxis]
 
-        # Find the group index of the max outlier in each pixel
-        # (the RHS is identical to the previous versions:
-        #  max_index = np.nanargmax (ratio, axis=2)
-        max_index1 = sort_index[:, :, ngroups - 2]
+        
+        # get the rows and columns of pixels of all pixels
+        row, col = np.where(number_sat_groups >= 0)
+        # Get the group index for each pixel of the largest non-saturated group, assuming the indicies are sorted.
+        # This is a 2-D array.
+        max_value_index = ngroups - 2 - number_sat_groups
 
-        # Get indices of highest values (may be outliers) that are above the
-        # rejection threshold
+        # Extract from the sorted group index the index of the largest non-saturated group
+        max_index1d = sort_index[row, col, max_value_index[row, col]]
+        # Reshape the list of max indicies to be a 2-day array
+        max_index1 = np.reshape(max_index1d, (nrows,ncols))
+
         r, c = np.indices(max_index1.shape)
-        row1, col1 = np.where(ratio[r, c, max_index1 - number_sat_groups] > rej_threshold)
+        # Get the row and column indices of pixels whose largest non-saturated ratio is above the threshold
+        row1, col1 = np.where(ratio[r, c, max_index1] > rej_threshold)
         log.debug('From highest outlier Twopt found %d pixels with at least one CR' % (len(row1)))
         number_pixels_with_cr = len(row1)
         for j in range(number_pixels_with_cr):
@@ -161,23 +165,30 @@ def return_clipped_median(num_differences, diffs_to_ignore, differences, sorted_
     """
 
     # ignore largest value and number of CRs found when finding new median
-
+    # Check to see if this is a 2-D array or 1-D
     if sorted_index.ndim > 1:
 
         # always exclude the highest value
         pixel_med_index = sorted_index[:, :, int((num_differences - 1) / 2)] # always exclude the highest value
         row, col = np.indices(pixel_med_index.shape)
 
-        # in addition decrease the index by 1 for every two diffs_to_ignore, these will be saturated values in this case
+        # In addition, decrease the index by 1 for every two diffs_to_ignore, these will be saturated values in this case
         pixel_med_diff = differences[row, col, pixel_med_index - ((diffs_to_ignore) / 2).astype(int)]
-        if (num_differences - 1) % 2 == 0:  # even
-            pixel_med_index2 = sorted_index[:, :, int((num_differences - 1) / 2) - 1]
-            pixel_med_diff = (pixel_med_diff + differences[row, col, pixel_med_index2 - ((diffs_to_ignore) / 2).astype(int)]) / 2.0
-
+        # For pixels with an even number of groups the median is the mean of the two central values
+        even_group_rows,even_group_cols = np.where((num_differences - diffs_to_ignore - 1)% 2 == 0)
+        pixel_med_index2 = np.zeros_like(pixel_med_index)
+        pixel_med_index2[even_group_rows,even_group_cols]=sorted_index[even_group_rows, even_group_cols, int((num_differences - 1) / 2 ) - 1]
+        # Average together the two central values
+        pixel_med_diff[even_group_rows,even_group_cols] = (pixel_med_diff[even_group_rows, even_group_cols] +
+                                                           differences[even_group_rows, even_group_cols,
+                                                                       pixel_med_index2[even_group_rows, even_group_cols]
+                                                                       - ((diffs_to_ignore[even_group_rows, even_group_cols])
+                                                                          / 2).astype(int)]) / 2.0
+    # The 1-D array case is a lot simplier.    
     else:
         pixel_med_index = sorted_index[int(((num_differences - 1 - diffs_to_ignore) / 2))]
         pixel_med_diff = differences[pixel_med_index]
-        if (num_differences - diffs_to_ignore - 1) % 2 == 0:  # even
+        if (num_differences - diffs_to_ignore - 1) % 2 == 0:  # even number of groups
             pixel_med_index2 = sorted_index[int((num_differences - 1 - diffs_to_ignore) / 2) - 1]
             pixel_med_diff = (pixel_med_diff + differences[pixel_med_index2]) / 2.0
 

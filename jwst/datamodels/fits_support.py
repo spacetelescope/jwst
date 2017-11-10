@@ -11,7 +11,7 @@ import numpy as np
 
 import jsonschema
 
-from astropy.extern import six
+import six
 from astropy.io import fits
 from astropy import time
 
@@ -114,12 +114,23 @@ def _get_hdu_name(schema):
     return hdu_name
 
 
+def _get_hdu_type(hdu_name, value):
+    if hdu_name in (0, 'PRIMARY'):
+        hdu_type = fits.PrimaryHDU
+    elif value is None:
+        hdu_type = fits.ImageHDU
+    else:
+        try:
+            defs = fits.ColDefs(value) # just to test if value is a table
+            hdu_type = fits.BinTableHDU
+        except TypeError:
+            hdu_type = fits.ImageHDU
+    return hdu_type
+
+
 def _make_new_hdu(hdulist, value, hdu_name, index=None):
-    try:
-        defs = fits.ColDefs(value) # just to test if value is a table
-        hdu = fits.BinTableHDU(value, name=hdu_name)
-    except TypeError:
-        hdu = fits.ImageHDU(value, name=hdu_name)
+    hdu_type = _get_hdu_type(hdu_name, value)
+    hdu = hdu_type(value, name=hdu_name)
     if index is not None:
         hdu.ver = index + 1
     hdulist.append(hdu)
@@ -164,10 +175,7 @@ def get_hdu(hdulist, hdu_name, index=None):
 
 def _make_hdu(hdulist, hdu_name, index=None, hdu_type=None, value=None):
     if hdu_type is None:
-        if hdu_name in (0, 'PRIMARY'):
-            hdu_type = fits.PrimaryHDU
-        else:
-            hdu_type = fits.ImageHDU
+        hdu_type = _get_hdu_type(hdu_name, value)
     if hdu_type == fits.PrimaryHDU:
         hdu = hdu_type(value)
     else:
@@ -279,11 +287,12 @@ def _fits_array_writer(validator, _, instance, schema):
         hdu_type = fits.BinTableHDU
     else:
         hdu_type = fits.ImageHDU
-    index = getattr(validator, 'sequence_index', None)
+    index = getattr(validator, 'sequence_index', 0)
 
     hdu = _get_or_make_hdu(validator.hdulist, hdu_name, index=index, hdu_type=hdu_type)
 
     hdu.data = instance
+    hdu.ver = index + 1
 
 
 # This is copied from jsonschema._validators and modified to keep track
@@ -352,8 +361,6 @@ def _save_from_schema(hdulist, tree, schema):
     validator.hdulist = hdulist
     # TODO: Handle comment stack on per-hdu-basis
     validator.comment_stack = []
-    # Tag the tree values first, the validator requires it
-    _tag_values(tree, schema)
     # This actually kicks off the saving
     validator.validate(tree, _schema=schema)
 
@@ -363,13 +370,17 @@ def _save_extra_fits(hdulist, tree):
     for hdu_name, parts in six.iteritems(tree.get('extra_fits', {})):
         hdu_name = fits_hdu_name(hdu_name)
         if 'data' in parts:
-            hdu = _make_new_hdu(hdulist, parts['data'], hdu_name)
+            hdu = _get_or_make_hdu(hdulist, hdu_name, value=parts['data'])
         if 'header' in parts:
             hdu = _get_or_make_hdu(hdulist, hdu_name)
             for key, val, comment in parts['header']:
                 if _is_builtin_fits_keyword(key):
                     continue
                 hdu.header.append((key, val, comment), end=True)
+
+    # Remove extra_fits so it is not written to the asdf extension
+    if 'extra_fits' in tree:
+        del tree['extra_fits']
 
 
 def _save_history(hdulist, tree):
@@ -382,31 +393,6 @@ def _save_history(hdulist, tree):
             else:
                 history[i] = HistoryEntry({'description': str(history[i])})
         hdulist[0].header['HISTORY'] = history[i]['description']
-
-
-def _tag_values(tree, schema):
-    # Replace tag value in tree with tagged versions
-
-    def included(cursor, part):
-        if isinstance(part, int):
-            return part > 0 and part < len(cursor)
-        else:
-            return part in cursor
-
-    def callback(subschema, path, combiner, ctx, recurse):
-        tag = subschema.get('tag')
-        if tag is not None:
-            cursor = tree
-            for part in path[:-1]:
-                if included(cursor, part):
-                    cursor = cursor[part]
-                else:
-                    return
-            part = path[-1]
-            if included(cursor, part):
-                cursor[part] = tagged.tag_object(tag, cursor[part])
-
-    mschema.walk_schema(schema, callback)
 
 
 def to_fits(tree, schema, extensions=None):
@@ -472,7 +458,29 @@ def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
     known_keywords = {}
     known_datas = set()
     invalid_values = set()
+    missing_values = set()
 
+    def build_errmsg():
+        # Prefix filename to error message where it can be found
+        errmsg = ""
+        if len(invalid_values) > 0:
+            values = ', '.join(list(invalid_values))
+            errmsg += "  Invalid values: {0}\n".format(values)
+
+        if len(missing_values) > 0:
+            values = ', '.join(list(missing_values))
+            errmsg += "  Missing values: {0}\n".format(values)
+
+        if errmsg:
+            try:
+                filename = hdulist._file.name
+            except AttributeError:
+                filename = None
+            if filename is not None:
+                errmsg = "In {0}\n{1}".format(filename, errmsg)
+
+        return errmsg
+                        
     def callback(schema, path, combiner, ctx, recurse):
         result = None
         if 'fits_keyword' in schema:
@@ -480,21 +488,19 @@ def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
             result = _fits_keyword_loader(
                 hdulist, fits_keyword, schema,
                 ctx.get('hdu_index'), known_keywords)
-            if result is not None:
+            if result is None:
+                if schema.get('fits_required'):
+                    missing_values.add(fits_keyword)
+            else:
                 temp_schema = {
                     '$schema':
                     'http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema'}
                 temp_schema.update(schema)
                 try:
                     asdf_schema.validate(result, schema=temp_schema)
-                except jsonschema.ValidationError:
-                    result = str(result)
-                    msgfmt = "'{0}' is not valid in '{1}'"
-                    msg = msgfmt.format(result, fits_keyword)
-                    warnings.warn(msg, properties.ValidationWarning)
-                    if not pass_invalid_values:
-                        invalid_values.add(fits_keyword)
-                        
+                except jsonschema.ValidationError as errmsg:
+                    warnings.warn(str(errmsg), properties.ValidationWarning)
+                    invalid_values.add(fits_keyword)
                 else:
                     properties.put_value(path, result, tree)
                     
@@ -502,20 +508,21 @@ def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
                 'max_ndim' in schema or 'ndim' in schema or 'datatype' in schema):
             result = _fits_array_loader(
                 hdulist, schema, ctx.get('hdu_index'), known_datas)
-            if result is not None:
+            if result is None:
+                if schema.get('fits_required'):
+                   hdu_name = _get_hdu_name(schema)
+                   missing_values.add(hdu_name)
+            else:
                 temp_schema = {
                     '$schema':
                     'http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema'}
                 temp_schema.update(schema)
                 try:
                     asdf_schema.validate(result, schema=temp_schema)
-                except jsonschema.ValidationError:
+                except jsonschema.ValidationError as errmsg:
                     fits_hdu = schema['fits_hdu']
-                    msgfmt = "'{0}' is not valid"
-                    msg = msgfmt.format(fits_hdu)
-                    warnings.warn(msg, properties.ValidationWarning)
-                    if not pass_invalid_values:
-                        invalid_values.add(fits_keyword)
+                    warnings.warn(str(errmsg), properties.ValidationWarning)
+                    invalid_values.add(fits_hdu)
                 else:
                     properties.put_value(path, result, tree)
 
@@ -530,15 +537,22 @@ def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
                 return True
 
     mschema.walk_schema(schema, callback)
-    if len(invalid_values) > 0:
-        msgfmt = "fits data is not valid: {0}"
-        msg = msgfmt.format(','.join(list(invalid_values)))
-        raise jsonschema.ValidationError(msg)
+    errmsg = build_errmsg()
+    if errmsg:
+        if pass_invalid_values:
+            warnings.warn(errmsg, properties.ValidationWarning)
+        else:
+            raise jsonschema.ValidationError(errmsg)
+
     return known_keywords, known_datas
 
 
 def _load_extra_fits(hdulist, known_keywords, known_datas, tree):
-    # Handle _extra_fits
+    # Remove any extra_fits from tree
+    if 'extra_fits' in tree:
+        del tree['extra_fits']
+
+    # Add header keywords and data not in schema to extra_fits
     for hdu in hdulist:
         known = known_keywords.get(hdu, set())
 
@@ -553,9 +567,10 @@ def _load_extra_fits(hdulist, known_keywords, known_datas, tree):
                 ['extra_fits', hdu.name, 'header'], cards, tree)
 
         if hdu not in known_datas:
-            if hdu.data is not None:
-                properties.put_value(
-                    ['extra_fits', hdu.name, 'data'], hdu.data, tree)
+            if hdu.name.lower() != 'asdf':
+                if hdu.data is not None:
+                    properties.put_value(
+                        ['extra_fits', hdu.name, 'data'], hdu.data, tree)
 
 
 def _load_history(hdulist, tree):

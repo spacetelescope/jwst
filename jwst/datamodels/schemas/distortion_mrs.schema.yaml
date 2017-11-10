@@ -1,0 +1,105 @@
+title: Distortion data model for MIRI MRS reference data
+allOf:
+- $ref: referencefile.schema.yaml
+- $ref: keyword_band.schema.yaml
+- $ref: keyword_channel.schema.yaml
+- $ref: keyword_exptype.schema.yaml
+- type: object
+  properties:
+    slices:
+      type: array
+      items:
+        type: integer
+      description: |
+        A list of slice numbers.
+    x_model:
+      type: array
+      items:
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      description: |
+        Transform from (alpha, beta) to detector x coordinate.
+        The transform is a Polynomial as a function of alpha and lambda.
+        The transform is defined for each slice.
+        The beta coordinate defines the slice number
+    y_model:
+      type: array
+      items:
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      description: |
+        Transform from (alpha, beta) to detector y coordinate.
+        The transform is a Polynomial as a function of alpha and lambda.
+        The transform is defined for each slice.
+        The beta coordinate defines the slice number.
+    alpha_model:
+      type: array
+      items:
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      description: |
+        Transform from detector (x, y) coordinates to alpha coordinate
+        in a subchannel cube. The transform is a Polynomial as a function of x and y.
+        The transform is defined for each slice.
+    beta_model:
+      type: array
+      items:
+        $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+      description: |
+        Transform from detector (x, y) coordinates to a beta coordinate
+        in a subchannel cube.
+    bzero:
+      type: object
+      properties:
+        channel_band:
+          type: array
+          description: |
+            An array of <channel><band> value, e.g. 1SHORT, 2SHORT.
+          items:
+            type: string
+        beta_zero:
+          type: array
+          description: |
+            An array of beta coordinates for center of slice 1 in each channel.
+          items:
+            type: number
+    bdel:
+      type: object
+      properties:
+        channel_band:
+          description: |
+            An array of <channel><band> value, e.g. 1SHORT, 2SHORT.
+          type: array
+          items:
+            type: string
+        delta_beta:
+          type: array
+          description: |
+            An array of slice width for each channel.
+          items:
+            type: number
+    abv2v3_model:
+      type: object
+      properties:
+        channel_band:
+          description: |
+            An array of <channel><band> value, e.g. 1SHORT, 2SHORT.
+          type: array
+          items:
+            type: string
+        model:
+          type: array
+          items:
+            $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    meta:
+      type: object
+      properties:
+        input_units:
+          description: |
+            Units of the inputs to this model.
+          anyOf:
+            - type: string
+            - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0
+        output_units:
+          description: |
+            Output units of coordinates after the model is applied.
+          anyOf:
+            - type: string
+            - $ref: http://stsci.edu/schemas/asdf/unit/unit-1.0.0

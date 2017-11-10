@@ -8,7 +8,7 @@ title: >
 description: |
 
 allOf:
-  - $ref: ../asdf/transform/transform-1.0.0
+  - $ref: ../asdf/transform/transform-1.1.0
   - type: object
     properties:
       condition:

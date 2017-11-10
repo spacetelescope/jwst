@@ -16,12 +16,12 @@ from datetime import datetime
 import numpy as np
 
 from ..skymatch.skystatistics import SkyStats
-from .skyimage import *
+from ..skymatch.skyimage import *
 
 
 __all__ = ['match']
 
-__version__ = '0.1.0'
+__version__ = '0.8.0'
 __vdate__ = '21-Sept-2016'
 __author__ = 'Mihai Cara'
 

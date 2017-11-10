@@ -1,6 +1,7 @@
 title: Straylight MRS correction data model
 allOf:
 - $ref: referencefile.schema.yaml
+- $ref: keyword_band.schema.yaml
 - type: object
   properties:
     data:

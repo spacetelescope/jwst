@@ -14,7 +14,7 @@ __all__ = [
     'Asn_NRS_MSA',
     'Asn_NIR_SO_SLITLESS',
     'Asn_WFSCMB',
-
+    'Asn_Coron',
 ]
 
 # Configure logging
@@ -41,17 +41,24 @@ class Asn_Image(
         # Setup for checking.
         self.add_constraints({
             'wfsvisit': {
-                'inputs': ['WFSVISIT'],
-                'is_invalid': True,
+                'inputs': ['visitype'],
+                'value': '((?!wfsc).)*'
             },
         })
 
         # Now check and continue initialization.
         super(Asn_Image, self).__init__(*args, **kwargs)
 
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'image3'
+        super(Asn_Image, self)._init_hook(item)
+
 
 class Asn_WFSCMB(
         AsnMixin_Image,
+        AsnMixin_OpticalPath,
         AsnMixin_Target,
         AsnMixin_Base
 ):
@@ -66,29 +73,30 @@ class Asn_WFSCMB(
         # Setup for checking.
         self.add_constraints({
             'wfsvisit': {
-                'value': '(?!NULL).+',
-                'inputs': ['WFSVISIT'],
+                'value': '.+wfsc.+',
+                'inputs': ['visitype'],
             },
             'asn_candidate_wfs': {
-                'value': '.+MOSAIC.+',
-                'inputs': ['ASN_CANDIDATE'],
+                'value': '.+mosaic.+',
+                'inputs': ['asn_candidate'],
                 'force_unique': True,
                 'is_acid': True,
+                'evaluate': True,
             },
             'activity_id': {
                 'value': None,
-                'inputs': ['ACT_ID']
+                'inputs': ['act_id']
             }
         })
 
         # Now check and continue initialization.
         super(Asn_WFSCMB, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, member):
+    def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'wfs'
-        super(Asn_WFSCMB, self)._init_hook(member)
+        super(Asn_WFSCMB, self)._init_hook(item)
 
 
 # Spectrographic Associations
@@ -105,16 +113,16 @@ class Asn_MIRI_LRS_FIXEDSLIT(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'MIR_LRS-FIXEDSLIT|MIR_TACQ',
-                'inputs': ['EXP_TYPE']
+                'value': 'mir_lrs-fixedslit|mir_tacq',
+                'inputs': ['exp_type']
             },
             'opt_elem': {
-                'value': 'P750L',
-                'inputs': ['FILTER']
+                'value': 'p750l',
+                'inputs': ['filter']
             },
             'subarray': {
-                'value': 'FULL',
-                'inputs': ['SUBARRAY']
+                'value': 'full',
+                'inputs': ['subarray']
             }
         })
 
@@ -135,16 +143,16 @@ class Asn_MIRI_LRS_SLITLESS(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'MIR_LRS-SLITLESS|MIR_TACQ',
-                'inputs': ['EXP_TYPE']
+                'value': 'mir_lrs-slitless|mir_tacq',
+                'inputs': ['exp_type']
             },
             'opt_elem': {
-                'value': 'P750L',
-                'inputs': ['FILTER']
+                'value': 'p750l',
+                'inputs': ['filter']
             },
             'subarray': {
-                'value': 'SUBPRISM',
-                'inputs': ['SUBARRAY']
+                'value': 'subprism',
+                'inputs': ['subarray']
             }
         })
 
@@ -165,20 +173,20 @@ class Asn_NIR_SO_SLITLESS(
         # Setup for checking.
         self.add_constraints({
             'detector': {
-                'value': 'NIS',
-                'inputs': ['DETECTOR']
+                'value': 'nis',
+                'inputs': ['detector']
             },
             'exp_type': {
-                'value': 'NIS_SOSS|NIS_TACQ|NIS_TACNFRM',
-                'inputs': ['EXP_TYPE']
+                'value': 'nis_soss|nis_tacq|nis_tacnfrm',
+                'inputs': ['exp_type']
             },
             'opt_elem': {
-                'value': 'GR700XD',
-                'inputs': ['PUPIL']
+                'value': 'gr700xd',
+                'inputs': ['pupil']
             },
             'subarray': {
-                'value': 'FULL|SUBSTRIP256|SUBSTRIP80',
-                'inputs': ['SUBARRAY'],
+                'value': 'full|substrip256|substrip80',
+                'inputs': ['subarray'],
                 'force_unique': True
             }
         })
@@ -202,22 +210,22 @@ class Asn_NRS_FIXEDSLIT(
         self.add_constraints({
             'exp_type': {
                 'value': (
-                    'NRS_FIXEDSLIT'
-                    '|NRS_AUTOWAVE'
-                    '|NRS_CONFIRM'
-                    '|NRS_TACQ'
-                    '|NRS_TACONFIRM'
-                    '|NRS_TASLIT'
+                    'nrs_fixedslit'
+                    '|nrs_autowave'
+                    '|nrs_confirm'
+                    '|nrs_tacq'
+                    '|nrs_taconfirm'
+                    '|nrs_taslit'
                 ),
-                'inputs': ['EXP_TYPE']
+                'inputs': ['exp_type']
             },
             'fixed_slit': {
                 'value': None,
-                'inputs': ['FXD_SLIT']
+                'inputs': ['fxd_slit']
             },
             'subarray': {
                 'value': None,
-                'inputs': ['SUBARRAY']
+                'inputs': ['subarray']
             },
         })
 
@@ -240,15 +248,15 @@ class Asn_NRS_MSA(
         self.add_constraints({
             'exp_type': {
                 'value': (
-                    'NRS_MSASPEC'
-                    '|NRS_AUTOFLAT'
-                    '|NRS_AUTOWAVE'
-                    '|NRS_CONFIRM'
-                    '|NRS_TASLIT'
-                    '|NRS_TACQ'
-                    '|NRS_TACONFIRM'
+                    'nrs_msaspec'
+                    '|nrs_autoflat'
+                    '|nrs_autowave'
+                    '|nrs_confirm'
+                    '|nrs_taslit'
+                    '|nrs_tacq'
+                    '|nrs_taconfirm'
                 ),
-                'inputs': ['EXP_TYPE']
+                'inputs': ['exp_type']
             },
         })
 
@@ -270,11 +278,11 @@ class Asn_MIRI_IFU(
         self.add_constraints({
             'exp_type': {
                 'value': (
-                    'MIR_MRS'
-                    '|MIR_FLATMRS'
-                    '|MIR_TACQ'
+                    'mir_mrs'
+                    '|mir_flatmrs'
+                    '|mir_tacq'
                 ),
-                'inputs': ['EXP_TYPE'],
+                'inputs': ['exp_type'],
                 'force_unique': False,
             },
         })
@@ -312,16 +320,205 @@ class Asn_NRS_IFU(
         self.add_constraints({
             'exp_type': {
                 'value': (
-                    'NRS_IFU'
-                    '|NRS_AUTOWAVE'
-                    '|NRS_CONFIRM'
-                    '|NRS_TASLIT'
-                    '|NRS_TACQ'
-                    '|NRS_TACONFIRM'
+                    'nrs_ifu'
+                    '|nrs_autowave'
+                    '|nrs_confirm'
+                    '|nrs_taslit'
+                    '|nrs_tacq'
+                    '|nrs_taconfirm'
                 ),
-                'inputs': ['EXP_TYPE']
+                'inputs': ['exp_type']
             },
         })
 
         # Check and continue initialization.
         super(Asn_NRS_IFU, self).__init__(*args, **kwargs)
+
+
+class Asn_Coron(
+        AsnMixin_OpticalPath,
+        AsnMixin_Base
+):
+    """Coronography
+
+    Notes
+    -----
+
+    Coronography is nearly completely defined by the association candidates
+    produced by APT.
+
+    Tracking Issues:
+
+    - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.add_constraints({
+            'exp_type': {
+                'value': (
+                    'nrc_coron'
+                    '|mir_lyot'
+                    '|mir_4qpm'
+                ),
+                'inputs': ['exp_type'],
+                'force_unique': True,
+            },
+            'target': {
+                'value': None,
+                'inputs': ['targetid'],
+                'onlyif': lambda item: self.get_exposure_type(item) == 'science',
+                'force_reprocess': ProcessList.EXISTING,
+            }
+        })
+
+        # PSF is required
+        self.validity.update({
+            'has_psf': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'psf'
+            }
+        })
+
+        # Check and continue initialization.
+        super(Asn_Coron, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'coron3'
+        super(Asn_Coron, self)._init_hook(item)
+
+
+class Asn_AMI(
+        AsnMixin_OpticalPath,
+        AsnMixin_Base
+):
+    """Aperture Mask Interferometry
+
+    Notes
+    -----
+
+    AMI is nearly completely defined by the association candidates
+    produced by APT.
+
+    Tracking Issues:
+
+    - `github #310 <https://github.com/STScI-JWST/jwst/issues/310>`
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.add_constraints({
+            'exp_type': {
+                'value': 'nis_ami',
+                'inputs': ['exp_type'],
+            },
+            'target': {
+                'value': None,
+                'inputs': ['targetid'],
+                'onlyif': lambda item: self.get_exposure_type(item) == 'science',
+                'force_reprocess': ProcessList.EXISTING,
+            }
+        })
+
+        # Check and continue initialization.
+        super(Asn_AMI, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'ami3'
+        super(Asn_AMI, self)._init_hook(item)
+
+
+class Asn_WFSS(
+        AsnMixin_Spectrum,
+        AsnMixin_OpticalPath,
+        AsnMixin_Target,
+        AsnMixin_Base
+):
+    """WFSS/Grism modes"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.add_constraints({
+            'exp_type': {
+                'value': 'nis_wfss',
+                'inputs': ['exp_type']
+            },
+            'opt_elem2': {
+                'value': 'gr150r|gr150c',
+                'inputs': ['grating'],
+                'force_unique': False,
+            },
+        })
+
+        # Check and continue initialization.
+        super(Asn_WFSS, self).__init__(*args, **kwargs)
+
+
+class Asn_TSO_Flag(
+        AsnMixin_OpticalPath,
+        AsnMixin_Target,
+        AsnMixin_Base
+):
+    """Time-Series observations"""
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'is_tso': {
+                'value': 't',
+                'inputs': ['tsovisit']
+            },
+            'exp_type': {
+                'value': None,
+                'inputs': ['exp_type']
+            }
+        })
+
+        super(Asn_TSO_Flag, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'tso3'
+        super(Asn_TSO_Flag, self)._init_hook(item)
+
+
+class Asn_TSO_EXPTYPE(
+        AsnMixin_OpticalPath,
+        AsnMixin_Target,
+        AsnMixin_Base
+):
+    """Time-Series observations"""
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'exp_type': {
+                'value': (
+                    'mir_lrs-slitless'
+                    '|nis_soss'
+                    '|nrc_tsimage'
+                    '|nrc_tsgrism'
+                    '|nrs_brightobj'
+                ),
+                'inputs': ['exp_type'],
+                'force_unique': True
+            },
+            'no_tso_flag': {
+                'value': None,
+                'inputs': ['tsovisit'],
+                'required': False,
+                'force_undefined': True
+            }
+        })
+
+        super(Asn_TSO_EXPTYPE, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'tso3'
+        super(Asn_TSO_EXPTYPE, self)._init_hook(item)

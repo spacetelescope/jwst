@@ -1,0 +1,18 @@
+title: NIRSpec fixed-slit pixel area data model
+allOf:
+- $ref: referencefile.schema.yaml
+- $ref: keyword_filter.schema.yaml
+- $ref: keyword_grating.schema.yaml
+- $ref: keyword_exptype.schema.yaml
+- $ref: keyword_pexptype.schema.yaml
+- type: object
+  properties:
+    area_table:
+      title: NIRSpec fixed-slit pixel area table
+      fits_hdu: AREA
+      datatype:
+      - name: slit_id
+        datatype: [ascii, 15]
+      - name: pixarea
+        datatype: float32
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

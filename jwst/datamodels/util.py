@@ -6,7 +6,7 @@ from __future__ import absolute_import, unicode_literals, division, print_functi
 import sys
 from os.path import basename
 import numpy as np
-from astropy.extern import six
+import six
 from astropy.io import fits
 
 import logging
@@ -21,7 +21,6 @@ def open(init=None, extensions=None, **kwargs):
 
     Parameters
     ----------
-
     init : shape tuple, file path, file object, astropy.io.fits.HDUList,
            numpy array, dict, None
 
@@ -45,9 +44,8 @@ def open(init=None, extensions=None, **kwargs):
         A list of extensions to the ASDF to support when reading
         and writing ASDF files.
 
-   Results
+    Returns
     -------
-
     model : DataModel instance
     """
 
@@ -58,6 +56,7 @@ def open(init=None, extensions=None, **kwargs):
 
     hdulist = {}
     shape = ()
+    file_to_close = None
 
     # Get special cases for opening a model out of the way
     # all special cases return a model if they match
@@ -80,6 +79,7 @@ def open(init=None, extensions=None, **kwargs):
 
         if file_type == "fits":
             hdulist = fits.open(init)
+            file_to_close = hdulist
 
         elif file_type == "asn":
             # Read the file as an association / model container
@@ -106,6 +106,9 @@ def open(init=None, extensions=None, **kwargs):
 
     # If we have it, determine the shape from the science hdu
     if hdulist:
+        # So we don't need to open the image twice
+        init = hdulist
+
         try:
             hdu = hdulist[(fits_header_name('SCI'), 1)]
         except (KeyError, NameError):
@@ -143,6 +146,11 @@ def open(init=None, extensions=None, **kwargs):
 
     # Actually open the model
     model = new_class(init, extensions=extensions, **kwargs)
+    
+    # Close the hdulist if we opened it
+    if file_to_close is not None:
+        model._files_to_close.append(file_to_close)
+        
     return model
 
 
@@ -361,3 +369,48 @@ def ensure_ascii(s):
         if six.PY3:
             s = s.decode('ascii')
     return s
+
+
+def create_history_entry(description, software=None):
+    """
+    Create a HistoryEntry object.
+
+    Parameters
+    ----------
+    description : str
+        Description of the change.
+    software : dict or list of dict
+        A description of the software used.  It should not include
+        asdf itself, as that is automatically notated in the
+        `asdf_library` entry.
+
+        Each dict must have the following keys:
+
+        ``name``: The name of the software
+        ``author``: The author or institution that produced the software
+        ``homepage``: A URI to the homepage of the software
+        ``version``: The version of the software
+
+    Examples
+    --------
+    >>> soft = {'name': 'jwreftools', 'author': 'STSCI',
+                'homepage': 'https://github.com/spacetelescope/jwreftools', 'version': "0.7"}
+    >>> entry = create_history_entry(description="HISTORY of this file", software=soft)
+
+    """
+    from asdf.tags.core import Software, HistoryEntry
+    import datetime
+
+    if isinstance(software, list):
+            software = [Software(x) for x in software]
+    elif software is not None:
+        software = Software(software)
+
+    entry = HistoryEntry({
+        'description': description,
+        'time': datetime.datetime.utcnow()
+    })
+
+    if software is not None:
+        entry['software'] = software
+    return entry

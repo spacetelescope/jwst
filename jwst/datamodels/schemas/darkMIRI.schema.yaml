@@ -1,6 +1,13 @@
 title: MIRI Dark current data model
 allOf:
 - $ref: referencefile.schema.yaml
+- $ref: keyword_exptype.schema.yaml
+- $ref: keyword_readpatt.schema.yaml
+- $ref: keyword_preadpatt.schema.yaml
+- $ref: keyword_nframes.schema.yaml
+- $ref: keyword_ngroups.schema.yaml
+- $ref: keyword_groupgap.schema.yaml
+- $ref: subarray.schema.yaml
 - type: object
   properties:
     data:

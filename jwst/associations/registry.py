@@ -17,9 +17,9 @@ import sys
 from . import libpath
 from .exceptions import (
     AssociationError,
-    AssociationNotValidError,
-    AssociationProcessMembers,
+    AssociationNotValidError
 )
+from .lib.callback_registry import CallbackRegistry
 
 __all__ = ['AssociationRegistry']
 
@@ -56,6 +56,9 @@ class AssociationRegistry(dict):
         rules.
     """
 
+    # Callback registry
+    callback = CallbackRegistry()
+
     def __init__(self,
                  definition_files=None,
                  include_default=True,
@@ -86,15 +89,12 @@ class AssociationRegistry(dict):
         self.schemas = []
         Utility = type('Utility', (object,), {})
         for fname in definition_files:
-            logger.debug('Import rules files "{}"'.format(fname))
             module = import_from_file(fname)
-            logger.debug('Module="{}"'.format(module))
             self.schemas += [
                 schema
-                for schema in find_member(module, 'ASN_SCHEMA')
+                for schema in find_object(module, 'ASN_SCHEMA')
             ]
             for class_name, class_object in get_classes(module):
-                logger.debug('class_name="{}"'.format(class_name))
                 if include_bases or class_name.startswith(USER_ASN):
                     try:
                         rule_name = '_'.join([self.name, class_name])
@@ -113,13 +113,13 @@ class AssociationRegistry(dict):
     def rule_set(self):
         return self._rule_set
 
-    def match(self, member, version_id=None, allow=None, ignore=None):
-        """See if member belongs to any of the associations defined.
+    def match(self, item, version_id=None, allow=None, ignore=None):
+        """See if item belongs to any of the associations defined.
 
         Parameters
         ----------
-        member: dict
-            A member, like from a Pool, to find assocations for.
+        item: dict
+            A item, like from a Pool, to find assocations for.
 
         version_id: str
             If specified, a string appened to association names.
@@ -138,11 +138,10 @@ class AssociationRegistry(dict):
         -------
         (associations, reprocess_list): 2-tuple
             associations: [association,...]
-                List of associations member belongs to. Empty if none match
+                List of associations item belongs to. Empty if none match
             reprocess_list: [AssociationReprocess, ...]
                 List of reprocess events.
         """
-        logger.debug('Starting...')
         if allow is None:
             allow = self.rule_set
         if ignore is None:
@@ -151,17 +150,10 @@ class AssociationRegistry(dict):
         process_list = []
         for name, rule in self.items():
             if rule not in ignore and rule in allow:
-                logger.debug('Checking membership for rule "{}"'.format(rule))
-                try:
-                    associations.append(rule(member, version_id))
-                except AssociationError as error:
-                    logger.debug('Rule "{}" not matched'.format(name))
-                    logger.debug('Reason="{}"'.format(error))
-                except AssociationProcessMembers as process_event:
-                    logger.debug('Process event "{}"'.format(process_event))
-                    process_list.append(process_event)
-                else:
-                    logger.debug('Member belongs to rule "{}"'.format(rule))
+                asn, reprocess = rule.create(item, version_id)
+                process_list.extend(reprocess)
+                if asn is not None:
+                    associations.append(asn)
         return associations, process_list
 
     def validate(self, association):
@@ -259,13 +251,22 @@ class AssociationRegistry(dict):
             if first:
                 break
         if len(results) == 0:
-            logger.debug('Data did not validate against any rule.')
             raise lasterr
         if first:
             return results[0]
         else:
             return results
 
+    def finalize(self, associations):
+        """Finalize newly generated associations
+
+        Parameters
+        ----------
+        assocations: [association[, ...]]
+            The list of associations
+        """
+        finalized = self.callback.filter('finalize', associations)
+        return finalized
 
 # Utilities
 def import_from_file(filename):
@@ -292,27 +293,27 @@ def import_from_file(filename):
     return module
 
 
-def find_member(module, member):
-    """Find all instances of member in module or sub-modules
+def find_object(module, obj):
+    """Find all instances of object in module or sub-modules
 
     Parameters
     ----------
     module: module
         The module to recursively search through.
 
-    member: str
-        The member to find.
+    obj: str
+        The object to find.
 
     Returns
     -------
     values: iterator
-        Iterator that returns all values of the member
+        Iterator that returns all values of the object
     """
     for name, value in getmembers(module):
         if ismodule(value) and name.startswith('asn_'):
-            for inner_value in find_member(value, member):
+            for inner_value in find_object(value, obj):
                 yield inner_value
-        elif name == member:
+        elif name == obj:
             yield value
 
 
@@ -326,15 +327,13 @@ def get_classes(module):
 
     Returns
     -------
-    class members: generator
+    class object: generator
         A generator that will yield all class members in the module.
     """
-    logger.debug('Called.')
     for class_name, class_object in getmembers(
             module,
             lambda o: isclass(o) or ismodule(o)
     ):
-        logger.debug('name="{}" object="{}"'.format(class_name, class_object))
         if ismodule(class_object) and class_name.startswith('asn_'):
             for sub_name, sub_class in get_classes(class_object):
                 yield sub_name, sub_class

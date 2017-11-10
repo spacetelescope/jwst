@@ -68,8 +68,8 @@ def ifu_coords(fname, output=None):
         imhdu.header['PLANE4'] = 'slit_y, relative to center (0, 0)'
         imhdu.header['SLIT'] = "SLIT_{0}".format(i)
         # -1 and +1 are to express this in 1-based coordinates
-        imhdu.header['CRVAL1'] = model.meta.subarray.xstart -1 + int(_toindex(slit.bounding_box[0][0])) + 1
-        imhdu.header['CRVAL2'] = model.meta.subarray.xstart -1 + int(_toindex(slit.bounding_box[1][0])) + 1
+        imhdu.header['CRVAL1'] = model.meta.subarray.xstart - 1 + int(_toindex(slit.bounding_box[0][0])) + 1
+        imhdu.header['CRVAL2'] = model.meta.subarray.xstart - 1 + int(_toindex(slit.bounding_box[1][0])) + 1
         # Input coordinates will be 1-based.
         imhdu.header['CRPIX1'] = 1
         imhdu.header['CRPIX2'] = 1
@@ -139,8 +139,8 @@ def compute_world_coordinates(fname, output=None):
         imhdu.header['PLANE4'] = 'slit_y, relative to center (0, 0)'
         imhdu.header['SLIT'] = slit.name
         # add the overall subarray offset
-        imhdu.header['CRVAL1'] = slit.xstart -1 + model.meta.subarray.xstart
-        imhdu.header['CRVAL2'] = slit.ystart -1 + model.meta.subarray.ystart
+        imhdu.header['CRVAL1'] = slit.xstart - 1 + model.meta.subarray.xstart
+        imhdu.header['CRVAL2'] = slit.ystart - 1 + model.meta.subarray.ystart
         # Input coordinates will be 1-based.
         imhdu.header['CRPIX1'] = 1
         imhdu.header['CRPIX2'] = 1
@@ -200,8 +200,8 @@ def imaging_coords(fname, output=None):
     imhdu.header['PLANE3'] = '{0}_y, deg'.format(output_frame)
     imhdu.header['SLIT'] = "SLIT_{0}".format(i)
     # add the overall subarray offset
-    imhdu.header['CRVAL1'] = model.meta.subarray.xstart -1 + int(_toindex(bb[0][0]))
-    imhdu.header['CRVAL2'] = model.meta.subarray.ystart -1 + int(_toindex(bb[1][0]))
+    imhdu.header['CRVAL1'] = model.meta.subarray.xstart - 1 + int(_toindex(bb[0][0]))
+    imhdu.header['CRVAL2'] = model.meta.subarray.ystart - 1 + int(_toindex(bb[1][0]))
     # Input coordinates will be 1-based.
     imhdu.header['CRPIX1'] = 1
     imhdu.header['CRPIX2'] = 1

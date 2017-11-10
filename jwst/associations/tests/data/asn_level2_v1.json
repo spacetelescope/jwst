@@ -1,0 +1,29 @@
+{
+    "asn_rule": "Asn_MIRI_BkgChop",
+    "targname": "2MASS-J00243075-6635527",
+    "asn_pool": "jw82600_001_20160304T145416_pool",
+    "program": "82600",
+    "members": [{
+                    "exptype": "SCIENCE",
+                    "expname": "test_lrs1_rate.fits",
+                    "bkgexps": [{"expname": "test_lrsbkg_rate.fits"}]
+                },
+                {
+                    "exptype": "SCIENCE",
+                    "expname": "test_lrs2_rate.fits",
+                    "bkgexps": [{"expname": "test_lrsbkg_rate.fits"}]
+                },
+                {
+                    "exptype": "SCIENCE",
+                    "expname": "test_lrs3_rate.fits",
+                    "bkgexps": [{"expname": "test_lrsbkg_rate.fits"}]
+                },
+                {
+                    "exptype": "SCIENCE",
+                    "expname": "test_lrs4_rate.fits",
+                    "bkgexps": [{"expname": "test_lrsbkg_rate.fits"}]
+                }
+            ],
+    "asn_type": "background",
+    "asn_id": "a3002"
+}

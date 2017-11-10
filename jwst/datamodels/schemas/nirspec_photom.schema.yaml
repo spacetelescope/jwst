@@ -1,6 +1,7 @@
 title: NIRSpec Image, IFU, and MOS photometric flux conversion data model
 allOf:
 - $ref: photom.schema.yaml
+- $ref: keyword_pexptype.schema.yaml
 - type: object
   properties:
     phot_table:

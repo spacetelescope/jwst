@@ -1,6 +1,9 @@
 """Test basic usage of Level2 associations"""
 from __future__ import absolute_import
 
+import pytest
+import re
+
 from .helpers import (
     combine_pools,
     registry_level2_only,
@@ -9,53 +12,60 @@ from .helpers import (
 
 from .. import (
     generate,
-    load_asn
+    load_asn,
 )
+from ..main import Main
+
+NONSSCIENCE = ['background']
+REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)'
 
 
-def test_level2_schema():
+def from_level2_schema():
     with open(t_path('data/asn_level2.json')) as asn_file:
         asn = load_asn(asn_file)
-    assert len(asn['members']) == 4
-    member = asn['members'][0]
-    assert member['expname'] == 'test_lrs1_rate.fits'
-    assert member['exptype'] == 'SCIENCE'
-    assert isinstance(member['bkgexps'], list)
-    bkg = member['bkgexps'][0]
-    assert bkg['expname'] == 'test_lrsbkg_rate.fits'
+    return [asn]
 
 
-def test_level2_image():
-    """Test creation of a Level 2 image association"""
+def generate_from_pool(pool_path):
+    """Generate associations from pools"""
     rules = registry_level2_only()
-    pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
+    pool = combine_pools(t_path(pool_path))
     asns, orphaned = generate(pool, rules)
-    assert len(asns) == 1
-    len(orphaned) == 0
-    asn = asns[0]
-    assert asn['asn_rule'] == 'Asn_Lv2Image'
-    assert asn['asn_type'] == 'image2'
-    assert len(asn['members']) == 8
-    member = asn['members'][0]
-    base_keys = {'expname', 'exptype'}
-    assert base_keys.issubset(member.keys())
-    assert member['expname'] == 'jw_00001_rate.fits'
-    assert member['exptype'] == 'SCIENCE'
+    return asns
 
 
-def test_level2_spec():
-    """Test creation of a Level 2 spectral association"""
-    rules = registry_level2_only()
-    pool = combine_pools(t_path('data/pool_007_spec_miri.csv'))
-    asns, orphaned = generate(pool, rules)
-    assert len(asns) == 1
-    len(orphaned) == 0
-    asn = asns[0]
-    assert asn['asn_rule'] == 'Asn_Lv2Spec'
-    assert asn['asn_type'] == 'spec2'
-    assert len(asn['members']) == 5
-    member = asn['members'][0]
-    base_keys = {'expname', 'exptype'}
-    assert base_keys.issubset(member.keys())
-    assert member['expname'] == 'jw_00001_rate.fits'
-    assert member['exptype'] == 'SCIENCE'
+def cmd_from_pool(pool_path, args):
+    """Run commandline on pool
+
+    Parameters
+    ---------
+    pool_path: str
+        The pool to run on.
+
+    args: [arg(, ...)]
+        Additional command line arguments in the form `sys.argv`
+    """
+    full_args = [
+        '--dry-run',
+        '-D',
+        '-r',
+        t_path('../lib/rules_level2b.py'),
+        '--ignore-default'
+    ]
+    full_args.extend(args)
+    result = Main(full_args, pool=pool_path)
+    return result
+
+
+def test_level2_productname():
+    asns = generate_from_pool('data/pool_002_image_miri.csv')
+    for asn in asns:
+        for product in asn['products']:
+            science = [
+                member
+                for member in product['members']
+                if member['exptype'] == 'science'
+            ]
+            assert len(science) == 1
+            match = re.match(REGEX_LEVEL2A, science[0]['expname'])
+            assert match.groupdict()['path'] == product['name']

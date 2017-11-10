@@ -2,16 +2,92 @@
 from backports.tempfile import TemporaryDirectory
 from collections import namedtuple
 from contextlib import contextmanager
+from copy import copy
 from glob import glob
 import os
 import pytest
 import re
+
+from ...tests.helpers import runslow
 
 from astropy.table import (Table, vstack)
 
 from .. import (AssociationRegistry, AssociationPool, generate)
 from ..association import is_iterable
 from ..lib.counter import Counter
+
+
+# Compare associations
+def compare_asns(left, right):
+    """Compare two associations
+
+    This comparison will include metadata such as
+    `asn_type` and membership
+
+    Parameters
+    ---------
+    left, right: dict
+        Two, individual, associations to compare
+
+    Returns
+    -------
+    equality: boolean
+
+    Raises
+    ------
+    AssertionError
+    """
+
+    # Metadata
+    assert left['asn_type'] == right['asn_type']
+
+    # Membership
+    return compare_membership(left, right)
+
+
+def compare_membership(left, right):
+    """Compare two associations' membership
+
+    Parameters
+    ---------
+    left, right: dict
+        Two, individual, associations to compare
+
+    Returns
+    -------
+    equality: boolean
+
+    Raises
+    ------
+    AssertionError
+    """
+    products_left = left['products']
+    products_right = copy(right['products'])
+    assert len(products_left) == len(products_right)
+    for left_product in products_left:
+        left_product_name = components(left_product['name'])
+        for right_product in products_right:
+            if components(right_product['name']) != left_product_name:
+                continue
+            assert len(right_product['members']) == len(left_product['members'])
+            members_right = copy(right_product['members'])
+            for left_member in left_product['members']:
+                for right_member in members_right:
+                    if left_member['expname'] != right_member['expname']:
+                        continue
+                    assert left_member['exptype'] == right_member['exptype']
+                    members_right.remove(right_member)
+                    break
+            assert len(members_right) == 0
+            products_right.remove(right_product)
+            break
+    assert len(products_right) == 0
+    return True
+
+
+def components(s):
+    """split string into its components"""
+    return set(re.split('[_-]', s))
 
 
 # Define how to setup initial conditions with pools.
@@ -220,9 +296,9 @@ def fmt_cand(candidate_list):
     evaled_list = []
     for cid, ctype in candidate_list:
         if isinstance(cid, int):
-            if ctype == 'OBSERVATION' and cid < 1000:
+            if ctype == 'observation' and cid < 1000:
                 cid_format = 'o{:0>3d}'
-            elif ctype in ['MOSAIC'] and cid >= 1000 and cid < 3000:
+            elif cid >= 1000 and cid < 3000:
                 cid_format = 'c{:0>4d}'
             else:
                 cid_format = 'r{:0>4d}'
@@ -237,7 +313,7 @@ def fmt_cand(candidate_list):
 
 def fmt_fname(expnum):
     """Format the filename"""
-    return 'jw_{:0>5d}_uncal.fits'.format(next(expnum))
+    return 'jw_{:0>5d}_uncal.fits'.format(expnum)
 
 
 def generate_params(request):

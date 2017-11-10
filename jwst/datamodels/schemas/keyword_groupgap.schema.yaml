@@ -1,0 +1,12 @@
+type: object
+properties:
+  meta:
+    type: object
+    properties:
+      exposure:
+        type: object
+        properties:
+          groupgap:
+            title: Number of frames dropped between groups
+            type: integer
+            fits_keyword: GROUPGAP

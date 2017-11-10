@@ -1,5 +1,6 @@
 allOf:
 - $ref: core.schema.yaml
+- $ref: wcsinfo.schema.yaml
 - $ref: bunit.schema.yaml
 - type: object
   properties:
@@ -18,10 +19,23 @@ allOf:
           title: EXTNAME of the extension containing data quality mask
           type: string
           fits_keyword: MASKEXT
-        data_model_type:
-          title: type of data model used to construct object
+        roi_spatial:
+          title: Size of ROI in spatial dimension arcs seconds
+          type: number
+          fits_keyword: ROIS
+        roi_wave:
+          title: Size of ROI in wavelength dimension microns
+          type: number
+          fits_keyword: ROIW
+        weighting:
+          title: Type of weighting type (MSM,MIRIPSF,AREA)
           type: string
-          fits_keyword: DATAMODL
+          fits_keyword: WTYPE
+        weight_power:
+          title: Weighting power for Modified Shepard Method
+          type: number
+          fits_keyword: WPOWER
+
 - type: object
   properties:
     data:

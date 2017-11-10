@@ -1,0 +1,49 @@
+{
+    "asn_type": "image2",
+    "asn_rule": "candidate_Asn_Lv2Image",
+    "version_id": null,
+    "code_version": "0.8.0",
+    "program": "90001",
+    "target": "1",
+    "asn_pool": "jw90001_20171108T043223_pool",
+    "constraints": "Constraints:\n    single_science: {'False'}\n    exp_type: {'nis_image'}\n    program: {'90001'}\n    target: {'1'}\n    instrument: {'niriss'}\n    detector: {'nis'}\n    opt_elem: {'clear'}\n    opt_elem2: {'f158m'}\n    subarray: {'full'}\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "asn_id": "o001",
+    "products": [
+        {
+            "name": "jw90001001002_02101_00001_nis",
+            "members": [
+                {
+                    "expname": "jw90001001002_02101_00001_nis_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw90001001003_02101_00001_nis",
+            "members": [
+                {
+                    "expname": "jw90001001003_02101_00001_nis_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw90001001001_02101_00001_nis",
+            "members": [
+                {
+                    "expname": "jw90001001001_02101_00001_nis_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw90001001004_02101_00001_nis",
+            "members": [
+                {
+                    "expname": "jw90001001004_02101_00001_nis_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}

@@ -11,7 +11,7 @@ from astropy import units as u
 from astropy import coordinates as coord
 from gwcs import coordinate_frames as cf
 
-from .util import not_implemented_mode
+from .util import not_implemented_mode, subarray_transform
 from . import pointing
 
 
@@ -51,10 +51,15 @@ def imaging(input_model, reference_files):
     # V2, V3 to sky
     tel2sky = pointing.v23tosky(input_model)
 
+    subarray2full = subarray_transform(input_model)
     if reference_files:
-        distortion = imaging_distortion(input_model, reference_files)
+        imdistortion = imaging_distortion(input_model, reference_files)
+        distortion = subarray2full | imdistortion
+        distortion.bounding_box = imdistortion.bounding_box
+        del imdistortion.bounding_box
     else:
-        distortion = models.Identity(2)
+        distortion = subarray2full
+
     pipeline = [(detector, distortion),
                 (v2v3, tel2sky),
                 (world, None)]
@@ -71,14 +76,15 @@ def imaging_distortion(input_model, reference_files):
     except NotImplementedError:
         shape = input_model.data.shape
         # Note: Since bounding_box is attached to the model here it's in reverse order.
-        transform.bounding_box = ((-0.5, shape[0] - 0.5),
-                                  (-0.5 , shape[1] - 0.5))
+        bb = ((-0.5, shape[0] - 0.5),
+              (-0.5, shape[1] - 0.5))
+    transform.bounding_box = bb
     return transform
 
 
 exp_type2transform = {'fgs_image': imaging,
                       'fgs_focus': imaging,
-                      'fgs_skyflat': imaging,
-                      'fgs_intflat': imaging,
+                      'fgs_skyflat': not_implemented_mode,
+                      'fgs_intflat': not_implemented_mode,
                       'fgs_dark': not_implemented_mode
                       }

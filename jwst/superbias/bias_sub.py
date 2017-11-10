@@ -7,6 +7,7 @@ from __future__ import division
 import numpy as np
 import logging
 from .. import datamodels
+from ..lib import reffile_utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -33,13 +34,13 @@ def do_correction(input_model, bias_model):
 
     """
 
-    # Replace NaN's in the superbias with zeros
-    bias_model.data[np.isnan(bias_model.data)] = 0.0
-
     # Check for subarray mode and extract subarray from the
     # bias reference data if necessary
-    if not ref_matches_sci(bias_model, input_model):
-        bias_model = get_subarray(bias_model, input_model)
+    if not reffile_utils.ref_matches_sci(input_model, bias_model):
+        bias_model = reffile_utils.get_subarray_model(input_model, bias_model)
+
+    # Replace NaN's in the superbias with zeros
+    bias_model.data[np.isnan(bias_model.data)] = 0.0
 
     # Subtract the bias ref image from the science data
     output_model = subtract_bias(input_model, bias_model)
@@ -82,65 +83,3 @@ def subtract_bias(input, bias):
     output.data -= bias.data
 
     return output
-
-
-def ref_matches_sci(ref_model, sci_model):
-
-    # See if the reference and science model subarray parameters match
-    if (ref_model.meta.subarray.xstart == sci_model.meta.subarray.xstart and
-        ref_model.meta.subarray.xsize == sci_model.meta.subarray.xsize and
-        ref_model.meta.subarray.ystart == sci_model.meta.subarray.ystart and
-        ref_model.meta.subarray.ysize == sci_model.meta.subarray.ysize):
-        return True
-    else:
-        return False
-
-
-def get_subarray(ref_model, sci_model):
-
-    sci_x1 = sci_model.meta.subarray.xstart
-    sci_x2 = sci_model.meta.subarray.xsize
-    sci_y1 = sci_model.meta.subarray.ystart
-    sci_y2 = sci_model.meta.subarray.ysize
-    log.debug("sci xstart=%d, xsize=%d, ystart=%d, ysize=%d" % (sci_x1, sci_x2,
-               sci_y1, sci_y2))
-    ref_x1 = ref_model.meta.subarray.xstart
-    ref_x2 = ref_model.meta.subarray.xsize
-    ref_y1 = ref_model.meta.subarray.ystart
-    ref_y2 = ref_model.meta.subarray.ysize
-    if ref_x1 is None or ref_x2 is None or ref_y1 is None or ref_y2 is None:
-        if ref_model.data.shape[-1] == 2048 and ref_model.data.shape[-2] == 2048:
-            ref_x1 = 1
-            ref_x2 = 2048
-            ref_y1 = 1
-            ref_y2 = 2048
-        else:
-            log.error("Missing subarray corner/size keywords in ref file")
-            raise ValueError("Can't determine ref file readout properties")
-    log.debug("ref xstart=%d, xsize=%d, ystart=%d, ysize=%d" % (ref_x1, ref_x2,
-               ref_y1, ref_y2))
-
-    # Compute the slicing indexes
-    xstart = sci_x1 - ref_x1
-    ystart = sci_y1 - ref_y1
-    xstop = xstart + sci_model.meta.subarray.xsize
-    ystop = ystart + sci_model.meta.subarray.ysize
-    log.debug("slice xstart=%d, xstop=%d, ystart=%d, ystop=%d" % (xstart, xstop, ystart, ystop))
-
-    # Check for errors in the slice indexes
-    if (xstart < 0) or (ystart < 0) or \
-       ((xstop-1) > ref_model.data.shape[-1]) or \
-       ((ystop-1) > ref_model.data.shape[-2]):
-        log.error("Science and reference file arrays not compatible")
-        raise ValueError("Can't extract matching subarray from reference data")
-
-    # Slice the reference model arrays
-    sub_data = ref_model.data[ystart:ystop, xstart:xstop]
-    sub_err = ref_model.err[ystart:ystop, xstart:xstop]
-    sub_dq = ref_model.dq[ystart:ystop, xstart:xstop]
-
-    # Create the sliced model
-    sub_model = datamodels.SuperBiasModel(data=sub_data, err=sub_err, dq=sub_dq)
-
-    # Return the sliced reference model
-    return sub_model

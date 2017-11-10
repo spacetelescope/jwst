@@ -1,6 +1,3 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
-# -*- coding: utf-8 -*-
-
 from __future__ import absolute_import, division, unicode_literals, print_function
 
 import os
@@ -34,7 +31,7 @@ def teardown():
 def _header_to_dict(x):
     return dict((a, b) for (a, b, c) in x)
 
-'''
+
 def test_wcs():
     with ImageModel(FITS_FILE) as dm:
         wcs1 = dm.get_fits_wcs()
@@ -50,8 +47,7 @@ def test_wcs():
     wcs1.wcs.crpix[0] = 42.0
 
     dm2.set_fits_wcs(wcs1)
-    header = _header_to_dict(dm2.extra_fits.PRIMARY.header)
-    assert header['CRPIX1'] == 42.0
+    assert dm2.meta.wcsinfo.crpix1 == 42.0
 
     wcs2 = dm2.get_fits_wcs()
     assert wcs2.wcs.crpix[0] == 42.0
@@ -75,4 +71,3 @@ def test_wcs():
         wcs5 = dm5.get_fits_wcs()
 
     assert wcs5.wcs.crpix[0] == 42.0
-'''

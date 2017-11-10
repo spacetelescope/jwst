@@ -33,8 +33,9 @@ Pipeline
 
 from __future__ import absolute_import, division, print_function
 
-from os.path import dirname, join
 import gc
+from os.path import dirname, join, split, splitext
+import re
 
 from .configobj.configobj import Section
 
@@ -45,6 +46,14 @@ from . import Step
 class Pipeline(Step):
     """
     A Pipeline is a way of combining a number of steps together.
+    """
+
+    # Configuration
+    spec = """
+    output_basename = string(default=None)    # Output base name
+    output_ext = string(default=".fits")      # Output extension
+    suffix = string(default=None)             # Suffix for output file name
+    output_use_model = boolean(default=False) # force use `meta.filename` as the output name
     """
     # A set of steps used in the Pipeline.  Should be overridden by
     # the subclass.
@@ -70,6 +79,37 @@ class Pipeline(Step):
 
             setattr(self, key, new_step)
 
+        self.reference_file_types = self._collect_active_reftypes()
+
+    def _collect_active_reftypes(self):
+        """Collect the list of all reftypes for child Steps that are not skipped.
+        Overridden reftypes are included but handled normally later by the Pipeline 
+        version of the _get_ref_override() method defined below.
+        """
+        return [reftype for step in self._unskipped_steps
+                for reftype in step.reference_file_types]
+
+    @property 
+    def _unskipped_steps(self):
+        """Return a list of the unskipped Step objects launched by `self`."""
+        return [getattr(self, name) for name in self.step_defs.keys()
+                if not getattr(self, name).skip]
+
+    def _get_ref_override(self, reference_file_type):
+        """Return any override for `reference_file_type` for any of the steps in
+        Pipeline `self`.  OVERRIDES Step.
+        
+        Returns
+        -------
+        override_filepath or None.
+
+        """
+        for step in self._unskipped_steps:
+            override = step._get_ref_override(reference_file_type)
+            if override is not None:
+                return override
+        return None
+            
     @classmethod
     def merge_config(cls, config, config_file):
         steps = config.get('steps', {})
@@ -114,29 +154,6 @@ class Pipeline(Step):
             step['class'] = "string(default='')"
 
         return spec
-
-    def _precache_reference_files(self, input_file):
-        """
-        Precache all of the expected reference files in this Pipeline
-        and all of its constituent Steps process method is called.
-        """
-        from .. import datamodels
-        gc.collect()
-        if self._is_association_file(input_file):
-            return
-        try:
-            with datamodels.open(input_file) as model:
-                pass
-        except (ValueError, TypeError, IOError):
-            self.log.info(
-                'First argument {0} does not appear to be a '
-                'model'.format(input_file))
-        else:
-            super(Pipeline, self)._precache_reference_files(input_file)
-            for name in self.step_defs.keys():
-                step = getattr(self, name)
-                step._precache_reference_files(input_file)
-        gc.collect()
 
     def set_input_filename(self, path):
         self._input_filename = path

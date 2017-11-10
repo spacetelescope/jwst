@@ -28,7 +28,9 @@ pixel = {'GOOD': 0,
          'OPEN': 67108864,
          'ADJ_OPEN': 134217728,
          'UNRELIABLE_RESET': 268435456,
-         'OTHER_BAD_PIXEL': 536870912
+         'MSA_FAILED_OPEN': 536870912,
+         'OTHER_BAD_PIXEL': 1073741824,
+         'REFERENCE_PIXEL': 2147483648
 }
 
 group = {'GOOD': 0,

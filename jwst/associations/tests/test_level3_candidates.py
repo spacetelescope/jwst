@@ -10,6 +10,7 @@ from .helpers import (
 
 from ..main import Main
 
+
 @pytest.mark.parametrize(
     "partial_args, n_asns",
     [
@@ -44,17 +45,19 @@ from ..main import Main
         # Whole program
         (
             [],
-            20
+            22
         ),
         # Discovered only
         (
             ['--discover'],
-            0
+            2
         ),
     ]
 )
 def test_candidate_observation(partial_args, n_asns):
-    with mkstemp_pool_file(t_path('data/pool_001_candidates.csv')) as pool_path:
+    with mkstemp_pool_file(
+            t_path('data/pool_001_candidates.csv')
+    ) as pool_path:
         cmd_args = [
             pool_path,
             '--dry-run',

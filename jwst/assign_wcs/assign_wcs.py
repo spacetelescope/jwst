@@ -4,7 +4,7 @@ from __future__ import (absolute_import, unicode_literals, division,
 import logging
 import importlib
 from gwcs.wcs import WCS
-
+from.util import update_s_region
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -28,6 +28,7 @@ def load_wcs(input_model, reference_files={}):
     mod = importlib.import_module('.' + instrument, 'jwst.assign_wcs')
 
     pipeline = mod.create_pipeline(input_model, reference_files)
+
     # Initialize the output model as a copy of the input
     # Make the copy after the WCS pipeline is created in order to pass updates to the model.
     if pipeline is None:
@@ -39,6 +40,16 @@ def load_wcs(input_model, reference_files={}):
         wcs = WCS(pipeline)
         output_model.meta.wcs = wcs
         output_model.meta.cal_step.assign_wcs = 'COMPLETE'
+        exclude_types = ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ', 'NRS_IFU',
+                         'NRS_MSASPEC', 'NRS_LAMP', 'MIR_MRS', 'NIS_SOSS',
+                         'NRC_GRISM', 'NRC_TSGRISM', 'NIS_WFSS']
+
+        if output_model.meta.exposure.type not in exclude_types:
+            orig_s_region = output_model.meta.wcsinfo.s_region.strip()
+            update_s_region(output_model)
+            if orig_s_region != output_model.meta.wcsinfo.s_region.strip():
+                log.info("assign_wcs updated S_REGION to {0}".format(output_model.meta.wcsinfo.s_region))
+        else:
+            log.info("assign_wcs did not update S_REGION for type {0}".format(output_model.meta.exposure.type))
         log.info("COMPLETED assign_wcs")
     return output_model
-

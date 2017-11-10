@@ -1,36 +1,27 @@
-from __future__ import (division, print_function, unicode_literals, 
+from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
-import os
-import os.path
-
 import numpy as np
-from astropy import wcs
-from astropy.io import fits
-
-from gwcs import wcs
 
 from drizzle import util
 from drizzle import doblot
 from drizzle import cdrizzle
 from . import resample_utils
 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 
 class GWCSDrizzle(object):
     """
     Combine images using the drizzle algorithm
     """
-    def __init__(self, product="", outwcs=None, single=False,
+    def __init__(self, product, outwcs=None, single=False,
                  wt_scl="exptime", pixfrac=1.0, kernel="square",
                  fillval="INDEF"):
         """
         Create a new Drizzle output object and set the drizzle parameters.
-
-        All parameters are optional, but either infile or outwcs must be supplied.
-        If infile initializes the object from a file written after a
-        previous run of drizzle. Results from the previous run will be combined
-        with new results. The value passed in outwcs will be ignored. If infile is
-        not set, outwcs will be used to initilize a new run of drizzle.
 
         Parameters
         ----------
@@ -41,10 +32,9 @@ class GWCSDrizzle(object):
             and image id bitmap, repectively. The WCS of the combined image is
             also read from the SCI extension.
 
-        outwcs : wcs, optional
-            The world coordinate system (WCS) of the combined image. This
-            parameter must be present if no input file is given and is ignored if
-            one is.
+        outwcs : `gwcs.WCS`
+            The world coordinate system (WCS) of the resampled image.  If not
+            provided, the WCS is taken from product.
 
         wt_scl : str, optional
             How each input image should be scaled. The choices are `exptime`
@@ -79,7 +69,6 @@ class GWCSDrizzle(object):
         self.outexptime = 0.0
         self.uniqid = 0
 
-        self.outwcs = outwcs
         self.wt_scl = wt_scl
         self.kernel = kernel
         self.fillval = fillval
@@ -107,11 +96,13 @@ class GWCSDrizzle(object):
         self.out_units = out_units = product.meta.resample.drizzle_output_units or "cps"
 
         self.outsci = product.data
-        self.outwcs = product.meta.wcs
+        if outwcs:
+            self.outwcs = outwcs
+        else:
+            self.outwcs = product.meta.wcs
 
         self.outwht = product.wht
         self.outcon = product.con
-
 
         if self.outcon.ndim == 2:
             self.outcon = np.reshape(self.outcon, (1,
@@ -125,12 +116,8 @@ class GWCSDrizzle(object):
             raise ValueError("Drizzle context image has wrong dimensions: \
                 {0}".format(product))
 
-
         # Check field values
-
-        if self.outwcs:
-            pass
-        else:
+        if not self.outwcs:
             raise ValueError("Either an existing file or wcs must be supplied")
 
         if util.is_blank(self.wt_scl):
@@ -224,7 +211,7 @@ class GWCSDrizzle(object):
         elif self.wt_scl == "expsq":
             wt_scl = expin * expin
 
-        wt_scl = 1.0 # hard-coded for JWST count-rate data
+        wt_scl = 1.0  # hard-coded for JWST count-rate data
         self.increment_id()
 
         dodrizzle(insci, inwcs, inwht, self.outwcs,
@@ -235,45 +222,6 @@ class GWCSDrizzle(object):
                             pixfrac=self.pixfrac, kernel=self.kernel,
                             fillval=self.fillval)
 
-    def blot_fits_file(self, infile, interp='poly5', sinscl=1.0):
-        """
-        Resample the output using another image's world coordinate system.
-
-        Parameters
-        ----------
-
-        infile : str
-            The name of the fits file containing the world coordinate
-            system that the output file will be resampled to. The name may
-            possibly include an extension.
-
-        interp : str, optional
-            The type of interpolation used in the resampling. The
-            possible values are "nearest" (nearest neighbor interpolation),
-            "linear" (bilinear interpolation), "poly3" (cubic polynomial
-            interpolation), "poly5" (quintic polynomial interpolation),
-            "sinc" (sinc interpolation), "lan3" (3rd order Lanczos
-            interpolation), and "lan5" (5th order Lanczos interpolation).
-
-        sincscl : float, optional
-            The scaling factor for sinc interpolation.
-        """
-        blotwcs = None
-
-        fileroot, extn = util.parse_filename(infile)
-
-        if os.path.exists(fileroot):
-            handle = fits.open(fileroot)
-            hdu = util.get_extn(handle, extn=extn)
-
-            if hdu is not None:
-                blotwcs = wcs.WCS(header=hdu.header)
-            handle.close()
-
-        if not blotwcs:
-            raise ValueError("Drizzle did not get a blot reference image")
-
-        self.blot_image(blotwcs, interp=interp, sinscl=sinscl)
 
     def blot_image(self, blotwcs, interp='poly5', sinscl=1.0):
         """
@@ -328,6 +276,7 @@ class GWCSDrizzle(object):
         # Increment the id
         self.uniqid += 1
 
+
 def dodrizzle(insci, input_wcs, inwht,
               output_wcs, outsci, outwht, outcon,
               expin, in_units, wt_scl,
@@ -346,7 +295,6 @@ def dodrizzle(insci, input_wcs, inwht,
 
     insci : 2d array
         A 2d numpy array containing the input image to be drizzled.
-        it is an error to not supply an image.
 
     input_wcs : gwcs.WCS object
         The world coordinate system of the input image.
@@ -492,13 +440,24 @@ def dodrizzle(insci, input_wcs, inwht,
         outcon = outcon[planeid]
 
     # Compute the mapping between the input and output pixel coordinates
-    pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs)
-    pixmap[np.isnan(pixmap)] = -1
+    # for use in drizzle.cdrizzle.tdriz
+    pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs, insci.shape)
+    # pixmap[np.isnan(pixmap)] = -10
+    # print("Number of NaNs: ", len(np.isnan(pixmap)) / 2)
+    # inwht[np.isnan(pixmap[:,:,0])] = 0.
 
-    #
+    log.debug("Pixmap shape: {}".format(pixmap[:,:,0].shape))
+    log.debug("Input Sci shape: {}".format(insci.shape))
+    log.debug("Output Sci shape: {}".format(outsci.shape))
+
+    # y_mid = pixmap.shape[0] // 2
+    # x_mid = pixmap.shape[1] // 2
+    # print("x slice: ", pixmap[y_mid,:,0])
+    # print("y slice: ", pixmap[:,x_mid,1])
+    # print("insci: ", insci)
+
     # Call 'drizzle' to perform image combination
-    # This call to 'cdriz.tdriz' uses the new C syntax
-    #
+    log.info('Drizzling {} --> {}'.format(insci.shape, outsci.shape))
     _vers, nmiss, nskip = cdrizzle.tdriz(
         insci, inwht, pixmap, outsci, outwht, outcon,
         uniqid=uniqid, xmin=xmin, xmax=xmax,

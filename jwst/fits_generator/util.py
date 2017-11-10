@@ -36,7 +36,7 @@ import textwrap
 
 # THIRD-PARTY
 from astropy.io import fits as pyfits
-from astropy.extern import six
+import six
 from astropy.time import Time
 
 def get_templates_dir():

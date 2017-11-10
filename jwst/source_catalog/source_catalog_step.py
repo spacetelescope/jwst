@@ -2,6 +2,7 @@
 
 from ..stpipe import Step, cmdline
 from ..datamodels import DrizProductModel
+from ..lib.catalog_utils import replace_suffix_ext
 from . import source_catalog
 
 
@@ -12,12 +13,11 @@ class SourceCatalogStep(Step):
     Parameters
     -----------
     input : str or `DrizProductModel`
-        A FITS filename or an `DrizProductModel` of a single drizzled
+        A FITS filename or a `DrizProductModel` of a single drizzled
         image.  The input image is assumed to be background subtracted.
     """
 
     spec = """
-        catalog_format = string(default='ecsv')   # Catalog output file format
         kernel_fwhm = float(default=2.0)    # Gaussian kernel FWHM in pixels
         kernel_xsize = float(default=5)     # Kernel x size in pixels
         kernel_ysize = float(default=5)     # Kernel y size in pixels
@@ -27,8 +27,6 @@ class SourceCatalogStep(Step):
     """
 
     def process(self, input):
-
-        catalog_format = self.catalog_format
         kernel_fwhm = self.kernel_fwhm
         kernel_xsize = self.kernel_xsize
         kernel_ysize = self.kernel_ysize
@@ -40,26 +38,25 @@ class SourceCatalogStep(Step):
             catalog = source_catalog.make_source_catalog(
                 model, kernel_fwhm, kernel_xsize, kernel_ysize, snr_threshold,
                 npixels, deblend=deblend)
+
+            if len(catalog) == 0:
+                self.log.info('No sources were found.  Source catalog will '
+                              'not be written.')
+                return
+
             self.log.info('Detected {0} sources'.format(len(catalog)))
 
-            catalog_filename = model.meta.filename.replace(
-                '.fits', '_cat.{0}'.format(catalog_format))
-            if catalog_format == 'ecsv':
-                fmt = 'ascii.ecsv'
-            elif catalog_format == 'fits':
-                # NOTE: The catalog must not contain any 'None' values.
-                #       FITS will also not clobber existing files.
-                fmt = 'fits'
-            else:
-                raise ValueError('catalog_format must be "ecsv" or "fits".')
-            catalog.write(catalog_filename, format=fmt)
-            self.log.info('Wrote source catalog: {0}'.
-                          format(catalog_filename))
-            model.meta.source_catalog.filename = catalog_filename
+            old_suffixes = ['i2d']
+            output_dir = self.search_attr('output_dir')
+            cat_filepath = replace_suffix_ext(model.meta.filename,
+                                              old_suffixes, 'cat',
+                                              output_ext='ecsv',
+                                              output_dir=output_dir)
+            catalog.write(cat_filepath, format='ascii.ecsv', overwrite=True)
+            self.log.info('Wrote source catalog: {0}'
+                          .format(cat_filepath))
+            model.meta.source_catalog.filename = cat_filepath
 
-        # because the is the last CALIMAGE3 step, nothing is returned
+        # nothing is returned because this is the last step
         return
 
-
-if __name__ == '__main__':
-    cmdline.step_script(source_catalog_step)

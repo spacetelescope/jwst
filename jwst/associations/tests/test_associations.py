@@ -1,9 +1,9 @@
 """test_associations: Test of general Association functionality."""
 from __future__ import absolute_import
+import os
 import pytest
 
 from . import helpers
-from .helpers import full_pool_rules
 
 from .. import (
     Association,
@@ -12,7 +12,7 @@ from .. import (
     generate)
 from ..registry import (
     import_from_file,
-    find_member
+    find_object
 )
 
 
@@ -77,72 +77,71 @@ def test_base_instatiation():
     assert Association()
 
 
-def test_global_constraints(full_pool_rules):
-    """Test that global constraints get applied to all rules"""
-    full_pool, default_rules, pool_fname = full_pool_rules
-
-    tests = {
-        'exists': {
-            'constraints': {
+@pytest.mark.parametrize(
+    'constraints, pool, n_asns',
+    [
+        (
+            {
                 'obs_id': {
                     'value': 'V99009001001P0000000002101',
-                    'inputs': ['OBS_ID']
+                    'inputs': ['obs_id']
                 }
             },
-            'pool': full_pool,
-            'n_asns': 2,
-        },
-        'empty': {
-            'constraints': {
+            helpers.t_path('data/mega_pool.csv'),
+            3,
+        ),
+        (
+            {
                 'obs_id': {
                     'value': 'junk',
-                    'inputs': ['OBS_ID']
+                    'inputs': ['obs_id']
                 }
             },
-            'pool': helpers.t_path('data/pool_001_candidates.csv'),
-            'n_asns': 0,
-        },
-        'combined_candidates': {
-            'constraints': {
+            helpers.t_path('data/pool_001_candidates.csv'),
+            0,
+        ),
+        (
+            {
                 'asn_candidate_id': {
                     'value': '.+(o001|o002).+',
-                    'inputs': ['ASN_CANDIDATE'],
+                    'inputs': ['asn_candidate'],
                     'force_unique': False,
                 }
             },
-            'pool': helpers.t_path('data/pool_001_candidates.csv'),
-            'n_asns': 3,
-        },
-        'exclusive_candidates': {
-            'constraints': {
+            helpers.t_path('data/pool_001_candidates.csv'),
+            22,
+        ),
+        (
+            {
                 'asn_candidate_id': {
                     'value': '.+(o001|o002).+',
-                    'inputs': ['ASN_CANDIDATE'],
+                    'inputs': ['asn_candidate'],
                     'force_unique': True,
                 }
             },
-            'pool': helpers.t_path('data/pool_001_candidates.csv'),
-            'n_asns': 6,
-        },
-    }
+            helpers.t_path('data/pool_001_candidates.csv'),
+            24,
+        ),
+    ]
+)
+def test_global_constraints(constraints, pool, n_asns):
+    """Test that global constraints get applied to all rules"""
+    rules = AssociationRegistry(
+        global_constraints=constraints
+    )
+    assert len(rules) >= 3
+    for constraint in constraints:
+        for rule in rules:
+            assert constraint in rules[rule].GLOBAL_CONSTRAINTS
 
-    for test_name, test in tests.items():
-        rules = AssociationRegistry(
-            global_constraints=test['constraints']
-        )
-        assert len(rules) >= 3
-        for constraint in test['constraints']:
-            for rule in rules:
-                assert constraint in rules[rule].GLOBAL_CONSTRAINTS
-
-        pool = helpers.combine_pools(test['pool'])
-        asns, orphaned = generate(pool, rules)
-        assert len(asns) == test['n_asns']
+    pool = helpers.combine_pools(pool)
+    asns, orphaned = generate(pool, rules)
+    assert len(asns) == n_asns
 
 
 def test_rulesets():
-    """Test finding members in a ruleset"""
+    """Test finding objects in a ruleset"""
     rule_file = helpers.t_path('../lib/association_rules.py')
     module = import_from_file(rule_file)
-    schemas = [schema for schema in find_member(module, 'ASN_SCHEMA')]
+    schemas = [schema for schema in find_object(module, 'ASN_SCHEMA')]
     assert len(schemas) == 2

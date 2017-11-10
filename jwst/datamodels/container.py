@@ -7,7 +7,7 @@ import warnings
 from collections import OrderedDict
 
 from asdf import AsdfFile
-from astropy.extern import six
+import six
 
 from ..associations import (
     AssociationError,
@@ -40,6 +40,8 @@ class ModelContainer(model_base.DataModel):
         - None: initializes an empty `ModelContainer` instance, to which
           DataModels can be added via the ``append()`` method.
 
+    persist: boolean. If True, do not close model after opening it
+    
     Examples
     --------
     >>> container = datamodels.ModelContainer('example_asn.json')
@@ -64,17 +66,16 @@ class ModelContainer(model_base.DataModel):
     # does not describe the data contents of the container.
     schema_url = "container.schema.yaml"
 
-    def __init__(self, init=None, **kwargs):
+    def __init__(self, init=None, persist=True, **kwargs):
 
         super(ModelContainer, self).__init__(init=None, **kwargs)
+        self._persist = persist
 
         if init is None:
             self._models = []
         elif isinstance(init, list):
-            for item in init:
-                if not isinstance(item, model_base.DataModel):
-                    raise ValueError('list must contain only DataModels')
-            self._models = init
+            self._validate_model(init)
+            self._models = init[:]
         elif isinstance(init, self.__class__):
             instance = copy.deepcopy(init._instance)
             self._schema = init._schema
@@ -96,15 +97,43 @@ class ModelContainer(model_base.DataModel):
                             'an ASN file'.format(init))
 
 
+    def _open_model(self, index):
+        model = self._models[index]
+        if isinstance(model, six.string_types):
+            model = datamodel_open(model,
+                                   extensions=self._extensions,
+                                   pass_invalid_values=self._pass_invalid_values)
+            self._models[index] = model
+                
+        return model
+
+
+    def _close_model(self, filename, index):
+        if not self._persist:
+            self._models[index].close()
+            self._models[index] = filename
+
+
+    def _validate_model(self, models):
+        if not isinstance(models, list):
+            models = [models]
+        for model in models:
+            if isinstance(model, ModelContainer):
+                raise ValueError("ModelContainer cannot contain ModelContainer")
+            if not isinstance(model, (six.string_types, model_base.DataModel)):
+                raise ValueError('model must be string or DataModel')
+
+
     def __len__(self):
         return len(self._models)
 
 
     def __getitem__(self, index):
-        return self._models[index]
+        return self._open_model(index)
 
 
     def __setitem__(self, index, model):
+        self._validate_model(model)
         self._models[index] = model
 
 
@@ -113,35 +142,39 @@ class ModelContainer(model_base.DataModel):
 
 
     def __iter__(self):
-        for model in self._models:
-            yield model
+        return ModelContainerIterator(self)
 
 
     def insert(self, index, model):
+        self._validate_model(model)
         self._models.insert(index, model)
 
 
     def append(self, model):
+        self._validate_model(model)
         self._models.append(model)
 
 
-    def extend(self, model):
-        self._models.extend(model)
+    def extend(self, models):
+        self._validate_model(models)
+        self._models.extend(models)
 
 
-    def pop(self, index=None):
-        if not index:
-            self._models.pop(-1)
-        else:
-            self._models.pop(index)
+    def pop(self, index=-1):
+        self._open_model(index)
+        return self._models.pop(index)
 
 
     def copy(self):
         """
         Returns a deep copy of the models in this model container.
         """
-
-        models_copy = [m.copy() for m in self._models]
+        models_copy = []
+        for model in self._models:
+            if isinstance(model, model_base.DataModel):
+                models_copy.append(model.copy())
+            else:
+                models_copy.append(model)
         return self.__class__(init=models_copy)
 
 
@@ -166,10 +199,7 @@ class ModelContainer(model_base.DataModel):
         # make a list of all the input FITS files
         infiles = [op.join(basedir, member['expname']) for member
                    in asn_data['products'][0]['members']]
-        try:
-            self._models = [datamodel_open(infile, **kwargs) for infile in infiles]
-        except IOError:
-            raise IOError('Cannot open {}'.format(infiles))
+        self._models = infiles
 
         # Pull the whole association table into meta.asn_table
         self.meta.asn_table = {}
@@ -186,12 +216,18 @@ class ModelContainer(model_base.DataModel):
         self.meta.asn_rule = str(asn_data['asn_rule'])
 
 
-    def save(self, path=None, *args, **kwargs):
+    def save(self, path_not_used, path=None, *args, **kwargs):
         """
         Write out models in container to FITS or ASDF.
 
         Parameters
         ----------
+        path_not_used : string
+            This first argument is ignored in this implementation of the
+            save method.  It is used by pipeline steps to save individual
+            files, but that is not applicable here.  Instead, we use the path
+            arg below and read the filename output from `meta.filename` in each
+            file in the container.
 
         path : string
             Directory to write out files.  Defaults to current working dir.
@@ -200,17 +236,18 @@ class ModelContainer(model_base.DataModel):
         """
         if path is None:
             path = os.getcwd()
-        try:
-            for model in self._models:
-                outpath = op.join(path, model.meta.filename)
+        for model in self:
+            outpath = op.join(path, model.meta.filename)
+            try:
                 model.save(outpath, *args, **kwargs)
-        except IOError as err:
-            raise err
+            except IOError as err:
+                raise err
 
 
-    def __assign_group_ids(self):
+    @property
+    def models_grouped(self):
         """
-        Assign an ID grouping by exposure.
+        Returns a list of a list of datamodels grouped by exposure.
 
         Data from different detectors of the same exposure will have the
         same group id, which allows grouping by exposure.  The following
@@ -226,9 +263,12 @@ class ModelContainer(model_base.DataModel):
         meta.instrument.name
         meta.instrument.channel
         """
-        for i, model in enumerate(self._models):
+        group_dict = OrderedDict()
+        for i in range(len(self)):
+            model = self._open_model(i)
             if hasattr(model.meta, 'group_id'):
                 continue
+            
             try:
                 model_attrs = []
                 model_attrs.append(model.meta.observation.program_number)
@@ -249,20 +289,12 @@ class ModelContainer(model_base.DataModel):
             except:
                 model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
-
-    @property
-    def models_grouped(self):
-        """
-        Returns a list of a list of datamodels grouped by exposure.
-        """
-        self.__assign_group_ids()
-        group_dict = OrderedDict()
-        for model in self._models:
             group_id = model.meta.group_id
             if group_id in group_dict:
                 group_dict[group_id].append(model)
             else:
                 group_dict[group_id] = [model]
+
         return group_dict.values()
 
 
@@ -304,3 +336,34 @@ class ModelContainer(model_base.DataModel):
         Returns a list of values of the specified field from meta.
         """
         return self.__get_recursively(field, self.meta._instance)
+
+
+class ModelContainerIterator(six.Iterator):
+    """
+    An iterator for model containers that opens one model at a time
+    """
+    def __init__(self, container):
+        self.index = -1
+        self.open_filename = None
+        self.container = container
+
+
+    def __iter__(self):
+        return self
+
+    
+    def __next__(self):
+        if self.open_filename is not None:
+            self.container._close_model(self.open_filename, self.index)
+            self.open_filename = None
+            
+        self.index += 1    
+        if self.index < len(self.container._models):
+            model = self.container._models[self.index]
+            if isinstance(model, six.string_types):
+                name = model
+                model = self.container._open_model(self.index)
+                self.open_filename = name
+            return model
+        else:
+            raise StopIteration

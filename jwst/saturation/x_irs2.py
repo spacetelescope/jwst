@@ -62,16 +62,20 @@ def _get_irs2_parameters(input_model, n=None, r=None):
     """
 
     try:
-        # I simply made up these names, so I expect this to fail.
-        n_norm = input_model.meta.exposure.irs2_norm
-        n_ref = input_model.meta.exposure.irs2_ref
+        # Try to get keyword values
+        n_norm = input_model.meta.exposure.nrs_normal
+        n_ref = input_model.meta.exposure.nrs_reference
     except AttributeError:
+        # If keywords are missing, use default values
         n_norm = 16
         n_ref = 4
+
+    # Check for user-supplied values
     if n is not None:
         n_norm = n
     if r is not None:
         n_ref = r
+
     param = ReadoutParam(refout=(512 + 512 // n_norm * n_ref),
                          n=n_norm, r=n_ref)
 

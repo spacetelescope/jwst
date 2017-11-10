@@ -2,7 +2,7 @@
 import os
 
 from ..stpipe import Pipeline
-from ..associations import load_asn
+from ..associations.load_as_asn import LoadAsAssociation
 from .. import datamodels
 
 
@@ -10,9 +10,9 @@ from .. import datamodels
 from ..ami import ami_analyze_step
 from ..ami import ami_average_step
 from ..ami import ami_normalize_step
+from ..resample import blend
 
-
-__version__ = "1.2"
+__version__ = '0.8.0'
 
 # Define logging
 import logging
@@ -43,8 +43,7 @@ class Ami3Pipeline(Pipeline):
         log.info('Starting calwebb_ami3')
 
         # Load the input association table
-        with open(input, 'r') as input_fh:
-            asn = load_asn(input_fh)
+        asn = LoadAsAssociation.load(input)
 
         # We assume there's one final product defined by the association
         prod = asn['products'][0]
@@ -76,6 +75,8 @@ class Ami3Pipeline(Pipeline):
             result = self.ami_analyze(input_file)
 
             # Save the LG analysis results to a file
+            result.meta.asn.pool_name = asn['asn_pool']
+            result.meta.asn.table_name = asn.filename
             output_file = mk_filename(self.output_dir, input_file, 'ami')
             self.log.info('Saving LG results to %s', output_file)
             result.save(output_file)
@@ -94,9 +95,15 @@ class Ami3Pipeline(Pipeline):
 
             # Save the results to a file, if requested
             if self.save_averages:
-                output_file = mk_prodname(self.output_dir, prod['psf_name'], 'amiavg')
-                self.log.info('Saving averaged PSF results to %s', output_file)
-                psf_avg.save(output_file)
+                psf_avg.meta.asn.pool_name = asn['asn_pool']
+                psf_avg.meta.asn.table_name = asn.filename
+                psf_avg_output_file = mk_prodname(self.output_dir, prod['psf_name'], 'amiavg')
+                self.log.info('Saving averaged PSF results to %s', psf_avg_output_file)
+                # Perform blending of metadata for all inputs to this output file
+                self.log.info('Blending metadata for averaged target {}'.format(psf_avg_output_file))
+                blend.blendfitsdata(psf_files, psf_avg)
+
+                psf_avg.save(psf_avg_output_file)
 
         # Average the science target image results
         if len(targ_files) > 0:
@@ -105,9 +112,18 @@ class Ami3Pipeline(Pipeline):
 
             # Save the results to a file, if requested
             if self.save_averages:
-                output_file = mk_prodname(self.output_dir, prod['name'], 'amiavg')
-                self.log.info('Saving averaged target results to %s', output_file)
-                targ_avg.save(output_file)
+                targ_avg.meta.asn.pool_name = asn['asn_pool']
+                targ_avg.meta.asn.table_name = asn.filename
+                targ_avg_output_file = mk_prodname(self.output_dir, prod['name'], 'amiavg')
+                
+                # Perform blending of metadata for all inputs to this output file
+                self.log.info('Blending metadata for averaged target {}'.format(targ_avg_output_file))
+                blend.blendfitsdata(targ_files, targ_avg)
+                
+                self.log.info('Saving averaged target results to %s', targ_avg_output_file)
+                targ_avg.save(targ_avg_output_file)
+                
+
 
         # Now that all LGAVG products have been produced, do normalization of
         # the target results by the reference results, if reference results exist
@@ -116,9 +132,16 @@ class Ami3Pipeline(Pipeline):
             result = self.ami_normalize(targ_avg, psf_avg)
 
             # Save the result
-            output_file = mk_prodname(self.output_dir, prod['name'], 'aminorm')
-            self.log.info('Saving normalized result to %s', output_file)
-            result.save(output_file)
+            result.meta.asn.pool_name = asn['asn_pool']
+            result.meta.asn.table_name = asn.filename
+            targ_norm_output_file = mk_prodname(self.output_dir, prod['name'], 'aminorm')
+            
+            # Perform blending of metadata for all inputs to this output file
+            self.log.info('Blending metadata for PSF normalized target {}'.format(targ_norm_output_file))
+            blend.blendfitsdata([targ_avg_output_file, psf_avg_output_file], result)
+
+            self.log.info('Saving normalized result to %s', targ_norm_output_file)
+            result.save(targ_norm_output_file)
             result.close()
 
         # We're done

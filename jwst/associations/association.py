@@ -8,16 +8,14 @@ import logging
 from nose.tools import nottest
 import re
 
-from astropy.extern import six
+import six
 from numpy.ma import masked
 
 from . import __version__
 from .exceptions import (
-    AssociationError,
-    AssociationNotValidError,
-    AssociationProcessMembers
+    AssociationNotValidError
 )
-from .lib.counter import Counter
+from .lib.format_template import FormatTemplate
 from .lib.ioregistry import IORegistry
 
 __all__ = ['Association']
@@ -36,9 +34,6 @@ class Association(MutableMapping):
 
     Parameters
     ----------
-    member: dict
-        The member to initialize the association with.
-
     version_id: str or None
         Version_Id to use in the name of this association.
         If None, nothing is added.
@@ -46,7 +41,7 @@ class Association(MutableMapping):
     Raises
     ------
     AssociationError
-        If a member doesn't match any of the registered associations.
+        If a item doesn't match any of the registered associations.
 
     Attributes
     ----------
@@ -86,6 +81,9 @@ class Association(MutableMapping):
     # can be explicitly checked.
     DEFAULT_REQUIRE_CONSTRAINT = True
 
+    # Default do not evaluate input values
+    DEFAULT_EVALUATE = False
+
     # Global constraints
     GLOBAL_CONSTRAINTS = {}
 
@@ -96,12 +94,8 @@ class Association(MutableMapping):
     # Initialize a global IO registry
     ioregistry = IORegistry()
 
-    # Associations of the same type are sequenced.
-    _sequence = Counter(start=1)
-
     def __init__(
             self,
-            member=None,
             version_id=None,
     ):
 
@@ -109,6 +103,7 @@ class Association(MutableMapping):
         self.add_constraints(deepcopy(self.GLOBAL_CONSTRAINTS))
         self.run_init_hook = True
         self.meta = {}
+        self.force_reprocess = False
 
         self.version_id = version_id
 
@@ -119,9 +114,32 @@ class Association(MutableMapping):
             'code_version': __version__,
         })
 
-        if member is not None:
-            self.add(member)
-        self.sequence = next(self._sequence)
+    @classmethod
+    def create(cls, item, version_id=None):
+        """Create association if item belongs
+
+        Parameters
+        ----------
+        item: dict
+            The item to initialize the association with.
+
+        version_id: str or None
+            Version_Id to use in the name of this association.
+            If None, nothing is added.
+
+        Returns
+        -------
+        (association, reprocess_list)
+            2-tuple consisting of:
+            - association: The association or, if the item does not
+                this rule, None
+            - [ProcessList[, ...]]: List of items to process again.
+        """
+        asn = cls(version_id=version_id)
+        matches, reprocess = asn.add(item)
+        if not matches:
+            return None, reprocess
+        return asn, reprocess
 
     @property
     def asn_name(self):
@@ -256,15 +274,15 @@ class Association(MutableMapping):
         """
         if format is None:
             formats = [
-                format
-                for format_name, format in cls.ioregistry.items()
+                format_func
+                for format_name, format_func in cls.ioregistry.items()
             ]
         else:
             formats = [cls.ioregistry[format]]
 
-        for format in formats:
+        for format_func in formats:
             try:
-                asn = format.load(
+                asn = format_func.load(
                     cls, serialized, **kwargs
                 )
             except AssociationNotValidError:
@@ -291,111 +309,209 @@ class Association(MutableMapping):
             return False
         return True
 
-    def add(self, member, check_constraints=True):
-        """Add the member to the association
+    def add(self, item, check_constraints=True):
+        """Add the item to the association
 
         Parameters
         ----------
-        member: dict
-            The member to add.
+        item: dict
+            The item to add.
 
         check_constraints: bool
-            If True, see if the member should belong to this association.
+            If True, see if the item should belong to this association.
             If False, just add it.
 
+        Returns
+        -------
+        (matches, reprocess_list)
+            2-tuple consisting of:
+            - bool: True if the all constraints are satisfied
+            - [ProcessList[, ...]]: List of items to process again.
         """
-        if check_constraints:
-            self.test_and_set_constraints(member)
 
-        if self.run_init_hook:
-            self._init_hook(member)
-        self._add(member)
-        self.run_init_hook = False
+        if self.is_item_member(item):
+            return False, []
+
+        matches = True
+        if check_constraints:
+            matches, reprocess = self.test_and_set_constraints(item)
+
+        if matches:
+            if self.run_init_hook:
+                self._init_hook(item)
+            self._add(item)
+            self.run_init_hook = False
+
+        return matches, reprocess
 
     @nottest
-    def test_and_set_constraints(self, member):
+    def test_and_set_constraints(self, item):
         """Test whether the given dictionaries match parameters for
         for this association
 
         Parameters
         ----------
-        member: dict
+        item: dict
             The parameters to check/set for this association.
             This can be a list of dictionaries.
 
-        Raises
-        ------
-        AssociationError
-            If a match fails.
+        Returns
+        -------
+        (matches, reprocess_list)
+            2-tuple consisting of:
+            - bool: True if the all constraints are satisfied
+            - [ProcessItem[, ...]]: List of items to process again.
 
         Notes
         -----
         If a constraint is present, but does not have a value,
         that constraint is set, and, by definition, matches.
         """
+
+        # If there are no conditions, the default is a
+        # successful test
+        matches = True
+
+        reprocess = []
         constraints = deepcopy(self.constraints)
         for constraint, conditions in constraints.items():
-            logger.debug('Constraint="{}" Conditions="{}"'.format(constraint, conditions))
-            try:
-                input, value = getattr_from_list(
-                    member,
-                    conditions['inputs'],
-                    invalid_values=self.INVALID_VALUES
-                )
-            except KeyError:
-                if conditions.get('is_invalid', False) or \
-                   not conditions.get(
-                       'required',
-                       self.DEFAULT_REQUIRE_CONSTRAINT
-                   ):
-                    continue
-                else:
-                    raise AssociationError(
-                        'Constraint {} not present in member.'.format(constraint)
-                    )
+            test = conditions.get('test', self.match_item)
+            matches, new_reprocess = test(item, constraint, conditions)
+            reprocess.extend(new_reprocess)
+            if not matches:
+                break
+        else:
+            self.constraints = constraints
+            if self.force_reprocess:
+                reprocess.append(ProcessList(
+                    [item], [type(self)], work_over=self.force_reprocess
+                ))
+        return matches, reprocess
+
+    def match_item(self, item, constraint, conditions):
+        """Use item info to match to the conditions
+
+        Parameters
+        ----------
+        item: dict
+            The item to retrieve the values from
+
+        constraint: str
+            The name of the constraint
+
+        conditions: dict
+            The conditions structure
+
+        Returns
+        -------
+        (matches, reprocess_list)
+            2-tuple consisting of:
+            - bool: True if the all constraints are satisfied
+            - [ProcessList[, ...]]: List of items to process again.
+        """
+        reprocess = []
+
+        # Only perform check on specified `onlyif` condition
+        onlyif = conditions.get('onlyif', lambda item: True)
+        if not onlyif(item):
+            self.force_reprocess = conditions.get('force_reprocess', False)
+            return (True, reprocess)
+
+        # Get the condition information.
+        try:
+            input, value = self.item_getattr(
+                item,
+                conditions['inputs'],
+            )
+        except KeyError:
+            if not conditions.get('force_undefined', False) and \
+               conditions.get(
+                   'required',
+                   self.DEFAULT_REQUIRE_CONSTRAINT
+               ):
+                return False, reprocess
             else:
-                if conditions.get('is_invalid', False):
-                    raise AssociationError(
-                        'Constraint {} present when it should not be'.format(constraint)
-                    )
+                return True, reprocess
+        else:
+            if conditions.get('force_undefined', False):
+                return False, reprocess
 
-            # If the value is a list, signal that a reprocess
-            # needs to be done.
-            logger.debug('To check: Input="{}" Value="{}"'.format(input, value))
+        # If the value is a list, build the reprocess list
+        if conditions.get('evaluate', self.DEFAULT_EVALUATE):
             evaled = evaluate(value)
-
             if is_iterable(evaled):
-                process_members = []
+                process_items = []
                 for avalue in evaled:
-                    new_member = deepcopy(member)
-                    new_member[input] = str(avalue)
-                    process_members.append(new_member)
-                raise AssociationProcessMembers(
-                    process_members,
+                    new_item = deepcopy(item)
+                    new_item[input] = str(avalue)
+                    process_items.append(new_item)
+                reprocess.append(ProcessList(
+                    process_items,
                     [type(self)]
-                )
+                ))
+                return False, reprocess
+            value = str(evaled)
 
-            evaled_str = str(evaled)
-            if conditions['value'] is not None:
-                if not meets_conditions(
-                        evaled_str, conditions['value']
-                ):
-                    raise AssociationError(
-                        'Constraint {} does not match association.'.format(constraint)
-                    )
+        # Check condition
+        if conditions['value'] is not None:
+            if not meets_conditions(
+                    value, conditions['value']
+            ):
+                return False, reprocess
 
-            # At this point, the constraint has passed.
-            # Fix the conditions.
-            logger.debug('Success Input="{}" Value="{}"'.format(input, evaled_str))
-            if conditions['value'] is None or \
-               conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
-                conditions['value'] = re.escape(evaled_str)
-                conditions['inputs'] = [input]
-                conditions['force_unique'] = False
+        # At this point, the constraint has passed.
+        # Fix the conditions.
+        escaped_value = re.escape(value)
+        conditions['found_values'].add(escaped_value)
+        if conditions['value'] is None or \
+           conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
+            conditions['value'] = escaped_value
+            conditions['inputs'] = [input]
+            conditions['force_unique'] = False
 
-        # At this point, all constraints have passed
-        # Update the constraints.
-        self.constraints = constraints
+        # That's all folks
+        return True, reprocess
+
+    def match_constraint(self, item, constraint, conditions):
+        """Generic constraint checking
+
+        Parameters
+        ----------
+        item: dict
+            The item to retrieve the values from
+
+        constraint: str
+            The name of the constraint
+
+        conditions: dict
+            The conditions structure
+
+        Returns
+        -------
+        (matches, reprocess_list)
+            2-tuple consisting of:
+            - bool: True if the all constraints are satisfied
+            - [ProcessList[, ...]]: List of items to process again.
+        """
+        reprocess = []
+        evaled_str = conditions['inputs'](item)
+        if conditions['value'] is not None:
+            if not meets_conditions(
+                    evaled_str, conditions['value']
+            ):
+                return False, reprocess
+
+        # At this point, the constraint has passed.
+        # Fix the conditions.
+        escaped_value = re.escape(evaled_str)
+        conditions['found_values'].add(escaped_value)
+        if conditions['value'] is None or \
+           conditions.get('force_unique', self.DEFAULT_FORCE_UNIQUE):
+            conditions['value'] = escaped_value
+            conditions['force_unique'] = False
+
+        # That's all folks
+        return True, reprocess
 
     def add_constraints(self, new_constraints):
         """Add a set of constraints to the current constraints."""
@@ -405,27 +521,41 @@ class Association(MutableMapping):
         except AttributeError:
             constraints = {}
             self.constraints = constraints
-        for constraint, value in six.iteritems(new_constraints):
-            constraints[constraint] = constraints.get(constraint, value)
+        for constraint, conditions in six.iteritems(new_constraints):
+            conditions['found_values'] = set()
+            constraints[constraint] = constraints.get(constraint, conditions)
 
     def constraints_to_text(self):
         yield 'Constraints:'
         for name, conditions in self.constraints.items():
-            if conditions.get('is_invalid', False):
+            if conditions.get('force_undefined', False):
                 yield '    {:s}: Is Invalid'.format(name)
             else:
-                yield '    {:s}: {}'.format(name, conditions['value'])
+                yield '    {:s}: {}'.format(name, conditions['found_values'])
 
-    @classmethod
-    def reset_sequence(cls):
-        cls._sequence = Counter(start=1)
+    def is_item_member(self, item):
+        """Check if item is already a member of this association
 
-    def _init_hook(self, member):
-        """Post-check and pre-member-adding initialization."""
+        Parameters
+        ----------
+        item: dict
+            The item to add.
+
+        Returns
+        -------
+        is_item_member: bool
+            True if item is a member.
+        """
+        raise NotImplementedError(
+            'Association.is_item_member must be implemented by a specific association rule.'
+        )
+
+    def _init_hook(self, item):
+        """Post-check and pre-item-adding initialization."""
         pass
 
-    def _add(self, member):
-        """Add a member, association-specific"""
+    def _add(self, item):
+        """Add a item, association-specific"""
         raise NotImplementedError(
             'Association._add must be implemented by a specific assocation rule.'
         )
@@ -478,6 +608,36 @@ class Association(MutableMapping):
 
     def values(self):
         return self.data.values()
+
+
+class ProcessList(object):
+    """A Process list
+
+    Parameters
+    ----------
+    items: [item[, ...]]
+        The list of items to process
+
+    rules: [Association[, ...]]
+        List of rules to process the items against.
+
+    work_over: int
+        What the reprocessing should work on:
+        - `ProcessList.EXISTING`: Only existing associations
+        - `ProcessList.RULES`: Only on the rules to create new associations
+        - `ProcessList.BOTH`: Compare to both existing and rules
+    """
+
+    (
+        BOTH,
+        EXISTING,
+        RULES
+    ) = range(1, 4)
+
+    def __init__(self, items, rules, work_over=BOTH):
+        self.items = items
+        self.rules = rules
+        self.work_over = work_over
 
 
 # #########
@@ -562,7 +722,7 @@ def getattr_from_list(adict, attributes, invalid_values=None):
             else:
                 continue
     else:
-        raise KeyError
+        raise KeyError('Object has no attributes in {}'.format(attributes))
 
 
 def evaluate(value):
@@ -590,3 +750,7 @@ def is_iterable(obj):
     return not isinstance(obj, six.string_types) and \
         not isinstance(obj, tuple) and \
         hasattr(obj, '__iter__')
+
+
+# Define default product name filling
+format_product = FormatTemplate()

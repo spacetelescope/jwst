@@ -1,22 +1,21 @@
 from __future__ import (division, print_function, unicode_literals,
     absolute_import)
 
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 from . import resample
+from .. assign_wcs.util import update_s_region
 
 
 class ResampleStep(Step):
     """
-    ResampleStep: Uses the drizzle process to resample (geometric correction)
-    a single 2D image or resample and combine a set of 2D images specified as
-    an association.
+    ResampleStep: Resample input data onto a regular grid using the
+    drizzle algorithm.
 
     Parameters
     -----------
-    input : str or model
-        Single filename for either a single image or an association table.  This
-        would then get used to create a AsnModel(?) object for this step.
+    input : DataModel or Association
+        Single filename for either a single image or an association table.
     """
 
     spec = """
@@ -25,51 +24,40 @@ class ResampleStep(Step):
         pixfrac = float(default=1.0)
         kernel = string(default='square')
         fillval = string(default='INDEF')
-        good_bits = integer(default=-1)
+        good_bits = integer(default=4)
+        blendheaders = boolean(default=True)
     """
     reference_file_types = ['drizpars']
 
     def process(self, input):
 
-        input_models = datamodels.open(input)
-        # If single input, insert into a ModelContainer
-        if input_models.__class__ is not datamodels.ModelContainer:
-            s = datamodels.ModelContainer()
-            s.append(input_models)
-            s.assign_group_ids()
-            s.meta.resample.output = s.group_names[0].replace('_resamp', '_drz')
+        input = datamodels.open(input)
 
-            self.input_models = s
+        # If single input, wrap in a ModelContainer
+        if not isinstance(input, datamodels.ModelContainer):
+            input_models = datamodels.ModelContainer([input])
+            input_models.meta.resample.output = input.meta.filename
+            self.blendheaders = False
         else:
-            self.input_models = input_models
+            input_models = input
 
-        # identify what reference file has been associated with these inputs
-        try:
-            self.ref_filename = self.get_reference_file(self.input_models[0], 'drizpars')
-        except:
-            # This is only in place for initial testing of this code, prior
-            # to ref file being included in CRDS
-            self.ref_filename = self.input_models[0].meta.storage.get_fits_header('PRIMARY')['r_resamp']
-        self.log.info('Reference file to use: %s ', self.ref_filename)
+        for reftype in self.reference_file_types:
+            ref_filename = self.get_reference_file(input_models[0], reftype)
 
         # Call the resampling routine
-        self.step = resample.ResampleData(self.input_models, self.ref_filename,
-                                single=self.single, wht_type=self.wht_type,
-                                pixfrac=self.pixfrac, kernel=self.kernel,
-                                fillval=self.fillval, good_bits=self.good_bits)
-        self.step.do_drizzle()
+        resamp = resample.ResampleData(input_models, ref_filename=ref_filename,
+            single=self.single, wht_type=self.wht_type, pixfrac=self.pixfrac,
+            kernel=self.kernel, fillval=self.fillval, good_bits=self.good_bits,
+            blendheaders=self.blendheaders)
+        resamp.do_drizzle()
 
-        #self.input_models.close()
-
-        if len(self.step.output_models) == 1:
-            output_model = self.step.output_models[0]
+        if len(resamp.output_models) == 1:
+            result = resamp.output_models[0]
+            result.meta.cal_step.resample = "COMPLETE"
+            update_s_region(result)
         else:
-            output_model = self.step.output_models
-
-        output_model.meta.cal_step.resample = "COMPLETE"
-
-        return output_model
-
-
-if __name__ == '__main__':
-    cmdline.step_script(ResampleStep)
+            result = resamp.output_models
+            for model in result:
+                model.meta.cal_step.resample = "COMPLETE"
+                update_s_region(model)
+        return result
