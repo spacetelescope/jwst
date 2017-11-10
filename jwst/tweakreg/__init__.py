@@ -12,8 +12,8 @@ import logging
 __docformat__ = 'restructuredtext'
 
 __taskname__ = 'tweakreg'
-__version__ = '0.7.0'
-__vdate__ = '17-April-2016'
+__version__ = '0.8.0'
+__vdate__ = '10-November-2017'
 __author__ = 'Mihai Cara'
 
 from .tweakreg_step import TweakRegStep
