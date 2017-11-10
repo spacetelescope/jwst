@@ -1,12 +1,10 @@
 """
 Various utility functions and data types
 """
-from __future__ import absolute_import, unicode_literals, division, print_function
 
 import sys
 from os.path import basename
 import numpy as np
-import six
 from astropy.io import fits
 
 import logging
@@ -68,11 +66,11 @@ def open(init=None, extensions=None, **kwargs):
         # Copy the object so it knows not to close here
         return init.__class__(init)
 
-    elif isinstance(init, (six.text_type, bytes)) or hasattr(init, "read"):
+    elif isinstance(init, (str, bytes)) or hasattr(init, "read"):
         # If given a string, presume its a file path.
         # if it has a read method, assume a file descriptor
 
-        if isinstance(init, (bytes)):
+        if isinstance(init, bytes):
             init = init.decode(sys.getfilesystemencoding())
 
         file_type = filetype.check(init)
@@ -139,7 +137,7 @@ def open(init=None, extensions=None, **kwargs):
         raise TypeError("Can't determine datamodel class from argument to open")
 
     # Log a message about how the model was opened
-    if isinstance(init, six.text_type):
+    if isinstance(init, str):
         log.debug('Opening {0} as {1}'.format(basename(init), new_class))
     else:
         log.debug('Opening as {0}'.format(new_class))
@@ -281,24 +279,14 @@ def to_camelcase(token):
     return ''.join(x.capitalize() for x in token.split('_-'))
 
 
-if six.PY3:
-    def fits_header_name(name):
-        """
-        Returns a FITS header name in the correct form for the current
-        version of Python.
-        """
-        if isinstance(name, bytes):
-            return name.decode('ascii')
-        return name
-else:
-    def fits_header_name(name):
-        """
-        Returns a FITS header name in the correct form for the current
-        version of Python.
-        """
-        if isinstance(name, unicode):
-            return name.encode('ascii')
-        return name
+def fits_header_name(name):
+    """
+    Returns a FITS header name in the correct form for the current
+    version of Python.
+    """
+    if isinstance(name, bytes):
+        return name.decode('ascii')
+    return name
 
 
 def gentle_asarray(a, dtype):
@@ -364,10 +352,8 @@ def get_short_doc(schema):
 
 
 def ensure_ascii(s):
-    if isinstance(s, six.text_type):
-        s = s.encode('ascii', 'replace')
-        if six.PY3:
-            s = s.decode('ascii')
+    if isinstance(s, bytes):
+        s = s.decode('ascii')
     return s
 
 

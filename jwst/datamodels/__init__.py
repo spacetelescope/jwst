@@ -27,13 +27,11 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
 
-from __future__ import absolute_import, division, print_function
 
 __version__ = '0.8.0'
 
 import numpy as np
 from os.path import basename
-import six
 from astropy.io import registry
 
 from . import ndmodel

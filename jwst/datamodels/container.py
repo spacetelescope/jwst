@@ -1,5 +1,3 @@
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
 import os.path as op
 import os
 import copy
@@ -7,7 +5,6 @@ import warnings
 from collections import OrderedDict
 
 from asdf import AsdfFile
-import six
 
 from ..associations import (
     AssociationError,
@@ -85,7 +82,7 @@ class ModelContainer(model_base.DataModel):
             self._ctx = self
             self.__class__ = init.__class__
             self._models = init._models
-        elif isinstance(init, six.string_types):
+        elif isinstance(init, str):
             try:
                 self.from_asn(init, **kwargs)
             except (IOError):
@@ -99,7 +96,7 @@ class ModelContainer(model_base.DataModel):
 
     def _open_model(self, index):
         model = self._models[index]
-        if isinstance(model, six.string_types):
+        if isinstance(model, str):
             model = datamodel_open(model,
                                    extensions=self._extensions,
                                    pass_invalid_values=self._pass_invalid_values)
@@ -120,7 +117,7 @@ class ModelContainer(model_base.DataModel):
         for model in models:
             if isinstance(model, ModelContainer):
                 raise ValueError("ModelContainer cannot contain ModelContainer")
-            if not isinstance(model, (six.string_types, model_base.DataModel)):
+            if not isinstance(model, (str, model_base.DataModel)):
                 raise ValueError('model must be string or DataModel')
 
 
@@ -336,7 +333,7 @@ class ModelContainer(model_base.DataModel):
         return self.__get_recursively(field, self.meta._instance)
 
 
-class ModelContainerIterator(six.Iterator):
+class ModelContainerIterator:
     """
     An iterator for model containers that opens one model at a time
     """
@@ -358,7 +355,7 @@ class ModelContainerIterator(six.Iterator):
         self.index += 1    
         if self.index < len(self.container._models):
             model = self.container._models[self.index]
-            if isinstance(model, six.string_types):
+            if isinstance(model, str):
                 name = model
                 model = self.container._open_model(self.index)
                 self.open_filename = name

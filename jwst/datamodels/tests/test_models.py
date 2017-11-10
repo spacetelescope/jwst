@@ -1,6 +1,3 @@
-from __future__ import absolute_import, unicode_literals, division, print_function
-
-import six
 import datetime
 import os
 import shutil
@@ -276,11 +273,7 @@ def test_multislit_metadata():
     with MultiSlitModel() as ms:
         ms.slits.append(ms.slits.item())
         for key, val in ms.iteritems():
-            if six.PY2:
-                assert isinstance(val, (bytes, unicode, int, long, float, bool,
-                                        Time))
-            else:
-                assert isinstance(val, (bytes, str, int, float, bool, Time))
+            assert isinstance(val, (bytes, str, int, float, bool, Time))
 
 
 def test_multislit_copy():
