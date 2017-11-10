@@ -5,7 +5,10 @@ import logging
 import numpy as np
 import stsci.imagestats as imagestats
 
+# LOCAL
 from . import chelp
+from . import __version__
+from . import __vdate__
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

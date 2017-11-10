@@ -18,13 +18,12 @@ import numpy as np
 
 # LOCAL
 from . wcsimage import *
-from . wcsutils import create_ref_wcs
+from . import __version__
+from . import __vdate__
 
 
 __all__ = ['align', 'overlap_matrix', 'max_overlap_pair', 'max_overlap_image']
 
-__version__ = '0.1.0'
-__vdate__ = '17-April-2016'
 __author__ = 'Mihai Cara'
 
 
@@ -34,7 +33,6 @@ log.setLevel(logging.DEBUG)
 
 def align(imcat, refcat=None, enforce_user_order=True,
           expand_refcat=False, minobj=None, searchrad=1.0,
-          searchunits='arcseconds',
           use2dhist=True, separation=0.5, tolerance=1.0,
           xoffset=0.0, yoffset=0.0,
           fitgeom='general', nclip=3, sigma=3.0):
@@ -87,9 +85,6 @@ def align(imcat, refcat=None, enforce_user_order=True,
 
     searchrad : float, optional
         The search radius for a match.
-
-    searchunits : str, optional
-        Units for search radius.
 
     use2dhist : bool, optional
         Use 2D histogram to find initial offset?
@@ -151,12 +146,6 @@ def align(imcat, refcat=None, enforce_user_order=True,
         raise ValueError("Unsupported 'fitgeom'. Valid values are: "
                          "'shift', 'rscale', or 'general'")
 
-    # check searchunits:
-    searchunits = searchunits.lower()
-    if searchunits not in ['arcseconds', 'pixel']:
-        raise ValueError("Unsupported 'searchunits'. Valid values are: "
-                         "'arcseconds', or 'pixel'")
-
     if minobj is None:
         if fitgeom == 'general':
             minobj = 3
@@ -187,18 +176,9 @@ def align(imcat, refcat=None, enforce_user_order=True,
             raise TypeError("Each input element of 'images' must be a "
                             "'WCSGroupCatalog'")
 
-    # create reference WCS if needed:
-    if refcat is None:
-        refwcs, refshape = create_ref_wcs(imcat)
-        refcat = RefCatalog(wcs=refwcs, catalog=None)
-
-    elif refcat.wcs is None:  # TODO: currently this is not supported
-        refwcs, refshape = create_ref_wcs(imcat)
-        refcat.wcs = refwcs
-
     # get the first image to be aligned and
     # create reference catalog if needed:
-    if refcat.catalog is None:
+    if refcat is None or refcat.catalog is None:
         # create reference catalog:
         ref_imcat, current_imcat = max_overlap_pair(
             images=imcat,
@@ -207,7 +187,7 @@ def align(imcat, refcat=None, enforce_user_order=True,
         )
         log.info("Selected image '{}' as reference image"
                  .format(ref_imcat.name))
-        refcat.expand_catalog(ref_imcat.catalog)
+        refcat = RefCatalog(ref_imcat.catalog, name=ref_imcat.name)
 
     else:
         # find the first image to be aligned:
@@ -228,7 +208,6 @@ def align(imcat, refcat=None, enforce_user_order=True,
             refcat=refcat,
             minobj=minobj,
             searchrad=searchrad,
-            searchunits=searchunits,
             separation=separation,
             use2dhist=use2dhist,
             xoffset=xoffset,

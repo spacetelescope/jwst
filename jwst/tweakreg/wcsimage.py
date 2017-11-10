@@ -20,15 +20,16 @@ from stsci.sphere.polygon import SphericalPolygon
 from stsci.stimage import xyxymatch
 
 # LOCAL
-from .simplewcs import SimpleWCS
+from .tpcorr import ImageWCS
 from . import linearfit
 from . import matchutils
 from . import wcsutils
+from . import tpcorr
+from . import __version__
+from . import __vdate__
 
 
 __all__ = ['WCSImageCatalog', 'WCSGroupCatalog', 'RefCatalog', 'convex_hull']
-__version__ = '0.1'
-__vdate__ = '18-April-2016'
 
 
 log = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ class WCSImageCatalog(object):
     catalog of the sources found in that image.
 
     """
-    def __init__(self, shape, wcs, catalog, name=None, meta={}):
+    def __init__(self, shape, wcs, ref_angles, catalog, name=None, meta={}):
         """
         Parameters
         ----------
@@ -55,6 +56,11 @@ class WCSImageCatalog(object):
 
         wcs : gwcs.WCS
             WCS associated with the image and the catalog.
+
+        ref_angles : dict
+            A Python dictionary providing essential WCS reference angles. This
+            parameter must contain at least the following keys:
+            ``ra_ref``, ``dec_ref``, ``v2_ref``, ``v3_ref``, and ``roll_ref``.
 
         catalog : astropy.table.Table
             Source catalog associated with an image. Must contain 'x' and 'y'
@@ -74,37 +80,66 @@ class WCSImageCatalog(object):
         self._catalog = None
         self._bb_radec = None
 
-        self._swcs = None
+        self._imwcs = None
         self.img_bounding_ra = None
         self.img_bounding_dec = None
 
         self.meta = {}
         self.meta.update(meta)
 
-        self.wcs = wcs
+        self.set_wcs(wcs, ref_angles)
         self.catalog = catalog
 
     @property
-    def swcs(self):
-        """ Get :py:class:`SimpleWCS` WCS.
-        """
-        return self._swcs
+    def imwcs(self):
+        """ Get :py:class:`ImageWCS` WCS. """
+        return self._imwcs
 
     @property
     def wcs(self):
-        """ Get or set :py:class:`gwcs.WCS`.
+        """ Get :py:class:`gwcs.WCS`. """
+        if self._imwcs is None:
+            return None
+        return self._imwcs.wcs
+
+    @property
+    def ref_angles(self):
+        """ Get ``wcsinfo``. """
+        if self._imwcs is None:
+            return None
+        return self._imwcs.ref_angles
+
+    def set_wcs(self, wcs, ref_angles):
+        """ Set :py:class:`gwcs.WCS` and the associated ``wcsinfo```.
 
         .. note::
             Setting the WCS triggers automatic bounding polygon recalculation.
 
-        """
-        if self._swcs is None:
-            return None
-        return self._swcs.wcs
+        Parameters
+        ----------
 
-    @wcs.setter
-    def wcs(self, wcs):
-        self._swcs = SimpleWCS(wcs, copy=False)
+        wcs : gwcs.WCS
+            WCS object.
+
+        ref_angles : dict
+            A Python dictionary providing essential WCS reference angles. This
+            parameter must contain at least the following keys:
+            ``ra_ref``, ``dec_ref``, ``v2_ref``, ``v3_ref``, and ``roll_ref``.
+
+        """
+        for key in ['dec_ref', 'v2_ref', 'v3_ref', 'roll_ref']:
+            if key not in ref_angles:
+                raise KeyError("Parameter 'ref_angles' must contain "
+                               "'{:s}' key.".format(key))
+
+        self._imwcs = ImageWCS(
+            wcs=wcs,
+            v2_ref=ref_angles['v2_ref'],
+            v3_ref=ref_angles['v3_ref'],
+            roll_ref=ref_angles['roll_ref'],
+            ra_ref=ref_angles['ra_ref'],
+            dec_ref=ref_angles['dec_ref']
+        )
 
         # create spherical polygon bounding the image
         self.calc_bounding_polygon()
@@ -146,6 +181,7 @@ class WCSImageCatalog(object):
         if catalog is None:
             self._catalog = None
             return
+
         else:
             self._catalog = table.Table(catalog.copy(), masked=True)
             self._catalog.meta['name'] = self._name
@@ -156,53 +192,61 @@ class WCSImageCatalog(object):
         # create spherical polygon bounding the image
         self.calc_bounding_polygon()
 
-    @property
-    def pscale(self):
-        """ Pixel scale in arcsec assuming CD is in deg/pix.
-        """
-        if self._swcs is None:
-            raise RuntimeError("WCS has not been set")
-        return self._swcs._pscale
-
-    def all_pix2world(self, x, y):
+    def det_to_world(self, x, y):
         """
         Convert pixel coordinates to sky coordinates using full
         (i.e., including distortions) transformations.
 
         """
-        if self._swcs is None:
+        if self._imwcs is None:
             raise RuntimeError("WCS has not been set")
-        return self._swcs.all_pix2world(x, y)
+        return self._imwcs.det_to_world(x, y)
 
-    def all_world2pix(self, ra, dec):
+    def world_to_det(self, ra, dec):
         """
         Convert sky coordinates to image's pixel coordinates using full
         (i.e., including distortions) transformations.
 
         """
-        if self._swcs is None:
+        if self._imwcs is None:
             raise RuntimeError("WCS has not been set")
-        return self._swcs.all_world2pix(ra, dec)
+        return self._imwcs.world_to_det(ra, dec)
 
-    def wcs_pix2world(self, x, y):
+    def det_to_tanp(self, x, y):
         """
-        Convert pixel coordinates to sky coordinates using standard WCS
-        transformations.
+        Convert detector (pixel) coordinates to tangent plane coordinates.
 
         """
-        if self._swcs is None:
+        if self._imwcs is None:
             raise RuntimeError("WCS has not been set")
-        return self._swcs.wcs_pix2world(x, y)
+        return self._imwcs.det_to_tanp(x, y)
 
-    def wcs_world2pix(self, ra, dec):
+    def tanp_to_det(self, x, y):
         """
-        Convert sky coordinates to image's pixel coordinates using
-        standard WCS transformations.
+        Convert tangent plane coordinates to detector (pixel) coordinates.
 
         """
-        if self._swcs is None:
+        if self._imwcs is None:
             raise RuntimeError("WCS has not been set")
-        return self._swcs.wcs_world2pix(ra, dec)
+        return self._imwcs.tanp_to_det(x, y)
+
+    def tanp_to_world(self, x, y):
+        """
+        Convert tangent plane coordinates to world coordinates.
+
+        """
+        if self._imwcs is None:
+            raise RuntimeError("WCS has not been set")
+        return self._imwcs.tanp_to_world(x, y)
+
+    def world_to_tanp(self, ra, dec):
+        """
+        Convert tangent plane coordinates to detector (pixel) coordinates.
+
+        """
+        if self._imwcs is None:
+            raise RuntimeError("WCS has not been set")
+        return self._imwcs.world_to_tanp(ra, dec)
 
     @property
     def polygon(self):
@@ -317,7 +361,7 @@ class WCSImageCatalog(object):
         borderx[-1] = borderx[0]
         bordery[-1] = bordery[0]
 
-        ra, dec = self.all_pix2world(borderx, bordery)
+        ra, dec = self.det_to_world(borderx, bordery)
         # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
         #       dec[0] != dec[-1] (even though we close the polygon in the
         #       previous two lines). Then SphericalPolygon fails because
@@ -340,24 +384,22 @@ class WCSImageCatalog(object):
         x = self.catalog['x']
         y = self.catalog['y']
 
-        ra, dec = convex_hull(x, y, wcs=self.wcs_pix2world)
-
-        if len(ra) == 0:
+        if len(x) == 0:
             # no points
             raise RuntimeError("Unexpected error: Contact sofware developer")
 
-        elif len(ra) == 1:
+        elif len(x) == 1:
             # one point. build a small box around it:
-            x, y = convex_hull(x, y, wcs=None)
+            x, y = convex_hull(x, y, wcs=self.det_to_tanp)
 
             xv = [x[0] - 0.5, x[0] - 0.5, x[0] + 0.5, x[0] + 0.5, x[0] - 0.5]
             yv = [y[0] - 0.5, y[0] + 0.5, y[0] + 0.5, y[0] - 0.5, y[0] - 0.5]
 
-            ra, dec = self.wcs_pix2world(xv, yv)
+            ra, dec = self.tanp_to_world(xv, yv)
 
-        elif len(ra) == 3:
+        elif len(x) == 3:
             # two points. build a small box around them:
-            x, y = convex_hull(x, y, wcs=None)
+            x, y = convex_hull(x, y, wcs=self.det_to_tanp)
 
             vx = -(y[1] - y[0])
             vy = x[1] - x[0]
@@ -368,7 +410,10 @@ class WCSImageCatalog(object):
             xv = [x[0] + vx, x[1] + vx, x[1] + vx, x[0] - vx, x[0] + vx]
             yv = [y[0] + vy, y[1] + vy, y[1] + vy, x[0] - vx, x[0] + vx]
 
-            ra, dec = self.wcs_pix2world(xv, yv)
+            ra, dec = self.tanp_to_world(xv, yv)
+
+        else:
+            ra, dec = convex_hull(x, y, wcs=self.det_to_world)
 
         # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
         #       dec[0] != dec[-1] (even though we close the polygon in the
@@ -561,7 +606,7 @@ class WCSGroupCatalog(object):
             col_id = table.MaskedColumn(image.catalog['id'])
             col_x = table.MaskedColumn(image.catalog['x'], dtype=np.float64)
             col_y = table.MaskedColumn(image.catalog['y'], dtype=np.float64)
-            ra, dec = image.all_pix2world(
+            ra, dec = image.det_to_world(
                 image.catalog['x'], image.catalog['y']
             )
             col_ra = table.MaskedColumn(ra, dtype=np.float64, name='RA')
@@ -605,43 +650,49 @@ class WCSGroupCatalog(object):
             if not np.any(idx):
                 continue
 
-            ra, dec = image.all_pix2world(
+            ra, dec = image.det_to_world(
                 self._catalog['x'][idx], self._catalog['y'][idx]
             )
             self._catalog['RA'][idx] = ra
             self._catalog['DEC'][idx] = dec
 
-    def calc_xyref(self, refcat):
+    def calc_tanp_xy(self, tanplane_wcs):
         """
         Compute x- and y-positions of the sources from the image catalog
-        in the reference image plane. This create the following
-        columns in the catalog's table: ``'xref'`` and ``'yref'``.
+        in the tangent plane. This creates the following
+        columns in the catalog's table: ``'xtanp'`` and ``'ytanp'``.
+
+        Parameters
+        ----------
+        tanplane_wcs : tpcorr.ImageWCS
+            A `tpcorr.ImageWCS` object that will provide transformations to
+            the tangent plane to which sources of this catalog a should be
+            "projected".
 
         """
         if 'RA' not in self._catalog.colnames or \
            'DEC' not in self._catalog.colnames:
             raise RuntimeError("'recalc_catalog_radec()' should have been run "
-                               "prior to calc_xyref()")
+                               "prior to calc_tanp_xy()")
 
         # compute x & y in the reference WCS:
-        xref, yref = refcat.all_world2pix(self.catalog['RA'],
+        xtp, ytp = tanplane_wcs.world_to_tanp(self.catalog['RA'],
                                           self.catalog['DEC'])
-        self._catalog['xref'] = table.MaskedColumn(
-            xref, name='xref', dtype=np.float64, mask=False
+        self._catalog['xtanp'] = table.MaskedColumn(
+            xtp, name='xtanp', dtype=np.float64, mask=False
         )
-        self._catalog['yref'] = table.MaskedColumn(
-            yref, name='yref', dtype=np.float64, mask=False
+        self._catalog['ytanp'] = table.MaskedColumn(
+            ytp, name='ytanp', dtype=np.float64, mask=False
         )
 
     def match2ref(self, refcat, minobj=15, searchrad=1.0,
-                  searchunits='arcseconds', separation=0.5,
-                  use2dhist=True, xoffset=0.0, yoffset=0.0, tolerance=1.0):
+                  separation=0.5, use2dhist=True, xoffset=0.0, yoffset=0.0,
+                  tolerance=1.0):
         """ Uses xyxymatch to cross-match sources between this catalog and
             a reference catalog.
 
         Parameters
         ----------
-
         refcat : RefCatalog
             A `RefCatalog` object that contains a catalog of reference sources
             as well as a valid reference WCS.
@@ -654,9 +705,6 @@ class WCSGroupCatalog(object):
 
         searchrad : float, optional
             The search radius for a match.
-
-        searchunits : str, optional
-            Units for search radius.
 
         separation : float, optional
             The  minimum  separation for sources in the input and reference
@@ -691,21 +739,17 @@ class WCSGroupCatalog(object):
 
         colnames = self._catalog.colnames
 
-        if 'xref' not in colnames or 'yref' not in colnames:
-            raise RuntimeError("'calc_xyref()' should have been run prior "
+        if 'xtanp' not in colnames or 'ytanp' not in colnames:
+            raise RuntimeError("'calc_tanp_xy()' should have been run prior "
                                "to match2ref()")
 
-        im_xyref = np.asanyarray([self._catalog['xref'],
-                                  self._catalog['yref']]).T
-        refxy = np.asanyarray([refcat.catalog['xref'],
-                               refcat.catalog['yref']]).T
+        im_xyref = np.asanyarray([self._catalog['xtanp'],
+                                  self._catalog['ytanp']]).T
+        refxy = np.asanyarray([refcat.catalog['xtanp'],
+                               refcat.catalog['ytanp']]).T
 
         log.info("Matching sources from '{}' with sources from reference "
                  "{:s} '{}'".format(self.name, 'image', refcat.name))
-
-        # convert tolerance from units of arcseconds to pixels, as needed
-        if searchunits == 'arcseconds':
-            searchrad /= refcat.pscale
 
         xyoff = (xoffset, yoffset)
 
@@ -732,6 +776,8 @@ class WCSGroupCatalog(object):
             tolerance=tolerance,
             separation=separation
         )
+
+        print("\nmatches:\n{}\n".format(matches))
 
         nmatches = len(matches)
         self._catalog.meta['nmatches'] = nmatches
@@ -793,28 +839,43 @@ class WCSGroupCatalog(object):
             Clipping limit in sigma units.
 
         """
-
-        im_xyref = np.asanyarray([self._catalog['xref'],
-                                  self._catalog['yref']]).T
-        refxy = np.asanyarray([refcat.catalog['xref'],
-                               refcat.catalog['yref']]).T
+        im_xyref = np.asanyarray([self._catalog['xtanp'],
+                                  self._catalog['ytanp']]).T
+        refxy = np.asanyarray([refcat.catalog['xtanp'],
+                               refcat.catalog['ytanp']]).T
 
         mask = np.logical_not(self._catalog['matched_ref_id'].mask)
         im_xyref = im_xyref[mask]
         ref_idx = self._catalog['_raw_matched_ref_idx'][mask]
         refxy = refxy[ref_idx]
 
+        print("\nim_xyref:\n")
+        for x, y in im_xyref:
+            print("({:.16g}, {:.16g})".format(x, y))
+        print("\nrefxy:\n")
+        for x, y in refxy:
+            print("({:.16g}, {:.16g})".format(x, y))
+        print("\n")
+
+        print("nclip = {}, fitgeom = '{}', sigma = {}\n".format(nclip, fitgeom, sigma))
+
         fit = linearfit.iter_linear_fit(
-            im_xyref, refxy, fitgeom=fitgeom,
-            nclip=nclip, sigma=sigma, center=refcat.crpix
+            refxy, im_xyref, fitgeom=fitgeom,
+            nclip=nclip, sigma=sigma, center=(0, 0)#refcat.crpix
         )
 
-        fit['rms_keys'] = self._compute_fit_rms(fit, refcat)
+        print(fit,"\n")
+        print("\nm11 = {:.16g} m12 = {:.16g}\nm21 = {:.16g} m22 = {:.16g}"
+              .format(*(fit['fit_matrix'].ravel())))
+        print("sh1 = {:.16g} sh2 = {:.16g}\n"
+              .format(*fit['offset']))
+
+        fit['rms_keys'] = {'RMS_RA': 0, 'RMS_DEC': 0, 'NMATCH': 0} #self._compute_fit_rms(fit, refcat)
         xy_fit = fit['img_coords'] + fit['resids']
         fit['fit_xy'] = xy_fit
-        ra_fit, dec_fit = refcat.wcs_pix2world(xy_fit[0], xy_fit[1])
-        fit['fit_RA'] = ra_fit
-        fit['fit_DEC'] = dec_fit
+        #ra_fit, dec_fit = refcat.wcs_pix2world(xy_fit[0], xy_fit[1])
+        fit['fit_RA'] = xy_fit[0] #ra_fit
+        fit['fit_DEC'] = xy_fit[1] #dec_fit
 
         log.info("Computed '{:s}' fit for {}:".format(fitgeom, self.name))
         if fitgeom == 'shift':
@@ -863,16 +924,14 @@ class WCSGroupCatalog(object):
         """
         for imcat in self:
             wcsutils.apply_affine_to_wcs(
-                imwcs=imcat.wcs,
-                imshape=imcat.imshape,
-                refwcs=refcat.wcs,
+                imwcs=imcat.imwcs,
                 xsh=xsh,
                 ysh=ysh,
                 matrix=matrix
             )
+            imcat.meta['image_model'].meta.wcs = imcat.wcs
 
-    def align_to_ref(self, refcat, minobj=15, searchrad=1.0,
-                     searchunits='arcseconds', separation=0.5,
+    def align_to_ref(self, refcat, minobj=15, searchrad=1.0, separation=0.5,
                      use2dhist=True, xoffset=0.0, yoffset=0.0, tolerance=1.0,
                      fitgeom='rscale', nclip=3, sigma=3.0):
         """
@@ -895,9 +954,6 @@ class WCSGroupCatalog(object):
 
         searchrad : float, optional
             The search radius for a match.
-
-        searchunits : str, optional
-            Units for search radius.
 
         separation : float, optional
             The  minimum  separation for sources in the input and reference
@@ -942,33 +998,35 @@ class WCSGroupCatalog(object):
             Clipping limit in sigma units.
 
         """
-        self.calc_xyref(refcat=refcat)
+        if len(self._images) == 0:
+            return
+
+        self.calc_tanp_xy(tanplane_wcs=self._images[0])
+        refcat.calc_tanp_xy(tanplane_wcs=self._images[0])
         self.match2ref(refcat=refcat, minobj=minobj, searchrad=searchrad,
-                       searchunits=searchunits, separation=separation,
+                       separation=separation,
                        use2dhist=use2dhist, xoffset=xoffset, yoffset=yoffset,
                        tolerance=tolerance)
+        print(self._catalog)
+        print(refcat._catalog)
         fit = self.fit2ref(refcat=refcat, fitgeom=fitgeom,
                            nclip=nclip, sigma=sigma)
+        print(fit)
         self.apply_affine_to_wcs(refcat=refcat, matrix=fit['fit_matrix'],
                                  xsh=fit['offset'][0], ysh=fit['offset'][1])
 
 
 class RefCatalog(object):
     """
-    An object that holds a reference catalog and an associated WCS and provides
+    An object that holds a reference catalog and provides
     tools for coordinate convertions using reference WCS as well as
     catalog manipulation and expansion.
 
     """
-    def __init__(self, wcs, catalog, name=None, max_cat_name_len=256):
-        # TODO: max_cat_name_len is not implemented yet
+    def __init__(self, catalog, name=None):
         """
         Parameters
         ----------
-
-        wcs : gwcs.WCS
-            WCS of the reference frame.
-
         catalog : astropy.table.Table
             Reference catalog.
 
@@ -979,55 +1037,13 @@ class RefCatalog(object):
         name : str, None, optional
             Name of the reference catalog.
 
-        max_cat_name_len : int, optional
-            Not implemented yet. Reserved for future use.
-
         """
         self._name = name
-        self._max_cat_name_len = max_cat_name_len
-
         self._catalog = None
-
-        # WCS
-        if wcs is None:
-            raise ValueError("Reference catalog's wcs' cannot be 'None'")
-
-        self._swcs = SimpleWCS(wcs, copy=False)
 
         # make sure catalog has RA & DEC
         if catalog is not None:
             self.catalog = catalog
-
-    def _rd2xyref(self, catalog):
-        return self.wcs_world2pix(catalog['RA'], catalog['DEC'])
-
-    def _recalc_catalog_xy(self, catalog):
-        colnames = catalog.colnames
-
-        if 'xref' not in colnames and 'yref' not in colnames:
-            x, y = self._rd2xyref(catalog)
-            txy = table.Table([x, y], names=('xref', 'yref'),
-                              dtype=(np.float64, np.float64))
-            catalog = table.hstack([catalog, txy], join_type='exact')
-
-        elif 'xref' in colnames and 'yref' in colnames:
-            x, y = self._rd2xyref(catalog)
-            catalog['xref'] = x
-            catalog['yref'] = y
-
-        else:
-            raise ValueError("Reference catalog must either have or not "
-                             "have *both* 'x' and 'y' columns.")
-
-        return catalog
-
-    def recalc_catalog_xy(self):
-        """
-        Recalculate catalog's ``'xref'`` and ``'yref'`` from catalog's
-        ``'RA'`` and ``'DEC'`` values.
-
-        """
-        self._catalog = self._recalc_catalog_xy(self.catalog)
 
     def _check_catalog(self, catalog):
         if catalog is None:
@@ -1036,78 +1052,6 @@ class RefCatalog(object):
         if 'RA' not in catalog.colnames or 'DEC' not in catalog.colnames:
             raise KeyError("Reference catalogs *must* contain *both* 'RA' "
                            "and 'DEC' columns.")
-
-    @property
-    def wcs(self):
-        """ Get :py:class:`gwcs.WCS`.
-        """
-        if self._swcs is None:
-            return None
-        return self._swcs.wcs
-
-    @property
-    def pscale(self):
-        """ Pixel scale in arcsec assuming CD is in deg/pix.
-        """
-        if self._swcs is None:
-            raise RuntimeError("WCS has not been set")
-        return self._swcs.pscale
-
-    @property
-    def crpix(self):
-        """ Retrieve "CRPIX" of the WCS.
-        """
-        if self._swcs is None:
-            raise RuntimeError("WCS has not been set")
-        return self._swcs.crpix
-
-    @property
-    def crval(self):
-        """ Retrieve "CRVAL" of the WCS.
-        """
-        if self._swcs is None:
-            raise RuntimeError("WCS has not been set")
-        return self._swcs.crval
-
-    def all_pix2world(self, x, y):
-        """
-        Convert pixel coordinates to sky coordinates using full
-        (i.e., including distortions) transformations.
-
-        """
-        if self._swcs is None:
-            raise RuntimeError("WCS has not been set")
-        return self._swcs.all_pix2world(x, y)
-
-    def all_world2pix(self, ra, dec):
-        """
-        Convert sky coordinates to image's pixel coordinates using full
-        (i.e., including distortions) transformations.
-
-        """
-        if self._swcs is None:
-            raise RuntimeError("WCS has not been set")
-        return self._swcs.all_world2pix(ra, dec)
-
-    def wcs_pix2world(self, x, y):
-        """
-        Convert pixel coordinates to sky coordinates using standard WCS
-        transformations.
-
-        """
-        if self._swcs is None:
-            raise RuntimeError("WCS has not been set")
-        return self._swcs.wcs_pix2world(x, y)
-
-    def wcs_world2pix(self, ra, dec):
-        """
-        Convert sky coordinates to image's pixel coordinates using
-        standard WCS transformations.
-
-        """
-        if self._swcs is None:
-            raise RuntimeError("WCS has not been set")
-        return self._swcs.wcs_world2pix(ra, dec)
 
     @property
     def name(self):
@@ -1133,8 +1077,6 @@ class RefCatalog(object):
             raise ValueError("Catalog must contain at least one source.")
 
         self._catalog = catalog.copy()
-
-        self.recalc_catalog_xy()
 
         # create spherical polygon bounding the sources
         self.calc_bounding_polygon()
@@ -1209,28 +1151,45 @@ class RefCatalog(object):
         the sources in the catalog.
 
         """
-        if self.wcs is None or self.catalog is None:
+        if self.catalog is None:
             return
 
-        x = self.catalog['x']
-        y = self.catalog['y']
+        # Find an "optimal" tangent plane to the catalog points based on the
+        # mean point and then construct a WCS based on the mean point.
+        # Compute x, y coordinates in this tangent plane based on the
+        # previously computed WCS and return the set of x, y coordinates and
+        # "reference WCS".
+        x, y, z = tpcorr.TPCorr.spherical2cartesian(
+            self.catalog['RA'], self.catalog['DEC']
+        )
+        ra_ref, dec_ref = tpcorr.TPCorr.cartesian2spherical(
+            x.mean(dtype=np.float64),
+            y.mean(dtype=np.float64),
+            z.mean(dtype=np.float64)
+        )
+        rotm = [tpcorr.rot_mat3D(np.deg2rad(alpha), 2 - axis)
+                for axis, alpha in enumerate([ra_ref, dec_ref])]
+        euler_rot = np.linalg.multi_dot(rotm)
+        inv_euler_rot = np.linalg.inv(euler_rot)
+        xr, yr, zr = np.dot(euler_rot, (x, y, z))
+        r0 = tpcorr.TPCorr.r0
+        x = r0 * yr / xr
+        y = r0 * zr / xr
 
-        ra, dec = convex_hull(x, y, wcs=self.wcs_pix2world)
+        xv, yv = convex_hull(x, y)
 
-        if len(ra) == 0:
+        if len(xv) == 0:
             # no points
             raise RuntimeError("Unexpected error: Contact sofware developer")
 
-        elif len(ra) == 1:
+        elif len(xv) == 1:
             # one point. build a small box around it:
             x, y = convex_hull(x, y, wcs=None)
 
             xv = [x[0] - 0.5, x[0] - 0.5, x[0] + 0.5, x[0] + 0.5, x[0] - 0.5]
             yv = [y[0] - 0.5, y[0] + 0.5, y[0] + 0.5, y[0] - 0.5, y[0] - 0.5]
 
-            ra, dec = self.wcs_pix2world(xv, yv)
-
-        elif len(ra) == 3:
+        elif len(xv) == 3:
             # two points. build a small box around them:
             x, y = convex_hull(x, y, wcs=None)
 
@@ -1243,7 +1202,12 @@ class RefCatalog(object):
             xv = [x[0] + vx, x[1] + vx, x[1] + vx, x[0] - vx, x[0] + vx]
             yv = [y[0] + vy, y[1] + vy, y[1] + vy, x[0] - vx, x[0] + vx]
 
-            ra, dec = self.wcs_pix2world(xv, yv)
+        # "unrotate" cartezian coordinates back to their original
+        # ra_ref and dec_ref "positions":
+        xt = np.full_like(xv, r0)
+        xcr, ycr, zcr = np.dot(inv_euler_rot, (xt, xv, yv))
+        # convert cartesian to spherical coordinates:
+        ra, dec = tpcorr.TPCorr.cartesian2spherical(xcr, ycr, zcr)
 
         # TODO: for strange reasons, occasionally ra[0] != ra[-1] and/or
         #       dec[0] != dec[-1] (even though we close the polygon in the
@@ -1276,13 +1240,37 @@ class RefCatalog(object):
         """
         self._check_catalog(catalog)
         cat = catalog.copy()
-        cat = self._recalc_catalog_xy(cat)
         if self._catalog is None:
             self._catalog = cat
         else:
             self._catalog = table.vstack([self.catalog, cat],
                                          join_type='outer')
-        self._calc_cat_convex_hull()
+        self.calc_bounding_polygon()
+
+    def calc_tanp_xy(self, tanplane_wcs):
+        """
+        Compute x- and y-positions of the sources from the reference catalog
+        in the tangent plane provided by the `tanplane_wcs`.
+        This creates the following columns in the catalog's table:
+        ``'xtanp'`` and ``'ytanp'``.
+
+        Parameters
+        ----------
+        tanplane_wcs : tpcorr.ImageWCS
+            A `tpcorr.ImageWCS` object that will provide transformations to
+            the tangent plane to which sources of this catalog a should be
+            "projected".
+
+        """
+        # compute x & y in the reference WCS:
+        xtp, ytp = tanplane_wcs.world_to_tanp(self.catalog['RA'],
+                                              self.catalog['DEC'])
+        self._catalog['xtanp'] = table.MaskedColumn(
+            xtp, name='xtanp', dtype=np.float64, mask=False
+        )
+        self._catalog['ytanp'] = table.MaskedColumn(
+            ytp, name='ytanp', dtype=np.float64, mask=False
+        )
 
 
 def convex_hull(x, y, wcs=None):

@@ -5,15 +5,18 @@ This package provides support for image alignment.
 """
 from __future__ import (absolute_import, division, unicode_literals,
                         print_function)
-from .tweakreg_step import TweakRegStep
 
 import os
 import logging
 
-#from . import distortion
-
 __docformat__ = 'restructuredtext'
 
+__taskname__ = 'tweakreg'
+__version__ = '0.7.0'
+__vdate__ = '17-April-2016'
+__author__ = 'Mihai Cara'
+
+from .tweakreg_step import TweakRegStep
 from . import wcsutils
 from . import imalign
 from . import wcsimage
@@ -21,12 +24,7 @@ from . import matchutils
 from . import tweakreg_step
 from . import chelp
 from . import linearfit
-from . import simplewcs
-
-__taskname__ = 'tweakreg'
-__version__ = '0.7.0'
-__vdate__ = '17-April-2016'
-__author__ = 'Mihai Cara'
+from . import tpcorr
 
 
 log = logging.getLogger(__name__)
