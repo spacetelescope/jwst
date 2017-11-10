@@ -136,6 +136,10 @@ class Image2Pipeline(Pipeline):
         if input.meta.exposure.type.upper() in self.image_exptypes:
             result = self.resample(input)
             if result:
+
+                # update meta data in resampled image
+                result.update(input, only="PRIMARY")
+
                 # write out resampled exposure
                 self.save_model(result, suffix='i2d')
                 result.close()
