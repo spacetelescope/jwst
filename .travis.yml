@@ -40,6 +40,10 @@ matrix:
 
     include:
 
+        - os: osx
+          env: PYTHON_VERSION=3.5 SETUP_CMD='test'
+          compiler: clang
+
         # PEP8 check with flake8 (only once, i.e. "os: linux")
         - os: linux
           env: MAIN_CMD='flake8 --count'
@@ -53,6 +57,8 @@ matrix:
                PIP_DEPENDENCIES='sphinx_rtd_theme sphinx-automodapi'
 
     allow_failures:
+        - env: PYTHON_VERSION=3.5 SETUP_CMD='test'
+
         # PEP8 will fail for numerous reasons. Ignore it.
         - env: MAIN_CMD='flake8 --count'
                SETUP_CMD='jwst' TEST_CMD='flake8 --version'
