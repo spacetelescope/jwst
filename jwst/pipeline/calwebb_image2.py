@@ -138,7 +138,7 @@ class Image2Pipeline(Pipeline):
             if result:
 
                 # update meta data in resampled image
-                result.update(input)
+                result.update(input, only="PRIMARY")
 
                 # write out resampled exposure
                 self.save_model(result, suffix='i2d')
