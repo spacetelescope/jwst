@@ -21,6 +21,7 @@ from .helpers import (
 from .. import load_asn
 from ..main import Main
 
+
 # Main test args
 TEST_ARGS = ['--dry-run']
 
@@ -39,96 +40,66 @@ LV3_ONLY_ARGS = [
 ]
 
 # Produce general associations
-GENERAL_ARGS = []
+DEF_ARGS = []
 
 
-@pytest.yield_fixture(
-    scope='module',
-    params=[
-        (
-            LV3_ONLY_ARGS,
-            'pool_002_image_miri'
-        ),
-        (
-            GENERAL_ARGS,
-            'pool_004_wfs'
-        ),
-        (
-            GENERAL_ARGS,
-            'pool_005_spec_niriss'
-        ),
-        (
-            GENERAL_ARGS,
-            'pool_006_spec_nirspec'
-        ),
-        (
-            GENERAL_ARGS,
-            'pool_007_spec_miri'
-        ),
-        (
-            LV2_ONLY_ARGS,
-            'pool_009_spec_miri_lv2bkg'
-        ),
-        (
-            LV2_ONLY_ARGS,
-            'pool_010_spec_nirspec_lv2bkg'
-        ),
-        (
-            LV2_ONLY_ARGS,
-            'pool_011_spec_miri_lv2bkg_lrs'
-        ),
-        (
-            GENERAL_ARGS,
-            'pool_013_coron_nircam'
-        ),
-        (
-            GENERAL_ARGS,
-            'pool_014_ami_niriss'
-        ),
-        (
-            LV2_ONLY_ARGS,
-            'pool_015_spec_nirspec_lv2bkg_reversed'
-        ),
-        (
-            LV2_ONLY_ARGS,
-            'pool_016_spec_nirspec_lv2bkg_double'
-        ),
-        (
-            LV2_ONLY_ARGS,
-            'pool_017_spec_nirspec_lv2imprint'
-        ),
-        (
-            LV2_ONLY_ARGS,
-            'pool_018_all_exptypes'
-        ),
-        (
-            GENERAL_ARGS,
-            'pool_019_niriss_wfss'
-        ),
-        (
-            GENERAL_ARGS,
-            'pool_021_tso'
-        ),
-        (
-            GENERAL_ARGS,
-            'pool_022_tso_noflag'
-        ),
-    ]
-)
+# Define the standards
+class MakePars(object):
+    def __init__(
+            self,
+            pool_root,
+            main_args=DEF_ARGS,
+            source=None,
+            outdir=None,
+            execute=True
+    ):
+        self.pool_root = pool_root
+        self.main_args = main_args
+        self.source = source
+        self.outdir = outdir
+        self.execute = execute
+
+
+standards = [
+    MakePars('pool_002_image_miri', main_args=LV3_ONLY_ARGS),
+    MakePars('pool_004_wfs'),
+    MakePars('pool_005_spec_niriss'),
+    MakePars('pool_006_spec_nirspec'),
+    MakePars('pool_007_spec_miri'),
+    MakePars('pool_009_spec_miri_lv2bkg', main_args=LV2_ONLY_ARGS),
+    MakePars('pool_010_spec_nirspec_lv2bkg', main_args=LV2_ONLY_ARGS),
+    MakePars('pool_011_spec_miri_lv2bkg_lrs', main_args=LV2_ONLY_ARGS),
+    MakePars('pool_013_coron_nircam'),
+    MakePars('pool_014_ami_niriss'),
+    MakePars('pool_015_spec_nirspec_lv2bkg_reversed', main_args=LV2_ONLY_ARGS),
+    MakePars('pool_016_spec_nirspec_lv2bkg_double', main_args=LV2_ONLY_ARGS),
+    MakePars('pool_017_spec_nirspec_lv2imprint', main_args=LV2_ONLY_ARGS),
+    MakePars('pool_018_all_exptypes', main_args=LV2_ONLY_ARGS),
+    MakePars('pool_019_niriss_wfss'),
+    MakePars('pool_021_tso'),
+    MakePars('pool_022_tso_noflag'),
+]
+
+
+@pytest.fixture(params=standards)
 def generate_asns(request):
     """Test exp_type inclusion based on standard associations"""
-    main_args, pool_root = request.param
+    standard = request.param
 
-    standards_paths = glob(t_path(path.join('data', pool_root + '*_asn.json')))
+    standards_paths = glob(t_path(path.join(
+        'data',
+        'asn_standards',
+        standard.pool_root + '*_asn.json'))
+    )
     standards = []
     for standard_path in standards_paths:
         with open(standard_path) as fp:
             asn = load_asn(fp)
         standards.append(asn)
 
-    pool_path = t_path(path.join('data', pool_root + '.csv'))
+    pool_path = t_path(path.join('data', standard.pool_root + '.csv'))
     pool = combine_pools([pool_path])
-    args = TEST_ARGS + main_args
+    args = TEST_ARGS + standard.main_args
     results = Main(args, pool=pool)
 
     asns = results.associations

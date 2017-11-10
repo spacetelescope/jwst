@@ -1,0 +1,25 @@
+{
+    "asn_type": "spec3",
+    "asn_rule": "candidate_Asn_MIRI_IFU",
+    "version_id": null,
+    "code_version": "0.8.0",
+    "program": "80600",
+    "degraded_status": "No known degraded exposures in association.",
+    "constraints": "Constraints:\n    exp_type: {'mir_flatmrs'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'1'}\n    program: {'80600'}\n    asn_candidate: {\"\\\\(\\\\'o021\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "asn_id": "o021",
+    "target": "t001",
+    "asn_pool": "jw80600_20171108T041522_pool",
+    "products": [
+        {
+            "name": "jw80600-o021_t001_miri",
+            "members": [
+                {
+                    "expname": "jw80600021001_02101_00001_mirifulong_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o021', 'observation')"
+                }
+            ]
+        }
+    ]
+}
