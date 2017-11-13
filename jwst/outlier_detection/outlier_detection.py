@@ -203,6 +203,7 @@ class OutlierDetection(object):
         median_model = datamodels.ImageModel(
                                         init=drizzled_models[0].data.shape)
         median_model.update(drizzled_models[0])
+        median_model.meta.wcs = drizzled_models[0].meta.wcs
         base_filename = self.input_models[0].meta.filename
         median_model.meta.filename = '_'.join(
                         base_filename.split('_')[:2] + ['median.fits'])
