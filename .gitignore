@@ -18,3 +18,4 @@ relic/
 *.wpr
 *wpu
 .pytest_cache
+results.xml
