@@ -7,6 +7,7 @@
 #include <string.h>
 #include <time.h>
 #include <float.h>
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 
 static PyObject *gl_Error;
@@ -32,10 +33,10 @@ double **pymatrix_to_Carrayptrs(PyArrayObject *arrayin)  {
     double **c, *a;
     long i,n,m;
 
-    n=arrayin->dimensions[0];
-    m=arrayin->dimensions[1];
+    n=PyArray_DIMS(arrayin)[0];
+    m=PyArray_DIMS(arrayin)[1];
     c=(double **)ptrvector(n);
-    a=(double *) arrayin->data;  /* pointer to arrayin data as double */
+    a=(double *) PyArray_DATA(arrayin);  /* pointer to arrayin data as double */
     for ( i=0; i<n; i++)  {
         c[i]=a+i*m;  }
     return c;
@@ -57,26 +58,24 @@ arrxyzero(PyObject *obj, PyObject *args)
   PyArrayObject *imgxy = NULL;
   PyArrayObject *refxy = NULL;
   PyArrayObject *ozpmat = NULL;
-  double **zpmat;
-  long *a;
+  double **zpmat = NULL;
 
   long imgnum, refnum;
   integer_t dimensions[2];
   integer_t xind, yind;
   double dx, dy;
   long j, k;
-  long nsource = 0;
 
   if (!PyArg_ParseTuple(args,"OOd:arrxyzero", &oimgxy, &orefxy, &searchrad)){
     return PyErr_Format(gl_Error, "chelp.arrxyzero: Invalid Parameters.");
   }
 
-  imgxy = (PyArrayObject *)PyArray_ContiguousFromAny(oimgxy, PyArray_FLOAT, 2, 2);
+  imgxy = (PyArrayObject *)PyArray_ContiguousFromAny(oimgxy, NPY_FLOAT32, 2, 2);
   if (!imgxy) {
     goto _exit;
   }
 
-  refxy = (PyArrayObject *)PyArray_ContiguousFromAny(orefxy, PyArray_FLOAT, 2, 2);
+  refxy = (PyArrayObject *)PyArray_ContiguousFromAny(orefxy, NPY_FLOAT32, 2, 2);
   if (!refxy) {
     goto _exit;
   }
@@ -90,16 +89,16 @@ arrxyzero(PyObject *obj, PyObject *args)
   /* Allocate memory for return matrix */
   zpmat=pymatrix_to_Carrayptrs(ozpmat);
 
-  imgnum = imgxy->dimensions[0];
-  refnum = refxy->dimensions[0];
+  imgnum = PyArray_DIMS(imgxy)[0];
+  refnum = PyArray_DIMS(refxy)[0];
 
   /* For each entry in the input image...*/
   for (j=0; j< imgnum; j++){
     /* compute the delta relative to each source in ref image */
     for (k = 0; k < refnum; k++){
-        dx = *(float *)(imgxy->data + j*imgxy->strides[0]) - *(float *)(refxy->data + k*refxy->strides[0]);
-        dy = *(float *)(imgxy->data + j*imgxy->strides[0]+ imgxy->strides[1]) -
-             *(float *)(refxy->data + k*refxy->strides[0]+ refxy->strides[1]);
+        dx = *(float *)(PyArray_DATA(imgxy) + j*PyArray_STRIDES(imgxy)[0]) - *(float *)(PyArray_DATA(refxy) + k*PyArray_STRIDES(refxy)[0]);
+        dy = *(float *)(PyArray_DATA(imgxy) + j*PyArray_STRIDES(imgxy)[0]+ PyArray_STRIDES(imgxy)[1]) -
+             *(float *)(PyArray_DATA(refxy) + k*PyArray_STRIDES(refxy)[0]+ PyArray_STRIDES(refxy)[1]);
         if ((fabs(dx) < searchrad) && (fabs(dy) < searchrad)) {
             xind = (integer_t)(dx+searchrad);
             yind = (integer_t)(dy+searchrad);
