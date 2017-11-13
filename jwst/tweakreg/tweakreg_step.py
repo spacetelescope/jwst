@@ -12,9 +12,13 @@ from __future__ import (absolute_import, division, unicode_literals,
 
 import os
 import logging
+
 import numpy as np
 from astropy.table import Table
 
+# LOCAL
+from . import __version__
+from . import __vdate__
 from ..stpipe import Step, cmdline
 from .. import datamodels
 
@@ -44,7 +48,6 @@ class TweakRegStep(Step):
         # Object matching parameters:
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
         searchrad = float(default=1.0) # The search radius for a match
-        searchunits = option('arcseconds', 'pixels', default='arcseconds') # Units for search radius
         use2dhist = boolean(default=True) # Use 2d histogram to find initial offset?
         separation = float(default=0.5) # Minimum object separation in pixels
         tolerance = float(default=1.0) # Matching tolerance for xyxymatch in pixels
@@ -67,7 +70,8 @@ class TweakRegStep(Step):
             raise ValueError("Input must contain at least one image model.")
 
         # group images by their "group id":
-        grp_img = img.models_grouped
+        #TODO: re-allow grouping once we implement support for groups
+        grp_img = [[i] for i in img] #img.models_grouped
 
         if len(grp_img) == 1:
             # we need at least two images/groups to perform image alignment
@@ -75,13 +79,6 @@ class TweakRegStep(Step):
                      "alinment.")
             log.info("Nothing to do. Exiting 'TweakRegStep'...")
             return input
-
-        # find maximum length of the filename:
-        max_name_len = None
-        for im in img:
-            fnlen = _get_filename(im)
-            if max_name_len is None or max_name_len < fnlen:
-                max_name_len = fnlen
 
         # create a list of WCS-Catalog-Images Info and/or their Groups:
         images = []
@@ -102,7 +99,6 @@ class TweakRegStep(Step):
             expand_refcat=self.expand_refcat,
             minobj=self.minobj,
             searchrad=self.searchrad,
-            searchunits=self.searchunits,
             use2dhist=self.use2dhist,
             separation=self.separation,
             tolerance=self.tolerance,
@@ -130,9 +126,15 @@ class TweakRegStep(Step):
             catalog.rename_column('ycentroid', 'y')
 
         # create WCSImageCatalog object:
+        refang = image_model.meta.wcsinfo.instance
         im = WCSImageCatalog(
             shape=image_model.data.shape,
             wcs=image_model.meta.wcs,
+            ref_angles={'roll_ref': refang['roll_ref'],
+                        'ra_ref': refang['ra_ref'],
+                        'dec_ref': refang['dec_ref'],
+                        'v2_ref': refang['v2_ref'] / 3600.0,
+                        'v3_ref': refang['v3_ref'] / 3600.0},
             catalog=catalog,
             name=_get_filename(image_model),
             meta={'image_model': image_model}
@@ -146,4 +148,8 @@ def _get_filename(image_model):
         return None
     else:
         return os.path.splitext(os.path.basename(image_model.meta.filename))[0]
+
+
+if __name__ == '__main__':
+    cmdline.step_script(TweakRegStep)
 
