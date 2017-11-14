@@ -248,7 +248,7 @@ class TPCorr(Model):
 
         # "unrotate" cartezian coordinates back to their original
         # v2ref, v3ref, and roll "positions":
-        zcr, xcr, ycr = np.dot(inv_euler_rot, (zt.reshape(), xt, yt))
+        zcr, xcr, ycr = np.dot(inv_euler_rot, (zt, xt, yt))
 
         # convert cartesian to spherical coordinates:
         v2c, v3c = self.cartesian2spherical(zcr, xcr, ycr)
