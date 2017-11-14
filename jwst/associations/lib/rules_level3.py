@@ -49,9 +49,16 @@ class Asn_Image(
         # Now check and continue initialization.
         super(Asn_Image, self).__init__(*args, **kwargs)
 
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'image3'
+        super(Asn_Image, self)._init_hook(item)
+
 
 class Asn_WFSCMB(
         AsnMixin_Image,
+        AsnMixin_OpticalPath,
         AsnMixin_Target,
         AsnMixin_Base
 ):
@@ -454,7 +461,7 @@ class Asn_WFSS(
         super(Asn_WFSS, self).__init__(*args, **kwargs)
 
 
-class Asn_TSO(
+class Asn_TSO_Flag(
         AsnMixin_OpticalPath,
         AsnMixin_Target,
         AsnMixin_Base
@@ -464,7 +471,7 @@ class Asn_TSO(
         self.add_constraints({
             'is_tso': {
                 'value': 't',
-                'inputs': ['is_tso']
+                'inputs': ['tsovisit']
             },
             'exp_type': {
                 'value': None,
@@ -472,10 +479,46 @@ class Asn_TSO(
             }
         })
 
-        super(Asn_TSO, self).__init__(*args, **kwargs)
+        super(Asn_TSO_Flag, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
 
         self.data['asn_type'] = 'tso3'
-        super(Asn_TSO, self)._init_hook(item)
+        super(Asn_TSO_Flag, self)._init_hook(item)
+
+
+class Asn_TSO_EXPTYPE(
+        AsnMixin_OpticalPath,
+        AsnMixin_Target,
+        AsnMixin_Base
+):
+    """Time-Series observations"""
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'exp_type': {
+                'value': (
+                    'mir_lrs-slitless'
+                    '|nis_soss'
+                    '|nrc_tsimage'
+                    '|nrc_tsgrism'
+                    '|nrs_brightobj'
+                ),
+                'inputs': ['exp_type'],
+                'force_unique': True
+            },
+            'no_tso_flag': {
+                'value': None,
+                'inputs': ['tsovisit'],
+                'required': False,
+                'force_undefined': True
+            }
+        })
+
+        super(Asn_TSO_EXPTYPE, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'tso3'
+        super(Asn_TSO_EXPTYPE, self)._init_hook(item)
