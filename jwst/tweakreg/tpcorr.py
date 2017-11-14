@@ -43,8 +43,7 @@ from . import __version__
 from . import __vdate__
 
 
-__all__ = ['V23ToTanPlane', 'TanPlaneToV23',
-           'IncompatibleCorrections', 'ImageWCS', 'TPCorr', 'rot_mat3D']
+__all__ = ['IncompatibleCorrections', 'ImageWCS', 'TPCorr', 'rot_mat3D']
 
 __author__ = 'Mihai Cara'
 
@@ -223,7 +222,7 @@ class TPCorr(Model):
         (v2, v3), format_info = self.prepare_inputs(v2, v3)
 
         # convert spherical coordinates to cartesian assuming unit sphere:
-        xyz = self.spherical2cartesian(v2, v3)
+        xyz = self.spherical2cartesian(v2.ravel(), v3.ravel())
 
         # build Euler rotation matrices:
         rotm = [rot_mat3D(np.deg2rad(alpha), axis)
@@ -249,12 +248,13 @@ class TPCorr(Model):
 
         # "unrotate" cartezian coordinates back to their original
         # v2ref, v3ref, and roll "positions":
-        zcr, xcr, ycr = np.dot(inv_euler_rot, (zt, xt, yt))
+        zcr, xcr, ycr = np.dot(inv_euler_rot, (zt.reshape(), xt, yt))
 
         # convert cartesian to spherical coordinates:
         v2c, v3c = self.cartesian2spherical(zcr, xcr, ycr)
 
-        return self.prepare_outputs(format_info, v2c, v3c)
+        return self.prepare_outputs(format_info, v2c.reshape(v2.shape),
+                                    v3c.reshape(v3.shape))
 
     @property
     def inverse(self):
