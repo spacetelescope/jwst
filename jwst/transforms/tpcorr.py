@@ -17,8 +17,7 @@ import math
 
 # THIRD PARTY
 import numpy as np
-from astropy import units as u
-from astropy.modeling import Model, Parameter
+from astropy.modeling import Model, Parameter, InputParameterError
 
 # LOCAL
 from . import __version__
@@ -77,8 +76,8 @@ class TPCorr(Model):
     inputs = ('v2', 'v3')
     outputs = ('v2c', 'v3c')
 
-    #input_units_strict = False
-    #input_units_allow_dimensionless = True
+    # input_units_strict = False
+    # input_units_allow_dimensionless = True
     separable = False
     standard_broadcasting = False
 
@@ -128,7 +127,7 @@ class TPCorr(Model):
         Convert cartesian coordinates to spherical coordinates (in deg).
         """
         h = np.hypot(x, y)
-        alpha  = np.rad2deg(np.arctan2(y, x))
+        alpha = np.rad2deg(np.arctan2(y, x))
         delta = np.rad2deg(np.arctan2(z, h))
         return alpha, delta
 
@@ -166,7 +165,6 @@ class TPCorr(Model):
         # (tangent to a sphere of radius r0):
         xt = self.__class__.r0 * xr / zr
         yt = self.__class__.r0 * yr / zr
-        zt = np.full_like(xt, self.__class__.r0)
 
         # apply corrections:
         # NOTE: order of transforms may need to be swapped depending on the
