@@ -1,19 +1,7 @@
 """
-A module that provides SimpleWCS class - a class that simplifies working with
-GWCS objects, in particular as related to WCS transformations sky<->pix
-that either include or do not include SIP. Another major purpose
-for this class is to allow easy manipulation of WCS parameters related to
-standard FITS WCS (CRPIX, CDELT, PC, CRVAL, LONPOLE).
-
-.. warning::
-    This class is intended mostly for the internal use by `tweakreg`. This
-    class is intended to provide some sort of control in GWCS which, at this
-    moment almost completely lacks any kind of standartization. In addition,
-    it provides workarounds to some limitations/bugs present in GWCS such as
-    the one described here: https://github.com/spacetelescope/gwcs/issues/46
-
-    The API of this class may change in the future as GWCS evolves and bugs
-    get fixed and and therefore this class should not be used in external code.
+A module that provides `TPCorr` class - an `~astropy.modeling.Model` derived
+class that applies linear tangent-plane corrections to V2V3 coordinates of
+of JWST instrument's WCS.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
@@ -25,25 +13,18 @@ from __future__ import (absolute_import, division, unicode_literals,
 
 # STDLIB
 import logging
-from copy import deepcopy
 import math
 
 # THIRD PARTY
 import numpy as np
 from astropy import units as u
 from astropy.modeling import Model, Parameter
-from astropy.modeling.models import (
-    Shift, Scale, RotateNative2Celestial, AffineTransformation2D
-)
-from astropy.modeling.rotations import EulerAngleRotation
-import gwcs
 
 # LOCAL
 from . import __version__
-from . import __vdate__
 
 
-__all__ = ['IncompatibleCorrections', 'ImageWCS', 'TPCorr', 'rot_mat3D']
+__all__ = ['IncompatibleCorrections', 'rot_mat3D', 'TPCorr']
 
 __author__ = 'Mihai Cara'
 
@@ -195,7 +176,7 @@ class TPCorr(Model):
         xt, yt = np.dot(self.matrix[0], (xt, yt))
 
         return self.prepare_outputs(format_info, xt.reshape(v2.shape),
-                                    yt.reshape(v2.shape))
+                                    yt.reshape(v3.shape))
 
     def tanp_to_v2v3(self, xt, yt):
         (xt, yt), format_info = self.prepare_inputs(xt, yt)
@@ -219,7 +200,7 @@ class TPCorr(Model):
         v2c, v3c = self.cartesian2spherical(zcr, xcr, ycr)
 
         return self.prepare_outputs(format_info, v2c.reshape(xt.shape),
-                                    v3c.reshape(xt.shape))
+                                    v3c.reshape(yt.shape))
 
     def evaluate(self, v2, v3, v2ref, v3ref, roll, matrix, shift):
         (v2, v3), format_info = self.prepare_inputs(v2, v3)
@@ -305,197 +286,3 @@ class TPCorr(Model):
 
         return cls(v2ref=t2.v2ref.value, v3ref=t2.v3ref.value,
                    roll=t2.roll.value, matrix=matrix, shift=shift, name=name)
-
-
-class ImageWCS(object):
-
-    def __init__(self, wcs, v2_ref, v3_ref, roll_ref, ra_ref, dec_ref):
-        if not self.check_wcs_structure(wcs):
-            raise ValueError("Unsupported WCS structure.")
-
-        self._ra_ref = ra_ref
-        self._dec_ref = dec_ref
-        self._v2_ref = v2_ref
-        self._v3_ref = v3_ref
-        self._roll_ref = roll_ref
-
-        # perform additional check that if tangent plane correction is already
-        # present in the WCS pipeline, it is of TPCorr class and that
-        # its parameters are consistent with reference angles:
-        frms = [f[0] for f in wcs.pipeline]
-        if 'v2v3corr' in frms:
-            self._v23name = 'v2v3corr'
-            self._tpcorr = deepcopy(wcs.pipeline[frms.index('v2v3corr')-1][1])
-            self._default_tpcorr = None
-            if not isinstance(self._tpcorr, TPCorr):
-                raise ValueError("Unsupported tangent-plance correction type.")
-
-            # check that transformation parameters are consistent with
-            # reference angles:
-            v2ref = self._tpcorr.v2ref.value
-            v3ref = self._tpcorr.v3ref.value
-            roll = self._tpcorr.roll.value
-            eps_v2 = 10.0 * np.finfo(v2_ref).eps
-            eps_v3 = 10.0 * np.finfo(v3_ref).eps
-            eps_roll = 10.0 * np.finfo(roll_ref).eps
-            if not (np.isclose(v2_ref, v2ref, rtol=eps_v2) and
-                    np.isclose(v3_ref, v3ref, rtol=eps_v3) and
-                    np.isclose(roll_ref, roll, rtol=eps_roll)):
-                raise ValueError(
-                    "WCS/TPCorr parameters 'v2ref', 'v3ref', and/or 'roll' "
-                    "differ from the corresponding reference values."
-                )
-
-        else:
-            self._v23name = 'v2v3'
-            self._tpcorr = None
-            self._default_tpcorr = TPCorr(
-                v2ref=v2_ref, v3ref=v3_ref,
-                roll=roll_ref,
-                name='tangent-plane linear correction'
-            )
-
-
-        self._owcs = wcs
-        self._wcs = deepcopy(wcs)
-        self._update_transformations()
-
-    def _update_transformations(self):
-        # define transformations from detector/world coordinates to
-        # the tangent plane:
-        detname = self._wcs.pipeline[0][0]
-        worldname = self._wcs.pipeline[-1][0]
-
-        self._world_to_v23 = self._wcs.get_transform(worldname, self._v23name)
-        self._v23_to_world = self._wcs.get_transform(self._v23name, worldname)
-        self._det_to_v23 = self._wcs.get_transform(detname, self._v23name)
-        self._v23_to_det = self._wcs.get_transform(self._v23name, detname)
-
-        self._det_to_world = self._wcs.__call__
-        self._world_to_det = self._wcs.invert
-
-    @property
-    def ref_angles(self):
-        wcsinfo = {
-            'ra_ref': self._ra_ref,
-            'dec_ref': self._dec_ref,
-            'v2_ref': self._v2_ref,
-            'v3_ref': self._v3_ref,
-            'roll_ref': self._roll_ref
-        }
-        return wcsinfo
-
-    @property
-    def wcs(self):
-        return self._wcs
-
-    @property
-    def original_wcs(self):
-        return self._owcs
-
-    def copy(self):
-        return deepcopy(self)
-
-    def set_correction(self, matrix=[[1, 0], [0, 1]], shift=[0, 0]):
-        frms = [f[0] for f in self._wcs.pipeline]
-
-        # if original WCS did not have tangent-plane corrections, create
-        # new correction and add it to the WCs pipeline:
-        if self._tpcorr is None:
-            self._tpcorr = TPCorr(
-                v2ref=self._v2_ref, v3ref=self._v3_ref,
-                roll=self._roll_ref, matrix=matrix, shift=shift,
-                name='tangent-plane linear correction'
-            )
-            idx_v2v3 = frms.index(self._v23name)
-            pipeline = deepcopy(self._wcs.pipeline)
-            pf, pt = pipeline[idx_v2v3]
-            pipeline[idx_v2v3] = (pf, deepcopy(self._tpcorr))
-            pipeline.insert(idx_v2v3 + 1, ('v2v3corr', pt))
-            self._wcs = gwcs.WCS(pipeline, name=self._owcs.name)
-            self._v23name = 'v2v3corr'
-
-        else:
-            # combine old and new corrections into a single one and replace
-            # old transformation with the combined correction transformation:
-            tpcorr2 = self._tpcorr.__class__(
-                v2ref=self._tpcorr.v2ref, v3ref=self._tpcorr.v3ref,
-                roll=self._tpcorr.roll, matrix=matrix, shift=shift,
-                name='tangent-plane linear correction'
-            )
-
-            self._tpcorr = tpcorr2.combine(tpcorr2, self._tpcorr)
-
-            idx_v2v3 = frms.index(self._v23name)
-            pipeline = deepcopy(self._wcs.pipeline)
-            pipeline[idx_v2v3 - 1] = (pipeline[idx_v2v3 - 1][0],
-                                      deepcopy(self._tpcorr))
-            self._wcs = gwcs.WCS(pipeline, name=self._owcs.name)
-
-        # reset definitions of the transformations from detector/world
-        # coordinates to the tangent plane:
-        self._update_transformations()
-
-    def check_wcs_structure(self, wcs):
-        if wcs is None or wcs.pipeline is None:
-            return False
-
-        frms = [f[0] for f in wcs.pipeline]
-        nframes = len(frms)
-        if nframes < 3:
-            return False
-
-        if frms.count(frms[0]) > 1 or frms.count(frms[-1]) > 1:
-            return False
-
-        if frms.count('v2v3') != 1:
-            return False
-
-        idx_v2v3 = frms.index('v2v3')
-        if idx_v2v3 == 0 or idx_v2v3 == (nframes - 1):
-            return False
-
-        nv2v3corr = frms.count('v2v3corr')
-        if nv2v3corr == 0:
-            return True
-        elif nv2v3corr > 1:
-            return False
-
-        idx_v2v3corr = frms.index('v2v3corr')
-        if idx_v2v3corr != (idx_v2v3 + 1) or idx_v2v3corr == (nframes - 1):
-            return False
-
-        return True
-
-    def det_to_world(self, x, y):
-        ra, dec = self._det_to_world(x, y)
-        return ra, dec
-
-    def world_to_det(self, ra, dec):
-        x, y = self._world_to_det(ra, dec)
-        return x, y
-
-    def det_to_tanp(self, x, y):
-        tpc = self._default_tpcorr if self._tpcorr is None else self._tpcorr
-        v2, v3 = self._det_to_v23(x, y)
-        x, y = tpc.v2v3_to_tanp(v2, v3)
-        return x, y
-
-    def tanp_to_det(self, x, y):
-        tpc = self._default_tpcorr if self._tpcorr is None else self._tpcorr
-        v2, v3 = tpc.tanp_to_v2v3(x, y)
-        x, y = self._v23_to_det(v2, v3)
-        return x, y
-
-    def world_to_tanp(self, ra, dec):
-        tpc = self._default_tpcorr if self._tpcorr is None else self._tpcorr
-        v2, v3 = self._world_to_v23(ra, dec)
-        x, y = tpc.v2v3_to_tanp(v2, v3)
-        return x, y
-
-    def tanp_to_world(self, x, y):
-        tpc = self._default_tpcorr if self._tpcorr is None else self._tpcorr
-        v2, v3 = tpc.tanp_to_v2v3(x, y)
-        ra, dec = self._v23_to_world(v2, v3)
-        return ra, dec
-
