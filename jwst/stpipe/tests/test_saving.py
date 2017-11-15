@@ -68,6 +68,24 @@ def test_save_step_withoutput(mk_tmp_dirs):
     assert isfile(output_path + '_stepwithmodel' + output_ext)
 
 
+def test_save_step_withoutputsuffix(mk_tmp_dirs):
+    """Default save should be current working directory"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    output_file = 'junk_rate.fits'
+    actual_output_file = 'junk_stepwithmodel.fits'
+
+    args = [
+        'jwst.stpipe.tests.steps.StepWithModel',
+        data_fn_path,
+        '--output_file=' + output_file
+    ]
+
+    Step.from_cmdline(args)
+
+    assert isfile(actual_output_file)
+
+
 def test_save_step_withdir(mk_tmp_dirs):
     """Save to specified folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs

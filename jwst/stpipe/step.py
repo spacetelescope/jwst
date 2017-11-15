@@ -815,6 +815,14 @@ class Step(object):
         if has_basepath:
             path, filename = split(output_path)
             name, filename_ext = splitext(filename)
+
+            if suffix is not None:
+                match = re.match(REMOVE_SUFFIX, name)
+                try:
+                    name = match.group('root')
+                except AttributeError:
+                    pass
+
             output_name = [name]
             if idx is not None:
                 output_name.append('_' + str(idx))
@@ -845,9 +853,14 @@ class Step(object):
                 name, filename_ext = splitext(filename)
 
                 # Remove any known, previous suffixes.
-                match = re.match(REMOVE_SUFFIX, name)
-                name = match.group('root')
-                separator = match.group('separator')
+                separator = None
+                if suffix is not None:
+                    match = re.match(REMOVE_SUFFIX, name)
+                    try:
+                        name = match.group('root')
+                        separator = match.group('separator')
+                    except AttributeError:
+                        pass
                 if separator is None:
                     separator = '_'
 
