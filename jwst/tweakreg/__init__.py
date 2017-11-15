@@ -12,8 +12,8 @@ import logging
 __docformat__ = 'restructuredtext'
 
 __taskname__ = 'tweakreg'
-__version__ = '0.8.0'
-__vdate__ = '10-November-2017'
+__version__ = '0.8.1'
+__vdate__ = '14-November-2017'
 __author__ = 'Mihai Cara'
 
 from .tweakreg_step import TweakRegStep
@@ -24,7 +24,6 @@ from . import matchutils
 from . import tweakreg_step
 from . import chelp
 from . import linearfit
-from . import tpcorr
 
 
 log = logging.getLogger(__name__)
