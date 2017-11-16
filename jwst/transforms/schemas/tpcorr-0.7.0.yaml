@@ -1,0 +1,46 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://stsci.edu/schemas/jwst_pipeline/tpcorr-0.7.0"
+tag: "tag:stsci.edu:jwst_pipeline/tpcorr-0.7.0"
+title: >
+  Tangent Plane Correction
+
+description: |
+  TPCorr model performs correction of "mis-aligned" (V2, V3) coordinates by:
+  - projecting points with (V2, V3) coordinates onto a tangent plane;
+  - applying linear transformations to the projected coordinates;
+  - projecting points from the tangent plane onto the V2-V3 sphere.
+  Ouput of this model are corrected (V2, V3) coordinates.
+
+anyOf:
+  - $ref: ../asdf/transform/transform-1.1.0
+  - type: object
+    properties:
+      v2ref:
+        description: |
+          V2 reference angle.
+        type: number
+      v3ref:
+        description: |
+          V3 reference angle.
+        type: number
+      roll:
+        description: |
+          Roll angle.
+        type: number
+      matrix:
+        description: |
+          Generalized rotation matrix.
+        type: array
+        items:
+          type: array
+          items:
+            type: number
+      shift:
+        description: |
+          Translational correction.
+        type: array
+        items:
+          type: number
+    required: [v2ref, v3ref, roll, matrix, shift]
