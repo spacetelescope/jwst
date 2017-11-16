@@ -44,7 +44,7 @@ class OutlierDetection(object):
 
     """
 
-    DEFAULT_SUFFIX = 'i2d'
+    default_suffix = 'i2d'
 
     def __init__(self, input_models, reffiles=None, **pars):
         """
@@ -165,7 +165,7 @@ class OutlierDetection(object):
         # Parse any user-provided filename suffix for resampled products
         self.resample_suffix = '_outlier_{}.fits'.format(
                                 pars.get('resample_suffix',
-                                         self.DEFAULT_SUFFIX))
+                                         self.default_suffix))
         if 'resample_suffix' in pars:
             del pars['resample_suffix']
         log.debug("Defined output product suffix as: {}".format(

@@ -118,7 +118,7 @@ class OutlierDetectionStep(Step):
                 detection_step = outlier_registry['scaled']
                 pars['resample_suffix'] = 'i2d'
             elif exptype in SLIT_SPEC_MODES:
-                detection_step = outlier_registry['slit']
+                detection_step = outlier_registry['slitspec']
                 pars['resample_suffix'] = 's2d'
             elif exptype in IFU_SPEC_MODES:
                 # select algorithm for IFU data
