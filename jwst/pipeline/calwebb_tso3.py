@@ -68,6 +68,7 @@ class Tso3Pipeline(Pipeline):
                 image = datamodels.ImageModel(data=cube.data[i],
                         err=cube.err[i], dq=cube.dq[i])
                 image.update(cube)
+                image.meta.wcs = cube.meta.wcs
                 input_2dmodels.append(image)
 
             if not self.scale_detection:
