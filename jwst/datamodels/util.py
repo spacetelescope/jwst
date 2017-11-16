@@ -121,6 +121,7 @@ def open(init=None, extensions=None, **kwargs):
 
     # First try to get the class name from the primary header
     new_class = _class_from_model_type(hdulist)
+    has_model_type = new_class is not None
 
     # Special handling for ramp files for backwards compatibility
     if new_class is None:
@@ -146,7 +147,8 @@ def open(init=None, extensions=None, **kwargs):
 
     # Actually open the model
     model = new_class(init, extensions=extensions, **kwargs)
-    model.meta.model_type = None
+    if not has_model_type:
+        model.meta.model_type = None
     
     # Close the hdulist if we opened it
     if file_to_close is not None:
