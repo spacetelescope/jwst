@@ -951,13 +951,14 @@ class ExtractModel(object):
                 ra = np.zeros(nelem, dtype=np.float64)
                 dec = np.zeros(nelem, dtype=np.float64)
                 wavelength = np.zeros(nelem, dtype=np.float64)
+                transform = self.wcs.forward_transform
                 if n_inputs == 2:
                     for i in range(nelem):
-                        ra[i], dec[i], wavelength[i], _ = self.wcs(
+                        ra[i], dec[i], wavelength[i], _ = transform(
                                         x_array[i], y_array[i])
                 elif n_inputs == 3:
                     for i in range(nelem):
-                        ra[i], dec[i], wavelength[i], _ = self.wcs(
+                        ra[i], dec[i], wavelength[i], _ = transform(
                                 x_array[i], y_array[i], self.spectral_order)
                 else:
                     log.error("n_inputs for wcs function is %d", n_inputs)

@@ -16,30 +16,6 @@ from .. import generate
 from ..main import constrain_on_candidates
 
 
-class TestLevel3Spectrographic(BasePoolRule):
-
-    pools = [
-        PoolParams(
-            path=[
-                t_path('data/pool_005_spec_niriss.csv'),
-                t_path('data/pool_006_spec_nirspec.csv'),
-                t_path('data/pool_007_spec_miri.csv'),
-            ],
-            n_asns=7,
-            n_orphaned=0
-        ),
-    ]
-
-    valid_rules = [
-        'Asn_MIRI_LRS_FIXEDSLIT',
-        'Asn_NIR_SO_SLITLESS',
-        'Asn_NRS_FIXEDSLIT',
-        'Asn_NRS_MSA',
-        'Asn_MIRI_IFU',
-        'Asn_NRS_IFU'
-    ]
-
-
 @pytest.fixture(
     scope='module',
     params=[

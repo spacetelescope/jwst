@@ -1,0 +1,25 @@
+{
+    "asn_type": "tso3",
+    "asn_rule": "candidate_Asn_TSO_Flag",
+    "version_id": null,
+    "code_version": "0.8.0",
+    "program": "99009",
+    "degraded_status": "No known degraded exposures in association.",
+    "constraints": "Constraints:\n    is_tso: {'t'}\n    exp_type: {'nis_soss'}\n    opt_elem: {'f140m'}\n    opt_elem2: set()\n    target: {'1'}\n    program: {'99009'}\n    instrument: {'niriss'}\n    asn_candidate: {\"\\\\(\\\\'o004\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "asn_id": "o004",
+    "target": "t001",
+    "asn_pool": "pool_021_tso",
+    "products": [
+        {
+            "name": "jw99009-o004_t001_niriss_f140m",
+            "members": [
+                {
+                    "expname": "jw_00002_calints.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o004', 'observation')"
+                }
+            ]
+        }
+    ]
+}
