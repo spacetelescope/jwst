@@ -68,6 +68,37 @@ def build_fits_dict(schema):
     return results
 
 
+def build_schema2fits_dict(schema):
+    """
+    Utility function to create a dict that maps metadata attributes to thier
+    FITS keyword and FITS HDU locations (if any).
+
+    Parameters
+    ----------
+    schema : JSON schema fragment
+        The schema in which to search.
+
+    Returns
+    -------
+    results : dict
+        Dictionary with schema metadata path as keys and a tuple of FITS
+        keyword and FITS HDU as values.
+
+    """
+    def build_schema_dict(subschema, path, combiner, ctx, recurse):
+        if len(path) and path[0] == 'extra_fits':
+            return True
+        kw = subschema.get('fits_keyword')
+        hdu = subschema.get('fits_hdu')
+        if kw is not None:
+            results['.'.join(path)] = (kw, hdu)
+
+    results = {}
+    walk_schema(schema, build_schema_dict, results)
+
+    return results
+
+
 class SearchSchemaResults(list):
     def __repr__(self):
         import textwrap
