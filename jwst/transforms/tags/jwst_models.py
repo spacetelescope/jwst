@@ -16,7 +16,7 @@ from ..tpcorr import TPCorr
 __all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
            'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSky',
            'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType', 'NIRCAMGrismDispersionType',
-           'NIRISSGrismDispersionType']
+           'NIRISSGrismDispersionType', 'TPCorrType']
 
 
 class NIRCAMGrismDispersionType(TransformType):
