@@ -31,7 +31,7 @@ _EXPTYPE_MAP = {
 }
 
 # Non-specified values found in DMS Association Pools
-_EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n')
+_EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f')
 
 __all__ = ['DMSBaseMixin']
 
@@ -203,13 +203,13 @@ class DMSBaseMixin(ACIDMixin):
         else:
             return 'psf'
         try:
-            self.item_getattr(item, ['is_imprint'])
+            self.item_getattr(item, ['is_imprt'])
         except KeyError:
             pass
         else:
             return 'imprint'
         try:
-            self.item_getattr(item, ['background'])
+            self.item_getattr(item, ['bkgdtarg'])
         except KeyError:
             pass
         else:
