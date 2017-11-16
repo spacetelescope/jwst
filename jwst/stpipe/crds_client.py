@@ -57,8 +57,8 @@ def get_refpaths_from_filename(filename, reference_file_types):
     
 _BESTREFS_CACHE = {}   # { model_filename : bestref_path or 'N/A', ... }
 
-# import memory_profiler
-# @memory_profiler.profile
+import memory_profiler
+@memory_profiler.profile
 def get_multiple_reference_paths(dataset_model, reference_file_types):
     """Aligns JWST pipeline requirements with CRDS library top level interfaces.
     
@@ -73,18 +73,19 @@ def get_multiple_reference_paths(dataset_model, reference_file_types):
         refpaths = { reftype:_BESTREFS_CACHE[(filename, reftype)]
                      for reftype in reference_file_types }
         log.verbose("Using cached bestrefs for", repr(filename), "with types", repr(reference_file_types))
-        
+        return refpaths
     except KeyError:
+        pass
+        
+    data_dict = _get_data_dict(filename, dataset_model)
 
-        data_dict = _get_data_dict(filename, dataset_model)
-
-        # Cache prefetch-like results
-        refpaths = _get_refpaths(data_dict, tuple(reference_file_types))
-
-        # Cache results for each individual reftype, as-in get_reference_file().
-        for reftype, path in refpaths.items():
-            _BESTREFS_CACHE[(filename, reftype)] = path
-
+    # Cache prefetch-like results
+    refpaths = _get_refpaths(data_dict, tuple(reference_file_types))
+    
+    # Cache results for each individual reftype, as-in get_reference_file().
+    for reftype, path in refpaths.items():
+        _BESTREFS_CACHE[(filename, reftype)] = path
+        
     return refpaths
 
 # ......................
@@ -99,11 +100,18 @@ def _get_data_dict(filename, dataset_model):
     try:
         header = _HEADER_CACHE[filename]
         log.verbose("Using cached CRDS matching header for", repr(filename))
+        return header
     except KeyError:
-        log.verbose("Caching CRDS matching header for", repr(filename))
-        _HEADER_CACHE[filename] = header = dataset_model.to_flat_dict(include_arrays=False)
+        pass
+    log.verbose("Caching CRDS matching header for", repr(filename))
+    _HEADER_CACHE[filename] = header = _clean_flat_dict(dataset_model)
     return header
 
+def _clean_flat_dict(dataset_model):
+    """Make sure all header items returned are simple, no complex objects."""
+    header = dataset_model.to_flat_dict(include_arrays=False)
+    return { key: val for (key,val) in header.items()
+             if isinstance(val, (python23.string_types,python23.long,int,float,complex,bool)) }
 
 # ......................
 
