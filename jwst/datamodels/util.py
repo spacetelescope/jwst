@@ -146,6 +146,7 @@ def open(init=None, extensions=None, **kwargs):
 
     # Actually open the model
     model = new_class(init, extensions=extensions, **kwargs)
+    model.meta.model_type = None
     
     # Close the hdulist if we opened it
     if file_to_close is not None:
