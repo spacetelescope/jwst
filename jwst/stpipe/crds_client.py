@@ -57,8 +57,8 @@ def get_refpaths_from_filename(filename, reference_file_types):
     
 _BESTREFS_CACHE = {}   # { model_filename : bestref_path or 'N/A', ... }
 
-import memory_profiler
-@memory_profiler.profile
+# import memory_profiler
+# @memory_profiler.profile
 def get_multiple_reference_paths(dataset_model, reference_file_types):
     """Aligns JWST pipeline requirements with CRDS library top level interfaces.
     
