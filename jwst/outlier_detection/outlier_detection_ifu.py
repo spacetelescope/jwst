@@ -46,7 +46,7 @@ class OutlierDetectionIFU(OutlierDetection):
 
     """
 
-    DEFAULT_SUFFIX = 's3d'
+    default_suffix = 's3d'
 
     def __init__(self, input_models, reffiles=None, **pars):
         """Initialize class for IFU data processing.
