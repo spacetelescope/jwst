@@ -4,7 +4,6 @@ from __future__ import (absolute_import, division, unicode_literals,
 import numpy as np
 from numpy.testing import assert_array_equal
 from asdf import yamlutil
-from astropy.io.misc.asdf.tags.transform.basic import TransformType
 from ..jwst_types import JWSTTransformType
 from .. import models
 from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
@@ -49,7 +48,7 @@ class NIRCAMGrismDispersionType(JWSTTransformType):
 
     @classmethod
     def assert_equal(cls, a, b):
-        TransformType.assert_equal(a, b)
+        JWSTTransformType.assert_equal(a, b)
         assert (isinstance(a, type(b)))
         assert_array_equal(a.xmodels, b.xmodels)
         assert_array_equal(a.ymodels, b.ymodels)
@@ -89,7 +88,7 @@ class NIRISSGrismDispersionType(JWSTTransformType):
 
     @classmethod
     def assert_equal(cls, a, b):
-        TransformType.assert_equal(a, b)
+        JWSTTransformType.assert_equal(a, b)
         assert (isinstance(a, type(b)))
         assert_array_equal(a.xmodels, b.xmodels)
         assert_array_equal(a.ymodels, b.ymodels)
@@ -307,7 +306,7 @@ class RefractionIndexType(JWSTTransformType):
 
     @classmethod
     def assert_equal(cls, a, b):
-        TransformType.assert_equal(a, b)
+        JWSTTransformType.assert_equal(a, b)
         assert (isinstance(a, RefractionIndexFromPrism) and
                 isinstance(b, RefractionIndexFromPrism))
         assert_array_equal(a.prism_angle, b.prism_angle)
@@ -339,7 +338,7 @@ class SnellType(JWSTTransformType):
 
     @classmethod
     def assert_equal(cls, a, b):
-        TransformType.assert_equal(a, b)
+        JWSTTransformType.assert_equal(a, b)
         assert (isinstance(a, Snell) and
                 isinstance(b, Snell))
         assert_array_equal(a.prism_angle, b.prism_angle)
@@ -372,7 +371,7 @@ class MIRI_AB2SliceType(JWSTTransformType):
 
     @classmethod
     def assert_equal(cls, a, b):
-        TransformType.assert_equal(a, b)
+        JWSTTransformType.assert_equal(a, b)
         assert (isinstance(a, MIRI_AB2Slice) and
                 isinstance(b, MIRI_AB2Slice))
         assert_array_equal(a.beta_zero, b.beta_zero)
