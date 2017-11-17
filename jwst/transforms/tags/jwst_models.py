@@ -5,6 +5,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 from asdf import yamlutil
 from astropy.io.misc.asdf.tags.transform.basic import TransformType
+from ..jwst_types import JWSTTransformType
 from .. import models
 from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
                       Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA, LRSWavelength, Gwa2Slit,
@@ -15,12 +16,12 @@ from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
 from ..tpcorr import TPCorr
 
 __all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
-           'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSky',
+           'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSkyType',
            'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType', 'NIRCAMGrismDispersionType',
            'NIRISSGrismDispersionType', 'TPCorrType']
 
 
-class NIRCAMGrismDispersionType(TransformType):
+class NIRCAMGrismDispersionType(JWSTTransformType):
     name = "nircam_grism_dispersion"
     types = [NIRCAMForwardRowGrismDispersion, NIRCAMForwardColumnGrismDispersion,
              NIRCAMBackwardGrismDispersion]
@@ -56,7 +57,7 @@ class NIRCAMGrismDispersionType(TransformType):
         assert_array_equal(a.orders, b.orders)
 
 
-class NIRISSGrismDispersionType(TransformType):
+class NIRISSGrismDispersionType(JWSTTransformType):
     name = "niriss_grism_dispersion"
     types = [NIRISSForwardRowGrismDispersion, NIRISSForwardColumnGrismDispersion,
              NIRISSBackwardGrismDispersion]
@@ -97,7 +98,7 @@ class NIRISSGrismDispersionType(TransformType):
         assert_array_equal(a.theta, b.theta)
 
 
-class RotationSequenceType(TransformType):
+class RotationSequenceType(JWSTTransformType):
     name = "rotation_sequence"
     types = [Rotation3DToGWA]
     standard = "jwst_pipeline"
@@ -116,7 +117,7 @@ class RotationSequenceType(TransformType):
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
-class V23ToSkyType(TransformType):
+class V23ToSkyType(JWSTTransformType):
     name = "v23tosky"
     types = [V23ToSky]
     standard = "jwst_pipeline"
@@ -135,7 +136,7 @@ class V23ToSkyType(TransformType):
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
-class CoordsType(TransformType):
+class CoordsType(JWSTTransformType):
     name = "coords"
     types = [Unitless2DirCos, DirCos2Unitless]
     standard = "jwst_pipeline"
@@ -164,7 +165,7 @@ class CoordsType(TransformType):
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
-class GratingEquationType(TransformType):
+class GratingEquationType(JWSTTransformType):
     name = "grating_equation"
     types = [WavelengthFromGratingEquation, AngleFromGratingEquation]
     standard = "jwst_pipeline"
@@ -199,7 +200,7 @@ class GratingEquationType(TransformType):
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
-class LRSWavelengthType(TransformType):
+class LRSWavelengthType(JWSTTransformType):
     name = "lrs_wavelength"
     types = [LRSWavelength]
     standard = "jwst_pipeline"
@@ -218,7 +219,7 @@ class LRSWavelengthType(TransformType):
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
-class Gwa2SlitType(TransformType):
+class Gwa2SlitType(JWSTTransformType):
     name = "gwa_to_slit"
     types = [Gwa2Slit]
     standard = "jwst_pipeline"
@@ -235,7 +236,7 @@ class Gwa2SlitType(TransformType):
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
-class Slit2MsaType(TransformType):
+class Slit2MsaType(JWSTTransformType):
     name = "slit_to_msa"
     types = [Slit2Msa]
     standard = "jwst_pipeline"
@@ -252,7 +253,7 @@ class Slit2MsaType(TransformType):
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
-class LogicalType(TransformType):
+class LogicalType(JWSTTransformType):
     name = "logical"
     types = [Logical]
     standard = "jwst_pipeline"
@@ -270,7 +271,7 @@ class LogicalType(TransformType):
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
-class NirissSOSSType(TransformType):
+class NirissSOSSType(JWSTTransformType):
     name = "niriss_soss"
     types = [NirissSOSSModel]
     standard = "jwst_pipeline"
@@ -288,7 +289,7 @@ class NirissSOSSType(TransformType):
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
 
 
-class RefractionIndexType(TransformType):
+class RefractionIndexType(JWSTTransformType):
     name = "refraction_index_from_prism"
     types = [RefractionIndexFromPrism]
     standard = "jwst_pipeline"
@@ -312,7 +313,7 @@ class RefractionIndexType(TransformType):
         assert_array_equal(a.prism_angle, b.prism_angle)
 
 
-class SnellType(TransformType):
+class SnellType(JWSTTransformType):
     name = "snell"
     types = [Snell]
     standard = "jwst_pipeline"
@@ -351,7 +352,7 @@ class SnellType(TransformType):
         assert_array_equal(a.pressure, b.pressure)
 
 
-class MIRI_AB2SliceType(TransformType):
+class MIRI_AB2SliceType(JWSTTransformType):
     name = "miri_ab2slice"
     types = [MIRI_AB2Slice]
     standard = "jwst_pipeline"
