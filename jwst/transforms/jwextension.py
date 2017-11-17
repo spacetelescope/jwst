@@ -22,6 +22,7 @@ class JWSTExtension(AsdfExtension):
                 NIRCAMGrismDispersionType,
                 NIRISSGrismDispersionType,
                 LogicalType,
+                TPCorrType,
                 ]
 
     @property
