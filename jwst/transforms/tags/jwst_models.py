@@ -379,7 +379,7 @@ class MIRI_AB2SliceType(JWSTTransformType):
         assert_array_equal(a.channel, b.channel)
 
 
-class TPCorrType(TransformType):
+class TPCorrType(JWSTTransformType):
     name = "tpcorr"
     types = [TPCorr]
     standard = "jwst_pipeline"
