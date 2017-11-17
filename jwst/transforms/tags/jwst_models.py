@@ -1,6 +1,7 @@
 
 from __future__ import (absolute_import, division, unicode_literals,
                         print_function)
+import numpy as np
 from numpy.testing import assert_array_equal
 from asdf import yamlutil
 from asdf.tags.transform.basic import TransformType
@@ -389,8 +390,8 @@ class TPCorrType(TransformType):
         v2ref = node['v2ref']
         v3ref = node['v3ref']
         roll = node['roll']
-        matrix = list(node['matrix'])
-        shift = list(node['shift'])
+        matrix = np.asarray(node['matrix'])
+        shift = np.asarray(node['shift'])
         return TPCorr(v2ref=v2ref, v3ref=v3ref, roll=roll, matrix=matrix,
                       shift=shift)
 
@@ -400,7 +401,7 @@ class TPCorrType(TransformType):
             'v2ref': model.v2ref.value,
             'v3ref': model.v3ref.value,
             'roll': model.roll.value,
-            'matrix': list(model.matrix.value),
-            'shift': list(model.shift.value)
+            'matrix': model.matrix.value.tolist(),
+            'shift': model.shift.value.tolist()
         }
         return yamlutil.custom_tree_to_tagged_tree(node, ctx)
