@@ -32,15 +32,19 @@ anyOf:
       matrix:
         description: |
           Generalized rotation matrix.
-        type: array
-        items:
-          type: array
-          items:
-            type: number
+        anyOf:
+          - type: array
+            items:
+              type: array
+              items:
+                type: number
+          - $ref: http://stsci.edu/schemas/asdf/core/ndarray-1.0.0
       shift:
         description: |
           Translational correction.
-        type: array
-        items:
-          type: number
+        anyOf:
+          - type: array
+            items:
+              type: number
+          - $ref: http://stsci.edu/schemas/asdf/core/ndarray-1.0.0
     required: [v2ref, v3ref, roll, matrix, shift]
