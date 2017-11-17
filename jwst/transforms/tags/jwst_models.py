@@ -4,7 +4,7 @@ from __future__ import (absolute_import, division, unicode_literals,
 import numpy as np
 from numpy.testing import assert_array_equal
 from asdf import yamlutil
-from asdf.tags.transform.basic import TransformType
+from astropy.io.misc.asdf.tags.transform.basic import TransformType
 from .. import models
 from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
                       Unitless2DirCos, DirCos2Unitless, Rotation3DToGWA, LRSWavelength, Gwa2Slit,
