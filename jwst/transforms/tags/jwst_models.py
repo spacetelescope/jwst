@@ -1,6 +1,7 @@
 
 from __future__ import (absolute_import, division, unicode_literals,
                         print_function)
+import numpy as np
 from numpy.testing import assert_array_equal
 from asdf import yamlutil
 from astropy.io.misc.asdf.tags.transform.basic import TransformType
@@ -11,12 +12,12 @@ from ..models import (WavelengthFromGratingEquation, AngleFromGratingEquation,
                       Snell, NIRCAMForwardRowGrismDispersion, NIRCAMForwardColumnGrismDispersion,
                       NIRISSForwardRowGrismDispersion, NIRISSForwardColumnGrismDispersion,
                       NIRCAMBackwardGrismDispersion, NIRISSBackwardGrismDispersion, MIRI_AB2Slice)
-
+from ..tpcorr import TPCorr
 
 __all__ = ['GratingEquationType', 'CoordsType', 'RotationSequenceType', 'LRSWavelengthType',
            'Gwa2SlitType', 'Slit2MsaType', 'LogicalType', 'NirissSOSSType', 'V23ToSky',
            'RefractionIndexType', 'SnellType', 'MIRI_AB2SliceType', 'NIRCAMGrismDispersionType',
-           'NIRISSGrismDispersionType']
+           'NIRISSGrismDispersionType', 'TPCorrType']
 
 
 class NIRCAMGrismDispersionType(TransformType):
@@ -376,3 +377,31 @@ class MIRI_AB2SliceType(TransformType):
         assert_array_equal(a.beta_zero, b.beta_zero)
         assert_array_equal(a.beta_del, b.beta_del)
         assert_array_equal(a.channel, b.channel)
+
+
+class TPCorrType(TransformType):
+    name = "tpcorr"
+    types = [TPCorr]
+    standard = "jwst_pipeline"
+    version = "0.7.0"
+
+    @classmethod
+    def from_tree_transform(cls, node, ctx):
+        v2ref = node['v2ref']
+        v3ref = node['v3ref']
+        roll = node['roll']
+        matrix = np.asarray(node['matrix'])
+        shift = np.asarray(node['shift'])
+        return TPCorr(v2ref=v2ref, v3ref=v3ref, roll=roll, matrix=matrix,
+                      shift=shift)
+
+    @classmethod
+    def to_tree_transform(cls, model, ctx):
+        node = {
+            'v2ref': model.v2ref.value,
+            'v3ref': model.v3ref.value,
+            'roll': model.roll.value,
+            'matrix': model.matrix.value.tolist(),
+            'shift': model.shift.value.tolist()
+        }
+        return yamlutil.custom_tree_to_tagged_tree(node, ctx)
