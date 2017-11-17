@@ -35,7 +35,7 @@ class OutlierDetectionSpec(OutlierDetection):
 
     """
 
-    DEFAULT_SUFFIX = 's2d'
+    default_suffix = 's2d'
 
     def __init__(self, input_models, reffiles=None, **pars):
         """Initialize class with input_models.
