@@ -1,0 +1,31 @@
+{
+    "asn_type": "spec3",
+    "asn_rule": "candidate_Asn_NRS_IFU",
+    "version_id": null,
+    "code_version": "0.9.2",
+    "program": "84600",
+    "degraded_status": "No known degraded exposures in association.",
+    "constraints": "Constraints:\n    exp_type: {'nrs_ifu'}\n    is_not_tso: set()\n    instrument: {'nirspec'}\n    target: {'1'}\n    program: {'84600'}\n    asn_candidate: {\"\\\\(\\\\'o006\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "asn_id": "o006",
+    "target": "t001",
+    "asn_pool": "jw84600_20171108T041344_fixed_pool",
+    "products": [
+        {
+            "name": "jw84600-o006_t001_nirspec_clear",
+            "members": [
+                {
+                    "expname": "jw84600006001_02101_00001_nrs2_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o006', 'observation')"
+                },
+                {
+                    "expname": "jw84600006001_02101_00001_nrs1_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o006', 'observation')"
+                }
+            ]
+        }
+    ]
+}
