@@ -7,7 +7,7 @@ from setuptools.command.test import test as TestCommand
 from numpy import get_include as np_include
 from glob import glob
 
-if sys.version_info < (3, 4):
+if sys.version_info < (3, 5):
     error = """
     JWST 0.9+ does not support Python 2.x, 3.0, 3.1, 3.2, 3.3 or 3.4.
     Beginning with JWST 0.9, Python 3.5 and above is required.
