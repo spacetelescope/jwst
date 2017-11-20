@@ -2,7 +2,7 @@
     "asn_type": "spec2",
     "asn_rule": "discover_Asn_Lv2WFSS",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.2",
     "program": "87600",
     "target": "1",
     "asn_pool": "jw87600_20171108T042226_pool",

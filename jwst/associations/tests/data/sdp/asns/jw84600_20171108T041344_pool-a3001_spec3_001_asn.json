@@ -2,7 +2,7 @@
     "asn_type": "spec3",
     "asn_rule": "discover_Asn_NRS_IFU",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.2",
     "program": "84600",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    exp_type: {'nrs_ifu', 'nrs_confirm'}\n    is_not_tso: set()\n    instrument: {'nirspec'}\n    target: {'1'}\n    program: {'84600'}",

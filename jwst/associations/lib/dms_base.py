@@ -24,6 +24,7 @@ _EXPTYPE_MAP = {
     'nrc_taconfirm': 'target_acquistion',
     'nrs_autoflat':  'autoflat',
     'nrs_autowave':  'autowave',
+    'nrs_image':     'engineering',
     'nrs_confirm':   'target_acquistion',
     'nrs_tacq':      'target_acquistion',
     'nrs_taconfirm': 'target_acquistion',
