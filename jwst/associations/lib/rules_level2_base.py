@@ -644,6 +644,7 @@ class AsnMixin_Lv2ImageNonScience(DMSLevel2bBase):
                     '|nrs_bota'
                     '|nrs_confirm'
                     '|nrs_focus'
+                    '|nrs_image'
                     '|nrs_mimf'
                     '|nrs_taslit'
                     '|nrs_tacq'

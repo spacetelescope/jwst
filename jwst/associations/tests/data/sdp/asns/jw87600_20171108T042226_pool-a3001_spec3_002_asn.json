@@ -2,7 +2,7 @@
     "asn_type": "spec3",
     "asn_rule": "discover_Asn_NIR_SO_SLITLESS",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.1",
     "program": "87600",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    detector: {'nis'}\n    exp_type: {'nis_soss'}\n    opt_elem: {'gr700xd'}\n    subarray: {'full'}\n    is_not_tso: set()\n    instrument: {'niriss'}\n    target: {'1'}\n    program: {'87600'}",

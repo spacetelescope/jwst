@@ -2,7 +2,7 @@
     "asn_type": "image2",
     "asn_rule": "discover_Asn_Lv2ImageNonScience",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.1",
     "program": "84600",
     "target": "1",
     "asn_pool": "jw84600_20171108T041344_pool",
@@ -100,6 +100,15 @@
             ]
         },
         {
+            "name": "jw84600033001_02101_00001_nrs1",
+            "members": [
+                {
+                    "expname": "jw84600033001_02101_00001_nrs1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
             "name": "jw84600017001_02101_00001_nrs2",
             "members": [
                 {
@@ -113,6 +122,15 @@
             "members": [
                 {
                     "expname": "jw84600018001_02101_00002_nrs1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw84600032001_02101_00001_nrs2",
+            "members": [
+                {
+                    "expname": "jw84600032001_02101_00001_nrs2_rate.fits",
                     "exptype": "science"
                 }
             ]
@@ -145,6 +163,15 @@
             ]
         },
         {
+            "name": "jw84600033001_02101_00001_nrs2",
+            "members": [
+                {
+                    "expname": "jw84600033001_02101_00001_nrs2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
             "name": "jw84600018001_02101_00001_nrs1",
             "members": [
                 {
@@ -163,10 +190,46 @@
             ]
         },
         {
+            "name": "jw84600032001_02101_00001_nrs1",
+            "members": [
+                {
+                    "expname": "jw84600032001_02101_00001_nrs1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw84600006001_02102_00001_nrs2",
+            "members": [
+                {
+                    "expname": "jw84600006001_02102_00001_nrs2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw84600006001_02102_00001_nrs1",
+            "members": [
+                {
+                    "expname": "jw84600006001_02102_00001_nrs1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
             "name": "jw84600017001_02101_00002_nrs2",
             "members": [
                 {
                     "expname": "jw84600017001_02101_00002_nrs2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw84600034001_02101_00001_nrs2",
+            "members": [
+                {
+                    "expname": "jw84600034001_02101_00001_nrs2_rate.fits",
                     "exptype": "science"
                 }
             ]
@@ -203,6 +266,15 @@
             "members": [
                 {
                     "expname": "jw84600018001_02101_00002_nrs2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw84600034001_02101_00001_nrs1",
+            "members": [
+                {
+                    "expname": "jw84600034001_02101_00001_nrs1_rate.fits",
                     "exptype": "science"
                 }
             ]
