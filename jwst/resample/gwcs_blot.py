@@ -1,6 +1,3 @@
-from __future__ import (division, print_function, unicode_literals,
-    absolute_import)
-
 import numpy as np
 
 from drizzle.cdrizzle import tblot
@@ -11,7 +8,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class GWCSBlot(object):
+class GWCSBlot:
     """
     Combine images using the drizzle algorithm
     """

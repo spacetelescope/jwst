@@ -1,6 +1,3 @@
-from __future__ import (division, print_function, unicode_literals,
-    absolute_import)
-
 import numpy as np
 from collections import OrderedDict
 
@@ -15,7 +12,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class ResampleData(object):
+class ResampleData:
     """
     This is the controlling routine for the resampling process.
     It loads and sets the various input data and parameters needed by
