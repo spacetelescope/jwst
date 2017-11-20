@@ -2,7 +2,7 @@
     "asn_type": "image3",
     "asn_rule": "candidate_Asn_Image",
     "version_id": null,
-    "code_version": "0.9.1",
+    "code_version": "0.9.2",
     "program": "90003",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    wfsvisit: {'prime_targeted_fixed'}\n    exp_type: {'nis_image'}\n    is_not_tso: set()\n    opt_elem: {'clear'}\n    opt_elem2: {'f158m'}\n    target: {'1'}\n    program: {'90003'}\n    instrument: {'niriss'}\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",

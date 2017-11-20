@@ -2,7 +2,7 @@
     "asn_type": "spec3",
     "asn_rule": "discover_Asn_NRS_MSA",
     "version_id": null,
-    "code_version": "0.9.1",
+    "code_version": "0.9.2",
     "program": "84600",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    exp_type: {'nrs_msaspec'}\n    is_not_tso: set()\n    instrument: {'nirspec'}\n    opt_elem: {'f100lp'}\n    opt_elem2: {'g140h'}\n    target: {'1'}\n    program: {'84600'}",

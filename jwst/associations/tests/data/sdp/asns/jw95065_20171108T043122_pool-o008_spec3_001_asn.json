@@ -2,7 +2,7 @@
     "asn_type": "spec3",
     "asn_rule": "candidate_Asn_NRS_MSA",
     "version_id": null,
-    "code_version": "0.9.1",
+    "code_version": "0.9.2",
     "program": "95065",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    exp_type: {'nrs_msaspec'}\n    is_not_tso: set()\n    instrument: {'nirspec'}\n    opt_elem: {'clear'}\n    opt_elem2: {'prism'}\n    target: {'3'}\n    program: {'95065'}\n    asn_candidate: {\"\\\\(\\\\'o008\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",

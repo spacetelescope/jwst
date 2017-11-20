@@ -2,7 +2,7 @@
     "asn_type": "spec3",
     "asn_rule": "candidate_Asn_MIRI_IFU",
     "version_id": null,
-    "code_version": "0.9.1",
+    "code_version": "0.9.2",
     "program": "93135",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    exp_type: {'mir_flatmrs', 'mir_mrs'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'6'}\n    program: {'93135'}\n    asn_candidate: {\"\\\\(\\\\'o333\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
