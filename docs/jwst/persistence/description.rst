@@ -36,15 +36,17 @@ group of each integration.
 
 The number of trap decays in a given time interval is computed as follows:
 
-    number_of_filled_traps * (1 - exp(-delta_t / tau)),
+.. math::
+    n\_decays = trapsfilled \cdot (1 - exp(-\Delta t / \tau))
 
-where number_of_filled_traps is the value of the traps-filled image at the
+where trapsfilled is the number of filled traps, i.e. the value of the
+traps-filled image at the
 beginning of the time interval, for the current trap family and at the
-current pixel; delta_t is the time interval (seconds) over which the decay
-is computed; and tau is the reciprocal of the absolute value of the decay
-parameter (column name "decay_param") for the current trap family.  Since
-this is called for each group, the value of the traps-filled image must be
-updated at the end of each group.
+current pixel; :math:`\Delta t` is the time interval (seconds) over which
+the decay is computed; and :math:`\tau` is the reciprocal of the absolute
+value of the decay parameter (column name "decay_param") for the current
+trap family.  Since this is called for each group, the value of the
+traps-filled image must be updated at the end of each group.
 
 For each pixel, the persistence in a group is the sum of the trap decays
 over all trap families.  This persistence is subtracted from the science
@@ -66,7 +68,7 @@ computed before the loop over groups in which trap decay is computed and
 persistence is corrected, since that correction will in general change the
 slope.  Within an integration, the difference is taken between groups of the
 ramp.  The difference is set to a very large value if a group is saturated.
-(The "very large value" is the larger of 1.e5 and twice the maximum
+(The "very large value" is the larger of :math:`10^5` and twice the maximum
 difference between groups.)  The difference array is then sorted.  All the
 differences affected by saturation will be at the high end.  Cosmic-ray
 affected differences should be just below, except for jumps that are smaller
@@ -85,24 +87,29 @@ the saturated portion (if any) of the ramp; the contribution from
 cosmic-ray events.
 
 For the smoothly increasing portion of the ramp, the time interval over
-which traps capture charge is nominally:  (number of resets at the
-beginning of the integration) * frame time + (number of groups) * group time.
-However, this time must be reduced by the number of groups for which the
-data value exceeds the persistence saturation limit, multiplied by
-the group time.  This reduced value is dt in the expression below.
+which traps capture charge is
+nominally :math:`nresets \cdot tframe + ngroups \cdot tgroup`
+where nresets is the number of resets at the beginning of the integration,
+tframe is the frame time, and tgroup is the group time.
+However, this time must be reduced by the group time multiplied by the
+number of groups for which the data value exceeds the persistence saturation
+limit.  This reduced value is :math:`Delta t` in the expression below.
 
 The number of captures in each pixel during the integration is:
 
-    traps_filled = 2 * (trap_density * slope**2
-                        * (dt**2 * (par0 + par2) / 2
-                           + par0 * (dt * tau + tau**2) * exp(-dt / tau)
-                           - par0 * tau**2))
+.. math::
+    trapsfilled = 2 \cdot (trapdensity \cdot slope^2
+                      \cdot  (\Delta t^2 \cdot (par0 + par2) / 2
+                       +  par0 \cdot (\Delta t \cdot \tau
+                       +  \tau^2) \cdot exp(-\Delta t / \tau)
+                         -  par0 \cdot \tau^2))
 
 where par0 and par2 are the values from columns "capture0" and "capture2"
-respectively, from the trappars reference table, and tau is the reciprocal
-of the absolute value of column "capture1", for the row corresponding to
-the current trap family.  trap_density is the relative density of traps,
-normalized to a median of 1.  dt is the time interval in seconds over which
+respectively, from the trappars reference table, and :math:`\tau` is the
+reciprocal of the absolute value from column "capture1", for the row
+corresponding to the current trap family.  trapdensity is the
+relative density of traps, normalized to a median of 1.  :math:`Delta t`
+is the time interval in seconds over which
 the charge capture is to be computed, as described above.  slope is the
 ramp slope (computed before the loop over groups), in units of fraction
 of the persistence saturation limit per second.  This returns the number
@@ -113,34 +120,41 @@ the saturated portion of the ramp.
 
 "Saturation" in this context means that the data value in a group exceeds
 the persistence saturation limit, i.e. the value in the PERSAT reference
-file.  For pixels that are saturated in the first group, the number of
-traps that were filled during the integration (filled_during_integration)
-is set to trap_density * par2 (column "capture2").  This accounts for
-"instantaneous" traps, ones that fill over a negligible time scale.
+file.  filled_during_integration is (initially) the array of the number of
+pixels that were filled, as returned by the function for the smoothly
+increasing portion of the ramp.  In the function for computing decays
+for the saturated part of the ramp, for pixels that are saturated in the
+first group, filled_during_integration
+is set to :math:`trapdensity \cdot par2` (column "capture2").  This accounts
+for "instantaneous" traps, ones that fill over a negligible time scale.
 
 The number of "exponential" traps (as opposed to instantaneous) is:
 
-    exp_filled_traps = filled_during_integration - trap_density * par2
+.. math::
+    exp\_filled\_traps = filled\_during\_integration - trapdensity \cdot par2
 
 and the number of traps that were empty and could be filled is:
 
-    empty_traps = trap_density * par0 - exp_filled_traps
+.. math::
+    empty\_traps = trapdensity \cdot par0 - exp\_filled\_traps
 
 so the traps that are filled depending on the exponential component is:
 
-    new_filled_traps = empty_traps * (1 - exp(-sattime / tau))
+.. math::
+    new\_filled\_traps = empty\_traps \cdot (1 - exp(-sattime / \tau))
 
 where sattime is the duration in seconds over which the pixel was saturated.
 
-Therefore, the number of traps filled during the current integration is:
+Therefore, the total number of traps filled during the current integration is:
 
-    filled_traps = filled_during_integration + new_filled_traps
+.. math::
+    filled\_traps = filled\_during\_integration + new\_filled\_traps
 
 This value is passed to the function that computes the additional traps
 that were filled due to cosmic-ray events.
 
 The number of traps that will be filled due to a cosmic-ray event depends
-on the amount of time from the CR hit to the end of the integration.  Thus,
+on the amount of time from the CR event to the end of the integration.  Thus,
 we must first find (via the flags in the GROUPDQ extension) which groups and
 which pixels were affected by CR hits.  This is handled by looping over
 group number, starting with the second group (since we currently don't flag
@@ -151,14 +165,16 @@ If a jump is negative, it will be set to zero.
 
 If there was a cosmic-ray hit in group number k, then
 
-    delta_t = (ngroups - k - 0.5) * group_time
+.. math::
+    \Delta t = (ngroups - k - 0.5) \cdot tgroup
 
 is the time from the CR-affected group to the end of the integration, with
-the approximation that the CR hit was in the middle (timewise) of the group.
-The number of traps filled as a result of this CR event is:
+the approximation that the CR event was in the middle (timewise) of the group.
+The number of traps filled as a result of this CR hit is:
 
-    cr_filled = 2 * trap_density * jump
-                * (par0 * (1 - exp(-delta_t / tau)) + par2)
+.. math::
+    crfilled = 2 \cdot trapdensity \cdot jump
+                \cdot (par0 \cdot (1 - exp(-\Delta t / \tau)) + par2)
 
 and the number of filled traps for the current pixel will be incremented
 by that amount.
