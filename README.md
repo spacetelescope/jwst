@@ -4,6 +4,10 @@ JWST Calibration Pipeline
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
+Note
+----
+Beginning with the next version (0.9.0), JWST requires Python 3.5 and above.
+
 Installing
 ----------
 

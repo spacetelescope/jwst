@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 from os.path import basename
 import subprocess
@@ -8,6 +6,18 @@ from setuptools import setup, find_packages, Extension, Command
 from setuptools.command.test import test as TestCommand
 from numpy import get_include as np_include
 from glob import glob
+
+if sys.version_info < (3, 4):
+    error = """
+    JWST 0.9+ does not support Python 2.x, 3.0, 3.1, 3.2, 3.3 or 3.4.
+    Beginning with JWST 0.9, Python 3.5 and above is required.
+
+    This may be due to an out of date pip
+
+    Make sure you have pip >= 9.0.1.
+
+    """
+    sys.exit(error)
 
 # hack building the sphinx docs with C source
 from setuptools.command.build_ext import build_ext
@@ -122,6 +132,7 @@ setup(
         'Programming Language :: Python',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
+    python_requires='>=3.5',
     scripts=SCRIPTS,
     packages=find_packages(),
     package_data=PACKAGE_DATA,
