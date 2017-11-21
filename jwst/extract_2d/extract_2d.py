@@ -1,8 +1,6 @@
 #
 #  Top level module for 2d extraction.
 #
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
 
 import logging
 
@@ -17,10 +15,10 @@ def extract2d(input_model, which_subarray=None, apply_wavecorr=False, reference_
 
     nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ', 'NRS_LAMP']
     grism_modes = ['NIS_WFSS', 'NRC_GRISM']
-    
+
     exp_type = input_model.meta.exposure.type.upper()
     log.info('EXP_TYPE is {0}'.format(exp_type))
-    
+
     if exp_type in nrs_modes:
         output_model = nrs_extract2d(input_model, which_subarray=which_subarray,
                               apply_wavecorr=apply_wavecorr, reference_files=reference_files)
@@ -33,7 +31,7 @@ def extract2d(input_model, which_subarray=None, apply_wavecorr=False, reference_
         input_model.meta.cal_step.extract_2d = 'SKIPPED'
         return input_model
 
-    
+
     # Set the step status to COMPLETE
     output_model.meta.cal_step.extract_2d = 'COMPLETE'
     del input_model
