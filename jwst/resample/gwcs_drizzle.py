@@ -1,6 +1,3 @@
-from __future__ import (division, print_function, unicode_literals,
-    absolute_import)
-
 import numpy as np
 
 from drizzle import util
@@ -13,7 +10,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class GWCSDrizzle(object):
+class GWCSDrizzle:
     """
     Combine images using the drizzle algorithm
     """

@@ -1,6 +1,3 @@
-from __future__ import (division, print_function, unicode_literals,
-    absolute_import)
-
 from ..stpipe import Step
 from .. import datamodels
 from . import resample
