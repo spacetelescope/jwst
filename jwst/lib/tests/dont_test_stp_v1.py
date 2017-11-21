@@ -11,12 +11,12 @@ which is generally not available.
 
 from __future__ import absolute_import
 
-from backports.tempfile import TemporaryDirectory
 import copy
 import numpy as np
 import os
 import pytest
 import requests_mock
+from tempfile import TemporaryDirectory
 
 from astropy.io import fits
 from astropy.table import Table
