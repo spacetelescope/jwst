@@ -289,6 +289,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         current_date.format = 'isot'
         self.meta.date = current_date.value
 
+        if not hasattr(self.meta, 'model_type'):
+            klass = self.__class__.__name__
+            if klass != 'DataModel':
+                self.meta.model_type = klass
+
     def save(self, path, *args, **kwargs):
         """
         Save to either a FITS or ASDF file, depending on the path.
@@ -627,7 +632,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         ----------
         d : model or dictionary-like object
             The model to copy the metadata elements from. Can also be a
-            dictionary or dictionary of dictionaries or lists.
+            dictionary or dictionary of dictionaries or lists. 
         only: only update the named hdu from extra_fits, e.g.
             only='PRIMARY'. Can either be a list of hdu names
             or a single string. If left blank, update all the hdus.
@@ -690,6 +695,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 this_cursor = this_cursor[part]
                 set_hdu_keyword(this_cursor, that_cursor, path)
 
+        def protected_keyword(path):
+            # Some keywords are protected and
+            # should not be copied frpm the other image
+            if len(path) == 2:
+                if path[0] == 'meta':
+                    if path[1] in ('filename', 'date', 'model_type'):
+                        return True
+            return False
         # Get the list of hdu names from the model so that updates
         # are limited to those hdus
 
@@ -716,7 +729,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         # Perform the updates to the keywords mentioned in the schema
 
         for path in hdu_keywords:
-            set_hdu_keyword(self._instance, d, path)
+            if not protected_keyword(path):
+                set_hdu_keyword(self._instance, d, path)
 
         # Perform updates to extra_fits area of a model
 
