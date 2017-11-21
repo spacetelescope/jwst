@@ -1,10 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-# -*- coding: utf-8 -*-
 
-from __future__ import absolute_import, division, unicode_literals, print_function
-
-
-import six
 from collections import OrderedDict
 
 
@@ -197,7 +192,7 @@ def walk_schema(schema, callback, ctx={}):
                 recurse(sub, path + [i], c, ctx)
 
         if schema.get('type') == 'object':
-            for key, val in six.iteritems(schema.get('properties', {})):
+            for key, val in schema.get('properties', {}).items():
                 recurse(val, path + [key], combiner, ctx)
 
         if schema.get('type') == 'array':

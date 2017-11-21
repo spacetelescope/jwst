@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 # The schema editor is desgned to be run as a command line script. It can be
 # run either interactively or not. To run it non-inteactively, you must set
 # the options when creating  a new editor object, as in the following
@@ -53,11 +51,6 @@ import datetime
 import argparse
 from urllib.parse import urlparse
 from collections import OrderedDict
-
-try:
-  basestring
-except NameError:
-  basestring = str
 
 from asdf import schema as aschema
 from asdf import resolver as aresolver
@@ -559,7 +552,7 @@ class Options(object):
         Coerce value to type of the current value of a parameter
         """
         if isinstance(current_value, bool):
-            if isinstance(value, basestring):
+            if isinstance(value, str):
                 value = value[0]
                 value = value.lower()
                 if value == "y":
@@ -773,8 +766,8 @@ class Options(object):
         Check that the type of a new value agrees with the current type
         """
         badtype = "Invalid paramater value for %s (%s)"
-        if isinstance(parameters[name], basestring):
-            if not isinstance(value, basestring):
+        if isinstance(parameters[name], str):
+            if not isinstance(value, str):
                 raise ValueError(badtype % (name, value))
 
         elif isinstance(parameters[name], set):
@@ -1028,8 +1021,8 @@ class Schema_editor(object):
         """
         Compare iwo values for type specific kind of equality
         """
-        if (isinstance(keyword_value, basestring) and
-            isinstance(model_value, basestring)):
+        if (isinstance(keyword_value, str) and
+            isinstance(model_value, str)):
             result = (keyword_value.lower().strip() ==
                       model_value.lower().strip())
     
@@ -1464,7 +1457,7 @@ class Schema_editor(object):
         Remove leading and trailing blanks from values
         """
         def strip_single(elem):
-            if isinstance(elem, basestring):
+            if isinstance(elem, str):
                 elem = elem.strip()
             return elem
         

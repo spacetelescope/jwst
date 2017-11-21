@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 Data model class heirarchy
 """
-from __future__ import absolute_import, unicode_literals, division, print_function
 
 import copy
 import datetime
@@ -14,7 +12,6 @@ import warnings
 import numpy as np
 import jsonschema
 
-import six
 from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
@@ -147,7 +144,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             asdf = fits_support.from_fits(init, self._schema, extensions,
                                           pass_invalid_values)
 
-        elif isinstance(init, (six.string_types, bytes)):
+        elif isinstance(init, (str, bytes)):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
             file_type = filetype.check(init)
@@ -178,7 +175,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         self._ctx = self
 
         # if the input is from a file, set the filename attribute
-        if isinstance(init, six.string_types):
+        if isinstance(init, str):
             self.meta.filename = os.path.basename(init)
         elif isinstance(init, fits.HDUList):
             info = init.fileinfo(0)
@@ -282,7 +279,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         path : str
             The path to the file that we're about to save to.
         """
-        if isinstance(path, six.string_types):
+        if isinstance(path, str):
             self.meta.filename = os.path.basename(path)
 
         current_date = Time(datetime.datetime.now())
@@ -503,7 +500,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         Get a metadata value using a dotted name.
         """
-        assert isinstance(key, six.string_types)
+        assert isinstance(key, str)
         meta = self
         for part in key.split('.'):
             try:
@@ -517,7 +514,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         Equivalent to __getitem__, except returns the value as a JSON
         basic type, rather than an arbitrary Python type.
         """
-        assert isinstance(key, six.string_types)
+        assert isinstance(key, str)
         meta = self
         parts = key.split('.')
         for part in parts:
@@ -531,7 +528,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         Set a metadata value using a dotted name.
         """
-        assert isinstance(key, six.string_types)
+        assert isinstance(key, str)
         meta = self
         parts = key.split('.')
         for part in parts[:-1]:
@@ -565,7 +562,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         def recurse(tree, path=[]):
             if isinstance(tree, dict):
-                for key, val in six.iteritems(tree):
+                for key, val in tree.items():
                     for x in recurse(val, path + [key]):
                         yield x
             elif isinstance(tree, (list, tuple)):
@@ -573,7 +570,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     for x in recurse(val, path + [i]):
                         yield x
             elif tree is not None:
-                yield (str('.'.join(six.text_type(x) for x in path)), tree)
+                yield ('.'.join(str(x) for x in path), tree)
 
         for x in recurse(self._instance):
             yield x
@@ -594,19 +591,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         for key, val in self.iteritems():
             yield key
 
-    if six.PY3:
-        keys = iterkeys
-    else:
-        def keys(self):
-            """
-            Gets all of the schema keys in a flat way.
-
-            Each result of the iterator is a `key`.  Each `key` is a
-            dot-separated name.  For example, the schema element
-            `meta.observation.date` will end up in the result as the
-            string `"meta.observation.date"`.
-            """
-            return list(self.iterkeys())
+    keys = iterkeys
 
     def itervalues(self):
         """
@@ -615,14 +600,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         for key, val in self.iteritems():
             yield val
 
-    if six.PY3:
-        values = itervalues
-    else:
-        def values(self):
-            """
-            Gets all of the schema values in a flat way.
-            """
-            return list(self.itervalues())
+    values = itervalues
 
     def update(self, d, only=''):
         """
@@ -707,7 +685,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         # are limited to those hdus
 
         if only:
-            if isinstance(only, six.string_types):
+            if isinstance(only, str):
                 hdu_names = set([only])
             else:
                 hdu_names = set(list(only))
