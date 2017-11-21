@@ -266,6 +266,8 @@ class ModelContainer(model_base.DataModel):
         group_dict = OrderedDict()
         for i in range(len(self)):
             model = self._open_model(i)
+            if hasattr(model.meta, 'group_id'):
+                continue
             
             try:
                 model_attrs = []
