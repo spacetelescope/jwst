@@ -38,7 +38,7 @@ class ModelContainer(model_base.DataModel):
           DataModels can be added via the ``append()`` method.
 
     persist: boolean. If True, do not close model after opening it
-    
+
     Examples
     --------
     >>> container = datamodels.ModelContainer('example_asn.json')
@@ -101,7 +101,7 @@ class ModelContainer(model_base.DataModel):
                                    extensions=self._extensions,
                                    pass_invalid_values=self._pass_invalid_values)
             self._models[index] = model
-                
+
         return model
 
 
@@ -263,28 +263,26 @@ class ModelContainer(model_base.DataModel):
         group_dict = OrderedDict()
         for i in range(len(self)):
             model = self._open_model(i)
-            if hasattr(model.meta, 'group_id'):
-                continue
-            
-            try:
-                model_attrs = []
-                model_attrs.append(model.meta.observation.program_number)
-                model_attrs.append(model.meta.observation.observation_number)
-                model_attrs.append(model.meta.observation.visit_number)
-                model_attrs.append(model.meta.observation.visit_group)
-                model_attrs.append(model.meta.observation.sequence_id)
-                model_attrs.append(model.meta.observation.activity_id)
-                model_attrs.append(model.meta.observation.exposure_number)
-                model_attrs.append(model.meta.instrument.name)
-                model_attrs.append(model.meta.instrument.channel)
-                group_id = ('jw' + '_'.join([
-                                ''.join(model_attrs[:3]),
-                                ''.join(model_attrs[3:6]),
-                                model_attrs[6], model_attrs[7].lower(),
-                                model_attrs[8].lower()]))
-                model.meta.group_id = group_id
-            except:
-                model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
+            if not hasattr(model.meta, 'group_id'):
+                try:
+                    model_attrs = []
+                    model_attrs.append(model.meta.observation.program_number)
+                    model_attrs.append(model.meta.observation.observation_number)
+                    model_attrs.append(model.meta.observation.visit_number)
+                    model_attrs.append(model.meta.observation.visit_group)
+                    model_attrs.append(model.meta.observation.sequence_id)
+                    model_attrs.append(model.meta.observation.activity_id)
+                    model_attrs.append(model.meta.observation.exposure_number)
+                    model_attrs.append(model.meta.instrument.name)
+                    model_attrs.append(model.meta.instrument.channel)
+                    group_id = ('jw' + '_'.join([
+                                    ''.join(model_attrs[:3]),
+                                    ''.join(model_attrs[3:6]),
+                                    model_attrs[6], model_attrs[7].lower(),
+                                    model_attrs[8].lower()]))
+                    model.meta.group_id = group_id
+                except:
+                    model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
             group_id = model.meta.group_id
             if group_id in group_dict:
@@ -348,13 +346,13 @@ class ModelContainerIterator:
     def __iter__(self):
         return self
 
-    
+
     def __next__(self):
         if self.open_filename is not None:
             self.container._close_model(self.open_filename, self.index)
             self.open_filename = None
-            
-        self.index += 1    
+
+        self.index += 1
         if self.index < len(self.container._models):
             model = self.container._models[self.index]
             if isinstance(model, str):
