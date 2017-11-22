@@ -63,20 +63,20 @@ pipeline is as follows.
 calwebb_detector1 calwebb_detector1
 (All Near-IR)     (MIRI)
 ================= =================
-group_scale     group_scale
-dq_init         dq_init
-saturation      saturation
-ipc             ipc
-superbias       linearity
-refpix          rscd
-linearity       lastframe
-persistence     dark_current
-dark_current    refpix
-\               persistence
-jump            jump
-ramp_fit        ramp_fit
-gain_scale      gain_scale
-==============  ==============
+group_scale       group_scale
+dq_init           dq_init
+saturation        saturation
+ipc               ipc
+superbias         linearity
+refpix            rscd
+linearity         lastframe
+persistence       dark_current
+dark_current      refpix
+\                 persistence
+jump              jump
+ramp_fit          ramp_fit
+gain_scale        gain_scale
+================= =================
 
 Inputs
 ------
@@ -329,7 +329,7 @@ Outputs
 * Resampled 2D Image product (:ref:`DrizProductModel`): A resampled/rectified 2D image product of type
   ``_i2d`` is created containing the rectified single exposure or the rectified
   and combined association of exposures, which is the direct output of the
-  ``resample`` step. This is the
+  ``resample`` step.
 
 * Source catalog: A source catalog produced from the ``_i2d`` product is saved
   as an ASCII file in ``ecsv`` format, with a product type of ``_cat``.
@@ -365,7 +365,7 @@ Inputs
 * Associated 2D Calibrated products: The inputs to ``calwebb_ami3`` are assumed
   to be in the form of an ASN file that lists multiple science target exposures,
   and optionally reference target exposures as well. The individual exposures
-  should be in the form of calibrated (``_cal``) products from ``calwebb_image2``
+  should be in the form of calibrated (``_cal``) pro        ducts from ``calwebb_image2``
   processing.
 
 Outputs
@@ -395,3 +395,133 @@ The ``calwebb_ami3`` pipeline has one optional argument:
 which is a Boolean parameter set to a default value of ``False``. If the user
 sets this agument to ``True``, the results of the ``ami_average`` step will be
 saved, as described above.
+
+
+Stage 3 Time-Series Observation(TSO) Pipeline Step Flow (calwebb_tso3)
+===============================================================================
+The stage 3 TSO pipeline (``calwebb_tso3``) is intended to be applied to
+associations of calibrated NIRISS SOSS and NIRCam TSO exposures and is used to
+produce calibrated time-series photometry of the source object.
+
+The steps applied by the ``calwebb_tso3`` pipeline are shown below for
+a NIRCam TSO observation:
+
++---------------------+
+| calwebb_tso3        |
++=====================+
+| outlier_detection   |
++---------------------+
+| tso_photometry      |
++---------------------+
+
+The steps applied by the ``calwebb_tso3`` pipeline are shown below for a
+NIRISS SOSS observation:
+
++---------------------+
+| calwebb_tso3        |
++=====================+
+| outlier_detection   |
++---------------------+
+| extract_1d          |
++---------------------+
+| white_light         |
++---------------------+
+
+Inputs
+------
+
+* Associated 2D Calibrated products: The input to ``calwebb_tso3`` is assumed
+  to be in the form of an ASN file that lists multiple science observations of
+  a science target either with NIRCam or NIRISS. The individual NIRCam exposures
+  should be in the form of calibrated (``_cal``) products from ``calwebb_image2``
+  processing, while the individual NIRISS exposures should be in the form of
+  calibrated (``_calints``) products from ``calwebb_spec2``.
+
+Outputs
+-------
+
+* CR-flagged products: If the
+  :py:class:`~jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep`
+  step is applied, a new version
+  of each input calibrated exposure product is created, which contains a DQ array
+  that has been updated to flag pixels detected as outliers. This updated
+  product is known as a CR-flagged product. A outlier-cleaned calibrated product of
+  type ``_crfints`` is created and can optionally get written to disk.
+
+* Source photometry catalog for NIRCam observations: A source catalog produced
+  from the ``_crfints`` product is saved as an ASCII file in ``ecsv`` format
+  with a product type of ``_phot``.
+
+* Extracted 1D spectra for NIRISS SOSS observations: The ``extract_1d`` step is
+  applied to create a ``MultiSpecModel`` for the entire set of SOSS
+  observations with a product type of ``_x1dints``.
+
+* White-light photometry for NIRISS SOSS observations:  The ``white_light`` step
+  is applied to the ``_x1dints`` extracted data to produce an ASCII catalog
+  in ``ecsv`` format with a product type of ``_whtlht`` of
+  the white-light photometry of the source object.
+
+
+Stage 3 CORONOGRAPHIC Observation Pipeline Step Flow (calwebb_coron3)
+===============================================================================
+  The stage 3 TSO pipeline (``calwebb_tso3``) is intended to be applied to
+  associations of calibrated NIRISS SOSS and NIRCam TSO exposures and is used to
+  produce calibrated time-series photometry of the source object.
+
+  The steps applied by the ``calwebb_tso3`` pipeline are shown below for
+  a NIRCam TSO observation:
+
+  +---------------------+
+  | calwebb_tso3        |
+  +=====================+
+  | outlier_detection   |
+  +---------------------+
+  | tso_photometry      |
+  +---------------------+
+
+  The steps applied by the ``calwebb_tso3`` pipeline are shown below for a
+  NIRISS SOSS observation:
+
+  +---------------------+
+  | calwebb_tso3        |
+  +=====================+
+  | outlier_detection   |
+  +---------------------+
+  | extract_1d          |
+  +---------------------+
+  | white_light         |
+  +---------------------+
+
+Inputs
+------
+
+* Associated 2D Calibrated products: The input to ``calwebb_tso3`` is assumed
+  to be in the form of an ASN file that lists multiple science observations of
+  a science target either with NIRCam or NIRISS. The individual NIRCam exposures
+  should be in the form of calibrated (``_cal``) products from ``calwebb_image2``
+  processing, while the individual NIRISS exposures should be in the form of
+  calibrated (``_calints``) products from ``calwebb_spec2``.
+
+Outputs
+-------
+
+* CR-flagged products: If the
+  :py:class:`~outlier_detection.outlier_detection_step.OutlierDetectionStep`
+  step is applied, a new version
+  of each input calibrated exposure product is created, which contains a DQ array
+  that has been updated to flag pixels detected as outliers. This update
+  product is known as a CR-flagged product. A outlier-cleaned calibrated product of
+  type ``_crfints`` is created and can optionally get written to disk.
+
+* Source photometry catalog for NIRCam observations: A source catalog produced
+  from the ``_crfints`` product is saved as an ASCII file in ``ecsv`` format
+  with a product type of ``_phot``.
+
+* Extracted 1D spectra for NIRISS SOSS observations: The ``extract_1d`` step is
+  applied to create a ``MultiSpecModel`` for the entire set of SOSS
+  observations with a product type of ``_x1dints``.
+
+* White-light photometry for NIRISS SOSS observations:  The ``white_light`` step
+  is applied to the ``_x1dints`` extracted data to produce an ASCII catalog
+  in ``ecsv`` format with a product type of ``_whtlht`` of
+  the white-light photometry of the source object.
