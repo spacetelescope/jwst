@@ -7,7 +7,6 @@ against are built in the jupyter notebook
 
 ./notebooks/make_tests.ipynb
 """
-from __future__ import absolute_import
 from glob import glob
 from os import path
 import pytest

@@ -7,8 +7,6 @@ Lifted from the `glue-viz`_ project.
 
 .. _glue-viz: https://github.com/glue-viz/glue
 """
-from __future__ import absolute_import, division, print_function
-
 from functools import wraps
 
 

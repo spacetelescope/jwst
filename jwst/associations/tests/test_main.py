@@ -1,7 +1,4 @@
 """test_associations: Test of general Association functionality."""
-from __future__ import absolute_import
-
-import os
 import pytest
 import re
 

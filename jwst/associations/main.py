@@ -1,5 +1,4 @@
-from __future__ import print_function
-
+"""Main entry for the association generator"""
 import os
 import sys
 import argparse
