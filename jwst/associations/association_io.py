@@ -4,7 +4,6 @@ Define the I/O methods for Level 3 associations
 import json as json_lib
 import logging
 import numpy as np
-import six
 import yaml as yaml_lib
 
 from .association import Association
@@ -44,7 +43,7 @@ class json(object):
         AssociationNotValidError
             Cannot create or validate the association.
         """
-        if isinstance(serialized, six.string_types):
+        if isinstance(serialized, str):
             loader = json_lib.loads
         else:
             # Presume a file object
