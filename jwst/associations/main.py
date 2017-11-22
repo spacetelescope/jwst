@@ -20,7 +20,7 @@ DISCOVER_RULESET = 'discover'
 CANDIDATE_RULESET = 'candidate'
 
 
-class Main(object):
+class Main():
     """
     Generate Associations from an Association Pool
 

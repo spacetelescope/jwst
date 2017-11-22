@@ -609,7 +609,7 @@ class Association(MutableMapping):
         return self.data.values()
 
 
-class ProcessList(object):
+class ProcessList():
     """A Process list
 
     Parameters

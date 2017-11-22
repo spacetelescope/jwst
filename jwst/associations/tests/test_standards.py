@@ -43,7 +43,7 @@ DEF_ARGS = []
 
 
 # Define the standards
-class MakePars(object):
+class MakePars():
     def __init__(
             self,
             pool_root,

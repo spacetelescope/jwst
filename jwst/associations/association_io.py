@@ -17,7 +17,7 @@ __all__ = []
 
 
 @Association.ioregistry
-class json(object):
+class json():
     """Load and store associations as JSON"""
 
     @staticmethod
@@ -82,7 +82,7 @@ class json(object):
 
 
 @Association.ioregistry
-class yaml(object):
+class yaml():
     """Load and store associations as YAML"""
 
     @staticmethod
