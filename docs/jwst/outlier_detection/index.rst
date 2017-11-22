@@ -5,8 +5,9 @@ Outlier Detection
 .. toctree::
    :maxdepth: 2
 
-   resample_step_B6design.rst
-   resample_step.rst
-   resample.rst
+   outlier_detection_step.rst
+   outlier_detection.rst
+   outlier_detection_ifu.rst
+   outlier_detection_spec.rst
 
 .. automodapi:: jwst.outlier_detection
