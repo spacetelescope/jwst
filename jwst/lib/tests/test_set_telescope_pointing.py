@@ -8,9 +8,6 @@ automatically found by py.test. This is because, to test,
 a connection to the internal engineering service is needed,
 which is generally not available.
 """
-
-from __future__ import absolute_import
-
 import copy
 import numpy as np
 import os
