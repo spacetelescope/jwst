@@ -608,7 +608,7 @@ def create_poly(coeff):
     return polynomial.Polynomial1D(degree=n - 1, **coeff_dict)
 
 
-class ExtractModel(object):
+class ExtractModel:
 
     def __init__(self, input_model, slit,
                  dispaxis=HORIZONTAL, spectral_order=1,
