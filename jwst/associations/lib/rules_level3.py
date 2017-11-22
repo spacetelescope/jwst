@@ -113,7 +113,10 @@ class Asn_MIRI_LRS_FIXEDSLIT(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'mir_lrs-fixedslit|mir_tacq',
+                'value': (
+                    'mir_lrs-fixedslit'
+                    '|mir_tacq'
+                ),
                 'inputs': ['exp_type']
             },
             'opt_elem': {
@@ -143,7 +146,10 @@ class Asn_MIRI_LRS_SLITLESS(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'mir_lrs-slitless|mir_tacq',
+                'value': (
+                    'mir_lrs-slitless'
+                    '|mir_tacq'
+                ),
                 'inputs': ['exp_type']
             },
             'opt_elem': {
@@ -177,7 +183,11 @@ class Asn_NIR_SO_SLITLESS(
                 'inputs': ['detector']
             },
             'exp_type': {
-                'value': 'nis_soss|nis_tacq|nis_tacnfrm',
+                'value': (
+                    'nis_soss'
+                    '|nis_tacq'
+                    '|nis_tacnfrm'
+                ),
                 'inputs': ['exp_type']
             },
             'opt_elem': {
@@ -213,8 +223,8 @@ class Asn_NRS_FIXEDSLIT(
                     'nrs_fixedslit'
                     '|nrs_autowave'
                     '|nrs_confirm'
-                    '|nrs_tacq'
                     '|nrs_taconfirm'
+                    '|nrs_tacq'
                     '|nrs_taslit'
                 ),
                 'inputs': ['exp_type']
@@ -253,8 +263,8 @@ class Asn_NRS_MSA(
                     '|nrs_autowave'
                     '|nrs_confirm'
                     '|nrs_taslit'
-                    '|nrs_tacq'
                     '|nrs_taconfirm'
+                    '|nrs_tacq'
                 ),
                 'inputs': ['exp_type']
             },
@@ -323,9 +333,9 @@ class Asn_NRS_IFU(
                     'nrs_ifu'
                     '|nrs_autowave'
                     '|nrs_confirm'
-                    '|nrs_taslit'
-                    '|nrs_tacq'
                     '|nrs_taconfirm'
+                    '|nrs_tacq'
+                    '|nrs_taslit'
                 ),
                 'inputs': ['exp_type']
             },
@@ -359,8 +369,11 @@ class Asn_Coron(
             'exp_type': {
                 'value': (
                     'nrc_coron'
+                    '|nrc_taconfirm'
+                    '|nrc_tacq'
                     '|mir_lyot'
                     '|mir_4qpm'
+                    '|mir_tacq'
                 ),
                 'inputs': ['exp_type'],
                 'force_unique': True,
@@ -413,7 +426,11 @@ class Asn_AMI(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'nis_ami',
+                'value': (
+                    'nis_ami'
+                    '|nis_taconfirm'
+                    '|nis_tacq'
+                ),
                 'inputs': ['exp_type'],
             },
             'target': {
@@ -500,9 +517,13 @@ class Asn_TSO_EXPTYPE(
                 'value': (
                     'mir_lrs-slitless'
                     '|nis_soss'
+                    '|nis_taconfirm'
+                    '|nis_tacq'
                     '|nrc_tsimage'
                     '|nrc_tsgrism'
+                    '|nrs_bota'
                     '|nrs_brightobj'
+                    '|nrs_taconfirm'
                 ),
                 'inputs': ['exp_type'],
                 'force_unique': True
