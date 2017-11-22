@@ -2,8 +2,6 @@
 #  Module for applying flat fielding
 #
 
-from __future__ import division
-
 import math
 import numpy as np
 import logging
