@@ -90,6 +90,8 @@ ModelContainer is passed as input to the ``stack_refs`` step. The output
 of ``stack_refs`` will be a single CubeModel containing all of the
 concatenated data cubes from the input psf files.
 
+.. automodapi:: jwst.coron.stack_refs_step
+
 Align_refs
 ==========
 
@@ -113,6 +115,8 @@ model (QuadModel), where the 3rd axis has length equal to the total
 number of reference PSF images in the input PSF stack and the 4th
 axis has length equal to the number of integrations in the input
 science target product.
+
+.. automodapi:: jwst.coron.align_refs_step
 
 Klip
 ====
@@ -151,10 +155,14 @@ target product, and contains the PSF-subtracted images for every integration
 of the science target product.
 
 Arguments
----------
+---------.. automodapi:: jwst.coron.align_refs
+
+
 The task takes one optional argument, `truncate`, which is used to specify the
 number of KL transform rows to keep when computing the PSF fit to the target.
 The default value is 50.
+
+.. automodapi:: jwst.coron.klip_step
 
 HLSP
 ====
@@ -183,3 +191,5 @@ The ``hslp`` task produces two output products. The first is the snr image (file
 name suffix "_snr") and the second is the table of contrast data (file name
 suffix "_contrast"). The contrast data are stored as a 2-column table giving
 radius (in pixels) and noise (1-sigma).
+
+.. automodapi:: jwst.coron.hlsp_step

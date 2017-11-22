@@ -407,74 +407,54 @@ of the source object.
 The steps applied by the ``calwebb_coron3`` pipeline are shown below for
 a NIRCam coronagraphic observation:
 
-Included steps are:
-stack_refs (assemble reference PSF inputs)
-align_refs (align reference PSFs to target images)
-klip (PSF subtraction using the KLIP algorithm)
-outlier_detection (flag outliers)
-resample (image combination and resampling)
++---------------------------------------------------------------------------------------------------+
+| :py:class:`calwebb_coron3 <jwst.pipeline.calwebb_coron3.Coron3Pipeline>`                          |
++===================================================================================================+
+| :py:class:`stack_refs <jwst.coron.stack_refs_step.StackRefsStep>`                                 |
++---------------------------------------------------------------------------------------------------+
+| :py:class:`align_refs <jwst.coron.align_refs_step.AlignRefsStep>`                                 |
++---------------------------------------------------------------------------------------------------+
+| :py:class:`klip <jwst.coron.klip_step.KlipStep>`                                                  |
++---------------------------------------------------------------------------------------------------+
+| :py:class:`outlier_detection <jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep` |
++---------------------------------------------------------------------------------------------------+
+| :py:class:`resample <jwst.resample.resample_step.ResampleStep>`                                   |
++---------------------------------------------------------------------------------------------------+
 
-+---------------------+
-| calwebb_coron3      |
-+=====================+
-| :py:class:`jwst.coron.stack_refs_step.StackRefsStep <stack_refs>``          |
-+---------------------+
-| align_refs          |
-+---------------------+
-| klip                |
-+---------------------+
-| outlier_detection   |
-+---------------------+
-| resample            |
-+---------------------+
-
-The steps applied by the ``calwebb_tso3`` pipeline are shown below for a
-NIRISS SOSS observation:
-
-+---------------------+
-| calwebb_tso3        |
-+=====================+
-| outlier_detection   |
-+---------------------+
-| extract_1d          |
-+---------------------+
-| white_light         |
-+---------------------+
 
 Inputs
 ------
 
-* Associated 2D Calibrated products: The input to ``calwebb_tso3`` is assumed
+* Associated 2D Calibrated products: The input to ``calwebb_coron3`` is assumed
   to be in the form of an ASN file that lists multiple science observations of
-  a science target either with NIRCam or NIRISS. The individual NIRCam exposures
-  should be in the form of calibrated (``_cal``) products from ``calwebb_image2``
-  processing, while the individual NIRISS exposures should be in the form of
-  calibrated (``_calints``) products from ``calwebb_spec2``.
+  a science target either with NIRCam or MIRI. The individual exposures
+  should be in the form of calibrated (``_calints``) products from ``calwebb_image2``
+  processing.
 
 Outputs
 -------
 
-* CR-flagged products: If the
+* Aligned PSF images: The initial processing requires aligning all input PSFs
+  specified in the ASN.  The aligned PSF image then gets written to disk in the
+  form of psfalign (``_psfalign``) products from
+  :py:class:`align_refs step <jwst.coron.align_refs_step.AlignRefsStep>`.
+
+* PSF-subtracted exposures: The :py:class:`klip step <jwst.coron.klip_step.KlipStep>`
+  takes the aligned PSF images and applies them to each of the science exposures
+  in the ASN to create the psfsub (``_psfsub``) products.
+
+* CR-flagged products: The
   :py:class:`~jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep`
-  step is applied, a new version
-  of each input calibrated exposure product is created, which contains a DQ array
-  that has been updated to flag pixels detected as outliers. This updated
+  step is applied to the psfsub products to flag pixels in the DQ array
+  that have been detected as outliers. This updated
   product is known as a CR-flagged product. A outlier-cleaned calibrated product of
   type ``_crfints`` is created and can optionally get written to disk.
 
-* Source photometry catalog for NIRCam observations: A source catalog produced
-  from the ``_crfints`` product is saved as an ASCII file in ``ecsv`` format
-  with a product type of ``_phot``.
-
-* Extracted 1D spectra for NIRISS SOSS observations: The ``extract_1d`` step is
-  applied to create a ``MultiSpecModel`` for the entire set of SOSS
-  observations with a product type of ``_x1dints``.
-
-* White-light photometry for NIRISS SOSS observations:  The ``white_light`` step
-  is applied to the ``_x1dints`` extracted data to produce an ASCII catalog
-  in ``ecsv`` format with a product type of ``_whtlht`` of
-  the white-light photometry of the source object.
-
+* Resampled product: The
+  :py:class:`resample step <jwst.resample.resample_step.ResampleStep>` is
+  applied to the CR-flagged products to create a single resampled, combined
+  product.  This resampled product of type ``_i2d`` gets written to disk and
+  returned as the final product from this pipeline.
 
 
 Stage 3 Time-Series Observation(TSO) Pipeline Step Flow (calwebb_tso3)
@@ -486,26 +466,26 @@ produce calibrated time-series photometry of the source object.
 The steps applied by the ``calwebb_tso3`` pipeline are shown below for
 a NIRCam TSO observation:
 
-+---------------------+
-| calwebb_tso3        |
-+=====================+
-| outlier_detection   |
-+---------------------+
-| tso_photometry      |
-+---------------------+
++---------------------------------------------------------------------------------------------------+
+| :py:class:`calwebb_tso3 <jwst.pipeline.calwebb_tso3.Tso3Pipeline>`                                |
++===================================================================================================+
+| :py:class:`outlier_detection <jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep` |
++---------------------------------------------------------------------------------------------------+
+| tso_photometry                                                                                    |
++---------------------------------------------------------------------------------------------------+
 
 The steps applied by the ``calwebb_tso3`` pipeline are shown below for a
 NIRISS SOSS observation:
 
-+---------------------+
-| calwebb_tso3        |
-+=====================+
-| outlier_detection   |
-+---------------------+
-| extract_1d          |
-+---------------------+
-| white_light         |
-+---------------------+
++---------------------------------------------------------------------------------------------------+
+| :py:class:`calwebb_tso3 <jwst.pipeline.calwebb_tso3.Tso3Pipeline>`                                |
++===================================================================================================+
+| :py:class:`outlier_detection <jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep` |
++---------------------------------------------------------------------------------------------------+
+| :py:class:`extract_1d <jwst.extract_1d.extract_1d_step.Extract1dStep>`                            |
++---------------------------------------------------------------------------------------------------+
+| :py:class:`white_light <jwst.white_light.white_light_step.WhiteLightStep>`                        |
++---------------------------------------------------------------------------------------------------+
 
 Inputs
 ------
