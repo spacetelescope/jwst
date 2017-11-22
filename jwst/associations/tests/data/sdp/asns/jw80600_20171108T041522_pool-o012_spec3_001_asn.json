@@ -2,7 +2,7 @@
     "asn_type": "spec3",
     "asn_rule": "candidate_Asn_MIRI_LRS_SLITLESS",
     "version_id": null,
-    "code_version": "0.9.2",
+    "code_version": "0.9.3",
     "program": "80600",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    exp_type: {'mir_lrs\\\\-slitless'}\n    opt_elem: {'p750l'}\n    subarray: {'subprism'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'1'}\n    program: {'80600'}\n    asn_candidate: {\"\\\\(\\\\'o012\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
