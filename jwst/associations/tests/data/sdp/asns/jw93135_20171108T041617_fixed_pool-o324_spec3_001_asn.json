@@ -2,10 +2,10 @@
     "asn_type": "spec3",
     "asn_rule": "candidate_Asn_MIRI_IFU",
     "version_id": null,
-    "code_version": "0.9.2",
+    "code_version": "0.9.3",
     "program": "93135",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    exp_type: {'mir_flatmrs', 'mir_mrs'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'1'}\n    program: {'93135'}\n    asn_candidate: {\"\\\\(\\\\'o324\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "constraints": "Constraints:\n    exp_type: {'mir_mrs', 'mir_flatmrs'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'1'}\n    program: {'93135'}\n    asn_candidate: {\"\\\\(\\\\'o324\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
     "asn_id": "o324",
     "target": "t001",
     "asn_pool": "jw93135_20171108T041617_fixed_pool",
@@ -15,7 +15,7 @@
             "members": [
                 {
                     "expname": "jw93135324001_02103_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o324', 'observation')"
                 },
@@ -27,7 +27,7 @@
                 },
                 {
                     "expname": "jw93135324001_02105_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o324', 'observation')"
                 },
@@ -39,7 +39,7 @@
                 },
                 {
                     "expname": "jw93135324001_02104_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o324', 'observation')"
                 },
@@ -51,19 +51,19 @@
                 },
                 {
                     "expname": "jw93135324001_02107_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o324', 'observation')"
                 },
                 {
                     "expname": "jw93135324001_02106_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o324', 'observation')"
                 },
                 {
                     "expname": "jw93135324001_02108_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o324', 'observation')"
                 },

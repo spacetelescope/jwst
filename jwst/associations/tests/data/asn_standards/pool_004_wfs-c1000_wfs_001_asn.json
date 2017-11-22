@@ -2,7 +2,7 @@
     "asn_type": "wfs",
     "asn_rule": "candidate_Asn_WFSCMB",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.3",
     "program": "99009",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    wfsvisit: {'prime_wfsc_sensing_control'}\n    asn_candidate_wfs: {\"\\\\(\\\\'c1000\\\\'\\\\,\\\\ \\\\'mosaic\\\\'\\\\)\"}\n    activity_id: {'1'}\n    exp_type: {'nrc_image'}\n    is_not_tso: set()\n    opt_elem: {'f150w2'}\n    opt_elem2: {'clear'}\n    target: {'1'}\n    program: {'99009'}\n    instrument: {'nircam'}\n    asn_candidate: {\"\\\\(\\\\'c1000\\\\'\\\\,\\\\ \\\\'mosaic\\\\'\\\\)\"}",

@@ -2,7 +2,7 @@
     "asn_type": "ami3",
     "asn_rule": "candidate_Asn_AMI",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.3",
     "program": "10005",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    exp_type: {'nis_ami'}\n    target: {'1'}\n    opt_elem: {'f210m'}\n    opt_elem2: {'maskrnd'}\n    program: {'10005'}\n    instrument: {'nircam'}\n    asn_candidate: {\"\\\\(\\\\'o006\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
