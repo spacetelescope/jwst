@@ -397,21 +397,35 @@ sets this agument to ``True``, the results of the ``ami_average`` step will be
 saved, as described above.
 
 
-Stage 3 Time-Series Observation(TSO) Pipeline Step Flow (calwebb_tso3)
+Stage 3 CORONAGRAPHIC Observation Pipeline Step Flow (calwebb_coron3)
 ===============================================================================
-The stage 3 TSO pipeline (``calwebb_tso3``) is intended to be applied to
-associations of calibrated NIRISS SOSS and NIRCam TSO exposures and is used to
-produce calibrated time-series photometry of the source object.
+The stage 3 coronagraphic pipeline (``calwebb_coron3``) is intended to be applied to
+associations of calibrated NIRCam coronagraphic and MIRI Lyot and MIRI 4QPM
+exposures and is used to produce psf-subtracted, resampled, combined image
+of the source object.
 
-The steps applied by the ``calwebb_tso3`` pipeline are shown below for
-a NIRCam TSO observation:
+The steps applied by the ``calwebb_coron3`` pipeline are shown below for
+a NIRCam coronagraphic observation:
+
+Included steps are:
+stack_refs (assemble reference PSF inputs)
+align_refs (align reference PSFs to target images)
+klip (PSF subtraction using the KLIP algorithm)
+outlier_detection (flag outliers)
+resample (image combination and resampling)
 
 +---------------------+
-| calwebb_tso3        |
+| calwebb_coron3      |
 +=====================+
+| :py:class:`jwst.coron.stack_refs_step.StackRefsStep <stack_refs>``          |
++---------------------+
+| align_refs          |
++---------------------+
+| klip                |
++---------------------+
 | outlier_detection   |
 +---------------------+
-| tso_photometry      |
+| resample            |
 +---------------------+
 
 The steps applied by the ``calwebb_tso3`` pipeline are shown below for a
@@ -462,35 +476,36 @@ Outputs
   the white-light photometry of the source object.
 
 
-Stage 3 CORONOGRAPHIC Observation Pipeline Step Flow (calwebb_coron3)
+
+Stage 3 Time-Series Observation(TSO) Pipeline Step Flow (calwebb_tso3)
 ===============================================================================
-  The stage 3 TSO pipeline (``calwebb_tso3``) is intended to be applied to
-  associations of calibrated NIRISS SOSS and NIRCam TSO exposures and is used to
-  produce calibrated time-series photometry of the source object.
+The stage 3 TSO pipeline (``calwebb_tso3``) is intended to be applied to
+associations of calibrated NIRISS SOSS and NIRCam TSO exposures and is used to
+produce calibrated time-series photometry of the source object.
 
-  The steps applied by the ``calwebb_tso3`` pipeline are shown below for
-  a NIRCam TSO observation:
+The steps applied by the ``calwebb_tso3`` pipeline are shown below for
+a NIRCam TSO observation:
 
-  +---------------------+
-  | calwebb_tso3        |
-  +=====================+
-  | outlier_detection   |
-  +---------------------+
-  | tso_photometry      |
-  +---------------------+
++---------------------+
+| calwebb_tso3        |
++=====================+
+| outlier_detection   |
++---------------------+
+| tso_photometry      |
++---------------------+
 
-  The steps applied by the ``calwebb_tso3`` pipeline are shown below for a
-  NIRISS SOSS observation:
+The steps applied by the ``calwebb_tso3`` pipeline are shown below for a
+NIRISS SOSS observation:
 
-  +---------------------+
-  | calwebb_tso3        |
-  +=====================+
-  | outlier_detection   |
-  +---------------------+
-  | extract_1d          |
-  +---------------------+
-  | white_light         |
-  +---------------------+
++---------------------+
+| calwebb_tso3        |
++=====================+
+| outlier_detection   |
++---------------------+
+| extract_1d          |
++---------------------+
+| white_light         |
++---------------------+
 
 Inputs
 ------
