@@ -437,7 +437,7 @@ class DataSet():
         # two, use this syntax:
         # refsub.data = ref.data[..., slc[0], slc[1]].copy()
         refsub.data = ref.data[slc[0], slc[1]].copy()
-        if "dq" in ref:
+        if hasattr(ref, "dq"):
             refsub.dq = ref.dq[slc[0], slc[1]].copy()
 
         return refsub
