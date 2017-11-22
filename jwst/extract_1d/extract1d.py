@@ -6,7 +6,6 @@
 :License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
 
 """
-from __future__ import division, print_function, absolute_import
 
 # STDLIB
 import logging
@@ -26,15 +25,6 @@ __author__ = 'Mihai Cara'
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-def p2_round(x):
-    """Round to the nearest integer.
-
-    This gives the same result as the Python 2 version of round(x, 0),
-    except that p2_round returns an int.
-    This is based on http://python3porting.com/differences.html
-    """
-    return math.floor(x + math.copysign(0.5, x))
 
 def extract1d(image, lambdas, disp_range,
               p_src, p_bkg=None, independent_var="wavelength",
@@ -339,7 +329,7 @@ def _extract_colpix(image_data, x, j, limits):
     ns = image_data.shape[0] - 1
     ns12 = ns + 0.5
 
-    npts = sum(map(lambda x: min(ns, int(p2_round(x[1]))) - \
+    npts = sum(map(lambda x: min(ns, int(math.floor(x[1] + 0.5))) - \
                    max(0, int(math.floor(x[0] + 0.5))) + 1,
                    intervals))
 
@@ -355,7 +345,7 @@ def _extract_colpix(image_data, x, j, limits):
         i2 = i[1] if i[1] <= ns12 else ns12
 
         ii1 = max(0, int(math.floor(i1 + 0.5)))
-        ii2 = min(ns, int(p2_round(i2)))
+        ii2 = min(ns, int(math.floor(i2 + 0.5)))
 
         # special case: ii1 == ii2:
         if ii1 == ii2:
