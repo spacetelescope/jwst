@@ -1296,31 +1296,31 @@ def copy_keyword_info(slit, slitname, spec):
     if slitname is not None and slitname != "ANY":
         spec.name = slitname
 
-    if "slitlet_id" in slit:
+    if hasattr(slit, "slitlet_id"):
         spec.slitlet_id = slit.slitlet_id
 
-    if "source_id" in slit:
+    if hasattr(slit, "source_id"):
         spec.source_id = slit.source_id
 
-    if "source_name" in slit and slit.source_name is not None:
+    if hasattr(slit, "source_name") and slit.source_name is not None:
         spec.source_name = slit.source_name
 
-    if "source_alias" in slit and slit.source_alias is not None:
+    if hasattr(slit, "source_alias") and slit.source_alias is not None:
         spec.source_alias = slit.source_alias
 
-    if "source_type" in slit and slit.source_type is not None:
+    if hasattr(slit, "source_type") and slit.source_type is not None:
         spec.source_type = slit.source_type
 
-    if "stellarity" in slit and slit.stellarity is not None:
+    if hasattr(slit, "stellarity") and slit.stellarity is not None:
         spec.stellarity = slit.stellarity
 
-    if "source_xpos" in slit:
+    if hasattr(slit, "source_xpos"):
         spec.source_xpos = slit.source_xpos
 
-    if "source_ypos" in slit:
+    if hasattr(slit, "source_ypos"):
         spec.source_ypos = slit.source_ypos
 
-    if "shutter_state" in slit:
+    if hasattr(slit, "shutter_state"):
         spec.shutter_state = slit.shutter_state
 
 
