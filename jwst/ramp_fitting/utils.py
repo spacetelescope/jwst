@@ -1,9 +1,6 @@
 #! /usr/bin/env python
 #
 # utils.py: utility functions
-from __future__ import division, print_function
-
-from __future__ import division
 import numpy as np
 import logging
 
@@ -15,7 +12,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class OptRes(object):
+class OptRes:
     """
     Object to hold optional results for all good pixels for
     y-intercept, slope, uncertainty for y-intercept, uncertainty for
