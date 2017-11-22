@@ -155,8 +155,7 @@ target product, and contains the PSF-subtracted images for every integration
 of the science target product.
 
 Arguments
----------.. automodapi:: jwst.coron.align_refs
-
+---------
 
 The task takes one optional argument, `truncate`, which is used to specify the
 number of KL transform rows to keep when computing the PSF fit to the target.
