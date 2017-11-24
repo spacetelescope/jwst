@@ -4,8 +4,6 @@ Some of these may go in astropy.modeling in the future.
 """
 # -*- coding: utf-8 -*-
 
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 import math
 from collections import namedtuple
 import numpy as np
@@ -1296,7 +1294,7 @@ class NIRISSBackwardGrismDispersion(Model):
         Notes:
         ------
         There's spatial dependence for NIRISS so the forward transform
-        dependes on x,y as well as the filter wheel rotation. Theta is 
+        dependes on x,y as well as the filter wheel rotation. Theta is
         usu. taken to be the different between fwcpos_ref in the specwcs
         reference file and fwcpos from the input image.
 
