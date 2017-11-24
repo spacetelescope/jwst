@@ -102,7 +102,9 @@ class OutlierDetection(object):
                 image = datamodels.ImageModel(data=self.inputs.data[i],
                                               err=self.inputs.err[i],
                                               dq=self.inputs.dq[i])
-                image.meta = self.inputs.meta
+                image.update(self.inputs)
+                image.meta.wcs = self.inputs.meta.wcs
+                image.meta.filename = self.inputs.meta.filename
                 image.wht = build_driz_weight(image,
                                               wht_type='exptime',
                                               good_bits=bits)
