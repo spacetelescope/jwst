@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
-
 import logging
 import importlib
 from gwcs.wcs import WCS
