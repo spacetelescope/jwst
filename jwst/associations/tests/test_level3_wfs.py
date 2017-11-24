@@ -1,5 +1,4 @@
 """test_level3_dithers: Test of WFS rules."""
-from __future__ import absolute_import
 
 from . import helpers
 

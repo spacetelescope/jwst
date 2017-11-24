@@ -1,5 +1,3 @@
-import six
-
 from ..lib.engdb_tools import ENGDB_Service
 from ..stpipe import Step
 
@@ -49,7 +47,7 @@ class EngDBLogStep(Step):
         verbosity = self.verbosity
         edb = ENGDB_Service()
 
-        if isinstance(mnemonics, six.string_types):
+        if isinstance(mnemonics, str):
             mnemonics = [mnemonics]
         for mnemonic in mnemonics:
             try:

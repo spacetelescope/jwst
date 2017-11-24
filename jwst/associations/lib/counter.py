@@ -1,4 +1,4 @@
-class Counter(object):
+class Counter():
     """Like itertools.count but access to the current value"""
     def __init__(self, start=0, step=1, end=None):
         self.value = start

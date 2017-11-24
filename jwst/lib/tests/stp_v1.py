@@ -58,12 +58,8 @@ PC2_2
 It does not currently place the new keywords in any particular location
 in the header other than what is required by the standard.
 '''
-
-from __future__ import print_function, division
-
 from collections import namedtuple
 import logging
-import sys
 
 import astropy.io.fits as fits
 import numpy as np

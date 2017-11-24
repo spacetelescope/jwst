@@ -1,11 +1,12 @@
 """
 Tests of engdb_mock
 """
-from astropy.time import Time
-from backports.tempfile import TemporaryDirectory
 import os
 import pytest
 import requests
+from tempfile import TemporaryDirectory
+
+from astropy.time import Time
 
 from . import engdb_mock
 from .. import engdb_tools
