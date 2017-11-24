@@ -1,13 +1,11 @@
 """Test general Level 3 rules environment"""
-from __future__ import absolute_import
-
 from .helpers import (
     combine_pools,
     registry_level3_only,
     t_path
 )
 
-from .. import (AssociationRegistry, generate)
+from .. import generate
 
 
 def test_meta():

@@ -40,7 +40,7 @@ __all__ = [
 _EngDB_Value = namedtuple('EngDB_Value', ['obstime', 'value'])
 
 
-class _Value_Collection(object):
+class _Value_Collection():
     """Engineering Value Collection
 
     Parameters
@@ -98,7 +98,7 @@ class _Value_Collection(object):
             self.collection.append(value)
 
 
-class ENGDB_Service(object):
+class ENGDB_Service():
     """
     Set of various utilities to access the JWST
     Engineering Database
