@@ -1,5 +1,3 @@
-from __future__ import absolute_import, print_function
-
 from os.path import join, dirname, basename
 import shutil
 import tempfile
@@ -7,7 +5,6 @@ import tempfile
 from nose.tools import raises
 
 from astropy.io import fits
-import six
 
 from jwst.stpipe import Step
 import crds
@@ -134,5 +131,3 @@ def test_crds_failed_getreferences_reftype():
 #         u'meta.telescope': 'JWST'
 #         }
 #     assert_raises(crds.getreferences, header, reftypes=["foo"], context="jwst_9942.pmap")
-
-

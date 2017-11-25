@@ -29,12 +29,9 @@
 """
 Our configuration files are ConfigObj/INI files.
 """
-from __future__ import absolute_import, division, print_function
-
 import os
 import os.path
 import textwrap
-import six
 
 from .configobj.configobj import ConfigObj, Section, \
      flatten_errors, get_extra_values
@@ -55,10 +52,7 @@ def _get_input_file_check(root_dir):
     def _input_file_check(path):
         if not isinstance(path, cmdline.FromCommandLine):
             try:
-                if six.PY2:
-                    path = unicode(path)
-                else:
-                    path = str(path)
+                path = str(path)
             except ValueError:
                 pass
 
@@ -82,10 +76,7 @@ def _get_output_file_check(root_dir):
     def _output_file_check(path):
         if not isinstance(path, cmdline.FromCommandLine):
             try:
-                if six.PY2:
-                    path = unicode(path)
-                else:
-                    path = str(path)
+                path = str(path)
             except ValueError:
                 pass
 
@@ -152,7 +143,7 @@ def load_spec_file(cls, preserve_comments=False):
         spec_file = spec_file.split('\n')
         encoded = []
         for line in spec_file:
-            if isinstance(line, six.text_type):
+            if isinstance(line, str):
                 encoded.append(line.encode('utf8'))
             else:
                 encoded.append(line)

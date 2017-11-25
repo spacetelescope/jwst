@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 import sys
 if sys.version_info[0] >= 3:
     __builtins__['unicode'] = str
