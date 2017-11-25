@@ -29,8 +29,6 @@
 """
 Logging setup etc.
 """
-from __future__ import absolute_import, division, print_function
-
 import fnmatch
 import io
 import logging
@@ -91,7 +89,7 @@ class BreakHandler(logging.Handler):
 log_config = {}
 
 
-class LogConfig(object):
+class LogConfig():
     """
     Stores a single logging configuration.
 
