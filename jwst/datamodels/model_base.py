@@ -292,7 +292,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if klass != 'DataModel':
                 self.meta.model_type = klass
 
-    def save(self, path, *args, **kwargs):
+    def save(self, path, dir_path=None, *args, **kwargs):
         """
         Save to either a FITS or ASDF file, depending on the path.
 
