@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from .helpers import t_path
 
 from .. import AssociationPool

@@ -5,7 +5,7 @@ from collections import defaultdict
 __all__ = ['CallbackRegistry']
 
 
-class CallbackRegistry(object):
+class CallbackRegistry():
     """Callback registry"""
 
     def __init__(self):
@@ -61,7 +61,7 @@ class CallbackRegistry(object):
 # Test suite
 # ##########
 
-class TestSuite(object):
+class TestSuite():
 
     @staticmethod
     def fn_single_1(arg):

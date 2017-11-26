@@ -2,7 +2,7 @@
     "asn_type": "spec3",
     "asn_rule": "candidate_Asn_MIRI_LRS_FIXEDSLIT",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.3",
     "program": "98010",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    exp_type: {'mir_lrs\\\\-fixedslit'}\n    opt_elem: {'p750l'}\n    subarray: {'full'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'1'}\n    program: {'98010'}\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",

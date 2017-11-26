@@ -1,5 +1,4 @@
 """Helpers for tests."""
-from backports.tempfile import TemporaryDirectory
 from collections import namedtuple
 from contextlib import contextmanager
 from copy import copy
@@ -7,6 +6,7 @@ from glob import glob
 import os
 import pytest
 import re
+from tempfile import TemporaryDirectory
 
 from ...tests.helpers import runslow
 
@@ -123,7 +123,7 @@ class PoolParams(
 
 
 # Basic Pool/Rule test class
-class BasePoolRule(object):
+class BasePoolRule():
 
     # Define the pools and testing parameters related to them.
     # Each entry is a tuple starting with the path of the pool.

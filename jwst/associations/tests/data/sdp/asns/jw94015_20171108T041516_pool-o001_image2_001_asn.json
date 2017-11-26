@@ -2,7 +2,7 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2Image",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.3",
     "program": "94015",
     "target": "1",
     "asn_pool": "jw94015_20171108T041516_pool",

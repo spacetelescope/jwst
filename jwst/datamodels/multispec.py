@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals, division, print_function
-
 from . import model_base
 from .spec import SpecModel
 

@@ -5,8 +5,6 @@ processed by CALIMAGE3.
 
 Such associations are mosaics and dithers.
 """
-from __future__ import absolute_import
-
 from .helpers import BasePoolRule, PoolParams, t_path
 
 

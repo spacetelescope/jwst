@@ -1,9 +1,3 @@
-from __future__ import (
-    absolute_import,
-    unicode_literals,
-    division,
-    print_function
-)
 from copy import deepcopy
 import inspect
 import os

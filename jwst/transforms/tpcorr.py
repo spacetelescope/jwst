@@ -8,8 +8,6 @@ of JWST instrument's WCS.
 :License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 
 # STDLIB
 import logging

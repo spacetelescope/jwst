@@ -330,7 +330,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         return '\n'.join(result)
 
 
-class Utility(object):
+class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
@@ -605,8 +605,7 @@ class AsnMixin_Lv2ImageScience(DMSLevel2bBase):
         self.add_constraints({
             'exp_type': {
                 'value': (
-                    'fgs_image'
-                    '|mir_image'
+                    'mir_image'
                     '|mir_lyot'
                     '|mir_4qpm'
                     '|nis_ami'
@@ -634,9 +633,7 @@ class AsnMixin_Lv2ImageNonScience(DMSLevel2bBase):
         self.add_constraints({
             'non_science': {
                 'value': (
-                    'fgs_focus'
-                    '|fgs_image'
-                    '|mir_coroncal'
+                    'mir_coroncal'
                     '|mir_tacq'
                     '|nis_focus'
                     '|nis_tacq'
@@ -647,6 +644,7 @@ class AsnMixin_Lv2ImageNonScience(DMSLevel2bBase):
                     '|nrs_bota'
                     '|nrs_confirm'
                     '|nrs_focus'
+                    '|nrs_image'
                     '|nrs_mimf'
                     '|nrs_taslit'
                     '|nrs_tacq'

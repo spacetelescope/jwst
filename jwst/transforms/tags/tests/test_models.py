@@ -1,7 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 # -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, unicode_literals, print_function
 import numpy as np
 from astropy.modeling.models import Shift, Rotation2D
 from asdf.tests import helpers
@@ -17,7 +15,11 @@ m2 = Shift(2) & Shift(2) | Rotation2D(23.1)
 test_models = [DirCos2Unitless(), Unitless2DirCos(),
                Rotation3DToGWA(angles=[12.1, 1.3, 0.5, 3.4], axes_order='xyzx'),
                AngleFromGratingEquation(20000, -1), WavelengthFromGratingEquation(25000, 2),
-               Logical('GT', 5, 10), Logical('LT', np.ones((10,))* 5, np.arange(10))
+               Logical('GT', 5, 10), Logical('LT', np.ones((10,))* 5, np.arange(10)),
+               V23ToSky(angles=[0.1259, -0.1037, -146.03468, 69.503032, 80.46448], axes_order="zyxyz"),
+               Snell(angle=-16.5, kcoef=[0.583, 0.462, 3.891], lcoef=[0.002526, 0.01, 1200.556],
+                     tcoef=[-2.66e-05, 0.0, 0.0, 0.0, 0.0, 0.0], tref=35, pref=0,
+                     temperature=35, pressure=0),
                ]
 
 

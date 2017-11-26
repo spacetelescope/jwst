@@ -30,12 +30,7 @@
 Pipeline
 
 """
-
-from __future__ import absolute_import, division, print_function
-
-import gc
-from os.path import dirname, join, split, splitext
-import re
+from os.path import dirname, join
 
 from .configobj.configobj import Section
 
@@ -83,13 +78,13 @@ class Pipeline(Step):
 
     def _collect_active_reftypes(self):
         """Collect the list of all reftypes for child Steps that are not skipped.
-        Overridden reftypes are included but handled normally later by the Pipeline 
+        Overridden reftypes are included but handled normally later by the Pipeline
         version of the _get_ref_override() method defined below.
         """
         return [reftype for step in self._unskipped_steps
                 for reftype in step.reference_file_types]
 
-    @property 
+    @property
     def _unskipped_steps(self):
         """Return a list of the unskipped Step objects launched by `self`."""
         return [getattr(self, name) for name in self.step_defs.keys()
@@ -98,7 +93,7 @@ class Pipeline(Step):
     def _get_ref_override(self, reference_file_type):
         """Return any override for `reference_file_type` for any of the steps in
         Pipeline `self`.  OVERRIDES Step.
-        
+
         Returns
         -------
         override_filepath or None.
@@ -109,7 +104,7 @@ class Pipeline(Step):
             if override is not None:
                 return override
         return None
-            
+
     @classmethod
     def merge_config(cls, config, config_file):
         steps = config.get('steps', {})

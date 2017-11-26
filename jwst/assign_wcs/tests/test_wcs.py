@@ -1,5 +1,3 @@
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
 from numpy.testing import utils
 from astropy import units as u
 from astropy import wcs
