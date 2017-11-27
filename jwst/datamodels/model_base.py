@@ -678,7 +678,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             # should not be copied frpm the other image
             if len(path) == 2:
                 if path[0] == 'meta':
-                    if path[1] in ('filename', 'date', 'model_type'):
+                    if path[1] in ('date', 'model_type'):
                         return True
             return False
         # Get the list of hdu names from the model so that updates
