@@ -1,8 +1,6 @@
 """
 FGS WCS pipeline - depends on EXP_TYPE.
 """
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
 import logging
 
 from asdf import AsdfFile

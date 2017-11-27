@@ -1,5 +1,4 @@
 """test_level3_dithers: Test of dither rules."""
-from __future__ import absolute_import
 import pytest
 
 

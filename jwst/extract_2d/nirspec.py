@@ -1,8 +1,6 @@
 #
 #  Module for 2d extraction
 #
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
 import logging
 import warnings
 import numpy as np

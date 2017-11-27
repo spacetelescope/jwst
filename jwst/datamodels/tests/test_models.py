@@ -27,6 +27,15 @@ FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
 ASN_FILE = os.path.join(ROOT_DIR, 'association.json')
 
 
+def reset_group_id(container):
+    """Remove group_id from all models in container"""
+    for m in container:
+        try:
+            del m.meta.group_id
+        except AttributeError:
+            pass
+
+
 def setup():
     global FITS_FILE, TMP_DIR, TMP_FITS, TMP_YAML, TMP_JSON, TMP_FITS2
 
@@ -390,6 +399,7 @@ def test_modelcontainer_indexing(container):
 
 
 def test_modelcontainer_group1(container):
+    reset_group_id(container)
     for group in container.models_grouped:
         assert len(group) == 2
         for model in group:
@@ -397,6 +407,7 @@ def test_modelcontainer_group1(container):
 
 
 def test_modelcontainer_group2(container):
+    reset_group_id(container)
     container[0].meta.observation.exposure_number = '2'
     for group in container.models_grouped:
         assert len(group) == 1
@@ -406,7 +417,9 @@ def test_modelcontainer_group2(container):
 
 
 def test_modelcontainer_group_names(container):
+    reset_group_id(container)
     assert len(container.group_names) == 1
+    reset_group_id(container)
     container[0].meta.observation.exposure_number = '2'
     assert len(container.group_names) == 2
     container[0].meta.observation.exposure_number = '1'

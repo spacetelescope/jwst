@@ -1,5 +1,5 @@
-from __future__ import absolute_import
 from .dictwithattrs import DictWithAttributes
+
 
 class Member(DictWithAttributes):
     """Create a new member.

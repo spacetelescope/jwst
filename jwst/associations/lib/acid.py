@@ -12,7 +12,7 @@ __all__ = [
 _DISCOVERED_ID_START = 3001
 
 
-class ACID(object):
+class ACID():
     """Association Candidate Identifer
 
     Parameters
@@ -51,7 +51,7 @@ class ACID(object):
         return self.id
 
 
-class ACIDMixin(object):
+class ACIDMixin():
     """Enable ACID for rules"""
     def __init__(self, *args, **kwargs):
 

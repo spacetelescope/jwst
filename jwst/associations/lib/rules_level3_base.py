@@ -414,7 +414,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         return result
 
 
-class Utility(object):
+class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
@@ -685,7 +685,12 @@ class AsnMixin_Image(AsnMixin_NotTSO):
 
         self.add_constraints({
             'exp_type': {
-                'value': 'nrc_image|mir_image|nis_image|fgs_image',
+                'value': (
+                    'nrc_image'
+                    '|mir_image'
+                    '|nis_image'
+                    '|fgs_image'
+                ),
                 'inputs': ['exp_type'],
                 'force_unique': True,
             }

@@ -1,19 +1,10 @@
 """
 Various utilities to handle running Steps from the commandline.
 """
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals
-)
-
-# import cProfile
 import io
 import os
 import os.path
 import textwrap
-import six
 
 from . import config_parser
 from . import log
@@ -225,12 +216,8 @@ def just_the_step_from_cmdline(args, cls=None):
                     "Error parsing logging config {0!r}:\n{1}".format(
                         log_config, e))
     except Exception as e:
-        if six.PY2:
-            _print_important_message(
-                "ERROR PARSING CONFIGURATION:", unicode(e))
-        else:
-            _print_important_message(
-                "ERROR PARSING CONFIGURATION:", str(e))
+        _print_important_message(
+            "ERROR PARSING CONFIGURATION:", str(e))
         parser1.print_help()
         raise
 
@@ -258,17 +245,9 @@ def just_the_step_from_cmdline(args, cls=None):
             config, name=name, config_file=config_file)
     except config_parser.ValidationError as e:
         # If the configobj validator failed, print usage information.
-        if six.PY2:
-            _print_important_message(
-                "ERROR PARSING CONFIGURATION:",
-                unicode(e)
-            )
-            parser2.print_help()
-            raise ValueError(unicode(e))
-        else:
-            _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
-            parser2.print_help()
-            raise ValueError(str(e))
+        _print_important_message("ERROR PARSING CONFIGURATION:", str(e))
+        parser2.print_help()
+        raise ValueError(str(e))
 
     # Define the primary input file.
     if len(positional):
@@ -321,14 +300,9 @@ def step_from_cmdline(args, cls=None):
     except Exception as e:
         import traceback
         lines = traceback.format_exc()
-        if six.PY2:
-            _print_important_message(
-                "ERROR RUNNING STEP {0!r}:".format(step_class.__name__),
-                unicode(e), lines)
-        else:
-            _print_important_message(
-                "ERROR RUNNING STEP {0!r}:".format(step_class.__name__),
-                str(e), lines)
+        _print_important_message(
+            "ERROR RUNNING STEP {0!r}:".format(step_class.__name__),
+            str(e), lines)
 
         if debug_on_exception:
             import pdb

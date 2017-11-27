@@ -4,8 +4,6 @@ Tools to create a WCS pipeline list of steps for NIRSPEC modes.
 Call create_pipeline() which redirects based on EXP_TYPE
 
 """
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
 import logging
 import numpy as np
 
