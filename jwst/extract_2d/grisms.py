@@ -1,8 +1,7 @@
 #
 #  Module for 2d extraction of grism spectra
 #
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
+
 import logging
 import copy
 import numpy as np
@@ -98,7 +97,7 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             # limit the boxes to the detector
             ymin, ymax = (max(bb[0][0], 0), min(bb[0][1], input_model.meta.subarray.ysize))
             xmin, xmax = (max(bb[1][0], 0), min(bb[1][1], input_model.meta.subarray.xsize))
-            
+
             # only the first two numbers in the Mapping are used
             # the order and source position are put directly into
             # the new wcs for the subarray for the forward transform
@@ -152,7 +151,7 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             output_model.slits[-1].source_xpos = obj.xcenter
             output_model.slits[-1].source_ypos = obj.ycenter
             output_model.slits[-1].source_id = obj.sid
-        
+
     del subwcs
     return output_model
 

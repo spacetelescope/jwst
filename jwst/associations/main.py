@@ -1,5 +1,4 @@
-from __future__ import print_function
-
+"""Main entry for the association generator"""
 import os
 import sys
 import argparse
@@ -21,7 +20,7 @@ DISCOVER_RULESET = 'discover'
 CANDIDATE_RULESET = 'candidate'
 
 
-class Main(object):
+class Main():
     """
     Generate Associations from an Association Pool
 

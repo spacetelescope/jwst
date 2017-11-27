@@ -414,7 +414,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         return result
 
 
-class Utility(object):
+class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod

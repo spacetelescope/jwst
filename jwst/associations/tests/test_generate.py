@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from . import helpers
 from .helpers import full_pool_rules
 
