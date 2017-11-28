@@ -1,8 +1,5 @@
 """Class definition for performing outlier detection with scaling."""
 
-from __future__ import (division, print_function, unicode_literals,
-                        absolute_import)
-
 import numpy as np
 
 from photutils import aperture_photometry, CircularAperture, CircularAnnulus

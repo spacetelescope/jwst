@@ -1,8 +1,5 @@
 """Class definition for performing outlier detection on spectra."""
 
-from __future__ import (division, print_function, unicode_literals,
-                        absolute_import)
-
 from .. import datamodels
 from ..resample import resample_spec, resample_utils
 from .outlier_detection import OutlierDetection
