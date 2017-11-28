@@ -1,6 +1,7 @@
 """
 Step
 """
+from functools import partial
 import gc
 from os.path import (
     abspath,
@@ -355,6 +356,9 @@ class Step():
             self.log.info(
                 'Step {0} running with args {1}.'.format(
                     self.name, args))
+
+            if self.output_file is not None:
+                self.output_basename = self.output_file
 
             hook_args = args
             for pre_hook in self._pre_hooks:

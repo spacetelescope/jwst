@@ -2,7 +2,6 @@ import os.path as op
 import os
 import copy
 import warnings
->>>>>>> upstream/master
 from collections import OrderedDict
 import copy
 from functools import partial
