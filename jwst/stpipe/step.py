@@ -30,9 +30,15 @@ from .. import __version_commit__, __version__
 from ..datamodels import DataModel
 
 SUFFIX_LIST = [
-    'rate', 'cal', 'uncal', 'i2d', 's2d', 's3d',
-    'jump', 'ramp', 'x1d', 'x1dints', 'calints', 'rateints',
-    'crf', 'crfints', 'psfsub', 'psfalign', 'psfstack'
+    'cal', 'calints', 'crf', 'crfints',
+    'dark',
+    'i2d',
+    'jump',
+    'psfalign', 'psfstack', 'psfsub',
+    'ramp', 'rate', 'rateints',
+    's2d', 's3d',
+    'uncal',
+    'x1d', 'x1dints',
 ]
 REMOVE_SUFFIX = '^(?P<root>.+?)((?P<separator>_|-)(' \
                 + '|'.join(SUFFIX_LIST) + '))?$'
