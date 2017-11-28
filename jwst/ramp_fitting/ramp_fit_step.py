@@ -1,7 +1,5 @@
 #! /usr/bin/env python
 
-from __future__ import division
-
 from ..stpipe import Step, cmdline
 from .. import datamodels
 from ..gain_scale import gain_scale
