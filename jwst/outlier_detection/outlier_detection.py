@@ -1,8 +1,5 @@
 """Primary code for performing outlier detection on JWST observations."""
 
-from __future__ import (division, print_function, unicode_literals,
-                        absolute_import)
-
 import numpy as np
 
 from stsci.image import median
@@ -21,7 +18,7 @@ log.setLevel(logging.DEBUG)
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 
 
-class OutlierDetection(object):
+class OutlierDetection:
     """Main class for performing outlier detection.
 
     This is the controlling routine for the outlier detection process.
