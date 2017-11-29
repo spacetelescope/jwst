@@ -375,6 +375,78 @@ Outputs
   changing the product type to ``_crf``, e.g.
   ``jw96090001001_03101_00001_nrca2_o001_crf.fits``.
 
+.. _stage3-spectroscopic-flow:
+
+Stage 3 Spectroscopic Pipeline Step Flow (calwebb_spec3)
+=========================================================
+Stage 3 processing for spectroscopic observations is intended for combining the 
+calibrated data from multiple exposures (e.g. a dither pattern) into a single
+rectified (distortion corrected) product and a combined 1D spectrum.
+Before being combined, the exposures may receive additional corrections for the
+purpose of background matching and outlier rejection.
+The steps applied by the ``calwebb_spec3`` pipeline are shown below.
+
++-------------------+----+-----+-----+----+-----+--------+--------+
+| Instrument Mode   |     NIRSpec    |   MIRI   | NIRISS | NIRCam |
++-------------------+----+-----+-----+----+-----+--------+--------+
+| Step              | FS | MOS | IFU | FS | MRS | WFSS   | WFSS   |
++===================+====+=====+=====+====+=====+========+========+
+| mrs_imatch        |    |     |     |    |  X  |        |        |
++-------------------+----+-----+-----+----+-----+--------+--------+
+| outlier_detection | X  |  X  |  X  | X  |  X  |   X    |   X    |
++-------------------+----+-----+-----+----+-----+--------+--------+
+| resample_spec     | X  |  X  |     | X  |     |   X    |   X    |
++-------------------+----+-----+-----+----+-----+--------+--------+
+| cube_build        |    |     |  X  |    |  X  |        |        |
++-------------------+----+-----+-----+----+-----+--------+--------+
+| extract_1d        | X  |  X  |  X  | X  |  X  |   X    |   X    |
++-------------------+----+-----+-----+----+-----+--------+--------+
+
+NOTE: In B7.1 the ``calwebb_spec3`` pipeline is very much a prototype and
+not all steps are functioning properly for all modes. In particular, the
+``outlier_detection`` step does not yet work well, if at all, for any of
+the spectroscopic modes. Also, the ``resample_spec`` step does not work
+for dithered slit-like spectra (i.e. all non-IFU modes). Processing of
+NIRSpec IFU and MIRI MRS exposures does work, using the
+``mrs_imatch``, ``cube_build``, and ``extract_1d`` steps.
+
+Inputs
+------
+
+* Associated 2D Calibrated products: The inputs to ``calwebb_spec3`` will
+  usually be in the form of an ASN file that lists multiple exposures to be
+  processed and combined into a single output product. The individual exposures
+  should be calibrated (``_cal``) products from ``calwebb_spec2`` processing.
+
+Outputs
+-------
+
+* CR-flagged products: If the ``outlier_detection`` step is applied, a new version
+  of each input calibrated exposure product is created, which contains a DQ array
+  that has been updated to flag pixels detected as outliers. This updated
+  product is known as a CR-flagged product and the file is identified by including
+  the association candidate ID in the original input ``_cal`` file name and
+  changing the product type to ``_crf``, e.g.
+  ``jw96090001001_03101_00001_nrs2_o001_crf.fits``.
+
+* Resampled 2D spectral product (:py:class:`DrizProductModel
+  <jwst.datamodels.DrizProductModel>`): A resampled/rectified 2D product of type
+  ``_s2d`` is created containing the rectified and combined association of
+  exposures, which is the direct output of the ``resample_spec`` step, when
+  processing non-IFU modes.
+
+* Resampled 3D spectral product (:py:class:`IFUCubeModel
+  <jwst.datamodels.IFUCubeModel>`): A resampled/rectified 3D product of type
+  ``_s3d`` is created containing the rectified and combined association of
+  exposures, which is the direct output of the ``cube_build`` step, when
+  processing IFU modes.
+
+* 1D Extracted Spectrum product: All types of inputs result in a 1D extracted
+  spectral data product, which is saved as a ``_x1d`` file, and is the result
+  of performing 1D extraction on the combined ``_s2d`` or ``_s3d`` product.
+
+.. _stage3-ami-flow:
+
 Stage 3 Aperture Masking Interferometry (AMI) Pipeline Step Flow (calwebb_ami3)
 ===============================================================================
 The stage 3 AMI (``calwebb_ami3``) pipeline is to be applied to
@@ -436,6 +508,7 @@ which is a Boolean parameter set to a default value of ``False``. If the user
 sets this agument to ``True``, the results of the ``ami_average`` step will be
 saved, as described above.
 
+.. _stage3-coron-flow:
 
 Stage 3 CORONAGRAPHIC Pipeline Step Flow (calwebb_coron3)
 ===============================================================================
@@ -502,6 +575,7 @@ Outputs
   product for the science target.  This resampled product of type ``_i2d`` gets
   written to disk and returned as the final product from this pipeline.
 
+.. _stage3-tso-flow:
 
 Stage 3 Time-Series Observation(TSO) Pipeline Step Flow (calwebb_tso3)
 ===============================================================================
