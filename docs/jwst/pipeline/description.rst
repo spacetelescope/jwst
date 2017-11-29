@@ -3,7 +3,7 @@
 Pipeline Modules
 ================
 
-The actual pipelines that call individual correction steps in various
+The pipelines that call individual correction steps in various
 orders are defined as python classes within python code modules. The pipelines
 can be executed by referencing their class name or through the use of a
 configuration (.cfg) file that in turn references the class. The table below
@@ -14,7 +14,9 @@ the instrument modes to which they can be applied.
 +----------------------+------------------------+------------------------------------------+
 | Class Name           | Configuration File     | Used For                                 |
 +======================+========================+==========================================+
-| Detector1Pipeline    | calwebb_detector1.cfg  | Stage 1 processing: all modes            |
+| Detector1Pipeline    | calwebb_detector1.cfg  | Stage 1 processing: all non-TSO modes    |
++----------------------+------------------------+------------------------------------------+
+| Detector1Pipeline    | calwebb_tso1.cfg       | Stage 1 processing: all TSO modes        |
 +----------------------+------------------------+------------------------------------------+
 | DarkPipeline         | calwebb_dark.cfg       | Stage 1 processing: darks                |
 +----------------------+------------------------+------------------------------------------+
@@ -77,6 +79,9 @@ jump              jump
 ramp_fit          ramp_fit
 gain_scale        gain_scale
 ================= =================
+
+If the ``calwebb_tso1.cfg`` configuration file is used to execute this pipeline,
+the ``ipc``, ``lastframe``, and ``persistence`` steps will be skipped.
 
 Inputs
 ------
@@ -152,77 +157,98 @@ steps applied by the calwebb_image2 imaging pipeline is as follows.
 +----------------+
 | calwebb_image2 |
 +================+
+| background     |
++----------------+
 | assign_wcs     |
 +----------------+
 | flat_field     |
 +----------------+
 | photom         |
 +----------------+
+| resample       |
++----------------+
 
 Inputs
 ------
 
 * 2D or 3D Countrate product: The input to the ``calwebb_image2`` pipeline is
-  a single countrate exposure, in the form of either a ``_rate`` or ``_rateints``
-  file. If the latter (data on a per-integration basis), the steps in the
-  pipeline are applied individually to each integration, where appropriate.
+  a countrate exposure, in the form of either ``_rate`` or ``_rateints``
+  files. A single input file can be processed or an ASN file listing
+  multiple inputs can be used, in which case the processing steps will be
+  applied to each input exposure, one at a time. If ``_rateints`` products are
+  used as input, the steps in the pipeline are applied individually to each
+  integration in an exposure, where appropriate.
 
 Outputs
 -------
 
-* 2D or 3D Calibrated product: The output is a single calibrated exposure, using
+* 2D or 3D Calibrated product: The output is a calibrated exposure, using
   the product type suffix ``_cal`` or ``_calints``, depending on the type of
   input (e.g. ``jw80600012001_02101_00003_mirimage_cal.fits``).
 
 Arguments
 ---------
-The ``calwebb_image2`` pipeline does not have any optional arguments.
+The ``calwebb_image2`` pipeline has one optional argument ``save_bsub``,
+which is set to ``False`` by default. If set to ``True``, the results of
+the background subtraction step will be saved to an intermediate file,
+using a product type of ``_bsub`` or ``_bsubints`` (depending on the type
+of input).
 
 .. _stage2-spectroscopic-flow:
 
 Stage 2 Spectroscopic Pipeline Step Flow (calwebb_spec2)
 ==========================================================
-Stage 2 spectroscopic (``calwebb_spec2``) processing applies additional
+Stage 2 spectroscopic (``calwebb_spec2``) pipeline applies additional
 corrections to countrate products that result in fully calibrated individual
 exposures.
 The list of correction steps is shown below. Some steps are only applied to
 certain instruments or instrument modes, as noted in the table.
 
-+------------------+----+-----+-----+----+----+-----+--------+
-| Instrument Mode  |     NIRSpec    |     MIRI      | NIRISS |
-+------------------+----+-----+-----+----+----+-----+--------+
-| Step             | FS | MOS | IFU | FS | SL | MRS |  SOSS  |
-+==================+====+=====+=====+====+====+=====+========+
-| assign_wcs       | X  |  X  |  X  | X  | X  |  X  |   X    |
-+------------------+----+-----+-----+----+----+-----+--------+
-| bkg_subtract     | X  |  X  |  X  | X  | X  |  X  |   X    |
-+------------------+----+-----+-----+----+----+-----+--------+
-| imprint_subtract |    |  X  |  X  |    |    |     |        |
-+------------------+----+-----+-----+----+----+-----+--------+
-| extract_2d       | X  |  X  |     |    |    |     |        |
-+------------------+----+-----+-----+----+----+-----+--------+
-| flat_field       | X  |  X  |  X  | X  | X  |  X  |   X    |
-+------------------+----+-----+-----+----+----+-----+--------+
-| srctype          | X  |  X  |  X  | X  | X  |  X  |   X    |
-+------------------+----+-----+-----+----+----+-----+--------+
-| straylight       |    |     |     |    |    |  X  |        |
-+------------------+----+-----+-----+----+----+-----+--------+
-| fringe           |    |     |     |    |    |  X  |        |
-+------------------+----+-----+-----+----+----+-----+--------+
-| photom           | X  |  X  |  X  | X  | X  |  X  |   X    |
-+------------------+----+-----+-----+----+----+-----+--------+
-| resample_spec    | X  |  X  |     |    |    |     |        |
-+------------------+----+-----+-----+----+----+-----+--------+
-| cube_build       |    |     |  X  |    |    |  X  |        |
-+------------------+----+-----+-----+----+----+-----+--------+
-| extract_1d       | X  |  X  |  X  | X  | X  |  X  |   X    |
-+------------------+----+-----+-----+----+----+-----+--------+
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| Instrument Mode      |     NIRSpec    |     MIRI      |    NIRISS   | NIRCam |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| Step                 | FS | MOS | IFU | FS | SL | MRS | SOSS | WFSS | WFSS   |
++======================+====+=====+=====+====+====+=====+======+======+========+
+| assign_wcs           | X  |  X  |  X  | X  | X  |  X  |   X  |  X   |   X    |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| bkg_subtract         | X  |  X  |  X  | X  | X  |  X  |   X  |  X   |   X    |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| imprint_subtract     |    |  X  |  X  |    |    |     |      |      |        |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| msaflagopen          |    |  X  |  X  |    |    |     |      |      |        |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| extract_2d\ :sup:`1` | X  |  X  |     |    |    |     |      |  X   |   X    |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| flat_field\ :sup:`1` | X  |  X  |  X  | X  | X  |  X  |   X  |  X   |   X    |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| srctype              | X  |  X  |  X  | X  | X  |  X  |   X  |  X   |   X    |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| straylight           |    |     |     |    |    |  X  |      |      |        |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| fringe               |    |     |     |    |    |  X  |      |      |        |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| pathloss             | X  |  X  |  X  |    |    |     |      |      |        |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| barshadow            |    |  X  |     |    |    |     |      |      |        |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| photom               | X  |  X  |  X  | X  | X  |  X  |   X  |  X   |   X    |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| resample_spec        | X  |  X  |     |    |    |     |      |      |        |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| cube_build           |    |     |  X  |    |    |  X  |      |      |        |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+| extract_1d           | X  |  X  |  X  | X  | X  |  X  |   X  |  X   |   X    |
++----------------------+----+-----+-----+----+----+-----+------+------+--------+
+
+:sup:`1`\ Note that the order of the extract_2d and flat_field steps is reversed
+(flat_field is performed first) for NIRISS and NIRCam WFSS exposures.
 
 The ``resample_spec`` step produces a resampled/rectified product for non-IFU
-modes of some kinds of spectroscopic exposures. If the ``resample_spec`` step
+modes of some spectroscopic exposures. If the ``resample_spec`` step
 is not applied to a given exposure, the ``extract_1d`` operation will be
 performed on the original (unresampled) data. The ``cube_build`` step produces
-a resampled/rectified cube for IFU exposures.
+a resampled/rectified cube for IFU exposures, which is then used as input to
+the ``extract_1d`` step.
 
 Inputs
 ------
@@ -238,9 +264,13 @@ relationships to one another.
 The background subtraction step can be applied to an assocation containing
 nodded exposures, such as for MIRI LRS fixed-slit, NIRSpec fixed-slit, and
 NIRSpec MSA observations, or an association that contains dedicated exposures
-of a background source. The step will accomplish background subtraction by
+of a background target. The step will accomplish background subtraction by
 doing direct subtraction of nodded exposures from one another or by direct
 subtraction of dedicated background expsoures from the science target exposures.
+
+Background subtraction for Wide-Field Slitless Spectroscopy (WFSS) exposures
+is accomplished by scaling and subtracting a master background image from a
+CRDS reference file.
 
 The imprint subtraction step, which is only applied to NIRSpec MSA and IFU
 exposures, also requires the use of an ASN file, in order to specify which of
@@ -255,20 +285,22 @@ Outputs
 -------
 Two or three different types of outputs are created by ``calwebb_spec2``.
 
-* Calibrated 2D product: All types of inputs result in a fully-calibrated 2D
-  product at the end of the ``photom`` step, which use the ``_cal`` or
+* Calibrated product: All types of inputs result in a fully-calibrated
+  product at the end of the ``photom`` step, which uses the ``_cal`` or
   ``_calints`` product type suffix, depending on whether the input was a
   ``_rate`` or ``_rateints`` product, respectively.
 
-* Resampled 2D product: If the input is an exposure type that gets
+* Resampled 2D product: If the input is a 2D exposure type that gets
   resampled/rectified by the ``resample_spec`` step, the rectified 2D spectral
   product created by the ``resample_spec`` step is saved as a ``_s2d`` file.
+  3D (``_rateints``) input exposures do not get resampled.
 
 * Resampled 3D product: If the data are NIRSpec IFU or MIRI MRS, the
-  results of the ``cube_build`` step will be saved as a ``_s3d`` file.
+  result of the ``cube_build`` step will be saved as a ``_s3d`` file.
 
 * 1D Extracted Spectrum product: All types of inputs result in a 1D extracted
-  spectral data product, which is saved as a ``_x1d`` file.
+  spectral data product, which is saved as a ``_x1d`` or ``_x1dints`` file,
+  depending on the input type.
 
 If the input to ``calwebb_spec2`` is an ASN file, these products are created
 for each input exposure.
@@ -287,7 +319,8 @@ saved to an intermediate file of type ``_bsub`` or ``_bsubints``, as appropriate
 
 Stage 3 Imaging Pipeline Step Flow (calwebb_image3)
 ===================================================
-Stage 3 processing for imaging observations is intended for combining the data
+Stage 3 processing for imaging observations is intended for combining the 
+calibrated data
 from multiple exposures (e.g. a dither or mosaic pattern) into a single
 rectified (distortion corrected) product.
 Before being combined, the exposures receive additional corrections for the
@@ -316,8 +349,7 @@ Inputs
 * Associated 2D Calibrated products: The inputs to ``calwebb_image3`` will
   usually be in the form of an ASN file that lists multiple exposures to be
   processed and combined into a single output product. The individual exposures
-  should be in the form of calibrated (``_cal``) products from ``calwebb_image2``
-  processing.
+  should be calibrated (``_cal``) products from ``calwebb_image2`` processing.
 
 * Single 2D Calibrated product: It is also possible use a single ``_cal`` file
   as input to ``calwebb_image3``, in which case only the ``resample`` and
@@ -338,13 +370,86 @@ Outputs
 * CR-flagged products: If the ``outlier_detection`` step is applied, a new version
   of each input calibrated exposure product is created, which contains a DQ array
   that has been updated to flag pixels detected as outliers. This updated
-  product is known as a CR-flagged product and the file is identified by appending
-  the association candidate ID to the original input ``_cal`` file name, e.g.
-  ``jw96090001001_03101_00001_nrca2_cal-o001.fits``.
+  product is known as a CR-flagged product and the file is identified by including
+  the association candidate ID in the original input ``_cal`` file name and
+  changing the product type to ``_crf``, e.g.
+  ``jw96090001001_03101_00001_nrca2_o001_crf.fits``.
+
+.. _stage3-spectroscopic-flow:
+
+Stage 3 Spectroscopic Pipeline Step Flow (calwebb_spec3)
+=========================================================
+Stage 3 processing for spectroscopic observations is intended for combining the 
+calibrated data from multiple exposures (e.g. a dither pattern) into a single
+rectified (distortion corrected) product and a combined 1D spectrum.
+Before being combined, the exposures may receive additional corrections for the
+purpose of background matching and outlier rejection.
+The steps applied by the ``calwebb_spec3`` pipeline are shown below.
+
++-------------------+----+-----+-----+----+-----+--------+--------+
+| Instrument Mode   |     NIRSpec    |   MIRI   | NIRISS | NIRCam |
++-------------------+----+-----+-----+----+-----+--------+--------+
+| Step              | FS | MOS | IFU | FS | MRS | WFSS   | WFSS   |
++===================+====+=====+=====+====+=====+========+========+
+| mrs_imatch        |    |     |     |    |  X  |        |        |
++-------------------+----+-----+-----+----+-----+--------+--------+
+| outlier_detection | X  |  X  |  X  | X  |  X  |   X    |   X    |
++-------------------+----+-----+-----+----+-----+--------+--------+
+| resample_spec     | X  |  X  |     | X  |     |   X    |   X    |
++-------------------+----+-----+-----+----+-----+--------+--------+
+| cube_build        |    |     |  X  |    |  X  |        |        |
++-------------------+----+-----+-----+----+-----+--------+--------+
+| extract_1d        | X  |  X  |  X  | X  |  X  |   X    |   X    |
++-------------------+----+-----+-----+----+-----+--------+--------+
+
+NOTE: In B7.1 the ``calwebb_spec3`` pipeline is very much a prototype and
+not all steps are functioning properly for all modes. In particular, the
+``outlier_detection`` step does not yet work well, if at all, for any of
+the spectroscopic modes. Also, the ``resample_spec`` step does not work
+for dithered slit-like spectra (i.e. all non-IFU modes). Processing of
+NIRSpec IFU and MIRI MRS exposures does work, using the
+``mrs_imatch``, ``cube_build``, and ``extract_1d`` steps.
+
+Inputs
+------
+
+* Associated 2D Calibrated products: The inputs to ``calwebb_spec3`` will
+  usually be in the form of an ASN file that lists multiple exposures to be
+  processed and combined into a single output product. The individual exposures
+  should be calibrated (``_cal``) products from ``calwebb_spec2`` processing.
+
+Outputs
+-------
+
+* CR-flagged products: If the ``outlier_detection`` step is applied, a new version
+  of each input calibrated exposure product is created, which contains a DQ array
+  that has been updated to flag pixels detected as outliers. This updated
+  product is known as a CR-flagged product and the file is identified by including
+  the association candidate ID in the original input ``_cal`` file name and
+  changing the product type to ``_crf``, e.g.
+  ``jw96090001001_03101_00001_nrs2_o001_crf.fits``.
+
+* Resampled 2D spectral product (:py:class:`DrizProductModel
+  <jwst.datamodels.DrizProductModel>`): A resampled/rectified 2D product of type
+  ``_s2d`` is created containing the rectified and combined association of
+  exposures, which is the direct output of the ``resample_spec`` step, when
+  processing non-IFU modes.
+
+* Resampled 3D spectral product (:py:class:`IFUCubeModel
+  <jwst.datamodels.IFUCubeModel>`): A resampled/rectified 3D product of type
+  ``_s3d`` is created containing the rectified and combined association of
+  exposures, which is the direct output of the ``cube_build`` step, when
+  processing IFU modes.
+
+* 1D Extracted Spectrum product: All types of inputs result in a 1D extracted
+  spectral data product, which is saved as a ``_x1d`` file, and is the result
+  of performing 1D extraction on the combined ``_s2d`` or ``_s3d`` product.
+
+.. _stage3-ami-flow:
 
 Stage 3 Aperture Masking Interferometry (AMI) Pipeline Step Flow (calwebb_ami3)
 ===============================================================================
-The stage 3 AMI pipeline (``calwebb_ami3``) is intended to be applied to
+The stage 3 AMI (``calwebb_ami3``) pipeline is to be applied to
 associations of calibrated NIRISS AMI exposures and is used to compute fringe
 parameters and correct science target fringe parameters using observations of
 reference targets.
@@ -363,32 +468,35 @@ The steps applied by the ``calwebb_ami3`` pipeline are shown below.
 Inputs
 ------
 
-* Associated 2D Calibrated products: The inputs to ``calwebb_ami3`` are assumed
-  to be in the form of an ASN file that lists multiple science target exposures,
+* Associated 2D Calibrated products: The inputs to ``calwebb_ami3`` need to be
+  in the form of an ASN file that lists multiple science target exposures,
   and optionally reference target exposures as well. The individual exposures
-  should be in the form of calibrated (``_cal``) pro        ducts from ``calwebb_image2``
+  should be in the form of calibrated (``_cal``) products from ``calwebb_image2``
   processing.
 
 Outputs
 -------
 
-* LG product (:py:class:`AmiLgModel <jwst.datamodels.AmiLgModel>`):
-  For every input exposure, the fringe
-  parameters and closure phases caculated by the ``ami_analyze`` step
-  are saved to an ``_lg`` product type file.
+* AMI product (:py:class:`AmiLgModel <jwst.datamodels.AmiLgModel>`):
+  For every input exposure, the fringe parameters and closure phases caculated
+  by the ``ami_analyze`` step are saved to an ``_ami`` product file, which is
+  a table containing the fringe parameters and closure phases. Product names
+  use the original input ``_cal`` file name, with the association candidate ID
+  included and the product type changed to ``_ami``, e.g.
+  ``jw93210001001_03101_00001_nis_a0003_ami.fits``.
 
-* Averaged LG product (:py:class:`AmiLgModel <jwst.datamodels.AmiLgModel>`):
-  The LG results averaged over all science or reference
-  exposures, calculated by the ``ami_average`` step, are saved to an ``_lgavgt``
-  (for the science target) or ``_lgavgr`` (for the reference target) file. Note
-  that these output products are only created if the pipeline argument
-  ``save_averages`` (see below) is set to ``True``.
+* Averaged AMI product (:py:class:`AmiLgModel <jwst.datamodels.AmiLgModel>`):
+  The AMI results averaged over all science or reference
+  exposures, calculated by the ``ami_average`` step, are saved to an ``_amiavg``
+  product file. Separate products are created for the science target and
+  reference target data. Note that these output products are only created if the
+  pipeline argument ``save_averages`` (see below) is set to ``True``.
 
-* Normalized LG product (:py:class:`AmiLgModel <jwst.datamodels.AmiLgModel>`):
+* Normalized AMI product (:py:class:`AmiLgModel <jwst.datamodels.AmiLgModel>`):
   If reference target exposures are included in the input
-  ASN, the LG results for the science target will be normalized by the LG
-  results for the reference target, via the ``ami_normalize`` step, and will be
-  saved to an ``_lgnorm`` product file.
+  ASN, the averaged AMI results for the science target will be normalized by the
+  averaged AMI results for the reference target, via the ``ami_normalize`` step,
+  and will be saved to an ``_aminorm`` product file.
 
 Arguments
 ---------
@@ -400,16 +508,17 @@ which is a Boolean parameter set to a default value of ``False``. If the user
 sets this agument to ``True``, the results of the ``ami_average`` step will be
 saved, as described above.
 
+.. _stage3-coron-flow:
 
-Stage 3 CORONAGRAPHIC Observation Pipeline Step Flow (calwebb_coron3)
+Stage 3 CORONAGRAPHIC Pipeline Step Flow (calwebb_coron3)
 ===============================================================================
-The stage 3 coronagraphic pipeline (``calwebb_coron3``) is intended to be applied to
+The stage 3 coronagraphic (``calwebb_coron3``) pipeline is to be applied to
 associations of calibrated NIRCam coronagraphic and MIRI Lyot and MIRI 4QPM
-exposures and is used to produce psf-subtracted, resampled, combined image
+exposures and is used to produce psf-subtracted, resampled, combined images
 of the source object.
 
-The steps applied by the ``calwebb_coron3`` pipeline are shown below for
-a NIRCam coronagraphic observation:
+The steps applied by the ``calwebb_coron3`` pipeline are shown in the table
+below.
 
 +---------------------------------------------------------------------------------------------------+
 | :py:class:`calwebb_coron3 <jwst.pipeline.calwebb_coron3.Coron3Pipeline>`                          |
@@ -429,46 +538,54 @@ a NIRCam coronagraphic observation:
 Inputs
 ------
 
-* Associated 2D Calibrated products: The input to ``calwebb_coron3`` is assumed
-  to be in the form of an ASN file that lists multiple science observations of
-  a science target either with NIRCam or MIRI. The individual exposures
-  should be in the form of calibrated (``_calints``) products from ``calwebb_image2``
-  processing.
+* Associated Calibrated products: The input to ``calwebb_coron3`` is assumed
+  to be in the form of an ASN file that lists multiple observations of
+  a science target and, optionally, a reference PSF target. The individual science
+  target and PSF reference exposures should be in the form of 3D calibrated (``_calints``)
+  products from ``calwebb_image2`` processing.
 
 Outputs
 -------
 
+* Stacked PSF images: The data from each input PSF reference exposure are
+  concatenated into a single combined 3D stack, for use by subsequent steps. The
+  stacked PSF data gets written to disk in the form of a psfstack (``_psfstack``)
+  product from
+  :py:class:`stack_refs step <jwst.coron.stack_refs_step.StackRefsStep>`.
+
 * Aligned PSF images: The initial processing requires aligning all input PSFs
-  specified in the ASN.  The aligned PSF image then gets written to disk in the
+  specified in the ASN.  The aligned PSF images then gets written to disk in the
   form of psfalign (``_psfalign``) products from
   :py:class:`align_refs step <jwst.coron.align_refs_step.AlignRefsStep>`.
 
 * PSF-subtracted exposures: The :py:class:`klip step <jwst.coron.klip_step.KlipStep>`
   takes the aligned PSF images and applies them to each of the science exposures
-  in the ASN to create the psfsub (``_psfsub``) products.
+  in the ASN to create psfsub (``_psfsub``) products.
 
 * CR-flagged products: The
   :py:class:`~jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep`
   step is applied to the psfsub products to flag pixels in the DQ array
   that have been detected as outliers. This updated
-  product is known as a CR-flagged product. A outlier-cleaned calibrated product of
+  product is known as a CR-flagged product. A outlier-flagged product of
   type ``_crfints`` is created and can optionally get written to disk.
 
 * Resampled product: The
   :py:class:`resample step <jwst.resample.resample_step.ResampleStep>` is
   applied to the CR-flagged products to create a single resampled, combined
-  product.  This resampled product of type ``_i2d`` gets written to disk and
-  returned as the final product from this pipeline.
+  product for the science target.  This resampled product of type ``_i2d`` gets
+  written to disk and returned as the final product from this pipeline.
 
+.. _stage3-tso-flow:
 
 Stage 3 Time-Series Observation(TSO) Pipeline Step Flow (calwebb_tso3)
 ===============================================================================
-The stage 3 TSO pipeline (``calwebb_tso3``) is intended to be applied to
-associations of calibrated NIRISS SOSS and NIRCam TSO exposures and is used to
+The stage 3 TSO (``calwebb_tso3``) pipeline is to be applied to
+associations of calibrated TSO exposures (NIRCam TS imaging, NIRCam TS grism,
+NIRISS SOSS, NIRSpec BrightObj, MIRI LRS Slitless) and is used to
 produce calibrated time-series photometry of the source object.
 
 The steps applied by the ``calwebb_tso3`` pipeline are shown below for
-a NIRCam TSO observation:
+an Imaging TSO observation:
 
 +---------------------------------------------------------------------------------------------------+
 | :py:class:`calwebb_tso3 <jwst.pipeline.calwebb_tso3.Tso3Pipeline>`                                |
@@ -479,7 +596,7 @@ a NIRCam TSO observation:
 +---------------------------------------------------------------------------------------------------+
 
 The steps applied by the ``calwebb_tso3`` pipeline are shown below for a
-NIRISS SOSS observation:
+Spectroscopic TS observation:
 
 +---------------------------------------------------------------------------------------------------+
 | :py:class:`calwebb_tso3 <jwst.pipeline.calwebb_tso3.Tso3Pipeline>`                                |
@@ -494,12 +611,11 @@ NIRISS SOSS observation:
 Inputs
 ------
 
-* Associated 2D Calibrated products: The input to ``calwebb_tso3`` is assumed
+* Associated 3D Calibrated products: The input to ``calwebb_tso3`` is assumed
   to be in the form of an ASN file that lists multiple science observations of
-  a science target either with NIRCam or NIRISS. The individual NIRCam exposures
-  should be in the form of calibrated (``_cal``) products from ``calwebb_image2``
-  processing, while the individual NIRISS exposures should be in the form of
-  calibrated (``_calints``) products from ``calwebb_spec2``.
+  a science target. The individual exposures should be in the form of 3D calibrated
+  (``_calints``) products from either ``calwebb_image2`` or ``calwebb_spec2``
+  processing.
 
 Outputs
 -------
@@ -509,18 +625,18 @@ Outputs
   step is applied, a new version
   of each input calibrated exposure product is created, which contains a DQ array
   that has been updated to flag pixels detected as outliers. This update
-  product is known as a CR-flagged product. A outlier-cleaned calibrated product of
+  product is known as a CR-flagged product. A outlier-flagged product of
   type ``_crfints`` is created and can optionally get written to disk.
 
-* Source photometry catalog for NIRCam observations: A source catalog produced
+* Source photometry catalog for imaging TS observations: A source catalog produced
   from the ``_crfints`` product is saved as an ASCII file in ``ecsv`` format
   with a product type of ``_phot``.
 
-* Extracted 1D spectra for NIRISS SOSS observations: The ``extract_1d`` step is
-  applied to create a ``MultiSpecModel`` for the entire set of SOSS
-  observations with a product type of ``_x1dints``.
+* Extracted 1D spectra for spectroscopic TS observations: The ``extract_1d`` step is
+  applied to create a ``MultiSpecModel`` for the entire set of
+  spectra, with a product type of ``_x1dints``.
 
-* White-light photometry for NIRISS SOSS observations:  The ``white_light`` step
+* White-light photometry for spectroscopic TS observations:  The ``white_light`` step
   is applied to the ``_x1dints`` extracted data to produce an ASCII catalog
-  in ``ecsv`` format with a product type of ``_whtlht`` of
-  the white-light photometry of the source object.
+  in ``ecsv`` format with a product type of ``_whtlht``, containing
+  the wavelength-integrated white-light photometry of the source object.
