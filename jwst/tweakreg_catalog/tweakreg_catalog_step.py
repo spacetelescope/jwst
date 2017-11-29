@@ -27,9 +27,9 @@ class TweakregCatalogStep(Step):
         catalog_format = self.catalog_format
         kernel_fwhm = self.kernel_fwhm
         snr_threshold = self.snr_threshold
-        model = ModelContainer(input, persist=True)
+        container = ModelContainer(input, persist=True)
 
-        for image_model in model:
+        for image_model in container:
             catalog = make_tweakreg_catalog(image_model, kernel_fwhm,
                                             snr_threshold)
             filename = image_model.meta.filename
@@ -46,11 +46,11 @@ class TweakregCatalogStep(Step):
                 fmt = 'fits'
             else:
                 raise ValueError('catalog_format must be "ecsv" or "fits".')
-            catalog.write(catalog_filename, format=fmt)
+            catalog.write(catalog_filename, format=fmt, overwrite=True)
             self.log.info('Wrote source catalog: {0}'.
                           format(catalog_filename))
             image_model.meta.tweakreg_catalog.filename = catalog_filename
             image_model.catalog = catalog
 
-        return model
+        return container
 
