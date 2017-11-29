@@ -1,14 +1,10 @@
 """
 Step
 """
-from __future__ import absolute_import, division, print_function
-
 import gc
 from os.path import dirname, join, basename, splitext, abspath, split
 import re
 import sys
-
-import six
 
 try:
     from astropy.io import fits
@@ -31,7 +27,7 @@ REMOVE_SUFFIX = '^(?P<root>.+?)((?P<separator>_|-)(' \
                 + '|'.join(SUFFIX_LIST) + '))?$'
 
 
-class Step(object):
+class Step():
     """
     Step
     """
@@ -167,7 +163,7 @@ class Step(object):
         if not name:
             name = config.get('name')
             if not name:
-                if isinstance(config_file, six.string_types):
+                if isinstance(config_file, str):
                     name = splitext(basename(config_file))[0]
                 else:
                     name = step_class.__name__

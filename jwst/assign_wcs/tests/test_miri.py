@@ -19,7 +19,6 @@ Notes:
 Both notes have been communicated to the INS team.
 
 """
-from __future__ import absolute_import, division, unicode_literals, print_function
 import pytest
 import numpy as np
 from astropy.io import fits

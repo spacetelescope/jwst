@@ -6,7 +6,7 @@ from jwst.datamodels import MultiSlitModel
 from jwst.exp_to_source import exp_to_source
 
 
-class Main(object):
+class Main():
     """Convert exposure-based slits data to source-based data
     Docs from the source.
 

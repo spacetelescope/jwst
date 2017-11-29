@@ -1,12 +1,8 @@
 """test_level3_dithers: Test of spectrographic rules."""
-from __future__ import absolute_import
-from glob import glob
 import pytest
 import re
 
 from .helpers import (
-    BasePoolRule,
-    PoolParams,
     combine_pools,
     registry_level3_only,
     t_path

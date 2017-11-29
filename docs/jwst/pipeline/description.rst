@@ -35,8 +35,8 @@ the instrument modes to which they can be applied.
 
 Input Files, Output Files and Data Models
 =========================================
-An important concept used throughout the JWST pipeline is the :ref:`Data
-Model`. Nearly all data used by any of the pipeline code is
+An important concept used throughout the JWST pipeline is the :py:class:`Data
+Model <jwst.datamodels.DataModel>`. Nearly all data used by any of the pipeline code is
 encapsulated in a data model. Most input is read into a data model and
 all output is produced by a data model. When possible, this document
 will indicate the data model associated with a file type, usually as a
@@ -63,20 +63,20 @@ pipeline is as follows.
 calwebb_detector1 calwebb_detector1
 (All Near-IR)     (MIRI)
 ================= =================
-group_scale     group_scale
-dq_init         dq_init
-saturation      saturation
-ipc             ipc
-superbias       linearity
-refpix          rscd
-linearity       lastframe
-persistence     dark_current
-dark_current    refpix
-\               persistence
-jump            jump
-ramp_fit        ramp_fit
-gain_scale      gain_scale
-==============  ==============
+group_scale       group_scale
+dq_init           dq_init
+saturation        saturation
+ipc               ipc
+superbias         linearity
+refpix            rscd
+linearity         lastframe
+persistence       dark_current
+dark_current      refpix
+\                 persistence
+jump              jump
+ramp_fit          ramp_fit
+gain_scale        gain_scale
+================= =================
 
 Inputs
 ------
@@ -326,10 +326,11 @@ Inputs
 Outputs
 -------
 
-* Resampled 2D Image product (:ref:`DrizProductModel`): A resampled/rectified 2D image product of type
+* Resampled 2D Image product (:py:class:`DrizProductModel
+  <jwst.datamodels.DrizProductModel>`): A resampled/rectified 2D image product of type
   ``_i2d`` is created containing the rectified single exposure or the rectified
   and combined association of exposures, which is the direct output of the
-  ``resample`` step. This is the
+  ``resample`` step.
 
 * Source catalog: A source catalog produced from the ``_i2d`` product is saved
   as an ASCII file in ``ecsv`` format, with a product type of ``_cat``.
@@ -365,23 +366,26 @@ Inputs
 * Associated 2D Calibrated products: The inputs to ``calwebb_ami3`` are assumed
   to be in the form of an ASN file that lists multiple science target exposures,
   and optionally reference target exposures as well. The individual exposures
-  should be in the form of calibrated (``_cal``) products from ``calwebb_image2``
+  should be in the form of calibrated (``_cal``) pro        ducts from ``calwebb_image2``
   processing.
 
 Outputs
 -------
 
-* LG product (:ref:`AmiLgModel`): For every input exposure, the fringe
+* LG product (:py:class:`AmiLgModel <jwst.datamodels.AmiLgModel>`):
+  For every input exposure, the fringe
   parameters and closure phases caculated by the ``ami_analyze`` step
   are saved to an ``_lg`` product type file.
 
-* Averaged LG product (:ref:`AmiLgModel`): The LG results averaged over all science or reference
+* Averaged LG product (:py:class:`AmiLgModel <jwst.datamodels.AmiLgModel>`):
+  The LG results averaged over all science or reference
   exposures, calculated by the ``ami_average`` step, are saved to an ``_lgavgt``
   (for the science target) or ``_lgavgr`` (for the reference target) file. Note
   that these output products are only created if the pipeline argument
   ``save_averages`` (see below) is set to ``True``.
 
-* Normalized LG product (:ref:`AmiLgModel`): If reference target exposures are included in the input
+* Normalized LG product (:py:class:`AmiLgModel <jwst.datamodels.AmiLgModel>`):
+  If reference target exposures are included in the input
   ASN, the LG results for the science target will be normalized by the LG
   results for the reference target, via the ``ami_normalize`` step, and will be
   saved to an ``_lgnorm`` product file.
@@ -395,3 +399,128 @@ The ``calwebb_ami3`` pipeline has one optional argument:
 which is a Boolean parameter set to a default value of ``False``. If the user
 sets this agument to ``True``, the results of the ``ami_average`` step will be
 saved, as described above.
+
+
+Stage 3 CORONAGRAPHIC Observation Pipeline Step Flow (calwebb_coron3)
+===============================================================================
+The stage 3 coronagraphic pipeline (``calwebb_coron3``) is intended to be applied to
+associations of calibrated NIRCam coronagraphic and MIRI Lyot and MIRI 4QPM
+exposures and is used to produce psf-subtracted, resampled, combined image
+of the source object.
+
+The steps applied by the ``calwebb_coron3`` pipeline are shown below for
+a NIRCam coronagraphic observation:
+
++---------------------------------------------------------------------------------------------------+
+| :py:class:`calwebb_coron3 <jwst.pipeline.calwebb_coron3.Coron3Pipeline>`                          |
++===================================================================================================+
+| :py:class:`stack_refs <jwst.coron.stack_refs_step.StackRefsStep>`                                 |
++---------------------------------------------------------------------------------------------------+
+| :py:class:`align_refs <jwst.coron.align_refs_step.AlignRefsStep>`                                 |
++---------------------------------------------------------------------------------------------------+
+| :py:class:`klip <jwst.coron.klip_step.KlipStep>`                                                  |
++---------------------------------------------------------------------------------------------------+
+| :py:class:`outlier_detection <jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep` |
++---------------------------------------------------------------------------------------------------+
+| :py:class:`resample <jwst.resample.resample_step.ResampleStep>`                                   |
++---------------------------------------------------------------------------------------------------+
+
+
+Inputs
+------
+
+* Associated 2D Calibrated products: The input to ``calwebb_coron3`` is assumed
+  to be in the form of an ASN file that lists multiple science observations of
+  a science target either with NIRCam or MIRI. The individual exposures
+  should be in the form of calibrated (``_calints``) products from ``calwebb_image2``
+  processing.
+
+Outputs
+-------
+
+* Aligned PSF images: The initial processing requires aligning all input PSFs
+  specified in the ASN.  The aligned PSF image then gets written to disk in the
+  form of psfalign (``_psfalign``) products from
+  :py:class:`align_refs step <jwst.coron.align_refs_step.AlignRefsStep>`.
+
+* PSF-subtracted exposures: The :py:class:`klip step <jwst.coron.klip_step.KlipStep>`
+  takes the aligned PSF images and applies them to each of the science exposures
+  in the ASN to create the psfsub (``_psfsub``) products.
+
+* CR-flagged products: The
+  :py:class:`~jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep`
+  step is applied to the psfsub products to flag pixels in the DQ array
+  that have been detected as outliers. This updated
+  product is known as a CR-flagged product. A outlier-cleaned calibrated product of
+  type ``_crfints`` is created and can optionally get written to disk.
+
+* Resampled product: The
+  :py:class:`resample step <jwst.resample.resample_step.ResampleStep>` is
+  applied to the CR-flagged products to create a single resampled, combined
+  product.  This resampled product of type ``_i2d`` gets written to disk and
+  returned as the final product from this pipeline.
+
+
+Stage 3 Time-Series Observation(TSO) Pipeline Step Flow (calwebb_tso3)
+===============================================================================
+The stage 3 TSO pipeline (``calwebb_tso3``) is intended to be applied to
+associations of calibrated NIRISS SOSS and NIRCam TSO exposures and is used to
+produce calibrated time-series photometry of the source object.
+
+The steps applied by the ``calwebb_tso3`` pipeline are shown below for
+a NIRCam TSO observation:
+
++---------------------------------------------------------------------------------------------------+
+| :py:class:`calwebb_tso3 <jwst.pipeline.calwebb_tso3.Tso3Pipeline>`                                |
++===================================================================================================+
+| :py:class:`outlier_detection <jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep` |
++---------------------------------------------------------------------------------------------------+
+| tso_photometry                                                                                    |
++---------------------------------------------------------------------------------------------------+
+
+The steps applied by the ``calwebb_tso3`` pipeline are shown below for a
+NIRISS SOSS observation:
+
++---------------------------------------------------------------------------------------------------+
+| :py:class:`calwebb_tso3 <jwst.pipeline.calwebb_tso3.Tso3Pipeline>`                                |
++===================================================================================================+
+| :py:class:`outlier_detection <jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep` |
++---------------------------------------------------------------------------------------------------+
+| :py:class:`extract_1d <jwst.extract_1d.extract_1d_step.Extract1dStep>`                            |
++---------------------------------------------------------------------------------------------------+
+| :py:class:`white_light <jwst.white_light.white_light_step.WhiteLightStep>`                        |
++---------------------------------------------------------------------------------------------------+
+
+Inputs
+------
+
+* Associated 2D Calibrated products: The input to ``calwebb_tso3`` is assumed
+  to be in the form of an ASN file that lists multiple science observations of
+  a science target either with NIRCam or NIRISS. The individual NIRCam exposures
+  should be in the form of calibrated (``_cal``) products from ``calwebb_image2``
+  processing, while the individual NIRISS exposures should be in the form of
+  calibrated (``_calints``) products from ``calwebb_spec2``.
+
+Outputs
+-------
+
+* CR-flagged products: If the
+  :py:class:`~outlier_detection.outlier_detection_step.OutlierDetectionStep`
+  step is applied, a new version
+  of each input calibrated exposure product is created, which contains a DQ array
+  that has been updated to flag pixels detected as outliers. This update
+  product is known as a CR-flagged product. A outlier-cleaned calibrated product of
+  type ``_crfints`` is created and can optionally get written to disk.
+
+* Source photometry catalog for NIRCam observations: A source catalog produced
+  from the ``_crfints`` product is saved as an ASCII file in ``ecsv`` format
+  with a product type of ``_phot``.
+
+* Extracted 1D spectra for NIRISS SOSS observations: The ``extract_1d`` step is
+  applied to create a ``MultiSpecModel`` for the entire set of SOSS
+  observations with a product type of ``_x1dints``.
+
+* White-light photometry for NIRISS SOSS observations:  The ``white_light`` step
+  is applied to the ``_x1dints`` extracted data to produce an ASCII catalog
+  in ``ecsv`` format with a product type of ``_whtlht`` of
+  the white-light photometry of the source object.

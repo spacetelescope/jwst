@@ -31,17 +31,12 @@
 This contains the functions that actually compute the time travel difference
 between two frames of reference.
 '''
-
-from __future__ import division
-
-import re
 import os
 import os.path
 import numpy as np
 from jplephem.spk import SPK
 import astropy.time as atime
 import astropy.coordinates as acoord
-import astropy.units as u
 import astropy.constants
 import pymssql
 import scipy.interpolate as sciint

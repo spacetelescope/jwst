@@ -1,6 +1,4 @@
 """Test degraded exposure info"""
-from __future__ import absolute_import
-
 from .helpers import (
     combine_pools,
     level3_rule_path,
@@ -8,7 +6,6 @@ from .helpers import (
 )
 
 from ..lib.rules_level3_base import (
-    _DEGRADED_STATUS_OK,
     _DEGRADED_STATUS_NOTOK,
     _EMPTY
     )
