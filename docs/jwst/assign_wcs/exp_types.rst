@@ -58,19 +58,19 @@ WCS reference file information per EXP_TYPE
 
   | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*
   | WCS pipeline coordinate frames: detector, sca, bgwa, slit_frame, msa_frame, ote, v2v3, world
-  | Implements: CDP 2 delivery
+  | Implements: CDP 3 delivery
 
 :NRS_IFU:
 
   | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*,
   | *ifufore*, *ifuslicer*, *ifupost*
   | WCS pipeline coordinate frames: detector, sca, bgwa, slit_frame, msa_frame, ote, v2v3, world
-  | Implements: CDP 2 delivery
+  | Implements: CDP 3 delivery
 
 :NRS_IMAGING, NRS_MIMF, NRS_BOTA, NRS_CONFIRM, NRS_TACONFIRM, NRS_TASLIT, NRS_TACQ:
 
   | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*
   | WCS pipeline coordinate frames: detector, sca, bgwa, slit_frame, msa_frame, ote, v2v3, world
-  | Implements: CDP 2 delivery
+  | Implements: CDP 3 delivery
 
 

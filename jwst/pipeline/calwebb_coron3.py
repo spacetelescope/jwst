@@ -22,11 +22,12 @@ class Coron3Pipeline(Pipeline):
 
     Coron3Pipeline: Apply all level-3 calibration steps to a
     coronagraphic association of exposures. Included steps are:
-    stack_refs (assemble reference PSF inputs)
-    align_refs (align reference PSFs to target images)
-    klip (PSF subtraction using the KLIP algorithm)
-    outlier_detection (flag outliers)
-    resample (image combination and resampling)
+
+    #. stack_refs (assemble reference PSF inputs)
+    #. align_refs (align reference PSFs to target images)
+    #. klip (PSF subtraction using the KLIP algorithm)
+    #. outlier_detection (flag outliers)
+    #. resample (image combination and resampling)
 
     """
 
