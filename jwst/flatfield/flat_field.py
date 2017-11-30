@@ -304,10 +304,17 @@ def do_NIRSpec_flat_field(output_model,
         got_wcs = hasattr(slit.meta, "wcs") and slit.meta.wcs is not None
 
         # Get the wavelength at each pixel in the extracted slit data.
-        wl = slit.wavelength                    # a 2-D array
+        # If the wavelength attribute exists and is populated, use it
+        # in preference to the wavelengths returned by the wcs function.
         got_wl_attribute = True
-        # There must be either a wavelength array or a meta.wcs.
-        if wl.min() == 0. and wl.max() == 0.:
+        try:
+            wl = slit.wavelength                # a 2-D array
+        except AttributeError:
+            got_wl_attribute = False
+        # The default value is 0, so all 0 values means that the
+        # wavelength attribute was not populated.  We need either a
+        # wavelength array or a meta.wcs.
+        if not got_wl_attribute or wl.min() == 0. and wl.max() == 0.:
             got_wl_attribute = False
             log.warning("The wavelength array for slit %s has not "
                         "been populated,", slit.name)
