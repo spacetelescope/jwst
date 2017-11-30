@@ -10,26 +10,32 @@ spectroscopic modes, and stage 3 processing for imaging, spectroscopic,
 coronagraphic, Aperture Masking Interferometry (AMI), and Time Series
 Observations (TSO).
 
-The stage 1 processing consists of detector-level
+Stage 1 processing consists of detector-level
 corrections that must be performed on a group-by-group basis
 before ramp fitting is applied. The output of stage 1 processing
 is a countrate image per exposure or per integration for some modes.
 Details of this pipeline can be found at :ref:`stage1-flow`.
 
 Stage 2 processing consists of additional corrections and
-calibrations to produce a fully calibrated exposure. The details
+calibrations to produce fully calibrated exposures. The details
 differ for imaging and spectroscopic exposures, and there are some
 corrections that are unique to certain instruments or modes.
 Details are at :ref:`stage2-imaging-flow`
 and :ref:`stage2-spectroscopic-flow`.
 
-Stage 3 processing consists of routines that combine the data from
-multiple exposures, for all observing modes.
-Details of stage 3 imaging processing are at
-:ref:`stage3-imaging-flow`.
+Stage 3 processing consists of routines that work with multiple exposures
+and in most cases produce some kind of combined product.
+There are dedicated (and unique) pipeline modules for stage 3 processing of
+imaging, spectroscopic, coronagraphic, AMI, and TSO observations. Details
+of each are available at
+:ref:`stage3-imaging-flow`,
+:ref:`stage3-spectroscopic-flow`,
+:ref:`stage3-coron-flow`,
+:ref:`stage3-ami-flow`, and
+:ref:`stage3-tso-flow`.
 
-This document discusses pipeline configuration files and examples of running
-pipelines either as a whole or in individual steps.
+The remainder of this document discusses pipeline configuration files and
+gives examples of running pipelines as a whole or in individual steps.
 
 CRDS Reference Files
 ====================
@@ -42,7 +48,7 @@ accomplished by setting the environment variable `CRDS_CONTEXT` to the
 desired project mapping version, e.g.
 ::
 
-$ export CRDS_CONTEXT='jwst_0234.pmap'
+$ export CRDS_CONTEXT='jwst_0421.pmap'
 
 The current storage location for all JWST CRDS reference files is:
 ::
@@ -51,7 +57,7 @@ The current storage location for all JWST CRDS reference files is:
 
 Each pipeline step records the reference file that it used in the value of
 a header keyword in the output data file. The keyword names use the syntax
-"R_<ref>", where <ref> corresponds to the first 6 characters of the reference
+"R_<ref>", where <ref> corresponds to a 6-character version of the reference
 file type, such as `R_DARK`, `R_LINEAR`, and `R_PHOTOM`.
 
 Running From the Command Line
@@ -67,7 +73,7 @@ step or pipeline to be run, or the name of a configuration (.cfg) file for the
 desired step or pipeline (see `Configuration Files`_ below for more details).
 The second argument to `strun` is the name of the input data file to be processed.
 
-For example, running the full ramps-to-slopes pipeline or an individual step by
+For example, running the full stage 1 pipeline or an individual step by
 referencing their class names is done as follows:
 ::
 
@@ -105,9 +111,9 @@ step by using the '-h' (help) argument to strun:
     $ strun jwst.pipeline.Detector1Pipeline -h
 
 If you want to consistently override the default values of certain arguments
-and don't want to have to specify them on the command line every time you
+and don't want to specify them on the command line every time you
 execute ``strun``, you can specify them in the configuration (.cfg) file for
-either the pipeline or the individual step.
+the pipeline or the individual step.
 For example, to always run ``Detector1Pipeline`` using the override in the
 previous example, you could edit your `calwebb_detector1.cfg` file to
 contain the following:
@@ -204,7 +210,7 @@ the entire pipeline using the `--output_file` argument also
 Output File and Associations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The stage 2 pipelines can take both individual file or an
+The stage 2 pipelines can take an individual file or an
 :ref:`association <associations>` as input. When given an association, `output_file` is
 ignored, in favor of using the product names defined in the
 associations. Stage 3 pipelines always require an association, hence
@@ -228,7 +234,6 @@ specified for the pipeline. From the example above, to change the name
 and location of the `dark_current` step, use the following
 ::
 
-
     $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
         --output_dir=calibrated
         --steps.dark_current.output_file='dark_sub.fits'
@@ -247,7 +252,7 @@ the correct name, just use the `-h` argument to ``strun`` to show you the list
 of available override arguments.
 
 To override the use of the default linearity file selection, for example,
-we would use:
+you would use:
 ::
 
   $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
@@ -336,8 +341,8 @@ Calibrated image                               cal
 Calibrated per integration images              calints
 1D extracted spectrum                          x1d
 1D extracted spectra per integration           x1dints
-Resampled image                                i2d
-Resampled spectrum                             s2d
+Resampled 2D image                             i2d
+Resampled 2D spectrum                          s2d
 Resampled 3D IFU cube                          s3d
 =============================================  ========
 
