@@ -283,6 +283,8 @@ def do_NIRSpec_flat_field(output_model,
     for (k, slit) in enumerate(output_model.slits):
         log.info("Processing slit %s", slit.name)
         slit_nt = None
+        flat_2d = np.ones_like(slit.data)       # default values
+        flat_dq_2d = np.zeros_like(slit.dq)
         if exposure_type == "NRS_MSASPEC":
             # Find this slit in the list of open slits.
             for j in range(len(slits)):
@@ -292,6 +294,10 @@ def do_NIRSpec_flat_field(output_model,
             if slit_nt is None:
                 log.error("Couldn't find slit %s in list of open slits; "
                           "skipping ...", slit.name)
+                populate_interpolated_flats(k, slit,
+                                            interpolated_flats, output_model,
+                                            flat_2d, flat_dq_2d,
+                                            got_wl_attribute=False)
                 continue
 
         # pixels with respect to the original image
@@ -332,6 +338,10 @@ def do_NIRSpec_flat_field(output_model,
                 else:
                     log.warning("likely because assign_wcs has not been run.")
                 log.error("skipping ...")
+                populate_interpolated_flats(k, slit,
+                                            interpolated_flats, output_model,
+                                            flat_2d, flat_dq_2d,
+                                            got_wl_attribute=False)
                 continue
         else:
             log.debug("Wavelengths are from the wavelength array.")
@@ -362,24 +372,11 @@ def do_NIRSpec_flat_field(output_model,
             flat_2d[mask] = 1.
         del mask
 
-        if flat_suffix is not None:
-            # Save flat_2d and flat_dq_2d for an output file.
-            new_flat = datamodels.ImageModel(data=flat_2d, dq=flat_dq_2d)
-            interpolated_flats.slits.append(new_flat.copy())
-            del new_flat
-            interpolated_flats.slits[k].err[...] = 1.   # xxx not realistic
-            # xxx There's more info that could be copied over.
-            interpolated_flats.slits[k].name = slit.name
-            interpolated_flats.slits[k].xstart = slit.xstart
-            interpolated_flats.slits[k].xsize = slit.xsize
-            interpolated_flats.slits[k].ystart = slit.ystart
-            interpolated_flats.slits[k].ysize = slit.ysize
-            if got_wl_attribute:
-                interpolated_flats.slits[k].wavelength = wl.copy()
-            # Copy the WCS info from output (same as input).
-            if got_wcs:
-                interpolated_flats.slits[k].meta.wcs = \
-                      output_model.slits[k].meta.wcs
+        # Save flat_2d and flat_dq_2d for an output file, if specified.
+        populate_interpolated_flats(k, slit,
+                                    interpolated_flats, output_model,
+                                    flat_2d, flat_dq_2d,
+                                    got_wl_attribute, wl, got_wcs)
 
         slit.data /= flat_2d
         slit.err /= flat_2d
@@ -393,6 +390,32 @@ def do_NIRSpec_flat_field(output_model,
         output_model.meta.cal_step.flat_field = 'SKIPPED'
 
     return interpolated_flats
+
+
+def populate_interpolated_flats(k, slit,
+                                interpolated_flats, output_model,
+                                flat_2d, flat_dq_2d,
+                                got_wl_attribute, wl=None,
+                                got_wcs=False):
+    """Save flat_2d and flat_dq_2d for an output file."""
+
+    if interpolated_flats is not None:
+        new_flat = datamodels.ImageModel(data=flat_2d, dq=flat_dq_2d)
+        interpolated_flats.slits.append(new_flat.copy())
+        interpolated_flats.slits[k].err[...] = 1.       # not realistic
+        interpolated_flats.slits[k].name = slit.name
+        interpolated_flats.slits[k].xstart = slit.xstart
+        interpolated_flats.slits[k].xsize = slit.xsize
+        interpolated_flats.slits[k].ystart = slit.ystart
+        interpolated_flats.slits[k].ysize = slit.ysize
+        if got_wl_attribute:
+            interpolated_flats.slits[k].wavelength = wl.copy()
+        else:
+            interpolated_flats.slits[k].wavelength = np.zeros_like(slit.data)
+        # Copy the WCS info from output (same as input).
+        if got_wcs:
+            interpolated_flats.slits[k].meta.wcs = \
+                  output_model.slits[k].meta.wcs
 
 
 def NIRSpec_brightobj(output_model,
