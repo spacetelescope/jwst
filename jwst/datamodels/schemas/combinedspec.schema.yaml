@@ -8,11 +8,11 @@ allOf:
       fits_hdu: COMBINE1D
       datatype:
         - name: wavelength
-          datatype: float32
-        - name: countrate
-          datatype: float32
-        - name: weigth
-          datatype: float32
+          datatype: float64
+        - name: net
+          datatype: float64
+        - name: weight
+          datatype: float64
         - name: n_input
-          datatype: float32
+          datatype: float64
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

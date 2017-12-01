@@ -14,10 +14,12 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class InputSpectrumModel(object):
+class InputSpectrumModel():
     """Attributes:
         wavelength
-        countrate
+        flux
+        net
+        dq
         nelem
         wcs
         weight
@@ -32,7 +34,7 @@ class InputSpectrumModel(object):
             This is used to get the integration time.
 
         spec: SpecModel table
-            The table containing columns "wavelength" and "countrate".
+            The table containing columns "wavelength" and "net".
             The `ms` object may contain more than one spectrum, but `spec`
             should be just one of those.
 
@@ -43,7 +45,9 @@ class InputSpectrumModel(object):
         """
 
         self.wavelength = spec.spec_table.field("wavelength").copy()
-        self.countrate = spec.spec_table.field("countrate").copy()
+        self.flux = spec.spec_table.field("flux").copy()
+        self.net = spec.spec_table.field("net").copy()
+        self.dq = spec.spec_table.field("dq").copy()
         self.nelem = self.wavelength.shape[0]
         self.wcs = temp_wcs.WCS(self.wavelength)
 
@@ -58,41 +62,36 @@ class InputSpectrumModel(object):
                                exptime_key)
 
     def close(self):
-        if self.wavelength is not None:
-            del self.wavelength
-            self.wavelength = None
-        if self.countrate is not None:
-            del self.countrate
-            self.countrate = None
-        if self.wcs:
-            self.wcs.close()
-            del self.wcs
-            self.wcs = None
+        self.wavelength = None
+        self.flux = None
+        self.net = None
+        self.dq = None
+        self.wcs = None
         self.nelem = 0
         self.weight = 1.
 
 
-class OutputSpectrumModel(object):
+class OutputSpectrumModel():
     """Attributes:
         wavelength
-        countrate
+        net
         weight
         count
         wcs
         wavelength_dtype
-        countrate_dtype
+        net_dtype
         normalized
     """
 
     def __init__(self):
 
         self.wavelength = None
-        self.countrate = None
+        self.net = None
         self.weight = None
         self.count = None
         self.wcs = None
         self.wavelength_dtype = None
-        self.countrate_dtype = None
+        self.net_dtype = None
         self.normalized = False
 
     def assign_wavelengths(self, input_spectra):
@@ -112,7 +111,7 @@ class OutputSpectrumModel(object):
         # The types used for accumulating sums and taking averages may not
         # be the same as these types.
         self.wavelength_dtype = input_spectra[0].wavelength.dtype
-        self.countrate_dtype = input_spectra[0].countrate.dtype
+        self.net_dtype = input_spectra[0].net.dtype
 
         nspectra = len(input_spectra)
         nwl = 0
@@ -121,7 +120,7 @@ class OutputSpectrumModel(object):
 
         # Create an array with all the input wavelengths (i.e. the union
         # of the input wavelengths).
-        wl = np.zeros(nwl, dtype=np.float64)
+        wl = np.zeros(nwl, dtype=np.float)
         i = 0
         for in_spec in input_spectra:
             nelem = in_spec.nelem
@@ -201,19 +200,19 @@ class OutputSpectrumModel(object):
         # of wl, over count_input elements.  A small value implies that
         # there's a clump, i.e. several elements of wl with nearly the
         # same wavelength.
-        sigma = np.zeros(nwl, dtype=np.float64) + 9999.
+        sigma = np.zeros(nwl, dtype=np.float) + 9999.
 
         # mean_wl is the mean wavelength over the same slice of wl that we
         # used to compute sigma.  If sigma is small enough that it looks
         # as if there's a clump, we'll copy the mean_wl value to temp_wl
         # to be one element of the output wavelengths.
-        mean_wl = np.zeros(nwl, dtype=np.float64) - 99.
+        mean_wl = np.zeros(nwl, dtype=np.float) - 99.
 
         # temp_wl has the same number of elements as wl, but we expect the
         # array of output wavelengths to be significantly smaller, so
         # temp_wl is initialized to a negative value as a flag.  Positive
         # elements will be copied to the array of output wavelengths.
-        temp_wl = np.zeros(nwl, dtype=np.float64) - 99.
+        temp_wl = np.zeros(nwl, dtype=np.float) - 99.
 
         for k in range(nwl):
             n = count_input[k]
@@ -295,9 +294,9 @@ class OutputSpectrumModel(object):
 
         nelem = self.wavelength.shape[0]
 
-        self.countrate = np.zeros(nelem, dtype=np.float64)
-        self.weight = np.zeros(nelem, dtype=np.float64)
-        self.count = np.zeros(nelem, dtype=np.float32)
+        self.net = np.zeros(nelem, dtype=np.float)
+        self.weight = np.zeros(nelem, dtype=np.float)
+        self.count = np.zeros(nelem, dtype=np.float)
 
         for in_spec in input_spectra:
             # Get the pixel numbers in the output arrays corresponding to
@@ -306,7 +305,7 @@ class OutputSpectrumModel(object):
             for i in range(len(out_pixel)):
                 # Nearest pixel "interpolation."
                 k = int(round(out_pixel[i]))
-                self.countrate[k] += (in_spec.countrate[i] * in_spec.weight)
+                self.net[k] += (in_spec.net[i] * in_spec.weight)
                 self.weight[k] += in_spec.weight
                 self.count[k] += 1.
 
@@ -321,7 +320,7 @@ class OutputSpectrumModel(object):
                         " input data;" % (nelem - n_good,))
             log.warning("    these elements will be omitted.")
             self.wavelength = self.wavelength[index]
-            self.countrate = self.countrate[index]
+            self.net = self.net[index]
             self.weight = self.weight[index]
             self.count = self.count[index]
         del index
@@ -333,7 +332,7 @@ class OutputSpectrumModel(object):
 
         if not self.normalized:
             weight = np.where(self.weight > 0., self.weight, 1.)
-            self.countrate /= weight
+            self.net /= weight
             self.normalized = True
 
     def create_output(self):
@@ -350,12 +349,12 @@ class OutputSpectrumModel(object):
                         " the sum of the weights.")
 
         dtype = [('wavelength', self.wavelength_dtype),
-                 ('countrate', self.countrate_dtype),
+                 ('net', self.net_dtype),
                  ('weight', self.wavelength_dtype),
-                 ('n_input', np.float32)]
+                 ('n_input', np.float)]
 
         data = np.array(list(zip(self.wavelength,
-                            self.countrate,
+                            self.net,
                             self.weight,
                             self.count)), dtype=dtype)
         out_model = datamodels.CombinedSpecModel(spec_table=data)
@@ -363,24 +362,13 @@ class OutputSpectrumModel(object):
         return out_model
 
     def close(self):
-        if self.wavelength is not None:
-            del self.wavelength
-            self.wavelength = None
-        if self.countrate is not None:
-            del self.countrate
-            self.countrate = None
-        if self.weight is not None:
-            del self.weight
-            self.weight = None
-        if self.count is not None:
-            del self.count
-            self.count = None
-        if self.wcs:
-            self.wcs.close()
-            del self.wcs
-            self.wcs = None
+        self.wavelength = None
+        self.net = None
+        self.weight = None
+        self.count = None
+        self.wcs = None
         self.wavelength_dtype = None
-        self.countrate_dtype = None
+        self.net_dtype = None
         self.normalized = False
 
 
@@ -481,6 +469,7 @@ def do_combine1d(asn_file, exptime_key, interpolation):
     out_model.meta.filename = output_name
     out_model.meta.cal_step.combine_1d = 'COMPLETE'
 
+    log.info("output_name = {}".format(output_name))
     out_model.save(output_name)
     out_model.close()
 
