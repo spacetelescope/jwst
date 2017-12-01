@@ -12,21 +12,22 @@ The only valid values for # are 1,2,3,4 or ALL .
 This argument is only valid for MIRI data. If the ``--channel`` argument is given, then only data corresponding to that channel
 will be used in constructing the cube.  If the user wants to construct a cube from more than one channel,
 then all the values are contained in the string with a comma between each channel number. For example,
-to create a cube with channel 1 and 2 the argument list is ``--channel='1, 2'``. If this value is not specified then all the
-channels contained in the input list of files will be used in constructing the cube.
+to create a cube with channel 1 and 2 the argument list is ``--channel='1, 2'``. If this value is not set then the default is
+to make single channel-single sub-channel IFU Cubes. 
 
 * ``--band [string]``
 
 This is a MIRI option and the  only valid values  are SHORT,MEDIUM,LONG, or ALL.
 If the ``--subchannel`` argument is given, then only data corresponding
 to that subchannel will be used in  constructing the cube. Only one option is possible, so IFU cubes are created either
-per subchannel or using all the subchannels the input data cover.  If this value is not specified then all the
-subchannels contained in the input list of files will be used in constructing the cube.
+per subchannel or using all the subchannels the input data cover.  If this value is not set then the default is
+to make single channel-single sub-channel IFU Cubes. 
+
 
 * ``--grating [string]``
 
 This is a NIRSPEC option and only valid values are PRISM, G140M, G140H, G235M, G235H, G395M, G395H, or ALL.
-If the option ALL is used then all the gratings in the assocation are used.
+If the option ALL is used then all the gratings in the association are used.
 Since association tables will only contain exposures of the same resolution, the use of ALL, will at most combine
 data from grating G140M, G235M & G395M or G140H, G235H & G395H together. The user can supply a comma separated string
 containing the gratings to use.
@@ -37,18 +38,9 @@ This is a NIRSPEC  option and the only valid options are Clear, F100LP, F070LP, 
 cover the full wavelength range of NIRSPEC the option ALL can be used (provided the exposures in the association table
 contain all the filters). The user can supply a comma separated string containing the filters to use.
 
-* ``weighting ['string]``
-
-This is the type of weighting to use when combining point cloud fluxes to represent the spaxel flux.
-This option is for MIRI data and the only valid values are STANDARD and MIRPSF. This parameter defines
-how the distances between the point cloud members and spaxel centers are determined.  The default value is STANDARD and the distances
-are determined in the cube output coordinate system. If this paramter is set to MIRIPSF then the distances are determined in
-the alpha-beta coordinate system of the point cloud member and are normalized by the PSF and LSF. The only valid method for NIRSPEC
-data is STANDARD.
-
 * ``--scale1 #``
 
-Where the #  is the  size of the output cube's sample size in the naxis1 dimentsion.
+Where the #  is the  size of the output cube's sample size in the naxis1 dimension.
 
 * ``--scale2 #``
 
@@ -58,59 +50,50 @@ Where the  #  is the size of the output cube's sample size  in the naxis2 dimens
 
 Where the  #  is size of the output cube's sample size in the naxis3 dimension.
 
+
+ *``wavemin  # `` is the minimum wavelength in microns to use in constructing the IFU cube. 
+
+ *``wavemax  # `` is the maximum wavelength in microns to use in constructing the IFU cube. 
+ 
+* ``coord_system = [string]. Options ra-dec and alpha-beta. The alpha-beta option is a special coordinate system for MIRI data and should
+only be used by advanced users. 
+
+
 There are a number of arguments which control how the point cloud values are combined together to produce the final
-flux associated with the output  spaxel flux. The first set defines the the  **region of interest**  which is the maximum
-distance (in each dimension)  from the spaxel center a point cloud member can be to be
-included in the determination of the spaxel flux. The  arguments  that control this  size are:
+flux associated with the output  spaxel flux. The first set defines the the  **region of interest**  which defines the
+boundary centered on the spaxel center of   point cloud members that are used to find the final spaxel flux. 
+The  arguments  that control this  size are:
 
-* ``--rio1 #``
-
-The ``rio1`` # is the  size of the region of interest in the naxis1 dimension. The value is  real number that  is a
-scale of  the  spaxel size in the x dimension.
-
-* ``--rio2 #``
-
-The ``rio2`` # is the size of the region of interest in the naxis2 dimension. The value is a real  number that is a
-scale of the spaxel size in the y dimension.
+* ``--rios #``
+The ``rios`` # is the radius of the region of interest in the spatial  dimensions. The value is  real number.
 
 * ``--riow #``
+The ``riow`` # is the size of the region of interest in the spectral dimension. The value is a real
+number.
 
-The ``riow`` # is the size of the region of interest in the naxis 3 dimension (spectral dimension). The value is a real
-number that is a  scale of the spaxel size in the z dimension.
 
+There are two arguments [``--weight`` and ``--weight_power``]  which control how to interpolate the point cloud values.
 
-There are a number of arguments related to how to interpolate the point cloud values.
+* ``weighting  [string]``
+
+This is the type of weighting to use when combining point cloud fluxes to represent the spaxel flux.
+The default value is STANDARD and in the method distances
+are determined in the cube output coordinate system. The Standard weighting function is the only option for NIRSPEC data. 
+For MIRI data is there an addition option, MIRIPSF. If this is used  then the distances are determined in
+the alpha-beta coordinate system of the point cloud member and are normalized by the PSF and LSF. For more details on
+how the weight of the point cloud members are used in determining the final spaxel flux see the Algorithm description section  
+
+* ``weight_power #`` controls the weighting of the distances between the point cloud member and spaxel center.  
+
 The weighting function used for determining the spaxel flux was given in the Algorithm description:
-
-
-The spaxel flux K =
+spaxel flux K =
 :math:`\frac{ \sum_{i=1}^n Flux_i w_i}{\sum_{i=1}^n w_i}`
 
 Where
 * n = the number of point cloud points within the region of interest of spaxel flux K
+:math:`w_i =1.0 \sqrt{({xnormalized}^2 + {ynormalized}^2 + {znormalized}^2)}^{p}`
 
-:math:`w_i = (d_i)^{-p}`
-
-:math:`d = \sqrt{(xdistance^2 + ydistance^2 + zdistance^2)}`
-
-by default currently p=2, but this parameter can be changed by the user.
-
-If --weight = STANDARD (default) :
-
-* xdistance = (distance on axis 1 between point cloud and spaxel center in the final cube coordinate system)/spaxel size in dimension 1
-* ydistance = (distance on axis 2 between point cloud and spaxel center in the final cube coordinate system)/spaxel size in dimension 2
-* zdistance = (distance on axis 3 between point cloud and spaxel center in the final cube coordinate system)/spaxel size in dimension 3
-
-
-If --weighting = MIRIPSF is used then:
-
-* xdistance = distance between point cloud and spaxel center in the alpha dimension/alpha_normalization factor
-
-* ydistance = distance between point cloud and spaxel center in the beta dimension/beta_normalization factor
-
-* zdistance = distance between point cloud and spaxel center in the lambda dimension/lambda_normalization factor
-
-
+by default currently p=2, but this parameter is controlled by the --weight_power option.
 
 
 Example of How to run Cube_Build
@@ -163,7 +146,7 @@ you must also use the -band option.::
 
 	 strun cube_build.cfg cube_build_4dither_asn.json
 
-The output  IFUCube will be: MIRM103-Q0-Q3_ch1-short_s3d.fits
+The output  IFU Cube will be: MIRM103-Q0-Q3_ch1-short_s3d.fits
 
 
 IFU Cube building for NIRSPEC data
@@ -179,7 +162,7 @@ The output IFU cube will be jwtest1004001_01101_00001_NRS2_uncal_rate_updated_as
 
 	strun cube_build.cfg nirspec_multi_asn.json
 
-Where the assocation table looks like::
+Where the association table looks like::
 
 	{"asn_rule": "Asn_NIRSPECFU_Dither", "targname": "MYTarget",
 	"asn_pool": "jw00024_001_01_pool", "program": "00024","asn_type":"NRSIFU",
