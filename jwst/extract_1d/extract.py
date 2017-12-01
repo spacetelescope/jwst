@@ -921,7 +921,10 @@ class ExtractModel:
 
         # If the wavelength attribute exists and is populated, use it
         # in preference to the wavelengths returned by the wcs function.
-        got_wavelength = (wl_array is not None)
+        if wl_array is None or len(wl_array) == 0:
+            got_wavelength = False
+        else:
+            got_wavelength = True               # may be reset later
 
         # The default value is 0, so all 0 values means that the
         # wavelength attribute was not populated.
