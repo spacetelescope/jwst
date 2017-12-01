@@ -59,6 +59,50 @@ TSO_EXP_TYPES = (
     'nrs_brightobj'
 )
 
+# Exposures that get Level2b processing
+IMAGE2_SCIENCE_EXP_TYPES = [
+    'mir_image',
+    'mir_lyot',
+    'mir_4qpm',
+    'nis_ami',
+    'nis_image',
+    'nrc_image',
+    'nrc_coron',
+    'nrc_tsimage',
+]
+
+IMAGE2_NONSCIENCE_EXP_TYPES = [
+    'mir_coroncal',
+    'mir_tacq',
+    'nis_focus',
+    'nis_tacq',
+    'nis_taconfirm',
+    'nrc_tacq',
+    'nrc_taconfirm',
+    'nrc_focus',
+    'nrs_bota',
+    'nrs_confirm',
+    'nrs_focus',
+    'nrs_image',
+    'nrs_mimf',
+    'nrs_taslit',
+    'nrs_tacq',
+    'nrs_taconfirm',
+]
+
+SPEC2_SCIENCE_EXP_TYPES = [
+    'nrc_grism',
+    'nrc_tsgrism',
+    'mir_lrs-fixedslit',
+    'mir_lrs-slitless',
+    'mir_mrs',
+    'nrs_fixedslit',
+    'nrs_ifu',
+    'nrs_msaspec',
+    'nrs_brightobj',
+    'nis_soss',
+]
+
 
 class DMSLevel2bBase(DMSBaseMixin, Association):
     """Basic class for DMS Level2 associations."""
@@ -453,7 +497,9 @@ class Utility():
                             member['expname']
                             for member in current_product['members']
                         ]
-                        new_names = member_names.difference(current_member_names)
+                        new_names = member_names.difference(
+                            current_member_names
+                        )
                         new_members = [
                             member
                             for member in product['members']
@@ -604,16 +650,7 @@ class AsnMixin_Lv2ImageScience(DMSLevel2bBase):
 
         self.add_constraints({
             'exp_type': {
-                'value': (
-                    'mir_image'
-                    '|mir_lyot'
-                    '|mir_4qpm'
-                    '|nis_ami'
-                    '|nis_image'
-                    '|nrc_image'
-                    '|nrc_coron'
-                    '|nrc_tsimage'
-                ),
+                'value': '|'.join(IMAGE2_SCIENCE_EXP_TYPES),
                 'inputs': ['exp_type'],
                 'force_unique': True,
             }
@@ -632,24 +669,7 @@ class AsnMixin_Lv2ImageNonScience(DMSLevel2bBase):
     def __init__(self, *args, **kwargs):
         self.add_constraints({
             'non_science': {
-                'value': (
-                    'mir_coroncal'
-                    '|mir_tacq'
-                    '|nis_focus'
-                    '|nis_tacq'
-                    '|nis_taconfirm'
-                    '|nrc_tacq'
-                    '|nrc_taconfirm'
-                    '|nrc_focus'
-                    '|nrs_bota'
-                    '|nrs_confirm'
-                    '|nrs_focus'
-                    '|nrs_image'
-                    '|nrs_mimf'
-                    '|nrs_taslit'
-                    '|nrs_tacq'
-                    '|nrs_taconfirm'
-                ),
+                'value': '|'.join(IMAGE2_NONSCIENCE_EXP_TYPES),
                 'inputs': ['exp_type'],
                 'force_unique': False,
             }
@@ -696,18 +716,7 @@ class AsnMixin_Lv2SpecScience(DMSLevel2bBase):
 
         self.add_constraints({
             'exp_type': {
-                'value': (
-                    'nrc_grism'
-                    '|nrc_tsgrism'
-                    '|mir_lrs-fixedslit'
-                    '|mir_lrs-slitless'
-                    '|mir_mrs'
-                    '|nrs_fixedslit'
-                    '|nrs_ifu'
-                    '|nrs_msaspec'
-                    '|nrs_brightobj'
-                    '|nis_soss'
-                ),
+                'value': '|'.join(SPEC2_SCIENCE_EXP_TYPES),
                 'inputs': ['exp_type'],
                 'force_unique': True,
             }
