@@ -317,6 +317,8 @@ def do_NIRSpec_flat_field(output_model,
             wl = slit.wavelength                # a 2-D array
         except AttributeError:
             got_wl_attribute = False
+        if not got_wl_attribute or len(wl) == 0:
+            got_wl_attribute = False
         # The default value is 0, so all 0 values means that the
         # wavelength attribute was not populated.  We need either a
         # wavelength array or a meta.wcs.
@@ -475,10 +477,16 @@ def NIRSpec_brightobj(output_model,
     ystop = ystart + ysize
 
     # The wavelength of each pixel in a plane of the data.
-    wl = output_model.wavelength                # this is only 2-D
+    got_wl_attribute = True
+    try:
+        wl = output_model.wavelength            # a 2-D array
+    except AttributeError:
+        got_wl_attribute = False
+    if not got_wl_attribute or len(wl) == 0:
+        got_wl_attribute = False
 
     # There must be either a wavelength array or a meta.wcs.
-    if wl.min() == 0. and wl.max() == 0.:
+    if not got_wl_attribute or wl.min() == 0. and wl.max() == 0.:
         log.warning("The wavelength array has not been populated,")
         if got_wcs:
             log.warning("so using wcs instead of the wavelength array.")
@@ -530,7 +538,10 @@ def NIRSpec_brightobj(output_model,
         interpolated_flats.dq = flat_dq_2d.copy()
         interpolated_flats.err = np.zeros((ysize, xsize),
                                           dtype=output_model.err.dtype)
-        interpolated_flats.wavelength = wl.copy()
+        if got_wl_attribute:
+            interpolated_flats.wavelength = wl.copy()
+        else:
+            interpolated_flats.wavelength = np.zeros_like(flat_2d)
 
     flat_3d = flat_2d.reshape((1, ysize, xsize))
     flat_dq_3d = flat_dq_2d.reshape((1, ysize, xsize))
