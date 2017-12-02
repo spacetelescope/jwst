@@ -69,9 +69,9 @@ def correct_MRS(input_model, straylight_model):
     debug_row = 412
     xd1 = 460
     xd2 = 480
-    print ('data ',input_model.data[debug_row,xd1:xd2])
-    print( 'dq ',input_model.dq[debug_row,xd1:xd2])
-    print( 'mask',mask[debug_row,xd1:xd2])
+#    print ('data ',input_model.data[debug_row,xd1:xd2])
+#    print( 'dq ',input_model.dq[debug_row,xd1:xd2])
+#    print( 'mask',mask[debug_row,xd1:xd2])
 
     output = input_model.copy() # this is used in algorithm to
     # find the straylight correction.
@@ -82,7 +82,7 @@ def correct_MRS(input_model, straylight_model):
 
     hot_flags = (dqflags.pixel['DO_NOT_USE'] + 
                  dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
-    print( 'mask dq',mask_dq[debug_row,xd1:xd2])
+#    print( 'mask dq',mask_dq[debug_row,xd1:xd2])
 # find the location of invalid slice data
     hot_pixels = np.where(mask_dq & dqflags.pixel['HOT'])
     dead_pixels = np.where(mask_dq & dqflags.pixel['DEAD'])
@@ -90,13 +90,13 @@ def correct_MRS(input_model, straylight_model):
 #    bad_pixels = np.where(mask_dq & all_flags)
 #    mask[bad_pixels] = 0 # zero out the bad pixel in the gaps so they are not used.
     # zero out bad pixels in the gaps so they are not used. 
-    print('hot pixel',hot_pixels[0].shape)
+#    print('hot pixel',hot_pixels[0].shape)
 
-    mask[hot_pixels] = 0 
-    mask[dead_pixels] = 0 
-    mask[donotuse_pixels] = 0 
+#    mask[hot_pixels] = 0 
+#    mask[dead_pixels] = 0 
+#    mask[donotuse_pixels] = 0 
 
-    print( 'new mask ',mask[debug_row,xd1:xd2])
+#    print( 'new mask ',mask[debug_row,xd1:xd2])
     # final result = output2_data - straylight correction
     # Output2 is the orginal (no NANs have been removed)
     #_________________________________________________________________
@@ -109,8 +109,8 @@ def correct_MRS(input_model, straylight_model):
     sci_mask = output.data * mask    #sci_maskcontains 0's in science regions of detector.
     straylight_image = output.data * 0.0
 
-    print( 'mask',mask[debug_row,xd1:xd2])
-    print( 'mask*data',sci_mask[debug_row,xd1:xd2])
+#    print( 'mask',mask[debug_row,xd1:xd2])
+#    print( 'mask*data',sci_mask[debug_row,xd1:xd2])
 
     #We Want Sci mask smoothed for GAP region with 3 X 3 box car filter
     # Handle edge cases for boxcar smoothing, by determining the
@@ -119,8 +119,8 @@ def correct_MRS(input_model, straylight_model):
     sci_ave = convolve(sci_mask, Box2DKernel(3))
     mask_ave = convolve(mask, Box2DKernel(3))
 
-    print( 'sci ave',sci_ave[debug_row,xd1:xd2])
-    print( 'mask ave',mask_ave[debug_row,xd1:xd2])
+#    print( 'sci ave',sci_ave[debug_row,xd1:xd2])
+#    print( 'mask ave',mask_ave[debug_row,xd1:xd2])
 
     # catch /0 cases
     index = np.where(mask_ave == 0) # zero catches cases that would be #/0
