@@ -8,6 +8,13 @@ detection on JWST observations.  The ``OutlierDetectionStep`` supports multiple
 algorithms and determines the appropriate algorithm for the type of observation
 being processed.  This step supports:
 
+* **Image modes**: 'NRC_IMAGE', 'MIR_IMAGE', 'NRS_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE'
+* **Spectroscopic modes**: 'NRC_GRISM', 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NIS_WFSS'
+* **Time-Series-Observation(TSO) Spectroscopic modes**: 'NIS_SOSS', 'MIR_LRS-SLITLESS', 'NRC_TSGRISM', 'NRS_BRIGHTOBJ'
+* **IFU Spectroscopic modes**: 'NRS_IFU', 'MIR_MRS'
+* **TSO Image modes**:'NRC_TSIMAGE'
+* **Coronagraphic Image modes**: 'NRC_CORON', 'MIR_LYOT', 'MIR_4QPM'
+
 
 This step uses the following logic to apply the appropriate algorithm to the
 input data:
@@ -23,9 +30,9 @@ input data:
 
   - **Images**: like those taken with NIRCam, will use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection`
   - **coronagraphic observations**: use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` with resampling turned off
-  - **time-series observations(TSO)**: both imaging and spectroscopic modes, will use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` with resampling turned off
-  - **NIRISS and MIRI IFU observations**: use :py:class:`~jwst.outlier_detection.outlier_detection_ifu.OutlierDetectionIFU`
-  - **long-slit spectroscopic observations**: use :py:class:`~jwst.outlier_detection.outlier_detection_spec.OutlierDetectionSpec`
+  - **Time-Series Observations(TSO)**: both imaging and spectroscopic modes, will use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` with resampling turned off
+  - **NIRSpec and MIRI IFU observations**: use :py:class:`~jwst.outlier_detection.outlier_detection_ifu.OutlierDetectionIFU`
+  - **Long-slit spectroscopic observations**: use :py:class:`~jwst.outlier_detection.outlier_detection_spec.OutlierDetectionSpec`
 
 * Read in reference files used by outlier detection, currently:
 
