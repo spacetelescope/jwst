@@ -932,33 +932,19 @@ class ExtractModel:
             got_wavelength = False
         if got_wavelength:
             log.debug("Wavelengths are from wavelength attribute.")
+            # We need a 1-D array of wavelengths, one element for each
+            # output table row.
             # These are slice limits.
             sx0 = int(round(self.xstart))
             sx1 = int(round(self.xstop)) + 1
             sy0 = int(round(self.ystart))
             sy1 = int(round(self.ystop)) + 1
-            # We need a 1-D array of wavelengths, one element for each
-            # output table row.
+            # Convert non-positive values to NaN, to easily ignore them.
+            wl = np.where(wl_array <= 0., np.nan, wl_array)
             if self.dispaxis == HORIZONTAL:
-                n = sy1 - sy0
-                middle = (sy0 + sy1) // 2
-                if n // 2 * 2 == n:
-                    low = middle - 1
-                    high = middle + 1
-                    wavelength = wl_array[low:high,
-                                          sx0:sx1].mean(axis=0, dtype=np.float)
-                else:
-                    wavelength = wl_array[middle, sx0:sx1]
+                wavelength = np.nanmean(wl[sy0:sy1, sx0:sx1], axis=0)
             else:
-                n = sx1 - sx0
-                middle = (sx0 + sx1) // 2
-                if n // 2 * 2 == n:
-                    low = middle - 1
-                    high = middle + 1
-                    wavelength = wl_array[sy0:sy1,
-                                          low:high].mean(axis=1, dtype=np.float)
-                else:
-                    wavelength = wl_array[sy0:sy1, middle]
+                wavelength = np.nanmean(wl[sy0:sy1, sx0:sx1], axis=1)
 
         # Now call the wcs function to compute the celestial coordinates.
         # Also use the returned wavelengths if we weren't able to get them
