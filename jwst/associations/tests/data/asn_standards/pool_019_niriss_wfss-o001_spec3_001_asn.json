@@ -2,7 +2,7 @@
     "asn_type": "spec3",
     "asn_rule": "candidate_Asn_WFSS",
     "version_id": null,
-    "code_version": "0.9.3",
+    "code_version": "0.9.4",
     "program": "99009",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    exp_type: {'nis_wfss'}\n    opt_elem2: {'gr150c', 'gr150r'}\n    is_not_tso: set()\n    opt_elem: {'f140m'}\n    target: {'1'}\n    program: {'99009'}\n    instrument: {'niriss'}\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
@@ -14,73 +14,73 @@
             "name": "jw99009-o001_t001_niriss_f140m-gr150c-gr150r",
             "members": [
                 {
-                    "expname": "jw_00002_cal.fits",
+                    "expname": "jw_00002_rate.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 },
                 {
-                    "expname": "jw_00003_cal.fits",
+                    "expname": "jw_00003_rate.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 },
                 {
-                    "expname": "jw_00004_cal.fits",
+                    "expname": "jw_00004_rate.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 },
                 {
-                    "expname": "jw_00005_cal.fits",
+                    "expname": "jw_00005_rate.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 },
                 {
-                    "expname": "jw_00006_cal.fits",
+                    "expname": "jw_00006_rate.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 },
                 {
-                    "expname": "jw_00007_cal.fits",
+                    "expname": "jw_00007_rate.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 },
                 {
-                    "expname": "jw_00010_cal.fits",
+                    "expname": "jw_00010_rate.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 },
                 {
-                    "expname": "jw_00011_cal.fits",
+                    "expname": "jw_00011_rate.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 },
                 {
-                    "expname": "jw_00012_cal.fits",
+                    "expname": "jw_00012_rate.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 },
                 {
-                    "expname": "jw_00013_cal.fits",
+                    "expname": "jw_00013_rate.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 },
                 {
-                    "expname": "jw_00014_cal.fits",
+                    "expname": "jw_00014_rate.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
                 },
                 {
-                    "expname": "jw_00015_cal.fits",
+                    "expname": "jw_00015_rate.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"
