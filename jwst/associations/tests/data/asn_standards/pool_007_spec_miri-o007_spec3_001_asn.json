@@ -2,10 +2,10 @@
     "asn_type": "spec3",
     "asn_rule": "candidate_Asn_MIRI_IFU",
     "version_id": null,
-    "code_version": "0.9.3",
+    "code_version": "0.9.4",
     "program": "99009",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    exp_type: {'mir_mrs', 'mir_flatmrs', 'mir_tacq'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'1'}\n    program: {'99009'}\n    asn_candidate: {\"\\\\(\\\\'o007\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "constraints": "Constraints:\n    exp_type: {'mir_flatmrs', 'mir_mrs', 'mir_tacq'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'1'}\n    program: {'99009'}\n    asn_candidate: {\"\\\\(\\\\'o007\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
     "asn_id": "o007",
     "target": "t001",
     "asn_pool": "pool_007_spec_miri",
@@ -14,7 +14,7 @@
             "name": "jw99009-o007_t001_miri",
             "members": [
                 {
-                    "expname": "jw99009016001_02101_00001_mirifulong_cal.fits",
+                    "expname": "jw99009016001_02101_00001_mirifulong_rate.fits",
                     "exptype": "flat",
                     "exposerr": null,
                     "asn_candidate": "('o007', 'observation')"

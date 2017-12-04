@@ -2,7 +2,7 @@
     "asn_type": "tso3",
     "asn_rule": "candidate_Asn_TSO_EXPTYPE",
     "version_id": null,
-    "code_version": "0.9.3",
+    "code_version": "0.9.4",
     "program": "10004",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    exp_type: {'nis_soss'}\n    no_tso_flag: Is Invalid\n    opt_elem: {'clear'}\n    opt_elem2: {'gr700xd'}\n    target: {'1'}\n    program: {'10004'}\n    instrument: {'niriss'}\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
