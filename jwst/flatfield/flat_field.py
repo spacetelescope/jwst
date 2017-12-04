@@ -283,6 +283,8 @@ def do_NIRSpec_flat_field(output_model,
     for (k, slit) in enumerate(output_model.slits):
         log.info("Processing slit %s", slit.name)
         slit_nt = None
+        flat_2d = np.ones_like(slit.data)       # default values
+        flat_dq_2d = np.zeros_like(slit.dq)
         if exposure_type == "NRS_MSASPEC":
             # Find this slit in the list of open slits.
             for j in range(len(slits)):
@@ -292,6 +294,10 @@ def do_NIRSpec_flat_field(output_model,
             if slit_nt is None:
                 log.error("Couldn't find slit %s in list of open slits; "
                           "skipping ...", slit.name)
+                populate_interpolated_flats(k, slit,
+                                            interpolated_flats, output_model,
+                                            flat_2d, flat_dq_2d,
+                                            got_wl_attribute=False)
                 continue
 
         # pixels with respect to the original image
@@ -301,34 +307,60 @@ def do_NIRSpec_flat_field(output_model,
         xstop = xstart + xsize
         ystop = ystart + ysize
 
-        # Make sure there is a WCS.
-        if not hasattr(slit.meta, "wcs") or slit.meta.wcs is None:
-            log.error("Slit %s does not have a 'wcs' attribute.", slit.name)
-            if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
-                raise RuntimeError("WCS was not found, but it isn't clear "
-                                   "why not.")
-            else:
-                raise RuntimeError("The assign_wcs step has not been run.")
+        got_wcs = hasattr(slit.meta, "wcs") and slit.meta.wcs is not None
 
-        # Get the wavelength of each pixel in the extracted slit data.
-        # pixels with respect to the cutout
-        grid = np.indices((ysize, xsize), dtype=np.float64)
-        # The arguments are the X and Y pixel coordinates (in that order).
-        (ra, dec, wl) = slit.meta.wcs(grid[1], grid[0])
-        del ra, dec, grid
+        # Get the wavelength at each pixel in the extracted slit data.
+        # If the wavelength attribute exists and is populated, use it
+        # in preference to the wavelengths returned by the wcs function.
+        got_wl_attribute = True
+        try:
+            wl = slit.wavelength                # a 2-D array
+        except AttributeError:
+            got_wl_attribute = False
+        if not got_wl_attribute or len(wl) == 0:
+            got_wl_attribute = False
+        # The default value is 0, so all 0 values means that the
+        # wavelength attribute was not populated.  We need either a
+        # wavelength array or a meta.wcs.
+        if not got_wl_attribute or wl.min() == 0. and wl.max() == 0.:
+            got_wl_attribute = False
+            log.warning("The wavelength array for slit %s has not "
+                        "been populated,", slit.name)
+            if got_wcs:
+                log.warning("so using wcs instead of the wavelength array.")
+                # Pixels with respect to the cutout
+                grid = np.indices((ysize, xsize), dtype=np.float64)
+                # The arguments are the X and Y pixel coordinates.
+                (ra, dec, wl) = slit.meta.wcs(grid[1], grid[0])
+                del ra, dec, grid
+            else:
+                log.warning("and this slit does not have a 'wcs' attribute")
+                if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
+                    log.warning("assign_wcs has been run, however.")
+                else:
+                    log.warning("likely because assign_wcs has not been run.")
+                log.error("skipping ...")
+                populate_interpolated_flats(k, slit,
+                                            interpolated_flats, output_model,
+                                            flat_2d, flat_dq_2d,
+                                            got_wl_attribute=False)
+                continue
+        else:
+            log.debug("Wavelengths are from the wavelength array.")
+
         nan_mask = np.isnan(wl)
         good_mask = np.logical_not(nan_mask)
         sum_nan_mask = nan_mask.sum(dtype=np.intp)
         sum_good_mask = good_mask.sum(dtype=np.intp)
         if sum_nan_mask > 0:
-            log.debug("Number of NaNs in sci wavelength array = %s out of %s",
+            log.debug("Number of NaNs in sci wavelength array = %d out of %d",
                       sum_nan_mask, sum_nan_mask + sum_good_mask)
             if sum_good_mask < 1:
                 log.warning("(all are NaN)")
             # Replace NaNs with a harmless but out-of-bounds value.
             wl[nan_mask] = -1000.
         if wl.max() > 0. and wl.max() < MICRONS_100:
-            log.warning("Wavelengths in SCI data appear to be in meters.")
+            log.warning("Wavelengths in science data appear to be in meters.")
 
         # Combine the three flat fields for the current subarray.
         (flat_2d, flat_dq_2d) = create_flat_field(wl,
@@ -342,20 +374,11 @@ def do_NIRSpec_flat_field(output_model,
             flat_2d[mask] = 1.
         del mask
 
-        if flat_suffix is not None:
-            # Save flat_2d and flat_dq_2d for an output file.
-            new_flat = datamodels.ImageModel(data=flat_2d, dq=flat_dq_2d)
-            interpolated_flats.slits.append(new_flat.copy())
-            interpolated_flats.slits[k].err[...] = 1.   # xxx not realistic
-            # xxx There's more info that could be copied over.
-            interpolated_flats.slits[k].name = slit.name
-            interpolated_flats.slits[k].xstart = slit.xstart
-            interpolated_flats.slits[k].xsize = slit.xsize
-            interpolated_flats.slits[k].ystart = slit.ystart
-            interpolated_flats.slits[k].ysize = slit.ysize
-            # Copy the WCS info from output (same as input).
-            interpolated_flats.slits[k].meta.wcs = \
-                  output_model.slits[k].meta.wcs
+        # Save flat_2d and flat_dq_2d for an output file, if specified.
+        populate_interpolated_flats(k, slit,
+                                    interpolated_flats, output_model,
+                                    flat_2d, flat_dq_2d,
+                                    got_wl_attribute, wl, got_wcs)
 
         slit.data /= flat_2d
         slit.err /= flat_2d
@@ -369,6 +392,32 @@ def do_NIRSpec_flat_field(output_model,
         output_model.meta.cal_step.flat_field = 'SKIPPED'
 
     return interpolated_flats
+
+
+def populate_interpolated_flats(k, slit,
+                                interpolated_flats, output_model,
+                                flat_2d, flat_dq_2d,
+                                got_wl_attribute, wl=None,
+                                got_wcs=False):
+    """Save flat_2d and flat_dq_2d for an output file."""
+
+    if interpolated_flats is not None:
+        new_flat = datamodels.ImageModel(data=flat_2d, dq=flat_dq_2d)
+        interpolated_flats.slits.append(new_flat.copy())
+        interpolated_flats.slits[k].err[...] = 1.       # not realistic
+        interpolated_flats.slits[k].name = slit.name
+        interpolated_flats.slits[k].xstart = slit.xstart
+        interpolated_flats.slits[k].xsize = slit.xsize
+        interpolated_flats.slits[k].ystart = slit.ystart
+        interpolated_flats.slits[k].ysize = slit.ysize
+        if got_wl_attribute:
+            interpolated_flats.slits[k].wavelength = wl.copy()
+        else:
+            interpolated_flats.slits[k].wavelength = np.zeros_like(slit.data)
+        # Copy the WCS info from output (same as input).
+        if got_wcs:
+            interpolated_flats.slits[k].meta.wcs = \
+                  output_model.slits[k].meta.wcs
 
 
 def NIRSpec_brightobj(output_model,
@@ -428,10 +477,16 @@ def NIRSpec_brightobj(output_model,
     ystop = ystart + ysize
 
     # The wavelength of each pixel in a plane of the data.
-    wl = output_model.wavelength                # this is only 2-D
+    got_wl_attribute = True
+    try:
+        wl = output_model.wavelength            # a 2-D array
+    except AttributeError:
+        got_wl_attribute = False
+    if not got_wl_attribute or len(wl) == 0:
+        got_wl_attribute = False
 
     # There must be either a wavelength array or a meta.wcs.
-    if wl.min() == 0. and wl.max() == 0.:
+    if not got_wl_attribute or wl.min() == 0. and wl.max() == 0.:
         log.warning("The wavelength array has not been populated,")
         if got_wcs:
             log.warning("so using wcs instead of the wavelength array.")
@@ -447,13 +502,15 @@ def NIRSpec_brightobj(output_model,
             log.error("Skipping flat_field.")
             output_model.meta.cal_step.flat_field = 'SKIPPED'
             return None
+    else:
+        log.debug("Wavelengths are from the wavelength array.")
 
     nan_mask = np.isnan(wl)
     good_mask = np.logical_not(nan_mask)
     sum_nan_mask = nan_mask.sum(dtype=np.intp)
     sum_good_mask = good_mask.sum(dtype=np.intp)
     if sum_nan_mask > 0:
-        log.debug("Number of NaNs in wavelength array = %s out of %s",
+        log.debug("Number of NaNs in wavelength array = %d out of %d",
                   sum_nan_mask, sum_nan_mask + sum_good_mask)
         if sum_good_mask < 1:
             log.warning("(all are NaN)")
@@ -481,7 +538,10 @@ def NIRSpec_brightobj(output_model,
         interpolated_flats.dq = flat_dq_2d.copy()
         interpolated_flats.err = np.zeros((ysize, xsize),
                                           dtype=output_model.err.dtype)
-        interpolated_flats.wavelength = wl.copy()
+        if got_wl_attribute:
+            interpolated_flats.wavelength = wl.copy()
+        else:
+            interpolated_flats.wavelength = np.zeros_like(flat_2d)
 
     flat_3d = flat_2d.reshape((1, ysize, xsize))
     flat_dq_3d = flat_dq_2d.reshape((1, ysize, xsize))

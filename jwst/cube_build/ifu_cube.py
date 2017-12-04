@@ -32,7 +32,7 @@ class IFUCubeData(object):
 # CubeData - holds all the importatn informtion for IFU Cube Building:
 # wcs, data, reference data
 
-    def __init__(self, 
+    def __init__(self,
                  cube_type,
                  pipeline,
                  input_filenames,
@@ -53,7 +53,7 @@ class IFUCubeData(object):
         self.input_filenames = input_filenames
         self.pipeline = pipeline
 
-        self.input_models = input_models # needed when building single mode IFU cubes 
+        self.input_models = input_models # needed when building single mode IFU cubes
         self.output_name_base = output_name_base
 
         self.data_type = data_type
@@ -115,18 +115,18 @@ class IFUCubeData(object):
 #********************************************************************************
 # first define the number of file names that will be used to construct this cube
 # do some checks on the IFUCube to be made
-# find the ROI size 
+# find the ROI size
 
     def setup_cube(self):
         num1= len(self.list_par1)
-        num_files = 0 
+        num_files = 0
         for i in range(num1):
             this_a = self.list_par1[i]
             this_b = self.list_par2[i]
             n = len(self.master_table.FileMap[self.instrument][this_a][this_b])
             num_files = num_files + n
 
-# do some basic checks on the cubes 
+# do some basic checks on the cubes
         if(self.interpolation == "area"):
             if(num_files > 1):
                 raise IncorrectInput("For interpolation = area, only one file can" +
@@ -143,7 +143,7 @@ class IFUCubeData(object):
                                         " The beta dimension (naxis2) has a one to one" +
                                         " mapping between slice and " +
                                         " beta coordinate.")
-                                    
+
         if(self.coord_system == "alpha-beta"):
             if(num_files > 1):
                 raise IncorrectInput("Cubes built in alpha-beta coordinate system" +
@@ -155,7 +155,7 @@ class IFUCubeData(object):
         # parameter file
 
         if self.roiw == 0.0: self.roiw = roi[0]
-        if self.rois == 0.0:  # user did not set so use defaults 
+        if self.rois == 0.0:  # user did not set so use defaults
             self.rois = roi[1]
             if self.output_type == 'single' or num_files < 4:
                self.rois = self.rois * 1.5
@@ -189,11 +189,11 @@ class IFUCubeData(object):
                 number_subchannels = len(subchannels)
                 b_name = ''
                 for i in range(number_subchannels):
-                    b_name = b_name + subchannels[i] 
+                    b_name = b_name + subchannels[i]
                     if i > 1 : b_name = b_name + '-'
                 b_name  = b_name.lower()
                 newname = self.output_name_base + ch_name+'-'+ b_name + '_s3d.fits'
-                if self.coord_system == 'alpha-beta': 
+                if self.coord_system == 'alpha-beta':
                     newname = self.output_name_base + ch_name+'-'+ b_name + '_ab_s3d.fits'
                 if self.output_type == 'single':
                     newname = self.output_name_base + ch_name+'-'+ b_name + 'single_s3d.fits'
@@ -210,7 +210,7 @@ class IFUCubeData(object):
                 if self.output_type == 'single':
                     newname = self.output_name_base + fg_name+ 'single_s3d.fits'
 #________________________________________________________________________________
-                
+
         if self.output_type != 'single':
             log.info('Output Name %s',newname)
 
@@ -324,7 +324,7 @@ class IFUCubeData(object):
             spaxel = IFUCubeData.create_spaxel(self)
 
             with datamodels.ImageModel(self.input_models[j]) as input_model:
-                
+
 #********************************************************************************
 # pulled necessary routines from   CubeData.map_detector_to_spaxel
                 if self.instrument == 'MIRI':
@@ -334,14 +334,14 @@ class IFUCubeData(object):
                     y = np.reshape(y, y.size)
                     x = np.reshape(x, x.size)
 
-                    
+
                     cube_cloud.match_det2cube(self,input_model,
                                               x, y, j,
                                               this_par1,this_par2,
                                               spaxel,
                                               c1_offset, c2_offset)
 
-                elif instrument == 'NIRSPEC':
+                elif self.instrument == 'NIRSPEC':
                     # each file, detector has 30 slices - wcs information access seperately for each slice
                     start_slice = 0
                     end_slice = 29
@@ -463,7 +463,7 @@ class IFUCubeData(object):
 
 
     def map_detector_to_spaxel(self,this_par1, this_par2,spaxel):
-        from ..mrs_imatch.mrs_imatch_step import apply_background_2d 
+        from ..mrs_imatch.mrs_imatch_step import apply_background_2d
 #********************************************************************************
         """
         Short Summary
@@ -517,7 +517,7 @@ class IFUCubeData(object):
                         poly_ch = poly.channel
                         if(poly_ch == this_par1):
                             apply_background_2d(input_model,poly_ch,subtract=True)
-                
+
 #********************************************************************************
                 if self.instrument == 'MIRI':
 #________________________________________________________________________________
@@ -682,7 +682,7 @@ class IFUCubeData(object):
         err_cube = np.zeros((naxis3, naxis2, naxis1))
 
         IFUCube = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
-        
+
         IFUCube.update(self.input_models[j])
 
         IFUCube.meta.filename = self.output_name
@@ -690,14 +690,14 @@ class IFUCubeData(object):
         if self.output_type == 'single':
             with datamodels.open(self.input_models[j]) as input:
 
-                # define the cubename for each single 
+                # define the cubename for each single
                 filename = self.input_filenames[j]
                 indx = filename.rfind('.fits')
                 self.output_name_base = filename[:indx]
                 self.output_file = None
                 newname  = IFUCubeData.define_cubename(self)
                 IFUCube.meta.filename = newname
-                IFUCube.meta.instrument.channel = self.list_par1[0] 
+                IFUCube.meta.instrument.channel = self.list_par1[0]
 
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
         IFUCube.meta.wcsinfo.crval2 = self.Crval2
@@ -732,7 +732,7 @@ class IFUCubeData(object):
         IFUCube.meta.flux_extension = 'SCI'
         IFUCube.meta.error_extension = 'ERR'
         IFUCube.meta.dq_extension = 'DQ'
-        IFUCube.meta.roi_spatial = self.rois    
+        IFUCube.meta.roi_spatial = self.rois
         IFUCube.meta.roi_wave = self.roiw
         IFUCube.meta.weighting = self.weighting
         IFUCube.meta.weight_power = self.weight_power
@@ -841,7 +841,7 @@ class IFUCubeData(object):
 #********************************************************************************
 #********************************************************************************
     def find_output_type(self):
-        
+
         ValidChannel = ['1', '2', '3', '4']
         ValidSubchannel = ['SHORT', 'MEDIUM', 'LONG']
 
