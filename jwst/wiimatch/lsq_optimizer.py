@@ -17,7 +17,7 @@ import numpy as np
 from .utils import create_coordinate_arrays
 
 
-__all__ = ['build_lsq_eqs', 'lsq_solve']
+__all__ = ['build_lsq_eqs', 'pinv_solve', 'rlu_solve']
 
 
 def build_lsq_eqs(images, masks, sigmas, degree, center=None,
@@ -50,12 +50,12 @@ def build_lsq_eqs(images, masks, sigmas, degree, center=None,
         of the input images.
 
     center : iterable, None, optional
-        An iterable of length equal to the number of dimensions in
-        ``image_shape`` that indicates the center of the coordinate system
+        An iterable of length equal to the number of dimensions of images in
+        ``images`` parameter that indicates the center of the coordinate system
         in **image** coordinates when ``center_cs`` is ``'image'`` otherwise
         center is assumed to be in **world** coordinates (when ``center_cs``
         is ``'world'``). When ``center`` is `None` then ``center`` is
-        set to the middle of the "image" as ``center[i]=image_shape[i]//2``.
+        set to the middle of the "image" as ``center[i]=image.shape[i]//2``.
         If ``image2world`` is not `None` and ``center_cs`` is ``'image'``,
         then supplied center will be converted to world coordinates.
 
@@ -81,7 +81,7 @@ def build_lsq_eqs(images, masks, sigmas, degree, center=None,
         equations.
 
     coord_arrays : list
-        A list of `numpy.ndarray` coordinate arrays each of ``image_shape``
+        A list of `numpy.ndarray` coordinate arrays each of ``images[0].shape``
         shape.
 
     eff_center : tuple
@@ -278,15 +278,14 @@ c_{1,0,\\ldots}^2,\\ldots).
     return a, b, coord_arrays, eff_center, coord_system
 
 
-def lsq_solve(matrix, free_term, nimages=None, tol=None):
+def pinv_solve(matrix, free_term, nimages, tol=None):
     """
-    Computes least-square solution of a system of linear equations
+    Solves a system of linear equations
 
     .. math::
         a \\cdot c = b.
 
-    This function uses Moore-Penrose pseudoinverse to solve the above system
-    of equations.
+    using Moore-Penrose pseudoinverse.
 
     Parameters
     ----------
@@ -296,7 +295,7 @@ def lsq_solve(matrix, free_term, nimages=None, tol=None):
     free_term : numpy.ndarray
         A 1D array containing free terms of the system of the equations.
 
-    nimages : int, None, optional
+    nimages : int
         Number of images for which the system is being solved.
 
     tol : float, None, optional
@@ -309,11 +308,7 @@ def lsq_solve(matrix, free_term, nimages=None, tol=None):
     Returns
     -------
     bkg_poly_coeff : numpy.ndarray
-        When ``nimages`` is `None`, this function returns a 1D `numpy.ndarray`
-        that holds the solution (polynomial coefficients) to the system.
-
-        When ``nimages`` is **not** `None`, this function returns a 2D
-        `numpy.ndarray` that holds the solution (polynomial coefficients)
+        A 2D `numpy.ndarray` that holds the solution (polynomial coefficients)
         to the system. The solution is grouped by image.
 
     Examples
@@ -328,7 +323,7 @@ def lsq_solve(matrix, free_term, nimages=None, tol=None):
 >>> sigma = np.ones_like(im1, dtype=np.float)
 >>> a, b = wiimatch.lsq_optimizer.build_lsq_eqs([im1, im3], [mask, mask],
 ... [sigma, sigma], degree=(1,1,1), center=(0,0,0))
->>> wiimatch.lsq_optimizer.lsq_solve(a, b, 2)
+>>> wiimatch.lsq_optimizer.pinv_solve(a, b, 2)
 array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
           3.33066907e-15,  -3.70000000e-01,   5.44009282e-15,
           7.88258347e-15,  -2.33146835e-15],
@@ -344,13 +339,79 @@ array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
     return bkg_poly_coeff
 
 
+def rlu_solve(matrix, free_term, nimages):
+    """
+    Computes solution of a "reduced" system of linear equations
+
+    .. math::
+        a' \\cdot c' = b'.
+
+    using LU-decomposition. If the original system contained a set of
+    linearly-dependent equations, then the "reduced" system is formed by
+    dropping equations and unknowns related to the first image. The unknowns
+    corresponding to the first image initially are assumed to be 0.
+    Upon solving the reduced system, these unknowns are recomputed so that
+    mean corection coefficients for all images are 0.
+    This function uses `~scipy.linalg.lu_solve` and
+    `~scipy.linalg.lu_factor` functions.
+
+    Parameters
+    ----------
+    matrix : numpy.ndarray
+        A 2D array containing coefficients of the system.
+
+    free_term : numpy.ndarray
+        A 1D array containing free terms of the system of the equations.
+
+    nimages : int
+        Number of images for which the system is being solved.
+
+    Returns
+    -------
+    bkg_poly_coeff : numpy.ndarray
+        A 2D `numpy.ndarray` that holds the solution (polynomial coefficients)
+        to the system. The solution is grouped by image.
+
+    Examples
+    --------
+>>> import wiimatch
+>>> import numpy as np
+>>> im1 = np.zeros((5, 5, 4), dtype=np.float)
+>>> cbg = 1.32 * np.ones_like(im1)
+>>> ind = np.indices(im1.shape, dtype=np.float)
+>>> im3 = cbg + 0.15 * ind[0] + 0.62 * ind[1] + 0.74 * ind[2]
+>>> mask = np.ones_like(im1, dtype=np.int8)
+>>> sigma = np.ones_like(im1, dtype=np.float)
+>>> a, b = wiimatch.lsq_optimizer.build_lsq_eqs([im1, im3], [mask, mask],
+... [sigma, sigma], degree=(1, 1, 1), center=(0, 0, 0))
+>>> wiimatch.lsq_optimizer.lu_solve(a, b, 2)
+array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
+         -1.19371180e-15,  -3.70000000e-01,  -1.62003744e-15,
+         -1.10844667e-15,   5.11590770e-16],
+       [  6.60000000e-01,   7.50000000e-02,   3.10000000e-01,
+          1.19371180e-15,   3.70000000e-01,   1.62003744e-15,
+          1.10844667e-15,  -5.11590770e-16]])
+
+    """
+    from scipy import linalg
+    drop =  free_term.size // nimages
+    v = linalg.lu_solve(linalg.lu_factor(matrix[drop:, drop:]),
+                        free_term[drop:])
+    reduced_bkg_poly_coeff = v.reshape((nimages - 1, v.size // (nimages - 1)))
+    delta1 = - reduced_bkg_poly_coeff.sum(axis=0) / nimages
+    reduced_bkg_poly_coeff += delta1
+    bkg_poly_coeff = np.insert(reduced_bkg_poly_coeff, 0, delta1, axis=0)
+    return bkg_poly_coeff
+
+
 def _image_pixel_sum(image_l, image_m, mask_l, mask_m,
                      sigma2_l, sigma2_m, coord_arrays=None, p=None):
     # Compute sum of:
     # coord_arrays^(p) * (image_l - image_m) / (sigma_l**2 + sigma_m**2)
     #
-    # If coord_arrays is None, replace it with 1 (this allows code optimization)
-    # for the case of constant background (polynomials of zero degree).
+    # If coord_arrays is None, replace it with 1 (this allows code
+    # optimization) for the case of constant background (polynomials of zero
+    # degree).
     #
     # NOTE: this function does not check that sigma2 arrays have same shapes
     #       as the coord_arrays arrays (for efficiency purpose).
@@ -387,8 +448,9 @@ def _sigma_pixel_sum(mask_l, mask_m, sigma2_l, sigma2_m,
                      coord_arrays=None, p=None, pp=None):
     # Compute sum of coord_arrays^(p+pp) ()/ (sigma_l**2 + sigma_m**2)
     #
-    # If coord_arrays is None, replace it with 1 (this allows code optimization)
-    # for the case of constant background (polynomials of zero degree).
+    # If coord_arrays is None, replace it with 1 (this allows code
+    # optimization) for the case of constant background (polynomials of zero
+    # degree).
     #
     # NOTE: this function does not check that sigma2 arrays have same shapes
     #       as the coord_arrays arrays (for efficiency purpose).
