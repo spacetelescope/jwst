@@ -17,15 +17,6 @@
                     "exptype": "science"
                 }
             ]
-        },
-        {
-            "name": "jw10004003001_02101_00001_nis",
-            "members": [
-                {
-                    "expname": "jw10004003001_02101_00001_nis_rateints.fits",
-                    "exptype": "science"
-                }
-            ]
         }
     ]
 }

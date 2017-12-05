@@ -1,0 +1,22 @@
+{
+    "asn_type": "spec2",
+    "asn_rule": "candidate_Asn_Lv2Spec",
+    "version_id": null,
+    "code_version": "0.9.4",
+    "program": "80600",
+    "target": "1",
+    "asn_pool": "jw80600_20171108T041522_pool",
+    "constraints": "Constraints:\n    single_science: {'False'}\n    exp_type: {'mir_lrs\\\\-slitless'}\n    program: {'80600'}\n    target: {'1'}\n    instrument: {'miri'}\n    detector: {'mirimage'}\n    opt_elem: {'p750l'}\n    opt_elem2: set()\n    subarray: {'subprism'}\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o012\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "asn_id": "o012",
+    "products": [
+        {
+            "name": "jw80600012001_02101_00002_mirimage",
+            "members": [
+                {
+                    "expname": "jw80600012001_02101_00002_mirimage_rateints.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}

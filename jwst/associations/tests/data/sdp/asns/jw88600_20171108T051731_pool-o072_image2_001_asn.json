@@ -37,28 +37,10 @@
             ]
         },
         {
-            "name": "jw88600071001_02101_00001_nrs1",
-            "members": [
-                {
-                    "expname": "jw88600071001_02101_00001_nrs1_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
             "name": "jw88600072001_02102_00001_nrcalong",
             "members": [
                 {
                     "expname": "jw88600072001_02102_00001_nrcalong_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw88600070001_04101_00001_mirimage",
-            "members": [
-                {
-                    "expname": "jw88600070001_04101_00001_mirimage_rate.fits",
                     "exptype": "science"
                 }
             ]
@@ -100,15 +82,6 @@
             ]
         },
         {
-            "name": "jw88600070001_03101_00001_mirimage",
-            "members": [
-                {
-                    "expname": "jw88600070001_03101_00001_mirimage_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
             "name": "jw88600072001_02102_00001_nrcb3",
             "members": [
                 {
@@ -118,28 +91,10 @@
             ]
         },
         {
-            "name": "jw88600073001_02101_00001_nis",
-            "members": [
-                {
-                    "expname": "jw88600073001_02101_00001_nis_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
             "name": "jw88600072001_02102_00001_nrca4",
             "members": [
                 {
                     "expname": "jw88600072001_02102_00001_nrca4_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw88600071001_02101_00001_nrs2",
-            "members": [
-                {
-                    "expname": "jw88600071001_02101_00001_nrs2_rate.fits",
                     "exptype": "science"
                 }
             ]

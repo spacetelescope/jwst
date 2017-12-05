@@ -403,13 +403,17 @@ class Utility():
         return finalized + lv2_asns
 
     @staticmethod
-    def merge_asns(associations):
+    def merge_asns(associations, acid_regex='o\d{3}$'):
         """merge level2 associations
 
         Parameters
         ----------
         associations: [asn(, ...)]
             Associations to search for merging.
+
+        acid_regex: str
+            Regular expression which the `asn_id` of the association
+            must match to be included.
 
         Returns
         -------
@@ -424,19 +428,38 @@ class Utility():
             else:
                 others.append(asn)
 
-        lv2_asns = Utility._merge_asns(lv2_asns)
+        lv2_asns = Utility._merge_asns(lv2_asns, acid_regex)
 
         return others + lv2_asns
 
     @staticmethod
-    def _merge_asns(asns):
-        # Merge all the associations into common types
-        merged_by_type = {}
+    def _merge_asns(asns, acid_regex):
+        """Merge associations by `asn_type` and `asn_id`
+
+        Parameters
+        ----------
+        associations: [asn(, ...)]
+            Associations to search for merging.
+
+        acid_regex: str
+            Regular expression which the `asn_id` of the association
+            must match to be included.
+
+        Returns
+        -------
+        associatons: [association(, ...)]
+            List of associations, some of which may be merged.
+        """
+        match_acid = re.compile(acid_regex, flags=re.IGNORECASE & re.UNICODE)
+        merged = {}
         for asn in asns:
+            if match_acid.match(asn['asn_id']) is None:
+                continue
+            idx = '_'.join([asn['asn_type'], asn['asn_id']])
             try:
-                current_asn = merged_by_type[asn['asn_type']]
+                current_asn = merged[idx]
             except KeyError:
-                merged_by_type[asn['asn_type']] = asn
+                merged[idx] = asn
                 current_asn = asn
             for product in asn['products']:
                 merge_occured = False
@@ -465,7 +488,7 @@ class Utility():
 
         merged_asns = [
             asn
-            for asn_type, asn in merged_by_type.items()
+            for asn in merged.values()
         ]
         return merged_asns
 

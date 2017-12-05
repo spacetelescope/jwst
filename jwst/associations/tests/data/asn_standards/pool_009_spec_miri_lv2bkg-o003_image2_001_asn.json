@@ -17,42 +17,6 @@
                     "exptype": "science"
                 }
             ]
-        },
-        {
-            "name": "jw_00010",
-            "members": [
-                {
-                    "expname": "jw_00010_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00013",
-            "members": [
-                {
-                    "expname": "jw_00013_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00016",
-            "members": [
-                {
-                    "expname": "jw_00016_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00038",
-            "members": [
-                {
-                    "expname": "jw_00038_rate.fits",
-                    "exptype": "science"
-                }
-            ]
         }
     ]
 }
