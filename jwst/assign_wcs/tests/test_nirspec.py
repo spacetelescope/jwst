@@ -59,9 +59,12 @@ def create_hdul():
     phdu.header['time-obs'] = '8:59:37'
     phdu.header['date-obs'] = '2016-09-05'
 
+    scihdu = fits.ImageHDU()
+    scihdu.header['EXTNAME'] = "SCI"
     for item in wcs_kw.items():
-        phdu.header[item[0]] = item[1]
+        scihdu.header[item[0]] = item[1]
     hdul.append(phdu)
+    hdul.append(scihdu)
     return hdul
 
 
@@ -105,11 +108,11 @@ def create_nirspec_ifu_file(filter, grating, lamp='N/A'):
     image[0].header['exp_type'] = 'NRS_IFU'
     image[0].header['filter'] = filter #'F170LP'
     image[0].header['grating'] = grating #'G235H'
-    image[0].header['crval3'] = 0
-    image[0].header['wcsaxes'] = 3
-    image[0].header['ctype3'] = 'WAVE'
-    image[0].header['pc3_1'] = 1
-    image[0].header['pc3_2'] = 0
+    image[1].header['crval3'] = 0
+    image[1].header['wcsaxes'] = 3
+    image[1].header['ctype3'] = 'WAVE'
+    #image[1].header['pc3_1'] = 1
+    #image[1].header['pc3_2'] = 0
     image[0].header['lamp'] = lamp
     image[0].header['GWA_XTIL'] = 0.35986012
     image[0].header['GWA_YTIL'] = 0.13448857
@@ -121,11 +124,11 @@ def create_nirspec_fs_file():
     image[0].header['exp_type'] = 'NRS_FIXEDSLIT'
     image[0].header['filter'] = 'F100LP'
     image[0].header['grating'] = 'G140H'
-    image[0].header['crval3'] = 0
-    image[0].header['wcsaxes'] = 3
-    image[0].header['ctype3'] = 'WAVE'
-    image[0].header['pc3_1'] = 1
-    image[0].header['pc3_2'] = 0
+    image[1].header['crval3'] = 0
+    image[1].header['wcsaxes'] = 3
+    image[1].header['ctype3'] = 'WAVE'
+    #image[1].header['pc3_1'] = 1
+    #image[1].header['pc3_2'] = 0
     image[0].header['GWA_XTIL'] = 3.5896975e-001
     image[0].header['GWA_YTIL'] = 1.3438272e-001
     image[0].header['GWA_TTIL'] = 3.9555361e+001
