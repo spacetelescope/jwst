@@ -119,7 +119,22 @@ CRDS Selection Criteria
 Reference File Formats
 ::::::::::::::::::::::
 
-The distortion reference file contains a combination of astropy models.
+The distortion reference file contains a combination of astropy models,
+representing the transform from detector to the telescope V2, V3 system.
+The following convention was adopted:
+
+- The output in the V2, V3 system is in units of arcsec.
+- The input x and y are 0-based coordinates.
+- The center of the first pixel is (0, 0), so the first pixel goes from -0.5 to 0.5.
+- The reference point of the transform is (0, 0).
+  Note, that a different reference point on the detector can be used to compute the
+  transform(s) from detector to V2,V3. In this case an offset transform should be prepended to
+  the distortion transform(s) to account for the change of origin in the detector coordinate frame.
+
+Internally the WCS pipeline works with 0-based coordinates. 
+When FITS header keywords are used, the 1 pixel offset in FITS coordinates is accounterd for
+internally in the pipeline.
+
 For the MIRI Imager this file contains a polynomial and filter dependent offsets.
 For the MIRI MRS, NIRCAM, NIRISS and FGS the model is a combination of polynomials.
 
