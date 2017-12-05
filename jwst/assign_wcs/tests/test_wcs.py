@@ -19,10 +19,6 @@ def _create_model_2d():
     im.meta.wcsinfo.cunit2 = 'deg'
     im.meta.wcsinfo.ctype1 = 'RA---TAN'
     im.meta.wcsinfo.ctype2 = 'DEC--TAN'
-    im.meta.wcsinfo.pc1_1 = 1.
-    im.meta.wcsinfo.pc1_2 = 0
-    im.meta.wcsinfo.pc2_1 = 0.
-    im.meta.wcsinfo.pc2_2 = 1.
     return im
 
 
@@ -33,11 +29,6 @@ def _create_model_3d():
     im.meta.wcsinfo.wcsaxes = 3
     im.meta.wcsinfo.cunit3 = 'um'
     im.meta.wcsinfo.ctype3 = 'WAVE'
-    im.meta.wcsinfo.pc3_1 = 0.
-    im.meta.wcsinfo.pc3_2 = 0
-    im.meta.wcsinfo.pc3_3 = 1
-    im.meta.wcsinfo.pc1_3 = 0
-    im.meta.wcsinfo.pc2_3 = 0.
     return im
 
 
