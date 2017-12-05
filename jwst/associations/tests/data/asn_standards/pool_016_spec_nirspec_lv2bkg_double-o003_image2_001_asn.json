@@ -44,42 +44,6 @@
                     "exptype": "science"
                 }
             ]
-        },
-        {
-            "name": "jw_00014",
-            "members": [
-                {
-                    "expname": "jw_00014_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00015",
-            "members": [
-                {
-                    "expname": "jw_00015_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00016",
-            "members": [
-                {
-                    "expname": "jw_00016_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00017",
-            "members": [
-                {
-                    "expname": "jw_00017_rate.fits",
-                    "exptype": "science"
-                }
-            ]
         }
     ]
 }

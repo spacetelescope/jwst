@@ -1,0 +1,22 @@
+{
+    "asn_type": "image2",
+    "asn_rule": "candidate_Asn_Lv2FGS",
+    "version_id": null,
+    "code_version": "0.9.4",
+    "program": "99009",
+    "target": "1",
+    "asn_pool": "pool_018_all_exptypes",
+    "constraints": "Constraints:\n    exp_type: {'fgs_focus'}\n    single_science: {'False'}\n    asn_candidate: {\"\\\\(\\\\'o060\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    program: {'99009'}\n    is_tso: set()",
+    "asn_id": "o060",
+    "products": [
+        {
+            "name": "jw_00060",
+            "members": [
+                {
+                    "expname": "jw_00060_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}

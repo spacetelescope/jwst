@@ -15,19 +15,6 @@
                 {
                     "expname": "jw_00001_rate.fits",
                     "exptype": "science"
-                },
-                {
-                    "expname": "jw_00002_rate.fits",
-                    "exptype": "background"
-                }
-            ]
-        },
-        {
-            "name": "jw_00002",
-            "members": [
-                {
-                    "expname": "jw_00002_rate.fits",
-                    "exptype": "science"
                 }
             ]
         }

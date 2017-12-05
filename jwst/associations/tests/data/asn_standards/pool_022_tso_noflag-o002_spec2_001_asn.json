@@ -17,33 +17,6 @@
                     "exptype": "science"
                 }
             ]
-        },
-        {
-            "name": "jw_00002",
-            "members": [
-                {
-                    "expname": "jw_00002_rateints.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00004",
-            "members": [
-                {
-                    "expname": "jw_00004_rateints.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00005",
-            "members": [
-                {
-                    "expname": "jw_00005_rateints.fits",
-                    "exptype": "science"
-                }
-            ]
         }
     ]
 }
