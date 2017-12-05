@@ -2,7 +2,7 @@ Reference Files
 ===============
 The photom step uses a photom reference file and a pixel area map reference
 file. The pixel area map reference file is only used when processing
-imaging-mode observations.
+imaging and NIRSpec IFU observations.
 
 PHOTOM CRDS Selection Criteria
 ------------------------------
@@ -61,7 +61,11 @@ The primary header of the photom reference file contains the keywords PIXAR_SR
 and PIXAR_A2, which give the average pixel area in units of steradians and
 square arcseconds, respectively.
 
-The MIRI MRS photom reference files contain the following FITS extensions:
+MIRI MRS Photom File
+--------------------
+
+The MIRI MRS photom reference files do not contain tabular information,
+but instead contain the following FITS extensions:
 
 * SCI  IMAGE  2D float
 * ERR  IMAGE  2D float

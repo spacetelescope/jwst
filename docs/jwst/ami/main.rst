@@ -1,6 +1,6 @@
 Tasks in the Package
 ====================
-The Aperture Masking Interferometry (AMI) pipeline package currently consists
+The Aperture Masking Interferometry (AMI) package currently consists
 of three tasks:
 
 1) ``ami_analyze``: apply the LG algorithm to a NIRISS AMI exposure
@@ -17,35 +17,39 @@ CALWEBB_AMI3 Pipeline
 Overview
 --------
 The ``calwebb_ami3`` pipeline module can be used to apply all 3 steps of AMI
-processing to an association of AMI exposures. The processing flow through the
-pipeline is as follows:
+processing to an association (ASN) of AMI exposures. The processing flow through
+the pipeline is as follows:
 
 1) Apply the ``ami_analyze`` step to all products listed in the input
-   association table. Output files will have a file name suffix of ``lg``.
+   association table. Output files will have a product type suffix of ``ami``.
+   There will be one ``ami`` product per input exposure.
 
-2) Apply the ``ami_average`` step to combine the above results for reference
-   target exposures contained in the association. The output file will have a
-   file name suffix of ``lgavgr``.
+2) Apply the ``ami_average`` step to combine the above results for both
+   science target and reference target exposures, if both types exist in the
+   ASN table. If the optional parameter ``save_averages`` is set to true
+   (see below), the results will be saved to output files with a product type
+   suffix of ``amiavg``.
+   There will be one ``amiavg`` product for the science target and one for
+   the reference target.
 
-3) Apply the ``ami_average`` step to combine the above results for science
-   target exposures contained in the association. The output file will have
-   a file name suffix of ``lgavgt``.
-
-4) If reference target results exist, apply the ``ami_normalize`` step to the
-   averaged science target result (``lgavgt``), using the averaged reference
-   target result (``lgavgr``) to do the normalization.
-   The output file will have a file name suffix of ``lgnorm``.
+3) If reference target results exist, apply the ``ami_normalize`` step to the
+   averaged science target result, using the averaged reference target result
+   to do the normalization. The output file will have a product type suffix of
+   ``aminorm``.
 
 Input
 -----
 The only input to the ``calwebb_ami3`` pipeline is the name of a json-formatted
-association file. There are no optional parameters. It is assumed that the
-ASN file will define a single output product, containing a list of input
-member file names. An example ASN file is shown below.
+association file. There is one optional parameter ``save_averages``. If set to
+true, the results of the ``ami_average`` step will be saved to files.
+It is assumed that the
+ASN file will define a single output product for the science target result,
+containing a list of input member file names, for both science target and
+reference target exposures. An example ASN file is shown below.
 
 ::
 
- {"asn_rule": "AMI", "targname": "NGC-3603", "asn_pool": "jw00017_001_01_pool", "program": "00017",
+ {"asn_rule": "NIRISS_AMI", "targname": "NGC-3603", "asn_pool": "jw00017_001_01_pool", "program": "00017",
  "products": [
      {"prodtype": "ami", "name": "jw87003-c1001_t001_niriss_f277w-nrm",
       "members": [
@@ -59,8 +63,8 @@ member file names. An example ASN file is shown below.
  "asn_id": "c1001"}
 
 Note that the ``exptype`` attribute value for each input member is used to
-indicate which files contain science target data and which contain reference
-psf data.
+indicate which files contain science target images and which contain reference
+psf images.
 
 AMI_Analyze
 ===========
@@ -76,7 +80,7 @@ and amplitudes.
 Inputs
 ------
 The ``ami_analyze`` step takes a single input image, in the form of a simple 2D
-ImageModel. Their are two optional parameters:
+ImageModel. There are two optional parameters:
 
 1) ``oversample``: specifies the oversampling factor to be used in the model fit
    (default value = 3)
@@ -102,8 +106,8 @@ AMI_Average
 
 Overview
 --------
-The ``ami_average`` step averages the results of LG processing (from the
-``ami_analyze`` step) for multiple exposures of a given target. It averages
+The ``ami_average`` step averages the results of LG processing from the
+``ami_analyze`` step for multiple exposures of a given target. It averages
 all 8 components of the ``ami_analyze`` output files for all input exposures.
 
 Inputs

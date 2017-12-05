@@ -2,7 +2,7 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2ImageNonScience",
     "version_id": null,
-    "code_version": "0.9.3",
+    "code_version": "0.9.4",
     "program": "84600",
     "target": "1",
     "asn_pool": "jw84600_20171108T041344_fixed_pool",

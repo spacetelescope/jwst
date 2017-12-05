@@ -33,10 +33,6 @@ DUMMY = "dummy"
 Aperture = namedtuple('Aperture', ['xstart', 'ystart', 'xstop', 'ystop'])
 
 
-def initialize_wave_model(model_name, degree):
-    return getattr(polynomial, model_name)(degree)
-
-
 def get_extract_parameters(refname, input_model, slitname,
                            meta, smoothing_length, bkg_order):
 
@@ -745,7 +741,6 @@ class ExtractModel:
             self.wcs = slit.meta.wcs
         if self.wcs is None:
             log.warning("WCS function not found in input.")
-        self._wave_model = None
 
         # If source extraction coefficients src_coeff were specified, this
         # method will add the nod offset correction to the first coefficient
@@ -899,7 +894,7 @@ class ExtractModel:
                 expect_lower = not expect_lower
 
 
-    def extract(self, data):
+    def extract(self, data, wl_array):
         """
         Do the actual extraction.
 
@@ -907,6 +902,10 @@ class ExtractModel:
         ----------
         data: array_like (2-D)
             Data array.
+
+        wl_array: array_like (2-D) or None
+            Wavelengths corresponding to `data`, or None if no WAVELENGTH
+            was found in the input file.
 
         Returns
         -------
@@ -920,49 +919,82 @@ class ExtractModel:
             source count rate to get `net`.
         """
 
-        # We need integer values that are the limits of a slice in the
-        # dispersion direction.
+        # If the wavelength attribute exists and is populated, use it
+        # in preference to the wavelengths returned by the wcs function.
+        if wl_array is None or len(wl_array) == 0:
+            got_wavelength = False
+        else:
+            got_wavelength = True               # may be reset later
+
+        # The default value is 0, so all 0 values means that the
+        # wavelength attribute was not populated.
+        if not got_wavelength or wl_array.min() == 0. and wl_array.max() == 0.:
+            got_wavelength = False
+        if got_wavelength:
+            log.debug("Wavelengths are from wavelength attribute.")
+            # We need a 1-D array of wavelengths, one element for each
+            # output table row.
+            # These are slice limits.
+            sx0 = int(round(self.xstart))
+            sx1 = int(round(self.xstop)) + 1
+            sy0 = int(round(self.ystart))
+            sy1 = int(round(self.ystop)) + 1
+            # Convert non-positive values to NaN, to easily ignore them.
+            wl = np.where(wl_array <= 0., np.nan, wl_array)
+            if self.dispaxis == HORIZONTAL:
+                wavelength = np.nanmean(wl[sy0:sy1, sx0:sx1], axis=0)
+            else:
+                wavelength = np.nanmean(wl[sy0:sy1, sx0:sx1], axis=1)
+
+        # Now call the wcs function to compute the celestial coordinates.
+        # Also use the returned wavelengths if we weren't able to get them
+        # from the wavelength attribute.
+
+        # Used for computing the celestial coordinates.
         if self.dispaxis == HORIZONTAL:
             slice0 = int(round(self.xstart))
             slice1 = int(round(self.xstop)) + 1
-        else:
-            slice0 = int(round(self.ystart))
-            slice1 = int(round(self.ystop)) + 1
-
-        # We expect two (x and y), or three (x, y, spectral order).
-        n_inputs = self.wcs.forward_transform.n_inputs
-
-        # x_array and y_array are just used for computing the wavelengths.
-        if self.dispaxis == HORIZONTAL:
             x_array = np.arange(slice0, slice1, dtype=np.float64)
             y_array = np.empty(x_array.shape, dtype=np.float64)
             y_array.fill((self.ystart + self.ystop) / 2.)
         else:
+            slice0 = int(round(self.ystart))
+            slice1 = int(round(self.ystop)) + 1
             y_array = np.arange(slice0, slice1, dtype=np.float64)
             x_array = np.empty(y_array.shape, dtype=np.float64)
             x_array.fill((self.xstart + self.xstop) / 2.)
 
         if self.wcs is not None:
+            if not got_wavelength:
+                log.debug("Wavelengths are from the wcs function.")
             nelem = slice1 - slice0
             if self.exp_type in ['NIS_WFSS', 'NRC_GRISM']:
+                # We expect two (x and y) or three (x, y, spectral order).
+                n_inputs = self.wcs.forward_transform.n_inputs
                 ra = np.zeros(nelem, dtype=np.float64)
                 dec = np.zeros(nelem, dtype=np.float64)
-                wavelength = np.zeros(nelem, dtype=np.float64)
+                # Temporary variable so as not to clobber `wavelength`.
+                wcs_wl = np.zeros(nelem, dtype=np.float64)
                 transform = self.wcs.forward_transform
                 if n_inputs == 2:
                     for i in range(nelem):
-                        ra[i], dec[i], wavelength[i], _ = transform(
+                        ra[i], dec[i], wcs_wl[i], _ = transform(
                                         x_array[i], y_array[i])
                 elif n_inputs == 3:
                     for i in range(nelem):
-                        ra[i], dec[i], wavelength[i], _ = transform(
+                        ra[i], dec[i], wcs_wl[i], _ = transform(
                                 x_array[i], y_array[i], self.spectral_order)
                 else:
                     log.error("n_inputs for wcs function is %d", n_inputs)
-                    raise ValueError("WCS function was expected to take "
-                                     "either 2 or 3 arguments.")
+                    log.error("WCS function was expected to take "
+                              "either 2 or 3 arguments.")
+                    ra[:] = -999.
+                    dec[:] = -999.
+                    wcs_wl[:] = -999.
             else:
-                ra, dec, wavelength = self.wcs(x_array, y_array)
+                ra, dec, wcs_wl = self.wcs(x_array, y_array)
+            # We need one right ascension and one declination, representing
+            # the direction of pointing.
             mask = np.isnan(ra)
             not_nan = np.logical_not(mask)
             if np.any(not_nan):
@@ -986,16 +1018,11 @@ class ExtractModel:
                             "assigning dummy value -999.")
                 dec = -999.
 
-        elif self._wave_model is not None:
-            if self.dispaxis == HORIZONTAL:
-                wavelength = self._wave_model(x_array)
-            else:
-                wavelength = self._wave_model(y_array)
-            (ra, dec) = (0., 0.)
-
         else:
-            (ra, dec, wavelength) = (None, None, None)
-        del x_array, y_array
+            (ra, dec, wcs_wl) = (None, None, None)
+
+        if not got_wavelength:
+            wavelength = wcs_wl                 # from wcs, or None
 
         # Range (slice) of pixel numbers in the dispersion direction.
         disp_range = [slice0, slice1]
@@ -1004,6 +1031,7 @@ class ExtractModel:
         else:
             image = np.transpose(data, (1, 0))
         if wavelength is None:
+            log.warning("Wavelengths could not be determined.")
             if slice0 <= 0:
                 wavelength = np.arange(1, slice1 - slice0 + 1,
                                        dtype=np.float64)
@@ -1011,7 +1039,7 @@ class ExtractModel:
                 wavelength = np.arange(slice0, slice1, dtype=np.float64)
 
         mask = np.isnan(wavelength)
-        n_nan = mask.sum(dtype=np.float64)
+        n_nan = mask.sum(dtype=np.intp)
         if n_nan > 0:
             log.warning("%d NaNs in wavelength array; set to 0.01", n_nan)
             wavelength[mask] = 0.01         # workaround
@@ -1327,10 +1355,22 @@ def extract_one_slit(input_model, slit, integ, **extract_params):
 
     if integ > -1:
         data = input_model.data[integ]
+        try:
+            wl_array = input_model.wavelength
+        except AttributeError:
+            wl_array = None
     elif slit == DUMMY:
         data = input_model.data
+        try:
+            wl_array = input_model.wavelength
+        except AttributeError:
+            wl_array = None
     else:
         data = slit.data
+        try:
+            wl_array = slit.wavelength
+        except AttributeError:
+            wl_array = None
 
     extract_model = ExtractModel(input_model, slit, **extract_params)
 
@@ -1339,7 +1379,7 @@ def extract_one_slit(input_model, slit, integ, **extract_params):
     extract_model.log_extraction_parameters()
 
     extract_model.assign_polynomial_limits()
-    (ra, dec, wavelength, net, background) = extract_model.extract(data)
-    del extract_model
+    (ra, dec, wavelength, net, background) = \
+                extract_model.extract(data, wl_array)
 
     return (ra, dec, wavelength, net, background)

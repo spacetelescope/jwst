@@ -44,6 +44,59 @@ _EXPTYPE_MAP = {
     'nrs_taslit':    'target_acquistion',
 }
 
+# Exposures that are always TSO
+TSO_EXP_TYPES = (
+    'mir_lrs-slitless',
+    'nis_soss',
+    'nrc_tsimage',
+    'nrc_tsgrism',
+    'nrs_brightobj'
+)
+
+# Exposures that get Level2b processing
+IMAGE2_SCIENCE_EXP_TYPES = [
+    'mir_image',
+    'mir_lyot',
+    'mir_4qpm',
+    'nis_ami',
+    'nis_image',
+    'nrc_image',
+    'nrc_coron',
+    'nrc_tsimage',
+]
+
+IMAGE2_NONSCIENCE_EXP_TYPES = [
+    'mir_coroncal',
+    'mir_tacq',
+    'nis_focus',
+    'nis_tacq',
+    'nis_taconfirm',
+    'nrc_tacq',
+    'nrc_taconfirm',
+    'nrc_focus',
+    'nrs_bota',
+    'nrs_confirm',
+    'nrs_focus',
+    'nrs_image',
+    'nrs_mimf',
+    'nrs_taslit',
+    'nrs_tacq',
+    'nrs_taconfirm',
+]
+
+SPEC2_SCIENCE_EXP_TYPES = [
+    'nrc_grism',
+    'nrc_tsgrism',
+    'mir_lrs-fixedslit',
+    'mir_lrs-slitless',
+    'mir_mrs',
+    'nrs_fixedslit',
+    'nrs_ifu',
+    'nrs_msaspec',
+    'nrs_brightobj',
+    'nis_soss',
+]
+
 # Non-specified values found in DMS Association Pools
 _EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f')
 

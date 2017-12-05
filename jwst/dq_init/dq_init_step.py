@@ -17,13 +17,27 @@ class DQInitStep(Step):
 
     def process(self, input):
 
-        # Determine Model type from EXP_TYPE of RampModel
-        input_model = datamodels.RampModel(input)
+        # Try to open the input as a regular RampModel
+        try:
+            input_model = datamodels.RampModel(input)
 
-        # Set flag for guider mode operations
-        if input_model.meta.exposure.type in dq_initialization.guider_list: # Reopen as GuiderRawModel
-            input_model.close()
-            input_model = datamodels.GuiderRawModel(input)
+            # Check to see if it's Guider raw data
+            if input_model.meta.exposure.type in dq_initialization.guider_list:
+                # Reopen as a GuiderRawModel
+                input_model.close()
+                input_model = datamodels.GuiderRawModel(input)
+                self.log.info("Input opened as GuiderRawModel")
+        
+        except TypeError:
+            # If the initial open attempt fails, try to open as a GuiderRawModel
+            try:
+                input_model = datamodels.GuiderRawModel(input)
+                self.log.info("Input opened as GuiderRawModel")
+            except TypeError:
+                self.log.error("Unexpected or unknown input model type")
+        except:
+            self.log.error("Can't open input")
+            raise
 
         # Check for consistency between keyword values and data shape
         nints, ngroups, ysize, xsize = input_model.data.shape
