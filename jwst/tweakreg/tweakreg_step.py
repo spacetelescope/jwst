@@ -64,8 +64,6 @@ class TweakRegStep(Step):
 
     reference_file_types = []
 
-    suffix = 'tweakreg'
-
     def process(self, input):
 
         try:
