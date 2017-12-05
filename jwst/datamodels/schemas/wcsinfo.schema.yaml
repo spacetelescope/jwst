@@ -63,37 +63,31 @@ properties:
           crpix1:
             title: axis 1 coordinate of the reference pixel
             type: number
-            default: 0.0
             fits_keyword: CRPIX1
             fits_hdu: SCI
           crpix2:
             title: axis 2 coordinate of the reference pixel
             type: number
-            default: 0.0
             fits_keyword: CRPIX2
             fits_hdu: SCI
           crpix3:
             title: axis 3 coordinate of the reference pixel
             type: number
-            default: 0.0
             fits_keyword: CRPIX3
             fits_hdu: SCI
           crval1:
             title: first axis value at the reference pixel
             type: number
-            default: 0.0
             fits_keyword: CRVAL1
             fits_hdu: SCI
           crval2:
             title: second axis value at the reference pixel
             type: number
-            default: 0.0
             fits_keyword: CRVAL2
             fits_hdu: SCI
           crval3:
             title: third axis value at the reference pixel
             type: number
-            default: 0.0
             fits_keyword: CRVAL3
             fits_hdu: SCI
           ctype1:
@@ -129,73 +123,61 @@ properties:
           cdelt1:
             title: first axis increment per pixel
             type: number
-            default: 1.0
             fits_keyword: CDELT1
             fits_hdu: SCI
           cdelt2:
             title: second axis increment per pixel
             type: number
-            default: 1.0
             fits_keyword: CDELT2
             fits_hdu: SCI
           cdelt3:
             title: third axis increment per pixel
             type: number
-            default: 1.0
             fits_keyword: CDELT3
             fits_hdu: SCI
           pc1_1:
             title: linear transformation matrix element
             type: number
-            default: 1.0
             fits_keyword: PC1_1
             fits_hdu: SCI
           pc1_2:
             title: linear transformation matrix element
             type: number
-            default: 0.0
             fits_keyword: PC1_2
             fits_hdu: SCI
           pc1_3:
             title: linear transformation matrix element
             type: number
-            default: 0.0
             fits_keyword: PC1_3
             fits_hdu: SCI
           pc2_1:
             title: linear transformation matrix element
             type: number
-            default: 0.0
             fits_keyword: PC2_1
             fits_hdu: SCI
           pc2_2:
             title: linear transformation matrix element
             type: number
-            default: 1.0
             fits_keyword: PC2_2
             fits_hdu: SCI
           pc2_3:
             title: linear transformation matrix element
             type: number
-            default: 0.0
             fits_keyword: PC2_3
             fits_hdu: SCI
           pc3_1:
             title: linear transformation matrix element
             type: number
-            default: 0.0
             fits_keyword: PC3_1
             fits_hdu: SCI
           pc3_2:
             title: linear transformation matrix element
             type: number
-            default: 0.0
             fits_keyword: PC3_2
             fits_hdu: SCI
           pc3_3:
             title: linear transformation matrix element
             type: number
-            default: 1.0
             fits_keyword: PC3_3
             fits_hdu: SCI
           s_region:
@@ -222,42 +204,35 @@ properties:
           v2_ref:
             title: Telescope v2 coordinate of the reference point (arcsec)
             type: number
-            default: 0.0
             fits_keyword: V2_REF
             fits_hdu: SCI
           v3_ref:
             title: Telescope v3 coordinate of the reference point (arcsec)
             type: number
-            default: 0.0
             fits_keyword: V3_REF
             fits_hdu: SCI
           vparity:
             title: Relative sense of rotation between Ideal xy and V2V3
             type: integer
-            default: 1
             fits_keyword: VPARITY
             fits_hdu: SCI
           v3yangle:
             title: Angle from V3 axis to Ideal y axis (deg)
             type: number
-            default: 0.0
             fits_keyword: V3I_YANG
             fits_hdu: SCI
           ra_ref:
             title: Right ascension of the reference point (deg)
             type: number
-            default: 0.0
             fits_keyword: RA_REF
             fits_hdu: SCI
           dec_ref:
             title: Declination of the reference point (deg)
             type: number
-            default: 0.0
             fits_keyword: DEC_REF
             fits_hdu: SCI
           roll_ref:
             title: Telescope roll angle of V3 measured from North over East at the ref. point (deg)
             type: number
-            default: 0.0
             fits_keyword: ROLL_REF
             fits_hdu: SCI
