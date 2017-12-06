@@ -379,6 +379,14 @@ def _save_history(hdulist, tree):
                 history[i] = HistoryEntry({'description': str(history[i])})
         hdulist[0].header['HISTORY'] = history[i]['description']
 
+def _snip_tables(tree):
+    def _snip_node(node, json_id):
+        if isinstance(node, np.ndarray):
+            dtype = node.dtype
+            if hasattr(dtype, 'names'):
+                node = None
+        return node
+    return treeutil.walk_and_modify(tree, _snip_node)
 
 def to_fits(tree, schema, extensions=None):
     hdulist = fits.HDUList()
@@ -387,6 +395,7 @@ def to_fits(tree, schema, extensions=None):
     _save_from_schema(hdulist, tree, schema)
     _save_extra_fits(hdulist, tree)
     _save_history(hdulist, tree)
+    tree = _snip_tables(tree)
 
     asdf = fits_embed.AsdfInFits(hdulist, tree, extensions=extensions)
     return asdf
