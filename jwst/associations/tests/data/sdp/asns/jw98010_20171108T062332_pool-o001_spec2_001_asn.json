@@ -2,7 +2,7 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2Spec",
     "version_id": null,
-    "code_version": "0.9.3",
+    "code_version": "0.9.4",
     "program": "98010",
     "target": "1",
     "asn_pool": "jw98010_20171108T062332_pool",

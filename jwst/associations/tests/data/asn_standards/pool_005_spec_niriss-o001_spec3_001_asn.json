@@ -2,7 +2,7 @@
     "asn_type": "spec3",
     "asn_rule": "candidate_Asn_NIR_SO_SLITLESS",
     "version_id": null,
-    "code_version": "0.9.3",
+    "code_version": "0.9.4",
     "program": "99009",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    detector: {'nis'}\n    exp_type: {'nis_tacnfrm', 'nis_soss', 'nis_tacq'}\n    opt_elem: {'gr700xd'}\n    subarray: {'full'}\n    is_not_tso: set()\n    instrument: {'niriss'}\n    target: {'1'}\n    program: {'99009'}\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
@@ -32,7 +32,7 @@
                     "asn_candidate": "('o001', 'observation')"
                 },
                 {
-                    "expname": "jw_00004_cal.fits",
+                    "expname": "jw_00004_rate.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o001', 'observation')"

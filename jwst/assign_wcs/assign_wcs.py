@@ -1,3 +1,6 @@
+from __future__ import (absolute_import, unicode_literals, division,
+                        print_function)
+
 import logging
 import importlib
 from gwcs.wcs import WCS
@@ -23,6 +26,10 @@ def load_wcs(input_model, reference_files={}):
         raise ValueError("assign_wcs needs reference files to compute the WCS, none were passed")
     instrument = input_model.meta.instrument.name.lower()
     mod = importlib.import_module('.' + instrument, 'jwst.assign_wcs')
+
+    # Add WCS keywords for the spectral axis.
+    if input_model.meta.wcsinfo.wcsaxes == 3:
+        _add_3rd_axis(input_model)
 
     pipeline = mod.create_pipeline(input_model, reference_files)
 
@@ -50,3 +57,18 @@ def load_wcs(input_model, reference_files={}):
             log.info("assign_wcs did not update S_REGION for type {0}".format(output_model.meta.exposure.type))
         log.info("COMPLETED assign_wcs")
     return output_model
+
+
+def _add_3rd_axis(input_model):
+    """
+    Add WCS keywords and their default values for the spectral axis.
+
+    SDP adds CTYPE3 and CUNIT3.
+
+    """
+    input_model.meta.wcsinfo.pc1_3 = 0.
+    input_model.meta.wcsinfo.pc2_3 = 0.
+    input_model.meta.wcsinfo.pc3_3 = 1.
+    input_model.meta.wcsinfo.crval3 = 0.
+    input_model.meta.wcsinfo.crpix3 = 0.
+    input_model.meta.wcsinfo.cdelt3 = 1.

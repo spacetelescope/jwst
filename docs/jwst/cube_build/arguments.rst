@@ -1,10 +1,11 @@
 Step Arguments
 ==============
-A single run of cube building program produces a single IFU cube.  The input data to the cube program can be a
+The input data to the cube program can be a
 single exposure, a data model passed from another pipeline step,  or a list of exposures contained in an association table.
-The output cube can contain data from a single band (for MIRI that is a single channel and single sub-channel and for NIRSPEC that
-is a single grating and single filter) or  a list of [dithered]  exposures either with in the same wavelength band or
-covering several wavelength bands. The arguments controlling the  types of output cubes are:
+The default spectral cubes contain data from a single band. For MIRI a single band covers a single channel and single sub-channel, 
+and for NIRSPEC a single band covers a single grating and single filter. There are options that allow the user to select the 
+type of data to be used in constructing the spectral IFU cube.
+The arguments controlling the  types of data to use  are:
 
 * ``--channel [integer]``
 
@@ -38,6 +39,9 @@ This is a NIRSPEC  option and the only valid options are Clear, F100LP, F070LP, 
 cover the full wavelength range of NIRSPEC the option ALL can be used (provided the exposures in the association table
 contain all the filters). The user can supply a comma separated string containing the filters to use.
 
+
+The arguments controlling the size of the output IFU cube:
+
 * ``--scale1 #``
 
 Where the #  is the  size of the output cube's sample size in the naxis1 dimension.
@@ -50,19 +54,18 @@ Where the  #  is the size of the output cube's sample size  in the naxis2 dimens
 
 Where the  #  is size of the output cube's sample size in the naxis3 dimension.
 
+* ``wavemin  # `` is the minimum wavelength in microns to use in constructing the IFU cube. 
 
- *``wavemin  # `` is the minimum wavelength in microns to use in constructing the IFU cube. 
-
- *``wavemax  # `` is the maximum wavelength in microns to use in constructing the IFU cube. 
+* ``wavemax  # `` is the maximum wavelength in microns to use in constructing the IFU cube. 
  
-* ``coord_system = [string]. Options ra-dec and alpha-beta. The alpha-beta option is a special coordinate system for MIRI data and should
-only be used by advanced users. 
+* ``coord_system = [string]. Options ra-dec and alpha-beta. The alpha-beta option is a special coordinate system 
+for MIRI data and should only be used by advanced users. 
 
 
 There are a number of arguments which control how the point cloud values are combined together to produce the final
 flux associated with the output  spaxel flux. The first set defines the the  **region of interest**  which defines the
 boundary centered on the spaxel center of   point cloud members that are used to find the final spaxel flux. 
-The  arguments  that control this  size are:
+The arguments related to region of interest and how the fluxes are combines together are: 
 
 * ``--rios #``
 The ``rios`` # is the radius of the region of interest in the spatial  dimensions. The value is  real number.
@@ -96,7 +99,7 @@ Where
 by default currently p=2, but this parameter is controlled by the --weight_power option.
 
 
-Example of How to run Cube_Build
+Example of how to run Cube_Build
 ================================
 It is assumed that the input data to the  IFU cube building step has been process through the CALDETECTOR  and
 that assign_wcs has been run on the data.
@@ -104,59 +107,56 @@ that assign_wcs has been run on the data.
 IFU Cube building for MIRI data
 -------------------------------
 
--To run cube_build on a single MIRI exposure (containing channel 1 and 2) but only creating an IFU cube for channel 1::
+To run cube_build on a single MIRI exposure (containing channel 1 and 2) but only creating an IFU cube for channel 1::
 
-	strun cube_build.cfg MIRM103-Q0-SHORT_495_rate_assign_wcs.fits --ch=1 --band=SHORT
+	strun cube_build.cfg MIRM103-Q0-SHORT_495_cal.fits --ch=1 --band=SHORT
 
-The output 3D spectral cube will be: MIRM103-Q0-SHORT_495_rate_assign_wcs_ch1-short_s3d.fits
+The output 3D spectral cube will be: MIRM103-Q0-SHORT_495_ch1-short_s3d.fits
 
 
--To run cube_build on a single MIRI exposure (containing channel 1 and 2) but only creating an IFU cube for channel 1::
-
-	strun cube_build.cfg MIRM103-Q0-SHORT_495_rate_assign_wcs.fits --ch=1 --band=SHORT
-
-The output 3D spectral cube will be: MIRM103-Q0-SHORT_495_rate_assign_wcs_ch1-short_s3d.fits
-
--To run cube_build using an association table containing 4 dithered images, which is defined as follows::
+To run cube_build using an association table containing 4 dithered images, which is defined as follows::
 
 	strun cube_build.cfg cube_build_4dither_asn.json
 
 where  cube_build_4dither_asn.json is defined as::
 
-	{"asn_rule": "Asn_MIRIFU_Dither", "targname": "MYTarget",
-	"asn_pool": "jw00024_001_01_pool", "program": "00024","asn_type":"dither",
-	"products": [
-        {"name": "MIRM103-Q0-Q3",
-        "members":
-        [{"exptype": "SCIENCE", "expname": "MIRM103-Q0-SHORT_495_rate_bsub_updated_assign_wcs.fits"},
-        {"exptype": "SCIENCE", "expname": "MIRM103-Q1-SHORT_495_rate_bsub_updated_assign_wcs.fits"},
-        {"exptype": "SCIENCE", "expname": "MIRM103-Q2-SHORT_495_rate_bsub_updated_assign_wcs.fits"},
-        {"exptype": "SCIENCE", "expname": "MIRM103-Q3-SHORT_495_rate_bsub_updated_assign_wcs.fits"}]}
-	]
+	{"asn_rule": "Asn_MIRIFU_Dither", 
+         "target": "MYTarget",
+         "asn_id": "c3001",
+	 "asn_pool": "jw00024_001_01_pool", 
+         "program": "00024","asn_type":"dither",
+	 "products": [
+                     {"name": "MIRM103-Q0-Q3",
+                     "members":
+                      [{"exptype": "SCIENCE", "expname": "MIRM103-Q0-SHORT_495_cal.fits"},
+                       {"exptype": "SCIENCE", "expname": "MIRM103-Q1-SHORT_495_cal.fits"},
+                       {"exptype": "SCIENCE", "expname": "MIRM103-Q2-SHORT_495_cal.fits"},
+                       {"exptype": "SCIENCE", "expname": "MIRM103-Q3-SHORT_495_cal.fits"}]}
+	              ]
         }
 
 
-	 The output file will be an IFU cube for 4 dithers and two channels for the SHORT wavelength band of the short
-	 wavelength MIRI IFU detector. Its root name was defined in the association table as MIRM103-Q0-Q3_ch1-2-short_s3d.fits
+The default output files will two IFU cubes. The first IFU cube will contain the dithered images for
+channel 1 and SHORT data and the second IFU will contain the channel 2 and SHORT data. The files names are defined by
+the association table and are: MIRM103-Q0-Q3_ch1-short_s3d.fits and MIRM103-Q0-Q3_ch2-short_s3d.fits.
 
 
--To use the same association table but only combine channel 1 data in the cube  you need to add the --ch
-and --band options. Even though there is only one band option for the data whenever you use the --ch option
-you must also use the -band option.::
+To use the same association table but  combine all the data together use the output_type=multi option::
 
-	 strun cube_build.cfg cube_build_4dither_asn.json
+	 strun cube_build.cfg cube_build_4dither_asn.json --output_type=multi
+	 
 
-The output  IFU Cube will be: MIRM103-Q0-Q3_ch1-short_s3d.fits
+The output  IFU Cube will be: MIRM103-Q0-Q3_ch1-2-short_s3d.fits
 
 
 IFU Cube building for NIRSPEC data
 ----------------------------------
 
-- To run cube_build on a single NIRSPEC exposure with grating = G140H and filter =F100LP::
+To run cube_build on a single NIRSPEC exposure with grating = G140H and filter =F100LP::
 
-	strun cube_build.cfg jwtest1004001_01101_00001_NRS2_uncal_rate_updated_assign_wcs.fits
+	strun cube_build.cfg jwtest1004001_01101_00001_NRS2_cal.fits
 
-The output IFU cube will be jwtest1004001_01101_00001_NRS2_uncal_rate_updated_assign_wcs_g140h-f100lp_s3d.fits
+The output IFU cube will be jwtest1004001_01101_00001_NRS2_g140h-f100lp_s3d.fits
 
 - To run cube_build using an association table containing data from twos dithers of G140H, F100LP and G140H, F070LP::
 
@@ -164,18 +164,20 @@ The output IFU cube will be jwtest1004001_01101_00001_NRS2_uncal_rate_updated_as
 
 Where the association table looks like::
 
-	{"asn_rule": "Asn_NIRSPECFU_Dither", "targname": "MYTarget",
-	"asn_pool": "jw00024_001_01_pool", "program": "00024","asn_type":"NRSIFU",
-	"asn_id":"a3001",
-	"products": [
-        {"name": "JW3-6-NIRSPEC",
-        "members":
-        [{"exptype": "SCIENCE", "expname": "jwtest1003001_01101_00001_NRS1_uncal_rate_updated_assign_wcs.fits"},
-        {"exptype": "SCIENCE", "expname": "jwtest1004001_01101_00001_NRS2_uncal_rate_updated_assign_wcs.fits"},
-        {"exptype": "SCIENCE", "expname": "jwtest1005001_01101_00001_NRS1_uncal_rate_updated_assign_wcs.fits"},
-        {"exptype": "SCIENCE", "expname": "jwtest1006001_01101_00001_NRS2_uncal_rate_updated_assign_wcs.fits"}]}
-        ]
-	}
+	{"asn_rule": "Asn_NIRSPECFU_Dither", 
+         "target": "MYTarget",
+	 "asn_pool": "jw00024_001_01_pool", 
+	 "program": "00024","asn_type":"NRSIFU",
+	 "asn_id":"a3001",
+	 "products": [
+         {"name": "JW3-6-NIRSPEC",
+         "members":
+         [{"exptype": "SCIENCE", "expname": "jwtest1003001_01101_00001_NRS1_cal.fits"},
+         {"exptype": "SCIENCE", "expname": "jwtest1004001_01101_00001_NRS2_cal.fits"},
+         {"exptype": "SCIENCE", "expname": "jwtest1005001_01101_00001_NRS1_cal.fits"},
+         {"exptype": "SCIENCE", "expname": "jwtest1006001_01101_00001_NRS2_cal.fits"}]}
+         ]
+	 }
 
- the output IFU cube is: JW3-6-NIRSPEC_g140h-f070lp-g140h-f100lp_s3d.fits
+The output IFU cube will be two IFU cubes: JW3-6-NIRSPEC_g140h-f070lp_s3d.fits and JW3-6-NIRSPEC_g140h-f100lp_s3d.fits
  

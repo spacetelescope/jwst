@@ -2,7 +2,7 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2Spec",
     "version_id": null,
-    "code_version": "0.9.3",
+    "code_version": "0.9.4",
     "program": "99009",
     "target": "1",
     "asn_pool": "pool_011_spec_miri_lv2bkg_lrs",
@@ -14,19 +14,6 @@
             "members": [
                 {
                     "expname": "jw_00001_rate.fits",
-                    "exptype": "science"
-                },
-                {
-                    "expname": "jw_00002_rate.fits",
-                    "exptype": "background"
-                }
-            ]
-        },
-        {
-            "name": "jw_00002",
-            "members": [
-                {
-                    "expname": "jw_00002_rate.fits",
                     "exptype": "science"
                 }
             ]
