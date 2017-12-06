@@ -8,7 +8,7 @@ detection on JWST observations.  The ``OutlierDetectionStep`` supports multiple
 algorithms and determines the appropriate algorithm for the type of observation
 being processed.  This step supports:
 
-* **Image modes**: 'NRC_IMAGE', 'MIR_IMAGE', 'NRS_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE'
+* **Image modes**: 'NRC_IMAGE', 'MIR_IMAGE', 'NIS_IMAGE', 'FGS_IMAGE'
 * **Spectroscopic modes**: 'NRC_GRISM', 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NIS_WFSS'
 * **Time-Series-Observation(TSO) Spectroscopic modes**: 'NIS_SOSS', 'MIR_LRS-SLITLESS', 'NRC_TSGRISM', 'NRS_BRIGHTOBJ'
 * **IFU Spectroscopic modes**: 'NRS_IFU', 'MIR_MRS'
