@@ -44,5 +44,4 @@ from . import superbias
 #from . import timeconversion
 from . import transforms
 from . import tweakreg
-from . import tweakreg_catalog
 from . import wfs_combine

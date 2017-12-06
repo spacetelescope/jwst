@@ -19,17 +19,15 @@ from astropy.table import Table
 # LOCAL
 from . import __version__
 from . import __vdate__
-from ..stpipe import Step, cmdline
+from ..stpipe import Step
 from .. import datamodels
 
-from . imalign import align
-from . wcsimage import *
+from .imalign import align
+from .wcsimage import *
+from .tweakreg_catalog import make_tweakreg_catalog
+
 
 __all__ = ['TweakRegStep']
-
-
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class TweakRegStep(Step):
@@ -43,6 +41,10 @@ class TweakRegStep(Step):
         enforce_user_order = boolean(default=True) # Align images in user specified order?
 
         # Reference Catalog parameters:
+        save_catalogs = boolean(default=False) # Write out catalogs?
+        catalog_format = string(default='ecsv')   # Catalog output file format
+        kernel_fwhm = float(default=2.5)    # Gaussian kernel FWHM in pixels
+        snr_threshold = float(default=5.0)  # SNR threshold above the bkg
         expand_refcat = boolean(default=False) # Expand reference catalog with new sources?
 
         # Object matching parameters:
@@ -64,36 +66,68 @@ class TweakRegStep(Step):
 
     def process(self, input):
 
-        img = datamodels.ModelContainer(input, persist=True)
+        try:
+            images = datamodels.ModelContainer(input, persist=True)
+        except TypeError as te:
+            raise te("Input to tweakreg must be a list of DataModels, an "
+                "association, or an already open ModelContainer containing "
+                "one or more DataModels.")
 
-        if len(img) == 0:
+        # Build the catalogs for input images
+        for image_model in images:
+            catalog = make_tweakreg_catalog(image_model, self.kernel_fwhm,
+                                            self.snr_threshold)
+            filename = image_model.meta.filename
+            self.log.info('Detected {0} sources in {1}.'.format(len(catalog), filename))
+
+            if self.save_catalogs:
+                catalog_filename = filename.replace('.fits', '_cat.{0}'.
+                                                    format(self.catalog_format))
+                if self.catalog_format == 'ecsv':
+                    fmt = 'ascii.ecsv'
+                elif self.catalog_format == 'fits':
+                    # NOTE: The catalog must not contain any 'None' values.
+                    #       FITS will also not clobber existing files.
+                    fmt = 'fits'
+                else:
+                    raise ValueError('catalog_format must be "ecsv" or "fits".')
+                catalog.write(catalog_filename, format=fmt, overwrite=True)
+                self.log.info('Wrote source catalog: {0}'.
+                              format(catalog_filename))
+                image_model.meta.tweakreg_catalog.filename = catalog_filename
+
+            image_model.catalog = catalog
+
+        # Now use the catalogs for tweakreg
+        if len(images) == 0:
             raise ValueError("Input must contain at least one image model.")
 
         # group images by their "group id":
-        #TODO: re-allow grouping once we implement support for groups
-        grp_img = [[i] for i in img] #img.models_grouped
+        grp_img = [[i] for i in images] #images.models_grouped
 
         if len(grp_img) == 1:
-            # we need at least two images/groups to perform image alignment
-            log.info("At least two images or groups are required for image "
-                     "alinment.")
-            log.info("Nothing to do. Exiting 'TweakRegStep'...")
+            # we need at least two exposures to perform image alignment
+            self.log.info("At least two exposures are required for image "
+                     "alignment.")
+            self.log.info("Nothing to do. Skipping 'TweakRegStep'...")
+            self.skip = True
+            for model in images:
+                model.meta.cal_step.tweakreg = "SKIPPED"
             return input
 
         # create a list of WCS-Catalog-Images Info and/or their Groups:
-        images = []
-
+        imcats = []
         for g in grp_img:
             if len(g) == 0:
                 raise AssertionError("Logical error in the pipeline code.")
 
             wcsimlist = list(map(self._imodel2wcsim, g))
             wgroup = WCSGroupCatalog(wcsimlist, name=wcsimlist[0].name)
-            images.append(wgroup)
+            imcats.append(wgroup)
 
         # align images:
         align(
-            imcat=images,
+            imcat=imcats,
             refcat=None,
             enforce_user_order=self.enforce_user_order,
             expand_refcat=self.expand_refcat,
@@ -109,7 +143,11 @@ class TweakRegStep(Step):
             sigma=self.sigma
         )
 
-        return img
+        for model in images:
+            model.meta.cal_step.tweakreg = "COMPLETE"
+
+        return images
+
 
     def _imodel2wcsim(self, image_model):
         # make sure that we have a catalog:
@@ -119,7 +157,10 @@ class TweakRegStep(Step):
             catalog = image_model.meta.tweakreg_catalog.filename
 
         if not isinstance(catalog, Table):
-            catalog = Table.read(catalog, format='ascii.ecsv')
+            try:
+                catalog = Table.read(catalog, format='ascii.ecsv')
+            except IOError:
+                self.log.error("Cannot read catalog {}".format(catalog))
 
         if 'xcentroid' in catalog.colnames:
             catalog.rename_column('xcentroid', 'x')
@@ -136,20 +177,9 @@ class TweakRegStep(Step):
                         'v2_ref': refang['v2_ref'] / 3600.0,
                         'v3_ref': refang['v3_ref'] / 3600.0},
             catalog=catalog,
-            name=_get_filename(image_model),
+            name=image_model.meta.filename,
             meta={'image_model': image_model}
         )
 
         return im
-
-
-def _get_filename(image_model):
-    if image_model.meta.filename is None:
-        return None
-    else:
-        return os.path.splitext(os.path.basename(image_model.meta.filename))[0]
-
-
-if __name__ == '__main__':
-    cmdline.step_script(TweakRegStep)
 

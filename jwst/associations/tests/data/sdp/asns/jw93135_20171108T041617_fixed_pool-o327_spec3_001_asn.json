@@ -2,7 +2,7 @@
     "asn_type": "spec3",
     "asn_rule": "candidate_Asn_MIRI_IFU",
     "version_id": null,
-    "code_version": "0.9.3",
+    "code_version": "0.9.4",
     "program": "93135",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    exp_type: {'mir_mrs', 'mir_flatmrs'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'2'}\n    program: {'93135'}\n    asn_candidate: {\"\\\\(\\\\'o327\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
@@ -20,7 +20,7 @@
                     "asn_candidate": "('o327', 'observation')"
                 },
                 {
-                    "expname": "jw93135327001_02103_00001_mirifulong_cal.fits",
+                    "expname": "jw93135327001_02103_00001_mirifulong_rate.fits",
                     "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o327', 'observation')"
@@ -44,25 +44,25 @@
                     "asn_candidate": "('o327', 'observation')"
                 },
                 {
-                    "expname": "jw93135327001_02101_00001_mirifulong_cal.fits",
+                    "expname": "jw93135327001_02101_00001_mirifulong_rate.fits",
                     "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o327', 'observation')"
                 },
                 {
-                    "expname": "jw93135327001_02102_00001_mirifulong_cal.fits",
+                    "expname": "jw93135327001_02102_00001_mirifulong_rate.fits",
                     "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o327', 'observation')"
                 },
                 {
-                    "expname": "jw93135327001_02105_00001_mirifulong_cal.fits",
+                    "expname": "jw93135327001_02105_00001_mirifulong_rate.fits",
                     "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o327', 'observation')"
                 },
                 {
-                    "expname": "jw93135327001_02108_00001_mirifulong_cal.fits",
+                    "expname": "jw93135327001_02108_00001_mirifulong_rate.fits",
                     "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o327', 'observation')"
@@ -74,19 +74,19 @@
                     "asn_candidate": "('o327', 'observation')"
                 },
                 {
-                    "expname": "jw93135327001_02104_00001_mirifulong_cal.fits",
+                    "expname": "jw93135327001_02104_00001_mirifulong_rate.fits",
                     "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o327', 'observation')"
                 },
                 {
-                    "expname": "jw93135327001_02107_00001_mirifulong_cal.fits",
+                    "expname": "jw93135327001_02107_00001_mirifulong_rate.fits",
                     "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o327', 'observation')"
                 },
                 {
-                    "expname": "jw93135327001_02106_00001_mirifulong_cal.fits",
+                    "expname": "jw93135327001_02106_00001_mirifulong_rate.fits",
                     "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "('o327', 'observation')"

@@ -2,7 +2,7 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2ImageNonScience",
     "version_id": null,
-    "code_version": "0.9.3",
+    "code_version": "0.9.4",
     "program": "93135",
     "target": "5",
     "asn_pool": "jw93135_20171108T041617_pool",
@@ -19,64 +19,10 @@
             ]
         },
         {
-            "name": "jw93135022001_0210d_00001_nrs1",
-            "members": [
-                {
-                    "expname": "jw93135022001_0210d_00001_nrs1_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw93135022001_0210d_00001_nrs2",
-            "members": [
-                {
-                    "expname": "jw93135022001_0210d_00001_nrs2_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw93135012001_0210d_00001_nrs2",
-            "members": [
-                {
-                    "expname": "jw93135012001_0210d_00001_nrs2_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw93135011001_0210d_00001_nrs1",
-            "members": [
-                {
-                    "expname": "jw93135011001_0210d_00001_nrs1_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
             "name": "jw93135021001_0210d_00001_nrs2",
             "members": [
                 {
                     "expname": "jw93135021001_0210d_00001_nrs2_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw93135012001_0210d_00001_nrs1",
-            "members": [
-                {
-                    "expname": "jw93135012001_0210d_00001_nrs1_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw93135011001_0210d_00001_nrs2",
-            "members": [
-                {
-                    "expname": "jw93135011001_0210d_00001_nrs2_rate.fits",
                     "exptype": "science"
                 }
             ]

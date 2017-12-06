@@ -2,7 +2,7 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2Spec",
     "version_id": null,
-    "code_version": "0.9.3",
+    "code_version": "0.9.4",
     "program": "99009",
     "target": "1",
     "asn_pool": "pool_021_tso",
@@ -14,33 +14,6 @@
             "members": [
                 {
                     "expname": "jw_00001_rateints.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00002",
-            "members": [
-                {
-                    "expname": "jw_00002_rateints.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00004",
-            "members": [
-                {
-                    "expname": "jw_00004_rateints.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00005",
-            "members": [
-                {
-                    "expname": "jw_00005_rateints.fits",
                     "exptype": "science"
                 }
             ]

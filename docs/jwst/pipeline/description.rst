@@ -11,29 +11,29 @@ shows the pipeline classes that are currently available, the
 corresponding pre-defined configurations that make use of those classes, and
 the instrument modes to which they can be applied.
 
-+----------------------+------------------------+------------------------------------------+
-| Class Name           | Configuration File     | Used For                                 |
-+======================+========================+==========================================+
-| Detector1Pipeline    | calwebb_detector1.cfg  | Stage 1 processing: all non-TSO modes    |
-+----------------------+------------------------+------------------------------------------+
-| Detector1Pipeline    | calwebb_tso1.cfg       | Stage 1 processing: all TSO modes        |
-+----------------------+------------------------+------------------------------------------+
-| DarkPipeline         | calwebb_dark.cfg       | Stage 1 processing: darks                |
-+----------------------+------------------------+------------------------------------------+
-| Image2Pipeline       | calwebb_image2.cfg     | Stage 2 processing: imaging modes        |
-+----------------------+------------------------+------------------------------------------+
-| Spec2Pipeline        | calwebb_spec2.cfg      | Stage 2 processing: spectroscopy modes   |
-+----------------------+------------------------+------------------------------------------+
-| Image3Pipeline       | calwebb_image3.cfg     | Stage 3 processing: imaging modes        |
-+----------------------+------------------------+------------------------------------------+
-| Spec3Pipeline        | calwebb_spec3.cfg      | Stage 3 processing: spectroscopy modes   |
-+----------------------+------------------------+------------------------------------------+
-| Ami3Pipeline         | calwebb_ami3.cfg       | Stage 3 processing: NIRISS AMI mode      |
-+----------------------+------------------------+------------------------------------------+
-| Coron3Pipeline       | calwebb_coron3.cfg     | Stage 3 processing: Coronagraphic mode   |
-+----------------------+------------------------+------------------------------------------+
-| TSO3Pipeline         | calwebb_tso3.cfg       | Stage 3 processing: Time Series mode     |
-+----------------------+------------------------+------------------------------------------+
++-------------------+-----------------------+-----------------------------+
+| Class Name        | Configuration File    | Used For                    |
++===================+=======================+=============================+
+| Detector1Pipeline | calwebb_detector1.cfg | Stage 1: all non-TSO modes  |
++-------------------+-----------------------+-----------------------------+
+| Detector1Pipeline | calwebb_tso1.cfg      | Stage 1: all TSO modes      |
++-------------------+-----------------------+-----------------------------+
+| DarkPipeline      | calwebb_dark.cfg      | Stage 1: darks              |
++-------------------+-----------------------+-----------------------------+
+| Image2Pipeline    | calwebb_image2.cfg    | Stage 2: imaging modes      |
++-------------------+-----------------------+-----------------------------+
+| Spec2Pipeline     | calwebb_spec2.cfg     | Stage 2: spectroscopy modes |
++-------------------+-----------------------+-----------------------------+
+| Image3Pipeline    | calwebb_image3.cfg    | Stage 3: imaging modes      |
++-------------------+-----------------------+-----------------------------+
+| Spec3Pipeline     | calwebb_spec3.cfg     | Stage 3: spectroscopy modes |
++-------------------+-----------------------+-----------------------------+
+| Ami3Pipeline      | calwebb_ami3.cfg      | Stage 3: NIRISS AMI mode    |
++-------------------+-----------------------+-----------------------------+
+| Coron3Pipeline    | calwebb_coron3.cfg    | Stage 3: Coronagraphic mode |
++-------------------+-----------------------+-----------------------------+
+| TSO3Pipeline      | calwebb_tso3.cfg      | Stage 3: Time Series mode   |
++-------------------+-----------------------+-----------------------------+
 
 Input Files, Output Files and Data Models
 =========================================
@@ -211,9 +211,9 @@ certain instruments or instrument modes, as noted in the table.
 +======================+====+=====+=====+====+====+=====+======+======+========+
 | assign_wcs           | X  |  X  |  X  | X  | X  |  X  |   X  |  X   |   X    |
 +----------------------+----+-----+-----+----+----+-----+------+------+--------+
-| bkg_subtract         | X  |  X  |  X  | X  | X  |  X  |   X  |  X   |   X    |
+| background           | X  |  X  |  X  | X  | X  |  X  |   X  |  X   |   X    |
 +----------------------+----+-----+-----+----+----+-----+------+------+--------+
-| imprint_subtract     |    |  X  |  X  |    |    |     |      |      |        |
+| imprint              |    |  X  |  X  |    |    |     |      |      |        |
 +----------------------+----+-----+-----+----+----+-----+------+------+--------+
 | msaflagopen          |    |  X  |  X  |    |    |     |      |      |        |
 +----------------------+----+-----+-----+----+----+-----+------+------+--------+
@@ -510,29 +510,29 @@ saved, as described above.
 
 .. _stage3-coron-flow:
 
-Stage 3 CORONAGRAPHIC Pipeline Step Flow (calwebb_coron3)
+Stage 3 Coronagraphic Pipeline Step Flow (calwebb_coron3)
 ===============================================================================
 The stage 3 coronagraphic (``calwebb_coron3``) pipeline is to be applied to
-associations of calibrated NIRCam coronagraphic and MIRI Lyot and MIRI 4QPM
-exposures and is used to produce psf-subtracted, resampled, combined images
+associations of calibrated NIRCam coronagraphic and MIRI Lyot and 4QPM
+exposures, and is used to produce psf-subtracted, resampled, combined images
 of the source object.
 
 The steps applied by the ``calwebb_coron3`` pipeline are shown in the table
 below.
 
-+---------------------------------------------------------------------------------------------------+
-| :py:class:`calwebb_coron3 <jwst.pipeline.calwebb_coron3.Coron3Pipeline>`                          |
-+===================================================================================================+
-| :py:class:`stack_refs <jwst.coron.stack_refs_step.StackRefsStep>`                                 |
-+---------------------------------------------------------------------------------------------------+
-| :py:class:`align_refs <jwst.coron.align_refs_step.AlignRefsStep>`                                 |
-+---------------------------------------------------------------------------------------------------+
-| :py:class:`klip <jwst.coron.klip_step.KlipStep>`                                                  |
-+---------------------------------------------------------------------------------------------------+
-| :py:class:`outlier_detection <jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep` |
-+---------------------------------------------------------------------------------------------------+
-| :py:class:`resample <jwst.resample.resample_step.ResampleStep>`                                   |
-+---------------------------------------------------------------------------------------------------+
++----------------------------------------------------------------------------------------------------+
+| :py:class:`calwebb_coron3 <jwst.pipeline.calwebb_coron3.Coron3Pipeline>`                           |
++====================================================================================================+
+| :py:class:`stack_refs <jwst.coron.stack_refs_step.StackRefsStep>`                                  |
++----------------------------------------------------------------------------------------------------+
+| :py:class:`align_refs <jwst.coron.align_refs_step.AlignRefsStep>`                                  |
++----------------------------------------------------------------------------------------------------+
+| :py:class:`klip <jwst.coron.klip_step.KlipStep>`                                                   |
++----------------------------------------------------------------------------------------------------+
+| :py:class:`outlier_detection <jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep>` |
++----------------------------------------------------------------------------------------------------+
+| :py:class:`resample <jwst.resample.resample_step.ResampleStep>`                                    |
++----------------------------------------------------------------------------------------------------+
 
 
 Inputs
@@ -584,29 +584,29 @@ associations of calibrated TSO exposures (NIRCam TS imaging, NIRCam TS grism,
 NIRISS SOSS, NIRSpec BrightObj, MIRI LRS Slitless) and is used to
 produce calibrated time-series photometry of the source object.
 
-The steps applied by the ``calwebb_tso3`` pipeline are shown below for
-an Imaging TSO observation:
+The steps applied by the ``calwebb_tso3`` pipeline for an Imaging TSO observation
+are shown below:
 
-+---------------------------------------------------------------------------------------------------+
-| :py:class:`calwebb_tso3 <jwst.pipeline.calwebb_tso3.Tso3Pipeline>`                                |
-+===================================================================================================+
-| :py:class:`outlier_detection <jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep` |
-+---------------------------------------------------------------------------------------------------+
-| tso_photometry                                                                                    |
-+---------------------------------------------------------------------------------------------------+
++----------------------------------------------------------------------------------------------------+
+| :py:class:`calwebb_tso3 <jwst.pipeline.calwebb_tso3.Tso3Pipeline>`                                 |
++====================================================================================================+
+| :py:class:`outlier_detection <jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep>` |
++----------------------------------------------------------------------------------------------------+
+| :py:class:`tso_photometry <jwst.tso_photometry.tso_photometry_step.TSOPhotometryStep>`             |
++----------------------------------------------------------------------------------------------------+
 
-The steps applied by the ``calwebb_tso3`` pipeline are shown below for a
-Spectroscopic TS observation:
+The steps applied by the ``calwebb_tso3`` pipeline for a Spectroscopic TSO
+observation are shown below:
 
-+---------------------------------------------------------------------------------------------------+
-| :py:class:`calwebb_tso3 <jwst.pipeline.calwebb_tso3.Tso3Pipeline>`                                |
-+===================================================================================================+
-| :py:class:`outlier_detection <jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep` |
-+---------------------------------------------------------------------------------------------------+
-| :py:class:`extract_1d <jwst.extract_1d.extract_1d_step.Extract1dStep>`                            |
-+---------------------------------------------------------------------------------------------------+
-| :py:class:`white_light <jwst.white_light.white_light_step.WhiteLightStep>`                        |
-+---------------------------------------------------------------------------------------------------+
++----------------------------------------------------------------------------------------------------+
+| :py:class:`calwebb_tso3 <jwst.pipeline.calwebb_tso3.Tso3Pipeline>`                                 |
++====================================================================================================+
+| :py:class:`outlier_detection <jwst.outlier_detection.outlier_detection_step.OutlierDetectionStep>` |
++----------------------------------------------------------------------------------------------------+
+| :py:class:`extract_1d <jwst.extract_1d.extract_1d_step.Extract1dStep>`                             |
++----------------------------------------------------------------------------------------------------+
+| :py:class:`white_light <jwst.white_light.white_light_step.WhiteLightStep>`                         |
++----------------------------------------------------------------------------------------------------+
 
 Inputs
 ------
@@ -638,5 +638,5 @@ Outputs
 
 * White-light photometry for spectroscopic TS observations:  The ``white_light`` step
   is applied to the ``_x1dints`` extracted data to produce an ASCII catalog
-  in ``ecsv`` format with a product type of ``_whtlht``, containing
+  in ``ecsv`` format with a product type of ``_whtlt``, containing
   the wavelength-integrated white-light photometry of the source object.
