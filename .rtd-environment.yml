@@ -7,10 +7,12 @@ dependencies:
   - setuptools
   - numpy
   - cython
-  - matplotlib
-  - d2to1
   - scipy
+  - matplotlib
+  - astropy
+  - d2to1
   - gwcs
+  - asdf
   - photutils
   - crds
   - dask
@@ -20,6 +22,4 @@ dependencies:
   - jwst_lib
   - sphinx_rtd_theme
   - pip:
-    - -e git+https://github.com/astropy/astropy.git#egg=astropy
-    - -e git+https://github.com/spacetelescope/asdf.git#egg=asdf
     - sphinx-automodapi
