@@ -41,17 +41,24 @@ class Asn_Image(
         # Setup for checking.
         self.add_constraints({
             'wfsvisit': {
-                'inputs': ['wfsvisit'],
-                'force_undefined': True,
+                'inputs': ['visitype'],
+                'value': '((?!wfsc).)*'
             },
         })
 
         # Now check and continue initialization.
         super(Asn_Image, self).__init__(*args, **kwargs)
 
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'image3'
+        super(Asn_Image, self)._init_hook(item)
+
 
 class Asn_WFSCMB(
         AsnMixin_Image,
+        AsnMixin_OpticalPath,
         AsnMixin_Target,
         AsnMixin_Base
 ):
@@ -66,8 +73,8 @@ class Asn_WFSCMB(
         # Setup for checking.
         self.add_constraints({
             'wfsvisit': {
-                'value': '(?!null).+',
-                'inputs': ['wfsvisit'],
+                'value': '.+wfsc.+',
+                'inputs': ['visitype'],
             },
             'asn_candidate_wfs': {
                 'value': '.+mosaic.+',
@@ -106,7 +113,10 @@ class Asn_MIRI_LRS_FIXEDSLIT(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'mir_lrs-fixedslit|mir_tacq',
+                'value': (
+                    'mir_lrs-fixedslit'
+                    '|mir_tacq'
+                ),
                 'inputs': ['exp_type']
             },
             'opt_elem': {
@@ -136,7 +146,10 @@ class Asn_MIRI_LRS_SLITLESS(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'mir_lrs-slitless|mir_tacq',
+                'value': (
+                    'mir_lrs-slitless'
+                    '|mir_tacq'
+                ),
                 'inputs': ['exp_type']
             },
             'opt_elem': {
@@ -170,7 +183,11 @@ class Asn_NIR_SO_SLITLESS(
                 'inputs': ['detector']
             },
             'exp_type': {
-                'value': 'nis_soss|nis_tacq|nis_tacnfrm',
+                'value': (
+                    'nis_soss'
+                    '|nis_tacq'
+                    '|nis_tacnfrm'
+                ),
                 'inputs': ['exp_type']
             },
             'opt_elem': {
@@ -206,8 +223,8 @@ class Asn_NRS_FIXEDSLIT(
                     'nrs_fixedslit'
                     '|nrs_autowave'
                     '|nrs_confirm'
-                    '|nrs_tacq'
                     '|nrs_taconfirm'
+                    '|nrs_tacq'
                     '|nrs_taslit'
                 ),
                 'inputs': ['exp_type']
@@ -246,8 +263,8 @@ class Asn_NRS_MSA(
                     '|nrs_autowave'
                     '|nrs_confirm'
                     '|nrs_taslit'
-                    '|nrs_tacq'
                     '|nrs_taconfirm'
+                    '|nrs_tacq'
                 ),
                 'inputs': ['exp_type']
             },
@@ -316,9 +333,9 @@ class Asn_NRS_IFU(
                     'nrs_ifu'
                     '|nrs_autowave'
                     '|nrs_confirm'
-                    '|nrs_taslit'
-                    '|nrs_tacq'
                     '|nrs_taconfirm'
+                    '|nrs_tacq'
+                    '|nrs_taslit'
                 ),
                 'inputs': ['exp_type']
             },
@@ -352,8 +369,11 @@ class Asn_Coron(
             'exp_type': {
                 'value': (
                     'nrc_coron'
+                    '|nrc_taconfirm'
+                    '|nrc_tacq'
                     '|mir_lyot'
                     '|mir_4qpm'
+                    '|mir_tacq'
                 ),
                 'inputs': ['exp_type'],
                 'force_unique': True,
@@ -406,7 +426,11 @@ class Asn_AMI(
         # Setup for checking.
         self.add_constraints({
             'exp_type': {
-                'value': 'nis_ami',
+                'value': (
+                    'nis_ami'
+                    '|nis_taconfirm'
+                    '|nis_tacq'
+                ),
                 'inputs': ['exp_type'],
             },
             'target': {
@@ -452,3 +476,70 @@ class Asn_WFSS(
 
         # Check and continue initialization.
         super(Asn_WFSS, self).__init__(*args, **kwargs)
+
+
+class Asn_TSO_Flag(
+        AsnMixin_OpticalPath,
+        AsnMixin_Target,
+        AsnMixin_Base
+):
+    """Time-Series observations"""
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'is_tso': {
+                'value': 't',
+                'inputs': ['tsovisit']
+            },
+            'exp_type': {
+                'value': None,
+                'inputs': ['exp_type']
+            }
+        })
+
+        super(Asn_TSO_Flag, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'tso3'
+        super(Asn_TSO_Flag, self)._init_hook(item)
+
+
+class Asn_TSO_EXPTYPE(
+        AsnMixin_OpticalPath,
+        AsnMixin_Target,
+        AsnMixin_Base
+):
+    """Time-Series observations"""
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'exp_type': {
+                'value': (
+                    'mir_lrs-slitless'
+                    '|nis_soss'
+                    '|nis_taconfirm'
+                    '|nis_tacq'
+                    '|nrc_tsimage'
+                    '|nrc_tsgrism'
+                    '|nrs_bota'
+                    '|nrs_brightobj'
+                    '|nrs_taconfirm'
+                ),
+                'inputs': ['exp_type'],
+                'force_unique': True
+            },
+            'no_tso_flag': {
+                'value': None,
+                'inputs': ['tsovisit'],
+                'required': False,
+                'force_undefined': True
+            }
+        })
+
+        super(Asn_TSO_EXPTYPE, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'tso3'
+        super(Asn_TSO_EXPTYPE, self)._init_hook(item)

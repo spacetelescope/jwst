@@ -1,7 +1,4 @@
 """Test basic usage of Level2 associations"""
-from __future__ import absolute_import
-
-import pytest
 import re
 
 from .helpers import (

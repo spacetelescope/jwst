@@ -287,7 +287,7 @@ def get_object_info(catalog_name=''):
 
     Notes
     -----
-    
+
     """
     objects = []
     catalog = QTable.read(catalog_name, format='ascii.ecsv')
@@ -338,7 +338,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     in order to find the "direct image" pixel location, which is
     also in a detector pixel coordinate frame. This "direct image"
     location can then be sent through the trace polynomials to find
-    the spectral location on the grism image for that wavelength and order. 
+    the spectral location on the grism image for that wavelength and order.
 
 
     Parameters
@@ -363,20 +363,43 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     for each object. The name of the catalog has been stored in the input models meta
     information under the source_catalog key.
 
-    It's left to the calling routine to cut the bounding boxes at the extent of the 
+    It's left to the calling routine to cut the bounding boxes at the extent of the
     detector (for example, extract 2d would only extract the on-detector portion of
     the bounding box)
-    """
 
-    # get the filter that was used with the observation
+    Bounding box dispersion direction is dependent on the filter and module for NIRCAM 
+    and changes for GRISMR, but is consistent for GRISMC,
+    see https://jwst-docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
+
+    NIRISS only has one detector, but GRISMC disperses along rows and GRISMR disperses
+    along columns.
+
+    """
+    # figure out the dispersion direction, shouldn't this be in the polynomials already?
+    disperse_row_right = True  # disperse to increasing x
+    disperse_column = False  # column always disperses to increasing y
+
     instr_name = input_model.meta.instrument.name
-    if instr_name == 'NIRCAM':
-        filter_name = input_model.meta.instrument.filter
-    elif instr_name == 'NIRISS':
-        filter_name = input_model.meta.instrument.pupil
+    if instr_name == "NIRCAM":
+        module, grism, filter_name = (input_model.meta.instrument.module,
+                                      input_model.meta.instrument.pupil,
+                                      input_model.meta.instrument.filter)
+        if ((module == "B") and (grism == "GRISMR")):
+            disperse_row_right = False
+        elif (grism == "GRISMC"):
+            disperse_column = True
+            disperse_row_right = False
+
+    elif instr_name == "NIRISS":
+        grism, filter_name = (input_model.meta.instrument.filter,
+                              input_model.meta.instrument.pupil)
+
+        if "R" == grism[-1]:
+            disperse_column = True
+            disperse_row_right = False
     else:
-        raise ValueError("Unsupported instrument specified in input_model")
-        
+        raise ValueError("Input model is from unexpected instrument")
+    
     # get the array extent to exclude boxes not contained on the detector
     xsize = input_model.meta.subarray.xsize
     ysize = input_model.meta.subarray.ysize
@@ -395,11 +418,11 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
         wrange = f.wrange
         wrange_selector = f.wrange_selector
         orders = f.order
-    
+
     # All objects in the catalog will use the same filter for translation
     # that filter is the one that was used in front of the grism
     fselect = wrange_selector.index(filter_name)
-    
+
     grism_objects = []  # the return list of GrismObjects
     for obj in skyobject_list:
         if obj.abmag < mmag_extract:
@@ -413,47 +436,83 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                                                      1, 1)
 
             order_bounding = {}
+            waverange = {}
             for oidx, order in enumerate(orders):
                 # The orders of the bounding box in the non-dispersed image
                 # drive the extraction extent. The location of the min and
                 # max wavelengths for each order are used to get the location
                 # of the +/- sides of the bounding box in the grism image
                 lmin, lmax = wrange[oidx][fselect]
+
+                # we need to be specific with dispersion direction here?
+                # I think this should be taken care of in the trace polys
+                wave_min = lmax
+                wave_max = lmin
+                if (disperse_row_right or  disperse_column):
+                    wave_min = lmin
+                    wave_max = lmax
+                 
                 xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value, obj.sky_bbox_ll.dec.value, lmin, order)
                 xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value, obj.sky_bbox_ur.dec.value, lmax, order)
-                order_bounding[order] = ((ymin, ymax), (xmin, xmax))
 
+                # xmin, ymin, _, _, _ = sky_to_grism(obj.icrs_centroid.ra.value, obj.icrs_centroid.dec.value, lmin, order)
+                # xmax, ymax, _, _, _ = sky_to_grism(obj.icrs_centroid.ra.value, obj.icrs_centroid.dec.value, lmax, order)    
+
+                # convert to integer pixels, making use of python3 round to integer, 2.7 rounds to float
+                # if disperse_column:
+                #     cdisp = abs(round(bxmax)-round(bxmin)) // 2
+                #     xmin, ymin, xmax, ymax = map(round,[xmin, ymin-cdisp, xmax, ymax+cdisp])
+                # else:
+                #     cdisp = abs(round(bymax)-round(bymin)) // 2
+                #     xmin, ymin, xmax, ymax = map(round,[xmin-cdisp, ymin, xmax+cdisp, ymax])
+                
+
+                # don't add objects and orders which are entirely off the detector
+                # this could also live in extract_2d
+                # partial_order marks partial off-detector objects which are near enough to cause
+                # spectra to be observed on the detector. This is usefull because the catalog often is
+                # created from a resampled direct image that is bigger than the detector FOV for a single
+                # grism exposure. 
+                exclude = False
+                partial_order = False
+
+                if ((ymin < 0) or (ymax > ysize)):
+                    partial_order = True
+                if ((ymin < 0) and (ymax < 0)):
+                    exclude = True
+                if (ymin > ysize):
+                    exclude = True
+
+                if ((xmin < 0) or (xmax > xsize)):
+                    partial_order = True
+                if ((xmin < 0) and (xmax < 0)):
+                    exclude = True
+                if (xmin > xsize):
+                    exclude = True
+                
+                if partial_order:
+                    log.info("Partial order on detector for obj: {} order: {}".format(obj.sid, order))
+                if exclude:
+                    log.info("Excluding off-image object: {}, order {}".format(obj.sid, order))
+                else:
+                    order_bounding[order] = ((round(ymin), round(ymax)), (round(xmin), round(xmax)))
+                    waverange[order] = ((lmin, lmax))
             # add lmin and lmax used for the orders here?
             # input_model.meta.wcsinfo.waverange_start keys covers the
             # full range of all the orders
-
-            # don't add objects which are entirely off the detector
-            # this could also live in extrac2d
-            # possible improvement is to add a member to GrismObject which
-            # marks off-detector objects which are near enough to cause
-            # spectra to be observed for later contamination removal, the
-            # rest of the objects can then be removed from the list which are
-            # much futher away
-            exclude = False
-            if (0 >= (ymin and ymax) <= ysize):
-                exclude = True
-            if (0 >= (xmin and xmax) <= xsize):
-                exclude = True
-            
-
-            if not exclude:
+            if len(order_bounding) > 0:
                 grism_objects.append(GrismObject(sid=obj.sid,
                                                  order_bounding=order_bounding,
                                                  icrs_centroid=obj.icrs_centroid,
-                                                 xcenter=xcenter,
-                                                 ycenter=ycenter,
+                                                 partial_order=partial_order,
+                                                 waverange=waverange,
                                                  sky_bbox_ll=obj.sky_bbox_ll,
                                                  sky_bbox_lr=obj.sky_bbox_lr,
                                                  sky_bbox_ul=obj.sky_bbox_ul,
-                                                 sky_bbox_ur=obj.sky_bbox_ur))
-            else:
-                log.info("Excluding off-image object: {}".format(obj.sid))
-
+                                                 sky_bbox_ur=obj.sky_bbox_ur,
+                                                 xcenter=xcenter,
+                                                 ycenter=ycenter,))
+            
     return grism_objects
 
 
@@ -471,3 +530,35 @@ def get_num_msa_open_shutters(shutter_state):
     if 'x' in shutter_state:
         num += 1
     return num
+
+
+def update_s_region(model):
+    """
+    Update the ``S_REGION`` keyword usiong ``WCS.footprint``.
+
+    """
+    bbox = None
+    def _bbox_from_shape(model):
+        shape = model.data.shape
+        bbox = ((0, shape[1]), (0, shape[0]))
+        return bbox
+    try:
+        bbox = model.meta.wcs.bounding_box
+    except NotImplementedError:
+        bbox = _bbox_from_shape(model)
+
+    if bbox is None:
+        bbox = _bbox_from_shape(model)
+
+    footprint = model.meta.wcs.footprint(bbox, center=True).T
+    s_region = (
+        "POLYGON ICRS "
+        " {0} {1}"
+        " {2} {3}"
+        " {4} {5}"
+        " {6} {7}".format(*footprint.flatten()))
+    if "nan" in s_region:
+        # do not update s_region if there are NaNs.
+        log.info("There NaNs in s_region")
+    else:
+        model.meta.wcsinfo.s_region = s_region

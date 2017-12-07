@@ -1,6 +1,3 @@
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
-
 import logging
 from copy import deepcopy
 
@@ -218,12 +215,6 @@ def wfss(input_model, reference_files):
     catalog in units of RA,DEC so they can be translated to pixels by
     the dispersed image's imaging wcs.
 
-    For each spectral order, the configuration file contains a
-    magnitude-cutoff value. Sources with magnitudes fainter than the
-    extraction cutoff (MMAG_EXTRACT)  will not be extracted, but are
-    accounted for when computing the spectral contamination and background
-    estimates. The default extraction value is 99 right now.
-
     The sensitivity information from the original aXe style configuration
     file needs to be modified by the passband of the filter used for
     the direct image to get the min and max wavelengths
@@ -231,22 +222,6 @@ def wfss(input_model, reference_files):
     and the min and max wavelengths to use to calculate t are stored in the
     grism reference file as wrange, which can be selected by wrange_selector
     which contains the filter names.
-
-
-    Step 1: Convert the source catalog from the reference frame of the
-            uberimage to that of the dispersed image.  For the Vanilla
-            Pipeline we assume that the pointing information in the file
-            headers is sufficient.  This will be strictly true if all images
-            were obtained in a single visit (same guide stars).
-    Step 2: Record source information for each object in the catalog: position
-            (RA and Dec), shape (A_IMAGE, B_IMAGE, THETA_IMAGE), and all
-            available magnitudes.
-    Step 3: Compute the trace and wavelength solutions for each object in the
-            catalog and for each spectral order.  Record this information.
-    Step 4: Compute the WIDTH of each spectral subwindow, which may be fixed or
-            variable (see discussion of optimal extraction, below).  Record
-            this information.
-    Step 4: Record the MMAG_EXTRACT for each object and spectral order.
 
     Source catalog use moved to extract_2d
     """
@@ -315,7 +290,7 @@ def wfss(input_model, reference_files):
     grism_pipeline = [(gdetector, det2det)]
 
     # pass through the wave, beam  and theta in the pipeline
-    # Theta is a constant for each grism exposure and is in the 
+    # Theta is a constant for each grism exposure and is in the
     # meta information for the input_model, pass it to the model
     # so the user doesn't have to
 

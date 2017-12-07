@@ -13,6 +13,7 @@ class Extract2dStep(Step):
     spec = """
         which_subarray = string(default = None)
         apply_wavecorr = boolean(default=True)
+        grism_objects = list(default=list())
     """
 
     reference_file_types = ['wavecorr', 'wavelengthrange']
@@ -29,6 +30,3 @@ class Extract2dStep(Step):
 
         return output_model
 
-
-if __name__ == '__main__':
-    cmdline.step_script(Extract2dStep)

@@ -1,6 +1,3 @@
-from __future__ import absolute_import, unicode_literals, division, print_function
-
-import six
 import datetime
 import os
 import shutil
@@ -28,6 +25,15 @@ from .. import schema
 ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
 ASN_FILE = os.path.join(ROOT_DIR, 'association.json')
+
+
+def reset_group_id(container):
+    """Remove group_id from all models in container"""
+    for m in container:
+        try:
+            del m.meta.group_id
+        except AttributeError:
+            pass
 
 
 def setup():
@@ -276,11 +282,7 @@ def test_multislit_metadata():
     with MultiSlitModel() as ms:
         ms.slits.append(ms.slits.item())
         for key, val in ms.iteritems():
-            if six.PY2:
-                assert isinstance(val, (bytes, unicode, int, long, float, bool,
-                                        Time))
-            else:
-                assert isinstance(val, (bytes, str, int, float, bool, Time))
+            assert isinstance(val, (bytes, str, int, float, bool, Time))
 
 
 def test_multislit_copy():
@@ -397,6 +399,7 @@ def test_modelcontainer_indexing(container):
 
 
 def test_modelcontainer_group1(container):
+    reset_group_id(container)
     for group in container.models_grouped:
         assert len(group) == 2
         for model in group:
@@ -404,6 +407,7 @@ def test_modelcontainer_group1(container):
 
 
 def test_modelcontainer_group2(container):
+    reset_group_id(container)
     container[0].meta.observation.exposure_number = '2'
     for group in container.models_grouped:
         assert len(group) == 1
@@ -413,7 +417,9 @@ def test_modelcontainer_group2(container):
 
 
 def test_modelcontainer_group_names(container):
+    reset_group_id(container)
     assert len(container.group_names) == 1
+    reset_group_id(container)
     container[0].meta.observation.exposure_number = '2'
     assert len(container.group_names) == 2
     container[0].meta.observation.exposure_number = '1'

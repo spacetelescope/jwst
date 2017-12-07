@@ -60,6 +60,3 @@ class TSOPhotometryStep(Step):
 
         return catalog
 
-
-if __name__ == '__main__':
-    cmdline.step_script(tso_photometry_step)

@@ -1,5 +1,4 @@
 """test_level3_dithers: Test of WFS rules."""
-from __future__ import absolute_import
 
 from . import helpers
 
@@ -27,4 +26,5 @@ class TestLevel3WFS(helpers.BasePoolRule):
         )
         (asns, orphaned) = generate(pool, rules)
         name = asns[0]['products'][0]['name']
-        assert name == 'jw99009-c1000_t001_nircam_clear'
+        assert name == 'jw99009-c1000_t001_nircam_f150w2'
+        assert asns[0]['asn_type'] == 'wfs'

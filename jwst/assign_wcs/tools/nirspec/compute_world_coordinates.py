@@ -7,7 +7,7 @@ The file is saved with a suffix "world_coordinates".
 
 Requested by the NIRSPEC team.
 
-Build 7 testing.
+Build 7.1 testing.
 """
 from __future__ import absolute_import, division, unicode_literals, print_function
 import os.path
@@ -15,8 +15,8 @@ import numpy as np
 from astropy.io import fits
 from gwcs import wcstools
 from gwcs.utils import _toindex
-from .... import datamodels
-from ... import nirspec
+from jwst import datamodels
+from jwst.assign_wcs import nirspec
 
 
 imaging_modes = supported_modes = ['nrs_taconfirm', 'nrs_brightobj', 'nrs_bota', 'nrs_tacq', 'nrs_focus',
@@ -126,7 +126,7 @@ def compute_world_coordinates(fname, output=None):
         # xstart, xend = slit.xstart - 1, slit.xstart -1 + slit.xsize
         # ystart, yend = slit.ystart - 1, slit.ystart -1 + slit.ysize
         # y, x = np.mgrid[ystart: yend, xstart: xend]
-        x, y = wcstools.grid_from_bounding_box(slit.bounding_box, step=(1, 1), center=True)
+        x, y = wcstools.grid_from_bounding_box(slit.meta.wcs.bounding_box, step=(1, 1), center=True)
         ra, dec, lam = slit.meta.wcs(x, y)
         detector2slit = slit.meta.wcs.get_transform('detector', 'slit_frame')
 

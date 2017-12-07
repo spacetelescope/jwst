@@ -30,87 +30,111 @@
 A client library for CRDS
 """
 import re
-import gc
-
-# ----------------------------------------------------------------------
-
-import six
 
 # ----------------------------------------------------------------------
 
 import crds
 from crds.core import log, config, exceptions, heavy_client
-
-try:
-    from crds.core import crds_cache_locking
-except ImportError:
-    crds_cache_locking = None
-    log.warning("CRDS needs to be updated to v7.1.4 or greater to support cache locking and association based CRDS cache updates.  Try 'conda update crds'.")
+from crds.core import crds_cache_locking, python23
 
 # ----------------------------------------------------------------------
 
-def _flatten_dict(nested):
-    """Takes a hierarchical arbitrarily nested dictionary of dictionaries, much
-    like a data model, and flattens it.  The end result has only non-dictionary
-    values referred to by the dotted paths that describe the traversal down
-    through the nested dictionaries to their values.
-    """
-    def flatten(root, path, output):
-        """Private worker function for _flatten_dict()."""
-        for key, val in root.items():
-            if isinstance(key, six.string_types):
-                if isinstance(val, dict):
-                    flatten(val, path + [key], output)
-                else:
-                    output['.'.join(path + [key])] = val
-    output = {}
-    flatten(nested, [], output)
-    return output
+# from jwst import datamodels
 
 # ----------------------------------------------------------------------
 
-def get_multiple_reference_paths(input_file, reference_file_types):
-    """Aligns JWST pipeline requirements with CRDS library top
-    level interfaces.
-
-    get_multiple_reference_paths() layers these additional tasks onto
-    crds.getreferences():
-
-    It converts an input file into a flat dictionary of JWST data
-    model dotted parameters for defining CRDS best references.
-
-    Returns { filetype : filepath or "N/A", ... }
-    """
+# This is really a testing and debug convenience function,  and notably now
+# the only place in this module that a direct import of datamodels occurs
+# or datamodels open() occurs.
+def get_refpaths_from_filename(filename, reference_file_types):
+    """Test wrapper to open/close data model for get_multiple_reference_paths."""
     from .. import datamodels
+    with datamodels.open(filename) as model:
+        refpaths = get_multiple_reference_paths(model, reference_file_types)
+    return refpaths
 
-    gc.collect()
+# ......................
+    
+_BESTREFS_CACHE = {}   # { model_filename : bestref_path or 'N/A', ... }
 
+# import memory_profiler
+# @memory_profiler.profile
+def get_multiple_reference_paths(dataset_model, reference_file_types):
+    """Aligns JWST pipeline requirements with CRDS library top level interfaces.
+    
+    `dataset_model` is an open data model.
+
+    Returns best references dict { filetype : filepath or "N/A", ... }
+    """
+    filename = dataset_model.meta.filename
+    
+    try:
+
+        refpaths = { reftype:_BESTREFS_CACHE[(filename, reftype)]
+                     for reftype in reference_file_types }
+        log.verbose("Using cached bestrefs for", repr(filename), "with types", repr(reference_file_types))
+        return refpaths
+    except KeyError:
+        pass
+        
+    data_dict = _get_data_dict(filename, dataset_model)
+
+    # Cache prefetch-like results
+    refpaths = _get_refpaths(data_dict, tuple(reference_file_types))
+    
+    # Cache results for each individual reftype, as-in get_reference_file().
+    for reftype, path in refpaths.items():
+        _BESTREFS_CACHE[(filename, reftype)] = path
+        
+    return refpaths
+
+# ......................
+    
+_HEADER_CACHE = {}   #  { model_filename : flat_model_pseudo_header, ... }
+
+def _get_data_dict(filename, dataset_model):
+    """Return the data models header dictionary based on open data `dataset_model`.
+
+    Returns a flat parameter dictionary used for CRDS bestrefs matching.
+    """
+    try:
+        header = _HEADER_CACHE[filename]
+        log.verbose("Using cached CRDS matching header for", repr(filename))
+        return header
+    except KeyError:
+        pass
+    log.verbose("Caching CRDS matching header for", repr(filename))
+    _HEADER_CACHE[filename] = header = _clean_flat_dict(dataset_model)
+    return header
+
+def _clean_flat_dict(dataset_model):
+    """Make sure all header items returned are simple, no complex objects."""
+    header = dataset_model.to_flat_dict(include_arrays=False)
+    return { key: val for (key,val) in header.items()
+             if isinstance(val, (python23.string_types,python23.long,int,float,complex,bool)) }
+
+# ......................
+
+def _get_refpaths(data_dict, reference_file_types):
+    """Tailor the CRDS core library getreferences() call to the JWST CAL code by
+    adding locking and truncating expected exceptions.   Also simplify 'NOT FOUND n/a' to
+    'N/A'.  Re-interpret empty reference_file_types as "no types" instead of core
+    library default of "all types."
+    """
     if not reference_file_types:   # [] interpreted as *all types*.
         return {}
-
-    if isinstance(input_file, (six.string_types, datamodels.DataModel)):
-        with datamodels.open(input_file) as dm:
-            data_dict = dm.to_flat_dict(include_arrays=False)
-    else:  # XXX not sure what this does... seems unneeded.
-        data_dict = _flatten_dict(input_file)
-
-    gc.collect()
-
     try:
-        if crds_cache_locking is not None:
-            with crds_cache_locking.get_cache_lock():
-                bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
-        else:
-            bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")            
+        with crds_cache_locking.get_cache_lock():
+            bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
     except crds.CrdsBadRulesError as exc:
         raise crds.CrdsBadRulesError(str(exc))
     except crds.CrdsBadReferenceError as exc:
-        raise crds.CrdsBadReferenceError(str(exc))
-
+        raise crds.CrdsBadReferenceError(str(exc))    
     refpaths = {filetype: filepath if "N/A" not in filepath.upper() else "N/A"
                 for (filetype, filepath) in bestrefs.items()}
-
     return refpaths
+
+# ----------------------------------------------------------------------
 
 def check_reference_open(refpath):
     """Verify that `refpath` exists and is readable for the current user.
@@ -118,11 +142,11 @@ def check_reference_open(refpath):
     Ignore reference path values of "N/A" or "" for checking.
     """
     if refpath != "N/A" and refpath.strip() != "":
-        fd = open(refpath, "rb")
-        fd.close()
+        opened = open(refpath, "rb")
+        opened.close()
     return refpath
 
-def get_reference_file(input_file, reference_file_type):
+def get_reference_file(dataset, reference_file_type):
     """
     Gets a reference file from CRDS as a readable file-like object.
     The actual file may be optionally overridden.
@@ -143,7 +167,13 @@ def get_reference_file(input_file, reference_file_type):
     reference_filepath : string
         The path of the reference in the CRDS file cache.
     """
-    return get_multiple_reference_paths(input_file, [reference_file_type])[reference_file_type]
+    if isinstance(dataset, python23.string_types):
+        from jwst import datamodels
+        with datamodels.open(dataset) as model:
+            return get_multiple_reference_paths(model, [reference_file_type])[reference_file_type]
+    else:
+        return get_multiple_reference_paths(dataset, [reference_file_type])[reference_file_type]
+        
 
 def get_override_name(reference_file_type):
     """
@@ -173,11 +203,6 @@ def get_svn_version():
     return crds.__version__
 
 
-def get_context_used():
-    """Return the context (.pmap) used for determining best references."""
-    _connected, final_context = heavy_client.get_processing_mode("jwst")
-    return final_context
-
 def reference_uri_to_cache_path(reference_uri):
     """Convert an abstract CRDS reference file URI into an absolute path for the
     file as located in the CRDS cache.
@@ -195,3 +220,8 @@ def reference_uri_to_cache_path(reference_uri):
         raise exceptions.CrdsError("CRDS reference URI's should start with 'crds://' but got", repr(reference_uri))
     basename = config.pop_crds_uri(reference_uri)
     return crds.locate_file(basename, "jwst")
+
+def get_context_used():
+    """Return the context (.pmap) used for determining best references."""
+    _connected, final_context = heavy_client.get_processing_mode("jwst")
+    return final_context

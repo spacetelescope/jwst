@@ -1,5 +1,5 @@
+"""Interface for running CALCORON3 pipeline."""
 #!/usr/bin/env python
-import os
 
 from ..stpipe import Pipeline
 from ..associations import load_asn
@@ -10,22 +10,25 @@ from ..resample import blend
 from ..coron import stack_refs_step
 from ..coron import align_refs_step
 from ..coron import klip_step
-from ..outlier_detection import outlier_detection_stack_step
+from ..outlier_detection import outlier_detection_step
 from ..resample import resample_step
 
 
-__version__ = "0.7.1"
+__version__ = '0.8.0'
 
 
 class Coron3Pipeline(Pipeline):
-    """
+    """Class for defining Coron3Pipeline.
+
     Coron3Pipeline: Apply all level-3 calibration steps to a
     coronagraphic association of exposures. Included steps are:
-    stack_refs (assemble reference PSF inputs)
-    align_refs (align reference PSFs to target images)
-    klip (PSF subtraction using the KLIP algorithm)
-    outlier_detection (flag outliers)
-    resample (image combination and resampling)
+
+    #. stack_refs (assemble reference PSF inputs)
+    #. align_refs (align reference PSFs to target images)
+    #. klip (PSF subtraction using the KLIP algorithm)
+    #. outlier_detection (flag outliers)
+    #. resample (image combination and resampling)
+
     """
 
     spec = """
@@ -37,12 +40,12 @@ class Coron3Pipeline(Pipeline):
                  'align_refs': align_refs_step.AlignRefsStep,
                  'klip': klip_step.KlipStep,
                  'outlier_detection':
-                     outlier_detection_stack_step.OutlierDetectionStackStep,
+                     outlier_detection_step.OutlierDetectionStep,
                  'resample': resample_step.ResampleStep
                  }
 
     def process(self, input):
-
+        """Primary method for performing pipeline."""
         self.log.info('Starting calwebb_coron3 ...')
 
         # Load the input association table
@@ -53,17 +56,21 @@ class Coron3Pipeline(Pipeline):
         prod = asn['products'][0]
 
         # Construct lists of all the PSF and science target members
-        psf_files = [m['expname'] for m in prod['members'] if m['exptype'].upper() == 'PSF']
-        targ_files = [m['expname'] for m in prod['members'] if m['exptype'].upper() == 'SCIENCE']
+        psf_files = [m['expname'] for m in prod['members']
+                     if m['exptype'].upper() == 'PSF']
+        targ_files = [m['expname'] for m in prod['members']
+                      if m['exptype'].upper() == 'SCIENCE']
 
         # Make sure we found some PSF and target members
         if len(psf_files) == 0:
-            self.log.error('No reference PSF members found in association table')
+            err_str1 = 'No reference PSF members found in association table.'
+            self.log.error(err_str1)
             self.log.error('Calwebb_coron3 processing will be aborted')
             return
 
         if len(targ_files) == 0:
-            self.log.error('No science target members found in association table')
+            err_str1 = 'No science target members found in association table'
+            self.log.error(err_str1)
             self.log.error('Calwebb_coron3 processing will be aborted')
             return
 
@@ -108,7 +115,8 @@ class Coron3Pipeline(Pipeline):
             target_models = datamodels.ModelContainer()
             for i in range(psf_sub.data.shape[0]):
                 image = datamodels.ImageModel(data=psf_sub.data[i],
-                        err=psf_sub.err[i], dq=psf_sub.dq[i])
+                                              err=psf_sub.err[i],
+                                              dq=psf_sub.dq[i])
                 image.update(psf_sub)
                 image.meta.wcs = psf_sub.meta.wcs
                 target_models.append(image)
@@ -118,7 +126,8 @@ class Coron3Pipeline(Pipeline):
 
             # Create Level 2c products
             if target_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
-                self.log.info("Creating Level 2c output with updated DQ arrays...")
+                err_str1 = "Creating Level 2c output with updated DQ arrays..."
+                self.log.info(err_str1)
                 lev2c_model = psf_sub.copy()
                 # Replace Level 2b product DQ array with Level 2c DQ array
                 for i in range(len(target_models)):
@@ -131,19 +140,21 @@ class Coron3Pipeline(Pipeline):
             for i in range(len(target_models)):
                 resample_input.append(target_models[i])
 
-        # Call the resample step to combine all the psf-subtracted target images
+        # Call the resample step to combine all psf-subtracted target images
         result = self.resample(resample_input)
 
         if result == resample_input:
-        # Resampling was skipped, 
-        #  yet we need to return a DrizProductModel, so...
-            self.log.warning('Creating fake resample results until step is available')
+            # Resampling was skipped,
+            #     yet we need to return a DrizProductModel, so...
+            warn1 = 'Creating fake resample results until step is available'
+            self.log.warning(warn1)
             result = datamodels.DrizProductModel(data=resample_input[0].data,
-                                             con=resample_input[0].dq,
-                                             wht=resample_input[0].err)
+                                                 con=resample_input[0].dq,
+                                                 wht=resample_input[0].err)
             result.update(resample_input[0])
             # The resample step blends headers already...
-            self.log.debug('Blending metadata for {}'.format(result.meta.filename))
+            self.log.debug('Blending metadata for {}'.format(
+                            result.meta.filename))
             blend.blendfitsdata(targ_files, result)
 
         result.meta.asn.pool_name = asn['asn_pool']

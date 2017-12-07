@@ -1,0 +1,91 @@
+{
+    "asn_type": "spec3",
+    "asn_rule": "candidate_Asn_WFSS",
+    "version_id": null,
+    "code_version": "0.9.4",
+    "program": "99009",
+    "degraded_status": "No known degraded exposures in association.",
+    "constraints": "Constraints:\n    exp_type: {'nis_wfss'}\n    opt_elem2: {'gr150r', 'gr150c'}\n    is_not_tso: set()\n    opt_elem: {'f140m'}\n    target: {'1'}\n    program: {'99009'}\n    instrument: {'niriss'}\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "asn_id": "o001",
+    "target": "t001",
+    "asn_pool": "pool_019_niriss_wfss",
+    "products": [
+        {
+            "name": "jw99009-o001_t001_niriss_f140m-gr150r-gr150c",
+            "members": [
+                {
+                    "expname": "jw_00002_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw_00003_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw_00004_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw_00005_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw_00006_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw_00007_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw_00010_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw_00011_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw_00012_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw_00013_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw_00014_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw_00015_rate.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o001', 'observation')"
+                }
+            ]
+        }
+    ]
+}

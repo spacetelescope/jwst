@@ -23,26 +23,28 @@ class CubeBuildStep (Step):
     """
 
     spec = """
-         channel = option('1','2','3','4','ALL','all',default='ALL')
-         band = option('SHORT','MEDIUM','LONG','ALL','short','medium','long','all',default='ALL')
-         grating   = option('PRISIM','G140M','G140H','G235M','G235H',G395M','G395H','ALL','all',default='ALL')
-         filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL','all',default='ALL')
-         scale1 = float(default=0.0)
-         scale2 = float(default=0.0)
-         scalew = float(default=0.0)
-         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm')
-         coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec')
-         rois = float(default=0.0)
-         roiw = float(default=0.0)
-         weight_power = float(default=2.0)
-         offset_list = string(default='NA')
-         wavemin = float(default=None)
-         wavemax = float(default=None)
-         xdebug = integer(default=None)
-         ydebug = integer(default=None)
-         zdebug = integer(default=None)
-         single = boolean(default=false)
-         output_type = option('band','channel','grating','multi',default='band')
+         channel = option('1','2','3','4','ALL','all',default='ALL') # Options: 1,2,3,4,or All
+         band = option('SHORT','MEDIUM','LONG','ALL','short','medium','long','all',default='ALL') # Options: \
+SHORT,MEDIUM,LONG, or ALL 
+         grating   = option('PRISIM','G140M','G140H','G235M','G235H',G395M','G395H','ALL','all',default='ALL')  # Options: PRISIM,G140M,G140H,G235M,G235H,G395M,G395H, or ALL 
+         filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL','all',default='ALL') # Options: CLEAR,F100LP,F070LP,F170LP,F290LP, or ALL
+         scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds 
+         scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
+         scalew = float(default=0.0) # cube sample size to use for axis 3, microns
+         weighting = option('msm','miripsf','area','MSM','MIRIPSF','AREA',default = 'msm') # Type of weighting function, msm: modified Shepard Method, miripsf: use information on shape of miri psf in the msm method, Area: only used if coord_system = alpha-beta [advanced option] 
+         coord_system = option('ra-dec','alpha-beta','ALPHA-BETA',default='ra-dec') # Coordinate system of the output IFUcube. Options: ra-dec or  alpha-beta
+         rois = float(default=0.0) # region of interest spatial size, arc seconds
+         roiw = float(default=0.0) # region of interest wavelength size, microns  
+         weight_power = float(default=2.0) # Weighting option to use when combining pixel surface brightness in the RIO centered on cube spaxial center
+         offset_list = string(default='NA')  # A file for dithered data containing additional ra and dec offsets to be applied to files in the association. The offset tweaks the wcs of the input exposures. Offsets are given in arcseconds. EXPERIMENTAL OPTION - ADVANCED USERS ONLY
+         wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
+         wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube 
+         xdebug = integer(default=None) # debug option, x spaxel value to report information on 
+         ydebug = integer(default=None) # debug option, y spaxel value to report information on 
+         zdebug = integer(default=None) # debug option, z spaxel value to report  information on 
+         single = boolean(default=false) # Internal pipeline option used by mrs_imatch and outlier detection
+         output_type = option('band','channel','grating','multi',default='band') # Type of output cube to create. Options = band,channel,grating, multi
+#         output_use_model = boolean(default=true)
        """
     reference_file_types = ['cubepar','resol']
 
@@ -144,7 +146,9 @@ class CubeBuildStep (Step):
 # the cube_build software will attached the needed information on channel, sub-channel
 # grating or filter. 
 #________________________________________________________________________________
-        input_table = data_types.DataTypes(input,self.single,self.output_file)
+        input_table = data_types.DataTypes(input,self.single,
+                                           self.output_file,
+                                           self.output_dir)
         
         self.cube_type = input_table.input_type
         self.input_models = input_table.input_models
@@ -285,27 +289,30 @@ class CubeBuildStep (Step):
             else:
                 result =  thiscube.build_ifucube()
 #                print('returning',result.meta.filename)
-#                print('********',result.meta.ref_file.crds.sw_version)
                 Final_IFUCube.append(result)
-
             if(self.debug_pixel ==1):
                 self.spaxel_debug.close()
 
-
-        save_IFU = False
-#        print('cube_build_step',self.save_results)
-
-        if self.pipeline == 3:
-            if self.save_results == True or self.output_file !=None:
-                self.save_results = False # turn off the Step class functions
+#        save_IFU = False
+#        if self.pipeline == 31:
+#            if self.save_results == True or self.output_file !=None:
+#                self.save_results = False # turn off the Step class functions
                                       # cause new output_file names
                                       # to be determined. Cube_build handles all this
-                self.output_file = None
-                save_IFU = True
-            
-        if save_IFU == True:
+#                self.output_file = None
+#                save_IFU = True
+#        if save_IFU == True:
+#            Final_IFUCube.save(None)
+
+
+#        print('save results',self.save_results,self.suffix)
+        if self.save_results == True:
+            self.suffix = 's3d'
+#            print(Final_IFUCube[0].meta.filename)
+            self.save_results = False
+            #self.save_model(Final_IFUCube,self.suffix)
+            self.output_file = None
             Final_IFUCube.save(None)
-#            print('at the end',Final_IFUCube[0].meta.ref_file.crds.sw_version)
         return Final_IFUCube
 
 #********************************************************************************
@@ -458,7 +465,3 @@ def read_user_input(self):
 
 #________________________________________________________________________________
 
-
-
-if __name__ == '__main__':
-    cmdline.step_script( cube_build_step )

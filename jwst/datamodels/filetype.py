@@ -1,7 +1,4 @@
-from __future__ import absolute_import, unicode_literals, division, print_function
-
 import os.path
-import six
 
 def check(init):
     """
@@ -17,7 +14,7 @@ def check(init):
     file_type: a string with the file type ("asdf", "asn", or "fits")
     """
 
-    if isinstance(init, six.string_types):
+    if isinstance(init, str):
         if os.path.exists(init):
             fd = open(init, "rb")
             magic = fd.read(5)

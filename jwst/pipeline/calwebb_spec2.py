@@ -22,7 +22,7 @@ from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
 from ..resample import resample_spec_step
 
-__version__ = "3.0"
+__version__ = '0.8.0'
 
 
 class Spec2Pipeline(Pipeline):
@@ -135,16 +135,23 @@ class Spec2Pipeline(Pipeline):
             input = datamodels.open(science)
         exp_type = input.meta.exposure.type
 
+        WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM"]
+
         # Apply WCS info
         # check the datamodel to see if it's
         # a grism image, if so get the catalog
         # name from the asn and record it to the meta
-        if exp_type in ["NIS_WFSS", "NRC_GRISM"]:
+        if exp_type in WFSS_TYPES:
             input.meta.source_catalog.filename = members_by_type['sourcecat'][0]
         input = self.assign_wcs(input)
 
         # Do background processing, if necessary
-        if len(members_by_type['background']) > 0:
+        if exp_type in WFSS_TYPES or len(members_by_type['background']) > 0:
+
+            if exp_type in WFSS_TYPES:
+                bkg_list = []           # will be overwritten by the step
+            else:
+                bkg_list = members_by_type['background']
 
             # Setup for saving
             self.bkg_subtract.suffix = 'bsub'
@@ -156,7 +163,7 @@ class Spec2Pipeline(Pipeline):
                 self.bkg_subtract.save_results = True
 
             # Call the background subtraction step
-            input = self.bkg_subtract(input, members_by_type['background'])
+            input = self.bkg_subtract(input, bkg_list)
 
         # If assign_wcs was skipped, abort the rest of processing,
         # because so many downstream steps depend on the WCS
@@ -233,9 +240,7 @@ class Spec2Pipeline(Pipeline):
         # Produce a resampled product, either via resample_spec for
         # "regular" spectra or cube_build for IFU data. No resampled
         # product is produced for time-series modes.
-        if input.meta.exposure.type in [
-            'NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NIS_WFSS', 'NRC_GRISM'
-            ]:
+        if input.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC']:
 
             # Call the resample_spec step
             self.resample_spec.suffix = 's2d'

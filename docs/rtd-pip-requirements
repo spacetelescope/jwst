@@ -1,6 +1,14 @@
+setuptools
+nose
 numpy
 matplotlib
-astropy
+-e git+https://github.com/astropy/astropy.git#egg=astropy
 scipy
 sphinx_rtd_theme
 sphinx-automodapi
+sphinx_numfig
+jsonschema
+asdf
+gwcs
+crds
+photutils

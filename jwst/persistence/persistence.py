@@ -1,5 +1,3 @@
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
 #
 #  Module for correcting for persistence
 
@@ -437,7 +435,7 @@ class DataSet():
         # two, use this syntax:
         # refsub.data = ref.data[..., slc[0], slc[1]].copy()
         refsub.data = ref.data[slc[0], slc[1]].copy()
-        if "dq" in ref:
+        if hasattr(ref, "dq"):
             refsub.dq = ref.dq[slc[0], slc[1]].copy()
 
         return refsub
@@ -643,9 +641,9 @@ class DataSet():
         self.groupgap = self.output_obj.meta.exposure.groupgap
         try:
             if integ == 0:
-                self.nresets = self.output_obj.meta.exposure.nrststrt
+                self.nresets = self.output_obj.meta.exposure.nresets_at_start
             else:
-                self.nresets = self.output_obj.meta.exposure.nresets
+                self.nresets = self.output_obj.meta.exposure.nresets_between_ints
         except AttributeError:
             if self.output_obj.meta.instrument.detector == "MIRI":
                 self.nresets = 0

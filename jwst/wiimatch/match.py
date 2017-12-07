@@ -16,15 +16,17 @@ import copy
 import numpy as np
 from stsci.tools.bitmask import interpret_bit_flags
 
-from .lsq_optimizer import build_lsq_eqs, lsq_solve
+from .lsq_optimizer import build_lsq_eqs, pinv_solve, rlu_solve
 
 
 __all__ = ['match_lsq']
 
+SUPPORTED_SOLVERS = ['RLU', 'PINV']
+
 
 def match_lsq(images, masks=None, sigmas=None, degree=0,
               center=None, image2world=None, center_cs='image',
-              ext_return=False):
+              ext_return=False, solver='RLU'):
     """
     Compute coefficients of (multivariate) polynomials that once subtracted
     from input images would provide image intensity matching in the least
@@ -83,6 +85,9 @@ def match_lsq(images, masks=None, sigmas=None, degree=0,
         optimal polynomial coefficients (see ``bkg_poly_coeff`` return value
         below) that match image intensities in the LSQ sense. See **Returns**
         section for more details.
+
+    solver : {'RLU', 'PINV'}, optional
+        Specifies method for solving the system of equations.
 
     Returns
     -------
@@ -165,7 +170,7 @@ c_{1,0,\\ldots}^2,\\ldots).
 >>> mask = np.ones_like(im1, dtype=np.int8)
 >>> sigma = np.ones_like(im1, dtype=np.float)
 >>> wiimatch.match.match_lsq([im1, im3], [mask, mask], [sigma, sigma],
-... degree=(1,1,1), center=(0,0,0))
+... degree=(1, 1, 1), center=(0, 0, 0))
 array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
           3.33066907e-15,  -3.70000000e-01,   5.44009282e-15,
           7.88258347e-15,  -2.33146835e-15],
@@ -174,6 +179,14 @@ array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
          -7.43849426e-15,   1.77635684e-15]])
 
     """
+    solver = solver.upper()
+    if solver not in SUPPORTED_SOLVERS:
+        ns = len(SUPPORTED_SOLVERS)
+        raise ValueError("'solver' must be one of the supported solvers: '{}'"
+                         .format(SUPPORTED_SOLVERS[0] if ns == 1 else
+                                 '\', \''.join(SUPPORTED_SOLVERS[:-1]) +
+                                 '\'' + (',' if ns > 2 else '') +
+                                 ' or \'{}'.format(SUPPORTED_SOLVERS[-1])))
 
     # check that all images have the same shape:
     shapes = set([])
@@ -254,8 +267,11 @@ array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
     )
 
     # solve the system:
-    tol = np.finfo(images[0].dtype).eps**(2.0/3.0)
-    bkg_poly_coef = lsq_solve(a, b, nimages, tol)
+    if solver == 'RLU':
+        bkg_poly_coef = rlu_solve(a, b, nimages)
+    else:
+        tol = np.finfo(images[0].dtype).eps**(2.0/3.0)
+        bkg_poly_coef = pinv_solve(a, b, nimages, tol)
 
     if ext_return:
         return bkg_poly_coef, a, b, coord_arrays, eff_center, coord_system

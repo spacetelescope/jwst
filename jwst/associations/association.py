@@ -8,7 +8,6 @@ import logging
 from nose.tools import nottest
 import re
 
-import six
 from numpy.ma import masked
 
 from . import __version__
@@ -521,7 +520,7 @@ class Association(MutableMapping):
         except AttributeError:
             constraints = {}
             self.constraints = constraints
-        for constraint, conditions in six.iteritems(new_constraints):
+        for constraint, conditions in new_constraints.items():
             conditions['found_values'] = set()
             constraints[constraint] = constraints.get(constraint, conditions)
 
@@ -610,7 +609,7 @@ class Association(MutableMapping):
         return self.data.values()
 
 
-class ProcessList(object):
+class ProcessList():
     """A Process list
 
     Parameters
@@ -747,7 +746,7 @@ def evaluate(value):
 
 
 def is_iterable(obj):
-    return not isinstance(obj, six.string_types) and \
+    return not isinstance(obj, str) and \
         not isinstance(obj, tuple) and \
         hasattr(obj, '__iter__')
 

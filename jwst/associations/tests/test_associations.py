@@ -1,6 +1,4 @@
 """test_associations: Test of general Association functionality."""
-from __future__ import absolute_import
-import os
 import pytest
 
 from . import helpers
@@ -88,7 +86,7 @@ def test_base_instatiation():
                 }
             },
             helpers.t_path('data/mega_pool.csv'),
-            2,
+            3,
         ),
         (
             {

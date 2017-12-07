@@ -1,6 +1,3 @@
-from __future__ import (division, print_function, unicode_literals,
-    absolute_import)
-
 from ..stpipe import Step, cmdline
 from .. import datamodels
 from . import resample_spec
@@ -44,7 +41,6 @@ class ResampleSpecStep(Step):
 
         # Multislits get converted to a ModelContainer per slit
         if all([isinstance(i, datamodels.MultiSlitModel) for i in input_models]):
-            self.log.info('Converting MultiSlit to ModelContainer')
             container_dict = multislit_to_container(input_models)
             output_product = datamodels.MultiProductModel()
             output_product.update(input_models[0])
@@ -85,6 +81,3 @@ class ResampleSpecStep(Step):
 
         return result
 
-
-if __name__ == '__main__':
-    cmdline.step_script(ResampleSpecStep)

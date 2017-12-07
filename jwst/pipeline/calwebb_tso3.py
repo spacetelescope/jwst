@@ -1,19 +1,14 @@
-from __future__ import unicode_literals, absolute_import
-
-import os
-
 from astropy.table import vstack
 
 from ..stpipe import Pipeline
 from .. import datamodels
 
-from ..outlier_detection import outlier_detection_stack_step
-from ..outlier_detection import outlier_detection_scaled_step
+from ..outlier_detection import outlier_detection_step
 from ..tso_photometry import tso_photometry_step
 from ..extract_1d import extract_1d_step
 from ..white_light import white_light_step
 
-__version__ = "0.7.8"
+__version__ = '0.8.0'
 
 
 class Tso3Pipeline(Pipeline):
@@ -22,10 +17,11 @@ class Tso3Pipeline(Pipeline):
                     any JWST instrument.
 
     Included steps are:
-        outlier_detection
-        tso_photometry
-        extract_1d
-        white_light
+
+        * outlier_detection
+        * tso_photometry
+        * extract_1d
+        * white_light
     """
 
     spec = """
@@ -34,9 +30,7 @@ class Tso3Pipeline(Pipeline):
 
     # Define alias to steps
     step_defs = {'outlier_detection':
-                        outlier_detection_stack_step.OutlierDetectionStackStep,
-                 'outlier_detection_scaled':
-                        outlier_detection_scaled_step.OutlierDetectionScaledStep,
+                 outlier_detection_step.OutlierDetectionStep,
                  'tso_photometry': tso_photometry_step.TSOPhotometryStep,
                  'extract_1d': extract_1d_step.Extract1dStep,
                  'white_light': white_light_step.WhiteLightStep
@@ -69,12 +63,14 @@ class Tso3Pipeline(Pipeline):
                 # convert each plane of data cube into it own array
                 # for outlier detection...
                 image = datamodels.ImageModel(data=cube.data[i],
-                        err=cube.err[i], dq=cube.dq[i])
+                                              err=cube.err[i], dq=cube.dq[i])
                 image.update(cube)
+                image.meta.wcs = cube.meta.wcs
                 input_2dmodels.append(image)
 
             if not self.scale_detection:
-                self.log.info("Performing outlier detection on input images...")
+                l = "Performing outlier detection on input images..."
+                self.log.info(l)
                 input_2dmodels = self.outlier_detection(input_2dmodels)
 
                 # Transfer updated DQ values to original input observation
@@ -85,8 +81,10 @@ class Tso3Pipeline(Pipeline):
                     input_2dmodels[0].meta.cal_step.outlier_detection
 
             else:
-                self.log.info("Performing scaled outlier detection on input images...")
-                cube = self.outlier_detection_scaled(cube)
+                l = "Performing scaled outlier detection on input images..."
+                self.log.info(l)
+                self.outlier_detection.scale_detection = True
+                cube = self.outlier_detection(cube)
 
         if input_models[0].meta.cal_step.outlier_detection == 'COMPLETE':
             self.log.info("Writing Level 2c cubes with updated DQ arrays...")
@@ -129,14 +127,16 @@ class Tso3Pipeline(Pipeline):
                 phot_result_list.append(self.white_light(result))
 
             # Update some metadata from the association
-            x1d_result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
+            x1d_result.meta.asn.pool_name = \
+                input_models.meta.asn_table.asn_pool
             x1d_result.meta.asn.table_name = input
 
             # Save the final x1d Multispec model
             self.save_model(x1d_result, suffix='x1dints')
 
         phot_results = vstack(phot_result_list)
-        self.log.info("Writing Level 3 photometry catalog {}...".format(phot_tab_name))
+        self.log.info("Writing Level 3 photometry catalog {}...".format(
+                      phot_tab_name))
         phot_results.write(phot_tab_name, format='ascii.ecsv')
 
         return

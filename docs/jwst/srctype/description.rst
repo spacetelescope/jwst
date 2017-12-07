@@ -30,7 +30,7 @@ of the ``EXP_TYPE`` keyword) is shown in the table below.
 +===================+========================+=================+
 | MIR_LRS-FIXEDSLIT | MIRI LRS fixed-slit    | Point           |
 +-------------------+------------------------+-----------------+
-| MIR_LRS-SLISTLESS | MIRI LRS slitless      | Point           |
+| MIR_LRS-SLITLESS  | MIRI LRS slitless      | Point           |
 +-------------------+------------------------+-----------------+
 | MIR_MRS           | MIRI MRS (IFU)         | Extended        |
 +-------------------+------------------------+-----------------+

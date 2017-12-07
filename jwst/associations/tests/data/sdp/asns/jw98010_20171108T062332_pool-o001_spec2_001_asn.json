@@ -1,0 +1,49 @@
+{
+    "asn_type": "spec2",
+    "asn_rule": "candidate_Asn_Lv2Spec",
+    "version_id": null,
+    "code_version": "0.9.4",
+    "program": "98010",
+    "target": "1",
+    "asn_pool": "jw98010_20171108T062332_pool",
+    "constraints": "Constraints:\n    single_science: {'False'}\n    exp_type: {'mir_lrs\\\\-fixedslit'}\n    program: {'98010'}\n    target: {'1'}\n    instrument: {'miri'}\n    detector: {'mirimage'}\n    opt_elem: {'p750l'}\n    opt_elem2: set()\n    subarray: {'full'}\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "asn_id": "o001",
+    "products": [
+        {
+            "name": "jw98010001001_02104_00001_mirimage",
+            "members": [
+                {
+                    "expname": "jw98010001001_02104_00001_mirimage_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw98010001001_02103_00001_mirimage",
+            "members": [
+                {
+                    "expname": "jw98010001001_02103_00001_mirimage_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw98010001001_02101_00001_mirimage",
+            "members": [
+                {
+                    "expname": "jw98010001001_02101_00001_mirimage_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw98010001001_02102_00001_mirimage",
+            "members": [
+                {
+                    "expname": "jw98010001001_02102_00001_mirimage_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}

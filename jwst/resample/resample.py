@@ -1,14 +1,9 @@
-from __future__ import (division, print_function, unicode_literals,
-    absolute_import)
-
-import time
 import numpy as np
 from collections import OrderedDict
 
 from .. import datamodels
 
 from . import gwcs_drizzle
-from . import bitmask
 from . import resample_utils
 from . import blend
 
@@ -17,7 +12,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class ResampleData(object):
+class ResampleData:
     """
     This is the controlling routine for the resampling process.
     It loads and sets the various input data and parameters needed by
@@ -73,6 +68,9 @@ class ResampleData(object):
         self.output_wcs = resample_utils.make_output_wcs(self.input_models)
         log.debug('Output mosaic size: {}'.format(self.output_wcs.data_size))
         self.blank_output = datamodels.DrizProductModel(self.output_wcs.data_size)
+
+        # update meta data and wcs
+        self.blank_output.update(input_models[0])
         self.blank_output.meta.wcs = self.output_wcs
 
         self.output_models = datamodels.ModelContainer()
@@ -95,9 +93,9 @@ class ResampleData(object):
         row = None
         drizpars = ref_model.drizpars_table
 
-        filter_match = False # flag to support wild-card rows in drizpars table
+        filter_match = False  # flag to support wild-card rows in drizpars table
         for n, filt, num in zip(range(0, len(drizpars)), drizpars.filter,
-            drizpars.numimages):
+                drizpars.numimages):
             # only remember this row if no exact match has already been made for
             # the filter. This allows the wild-card row to be anywhere in the
             # table; since it may be placed at beginning or end of table.
@@ -122,7 +120,7 @@ class ResampleData(object):
     def update_driz_outputs(self):
         """ Define output arrays for use with drizzle operations.
         """
-        numchips = len(self.input_models) # assuming 1 chip per model
+        numchips = len(self.input_models)  # assuming 1 chip per model
         numplanes = (numchips // 32) + 1
 
         # Replace CONTEXT array with full set of planes needed for all inputs
@@ -140,7 +138,7 @@ class ResampleData(object):
         blend.blendfitsdata(input_list, output_model)
 
 
-    def do_drizzle(self, **pars):
+    def do_drizzle(self):
         """ Perform drizzling operation on input images's to create a new output
         """
         # Set up information about what outputs we need to create: single or final
@@ -199,8 +197,9 @@ class ResampleData(object):
                 outwcs_pscale = output_model.meta.wcsinfo.cdelt1
                 wcslin_pscale = img.meta.wcsinfo.cdelt1
 
-                inwht = build_driz_weight(img, wht_type=self.drizpars['wht_type'],
-                                    good_bits=self.drizpars['good_bits'])
+                inwht = resample_utils.build_driz_weight(img,
+                    wht_type=self.drizpars['wht_type'],
+                    good_bits=self.drizpars['good_bits'])
                 driz.add_image(img.data, img.meta.wcs, inwht=inwht,
                         expin=img.meta.exposure.exposure_time,
                         pscale_ratio=outwcs_pscale / wcslin_pscale)
@@ -222,36 +221,23 @@ class ResampleData(object):
             output_model.meta.resample.weight_type = self.drizpars['wht_type']
             output_model.meta.resample.pointings = pointings
 
+            self.update_fits_wcs(output_model)
+
             self.output_models.append(output_model)
 
 
-def _buildMask(dqarr, bitvalue):
-    """ Build a bit-mask from an input DQ array and a bitvalue flag
-    """
-
-    bitvalue = bitmask.interpret_bits_value(bitvalue)
-
-    if bitvalue is None:
-        return (np.ones(dqarr.shape, dtype=np.uint8))
-    return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint8)
-
-
-def build_driz_weight(model, wht_type=None, good_bits=None):
-    """ Create input weighting image based on user inputs
-    """
-    
-    if good_bits is not None and good_bits < 0: good_bits = None
-    dqmask = _buildMask(model.dq, good_bits)
-    exptime = model.meta.exposure.exposure_time
-
-    if wht_type.lower()[:3] == 'err':
-        # Multiply the scaled ERR file by the input mask in place.
-        inwht = (exptime / model.err)**2 * dqmask
-    #elif wht_type == 'IVM':
-    #    _inwht = img.buildIVMmask(chip._chip,dqarr,pix_ratio)
-    elif wht_type.lower()[:3] == 'exp':# or wht_type is None, as used for single=True
-        inwht = exptime * dqmask
-    else:
-        # Create an identity input weight map
-        inwht = np.ones(model.data.shape, dtype=model.data.dtype)
-    return inwht
+    def update_fits_wcs(self, model):
+        """Update FITS WCS keywords of the resampled image"""
+        transform = model.meta.wcs.forward_transform
+        model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
+        model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
+        model.meta.wcsinfo.cdelt1 = transform[3].factor.value
+        model.meta.wcsinfo.cdelt2 = transform[4].factor.value
+        model.meta.wcsinfo.ra_ref = transform[6].lon.value
+        model.meta.wcsinfo.dec_ref = transform[6].lat.value
+        model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
+        model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
+        model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
+        model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
+        model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
+        model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]

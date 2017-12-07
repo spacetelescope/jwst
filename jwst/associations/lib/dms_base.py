@@ -17,21 +17,88 @@ _ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 
 # Exposure EXP_TYPE to Association EXPTYPE mapping
 _EXPTYPE_MAP = {
+    'mir_dark':      'dark',
+    'mir_flatimage': 'flat',
+    'mir_flatmrs':   'flat',
     'mir_tacq':      'target_acquistion',
+    'nis_dark':      'dark',
+    'nis_focus':     'engineering',
+    'nis_lamp':      'engineering',
     'nis_tacq':      'target_acquistion',
     'nis_taconfirm': 'target_acquistion',
+    'nrc_dark':      'dark',
+    'nrc_flat':      'flat',
+    'nrc_focus':     'engineering',
+    'nrc_led':       'engineering',
     'nrc_tacq':      'target_acquistion',
     'nrc_taconfirm': 'target_acquistion',
     'nrs_autoflat':  'autoflat',
     'nrs_autowave':  'autowave',
     'nrs_confirm':   'target_acquistion',
+    'nrs_dark':      'dark',
+    'nrs_focus':     'engineering',
+    'nrs_image':     'engineering',
+    'nrs_lamp':      'engineering',
     'nrs_tacq':      'target_acquistion',
     'nrs_taconfirm': 'target_acquistion',
     'nrs_taslit':    'target_acquistion',
 }
 
+# Exposures that are always TSO
+TSO_EXP_TYPES = (
+    'mir_lrs-slitless',
+    'nis_soss',
+    'nrc_tsimage',
+    'nrc_tsgrism',
+    'nrs_brightobj'
+)
+
+# Exposures that get Level2b processing
+IMAGE2_SCIENCE_EXP_TYPES = [
+    'mir_image',
+    'mir_lyot',
+    'mir_4qpm',
+    'nis_ami',
+    'nis_image',
+    'nrc_image',
+    'nrc_coron',
+    'nrc_tsimage',
+]
+
+IMAGE2_NONSCIENCE_EXP_TYPES = [
+    'mir_coroncal',
+    'mir_tacq',
+    'nis_focus',
+    'nis_tacq',
+    'nis_taconfirm',
+    'nrc_tacq',
+    'nrc_taconfirm',
+    'nrc_focus',
+    'nrs_bota',
+    'nrs_confirm',
+    'nrs_focus',
+    'nrs_image',
+    'nrs_mimf',
+    'nrs_taslit',
+    'nrs_tacq',
+    'nrs_taconfirm',
+]
+
+SPEC2_SCIENCE_EXP_TYPES = [
+    'nrc_grism',
+    'nrc_tsgrism',
+    'mir_lrs-fixedslit',
+    'mir_lrs-slitless',
+    'mir_mrs',
+    'nrs_fixedslit',
+    'nrs_ifu',
+    'nrs_msaspec',
+    'nrs_brightobj',
+    'nis_soss',
+]
+
 # Non-specified values found in DMS Association Pools
-_EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n')
+_EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f')
 
 __all__ = ['DMSBaseMixin']
 
@@ -203,13 +270,13 @@ class DMSBaseMixin(ACIDMixin):
         else:
             return 'psf'
         try:
-            self.item_getattr(item, ['is_imprint'])
+            self.item_getattr(item, ['is_imprt'])
         except KeyError:
             pass
         else:
             return 'imprint'
         try:
-            self.item_getattr(item, ['background'])
+            self.item_getattr(item, ['bkgdtarg'])
         except KeyError:
             pass
         else:

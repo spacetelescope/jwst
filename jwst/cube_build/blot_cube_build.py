@@ -63,8 +63,6 @@ class CubeBlot(object):
         self.cdelt2 = median_model.meta.wcsinfo.cdelt2*3600.0
         self.cdelt3 = median_model.meta.wcsinfo.cdelt3*3600.0
 
-#        print('cdelts',self.cdelt1,self.cdelt2,self.cdelt3)
-
         xcube,ycube,zcube = wcstools.grid_from_bounding_box(self.median_skycube.meta.wcs.bounding_box,
                                                 step=(1,1,1))
         
@@ -123,12 +121,14 @@ class CubeBlot(object):
 
             filename = model.meta.filename
             indx = filename.rfind('.fits')
-            blot.meta.filename = filename[:indx] + '_blot.fits' #set output name
+            
 
-            log.info('Blotting back %s',model.meta.filename)
             if(self.instrument =='MIRI'):
-                
                 this_par1 = self.channel # only one channel is blotted at a time
+                ch_name = '_ch' + this_par1
+                blot.meta.filename = filename[:indx] +ch_name+ '_blot.fits' #set output name
+                log.info('Blotting back %s',model.meta.filename)
+
                 # get the detector values for this model
                 xstart, xend = instrument_info.GetMIRISliceEndPts(this_par1)
 #                xdet,ydet = wcstools.grid_from_bounding_box(model.meta.wcs.bounding_box, step=(1,1))
@@ -141,9 +141,6 @@ class CubeBlot(object):
                 pixel_mask = np.full(model.shape,False,dtype=bool)
                 pixel_mask[:,xstart:xend] = True
                 ra_det,dec_det,wave_det = model.meta.wcs(xdet,ydet)
-
-#                print('xstart and xend',xstart,xend)
-#                print('size of blot flux',blot_flux.size)                
 
                 valid1 = np.isfinite(ra_det)
                 valid2 = np.isfinite(dec_det)
@@ -167,17 +164,12 @@ class CubeBlot(object):
                 self.xi_centers = np.reshape(xi_cube[0,:,:],nplane)
                 self.eta_centers =np.reshape(eta_cube[0,:,:],nplane)
                 
-#                print('size of xi, eta centers',self.xi_centers.shape,self.eta_centers.shape))
-#                print('size of cube',xi_cube.shape)
-
-
                 num = ra_blot.size
 #                print('Size of pixel detectors looping over',num)
                 iprint = 0 
 #________________________________________________________________________________  
                 # loop over the valid pixels on the detector
                 for ipt in range(0, num - 1):
-
                     # xx,yy are the index value of the orginal detector frame -
                     # blot image
                     yy = y[ipt]
@@ -194,15 +186,6 @@ class CubeBlot(object):
                     wave_found = self.lam_centers[indexz]        # z Cube values falling in wavelength roi
                     xi_found = self.xi_centers[indexr]   # x Cube values within radius 
                     eta_found = self.eta_centers[indexr]  # y cube values with the radius
-
-#                    if(iprint == 0):
-#                        print ('on pixel ipt',ipt,len(indexr[0]),len(indexz[0]))
-#                        print('point',xi_blot[ipt],eta_blot[ipt],wave_blot[ipt])
-
-#                        print('wave found',wave_found)
-#                        print('xi_found',xi_found)
-#                        print('eta found',eta_found)
-
 #________________________________________________________________________________  
                     #loop over the median cube pixels that fall within the ROI
                     # of the detector center
@@ -234,9 +217,6 @@ class CubeBlot(object):
                     if(blot_iflux[yy,xx] > 0) :
                         blot_flux[yy,xx] = blot_flux[yy,xx]/blot_weight[yy,xx]
                     
-#                    iprint = iprint+1
-#                    if(iprint == 40960):
-#                        iprint = 0 
                         
                 blot.data = blot_flux
             blot_models.append(blot)

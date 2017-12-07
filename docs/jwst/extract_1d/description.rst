@@ -7,6 +7,10 @@ data through any one or more of the fixed slits, MIRI LRS data through
 the slit or in the slitless region, and NIRISS slitless data) as well as
 IFU data and NIRSpec MOS (micro-shutter array) data.
 
+For GRISM data (NIS_WFSS or NRC_GRISM), no reference file is used.
+The extraction region is taken to be the full size of the input subarray,
+and the dispersion direction is assumed to be the longer axis.
+
 For IFU data, the extraction options differ depending on
 whether the target is a point source or an extended source.  For a point
 source, the spectrum will be extracted using circular aperture photometry,
@@ -23,8 +27,9 @@ subsampled N x N, and the "center" option will be used for each sub-pixel.
 Input
 =====
 Level 2-b countrate data, or level-3 data.  The format should be a
-CubeModel, an IFUCubeModel, an ImageModel, or a MultiSlitModel, with at
-least SCI and RELSENS extensions for each slit.  The SCI extensions should
+CubeModel, an IFUCubeModel, an ImageModel, a DrizProductModel,
+a MultiSlitModel, a MultiProductModel, or a ModelContainer.
+The SCI extensions should
 have keyword SLTNAME to specify which slit was extracted, though if there
 is only one slit (e.g. full-frame data), the slit name can be taken from
 the JSON reference file instead.

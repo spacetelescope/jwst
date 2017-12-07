@@ -1,0 +1,43 @@
+{
+    "asn_type": "spec3",
+    "asn_rule": "candidate_Asn_MIRI_LRS_FIXEDSLIT",
+    "version_id": null,
+    "code_version": "0.9.4",
+    "program": "98010",
+    "degraded_status": "No known degraded exposures in association.",
+    "constraints": "Constraints:\n    exp_type: {'mir_lrs\\\\-fixedslit'}\n    opt_elem: {'p750l'}\n    subarray: {'full'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'1'}\n    program: {'98010'}\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "asn_id": "o001",
+    "target": "t001",
+    "asn_pool": "jw98010_20171108T062332_pool",
+    "products": [
+        {
+            "name": "jw98010-o001_t001_miri_p750l",
+            "members": [
+                {
+                    "expname": "jw98010001001_02104_00001_mirimage_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw98010001001_02103_00001_mirimage_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw98010001001_02101_00001_mirimage_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o001', 'observation')"
+                },
+                {
+                    "expname": "jw98010001001_02102_00001_mirimage_cal.fits",
+                    "exptype": "science",
+                    "exposerr": "null",
+                    "asn_candidate": "('o001', 'observation')"
+                }
+            ]
+        }
+    ]
+}

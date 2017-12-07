@@ -437,8 +437,8 @@ def set_geometry(self, footprint):
         eta_min = 0.0 - (n2a * self.Cdelt2) - self.Cdelt2/2.0
         eta_max = (n2b * self.Cdelt2) + self.Cdelt2/2.0
         
-        self.Crpix1 = n1a
-        self.Crpix2 = n2a
+        self.Crpix1 = float(n1a) + 1.0
+        self.Crpix2 = float(n2a) + 1.0 
 
         self.naxis1 = n1a + n1b
         self.naxis2 = n2a + n2b

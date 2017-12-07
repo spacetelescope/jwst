@@ -8,14 +8,14 @@ automatically found by py.test. This is because, to test,
 a connection to the internal engineering service is needed,
 which is generally not available.
 """
-
-from __future__ import absolute_import
-
-from backports.tempfile import TemporaryDirectory
 import copy
 import numpy as np
 import os
+import sys
+import sqlite3
 import pytest
+from tempfile import TemporaryDirectory
+
 import requests_mock
 
 from astropy.table import Table
@@ -44,7 +44,7 @@ VPARITY = -1
 # Get the mock DB
 db_path = os.path.join(os.path.dirname(__file__), 'data', 'engdb_mock.csv')
 mock_db = Table.read(db_path)
-
+siaf_db = os.path.join(os.path.dirname(__file__), 'data', 'siaf.db')
 
 # Some expected falues
 Q_EXPECTED = np.asarray(
@@ -149,7 +149,7 @@ def eng_db():
 
 @pytest.fixture
 def data_file():
-    model = datamodels.ImageModel()
+    model = datamodels.Level1bModel()
     model.meta.exposure.start_time = STARTTIME.mjd
     model.meta.exposure.end_time = ENDTIME.mjd
     model.meta.target.ra = TARG_RA
@@ -158,6 +158,8 @@ def data_file():
     model.meta.wcsinfo.v3_ref = V3_REF
     model.meta.wcsinfo.v3yangle = V3I_YANG
     model.meta.wcsinfo.vparity = VPARITY
+    model.meta.aperture.name = "MIRIM_FULL"
+    model.meta.observation.date = '1/1/2017'
 
     with TemporaryDirectory() as path:
         file_path = os.path.join(path, 'fits.fits')
@@ -206,9 +208,11 @@ def test_get_pointing_with_zeros(eng_db):
     assert np.array_equal(fsmcorr, fsmcorr_desired)
 
 
+@pytest.mark.skipif(sys.version_info.major<3,
+                    reason="No URI support in sqlite3")
 def test_add_wcs_default(data_file):
     try:
-        stp.add_wcs(data_file)
+        stp.add_wcs(data_file, siaf_path=siaf_db)
     except Exception as e:
         pytest.skip(
             'Live ENGDB service is not accessible.'
@@ -233,19 +237,20 @@ def test_add_wcs_default(data_file):
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 344.0 -86.0'
-            ' 344.0 -87.0'
-            ' 345.0 -87.0'
-            ' 345.0 -86.0'
-            ' 344.0 -86.0'
+            ' 345.0516057166881 -86.87312441299257'
+            ' 344.61737392066823 -86.85221531104224'
+            ' 344.99072891662956 -86.82863042295425'
+            ' 345.42745662836063 -86.84915871318734'
         )
     )
 
 
+@pytest.mark.skipif(sys.version_info.major<3,
+                    reason="No URI support in sqlite3")
 def test_add_wcs_fsmcorr_v1(data_file):
     """Test with default value using FSM original correction"""
     try:
-        stp.add_wcs(data_file, fsmcorr_version='v1')
+        stp.add_wcs(data_file, fsmcorr_version='v1', siaf_path=siaf_db)
     except Exception as e:
         pytest.skip(
             'Live ENGDB service is not accessible.'
@@ -270,18 +275,19 @@ def test_add_wcs_fsmcorr_v1(data_file):
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 344.0 -86.0'
-            ' 344.0 -87.0'
-            ' 345.0 -87.0'
-            ' 345.0 -86.0'
-            ' 344.0 -86.0'
+            ' 345.0516057166881 -86.87312441299257'
+            ' 344.61737392066823 -86.85221531104224'
+            ' 344.99072891662956 -86.82863042295425'
+            ' 345.42745662836063 -86.84915871318734'
         )
     )
 
 
-def test_add_wcs_with_db(eng_db, data_file):
+@pytest.mark.skipif(sys.version_info.major<3,
+                    reason="No URI support in sqlite3")
+def test_add_wcs_with_db(eng_db, data_file, siaf_file=siaf_db):
     """Test using the database"""
-    stp.add_wcs(data_file)
+    stp.add_wcs(data_file, siaf_path=siaf_db)
 
     model = datamodels.open(data_file)
     assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
@@ -301,18 +307,19 @@ def test_add_wcs_with_db(eng_db, data_file):
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 349.9154593139086 -37.89343325428542'
-            ' 348.9162019077701 -37.854902276134595'
-            ' 348.8776709296192 -38.85415968227314'
-            ' 349.8769283357578 -38.892690660423966'
-            ' 349.9154593139086 -37.89343325428542'
+            ' 349.00694612561705 -38.776964589744054'
+            ' 349.0086451128466 -38.74533844552814'
+            ' 349.04874980331374 -38.746495669763334'
+            ' 349.0474396482846 -38.77812380255898'
         )
     )
 
 
+@pytest.mark.skipif(sys.version_info.major<3,
+                    reason="No URI support in sqlite3")
 def test_add_wcs_with_db_fsmcorr_v1(eng_db, data_file):
     """Test using the database with original FSM correction"""
-    stp.add_wcs(data_file, fsmcorr_version='v1')
+    stp.add_wcs(data_file, fsmcorr_version='v1', siaf_path=siaf_db)
 
     model = datamodels.open(data_file)
     assert np.isclose(model.meta.pointing.ra_v1, 348.9278669)
@@ -332,10 +339,9 @@ def test_add_wcs_with_db_fsmcorr_v1(eng_db, data_file):
         model.meta.wcsinfo.s_region,
         (
             'POLYGON ICRS'
-            ' 349.9154593139086 -37.89343325428542'
-            ' 348.9162019077701 -37.854902276134595'
-            ' 348.8776709296192 -38.85415968227314'
-            ' 349.8769283357578 -38.892690660423966'
-            ' 349.9154593139086 -37.89343325428542'
+            ' 349.00694612561705 -38.776964589744054'
+            ' 349.0086451128466 -38.74533844552814'
+            ' 349.04874980331374 -38.746495669763334'
+            ' 349.0474396482846 -38.77812380255898'
         )
     )

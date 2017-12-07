@@ -53,5 +53,3 @@ class PhotomStep(Step):
 
         return output_obj
 
-if __name__ == '__main__':
-    cmdline.step_script(photom_step)

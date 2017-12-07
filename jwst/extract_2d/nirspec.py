@@ -1,8 +1,6 @@
 #
 #  Module for 2d extraction
 #
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
 import logging
 import warnings
 import numpy as np
@@ -13,7 +11,7 @@ from gwcs import wcstools
 from .. import datamodels
 from ..transforms import models as trmodels
 from ..assign_wcs import nirspec
-
+from ..assign_wcs import util
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -21,9 +19,9 @@ log.setLevel(logging.DEBUG)
 
 def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, reference_files={}):
     exp_type = input_model.meta.exposure.type.upper()
-    
+
     wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']
-    
+
     if exp_type in wavecorr_supported_modes:
         reffile = reference_files['wavecorr']
         if reffile and reffile.strip().upper() == 'N/A':
@@ -33,7 +31,7 @@ def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, refere
         apply_wavecorr = False
         log.info("Skipping wavecorr correction for EXP_TYPE {0}".format(exp_type))
 
-    
+
     slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
     # This is a cludge but will work for now.
     # This model keeps open_slits as an attribute.
@@ -41,8 +39,8 @@ def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, refere
     if which_subarray is not None:
         open_slits = [sub for sub in open_slits if sub.name==which_subarray]
     log.debug('open slits {0}'.format(open_slits))
-    if len(open_slits) == 1:
-        # the output model is the same as the input - ImageModel or CubeModel
+    if exp_type == 'NRS_BRIGHTOBJ':
+        # the output model is CubeModel
         output_model, xlo, xhi, ylo, yhi = process_slit(input_model, open_slits[0],
                                                         exp_type, apply_wavecorr, reffile)
     else:
@@ -53,6 +51,10 @@ def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, refere
                                                          exp_type, apply_wavecorr, reffile)
 
             output_model.slits.append(new_model)
+            orig_s_region = new_model.meta.wcsinfo.s_region.strip()
+            util.update_s_region(new_model)
+            if orig_s_region != new_model.meta.wcsinfo.s_region.strip():
+                log.info('extract_2d updated S_REGION to {0}'.format(new_model.meta.wcsinfo.s_region))
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
             nslit = len(output_model.slits) - 1

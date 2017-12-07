@@ -1,5 +1,4 @@
 """Test case insensitivity"""
-from __future__ import absolute_import
 import pytest
 
 from .helpers import (

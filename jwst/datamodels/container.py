@@ -1,5 +1,3 @@
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
 import os.path as op
 import os
 import copy
@@ -7,7 +5,6 @@ import warnings
 from collections import OrderedDict
 
 from asdf import AsdfFile
-import six
 
 from ..associations import (
     AssociationError,
@@ -41,7 +38,7 @@ class ModelContainer(model_base.DataModel):
           DataModels can be added via the ``append()`` method.
 
     persist: boolean. If True, do not close model after opening it
-    
+
     Examples
     --------
     >>> container = datamodels.ModelContainer('example_asn.json')
@@ -85,7 +82,7 @@ class ModelContainer(model_base.DataModel):
             self._ctx = self
             self.__class__ = init.__class__
             self._models = init._models
-        elif isinstance(init, six.string_types):
+        elif isinstance(init, str):
             try:
                 self.from_asn(init, **kwargs)
             except (IOError):
@@ -99,12 +96,12 @@ class ModelContainer(model_base.DataModel):
 
     def _open_model(self, index):
         model = self._models[index]
-        if isinstance(model, six.string_types):
+        if isinstance(model, str):
             model = datamodel_open(model,
                                    extensions=self._extensions,
                                    pass_invalid_values=self._pass_invalid_values)
             self._models[index] = model
-                
+
         return model
 
 
@@ -120,7 +117,7 @@ class ModelContainer(model_base.DataModel):
         for model in models:
             if isinstance(model, ModelContainer):
                 raise ValueError("ModelContainer cannot contain ModelContainer")
-            if not isinstance(model, (six.string_types, model_base.DataModel)):
+            if not isinstance(model, (str, model_base.DataModel)):
                 raise ValueError('model must be string or DataModel')
 
 
@@ -266,26 +263,26 @@ class ModelContainer(model_base.DataModel):
         group_dict = OrderedDict()
         for i in range(len(self)):
             model = self._open_model(i)
-            
-            try:
-                model_attrs = []
-                model_attrs.append(model.meta.observation.program_number)
-                model_attrs.append(model.meta.observation.observation_number)
-                model_attrs.append(model.meta.observation.visit_number)
-                model_attrs.append(model.meta.observation.visit_group)
-                model_attrs.append(model.meta.observation.sequence_id)
-                model_attrs.append(model.meta.observation.activity_id)
-                model_attrs.append(model.meta.observation.exposure_number)
-                model_attrs.append(model.meta.instrument.name)
-                model_attrs.append(model.meta.instrument.channel)
-                group_id = ('jw' + '_'.join([
-                                ''.join(model_attrs[:3]),
-                                ''.join(model_attrs[3:6]),
-                                model_attrs[6], model_attrs[7].lower(),
-                                model_attrs[8].lower()]))
-                model.meta.group_id = group_id
-            except:
-                model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
+            if not hasattr(model.meta, 'group_id'):
+                try:
+                    model_attrs = []
+                    model_attrs.append(model.meta.observation.program_number)
+                    model_attrs.append(model.meta.observation.observation_number)
+                    model_attrs.append(model.meta.observation.visit_number)
+                    model_attrs.append(model.meta.observation.visit_group)
+                    model_attrs.append(model.meta.observation.sequence_id)
+                    model_attrs.append(model.meta.observation.activity_id)
+                    model_attrs.append(model.meta.observation.exposure_number)
+                    model_attrs.append(model.meta.instrument.name)
+                    model_attrs.append(model.meta.instrument.channel)
+                    group_id = ('jw' + '_'.join([
+                                    ''.join(model_attrs[:3]),
+                                    ''.join(model_attrs[3:6]),
+                                    model_attrs[6], model_attrs[7].lower(),
+                                    model_attrs[8].lower()]))
+                    model.meta.group_id = group_id
+                except:
+                    model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
             group_id = model.meta.group_id
             if group_id in group_dict:
@@ -336,7 +333,7 @@ class ModelContainer(model_base.DataModel):
         return self.__get_recursively(field, self.meta._instance)
 
 
-class ModelContainerIterator(six.Iterator):
+class ModelContainerIterator:
     """
     An iterator for model containers that opens one model at a time
     """
@@ -349,16 +346,16 @@ class ModelContainerIterator(six.Iterator):
     def __iter__(self):
         return self
 
-    
+
     def __next__(self):
         if self.open_filename is not None:
             self.container._close_model(self.open_filename, self.index)
             self.open_filename = None
-            
-        self.index += 1    
+
+        self.index += 1
         if self.index < len(self.container._models):
             model = self.container._models[self.index]
-            if isinstance(model, six.string_types):
+            if isinstance(model, str):
                 name = model
                 model = self.container._open_model(self.index)
                 self.open_filename = name

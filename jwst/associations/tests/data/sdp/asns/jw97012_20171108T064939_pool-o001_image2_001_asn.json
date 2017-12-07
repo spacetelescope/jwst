@@ -1,0 +1,49 @@
+{
+    "asn_type": "image2",
+    "asn_rule": "candidate_Asn_Lv2FGS",
+    "version_id": null,
+    "code_version": "0.9.4",
+    "program": "97012",
+    "target": "1",
+    "asn_pool": "jw97012_20171108T064939_pool",
+    "constraints": "Constraints:\n    exp_type: {'fgs_image'}\n    single_science: {'False'}\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    program: {'97012'}\n    is_tso: set()",
+    "asn_id": "o001",
+    "products": [
+        {
+            "name": "jw97012001003_02101_00001_guider1",
+            "members": [
+                {
+                    "expname": "jw97012001003_02101_00001_guider1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw97012001002_02101_00001_guider1",
+            "members": [
+                {
+                    "expname": "jw97012001002_02101_00001_guider1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw97012001001_02101_00001_guider1",
+            "members": [
+                {
+                    "expname": "jw97012001001_02101_00001_guider1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw97012001004_02101_00001_guider1",
+            "members": [
+                {
+                    "expname": "jw97012001004_02101_00001_guider1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}

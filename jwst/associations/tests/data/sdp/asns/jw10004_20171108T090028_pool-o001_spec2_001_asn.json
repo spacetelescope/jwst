@@ -1,0 +1,22 @@
+{
+    "asn_type": "spec2",
+    "asn_rule": "candidate_Asn_Lv2Spec",
+    "version_id": null,
+    "code_version": "0.9.4",
+    "program": "10004",
+    "target": "1",
+    "asn_pool": "jw10004_20171108T090028_pool",
+    "constraints": "Constraints:\n    single_science: {'False'}\n    exp_type: {'nis_soss'}\n    program: {'10004'}\n    target: {'1'}\n    instrument: {'niriss'}\n    detector: {'nis'}\n    opt_elem: {'clear'}\n    opt_elem2: {'gr700xd'}\n    subarray: {'substrip256'}\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "asn_id": "o001",
+    "products": [
+        {
+            "name": "jw10004001001_02101_00001_nis",
+            "members": [
+                {
+                    "expname": "jw10004001001_02101_00001_nis_rateints.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}

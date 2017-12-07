@@ -27,7 +27,7 @@ class JumpStep(Step):
 
     def process(self, input):
 
-        with datamodels.open(input) as input_model:
+        with datamodels.RampModel(input) as input_model:
 
             # Check for consistency between keyword values and data shape
             ngroups = input_model.data.shape[1]
@@ -76,6 +76,3 @@ class JumpStep(Step):
 
         return result
 
-
-if __name__ == '__main__':
-    cmdline.step_script(JumpStep)

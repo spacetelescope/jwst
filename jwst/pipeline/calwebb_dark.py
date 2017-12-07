@@ -16,7 +16,7 @@ from ..lastframe import lastframe_step
 from ..linearity import linearity_step
 
 
-__version__ = "0.7.1"
+__version__ = '0.8.0'
 
 # Define logging
 log = logging.getLogger()
@@ -51,7 +51,7 @@ class DarkPipeline(Pipeline):
         log.info('Starting calwebb_dark ...')
 
         # open the input
-        input = datamodels.open(input)
+        input = datamodels.RampModel(input)
 
         if input.meta.instrument.name == 'MIRI':
 

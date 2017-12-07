@@ -95,4 +95,10 @@ allOf:
             default: 0.0
             fits_keyword: SLIT_DEC
             fits_hdu: EXTRACT1D
+          spectral_order:
+            title: Spectral order number
+            type: integer
+            default: 1
+            fits_keyword: SPORDER
+            fits_hdu: EXTRACT1D
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

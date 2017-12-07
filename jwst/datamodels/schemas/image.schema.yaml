@@ -43,6 +43,18 @@ allOf:
       ndim: 2
       default: 0.0
       datatype: float32
+    var_poisson:
+      title: variance due to poisson noise 
+      fits_hdu: VAR_POISSON
+      ndim: 2
+      default: 0.0
+      datatype: float32
+    var_rnoise:
+      title: variance due to read noise 
+      fits_hdu: VAR_RNOISE
+      ndim: 2
+      default: 0.0
+      datatype: float32
 - type: object
   properties:
     pathloss_pointsource:

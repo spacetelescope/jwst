@@ -72,37 +72,52 @@ def correct_model(input_model, irs2_model,
     """
 
     output_model = input_model.copy()
+    output_model.meta.cal_step.refpix = 'not specified yet'
 
     # Get reference data.
+    # The reference data are complex, but they're stored as float, with
+    # alternating real and imaginary parts.  We therefore check for twice
+    # as many rows as we actually want, and we'll divide that number by two
+    # when allocating the arrays alpha and beta.
     nrows = len(irs2_model.irs2_table.field("alpha_0"))
-    if nrows != 712 * 2048:
-        log.warning("Number of rows in reference file = %d,"
-                    " but it should be 1458176." % nrows)
-    alpha = np.ones((4, nrows), dtype=np.complex64)
-    beta = np.zeros((4, nrows), dtype=np.complex64)
-    alpha[0, :] = irs2_model.irs2_table.field("alpha_0")
-    alpha[1, :] = irs2_model.irs2_table.field("alpha_1")
-    alpha[2, :] = irs2_model.irs2_table.field("alpha_2")
-    alpha[3, :] = irs2_model.irs2_table.field("alpha_3")
-    beta[0, :] = irs2_model.irs2_table.field("beta_0")
-    beta[1, :] = irs2_model.irs2_table.field("beta_1")
-    beta[2, :] = irs2_model.irs2_table.field("beta_2")
-    beta[3, :] = irs2_model.irs2_table.field("beta_3")
+    expected_nrows = 2 * 712 * 2048
+    if nrows != expected_nrows:
+        log.error("Number of rows in reference file = {},"
+                  " but it should be {}.".format(nrows, expected_nrows))
+        output_model.meta.cal_step.refpix = 'SKIPPED'
+        return output_model
+    alpha = np.ones((4, nrows // 2), dtype=np.complex64)
+    beta = np.zeros((4, nrows // 2), dtype=np.complex64)
+
+    alpha[0, :] = float_to_complex(
+                        irs2_model.irs2_table.field("alpha_0"))
+    alpha[1, :] = float_to_complex(
+                        irs2_model.irs2_table.field("alpha_1"))
+    alpha[2, :] = float_to_complex(
+                        irs2_model.irs2_table.field("alpha_2"))
+    alpha[3, :] = float_to_complex(
+                        irs2_model.irs2_table.field("alpha_3"))
+
+    beta[0, :] = float_to_complex(
+                    irs2_model.irs2_table.field("beta_0"))
+    beta[1, :] = float_to_complex(
+                    irs2_model.irs2_table.field("beta_1"))
+    beta[2, :] = float_to_complex(
+                    irs2_model.irs2_table.field("beta_2"))
+    beta[3, :] = float_to_complex(
+                    irs2_model.irs2_table.field("beta_3"))
 
     if beta is None:
         log.info("Using reference pixels only.")
 
-    try:
-        scipix_n = input_model.meta.exposure.nrs_norm
-    except AttributeError as errmsg:
-        log.warning(errmsg)
+    scipix_n = input_model.meta.exposure.nrs_normal
+    if scipix_n is None:
         log.warning("Keyword NRS_NORM not found; using default value %d" %
                     scipix_n_default)
         scipix_n = scipix_n_default
-    try:
-        refpix_r = input_model.meta.exposure.nrs_ref
-    except AttributeError as errmsg:
-        log.warning(errmsg)
+
+    refpix_r = input_model.meta.exposure.nrs_reference
+    if refpix_r is None:
         log.warning("Keyword NRS_REF not found; using default value %d" %
                     refpix_r_default)
         refpix_r = refpix_r_default
@@ -149,6 +164,14 @@ def correct_model(input_model, irs2_model,
     exclude_ref(output_model, irs2_mask)
 
     return output_model
+
+
+def float_to_complex(data):
+    """Convert real and imaginary parts to complex"""
+
+    nelem = len(data)
+
+    return data[0:-1:2] + 1j * data[1:nelem:2]
 
 def make_irs2_mask(output_model, scipix_n, refpix_r):
 

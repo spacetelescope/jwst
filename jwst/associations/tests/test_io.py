@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 from glob import glob
 import os
 import pytest
@@ -9,6 +7,7 @@ from astropy.table import Table
 from .helpers import (
     TemporaryDirectory,
     full_pool_rules,
+    runslow,
 )
 
 from ..main import Main
@@ -21,6 +20,7 @@ from .. import load_asn
 # )
 
 
+@runslow
 @pytest.yield_fixture(
     scope='module',
     params=['yaml', 'json']
@@ -38,6 +38,7 @@ def make_asns(request):
         yield generated, path, asn_format
 
 
+@runslow
 def test_roundtrip(make_asns):
     generated, path, asn_format = make_asns
     asn_files = glob(os.path.join(path, '*.' + asn_format))
@@ -57,6 +58,7 @@ def test_roundtrip(make_asns):
     assert len(orphaned) == len(generated.orphaned)
 
 
+@runslow
 def test_load_asn_all(make_asns):
     generated, path, asn_format = make_asns
     asn_files = glob(os.path.join(path, '*.' + asn_format))

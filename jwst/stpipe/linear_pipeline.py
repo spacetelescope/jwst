@@ -30,12 +30,8 @@
 LinearPipeline
 
 """
-
-from __future__ import absolute_import, division, print_function
-
 import gc
 
-import six
 from .pipeline import Pipeline
 
 
@@ -54,8 +50,7 @@ class _LinearPipelineMetaclass(type):
 # Since the pipeline_steps member needs to be converted to a step_defs
 # at the class level, we need to use a metaclass.
 
-@six.add_metaclass(_LinearPipelineMetaclass)
-class LinearPipeline(Pipeline):
+class LinearPipeline(Pipeline, metaclass=_LinearPipelineMetaclass):
     """
     A LinearPipeline is a way of combining a number of steps together
     in a simple linear order.

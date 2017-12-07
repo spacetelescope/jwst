@@ -1,0 +1,373 @@
+{
+    "asn_type": "image2",
+    "asn_rule": "candidate_Asn_Lv2Image",
+    "version_id": null,
+    "code_version": "0.9.4",
+    "program": "96090",
+    "target": "1",
+    "asn_pool": "jw96090_20171108T041421_pool",
+    "constraints": "Constraints:\n    single_science: {'False'}\n    exp_type: {'nrc_image'}\n    program: {'96090'}\n    target: {'1'}\n    instrument: {'nircam'}\n    detector: {'nrcb4'}\n    opt_elem: {'f150w2'}\n    opt_elem2: {'clear'}\n    subarray: {'full'}\n    channel: {'short'}\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "asn_id": "o001",
+    "products": [
+        {
+            "name": "jw96090001003_03101_00001_nrcb4",
+            "members": [
+                {
+                    "expname": "jw96090001003_03101_00001_nrcb4_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001003_03101_00001_nrcb1",
+            "members": [
+                {
+                    "expname": "jw96090001003_03101_00001_nrcb1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001003_03101_00001_nrcalong",
+            "members": [
+                {
+                    "expname": "jw96090001003_03101_00001_nrcalong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001003_03101_00001_nrca4",
+            "members": [
+                {
+                    "expname": "jw96090001003_03101_00001_nrca4_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001003_03101_00001_nrca1",
+            "members": [
+                {
+                    "expname": "jw96090001003_03101_00001_nrca1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001004_03101_00001_nrcb3",
+            "members": [
+                {
+                    "expname": "jw96090001004_03101_00001_nrcb3_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001002_03101_00001_nrca2",
+            "members": [
+                {
+                    "expname": "jw96090001002_03101_00001_nrca2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001004_03101_00001_nrcb2",
+            "members": [
+                {
+                    "expname": "jw96090001004_03101_00001_nrcb2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001002_03101_00001_nrcb2",
+            "members": [
+                {
+                    "expname": "jw96090001002_03101_00001_nrcb2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001003_03101_00001_nrcblong",
+            "members": [
+                {
+                    "expname": "jw96090001003_03101_00001_nrcblong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001004_03101_00001_nrca4",
+            "members": [
+                {
+                    "expname": "jw96090001004_03101_00001_nrca4_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001003_03101_00001_nrcb3",
+            "members": [
+                {
+                    "expname": "jw96090001003_03101_00001_nrcb3_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001001_03101_00001_nrcb1",
+            "members": [
+                {
+                    "expname": "jw96090001001_03101_00001_nrcb1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001001_03101_00001_nrcb4",
+            "members": [
+                {
+                    "expname": "jw96090001001_03101_00001_nrcb4_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001004_03101_00001_nrcalong",
+            "members": [
+                {
+                    "expname": "jw96090001004_03101_00001_nrcalong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001004_03101_00001_nrca3",
+            "members": [
+                {
+                    "expname": "jw96090001004_03101_00001_nrca3_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001003_03101_00001_nrca2",
+            "members": [
+                {
+                    "expname": "jw96090001003_03101_00001_nrca2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001002_03101_00001_nrcalong",
+            "members": [
+                {
+                    "expname": "jw96090001002_03101_00001_nrcalong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001002_03101_00001_nrcblong",
+            "members": [
+                {
+                    "expname": "jw96090001002_03101_00001_nrcblong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001002_03101_00001_nrcb1",
+            "members": [
+                {
+                    "expname": "jw96090001002_03101_00001_nrcb1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001001_03101_00001_nrcblong",
+            "members": [
+                {
+                    "expname": "jw96090001001_03101_00001_nrcblong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001001_03101_00001_nrcb2",
+            "members": [
+                {
+                    "expname": "jw96090001001_03101_00001_nrcb2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001001_03101_00001_nrcalong",
+            "members": [
+                {
+                    "expname": "jw96090001001_03101_00001_nrcalong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001004_03101_00001_nrcb1",
+            "members": [
+                {
+                    "expname": "jw96090001004_03101_00001_nrcb1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001002_03101_00001_nrca4",
+            "members": [
+                {
+                    "expname": "jw96090001002_03101_00001_nrca4_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001001_03101_00001_nrca1",
+            "members": [
+                {
+                    "expname": "jw96090001001_03101_00001_nrca1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001001_03101_00001_nrca3",
+            "members": [
+                {
+                    "expname": "jw96090001001_03101_00001_nrca3_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001002_03101_00001_nrcb3",
+            "members": [
+                {
+                    "expname": "jw96090001002_03101_00001_nrcb3_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001003_03101_00001_nrca3",
+            "members": [
+                {
+                    "expname": "jw96090001003_03101_00001_nrca3_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001004_03101_00001_nrca2",
+            "members": [
+                {
+                    "expname": "jw96090001004_03101_00001_nrca2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001002_03101_00001_nrcb4",
+            "members": [
+                {
+                    "expname": "jw96090001002_03101_00001_nrcb4_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001001_03101_00001_nrcb3",
+            "members": [
+                {
+                    "expname": "jw96090001001_03101_00001_nrcb3_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001001_03101_00001_nrca2",
+            "members": [
+                {
+                    "expname": "jw96090001001_03101_00001_nrca2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001002_03101_00001_nrca1",
+            "members": [
+                {
+                    "expname": "jw96090001002_03101_00001_nrca1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001002_03101_00001_nrca3",
+            "members": [
+                {
+                    "expname": "jw96090001002_03101_00001_nrca3_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001004_03101_00001_nrcblong",
+            "members": [
+                {
+                    "expname": "jw96090001004_03101_00001_nrcblong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001001_03101_00001_nrca4",
+            "members": [
+                {
+                    "expname": "jw96090001001_03101_00001_nrca4_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001003_03101_00001_nrcb2",
+            "members": [
+                {
+                    "expname": "jw96090001003_03101_00001_nrcb2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001004_03101_00001_nrcb4",
+            "members": [
+                {
+                    "expname": "jw96090001004_03101_00001_nrcb4_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw96090001004_03101_00001_nrca1",
+            "members": [
+                {
+                    "expname": "jw96090001004_03101_00001_nrca1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}

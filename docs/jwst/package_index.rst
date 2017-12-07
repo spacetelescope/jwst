@@ -8,6 +8,7 @@ Package Index
    assign_wcs/index.rst
    associations/index.rst
    background/index.rst
+   barshadow/index.rst
    combine_1d/index.rst
    coron/index.rst
    csv_tools/index.rst

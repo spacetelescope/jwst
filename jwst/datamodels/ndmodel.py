@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals, division, print_function
-
 """
 Subclass of NDDataBase to support DataModel compatibility with NDData
 """
@@ -8,7 +6,6 @@ import os.path
 import numpy as np
 import collections
 
-import six
 from astropy.units import Quantity
 from astropy.nddata import nddata_base
 
@@ -95,7 +92,7 @@ def write(data, path, *args, **kwargs):
     else:
         model = data
     
-    if isinstance(path, six.string_types): 
+    if isinstance(path, str): 
         model.save(path, *args, **kwargs)
     else:
         raise ValueError("Path to write DataModel was not found")
@@ -243,7 +240,7 @@ class MetaNode(properties.ObjectNode, collections.MutableMapping):
     def __len__(self):
         def recurse(val):
             n = 0
-            for subval in six.itervalues(val):
+            for subval in val.values():
                 if isinstance(subval, dict):
                     n += recurse(subval)
                 else:

@@ -32,11 +32,21 @@ WCS reference file information per EXP_TYPE
   | WCS pipeline coordinate frames: detector, v2v3, world
   | Implements: Distortion file created from TEL team data.
 
+:NRC_GRISM, NRC_TSGRISM:
+  | reftypes: *specwcs*, *distortion* *wavelengthrange*
+  | WCS pipeline coordinate frames: grism_detector, detector, v2v3, world
+  | Implements: reference files provided by NIRCAM team
+
 :NIS_IMAGE, NIS_TACQ, NIS_TACONFIRM, NIS_FOCUS:
 
   | reftypes: *distortion*
   | WCS pipeline coordinate frames: detector, v2v3, world
   | Implements: reference file provided by NIRISS team
+
+:NIS_WFSS:
+  | reftypes: *specwcs*, *distortion*
+  | WCS pipeline coordinate frames: grism_detector, detector, v2v3, world
+  | Implements: reference files provided by NIRISS team
 
 :NIS_SOSS:
 
@@ -48,18 +58,19 @@ WCS reference file information per EXP_TYPE
 
   | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*
   | WCS pipeline coordinate frames: detector, sca, bgwa, slit_frame, msa_frame, ote, v2v3, world
-  | Implements: CDP 2 delivery
+  | Implements: CDP 3 delivery
 
 :NRS_IFU:
 
   | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*,
   | *ifufore*, *ifuslicer*, *ifupost*
   | WCS pipeline coordinate frames: detector, sca, bgwa, slit_frame, msa_frame, ote, v2v3, world
-  | Implements: CDP 2 delivery
+  | Implements: CDP 3 delivery
 
 :NRS_IMAGING, NRS_MIMF, NRS_BOTA, NRS_CONFIRM, NRS_TACONFIRM, NRS_TASLIT, NRS_TACQ:
 
   | reftypes: *fpa*, *camera*, *disperser*, *collimator*, *msa*, *wavelengthrange*, *fore*, *ote*
   | WCS pipeline coordinate frames: detector, sca, bgwa, slit_frame, msa_frame, ote, v2v3, world
-  | Implements: CDP 2 delivery
+  | Implements: CDP 3 delivery
+
 

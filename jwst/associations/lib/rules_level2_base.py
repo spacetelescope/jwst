@@ -12,7 +12,14 @@ from jwst.associations import (
     AssociationRegistry,
     libpath
 )
-from jwst.associations.lib.dms_base import (DMSBaseMixin, PRODUCT_NAME_DEFAULT)
+from jwst.associations.lib.dms_base import (
+    DMSBaseMixin,
+    IMAGE2_NONSCIENCE_EXP_TYPES,
+    IMAGE2_SCIENCE_EXP_TYPES,
+    PRODUCT_NAME_DEFAULT,
+    SPEC2_SCIENCE_EXP_TYPES,
+    TSO_EXP_TYPES
+)
 from jwst.associations.lib.rules_level3_base import _EMPTY
 from jwst.associations.lib.rules_level3_base import Utility as Utility_Level3
 
@@ -50,7 +57,6 @@ _REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)'
 # Key that uniquely identfies items.
 KEY = 'expname'
 
-
 class DMSLevel2bBase(DMSBaseMixin, Association):
     """Basic class for DMS Level2 associations."""
 
@@ -74,6 +80,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 'value': None,
                 'inputs': ['program']
             },
+            'is_tso': {
+                'value': None,
+                'inputs': ['tsovisit'],
+                'required': False,
+                'force_unique': True,
+            }
         })
 
         # Initialize validity checks
@@ -165,8 +177,13 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         member: dict
             The member
         """
+        is_tso = self.constraints['is_tso']['value'] == 't'
+        if not is_tso:
+            is_tso = item['exp_type'] in TSO_EXP_TYPES
         member = {
-            'expname': Utility.rename_to_level2a(item['filename']),
+            'expname': Utility.rename_to_level2a(
+                item['filename'], is_tso=is_tso
+            ),
             'exptype': self.get_exposure_type(item)
         }
         return member
@@ -174,7 +191,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
         self.data['target'] = item['targetid']
-        self.data['program'] = str(item['program'])
+        self.data['program'] = '{:0>5s}'.format(item['program'])
         self.data['asn_pool'] = basename(
             item.meta['pool_file']
         ).split('.')[0]
@@ -310,17 +327,21 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         return '\n'.join(result)
 
 
-class Utility(object):
+class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
-    def rename_to_level2a(level1b_name):
+    def rename_to_level2a(level1b_name, is_tso=False):
         """Rename a Level 1b Exposure to another level
 
         Parameters
         ----------
         level1b_name: str
             The Level 1b exposure name.
+
+        is_tso: boolean
+            Use 'rateints' instead of 'rate' as
+            the suffix.
 
         Returns
         -------
@@ -337,9 +358,13 @@ class Utility(object):
             ))
             return level1b_name
 
+        suffix = 'rate'
+        if is_tso:
+            suffix = 'rateints'
         level2a_name = ''.join([
             match.group('path'),
-            '_rate',
+            '_',
+            suffix,
             match.group('extension')
         ])
         return level2a_name
@@ -378,13 +403,17 @@ class Utility(object):
         return finalized + lv2_asns
 
     @staticmethod
-    def merge_asns(associations):
+    def merge_asns(associations, acid_regex='o\d{3}$'):
         """merge level2 associations
 
         Parameters
         ----------
         associations: [asn(, ...)]
             Associations to search for merging.
+
+        acid_regex: str
+            Regular expression which the `asn_id` of the association
+            must match to be included.
 
         Returns
         -------
@@ -399,19 +428,38 @@ class Utility(object):
             else:
                 others.append(asn)
 
-        lv2_asns = Utility._merge_asns(lv2_asns)
+        lv2_asns = Utility._merge_asns(lv2_asns, acid_regex)
 
         return others + lv2_asns
 
     @staticmethod
-    def _merge_asns(asns):
-        # Merge all the associations into common types
-        merged_by_type = {}
+    def _merge_asns(asns, acid_regex):
+        """Merge associations by `asn_type` and `asn_id`
+
+        Parameters
+        ----------
+        associations: [asn(, ...)]
+            Associations to search for merging.
+
+        acid_regex: str
+            Regular expression which the `asn_id` of the association
+            must match to be included.
+
+        Returns
+        -------
+        associatons: [association(, ...)]
+            List of associations, some of which may be merged.
+        """
+        match_acid = re.compile(acid_regex, flags=re.IGNORECASE & re.UNICODE)
+        merged = {}
         for asn in asns:
+            if match_acid.match(asn['asn_id']) is None:
+                continue
+            idx = '_'.join([asn['asn_type'], asn['asn_id']])
             try:
-                current_asn = merged_by_type[asn['asn_type']]
+                current_asn = merged[idx]
             except KeyError:
-                merged_by_type[asn['asn_type']] = asn
+                merged[idx] = asn
                 current_asn = asn
             for product in asn['products']:
                 merge_occured = False
@@ -425,7 +473,9 @@ class Utility(object):
                             member['expname']
                             for member in current_product['members']
                         ]
-                        new_names = member_names.difference(current_member_names)
+                        new_names = member_names.difference(
+                            current_member_names
+                        )
                         new_members = [
                             member
                             for member in product['members']
@@ -438,7 +488,7 @@ class Utility(object):
 
         merged_asns = [
             asn
-            for asn_type, asn in merged_by_type.items()
+            for asn in merged.values()
         ]
         return merged_asns
 
@@ -527,8 +577,8 @@ class AsnMixin_Lv2Special(DMSLevel2bBase):
             'is_special': {
                 'value': None,
                 'inputs': [
-                    'background',
-                    'is_imprint',
+                    'bkgdtarg',
+                    'is_imprt',
                     'is_psf'
                 ],
                 'force_unique': False,
@@ -576,17 +626,7 @@ class AsnMixin_Lv2ImageScience(DMSLevel2bBase):
 
         self.add_constraints({
             'exp_type': {
-                'value': (
-                    'fgs_image'
-                    '|mir_image'
-                    '|mir_lyot'
-                    '|mir_4qpm'
-                    '|nis_ami'
-                    '|nis_image'
-                    '|nrc_image'
-                    '|nrc_coron'
-                    '|nrc_tsimage'
-                ),
+                'value': '|'.join(IMAGE2_SCIENCE_EXP_TYPES),
                 'inputs': ['exp_type'],
                 'force_unique': True,
             }
@@ -605,25 +645,7 @@ class AsnMixin_Lv2ImageNonScience(DMSLevel2bBase):
     def __init__(self, *args, **kwargs):
         self.add_constraints({
             'non_science': {
-                'value': (
-                    'fgs_focus'
-                    '|fgs_image'
-                    '|mir_coroncal'
-                    '|mir_tacq'
-                    '|nis_focus'
-                    '|nis_tacq'
-                    '|nis_taconfirm'
-                    '|nrc_tacq'
-                    '|nrc_taconfirm'
-                    '|nrc_focus'
-                    '|nrs_bota'
-                    '|nrs_confirm'
-                    '|nrs_focus'
-                    '|nrs_mimf'
-                    '|nrs_taslit'
-                    '|nrs_tacq'
-                    '|nrs_taconfirm'
-                ),
+                'value': '|'.join(IMAGE2_NONSCIENCE_EXP_TYPES),
                 'inputs': ['exp_type'],
                 'force_unique': False,
             }
@@ -670,18 +692,7 @@ class AsnMixin_Lv2SpecScience(DMSLevel2bBase):
 
         self.add_constraints({
             'exp_type': {
-                'value': (
-                    'nrc_grism'
-                    '|nrc_tsgrism'
-                    '|mir_lrs-fixedslit'
-                    '|mir_lrs-slitless'
-                    '|mir_mrs'
-                    '|nrs_fixedslit'
-                    '|nrs_ifu'
-                    '|nrs_msaspec'
-                    '|nrs_brightobj'
-                    '|nis_soss'
-                ),
+                'value': '|'.join(SPEC2_SCIENCE_EXP_TYPES),
                 'inputs': ['exp_type'],
                 'force_unique': True,
             }

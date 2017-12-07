@@ -39,5 +39,3 @@ class FringeStep(Step):
 
         return output_model
 
-if __name__ == '__main__':
-    cmdline.step_script(fringe_step)

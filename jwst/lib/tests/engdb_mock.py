@@ -125,7 +125,7 @@ class EngDB_Mocker(requests_mock.Mocker):
         return data
 
 
-class EngDB_Local(object):
+class EngDB_Local():
     """
     Fetch engineering data from the local cache
     """

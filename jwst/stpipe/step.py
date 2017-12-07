@@ -1,14 +1,10 @@
 """
 Step
 """
-from __future__ import absolute_import, division, print_function
-
 import gc
 from os.path import dirname, join, basename, splitext, abspath, split
 import re
 import sys
-
-import six
 
 try:
     from astropy.io import fits
@@ -31,7 +27,7 @@ REMOVE_SUFFIX = '^(?P<root>.+?)((?P<separator>_|-)(' \
                 + '|'.join(SUFFIX_LIST) + '))?$'
 
 
-class Step(object):
+class Step():
     """
     Step
     """
@@ -167,7 +163,7 @@ class Step(object):
         if not name:
             name = config.get('name')
             if not name:
-                if isinstance(config_file, six.string_types):
+                if isinstance(config_file, str):
                     name = splitext(basename(config_file))[0]
                 else:
                     name = step_class.__name__
@@ -337,7 +333,7 @@ class Step(object):
         orig_log = log.delegator.log
         log.delegator.log = self.log
 
-        result = None
+        step_result = None
 
         try:
             if (len(args) and len(self.reference_file_types) and not self.skip
@@ -364,32 +360,29 @@ class Step(object):
             # Run the Step-specific code.
             if self.skip:
                 self.log.info('Step skipped.')
-                result = args[0]
+                step_result = args[0]
             else:
                 try:
-                    result = self.process(*args)
+                    step_result = self.process(*args)
                 except TypeError as e:
                     if "process() takes exactly" in str(e):
                         raise TypeError("Incorrect number of arguments to step")
                     raise
 
             # Warn if returning a discouraged object
-            self._check_args(result, DISCOURAGED_TYPES, "Returned")
+            self._check_args(step_result, DISCOURAGED_TYPES, "Returned")
 
             # Run the post hooks
             for post_hook in self._post_hooks:
-                hook_results = post_hook.run(result)
+                hook_results = post_hook.run(step_result)
                 if hook_results is not None:
-                    result = hook_results
-
-            # Result to return
-            result_return = result
+                    step_result = hook_results
 
             # Update meta information
-            if not isinstance(result, (list, tuple, datamodels.ModelContainer)):
-                results = [result]
+            if not isinstance(step_result, (list, tuple, datamodels.ModelContainer)):
+                results = [step_result]
             else:
-                results = result
+                results = step_result
 
             if len(self._reference_files_used):
                 for result in results:
@@ -411,13 +404,19 @@ class Step(object):
             if not self.skip and (
                     self.save_results or self.output_file is not None
             ):
+                # Setup the save list.
+                if not isinstance(step_result, (list, tuple)):
+                    results_to_save = [step_result]
+                else:
+                    results_to_save = step_result
+
                 result_id = _make_result_id(
-                    self.output_file, len(results), self.name
+                    self.output_file, len(results_to_save), self.name
                 )
                 make_output_path = self.search_attr(
                     'make_output_path', parent_first=True
                 )
-                for idx, result in enumerate(results):
+                for idx, result in enumerate(results_to_save):
                     if hasattr(result, 'save'):
                         try:
                             output_path = make_output_path(
@@ -445,7 +444,7 @@ class Step(object):
         finally:
             log.delegator.log = orig_log
 
-        return result_return
+        return step_result
 
     __call__ = run
 

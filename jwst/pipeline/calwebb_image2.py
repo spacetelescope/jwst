@@ -3,16 +3,17 @@ from collections import defaultdict
 
 from .. import datamodels
 from ..associations.load_as_asn import LoadAsLevel2Asn
-from ..background import background_step
 from ..stpipe import Pipeline
 
 # calwebb IMAGE2 step imports
+from ..background import background_step
 from ..assign_wcs import assign_wcs_step
 from ..flatfield import flat_field_step
 from ..photom import photom_step
+from ..resample import resample_step
 
 
-__version__ = "3.0"
+__version__ = '0.8.0'
 
 
 class Image2Pipeline(Pipeline):
@@ -21,7 +22,7 @@ class Image2Pipeline(Pipeline):
     Level-2b.
 
     Included steps are:
-    assign_wcs, flat_field, and photom.
+    background_subtraction, assign_wcs, flat_field, photom and resample.
     """
 
     spec = """
@@ -34,7 +35,11 @@ class Image2Pipeline(Pipeline):
         'assign_wcs': assign_wcs_step.AssignWcsStep,
         'flat_field': flat_field_step.FlatFieldStep,
         'photom': photom_step.PhotomStep,
+        'resample': resample_step.ResampleStep
         }
+
+    # List of normal imaging exp_types
+    image_exptypes = ['MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE']
 
     def process(self, input):
 
@@ -125,7 +130,16 @@ class Image2Pipeline(Pipeline):
         input = self.assign_wcs(input)
         input = self.flat_field(input)
         input = self.photom(input)
-
+        
+        # Resample individual exposures, but only if it's one of the
+        # regular science image types.
+        if input.meta.exposure.type.upper() in self.image_exptypes:
+            result = self.resample(input)
+            if result:
+                # write out resampled exposure
+                self.save_model(result, suffix='i2d')
+                result.close()
+        
         # That's all folks
         self.log.info(
             'Finished processing product {}'.format(exp_product['name'])

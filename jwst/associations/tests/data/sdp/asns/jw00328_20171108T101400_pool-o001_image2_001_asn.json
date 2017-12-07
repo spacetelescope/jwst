@@ -1,0 +1,193 @@
+{
+    "asn_type": "image2",
+    "asn_rule": "candidate_Asn_Lv2Image",
+    "version_id": null,
+    "code_version": "0.9.4",
+    "program": "00328",
+    "target": "1",
+    "asn_pool": "jw00328_20171108T101400_pool",
+    "constraints": "Constraints:\n    single_science: {'False'}\n    exp_type: {'nrc_image'}\n    program: {'328'}\n    target: {'1'}\n    instrument: {'nircam'}\n    detector: {'nrca2'}\n    opt_elem: {'wlp4'}\n    opt_elem2: {'wlm8'}\n    subarray: {'full'}\n    channel: {'short'}\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "asn_id": "o001",
+    "products": [
+        {
+            "name": "jw00328001001_02104_00001_nrca2",
+            "members": [
+                {
+                    "expname": "jw00328001001_02104_00001_nrca2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02104_00001_nrca1",
+            "members": [
+                {
+                    "expname": "jw00328001001_02104_00001_nrca1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02104_00001_nrcalong",
+            "members": [
+                {
+                    "expname": "jw00328001001_02104_00001_nrcalong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02104_00001_nrca4",
+            "members": [
+                {
+                    "expname": "jw00328001001_02104_00001_nrca4_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02104_00001_nrca3",
+            "members": [
+                {
+                    "expname": "jw00328001001_02104_00001_nrca3_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02101_00001_nrca4",
+            "members": [
+                {
+                    "expname": "jw00328001001_02101_00001_nrca4_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02101_00001_nrca1",
+            "members": [
+                {
+                    "expname": "jw00328001001_02101_00001_nrca1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02101_00001_nrcalong",
+            "members": [
+                {
+                    "expname": "jw00328001001_02101_00001_nrcalong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02102_00001_nrcalong",
+            "members": [
+                {
+                    "expname": "jw00328001001_02102_00001_nrcalong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02101_00001_nrca3",
+            "members": [
+                {
+                    "expname": "jw00328001001_02101_00001_nrca3_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02102_00001_nrca2",
+            "members": [
+                {
+                    "expname": "jw00328001001_02102_00001_nrca2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02102_00001_nrca1",
+            "members": [
+                {
+                    "expname": "jw00328001001_02102_00001_nrca1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02102_00001_nrca3",
+            "members": [
+                {
+                    "expname": "jw00328001001_02102_00001_nrca3_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02102_00001_nrca4",
+            "members": [
+                {
+                    "expname": "jw00328001001_02102_00001_nrca4_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02101_00001_nrca2",
+            "members": [
+                {
+                    "expname": "jw00328001001_02101_00001_nrca2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02103_00001_nrcalong",
+            "members": [
+                {
+                    "expname": "jw00328001001_02103_00001_nrcalong_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02103_00001_nrca4",
+            "members": [
+                {
+                    "expname": "jw00328001001_02103_00001_nrca4_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02103_00001_nrca3",
+            "members": [
+                {
+                    "expname": "jw00328001001_02103_00001_nrca3_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02103_00001_nrca1",
+            "members": [
+                {
+                    "expname": "jw00328001001_02103_00001_nrca1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw00328001001_02103_00001_nrca2",
+            "members": [
+                {
+                    "expname": "jw00328001001_02103_00001_nrca2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}

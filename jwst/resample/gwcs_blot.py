@@ -1,19 +1,5 @@
-from __future__ import (division, print_function, unicode_literals,
-    absolute_import)
-
-import os
-import os.path
-
 import numpy as np
-from astropy import wcs
-from astropy.io import fits
 
-from astropy import wcs as fitswcs
-from gwcs import wcs
-from gwcs import wcstools
-
-from drizzle import util
-from drizzle import doblot
 from drizzle.cdrizzle import tblot
 from . import resample_utils
 
@@ -22,7 +8,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class GWCSBlot(object):
+class GWCSBlot:
     """
     Combine images using the drizzle algorithm
     """

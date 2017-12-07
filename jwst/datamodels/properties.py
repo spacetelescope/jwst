@@ -1,14 +1,10 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, unicode_literals, print_function
 
 import copy
 import numpy as np
 import jsonschema
 import warnings
 
-import six
 from astropy.utils.compat.misc import override__dir__
 
 from asdf import schema
@@ -191,7 +187,7 @@ class Node(object):
 class ObjectNode(Node):
     @override__dir__
     def __dir__(self):
-        return list(six.iterkeys(self._schema.get('properties', {})))
+        return list(self._schema.get('properties', {}).keys())
 
     def __eq__(self, other):
         if isinstance(other, ObjectNode):
@@ -386,13 +382,13 @@ class ListNode(Node):
         obj._validate()
         return obj
 
-class NodeIterator(six.Iterator):
+class NodeIterator:
     """
     An iterator for a node which flattens the hierachical structure
     """
     def __init__(self, node):
         self.key_stack = []
-        self.iter_stack = [six.iteritems(node._instance)]
+        self.iter_stack = [node._instance.items()]
 
     def __iter__(self):
         return self
@@ -400,7 +396,7 @@ class NodeIterator(six.Iterator):
     def __next__(self):
         while self.iter_stack:
             try:
-                key, val = six.next(self.iter_stack[-1])
+                key, val = next(self.iter_stack[-1])
             except StopIteration:
                 self.iter_stack.pop()
                 if self.iter_stack:
@@ -409,7 +405,7 @@ class NodeIterator(six.Iterator):
                 
             if isinstance(val, dict):
                 self.key_stack.append(key)
-                self.iter_stack.append(six.iteritems(val))
+                self.iter_stack.append(val.items())
             else:
                 return '.'.join(self.key_stack + [key])
                 
@@ -457,7 +453,7 @@ def merge_tree(a, b):
         if isinstance(b, dict):
             if not isinstance(a, dict):
                 return copy.deepcopy(b)
-            for key, val in six.iteritems(b):
+            for key, val in b.items():
                 a[key] = recurse(a.get(key), val)
             return a
         return copy.deepcopy(b)

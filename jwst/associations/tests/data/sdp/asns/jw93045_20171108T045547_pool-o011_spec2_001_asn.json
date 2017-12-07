@@ -1,0 +1,67 @@
+{
+    "asn_type": "spec2",
+    "asn_rule": "candidate_Asn_Lv2Spec",
+    "version_id": null,
+    "code_version": "0.9.4",
+    "program": "93045",
+    "target": "1",
+    "asn_pool": "jw93045_20171108T045547_pool",
+    "constraints": "Constraints:\n    single_science: {'False'}\n    exp_type: {'nrs_fixedslit'}\n    program: {'93045'}\n    target: {'1'}\n    instrument: {'nirspec'}\n    detector: {'nrs2'}\n    opt_elem: {'f290lp'}\n    opt_elem2: {'g395h'}\n    subarray: {'s400a1'}\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o011\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "asn_id": "o011",
+    "products": [
+        {
+            "name": "jw93045011001_02103_00001_nrs2",
+            "members": [
+                {
+                    "expname": "jw93045011001_02103_00001_nrs2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw93045011001_02103_00001_nrs1",
+            "members": [
+                {
+                    "expname": "jw93045011001_02103_00001_nrs1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw93045011001_02101_00001_nrs1",
+            "members": [
+                {
+                    "expname": "jw93045011001_02101_00001_nrs1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw93045011001_02102_00001_nrs2",
+            "members": [
+                {
+                    "expname": "jw93045011001_02102_00001_nrs2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw93045011001_02101_00001_nrs2",
+            "members": [
+                {
+                    "expname": "jw93045011001_02101_00001_nrs2_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        },
+        {
+            "name": "jw93045011001_02102_00001_nrs1",
+            "members": [
+                {
+                    "expname": "jw93045011001_02102_00001_nrs1_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}

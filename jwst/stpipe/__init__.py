@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function
-
 import sys
 if sys.version_info[0] >= 3:
     __builtins__['unicode'] = str
@@ -9,7 +7,7 @@ from .step import Step
 from .pipeline import Pipeline
 from .linear_pipeline import LinearPipeline
 
-__version__ = '0.7.0'
+__version__ = '0.8.0'
 
 #def test(verbose=False):
     #import nose

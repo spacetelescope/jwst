@@ -4,8 +4,6 @@ Some of these may go in astropy.modeling in the future.
 """
 # -*- coding: utf-8 -*-
 
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 import math
 from collections import namedtuple
 import numpy as np
@@ -39,6 +37,8 @@ Slit.__new__.__defaults__ = ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "", "",
 class GrismObject(namedtuple('GrismObject', ("sid",
                                              "order_bounding",
                                              "icrs_centroid",
+                                             "partial_order",
+                                             "waverange",
                                              "sky_bbox_ll",
                                              "sky_bbox_lr",
                                              "sky_bbox_ur",
@@ -75,6 +75,8 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                 sid=None,
                 order_bounding={},
                 icrs_centroid=None,
+                partial_order=False,
+                waverange=None,
                 sky_bbox_ll=None,
                 sky_bbox_lr=None,
                 sky_bbox_ur=None,
@@ -86,6 +88,8 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                                                sid=sid,
                                                order_bounding=order_bounding,
                                                icrs_centroid=icrs_centroid,
+                                               partial_order=partial_order,
+                                               waverange=waverange,
                                                sky_bbox_ll=sky_bbox_ll,
                                                sky_bbox_lr=sky_bbox_lr,
                                                sky_bbox_ur=sky_bbox_ur,
@@ -104,6 +108,8 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                 "sky_bbox_ul:{6}\n"
                 "xcenter: {7}\n"
                 "ycenter: {8}\n"
+                "partial_order: {9}\n"
+                "waverange: {10}\n"
                 .format(self.sid,
                         str(self.order_bounding),
                         str(self.icrs_centroid),
@@ -112,7 +118,9 @@ class GrismObject(namedtuple('GrismObject', ("sid",
                         str(self.sky_bbox_ur),
                         str(self.sky_bbox_ul),
                         self.xcenter,
-                        self.ycenter))
+                        self.ycenter,
+                        str(self.partial_order),
+                        str(self.waverange)))
 
 
 class MIRI_AB2Slice(Model):
@@ -1286,7 +1294,7 @@ class NIRISSBackwardGrismDispersion(Model):
         Notes:
         ------
         There's spatial dependence for NIRISS so the forward transform
-        dependes on x,y as well as the filter wheel rotation. Theta is 
+        dependes on x,y as well as the filter wheel rotation. Theta is
         usu. taken to be the different between fwcpos_ref in the specwcs
         reference file and fwcpos from the input image.
 

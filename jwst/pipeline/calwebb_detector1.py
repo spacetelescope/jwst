@@ -20,7 +20,7 @@ from ..ramp_fitting import ramp_fit_step
 from ..gain_scale import gain_scale_step
 
 
-__version__ = "7.1.1"
+__version__ = '0.8.0'
 
 # Define logging
 import logging
@@ -65,8 +65,8 @@ class Detector1Pipeline(Pipeline):
 
         log.info('Starting calwebb_detector1 ...')
 
-        # open the input
-        input = datamodels.open(input)
+        # open the input as a RampModel
+        input = datamodels.RampModel(input)
 
         # propagate output_dir to steps that might need it
         self.dark_current.output_dir = self.output_dir
@@ -118,7 +118,15 @@ class Detector1Pipeline(Pipeline):
             self.save_model(input, 'ramp')
 
         # apply the ramp_fit step
-        input, ints_model = self.ramp_fit(input)
+        # This explicit test on self.ramp_fit.skip is a temporary workaround
+        # to fix the problem that the ramp_fit step ordinarily returns two
+        # objects, but when the step is skipped due to `skip = True` in a
+        # cfg file, only the input is returned when the step is invoked.
+        if self.ramp_fit.skip:
+            input = self.ramp_fit(input)
+            ints_model = None
+        else:
+            input, ints_model = self.ramp_fit(input)
 
         # apply the gain_scale step to the exposure-level product
         input = self.gain_scale(input)

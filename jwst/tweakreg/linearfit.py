@@ -11,11 +11,12 @@ from __future__ import (absolute_import, division, unicode_literals,
                         print_function)
 import logging
 import numpy as np
+# LOCAL
+from . import __version__
+from . import __vdate__
 
 __all__ = ['iter_linear_fit', 'build_fit_matrix']
 
-__version__ = '0.1.0'
-__vdate__ = '29-April-2016'
 __author__ = 'Mihai Cara, Warren Hack'
 
 

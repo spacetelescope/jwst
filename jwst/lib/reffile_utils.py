@@ -78,15 +78,38 @@ def ref_matches_sci(sci_model, ref_model):
 
         # If the ref file is full-frame, set the missing params to
         # default values
-        if (ref_model.data.shape[-1] == 2048) and \
-           (ref_model.data.shape[-2] == 2048):
-            xstart_ref = 1
-            ystart_ref = 1
-            xsize_ref = 2048
-            ysize_ref = 2048
+        if ref_model.meta.instrument.name.upper() == 'MIRI':
+            if (ref_model.data.shape[-1] == 1032 and \
+                ref_model.data.shape[-2] == 1024):
+                log.warning('Missing subarray corner/size keywords in reference file')
+                log.warning('Setting them to full-frame default values')
+                xstart_ref = 1
+                ystart_ref = 1
+                xsize_ref = 1032
+                ysize_ref = 1024
+                ref_model.meta.subarray.xstart = xstart_ref
+                ref_model.meta.subarray.ystart = ystart_ref
+                ref_model.meta.subarray.xsize = xsize_ref
+                ref_model.meta.subarray.ysize = ysize_ref
+            else:
+                log.error('Missing subarray corner/size keywords in reference file')
+                raise ValueError("Can't determine ref file subarray properties")
         else:
-            log.error('Missing subarray corner/size keywords in reference file')
-            raise ValueError("Can't determine ref file subarray properties")
+            if (ref_model.data.shape[-1] == 2048) and \
+               (ref_model.data.shape[-2] == 2048):
+                log.warning('Missing subarray corner/size keywords in reference file')
+                log.warning('Setting them to full-frame default values')
+                xstart_ref = 1
+                ystart_ref = 1
+                xsize_ref = 2048
+                ysize_ref = 2048
+                ref_model.meta.subarray.xstart = xstart_ref
+                ref_model.meta.subarray.ystart = ystart_ref
+                ref_model.meta.subarray.xsize = xsize_ref
+                ref_model.meta.subarray.ysize = ysize_ref
+            else:
+                log.error('Missing subarray corner/size keywords in reference file')
+                raise ValueError("Can't determine ref file subarray properties")
 
     log.debug(" ref xstart=%d, xsize=%d, ystart=%d, ysize=%d" % \
         (xstart_ref, xsize_ref, ystart_ref, ysize_ref))
@@ -179,14 +202,45 @@ def get_subarray_data(sci_model, ref_model):
     # Make sure xstart/ystart exist in science data model
     if (sci_model.meta.subarray.xstart is None or
         sci_model.meta.subarray.ystart is None):
-        raise ValueError('xstart or ystart metadata values ' \
-                         + 'not found in input model')
+
+        # If the science file is full-frame, set the missing params to
+        # default values
+        if (sci_model.data.shape[-1] == 2048) and \
+           (sci_model.data.shape[-2] == 2048):
+            sci_model.meta.subarray.xstart = 1
+            sci_model.meta.subarray.ystart = 1
+            sci_model.meta.subarray.xsize = 2048
+            sci_model.meta.subarray.ysize = 2048
+        else:
+            raise ValueError('xstart or ystart metadata values ' \
+                             + 'not found in input model')
 
     # Make sure xstart/ystart exist in reference data model
     if (ref_model.meta.subarray.xstart is None or
         ref_model.meta.subarray.ystart is None):
-        raise ValueError('xstart or ystart metadata values ' \
-                         + 'not found in reference model')
+
+        # If the ref file is full-frame, set the missing params to
+        # default values
+        if ref_model.meta.instrument.name.upper() == 'MIRI':
+            if (ref_model.data.shape[-1] == 1032 and \
+                ref_model.data.shape[-2] == 1024):
+                ref_model.meta.subarray.xstart = 1
+                ref_model.meta.subarray.ystart = 1
+                ref_model.meta.subarray.xsize = 1032
+                ref_model.meta.subarray.ysize = 1024
+            else:
+                raise ValueError('xstart or ystart metadata values ' \
+                                 + 'not found in reference model')
+        else:
+            if (ref_model.data.shape[-1] == 2048) and \
+               (ref_model.data.shape[-2] == 2048):
+                ref_model.meta.subarray.xstart = 1
+                ref_model.meta.subarray.ystart = 1
+                ref_model.meta.subarray.xsize = 2048
+                ref_model.meta.subarray.ysize = 2048
+            else:
+                raise ValueError('xstart or ystart metadata values ' \
+                                 + 'not found in reference model')
 
     # Get subarray limits from metadata of input model
     xstart_sci = sci_model.meta.subarray.xstart

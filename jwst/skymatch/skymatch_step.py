@@ -192,5 +192,3 @@ class SkyMatchStep(Step):
         image.meta.background.level = sky
         image.meta.background.subtracted = self.subtract
 
-if __name__ == '__main__':
-    cmdline.step_script(SkyMatchStep)

@@ -3,10 +3,8 @@ from astropy.io import fits
 from astropy import wcs
 from astropy.wcs import InvalidTransformError
 import six
+from jwst import datamodels
 
-
-stsci_wcs_kw = ['PA_V3', 'V2_REF', 'V3_REF', 'PA_APER', 'VPARITY',
-                'RA_V1', 'DEC_V1', 'ROLL_REF', 'RA_REF', 'DEC_REF']
 
 wcslib_kw_to_remove = ['LONPOLE', 'LATPOLE', 'MJD-OBS', 'DATE-OBS']
 
@@ -36,6 +34,15 @@ def move_wcs(files, remove_asdf=False):
     
     
 def _collect_wcs_keywords(f):
+    # Get keywords to go in SCI header from the datamodels schema
+    dm = datamodels.open(f, pass_invalid_values=True)
+    stsci_wcs_kw = []
+    for k,v in datamodels.schema.build_schema2fits_dict(dm.meta._schema).items():
+        if v[1] == 'SCI':
+            if v[0] != 'WCSAXES':
+                stsci_wcs_kw.append(v[0])
+    dm.close()
+
     # Convert the WCS to a header
     try:
         w = wcs.WCS(f[0].header)

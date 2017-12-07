@@ -1,5 +1,4 @@
 from collections import OrderedDict
-import six
 
 from fitsblender import blendheaders
 
@@ -159,8 +158,8 @@ def convert_dtype(value):
     if 'S' in value:
         # working with a string description
         str_len = int(value[value.find('S') + 1:])
-        new_dtype = [u'ascii', str_len] ## CHANGED
+        new_dtype = ['ascii', str_len]
     else:
-        new_dtype = unicode(str(value))
+        new_dtype = str(value)
 
     return new_dtype

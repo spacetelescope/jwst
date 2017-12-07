@@ -27,7 +27,7 @@ DMS_DEFAULT_FORMAT = (
 )
 
 
-class ContextFilter(object):
+class ContextFilter():
     """Set Association Generator logging context"""
     def __init__(self):
         self.context = {}
@@ -43,7 +43,7 @@ class ContextFilter(object):
         self.context[key] = value
 
 
-class LogLevelFilter(object):
+class LogLevelFilter():
     """Filter on a specific level"""
     def __init__(self, level):
         self.__level = level

@@ -20,7 +20,13 @@ from jwst.associations.exceptions import (
 )
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.counter import Counter
-from jwst.associations.lib.dms_base import (DMSBaseMixin, _EMPTY)
+from jwst.associations.lib.dms_base import (
+    _EMPTY,
+    DMSBaseMixin,
+    IMAGE2_SCIENCE_EXP_TYPES,
+    IMAGE2_NONSCIENCE_EXP_TYPES,
+    SPEC2_SCIENCE_EXP_TYPES,
+)
 from jwst.associations.lib.format_template import FormatTemplate
 
 __all__ = [
@@ -65,6 +71,21 @@ _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
 
 # Key that uniquely identfies members.
 KEY = 'expname'
+
+# Exposures that are always TSO
+TSO_EXP_TYPES = (
+    'mir_lrs-slitless',
+    'nis_soss',
+    'nrc_tsimage',
+    'nrc_tsgrism',
+    'nrs_brightobj'
+)
+
+# Exposures that should have received Level2b processing
+LEVEL2B_EXPTYPES = []
+LEVEL2B_EXPTYPES.extend(IMAGE2_SCIENCE_EXP_TYPES)
+LEVEL2B_EXPTYPES.extend(IMAGE2_NONSCIENCE_EXP_TYPES)
+LEVEL2B_EXPTYPES.extend(SPEC2_SCIENCE_EXP_TYPES)
 
 
 class DMS_Level3_Base(DMSBaseMixin, Association):
@@ -214,7 +235,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
             # Program
             if self.data['program'] != 'noprogram':
-                self.data['program'] = str(item['program'])
+                self.data['program'] = '{:0>5s}'.format(item['program'])
 
             # Pool
             if self.data['asn_pool'] == 'none':
@@ -275,9 +296,23 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             exposerr = item['exposerr']
         except KeyError:
             exposerr = None
+
+        # Get exposure type
+        try:
+            is_tso = self.constraints['is_tso']['value'] == 't'
+        except KeyError:
+            is_tso = item['exp_type'] in TSO_EXP_TYPES
+
+        exptype = self.get_exposure_type(item)
+
+        # Determine expected member name
+        expname = Utility.rename_to_level2(
+                item['filename'], exp_type=item['exp_type'], is_tso=is_tso
+            )
+
         member = {
-            'expname': Utility.rename_to_level2b(item['filename']),
-            'exptype': self.get_exposure_type(item),
+            'expname': expname,
+            'exptype': exptype,
             'exposerr': exposerr,
             'asn_candidate': item['asn_candidate']
         }
@@ -311,7 +346,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         members = self.current_product['members']
         members.append(member)
         if member['exposerr'] not in _EMPTY:
-            logger.warn('Member {} has error "{}"'.format(
+            logger.warn('Member {} has exposure error "{}"'.format(
                 item['filename'],
                 member['exposerr']
             ))
@@ -397,7 +432,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         return result
 
 
-class Utility(object):
+class Utility():
     """Utility functions that understand DMS Level 3 associations"""
 
     @staticmethod
@@ -410,13 +445,25 @@ class Utility(object):
             )
 
     @staticmethod
-    def rename_to_level2b(level1b_name):
-        """Rename a Level 1b Exposure to another level
+    def rename_to_level2(level1b_name, exp_type=None, is_tso=False):
+        """Rename a Level 1b Exposure to a Level2 name.
+
+        The basic transform is changing the suffix `uncal` to
+        `cal`, `calints`, or `rate`.
 
         Parameters
         ----------
         level1b_name: str
             The Level 1b exposure name.
+
+        exp_type:
+            JWST exposure type. If not specified,
+            it will be presumed that the name
+            should get a Level2b name
+
+        is_tso: boolean
+            Use 'calints' instead of 'cal' as
+            the suffix.
 
         Returns
         -------
@@ -433,12 +480,20 @@ class Utility(object):
             ))
             return level1b_name
 
-        level2b_name = ''.join([
+        if exp_type in LEVEL2B_EXPTYPES:
+            suffix = 'cal'
+        else:
+            suffix = 'rate'
+        if is_tso:
+            suffix += 'ints'
+
+        level2_name = ''.join([
             match.group('path'),
-            '_cal',
+            '_',
+            suffix,
             match.group('extension')
         ])
-        return level2b_name
+        return level2_name
 
     @staticmethod
     def get_candidate_list(value):
@@ -571,6 +626,20 @@ class AsnMixin_Target(DMS_Level3_Base):
         super(AsnMixin_Target, self).__init__(*args, **kwargs)
 
 
+class AsnMixin_NotTSO(DMS_Level3_Base):
+    """Ensure exposure is not a TSO"""
+    def __init__(self, *args, **kwargs):
+        self.add_constraints({
+            'is_not_tso': {
+                'value': '[^t]',
+                'inputs': ['tsovisit'],
+                'required': False
+            }
+        })
+
+        super(AsnMixin_NotTSO, self).__init__(*args, **kwargs)
+
+
 class AsnMixin_MIRI(DMS_Level3_Base):
     """All things that belong to MIRI"""
 
@@ -639,14 +708,19 @@ class AsnMixin_NIRCAM(DMS_Level3_Base):
         super(AsnMixin_NIRCAM, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_Image(DMS_Level3_Base):
+class AsnMixin_Image(AsnMixin_NotTSO):
     """All things that are in imaging mode"""
 
     def __init__(self, *args, **kwargs):
 
         self.add_constraints({
             'exp_type': {
-                'value': 'nrc_image|mir_image|nis_image|fgs_image',
+                'value': (
+                    'nrc_image'
+                    '|mir_image'
+                    '|nis_image'
+                    '|fgs_image'
+                ),
                 'inputs': ['exp_type'],
                 'force_unique': True,
             }
@@ -654,14 +728,9 @@ class AsnMixin_Image(DMS_Level3_Base):
 
         super(AsnMixin_Image, self).__init__(*args, **kwargs)
 
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'image3'
-        super(AsnMixin_Image, self)._init_hook(item)
 
 
-class AsnMixin_Spectrum(DMS_Level3_Base):
+class AsnMixin_Spectrum(AsnMixin_NotTSO):
     """All things that are spectrum"""
 
     def _init_hook(self, item):

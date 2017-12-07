@@ -1,5 +1,3 @@
-from __future__ import absolute_import
-
 import pytest
 import re
 
@@ -38,7 +36,7 @@ LEVEL3_ASN_WITH_VERSION = (
 pool_params = pytest.fixture(
     scope='module',
     params=[
-        'data/pool_002_image_miri.csv'
+        'data/pool_020_00009_image_miri.csv'
     ]
 )(helpers.generate_params)
 
