@@ -27,14 +27,9 @@ conf = ConfigParser()
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
-# https://github.com/rtfd/readthedocs.org/issues/2707
-if os.environ.get('READTHEDOCS') != 'True':
-    sys.path.insert(0, os.path.abspath('../'))
-    sys.path.insert(0, os.path.abspath('jwst/'))
-    sys.path.insert(0, os.path.abspath('exts/'))
-else:
-    import site
-    sys.path.insert(0, os.path.join(os.path.dirname(site.__file__), 'site-packages'))
+sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('jwst/'))
+sys.path.insert(0, os.path.abspath('exts/'))
     
 # -- General configuration ------------------------------------------------
 conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
