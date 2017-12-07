@@ -22,3 +22,6 @@ dependencies:
   - drizzle
   - drizzlepac
   - jwst_lib
+  - sphinx_rtd_theme
+  - pip:
+    - sphinx-automodapi
