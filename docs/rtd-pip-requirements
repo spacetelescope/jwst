@@ -1,6 +1,13 @@
-numpy
-matplotlib
+nose
 astropy
+numpy
+crds
+matplotlib
 scipy
 sphinx_rtd_theme
 sphinx-automodapi
+sphinx_numfig
+jsonschema
+asdf
+gwcs
+photutils
