@@ -6,4 +6,5 @@ sphinx_rtd_theme
 sphinx-automodapi
 jsonschema
 asdf
+gwcs
 crds
