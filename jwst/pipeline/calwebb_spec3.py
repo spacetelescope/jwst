@@ -72,11 +72,6 @@ class Spec3Pipeline(Pipeline):
         output_basename = input_models.meta.asn_table.products[0].name
         self.output_basename = output_basename
 
-        pool_name = input_models.meta.asn_table.asn_pool
-        asn_file = input
-        prog = input_models.meta.asn_table.program
-        acid = input_models.meta.asn_table.asn_id
-
         # `sources` is the list of astronomical sources that need be
         # processed. Each element is a ModelContainer, which contains
         # models for all exposures that belong to a single source.

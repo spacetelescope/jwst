@@ -115,9 +115,11 @@ class FormatTemplate(Formatter):
         # Preformat the values
         formatted_kwargs = {
             key: self.key_formats[key].format(value)
-            for key,value in kwargs.items()
+            for key, value in kwargs.items()
         }
-        result = super(FormatTemplate, self).format(format_string, **formatted_kwargs)
+        result = super(FormatTemplate, self).format(
+            format_string, **formatted_kwargs
+        )
 
         # Get any unused arguments and simply do the appending
         unused_keys = set(formatted_kwargs).difference(self._used_keys)
@@ -126,6 +128,8 @@ class FormatTemplate(Formatter):
         result = self.separator.join(result_parts)
 
         return result
+
+    # Make the instance callable
     __call__ = format
 
     def get_value(self, key, args, kwargs):
