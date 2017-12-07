@@ -1,4 +1,5 @@
 setuptools
+nose
 numpy
 matplotlib
 -e git+https://github.com/astropy/astropy.git#egg=astropy
