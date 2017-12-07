@@ -3,7 +3,10 @@ Description
 ===========
 
 This step creates a catalog of point-like sources whose centroids are
-used to aid in aligning images in the "tweakreg" step.
+then used to aligning images using the Tweakreg algorithm.
+
+Source detection
+----------------
 
 Stars are detected in the image using Photutils' "daofind" function.
 Photutils.daofind is an implementation of the `DAOFIND`_ algorithm
@@ -17,3 +20,10 @@ roundness and sharpness, whose lower and upper bounds can be
 specified.
 
 .. _DAOFIND: http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?daofind
+
+Alignment
+---------
+
+The source catalog for each input image is used to compute the affine
+transformation that aligns the images to each other.  This affine
+transformation is appended to the GWCS object of each image.

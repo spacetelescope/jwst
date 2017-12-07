@@ -330,8 +330,6 @@ The steps applied by the ``calwebb_image3`` pipeline are shown below.
 +-------------------+
 | calwebb_image3    |
 +===================+
-| tweakreg_catalog  |
-+-------------------+
 | tweakreg          |
 +-------------------+
 | skymatch          |
