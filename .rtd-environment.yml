@@ -1,0 +1,24 @@
+name: jwstdoc
+
+channels:
+  - http://ssb.stsci.edu/astroconda-dev
+  - defaults
+  
+dependencies:
+  - python>=3.6
+  - setuptools
+  - numpy
+  - cython
+  - matplotlib
+  - d2to1
+  - scipy
+  - astropy
+  - gwcs
+  - asdf
+  - photutils
+  - crds
+  - dask
+  - stsci.distutils
+  - drizzle
+  - drizzlepac
+  - jwst_lib
