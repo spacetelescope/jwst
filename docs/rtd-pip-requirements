@@ -4,5 +4,6 @@ matplotlib
 scipy
 sphinx_rtd_theme
 sphinx-automodapi
-crds
 jsonschema
+asdf
+crds
