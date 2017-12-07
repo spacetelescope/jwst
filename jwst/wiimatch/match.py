@@ -26,7 +26,7 @@ SUPPORTED_SOLVERS = ['RLU', 'PINV']
 
 def match_lsq(images, masks=None, sigmas=None, degree=0,
               center=None, image2world=None, center_cs='image',
-              ext_return=False, solver='LU'):
+              ext_return=False, solver='PINV'):
     """
     Compute coefficients of (multivariate) polynomials that once subtracted
     from input images would provide image intensity matching in the least
