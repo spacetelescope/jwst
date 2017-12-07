@@ -1,4 +1,7 @@
-from .version import *
+try:
+    from .version import *
+except ImportError:  # Not available for RTD
+    pass
 import sys
 
 if sys.version_info < (3, 5):
