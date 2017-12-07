@@ -34,7 +34,7 @@ if os.environ.get('READTHEDOCS') != 'True':
     sys.path.insert(0, os.path.abspath('exts/'))
 else:
     import site
-    sys.path.insert(0, site.getsitepackages()[0])
+    sys.path.insert(0, os.path.join(os.path.dirname(site.__file__), 'site-packages'))
     
 # -- General configuration ------------------------------------------------
 conf.read([os.path.join(os.path.dirname(__file__), '..', 'setup.cfg')])
