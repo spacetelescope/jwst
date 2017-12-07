@@ -740,6 +740,10 @@ class Step():
             Index identifier.
         """
 
+        # Check if saving is even specified.
+        if not self.save_results and not self.output_file:
+            return
+
         # Get the output path as defined by the current step.
         make_output_path_partial = partial(
             self.make_output_path,
