@@ -3,7 +3,7 @@ Description
 ===========
 
 This step creates a catalog of point-like sources whose centroids are
-then used to aligning images using the Tweakreg algorithm.
+then used to align images using the Tweakreg algorithm.
 
 Source detection
 ----------------
@@ -27,3 +27,4 @@ Alignment
 The source catalog for each input image is used to compute the affine
 transformation that aligns the images to each other.  This affine
 transformation is appended to the GWCS object of each image.
+
