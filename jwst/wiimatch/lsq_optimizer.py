@@ -393,9 +393,12 @@ array([[ -6.60000000e-01,  -7.50000000e-02,  -3.10000000e-01,
           1.10844667e-15,  -5.11590770e-16]])
 
     """
-    from scipy import linalg
     drop =  free_term.size // nimages
-    v = linalg.lu_solve(linalg.lu_factor(matrix[drop:, drop:]),
+    if nimages <= 1:
+        return np.zeros((1, drop), dtype=np.float)
+    from scipy import linalg
+    rmat = matrix[drop:, drop:]
+    v = linalg.lu_solve(linalg.lu_factor(rmat),
                         free_term[drop:])
     reduced_bkg_poly_coeff = v.reshape((nimages - 1, v.size // (nimages - 1)))
     delta1 = - reduced_bkg_poly_coeff.sum(axis=0) / nimages
