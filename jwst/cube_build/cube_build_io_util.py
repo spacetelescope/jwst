@@ -180,24 +180,6 @@ def read_resolution_file(self,instrument_info):
                                           this_channel,this_sub)
 
 
-class ErrorNoChannels(Exception):
-    pass
-
-class ErrorNoSubchannels(Exception):
-    pass
-
-class ErrorNoFilters(Exception):
-    pass
-
-class ErrorNoGrating(Exception):
-    pass
-
-class ErrorInvalidParameter(Exception):
-    pass
-
-class ErrorMissingParameter(Exception):
-    pass
-
 
 #********************************************************************************
 class IFUCubeASN(object):

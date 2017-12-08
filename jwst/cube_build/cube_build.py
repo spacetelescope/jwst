@@ -423,3 +423,18 @@ class CubeData(object):
 #********************************************************************************
 
 
+class ErrorMissingParameter(Exception):
+    pass
+
+class ErrorNoChannels(Exception):
+    pass
+
+class ErrorNoSubchannels(Exception):
+    pass
+
+class ErrorNoFilters(Exception):
+    pass
+
+class ErrorNoGrating(Exception):
+    pass
+

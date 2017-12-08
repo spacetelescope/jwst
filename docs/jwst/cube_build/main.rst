@@ -78,7 +78,7 @@ Terminology
   channel/sub-channel combination, i.e., the shortest wavelength range on MIRI is covered by Band 1-SHORT and the
   longest is covered by Band 4-LONG.
 
-  For **NIRSPEC** band is defined by a single grating-filter combination, i.e. G140M-F070LP
+
 
 **NIRSPEC Optical Element and Filter possibilities for IFU mode:**
 
@@ -96,6 +96,7 @@ G235H    F170LP  1.7 - 3.1
 G395H    F290LP  2.9 - 5.2
 =======  ======  ====================
 
+For NIRSPEC we have defined a *band*  as a  single grating-filter combination, i.e. G140M-F070LP.
 
 **Coordinate Systems:**
 
@@ -170,19 +171,22 @@ To cover the full wavelength range of NIRSPEC the option ALL can be used (provid
 contain all the filters). The user can supply a comma separated string containing the filters to use.
 
 - ``--output_type [string]``
-This parameter has four valid options Band, Channel, Grating and Multi. The parameters can be combined with the options above 
-[--band, --channel,--grating, and --filter] to fully control the type of IFU cubes to make. 
+This parameter has four valid options Band, Channel, Grating and Multi. The parameters can be combined 
+with the options above  [--band, --channel,--grating, and --filter] to fully control the type of IFU 
+cubes to make. 
 
-``--output_type=Band`` is the default mode and creates IFU cubes containing only one band (channel/sub-channel or
-grating/filter combination).
+	 - ``--output_type=Band`` is the default mode and creates IFU cubes containing only one band 
+	 (channel/sub-channel or  grating/filter combination).
 
-``--output_type = channel`` combines all the MIRI channels in the data or set by the --channel option into
-a single IFU cube. 
+	 - ``--output_type = channel`` combines all the MIRI channels in the data or set by the 
+	 --channel option into a single IFU cube. 
 
-``--output_type = grating `` combines all the grating in the NIRSPEC data or set by the --grating option into a single IFU cube. 
+	 - ``--output_type = grating `` combines all the grating in the NIRSPEC data or set by the 
+	 --grating option into a single IFU cube. 
 
-``--output_type = multi`` combines data  into a single uber IFUCube. If in addition, --channel, --band, --grating, or -filter are
-also set then only the data set by those parameters will be combined into an uber cube. 
+	 - ``--output_type = multi`` combines data  into a single uber IFUCube. If in addition, 
+	 --channel, --band, --grating, or -filter are also set then only the data set by those 
+	 parameters will be combined into an uber cube. 
 
 
 - ``--weighting ['string]``

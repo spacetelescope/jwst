@@ -196,7 +196,7 @@ class IFUCubeData(object):
                 if self.coord_system == 'alpha-beta':
                     newname = self.output_name_base + ch_name+'-'+ b_name + '_ab_s3d.fits'
                 if self.output_type == 'single':
-                    newname = self.output_name_base + ch_name+'-'+ b_name + 'single_s3d.fits'
+                    newname = self.output_name_base + ch_name+'-'+ b_name + '_single_s3d.fits'
 #________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
                 fg_name = '_'
@@ -353,7 +353,6 @@ class IFUCubeData(object):
                         yrange = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
                         xrange = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-
 
                         cube_cloud.match_det2cube(self,input_model,
                                                   x, y, ii,
@@ -697,7 +696,10 @@ class IFUCubeData(object):
                 self.output_file = None
                 newname  = IFUCubeData.define_cubename(self)
                 IFUCube.meta.filename = newname
-                IFUCube.meta.instrument.channel = self.list_par1[0]
+                if(self.instrument == 'MIRI'):
+                    IFUCube.meta.instrument.channel = self.list_par1[0]
+                if(self.instrument == 'NIRSPEC'):
+                    IFUCube.meta.instrument.grating = self.list_par1[0]
 
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
         IFUCube.meta.wcsinfo.crval2 = self.Crval2
