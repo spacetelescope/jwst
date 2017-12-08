@@ -6,11 +6,11 @@ JWST Calibration Pipeline
 
 Note
 ----
-Beginning with the next version (0.9.0), JWST requires Python 3.5 and above.
+Beginning with the next version (0.9.0), **JWST requires Python 3.5 and above**.
 
 Installing
 ----------
-Releases are made on the "stable" branch. To install the latest release:
+Releases are made on the **stable** branch. To install the latest release:
 
     % git clone https://github.com/STScI-JWST/jwst.git
 
@@ -20,7 +20,7 @@ Releases are made on the "stable" branch. To install the latest release:
 
     % python setup.py install
 
-The main development is on the "master" branch. To install the development version:
+The main development is on the **master** branch. To install the development version:
 
     % git clone https://github.com/STScI-JWST/jwst.git
 
