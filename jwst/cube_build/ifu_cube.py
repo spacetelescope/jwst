@@ -196,7 +196,7 @@ class IFUCubeData(object):
                 if self.coord_system == 'alpha-beta':
                     newname = self.output_name_base + ch_name+'-'+ b_name + '_ab_s3d.fits'
                 if self.output_type == 'single':
-                    newname = self.output_name_base + ch_name+'-'+ b_name + 'single_s3d.fits'
+                    newname = self.output_name_base + ch_name+'-'+ b_name + '_single_s3d.fits'
 #________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
                 fg_name = '_'
