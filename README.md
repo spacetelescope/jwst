@@ -10,7 +10,7 @@ Beginning with the next version (0.9.0), JWST requires Python 3.5 and above.
 
 Installing
 ----------
-Releases are made on the "stable" branch. To i nstall the latest release:
+Releases are made on the "stable" branch. To install the latest release:
 
     % git clone https://github.com/STScI-JWST/jwst.git
 
@@ -20,7 +20,7 @@ Releases are made on the "stable" branch. To i nstall the latest release:
 
     % python setup.py install
 
-The main development is on the "msater" branch. To install the development version:
+The main development is on the "master" branch. To install the development version:
 
     % git clone https://github.com/STScI-JWST/jwst.git
 
@@ -35,9 +35,9 @@ The main development is on the "msater" branch. To install the development versi
 
 Contributing Code, Documentation or Feedback
 --------------------------------------------
-We welcome feedback and contributions to the project. Please follow the contributing guidelines to submit an issue or a pull request.
+We welcome feedback and contributions to the project. Please follow the [contributing guidelines](CONTRIBUTING.md) to submit an issue or a pull request.
 
-We strive to provide a welcoming community to all of our users by abiding to the Code of Conduct.
+We strive to provide a welcoming community to all of our users by abiding to the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 Using
 -----
