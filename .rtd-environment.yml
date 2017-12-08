@@ -1,6 +1,5 @@
 channels:
   - http://ssb.stsci.edu/astroconda-dev
-  - defaults
   
 dependencies:
   - python>=3
