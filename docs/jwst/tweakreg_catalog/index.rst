@@ -9,4 +9,4 @@ Tweakreg Catalog
    tweakreg_catalog_step.rst
    tweakreg_catalog.rst
 
-.. automodapi:: jwst.tweakreg_catalog
+.. automodapi:: jwst.tweakreg.tweakreg_catalog
