@@ -50,7 +50,6 @@ Package Index
    straylight/index.rst
    superbias/index.rst
    tweakreg/index.rst
-   tweakreg_catalog/index.rst
    wfs_combine/index.rst
    white_light/index.rst
    wiimatch/index.rst
