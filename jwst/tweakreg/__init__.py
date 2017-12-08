@@ -22,13 +22,16 @@ from . import imalign
 from . import wcsimage
 from . import matchutils
 from . import tweakreg_step
-from . import chelp
 from . import linearfit
 
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+try:
+    from . import chelp
+except ImportError:  # RTD cannot build it
+    log.warning('cannot import chelp')
 
 def help():
     msg = \
