@@ -4,21 +4,24 @@ channels:
 dependencies:
   - python>=3
   - setuptools
-  - numpy
-  - cython
-  - scipy
-  - matplotlib
-  - astropy
-  - d2to1
-  - gwcs
   - asdf
-  - photutils
+  - astropy
   - crds
   - dask
-  - stsci.distutils
   - drizzle
   - drizzlepac
-  - jwst_lib
+  - gwcs
+  - jsonschema
+  - jplephem
+  - matplotlib
+  - namedlist
+  - nose
+  - numpy
+  - photutils
+  - pymssql
+  - scipy
+  - six
+  - verhawk
   - sphinx_rtd_theme
   - pip:
     - sphinx-automodapi
