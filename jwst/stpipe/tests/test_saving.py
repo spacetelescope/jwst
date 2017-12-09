@@ -213,10 +213,17 @@ def test_save_pipeline_default(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    output_pipeline_fn_path = data_name + '_processed_savepipeline' + data_ext
-    output_stepsave_fn_path = data_name + '_processed' + data_ext
-    assert isfile(output_pipeline_fn_path)
-    assert isfile(output_stepsave_fn_path)
+    # Output from the explicit `SaveStep.save_model`
+    desired = data_name + '_processed' + data_ext
+    assert isfile(desired)
+
+    # Output from the Step's default saving of `SaveStep`
+    desired = data_name + '_processed_savestep' + data_ext
+    assert isfile(desired)
+
+    # Output from the Steps' default saving of `SavePipeline`
+    desired = data_name + '_processed_savestep_savepipeline' + data_ext
+    assert isfile(desired)
 
 
 def test_save_pipeline_withdir(mk_tmp_dirs):
@@ -261,13 +268,23 @@ def test_save_substep_withdir(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    output_pipeline_fn_path = data_name + '_processed_savepipeline' + data_ext
-    output_stepsave_fn_path = join(
+    # Output from the explicit `SaveStep.save_model`
+    desired = join(
         tmp_data_path,
         data_name + '_processed' + data_ext
     )
-    assert isfile(output_pipeline_fn_path)
-    assert isfile(output_stepsave_fn_path)
+    assert isfile(desired)
+
+    # Output from the Step's default saving of `SaveStep`
+    desired = join(
+        tmp_data_path,
+        data_name + '_processed_savestep' + data_ext
+    )
+    assert isfile(desired)
+
+    # Output from the Steps' default saving of `SavePipeline`
+    desired = data_name + '_processed_savestep_savepipeline' + data_ext
+    assert isfile(desired)
 
 
 def test_save_proper_pipeline(mk_tmp_dirs):

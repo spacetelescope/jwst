@@ -724,7 +724,7 @@ class Step():
         """
         self._input_filename = path
 
-    def save_model(self, model, suffix=None, idx=None):
+    def save_model(self, model, suffix=None, idx=None, output_file=None, force=False):
         """
         Saves the given model using the step/pipeline's naming scheme
 
@@ -738,17 +738,29 @@ class Step():
 
         idx: object
             Index identifier.
+
+        output_file: str
+            Use this file name instead of what the Step
+            default would be.
+
+        force: bool
+            Regardless of whether `save_results` is `False`
+            and no `output_file` is specified, try saving.
         """
+        if output_file is None:
+            output_file = self.output_file
 
         # Check if saving is even specified.
-        if not self.save_results and not self.output_file:
+        if not force and \
+           not self.save_results and \
+           not output_file:
             return
 
         # Get the output path as defined by the current step.
         make_output_path_partial = partial(
             self.make_output_path,
             self,
-            basepath=self.output_file,
+            basepath=output_file,
             suffix=suffix,
             idx=idx
         )

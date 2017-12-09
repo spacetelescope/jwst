@@ -26,8 +26,8 @@ Cube Building Parameter Reference File Format
 The cube parameter reference files are FITS file with a BINTABLE extension. The FITS primary data array is
 assumed to be empty. The BINTABLE extension contains the information on the default sample sizes of spatial
 and spectral dimension of the output spectral cubes, as well as the size region of interest to use 
-around each spaxel in choosing the detector pixels to combine. 
-The first two columns in  reference files defines the which band the row describes. For MIRI column 1 holds
+around each spaxel in chosing the detetector pixels to combine. 
+The first two colunms in  reference files defines the which band the row describes. For MIRI column 1 holds
 the channel and column two holds the sub-channel, while for NIRSPEC column 1 holds the grating and column 2
 contains the filter. For each band defined by columns 1 and 2, columns 3-6 contain the  
 spatial size of the output cube, the spectral size of the output cube, spatial region of interest size,
@@ -36,14 +36,14 @@ and wavelength region of interest.
 
 MIRI Resolution reference file
 ------------------------------
-The MIRI resolution reference file is a FITS file with three BINTABLE extensions. The FITS primary data array is
-assumed to be empty. The first  BINTABLE extension, RESOLVING_POWER, hold the resolution power information to use for 
+The MIRI resolution reference file is a FITS file with four BINTABLE extensions. The FITS primary data array is
+assumed to be empty. The first  BINTABLE extension  contains the RESOLVING_POWER the information to use for 
 each band. This table has 12 rows and 11 columns, one row of information for each band.  The parameters in the 11 columns
 provide the polynomial coefficients to determine the resolving power for band that row corresponds to. 
 The second BINTABLE extension, PSF_FWHM_ALPHA,
 has a format of 1 row and 5 columns. The 5 columns hold the polynomial coefficients for determining the alpha PSF
 size. 
-The third BINTABLE extension, PSF_FWHM_BET,
+The third BINTABLE extension, PSF_FWHM_BETA,
 has a format of 1 row and 5 columns. The 5 columns hold the polynomial coefficients for determining the beta PSF
-size.  For more details on how to use the three tables, see the MIRI-TN-00005-ETH document. 
+size. 
 

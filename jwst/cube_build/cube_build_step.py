@@ -26,7 +26,7 @@ class CubeBuildStep (Step):
          channel = option('1','2','3','4','ALL','all',default='ALL') # Options: 1,2,3,4,or All
          band = option('SHORT','MEDIUM','LONG','ALL','short','medium','long','all',default='ALL') # Options: \
 SHORT,MEDIUM,LONG, or ALL
-         grating   = option('PRISIM','G140M','G140H','G235M','G235H',G395M','G395H','ALL','all',default='ALL')  # Options: PRISIM,G140M,G140H,G235M,G235H,G395M,G395H, or ALL
+         grating   = option('PRISM','G140M','G140H','G235M','G235H',G395M','G395H','ALL','all',default='ALL')  # Options: PRISM,G140M,G140H,G235M,G235H,G395M,G395H, or ALL
          filter   = option('CLEAR','F100LP','F070LP','F170LP','F290LP','ALL','all',default='ALL') # Options: CLEAR,F100LP,F070LP,F170LP,F290LP, or ALL
          scale1 = float(default=0.0) # cube sample size to use for axis 1, arc seconds
          scale2 = float(default=0.0) # cube sample size to use for axis 2, arc seconds
@@ -247,9 +247,6 @@ SHORT,MEDIUM,LONG, or ALL
             icube = str(i+1)
             list_par1 = cube_pars[icube]['par1']
             list_par2 = cube_pars[icube]['par2']
-#            print('par1',list_par1)
-#            print('par2',list_par2)
-
             thiscube = ifu_cube.IFUCubeData(self.cube_type,
                                             self.pipeline,
                                             self.input_filenames,
@@ -444,3 +441,6 @@ def read_user_input(self):
         self.pars_input['grating'] = list(set(self.pars_input['grating']))
 
 #________________________________________________________________________________
+
+class ErrorInvalidParameter(Exception):
+    pass
