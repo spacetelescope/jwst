@@ -53,6 +53,7 @@ class Step():
     post_hooks       = string_list(default=list())
     output_file      = output_file(default=None)   # File to save output to.
     output_dir       = string(default=None)        # Directory path for output files
+    output_ext       = string(default='.fits')     # Default type of output
     output_use_model = boolean(default=False)      # When saving use `DataModel.meta.filename`
     output_use_index = boolean(default=True)       # Append index.
     save_results     = boolean(default=False)      # Force save results
@@ -364,7 +365,7 @@ class Step():
                     self.name, args))
 
             if self.output_file is not None:
-                self.output_basename = self.output_file
+                self.save_results = True
 
             hook_args = args
             for pre_hook in self._pre_hooks:
@@ -818,7 +819,9 @@ class Step():
 
         # Determine source of the basepath
         output_path = basepath
-        has_basepath = basepath is not None and len(basepath) > 0
+        has_basepath = not step.output_use_model and \
+                       basepath is not None and \
+                       len(basepath) > 0
         use_model_name = (not ignore_use_model) and \
                          getattr(step, 'output_use_model', False)
 
@@ -831,73 +834,47 @@ class Step():
         # Get the suffix
         suffix = _get_suffix(suffix, step=step)
 
-        # If a basepath was specified, use that, but adding the
-        # result_id if necessary
-        if has_basepath:
-            path, filename = split(output_path)
-            name, filename_ext = splitext(filename)
-
-            if suffix is not None:
-                match = re.match(REMOVE_SUFFIX, name)
-                try:
-                    name = match.group('root')
-                except AttributeError:
-                    pass
-
-            output_name = [name]
-            if idx is not None:
-                output_name.append('_' + str(idx))
-            if suffix is not None:
-                output_name.append('_' + suffix)
-            output_name.append(filename_ext)
-            output_name = ''.join(output_name)
-
-        # Otherwise, construct a name
-        else:
+        # If not given a name, construct one.
+        if not has_basepath:
 
             # Make names based on DataModels
             if isinstance(data, DataModel):
 
                 # If using what is in the model, just retrieve that.
                 if use_model_name:
-                    basepath = data.meta.filename
-                    path, output_name = split(basepath)
+                    output_path = data.meta.filename
 
                 # Otherwise, create a fully qualified pipeline outputname
                 else:
-                    basepath = step.search_attr('output_basename')
-                    if basepath is None:
-                        basepath = data.meta.filename
+                    output_path = step.search_attr('output_file')
+                    if output_path is None:
+                        output_path = data.meta.filename
 
-                # Breakdown the components
-                path, filename = split(basepath)
-                name, filename_ext = splitext(filename)
+        # Construct the output name
+        path, filename = split(output_path)
+        name, ext = splitext(filename)
 
-                # Remove any known, previous suffixes.
-                separator = None
-                if suffix is not None:
-                    match = re.match(REMOVE_SUFFIX, name)
-                    try:
-                        name = match.group('root')
-                        separator = match.group('separator')
-                    except AttributeError:
-                        pass
-                if separator is None:
-                    separator = '_'
+        # Remove any known, previous suffixes.
+        separator = None
+        if suffix is not None:
+            match = re.match(REMOVE_SUFFIX, name)
+            try:
+                name = match.group('root')
+                separator = match.group('separator')
+            except AttributeError:
+                pass
+        if separator is None:
+            separator = '_'
 
-                # Rebuild the path.
-                output_name = [name]
-                if idx is not None:
-                    output_name.append(separator + str(idx))
-                if suffix is not None:
-                    output_name.append(separator + suffix)
-                if ext is None:
-                    ext = step.search_attr('output_ext')
-                    if ext is None:
-                        ext = filename_ext
-                if ext is not None:
-                    output_name.append(ext)
-                output_name = ''.join(output_name)
+        output_name = [name]
+        if idx is not None:
+            output_name.append(separator + str(idx))
+        if suffix is not None:
+            output_name.append(separator + suffix)
+        if ext is None or len(ext) == 0:
+            ext = step.search_attr('output_ext')
+        output_name.append(ext)
+        output_name = ''.join(output_name)
 
         output_dir = step.search_attr('output_dir', default='')
         output_dir = expandvars(expanduser(output_dir))

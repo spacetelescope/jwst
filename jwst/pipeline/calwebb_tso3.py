@@ -50,7 +50,7 @@ class Tso3Pipeline(Pipeline):
 
         self.log.info('Starting calwebb_tso3...')
         input_models = datamodels.open(input)
-        self.output_basename = input_models.meta.asn_table.products[0].name
+        self.output_file = input_models.meta.asn_table.products[0].name
 
         input_exptype = None
         # Input may consist of multiple exposures, so loop over each of them
@@ -99,14 +99,14 @@ class Tso3Pipeline(Pipeline):
         phot_result_list = []
         if input_exptype in self.image_exptypes:
             # Create name for extracted photometry (Level 3) product
-            phot_tab_name = "{}_phot.ecsv".format(self.output_basename)
+            phot_tab_name = "{}_phot.ecsv".format(self.output_file)
 
             for cube in input_models:
                 # Extract Photometry from imaging data
                 phot_result_list.append(self.tso_photometry(cube))
         else:
             # Create name for extracted white-light (Level 3) product
-            phot_tab_name = "{}_whtlt.ecsv".format(self.output_basename)
+            phot_tab_name = "{}_whtlt.ecsv".format(self.output_file)
 
             # Working with spectroscopic TSO data...
             # define output for x1d (level 3) products

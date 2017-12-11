@@ -132,7 +132,8 @@ class ProperPipeline(Pipeline):
 
     def process(self, *args):
 
-        self.output_basename = 'ppbase'
+        if self.output_file is None:
+            self.output_file = 'ppbase.fits'
         self.suffix = 'pp'
 
         model = ImageModel(args[0])

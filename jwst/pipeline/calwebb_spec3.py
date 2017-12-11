@@ -69,8 +69,8 @@ class Spec3Pipeline(Pipeline):
         # products until the individual tasks work and do it themselves
         exptype = input_models[0].meta.exposure.type
         model_type = input_models[0].meta.model_type
-        output_basename = input_models.meta.asn_table.products[0].name
-        self.output_basename = output_basename
+        output_file = input_models.meta.asn_table.products[0].name
+        self.output_file = output_file
 
         # `sources` is the list of astronomical sources that need be
         # processed. Each element is a ModelContainer, which contains
@@ -102,8 +102,8 @@ class Spec3Pipeline(Pipeline):
             # the output name needs to be updated with the source name.
             if isinstance(source, tuple):
                 source_id, result = source
-                self.output_basename = format_product(
-                    output_basename, source_id=int(source_id)
+                self.output_file = format_product(
+                    output_file, source_id=int(source_id)
                 )
             else:
                 result = source
