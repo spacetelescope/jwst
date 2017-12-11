@@ -424,9 +424,7 @@ class Step():
                     result.meta.calibration_software_version = __version__
 
             # Save the output file if one was specified
-            if not self.skip and (
-                    self.save_results or self.output_file is not None
-            ):
+            if not self.skip and self.save_results:
                 # Setup the save list.
                 if not isinstance(step_result, (list, tuple)):
                     results_to_save = [step_result]
