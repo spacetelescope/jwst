@@ -8,21 +8,24 @@ import numpy as np
 
 from ..associations import load_asn
 from .. import datamodels
-from . import temp_wcs
+from ..extract_1d.spec_wcs import create_spectral_wcs
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class InputSpectrumModel():
+class InputSpectrumModel:
     """Attributes:
         wavelength
         flux
+        error
         net
         dq
         nelem
-        wcs
         weight
+        unit_weight
+        right_ascension
+        declination
     """
 
     def __init__(self, ms, spec, exptime_key):
@@ -46,10 +49,13 @@ class InputSpectrumModel():
 
         self.wavelength = spec.spec_table.field("wavelength").copy()
         self.flux = spec.spec_table.field("flux").copy()
+        self.error = spec.spec_table.field("error").copy()
         self.net = spec.spec_table.field("net").copy()
         self.dq = spec.spec_table.field("dq").copy()
         self.nelem = self.wavelength.shape[0]
-        self.wcs = temp_wcs.WCS(self.wavelength)
+        self.unit_weight = False        # may be reset below
+        self.right_ascension = None
+        self.declination = None
 
         if exptime_key == "integration_time":
             self.weight = ms.meta.exposure.integration_time
@@ -57,42 +63,70 @@ class InputSpectrumModel():
             self.weight = ms.meta.exposure.exposure_time
         elif exptime_key == "unit_weight":
             self.weight = 1.
+            self.unit_weight = True
         else:
             raise RuntimeError("Don't understand exptime_key = '%s'" %
                                exptime_key)
 
+        got_wcs = True
+        try:
+            wcs = spec.meta.wcs
+        except AttributeError:
+            got_wcs = False
+        if got_wcs:
+            self.right_ascension, self.declination, _ = wcs(0.)
+        else:
+            self.right_ascension = ms.meta.target.ra
+            self.declination = ms.meta.target.dec
+            log.warning("There is no WCS in the input.")
+
+
     def close(self):
         self.wavelength = None
         self.flux = None
+        self.error = None
         self.net = None
         self.dq = None
-        self.wcs = None
         self.nelem = 0
         self.weight = 1.
+        self.unit_weight = False
+        self.right_ascension = None
+        self.declination = None
 
 
-class OutputSpectrumModel():
+class OutputSpectrumModel:
     """Attributes:
         wavelength
+        flux
+        error
         net
+        dq
+        flux_weight
         weight
         count
         wcs
         wavelength_dtype
         net_dtype
+        dq_dtype
         normalized
     """
 
     def __init__(self):
 
         self.wavelength = None
+        self.flux = None
+        self.error = None
         self.net = None
+        self.dq = None
+        self.flux_weight = None
         self.weight = None
         self.count = None
         self.wcs = None
         self.wavelength_dtype = None
         self.net_dtype = None
+        self.dq_dtype = None
         self.normalized = False
+
 
     def assign_wavelengths(self, input_spectra):
         """Create an array of wavelengths to use for the output spectrum.
@@ -112,8 +146,8 @@ class OutputSpectrumModel():
         # be the same as these types.
         self.wavelength_dtype = input_spectra[0].wavelength.dtype
         self.net_dtype = input_spectra[0].net.dtype
+        self.dq_dtype = input_spectra[0].dq.dtype
 
-        nspectra = len(input_spectra)
         nwl = 0
         for in_spec in input_spectra:
             nwl += in_spec.nelem
@@ -152,9 +186,12 @@ class OutputSpectrumModel():
         if np.any(count_input <= 0.):
             raise RuntimeError("Problem with input wavelengths.")
 
-        self.compute_output_wl(wl, count_input)
+        self.wavelength = self.compute_output_wl(wl, count_input)
 
-        self.wcs = temp_wcs.WCS(self.wavelength)
+        self.wcs = create_spectral_wcs(input_spectra[0].right_ascension,
+                                       input_spectra[0].declination,
+                                       self.wavelength)
+
 
     def compute_output_wl(self, wl, count_input):
         """Compute output wavelengths.
@@ -179,9 +216,6 @@ class OutputSpectrumModel():
         wavelengths will then be computed by just averaging groups of
         input wavelengths to fill in the gaps.
 
-        The output wavelengths will be assigned to the `wavelengths`
-        attribute.
-
         Parameters
         ----------
         wl: 1-D array
@@ -192,6 +226,11 @@ class OutputSpectrumModel():
             An integer array of the same length as `wl`.  For a given
             array index k (for example), count_input[k] is the number of
             input spectra that cover wavelength wl[k].
+
+        Returns
+        -------
+        wavelength:  1-D array
+            Array of wavelengths for the output spectrum.
         """
 
         nwl = len(wl)
@@ -266,7 +305,8 @@ class OutputSpectrumModel():
                             temp_wl[i] = wl[i:i + n].mean()
                 i += n
 
-        self.wavelength = temp_wl[np.where(temp_wl > 0.)].copy()
+        return temp_wl[np.where(temp_wl > 0.)].copy()
+
 
     def accumulate_sums(self, input_spectra, interpolation):
         """Compute a weighted sum of all the input spectra.
@@ -275,12 +315,24 @@ class OutputSpectrumModel():
         the output spectrum.  The wavelength spacing of the input and
         output should be comparable, so each input pixel will usually
         correspond to one output pixel (i.e. have the same wavelength,
-        to within half a pixel).  However, if the input and output
-        wavelength spacings are not identical, then for any given input
-        spectrum, there can be output pixels that are incremented by more
-        than one input pixel, and in that case there will be at least one
-        output pixel that is not incremented.  If there are several input
-        spectra, such gaps will hopefully be filled in.
+        to within half a pixel).  However, for any given input spectrum,
+        there can be output pixels that are incremented by more than one
+        input pixel, and there can be output pixels that are not incremented.
+        If there are several input spectra, such gaps will hopefully be
+        filled in.
+
+        Pixels in an input spectrum that are flagged (via the DQ array)
+        as DO_NOT_USE will not be used, i.e. they will simply be ignored
+        when incrementing output arrays from an input spectrum.  If an
+        input pixel is flagged with a non-zero value other than DO_NOT_USE,
+        the value will be propagated to the output DQ array via bitwise OR.
+
+        The net will be weighted by the exposure (or integration) time.
+        The flux will also be weighted by the sensitivity.  The ratio of
+        net to flux is the sensitivity.  For both net and flux, the idea
+        is that it is counts that should be added up when accumulating
+        sums.  If unit weight was specified, however, both net and flux
+        will be weighted by one.
 
         Parameters
         ----------
@@ -294,19 +346,39 @@ class OutputSpectrumModel():
 
         nelem = self.wavelength.shape[0]
 
+        self.flux = np.zeros(nelem, dtype=np.float)
+        self.error = np.zeros(nelem, dtype=np.float)
+        self.flux_weight = np.zeros(nelem, dtype=np.float)
+        self.dq = np.zeros(nelem, dtype=self.dq_dtype)
         self.net = np.zeros(nelem, dtype=np.float)
         self.weight = np.zeros(nelem, dtype=np.float)
         self.count = np.zeros(nelem, dtype=np.float)
 
         for in_spec in input_spectra:
-            # Get the pixel numbers in the output arrays corresponding to
-            # the wavelengths of the current input spectrum.
-            out_pixel = self.wcs.to_pixel(in_spec.wavelength)
+            # Replace zeros so we can divide by the flux.
+            temp_flux = np.where(in_spec.flux == 0., 1., in_spec.flux)
+            # Get the pixel numbers in the output corresponding to the
+            # wavelengths of the current input spectrum.
+            out_pixel = self.to_pixel(in_spec.wavelength)
+            # i is a pixel number in the current input spectrum, and
+            # k is the corresponding pixel number in the output spectrum.
             for i in range(len(out_pixel)):
+                if in_spec.dq[i] & datamodels.dqflags.pixel['DO_NOT_USE'] > 0:
+                    continue
                 # Nearest pixel "interpolation."
-                k = int(round(out_pixel[i]))
+                k = round(float(out_pixel[i]))
                 self.net[k] += (in_spec.net[i] * in_spec.weight)
                 self.weight[k] += in_spec.weight
+                self.dq[k] |= in_spec.dq[i]
+                if in_spec.unit_weight:
+                    flux_wgt = 1.
+                else:
+                    # net / flux is the sensitivity
+                    flux_wgt = in_spec.weight * in_spec.net[i] / temp_flux[i]
+                    flux_wgt = np.where(flux_wgt < 0., 0., flux_wgt)
+                self.flux[k] += in_spec.flux[i] * flux_wgt
+                self.error[k] += (in_spec.error[i] * flux_wgt)**2
+                self.flux_weight[k] += flux_wgt
                 self.count[k] += 1.
 
         # Since the output wavelengths will not usually be exactly the same
@@ -320,27 +392,124 @@ class OutputSpectrumModel():
                         " input data;" % (nelem - n_good,))
             log.warning("    these elements will be omitted.")
             self.wavelength = self.wavelength[index]
+            self.flux = self.flux[index]
             self.net = self.net[index]
             self.weight = self.weight[index]
+            self.flux_weight = self.flux_weight[index]
+            self.error = self.error[index]
             self.count = self.count[index]
         del index
 
         self.normalized = False
 
+
+    def to_pixel(self, in_wl):
+        """Get pixel numbers in the output array corresponding to
+        wavelengths in an input spectrum.
+
+        Parameters
+        ----------
+        in_wl:  1-D array, or float
+             Array (or a single value) of wavelengths.
+
+        Returns
+        -------
+        pixel:  1-D array, or float
+             Pixel numbers in the output spectrum corresponding to the
+             wavelengths in `in_wl`.
+        """
+
+        out_wl = self.wavelength
+        nelem = self.wavelength.shape[0]
+
+        if not nelem or nelem < 1:
+            return None
+
+        try:
+            len_wl = len(in_wl)
+            wl_has_len = True
+        except TypeError:
+            wl_has_len = False
+
+        if nelem == 1:
+            if wl_has_len:
+                return np.zeros(len_wl, dtype=np.float)
+            else:
+                return 0.
+
+        if out_wl[-1] > out_wl[0]:
+            dir = 1.
+        else:
+            dir = -1.
+
+        dwl = out_wl[1:] - out_wl[0:-1]
+
+        if not wl_has_len:
+            in_wl = np.array([in_wl], dtype=np.float)
+
+        pixel = np.zeros_like(in_wl)
+        if dir > 0.:
+            for i in range(len(in_wl)):
+                if in_wl[i] < out_wl[0]:
+                    # Linear extrapolation.
+                    pixel[i] = (in_wl[i] - out_wl[0]) / \
+                               (out_wl[1] - out_wl[0])
+                elif in_wl[i] > out_wl[-1]:
+                    # Linear extrapolation.
+                    pixel[i] = float(nelem - 1) + \
+                               (in_wl[i] - out_wl[-1]) / \
+                               (out_wl[-1] - out_wl[-2])
+                else:
+                    for k in range(nelem - 1):
+                        # Linear interpolation.
+                        if in_wl[i] >= out_wl[k] and \
+                           in_wl[i] <= out_wl[k + 1]:
+                            pixel[i] = float(k) + (in_wl[i] - out_wl[k]) / \
+                                           (out_wl[k + 1] - out_wl[k])
+                            break
+        else:                                   # dir < 0
+            for i in range(len(in_wl)):
+                if in_wl[i] > out_wl[0]:
+                    pixel[i] = (in_wl[i] - out_wl[0]) / \
+                               (out_wl[1] - out_wl[0])
+                elif in_wl[i] < out_wl[-1]:
+                    pixel[i] = float(nelem - 1) + \
+                               (in_wl[i] - out_wl[-1]) / \
+                               (out_wl[-1] - out_wl[-2])
+                else:
+                    for k in range(nelem - 1):
+                        if in_wl[i] <= out_wl[k] and \
+                           in_wl[i] >= out_wl[k + 1]:
+                            pixel[i] = float(k + 1) - \
+                                       (in_wl[i] - out_wl[k + 1]) / \
+                                       (out_wl[k] - out_wl[k + 1])
+                            break
+
+        if wl_has_len:
+            return pixel
+        else:
+            return float(pixel[0])
+
+
     def compute_combination(self):
-        """Compute the combined count rate."""
+        """Compute the combined values."""
 
         if not self.normalized:
-            weight = np.where(self.weight > 0., self.weight, 1.)
-            self.net /= weight
+            sum_weight = np.where(self.weight > 0., self.weight, 1.)
+            sum_flux_wgt = np.where(self.flux_weight > 0.,
+                                    self.flux_weight, 1.)
+            self.net /= sum_weight
+            self.flux /= sum_flux_wgt
+            self.error = np.sqrt(self.error / sum_flux_wgt)
             self.normalized = True
+
 
     def create_output(self):
         """Create the output model.
 
         Returns
         -------
-        out_model: CombinedSpecModel object
+        output_model: CombinedSpecModel object
             A table of combined spectral data.
         """
 
@@ -349,26 +518,38 @@ class OutputSpectrumModel():
                         " the sum of the weights.")
 
         dtype = [('wavelength', self.wavelength_dtype),
+                 ('flux', self.net_dtype),
+                 ('error', self.net_dtype),
                  ('net', self.net_dtype),
+                 ('dq', self.dq_dtype),
                  ('weight', self.wavelength_dtype),
                  ('n_input', np.float)]
 
         data = np.array(list(zip(self.wavelength,
-                            self.net,
-                            self.weight,
-                            self.count)), dtype=dtype)
-        out_model = datamodels.CombinedSpecModel(spec_table=data)
+                                 self.flux,
+                                 self.error,
+                                 self.net,
+                                 self.dq,
+                                 self.weight,
+                                 self.count)), dtype=dtype)
+        output_model = datamodels.CombinedSpecModel(spec_table=data)
 
-        return out_model
+        return output_model
+
 
     def close(self):
         self.wavelength = None
+        self.flux = None
+        self.error = None
         self.net = None
+        self.dq = None
+        self.flux_weight = None
         self.weight = None
         self.count = None
         self.wcs = None
         self.wavelength_dtype = None
         self.net_dtype = None
+        self.dq_dtype = None
         self.normalized = False
 
 
@@ -409,12 +590,15 @@ def check_exptime(exptime_key):
     else:
         log.warning("Don't understand exptime_key = '%s';"
                     " using unit weight." % exptime_key)
+        log.info("The options for exptime_key are:")
+        log.info("  integration_time, effinttm, exposure_time, effexptm,"
+                 " unit_weight, unit weight")
         exptime_key = "unit_weight"
 
     return exptime_key
 
 
-def do_combine1d(asn_file, exptime_key, interpolation):
+def do_correction(asn_file, exptime_key, interpolation):
     """Combine the input spectra.
 
     Parameters
@@ -444,8 +628,14 @@ def do_combine1d(asn_file, exptime_key, interpolation):
     input_spectra = []
     for file_dict in input_files:
         file = file_dict["expname"]
-        ms = datamodels.MultiSpecModel(file)
-        nspec = len(ms.spec)
+        ms = datamodels.open(file)
+        try:
+            dummy = len(ms.spec)
+        except AttributeError:
+            log.error("Input file {} is a {}; skipping ..."
+                      .format(file, type(ms)))
+            ms.close()
+            continue
         for in_spec in ms.spec:
             input_spectra.append(InputSpectrumModel(ms, in_spec, exptime_key))
         ms.close()
@@ -458,23 +648,17 @@ def do_combine1d(asn_file, exptime_key, interpolation):
     for in_spec in input_spectra:
         in_spec.close()
 
-    out_model = output_spec.create_output()
-    output_spec.close()
+    output_model = output_spec.create_output()
 
     # Copy one of the input headers to output.
     ms = datamodels.MultiSpecModel(input_files[0]["expname"])
-    out_model.update(ms)# , primary_only=True)
+    output_model.update(ms, only="PRIMARY")
     ms.close()
 
-    out_model.meta.filename = output_name
-    out_model.meta.cal_step.combine_1d = 'COMPLETE'
+    output_model.meta.wcs = output_spec.wcs
+    output_model.meta.filename = output_name
+    output_model.meta.cal_step.combine_1d = 'COMPLETE'
 
-    log.info("output_name = {}".format(output_name))
-    out_model.save(output_name)
-    out_model.close()
+    output_spec.close()
 
-
-def correct_model(input_file, exptime_key, interpolation):
-    """Combine 1-D spectra."""
-
-    do_combine1d(input_file, exptime_key, interpolation)
+    return output_model

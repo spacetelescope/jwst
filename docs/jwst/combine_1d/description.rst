@@ -3,14 +3,24 @@ Description
 The combine_1d step computes a weighted average of 1-D spectra and writes
 the combined 1-D spectrum as output.
 
-The weight will typically be the integration time or the exposure time,
-but uniform (unit) weighting can be specified instead.
-
 The combination of spectra proceeds as follows.  For each pixel of each
 input spectrum, the corresponding pixel in the output is identified
 (based on wavelength), and the input value multiplied by the weight is
-added to the output buffer.  After all input spectra have been included,
-the output is normalized by dividing by the sum of the weights.
+added to the output buffer.  Pixels that are flagged (via the DQ column)
+with DO_NOT_USE will not contribute to the output.  After all input
+spectra have been included, the output is normalized by dividing by
+the sum of the weights.
+
+The weight will typically be the integration time or the exposure time,
+but uniform (unit) weighting can be specified instead.  It is the net
+count rate that uses this weight; that is, the net count rate is multiplied
+by the integration time to get net counts, and it is the net counts that
+are added together and finally divided by the sum of the integration
+times.  The flux weighted by an additional factor of the instrumental
+sensitivity, count rate per unit flux.  The idea is that the quantity
+that is added up should be in units of counts.  If unit weight was
+specified, however, unit weight will be used for both flux and net.
+The data quality (DQ) columns will be combined using bitwise OR.
 
 The only part of this step that is not completely straightforward is the
 determination of wavelengths for the output spectrum.  The output
@@ -43,14 +53,15 @@ can contain more than one spectrum).
 The association file should have an object called "products", which is
 a one-element list containing a dictionary.  This dictionary contains two
 entries (at least), one with key "name" and one with key "members".  The
-value for key "name" is a string, the name that will be used for the output
-file.  "members" is a list of dictionaries.  Each of these dictionaries
-contains one input file name, identified by key "expname".
+value for key "name" is a string, the name that will be used as a basis for
+creating the output file name.  "members" is a list of dictionaries, each
+of which contains one input file name, identified by key "expname".
 
 Output
 ======
 The output will be in CombinedSpecModel format, with a table extension
-having the name COMBINE1D.  This extension will have columns giving the
-wavelength, countrate in counts/second, the sum of the weights that were
-used when combining the input spectra, and the number of input spectra
-that contributed to each output pixel.
+having the name COMBINE1D.  This extension will have six columns, giving
+the wavelength, flux, error estimate for the flux, net countrate in
+counts/second, the sum of the weights that were used when combining the
+input spectra, and the number of input spectra that contributed to each
+output pixel.
