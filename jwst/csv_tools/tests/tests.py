@@ -42,5 +42,4 @@ class TestCSVConvert():
         """Test json"""
         path = os.path.join(self.data_path, 'test_csv_mixed.txt')
         c2json = table_to_json(csv_to_table(path, delimiter=','))
-        print(c2json)
         assert c2json == self.json_mixed_result
