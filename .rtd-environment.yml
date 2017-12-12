@@ -15,7 +15,6 @@ dependencies:
   - jplephem
   - matplotlib
   - namedlist
-  - nose
   - numpy
   - photutils
   - pymssql
