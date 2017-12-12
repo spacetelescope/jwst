@@ -21,10 +21,8 @@ class Combine1dStep(Step):
 
     def process(self, input_file):
 
-        combine1d.correct_model(input_file,
-                                self.exptime_key,
-                                self.interpolation)
+        result = combine1d.do_correction(input_file,
+                                         self.exptime_key,
+                                         self.interpolation)
 
-def combine_1d_correction(input):
-    a = Combine1dStep()
-    a.process(input)
+        return result
