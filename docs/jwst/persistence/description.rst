@@ -98,17 +98,16 @@ limit.  This reduced value is :math:`Delta t` in the expression below.
 The number of captures in each pixel during the integration is:
 
 .. math::
-    trapsfilled = 2 \cdot (trapdensity \cdot slope^2
-                      \cdot  (\Delta t^2 \cdot (par0 + par2) / 2
-                       +  par0 \cdot (\Delta t \cdot \tau
-                       +  \tau^2) \cdot exp(-\Delta t / \tau)
-                         -  par0 \cdot \tau^2))
+    trapsfilled = 2 \cdot &(trapdensity \cdot slope^2 \\
+                      &\cdot (\Delta t^2 \cdot (par0 + par2) / 2
+                       + par0 \cdot (\Delta t \cdot \tau + \tau^2) \\
+                       &\cdot exp(-\Delta t / \tau) - par0 \cdot \tau^2))
 
 where par0 and par2 are the values from columns "capture0" and "capture2"
 respectively, from the trappars reference table, and :math:`\tau` is the
 reciprocal of the absolute value from column "capture1", for the row
 corresponding to the current trap family.  trapdensity is the
-relative density of traps, normalized to a median of 1.  :math:`Delta t`
+relative density of traps, normalized to a median of 1.  :math:`\Delta t`
 is the time interval in seconds over which
 the charge capture is to be computed, as described above.  slope is the
 ramp slope (computed before the loop over groups), in units of fraction
