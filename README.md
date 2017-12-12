@@ -46,4 +46,4 @@ Using
 
 Documentation (built nightly) is available here:
 
-http://ssb.stsci.edu/doc/jwst_dev/
+http://jwst-pipeline.readthedocs.io/en/latest/
