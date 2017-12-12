@@ -32,6 +32,13 @@ class DarkCurrentStep(Step):
                 result.meta.cal_step.dark = 'SKIPPED'
                 return result
 
+            # Create name for the intermediate dark, if desired.
+            dark_output = self.dark_output
+            if dark_output is not None:
+                dark_output = self.make_output_path()(
+                    self, None, basepath=dark_output, ignore_use_model=True
+                )
+
             # Open the dark ref file data model - based on Instrument
             instrument = input_model.meta.instrument.name
             if(instrument == 'MIRI'):
@@ -41,7 +48,7 @@ class DarkCurrentStep(Step):
 
             # Do the dark correction
             result = dark_sub.do_correction(
-                input_model, dark_model, self.dark_output
+                input_model, dark_model, dark_output
             )
             dark_model.close()
 
