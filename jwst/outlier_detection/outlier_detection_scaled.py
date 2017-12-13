@@ -1,5 +1,6 @@
 """Class definition for performing outlier detection with scaling."""
 
+from functools import partial
 import numpy as np
 
 from photutils import aperture_photometry, CircularAperture, CircularAnnulus
@@ -97,17 +98,20 @@ class OutlierDetectionScaled(OutlierDetection):
 
         # Convert CubeModel into ModelContainer of 2-D DataModels
         for image in self.input_models:
-            image.wht = resample_utils.build_driz_weight(image,
-                                                   wht_type='exptime',
-                                                   good_bits=pars['good_bits'])
+            image.wht = resample_utils.build_driz_weight(
+                image,
+                wht_type='exptime',
+                good_bits=pars['good_bits']
+            )
 
         # Initialize intermediate products used in the outlier detection
         input_shape = self.input_models[0].data.shape
         median_model = datamodels.ImageModel(init=input_shape)
         median_model.meta = self.input_models[0].meta
         base_filename = self.inputs.meta.filename
-        median_model.meta.filename = '_'.join(base_filename.split('_')[:2] +
-                                              ['median.fits'])
+        median_model.meta.filename = self.make_output_path(
+            None, basepath=base_filename, suffix='median'
+        )
 
         # Perform median combination on set of drizzled mosaics
         median_model.data = self.create_median(self.input_models)
@@ -145,7 +149,7 @@ class OutlierDetectionScaled(OutlierDetection):
 
         if save_intermediate_results:
             log.info("Writing out Scaled Median images...")
-            blot_models.save()
+            blot_models.save(partial(self.make_output_path, suffix='blot'))
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image

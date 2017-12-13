@@ -444,7 +444,7 @@ class Step():
                         self.save_model(result, idx=idx)
                     elif hasattr(result, 'save'):
                         try:
-                            out_dir, out_name = make_output_path(
+                            out_path = make_output_path(
                                 self, result,
                                 basepath=self.output_file,
                                 result_id=result_id(idx)
@@ -459,7 +459,6 @@ class Step():
                                 ' or set `--save_results=false`'
                             )
                         else:
-                            out_path = join(out_dir, out_name)
                             self.log.info(
                                 'Saving file {0}'.format(out_path)
                             )
@@ -784,7 +783,8 @@ class Step():
         Parameters
         ----------
         step: Step
-            The step which produced the data
+            The step which produced the data.
+            If None, default `Step` parameters will be used.
 
         data: obj
             Get filename info from the data to be saved.
@@ -808,12 +808,13 @@ class Step():
 
         Returns
         -------
-        output_path, file_name, path_name: str, str, str
-            2-tuple consisting of:
-            - path_name: Directory path
-            - file_name: File name
+        output_path: str
+            The full output path.
         """
         from ..datamodels import DataModel
+
+        if step is None:
+            step = Step()
 
         # Determine source of the basepath
         output_path = basepath
@@ -876,10 +877,11 @@ class Step():
 
         output_dir = step.search_attr('output_dir', default='')
         output_dir = expandvars(expanduser(output_dir))
+        full_output_path = join(output_dir, output_name)
         step.log.info('Saving file {}'.format(
-            join(output_dir, output_name)
+            full_output_path
         ))
-        return output_dir, output_name
+        return full_output_path
 
     def closeout(self, to_close=None, to_del=None):
         """Close out step processing

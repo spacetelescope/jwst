@@ -1,4 +1,5 @@
 """Public common step definition for OutlierDetection processing."""
+from functools import partial
 
 from ..stpipe import Step
 from .. import datamodels
@@ -87,6 +88,12 @@ class OutlierDetectionStep(Step):
                 'resample_data': self.resample_data,
                 'good_bits': self.good_bits
                 }
+
+            # Setup for creating file names
+            pars['make_output_path'] = partial(
+                self.make_output_path,
+                self
+            )
 
             # Add logic here to select which version of OutlierDetection
             # needs to be used depending on the input data

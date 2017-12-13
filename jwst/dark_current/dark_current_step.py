@@ -35,7 +35,7 @@ class DarkCurrentStep(Step):
             # Create name for the intermediate dark, if desired.
             dark_output = self.dark_output
             if dark_output is not None:
-                dark_output = self.make_output_path()(
+                dark_output = self.make_output_path(
                     self, None, basepath=dark_output, ignore_use_model=True
                 )
 
@@ -51,6 +51,5 @@ class DarkCurrentStep(Step):
                 input_model, dark_model, dark_output
             )
             dark_model.close()
-
 
         return result

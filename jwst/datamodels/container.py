@@ -223,7 +223,7 @@ class ModelContainer(model_base.DataModel):
               appended.
             - If a function, the function takes the model and
               `idx` parameter index (optional) as arguments and
-              returns a 2-tuple (dir_path, filename)
+              returns a full path string.
 
         dir_path : str
             Directory to write out files.  Defaults to current working dir.
@@ -243,7 +243,7 @@ class ModelContainer(model_base.DataModel):
         for idx, model in enumerate(self):
             if len(self) <= 1:
                 idx = None
-            outpath, filename = path_func(model, idx=idx)
+            outpath, filename = op.split(path_func(model, idx=idx))
             if dir_path:
                 outpath = dir_path
             save_path = op.join(outpath, filename)

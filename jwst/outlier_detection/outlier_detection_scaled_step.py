@@ -69,6 +69,12 @@ class OutlierDetectionScaledStep(Step):
                 'good_bits': self.good_bits
                 }
 
+            # Setup for creating file names
+            pars['make_output_path'] = partial(
+                self.make_output_path,
+                self
+            )
+
             # Set up outlier detection, then do detection
             step = outlier_detection_scaled.OutlierDetectionScaled(
                         self.input_models,
