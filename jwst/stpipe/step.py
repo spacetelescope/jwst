@@ -27,7 +27,7 @@ from . import crds_client
 from . import log
 from . import utilities
 from .. import __version_commit__, __version__
-from ..datamodels import DataModel
+from ..datamodels import (DataModel, ModelContainer)
 
 SUFFIX_LIST = [
     'cal', 'calints', 'crf', 'crfints',
@@ -445,7 +445,7 @@ class Step():
                     elif hasattr(result, 'save'):
                         try:
                             out_path = make_output_path(
-                                self, result,
+                                result,
                                 basepath=self.output_file,
                                 result_id=result_id(idx)
                             )
@@ -757,12 +757,17 @@ class Step():
         # Get the output path as defined by the current step.
         make_output_path_partial = partial(
             self.make_output_path,
-            self,
             basepath=output_file,
             suffix=suffix,
             idx=idx
         )
+
         model.save(make_output_path_partial)
+        models = [model]
+        if isinstance(model, ModelContainer):
+            models = model
+        for a_model in models:
+            self.log.info('Saved model in {}'.format(a_model.meta.filename))
 
     @property
     def make_output_path(self):
@@ -770,7 +775,7 @@ class Step():
         make_output_path = self.search_attr(
             '_make_output_path', parent_first=True
         )
-        return make_output_path
+        return partial(make_output_path, self)
 
     @staticmethod
     def _make_output_path(

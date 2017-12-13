@@ -90,10 +90,7 @@ class OutlierDetectionStep(Step):
                 }
 
             # Setup for creating file names
-            pars['make_output_path'] = partial(
-                self.make_output_path,
-                self
-            )
+            pars['make_output_path'] = self.make_output_path
 
             # Add logic here to select which version of OutlierDetection
             # needs to be used depending on the input data

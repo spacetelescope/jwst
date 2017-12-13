@@ -36,7 +36,7 @@ class DarkCurrentStep(Step):
             dark_output = self.dark_output
             if dark_output is not None:
                 dark_output = self.make_output_path(
-                    self, None, basepath=dark_output, ignore_use_model=True
+                    None, basepath=dark_output, ignore_use_model=True
                 )
 
             # Open the dark ref file data model - based on Instrument

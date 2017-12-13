@@ -389,7 +389,7 @@ def make_file_with_index(model, idx, path):
 
     Returns
     -------
-    (dir_path, new_filename: str
+    file_path: str
         Path with index appended
     """
     # Decompose path
@@ -397,4 +397,4 @@ def make_file_with_index(model, idx, path):
     base, ext = op.splitext(path_tail)
     if idx is not None:
         base = base + str(idx)
-    return (path_head, base + ext)
+    return op.join(path_head, base + ext)

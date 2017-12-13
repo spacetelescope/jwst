@@ -70,10 +70,7 @@ class OutlierDetectionScaledStep(Step):
                 }
 
             # Setup for creating file names
-            pars['make_output_path'] = partial(
-                self.make_output_path,
-                self
-            )
+            pars['make_output_path'] = self.make_output_path
 
             # Set up outlier detection, then do detection
             step = outlier_detection_scaled.OutlierDetectionScaled(
