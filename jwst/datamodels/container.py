@@ -229,6 +229,11 @@ class ModelContainer(model_base.DataModel):
             Directory to write out files.  Defaults to current working dir.
             If directory does not exist, it creates it.  Filenames are pulled
             from `.meta.filename` of each datamodel in the container.
+
+        Returns
+        -------
+        output_paths: [str[, ...]]
+            List of output file paths of where the models were saved.
         """
         if path is None:
             path_func = lambda model, idx: (None, model.meta.filename)
@@ -240,6 +245,7 @@ class ModelContainer(model_base.DataModel):
         else:
             path_func = partial(make_file_with_index, path=path)
 
+        output_paths = []
         for idx, model in enumerate(self):
             if len(self) <= 1:
                 idx = None
@@ -248,9 +254,11 @@ class ModelContainer(model_base.DataModel):
                 outpath = dir_path
             save_path = op.join(outpath, filename)
             try:
-                model.save(save_path, *args, **kwargs)
+                output_paths.append(model.save(save_path, *args, **kwargs))
             except IOError as err:
                 raise err
+
+        return output_paths
 
     @property
     def models_grouped(self):

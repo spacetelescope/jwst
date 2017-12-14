@@ -744,6 +744,11 @@ class Step():
         force: bool
             Regardless of whether `save_results` is `False`
             and no `output_file` is specified, try saving.
+
+        Returns
+        -------
+        output_path: [str[, ...]]
+            List of output file paths the model(s) were saved in.
         """
         if output_file is None:
             output_file = self.output_file
@@ -762,12 +767,14 @@ class Step():
             idx=idx
         )
 
-        model.save(make_output_path_partial)
-        models = [model]
-        if isinstance(model, ModelContainer):
-            models = model
-        for a_model in models:
-            self.log.info('Saved model in {}'.format(a_model.meta.filename))
+        output_paths = model.save(make_output_path_partial)
+        if not isinstance(output_paths, (list, tuple)):
+            output_paths = [output_paths]
+
+        for output_path in output_paths:
+            self.log.info('Saved model in {}'.format(output_path))
+
+        return output_paths
 
     @property
     def make_output_path(self):

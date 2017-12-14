@@ -306,6 +306,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         dir_path: string
             Directory to save to. If not None, this will override
             any directory information in the `path`
+
+        Returns
+        -------
+        output_path: str
+            The file path the model was saved in.
         """
         if callable(path):
             path_head, path_tail = os.path.split(path(self))
@@ -317,18 +322,20 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         if dir_path:
             path_head = dir_path
-        save_path = os.path.join(path_head, path_tail)
+        output_path = os.path.join(path_head, path_tail)
 
         # TODO: Support gzip-compressed fits
         if ext == '.fits':
             # TODO: remove 'clobber' check once depreciated fully in astropy
             if 'clobber' not in kwargs:
                 kwargs.setdefault('overwrite', True)
-            self.to_fits(save_path, *args, **kwargs)
+            self.to_fits(output_path, *args, **kwargs)
         elif ext == '.asdf':
-            self.to_asdf(save_path, *args, **kwargs)
+            self.to_asdf(output_path, *args, **kwargs)
         else:
             raise ValueError("unknown filetype {0}".format(ext))
+
+        return output_path
 
     @classmethod
     def from_asdf(cls, init, schema=None):
