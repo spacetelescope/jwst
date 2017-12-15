@@ -4,6 +4,7 @@
 """
 from collections import OrderedDict
 
+import copy
 import numpy as np
 from astropy.io import fits
 
@@ -57,8 +58,8 @@ def blendmodels(product, inputs=None, output=None,
     """
 
     if inputs in empty_list:
-        inputs = extract_filenames_from_product(product)
-        input_filenames = inputs
+        input_filenames = extract_filenames_from_product(product)
+        inputs = [datamodels.open(i) for i in inputs]  # return datamodels
     else:
         input_filenames = [i.meta.filename for i in inputs]
 
@@ -74,15 +75,21 @@ def blendmodels(product, inputs=None, output=None,
     output_model = datamodels.open(product)
     output_model.meta = newmeta
     """
+        # NOTE 14-Dec-2017:
+        # We need to replace metadata values with new ones based on rules
+        # using syntax below.  We can NOT use `model.update()` since that
+        # would retain the old values and structure where no new values were
+        # provided.  Furthermore, we need to make a copy of the WCS already
+        # stored in output_model and restore it after the update to insure
+        # the properly computed WCS remains with the output product.
+
         # This is code used by resample.blend to merge blended attributes
         # into output_model metadata.
         #
+        # start by saving WCS (may not be necessary?)
+        product_wcs = output_model.meta.wcs
         # Now merge the keyword values from new_hdrs into the metatdata for the
         # output datamodel
-        #
-        # start by building dict which maps all FITS keywords in schema to
-        # attribute in the schema
-        fits_dict = schema.build_fits_dict(output_model.schema)
         # Need to insure that output_model does not already have an instance
         # of hdrtab from previous processing, an instance that would be
         # incompatible with the new table generated now...
@@ -94,7 +101,12 @@ def blendmodels(product, inputs=None, output=None,
         for hdr in new_hdrs:
             for kw in hdr:
                 if kw in fits_dict:
+                    # use "model['meta.section.attribute'] = new_value" syntax
                     output_model[fits_dict[kw]] = hdr[kw]
+        #
+        # restore WCS, in case it was overridden in update
+        # this may not be necessary?
+        output_model.meta.wcs = product_wcs
     """
     # Now, append HDRTAB as new element in datamodel
     newtab_schema = build_tab_schema(newtab)
@@ -120,7 +132,7 @@ def get_blended_metadata(input_models, verbose=False, rules_file=None):
 
     rules_file : str, optional [Default: None]
         Filename of a rules file to be used.  If None, look for default file
-        installed with the code.
+        as a reference files "blendrules" from CRDS.
 
     Returns
     -------
@@ -137,21 +149,25 @@ def get_blended_metadata(input_models, verbose=False, rules_file=None):
     if not isinstance(input_models, list):
         input_models = [input_models]
 
+    # Turn input filenames into a set of metadata objects
+    if isinstance(input_models[0], str):
+        # convert `input_models` to a list of datamodels
+        hdrlist = []
+        model_fnames = input_models
+        input_models = [datamodels.open(i) for i in model_fnames]
+        # get copies of metadata from each input datamodel
+        hdrlist = [copy.deepcopy(m.meta) for m in input_models]
+    else:
+        # Use deepcopy to avoid any possibility of modifying the input
+        # metadata (even by accident)
+        hdrlist = [copy.deepcopy(i.meta) for i in input_models]
+
+    num_files = len(hdrlist)
+
     # Look for rules reference file from CRDS
     if rules_file is None:
         rules_file = crds_client.get_reference_file(input_models[0],
                                                     'blendrules')
-
-    # Turn input filenames into a set of header objects
-    if isinstance(input_models[0], str):
-        hdrlist = []
-        for fname in input_models:
-            model = datamodels.open(fname)
-            hdrlist.append(model.meta.copy())
-    else:
-        hdrlist = input_models
-
-    num_files = len(hdrlist)
 
     # Determine what blending rules need to be merged to create the final
     # blended headers. There will be a separate set of rules for each
@@ -189,14 +205,9 @@ def get_blended_metadata(input_models, verbose=False, rules_file=None):
         else:
             final_rules.merge(icache[inst])
 
-    # Apply rules to each set of input headers
-    new_headers = []
-
-    # apply rules to PRIMARY headers separately, since there is only
-    # 1 PRIMARY header per image, yet many extension headers
-    newhdr, newtab = final_rules.apply(hdrlist)
-    final_rules.add_rules_kws(newhdr)
-    new_headers.append(newhdr)
+    # apply rules to datamodels metadata
+    new_meta, newtab = final_rules.apply(hdrlist)
+    final_rules.add_rules_kws(new_meta)
 
     if len(newtab) > 0:
         # Now merge the results for all the tables into single table extension
@@ -204,7 +215,7 @@ def get_blended_metadata(input_models, verbose=False, rules_file=None):
         new_table.header['EXTNAME'] = 'HDRTAB'
     else:
         new_table = None
-    return new_headers, new_table
+    return new_meta, new_table
 
 
 def merge_tables_by_cols(tables):

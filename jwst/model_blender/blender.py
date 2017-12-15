@@ -29,7 +29,8 @@
 
 import numpy as np
 from numpy import ma
-from astropy.io import fits
+
+from .. import datamodels
 
 
 class _KeywordMapping:
@@ -73,17 +74,17 @@ class _KeywordMapping:
         self.error_value = error_value
 
 
-def blendmetadata(metadata_list, spec):
+def metablender(input_models, spec):
     """
-    Given a list of model metadata instances, aggregate values and create a
-    table made up of values from a number of metadata instancs, according
-    to the given specification.
+    Given a list of datamodels, aggregate metadata attribute values and
+    create a table made up of values from a number of metadata instancs,
+    according to the given specification.
 
     **Parameters:**
 
-    - *metadata_list* is a sequence where each element is either:
+    - *input_models* is a sequence where each element is either:
 
-      - a `datamodels.DataModel.meta` instance
+      - a `datamodels.DataModel` instance or sub-class
 
       - a string giving the *filename* for the input_model
 
@@ -172,16 +173,16 @@ def blendmetadata(metadata_list, spec):
     data_masks = [[] for x in spec]
 
     # Read in data
-    for header in headers:
-        hdulist = None
-        if not isinstance(header, fits.Header):
-            if not isinstance(header, tuple) and len(header) == 2:
+    for model in input_models:
+        if not isinstance(model, datamodels.DataModel):
+            if not isinstance(model, str):
                 raise TypeError(
                     "Each entry in the headers list must be either a " +
-                    "fits.Header instance or a 2-tuple")
-            filename, ext = header
-            hdulist = fits.open(filename)
-            header = hdulist[ext].header
+                    "datamodels.DataModel instance or a filename (str)")
+            model = datamodels.open(model)
+            header = model.meta
+        else:
+            header = model.meta
 
         for i, mapping in enumerate(mappings):
             if mapping.src_kwd in header:
@@ -205,9 +206,6 @@ def blendmetadata(metadata_list, spec):
             else:
                 if value is not None:
                     data[i].append(value)
-
-        if hdulist is not None:
-            hdulist.close()
 
     # Aggregate data into dictionary
     results = {}
@@ -242,7 +240,7 @@ def blendmetadata(metadata_list, spec):
 
     if len(dtype):
         # Combine the columns into a structured array
-        table = ma.empty((len(headers),), dtype=dtype)
+        table = ma.empty((len(input_models),), dtype=dtype)
         j = 0
         for i, mapping in enumerate(mappings):
             if mapping.agg_func is None:
