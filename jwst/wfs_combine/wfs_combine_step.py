@@ -30,13 +30,19 @@ class WfsCombineStep(Step):
             outfile = asn_table['products'][which_set]['name']
 
             # Construct the full output file name
-            outfile = mk_prodname(self.output_dir, outfile, 'wfscmb')
+            outfile = self.make_output_path(
+                None, basepath=outfile, suffix='wfscmb'
+            )
 
-            wfs = wfs_combine.DataSet(infile_1, infile_2, outfile, self.do_refine)
+            wfs = wfs_combine.DataSet(
+                infile_1, infile_2, outfile, self.do_refine
+            )
 
             output_model = wfs.do_all()
             output_model.meta.cal_step.wfs_combine = 'COMPLETE'
-            output_model.save(outfile)
+            output_model.save_model(
+                output_model, 'wfscmb', output_file=outfile
+            )
 
         return None
 
@@ -51,4 +57,3 @@ def mk_prodname(output_dir, filename, suffix):
     if len(ext) == 0:
         ext = ".fits"
     return base + '_' + suffix + ext
-

@@ -750,7 +750,7 @@ class Step():
         output_path: [str[, ...]]
             List of output file paths the model(s) were saved in.
         """
-        if output_file is None:
+        if output_file is None or output_file == '':
             output_file = self.output_file
 
         # Check if saving is even specified.
