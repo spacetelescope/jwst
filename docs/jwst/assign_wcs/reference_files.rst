@@ -390,22 +390,6 @@ The file stores a numpy array mapping each pixel to its corresponding IFU slice.
 :band: The band for the observation (one of "LONG", "MEDIUM", "SHORT").
 :regions: An array with the size of the MIRI MRS image where pixel values map to the MRS slice number. 0 indicates a pixel is not within any slice.
 
-V2V3
-----
-
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:MIRI: DETECTOR, CHANNEL, BAND, EXP_TYPE
-
-Reference File Formats
-::::::::::::::::::::::
-The model field in the tree contains N models, one per channel, that map the spatial coordinates from alpha, beta to XAN, YAN.
-
-:channel: The MIRI channels in the observation, e.g. "12".
-:band: The band for the observation (one of "LONG", "MEDIUM", "SHORT").
-:model:
-        :channel_band: Transform from alpha, beta to XAN, YAN for this channel.
 
 WAVELENGTHRANGE
 ---------------
