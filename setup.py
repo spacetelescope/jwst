@@ -146,10 +146,8 @@ setup(
         'namedlist'
     ],
     tests_require=[
-        'backports.tempfile',
         'pytest',
-        'requests_mock',
-        'pytest-catchlog'
+        'requests_mock'
     ],
     cmdclass={
         'test': PyTest,

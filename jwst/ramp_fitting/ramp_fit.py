@@ -1520,9 +1520,10 @@ def fit_lines(data, mask_2d, rn_sect, gain_sect, ngroups, weighting):
    # For datasets having >2 groups/integrations, for any semiramp in which only
    #   the 0th and 1st read are good, set slope, etc 
     wh_pix_2r = np.where( c_mask_2d.sum(axis=0) ==2) # ramps with 2 good reads
+
     slope_s, intercept_s, variance_s, sig_slope_s, sig_intercept_s = \
         fit_double_read( c_mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s,\
-        variance_s, sig_slope_s, sig_intercept_s )
+        variance_s, sig_slope_s, sig_intercept_s, rn_sect )
 
     # Select ramps having >2 good reads
     wh_pix_to_use = np.where(c_mask_2d.sum(axis=0) > 2)
@@ -1648,7 +1649,7 @@ def fit_single_read(slope_s, intercept_s, variance_s, sig_intercept_s,
 
 
 def fit_double_read(mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s, \
-                     variance_s, sig_slope_s, sig_intercept_s ):
+                     variance_s, sig_slope_s, sig_intercept_s, rn_sect ):
     """
     Short Summary
     -------------
@@ -1680,6 +1681,9 @@ def fit_double_read(mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s, \
     sig_intercept_s: float, 1D array
         sigma of y-intercepts from fit for data section
 
+    rn_sect: float, 2D array
+        read noise values for all pixels in data section
+
     Returns
     -------
     slope_s: float, 1D array
@@ -1701,6 +1705,8 @@ def fit_double_read(mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s, \
 
     for ff in range(len(wh_pix_2r[0])):
         pixel_ff = wh_pix_2r[0][ff] # pixel index (1d)
+        rn = rn_sect.flatten()[pixel_ff]     # Read noise for this pixel
+
         read_nums = np.where( mask_2d[:,pixel_ff])
         first_read = read_nums[0][0]
         second_read = read_nums[0][1]
@@ -1711,9 +1717,9 @@ def fit_double_read(mask_2d, wh_pix_2r, data_masked, slope_s, intercept_s, \
         slope_s[ pixel_ff ] = diff_data
         intercept_s[ pixel_ff ] = data_semi[1]*(1.- second_read) + \
             data_semi[0]*second_read # by geometry
-        variance_s[ pixel_ff ] = MIN_ERR
-        sig_slope_s[ pixel_ff ] = MIN_ERR
-        sig_intercept_s[ pixel_ff ] = MIN_ERR
+        variance_s[ pixel_ff ] = 2.0 * rn * rn  
+        sig_slope_s[pixel_ff] = np.sqrt(2) * rn 
+        sig_intercept_s[ pixel_ff ] = np.sqrt(2) * rn 
 
     return slope_s, intercept_s, variance_s, sig_slope_s, \
            sig_intercept_s

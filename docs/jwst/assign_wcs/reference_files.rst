@@ -29,7 +29,6 @@ reftype                                     description                         
 **ote**                Transform through the Optical Telescope Element               NIRSPEC
 **specwcs**            Wavelength calibration models                                 MIRI, NIRCAM, NIRISS
 **regions**            Stores location of the regions on the detector                MIRI
-**v2v3**               Transform from MIRI instrument focal plane to V2V3 plane      MIRI
 **wavelengthrange**    Typical wavelength ranges                                     MIRI, NIRSPEC, NIRCAM, NIRISS
 ===================    ==========================================================   ============================
 
@@ -119,9 +118,26 @@ CRDS Selection Criteria
 Reference File Formats
 ::::::::::::::::::::::
 
-The distortion reference file contains a combination of astropy models.
-For the MIRI Imager this file contains a polynomial and filter dependent offsets.
-For the MIRI MRS, NIRCAM, NIRISS and FGS the model is a combination of polynomials.
+The distortion reference file contains a combination of astropy models,
+representing the transform from detector to the telescope V2, V3 system.
+The following convention was adopted:
+
+- The output in the V2, V3 system is in units of arcsec.
+- The input x and y are 0-based coordinates.
+- The center of the first pixel is (0, 0), so the first pixel goes from -0.5 to 0.5.
+- The origin of the transform is taken to be (0, 0).
+  Note, that while a different origin can be used  for some transforms the relevant
+  offset should first be prepended to the distortion transform to account for the change
+  in origin of the coordinate frame.  For instance, MIRI takes input in (0, 0) - indexed
+  detector pixel coordinates, but shifts these around prior to calling transforms that are
+  defined with respect to science-frame pixels that omit reference pixels.
+
+
+Internally the WCS pipeline works with 0-based coordinates.
+When FITS header keywords are used, the 1 pixel offset in FITS coordinates is accounterd for
+internally in the pipeline.
+
+The model is a combination of polynomials.
 
 :model: Transform from detector to an intermediate frame (instrument dependent).
 
@@ -368,28 +384,12 @@ CRDS Selection Criteria
 Reference File Formats
 ::::::::::::::::::::::
 
-The IFU takes a region reference file that defines the region over which the WCS is valid. The reference file should define a polygon and may consist of a set of X,Y coordinates that define the polygon.
+The file stores a numpy array mapping each pixel to its corresponding IFU slice.
 
 :channel: The MIRI channels in the observation, e.g. "12".
 :band: The band for the observation (one of "LONG", "MEDIUM", "SHORT").
 :regions: An array with the size of the MIRI MRS image where pixel values map to the MRS slice number. 0 indicates a pixel is not within any slice.
 
-V2V3
-----
-
-CRDS Selection Criteria
-:::::::::::::::::::::::
-
-:MIRI: DETECTOR, CHANNEL, BAND, EXP_TYPE
-
-Reference File Formats
-::::::::::::::::::::::
-The model field in the tree contains N models, one per channel, that map the spatial coordinates from alpha, beta to XAN, YAN.
-
-:channel: The MIRI channels in the observation, e.g. "12".
-:band: The band for the observation (one of "LONG", "MEDIUM", "SHORT").
-:model:
-        :channel_band: Transform from alpha, beta to XAN, YAN for this channel.
 
 WAVELENGTHRANGE
 ---------------
