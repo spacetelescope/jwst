@@ -29,7 +29,6 @@ reftype                                     description                         
 **ote**                Transform through the Optical Telescope Element               NIRSPEC
 **specwcs**            Wavelength calibration models                                 MIRI, NIRCAM, NIRISS
 **regions**            Stores location of the regions on the detector                MIRI
-**v2v3**               Transform from MIRI instrument focal plane to V2V3 plane      MIRI
 **wavelengthrange**    Typical wavelength ranges                                     MIRI, NIRSPEC, NIRCAM, NIRISS
 ===================    ==========================================================   ============================
 
@@ -126,17 +125,19 @@ The following convention was adopted:
 - The output in the V2, V3 system is in units of arcsec.
 - The input x and y are 0-based coordinates.
 - The center of the first pixel is (0, 0), so the first pixel goes from -0.5 to 0.5.
-- The reference point of the transform is (0, 0).
-  Note, that a different reference point on the detector can be used to compute the
-  transform(s) from detector to V2,V3. In this case an offset transform should be prepended to
-  the distortion transform(s) to account for the change of origin in the detector coordinate frame.
+- The origin of the transform is taken to be (0, 0).
+  Note, that while a different origin can be used  for some transforms the relevant
+  offset should first be prepended to the distortion transform to account for the change
+  in origin of the coordinate frame.  For instance, MIRI takes input in (0, 0) - indexed
+  detector pixel coordinates, but shifts these around prior to calling transforms that are
+  defined with respect to science-frame pixels that omit reference pixels.
 
-Internally the WCS pipeline works with 0-based coordinates. 
+
+Internally the WCS pipeline works with 0-based coordinates.
 When FITS header keywords are used, the 1 pixel offset in FITS coordinates is accounterd for
 internally in the pipeline.
 
-For the MIRI Imager this file contains a polynomial and filter dependent offsets.
-For the MIRI MRS, NIRCAM, NIRISS and FGS the model is a combination of polynomials.
+The model is a combination of polynomials.
 
 :model: Transform from detector to an intermediate frame (instrument dependent).
 
@@ -383,7 +384,7 @@ CRDS Selection Criteria
 Reference File Formats
 ::::::::::::::::::::::
 
-The IFU takes a region reference file that defines the region over which the WCS is valid. The reference file should define a polygon and may consist of a set of X,Y coordinates that define the polygon.
+The file stores a numpy array mapping each pixel to its corresponding IFU slice.
 
 :channel: The MIRI channels in the observation, e.g. "12".
 :band: The band for the observation (one of "LONG", "MEDIUM", "SHORT").
