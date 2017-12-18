@@ -38,6 +38,7 @@ SUFFIX_LIST = [
     'ramp', 'rate', 'rateints',
     's2d', 's3d',
     'uncal',
+    'wfscmb',
     'x1d', 'x1dints',
 ]
 REMOVE_SUFFIX = '^(?P<root>.+?)((?P<separator>_|-)(' \
