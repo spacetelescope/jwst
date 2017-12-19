@@ -274,6 +274,10 @@ class RegionsModel(ReferenceFileModel):
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
 
+    def populate_meta(self):
+        self.meta.instrument.name = "MIRI"
+        self.meta.exposure.type = "MIR_MRS"
+
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
 
