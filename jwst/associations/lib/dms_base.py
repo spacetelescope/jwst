@@ -100,6 +100,9 @@ SPEC2_SCIENCE_EXP_TYPES = [
 # Non-specified values found in DMS Association Pools
 _EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f')
 
+# Key that uniquely identfies members.
+MEMBER_KEY = 'expname'
+
 __all__ = ['DMSBaseMixin']
 
 
@@ -172,6 +175,16 @@ class DMSBaseMixin(ACIDMixin):
                 sequence=sequence,
             )
         return name.lower()
+
+    @property
+    def member_ids(self):
+        """Set of all members, by their id, in all products of this association"""
+        member_ids = set(
+            member[MEMBER_KEY]
+            for product in self['products']
+            for member in product['members']
+        )
+        return member_ids
 
     @property
     def validity(self):
