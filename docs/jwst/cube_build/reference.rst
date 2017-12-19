@@ -7,8 +7,8 @@ and there is a  reference file of this type for MIRI data and one for NIRSPEC da
 for each band of the spatial and spectral 
 size to use to construct the IFU Cube. For build 7.1, if more than one band is used to build the IFU cube,
 then the final spatial and spectral size will be the smallest one from the list of input bands. 
-The IFU cubes have a linear spatial and spectral dimension. In build 7.2 we plan to alway a varying spectral
-size with wavelength.
+The IFU cubes have a linear spatial and spectral dimension. In build 7.2 we plan to allow a varying spectral
+step with wavelength.
 
 The other type of reference file pertains only to MIRI data and contains the width of the PSF and LSF per
 band. The reftype for this reference file is *resol*.
@@ -23,7 +23,7 @@ reference file is  also based on Instrument (a N/Q is returned for NIRSPEC data)
 
 Cube Building Parameter Reference File Format
 ---------------------------------------------
-The cube parameter reference files are FITS file with a BINTABLE extension. The FITS primary data array is
+The cube parameter reference files are FITS files with a BINTABLE extension. The FITS primary data array is
 assumed to be empty. The BINTABLE extension contains the information on the default sample sizes of spatial
 and spectral dimension of the output spectral cubes, as well as the size region of interest to use 
 around each spaxel in chosing the detetector pixels to combine. 
