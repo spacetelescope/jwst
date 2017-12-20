@@ -102,9 +102,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         # Load the schema files
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
-            extension_list = asdf_extension.AsdfExtensionList(self._extensions)
+            # Create an AsdfFile so we can use its resolver for loading schemas
+            asdf_file = AsdfFile(extensions=self._extensions)
             schema = asdf_schema.load_schema(schema_path,
-                resolver=extension_list.url_mapping, resolve_references=True)
+                resolver=asdf_file.resolver, resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
         # Determine what kind of input we have (init) and execute the
