@@ -18,7 +18,7 @@ where:
 
   * `jw`: All JWST-related products begin with `jw`
   * `PPPPP`: 5 digit proposal number
-  * `TNNNN`: Canididat Identifier. Can be on of the following:
+  * `TNNNN`: Canididate Identifier. Can be one of the following:
 
     * `oNNN`: Observation candidate specified by the letter `o` followed
       by a 3 digit number.
@@ -31,10 +31,10 @@ where:
       file an issue to have this document updated.
 
   * `YYYYMMDDtHHMMSS`: This is generically referred to as the `version_id`.
-    A timestamp provided the DMS workflow. Note:
+    DMS specifies this as a  timestamp. Note:
     When used outside the workflow, this field is user-specifiable.
   * `ATYPE`: The type of association. See
-    :ref:`level3-asn-association-types`
+    :ref:`asn-jwst-association-types`
   * `MMM`: A counter for each type of association created.
 
 .. _asn-jwst-association-types:
