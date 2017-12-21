@@ -49,12 +49,12 @@ class TweakRegStep(Step):
 
         # Object matching parameters:
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
-        searchrad = float(default=1.0) # The search radius for a match
+        searchrad = float(default=1.0) # The search radius in arcsec for a match
         use2dhist = boolean(default=True) # Use 2d histogram to find initial offset?
-        separation = float(default=0.5) # Minimum object separation in pixels
-        tolerance = float(default=1.0) # Matching tolerance for xyxymatch in pixels
-        xoffset = float(default=0.0), # Initial guess for X offset in pixels
-        yoffset = float(default=0.0) # Initial guess for Y offset in pixels
+        separation = float(default=0.5) # Minimum object separation in arcsec
+        tolerance = float(default=1.0) # Matching tolerance for xyxymatch in arcsec
+        xoffset = float(default=0.0), # Initial guess for X offset in arcsec
+        yoffset = float(default=0.0) # Initial guess for Y offset in arcsec
 
         # Catalog fitting parameters:
         fitgeometry = option('shift', 'rscale', 'general', default='general') # Fitting geometry
@@ -103,7 +103,7 @@ class TweakRegStep(Step):
             raise ValueError("Input must contain at least one image model.")
 
         # group images by their "group id":
-        grp_img = [[i] for i in images] #images.models_grouped
+        grp_img = images.models_grouped
 
         if len(grp_img) == 1:
             # we need at least two exposures to perform image alignment
