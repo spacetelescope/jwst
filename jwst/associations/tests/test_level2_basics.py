@@ -27,7 +27,7 @@ def generate_from_pool(pool_path):
     """Generate associations from pools"""
     rules = registry_level2_only()
     pool = combine_pools(t_path(pool_path))
-    asns, orphaned = generate(pool, rules)
+    asns = generate(pool, rules)
     return asns
 
 

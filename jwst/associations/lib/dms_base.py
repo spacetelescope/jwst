@@ -100,14 +100,14 @@ SPEC2_SCIENCE_EXP_TYPES = [
 # Non-specified values found in DMS Association Pools
 _EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f')
 
-# Key that uniquely identfies members.
-MEMBER_KEY = 'expname'
-
 __all__ = ['DMSBaseMixin']
 
 
 class DMSBaseMixin(ACIDMixin):
     """Association attributes common to DMS-based Rules"""
+
+    # Key that uniquely identfies members.
+    MEMBER_KEY = 'expname'
 
     # Associations of the same type are sequenced.
     _sequence = Counter(start=1)
@@ -178,9 +178,9 @@ class DMSBaseMixin(ACIDMixin):
 
     @property
     def member_ids(self):
-        """Set of all members, by their id, in all products of this association"""
+        """Set of all member ids in all products of this association"""
         member_ids = set(
-            member[MEMBER_KEY]
+            member[self.MEMBER_KEY]
             for product in self['products']
             for member in product['members']
         )
