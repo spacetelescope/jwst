@@ -278,17 +278,15 @@ class Main():
 
     @property
     def orphaned(self):
-        in_an_asn = np.zeros((len(self.pool),), dtype=bool)
-        member_ids = set()
+        not_in_asn = np.ones((len(self.pool),), dtype=bool)
         for asn in self.associations:
             try:
-                member_ids.update(asn.member_ids)
+                indexes = [item.index for item in asn.from_items]
             except AttributeError:
                 continue
-        for item in self.pool:
-            in_an_asn[item.index] = not member_ids.isdisjoint(item)
+            not_in_asn[indexes] = False
 
-        orphaned = self.pool[np.logical_not(in_an_asn)]
+        orphaned = self.pool[not_in_asn]
         return orphaned
 
     def __str__(self):

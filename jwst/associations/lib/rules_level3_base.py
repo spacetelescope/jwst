@@ -344,6 +344,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 item['filename'],
                 member['exposerr']
             ))
+        self.from_items.append(item)
 
         # Update meta info
         self.update_asn(item=item, member=member)
@@ -390,6 +391,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             }
             self.update_validity(member)
             members.append(member)
+            self.from_items.append(item)
         self.sequence = next(self._sequence)
 
     def __repr__(self):
