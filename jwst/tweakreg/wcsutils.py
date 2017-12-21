@@ -122,6 +122,5 @@ def apply_affine_to_wcs(imwcs, rot=0.0, scale=1.0, xsh=0.0, ysh=0.0,
         matrix = linearfit.build_fit_matrix(rot, scale)
 
     matrix = matrix.T
-    shift = -np.array([xsh, ysh], dtype=np.float)
-
+    shift = -np.dot(np.linalg.inv(matrix), [xsh, ysh])
     imwcs.set_correction(matrix, shift)

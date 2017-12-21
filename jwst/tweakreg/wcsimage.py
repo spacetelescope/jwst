@@ -644,7 +644,6 @@ class WCSImageCatalog(object):
         """
         return self._bb_radec
 
-
 class WCSGroupCatalog(object):
     """
     A class that holds together `WCSImageCatalog` image catalog objects
@@ -786,7 +785,6 @@ class WCSGroupCatalog(object):
         catalogs = []
         catno = 0
         for image in self._images:
-
             catlen = len(image.catalog)
 
             if image.name is None:
@@ -1047,7 +1045,7 @@ class WCSGroupCatalog(object):
             nclip=nclip, sigma=sigma, center=(0, 0)#refcat.crpix
         )
 
-        fit['rms_keys'] = {'RMS_RA': 0, 'RMS_DEC': 0, 'NMATCH': 0} #self._compute_fit_rms(fit, refcat)
+        fit['rms_keys'] = {'RMS_RA': 0, 'RMS_DEC': 0, 'NMATCH': fit['resids'].shape[0]} #self._compute_fit_rms(fit, refcat)
         xy_fit = fit['img_coords'] + fit['resids']
         fit['fit_xy'] = xy_fit
         #ra_fit, dec_fit = refcat.wcs_pix2world(xy_fit[0], xy_fit[1])
@@ -1096,16 +1094,28 @@ class WCSGroupCatalog(object):
         nmatch = fit['resids'].shape[0]
         return {'RMS_RA': rms_ra, 'RMS_DEC': rms_dec, 'NMATCH': nmatch}
 
-    def apply_affine_to_wcs(self, refcat, matrix, xsh, ysh):
+    def apply_affine_to_wcs(self, refcat, matrix, xsh, ysh, tanplane_wcs):
         """ Applies a general affine transformation to the WCS.
         """
+
+        # compute the matrix for the scale and rotation correction
+        m = matrix.T
+        s = -np.dot(np.linalg.inv(m), [xsh, ysh])
+
         for imcat in self:
-            wcsutils.apply_affine_to_wcs(
-                imwcs=imcat.imwcs,
-                xsh=xsh,
-                ysh=ysh,
-                matrix=matrix
-            )
+            # compute linear transformation from the tangent plane used for
+            # alignment to the tangent plane of another image in the group:
+            if imcat.imwcs == tanplane_wcs:
+                rotmat = m.copy()
+                shift = s.copy()
+            else:
+                r1, t1 = _tp2tp(imcat.imwcs, tanplane_wcs)
+                r2, t2 = _tp2tp(tanplane_wcs, imcat.imwcs)
+                rotmat = np.linalg.multi_dot([r2, m, r1])
+                shift = t1 + np.dot(np.linalg.inv(r1), s) + \
+                        np.dot(np.linalg.inv(np.dot(m, r1)), t2)
+
+            imcat.imwcs.set_correction(rotmat, shift)
             imcat.meta['image_model'].meta.wcs = imcat.wcs
 
     def align_to_ref(self, refcat, minobj=15, searchrad=1.0, separation=0.5,
@@ -1178,8 +1188,10 @@ class WCSGroupCatalog(object):
         if len(self._images) == 0:
             return
 
-        self.calc_tanp_xy(tanplane_wcs=self._images[0])
-        refcat.calc_tanp_xy(tanplane_wcs=self._images[0])
+        tanplane_wcs = deepcopy(self._images[0])
+
+        self.calc_tanp_xy(tanplane_wcs=tanplane_wcs)
+        refcat.calc_tanp_xy(tanplane_wcs=tanplane_wcs)
         self.match2ref(refcat=refcat, minobj=minobj, searchrad=searchrad,
                        separation=separation,
                        use2dhist=use2dhist, xoffset=xoffset, yoffset=yoffset,
@@ -1187,7 +1199,19 @@ class WCSGroupCatalog(object):
         fit = self.fit2ref(refcat=refcat, fitgeom=fitgeom,
                            nclip=nclip, sigma=sigma)
         self.apply_affine_to_wcs(refcat=refcat, matrix=fit['fit_matrix'],
-                                 xsh=fit['offset'][0], ysh=fit['offset'][1])
+                                 xsh=fit['offset'][0], ysh=fit['offset'][1],
+                                 tanplane_wcs=tanplane_wcs)
+
+
+def _tp2tp(imwcs1, imwcs2):
+    x = np.array([0.0, 1.0, 0.0], dtype=np.float)
+    y = np.array([0.0, 0.0, 1.0], dtype=np.float)
+    xrp, yrp = imwcs2.world_to_tanp(*imwcs1.tanp_to_world(x, y))
+
+    matrix = np.array([(xrp[1:] - xrp[0]), (yrp[1:] - yrp[0])])
+    shift = -np.dot(np.linalg.inv(matrix), [xrp[0], yrp[0]])
+
+    return matrix, shift
 
 
 class RefCatalog(object):
