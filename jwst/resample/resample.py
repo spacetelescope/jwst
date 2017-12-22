@@ -1,6 +1,3 @@
-from __future__ import (division, print_function, unicode_literals,
-    absolute_import)
-
 import numpy as np
 from collections import OrderedDict
 
@@ -15,7 +12,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class ResampleData(object):
+class ResampleData:
     """
     This is the controlling routine for the resampling process.
     It loads and sets the various input data and parameters needed by
@@ -171,9 +168,11 @@ class ResampleData(object):
             group_exptime):
             output_model = self.blank_output.copy()
             output_model.meta.filename = obs_product
+            saved_model_type = output_model.meta.model_type
 
             if self.drizpars['blendheaders']:
                 self.blend_output_metadata(output_model)
+                output_model.meta.model_type = saved_model_type
 
             # Following 2 lines can probably be removed once ASN dicts
             # are handled properly

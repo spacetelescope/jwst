@@ -2,10 +2,10 @@
     "asn_type": "spec3",
     "asn_rule": "candidate_Asn_NRS_IFU",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.4",
     "program": "99009",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    exp_type: {'nrs_confirm', 'nrs_autowave', 'nrs_ifu', 'nrs_tacq', 'nrs_taconfirm', 'nrs_taslit'}\n    is_not_tso: set()\n    instrument: {'nirspec'}\n    target: {'2'}\n    program: {'99009'}\n    asn_candidate: {\"\\\\(\\\\'o003\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
+    "constraints": "Constraints:\n    exp_type: {'nrs_tacq', 'nrs_autowave', 'nrs_ifu', 'nrs_taconfirm', 'nrs_taslit', 'nrs_confirm'}\n    is_not_tso: set()\n    instrument: {'nirspec'}\n    target: {'2'}\n    program: {'99009'}\n    asn_candidate: {\"\\\\(\\\\'o003\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",
     "asn_id": "o003",
     "target": "t002",
     "asn_pool": "pool_006_spec_nirspec",
@@ -50,7 +50,7 @@
                     "asn_candidate": "('o003', 'observation')"
                 },
                 {
-                    "expname": "jw_00022_cal.fits",
+                    "expname": "jw_00022_rate.fits",
                     "exptype": "autowave",
                     "exposerr": null,
                     "asn_candidate": "('o003', 'observation')"

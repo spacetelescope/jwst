@@ -2,7 +2,7 @@
     "asn_type": "spec3",
     "asn_rule": "discover_Asn_NRS_MSA",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.4",
     "program": "84600",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    exp_type: {'nrs_msaspec', 'nrs_autoflat'}\n    is_not_tso: set()\n    instrument: {'nirspec'}\n    opt_elem: {'f290lp'}\n    opt_elem2: {'g395m'}\n    target: {'1'}\n    program: {'84600'}",
@@ -20,7 +20,7 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw84600008001_02101_00003_nrs1_cal.fits",
+                    "expname": "jw84600008001_02101_00003_nrs1_rate.fits",
                     "exptype": "autoflat",
                     "exposerr": "null",
                     "asn_candidate": "null"
@@ -32,7 +32,7 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw84600008001_02101_00003_nrs2_cal.fits",
+                    "expname": "jw84600008001_02101_00003_nrs2_rate.fits",
                     "exptype": "autoflat",
                     "exposerr": "null",
                     "asn_candidate": "null"

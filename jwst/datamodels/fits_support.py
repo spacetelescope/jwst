@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, unicode_literals, print_function
-
 import datetime
 import os
 import re
@@ -11,7 +7,6 @@ import numpy as np
 
 import jsonschema
 
-import six
 from astropy.io import fits
 from astropy import time
 
@@ -77,7 +72,7 @@ def _get_indexed_keyword(keyword, i):
                 raise ValueError(
                     "Too many entries for given keyword '{0}'".format(keyword))
             if r is None:
-                val = six.text_type(i)
+                val = str(i)
             else:
                 val = r[i]
             keyword = keyword.replace(sub, val)
@@ -85,24 +80,14 @@ def _get_indexed_keyword(keyword, i):
     return keyword
 
 
-if six.PY3:
-    def fits_hdu_name(name):
-        """
-        Returns a FITS hdu name in the correct form for the current
-        version of Python.
-        """
-        if isinstance(name, bytes):
-            return name.decode('ascii')
-        return name
-else:
-    def fits_hdu_name(name):
-        """
-        Returns a FITS hdu name in the correct form for the current
-        version of Python.
-        """
-        if isinstance(name, six.text_type):
-            return name.encode('ascii')
-        return name
+def fits_hdu_name(name):
+    """
+    Returns a FITS hdu name in the correct form for the current
+    version of Python.
+    """
+    if isinstance(name, bytes):
+        return name.decode('ascii')
+    return name
 
 
 def _get_hdu_name(schema):
@@ -151,7 +136,7 @@ def get_hdu(hdulist, hdu_name, index=None):
         hdu = hdulist[pair]
     except (KeyError, IndexError, AttributeError):
         try:
-            if isinstance(pair, six.string_types):
+            if isinstance(pair, str):
                 hdu = hdulist[(pair, 1)]
             elif isinstance(pair, tuple) and index == 0:
                 hdu = hdulist[pair[0]]
@@ -196,7 +181,7 @@ def _get_or_make_hdu(hdulist, hdu_name, index=None, hdu_type=None, value=None):
         if hdu_type is not None and not isinstance(hdu, hdu_type):
             new_hdu = _make_hdu(hdulist, hdu_name, index=index,
                                 hdu_type=hdu_type, value=value)
-            for key, val in six.iteritems(hdu.header):
+            for key, val in hdu.header.items():
                 if not _is_builtin_fits_keyword(key):
                     new_hdu.header[key] = val
             hdulist.remove(hdu)
@@ -225,7 +210,7 @@ def _fits_comment_section_handler(validator, properties, instance, schema):
         current_comment_stack = validator.comment_stack
         current_comment_stack.append(util.ensure_ascii(title))
 
-    for property, subschema in six.iteritems(properties):
+    for property, subschema in properties.items():
         if property in instance:
             for error in validator.descend(
                 instance[property],
@@ -351,7 +336,7 @@ def _save_from_schema(hdulist, tree, schema):
         if isinstance(node, datetime.datetime):
             node = time.Time(node)
         if isinstance(node, time.Time):
-            node = six.text_type(time.Time(node, format='iso'))
+            node = str(time.Time(node, format='iso'))
         return node
     tree = treeutil.walk_and_modify(tree, convert_datetimes)
 
@@ -367,7 +352,7 @@ def _save_from_schema(hdulist, tree, schema):
 
 def _save_extra_fits(hdulist, tree):
     # Handle _extra_fits
-    for hdu_name, parts in six.iteritems(tree.get('extra_fits', {})):
+    for hdu_name, parts in tree.get('extra_fits', {}).items():
         hdu_name = fits_hdu_name(hdu_name)
         if 'data' in parts:
             hdu = _get_or_make_hdu(hdulist, hdu_name, value=parts['data'])
@@ -394,6 +379,14 @@ def _save_history(hdulist, tree):
                 history[i] = HistoryEntry({'description': str(history[i])})
         hdulist[0].header['HISTORY'] = history[i]['description']
 
+def _snip_tables(tree):
+    def _snip_node(node, json_id):
+        if isinstance(node, np.ndarray):
+            dtype = node.dtype
+            if hasattr(dtype, 'names'):
+                node = None
+        return node
+    return treeutil.walk_and_modify(tree, _snip_node)
 
 def to_fits(tree, schema, extensions=None):
     hdulist = fits.HDUList()
@@ -402,6 +395,7 @@ def to_fits(tree, schema, extensions=None):
     _save_from_schema(hdulist, tree, schema)
     _save_extra_fits(hdulist, tree)
     _save_history(hdulist, tree)
+    tree = _snip_tables(tree)
 
     asdf = fits_embed.AsdfInFits(hdulist, tree, extensions=extensions)
     return asdf

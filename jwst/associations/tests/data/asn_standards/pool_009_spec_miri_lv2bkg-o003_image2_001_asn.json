@@ -2,7 +2,7 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2ImageNonScience",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.4",
     "program": "99009",
     "target": "1",
     "asn_pool": "pool_009_spec_miri_lv2bkg",
@@ -14,42 +14,6 @@
             "members": [
                 {
                     "expname": "jw_00005_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00010",
-            "members": [
-                {
-                    "expname": "jw_00010_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00013",
-            "members": [
-                {
-                    "expname": "jw_00013_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00016",
-            "members": [
-                {
-                    "expname": "jw_00016_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00038",
-            "members": [
-                {
-                    "expname": "jw_00038_rate.fits",
                     "exptype": "science"
                 }
             ]

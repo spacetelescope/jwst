@@ -1,16 +1,13 @@
-from __future__ import unicode_literals, absolute_import
-
 import os
 
 from ..stpipe import Pipeline
 from .. import datamodels
 
-from ..resample import resample_step
+from ..tweakreg import tweakreg_step
 from ..skymatch import skymatch_step
+from ..resample import resample_step
 from ..outlier_detection import outlier_detection_step
 from ..source_catalog import source_catalog_step
-from ..tweakreg_catalog import tweakreg_catalog_step
-from ..tweakreg import tweakreg_step
 
 __version__ = '0.8.0'
 
@@ -21,7 +18,6 @@ class Image3Pipeline(Pipeline):
                     any JWST instrument.
 
     Included steps are:
-        tweakreg_catalog
         tweakreg
         skymatch
         outlier_detection
@@ -34,8 +30,7 @@ class Image3Pipeline(Pipeline):
     """
 
     # Define alias to steps
-    step_defs = {'tweakreg_catalog': tweakreg_catalog_step.TweakregCatalogStep,
-                 'tweakreg': tweakreg_step.TweakRegStep,
+    step_defs = {'tweakreg': tweakreg_step.TweakRegStep,
                  'skymatch': skymatch_step.SkyMatchStep,
                  'outlier_detection': outlier_detection_step.OutlierDetectionStep,
                  'resample': resample_step.ResampleStep,
@@ -64,19 +59,8 @@ class Image3Pipeline(Pipeline):
             has_groups = False
         if is_container and has_groups:
 
-            self.log.info("Generating source catalogs for alignment...")
-            input_models = self.tweakreg_catalog(input_models)
-
             self.log.info("Aligning input images...")
             input_models = self.tweakreg(input_models)
-
-            # Clean up tweakreg catalogs which no are no longer needed
-            for model in input_models:
-                try:
-                    catalog_name = model.meta.tweakreg_catalog.filename
-                    os.remove(catalog_name)
-                except:
-                    pass
 
             self.log.info("Matching sky values across all input images...")
             input_models = self.skymatch(input_models)
@@ -98,10 +82,10 @@ class Image3Pipeline(Pipeline):
         try:
             result.meta.asn.pool_name = input_models.meta.asn_table.asn_pool
             result.meta.asn.table_name = input
+            result.meta.filename = input_models.meta.asn_table.products[0].name
         except:
             pass
 
-        result.meta.filename = input_models.meta.asn_table.products[0].name
         self.save_model(result, suffix=self.suffix)
 
         self.log.info("Creating source catalog...")

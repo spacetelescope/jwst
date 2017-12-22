@@ -2,18 +2,18 @@
 Description
 ===========
 
-``jwst.assign_wcs`` is one of the first steps in the level 2B JWST pipeline.
-It associates a WCS object with each science exposure. The WCS transforms
-positions on the detector to a world coordinate frame - ICRS and wavelength.
+``jwst.assign_wcs`` is run in the beginning of the level 2B JWST pipeline.
+It associates a WCS object with each science exposure. The WCS object transforms
+positions in the detector frame to positions in a world coordinate frame - ICRS and wavelength.
 In general there may be intermediate coordinate frames depending on the instrument.
-The WCS is saved in the FITS file. It can be accessed as an attribute of
+The WCS is saved in the ASDF extension of the FITS file. It can be accessed as an attribute of
 the meta object when the fits file is opened as a data model.
 
 The forward direction of the transforms is from detector to world coordinates
 and the input positions are 0-based.
 
-The basic WCS keywords are in the primary header and the distortion
-and spectral models are stored in reference files in the
+``jwst.assign_wcs`` expects to find the basic WCS keywords in the 
+SCI header. Distortion and spectral models are stored in reference files in the
 `ASDF <http://asdf-standard.readthedocs.org/en/latest/>`__  format.
 
 For each observing mode, determined by the value of ``EXP_TYPE`` in the science header,
@@ -21,6 +21,8 @@ assign_wcs retrieves reference files from CRDS and creates a pipeline of transfo
 input frame ``detector`` to a frame ``v2v3``. This part of the WCS pipeline may include
 intermediate coordinate frames. The basic WCS keywords are used to create
 the transform from frame ``v2v3`` to frame ``world``.
+
+
 
 Basic WCS keywords and the transform from ``v2v3`` to ``world``
 ---------------------------------------------------------------
@@ -34,6 +36,8 @@ define the transform from ``v2v3`` to ``world``:
 
 ``ROLL_REF`` - local roll angle associated with each aperture, [deg]
 
+``RADESYS`` - standard coordinate system [ICRS]
+
 These quantities are used to create a 3D Euler angle rotation between the V2V3 spherical system,
 associated with the telescope, and a standard celestial system.
 
@@ -46,12 +50,12 @@ Calling it as a function with detector positions as inputs returns the
 corresponding world coordinates. Using MIRI LRS fixed slit as an example:
 
 >>> from jwst.datamodels import ImageModel
->>> exp = ImageModel('miri_fixed_assign_wcs.fits')
+>>> exp = ImageModel('miri_fixedslit_assign_wcs.fits')
 >>> ra, dec, lam = exp.meta.wcs(x, y)
 >>> print(ra, dec, lam)
     (329.97260532549336, 372.0242999250267, 5.4176100046836675)
 
-The GRISM modes for NIRCAM and NIRISS have a slightly difference calling structure,
+The GRISM modes for NIRCAM and NIRISS have a slightly different calling structure,
 in addition to the (x, y) coordinate, they need to know other information about the
 spectrum or source object. In the JWST backward direction (going from the sky to
 the detector) the WCS model also looks for the wavelength and order and returns

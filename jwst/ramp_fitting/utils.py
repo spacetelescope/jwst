@@ -1,9 +1,6 @@
 #! /usr/bin/env python
 #
 # utils.py: utility functions
-from __future__ import division, print_function
-
-from __future__ import division
 import numpy as np
 import logging
 
@@ -15,7 +12,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class OptRes(object):
+class OptRes:
     """
     Object to hold optional results for all good pixels for
     y-intercept, slope, uncertainty for y-intercept, uncertainty for
@@ -268,13 +265,12 @@ class OptRes(object):
         -------
         rfo_model: Data Model object
         """
-
         rfo_model = \
         datamodels.RampFitOutputModel(\
             slope=self.slope_seg.astype(np.float32) / effintim,
             sigslope=self.sigslope_seg.astype(np.float32),
-            var_p=self.var_p_seg.astype(np.float32),
-            var_r=self.var_r_seg.astype(np.float32),
+            var_poisson=self.var_p_seg.astype(np.float32),
+            var_rnoise=self.var_r_seg.astype(np.float32),
             yint=self.yint_seg.astype(np.float32),
             sigyint=self.sigyint_seg.astype(np.float32),
             pedestal=self.ped_int.astype(np.float32),

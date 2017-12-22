@@ -40,7 +40,7 @@ def asn_from_list(items, rule=DMS_Level3_Base, **kwargs):
     return asn
 
 
-class Main(object):
+class Main():
     """Command-line interface for list_to_asn
 
     Parameters

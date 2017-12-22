@@ -8,10 +8,11 @@ primarily intended as an interchange format for delivering products from
 instruments to scientists or between scientists. It's based on YAML and JSON schema and as such
 provides automatic structure and metadata validation.
 
-While it is possible to write or edit an ASDF file in a text editor, the best way to create
-reference files is using the python implementation of the format
-`asdf <http://asdf.readthedocs.io/en/latest/>`__ and
-`astropy.modeling <http://astropy.readthedocs.org/en/latest/modeling/index.html>`__ .
+While it is possible to write or edit an ASDF file in a text editor, or to use the ASDF interface, the best way to create
+reference files is using the datamodels in the jwst pipeline
+`jwst.datamodels <http://jwst-pipeline.readthedocs.io/en/latest/jwst/datamodels/index.html#classes>`__ and
+`astropy.modeling <http://astropy.readthedocs.io/en/latest/modeling/index.html>`__ .
+
 There are two steps in this process:
 
 - create a transform using the simple models and the rules to combine them
@@ -99,13 +100,22 @@ with all inputs and the operator is applied to the results, e.g. ``model = m1 + 
 >>> model(1, 1)
     -152.2
 
+Create the reference file
+-------------------------
+
+The DictortionModel in jwst.datamodels is used as an example of how to create a reference file. Similarly data models should be used to create other types of reference files as this process provides validaiton of the file structure.
+
+>>> from jwst.datamodels import DistortionModel
+>>> dist = DistortionModel(model=model)
+>>> dist.validate()
+>>> dist.save("new_distortion.asdf")
+
 
 Save a transform to an ASDF file
 --------------------------------
 
 `asdf <http://asdf.readthedocs.io/en/latest/>`__ is used to read and write reference files in
-`ASDF <http://asdf-standard.readthedocs.org/en/latest/>`__ format. Once the model is create using the rules in the above section, it needs to be assigned
-to the ASDF tree.
+`ASDF <http://asdf-standard.readthedocs.org/en/latest/>`__ format. Once the model is create using the rules in the above section, it needs to be assigned to the ASDF tree.
 
 >>> from asdf import AsdfFile
 >>> f = AsdfFile()

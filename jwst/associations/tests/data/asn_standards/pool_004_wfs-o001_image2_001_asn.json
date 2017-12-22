@@ -2,7 +2,7 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2Image",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.4",
     "program": "99009",
     "target": "1",
     "asn_pool": "pool_004_wfs",
@@ -14,15 +14,6 @@
             "members": [
                 {
                     "expname": "jw_00001_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00002",
-            "members": [
-                {
-                    "expname": "jw_00002_rate.fits",
                     "exptype": "science"
                 }
             ]

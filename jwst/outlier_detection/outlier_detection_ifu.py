@@ -1,8 +1,5 @@
 """Class definition for performing outlier detection on IFU data."""
 
-from __future__ import (division, print_function, unicode_literals,
-                        absolute_import)
-
 import numpy as np
 
 from stsci.image import median
@@ -46,7 +43,7 @@ class OutlierDetectionIFU(OutlierDetection):
 
     """
 
-    DEFAULT_SUFFIX = 's3d'
+    default_suffix = 's3d'
 
     def __init__(self, input_models, reffiles=None, **pars):
         """Initialize class for IFU data processing.

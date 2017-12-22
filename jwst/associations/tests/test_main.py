@@ -1,7 +1,4 @@
 """test_associations: Test of general Association functionality."""
-from __future__ import absolute_import
-
-import os
 import pytest
 import re
 
@@ -19,7 +16,7 @@ def test_script(full_pool_rules):
 
     generated = Main([pool_fname, '--dry-run'])
     asns = generated.associations
-    assert len(asns) == 188
+    assert len(asns) == 356
     assert len(generated.orphaned) == 43
     found_rules = set(
         asn['asn_rule']
@@ -36,7 +33,7 @@ def test_asn_candidates(full_pool_rules):
     generated = Main([pool_fname, '--dry-run', '-i', 'o001'])
     assert len(generated.associations) == 3
     generated = Main([pool_fname, '--dry-run', '-i', 'o001', 'o002'])
-    assert len(generated.associations) == 5
+    assert len(generated.associations) == 6
 
 
 def test_toomanyoptions(full_pool_rules):

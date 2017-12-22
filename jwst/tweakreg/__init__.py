@@ -1,45 +1,14 @@
-""" tweakreg
-
+"""
 This package provides support for image alignment.
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
-from .tweakreg_step import TweakRegStep
-
-import os
-import logging
-
-#from . import distortion
+from __future__ import absolute_import
 
 __docformat__ = 'restructuredtext'
 
-from . import wcsutils
-from . import imalign
-from . import wcsimage
-from . import matchutils
-from . import tweakreg_step
-from . import chelp
-from . import linearfit
-from . import simplewcs
-
 __taskname__ = 'tweakreg'
-__version__ = '0.8.0'
-__vdate__ = '17-April-2016'
+__version__ = '0.8.1'
+__vdate__ = '14-November-2017'
 __author__ = 'Mihai Cara'
 
-
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-
-
-def help():
-    msg = \
-"""
-The tweakreg package contains the following tasks that allow users
-perform WCS alignment.
-
-tweakreg:
-       align - primary task for performing image alignment
-"""
-    print(msg)
+from .tweakreg_step import TweakRegStep

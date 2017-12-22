@@ -1,0 +1,22 @@
+{
+    "asn_type": "spec2",
+    "asn_rule": "candidate_Asn_Lv2SpecSpecial",
+    "version_id": null,
+    "code_version": "0.9.4",
+    "program": "99009",
+    "target": "1",
+    "asn_pool": "pool_009_spec_miri_lv2bkg",
+    "constraints": "Constraints:\n    is_special: {'t'}\n    single_science: {'False'}\n    exp_type: {'mir_lrs\\\\-fixedslit'}\n    program: {'99009'}\n    target: {'1'}\n    instrument: {'miri'}\n    detector: {'mirimage'}\n    opt_elem: {'p750l'}\n    opt_elem2: set()\n    subarray: {'full'}\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o002\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "asn_id": "o002",
+    "products": [
+        {
+            "name": "jw_00002",
+            "members": [
+                {
+                    "expname": "jw_00002_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}

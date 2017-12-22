@@ -2,7 +2,7 @@
     "asn_type": "tso3",
     "asn_rule": "candidate_Asn_TSO_EXPTYPE",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.4",
     "program": "99009",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    exp_type: {'mir_lrs\\\\-slitless'}\n    no_tso_flag: Is Invalid\n    opt_elem: {'p750l'}\n    opt_elem2: set()\n    target: {'1'}\n    program: {'99009'}\n    instrument: {'miri'}\n    asn_candidate: {\"\\\\(\\\\'o004\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}",

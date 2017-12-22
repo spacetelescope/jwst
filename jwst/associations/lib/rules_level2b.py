@@ -149,3 +149,25 @@ class Asn_Lv2WFSS(
         if opt_elem == '':
             opt_elem = 'clear'
         return opt_elem
+
+
+class Asn_Lv2FGS(
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Image,
+):
+    """Level2b FGS"""
+
+    def __init__(self, *args, **kwargs):
+
+        self.add_constraints({
+            'exp_type': {
+                'value': (
+                    'fgs_image'
+                    '|fgs_focus'
+                ),
+                'inputs': ['exp_type'],
+                'force_unique': True,
+            }
+        })
+
+        super(Asn_Lv2FGS, self).__init__(*args, **kwargs)

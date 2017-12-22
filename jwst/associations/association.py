@@ -5,10 +5,8 @@ from datetime import datetime
 import json
 import jsonschema
 import logging
-from nose.tools import nottest
 import re
 
-import six
 from numpy.ma import masked
 
 from . import __version__
@@ -334,7 +332,7 @@ class Association(MutableMapping):
 
         matches = True
         if check_constraints:
-            matches, reprocess = self.test_and_set_constraints(item)
+            matches, reprocess = self.check_and_set_constraints(item)
 
         if matches:
             if self.run_init_hook:
@@ -344,9 +342,8 @@ class Association(MutableMapping):
 
         return matches, reprocess
 
-    @nottest
-    def test_and_set_constraints(self, item):
-        """Test whether the given dictionaries match parameters for
+    def check_and_set_constraints(self, item):
+        """Check whether the given dictionaries match parameters for
         for this association
 
         Parameters
@@ -521,7 +518,7 @@ class Association(MutableMapping):
         except AttributeError:
             constraints = {}
             self.constraints = constraints
-        for constraint, conditions in six.iteritems(new_constraints):
+        for constraint, conditions in new_constraints.items():
             conditions['found_values'] = set()
             constraints[constraint] = constraints.get(constraint, conditions)
 
@@ -610,7 +607,7 @@ class Association(MutableMapping):
         return self.data.values()
 
 
-class ProcessList(object):
+class ProcessList():
     """A Process list
 
     Parameters
@@ -747,7 +744,7 @@ def evaluate(value):
 
 
 def is_iterable(obj):
-    return not isinstance(obj, six.string_types) and \
+    return not isinstance(obj, str) and \
         not isinstance(obj, tuple) and \
         hasattr(obj, '__iter__')
 

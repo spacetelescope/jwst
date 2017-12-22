@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals, division, print_function
-
 from . import model_base
 
 
@@ -24,9 +22,9 @@ class RampFitOutputModel(model_base.DataModel):
 
     sigslope : numpy array (n_int, max_seg, ny, nx)
 
-    var_p : numpy array (n_int, max_seg, ny, nx)
+    var_poisson : numpy array (n_int, max_seg, ny, nx)
 
-    var_r : numpy array (n_int, max_seg, ny, nx)
+    var_rnoise : numpy array (n_int, max_seg, ny, nx)
 
     yint : numpy array (n_int, max_seg, ny, nx)
 
@@ -43,8 +41,8 @@ class RampFitOutputModel(model_base.DataModel):
     def __init__(self, init=None,
                  slope=None,
                  sigslope=None,
-                 var_p=None,
-                 var_r=None,
+                 var_poisson=None,
+                 var_rnoise=None,
                  yint=None,
                  sigyint=None,
                  pedestal=None,
@@ -59,11 +57,11 @@ class RampFitOutputModel(model_base.DataModel):
         if sigslope is not None:
             self.sigslope = sigslope
 
-        if var_p is not None:
-            self.var_p = var_p
+        if var_poisson is not None:
+            self.var_poisson = var_poisson
 
-        if var_r is not None:
-            self.var_r = var_r
+        if var_rnoise is not None:
+            self.var_rnoise = var_rnoise
 
         if yint is not None:
             self.yint = yint

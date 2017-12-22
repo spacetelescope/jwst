@@ -1,7 +1,4 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-# -*- coding: utf-8 -*-
-
-from __future__ import absolute_import, division, unicode_literals, print_function
 
 import os
 import shutil
@@ -323,7 +320,6 @@ def test_table_with_metadata():
     assert len(hdulist) == 3
     assert isinstance(hdulist[1], fits.BinTableHDU)
     assert hdulist[1].name == 'FLUX'
-    assert isinstance(hdulist[2], fits.ImageHDU)
     assert hdulist[2].name == 'ASDF'
 
 

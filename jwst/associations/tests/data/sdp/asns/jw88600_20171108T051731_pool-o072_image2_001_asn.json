@@ -2,7 +2,7 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2Image",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.4",
     "program": "88600",
     "target": "1",
     "asn_pool": "jw88600_20171108T051731_pool",
@@ -46,15 +46,6 @@
             ]
         },
         {
-            "name": "jw88600070001_04101_00001_mirimage",
-            "members": [
-                {
-                    "expname": "jw88600070001_04101_00001_mirimage_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
             "name": "jw88600072001_02102_00001_nrcblong",
             "members": [
                 {
@@ -91,28 +82,10 @@
             ]
         },
         {
-            "name": "jw88600070001_03101_00001_mirimage",
-            "members": [
-                {
-                    "expname": "jw88600070001_03101_00001_mirimage_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
             "name": "jw88600072001_02102_00001_nrcb3",
             "members": [
                 {
                     "expname": "jw88600072001_02102_00001_nrcb3_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw88600073001_02101_00001_nis",
-            "members": [
-                {
-                    "expname": "jw88600073001_02101_00001_nis_rate.fits",
                     "exptype": "science"
                 }
             ]

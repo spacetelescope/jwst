@@ -7,7 +7,6 @@ against are built in the jupyter notebook
 
 ./notebooks/make_tests.ipynb
 """
-from __future__ import absolute_import
 from glob import glob
 from os import path
 import pytest
@@ -44,7 +43,7 @@ DEF_ARGS = []
 
 
 # Define the standards
-class MakePars(object):
+class MakePars():
     def __init__(
             self,
             pool_root,

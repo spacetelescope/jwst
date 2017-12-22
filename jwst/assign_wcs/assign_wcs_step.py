@@ -1,7 +1,4 @@
 #! /usr/bin/env python
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
-
 from ..stpipe import Step, cmdline
 from .. import datamodels
 import logging
@@ -23,23 +20,25 @@ class AssignWcsStep(Step):
     """
     Reference file types:
 
-    camera             NIRSPEC Camera model
-    collimator         NIRSPEC Collimator Model
-    disperser          Disperser model
-    distortion         Spatial distortion model
-    filteroffset       MIRI Imager fiter offsets
-    fore               Transform through the NIRSPEC FORE optics
-    fpa                Transform in the NIRSPEC FPA plane
-    msa                Transformin the NIRSPEC MSA plane
-    ote                Transform through the Optical Telescope Element
-    specwcs            Wavelength calibration models
-    regions            Stores location of the regions on the detector
-    v2v3               Transform from MIRI instrument focal plane to V2V3 plane
-    wavelengthrange    Typical wavelength ranges
+    camera             Camera model (NIRSPEC)
+    collimator         Collimator Model (NIRSPEC)
+    disperser          Disperser model (NIRSPEC)
+    distortion         Spatial distortion model (FGS, MIRI, NIRCAM, NIRISS)
+    filteroffset       Filter offsets (MIRI Imager)
+    fore               Transform through the FORE optics (NIRSPEC)
+    fpa                Transform in the FPA plane (NIRSPEC)
+    ifufore            Transforms from the MSA plane to the plane of the IFU slicer (NIRSPEC)
+    ifupost            Transforms from the slicer plane to the MSA plane (NIRSPEC)
+    ifuslicer          Metrology of the IFU slicer (NIRSPEC)
+    msa                Metrology of the MSA plane (NIRSPEC)
+    ote                Transform through the Optical Telescope Element (NIRSPEC)
+    specwcs            Wavelength calibration models (MIRI, NIRCAM, NIRISS)
+    regions            Stores location of the regions on the detector (MIRI)
+    wavelengthrange    Typical wavelength ranges (MIRI, NIRCAM, NIRISS, NIRSPEC)
     """
     reference_file_types = ['distortion', 'filteroffset', 'specwcs', 'regions',
-                            'wavelengthrange', 'v2v3', 'camera', 'collimator',
-                            'disperser', 'fore', 'fpa', 'msa', 'ote', 'ifupost',
+                            'wavelengthrange', 'camera', 'collimator', 'disperser',
+                            'fore', 'fpa', 'msa', 'ote', 'ifupost',
                             'ifufore', 'ifuslicer']
 
     def process(self, input):

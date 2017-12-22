@@ -1,4 +1,3 @@
-from __future__ import absolute_import, unicode_literals, division, print_function
 import numpy as np
 from astropy.modeling.core import Model
 from astropy import units as u
@@ -274,6 +273,10 @@ class RegionsModel(ReferenceFileModel):
 
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
+
+    def populate_meta(self):
+        self.meta.instrument.name = "MIRI"
+        self.meta.exposure.type = "MIR_MRS"
 
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")

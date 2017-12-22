@@ -2,10 +2,6 @@
 """
 Test jwst.transforms
 """
-
-from __future__ import (absolute_import, unicode_literals, division,
-                        print_function)
-
 from numpy.testing.utils import assert_allclose
 from ..import models
 

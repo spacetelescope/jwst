@@ -1,6 +1,4 @@
 """Public common step definition for OutlierDetection processing."""
-from __future__ import (division, print_function, unicode_literals,
-                        absolute_import)
 
 from ..stpipe import Step
 from .. import datamodels
@@ -106,19 +104,19 @@ class OutlierDetectionStep(Step):
                 # algorithm selected for TSO data (no resampling)
                 pars['resample_data'] = False  # force resampling off...
                 detection_step = outlier_registry['imaging']
-                pars['resample_suffix'] = 'i2d'
+                pars['resample_suffix'] = 's2d'
             elif exptype in TSO_IMAGE_MODES+CORON_IMAGE_MODES and \
                     not self.scale_detection:
                 # algorithm selected for TSO data (no resampling)
                 pars['resample_data'] = False  # force resampling off...
                 detection_step = outlier_registry['imaging']
-                pars['resample_suffix'] = 's2d'
+                pars['resample_suffix'] = 'i2d'
             elif exptype in TSO_IMAGE_MODES and self.scale_detection:
                 # selected scaled algorithm for TSO data
                 detection_step = outlier_registry['scaled']
                 pars['resample_suffix'] = 'i2d'
             elif exptype in SLIT_SPEC_MODES:
-                detection_step = outlier_registry['slit']
+                detection_step = outlier_registry['slitspec']
                 pars['resample_suffix'] = 's2d'
             elif exptype in IFU_SPEC_MODES:
                 # select algorithm for IFU data

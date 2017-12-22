@@ -27,13 +27,11 @@
 # USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
 # DAMAGE.
 
-from __future__ import absolute_import, division, print_function
 
 __version__ = '0.8.0'
 
 import numpy as np
 from os.path import basename
-import six
 from astropy.io import registry
 
 from . import ndmodel
@@ -154,31 +152,3 @@ except NameError:
 _all_models = __all__[1:]
 _local_dict = dict(locals())
 _defined_models = { k: _local_dict[k] for k in _all_models }
-
-
-'''
-def test(verbose=False) :
-    import nose
-
-    # get the pandokia plugin if it is available (it will only
-    # do anything if we are run from pandokia).
-    try :
-        import pandokia.helpers.nose_plugin as nose_plugin
-    except ImportError :
-        nose_plugin = None
-
-    if nose_plugin :
-        addplugins = [nose_plugin.Pdk()]
-    else :
-        addplugins = None
-
-    # get the name of the test package
-    argv = ['nosetests', '--exe', __name__ + '.tests']
-
-    import jwst.datamodels.tests
-
-    print ("ARGS", argv)
-
-    # run nose
-    return nose.main(argv = argv,  addplugins=addplugins)
-'''

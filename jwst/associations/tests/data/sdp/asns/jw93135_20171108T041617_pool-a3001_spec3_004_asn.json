@@ -2,7 +2,7 @@
     "asn_type": "spec3",
     "asn_rule": "discover_Asn_MIRI_IFU",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.4",
     "program": "93135",
     "degraded_status": "No known degraded exposures in association.",
     "constraints": "Constraints:\n    exp_type: {'mir_mrs', 'mir_flatmrs'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'6'}\n    program: {'93135'}",
@@ -20,20 +20,20 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135336001_02107_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135336001_02107_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135335001_02102_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135335001_02102_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135333001_02107_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135333001_02107_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -56,8 +56,8 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135337001_02104_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135337001_02104_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -80,26 +80,26 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135333001_02103_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135333001_02103_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135337001_02108_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135337001_02108_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135336001_02101_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135336001_02101_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135336001_02106_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135336001_02106_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -110,8 +110,8 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135333001_02101_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135333001_02101_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -128,8 +128,8 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135333001_02108_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135333001_02108_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -140,8 +140,8 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135336001_02102_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135336001_02102_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -158,14 +158,14 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135337001_02101_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135337001_02101_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135335001_02106_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135335001_02106_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -176,8 +176,8 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135333001_02102_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135333001_02102_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -188,8 +188,8 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135336001_02103_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135336001_02103_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -206,14 +206,14 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135337001_02107_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135337001_02107_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135333001_02106_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135333001_02106_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -224,8 +224,8 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135335001_02105_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135335001_02105_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -248,20 +248,20 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135335001_02104_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135335001_02104_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135336001_02104_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135336001_02104_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135337001_02103_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135337001_02103_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -278,14 +278,14 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135337001_02102_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135337001_02102_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135335001_02101_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135335001_02101_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -296,8 +296,8 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135335001_02107_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135335001_02107_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -326,20 +326,20 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135335001_02108_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135335001_02108_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135333001_02105_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135333001_02105_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135336001_02105_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135336001_02105_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -350,8 +350,8 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135336001_02108_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135336001_02108_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -368,8 +368,8 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135335001_02103_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135335001_02103_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
@@ -380,20 +380,20 @@
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135333001_02104_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135333001_02104_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135337001_02105_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135337001_02105_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 },
                 {
-                    "expname": "jw93135337001_02106_00001_mirifulong_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw93135337001_02106_00001_mirifulong_rate.fits",
+                    "exptype": "flat",
                     "exposerr": "null",
                     "asn_candidate": "null"
                 }

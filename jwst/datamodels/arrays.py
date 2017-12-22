@@ -5,12 +5,9 @@ structured arrays.
 
 # TODO: Add __all__ members to modules
 
-from __future__ import absolute_import, unicode_literals, division, print_function
-
 import re
 
 import numpy as np
-import six
 
 def _schema_dtype_to_numpy_dtype_single(dtype):
     names = {
@@ -29,7 +26,7 @@ def _schema_dtype_to_numpy_dtype_single(dtype):
         'complex128': np.complex128,
         }
 
-    if isinstance(dtype, six.string_types):
+    if isinstance(dtype, str):
         if dtype in names:
             return names[dtype]
         elif re.match('string[0-9]+', dtype):
@@ -44,7 +41,7 @@ def _schema_dtype_to_numpy_dtype_single(dtype):
 
 
 def _parse_column(i, entry):
-    if isinstance(entry, six.string_types):
+    if isinstance(entry, str):
         col_dtype = _schema_dtype_to_numpy_dtype_single(entry)
         col_name = b'f{0}'.format(i)
         col_shape = 1
@@ -57,11 +54,11 @@ def _parse_column(i, entry):
 
         if 'name' in entry:
             col_name = entry['name']
-            if not isinstance(col_name, six.string_types):
+            if isinstance(col_name, bytes):
+                col_name = col_name.encode('ascii')
+            if not isinstance(col_name, str):
                 raise ValueError(
                     "Invalid name {0} in dtype".format(col_name))
-            if isinstance(col_name, six.text_type):
-                col_name = col_name.encode('ascii')
         else:
             col_name = b'f{0}'.format(i)
 
@@ -101,7 +98,7 @@ def schema_dtype_to_numpy_dtype(dtype):
     """
     Given a schema dtype, returns a numpy dtype.
     """
-    if isinstance(dtype, (six.string_types, type)):
+    if isinstance(dtype, str):
         return _schema_dtype_to_numpy_dtype_single(dtype)
     elif isinstance(dtype, list):
         new_dtype = []

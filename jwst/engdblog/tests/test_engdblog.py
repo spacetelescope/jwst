@@ -1,9 +1,9 @@
 """
 Test the engdblog step
 """
-from backports.tempfile import TemporaryDirectory
 import os
 import pytest
+from tempfile import TemporaryDirectory
 
 from ..engdblog import EngDBLogStep
 from ...lib.tests.engdb_mock import EngDB_Mocker

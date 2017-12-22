@@ -2,7 +2,7 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2Spec",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.4",
     "program": "93056",
     "target": "1",
     "asn_pool": "jw93056_20171108T060152_pool",
@@ -19,28 +19,10 @@
             ]
         },
         {
-            "name": "jw93056003001_02101_00001_nrs1",
-            "members": [
-                {
-                    "expname": "jw93056003001_02101_00001_nrs1_rateints.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
             "name": "jw93056001001_02101_00001_nrs2",
             "members": [
                 {
                     "expname": "jw93056001001_02101_00001_nrs2_rateints.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw93056003001_02101_00001_nrs2",
-            "members": [
-                {
-                    "expname": "jw93056003001_02101_00001_nrs2_rateints.fits",
                     "exptype": "science"
                 }
             ]

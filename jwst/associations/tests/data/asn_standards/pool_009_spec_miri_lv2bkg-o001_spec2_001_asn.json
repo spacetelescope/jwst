@@ -2,7 +2,7 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2Spec",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.4",
     "program": "99009",
     "target": "1",
     "asn_pool": "pool_009_spec_miri_lv2bkg",
@@ -14,94 +14,6 @@
             "members": [
                 {
                     "expname": "jw_00001_rate.fits",
-                    "exptype": "science"
-                },
-                {
-                    "expname": "jw_00002_rate.fits",
-                    "exptype": "background"
-                }
-            ]
-        },
-        {
-            "name": "jw_00002",
-            "members": [
-                {
-                    "expname": "jw_00002_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00004",
-            "members": [
-                {
-                    "expname": "jw_00004_rate.fits",
-                    "exptype": "science"
-                },
-                {
-                    "expname": "jw_00039_rate.fits",
-                    "exptype": "background"
-                }
-            ]
-        },
-        {
-            "name": "jw_00008",
-            "members": [
-                {
-                    "expname": "jw_00008_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00009",
-            "members": [
-                {
-                    "expname": "jw_00009_rate.fits",
-                    "exptype": "science"
-                },
-                {
-                    "expname": "jw_00039_rate.fits",
-                    "exptype": "background"
-                }
-            ]
-        },
-        {
-            "name": "jw_00012",
-            "members": [
-                {
-                    "expname": "jw_00012_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00014",
-            "members": [
-                {
-                    "expname": "jw_00014_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw_00029",
-            "members": [
-                {
-                    "expname": "jw_00029_rate.fits",
-                    "exptype": "science"
-                },
-                {
-                    "expname": "jw_00039_rate.fits",
-                    "exptype": "background"
-                }
-            ]
-        },
-        {
-            "name": "jw_00039",
-            "members": [
-                {
-                    "expname": "jw_00039_rate.fits",
                     "exptype": "science"
                 }
             ]

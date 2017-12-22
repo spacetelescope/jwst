@@ -2,7 +2,7 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2ImageNonScience",
     "version_id": null,
-    "code_version": "0.8.0",
+    "code_version": "0.9.4",
     "program": "99009",
     "target": "1",
     "asn_pool": "pool_007_spec_miri",
@@ -14,69 +14,6 @@
             "members": [
                 {
                     "expname": "jw_00003_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw99009015001_02101_00003_mirimage",
-            "members": [
-                {
-                    "expname": "jw99009015001_02101_00003_mirimage_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw99009012001_02101_00002_mirimage",
-            "members": [
-                {
-                    "expname": "jw99009012001_02101_00002_mirimage_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw99009016001_02101_00001_mirifushort",
-            "members": [
-                {
-                    "expname": "jw99009016001_02101_00001_mirifushort_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw99009018001_02101_00001_mirifushort",
-            "members": [
-                {
-                    "expname": "jw99009018001_02101_00001_mirifushort_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw99009020001_02101_00001_mirifushort",
-            "members": [
-                {
-                    "expname": "jw99009020001_02101_00001_mirifushort_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw99009021001_02101_00001_mirifulong",
-            "members": [
-                {
-                    "expname": "jw99009021001_02101_00001_mirifulong_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw99009050001_02109_00001_mirifulong",
-            "members": [
-                {
-                    "expname": "jw99009050001_02109_00001_mirifulong_rate.fits",
                     "exptype": "science"
                 }
             ]

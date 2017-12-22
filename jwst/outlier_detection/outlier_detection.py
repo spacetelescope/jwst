@@ -1,8 +1,5 @@
 """Primary code for performing outlier detection on JWST observations."""
 
-from __future__ import (division, print_function, unicode_literals,
-                        absolute_import)
-
 import numpy as np
 
 from stsci.image import median
@@ -21,7 +18,7 @@ log.setLevel(logging.DEBUG)
 CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
 
 
-class OutlierDetection(object):
+class OutlierDetection:
     """Main class for performing outlier detection.
 
     This is the controlling routine for the outlier detection process.
@@ -44,7 +41,7 @@ class OutlierDetection(object):
 
     """
 
-    DEFAULT_SUFFIX = 'i2d'
+    default_suffix = 'i2d'
 
     def __init__(self, input_models, reffiles=None, **pars):
         """
@@ -165,7 +162,7 @@ class OutlierDetection(object):
         # Parse any user-provided filename suffix for resampled products
         self.resample_suffix = '_outlier_{}.fits'.format(
                                 pars.get('resample_suffix',
-                                         self.DEFAULT_SUFFIX))
+                                         self.default_suffix))
         if 'resample_suffix' in pars:
             del pars['resample_suffix']
         log.debug("Defined output product suffix as: {}".format(
@@ -203,6 +200,7 @@ class OutlierDetection(object):
         median_model = datamodels.ImageModel(
                                         init=drizzled_models[0].data.shape)
         median_model.update(drizzled_models[0])
+        median_model.meta.wcs = drizzled_models[0].meta.wcs
         base_filename = self.input_models[0].meta.filename
         median_model.meta.filename = '_'.join(
                         base_filename.split('_')[:2] + ['median.fits'])

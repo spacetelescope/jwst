@@ -15,8 +15,6 @@ There are currently 2 storage backends implemented:
     hierarchy.  This includes all of the nice things about
     ``astropy.io.fits``, such as mmap'ing of array data.
 """
-from __future__ import absolute_import, unicode_literals, division, print_function
-
 
 class Storage(object):
     def close(self):
