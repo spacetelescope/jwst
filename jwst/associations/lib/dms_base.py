@@ -97,6 +97,9 @@ SPEC2_SCIENCE_EXP_TYPES = [
     'nis_soss',
 ]
 
+# Key that uniquely identfies members.
+MEMBER_KEY = 'expname'
+
 # Non-specified values found in DMS Association Pools
 _EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f')
 
@@ -113,7 +116,16 @@ __all__ = ['DMSBaseMixin']
 
 
 class DMSBaseMixin(ACIDMixin):
-    """Association attributes common to DMS-based Rules"""
+    """Association attributes common to DMS-based Rules
+
+    Attributes
+    ----------
+    from_items: [item[,...]]
+        The list of items that contributed to the association.
+
+    sequence: int
+        The sequence number of the current association
+    """
 
     # Associations of the same type are sequenced.
     _sequence = Counter(start=1)
@@ -121,6 +133,7 @@ class DMSBaseMixin(ACIDMixin):
     def __init__(self, *args, **kwargs):
         super(DMSBaseMixin, self).__init__(*args, **kwargs)
 
+        self.from_items = []
         self.sequence = None
         if 'degraded_status' not in self.data:
             self.data['degraded_status'] = _DEGRADED_STATUS_OK
@@ -182,6 +195,16 @@ class DMSBaseMixin(ACIDMixin):
                 sequence=sequence,
             )
         return name.lower()
+
+    @property
+    def member_ids(self):
+        """Set of all member ids in all products of this association"""
+        member_ids = set(
+            member[MEMBER_KEY]
+            for product in self['products']
+            for member in product['members']
+        )
+        return member_ids
 
     @property
     def current_product(self):

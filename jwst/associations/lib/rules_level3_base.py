@@ -60,9 +60,6 @@ _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 # Product name regex's
 _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
 
-# Key that uniquely identfies members.
-KEY = 'expname'
-
 # Exposures that are always TSO
 TSO_EXP_TYPES = (
     'mir_lrs-slitless',
@@ -96,9 +93,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         super(DMS_Level3_Base, self).__init__(*args, **kwargs)
 
-        # Keep the set of members included in this association
-        self.members = set()
-
         # Initialize validity checks
         self.validity.update({
             'has_science': {
@@ -127,7 +121,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         """Compare equality of two assocaitions"""
         if isinstance(other, DMS_Level3_Base):
             result = self.data['asn_type'] == other.data['asn_type']
-            result = result and (self.members == other.members)
+            result = result and (self.member_ids == other.member_ids)
             return result
         else:
             return NotImplemented
@@ -316,9 +310,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 item['filename'],
                 member['exposerr']
             ))
-
-        # Add member to the short list
-        self.members.add(member[KEY])
+        self.from_items.append(item)
 
         # Update meta info
         self.update_asn(item=item, member=member)
@@ -365,6 +357,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             }
             self.update_validity(member)
             members.append(member)
+            self.from_items.append(item)
         self.sequence = next(self._sequence)
 
     def __repr__(self):

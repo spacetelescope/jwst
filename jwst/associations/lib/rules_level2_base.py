@@ -71,9 +71,6 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         super(DMSLevel2bBase, self).__init__(*args, **kwargs)
 
-        # Keep the set of members included in this association
-        self.members = set()
-
         # I am defined by the following constraints
         self.add_constraints({
             'program': {
@@ -134,7 +131,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         """Compare equality of two assocaitions"""
         if isinstance(other, DMSLevel2bBase):
             result = self.data['asn_type'] == other.data['asn_type']
-            result = result and (self.members == other.members)
+            result = result and (self.member_ids == other.member_ids)
             return result
         else:
             return NotImplemented
@@ -224,10 +221,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         member = self.make_member(item)
         members = self.current_product['members']
         members.append(member)
+        self.from_items.append(item)
         self.update_validity(member)
-
-        # Add member to the short list
-        self.members.add(member[KEY])
 
         # Update association state due to new member
         self.update_asn()
@@ -280,6 +275,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 'exptype': 'science'
             }
             members.append(member)
+            self.from_items.append(item)
             self.update_validity(member)
             self.update_asn()
 
