@@ -178,6 +178,11 @@ class TPCorr(Model):
         (xt, yt), format_info = self.prepare_inputs(xt, yt)
         zt = np.full_like(xt, self.__class__.r0)
 
+        # undo corrections:
+        xt, yt = np.dot(np.linalg.inv(self.matrix[0]), (xt, yt))
+        xt += self.shift[0][0]
+        yt += self.shift[0][1]
+
         # build Euler rotation matrices:
         rotm = [
             rot_mat3D(np.deg2rad(alpha), axis)

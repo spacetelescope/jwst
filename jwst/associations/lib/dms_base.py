@@ -103,6 +103,15 @@ MEMBER_KEY = 'expname'
 # Non-specified values found in DMS Association Pools
 _EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f')
 
+# Degraded status information
+_DEGRADED_STATUS_OK = (
+    'No known degraded exposures in association.'
+)
+_DEGRADED_STATUS_NOTOK = (
+    'One or more members have an error associated with them.'
+    '\nDetails can be found in the member.exposerr attribute.'
+)
+
 __all__ = ['DMSBaseMixin']
 
 
@@ -126,9 +135,10 @@ class DMSBaseMixin(ACIDMixin):
 
         self.from_items = []
         self.sequence = None
-        self.data.update({
-            'program': 'none',
-        })
+        if 'degraded_status' not in self.data:
+            self.data['degraded_status'] = _DEGRADED_STATUS_OK
+        if 'program' not in self.data:
+            self.data['program'] = 'noprogram'
 
     @classmethod
     def create(cls, item, version_id=None):
@@ -197,6 +207,10 @@ class DMSBaseMixin(ACIDMixin):
         return member_ids
 
     @property
+    def current_product(self):
+        return self.data['products'][-1]
+
+    @property
     def validity(self):
         """Keeper of the validity tests"""
         try:
@@ -211,10 +225,6 @@ class DMSBaseMixin(ACIDMixin):
         """Set validity dict"""
         self._validity = item
 
-    @property
-    def current_product(self):
-        return self.data['products'][-1]
-
     def new_product(self, product_name=PRODUCT_NAME_DEFAULT):
         """Start a new product"""
         product = {
@@ -226,10 +236,50 @@ class DMSBaseMixin(ACIDMixin):
         except KeyError:
             self.data['products'] = [product]
 
+    def update_asn(self, item=None, member=None):
+        """Update association meta information
+
+        Parameters
+        ----------
+        item: dict or None
+            Item to use as a source. If not given, item-specific
+            information will be left unchanged.
+
+        member: dict or None
+            An association member to use as source.
+            If not given, member-specific information will be update
+            from current association/product membership.
+
+        Notes
+        -----
+        If both `item` and `member` are given,
+        information in `member` will take precedence.
+        """
+        self.update_degraded_status()
+
+    def update_degraded_status(self):
+        """Update association degraded status"""
+
+        if self.data['degraded_status'] == _DEGRADED_STATUS_OK:
+            for product in self.data['products']:
+                for member in product['members']:
+                    try:
+                        exposerr = member['exposerr']
+                    except KeyError:
+                        continue
+                    else:
+                        if exposerr not in _EMPTY:
+                            self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
+                            break
+
     def update_validity(self, entry):
         for test in self.validity.values():
             if not test['validated']:
                 test['validated'] = test['check'](entry)
+
+    @classmethod
+    def reset_sequence(cls):
+        cls._sequence = Counter(start=1)
 
     @classmethod
     def validate(cls, asn):
@@ -250,10 +300,6 @@ class DMSBaseMixin(ACIDMixin):
                 )
 
         return True
-
-    @classmethod
-    def reset_sequence(cls):
-        cls._sequence = Counter(start=1)
 
     def get_exposure_type(self, item, default='science'):
         """Determine the exposure type of a pool item

@@ -174,15 +174,27 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         member: dict
             The member
         """
+
+        # Set exposure error status.
+        try:
+            exposerr = item['exposerr']
+        except KeyError:
+            exposerr = None
+
+        # Handle time-series file naming
         is_tso = self.constraints['is_tso']['value'] == 't'
         if not is_tso:
             is_tso = item['exp_type'] in TSO_EXP_TYPES
+
+        # Create the member.
         member = {
             'expname': Utility.rename_to_level2a(
                 item['filename'], is_tso=is_tso
             ),
-            'exptype': self.get_exposure_type(item)
+            'exptype': self.get_exposure_type(item),
+            'exposerr': exposerr,
         }
+
         return member
 
     def _init_hook(self, item):
@@ -283,6 +295,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
     def update_asn(self):
         """Update association info based on current members"""
+        super(DMSLevel2bBase, self).update_asn()
         self.current_product['name'] = self.dms_product_name()
 
     def __repr__(self):

@@ -217,7 +217,6 @@ def align(imcat, refcat=None, enforce_user_order=True,
             nclip=nclip,
             sigma=sigma
         )
-
         aligned_imcat.append(current_imcat)
 
         # add unmatched sources to the reference catalog:
