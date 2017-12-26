@@ -16,7 +16,7 @@ _ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn
 _ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 
 # Exposure EXP_TYPE to Association EXPTYPE mapping
-_EXPTYPE_MAP = {
+EXPTYPE_MAP = {
     'mir_dark':      'dark',
     'mir_flatimage': 'flat',
     'mir_flatmrs':   'flat',
@@ -357,7 +357,7 @@ class DMSBaseMixin(ACIDMixin):
         except KeyError:
             raise LookupError('Exposure type cannot be determined')
 
-        result = _EXPTYPE_MAP.get(exp_type, default)
+        result = EXPTYPE_MAP.get(exp_type, default)
 
         if result is None:
             raise LookupError('Cannot determine exposure type')

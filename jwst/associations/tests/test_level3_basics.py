@@ -1,4 +1,6 @@
 """Test general Level 3 rules environment"""
+import pytest
+
 from .helpers import (
     combine_pools,
     registry_level3_only,
@@ -24,3 +26,32 @@ def test_meta():
     assert data['degraded_status'] == 'No known degraded exposures in association.'
     assert data['version_id'] is None
     assert data['constraints'] is not None
+
+
+@pytest.mark.parametrize(
+    'pool_file',
+    [
+        'data/pool_005_spec_niriss.csv',
+        'data/pool_006_spec_nirspec.csv',
+        'data/pool_007_spec_miri.csv',
+        'data/pool_009_spec_miri_lv2bkg.csv',
+        'data/pool_010_spec_nirspec_lv2bkg.csv',
+        'data/pool_015_spec_nirspec_lv2bkg_reversed.csv',
+        'data/pool_016_spec_nirspec_lv2bkg_double.csv',
+        'data/pool_017_spec_nirspec_lv2imprint.csv',
+        'data/pool_018_all_exptypes.csv',
+    ]
+)
+def test_targacq(pool_file):
+    """Test for existence of target acquisitions in associatons"""
+    rules = registry_level3_only()
+    pool = combine_pools(t_path(pool_file))
+    asns = generate(pool, rules)
+    assert len(asns) > 1
+    for asn in asns:
+        for product in asn['products']:
+            exptypes = [
+                member['exptype'].lower()
+                for member in product['members']
+            ]
+            assert 'target_acquistion' in exptypes
