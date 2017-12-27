@@ -60,6 +60,10 @@ def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, refere
             nslit = len(output_model.slits) - 1
             set_slit_attributes(output_model, nslit, slit, xlo, xhi, ylo, yhi)
 
+            # Copy BUNIT values to output slit
+            output_model.slits[nslit].bunit_data = input_model.meta.bunit_data
+            output_model.slits[nslit].bunit_err = input_model.meta.bunit_err
+
     return output_model
 
 
