@@ -28,6 +28,10 @@ def test_meta():
     assert data['constraints'] is not None
 
 
+@pytest.mark.xfail(
+    reason='Issue #1442',
+    run=False
+)
 @pytest.mark.parametrize(
     'pool_file',
     [
