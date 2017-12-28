@@ -151,6 +151,8 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             output_model.slits[-1].source_xpos = obj.xcenter
             output_model.slits[-1].source_ypos = obj.ycenter
             output_model.slits[-1].source_id = obj.sid
+            output_model.slits[-1].bunit_data = input_model.meta.bunit_data
+            output_model.slits[-1].bunit_err = input_model.meta.bunit_err
 
     del subwcs
     return output_model
