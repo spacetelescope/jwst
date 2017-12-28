@@ -414,6 +414,12 @@ class Association(MutableMapping):
             self.force_reprocess = conditions.get('force_reprocess', False)
             return (True, reprocess)
 
+        # Get whether condition is require to exist and be true.
+        required = conditions.get(
+            'required',
+            self.DEFAULT_REQUIRE_CONSTRAINT
+        )
+
         # Get the condition information.
         try:
             input, value = self.item_getattr(
@@ -421,11 +427,7 @@ class Association(MutableMapping):
                 conditions['inputs'],
             )
         except KeyError:
-            if not conditions.get('force_undefined', False) and \
-               conditions.get(
-                   'required',
-                   self.DEFAULT_REQUIRE_CONSTRAINT
-               ):
+            if required and not conditions.get('force_undefined', False):
                 return False, reprocess
             else:
                 return True, reprocess
