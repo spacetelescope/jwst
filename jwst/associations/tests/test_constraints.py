@@ -1,7 +1,17 @@
 """Constraint Tests"""
 import pytest
 
-from ..lib.constraint import Constraint, SimpleConstraint
+from ..lib.constraint import (
+    Constraint,
+    SimpleConstraint,
+    SimpleConstraintABC,
+)
+
+
+def test_abc():
+    """Test ABC istelf"""
+    with pytest.raises(TypeError):
+        SimpleConstraintABC()
 
 
 def test_simpleconstraint():
@@ -62,9 +72,9 @@ def test_constraint_default():
 
 def test_invalid_init():
     with pytest.raises(TypeError):
-        c = Constraint('bad init')
+        Constraint('bad init')
 
-    
+
 def test_constraint_all():
     """Test the all operation"""
 
@@ -87,3 +97,27 @@ def test_constraint_any():
     assert new_c
     new_c, reprocess = c.check_and_set('value_3')
     assert not new_c
+
+
+def test_iteration():
+    """Test various iterations"""
+    sc = SimpleConstraint()
+    for idx in sc:
+        assert isinstance(idx, SimpleConstraint)
+
+    c = Constraint([sc, sc])
+    count = 0
+    for idx in c:
+        assert isinstance(idx, SimpleConstraint)
+        count += 1
+    assert count == 2
+
+    c = Constraint([
+        Constraint([sc, sc]),
+        Constraint([sc, sc])
+    ])
+    count = 0
+    for idx in c:
+        assert isinstance(idx, SimpleConstraint)
+        count += 1
+    assert count == 4  # Not 6

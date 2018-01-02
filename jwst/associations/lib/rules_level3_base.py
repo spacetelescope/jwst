@@ -10,7 +10,7 @@ from jwst.associations import (
     ProcessList,
     libpath
 )
-from jwst.associations.association import (
+from jwst.associations.lib.utilities import (
     evaluate,
     is_iterable
 )
@@ -19,6 +19,10 @@ from jwst.associations.exceptions import (
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACID
+from jwst.associations.lib.constraint import (
+    AttrConstraint,
+    Constraint
+)
 from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import (
     _EMPTY,
@@ -30,17 +34,13 @@ from jwst.associations.lib.dms_base import (
 from jwst.associations.lib.format_template import FormatTemplate
 
 __all__ = [
-    'AsnMixin_Base',
-    'AsnMixin_CrossCandidate',
-    'AsnMixin_Image',
-    'AsnMixin_MIRI',
-    'AsnMixin_NIRCAM',
-    'AsnMixin_NIRISS',
-    'AsnMixin_NIRSPEC',
-    'AsnMixin_OpticalPath',
-    'AsnMixin_Spectrum',
-    'AsnMixin_Target',
     'ASN_SCHEMA',
+    'AttrConstraint',
+    'CONSTRAINT_BASE',
+    'CONSTRAINT_IMAGE',
+    'CONSTRAINT_OPTICAL_PATH',
+    'CONSTRAINT_TARGET',
+    'Constraint',
     'DMS_Level3_Base',
     'ProcessList',
     'Utility',
@@ -203,9 +203,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         super(DMS_Level3_Base, self).update_asn(item=item, member=member)
 
         # Constraints
-        self.data['constraints'] = '\n'.join(
-            [cc for cc in self.constraints_to_text()]
-        )
+        self.data['constraints'] = str(self.constraints)
 
         # ID
         self.data['asn_id'] = self.acid.id
@@ -523,200 +521,46 @@ format_product = FormatTemplate(
 )
 
 
-# ---------------------------------------------
-# Mixins to define the broad category of rules.
-# ---------------------------------------------
+# -----------------
+# Basic constraints
+# -----------------
 
+CONSTRAINT_BASE = Constraint([
+    AttrConstraint(
+        name='program',
+        sources=['program'],
+    ),
+    AttrConstraint(
+        name='instrument',
+        sources=['instrume'],
+    )
+])
 
-class AsnMixin_Base(DMS_Level3_Base):
-    """Restrict to Program and Instrument"""
+CONSTRAINT_OPTICAL_PATH = Constraint([
+    AttrConstraint(
+        name='opt_elem',
+        sources=['filter'],
+    ),
+    AttrConstraint(
+        name='opt_elem2',
+        sources=['pupil', 'grating'],
+        required=False,
+    )
+])
 
-    def __init__(self, *args, **kwargs):
+CONSTRAINT_TARGET = AttrConstraint(
+    name='target',
+    sources=['targetid'],
+)
 
-        # I am defined by the following constraints
-        self.add_constraints({
-            'program': {
-                'value': None,
-                'inputs': ['program'],
-            },
-            'instrument': {
-                'value': None,
-                'inputs': ['instrume']
-            },
-        })
-
-        super(AsnMixin_Base, self).__init__(*args, **kwargs)
-
-
-class AsnMixin_OpticalPath(DMS_Level3_Base):
-    """Ensure unique optical path"""
-
-    def __init__(self, *args, **kwargs):
-        # I am defined by the following constraints
-        self.add_constraints({
-            'opt_elem': {
-                'value': None,
-                'inputs': ['filter']
-            },
-            'opt_elem2': {
-                'value': None,
-                'inputs': ['pupil', 'grating'],
-                'required': False,
-            },
-        })
-
-        super(AsnMixin_OpticalPath, self).__init__(*args, **kwargs)
-
-
-class AsnMixin_Target(DMS_Level3_Base):
-    """Constrain by Target"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.add_constraints({
-            'target': {
-                'value': None,
-                'inputs': ['targetid'],
-            },
-        })
-
-        # Check and continue initialization.
-        super(AsnMixin_Target, self).__init__(*args, **kwargs)
-
-
-class AsnMixin_NotTSO(DMS_Level3_Base):
-    """Ensure exposure is not a TSO"""
-    def __init__(self, *args, **kwargs):
-        self.add_constraints({
-            'is_not_tso': {
-                'value': '[^t]',
-                'inputs': ['tsovisit'],
-                'required': False
-            }
-        })
-
-        super(AsnMixin_NotTSO, self).__init__(*args, **kwargs)
-
-
-class AsnMixin_MIRI(DMS_Level3_Base):
-    """All things that belong to MIRI"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.add_constraints({
-            'instrument': {
-                'value': 'miri',
-                'inputs': ['instrume']
-            }
-        })
-
-        # Check and continue initialization.
-        super(AsnMixin_MIRI, self).__init__(*args, **kwargs)
-
-
-class AsnMixin_NIRSPEC(DMS_Level3_Base):
-    """All things that belong to NIRSPEC"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.add_constraints({
-            'instrument': {
-                'value': 'nirspec',
-                'inputs': ['instrume']
-            }
-        })
-
-        # Check and continue initialization.
-        super(AsnMixin_NIRSPEC, self).__init__(*args, **kwargs)
-
-
-class AsnMixin_NIRISS(DMS_Level3_Base):
-    """All things that belong to NIRISS"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.add_constraints({
-            'instrument': {
-                'value': 'niriss',
-                'inputs': ['instrume']
-            },
-        })
-
-        # Check and continue initialization.
-        super(AsnMixin_NIRISS, self).__init__(*args, **kwargs)
-
-
-class AsnMixin_NIRCAM(DMS_Level3_Base):
-    """All things that belong to NIRCAM"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.add_constraints({
-            'instrument': {
-                'value': 'nircam',
-                'inputs': ['instrume']
-            },
-        })
-
-        # Check and continue initialization.
-        super(AsnMixin_NIRCAM, self).__init__(*args, **kwargs)
-
-
-class AsnMixin_Image(AsnMixin_NotTSO):
-    """All things that are in imaging mode"""
-
-    def __init__(self, *args, **kwargs):
-
-        self.add_constraints({
-            'exp_type': {
-                'value': (
-                    'nrc_image'
-                    '|mir_image'
-                    '|nis_image'
-                    '|fgs_image'
-                ),
-                'inputs': ['exp_type'],
-                'force_unique': True,
-            }
-        })
-
-        super(AsnMixin_Image, self).__init__(*args, **kwargs)
-
-
-
-class AsnMixin_Spectrum(AsnMixin_NotTSO):
-    """All things that are spectrum"""
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'spec3'
-        super(AsnMixin_Spectrum, self)._init_hook(item)
-
-
-class AsnMixin_CrossCandidate(DMS_Level3_Base):
-    """Basic constraints for Cross-Candidate associations"""
-
-    @classmethod
-    def validate(cls, asn):
-        super(AsnMixin_CrossCandidate, cls).validate(asn)
-
-        if isinstance(asn, AsnMixin_CrossCandidate):
-            try:
-                candidates = set(
-                    member['asn_candidate_id']
-                    for product in asn.data['products']
-                    for member in product['members']
-                )
-            except (AttributeError, KeyError) as err:
-                raise AssociationNotValidError('Validation failed')
-            if not len(candidates) > 1:
-                raise AssociationNotValidError(
-                    'Validation failed: No candidates found.'
-                )
-        return True
+CONSTRAINT_IMAGE = AttrConstraint(
+    name='exp_type',
+    sources=['exp_type'],
+    value=(
+        'nrc_image'
+        '|mir_image'
+        '|nis_image'
+        '|fgs_image'
+    ),
+    force_unique=True,
+)

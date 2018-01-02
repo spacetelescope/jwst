@@ -1,12 +1,13 @@
 """Association attributes common to DMS-based Rules"""
 from .counter import Counter
 
-from jwst.associations.association import getattr_from_list
+from jwst.associations.lib.utilities import getattr_from_list
 from jwst.associations.exceptions import (
     AssociationNotAConstraint,
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACIDMixin
+
 
 # Default product name
 PRODUCT_NAME_DEFAULT = 'undefined'
@@ -434,7 +435,7 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the target or source ID.
         """
-        target_id = format_list(self.constraints['target']['found_values'])
+        target_id = format_list(self.constraints['target'].found_values)
         target = 't{0:0>3s}'.format(str(target_id))
         return target
 
@@ -447,7 +448,7 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the instrument
         """
-        instrument = format_list(self.constraints['instrument']['found_values'])
+        instrument = format_list(self.constraints['instrument'].found_values)
         return instrument
 
     def _get_opt_element(self):
@@ -462,7 +463,7 @@ class DMSBaseMixin(ACIDMixin):
         opt_elem = ''
         join_char = ''
         try:
-            value = format_list(self.constraints['opt_elem']['found_values'])
+            value = format_list(self.constraints['opt_elem'].found_values)
         except KeyError:
             pass
         else:
@@ -470,7 +471,7 @@ class DMSBaseMixin(ACIDMixin):
                 opt_elem = value
                 join_char = '-'
         try:
-            value = format_list(self.constraints['opt_elem2']['found_values'])
+            value = format_list(self.constraints['opt_elem2'].found_values)
         except KeyError:
             pass
         else:
