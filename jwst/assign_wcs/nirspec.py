@@ -981,8 +981,13 @@ def correct_tilt(disperser, xtilt, ytilt):
         Value of GWAXTILT keyword - angle in arcsec
     ytilt : float
         Value of GWAYTILT keyword - angle in arcsec
-    disperser : dict
+    disperser : `~jwst.datamodels.DisperserModel`
         Disperser information.
+
+    Returns
+    -------
+    disp : `~jwst.datamodels.DisperserModel`
+        Corrected DisperserModel.
 
     """
     def _get_correction(gwa_tilt, tilt_angle):
