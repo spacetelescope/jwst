@@ -77,7 +77,7 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
     #
     # xcenter,ycenter: in direct image pixels
     # order_bounding in grism_detector pixels
-    # icrs_centroid: SkyCoord of object center
+    # sky_centroid: SkyCoord of object center
     # sky_bbox_ :lower and upper bounding box in SkyCoord
     # sid: catalog ID of the object
 
