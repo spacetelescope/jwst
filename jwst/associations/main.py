@@ -4,6 +4,8 @@ import sys
 import argparse
 import logging
 
+import numpy as np
+
 from jwst.associations import (
     __version__,
     AssociationPool,
@@ -239,7 +241,7 @@ class Main():
             )
 
         logger.info('Generating associations.')
-        self.associations, self.orphaned = generate(
+        self.associations = generate(
             self.pool, self.rules, version_id=parsed.version_id
         )
 
@@ -273,6 +275,19 @@ class Main():
                 format=parsed.format,
                 save_orphans=parsed.save_orphans
             )
+
+    @property
+    def orphaned(self):
+        not_in_asn = np.ones((len(self.pool),), dtype=bool)
+        for asn in self.associations:
+            try:
+                indexes = [item.index for item in asn.from_items]
+            except AttributeError:
+                continue
+            not_in_asn[indexes] = False
+
+        orphaned = self.pool[not_in_asn]
+        return orphaned
 
     def __str__(self):
         result = []

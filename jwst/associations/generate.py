@@ -31,12 +31,8 @@ def generate(pool, rules, version_id=None):
 
     Returns
     -------
-    ([association,...], orphans)
-        A 2-tuple consisting of:
-
-        * List of associations
-        * Table of items from the pool that
-          do not belong to any association.
+    associations: [association[,...]]
+        List of associations
 
     Notes
     -----
@@ -81,8 +77,7 @@ def generate(pool, rules, version_id=None):
     # Finalize found associations
     finalized_asns = rules.finalize(associations)
 
-    orphaned = pool[np.logical_not(in_an_asn)]
-    return finalized_asns, orphaned
+    return finalized_asns
 
 
 def generate_from_item(

@@ -45,7 +45,7 @@ def test_level3_asn_names(pool_params):
     pool_path = helpers.t_path(pool_params)
     pool = helpers.combine_pools(pool_path)
     rules = helpers.registry_level3_only()
-    asns, orphaned = generate(pool, rules)
+    asns = generate(pool, rules)
     assert len(asns) > 0
     for asn in asns:
         name = asn.asn_name
@@ -62,7 +62,7 @@ def test_level3_asn_names_with_version(pool_params):
     pool_path = helpers.t_path(pool_params)
     pool = helpers.combine_pools(pool_path)
     rules = helpers.registry_level3_only()
-    asns, orphaned = generate(pool, rules, version_id=True)
+    asns = generate(pool, rules, version_id=True)
     assert len(asns) > 0
     for asn in asns:
         name = asn.asn_name
@@ -73,7 +73,7 @@ def test_level2_asn_names(pool_params):
     pool_path = helpers.t_path(pool_params)
     pool = helpers.combine_pools(pool_path)
     rules = helpers.registry_level2_only()
-    asns, orphaned = generate(pool, rules)
+    asns = generate(pool, rules)
     assert len(asns) > 0
     for asn in asns:
         name = asn.asn_name
@@ -90,7 +90,7 @@ def test_level2_asn_names_with_version(pool_params):
     pool_path = helpers.t_path(pool_params)
     pool = helpers.combine_pools(pool_path)
     rules = helpers.registry_level2_only()
-    asns, orphaned = generate(pool, rules, version_id=True)
+    asns = generate(pool, rules, version_id=True)
     assert len(asns) > 0
     for asn in asns:
         name = asn.asn_name

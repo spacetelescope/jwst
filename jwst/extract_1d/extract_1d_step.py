@@ -108,6 +108,8 @@ class Extract1dStep(Step):
             # Set the step flag to complete
             result.meta.cal_step.extract_1d = 'COMPLETE'
 
+        input_model.close()
+
         return result
 
 def extract_1d_correction(input):

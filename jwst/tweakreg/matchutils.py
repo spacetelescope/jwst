@@ -6,7 +6,10 @@ import numpy as np
 import stsci.imagestats as imagestats
 
 # LOCAL
-from . import chelp
+try:
+    from . import chelp
+except ImportError:
+    chelp = None
 from . import __version__
 from . import __vdate__
 
@@ -62,6 +65,9 @@ def build_xy_zeropoint(imgxy, refxy, searchrad=3.0):
     """
     log.info("Computing initial guess for X and Y shifts...")
 
+    if chelp is None:
+        raise ImportError('cannot import chelp')
+    
     # run C function to create ZP matrix
     zpmat = chelp.arrxyzero(imgxy.astype(np.float32),
                             refxy.astype(np.float32), searchrad)

@@ -1,0 +1,26 @@
+channels:
+  - http://ssb.stsci.edu/astroconda-dev
+  
+dependencies:
+  - python>=3
+  - setuptools
+  - asdf
+  - astropy
+  - crds
+  - dask
+  - drizzle
+  - drizzlepac
+  - gwcs
+  - jsonschema
+  - jplephem
+  - matplotlib
+  - namedlist
+  - numpy
+  - photutils
+  - pymssql
+  - scipy
+  - six
+  - verhawk
+  - sphinx_rtd_theme
+  - pip:
+    - sphinx-automodapi

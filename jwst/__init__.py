@@ -1,4 +1,8 @@
-from .version import *
+try:
+    from .version import *
+except ImportError:  # Not available for RTD
+    __version_commit__ = 'unknown'
+    __version__ = 'dev'
 import sys
 
 if sys.version_info < (3, 5):

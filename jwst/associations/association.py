@@ -5,7 +5,6 @@ from datetime import datetime
 import json
 import jsonschema
 import logging
-from nose.tools import nottest
 import re
 
 from numpy.ma import masked
@@ -333,7 +332,7 @@ class Association(MutableMapping):
 
         matches = True
         if check_constraints:
-            matches, reprocess = self.test_and_set_constraints(item)
+            matches, reprocess = self.check_and_set_constraints(item)
 
         if matches:
             if self.run_init_hook:
@@ -343,9 +342,8 @@ class Association(MutableMapping):
 
         return matches, reprocess
 
-    @nottest
-    def test_and_set_constraints(self, item):
-        """Test whether the given dictionaries match parameters for
+    def check_and_set_constraints(self, item):
+        """Check whether the given dictionaries match parameters for
         for this association
 
         Parameters
@@ -416,6 +414,12 @@ class Association(MutableMapping):
             self.force_reprocess = conditions.get('force_reprocess', False)
             return (True, reprocess)
 
+        # Get whether condition is require to exist and be true.
+        required = conditions.get(
+            'required',
+            self.DEFAULT_REQUIRE_CONSTRAINT
+        )
+
         # Get the condition information.
         try:
             input, value = self.item_getattr(
@@ -423,11 +427,7 @@ class Association(MutableMapping):
                 conditions['inputs'],
             )
         except KeyError:
-            if not conditions.get('force_undefined', False) and \
-               conditions.get(
-                   'required',
-                   self.DEFAULT_REQUIRE_CONSTRAINT
-               ):
+            if required and not conditions.get('force_undefined', False):
                 return False, reprocess
             else:
                 return True, reprocess

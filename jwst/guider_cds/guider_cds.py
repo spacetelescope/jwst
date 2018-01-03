@@ -2,7 +2,6 @@
 # 
 #  guider_cds.py
 
-from __future__ import division
 import time
 import numpy as np
 import logging
@@ -75,6 +74,9 @@ def guider_cds(model):
 
     # copy all meta data from input to output model
     new_model.update(model)
+
+    # Update BUNIT to reflect count rate
+    new_model.meta.bunit_data = 'DN/s'
 
     # Add all table extensions to be carried over to output
     if len(model.planned_star_table):

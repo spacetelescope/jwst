@@ -24,7 +24,7 @@ class TestLevel3WFS(helpers.BasePoolRule):
         pool = helpers.combine_pools(
             helpers.t_path('data/pool_004_wfs.csv')
         )
-        (asns, orphaned) = generate(pool, rules)
+        asns = generate(pool, rules)
         name = asns[0]['products'][0]['name']
         assert name == 'jw99009-c1000_t001_nircam_f150w2'
         assert asns[0]['asn_type'] == 'wfs'

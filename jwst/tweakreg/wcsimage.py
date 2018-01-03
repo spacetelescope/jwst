@@ -26,7 +26,6 @@ from stsci.stimage import xyxymatch
 from ..transforms.tpcorr import TPCorr, rot_mat3D
 from . import linearfit
 from . import matchutils
-from . import wcsutils
 from . import __version__
 from . import __vdate__
 
@@ -644,7 +643,6 @@ class WCSImageCatalog(object):
         """
         return self._bb_radec
 
-
 class WCSGroupCatalog(object):
     """
     A class that holds together `WCSImageCatalog` image catalog objects
@@ -786,7 +784,6 @@ class WCSGroupCatalog(object):
         catalogs = []
         catno = 0
         for image in self._images:
-
             catlen = len(image.catalog)
 
             if image.name is None:
@@ -872,7 +869,7 @@ class WCSGroupCatalog(object):
 
         # compute x & y in the reference WCS:
         xtp, ytp = tanplane_wcs.world_to_tanp(self.catalog['RA'],
-                                          self.catalog['DEC'])
+                                              self.catalog['DEC'])
         self._catalog['xtanp'] = table.MaskedColumn(
             xtp, name='xtanp', dtype=np.float64, mask=False
         )
@@ -1005,7 +1002,8 @@ class WCSGroupCatalog(object):
 
         return matches
 
-    def fit2ref(self, refcat, fitgeom='general', nclip=3, sigma=3.0):
+    def fit2ref(self, refcat, tanplane_wcs, fitgeom='general', nclip=3,
+                sigma=3.0):
         """
         Perform linear fit of this group's combined catalog to the reference
         catalog.
@@ -1015,8 +1013,12 @@ class WCSGroupCatalog(object):
         ----------
 
         refcat : RefCatalog
-            A `RefCatalog` object that contains a catalog of reference sources
-            as well as a valid reference WCS.
+            A `RefCatalog` object that contains a catalog of reference sources.
+
+        tanplane_wcs : ImageWCS
+            A `ImageWCS` object that will provide transformations to
+            the tangent plane to which sources of this catalog a should be
+            "projected".
 
         fitgeom : {'shift', 'rscale', 'general'}, optional
             The fitting geometry to be used in fitting the matched object
@@ -1044,15 +1046,12 @@ class WCSGroupCatalog(object):
 
         fit = linearfit.iter_linear_fit(
             refxy, im_xyref, fitgeom=fitgeom,
-            nclip=nclip, sigma=sigma, center=(0, 0)#refcat.crpix
+            nclip=nclip, sigma=sigma, center=(0, 0)
         )
 
-        fit['rms_keys'] = {'RMS_RA': 0, 'RMS_DEC': 0, 'NMATCH': 0} #self._compute_fit_rms(fit, refcat)
         xy_fit = fit['img_coords'] + fit['resids']
         fit['fit_xy'] = xy_fit
-        #ra_fit, dec_fit = refcat.wcs_pix2world(xy_fit[0], xy_fit[1])
-        fit['fit_RA'] = xy_fit[0] #ra_fit
-        fit['fit_DEC'] = xy_fit[1] #dec_fit
+        fit['fit_RA'], fit['fit_DEC'] = tanplane_wcs.tanp_to_world(*(xy_fit.T))
 
         log.info("Computed '{:s}' fit for {}:".format(fitgeom, self.name))
         if fitgeom == 'shift':
@@ -1078,34 +1077,33 @@ class WCSGroupCatalog(object):
         log.info("")
         log.info("XRMS: {:.6g}    YRMS: {:.6g}".format(fit['rms'][0],
                                                        fit['rms'][1]))
-        log.info("RMS_RA: {:g} (deg)   RMS_DEC: {:g} (deg)"
-                 .format(fit['rms_keys']['RMS_RA'],
-                         fit['rms_keys']['RMS_DEC']))
         log.info("Final solution based on {:d} objects."
-                 .format(fit['rms_keys']['NMATCH']))
+                 .format(fit['resids'].shape[0]))
 
         return fit
 
-    def _compute_fit_rms(self, fit, refwcs):
-        # start by interpreting the fit to get the RMS values
-        crpix = refwcs.crpix + fit['rms']
-        rms_ra, rms_dec = refwcs.wcs_pix2world(crpix[0], crpix[1])
-        crval1, crval2 = refwcs.crval
-        rms_ra = np.abs(rms_ra - crval1)
-        rms_dec = np.abs(rms_dec - crval2)
-        nmatch = fit['resids'].shape[0]
-        return {'RMS_RA': rms_ra, 'RMS_DEC': rms_dec, 'NMATCH': nmatch}
 
-    def apply_affine_to_wcs(self, refcat, matrix, xsh, ysh):
+    def apply_affine_to_wcs(self, tanplane_wcs, matrix, shift):
         """ Applies a general affine transformation to the WCS.
         """
+        # compute the matrix for the scale and rotation correction
+        matrix = matrix.T
+        shift = -np.dot(np.linalg.inv(matrix), shift)
+
         for imcat in self:
-            wcsutils.apply_affine_to_wcs(
-                imwcs=imcat.imwcs,
-                xsh=xsh,
-                ysh=ysh,
-                matrix=matrix
-            )
+            # compute linear transformation from the tangent plane used for
+            # alignment to the tangent plane of another image in the group:
+            if imcat.imwcs == tanplane_wcs:
+                m = matrix.copy()
+                s = s.copy()
+            else:
+                r1, t1 = _tp2tp(imcat.imwcs, tanplane_wcs)
+                r2, t2 = _tp2tp(tanplane_wcs, imcat.imwcs)
+                m = np.linalg.multi_dot([r2, matrix, r1])
+                s = t1 + np.dot(np.linalg.inv(r1), shift) + \
+                    np.dot(np.linalg.inv(np.dot(matrix, r1)), t2)
+
+            imcat.imwcs.set_correction(m, s)
             imcat.meta['image_model'].meta.wcs = imcat.wcs
 
     def align_to_ref(self, refcat, minobj=15, searchrad=1.0, separation=0.5,
@@ -1178,16 +1176,32 @@ class WCSGroupCatalog(object):
         if len(self._images) == 0:
             return
 
-        self.calc_tanp_xy(tanplane_wcs=self._images[0])
-        refcat.calc_tanp_xy(tanplane_wcs=self._images[0])
+        tanplane_wcs = deepcopy(self._images[0].imwcs)
+
+        self.calc_tanp_xy(tanplane_wcs=tanplane_wcs)
+        refcat.calc_tanp_xy(tanplane_wcs=tanplane_wcs)
         self.match2ref(refcat=refcat, minobj=minobj, searchrad=searchrad,
                        separation=separation,
                        use2dhist=use2dhist, xoffset=xoffset, yoffset=yoffset,
                        tolerance=tolerance)
-        fit = self.fit2ref(refcat=refcat, fitgeom=fitgeom,
-                           nclip=nclip, sigma=sigma)
-        self.apply_affine_to_wcs(refcat=refcat, matrix=fit['fit_matrix'],
-                                 xsh=fit['offset'][0], ysh=fit['offset'][1])
+        fit = self.fit2ref(refcat=refcat, tanplane_wcs=tanplane_wcs,
+                           fitgeom=fitgeom, nclip=nclip, sigma=sigma)
+        self.apply_affine_to_wcs(
+            tanplane_wcs=tanplane_wcs,
+            matrix=fit['fit_matrix'],
+            shift=fit['offset']
+        )
+
+
+def _tp2tp(imwcs1, imwcs2):
+    x = np.array([0.0, 1.0, 0.0], dtype=np.float)
+    y = np.array([0.0, 0.0, 1.0], dtype=np.float)
+    xrp, yrp = imwcs2.world_to_tanp(*imwcs1.tanp_to_world(x, y))
+
+    matrix = np.array([(xrp[1:] - xrp[0]), (yrp[1:] - yrp[0])])
+    shift = -np.dot(np.linalg.inv(matrix), [xrp[0], yrp[0]])
+
+    return matrix, shift
 
 
 class RefCatalog(object):

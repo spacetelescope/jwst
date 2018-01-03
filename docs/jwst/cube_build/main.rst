@@ -29,14 +29,14 @@ Assumption
 ----------
 It is assumed the assign_wcs step has been run on the data, attaching the distortion and pointing
 information to the image. It is also assumed the photom step has converted the detector pixels from
-units of flux to surface brightness. This step will only work with  MIRI or NIRSPEC IFUdata. 
+units of flux to surface brightness. This step will only work with  MIRI or NIRSPEC IFU data. 
 
 
 Background Information
 ----------------------
 The JWST integral field spectrographs obtain simultaneous spectral and spatial data on a relatively compact
-region of the sky. The MIRI Medium Resolution Spectrograph (MRS) consists of four integral field units
-providing four simultaneous and overlapping fields of view ranging from 3.7" X 3.7" to ~7.7" X 7.7" covering a
+region of the sky. The MIRI Medium Resolution Spectrometer (MRS) consists of four integral field units
+providing four simultaneous and overlapping fields of view ranging from 3.3" X 3.7" to ~ 7.2" X 7.7" covering a
 wavelength range from 5 to 28 microns. The optics system for the four IFUs is split into two paths. One path
 is dedicated to the two short wavelength IFUs and the other one handles the two longer wavelength IFUs.
 There is one 1024 X 1024 SCA for each path. Light entering the MRS is spectrally separated into four
@@ -45,7 +45,7 @@ slices. Each slice is then dispersed using a grating spectrograph and imaged on 
 four channels are observed simultaneously, each exposure only records the spectral coverage of
 approximately one third of the full wavelength range of each channel. The full 5 to 28 micron spectrum is then
 obtained by making three exposures using three different gratings and three different dichroic sets.
-We refer to a sub-channel as one of the three possible configurations of the channel where each
+We refer to a sub-channel as one of the three possible configurations (A/B/C) of the channel where each
 sub-channel covers ~1/3 of the full spectrum for the channel. Each of the four channels have a different sampling
 of the field, so the FOV, slice width, number of slices and plate scales are different for each channel.
 
@@ -70,15 +70,16 @@ Terminology
 
 **We use the following terminology to define the spectral range divisions of MIRI:**
 
-- *Channel* the spectral range covered by each MIRI IFU. The channels are labeled as 1, 2, 3 or 4.
-- *Sub-Channel* each of the 3 sub-ranges that a channel is divided into. We  will designate these as *Short*, *Medium*, or *Long*.
-- *Band*
+- *Channel*: The spectral range covered by each MIRI IFU. The channels are labeled as 1, 2, 3 or 4.
+- *Sub-Channel*: The 3 sub-ranges that a channel is divided into. These are designated as *Short(A)*, *Medium(B)*, or *Long(C)*.
+- *Band*:
 
-  For **MIRI** band is one of the 12 sub-ranges the spectral range of the MRS can be divided, each band has unique
+  For **MIRI** band is one of the 12 contiguous wavelength intervals (four channels times three sub-channels each) into which
+  the spectral range of the MRS is divided.  Each band (e.g., 1A, aka 1-SHORT) has a unique
   channel/sub-channel combination, i.e., the shortest wavelength range on MIRI is covered by Band 1-SHORT and the
   longest is covered by Band 4-LONG.
 
-  For **NIRSPEC** band is defined by a single grating-filter combination, i.e. G140M-F070LP
+
 
 **NIRSPEC Optical Element and Filter possibilities for IFU mode:**
 
@@ -96,6 +97,7 @@ G235H    F170LP  1.7 - 3.1
 G395H    F290LP  2.9 - 5.2
 =======  ======  ====================
 
+For NIRSPEC we have defined a *band*  as a  single grating-filter combination, i.e. G140M-F070LP.
 
 **Coordinate Systems:**
 
@@ -109,10 +111,10 @@ overview of these coordinate systems:
 
 - *Telescope (V2,V3)* : the V2,V3 coordinates locate points on  a spherical coordinate system. The frame is tied
   to JWST and applies to the whole field of view, encompassing all the instruments. The coordinates (V2,V3) 
-  are Euler angles in a spherical frame rather than Cartesian. The transformation between the V2-V3 and 
-  MRS-FOV system  is fixed throughout the mission and is determined during ground testing.
+  are Euler angles in a spherical frame rather than Cartesian coordinates.
 
-- *XAN,YAN*: like V2,V3 but flipped and shifted so the origin lies between the NIRCAM detectors. 
+- *XAN,YAN*: similar to V2,V3 but flipped and shifted so the origin lies between the NIRCAM detectors instead of
+   at the telescope boresight.
    Note what OSIM and OTE call 'V2,V3' are actually XAN,YAN.
 
 - *Absolute* is the standard astronomical equatorial system of Ra-Dec.
@@ -128,7 +130,7 @@ Options which control what type of IFU cube to build.
 ----------------------------------------------------
 The input to cube build can be a single exposure or a set of exposures. There are a number of user options that control the
 type of IFU Cube to create. For standard pipeline processing in calwebb_spec3, default settings are used and the output is a set of single
-band IFU cubes. In the case of MIRI the standard IFU cubes will be single channel, single sub-channel cubes and in 
+band IFU cubes. In the case of MIRI the standard IFU cubes will be single channel, single sub-channel cubes (e.g., 1A) and in 
 the case of NIRSPEC the standard output will be be single grating, single filters cubes. Since a single MIRI exposure 
 always covers two channels, there will at least be two IFU cubes as 
 the standard output.  The calwebb_spec2 pipeline produces intermediate cubes which are single IFU cubes for a single exposure. 
@@ -170,19 +172,22 @@ To cover the full wavelength range of NIRSPEC the option ALL can be used (provid
 contain all the filters). The user can supply a comma separated string containing the filters to use.
 
 - ``--output_type [string]``
-This parameter has four valid options Band, Channel, Grating and Multi. The parameters can be combined with the options above 
-[--band, --channel,--grating, and --filter] to fully control the type of IFU cubes to make. 
+This parameter has four valid options Band, Channel, Grating and Multi. The parameters can be combined 
+with the options above  [--band, --channel,--grating, and --filter] to fully control the type of IFU 
+cubes to make. 
 
-``--output_type=Band`` is the default mode and creates IFU cubes containing only one band (channel/sub-channel or
-grating/filter combination).
+	 - ``--output_type=Band`` is the default mode and creates IFU cubes containing only one band 
+	 (channel/sub-channel or  grating/filter combination).
 
-``--output_type = channel`` combines all the MIRI channels in the data or set by the --channel option into
-a single IFU cube. 
+	 - ``--output_type = channel`` combines all the MIRI channels in the data or set by the 
+	 --channel option into a single IFU cube. 
 
-``--output_type = grating `` combines all the grating in the NIRSPEC data or set by the --grating option into a single IFU cube. 
+	 - ``--output_type = grating `` combines all the grating in the NIRSPEC data or set by the 
+	 --grating option into a single IFU cube. 
 
-``--output_type = multi`` combines data  into a single uber IFUCube. If in addition, --channel, --band, --grating, or -filter are
-also set then only the data set by those parameters will be combined into an uber cube. 
+	 - ``--output_type = multi`` combines data  into a single uber IFUCube. If in addition, 
+	 --channel, --band, --grating, or -filter are also set then only the data set by those 
+	 parameters will be combined into an uber cube. 
 
 
 - ``--weighting ['string]``
@@ -208,7 +213,7 @@ WMAP     3      2 spatial and 1 spectral  integer
 =======  =====  ========================  =========
 
 The SCI image hold the surface brightness of the cube spaxel in units of mJy/arcsecond^2. The ERR image contains the 
-error on the surface brights, the DQ image contains the data quality flag for each spaxel and the WMAP image contains
+error on the surface brightnesses, the DQ image contains the data quality flag for each spaxel and the WMAP image contains
 the number of point cloud elements contained in the region of interest of the spaxel.
 
 
@@ -242,8 +247,9 @@ Based on the arguments defining the type of cubes to create, the program selects
 each exposure that should be included in the spectral cube. The output cube is defined using the WCS information of all
 the included  input data.
 This output cube WCS defines a field-of-view that encompasses the undistorted footprints on
-the sky of all the input images. The output sample size for the three dimensions are stored in a cubepars reference file, 
-however, these sizes can also be changed by the user. The cubepars reference file contains a predefined scale to use 
+the sky of all the input images. The output sampling scale in all three dimensions for the cube
+is defined by a 'cubepars' reference file as a function of wavelength, and can also be changed by the user.
+The cubepars reference file contains a predefined scale to use 
 for each dimension for each band. If the output IFU cube contains more than one band, then  for MIRI the 
 output scale corresponds to the channel with the smallest scale. In the case of NIRSPEC only gratings of the
 same resolution are combined together in an IFU cube. The output spatial coordinate system is right ascension-declination.
@@ -251,29 +257,35 @@ same resolution are combined together in an IFU cube. The output spatial coordin
 
 All the pixels on each exposure that are included are mapped to the cube coordinate system. This input-to-output
 pixel mapping is determined via a mapping function derived from the WCS of each input image and the WCS of output cube. The
-mapping process corrects for the optical distortions and uses the spacecraft telemetry information in one rebinning step to map
-a pixel from the the detector to the cube coordinate system. The mapping is actually a series of chained transformations
-(detector -> alpha-beta-lambda), (alpha-beta-lambda -> V2, V3 lambda), (V2-V3-Lambda - > right ascension-declination-lambda),
-and (right ascension-declination-lambda -> Cube coordinate1,-Cube Coordinate2-lambda).  The reverse of each transformation
+mapping process corrects for the optical distortions and uses the spacecraft telemetry information to map each pixel location
+to its projected location in the cube coordinate system. The mapping is actually a series of chained transformations
+(detector -> alpha-beta-lambda), (alpha-beta-lambda -> v2-v3-lambda), (v2-v3-lambda - > right ascension-declination-lambda),
+and (right ascension-declination-lambda -> Cube coordinate1-Cube Coordinate2-lambda).  The reverse of each transformation
 is also possible.
 
-The mapping process results in an irregular spaced "cloud of points" on the sky. A schematic of this process is shown
-in Figure 1. Two dithered exposures are mapped from the detector plane to the output coordinate system. The detector pixels 
-from the first exposure are shown in black, while the detector pixels from the second exposure are shown in red.
+The mapping process results in an irregular spaced "cloud of points" that sample the specific intensity
+distribution at a series of locations on the sky. A schematic of this process is shown
+in Figure 1.
 
 .. figure:: pointcloud.png
    :scale: 50%
    :align: center
 
-Figure 1: Schematic of two exposures mapped to the IFU output coordinate system. The point cloud shown by the plus symbols are 
-the detector pixels mapped to the output coordinate system. The black points are from exposure one and the red points 
+Figure 1: Schematic of two dithered exposures mapped to the IFU output coordinate system (black regular grid). 
+The plus symbols represent the point cloud mapping of detector pixels to effective sampling locations
+relative to the output coordinate system at a given wavelength. The black points are from exposure one and the red points 
 are from exposure two.
 
-Each point in the cloud contains information of the flux of the original detector pixel and the error of this flux. The final 
-flux that is derived for each cube pixel (**spaxel**) is a combination of all the **point cloud** values with a specified 
-**region of interest** from the center of the spaxel. How to best combine the point cloud values into a final flux is an  
-on-going process. The current method uses a weighting function based on the distance between the center of spaxel center and 
-point cloud member.  In order to explain this method we will introduce the follow definitions: 
+Each point in the cloud represents a measurement of the specific intensity (with corresponding uncertainty) 
+of the astronomical scene at a particular location.  The final data cube is constructed by combining each of the
+irregularly-distributed samples of the scene into a regularly-sampled grid in three dimensions for which each
+**spaxel** (i.e., a spatial pixel in the cube) has a spectrum composed of many spectral elements.
+
+The best algorithm with which to combine the irregularly-distributed samples of the point cloud to a rectilinear
+data cube is the subject of ongoing study, and depends on both the optical characteristics of the IFU and
+the science goals of a particular observing program.  At present, the default method uses a flux-conserving
+variant of Shepards method in which the value of a given element of the cube is a distance-weighted average
+of all point-cloud members within a given region of influence.  In order to explain this method we will introduce the follow definitions: 
 
 * xdistance = distance between point in the cloud and spaxel center  in units of arc seconds along the x axis
 * ydistance = distance between point in the cloud and spaxel center in units of arc seconds along the y axis
@@ -285,21 +297,22 @@ These distances are then normalized by the IFU cube sample size for the appropri
 * ynormalized = ydistance/(cube sample size in y dimension [cdelt2])
 * znormalized = zdistance/(cube sample size in z dimension [cdelt3])
 
-The final spaxel flux is determined by the  number of point cloud members found  within the region of interest 
-centered on the spaxel. The default size of the region of interest is defined a reference file, but  can be changed by the
+The final spaxel value at a given wavelength is determined as the weighted sum of the point cloud members with a spatial and
+spectral region of influence centered on the spaxel.
+The default size of the region of influence is defined in the cubepar reference file, but can be changed by the
 user with the options: ``rois`` and ``roiw``. 
+
 If *n* point cloud members are located within the ROI of a spaxel, the  spaxel flux K =
 :math:`\frac{ \sum_{i=1}^n Flux_i w_i}{\sum_{i=1}^n w_i}`
 
-Where
+where
 
-:math:`w_i =1.0 \sqrt{({xnormalized}^2 + {ynormalized}^2 + {znormalized}^2)^{p} }`
+:math:`w_i =\frac{1.0} {\sqrt{({xnormalized}_i^2 + {ynormalized}_i^2 + {znormalized}_i^2)^{p} }}`
 
 
-The default value for the *p* is  2. The optiminal choice of this value is still TBD, but
-one should consider the degree of smoothing desired in the interpolation, the density of the point cloud elements,
-and the region of interest when choosing the value.
-
+The default value for *p* is  2, although the optimal choice for this value (along with the size of the region of influence
+and the cube sampling scale) is still under study.  Similarly, other algorithms such as a 3d generalization of the drizzle algorithm
+are also being studied and may provide better performance for some science applications.
 
 *Additional constraints for MIRI data if --weighting=MIRIPSF*
 

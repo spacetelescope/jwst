@@ -53,24 +53,12 @@ logger.addHandler(logging.NullHandler())
 # The schema that these associations must adhere to.
 ASN_SCHEMA = libpath('asn_schema_jw_level3.json')
 
-# Degraded status information
-_DEGRADED_STATUS_OK = (
-    'No known degraded exposures in association.'
-)
-_DEGRADED_STATUS_NOTOK = (
-    'One or more members have an error associated with them.'
-    '\nDetails can be found in the members.exposerr property.'
-)
-
 # DMS file name templates
 _LEVEL1B_REGEX = '(?P<path>.+)(?P<type>_uncal)(?P<extension>\..+)'
 _DMS_POOLNAME_REGEX = 'jw(\d{5})_(\d{8}[Tt]\d{6})_pool'
 
 # Product name regex's
 _REGEX_ACID_VALUE = '(o\d{3}|(c|a)\d{4})'
-
-# Key that uniquely identfies members.
-KEY = 'expname'
 
 # Exposures that are always TSO
 TSO_EXP_TYPES = (
@@ -105,9 +93,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         super(DMS_Level3_Base, self).__init__(*args, **kwargs)
 
-        # Keep the set of members included in this association
-        self.members = set()
-
         # Initialize validity checks
         self.validity.update({
             'has_science': {
@@ -117,10 +102,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         })
 
         # Other presumptions on the association
-        if 'degraded_status' not in self.data:
-            self.data['degraded_status'] = _DEGRADED_STATUS_OK
-        if 'program' not in self.data:
-            self.data['program'] = 'noprogram'
         if 'constraints' not in self.data:
             self.data['constraints'] = 'No constraints'
         if 'asn_type' not in self.data:
@@ -140,7 +121,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         """Compare equality of two assocaitions"""
         if isinstance(other, DMS_Level3_Base):
             result = self.data['asn_type'] == other.data['asn_type']
-            result = result and (self.members == other.members)
+            result = result and (self.member_ids == other.member_ids)
             return result
         else:
             return NotImplemented
@@ -219,6 +200,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         If both `item` and `member` are given,
         information in `member` will take precedence.
         """
+        super(DMS_Level3_Base, self).update_asn(item=item, member=member)
+
         # Constraints
         self.data['constraints'] = '\n'.join(
             [cc for cc in self.constraints_to_text()]
@@ -234,7 +217,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         if item is not None:
 
             # Program
-            if self.data['program'] != 'noprogram':
+            if self.data['program'] == 'noprogram':
                 self.data['program'] = '{:0>5s}'.format(item['program'])
 
             # Pool
@@ -251,29 +234,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                         'version': parsed_name.group(2)
                     }
                     self.meta['pool_meta'] = pool_meta
-
-            # Degrade exposure
-            if self.data['degraded_status'] == _DEGRADED_STATUS_OK:
-                try:
-                    exposerr = item['exposerr']
-                except KeyError:
-                    pass
-                else:
-                    if exposerr not in _EMPTY:
-                        self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
-
-        # Member-based info
-        if member is not None:
-
-            # Degraded exposure
-            if self.data['degraded_status'] == _DEGRADED_STATUS_OK:
-                try:
-                    exposerr = member['exposerr']
-                except KeyError:
-                    pass
-                else:
-                    if exposerr not in _EMPTY:
-                        self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
 
         # Product-based updates
         product = self.current_product
@@ -350,9 +310,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 item['filename'],
                 member['exposerr']
             ))
-
-        # Add member to the short list
-        self.members.add(member[KEY])
+        self.from_items.append(item)
 
         # Update meta info
         self.update_asn(item=item, member=member)
@@ -399,6 +357,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             }
             self.update_validity(member)
             members.append(member)
+            self.from_items.append(item)
         self.sequence = next(self._sequence)
 
     def __repr__(self):
