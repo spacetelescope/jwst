@@ -29,14 +29,7 @@ logger.addHandler(logging.NullHandler())
 
 __all__ = [
     'ASN_SCHEMA',
-    'AsnMixin_Lv2Image',
-    'AsnMixin_Lv2ImageNonScience',
-    'AsnMixin_Lv2ImageScience',
-    'AsnMixin_Lv2Mode',
-    'AsnMixin_Lv2Singleton',
     'AsnMixin_Lv2Spec',
-    'AsnMixin_Lv2SpecScience',
-    'AsnMixin_Lv2Special',
     'DMSLevel2bBase',
     'Utility'
 ]
@@ -692,19 +685,3 @@ class AsnMixin_Lv2Spec(DMSLevel2bBase):
 
         super(AsnMixin_Lv2Spec, self)._init_hook(item)
         self.data['asn_type'] = 'spec2'
-
-
-class AsnMixin_Lv2SpecScience(DMSLevel2bBase):
-    """Level 2 Spectral association base"""
-
-    def __init__(self, *args, **kwargs):
-
-        self.add_constraints({
-            'exp_type': {
-                'value': '|'.join(SPEC2_SCIENCE_EXP_TYPES),
-                'inputs': ['exp_type'],
-                'force_unique': True,
-            }
-        })
-
-        super(AsnMixin_Lv2SpecScience, self).__init__(*args, **kwargs)

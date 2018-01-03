@@ -112,11 +112,12 @@ class Association(MutableMapping):
         })
 
         # Add in the global constraints.
-        constraints = getattr(self, 'constraints', SimpleConstraint())
-        self.constraints = Constraint([
-            constraints,
-            self.GLOBAL_CONSTRAINT
-        ])
+        constraint_list = []
+        constraint = getattr(self, 'constraints', False)
+        if constraint:
+            constraint_list.append(constraint)
+        constraint_list.append(self.GLOBAL_CONSTRAINT)
+        self.constraints = Constraint(constraint_list)
 
     @classmethod
     def create(cls, item, version_id=None):

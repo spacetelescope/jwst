@@ -498,7 +498,9 @@ class DMSBaseMixin(ACIDMixin):
             No constraints produce this value
         """
         try:
-            activity_id = format_list(self.constraints['activity_id']['found_values'])
+            activity_id = format_list(
+                self.constraints['activity_id'].found_values
+            )
         except KeyError:
             raise AssociationNotAConstraint
         else:

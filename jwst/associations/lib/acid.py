@@ -67,7 +67,7 @@ class ACIDMixin():
                 value = re.sub(
                     '\\\\',
                     '',
-                    '-'.join(constraint['found_values'])
+                    '-'.join(constraint.found_values)
                 )
                 try:
                     acid = ACID(value)

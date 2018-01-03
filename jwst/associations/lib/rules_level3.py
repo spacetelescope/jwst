@@ -24,7 +24,7 @@ class Asn_Image(DMS_Level3_Base):
 
     def __init__(self, *args, **kwargs):
 
-        # Setup for checking.
+        # Setup constraints
         self.constraints = Constraint([
             CONSTRAINT_BASE,
             CONSTRAINT_OPTICAL_PATH,
@@ -45,3 +45,47 @@ class Asn_Image(DMS_Level3_Base):
 
         self.data['asn_type'] = 'image3'
         super(Asn_Image, self)._init_hook(item)
+
+
+class Asn_WFSCMB(DMS_Level3_Base):
+    """Wavefront Sensing association
+
+    Notes
+    -----
+    Defined by `TRAC issue #269 <https://aeon.stsci.edu/ssb/trac/jwst/ticket/269>`_
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_OPTICAL_PATH,
+            CONSTRAINT_TARGET,
+            CONSTRAINT_IMAGE,
+            AttrConstraint(
+                name='wfsvisit',
+                sources=['visitype'],
+                value='.+wfsc.+',
+            ),
+            AttrConstraint(
+                name='asn_candidate_wfs',
+                sources=['asn_candidate'],
+                value='.+mosaic.+',
+                force_unique=True,
+                is_acid=True,
+                evaluate=True,
+            ),
+            AttrConstraint(
+                name='activity_id',
+                sources=['act_id']
+            )
+        ])
+
+        super(Asn_WFSCMB, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'wfs'
+        super(Asn_WFSCMB, self)._init_hook(item)

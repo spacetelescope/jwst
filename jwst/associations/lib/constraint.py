@@ -415,32 +415,29 @@ class Constraint:
             constraint.check_and_set(item)
             for constraint in self.constraints
         ]
-        result = self.reduce(results)
+        matches, reprocess = zip(*results)
+        match = self.reduce(matches)
+
+        all_reprocess = chain(*reprocess)
 
         # If a positive, replace positive returning
         # constraints in the list.
-        all_reprocess = []
         new_constraint = False
-        if result:
-            new_constraint = Constraint(reduce=self.reduce)
-            for idx, (constraint, reprocess) in enumerate(results):
-                all_reprocess.extend(reprocess)
+        if match:
+            new_constraint = Constraint(self)
+            for idx, constraint in enumerate(matches):
                 if constraint:
-                    new_constraint.constraints.append(constraint)
-                else:
-                    new_constraint.constraints.append(self.constraints[idx])
+                    new_constraint.constraints[idx] = constraint
 
         return new_constraint, all_reprocess
 
     @staticmethod
-    def all(results):
-        constraints, reprocess = zip(*results)
-        return all(constraints)
+    def all(matches):
+        return all(matches)
 
     @staticmethod
-    def any(results):
-        constraints, reprocess = zip(*results)
-        return any(constraints)
+    def any(matches):
+        return any(matches)
 
     # Make iterable
     def __iter__(self):
