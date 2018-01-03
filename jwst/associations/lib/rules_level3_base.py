@@ -40,6 +40,7 @@ __all__ = [
     'CONSTRAINT_BASE',
     'CONSTRAINT_IMAGE',
     'CONSTRAINT_MIRI',
+    'CONSTRAINT_NIRISS',
     'CONSTRAINT_NOTTSO',
     'CONSTRAINT_OPTICAL_PATH',
     'CONSTRAINT_TARGET',
@@ -548,13 +549,18 @@ CONSTRAINT_IMAGE = AttrConstraint(
         '|nis_image'
         '|fgs_image'
     ),
-    force_unique=True,
 )
 
 CONSTRAINT_MIRI = AttrConstraint(
     name='instrument_miri',
     sources=['instrume'],
     value='miri',
+)
+
+CONSTRAINT_NIRISS = AttrConstraint(
+    name='instrument_niriss',
+    sources=['instrume'],
+    value='nis',
 )
 
 CONSTRAINT_NOTTSO = AttrConstraint(

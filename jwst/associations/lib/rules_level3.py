@@ -8,6 +8,7 @@ __all__ = [
     'Asn_Image',
     'Asn_MIRI_LRS_FIXEDSLIT',
     'Asn_MIRI_LRS_SLITLESS',
+    'Asn_NIS_SO_SLITLESS',
     'Asn_WFSCMB',
 ]
 
@@ -104,7 +105,6 @@ class Asn_MIRI_LRS_FIXEDSLIT(AsnMixin_Spectrum):
             CONSTRAINT_BASE,
             CONSTRAINT_NOTTSO,
             CONSTRAINT_TARGET,
-            CONSTRAINT_MIRI,
             AttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -112,6 +112,7 @@ class Asn_MIRI_LRS_FIXEDSLIT(AsnMixin_Spectrum):
                     'mir_lrs-fixedslit'
                     '|mir_tacq'
                 ),
+                force_unique=False,
             ),
             AttrConstraint(
                 name='opt_elem',
@@ -139,7 +140,6 @@ class Asn_MIRI_LRS_SLITLESS(AsnMixin_Spectrum):
             CONSTRAINT_BASE,
             CONSTRAINT_NOTTSO,
             CONSTRAINT_TARGET,
-            CONSTRAINT_MIRI,
             AttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -147,6 +147,7 @@ class Asn_MIRI_LRS_SLITLESS(AsnMixin_Spectrum):
                     'mir_lrs-slitless'
                     '|mir_tacq'
                 ),
+                force_unique=False,
             ),
             AttrConstraint(
                 name='opt_elem',
@@ -162,3 +163,42 @@ class Asn_MIRI_LRS_SLITLESS(AsnMixin_Spectrum):
 
         # Check and continue initialization.
         super(Asn_MIRI_LRS_SLITLESS, self).__init__(*args, **kwargs)
+
+
+class Asn_NIS_SO_SLITLESS(AsnMixin_Spectrum):
+    """NIRISS Single-Object Slitless"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_TARGET,
+            AttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'nis_soss'
+                    '|nis_tacq'
+                    '|nis_tacnfrm'
+                ),
+                force_unique=False,
+            ),
+            AttrConstraint(
+                name='opt_elem',
+                sources=['pupil'],
+                value='gr700xd',
+            ),
+            AttrConstraint(
+                name='subarray',
+                sources=['subarray'],
+                value=(
+                    'full'
+                    '|substrip256'
+                    '|substrip80'
+                ),
+            )
+        ])
+
+        # Check and continue initialization.
+        super(Asn_NIS_SO_SLITLESS, self).__init__(*args, **kwargs)
