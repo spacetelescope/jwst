@@ -34,10 +34,13 @@ from jwst.associations.lib.dms_base import (
 from jwst.associations.lib.format_template import FormatTemplate
 
 __all__ = [
+    'AsnMixin_Spectrum',
     'ASN_SCHEMA',
     'AttrConstraint',
     'CONSTRAINT_BASE',
     'CONSTRAINT_IMAGE',
+    'CONSTRAINT_MIRI',
+    'CONSTRAINT_NOTTSO',
     'CONSTRAINT_OPTICAL_PATH',
     'CONSTRAINT_TARGET',
     'Constraint',
@@ -536,6 +539,31 @@ CONSTRAINT_BASE = Constraint([
     )
 ])
 
+CONSTRAINT_IMAGE = AttrConstraint(
+    name='exp_type',
+    sources=['exp_type'],
+    value=(
+        'nrc_image'
+        '|mir_image'
+        '|nis_image'
+        '|fgs_image'
+    ),
+    force_unique=True,
+)
+
+CONSTRAINT_MIRI = AttrConstraint(
+    name='instrument_miri',
+    sources=['instrume'],
+    value='miri',
+)
+
+CONSTRAINT_NOTTSO = AttrConstraint(
+    name='is_not_tso',
+    sources=['tsovisit'],
+    value='[^t]',
+    required=False,
+)
+
 CONSTRAINT_OPTICAL_PATH = Constraint([
     AttrConstraint(
         name='opt_elem',
@@ -553,14 +581,15 @@ CONSTRAINT_TARGET = AttrConstraint(
     sources=['targetid'],
 )
 
-CONSTRAINT_IMAGE = AttrConstraint(
-    name='exp_type',
-    sources=['exp_type'],
-    value=(
-        'nrc_image'
-        '|mir_image'
-        '|nis_image'
-        '|fgs_image'
-    ),
-    force_unique=True,
-)
+
+# -----------
+# Base Mixins
+# -----------
+class AsnMixin_Spectrum(DMS_Level3_Base):
+    """All things that are spectrum"""
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'spec3'
+        super(AsnMixin_Spectrum, self)._init_hook(item)
