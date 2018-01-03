@@ -202,3 +202,40 @@ class Asn_NIS_SO_SLITLESS(AsnMixin_Spectrum):
 
         # Check and continue initialization.
         super(Asn_NIS_SO_SLITLESS, self).__init__(*args, **kwargs)
+
+
+class Asn_NRS_FIXEDSLIT(AsnMixin_Spectrum):
+    """NIRSPEC Fixed Slit"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_OPTICAL_PATH,
+            CONSTRAINT_TARGET,
+            AttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'nrs_fixedslit'
+                    '|nrs_autowave'
+                    '|nrs_confirm'
+                    '|nrs_taconfirm'
+                    '|nrs_tacq'
+                    '|nrs_taslit'
+                ),
+                force_unique=False,
+            ),
+            AttrConstraint(
+                name='fixed_slit',
+                sources=['fxd_slit']
+            ),
+            AttrConstraint(
+                name='subarray',
+                sources=['subarray']
+            ),
+        ])
+
+        # Check and continue initialization.
+        super(Asn_NRS_FIXEDSLIT, self).__init__(*args, **kwargs)
