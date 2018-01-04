@@ -36,7 +36,6 @@ from jwst.associations.lib.format_template import FormatTemplate
 __all__ = [
     'AsnMixin_Spectrum',
     'ASN_SCHEMA',
-    'AttrConstraint',
     'CONSTRAINT_BASE',
     'CONSTRAINT_IMAGE',
     'CONSTRAINT_MIRI',
@@ -46,6 +45,7 @@ __all__ = [
     'CONSTRAINT_TARGET',
     'Constraint',
     'DMS_Level3_Base',
+    'LV3AttrConstraint',
     'ProcessList',
     'Utility',
 ]
@@ -529,18 +529,48 @@ format_product = FormatTemplate(
 # Basic constraints
 # -----------------
 
+class LV3AttrConstraint(AttrConstraint):
+    """Leve3-focused attribute constraint
+
+    Forces definition of invalid values
+    """
+    def __init__(self,
+                 init=None,
+                 evaluate=False,
+                 force_undefined=False,
+                 force_unique=True,
+                 invalid_values=None,
+                 onlyif=None,
+                 required=True,
+                 **kwargs):
+
+        if invalid_values is None:
+            invalid_values = DMS_Level3_Base.INVALID_VALUES
+
+        super(LV3AttrConstraint, self).__init__(
+            init=init,
+            evaluate=evaluate,
+            force_undefined=force_undefined,
+            force_unique=force_unique,
+            invalid_values=invalid_values,
+            onlyif=onlyif,
+            required=required,
+            **kwargs
+        )
+
+
 CONSTRAINT_BASE = Constraint([
-    AttrConstraint(
+    LV3AttrConstraint(
         name='program',
         sources=['program'],
     ),
-    AttrConstraint(
+    LV3AttrConstraint(
         name='instrument',
         sources=['instrume'],
     )
 ])
 
-CONSTRAINT_IMAGE = AttrConstraint(
+CONSTRAINT_IMAGE = LV3AttrConstraint(
     name='exp_type',
     sources=['exp_type'],
     value=(
@@ -551,19 +581,19 @@ CONSTRAINT_IMAGE = AttrConstraint(
     ),
 )
 
-CONSTRAINT_MIRI = AttrConstraint(
+CONSTRAINT_MIRI = LV3AttrConstraint(
     name='instrument_miri',
     sources=['instrume'],
     value='miri',
 )
 
-CONSTRAINT_NIRISS = AttrConstraint(
+CONSTRAINT_NIRISS = LV3AttrConstraint(
     name='instrument_niriss',
     sources=['instrume'],
     value='nis',
 )
 
-CONSTRAINT_NOTTSO = AttrConstraint(
+CONSTRAINT_NOTTSO = LV3AttrConstraint(
     name='is_not_tso',
     sources=['tsovisit'],
     value='[^t]',
@@ -571,18 +601,18 @@ CONSTRAINT_NOTTSO = AttrConstraint(
 )
 
 CONSTRAINT_OPTICAL_PATH = Constraint([
-    AttrConstraint(
+    LV3AttrConstraint(
         name='opt_elem',
         sources=['filter'],
     ),
-    AttrConstraint(
+    LV3AttrConstraint(
         name='opt_elem2',
         sources=['pupil', 'grating'],
         required=False,
     )
 ])
 
-CONSTRAINT_TARGET = AttrConstraint(
+CONSTRAINT_TARGET = LV3AttrConstraint(
     name='target',
     sources=['targetid'],
 )

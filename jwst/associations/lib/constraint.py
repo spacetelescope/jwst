@@ -265,7 +265,7 @@ class AttrConstraint(SimpleConstraintABC):
             self.onlyif = lambda item: True
         else:
             self.onlyif = onlyif
-        self.required = True
+        self.required = required
 
         self.found_values = set()
 

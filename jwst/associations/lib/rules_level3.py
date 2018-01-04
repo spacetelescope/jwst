@@ -34,10 +34,11 @@ class Asn_Image(DMS_Level3_Base):
             CONSTRAINT_OPTICAL_PATH,
             CONSTRAINT_TARGET,
             CONSTRAINT_IMAGE,
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='wfsvisit',
                 sources=['visitype'],
-                value='((?!wfsc).)*'
+                value='((?!wfsc).)*',
+                required=False
             ),
         ])
 
@@ -67,12 +68,12 @@ class Asn_WFSCMB(DMS_Level3_Base):
             CONSTRAINT_OPTICAL_PATH,
             CONSTRAINT_TARGET,
             CONSTRAINT_IMAGE,
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='wfsvisit',
                 sources=['visitype'],
                 value='.+wfsc.+',
             ),
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='asn_candidate_wfs',
                 sources=['asn_candidate'],
                 value='.+mosaic.+',
@@ -80,7 +81,7 @@ class Asn_WFSCMB(DMS_Level3_Base):
                 is_acid=True,
                 evaluate=True,
             ),
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='activity_id',
                 sources=['act_id']
             )
@@ -105,7 +106,7 @@ class Asn_MIRI_LRS_FIXEDSLIT(AsnMixin_Spectrum):
             CONSTRAINT_BASE,
             CONSTRAINT_NOTTSO,
             CONSTRAINT_TARGET,
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -114,12 +115,12 @@ class Asn_MIRI_LRS_FIXEDSLIT(AsnMixin_Spectrum):
                 ),
                 force_unique=False,
             ),
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='opt_elem',
                 sources=['filter'],
                 value='p750l',
             ),
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='subarray',
                 sources=['subarray'],
                 value='full',
@@ -140,7 +141,7 @@ class Asn_MIRI_LRS_SLITLESS(AsnMixin_Spectrum):
             CONSTRAINT_BASE,
             CONSTRAINT_NOTTSO,
             CONSTRAINT_TARGET,
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -149,12 +150,12 @@ class Asn_MIRI_LRS_SLITLESS(AsnMixin_Spectrum):
                 ),
                 force_unique=False,
             ),
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='opt_elem',
                 sources=['filter'],
                 value='p750l',
             ),
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='subarray',
                 sources=['subarray'],
                 value='subprism',
@@ -174,7 +175,7 @@ class Asn_NIS_SO_SLITLESS(AsnMixin_Spectrum):
         self.constraints = Constraint([
             CONSTRAINT_BASE,
             CONSTRAINT_TARGET,
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -184,12 +185,12 @@ class Asn_NIS_SO_SLITLESS(AsnMixin_Spectrum):
                 ),
                 force_unique=False,
             ),
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='opt_elem',
                 sources=['pupil'],
                 value='gr700xd',
             ),
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='subarray',
                 sources=['subarray'],
                 value=(
@@ -214,7 +215,7 @@ class Asn_NRS_FIXEDSLIT(AsnMixin_Spectrum):
             CONSTRAINT_BASE,
             CONSTRAINT_OPTICAL_PATH,
             CONSTRAINT_TARGET,
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -227,11 +228,11 @@ class Asn_NRS_FIXEDSLIT(AsnMixin_Spectrum):
                 ),
                 force_unique=False,
             ),
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='fixed_slit',
                 sources=['fxd_slit']
             ),
-            AttrConstraint(
+            LV3AttrConstraint(
                 name='subarray',
                 sources=['subarray']
             ),
@@ -239,3 +240,33 @@ class Asn_NRS_FIXEDSLIT(AsnMixin_Spectrum):
 
         # Check and continue initialization.
         super(Asn_NRS_FIXEDSLIT, self).__init__(*args, **kwargs)
+
+
+class Asn_NRS_MSA(AsnMixin_Spectrum):
+    """NIRSPEC MSA"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_OPTICAL_PATH,
+            CONSTRAINT_TARGET,
+            LV3AttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'nrs_msaspec'
+                    '|nrs_autoflat'
+                    '|nrs_autowave'
+                    '|nrs_confirm'
+                    '|nrs_taslit'
+                    '|nrs_taconfirm'
+                    '|nrs_tacq'
+                ),
+                force_unique=False,
+            ),
+        ])
+
+        # Check and continue initialization.
+        super(Asn_NRS_MSA, self).__init__(*args, **kwargs)
