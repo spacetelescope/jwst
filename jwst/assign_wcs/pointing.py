@@ -32,7 +32,7 @@ def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_
         Reference point in the V2, V3 frame [in arcsec] (FITS keywords V2_REF and V3_REF)
     roll_ref : float
         Position angle of V3 at V2_REF, V3_REF, [in deg]
-        When ROLL_REF == PA_V2, V2_REF, V3_REF = (0, 0)
+        When ROLL_REF == PA_V3, then (V2_REF, V3_REF) = (0, 0)
     ra_ref, dec_ref : float
         RA and DEC corresponding to V2_REF and V3_REF, [in deg]
     new_v2_ref, new_v3_ref : float
@@ -47,6 +47,9 @@ def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_
     """
     v2 = np.deg2rad(new_v2_ref / 3600)
     v3 = np.deg2rad(new_v3_ref / 3600)
+
+    v2_ref = v2_ref / 3600
+    v3_ref = v3_ref / 3600
 
     if np.isclose(v2_ref, 0, atol=1e-13) and np.isclose(v3_ref, 0, atol=1e-13):
         angles = [-roll_ref, -dec_ref, - ra_ref]
