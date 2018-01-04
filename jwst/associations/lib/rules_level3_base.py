@@ -534,29 +534,12 @@ class LV3AttrConstraint(AttrConstraint):
 
     Forces definition of invalid values
     """
-    def __init__(self,
-                 init=None,
-                 evaluate=False,
-                 force_undefined=False,
-                 force_unique=True,
-                 invalid_values=None,
-                 onlyif=None,
-                 required=True,
-                 **kwargs):
+    def __init__(self, **kwargs):
 
-        if invalid_values is None:
-            invalid_values = DMS_Level3_Base.INVALID_VALUES
+        if kwargs.get('invalid_values', None) is None:
+            kwargs['invalid_values'] = DMS_Level3_Base.INVALID_VALUES
 
-        super(LV3AttrConstraint, self).__init__(
-            init=init,
-            evaluate=evaluate,
-            force_undefined=force_undefined,
-            force_unique=force_unique,
-            invalid_values=invalid_values,
-            onlyif=onlyif,
-            required=required,
-            **kwargs
-        )
+        super(LV3AttrConstraint, self).__init__(**kwargs)
 
 
 CONSTRAINT_BASE = Constraint([

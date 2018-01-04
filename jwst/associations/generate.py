@@ -51,6 +51,7 @@ def generate(pool, rules, version_id=None):
     ]
 
     for process_idx, process_item in enumerate(process_list):
+        extra_process = []
         for item in process_item.items:
 
             # Determine against what the item should be compared
@@ -69,10 +70,22 @@ def generate(pool, rules, version_id=None):
                 process_item.rules
             )
             associations.extend(new_asns)
-            process_list.extend(to_process)
+
+            # If working on a process list EXISTING
+            # remove any new `to_process` that is
+            # also EXISTING. Prevent infinite loops.
+            if process_item.work_over == ProcessList.EXISTING:
+                to_process = [
+                    to_process_item
+                    for to_process_item in to_process
+                    if to_process_item.work_over != ProcessList.EXISTING
+                ]
+            extra_process.extend(to_process)
             if len(existing_asns) +\
                len(new_asns) > 0:
                 in_an_asn[item.index] = True
+
+        process_list.extend(extra_process)
 
     # Finalize found associations
     finalized_asns = rules.finalize(associations)

@@ -338,3 +338,56 @@ class Asn_NRS_IFU(AsnMixin_Spectrum):
 
         # Check and continue initialization.
         super(Asn_NRS_IFU, self).__init__(*args, **kwargs)
+
+
+class Asn_Coron(DMS_Level3_Base):
+    """Coronography
+    Notes
+    -----
+    Coronography is nearly completely defined by the association candidates
+    produced by APT.
+    Tracking Issues:
+    - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_OPTICAL_PATH,
+            LV3AttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'nrc_coron'
+                    '|mir_lyot'
+                    '|mir_4qpm'
+                ),
+            ),
+            LV3AttrConstraint(
+                name='target',
+                sources=['targetid'],
+                onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                force_reprocess=ProcessList.EXISTING,
+                only_on_match=True,
+            ),
+        ])
+
+        # PSF is required
+        self.validity.update({
+            'has_psf': {
+                'validated': False,
+                'check': lambda entry: entry['exptype'] == 'psf'
+            }
+        })
+
+        # Check and continue initialization.
+        super(Asn_Coron, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'coron3'
+        super(Asn_Coron, self)._init_hook(item)

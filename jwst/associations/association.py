@@ -15,6 +15,7 @@ from .lib.constraint import (
 )
 from .lib.format_template import FormatTemplate
 from .lib.ioregistry import IORegistry
+from .lib.process_list import ProcessList
 
 __all__ = ['Association']
 
@@ -100,7 +101,6 @@ class Association(MutableMapping):
         self.data = dict()
         self.run_init_hook = True
         self.meta = {}
-        self.force_reprocess = False
 
         self.version_id = version_id
 
@@ -367,14 +367,13 @@ class Association(MutableMapping):
             - [ProcessItem[, ...]]: List of items to process again.
 
         """
-        match, reprocess_items = self.constraints.check_and_set(item)
+        match, reprocess = self.constraints.check_and_set(item)
         if match:
             self.constraints = match
 
-        reprocess = [
-            ProcessList([reprocess_item], [type(self)])
-            for reprocess_item in reprocess_items
-        ]
+        # Set the association type for all reprocessed items.
+        for process_list in reprocess:
+            process_list.rules = [type(self)]
 
         return match, reprocess
 
@@ -494,36 +493,6 @@ class Association(MutableMapping):
 
     def values(self):
         return self.data.values()
-
-
-class ProcessList():
-    """A Process list
-
-    Parameters
-    ----------
-    items: [item[, ...]]
-        The list of items to process
-
-    rules: [Association[, ...]]
-        List of rules to process the items against.
-
-    work_over: int
-        What the reprocessing should work on:
-        - `ProcessList.EXISTING`: Only existing associations
-        - `ProcessList.RULES`: Only on the rules to create new associations
-        - `ProcessList.BOTH`: Compare to both existing and rules
-    """
-
-    (
-        BOTH,
-        EXISTING,
-        RULES
-    ) = range(1, 4)
-
-    def __init__(self, items, rules, work_over=BOTH):
-        self.items = items
-        self.rules = rules
-        self.work_over = work_over
 
 
 # #########

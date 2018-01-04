@@ -5,6 +5,7 @@ from copy import deepcopy
 from itertools import chain
 import re
 
+from .process_list import ProcessList
 from .utilities import (
     evaluate,
     getattr_from_list,
@@ -211,43 +212,50 @@ class AttrConstraint(SimpleConstraintABC):
         `force_unique`, any value in the first
         available source will become the value.
 
+    evaluate: bool
+        Evaluate the item's value before checking condition.
+
+    force_reprocess: ProcessList.state or False
+        Add item back onto the reprocess list using
+        the specified `ProcessList` work over state.
+
     force_unique: bool
         If the initial value of `value` is None,
         `value` will be set to the first source.
         Otherwise, this will be left as None.
 
-    required: bool
-        One of the sources must exist. Otherwise,
-        return as a matched constraint.
+    found_values: set(str[,...])
+        Set of actual found values for this condition.
+
+    invalid_values: [str[,...]]
+        List of values that are invalid in an item.
+        Will cause a non-match.
+
+    name: str or None
+        Name of the constraint.
+
+    only_on_match: bool
+        If `force_reprocess`, only do the reprocess
+        if the entire constraint is satisfied.
 
     onlyif: function
         Boolean function that takes `item` as argument.
         If True, the rest of the condition is checked. Otherwise
         return as a matched condition
 
-    force_reprocess: bool
-        Add item back onto the reprocess list.
-
-    evaluate: bool
-        Evaluate the item's value before checking condition.
-
-    found_values: set(str[,...])
-        Set of actual found values for this condition.
-
-    name: str or None
-        Name of the constraint.
-
-    invalid_values: [str[,...]]
-        List of values that are invalid in an item.
-        Will cause a non-match.
+    required: bool
+        One of the sources must exist. Otherwise,
+        return as a matched constraint.
     """
 
     def __init__(self,
                  init=None,
                  evaluate=False,
+                 force_reprocess=False,
                  force_undefined=False,
                  force_unique=True,
                  invalid_values=None,
+                 only_on_match=False,
                  onlyif=None,
                  required=True,
                  **kwargs):
@@ -255,12 +263,14 @@ class AttrConstraint(SimpleConstraintABC):
         # Attributes
         super(AttrConstraint, self).__init__(init=init, **kwargs)
         self.evaluate = evaluate
+        self.force_reprocess = force_reprocess
         self.force_unique = force_unique
         self.force_undefined = force_undefined
         if invalid_values is None:
             self.invalid_values = []
         else:
             self.invalid_values = invalid_values
+        self.only_on_match = only_on_match
         if onlyif is None:
             self.onlyif = lambda item: True
         else:
@@ -282,7 +292,7 @@ class AttrConstraint(SimpleConstraintABC):
         matching_constraint, reprocess: AttrConstraint or False
             A 2-tuple consisting of:
             - matching_constraint if a successful match
-            - List of items that need to be checked again.
+            - List of `ProcessList`s that need to be checked again.
         """
         reprocess = []
         match = deepcopy(self)
@@ -290,7 +300,13 @@ class AttrConstraint(SimpleConstraintABC):
         # Only perform check on specified `onlyif` condition
         if not match.onlyif(item):
             if match.force_reprocess:
-                reprocess.append(item)
+                reprocess.append(
+                    ProcessList(
+                        items=[item],
+                        work_over=match.force_reprocess,
+                        only_on_match=match.only_on_match,
+                    )
+                )
             return (match, reprocess)
 
         # Get the condition information.
@@ -313,10 +329,14 @@ class AttrConstraint(SimpleConstraintABC):
         if match.evaluate:
             evaled = evaluate(value)
             if is_iterable(evaled):
+                reprocess_items = []
                 for avalue in evaled:
                     new_item = deepcopy(item)
                     new_item[source] = str(avalue)
-                    reprocess.append(new_item)
+                    reprocess_items.append(new_item)
+                reprocess.append(ProcessList(
+                    items=reprocess_items,
+                ))
                 return False, reprocess
             value = str(evaled)
 
@@ -418,7 +438,17 @@ class Constraint:
         matches, reprocess = zip(*results)
         match = self.reduce(matches)
 
-        all_reprocess = chain(*reprocess)
+        # Add reprocess lists depending on whether
+        # a match was made or not.
+        if match:
+            reprocess_filter = lambda reprocess_item: True
+        else:
+            reprocess_filter = lambda reprocess_item: not reprocess_item.only_on_match
+        all_reprocess = [
+            reprocess_item
+            for reprocess_item in chain(*reprocess)
+            if reprocess_filter(reprocess_item)
+        ]
 
         # If a positive, replace positive returning
         # constraints in the list.
