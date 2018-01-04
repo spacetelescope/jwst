@@ -270,3 +270,43 @@ class Asn_NRS_MSA(AsnMixin_Spectrum):
 
         # Check and continue initialization.
         super(Asn_NRS_MSA, self).__init__(*args, **kwargs)
+
+
+class Asn_MIRI_IFU(AsnMixin_Spectrum):
+    """MIRI MRS (IFU)"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_TARGET,
+            LV3AttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'mir_mrs'
+                    '|mir_flatmrs'
+                    '|mir_tacq'
+                ),
+                force_unique=False,
+            ),
+        ])
+
+        # Check and continue initialization.
+        super(Asn_MIRI_IFU, self).__init__(*args, **kwargs)
+
+    def dms_product_name(self):
+        """Define product name."""
+        target = self._get_target()
+
+        instrument = self._get_instrument()
+
+        product_name = 'jw{}-{}_{}_{}'.format(
+            self.data['program'],
+            self.acid.id,
+            target,
+            instrument
+        )
+
+        return product_name.lower()
