@@ -310,3 +310,31 @@ class Asn_MIRI_IFU(AsnMixin_Spectrum):
         )
 
         return product_name.lower()
+
+
+class Asn_NRS_IFU(AsnMixin_Spectrum):
+    """NIRSPEC IFU"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_TARGET,
+            LV3AttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'nrs_ifu'
+                    '|nrs_autowave'
+                    '|nrs_confirm'
+                    '|nrs_taconfirm'
+                    '|nrs_tacq'
+                    '|nrs_taslit'
+                ),
+                force_unique=False,
+            ),
+        ])
+
+        # Check and continue initialization.
+        super(Asn_NRS_IFU, self).__init__(*args, **kwargs)
