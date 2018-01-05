@@ -434,3 +434,33 @@ class Asn_AMI(DMS_Level3_Base):
 
         self.data['asn_type'] = 'ami3'
         super(Asn_AMI, self)._init_hook(item)
+
+
+class Asn_WFSS(AsnMixin_Spectrum):
+    """WFSS/Grism modes"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_TARGET,
+            LV3AttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nis_wfss',
+            ),
+            LV3AttrConstraint(
+                name='opt_elem',
+                sources=['filter'],
+            ),
+            LV3AttrConstraint(
+                name='opt_elem2',
+                sources=['grating'],
+                value='gr150r|gr150c',
+                force_unique=False,
+            ),
+        ])
+
+        # Check and continue initialization.
+        super(Asn_WFSS, self).__init__(*args, **kwargs)
