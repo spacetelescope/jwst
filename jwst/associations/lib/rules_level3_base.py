@@ -34,8 +34,8 @@ from jwst.associations.lib.dms_base import (
 from jwst.associations.lib.format_template import FormatTemplate
 
 __all__ = [
-    'AsnMixin_Spectrum',
     'ASN_SCHEMA',
+    'AsnMixin_Spectrum',
     'CONSTRAINT_BASE',
     'CONSTRAINT_IMAGE',
     'CONSTRAINT_MIRI',

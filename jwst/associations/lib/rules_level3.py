@@ -5,11 +5,20 @@ import logging
 from jwst.associations.lib.rules_level3_base import *
 
 __all__ = [
+    'Asn_AMI',
+    'Asn_Coron',
     'Asn_Image',
     'Asn_MIRI_LRS_FIXEDSLIT',
     'Asn_MIRI_LRS_SLITLESS',
+    'Asn_MIRI_IFU',
+    'Asn_NRS_FIXEDSLIT',
+    'Asn_NRS_IFU',
+    'Asn_NRS_MSA',
     'Asn_NIS_SO_SLITLESS',
+    'Asn_TSO_EXPTYPE',
+    'Asn_TSO_Flag',
     'Asn_WFSCMB',
+    'Asn_WFSS',
 ]
 
 # Configure logging
@@ -464,7 +473,6 @@ class Asn_WFSS(AsnMixin_Spectrum):
 
         # Check and continue initialization.
         super(Asn_WFSS, self).__init__(*args, **kwargs)
-
 
 
 class Asn_TSO_Flag(DMS_Level3_Base):

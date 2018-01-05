@@ -1,7 +1,7 @@
 """Constraints
 """
 import abc
-from copy import deepcopy
+from copy import (copy, deepcopy)
 from itertools import chain
 import re
 
@@ -438,17 +438,18 @@ class Constraint:
         matches, reprocess = zip(*results)
         match = self.reduce(matches)
 
-        # Add reprocess lists depending on whether
-        # a match was made or not.
-        if match:
-            reprocess_filter = lambda reprocess_item: True
-        else:
-            reprocess_filter = lambda reprocess_item: not reprocess_item.only_on_match
-        all_reprocess = [
-            reprocess_item
-            for reprocess_item in chain(*reprocess)
-            if reprocess_filter(reprocess_item)
-        ]
+        # If a match, all reprocess items are passed on.
+        # If not a match, find the first reprocess item
+        # that returned a non-match and only pass that.
+        if not match:
+            for idx, reprocess_item in enumerate(reprocess):
+                if len(reprocess_item) > 0 and not matches[idx]:
+                    reprocess = []
+                    filtered = list(matches)
+                    del(filtered[idx])
+                    if self.reduce(filtered):
+                        reprocess = [reprocess_item]
+                    break
 
         # If a positive, replace positive returning
         # constraints in the list.
@@ -459,7 +460,7 @@ class Constraint:
                 if constraint:
                     new_constraint.constraints[idx] = constraint
 
-        return new_constraint, all_reprocess
+        return new_constraint, list(chain(*reprocess))
 
     @staticmethod
     def all(matches):

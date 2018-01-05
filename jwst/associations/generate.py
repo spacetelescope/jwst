@@ -1,5 +1,6 @@
 import logging
 
+from collections import deque
 import numpy as np
 
 from .association import (
@@ -43,15 +44,14 @@ def generate(pool, rules, version_id=None):
     in_an_asn = np.zeros((len(pool),), dtype=bool)
     if type(version_id) is bool:
         version_id = make_timestamp()
-    process_list = [
+    process_list = ProcessQueue([
         ProcessList(
             items=pool,
             rules=[rule for _, rule in rules.items()]
         )
-    ]
+    ])
 
     for process_idx, process_item in enumerate(process_list):
-        extra_process = []
         for item in process_item.items:
 
             # Determine against what the item should be compared
@@ -80,12 +80,11 @@ def generate(pool, rules, version_id=None):
                     for to_process_item in to_process
                     if to_process_item.work_over != ProcessList.EXISTING
                 ]
-            extra_process.extend(to_process)
+            process_list.extend(to_process)
+
             if len(existing_asns) +\
                len(new_asns) > 0:
                 in_an_asn[item.index] = True
-
-        process_list.extend(extra_process)
 
     # Finalize found associations
     finalized_asns = rules.finalize(associations)
@@ -193,3 +192,13 @@ def match_item(item, associations):
         if matches:
             item_associations.append(asn)
     return item_associations, process_list
+
+
+class ProcessQueue(deque):
+    """Make a deque iterable and mutable"""
+    def __iter__(self):
+        while True:
+            try:
+                yield self.popleft()
+            except:
+                break
