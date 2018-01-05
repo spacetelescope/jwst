@@ -495,3 +495,45 @@ class Asn_TSO_Flag(DMS_Level3_Base):
 
         self.data['asn_type'] = 'tso3'
         super(Asn_TSO_Flag, self)._init_hook(item)
+
+
+class Asn_TSO_EXPTYPE(DMS_Level3_Base):
+    """Time-Series observations"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_TARGET,
+            CONSTRAINT_OPTICAL_PATH,
+            LV3AttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'mir_lrs-slitless'
+                    '|nis_soss'
+                    '|nis_taconfirm'
+                    '|nis_tacq'
+                    '|nrc_tsimage'
+                    '|nrc_tsgrism'
+                    '|nrs_bota'
+                    '|nrs_brightobj'
+                    '|nrs_taconfirm'
+                ),
+            ),
+            LV3AttrConstraint(
+                name='no_tso_flag',
+                sources=['tsovisit'],
+                required=False,
+                force_undefined=True
+            )
+        ])
+
+        super(Asn_TSO_EXPTYPE, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'tso3'
+        super(Asn_TSO_EXPTYPE, self)._init_hook(item)
