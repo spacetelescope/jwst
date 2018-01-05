@@ -353,7 +353,6 @@ class Asn_Coron(DMS_Level3_Base):
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
-
         self.constraints = Constraint([
             CONSTRAINT_BASE,
             CONSTRAINT_OPTICAL_PATH,
@@ -391,3 +390,47 @@ class Asn_Coron(DMS_Level3_Base):
 
         self.data['asn_type'] = 'coron3'
         super(Asn_Coron, self)._init_hook(item)
+
+
+class Asn_AMI(DMS_Level3_Base):
+    """Aperture Mask Interferometry
+    Notes
+    -----
+    AMI is nearly completely defined by the association candidates
+    produced by APT.
+    Tracking Issues:
+    - `github #310 <https://github.com/STScI-JWST/jwst/issues/310>`
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_OPTICAL_PATH,
+            LV3AttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'nis_ami'
+                    '|nis_taconfirm'
+                    '|nis_tacq'
+                ),
+            ),
+            LV3AttrConstraint(
+                name='target',
+                sources=['targetid'],
+                onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                force_reprocess=ProcessList.EXISTING,
+                only_on_match=True,
+            ),
+        ])
+
+        # Check and continue initialization.
+        super(Asn_AMI, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'ami3'
+        super(Asn_AMI, self)._init_hook(item)
