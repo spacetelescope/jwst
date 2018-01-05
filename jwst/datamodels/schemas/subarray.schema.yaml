@@ -31,10 +31,10 @@ properties:
               # Obsolete NIRISS
               SUBSTRIP80,
               # NIRSpec
-              ALLSLITS, S200A1, S200A2, S200B1, S400A1, SUB1024A, SUB1024B,
+              ALLSLITS, SUB200A1, SUB200A2, SUB200B1, SUB400A1, SUB1024A, SUB1024B,
               SUB512, SUB32, SUB512S, SUB2048,
               # Obsolete NIRSpec
-              FULL_IRS2,
+              FULL_IRS2, S200A1, S200A2, S200B1, S400A1,
               # All
               FULL, GENERIC, N/A]
             fits_keyword: SUBARRAY

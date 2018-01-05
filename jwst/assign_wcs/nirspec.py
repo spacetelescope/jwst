@@ -304,15 +304,15 @@ def get_open_fixed_slits(input_model):
     s2b1 = Slit('S200B1', 4, 0, 0, -.5, .5, 5)
 
     subarray = input_model.meta.subarray.name.upper()
-    if subarray == "S200A1":
+    if subarray == "SUB200A1":
         slits.append(s2a1)
-    elif subarray == "S200A2":
+    elif subarray == "SUB200A2":
         slits.append(s2a2)
-    elif subarray == "S400A1":
+    elif subarray == "SSUB400A1":
         slits.append(s4a1)
-    elif subarray == "S1600A1":
+    elif subarray == "SUB2048":
         slits.append(s16a1)
-    elif subarray == "S200B1":
+    elif subarray == "SUB200B1":
         slits.append(s2b1)
     else:
         slits.extend([s2a1, s2a2, s4a1, s16a1, s2b1])
