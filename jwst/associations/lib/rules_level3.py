@@ -464,3 +464,34 @@ class Asn_WFSS(AsnMixin_Spectrum):
 
         # Check and continue initialization.
         super(Asn_WFSS, self).__init__(*args, **kwargs)
+
+
+
+class Asn_TSO_Flag(DMS_Level3_Base):
+    """Time-Series observations"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_TARGET,
+            CONSTRAINT_OPTICAL_PATH,
+            LV3AttrConstraint(
+                name='is_tso',
+                sources=['tsovisit'],
+                value='t',
+            ),
+            LV3AttrConstraint(
+                name='exp_type',
+                sources=['exp_type']
+            )
+        ])
+
+        super(Asn_TSO_Flag, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'tso3'
+        super(Asn_TSO_Flag, self)._init_hook(item)
