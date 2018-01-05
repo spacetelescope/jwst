@@ -68,14 +68,14 @@ def get_multiple_reference_paths(dataset_model, reference_file_types):
     """
     filename = dataset_model.meta.filename
     
-    try:
-
-        refpaths = { reftype:_BESTREFS_CACHE[(filename, reftype)]
-                     for reftype in reference_file_types }
-        log.verbose("Using cached bestrefs for", repr(filename), "with types", repr(reference_file_types))
-        return refpaths
-    except KeyError:
-        pass
+    # try:
+    #     refpaths = { reftype:_BESTREFS_CACHE[(filename, reftype)]
+    #                  for reftype in reference_file_types }
+    #     log.verbose("Using cached bestrefs for", repr(filename),
+    #                 "with types", repr(reference_file_types))
+    #     return refpaths
+    # except KeyError:
+    #     pass
         
     data_dict = _get_data_dict(filename, dataset_model)
 
@@ -94,15 +94,15 @@ _HEADER_CACHE = {}   #  { model_filename : flat_model_pseudo_header, ... }
 
 def _get_data_dict(filename, dataset_model):
     """Return the data models header dictionary based on open data `dataset_model`.
-
     Returns a flat parameter dictionary used for CRDS bestrefs matching.
     """
-    try:
-        header = _HEADER_CACHE[filename]
-        log.verbose("Using cached CRDS matching header for", repr(filename))
-        return header
-    except KeyError:
-        pass
+    # try:
+    #     raise KeyError("Forcing header cache skip.") # XXX unconditional miss
+    #     header = _HEADER_CACHE[filename]
+    #     log.verbose("Using cached CRDS matching header for", repr(filename))
+    #     return header
+    # except KeyError:
+    #     pass
     log.verbose("Caching CRDS matching header for", repr(filename))
     _HEADER_CACHE[filename] = header = _clean_flat_dict(dataset_model)
     return header
@@ -123,13 +123,15 @@ def _get_refpaths(data_dict, reference_file_types):
     """
     if not reference_file_types:   # [] interpreted as *all types*.
         return {}
-    try:
+    try: # catch exceptions to truncate expected tracebacks
         with crds_cache_locking.get_cache_lock():
             bestrefs = crds.getreferences(data_dict, reftypes=reference_file_types, observatory="jwst")
     except crds.CrdsBadRulesError as exc:
         raise crds.CrdsBadRulesError(str(exc))
     except crds.CrdsBadReferenceError as exc:
-        raise crds.CrdsBadReferenceError(str(exc))    
+        raise crds.CrdsBadReferenceError(str(exc))
+    except crds.CrdsLookupError as exc:
+        raise crds.CrdsLookupError(str(exc))
     refpaths = {filetype: filepath if "N/A" not in filepath.upper() else "N/A"
                 for (filetype, filepath) in bestrefs.items()}
     return refpaths
