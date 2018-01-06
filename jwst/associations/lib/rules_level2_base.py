@@ -12,6 +12,11 @@ from jwst.associations import (
     AssociationRegistry,
     libpath
 )
+from jwst.associations.lib.constraint import (
+    AttrConstraint,
+    Constraint,
+    SimpleConstraint,
+)
 from jwst.associations.lib.dms_base import (
     DMSBaseMixin,
     IMAGE2_NONSCIENCE_EXP_TYPES,
@@ -29,7 +34,16 @@ logger.addHandler(logging.NullHandler())
 
 __all__ = [
     'ASN_SCHEMA',
-    'AsnMixin_Lv2Spec',
+    'AsnMixin_Lv2Image',
+    'AsnMixin_Lv2Singleton',
+    'AsnMixin_Lv2Special',
+    'AsnMixin_Lv2Spectral',
+    'CONSTRAINT_BASE',
+    'CONSTRAINT_IMAGE_NONSCIENCE',
+    'CONSTRAINT_IMAGE_SCIENCE',
+    'CONSTRAINT_MODE',
+    'CONSTRAINT_SPECIAL',
+    'CONSTRAINT_SPECTRAL_SCIENCE',
     'DMSLevel2bBase',
     'Utility'
 ]
@@ -50,6 +64,7 @@ _REGEX_LEVEL2A = '(?P<path>.+)(?P<type>_rate(ints)?)'
 # Key that uniquely identfies items.
 KEY = 'expname'
 
+
 class DMSLevel2bBase(DMSBaseMixin, Association):
     """Basic class for DMS Level2 associations."""
 
@@ -63,20 +78,6 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
     def __init__(self, *args, **kwargs):
 
         super(DMSLevel2bBase, self).__init__(*args, **kwargs)
-
-        # I am defined by the following constraints
-        self.add_constraints({
-            'program': {
-                'value': None,
-                'inputs': ['program']
-            },
-            'is_tso': {
-                'value': None,
-                'inputs': ['tsovisit'],
-                'required': False,
-                'force_unique': True,
-            }
-        })
 
         # Initialize validity checks
         self.validity.update({
@@ -175,7 +176,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             exposerr = None
 
         # Handle time-series file naming
-        is_tso = self.constraints['is_tso']['value'] == 't'
+        is_tso = self.constraints['is_tso'].value == 't'
         if not is_tso:
             is_tso = item['exp_type'] in TSO_EXP_TYPES
 
@@ -197,9 +198,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         self.data['asn_pool'] = basename(
             item.meta['pool_file']
         ).split('.')[0]
-        self.data['constraints'] = '\n'.join(
-            [cc for cc in self.constraints_to_text()]
-        )
+        self.data['constraints'] = str(self.constraints)
         self.data['asn_id'] = self.acid.id
         self.new_product(self.dms_product_name())
 
@@ -312,8 +311,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         result.append('        Target:       {:s}'.format(self.data['target']))
         result.append('        Pool:         {:s}'.format(self.data['asn_pool']))
 
-        for cc in self.constraints_to_text():
-            result.append('        {:s}'.format(cc))
+        result.append('        {:s}'.format(str(self.constraints)))
 
         # Products of the assocation
         for product in self.data['products']:
@@ -495,123 +493,106 @@ class Utility():
         return merged_asns
 
 
+# -----------------
+# Basic constraints
+# -----------------
+class LV2AttrConstraint(AttrConstraint):
+    """Level2-focused attribute constraint
+
+    Forces definition of invalid values
+    """
+    def __init__(self, **kwargs):
+
+        if kwargs.get('invalid_values', None) is None:
+            kwargs['invalid_values'] = DMSLevel2bBase.INVALID_VALUES
+
+        super(LV2AttrConstraint, self).__init__(**kwargs)
+
+CONSTRAINT_BASE = Constraint([
+    LV2AttrConstraint(
+        name='program',
+        sources=['program']
+    ),
+    LV2AttrConstraint(
+        name='is_tso',
+        sources=['tsovisit'],
+        required=False,
+        force_unique=True,
+    )
+])
+
+CONSTRAINT_MODE = Constraint([
+    LV2AttrConstraint(
+        name='program',
+        sources=['program']
+    ),
+    LV2AttrConstraint(
+        name='target',
+        sources=['targetid'],
+    ),
+    LV2AttrConstraint(
+        name='instrument',
+        sources=['instrume']
+    ),
+    LV2AttrConstraint(
+        name='detector',
+        sources=['detector']
+    ),
+    LV2AttrConstraint(
+        name='opt_elem',
+        sources=['filter', 'band']
+    ),
+    LV2AttrConstraint(
+        name='opt_elem2',
+        sources=['pupil', 'grating'],
+        required=False,
+    ),
+    LV2AttrConstraint(
+        name='subarray',
+        sources=['subarray'],
+        required=False,
+    ),
+    LV2AttrConstraint(
+        name='channel',
+        sources=['channel'],
+        required=False,
+    )
+])
+
+CONSTRAINT_IMAGE_SCIENCE = LV2AttrConstraint(
+    name='exp_type',
+    sources=['exp_type'],
+    value='|'.join(IMAGE2_SCIENCE_EXP_TYPES)
+)
+
+CONSTRAINT_IMAGE_NONSCIENCE = LV2AttrConstraint(
+    name='non_science',
+    sources=['exp_type'],
+    value='|'.join(IMAGE2_NONSCIENCE_EXP_TYPES),
+    force_unique=False,
+)
+
+CONSTRAINT_SPECIAL = LV2AttrConstraint(
+    name='is_special',
+    sources=[
+        'bkgdtarg',
+        'is_imprt',
+        'is_psf'
+    ],
+    force_unique=False,
+)
+
+CONSTRAINT_SPECTRAL_SCIENCE = LV2AttrConstraint(
+    name='exp_type',
+    sources=['exp_typ'],
+    value='|'.join(SPEC2_SCIENCE_EXP_TYPES)
+)
+
+
 # ---------------------------------------------
 # Mixins to define the broad category of rules.
 # ---------------------------------------------
-
-# General constraints
-# -------------------
-class AsnMixin_Lv2Mode(DMSLevel2bBase):
-    """Fix the instrument configuration"""
-    def __init__(self, *args, **kwargs):
-
-        # I am defined by the following constraints
-        self.add_constraints({
-            'program': {
-                'value': None,
-                'inputs': ['program']
-            },
-            'target': {
-                'value': None,
-                'inputs': ['targetid'],
-            },
-            'instrument': {
-                'value': None,
-                'inputs': ['instrume']
-            },
-            'detector': {
-                'value': None,
-                'inputs': ['detector']
-            },
-            'opt_elem': {
-                'value': None,
-                'inputs': ['filter', 'band']
-            },
-            'opt_elem2': {
-                'value': None,
-                'inputs': ['pupil', 'grating'],
-                'required': False,
-            },
-            'subarray': {
-                'value': None,
-                'inputs': ['subarray'],
-                'required': False,
-            },
-            'channel': {
-                'value': None,
-                'inputs': ['channel'],
-                'required': False,
-            }
-        })
-
-        super(AsnMixin_Lv2Mode, self).__init__(*args, **kwargs)
-
-
-class AsnMixin_Lv2Singleton(DMSLevel2bBase):
-    """Allow only single science exposure"""
-
-    def __init__(self, *args, **kwargs):
-        # I am defined by the following constraints
-        self.add_constraints({
-            'single_science': {
-                'test': self.match_constraint,
-                'value': 'False',
-                'inputs': lambda item: str(
-                    self.has_science(item)
-                ),
-            }
-        })
-
-        # Now, lets see if item belongs to us.
-        super(AsnMixin_Lv2Singleton, self).__init__(*args, **kwargs)
-
-
-class AsnMixin_Lv2Special(DMSLevel2bBase):
-    """Process special exposures as science
-
-    Spectral exposures that are marked as backgrounds, imprints, etc.,
-    still get 2b processing just as normal science. However, no other
-    exposures should get included into the association.
-
-    """
-    def __init__(self, *args, **kwargs):
-        self.add_constraints({
-            'is_special': {
-                'value': None,
-                'inputs': [
-                    'bkgdtarg',
-                    'is_imprt',
-                    'is_psf'
-                ],
-                'force_unique': False,
-            }
-        })
-
-        super(AsnMixin_Lv2Special, self).__init__(*args, **kwargs)
-
-    def get_exposure_type(self, item, default='science'):
-        """Override to force exposure type to always be science
-
-        Parameters
-        ----------
-        item: dict
-            The pool entry to determine the exposure type of
-
-        default: str or None
-            The default exposure type.
-            If None, routine will raise LookupError
-
-        Returns
-        -------
-        exposure_type: 'science'
-            Always returns as science
-        """
-        return 'science'
-
-
-# Image-like Exposures
-# --------------------
-class AsnMixin_Lv2Image(DMSLevel2bBase):
+class AsnMixin_Lv2Image:
     """Level 2 Image association base"""
 
     def _init_hook(self, item):
@@ -621,67 +602,53 @@ class AsnMixin_Lv2Image(DMSLevel2bBase):
         self.data['asn_type'] = 'image2'
 
 
-class AsnMixin_Lv2ImageScience(DMSLevel2bBase):
-    """Level 2 Image association base"""
+class AsnMixin_Lv2Singleton(DMSLevel2bBase):
+    """Allow only single science exposure"""
 
     def __init__(self, *args, **kwargs):
 
-        self.add_constraints({
-            'exp_type': {
-                'value': '|'.join(IMAGE2_SCIENCE_EXP_TYPES),
-                'inputs': ['exp_type'],
-                'force_unique': True,
-            }
-        })
+        constraints = SimpleConstraint(
+            name='single_science',
+            value=False,
+            sources=lambda item: self.has_science(item)
+        )
+        if self.constraints is None:
+            self.constraints = constraints
+        else:
+            self.constraints = Constraint([
+                self.constraints,
+                constraints
+            ])
 
-        super(AsnMixin_Lv2ImageScience, self).__init__(*args, **kwargs)
+        # Now, lets see if item belongs to us.
+        super(AsnMixin_Lv2Singleton, self).__init__(*args, **kwargs)
 
 
-class AsnMixin_Lv2ImageNonScience(DMSLevel2bBase):
-    """Process selected non-science exposures
+class AsnMixin_Lv2Spectral(DMSLevel2bBase):
+    """Level 2 Spectral association base"""
 
-    Exposures, such as target acquisitions,
-    though considered non-science, still get 2b processing.
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
 
+        super(AsnMixin_Lv2Spectral, self)._init_hook(item)
+        self.data['asn_type'] = 'spec2'
+
+
+class AsnMixin_Lv2Special:
+    """Process special and non-science exposures as science.
     """
-    def __init__(self, *args, **kwargs):
-        self.add_constraints({
-            'non_science': {
-                'value': '|'.join(IMAGE2_NONSCIENCE_EXP_TYPES),
-                'inputs': ['exp_type'],
-                'force_unique': False,
-            }
-        })
-
-        super(AsnMixin_Lv2ImageNonScience, self).__init__(*args, **kwargs)
-
     def get_exposure_type(self, item, default='science'):
         """Override to force exposure type to always be science
-
         Parameters
         ----------
         item: dict
             The pool entry to determine the exposure type of
-
         default: str or None
             The default exposure type.
             If None, routine will raise LookupError
-
         Returns
         -------
         exposure_type: 'science'
             Always returns as science
         """
         return 'science'
-
-
-# Spectral-like exposures
-# -----------------------
-class AsnMixin_Lv2Spec(DMSLevel2bBase):
-    """Level 2 Spectral association base"""
-
-    def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
-
-        super(AsnMixin_Lv2Spec, self)._init_hook(item)
-        self.data['asn_type'] = 'spec2'

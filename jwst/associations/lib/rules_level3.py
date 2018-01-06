@@ -25,13 +25,10 @@ __all__ = [
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
-
-
-# ----------------------------------
-# Image associations
 class Asn_Image(DMS_Level3_Base):
     """Non-Association Candidate Dither Associations"""
 

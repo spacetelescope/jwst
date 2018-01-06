@@ -181,22 +181,24 @@ class SimpleConstraint(SimpleConstraintABC):
             If successful, a copy of the constraint
             is returned with modified value.
         """
+        source_value = self.sources(item)
+
+        satisfied = True
         if self.value is not None:
-            satisfied = self.test(item)
-            if satisfied:
-                return self, self._reprocess
-            else:
-                return False, self._reprocess
+            satisfied = self.test(self.value, source_value)
 
-        updated = self
-        if self.force_unique:
-            updated = deepcopy(self)
-            updated.value = item
-        return updated, self._reprocess
+        match = False
+        if satisfied:
+            match = self
+            if self.force_unique:
+                match = deepcopy(self)
+                match.value = source_value
 
-    def eq(self, item):
+        return match, self._reprocess
+
+    def eq(self, value1, value2):
         """True if constraint.value and item are equal."""
-        return self.value == item
+        return value1 == value2
 
 
 class AttrConstraint(SimpleConstraintABC):
