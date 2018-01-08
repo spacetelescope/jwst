@@ -569,7 +569,6 @@ CONSTRAINT_IMAGE_NONSCIENCE = LV2AttrConstraint(
     name='non_science',
     sources=['exp_type'],
     value='|'.join(IMAGE2_NONSCIENCE_EXP_TYPES),
-    force_unique=False,
 )
 
 CONSTRAINT_SPECIAL = LV2AttrConstraint(
@@ -579,7 +578,6 @@ CONSTRAINT_SPECIAL = LV2AttrConstraint(
         'is_imprt',
         'is_psf'
     ],
-    force_unique=False,
 )
 
 CONSTRAINT_SPECTRAL_SCIENCE = LV2AttrConstraint(

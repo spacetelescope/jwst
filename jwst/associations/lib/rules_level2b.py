@@ -34,3 +34,28 @@ class Asn_Lv2Image(
 
         # Now check and continue initialization.
         super(Asn_Lv2Image, self).__init__(*args, **kwargs)
+
+
+class Asn_Lv2ImageSpecial(
+        AsnMixin_Lv2Special,
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Image,
+        DMSLevel2bBase
+):
+    """Level2b Image that are marked special
+    Image exposures that are marked as backgrounds, imprints, etc.,
+    still get 2b processing just as normal science. However, no other
+    exposures should get included into the association.
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_MODE,
+            CONSTRAINT_IMAGE_SCIENCE,
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2ImageSpecial, self).__init__(*args, **kwargs)
