@@ -80,3 +80,23 @@ class Asn_Lv2ImageNonScience(
 
         # Now check and continue initialization.
         super(Asn_Lv2ImageNonScience, self).__init__(*args, **kwargs)
+
+
+class Asn_Lv2Spec(
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
+):
+    """Level2b Spectra"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_MODE,
+            CONSTRAINT_SPECTRAL_SCIENCE
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2Spec, self).__init__(*args, **kwargs)

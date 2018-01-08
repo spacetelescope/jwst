@@ -582,7 +582,7 @@ CONSTRAINT_SPECIAL = LV2AttrConstraint(
 
 CONSTRAINT_SPECTRAL_SCIENCE = LV2AttrConstraint(
     name='exp_type',
-    sources=['exp_typ'],
+    sources=['exp_type'],
     value='|'.join(SPEC2_SCIENCE_EXP_TYPES)
 )
 
