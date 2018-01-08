@@ -59,3 +59,24 @@ class Asn_Lv2ImageSpecial(
 
         # Now check and continue initialization.
         super(Asn_Lv2ImageSpecial, self).__init__(*args, **kwargs)
+
+
+class Asn_Lv2ImageNonScience(
+        AsnMixin_Lv2Special,
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Image,
+        DMSLevel2bBase
+):
+    """Level2b Image that are not science but get Level 2b processing"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_MODE,
+            CONSTRAINT_IMAGE_NONSCIENCE,
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2ImageNonScience, self).__init__(*args, **kwargs)
