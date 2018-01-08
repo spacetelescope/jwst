@@ -39,6 +39,9 @@ class SimpleConstraintABC(abc.ABC):
         Other initialization parameters
     """
 
+    # Attributes to show in the string representation.
+    _str_attrs = ('name', 'value')
+
     def __init__(self, init=None, value=None, name=None, **kwargs):
 
         # Defined attributes
@@ -67,10 +70,20 @@ class SimpleConstraintABC(abc.ABC):
     def __iter__(self):
         yield self
 
-    def __str__(self):
+    def __repr__(self):
         result = '{}({})'.format(
             self.__class__.__name__,
             str(self.__dict__)
+        )
+        return result
+
+    def __str__(self):
+        result = '{}({})'.format(
+            self.__class__.__name__,
+            {
+                str_attr: getattr(self, str_attr)
+                for str_attr in self._str_attrs
+            }
         )
         return result
 
@@ -250,8 +263,12 @@ class AttrConstraint(SimpleConstraintABC):
         return as a matched constraint.
     """
 
+    # Attributes to show in the string representation.
+    _str_attrs = ('name', 'sources', 'value')
+
     def __init__(self,
                  init=None,
+                 sources=None,
                  evaluate=False,
                  force_reprocess=False,
                  force_undefined=False,
@@ -264,6 +281,7 @@ class AttrConstraint(SimpleConstraintABC):
 
         # Attributes
         super(AttrConstraint, self).__init__(init=init, **kwargs)
+        self.sources = sources
         self.evaluate = evaluate
         self.force_reprocess = force_reprocess
         self.force_unique = force_unique
@@ -416,7 +434,7 @@ class Constraint:
         elif isinstance(init, Constraint):
             self.reduce = init.reduce
             self.constraints = deepcopy(init.constraints)
-        elif isinstance(init, SimpleConstraint):
+        elif isinstance(init, SimpleConstraintABC):
             self.constraints = [init]
         else:
             raise TypeError(
@@ -500,18 +518,25 @@ class Constraint:
         """Not implemented"""
         raise NotImplementedError('Cannot delete a constraint by index.')
 
-    def __str__(self):
-        """String representation"""
-        result = 'Constraint {} with {} on:\n{}'.format(
-            getattr(self, 'name', 'Unnamed'),
-            str(self.reduce),
+    def __repr__(self):
+        result = '{}(name={}).{}([{}])'.format(
+            self.__class__.__name__,
+            str(getattr(self, 'name', None)),
+            str(self.reduce.__name__),
             ''.join([
-                str(constraint)
+                repr(constraint)
                 for constraint in self.constraints
             ])
         )
+        return result
 
-        return result + '\n'
+    def __str__(self):
+        result = '\n'.join([
+            str(constraint)
+            for constraint in self
+            if constraint.name is not None
+        ])
+        return result
 
 
 # ---------
