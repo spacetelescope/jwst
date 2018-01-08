@@ -85,6 +85,32 @@ class Asn_Lv2ImageNonScience(
         super(Asn_Lv2ImageNonScience, self).__init__(*args, **kwargs)
 
 
+class Asn_Lv2FGS(
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Image,
+        DMSLevel2bBase
+):
+    """Level2b FGS"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_MODE,
+            LV2AttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'fgs_image'
+                    '|fgs_focus'
+                ),
+            )
+        ])
+
+        super(Asn_Lv2FGS, self).__init__(*args, **kwargs)
+
+
 class Asn_Lv2Spec(
         AsnMixin_Lv2Singleton,
         AsnMixin_Lv2Spectral,
