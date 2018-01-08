@@ -187,7 +187,7 @@ class Asn_NIS_SO_SLITLESS(AsnMixin_Spectrum):
                 value=(
                     'nis_soss'
                     '|nis_tacq'
-                    '|nis_tacnfrm'
+                    '|nis_taconfirm'
                 ),
                 force_unique=False,
             ),

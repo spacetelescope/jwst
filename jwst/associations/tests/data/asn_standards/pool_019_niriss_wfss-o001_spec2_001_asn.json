@@ -2,11 +2,12 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2WFSS",
     "version_id": null,
-    "code_version": "0.9.4",
+    "code_version": "0.9.6",
+    "degraded_status": "No known degraded exposures in association.",
     "program": "99009",
     "target": "1",
     "asn_pool": "pool_019_niriss_wfss",
-    "constraints": "Constraints:\n    exp_type: {'nis_wfss'}\n    single_science: {'False'}\n    program: {'99009'}\n    target: {'1'}\n    instrument: {'niriss'}\n    detector: {'central'}\n    opt_elem: {'f140m'}\n    opt_elem2: {'gr150r'}\n    subarray: set()\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "constraints": "Constraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nLV2AttrConstraint({'value': '99009', 'name': 'program', 'sources': ['program'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b13b6a8>, 'required': True, 'found_values': {'99009'}})LV2AttrConstraint({'value': None, 'name': 'is_tso', 'sources': ['tsovisit'], 'evaluate': False, 'force_reprocess': False, 'force_unique': True, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066d90>, 'required': False, 'found_values': set()})\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nLV2AttrConstraint({'value': '99009', 'name': 'program', 'sources': ['program'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066d08>, 'required': True, 'found_values': {'99009'}})LV2AttrConstraint({'value': '1', 'name': 'target', 'sources': ['targetid'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066c80>, 'required': True, 'found_values': {'1'}})LV2AttrConstraint({'value': 'niriss', 'name': 'instrument', 'sources': ['instrume'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066bf8>, 'required': True, 'found_values': {'niriss'}})LV2AttrConstraint({'value': 'central', 'name': 'detector', 'sources': ['detector'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066b70>, 'required': True, 'found_values': {'central'}})LV2AttrConstraint({'value': 'f140m', 'name': 'opt_elem', 'sources': ['filter'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066ae8>, 'required': True, 'found_values': {'f140m'}})LV2AttrConstraint({'value': 'gr150r', 'name': 'opt_elem2', 'sources': ['grating'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066a60>, 'required': False, 'found_values': {'gr150r'}})LV2AttrConstraint({'value': None, 'name': 'subarray', 'sources': ['subarray'], 'evaluate': False, 'force_reprocess': False, 'force_unique': True, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b0669d8>, 'required': False, 'found_values': set()})LV2AttrConstraint({'value': None, 'name': 'channel', 'sources': ['channel'], 'evaluate': False, 'force_reprocess': False, 'force_unique': True, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066950>, 'required': False, 'found_values': set()})\nLV2AttrConstraint({'value': 'nis_wfss', 'name': 'exp_type', 'sources': ['exp_type'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10beed158>, 'required': True, 'found_values': {'nis_wfss'}})\nSimpleConstraint({'value': False, 'name': 'single_science', 'sources': <function AsnMixin_Lv2Singleton.__init__.<locals>.<lambda> at 0x10beed0d0>, 'force_unique': True, 'test': <bound method SimpleConstraint.eq of <jwst.associations.lib.constraint.SimpleConstraint object at 0x10ba30c88>>, '_reprocess': []})\nAttrConstraint({'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\", 'name': 'asn_candidate', 'sources': ['asn_candidate'], 'is_acid': True, 'evaluate': True, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': [], 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10be4c510>, 'required': True, 'found_values': {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}})\n",
     "asn_id": "o001",
     "products": [
         {
@@ -18,7 +19,8 @@
                 },
                 {
                     "expname": "jw_00002_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -31,7 +33,8 @@
                 },
                 {
                     "expname": "jw_00003_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -44,7 +47,8 @@
                 },
                 {
                     "expname": "jw_00004_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -57,7 +61,8 @@
                 },
                 {
                     "expname": "jw_00005_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -70,7 +75,8 @@
                 },
                 {
                     "expname": "jw_00006_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -83,7 +89,8 @@
                 },
                 {
                     "expname": "jw_00007_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -96,7 +103,8 @@
                 },
                 {
                     "expname": "jw_00010_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -109,7 +117,8 @@
                 },
                 {
                     "expname": "jw_00011_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -122,7 +131,8 @@
                 },
                 {
                     "expname": "jw_00012_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -135,7 +145,8 @@
                 },
                 {
                     "expname": "jw_00013_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -148,7 +159,8 @@
                 },
                 {
                     "expname": "jw_00014_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -161,7 +173,8 @@
                 },
                 {
                     "expname": "jw_00015_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         }
