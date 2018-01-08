@@ -55,6 +55,7 @@ class Asn_Lv2ImageSpecial(
             CONSTRAINT_BASE,
             CONSTRAINT_MODE,
             CONSTRAINT_IMAGE_SCIENCE,
+            CONSTRAINT_SPECIAL,
         ])
 
         # Now check and continue initialization.
@@ -100,3 +101,29 @@ class Asn_Lv2Spec(
 
         # Now check and continue initialization.
         super(Asn_Lv2Spec, self).__init__(*args, **kwargs)
+
+
+class Asn_Lv2SpecSpecial(
+        AsnMixin_Lv2Special,
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
+):
+    """Level2b Spectra that are marked special
+    Spectral exposures that are marked as backgrounds, imprints, etc.,
+    still get 2b processing just as normal science. However, no other
+    exposures should get included into the association.
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            CONSTRAINT_BASE,
+            CONSTRAINT_MODE,
+            CONSTRAINT_SPECTRAL_SCIENCE,
+            CONSTRAINT_SPECIAL,
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2SpecSpecial, self).__init__(*args, **kwargs)
