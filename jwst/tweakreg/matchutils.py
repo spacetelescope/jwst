@@ -1,3 +1,10 @@
+"""
+A module that provides algorithms for initial estimation of shifts
+based on 2D histograms.
+
+:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+
+"""
 from __future__ import (absolute_import, division, unicode_literals,
                         print_function)
 
@@ -67,7 +74,7 @@ def build_xy_zeropoint(imgxy, refxy, searchrad=3.0):
 
     if chelp is None:
         raise ImportError('cannot import chelp')
-    
+
     # run C function to create ZP matrix
     zpmat = chelp.arrxyzero(imgxy.astype(np.float32),
                             refxy.astype(np.float32), searchrad)
