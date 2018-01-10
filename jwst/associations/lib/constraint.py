@@ -106,6 +106,12 @@ class SimpleConstraint(SimpleConstraintABC):
 
     value: object or None
         Value that must be matched.
+        If None, any retrieved value will match.
+
+    sources: func(item) or None
+        Function taking `item` as argument used to
+        retrieve a value to check against.
+        If None, the item itself is used as the value.
 
     force_unique: bool
         If the constraint is satisfied, reset `value`
@@ -171,10 +177,15 @@ class SimpleConstraint(SimpleConstraintABC):
     SimpleConstraint({'value': None})
     """
 
-    def __init__(self, init=None, force_unique=True, test=None, **kwargs):
+    def __init__(self, init=None, sources=None, force_unique=True, test=None, **kwargs):
 
         # Defined attributes
         super(SimpleConstraint, self).__init__(init=init, **kwargs)
+        if sources is None:
+            self.sources = lambda item: item
+        else:
+            self.sources = sources
+
         self.force_unique = force_unique
         if test is None:
             self.test = self.eq

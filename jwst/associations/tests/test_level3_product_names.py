@@ -10,6 +10,7 @@ from .helpers import (
 )
 
 from .. import (AssociationPool, generate)
+from ..lib.rules_level3_base import LV3AttrConstraint
 
 # Temporarily skip if running under Travis
 # pytestmark = pytest.mark.skipif(
@@ -53,15 +54,14 @@ global_constraints = func_fixture(
     generate_params,
     scope='module',
     params=[
-        {
-            'asn_candidate': {
-                'value': ['.+o002.+'],
-                'inputs': ['asn_candidate'],
-                'force_unique': True,
-                'is_acid': True,
-                'evaluate': True,
-            }
-        },
+        LV3AttrConstraint(
+            name='asn_candidate',
+            value=['.+o002.+'],
+            sources=['asn_candidate'],
+            force_unique=True,
+            is_acid=True,
+            evaluate=True,
+        ),
     ]
 )
 
@@ -82,14 +82,14 @@ def test_level3_productname_components_discovered():
 
 
 def test_level3_productname_components_acid():
-    global_constraints = {}
-    global_constraints['asn_candidate_ids'] = {
-        'value': '.+o001.+',
-        'inputs': ['asn_candidate'],
-        'force_unique': True,
-        'is_acid': True,
-        'evaluate': True,
-    }
+    global_constraints = LV3AttrConstraint(
+        name='asn_candidate_ids',
+        value='.+o001.+',
+        sources=['asn_candidate'],
+        force_unique=True,
+        is_acid=True,
+        evaluate=True,
+    )
     rules = registry_level3_only(global_constraints=global_constraints)
     pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
     asns = generate(pool, rules)

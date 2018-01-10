@@ -97,7 +97,6 @@ class Asn_Lv2FGS(
         # Setup constraints
         self.constraints = Constraint([
             CONSTRAINT_BASE,
-            CONSTRAINT_MODE,
             LV2AttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],

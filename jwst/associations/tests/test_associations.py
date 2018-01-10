@@ -13,6 +13,7 @@ from ..registry import (
     import_from_file,
     find_object
 )
+from ..lib.rules_level3_base import LV3AttrConstraint
 
 
 # Basic Association object
@@ -80,44 +81,40 @@ def test_base_instatiation():
     'constraints, pool, n_asns',
     [
         (
-            {
-                'obs_id': {
-                    'value': 'V99009001001P0000000002101',
-                    'inputs': ['obs_id']
-                }
-            },
+            LV3AttrConstraint(
+                name='obs_id',
+                value='V99009001001P0000000002101',
+                sources=['obs_id']
+            ),
             helpers.t_path('data/mega_pool.csv'),
             3,
         ),
         (
-            {
-                'obs_id': {
-                    'value': 'junk',
-                    'inputs': ['obs_id']
-                }
-            },
+            LV3AttrConstraint(
+                name='obs_id',
+                value='junk',
+                sources=['obs_id']
+            ),
             helpers.t_path('data/pool_001_candidates.csv'),
             0,
         ),
         (
-            {
-                'asn_candidate_id': {
-                    'value': '.+(o001|o002).+',
-                    'inputs': ['asn_candidate'],
-                    'force_unique': False,
-                }
-            },
+            LV3AttrConstraint(
+                name='asn_candidate_id',
+                value='.+(o001|o002).+',
+                sources=['asn_candidate'],
+                force_unique=False,
+            ),
             helpers.t_path('data/pool_001_candidates.csv'),
             22,
         ),
         (
-            {
-                'asn_candidate_id': {
-                    'value': '.+(o001|o002).+',
-                    'inputs': ['asn_candidate'],
-                    'force_unique': True,
-                }
-            },
+            LV3AttrConstraint(
+                name='asn_candidate_id',
+                value='.+(o001|o002).+',
+                sources=['asn_candidate'],
+                force_unique=True,
+            ),
             helpers.t_path('data/pool_001_candidates.csv'),
             24,
         ),
@@ -131,7 +128,7 @@ def test_global_constraints(constraints, pool, n_asns):
     assert len(rules) >= 3
     for constraint in constraints:
         for rule in rules:
-            assert constraint in rules[rule].GLOBAL_CONSTRAINTS
+            assert constraint in rules[rule].GLOBAL_CONSTRAINT
 
     pool = helpers.combine_pools(pool)
     asns = generate(pool, rules)

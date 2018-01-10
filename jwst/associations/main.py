@@ -17,6 +17,7 @@ from jwst.associations.lib.constraint import (
     ConstraintTrue,
 )
 from jwst.associations.lib.log_config import (log_config, DMS_config)
+from jwst.associations.lib.rules_level3_base import _EMPTY
 
 # Configure logging
 logger = log_config(name=__package__)
@@ -358,6 +359,7 @@ def constrain_on_candidates(candidates):
         force_unique=True,
         is_acid=True,
         evaluate=True,
+        invalid_values=_EMPTY
     )
 
     return constraint
