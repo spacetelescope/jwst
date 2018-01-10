@@ -4,7 +4,7 @@ JWST pipeline step for image alignment.
 
 :Authors: Mihai Cara
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
 from __future__ import (absolute_import, division, unicode_literals,
@@ -37,14 +37,16 @@ class TweakRegStep(Step):
     """
 
     spec = """
-        # Optimize alignment order:
-        enforce_user_order = boolean(default=True) # Align images in user specified order?
-
-        # Reference Catalog parameters:
+        # Source finding parameters:
         save_catalogs = boolean(default=False) # Write out catalogs?
         catalog_format = string(default='ecsv')   # Catalog output file format
         kernel_fwhm = float(default=2.5)    # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=5.0)  # SNR threshold above the bkg
+
+        # Optimize alignment order:
+        enforce_user_order = boolean(default=False) # Align images in user specified order?
+
+        # Reference Catalog parameters:
         expand_refcat = boolean(default=False) # Expand reference catalog with new sources?
 
         # Object matching parameters:

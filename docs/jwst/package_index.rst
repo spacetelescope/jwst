@@ -49,6 +49,7 @@ Package Index
    stpipe/index.rst
    straylight/index.rst
    superbias/index.rst
+   transforms/index.rst
    tweakreg/index.rst
    wfs_combine/index.rst
    white_light/index.rst

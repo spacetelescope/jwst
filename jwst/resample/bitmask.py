@@ -3,7 +3,7 @@ A module that provides functions for manipulating bitmasks and data quality (DQ)
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
 

@@ -1,10 +1,11 @@
 """
-This module provides support for working with image footprints on the sky and
-source catalogs.
+This module provides support for working with image footprints on the sky,
+source catalogs, and setting and manipulating tangent-plane corrections
+of image WCS.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
 from __future__ import (absolute_import, division, unicode_literals,
@@ -39,9 +40,35 @@ log.setLevel(logging.DEBUG)
 
 
 class ImageWCS(object):
+    """ A class for holding JWST GWCS information and for managing
+    tangent-plane corrections.
 
+    """
     def __init__(self, wcs, v2_ref, v3_ref, roll_ref, ra_ref, dec_ref):
-        if not self.check_wcs_structure(wcs):
+        """
+        Parameters
+        ----------
+
+        wcs : GWCS
+            A `GWCS` object.
+
+        v2ref : float
+            V2 position of the reference point in degrees.
+
+        v3ref : float
+            V3 position of the reference point in degrees.
+
+        roll : float
+            Roll angle in degrees.
+
+        ra_ref : float
+            RA of the reference point in degrees.
+
+        dec_ref : float
+            DEC of the reference point in degrees.
+
+        """
+        if not self._check_wcs_structure(wcs):
             raise ValueError("Unsupported WCS structure.")
 
         self._ra_ref = ra_ref
@@ -107,6 +134,7 @@ class ImageWCS(object):
 
     @property
     def ref_angles(self):
+        """ Return a ``wcsinfo``-like dictionary of main WCS parameters. """
         wcsinfo = {
             'ra_ref': self._ra_ref,
             'dec_ref': self._dec_ref,
@@ -118,16 +146,34 @@ class ImageWCS(object):
 
     @property
     def wcs(self):
+        """ Get current GWCS object. """
         return self._wcs
 
     @property
     def original_wcs(self):
+        """ Get original GWCS object. """
         return self._owcs
 
     def copy(self):
+        """ Returns a deep copy of this `ImageWCS` object. """
         return deepcopy(self)
 
     def set_correction(self, matrix=[[1, 0], [0, 1]], shift=[0, 0]):
+        """
+        Sets a tangent-plane correction of the GWCS object according to
+        the provided liniar parameters.
+
+        Parameters
+        ----------
+        matrix : list, numpy.ndarray
+            A ``2x2`` array or list of lists coefficients representing scale,
+            rotation, and/or skew transformations.
+
+        shift : list, numpy.ndarray
+            A list of two coordinate shifts to be applied to coordinates
+            *before* ``matrix`` transformations are applied.
+
+        """
         frms = [f[0] for f in self._wcs.pipeline]
 
         # if original WCS did not have tangent-plane corrections, create
@@ -167,7 +213,7 @@ class ImageWCS(object):
         # coordinates to the tangent plane:
         self._update_transformations()
 
-    def check_wcs_structure(self, wcs):
+    def _check_wcs_structure(self, wcs):
         if wcs is None or wcs.pipeline is None:
             return False
 
@@ -199,32 +245,58 @@ class ImageWCS(object):
         return True
 
     def det_to_world(self, x, y):
+        """
+        Convert pixel coordinates to sky coordinates using full
+        (i.e., including distortions) transformations.
+
+        """
         ra, dec = self._det_to_world(x, y)
         return ra, dec
 
     def world_to_det(self, ra, dec):
+        """
+        Convert sky coordinates to image's pixel coordinates using full
+        (i.e., including distortions) transformations.
+
+        """
         x, y = self._world_to_det(ra, dec)
         return x, y
 
     def det_to_tanp(self, x, y):
+        """
+        Convert detector (pixel) coordinates to tangent plane coordinates.
+
+        """
         tpc = self._default_tpcorr if self._tpcorr is None else self._tpcorr
         v2, v3 = self._det_to_v23(x, y)
         x, y = tpc.v2v3_to_tanp(v2, v3)
         return x, y
 
     def tanp_to_det(self, x, y):
+        """
+        Convert tangent plane coordinates to detector (pixel) coordinates.
+
+        """
         tpc = self._default_tpcorr if self._tpcorr is None else self._tpcorr
         v2, v3 = tpc.tanp_to_v2v3(x, y)
         x, y = self._v23_to_det(v2, v3)
         return x, y
 
     def world_to_tanp(self, ra, dec):
+        """
+        Convert tangent plane coordinates to detector (pixel) coordinates.
+
+        """
         tpc = self._default_tpcorr if self._tpcorr is None else self._tpcorr
         v2, v3 = self._world_to_v23(ra, dec)
         x, y = tpc.v2v3_to_tanp(v2, v3)
         return x, y
 
     def tanp_to_world(self, x, y):
+        """
+        Convert tangent plane coordinates to world coordinates.
+
+        """
         tpc = self._default_tpcorr if self._tpcorr is None else self._tpcorr
         v2, v3 = tpc.tanp_to_v2v3(x, y)
         ra, dec = self._v23_to_world(v2, v3)

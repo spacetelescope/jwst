@@ -6,7 +6,7 @@ computing intersections and statistics in the overlap regions.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
 from __future__ import (absolute_import, division, unicode_literals,
