@@ -32,9 +32,9 @@ NIRCAM GRISM and NIRISS WFSS observations.
 
 For NIRSPEC:
 
-If the step parameter ``which_subarray`` is left unspecified, the default behavior is
+If the step parameter ``slit_name`` is left unspecified, the default behavior is
 to extract all slits which fall within a detector. Only one slit may be extracted by
-specifying the slit name with the ``which_subarray`` argument, using one of the following
+specifying the slit name with the ``slit_name`` argument, using one of the following
 accepted names: ``S1600A1``, ``S200A1``, ``S200A2``, ``S200B1``, ``S400A1`` or ``S200B1``
 in the case of NIRSPEC FS exposure or any of the slitlet names in the case of the MSA.
 
@@ -58,19 +58,19 @@ corresponding to the FITS keywords ``SLTNAME``, ``SLTSTRT1``, ``SLTSIZE1``,
 For NIRCAM GRISM and NIRISS WFSS :
 
 If the step parameter ``grism_objects`` is left unspecified, the default behavior
-is to use the source catalog that is specified in the input model's meta information, 
+is to use the source catalog that is specified in the input model's meta information,
 ``input_model.meta.source_catalog.filename``. Otherwise, a user can submit of list of
 ``GrismObjects`` that contains information about the objects that should be extracted.
 The ``GrismObject`` list can be created automatically by using the method in
 ``jwst.assign_wcs.utils.create_grism_bbox``. This method also uses the name of the source
 catalog saved in the input model's meta information. If it's better to construct a list
 of ``GrismObjects`` outside of these, the ``GrismObject`` itself can be imported from
-``jwst.transforms.models``. 
+``jwst.transforms.models``.
 
 
 Step Arguments
 ==============
-The extract_2d step has two optional arguments for NIRSPEC observations: 
+The extract_2d step has two optional arguments for NIRSPEC observations:
 
 * ``--which_subarray``: name (string value) of a specific slit region to
   extract. The default value of None will cause all known slits for the
@@ -96,7 +96,7 @@ when running the step.
 
 NIRCAM GRISM and NIRISS WFSS observations use the wavelengthrange reference file in order
 to construct the bounding boxes around each objects orders. If a list of ``GrismObject``
-is supplied, then no reference file is neccessary. 
+is supplied, then no reference file is neccessary.
 
 
 

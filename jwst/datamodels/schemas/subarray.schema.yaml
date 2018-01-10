@@ -31,7 +31,7 @@ properties:
               # Obsolete NIRISS
               SUBSTRIP80,
               # NIRSpec
-              ALLSLITS, SUB200A1, SUB200A2, SUB200B1, SUB400A1, SUB1024A, SUB1024B,
+              ALLSLITS, SUBS200A1, SUBS200A2, SUBS200B1, SUBS400A1, SUB1024A, SUB1024B,
               SUB512, SUB32, SUB512S, SUB2048,
               # Obsolete NIRSpec
               FULL_IRS2, S200A1, S200A2, S200B1, S400A1,
