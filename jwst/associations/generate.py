@@ -41,7 +41,6 @@ def generate(pool, rules, version_id=None):
     documentation for a full description.
     """
     associations = []
-    in_an_asn = np.zeros((len(pool),), dtype=bool)
     if type(version_id) is bool:
         version_id = make_timestamp()
     process_list = ProcessQueue([
@@ -51,7 +50,8 @@ def generate(pool, rules, version_id=None):
         )
     ])
 
-    for process_idx, process_item in enumerate(process_list):
+    for process_item in process_list:
+        logger.debug('Processing {}'.format(process_item))
         for item in process_item.items:
 
             # Determine against what the item should be compared
@@ -81,10 +81,6 @@ def generate(pool, rules, version_id=None):
                     if to_process_item.work_over != ProcessList.EXISTING
                 ]
             process_list.extend(to_process)
-
-            if len(existing_asns) +\
-               len(new_asns) > 0:
-                in_an_asn[item.index] = True
 
     # Finalize found associations
     finalized_asns = rules.finalize(associations)
