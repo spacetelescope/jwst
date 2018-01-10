@@ -2,7 +2,7 @@
 A module that provides algorithms for initial estimation of shifts
 based on 2D histograms.
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
 from __future__ import (absolute_import, division, unicode_literals,
@@ -36,7 +36,7 @@ def center_of_mass(img, labels=None, index=None):
     Returns
     -------
     centerofmass : tuple, or list of tuples
-        Co-ordinates of centers-of-masses.
+        Coordinates of centers-of-masses.
 
     Examples
     --------

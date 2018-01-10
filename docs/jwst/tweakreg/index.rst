@@ -1,5 +1,5 @@
 ========
-tweakreg
+TweakReg
 ========
 
 .. moduleauthor:: Mihai Cara <help@stsci.edu>
