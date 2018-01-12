@@ -466,40 +466,69 @@ class Constraint:
             constraint.check_and_set(item)
             for constraint in self.constraints
         ]
-        matches, reprocess = zip(*results)
-        match = self.reduce(matches)
-
-        # If a match, all reprocess items are passed on.
-        # If not a match, find the first reprocess item
-        # that returned a non-match and only pass that.
-        if not match:
-            for idx, reprocess_item in enumerate(reprocess):
-                if len(reprocess_item) > 0 and not matches[idx]:
-                    reprocess = []
-                    filtered = list(matches)
-                    del(filtered[idx])
-                    if self.reduce(filtered):
-                        reprocess = [reprocess_item]
-                    break
+        constraints, reprocess = self.reduce(results)
 
         # If a positive, replace positive returning
         # constraints in the list.
         new_constraint = False
-        if match:
+        if constraints:
             new_constraint = Constraint(self)
-            for idx, constraint in enumerate(matches):
+            for idx, constraint in enumerate(constraints):
                 if constraint:
                     new_constraint.constraints[idx] = constraint
 
         return new_constraint, list(chain(*reprocess))
 
     @staticmethod
-    def all(matches):
-        return all(matches)
+    def all(results):
+        """Return positive only if all results are positive."""
+
+        # Find all negatives. Note first negative
+        # that requires reprocessing and how many
+        # negatives do not.
+        all_match = True
+        constraints = []
+        negative_reprocess = None
+        to_reprocess = []
+        for match, reprocess in results:
+            if match:
+                if all_match:
+                    constraints.append(match)
+                    to_reprocess.append(reprocess)
+            else:
+                all_match = False
+
+                # If not match and no reprocessing, then fail
+                # completely. However, if there is reprocessing, take
+                # the first one. Continue to check to ensure
+                # there is no further complete fail.
+                if len(reprocess) == 0:
+                    negative_reprocess = None
+                    break
+                elif negative_reprocess is None:
+                    negative_reprocess = [reprocess]
+
+        if not all_match:
+            constraints = False
+            if negative_reprocess is not None:
+                to_reprocess = negative_reprocess
+            else:
+                to_reprocess = []
+
+        return constraints, to_reprocess
 
     @staticmethod
-    def any(matches):
-        return any(matches)
+    def any(results):
+        """Return the first successful constraint."""
+        constraint = False
+        to_reprocess = []
+        for match, reprocess in results:
+            if match:
+                constraint = match
+                to_reprocess = [reprocess]
+                break
+
+        return constraint, to_reprocess
 
     # Make iterable
     def __iter__(self):

@@ -51,7 +51,6 @@ def generate(pool, rules, version_id=None):
     ])
 
     for process_item in process_list:
-        logger.debug('Processing {}'.format(process_item))
         for item in process_item.items:
 
             # Determine against what the item should be compared
