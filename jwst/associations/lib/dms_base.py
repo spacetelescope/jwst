@@ -1,12 +1,13 @@
 """Association attributes common to DMS-based Rules"""
 from .counter import Counter
 
-from jwst.associations.lib.utilities import getattr_from_list
 from jwst.associations.exceptions import (
     AssociationNotAConstraint,
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACIDMixin
+from jwst.associations.lib.constraint import AttrConstraint
+from jwst.associations.lib.utilities import getattr_from_list
 
 
 # Default product name
@@ -507,6 +508,24 @@ class DMSBaseMixin(ACIDMixin):
             if activity_id not in _EMPTY:
                 exposure = '{0:0>2s}'.format(activity_id)
         return exposure
+
+
+# -----------------
+# Basic constraints
+# -----------------
+class DMSAttrConstraint(AttrConstraint):
+    """DMS-focused attribute constraint
+
+    Forces definition of invalid values
+    """
+    def __init__(self, **kwargs):
+
+        if kwargs.get('invalid_values', None) is None:
+            kwargs['invalid_values'] = _EMPTY
+
+        super(DMSAttrConstraint, self).__init__(**kwargs)
+
+
 
 # #########
 # Utilities

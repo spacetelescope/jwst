@@ -40,7 +40,7 @@ class Asn_Image(DMS_Level3_Base):
             CONSTRAINT_OPTICAL_PATH,
             CONSTRAINT_TARGET,
             CONSTRAINT_IMAGE,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='wfsvisit',
                 sources=['visitype'],
                 value='((?!wfsc).)*',
@@ -74,12 +74,12 @@ class Asn_WFSCMB(DMS_Level3_Base):
             CONSTRAINT_OPTICAL_PATH,
             CONSTRAINT_TARGET,
             CONSTRAINT_IMAGE,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='wfsvisit',
                 sources=['visitype'],
                 value='.+wfsc.+',
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='asn_candidate_wfs',
                 sources=['asn_candidate'],
                 value='.+mosaic.+',
@@ -87,7 +87,7 @@ class Asn_WFSCMB(DMS_Level3_Base):
                 is_acid=True,
                 evaluate=True,
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='activity_id',
                 sources=['act_id']
             )
@@ -112,7 +112,7 @@ class Asn_MIRI_LRS_FIXEDSLIT(AsnMixin_Spectrum):
             CONSTRAINT_BASE,
             CONSTRAINT_NOTTSO,
             CONSTRAINT_TARGET,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -121,12 +121,12 @@ class Asn_MIRI_LRS_FIXEDSLIT(AsnMixin_Spectrum):
                 ),
                 force_unique=False,
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='opt_elem',
                 sources=['filter'],
                 value='p750l',
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='subarray',
                 sources=['subarray'],
                 value='full',
@@ -147,7 +147,7 @@ class Asn_MIRI_LRS_SLITLESS(AsnMixin_Spectrum):
             CONSTRAINT_BASE,
             CONSTRAINT_NOTTSO,
             CONSTRAINT_TARGET,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -156,12 +156,12 @@ class Asn_MIRI_LRS_SLITLESS(AsnMixin_Spectrum):
                 ),
                 force_unique=False,
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='opt_elem',
                 sources=['filter'],
                 value='p750l',
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='subarray',
                 sources=['subarray'],
                 value='subprism',
@@ -181,7 +181,7 @@ class Asn_NIS_SO_SLITLESS(AsnMixin_Spectrum):
         self.constraints = Constraint([
             CONSTRAINT_BASE,
             CONSTRAINT_TARGET,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -191,12 +191,12 @@ class Asn_NIS_SO_SLITLESS(AsnMixin_Spectrum):
                 ),
                 force_unique=False,
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='opt_elem',
                 sources=['pupil'],
                 value='gr700xd',
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='subarray',
                 sources=['subarray'],
                 value=(
@@ -221,7 +221,7 @@ class Asn_NRS_FIXEDSLIT(AsnMixin_Spectrum):
             CONSTRAINT_BASE,
             CONSTRAINT_OPTICAL_PATH,
             CONSTRAINT_TARGET,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -234,11 +234,11 @@ class Asn_NRS_FIXEDSLIT(AsnMixin_Spectrum):
                 ),
                 force_unique=False,
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='fixed_slit',
                 sources=['fxd_slit']
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='subarray',
                 sources=['subarray']
             ),
@@ -258,7 +258,7 @@ class Asn_NRS_MSA(AsnMixin_Spectrum):
             CONSTRAINT_BASE,
             CONSTRAINT_OPTICAL_PATH,
             CONSTRAINT_TARGET,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -287,7 +287,7 @@ class Asn_MIRI_IFU(AsnMixin_Spectrum):
         self.constraints = Constraint([
             CONSTRAINT_BASE,
             CONSTRAINT_TARGET,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -327,7 +327,7 @@ class Asn_NRS_IFU(AsnMixin_Spectrum):
         self.constraints = Constraint([
             CONSTRAINT_BASE,
             CONSTRAINT_TARGET,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -362,7 +362,7 @@ class Asn_Coron(DMS_Level3_Base):
         self.constraints = Constraint([
             CONSTRAINT_BASE,
             CONSTRAINT_OPTICAL_PATH,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -371,7 +371,7 @@ class Asn_Coron(DMS_Level3_Base):
                     '|mir_4qpm'
                 ),
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='target',
                 sources=['targetid'],
                 onlyif=lambda item: self.get_exposure_type(item) == 'science',
@@ -414,7 +414,7 @@ class Asn_AMI(DMS_Level3_Base):
         self.constraints = Constraint([
             CONSTRAINT_BASE,
             CONSTRAINT_OPTICAL_PATH,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -423,7 +423,7 @@ class Asn_AMI(DMS_Level3_Base):
                     '|nis_tacq'
                 ),
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='target',
                 sources=['targetid'],
                 onlyif=lambda item: self.get_exposure_type(item) == 'science',
@@ -451,16 +451,16 @@ class Asn_WFSS(AsnMixin_Spectrum):
         self.constraints = Constraint([
             CONSTRAINT_BASE,
             CONSTRAINT_TARGET,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value='nis_wfss',
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='opt_elem',
                 sources=['filter'],
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='opt_elem2',
                 sources=['grating'],
                 value='gr150r|gr150c',
@@ -482,12 +482,12 @@ class Asn_TSO_Flag(DMS_Level3_Base):
             CONSTRAINT_BASE,
             CONSTRAINT_TARGET,
             CONSTRAINT_OPTICAL_PATH,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='is_tso',
                 sources=['tsovisit'],
                 value='t',
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type']
             )
@@ -512,7 +512,7 @@ class Asn_TSO_EXPTYPE(DMS_Level3_Base):
             CONSTRAINT_BASE,
             CONSTRAINT_TARGET,
             CONSTRAINT_OPTICAL_PATH,
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -527,7 +527,7 @@ class Asn_TSO_EXPTYPE(DMS_Level3_Base):
                     '|nrs_taconfirm'
                 ),
             ),
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='no_tso_flag',
                 sources=['tsovisit'],
                 required=False,

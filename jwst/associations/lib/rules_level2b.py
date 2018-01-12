@@ -97,7 +97,7 @@ class Asn_Lv2FGS(
         # Setup constraints
         self.constraints = Constraint([
             CONSTRAINT_BASE,
-            LV2AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value=(
@@ -171,7 +171,7 @@ class Asn_Lv2WFSS(
         self.constraints = Constraint([
             CONSTRAINT_BASE,
             CONSTRAINT_MODE,
-            LV2AttrConstraint(
+            DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
                 value='nis_wfss',

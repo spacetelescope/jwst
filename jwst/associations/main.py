@@ -12,12 +12,11 @@ from jwst.associations import (
     AssociationRegistry,
     generate,
 )
+from jwst.associations.lib.dms_base import DMSAttrConstraint
 from jwst.associations.lib.constraint import (
-    AttrConstraint,
     ConstraintTrue,
 )
 from jwst.associations.lib.log_config import (log_config, DMS_config)
-from jwst.associations.lib.rules_level3_base import _EMPTY
 
 # Configure logging
 logger = log_config(name=__package__)
@@ -352,14 +351,13 @@ def constrain_on_candidates(candidates):
         ])
     else:
         values = None
-    constraint = AttrConstraint(
+    constraint = DMSAttrConstraint(
         name='asn_candidate',
         sources=['asn_candidate'],
         value=values,
         force_unique=True,
         is_acid=True,
         evaluate=True,
-        invalid_values=_EMPTY
     )
 
     return constraint

@@ -26,6 +26,7 @@ from jwst.associations.lib.constraint import (
 from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import (
     _EMPTY,
+    DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_SCIENCE_EXP_TYPES,
     IMAGE2_NONSCIENCE_EXP_TYPES,
@@ -45,7 +46,7 @@ __all__ = [
     'CONSTRAINT_TARGET',
     'Constraint',
     'DMS_Level3_Base',
-    'LV3AttrConstraint',
+    'DMSAttrConstraint',
     'ProcessList',
     'Utility',
 ]
@@ -529,31 +530,18 @@ format_product = FormatTemplate(
 # Basic constraints
 # -----------------
 
-class LV3AttrConstraint(AttrConstraint):
-    """Leve3-focused attribute constraint
-
-    Forces definition of invalid values
-    """
-    def __init__(self, **kwargs):
-
-        if kwargs.get('invalid_values', None) is None:
-            kwargs['invalid_values'] = DMS_Level3_Base.INVALID_VALUES
-
-        super(LV3AttrConstraint, self).__init__(**kwargs)
-
-
 CONSTRAINT_BASE = Constraint([
-    LV3AttrConstraint(
+    DMSAttrConstraint(
         name='program',
         sources=['program'],
     ),
-    LV3AttrConstraint(
+    DMSAttrConstraint(
         name='instrument',
         sources=['instrume'],
     )
 ])
 
-CONSTRAINT_IMAGE = LV3AttrConstraint(
+CONSTRAINT_IMAGE = DMSAttrConstraint(
     name='exp_type',
     sources=['exp_type'],
     value=(
@@ -564,19 +552,19 @@ CONSTRAINT_IMAGE = LV3AttrConstraint(
     ),
 )
 
-CONSTRAINT_MIRI = LV3AttrConstraint(
+CONSTRAINT_MIRI = DMSAttrConstraint(
     name='instrument_miri',
     sources=['instrume'],
     value='miri',
 )
 
-CONSTRAINT_NIRISS = LV3AttrConstraint(
+CONSTRAINT_NIRISS = DMSAttrConstraint(
     name='instrument_niriss',
     sources=['instrume'],
     value='nis',
 )
 
-CONSTRAINT_NOTTSO = LV3AttrConstraint(
+CONSTRAINT_NOTTSO = DMSAttrConstraint(
     name='is_not_tso',
     sources=['tsovisit'],
     value='[^t]',
@@ -584,18 +572,18 @@ CONSTRAINT_NOTTSO = LV3AttrConstraint(
 )
 
 CONSTRAINT_OPTICAL_PATH = Constraint([
-    LV3AttrConstraint(
+    DMSAttrConstraint(
         name='opt_elem',
         sources=['filter'],
     ),
-    LV3AttrConstraint(
+    DMSAttrConstraint(
         name='opt_elem2',
         sources=['pupil', 'grating'],
         required=False,
     )
 ])
 
-CONSTRAINT_TARGET = LV3AttrConstraint(
+CONSTRAINT_TARGET = DMSAttrConstraint(
     name='target',
     sources=['targetid'],
 )

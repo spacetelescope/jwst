@@ -18,6 +18,7 @@ from jwst.associations.lib.constraint import (
     SimpleConstraint,
 )
 from jwst.associations.lib.dms_base import (
+    DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_NONSCIENCE_EXP_TYPES,
     IMAGE2_SCIENCE_EXP_TYPES,
@@ -46,7 +47,7 @@ __all__ = [
     'CONSTRAINT_SPECIAL',
     'CONSTRAINT_SPECTRAL_SCIENCE',
     'DMSLevel2bBase',
-    'LV2AttrConstraint',
+    'DMSAttrConstraint',
     'Utility'
 ]
 
@@ -498,24 +499,14 @@ class Utility():
 # -----------------
 # Basic constraints
 # -----------------
-class LV2AttrConstraint(AttrConstraint):
-    """Level2-focused attribute constraint
 
-    Forces definition of invalid values
-    """
-    def __init__(self, **kwargs):
-
-        if kwargs.get('invalid_values', None) is None:
-            kwargs['invalid_values'] = DMSLevel2bBase.INVALID_VALUES
-
-        super(LV2AttrConstraint, self).__init__(**kwargs)
 
 CONSTRAINT_BASE = Constraint([
-    LV2AttrConstraint(
+    DMSAttrConstraint(
         name='program',
         sources=['program']
     ),
-    LV2AttrConstraint(
+    DMSAttrConstraint(
         name='is_tso',
         sources=['tsovisit'],
         required=False,
@@ -524,56 +515,56 @@ CONSTRAINT_BASE = Constraint([
 ])
 
 CONSTRAINT_MODE = Constraint([
-    LV2AttrConstraint(
+    DMSAttrConstraint(
         name='program',
         sources=['program']
     ),
-    LV2AttrConstraint(
+    DMSAttrConstraint(
         name='target',
         sources=['targetid'],
     ),
-    LV2AttrConstraint(
+    DMSAttrConstraint(
         name='instrument',
         sources=['instrume']
     ),
-    LV2AttrConstraint(
+    DMSAttrConstraint(
         name='detector',
         sources=['detector']
     ),
-    LV2AttrConstraint(
+    DMSAttrConstraint(
         name='opt_elem',
         sources=['filter', 'band']
     ),
-    LV2AttrConstraint(
+    DMSAttrConstraint(
         name='opt_elem2',
         sources=['pupil', 'grating'],
         required=False,
     ),
-    LV2AttrConstraint(
+    DMSAttrConstraint(
         name='subarray',
         sources=['subarray'],
         required=False,
     ),
-    LV2AttrConstraint(
+    DMSAttrConstraint(
         name='channel',
         sources=['channel'],
         required=False,
     )
 ])
 
-CONSTRAINT_IMAGE_SCIENCE = LV2AttrConstraint(
+CONSTRAINT_IMAGE_SCIENCE = DMSAttrConstraint(
     name='exp_type',
     sources=['exp_type'],
     value='|'.join(IMAGE2_SCIENCE_EXP_TYPES)
 )
 
-CONSTRAINT_IMAGE_NONSCIENCE = LV2AttrConstraint(
+CONSTRAINT_IMAGE_NONSCIENCE = DMSAttrConstraint(
     name='non_science',
     sources=['exp_type'],
     value='|'.join(IMAGE2_NONSCIENCE_EXP_TYPES),
 )
 
-CONSTRAINT_SPECIAL = LV2AttrConstraint(
+CONSTRAINT_SPECIAL = DMSAttrConstraint(
     name='is_special',
     sources=[
         'bkgdtarg',
@@ -582,7 +573,7 @@ CONSTRAINT_SPECIAL = LV2AttrConstraint(
     ],
 )
 
-CONSTRAINT_SPECTRAL_SCIENCE = LV2AttrConstraint(
+CONSTRAINT_SPECTRAL_SCIENCE = DMSAttrConstraint(
     name='exp_type',
     sources=['exp_type'],
     value='|'.join(SPEC2_SCIENCE_EXP_TYPES)
