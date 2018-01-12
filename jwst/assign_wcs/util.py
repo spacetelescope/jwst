@@ -497,6 +497,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
             # add lmin and lmax used for the orders here?
             # input_model.meta.wcsinfo.waverange_start keys covers the
             # full range of all the orders
+
             if len(order_bounding) > 0:
                 grism_objects.append(GrismObject(sid=obj.sid,
                                                  order_bounding=order_bounding,
@@ -507,8 +508,8 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                                                  sky_bbox_lr=obj.sky_bbox_lr,
                                                  sky_bbox_ul=obj.sky_bbox_ul,
                                                  sky_bbox_ur=obj.sky_bbox_ur,
-                                                 xcenter=xcenter,
-                                                 ycenter=ycenter,))
+                                                 xcentroid=xcenter,
+                                                 ycentroid=ycenter))
             
     return grism_objects
 
