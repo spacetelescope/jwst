@@ -33,9 +33,9 @@ NIRCAM GRISM and NIRISS WFSS observations.
 For NIRSPEC:
 
 If the step parameter ``slit_name`` is left unspecified, the default behavior is
-to extract all slits which fall within a detector. Only one slit may be extracted by
+to extract all slits which project on the detector. Only one slit may be extracted by
 specifying the slit name with the ``slit_name`` argument, using one of the following
-accepted names: ``S1600A1``, ``S200A1``, ``S200A2``, ``S200B1``, ``S400A1`` or ``S200B1``
+accepted names: ``S1600A1``, ``S200A1``, ``S200A2``, ``S200B1`` or ``S400A1``
 in the case of NIRSPEC FS exposure or any of the slitlet names in the case of the MSA.
 
 To find out what slits are available for extraction:
@@ -72,7 +72,7 @@ Step Arguments
 ==============
 The extract_2d step has two optional arguments for NIRSPEC observations:
 
-* ``--which_subarray``: name (string value) of a specific slit region to
+* ``--slit_name``: name (string value) of a specific slit region to
   extract. The default value of None will cause all known slits for the
   instrument mode to be extracted. Currently only used for NIRspec fixed slit
   exposures.
