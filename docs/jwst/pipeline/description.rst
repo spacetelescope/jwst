@@ -172,7 +172,7 @@ Inputs
 Outputs
 -------
 
-* 2D Calibrated product: The output is a 2D (ncols x nrows)
+* 3D Calibrated product: The output is a 3D (ncols x nrows x nints)
   countrate product that has been flat-fielded and has bad pixels flagged.
 
 Arguments
