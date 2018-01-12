@@ -310,7 +310,8 @@ def get_open_fixed_slits(input_model):
         slits.append(s2a2)
     elif subarray == "SUBS400A1":
         slits.append(s4a1)
-    elif subarray == "SUB2048":
+    elif subarray in ("SUB2048", "SUB512", "SUB512S",
+                      "SUB1024A", "SUB1024B"):
         slits.append(s16a1)
     elif subarray == "SUBS200B1":
         slits.append(s2b1)
