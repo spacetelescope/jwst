@@ -13,7 +13,7 @@ from ..registry import (
     import_from_file,
     find_object
 )
-from ..lib.rules_level3_base import LV3AttrConstraint
+from ..lib.dms_base import DMSAttrConstraint
 
 
 # Basic Association object
@@ -81,7 +81,7 @@ def test_base_instatiation():
     'constraints, pool, n_asns',
     [
         (
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='obs_id',
                 value='V99009001001P0000000002101',
                 sources=['obs_id']
@@ -90,7 +90,7 @@ def test_base_instatiation():
             3,
         ),
         (
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='obs_id',
                 value='junk',
                 sources=['obs_id']
@@ -99,7 +99,7 @@ def test_base_instatiation():
             0,
         ),
         (
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='asn_candidate_id',
                 value='.+(o001|o002).+',
                 sources=['asn_candidate'],
@@ -109,7 +109,7 @@ def test_base_instatiation():
             22,
         ),
         (
-            LV3AttrConstraint(
+            DMSAttrConstraint(
                 name='asn_candidate_id',
                 value='.+(o001|o002).+',
                 sources=['asn_candidate'],

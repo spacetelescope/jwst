@@ -10,7 +10,7 @@ from .helpers import (
 )
 
 from .. import (AssociationPool, generate)
-from ..lib.rules_level3_base import LV3AttrConstraint
+from ..lib.dms_base import DMSAttrConstraint
 
 # Temporarily skip if running under Travis
 # pytestmark = pytest.mark.skipif(
@@ -54,7 +54,7 @@ global_constraints = func_fixture(
     generate_params,
     scope='module',
     params=[
-        LV3AttrConstraint(
+        DMSAttrConstraint(
             name='asn_candidate',
             value=['.+o002.+'],
             sources=['asn_candidate'],
@@ -82,7 +82,7 @@ def test_level3_productname_components_discovered():
 
 
 def test_level3_productname_components_acid():
-    global_constraints = LV3AttrConstraint(
+    global_constraints = DMSAttrConstraint(
         name='asn_candidate_ids',
         value='.+o001.+',
         sources=['asn_candidate'],
