@@ -85,7 +85,7 @@ def test_constraint_all():
     assert not new_c
 
 
-def test_constraint_any():
+def test_constraint_any_basic():
     """Test the all operation"""
 
     sc1 = SimpleConstraint(value='value_1')
@@ -96,6 +96,22 @@ def test_constraint_any():
     new_c, reprocess = c.check_and_set('value_2')
     assert new_c
     new_c, reprocess = c.check_and_set('value_3')
+    assert not new_c
+
+
+def test_constraint_any_remember():
+    """Ensure that any doesn't forget other or propositions"""
+
+    sc1 = SimpleConstraint(value='value_1')
+    sc2 = SimpleConstraint(value='value_2')
+    c = Constraint([sc1, sc2], reduce=Constraint.any)
+    new_c, reprocess = c.check_and_set('value_1')
+    assert new_c
+    new_c, reprocess = new_c.check_and_set('value_2')
+    assert new_c
+    new_c, reprocess = new_c.check_and_set('value_1')
+    assert new_c
+    new_c, reprocess = new_c.check_and_set('value_3')
     assert not new_c
 
 

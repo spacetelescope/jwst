@@ -117,7 +117,6 @@ class Asn_MIRI_LRS_FIXEDSLIT(AsnMixin_Spectrum):
                 sources=['exp_type'],
                 value=(
                     'mir_lrs-fixedslit'
-                    '|mir_tacq'
                 ),
                 force_unique=False,
             ),
@@ -152,7 +151,6 @@ class Asn_MIRI_LRS_SLITLESS(AsnMixin_Spectrum):
                 sources=['exp_type'],
                 value=(
                     'mir_lrs-slitless'
-                    '|mir_tacq'
                 ),
                 force_unique=False,
             ),
@@ -186,8 +184,6 @@ class Asn_NIS_SO_SLITLESS(AsnMixin_Spectrum):
                 sources=['exp_type'],
                 value=(
                     'nis_soss'
-                    '|nis_tacq'
-                    '|nis_taconfirm'
                 ),
                 force_unique=False,
             ),
@@ -227,10 +223,6 @@ class Asn_NRS_FIXEDSLIT(AsnMixin_Spectrum):
                 value=(
                     'nrs_fixedslit'
                     '|nrs_autowave'
-                    '|nrs_confirm'
-                    '|nrs_taconfirm'
-                    '|nrs_tacq'
-                    '|nrs_taslit'
                 ),
                 force_unique=False,
             ),
@@ -265,10 +257,6 @@ class Asn_NRS_MSA(AsnMixin_Spectrum):
                     'nrs_msaspec'
                     '|nrs_autoflat'
                     '|nrs_autowave'
-                    '|nrs_confirm'
-                    '|nrs_taslit'
-                    '|nrs_taconfirm'
-                    '|nrs_tacq'
                 ),
                 force_unique=False,
             ),
@@ -293,7 +281,6 @@ class Asn_MIRI_IFU(AsnMixin_Spectrum):
                 value=(
                     'mir_mrs'
                     '|mir_flatmrs'
-                    '|mir_tacq'
                 ),
                 force_unique=False,
             ),
@@ -333,10 +320,6 @@ class Asn_NRS_IFU(AsnMixin_Spectrum):
                 value=(
                     'nrs_ifu'
                     '|nrs_autowave'
-                    '|nrs_confirm'
-                    '|nrs_taconfirm'
-                    '|nrs_tacq'
-                    '|nrs_taslit'
                 ),
                 force_unique=False,
             ),
@@ -419,8 +402,6 @@ class Asn_AMI(DMS_Level3_Base):
                 sources=['exp_type'],
                 value=(
                     'nis_ami'
-                    '|nis_taconfirm'
-                    '|nis_tacq'
                 ),
             ),
             DMSAttrConstraint(
@@ -518,13 +499,10 @@ class Asn_TSO_EXPTYPE(DMS_Level3_Base):
                 value=(
                     'mir_lrs-slitless'
                     '|nis_soss'
-                    '|nis_taconfirm'
-                    '|nis_tacq'
                     '|nrc_tsimage'
                     '|nrc_tsgrism'
                     '|nrs_bota'
                     '|nrs_brightobj'
-                    '|nrs_taconfirm'
                 ),
             ),
             DMSAttrConstraint(

@@ -520,15 +520,11 @@ class Constraint:
     @staticmethod
     def any(results):
         """Return the first successful constraint."""
-        constraint = False
-        to_reprocess = []
-        for match, reprocess in results:
-            if match:
-                constraint = match
-                to_reprocess = [reprocess]
-                break
+        constraints, reprocess = zip(*results)
+        if not any(constraints):
+            constraints = False
 
-        return constraint, to_reprocess
+        return constraints, reprocess
 
     # Make iterable
     def __iter__(self):
