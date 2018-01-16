@@ -99,6 +99,12 @@ SPEC2_SCIENCE_EXP_TYPES = [
     'nis_soss',
 ]
 
+SPECIAL_EXPTYPES = {
+    'psf': ['is_psf'],
+    'imprint': ['is_imprt'],
+    'background': ['bkgdtarg']
+}
+
 # Key that uniquely identfies members.
 MEMBER_KEY = 'expname'
 
@@ -333,26 +339,6 @@ class DMSBaseMixin(ACIDMixin):
         """
         result = default
 
-        # Look for specific attributes
-        try:
-            self.item_getattr(item, ['is_psf'])
-        except KeyError:
-            pass
-        else:
-            return 'psf'
-        try:
-            self.item_getattr(item, ['is_imprt'])
-        except KeyError:
-            pass
-        else:
-            return 'imprint'
-        try:
-            self.item_getattr(item, ['bkgdtarg'])
-        except KeyError:
-            pass
-        else:
-            return 'background'
-
         # Base type off of exposure type.
         try:
             exp_type = item['exp_type']
@@ -363,6 +349,19 @@ class DMSBaseMixin(ACIDMixin):
 
         if result is None:
             raise LookupError('Cannot determine exposure type')
+
+        # For `science` data, compare against special modifiers
+        # to further refine the type.
+        if result == 'science':
+            for special, source in SPECIAL_EXPTYPES.items():
+                try:
+                    self.item_getattr(item, source)
+                except KeyError:
+                    pass
+                else:
+                    result = special
+                    break
+
         return result
 
     def item_getattr(self, item, attributes):
