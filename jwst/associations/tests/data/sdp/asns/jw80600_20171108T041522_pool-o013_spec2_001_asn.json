@@ -17,15 +17,6 @@
                     "exptype": "science"
                 }
             ]
-        },
-        {
-            "name": "jw80600012001_02101_00002_mirimage",
-            "members": [
-                {
-                    "expname": "jw80600012001_02101_00002_mirimage_rateints.fits",
-                    "exptype": "science"
-                }
-            ]
         }
     ]
 }

@@ -2,11 +2,11 @@ from os.path import join, dirname, basename
 import shutil
 import tempfile
 
-from nose.tools import raises
+import pytest
 
 from astropy.io import fits
 
-from jwst.stpipe import Step
+from .. import Step
 import crds
 
 TMP_DIR = None
@@ -38,10 +38,10 @@ def test_crds_step():
     _run_flat_fetch_on_dataset('data/crds.fits')
 
 
-@raises(Exception)
 def test_crds_step_bad():
-    """Run CrdsStep on a dataset with invalid FILTER."""
-    _run_flat_fetch_on_dataset('data/crds_bad.fits')
+    """Run CrdsStep on a dataset with detector set to N/A."""
+    with pytest.raises(crds.CrdsError):
+        _run_flat_fetch_on_dataset('data/crds_bad.fits')
 
 
 def _run_flat_fetch_on_dataset(dataset_path):
@@ -49,8 +49,7 @@ def _run_flat_fetch_on_dataset(dataset_path):
     step = CrdsStep()
     with datamodels.ImageModel(join(dirname(__file__), dataset_path)) as input_file:
         step.run(input_file)
-    print(step.ref_filename)
-    assert basename(step.ref_filename) == "jwst_nircam_flat_0105.fits"
+    assert basename(step.ref_filename) == "jwst_nircam_flat_0296.fits"
 
 def test_crds_step_override():
     """Run CRDS step with override parameter bypassing CRDS lookup."""
@@ -67,7 +66,6 @@ def test_crds_step_override():
     with fits.open(TMP_FITS) as hdulist:
         assert hdulist[0].header['R_FLAT'].endswith('flat.fits')
 
-@raises(crds.CrdsError)
 def test_crds_failed_getreferences_parameter():
     """Run crds.getreferences() with invalid FILTER."""
     header = {
@@ -87,9 +85,9 @@ def test_crds_failed_getreferences_parameter():
         'meta.subarray.ystart': 1,
         'meta.telescope': 'JWST'
         }
-    crds.getreferences(header, reftypes=["flat"])
+    with pytest.raises(crds.CrdsError):
+        crds.getreferences(header, reftypes=["flat"])
 
-@raises(crds.CrdsError)
 def test_crds_failed_getreferences_reftype():
     """Run crds.getreferences() with an invalid reftypes list."""
     header = {
@@ -109,25 +107,27 @@ def test_crds_failed_getreferences_reftype():
         'meta.subarray.ystart': 1,
         'meta.telescope': 'JWST'
         }
-    crds.getreferences(header, reftypes=["foo"])
+    with pytest.raises(crds.CrdsError):
+        crds.getreferences(header, reftypes=["foo"])
 
-# def test_crds_failed_getreferences_bad_context():
-#     import crds
-#     header = {
-#         u'_extra_fits.PRIMARY.IRAF-TLM': '2013-12-12T15:56:30',
-#         u'meta.date': '2014-07-22T15:53:19.893683',
-#         u'meta.filename': 'crds.fits',
-#         u'meta.instrument.detector': 'NRCA1',
-#         u'meta.instrument.filter': 'F140M',
-#         u'meta.instrument.name': 'NIRCAM',
-#         u'meta.instrument.pupil': 'CLEAR',
-#         u'meta.observation.date': '2012-04-22',
-#         u'meta.origin': 'NOAO-IRAF FITS Image Kernel July 2003',
-#         u'meta.subarray.name': 'FULL',
-#         u'meta.subarray.xsize': 2048,
-#         u'meta.subarray.xstart': 1,
-#         u'meta.subarray.ysize': 2048,
-#         u'meta.subarray.ystart': 1,
-#         u'meta.telescope': 'JWST'
-#         }
-#     assert_raises(crds.getreferences, header, reftypes=["foo"], context="jwst_9942.pmap")
+def test_crds_failed_getreferences_bad_context():
+    import crds
+    header = {
+        '_extra_fits.PRIMARY.IRAF-TLM': '2013-12-12T15:56:30',
+        'meta.date': '2014-07-22T15:53:19.893683',
+        'meta.filename': 'crds.fits',
+        'meta.instrument.detector': 'NRCA1',
+        'meta.instrument.filter': 'F140M',
+        'meta.instrument.name': 'NIRCAM',
+        'meta.instrument.pupil': 'CLEAR',
+        'meta.observation.date': '2012-04-22',
+        'meta.origin': 'NOAO-IRAF FITS Image Kernel July 2003',
+        'meta.subarray.name': 'FULL',
+        'meta.subarray.xsize': 2048,
+        'meta.subarray.xstart': 1,
+        'meta.subarray.ysize': 2048,
+        'meta.subarray.ystart': 1,
+        'meta.telescope': 'JWST'
+        }
+    with pytest.raises(crds.CrdsError):
+        crds.getreferences(header, reftypes=["flat"], context="jwst_9942.pmap")

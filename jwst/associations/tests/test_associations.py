@@ -1,3 +1,4 @@
+
 """test_associations: Test of general Association functionality."""
 import pytest
 
@@ -133,7 +134,7 @@ def test_global_constraints(constraints, pool, n_asns):
             assert constraint in rules[rule].GLOBAL_CONSTRAINTS
 
     pool = helpers.combine_pools(pool)
-    asns, orphaned = generate(pool, rules)
+    asns = generate(pool, rules)
     assert len(asns) == n_asns
 
 

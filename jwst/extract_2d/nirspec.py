@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, reference_files={}):
+def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_files={}):
     exp_type = input_model.meta.exposure.type.upper()
 
     wavecorr_supported_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']
@@ -36,8 +36,8 @@ def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, refere
     # This is a cludge but will work for now.
     # This model keeps open_slits as an attribute.
     open_slits = slit2msa[1].slits[:]
-    if which_subarray is not None:
-        open_slits = [sub for sub in open_slits if sub.name==which_subarray]
+    if slit_name is not None:
+        open_slits = [sub for sub in open_slits if sub.name == slit_name]
     log.debug('open slits {0}'.format(open_slits))
     if exp_type == 'NRS_BRIGHTOBJ':
         # the output model is CubeModel
@@ -59,6 +59,10 @@ def nrs_extract2d(input_model, which_subarray=None, apply_wavecorr=False, refere
             # The overall subarray offset is recorded in model.meta.subarray.
             nslit = len(output_model.slits) - 1
             set_slit_attributes(output_model, nslit, slit, xlo, xhi, ylo, yhi)
+
+            # Copy BUNIT values to output slit
+            output_model.slits[nslit].bunit_data = input_model.meta.bunit_data
+            output_model.slits[nslit].bunit_err = input_model.meta.bunit_err
 
     return output_model
 

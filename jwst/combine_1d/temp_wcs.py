@@ -1,7 +1,7 @@
 import math
 import numpy as np
 
-class WCS(object):
+class WCS:
     """Temporary interface for WCS using a 1-D array.
 
     nelem = wcs.get_nelem()

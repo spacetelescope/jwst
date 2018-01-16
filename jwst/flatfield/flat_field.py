@@ -164,26 +164,32 @@ def apply_flat_field(science, flat):
         flat_dq = sub_flat.dq.copy()
         sub_flat.close()
 
-    # For pixels whose flat is either NaN or NO_FLAT_FIELD, update their DQ to
-    # indicate that no flat is applied to those pixels
-    flat_dq[np.isnan(flat_data)] = np.bitwise_or(flat_dq[np.isnan(flat_data)],
-                                                 dqflags.pixel['NO_FLAT_FIELD'])
+    # Find pixels in the flat that have a value of NaN and set
+    # their DQ to NO_FLAT_FIELD
+    flat_nan = np.isnan(flat_data)
+    flat_dq[flat_nan] = np.bitwise_or(flat_dq[flat_nan],
+                                      dqflags.pixel['NO_FLAT_FIELD'])
 
-    # Replace NaN's in flat with 1's
-    flat_data[np.isnan(flat_data)] = 1.0
+    # Find pixels in the flat have have a value of zero, and set
+    # their DQ to NO_FLAT_FIELD
+    flat_zero = np.where(flat_data == 0.)
+    flat_dq[flat_zero] = np.bitwise_or(flat_dq[flat_zero],
+                                       dqflags.pixel['NO_FLAT_FIELD'])
 
-    # Reset flat values of pixels having DQ values containing NO_FLAT_FIELD
-    # to 1.0, so that no flat fielding correction is made
-    wh_dq = np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD'])
-    flat_data[wh_dq == dqflags.pixel['NO_FLAT_FIELD']] = 1.0
+    # Find all pixels in the flat that have a DQ value of NO_FLAT_FIELD
+    flat_bad = np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD'])
+
+    # Reset the flat value of all bad pixels to 1.0, so that no
+    # correction is made
+    flat_data[np.where(flat_bad)] = 1.0
 
     # For GuiderCalModel data, only apply flat to science data array;
     # there isn't an error array.
     if isinstance(science, datamodels.GuiderCalModel):
-            # Flatten data array
-            science.data /= flat_data
-            # Combine the science and flat DQ arrays
-            science.dq = np.bitwise_or(science.dq, flat_dq)
+        # Flatten data array
+        science.data /= flat_data
+        # Combine the science and flat DQ arrays
+        science.dq = np.bitwise_or(science.dq, flat_dq)
 
     # For CubeModel science data, apply flat to each integration
     elif isinstance(science, datamodels.CubeModel):

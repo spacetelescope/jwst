@@ -37,46 +37,10 @@
             ]
         },
         {
-            "name": "jw80600003001_02101_00001_mirimage",
-            "members": [
-                {
-                    "expname": "jw80600003001_02101_00001_mirimage_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw80600004001_02101_00001_mirimage",
-            "members": [
-                {
-                    "expname": "jw80600004001_02101_00001_mirimage_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw80600009001_02101_00001_mirimage",
-            "members": [
-                {
-                    "expname": "jw80600009001_02101_00001_mirimage_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
             "name": "jw80600006001_02104_00001_mirimage",
             "members": [
                 {
                     "expname": "jw80600006001_02104_00001_mirimage_rate.fits",
-                    "exptype": "science"
-                }
-            ]
-        },
-        {
-            "name": "jw80600010001_02101_00001_mirimage",
-            "members": [
-                {
-                    "expname": "jw80600010001_02101_00001_mirimage_rate.fits",
                     "exptype": "science"
                 }
             ]

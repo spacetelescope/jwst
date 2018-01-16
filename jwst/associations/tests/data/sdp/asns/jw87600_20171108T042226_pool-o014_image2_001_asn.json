@@ -1,0 +1,22 @@
+{
+    "asn_type": "image2",
+    "asn_rule": "candidate_Asn_Lv2Image",
+    "version_id": null,
+    "code_version": "0.9.4",
+    "program": "87600",
+    "target": "1",
+    "asn_pool": "jw87600_20171108T042226_pool",
+    "constraints": "Constraints:\n    single_science: {'False'}\n    exp_type: {'nis_image'}\n    program: {'87600'}\n    target: {'1'}\n    instrument: {'niriss'}\n    detector: {'nis'}\n    opt_elem: {'clear'}\n    opt_elem2: {'f140m'}\n    subarray: {'sub128'}\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o014\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "asn_id": "o014",
+    "products": [
+        {
+            "name": "jw87600014001_02101_00001_nis",
+            "members": [
+                {
+                    "expname": "jw87600014001_02101_00001_nis_rate.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}

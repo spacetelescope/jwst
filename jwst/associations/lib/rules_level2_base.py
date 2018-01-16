@@ -71,9 +71,6 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         super(DMSLevel2bBase, self).__init__(*args, **kwargs)
 
-        # Keep the set of members included in this association
-        self.members = set()
-
         # I am defined by the following constraints
         self.add_constraints({
             'program': {
@@ -134,7 +131,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         """Compare equality of two assocaitions"""
         if isinstance(other, DMSLevel2bBase):
             result = self.data['asn_type'] == other.data['asn_type']
-            result = result and (self.members == other.members)
+            result = result and (self.member_ids == other.member_ids)
             return result
         else:
             return NotImplemented
@@ -177,15 +174,27 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         member: dict
             The member
         """
+
+        # Set exposure error status.
+        try:
+            exposerr = item['exposerr']
+        except KeyError:
+            exposerr = None
+
+        # Handle time-series file naming
         is_tso = self.constraints['is_tso']['value'] == 't'
         if not is_tso:
             is_tso = item['exp_type'] in TSO_EXP_TYPES
+
+        # Create the member.
         member = {
             'expname': Utility.rename_to_level2a(
                 item['filename'], is_tso=is_tso
             ),
-            'exptype': self.get_exposure_type(item)
+            'exptype': self.get_exposure_type(item),
+            'exposerr': exposerr,
         }
+
         return member
 
     def _init_hook(self, item):
@@ -212,10 +221,8 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         member = self.make_member(item)
         members = self.current_product['members']
         members.append(member)
+        self.from_items.append(item)
         self.update_validity(member)
-
-        # Add member to the short list
-        self.members.add(member[KEY])
 
         # Update association state due to new member
         self.update_asn()
@@ -268,6 +275,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
                 'exptype': 'science'
             }
             members.append(member)
+            self.from_items.append(item)
             self.update_validity(member)
             self.update_asn()
 
@@ -287,6 +295,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
     def update_asn(self):
         """Update association info based on current members"""
+        super(DMSLevel2bBase, self).update_asn()
         self.current_product['name'] = self.dms_product_name()
 
     def __repr__(self):
@@ -403,13 +412,17 @@ class Utility():
         return finalized + lv2_asns
 
     @staticmethod
-    def merge_asns(associations):
+    def merge_asns(associations, acid_regex='o\d{3}$'):
         """merge level2 associations
 
         Parameters
         ----------
         associations: [asn(, ...)]
             Associations to search for merging.
+
+        acid_regex: str
+            Regular expression which the `asn_id` of the association
+            must match to be included.
 
         Returns
         -------
@@ -424,19 +437,38 @@ class Utility():
             else:
                 others.append(asn)
 
-        lv2_asns = Utility._merge_asns(lv2_asns)
+        lv2_asns = Utility._merge_asns(lv2_asns, acid_regex)
 
         return others + lv2_asns
 
     @staticmethod
-    def _merge_asns(asns):
-        # Merge all the associations into common types
-        merged_by_type = {}
+    def _merge_asns(asns, acid_regex):
+        """Merge associations by `asn_type` and `asn_id`
+
+        Parameters
+        ----------
+        associations: [asn(, ...)]
+            Associations to search for merging.
+
+        acid_regex: str
+            Regular expression which the `asn_id` of the association
+            must match to be included.
+
+        Returns
+        -------
+        associatons: [association(, ...)]
+            List of associations, some of which may be merged.
+        """
+        match_acid = re.compile(acid_regex, flags=re.IGNORECASE & re.UNICODE)
+        merged = {}
         for asn in asns:
+            if match_acid.match(asn['asn_id']) is None:
+                continue
+            idx = '_'.join([asn['asn_type'], asn['asn_id']])
             try:
-                current_asn = merged_by_type[asn['asn_type']]
+                current_asn = merged[idx]
             except KeyError:
-                merged_by_type[asn['asn_type']] = asn
+                merged[idx] = asn
                 current_asn = asn
             for product in asn['products']:
                 merge_occured = False
@@ -465,7 +497,7 @@ class Utility():
 
         merged_asns = [
             asn
-            for asn_type, asn in merged_by_type.items()
+            for asn in merged.values()
         ]
         return merged_asns
 

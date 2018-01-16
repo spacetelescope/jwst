@@ -3,7 +3,7 @@ Polygon filling algorithm.
 
 :Authors: Nadezhda Dencheva, Mihai Cara (contact: help@stsci.edu)
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
 # Original author: Nadezhda Dencheva

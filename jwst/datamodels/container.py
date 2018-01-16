@@ -12,6 +12,10 @@ from ..associations import (
 from . import model_base
 from .util import open as datamodel_open
 
+import logging
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
+
 
 __all__ = ['ModelContainer']
 
@@ -257,32 +261,35 @@ class ModelContainer(model_base.DataModel):
         meta.observation.sequence_id
         meta.observation.activity_id
         meta.observation.exposure_number
-        meta.instrument.name
-        meta.instrument.channel
         """
+        unique_exposure_parameters = [
+            'program_number',
+            'observation_number',
+            'visit_number',
+            'visit_group',
+            'sequence_id',
+            'activity_id',
+            'exposure_number'
+            ]
         group_dict = OrderedDict()
+
         for i in range(len(self)):
             model = self._open_model(i)
-            if not hasattr(model.meta, 'group_id'):
-                try:
-                    model_attrs = []
-                    model_attrs.append(model.meta.observation.program_number)
-                    model_attrs.append(model.meta.observation.observation_number)
-                    model_attrs.append(model.meta.observation.visit_number)
-                    model_attrs.append(model.meta.observation.visit_group)
-                    model_attrs.append(model.meta.observation.sequence_id)
-                    model_attrs.append(model.meta.observation.activity_id)
-                    model_attrs.append(model.meta.observation.exposure_number)
-                    model_attrs.append(model.meta.instrument.name)
-                    model_attrs.append(model.meta.instrument.channel)
-                    group_id = ('jw' + '_'.join([
-                                    ''.join(model_attrs[:3]),
-                                    ''.join(model_attrs[3:6]),
-                                    model_attrs[6], model_attrs[7].lower(),
-                                    model_attrs[8].lower()]))
-                    model.meta.group_id = group_id
-                except:
-                    model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
+            params = []
+            for param in unique_exposure_parameters:
+                params.append(getattr(model.meta.observation, param))
+            try:
+                group_id = ('jw' + '_'.join([''.join(params[:3]),
+                        ''.join(params[3:6]), params[6]]))
+                model.meta.group_id = group_id
+            except TypeError:
+                params_dict = dict(zip(unique_exposure_parameters, params))
+                bad_params = {'meta.observation.'+k:v for k, v in params_dict.items() if not v}
+                log.warn(
+                    'Cannot determine grouping of exposures: '
+                    '{}'.format(bad_params)
+                    )
+                model.meta.group_id = 'exposure{0:04d}'.format(i + 1)
 
             group_id = model.meta.group_id
             if group_id in group_dict:

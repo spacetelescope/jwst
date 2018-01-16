@@ -41,6 +41,16 @@ def set_source_type(input_model):
                 src_type = 'EXTENDED'
             else:
                 src_type = 'POINT'
+
+            # Check for background target status
+            if input_model.meta.observation.bkgdtarg:
+
+                # If it's NIRSpec IFU background target exposure, set
+                # the default type to Extended
+                if input_model.meta.exposure.type == 'NRS_IFU':
+                    src_type = 'EXTENDED'
+
+            # Report the type
             log.info('Input SRCTYPE is unknown. Setting to default ' +
                      'value of %s' % src_type)
 

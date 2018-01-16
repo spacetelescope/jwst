@@ -30,13 +30,15 @@ from .. import miri
 from ..assign_wcs_step import AssignWcsStep
 
 
-wcs_kw = {'wcsaxes': 2, 'ra_ref': 165, 'dec_ref': 54,
+wcs_kw = {'wcsaxes': 3, 'ra_ref': 165, 'dec_ref': 54,
           'v2_ref': -8.3942412, 'v3_ref': -5.3123744, 'roll_ref': 37,
-          'crpix1': 1024, 'crpix2': 1024,
-          'cdelt1': .08, 'cdelt2': .08,
-          'ctype1': 'RA---TAN', 'ctype2': 'DEC--TAN',
-          'pc1_1': 1, 'pc1_2': 0, 'pc2_1': 0, 'pc2_2': 1,
-          'pc3_1': 1, 'pc3_2': 0
+          'crpix1': 1024, 'crpix2': 1024, 'crpix3': 0,
+          'cdelt1': .08, 'cdelt2': .08, 'cdelt3': 1,
+          'ctype1': 'RA---TAN', 'ctype2': 'DEC--TAN', 'ctype3': 'WAVE',
+          'pc1_1': 1, 'pc1_2': 0, 'pc1_3': 0,
+          'pc2_1': 0, 'pc2_2': 1, 'pc2_3': 0,
+          'pc3_1': 0, 'pc3_2': 0, 'pc3_3': 1,
+          'cunit1': 'deg', 'cunit2': 'deg', 'cunit3': 'um',
           }
 
 band_mapping = {'SHORT': 'A', 'MEDIUM': 'B', 'LONG': 'C'}
@@ -45,6 +47,7 @@ band_mapping = {'SHORT': 'A', 'MEDIUM': 'B', 'LONG': 'C'}
 def create_hdul(detector, channel, band):
     hdul = fits.HDUList()
     phdu = fits.PrimaryHDU()
+    phdu.header['telescop'] = "JWST"
     phdu.header['filename'] = "test" + channel + band
     phdu.header['instrume'] = 'MIRI'
     phdu.header['detector'] = detector
@@ -54,6 +57,7 @@ def create_hdul(detector, channel, band):
     phdu.header['date-obs'] = '2017-09-05'
     phdu.header['exp_type'] = 'MIR_MRS'
     scihdu = fits.ImageHDU()
+    scihdu.header['EXTNAME'] = "SCI"
     scihdu.header.update(wcs_kw)
     hdul.append(phdu)
     hdul.append(scihdu)
@@ -63,8 +67,6 @@ def create_hdul(detector, channel, band):
 def create_datamodel(hdul):
     im = ImageModel(hdul)
     ref = create_reference_files(im)
-    print('in create_datamodel', ref['distortion'])
-    print(im.meta.instrument.band)
     pipeline = miri.create_pipeline(im, ref)
     wcsobj = wcs.WCS(pipeline)
     im.meta.wcs = wcsobj

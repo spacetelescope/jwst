@@ -45,7 +45,7 @@ def nirspec_params(request):
         'asn_candidate': constrain_on_candidates((cid,))
     }
     rules = registry_level3_only(global_constraints=gc)
-    asns, orphaned = generate(pool, rules)
+    asns = generate(pool, rules)
     return asns, asn_type, asn_name, product_name, exptypes
 
 
@@ -107,7 +107,7 @@ def miri_params(request):
         'asn_candidate': constrain_on_candidates((cid,))
     }
     rules = registry_level3_only(global_constraints=gc)
-    asns, orphaned = generate(pool, rules)
+    asns = generate(pool, rules)
     return asns, asn_type, asn_name, product_name
 
 

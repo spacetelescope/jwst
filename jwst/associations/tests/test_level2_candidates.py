@@ -26,7 +26,7 @@ from ..main import Main
         # Whole program
         (
             [],
-            1
+            7
         ),
         # Discovered only
         (
@@ -36,7 +36,7 @@ from ..main import Main
         # Candidates only
         (
             ['--all-candidates'],
-            1
+            7
         ),
     ]
 )

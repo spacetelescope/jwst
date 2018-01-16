@@ -5,7 +5,7 @@ from astropy.modeling.models import Shift, Rotation2D
 from asdf.tests import helpers
 from ...import jwextension
 from ...models import *
-from astropy.tests.helper import pytest
+import pytest
 
 
 m1 = Shift(1) & Shift(2) | Rotation2D(3.1)

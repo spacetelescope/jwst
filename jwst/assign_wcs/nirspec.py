@@ -223,6 +223,7 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
     sporder, wrange = get_spectral_order_wrange(input_model, reference_files['wavelengthrange'])
     input_model.meta.wcsinfo.waverange_start = wrange[0]
     input_model.meta.wcsinfo.waverange_end = wrange[1]
+    log.info("SPORDER= {0}, wrange={1}".format(sporder, wrange))
     input_model.meta.wcsinfo.spectral_order = sporder
 
     # DMS to SCA transform
@@ -286,7 +287,7 @@ def get_open_slits(input_model, reference_files=None):
     if reference_files is not None:
         slits = validate_open_slits(input_model, slits, reference_files)
         log.info("Slits projected on detector {0}: {1}".format(input_model.meta.instrument.detector,
-                                                             [sl.name for sl in slits]))
+                                                               [sl.name for sl in slits]))
     if not slits:
         log.critical("No open slits fall on detector {0}.".format(input_model.meta.instrument.detector))
     return slits
@@ -303,15 +304,16 @@ def get_open_fixed_slits(input_model):
     s2b1 = Slit('S200B1', 4, 0, 0, -.5, .5, 5)
 
     subarray = input_model.meta.subarray.name.upper()
-    if subarray == "S200A1":
+    if subarray == "SUBS200A1":
         slits.append(s2a1)
-    elif subarray == "S200A2":
+    elif subarray == "SUBS200A2":
         slits.append(s2a2)
-    elif subarray == "S400A1":
+    elif subarray == "SUBS400A1":
         slits.append(s4a1)
-    elif subarray == "S1600A1":
+    elif subarray in ("SUB2048", "SUB512", "SUB512S",
+                      "SUB1024A", "SUB1024B"):
         slits.append(s16a1)
-    elif subarray == "S200B1":
+    elif subarray == "SUBS200B1":
         slits.append(s2b1)
     else:
         slits.extend([s2a1, s2a2, s4a1, s16a1, s2b1])
@@ -814,13 +816,9 @@ def detector_to_gwa(reference_files, detector, disperser):
         Transform from DETECTOR frame to GWA frame.
 
     """
-    #with AsdfFile.open(reference_files['fpa']) as f:
-    #    fpa = f.tree[detector].copy()
     with FPAModel(reference_files['fpa']) as f:
         fpa = getattr(f, detector.lower() + '_model')
-    #with AsdfFile.open(reference_files['camera']) as f:
     with CameraModel(reference_files['camera']) as f:
-        #camera = f.tree['model'].copy()
         camera = f.model
 
     angles = [disperser['theta_x'], disperser['theta_y'],
@@ -902,13 +900,13 @@ def compute_bounding_box(slit2detector, wavelength_range, slit_ymin=-.5, slit_ym
 
     """
     lam_min, lam_max = wavelength_range
-
     step = 1e-10
     nsteps = int((lam_max - lam_min) / step)
     lam_grid = np.linspace(lam_min, lam_max, nsteps)
     x_range_low, y_range_low = slit2detector([0] * nsteps, [slit_ymin] * nsteps, lam_grid)
     x_range_high, y_range_high = slit2detector([0] * nsteps, [slit_ymax] * nsteps, lam_grid)
     x_range = np.hstack((x_range_low, x_range_high))
+
     y_range = np.hstack((y_range_low, y_range_high))
     # add 10 px margin
     # The -1 is technically because the output of slit2detector is 1-based coordinates.
@@ -940,7 +938,6 @@ def collimator_to_gwa(reference_files, disperser):
 
     """
     with CollimatorModel(reference_files['collimator']) as f:
-        #collimator = f.tree['model'].copy()
         collimator = f.model
     angles = [disperser['theta_x'], disperser['theta_y'],
               disperser['theta_z'], disperser['tilt_y']]
@@ -985,8 +982,13 @@ def correct_tilt(disperser, xtilt, ytilt):
         Value of GWAXTILT keyword - angle in arcsec
     ytilt : float
         Value of GWAYTILT keyword - angle in arcsec
-    disperser : dict
+    disperser : `~jwst.datamodels.DisperserModel`
         Disperser information.
+
+    Returns
+    -------
+    disp : `~jwst.datamodels.DisperserModel`
+        Corrected DisperserModel.
 
     """
     def _get_correction(gwa_tilt, tilt_angle):
@@ -1263,25 +1265,29 @@ def validate_open_slits(input_model, open_slits, reference_files):
     det2dms = dms_to_sca(input_model).inverse
     # read models from reference files
     with FPAModel(reference_files['fpa']) as f:
-        #fpa = f.tree[input_model.meta.instrument.detector].copy()
         fpa = getattr(f, input_model.meta.instrument.detector.lower() + '_model')
     with CameraModel(reference_files['camera']) as f:
         camera = f.model
-    #with DisperserModel(reference_files['disperser']) as f:
-        #disperser = f.tree
-    disperser = DisperserModel(reference_files['disperser'])
 
-    dircos2u = DirCos2Unitless(name='directional2unitless_cosines')
+    disperser = DisperserModel(reference_files['disperser'])
     disperser = correct_tilt(disperser, input_model.meta.instrument.gwa_xtilt,
                              input_model.meta.instrument.gwa_ytilt)
+
+    dircos2u = DirCos2Unitless(name='directional2unitless_cosines')
+
     angles = [disperser['theta_x'], disperser['theta_y'],
               disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
 
     order, wrange = get_spectral_order_wrange(input_model, reference_files['wavelengthrange'])
+
+    input_model.meta.wcsinfo.waverange_start = wrange[0]
+    input_model.meta.wcsinfo.waverange_end = wrange[1]
+    input_model.meta.wcsinfo.spectral_order = order
     agreq = angle_from_disperser(disperser, input_model)
     # GWA to detector
-    gwa2det = rotation.inverse | dircos2u | camera.inverse | fpa.inverse
+    det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
+    gwa2det = det2gwa.inverse
     # collimator to GWA
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
 
@@ -1305,7 +1311,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
                 bb = compute_bounding_box(msa2det, wrange, slit.ymin, slit.ymax)
                 valid = _is_valid_slit(bb)
                 if not valid:
-                    log.info("Removing slit {0} from the list of open slits because the"
+                    log.info("Removing slit {0} from the list of open slits because the "
                              "WCS bounding_box is completely outside the detector.".format(slit.name))
                     log.debug("Slit bounding_box is {0}".format(bb))
                     idx = np.nonzero([s.name == slit.name for s in open_slits])[0][0]

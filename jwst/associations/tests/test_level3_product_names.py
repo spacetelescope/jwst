@@ -69,7 +69,7 @@ global_constraints = func_fixture(
 def test_level3_productname_components_discovered():
     rules = registry_level3_only()
     pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
-    asns, orphaned = generate(pool, rules)
+    asns = generate(pool, rules)
     asn = asns[0]
     match = re.match(LEVEL3_PRODUCT_NAME_REGEX, asn['products'][0]['name'])
     assert match is not None
@@ -92,7 +92,7 @@ def test_level3_productname_components_acid():
     }
     rules = registry_level3_only(global_constraints=global_constraints)
     pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
-    asns, orphaned = generate(pool, rules)
+    asns = generate(pool, rules)
     asn = asns[0]
     match = re.match(LEVEL3_PRODUCT_NAME_REGEX, asn['products'][0]['name'])
     assert match is not None
@@ -107,7 +107,7 @@ def test_level3_productname_components_acid():
 def test_level35_names(pool_file):
     rules = registry_level3_only()
     pool = AssociationPool.read(pool_file)
-    (asns, orphaned) = generate(pool, rules)
+    asns = generate(pool, rules)
     for asn in asns:
         product_name = asn['products'][0]['name']
         if asn['asn_rule'] == 'Asn_MIRI_IFU':
@@ -122,7 +122,7 @@ def test_level3_names(pool_file, global_constraints):
         global_constraints=global_constraints
     )
     pool = AssociationPool.read(pool_file)
-    (asns, orphaned) = generate(pool, rules)
+    asns = generate(pool, rules)
     for asn in asns:
         product_name = asn['products'][0]['name']
         if asn['asn_rule'] == 'Asn_MIRI_IFU':
@@ -140,7 +140,7 @@ def test_level3_names(pool_file, global_constraints):
 def test_multiple_optelems(pool_file):
     rules = registry_level3_only()
     pool = AssociationPool.read(pool_file)
-    (asns, orphaned) = generate(pool, rules)
+    asns = generate(pool, rules)
     for asn in asns:
         product_name = asn['products'][0]['name']
         if asn['asn_rule'] != 'Asn_MIRI_IFU':

@@ -58,6 +58,7 @@ class ResampleSpecStep(Step):
                 if len(resamp.output_models) == 1:
                     out_slit = resamp.output_models[0]
                     output_product.products.append(out_slit)
+                    output_product.products[-1].bunit_data = input_models[0].meta.bunit_data
                 else:
                     out_slit = resamp.output_models
             result = output_product

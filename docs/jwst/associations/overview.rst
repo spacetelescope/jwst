@@ -55,7 +55,7 @@ then used as input to the Level3 calibration steps to perform the
 transformation from exposure-based data to source-based, high(er)
 signal-to-noise data.
 
-In short, Level 2 andLevel 3 associations are created running the
+In short, Level 2 and Level 3 associations are created running the
 :ref:`asn_generate <asn-generate>` task on an :ref:`Association Pool
 <asn-pool>` using the default :ref:`Level 2` and :ref:`Level 3
 Association Rules <level3-asn-rules>` to produce

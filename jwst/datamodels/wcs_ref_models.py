@@ -274,6 +274,10 @@ class RegionsModel(ReferenceFileModel):
     def on_save(self, path=None):
         self.meta.reftype = self.reftype
 
+    def populate_meta(self):
+        self.meta.instrument.name = "MIRI"
+        self.meta.exposure.type = "MIR_MRS"
+
     def to_fits(self):
         raise NotImplementedError("FITS format is not supported for this file.")
 
@@ -476,9 +480,9 @@ class DisperserModel(ReferenceFileModel):
         if angle is not None:
             self.angle = angle
         if gwa_tiltx is not None:
-            gwa_tiltx = gwa_tiltx
+            self.gwa_tiltx = gwa_tiltx
         if gwa_tilty is not None:
-            gwa_tilty = gwa_tilty
+            self.gwa_tilty = gwa_tilty
         if kcoef is not None:
             self.kcoef = kcoef
         if lcoef is not None:

@@ -1,9 +1,9 @@
-from nose.tools import assert_raises
-
 from collections import MutableMapping
 
 from ..lib.dictwithattrs import DictWithAttributes
 from ..lib.member import Member
+
+import pytest
 
 class TestMember():
     def setUp(self):
@@ -44,5 +44,5 @@ class TestMember():
         assert da.c == 3
         assert da['aa'] == 1
         assert da['c'] == 3
-        assert_raises(KeyError, lambda x: x['a'], da)
-        assert_raises(AttributeError, lambda x: x.a, da)
+        pytest.raises(KeyError, lambda x: x['a'], da)
+        pytest.raises(AttributeError, lambda x: x.a, da)
