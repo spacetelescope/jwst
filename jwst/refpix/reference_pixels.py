@@ -521,7 +521,7 @@ class NIRDataset(Dataset):
         bufsize = smoothing_length // 2
         reflected[bufsize:bufsize + nrows] = data[:]
         reflected[:bufsize] = data[bufsize:0:-1]
-        reflected[nrows + bufsize:] = data[-1:nrows - 1 - bufsize:-1]
+        reflected[-(bufsize):] = data[-2:-(bufsize+2):-1]
         return reflected
 
     def median_filter(self, data, dq, smoothing_length):
