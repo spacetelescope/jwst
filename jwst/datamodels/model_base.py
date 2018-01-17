@@ -104,19 +104,24 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             schema_path = os.path.join(base_url, self.schema_url)
             # Create an AsdfFile so we can use its resolver for loading schemas
             asdf_file = AsdfFile(extensions=self._extensions)
+            if hasattr(asdf_file, 'resolver'):
+                file_resolver = asdf_file.resolver
+            else:
+                file_resolver = self.get_resolver(asdf_file)
             schema = asdf_schema.load_schema(schema_path,
-                resolver=asdf_file.resolver, resolve_references=True)
+                                             resolver=file_resolver,
+                                             resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
         # Determine what kind of input we have (init) and execute the
         # proper code to intiailize the model
         self._files_to_close = []
         self._iscopy = False
-    
+
         is_array = False
         is_shape = False
         shape = None
-        
+
         if init is None:
             asdf = AsdfFile(extensions=extensions)
         elif isinstance(init, dict):
@@ -149,13 +154,13 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if isinstance(init, bytes):
                 init = init.decode(sys.getfilesystemencoding())
             file_type = filetype.check(init)
-     
+
             if file_type == "fits":
                 hdulist = fits.open(init)
                 asdf = fits_support.from_fits(hdulist, self._schema,
                                               extensions, pass_invalid_values)
                 self._files_to_close.append(hdulist)
-     
+
             elif file_type == "asdf":
                 asdf = AsdfFile.open(init, extensions=extensions)
 
@@ -163,7 +168,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 # TODO handle json files as well
                 raise IOError(
                         "File does not appear to be a FITS or ASDF file.")
-            
+
         else:
             raise ValueError(
                 "Can't initialize datamodel using {0}".format(str(type(init))))
@@ -184,18 +189,18 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 filename = info.get('filename')
                 if filename is not None:
                     self.meta.filename = os.path.basename(filename)
-        
+
         # if the input model doesn't have a date set, use the current date/time
         if self.meta.date is None:
             current_date = Time(datetime.datetime.now())
             current_date.format = 'isot'
             self.meta.date = current_date.value
-        
+
         # store the data model type, if not already set
         klass = self.__class__.__name__
         if klass == 'DataModel':
             klass = None
-            
+
         if hasattr(self.meta, 'model_type'):
             if self.meta.model_type is None:
                 self.meta.model_type = klass
@@ -226,6 +231,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 fd.close()
         if not self._iscopy and self._asdf is not None:
             self._asdf.close()
+
+    def get_resolver(self, asdf_file):
+        extensions = asdf_file._extensions
+        def asdf_file_resolver(uri):
+            return extensions._url_mapping(extensions._tag_mapping(uri))
+        return asdf_file_resolver
 
     @staticmethod
     def clone(target, source, deepcopy=False, memo=None):
@@ -611,7 +622,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         ----------
         d : model or dictionary-like object
             The model to copy the metadata elements from. Can also be a
-            dictionary or dictionary of dictionaries or lists. 
+            dictionary or dictionary of dictionaries or lists.
         only: only update the named hdu from extra_fits, e.g.
             only='PRIMARY'. Can either be a list of hdu names
             or a single string. If left blank, update all the hdus.
