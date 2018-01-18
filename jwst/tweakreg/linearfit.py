@@ -4,7 +4,7 @@ sets of 2D points.
 
 :Authors: Mihai Cara, Warren Hack (contact: help@stsci.edu)
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
 from __future__ import (absolute_import, division, unicode_literals,

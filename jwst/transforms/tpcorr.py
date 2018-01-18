@@ -1,11 +1,11 @@
 """
-A module that provides `TPCorr` class - an `~astropy.modeling.Model` derived
+A module that provides `TPCorr` class - a `~astropy.modeling.Model` derived
 class that applies linear tangent-plane corrections to V2V3 coordinates of
-of JWST instrument's WCS.
+JWST instrument's WCS.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
 
@@ -64,7 +64,6 @@ class TPCorr(Model):
         Roll angle in degrees. Default is 0 degrees.
 
     """
-
     v2ref = Parameter(default=0.0)
     v3ref = Parameter(default=0.0)
     roll = Parameter(default=0.0)
@@ -101,7 +100,10 @@ class TPCorr(Model):
 
     @matrix.validator
     def matrix(self, value):
-        """Validates that the input matrix is a 2x2 2D array."""
+        """
+        Validates that the input matrix is a 2x2 2D array.
+
+        """
 
         if np.shape(value) != (2, 2):
             raise InputParameterError(
@@ -112,6 +114,7 @@ class TPCorr(Model):
         """
         Validates that the shift vector is a 2D vector.  This allows
         either a "row" vector.
+
         """
 
         if not (np.ndim(value) == 1 and np.shape(value) == (2,)):
@@ -123,6 +126,7 @@ class TPCorr(Model):
     def cartesian2spherical(x, y, z):
         """
         Convert cartesian coordinates to spherical coordinates (in deg).
+
         """
         h = np.hypot(x, y)
         alpha = np.rad2deg(np.arctan2(y, x))
@@ -133,6 +137,7 @@ class TPCorr(Model):
     def spherical2cartesian(alpha, delta):
         """
         Convert spherical coordinates (in deg) to cartesian.
+
         """
         alpha = np.deg2rad(alpha)
         delta = np.deg2rad(delta)
@@ -142,6 +147,10 @@ class TPCorr(Model):
         return x, y, z
 
     def v2v3_to_tanp(self, v2, v3):
+        """
+        Converts V2V3 spherical coordinates to tangent plane coordinates.
+
+        """
         (v2, v3), format_info = self.prepare_inputs(v2, v3)
 
         # convert spherical coordinates to cartesian assuming unit sphere:
@@ -175,6 +184,10 @@ class TPCorr(Model):
                                     yt.reshape(v3.shape))
 
     def tanp_to_v2v3(self, xt, yt):
+        """
+        Converts tangent plane coordinates to V2V3 spherical coordinates.
+
+        """
         (xt, yt), format_info = self.prepare_inputs(xt, yt)
         zt = np.full_like(xt, self.__class__.r0)
 
@@ -204,6 +217,10 @@ class TPCorr(Model):
                                     v3c.reshape(yt.shape))
 
     def evaluate(self, v2, v3, v2ref, v3ref, roll, matrix, shift):
+        """
+        Evaluate the model on some input variables.
+
+        """
         (v2, v3), format_info = self.prepare_inputs(v2, v3)
 
         # convert spherical coordinates to cartesian assuming unit sphere:
@@ -243,6 +260,11 @@ class TPCorr(Model):
 
     @property
     def inverse(self):
+        """
+        Returns a new `TPCorr` instance which performs the inverse
+        transformation of the transformation defined for this `TPCorr` model.
+
+        """
         ishift = -np.dot(self.matrix.value, self.shift.value)
         imatrix = np.linalg.inv(self.matrix.value)
         return TPCorr(v2ref=self.v2ref.value, v3ref=self.v3ref.value,

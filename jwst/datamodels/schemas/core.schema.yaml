@@ -183,9 +183,9 @@ properties:
           type:
             title: Visit type
             type: string
-            enum: [GENERIC, PARALLEL_DARK_CALIBRATION, PARALLEL_EXTERNAL_CALIBRATION, 
+            enum: [GENERIC, PARALLEL_DARK_CALIBRATION, PARALLEL_EXTERNAL_CALIBRATION,
                    PARALLEL_PURE, PARALLEL_SLEW_CALIBRATION, PRIME_STATION_KEEPING,
-                   PRIME_TARGETED_FIXED, PRIME_TARGETED_MOVING, PRIME_UNTARGETED, 
+                   PRIME_TARGETED_FIXED, PRIME_TARGETED_MOVING, PRIME_UNTARGETED,
                    PRIME_WFSC_ROUTINE, PRIME_WFSC_SENSING_CONTROL,
                    PRIME_WFSC_SENSING_ONLY, PRIOR_MOMENTUM_UNLOAD]
             fits_keyword: VISITYPE
@@ -611,10 +611,10 @@ properties:
               # Obsolete NIRISS
               SUBSTRIP80,
               # NIRSpec
-              ALLSLITS, S200A1, S200A2, S200B1, S400A1, SUB1024A, SUB1024B,
+              ALLSLITS, SUBS200A1, SUBS200A2, SUBS200B1, SUBS400A1, SUB1024A, SUB1024B,
               SUB512, SUB32, SUB512S, SUB2048,
               # Obsolete NIRSpec
-              FULL_IRS2,
+              FULL_IRS2, S200A1, S200A2, S200B1, S400A1,
               # All
               FULL, GENERIC, N/A]
             fits_keyword: SUBARRAY
@@ -1035,7 +1035,7 @@ properties:
             type: number
             fits_keyword: GS_MURA
           gs_para:
-            title: Guide star annual parallax 
+            title: Guide star annual parallax
             type: number
             fits_keyword: GS_PARA
           gs_srcjm:

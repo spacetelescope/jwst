@@ -11,7 +11,7 @@ class Extract2dStep(Step):
     """
 
     spec = """
-        which_subarray = string(default = None)
+        slit_name = string(default = None)
         apply_wavecorr = boolean(default=True)
         grism_objects = list(default=list())
     """
@@ -25,7 +25,7 @@ class Extract2dStep(Step):
             reference_file_names[reftype] = reffile if reffile else ""
 
         with datamodels.open(input_model) as dm:
-            output_model = extract_2d.extract2d(dm, self.which_subarray, self.apply_wavecorr,
+            output_model = extract_2d.extract2d(dm, self.slit_name, self.apply_wavecorr,
                                                 reference_files=reference_file_names)
 
         return output_model

@@ -1,0 +1,5 @@
+*******
+LICENSE
+*******
+
+.. include:: ../../LICENSE

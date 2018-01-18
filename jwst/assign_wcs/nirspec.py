@@ -304,15 +304,16 @@ def get_open_fixed_slits(input_model):
     s2b1 = Slit('S200B1', 4, 0, 0, -.5, .5, 5)
 
     subarray = input_model.meta.subarray.name.upper()
-    if subarray == "S200A1":
+    if subarray == "SUBS200A1":
         slits.append(s2a1)
-    elif subarray == "S200A2":
+    elif subarray == "SUBS200A2":
         slits.append(s2a2)
-    elif subarray == "S400A1":
+    elif subarray == "SUBS400A1":
         slits.append(s4a1)
-    elif subarray == "S1600A1":
+    elif subarray in ("SUB2048", "SUB512", "SUB512S",
+                      "SUB1024A", "SUB1024B"):
         slits.append(s16a1)
-    elif subarray == "S200B1":
+    elif subarray == "SUBS200B1":
         slits.append(s2b1)
     else:
         slits.extend([s2a1, s2a2, s4a1, s16a1, s2b1])
@@ -981,8 +982,13 @@ def correct_tilt(disperser, xtilt, ytilt):
         Value of GWAXTILT keyword - angle in arcsec
     ytilt : float
         Value of GWAYTILT keyword - angle in arcsec
-    disperser : dict
+    disperser : `~jwst.datamodels.DisperserModel`
         Disperser information.
+
+    Returns
+    -------
+    disp : `~jwst.datamodels.DisperserModel`
+        Corrected DisperserModel.
 
     """
     def _get_correction(gwa_tilt, tilt_angle):

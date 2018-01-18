@@ -49,7 +49,7 @@ def _run_flat_fetch_on_dataset(dataset_path):
     step = CrdsStep()
     with datamodels.ImageModel(join(dirname(__file__), dataset_path)) as input_file:
         step.run(input_file)
-    assert basename(step.ref_filename) == "jwst_nircam_flat_0105.fits"
+    assert basename(step.ref_filename) == "jwst_nircam_flat_0296.fits"
 
 def test_crds_step_override():
     """Run CRDS step with override parameter bypassing CRDS lookup."""

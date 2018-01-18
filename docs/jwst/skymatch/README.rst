@@ -71,6 +71,7 @@ Step Arguments
 The ``skymatch`` step has the following optional arguments:
 
 **General sky matching parameters:**
+
 * ``skymethod``: A `str` value indicating sky computation algorithm to be used.
   Allowed values: {``'local'``, ``'global'``, ``'match'``, ``'global+match'``}
   (Default = ``'global+match'``)
@@ -89,20 +90,55 @@ The ``skymatch`` step has the following optional arguments:
     be subtracted from image data. (Default = `False`)
 
 **Image's bounding polygon parameters:**
+
 * ``stepsize``: An integer number indicating spacing between vertices of the
   image's bounding polygon. Default value of `None` creates bounding polygons
   with four vertices corresponding to the corners of the image.
 
 **Sky statistics parameters:**
-* ``skystat`` A string describing statistics to be used for sky background
+
+* ``skystat``: A string describing statistics to be used for sky background
   value computations. Supported values are: 'mean', 'mode', 'midpt',
   and 'median' (Default = 'mode')
 
-* ``lower`` An optional `float` value indicating lower limit of usable pixel
+* ``dqbits``: A string or `None`. Integer sum of all the DQ bit values
+  from the input image's
+  DQ array that should be considered "good" when building masks for
+  sky computations. For example, if pixels in the DQ array can be
+  combinations of 1, 2, 4, and 8 flags and one wants to consider DQ
+  "defects" having flags 2 and 4 as being acceptable for sky
+  computations, then ``dqbits`` should be set to 2+4=6. Then a DQ pixel
+  having values 2,4, or 6 will be considered a good pixel, while a
+  DQ pixel with a value, e.g., 1+2=3, 4+8=12, etc. will be flagged as
+  a "bad" pixel.
+
+  Alternatively, one can enter a comma- or '+'-separated list
+  of integer bit flags that should be added to obtain the
+  final "good" bits. For example, both ``4,8`` and ``4+8``
+  are equivalent to setting ``dqbits`` to 12.
+
+  .. note::
+    - Default value (0) will make *all* non-zero
+      pixels in the DQ mask to be considered "bad" pixels, and the
+      corresponding image pixels will not be used for sky computations.
+
+    - Set ``dqbits`` to `None` to turn off the use of image's DQ array
+      for sky computations.
+
+    - In order to reverse the meaning of the ``dqbits``
+      parameter from indicating values of the "good" DQ flags
+      to indicating the "bad" DQ flags, prepend '~' to the string
+      value. For example, in order not to use pixels with
+      DQ flags 4 and 8 for sky computations and to consider
+      as "good" all other pixels (regardless of their DQ flag),
+      set ``dqbits`` to ``~4+8``, or ``~4,8``. A ``dqbits`` string value of
+      ``'~0'`` would be equivalent to setting ``dqbits=None``.
+
+* ``lower``: An optional `float` value indicating lower limit of usable pixel
   values for computing the sky. This value should be specified in the units
   of the input image(s). (Default = `None`)
 
-* ``upper`` An optional `float` value indicating upper limit of usable pixel
+* ``upper``: An optional `float` value indicating upper limit of usable pixel
   values for computing the sky. This value should be specified in the units
   of the input image(s). (Default = `None`)
 
