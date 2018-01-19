@@ -77,7 +77,7 @@ class PyTest(TestCommand):
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
-        self.pytest_args = [NAME]
+        self.pytest_args = ["jwst/transforms"]#NAME]
 
     def finalize_options(self):
         TestCommand.finalize_options(self)
@@ -117,6 +117,7 @@ else:
 version = relic.release.get_info()
 relic.release.write_template(version, NAME)
 
+entry_points = dict(asdf_extensions='jwst_pipeline = jwst.transforms.jwextension:JWSTExtension')
 
 setup(
     name=NAME,
@@ -153,4 +154,5 @@ setup(
         'test': PyTest,
         'build_sphinx': BuildSphinx
     },
+    entry_points=entry_points,
 )
