@@ -11,29 +11,31 @@ shows the pipeline classes that are currently available, the
 corresponding pre-defined configurations that make use of those classes, and
 the instrument modes to which they can be applied.
 
-+-------------------+-----------------------+-----------------------------+
-| Class Name        | Configuration File    | Used For                    |
-+===================+=======================+=============================+
-| Detector1Pipeline | calwebb_detector1.cfg | Stage 1: all non-TSO modes  |
-+-------------------+-----------------------+-----------------------------+
-| Detector1Pipeline | calwebb_tso1.cfg      | Stage 1: all TSO modes      |
-+-------------------+-----------------------+-----------------------------+
-| DarkPipeline      | calwebb_dark.cfg      | Stage 1: darks              |
-+-------------------+-----------------------+-----------------------------+
-| Image2Pipeline    | calwebb_image2.cfg    | Stage 2: imaging modes      |
-+-------------------+-----------------------+-----------------------------+
-| Spec2Pipeline     | calwebb_spec2.cfg     | Stage 2: spectroscopy modes |
-+-------------------+-----------------------+-----------------------------+
-| Image3Pipeline    | calwebb_image3.cfg    | Stage 3: imaging modes      |
-+-------------------+-----------------------+-----------------------------+
-| Spec3Pipeline     | calwebb_spec3.cfg     | Stage 3: spectroscopy modes |
-+-------------------+-----------------------+-----------------------------+
-| Ami3Pipeline      | calwebb_ami3.cfg      | Stage 3: NIRISS AMI mode    |
-+-------------------+-----------------------+-----------------------------+
-| Coron3Pipeline    | calwebb_coron3.cfg    | Stage 3: Coronagraphic mode |
-+-------------------+-----------------------+-----------------------------+
-| TSO3Pipeline      | calwebb_tso3.cfg      | Stage 3: Time Series mode   |
-+-------------------+-----------------------+-----------------------------+
++-------------------+-----------------------+------------------------------+
+| Class Name        | Configuration File    | Used For                     |
++===================+=======================+==============================+
+| Detector1Pipeline | calwebb_detector1.cfg | Stage 1: all non-TSO modes   |
++-------------------+-----------------------+------------------------------+
+| Detector1Pipeline | calwebb_tso1.cfg      | Stage 1: all TSO modes       |
++-------------------+-----------------------+------------------------------+
+| DarkPipeline      | calwebb_dark.cfg      | Stage 1: darks               |
++-------------------+-----------------------+------------------------------+
+| GuiderPipeline    | calwebb_guider.cfg    | Stage 1+2: FGS guiding modes |
++-------------------+-----------------------+------------------------------+
+| Image2Pipeline    | calwebb_image2.cfg    | Stage 2: imaging modes       |
++-------------------+-----------------------+------------------------------+
+| Spec2Pipeline     | calwebb_spec2.cfg     | Stage 2: spectroscopy modes  |
++-------------------+-----------------------+------------------------------+
+| Image3Pipeline    | calwebb_image3.cfg    | Stage 3: imaging modes       |
++-------------------+-----------------------+------------------------------+
+| Spec3Pipeline     | calwebb_spec3.cfg     | Stage 3: spectroscopy modes  |
++-------------------+-----------------------+------------------------------+
+| Ami3Pipeline      | calwebb_ami3.cfg      | Stage 3: NIRISS AMI mode     |
++-------------------+-----------------------+------------------------------+
+| Coron3Pipeline    | calwebb_coron3.cfg    | Stage 3: Coronagraphic mode  |
++-------------------+-----------------------+------------------------------+
+| TSO3Pipeline      | calwebb_tso3.cfg      | Stage 3: Time Series mode    |
++-------------------+-----------------------+------------------------------+
 
 Input Files, Output Files and Data Models
 =========================================
@@ -145,6 +147,37 @@ Outputs
 Arguments
 ---------
 The ``calwebb_dark`` pipeline does not have any optional arguments.
+
+Guider Pipeline Step Flow (calwebb_guider)
+==========================================
+The guider (``calwebb_guider``) processing pipeline is only for use with FGS
+guiding mode exposures (ID, ACQ1, ACQ2, TRACK, and FineGuide).
+It applies three detector-level correction and calibration steps to uncalibrated
+guider data files, as shown in the table below.
+
+==============
+calwebb_guider
+==============
+dq_init
+guider_cds
+flat_field
+==============
+
+Inputs
+------
+
+* Raw 4D guide-mode product: The input to ``calwebb_guider`` is a single raw
+  guide-mode data file.
+
+Outputs
+-------
+
+* 3D Calibrated product: The output is a 3D (ncols x nrows x nints)
+  countrate product that has been flat-fielded and has bad pixels flagged.
+
+Arguments
+---------
+The ``calwebb_guider`` pipeline does not have any optional arguments.
 
 .. _stage2-imaging-flow:
 

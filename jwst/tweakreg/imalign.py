@@ -1,9 +1,11 @@
 """
-A module that provides functions for matching sky in overlapping images.
+A module that provides functions for "aligning" images: specifically, it
+provides functions for computing corrections to image WCS so that
+images catalogs "align" to the reference catalog *on the sky*.
 
 :Authors: Mihai Cara (contact: help@stsci.edu)
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
 from __future__ import (absolute_import, division, unicode_literals,
@@ -182,8 +184,7 @@ def align(imcat, refcat=None, enforce_user_order=True,
         # create reference catalog:
         ref_imcat, current_imcat = max_overlap_pair(
             images=imcat,
-            expand_refcat=expand_refcat,
-            enforce_user_order=enforce_user_order
+            enforce_user_order=enforce_user_order or not expand_refcat
         )
         log.info("Selected image '{}' as reference image"
                  .format(ref_imcat.name))
@@ -194,8 +195,7 @@ def align(imcat, refcat=None, enforce_user_order=True,
         current_imcat = max_overlap_image(
             refimage=refcat,
             images=imcat,
-            expand_refcat=expand_refcat,
-            enforce_user_order=enforce_user_order
+            enforce_user_order=enforce_user_order or not expand_refcat
         )
 
     aligned_imcat = []
@@ -229,8 +229,7 @@ def align(imcat, refcat=None, enforce_user_order=True,
         current_imcat = max_overlap_image(
             refimage=refcat,
             images=imcat,
-            expand_refcat=expand_refcat,
-            enforce_user_order=enforce_user_order
+            enforce_user_order=enforce_user_order or not expand_refcat
         )
 
     # log running time:
@@ -246,6 +245,31 @@ def align(imcat, refcat=None, enforce_user_order=True,
 
 
 def overlap_matrix(images):
+    """
+    Compute overlap matrix: non-diagonal elements (i,j) of this matrix are
+    absolute value of the area of overlap on the sky between i-th input image
+    and j-th input image.
+
+    .. note::
+        The diagonal of the returned overlap matrix is set to ``0.0``, i.e.,
+        this function does not compute the area of the footprint of a single
+        image on the sky.
+
+    Parameters
+    ----------
+
+    images : list of WCSImageCatalog, WCSGroupCatalog, or RefCatalog
+        A list of catalogs that implement :py:meth:`intersection_area` method.
+
+    Returns
+    -------
+    m : numpy.ndarray
+        A `numpy.ndarray` of shape ``NxN`` where ``N`` is equal to the
+        number of input images. Each non-diagonal element (i,j) of this matrix
+        is the absolute value of the area of overlap on the sky between i-th
+        input image and j-th input image. Diagonal elements are set to ``0.0``.
+
+    """
     nimg = len(images)
     m = np.zeros((nimg, nimg), dtype=np.float)
     for i in range(nimg):
@@ -256,7 +280,37 @@ def overlap_matrix(images):
     return m
 
 
-def max_overlap_pair(images, expand_refcat, enforce_user_order):
+def max_overlap_pair(images, enforce_user_order):
+    """
+    Return a pair of images with the largest overlap.
+
+    .. warning::
+        Returned pair of images is "poped" from input ``images`` list and
+        therefore on return ``images`` will contain a smaller number of
+        elements.
+
+    Parameters
+    ----------
+
+    images : list of WCSImageCatalog, WCSGroupCatalog, or RefCatalog
+        A list of catalogs that implement :py:meth:`intersection_area` method.
+
+    enforce_user_order : bool
+        When ``enforce_user_order`` is `True`, a pair of images will be
+        returned **in the same order** as they were arranged in the ``images``
+        input list. That is, image overlaps will be ignored.
+
+    Returns
+    -------
+    (im1, im2)
+        Returns a tuple of two images - elements of input ``images`` list.
+        When ``enforce_user_order`` is `True`, images are returned in the
+        order in which they appear in the input ``images`` list. When the
+        number of input images is smaller than two, ``im1`` and ``im2`` may
+        be `None`.
+
+
+    """
     nimg = len(images)
 
     if nimg == 0:
@@ -265,7 +319,7 @@ def max_overlap_pair(images, expand_refcat, enforce_user_order):
     elif nimg == 1:
         return images[0], None
 
-    elif nimg == 2 or not expand_refcat or enforce_user_order:
+    elif nimg == 2 or enforce_user_order:
         # for the special case when only two images are provided
         # return (refimage, image) in the same order as provided in 'images'.
         # Also, when ref. catalog is static - revert to old tweakreg behavior
@@ -308,26 +362,41 @@ def max_overlap_pair(images, expand_refcat, enforce_user_order):
     return (im1, im2)
 
 
-def max_overlap_image(refimage, images, expand_refcat, enforce_user_order):
+def max_overlap_image(refimage, images, enforce_user_order):
+    """
+    Return the image from the input ``images`` list that has the largest
+    overlap with the ``refimage`` image.
+
+    .. warning::
+        Returned image of images is "poped" from input ``images`` list and
+        therefore on return ``images`` will contain a smaller number of
+        elements.
+
+    Parameters
+    ----------
+
+    images : list of WCSImageCatalog, or WCSGroupCatalog
+        A list of catalogs that implement :py:meth:`intersection_area` method.
+
+    enforce_user_order : bool
+        When ``enforce_user_order`` is `True`, returned image is the first
+        image from the ``images`` input list regardless ofimage overlaps.
+
+    Returns
+    -------
+    image: WCSImageCatalog, WCSGroupCatalog, or None
+        Returns an element of input ``images`` list. When input list is
+        empty - `None` is returned.
+
+    """
     nimg = len(images)
     if len(images) < 1:
         return None
 
-    if not expand_refcat or enforce_user_order:
+    if enforce_user_order:
         # revert to old tweakreg behavior
         return images.pop(0)
 
-    area = np.zeros(nimg, dtype=np.float)
-    for i in range(nimg):
-        area[i] = refimage.intersection_area(images[i])
-
-    # Sort the remaining of the input list of images by overlap area
-    # with the reference image (in decreasing order):
-    sorting_indices = np.argsort(area)[::-1]
-    images_arr = np.asarray(images)[sorting_indices]
-    while len(images) > 0:
-        del images[0]
-    for k in range(images_arr.shape[0]):
-        images.append(images_arr[k])
-
-    return images.pop(0)
+    area = [refimage.intersection_area(im) for im in images]
+    idx = np.argmax(area)
+    return images.pop(idx)

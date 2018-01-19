@@ -4,7 +4,7 @@ JWST pipeline step for image intensity matching for MIRI images.
 
 :Authors: Mihai Cara
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
 
