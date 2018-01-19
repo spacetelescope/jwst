@@ -36,17 +36,16 @@ Slit.__new__.__defaults__ = ("", 0, 0.0, 0.0, 0.0, 0.0, 0, 0, "", "", "", "",
 
 class GrismObject(namedtuple('GrismObject', ("sid",
                                              "order_bounding",
-                                             "icrs_centroid",
+                                             "sky_centroid",
                                              "partial_order",
                                              "waverange",
                                              "sky_bbox_ll",
                                              "sky_bbox_lr",
                                              "sky_bbox_ur",
                                              "sky_bbox_ul",
-                                             "xcenter",
-                                             "ycenter",
+                                             "xcentroid",
+                                             "ycentroid",
                                              ), rename=False)):
-
     """ Grism Objects identified from a direct image catalog and segment map.
 
     Notes
@@ -74,51 +73,51 @@ class GrismObject(namedtuple('GrismObject', ("sid",
     def __new__(cls,
                 sid=None,
                 order_bounding={},
-                icrs_centroid=None,
+                sky_centroid=None,
                 partial_order=False,
                 waverange=None,
                 sky_bbox_ll=None,
                 sky_bbox_lr=None,
                 sky_bbox_ur=None,
                 sky_bbox_ul=None,
-                xcenter=None,
-                ycenter=None):
+                xcentroid=None,
+                ycentroid=None):
 
         return super(GrismObject, cls).__new__(cls,
                                                sid=sid,
                                                order_bounding=order_bounding,
-                                               icrs_centroid=icrs_centroid,
+                                               sky_centroid=sky_centroid,
                                                partial_order=partial_order,
                                                waverange=waverange,
                                                sky_bbox_ll=sky_bbox_ll,
                                                sky_bbox_lr=sky_bbox_lr,
                                                sky_bbox_ur=sky_bbox_ur,
                                                sky_bbox_ul=sky_bbox_ul,
-                                               xcenter=xcenter,
-                                               ycenter=ycenter)
+                                               xcentroid=xcentroid,
+                                               ycentroid=ycentroid)
 
     def __str__(self):
         """Return a pretty print for the object information."""
         return ("id: {0}\n"
                 "order_bounding {1}\n"
-                "icrs_centroid: {2}\n"
+                "sky_centroid: {2}\n"
                 "sky_bbox_ll: {3}\n"
                 "sky_bbox_lr: {4}\n"
                 "sky_bbox_ur: {5}\n"
                 "sky_bbox_ul:{6}\n"
-                "xcenter: {7}\n"
-                "ycenter: {8}\n"
+                "xcentroid: {7}\n"
+                "ycentroid: {8}\n"
                 "partial_order: {9}\n"
                 "waverange: {10}\n"
                 .format(self.sid,
                         str(self.order_bounding),
-                        str(self.icrs_centroid),
+                        str(self.sky_centroid),
                         str(self.sky_bbox_ll),
                         str(self.sky_bbox_lr),
                         str(self.sky_bbox_ur),
                         str(self.sky_bbox_ul),
-                        self.xcenter,
-                        self.ycenter,
+                        self.xcentroid,
+                        self.ycentroid,
                         str(self.partial_order),
                         str(self.waverange)))
 
@@ -806,9 +805,11 @@ class V23ToSky(Rotation3D):
     ----------
     angles : list
         A sequence of angles (in deg).
+        The angles are [-V2_REF, V3_REF, -ROLL_REF, -DEC_REF, RA_REF].
     axes_order : str
         A sequence of characters ('x', 'y', or 'z') corresponding to the
         axis of rotation and matching the order in ``angles``.
+        The axes are "zyxyz".
     """
 
     inputs = ("v2", "v3")

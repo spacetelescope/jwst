@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def extract2d(input_model, which_subarray=None, apply_wavecorr=False, reference_files={}, grism_objects=[]):
+def extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_files={}, grism_objects=[]):
 
     nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ', 'NRS_LAMP']
     grism_modes = ['NIS_WFSS', 'NRC_GRISM']
@@ -20,7 +20,7 @@ def extract2d(input_model, which_subarray=None, apply_wavecorr=False, reference_
     log.info('EXP_TYPE is {0}'.format(exp_type))
 
     if exp_type in nrs_modes:
-        output_model = nrs_extract2d(input_model, which_subarray=which_subarray,
+        output_model = nrs_extract2d(input_model, slit_name=slit_name,
                               apply_wavecorr=apply_wavecorr, reference_files=reference_files)
 
     elif exp_type in grism_modes:
