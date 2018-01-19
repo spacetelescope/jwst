@@ -77,7 +77,7 @@ class PyTest(TestCommand):
 
     def initialize_options(self):
         TestCommand.initialize_options(self)
-        self.pytest_args = ["jwst/transforms"]#NAME]
+        self.pytest_args = [NAME]
 
     def finalize_options(self):
         TestCommand.finalize_options(self)
