@@ -1,0 +1,31 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://stsci.edu/schemas/jwst_pipeline/logical-0.1.0"
+tag: "tag:stsci.edu:jwst_pipeline/logical-0.1.0"
+title: >
+  A model performing logical operations on arrays.
+description: |
+
+allOf:
+  - $ref: ../asdf/transform/transform-1.1.0
+  - type: object
+    properties:
+      condition:
+        description: |
+          A string representing the logical operation,
+          one of GT, LT, NE, EQ
+        type: string
+      compareto:
+        description: |
+          A number or ndarray to compare to using the condition.
+          If ndarray then the input array, compareto and value should have the same shape.
+        anyOf:
+          - $ref: ../asdf/core/ndarray-1.0.0
+          - type: number
+      value:
+        description: |
+          Value to substitute where condition is True.
+        anyOf:
+          - $ref: ../asdf/core/ndarray-1.0.0
+          - type: number

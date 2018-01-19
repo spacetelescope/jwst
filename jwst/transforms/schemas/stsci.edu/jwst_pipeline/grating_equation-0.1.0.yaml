@@ -1,0 +1,27 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://stsci.edu/schemas/jwst_pipeline/grating_equation-0.1.0"
+tag: "tag:stsci.edu:jwst_pipeline/grating_equation-0.1.0"
+title: >
+  A grating equation model.
+description: |
+  Supports two models:
+   - given incident angle and wavelength compute the refraction/difraction angle
+   - given an incident angle and a refraction angle compute the wavelength
+
+
+allOf:
+  - $ref: ../asdf/transform/transform-1.1.0
+  - type: object
+    properties:
+      groove_density:
+        description: |
+          The groove density of the grating
+        type: number
+      order:
+        description: |
+          Spectral order
+        type: number
+
+    required: [groove_density]

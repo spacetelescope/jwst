@@ -1,0 +1,31 @@
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://stsci.edu/schemas/jwst_pipeline/slit_to_msa-0.1.0"
+tag: "tag:stsci.edu:jwst_pipeline/slit_to_msa-0.1.0"
+title: >
+  NIRSPEC set of models from slit_frame to the MSA frame.
+
+description: |
+  This model is used by the NIRSPEC WCS pipeline.
+  It maps a slit to its position in the MSA plane.
+
+allOf:
+  - $ref: ../asdf/transform/transform-1.1.0
+  - type: object
+    properties:
+      slits:
+        anyOf:
+          - type: array
+            items:
+              anyOf:
+                - type: array
+                - type: number
+          - $ref: ../asdf/core/ndarray-1.0.0
+      models:
+        description: |
+          A compound model transferring positions in the slit frame to
+          positions in the MSA frame.
+        type: array
+        items:
+          $ref: ../asdf/transform/transform-1.1.0
+    required: [slits, models]

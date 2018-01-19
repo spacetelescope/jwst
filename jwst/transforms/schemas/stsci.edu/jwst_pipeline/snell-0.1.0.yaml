@@ -1,0 +1,66 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://stsci.edu/schemas/jwst_pipeline/snell-0.1.0"
+tag: "tag:stsci.edu:jwst_pipeline/snell-0.1.0"
+title: >
+  NIRSpec transforms through the prism.
+
+description: |
+  This model does all transforms through the NIRSpec prism:
+  - computes the refraction index as a function of lambda.
+  - Applies Snell's law through fromt surface.
+  - Rotates to back surface.
+  - Applies reflection from back surface.
+  - Rotates to front surface
+  - Applies Snell's law through fromt surface.
+
+allOf:
+  - $ref: ../asdf/transform/transform-1.1.0
+  - type: object
+    properties:
+      prism_angle:
+        description: |
+          The angle of the prism in deg.
+        type: number
+      kcoef:
+        description: |
+          K coefficients in Sellmeir equation.
+        type: array
+        items:
+          type: number
+        minItems: 3
+        maxItems: 3
+      lcoef:
+        description: |
+          L coefficients in Sellmeir equation.
+        type: array
+        items:
+          type: number
+        minItems: 3
+        maxItems: 3
+      tcoef:
+        description: |
+          Thermal coefficients of the glass.
+        type: array
+        items:
+          type: number
+        minItems: 6
+        maxItems: 6
+      ref_temp:
+        description: |
+          Reference temperature of the glass in [K].
+        type: number
+      ref_pressure:
+        description: |
+          Reference pressure of the glass in [ATM].
+        type: number
+      temp:
+        description: |
+          System temperature in [K].
+        type: number
+      pressure:
+        description: |
+          System pressure in [ATM].
+        type: number
+    required: [prism_angle, kcoef, lcoef, tcoef, ref_temp, ref_pressure, temp, pressure]

@@ -1,0 +1,14 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://stsci.edu/schemas/jwst/coords-0.1.0"
+tag: "tag:stsci.edu:jwst/coords-0.1.0"
+title: >
+  Coordinate manipulation
+description: |
+  This schema is for representing any model that takes coordinates and does
+  some computation with them. Models have no parameters. Currently it supports
+  NRSZCoord, DirCos2Unitless, unitless2DirCos
+
+$ref: ../asdf/transform/transform-1.1.0
+

@@ -1,0 +1,28 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/yaml-schema/draft-01"
+id: "http://stsci.edu/schemas/jwst_pipeline/v23tosky-0.1.0"
+tag: "tag:stsci.edu:jwst_pipeline/v23tosky-0.1.0"
+title: >
+  A sequence of 3D rotations.
+
+description: |
+  A sequence of 3D rotations around different axes.
+
+allOf:
+  - $ref: ../asdf/transform/transform-1.1.0
+  - type: object
+    properties:
+      angles:
+        description: |
+          The angles of rotation.
+        type: array
+        items:
+          type: number
+      axes_order:
+        description: |
+          A sequence of "x", "y" or "z" characters representing an axis of rotation.
+          The number of characters must equal the number of angles.
+        type: string
+
+    required: [angles, axes_order]
