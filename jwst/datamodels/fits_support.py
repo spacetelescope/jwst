@@ -379,15 +379,6 @@ def _save_history(hdulist, tree):
                 history[i] = HistoryEntry({'description': str(history[i])})
         hdulist[0].header['HISTORY'] = history[i]['description']
 
-def _snip_tables(tree):
-    def _snip_node(node, json_id):
-        if isinstance(node, np.ndarray):
-            dtype = node.dtype
-            if hasattr(dtype, 'names'):
-                node = None
-        return node
-    return treeutil.walk_and_modify(tree, _snip_node)
-
 def to_fits(tree, schema, extensions=None):
     hdulist = fits.HDUList()
     hdulist.append(fits.PrimaryHDU())
@@ -395,7 +386,6 @@ def to_fits(tree, schema, extensions=None):
     _save_from_schema(hdulist, tree, schema)
     _save_extra_fits(hdulist, tree)
     _save_history(hdulist, tree)
-    tree = _snip_tables(tree)
 
     asdf = fits_embed.AsdfInFits(hdulist, tree, extensions=extensions)
     return asdf
@@ -474,7 +464,7 @@ def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
                 errmsg = "In {0}\n{1}".format(filename, errmsg)
 
         return errmsg
-                        
+
     def callback(schema, path, combiner, ctx, recurse):
         result = None
         if 'fits_keyword' in schema:
@@ -497,7 +487,7 @@ def _load_from_schema(hdulist, schema, tree, pass_invalid_values):
                     invalid_values.add(fits_keyword)
                 else:
                     properties.put_value(path, result, tree)
-                    
+
         elif 'fits_hdu' in schema and (
                 'max_ndim' in schema or 'ndim' in schema or 'datatype' in schema):
             result = _fits_array_loader(
@@ -597,7 +587,7 @@ def from_fits_hdu(hdu, schema):
     """
     Read the data from a fits hdu into a numpy ndarray
     """
-    data = hdu.data    
+    data = hdu.data
     data2 = properties._cast(data, schema)
 
     # Casting a table loses the listeners, so restore them
