@@ -22,5 +22,5 @@ class JWSTExtension(AsdfExtension):
     @property
     def url_mapping(self):
         return [('http://stsci.edu/schemas/jwst_pipeline/',
-                 util.filepath_to_url(SCHEMA_PATH) +
-                 '/{url_suffix}.yaml')]
+                 util.filepath_to_url(os.path.join(SCHEMA_PATH, "stsci.edu")) +
+                 '/jwst_pipeline/{url_suffix}.yaml')]

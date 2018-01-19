@@ -805,9 +805,11 @@ class V23ToSky(Rotation3D):
     ----------
     angles : list
         A sequence of angles (in deg).
+        The angles are [-V2_REF, V3_REF, -ROLL_REF, -DEC_REF, RA_REF].
     axes_order : str
         A sequence of characters ('x', 'y', or 'z') corresponding to the
         axis of rotation and matching the order in ``angles``.
+        The axes are "zyxyz".
     """
 
     inputs = ("v2", "v3")
