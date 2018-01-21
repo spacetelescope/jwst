@@ -1,11 +1,11 @@
 import logging
 
-from collections import deque
-import numpy as np
-
 from .association import (
-    ProcessList,
     make_timestamp
+)
+from .lib.process_list import (
+    ProcessList,
+    ProcessQueueSorted
 )
 
 # Configure logging
@@ -43,7 +43,7 @@ def generate(pool, rules, version_id=None):
     associations = []
     if type(version_id) is bool:
         version_id = make_timestamp()
-    process_list = ProcessQueue([
+    process_list = ProcessQueueSorted([
         ProcessList(
             items=pool,
             rules=[rule for _, rule in rules.items()]
@@ -53,20 +53,12 @@ def generate(pool, rules, version_id=None):
     for process_item in process_list:
         for item in process_item.items:
 
-            # Determine against what the item should be compared
-            # against.
-            use_rules = rules
-            use_associations = associations
-            if process_item.work_over == process_item.EXISTING:
-                use_rules = None
-            if process_item.work_over == process_item.RULES:
-                use_associations = []
             existing_asns, new_asns, to_process = generate_from_item(
                 item,
                 version_id,
-                use_associations,
-                use_rules,
-                process_item.rules
+                associations,
+                rules,
+                process_item
             )
             associations.extend(new_asns)
 
@@ -92,7 +84,7 @@ def generate_from_item(
         version_id,
         associations,
         rules,
-        allowed_rules):
+        process_item):
     """Either match or generate a new assocation
 
     Parameters
@@ -113,10 +105,8 @@ def generate_from_item(
     rules: AssociationRegistry or None
         List of rules to create new associations
 
-    allowed_rules: [rule, ...]
-        Only compare existing associations and rules if the
-        rule is in this list. If none,
-        all existing associations and rules will be checked.
+    process_item: ProcessList
+        The `ProcessList` from which the current item belongs to.
 
     Returns
     -------
@@ -130,13 +120,24 @@ def generate_from_item(
             List of process events.
     """
 
+    # Setup the rules allowed to be examined.
+    if process_item.rules is None or len(process_item.rules) == 0:
+        allowed_rules = list(rules.values())
+    else:
+        allowed_rules = process_item.rules
+
     # Check membership in existing associations.
-    associations = [
-        asn
-        for asn in associations
-        if type(asn) in allowed_rules
-    ]
-    existing_asns, process_list = match_item(item, associations)
+    existing_asns = []
+    process_list = []
+    if process_item.work_over in (ProcessList.EXISTING, ProcessList.BOTH):
+        associations = [
+            asn
+            for asn in associations
+            if type(asn) in allowed_rules
+        ]
+        existing_asns, process_list = match_item(
+            item, associations
+        )
 
     # Now see if this item will create new associatons.
     # By default, a item will not be allowed to create
@@ -187,13 +188,3 @@ def match_item(item, associations):
         if matches:
             item_associations.append(asn)
     return item_associations, process_list
-
-
-class ProcessQueue(deque):
-    """Make a deque iterable and mutable"""
-    def __iter__(self):
-        while True:
-            try:
-                yield self.popleft()
-            except:
-                break

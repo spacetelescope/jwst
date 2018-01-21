@@ -2,6 +2,7 @@
 """
 import logging
 
+from jwst.associations.lib.dms_base import ACQ_EXP_TYPES
 from jwst.associations.lib.rules_level3_base import *
 
 __all__ = [
@@ -36,7 +37,6 @@ class Asn_Image(DMS_Level3_Base):
 
         # Setup constraints
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_OPTICAL_PATH,
             CONSTRAINT_TARGET,
             CONSTRAINT_IMAGE,
@@ -70,7 +70,6 @@ class Asn_WFSCMB(DMS_Level3_Base):
 
         # Setup constraints
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_OPTICAL_PATH,
             CONSTRAINT_TARGET,
             CONSTRAINT_IMAGE,
@@ -109,7 +108,6 @@ class Asn_MIRI_LRS_FIXEDSLIT(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_NOTTSO,
             CONSTRAINT_TARGET,
             DMSAttrConstraint(
@@ -143,7 +141,6 @@ class Asn_MIRI_LRS_SLITLESS(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_NOTTSO,
             CONSTRAINT_TARGET,
             DMSAttrConstraint(
@@ -177,7 +174,6 @@ class Asn_NIS_SO_SLITLESS(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_TARGET,
             DMSAttrConstraint(
                 name='exp_type',
@@ -214,7 +210,6 @@ class Asn_NRS_FIXEDSLIT(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_OPTICAL_PATH,
             CONSTRAINT_TARGET,
             DMSAttrConstraint(
@@ -247,7 +242,6 @@ class Asn_NRS_MSA(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_OPTICAL_PATH,
             CONSTRAINT_TARGET,
             DMSAttrConstraint(
@@ -273,7 +267,6 @@ class Asn_MIRI_IFU(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_TARGET,
             DMSAttrConstraint(
                 name='exp_type',
@@ -312,7 +305,6 @@ class Asn_NRS_IFU(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_TARGET,
             DMSAttrConstraint(
                 name='exp_type',
@@ -343,7 +335,6 @@ class Asn_Coron(DMS_Level3_Base):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_OPTICAL_PATH,
             DMSAttrConstraint(
                 name='exp_type',
@@ -395,7 +386,6 @@ class Asn_AMI(DMS_Level3_Base):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_OPTICAL_PATH,
             DMSAttrConstraint(
                 name='exp_type',
@@ -430,7 +420,6 @@ class Asn_WFSS(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_TARGET,
             DMSAttrConstraint(
                 name='exp_type',
@@ -460,7 +449,6 @@ class Asn_TSO_Flag(DMS_Level3_Base):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_TARGET,
             CONSTRAINT_OPTICAL_PATH,
             DMSAttrConstraint(
@@ -490,7 +478,6 @@ class Asn_TSO_EXPTYPE(DMS_Level3_Base):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_BASE,
             CONSTRAINT_TARGET,
             CONSTRAINT_OPTICAL_PATH,
             DMSAttrConstraint(
@@ -520,3 +507,25 @@ class Asn_TSO_EXPTYPE(DMS_Level3_Base):
 
         self.data['asn_type'] = 'tso3'
         super(Asn_TSO_EXPTYPE, self)._init_hook(item)
+
+
+class Asn_ACQ_Reprocess(DMS_Level3_Base):
+    """For first loop, simply send acquisitions and confirms back"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for checking.
+        self.constraints = Constraint([
+                DMSAttrConstraint(
+                    sources=['exp_type'],
+                    value='|'.join(ACQ_EXP_TYPES),
+                    force_unique=False
+                ),
+                SimpleConstraint(
+                    test=lambda x, y: False,
+                    value='anything but None',
+                    force_reprocess=ProcessList.EXISTING
+                )
+            ])
+
+        super(Asn_ACQ_Reprocess, self).__init__(*args, **kwargs)

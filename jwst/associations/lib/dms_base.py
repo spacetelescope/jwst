@@ -46,6 +46,19 @@ EXPTYPE_MAP = {
     'nrs_taslit':    'target_acquistion',
 }
 
+# Acquistions and Confirmation images
+ACQ_EXP_TYPES = (
+    'mir_tacq',
+    'nis_taconfirm',
+    'nis_tacq',
+    'nrc_taconfirm',
+    'nrc_tacq',
+    'nrs_confirm',
+    'nrs_taconfirm',
+    'nrs_tacq',
+    'nrs_taslit',
+)
+
 # Exposures that are always TSO
 TSO_EXP_TYPES = (
     'mir_lrs-slitless',
@@ -523,7 +536,6 @@ class DMSAttrConstraint(AttrConstraint):
             kwargs['invalid_values'] = _EMPTY
 
         super(DMSAttrConstraint, self).__init__(**kwargs)
-
 
 
 # #########

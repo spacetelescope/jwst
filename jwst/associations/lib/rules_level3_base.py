@@ -20,12 +20,13 @@ from jwst.associations.exceptions import (
 )
 from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.constraint import (
-    AttrConstraint,
-    Constraint
+    Constraint,
+    SimpleConstraint,
 )
 from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import (
     _EMPTY,
+    ACQ_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_SCIENCE_EXP_TYPES,
@@ -48,6 +49,7 @@ __all__ = [
     'DMS_Level3_Base',
     'DMSAttrConstraint',
     'ProcessList',
+    'SimpleConstraint',
     'Utility',
 ]
 
@@ -117,6 +119,39 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             self.data['target'] = 'none'
         if 'asn_pool' not in self.data:
             self.data['asn_pool'] = 'none'
+
+        # Setup the base constraints
+        constraint_acqs = Constraint(
+            [
+                DMSAttrConstraint(
+                    name='acq_exp',
+                    sources=['exp_type'],
+                    value='|'.join(ACQ_EXP_TYPES),
+                    force_unique=False
+                ),
+                DMSAttrConstraint(
+                    name='acq_obsnum',
+                    sources=['obs_num'],
+                    value=lambda:'|'.join(
+                        self.constraints['obs_num'].found_values
+                    ),
+                    force_unique=False,
+                )
+            ],
+            work_over=ProcessList.EXISTING
+        )
+        self.constraints = Constraint(
+            [
+                CONSTRAINT_BASE,
+                Constraint(
+                    [
+                        self.constraints,
+                        constraint_acqs
+                    ],
+                    reduce=Constraint.any
+                )
+            ]
+        )
 
     @property
     def current_product(self):
@@ -529,7 +564,6 @@ format_product = FormatTemplate(
 # -----------------
 # Basic constraints
 # -----------------
-
 CONSTRAINT_BASE = Constraint([
     DMSAttrConstraint(
         name='program',
@@ -538,6 +572,12 @@ CONSTRAINT_BASE = Constraint([
     DMSAttrConstraint(
         name='instrument',
         sources=['instrume'],
+    ),
+    DMSAttrConstraint(
+        name='obs_num',
+        sources=['obs_num'],
+        force_unique=False,
+        required=False,
     )
 ])
 

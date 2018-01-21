@@ -1,4 +1,12 @@
 """Reprocessing List"""
+from collections import (defaultdict, deque)
+from functools import reduce
+
+__all__ = [
+    'ProcessList',
+    'ProcessQueue',
+    'ProcessQueueSorted'
+]
 
 
 class ProcessList:
@@ -24,9 +32,9 @@ class ProcessList:
     """
 
     (
+        RULES,
         BOTH,
         EXISTING,
-        RULES
     ) = range(1, 4)
 
     _str_attrs = ('rules', 'work_over', 'only_on_match')
@@ -51,3 +59,47 @@ class ProcessList:
             }
         )
         return result
+
+
+class ProcessQueue(deque):
+    """Make a deque iterable and mutable"""
+    def __iter__(self):
+        while True:
+            try:
+                yield self.popleft()
+            except:
+                break
+
+
+class ProcessQueueSorted:
+    """Sort ProcessItem based on work_over
+
+    `ProcessItem`s are handled in order of `RULES`, `BOTH`, and
+    `EXISTING`.
+
+    Parameters
+    ----------
+    init: [ProcessList[,...]]
+        List of `ProcessList` to start the queue with.
+    """
+    def __init__(self, init=None):
+        self.queues = defaultdict(ProcessQueue)
+
+        if init is not None:
+            self.extend(init)
+
+    def extend(self, process_items):
+        """Add the list of process items to their appropriate queues"""
+        for item in process_items:
+            self.queues[item.work_over].append(item)
+
+    def __iter__(self):
+        """Return the queues in order"""
+        while reduce(lambda x, y: x + len(y), self.queues.values(), 0) > 0:
+            for queue in self.queues.values():
+                for item in queue:
+                    yield item
+                    break
+                else:
+                    continue
+                break

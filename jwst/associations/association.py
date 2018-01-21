@@ -11,11 +11,9 @@ from .exceptions import (
 from .lib.constraint import (
     Constraint,
     ConstraintTrue,
-    SimpleConstraint
 )
 from .lib.format_template import FormatTemplate
 from .lib.ioregistry import IORegistry
-from .lib.process_list import ProcessList
 
 __all__ = ['Association']
 
@@ -373,7 +371,8 @@ class Association(MutableMapping):
 
         # Set the association type for all reprocessed items.
         for process_list in reprocess:
-            process_list.rules = [type(self)]
+            if process_list.rules is None:
+                process_list.rules = [type(self)]
 
         return match, reprocess
 

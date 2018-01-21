@@ -22,7 +22,6 @@ def test_simpleconstraint():
     assert c.value is None
     assert c.force_unique
     assert c.test == c.eq
-    assert c._reprocess == []
 
     # Parameter initialization
     c = SimpleConstraint(value='my_value')
@@ -137,3 +136,26 @@ def test_iteration():
         assert isinstance(idx, SimpleConstraint)
         count += 1
     assert count == 4  # Not 6
+
+
+def test_name_index():
+    """Test for name indexing"""
+    sc1 = SimpleConstraint(name='sc1', value='value1')
+    sc2 = SimpleConstraint(name='sc2', value='value2')
+    c1 = Constraint([sc1, sc2])
+    assert c1['sc1'].value
+    assert c1['sc2'].value
+
+    sc3 = SimpleConstraint(name='sc3', value='value3')
+    sc4 = SimpleConstraint(name='sc4', value='value4')
+    c2 = Constraint([sc3, sc4, c1])
+    assert c2['sc1'].value
+    assert c2['sc2'].value
+    assert c2['sc3'].value
+    assert c2['sc4'].value
+
+    with pytest.raises(KeyError):
+        c2['nonexistant'].value
+
+    with pytest.raises(AttributeError):
+        c2['sc1'].nonexistant

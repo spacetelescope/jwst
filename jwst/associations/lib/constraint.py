@@ -128,6 +128,10 @@ class SimpleConstraint(SimpleConstraintABC):
     name: str or None
         Option name for constraint
 
+    force_reprocess: False or ProcessList.[BOTH, EXISTING, RULES]
+        If set, put the item on the reprocess list with the given
+        setting.
+
     Attributes
     ----------
     All `Parameters` are also `Attributes`
@@ -177,24 +181,28 @@ class SimpleConstraint(SimpleConstraintABC):
     SimpleConstraint({'value': None})
     """
 
-    def __init__(self, init=None, sources=None, force_unique=True, test=None, **kwargs):
+    def __init__(
+            self,
+            init=None,
+            sources=None,
+            force_unique=True,
+            test=None,
+            force_reprocess=False,
+            **kwargs
+    ):
 
         # Defined attributes
-        super(SimpleConstraint, self).__init__(init=init, **kwargs)
-        if sources is None:
-            self.sources = lambda item: item
-        else:
-            self.sources = sources
-
+        self.sources = sources
         self.force_unique = force_unique
+        self.test = test
+        self.force_reprocess = force_reprocess
+        super(SimpleConstraint, self).__init__(init=init, **kwargs)
+
+        # Give defaults some real meaning.
+        if self.sources is None:
+            self.sources = lambda item: item
         if test is None:
             self.test = self.eq
-        else:
-            self.test = test
-
-        # The reprocess list. For this class, an empty list
-        # is always returned.
-        self._reprocess = []
 
     def check_and_set(self, item):
         """Check and set the constraint
@@ -218,7 +226,15 @@ class SimpleConstraint(SimpleConstraintABC):
                 match = deepcopy(self)
                 match.value = source_value
 
-        return match, self._reprocess
+        reprocess = []
+        if self.force_reprocess:
+            reprocess.append(ProcessList(
+                items=[item],
+                work_over=self.force_reprocess,
+                rules=[]
+            ))
+
+        return match, reprocess
 
     def eq(self, value1, value2):
         """True if constraint.value and item are equal."""
@@ -233,10 +249,12 @@ class AttrConstraint(SimpleConstraintABC):
     sources: [str[,...]]
         List of attributes to query
 
-    value: str or None
+    value: str, function or None
         The value to check for. If None and
         `force_unique`, any value in the first
         available source will become the value.
+        If function, the function takes no arguments
+        and returns a string.
 
     evaluate: bool
         Evaluate the item's value before checking condition.
@@ -291,23 +309,24 @@ class AttrConstraint(SimpleConstraintABC):
                  **kwargs):
 
         # Attributes
-        super(AttrConstraint, self).__init__(init=init, **kwargs)
         self.sources = sources
         self.evaluate = evaluate
         self.force_reprocess = force_reprocess
-        self.force_unique = force_unique
         self.force_undefined = force_undefined
+        self.force_unique = force_unique
+        self.invalid_values = invalid_values
+        self.only_on_match = only_on_match
+        self.onlyif = onlyif
+        self.required = required
+        super(AttrConstraint, self).__init__(init=init, **kwargs)
+
+        # Give some defaults real meaning.
         if invalid_values is None:
             self.invalid_values = []
-        else:
-            self.invalid_values = invalid_values
-        self.only_on_match = only_on_match
         if onlyif is None:
             self.onlyif = lambda item: True
-        else:
-            self.onlyif = onlyif
-        self.required = required
 
+        # Haven't actually matched anything yet.
         self.found_values = set()
 
     def check_and_set(self, item):
@@ -373,8 +392,12 @@ class AttrConstraint(SimpleConstraintABC):
 
         # Check condition
         if match.value is not None:
+            if callable(match.value):
+                match_value = match.value()
+            else:
+                match_value = match.value
             if not meets_conditions(
-                    value, match.value
+                    value, match_value
             ):
                 return False, reprocess
 
@@ -382,7 +405,7 @@ class AttrConstraint(SimpleConstraintABC):
         # Fix the conditions.
         escaped_value = re.escape(value)
         match.found_values.add(escaped_value)
-        if match.value is None or match.force_unique:
+        if match.force_unique:
             match.value = escaped_value
             match.sources = [source]
             match.force_unique = False
@@ -411,6 +434,13 @@ class Constraint:
     name: str or None
         Optional name for constraint.
 
+    force_reprocess: bool
+        Regardless of outcome, put the item on the
+        reprocess list.
+
+    work_over: ProcessList.[BOTH, EXISTING, RULES]
+        The condition on which this constraint should operate.
+
     Attributes
     ----------
     constraints: [Constraint[,...]]
@@ -433,17 +463,29 @@ class Constraint:
     >>> c['simple']
     SimpleConstraint('value': 'a_value')
     """
-    def __init__(self, init=None, reduce=None, name=None):
-        self.reduce = reduce
-        if self.reduce is None:
-            self.reduce = self.all
+    def __init__(
+            self,
+            init=None,
+            reduce=None,
+            name=None,
+            work_over=ProcessList.BOTH,
+    ):
         self.constraints = []
+
+        # Initialize from named parameters
+        self.reduce = reduce
+        self.name = name
+        self.work_over = work_over
+
+        # Initialize from a structure.
         if init is None:
             pass
         elif isinstance(init, list):
             self.constraints = init
         elif isinstance(init, Constraint):
             self.reduce = init.reduce
+            self.name = init.name
+            self.work_over = init.work_over
             self.constraints = deepcopy(init.constraints)
         elif isinstance(init, SimpleConstraintABC):
             self.constraints = [init]
@@ -454,13 +496,20 @@ class Constraint:
                 '\nor subclass.'.format(type(init))
             )
 
-    def check_and_set(self, item):
+        # Give some defaults real meaning.
+        if self.reduce is None:
+            self.reduce = self.all
+
+    def check_and_set(self, item, work_over=ProcessList.BOTH):
         """Check and set the constraint
 
         Returns
         -------
         2-tuple of (`Constraint`, reprocess)
         """
+        if work_over not in (self.work_over, ProcessList.BOTH):
+            return False, []
+
         # Do we have positive?
         results = [
             constraint.check_and_set(item)
