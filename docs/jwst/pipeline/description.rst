@@ -153,15 +153,17 @@ Guider Pipeline Step Flow (calwebb_guider)
 The guider (``calwebb_guider``) processing pipeline is only for use with FGS
 guiding mode exposures (ID, ACQ1, ACQ2, TRACK, and FineGuide).
 It applies three detector-level correction and calibration steps to uncalibrated
-guider data files, as shown in the table below.
+guider data files, as listed in the table below.
 
-==============
-calwebb_guider
-==============
-dq_init
-guider_cds
-flat_field
-==============
++----------------+
+| calwebb_guider |
++================+
+| dq_init        |
++----------------+
+| guider_cds     |
++----------------+
+| flat_field     |
++----------------+
 
 Inputs
 ------
@@ -174,6 +176,8 @@ Outputs
 
 * 3D Calibrated product: The output is a 3D (ncols x nrows x nints)
   countrate product that has been flat-fielded and has bad pixels flagged.
+  See the documentation for the guider_cds step for details on the
+  conversion from raw readouts to countrate images.
 
 Arguments
 ---------

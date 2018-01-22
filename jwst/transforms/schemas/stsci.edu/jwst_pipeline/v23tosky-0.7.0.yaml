@@ -8,6 +8,17 @@ title: >
 
 description: |
   A sequence of 3D rotations around different axes.
+  This represents JWST transform from the telescope 
+  coordinate system (V2,V3) to ICRS.
+
+examples:
+  -
+    - JWST V2, V3 to sky transform.
+
+    - |
+        !<tag:stsci.edu:jwst_pipeline/v23tosky-0.7.0>
+          angles: [-0.0193, -0.1432, -0.04, -65.60, 273.089]
+          axes_order: zyxyz
 
 allOf:
   - $ref: ../asdf/transform/transform-1.1.0
@@ -15,7 +26,9 @@ allOf:
     properties:
       angles:
         description: |
-          The angles of rotation.
+          The angles of rotation in units of deg.
+          The order of the angles is:
+          [-V2_REF, V3_REF, -ROLL_REF, -DEC_REF, RA_REF]
         type: array
         items:
           type: number
@@ -23,6 +36,7 @@ allOf:
         description: |
           A sequence of "x", "y" or "z" characters representing an axis of rotation.
           The number of characters must equal the number of angles.
+          For the JWST V23 to sky transform the axes are zyxyz.
         type: string
 
     required: [angles, axes_order]
