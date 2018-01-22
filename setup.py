@@ -73,6 +73,25 @@ PACKAGE_DATA = {
 }
 
 
+def get_transforms_data():
+    # Installs the schema files in jwst/transforms
+    # Because the path to the schemas includes "stsci.edu" they
+    # can't be installed using setuptools.
+    transforms_schemas = []
+    root = os.path.join(NAME, 'transforms', 'schemas')
+    for node, dirs, files in os.walk(root):
+        for fname in files:
+            if fname.endswith('.yaml'):
+                transforms_schemas.append(
+                    os.path.relpath(os.path.join(node, fname), root))
+    # In the package directory, install to the subdirectory 'schemas'
+    transforms_schemas = [os.path.join('schemas', s) for s in transforms_schemas]
+    return transforms_schemas
+
+transforms_schemas = get_transforms_data()
+PACKAGE_DATA['jwst.transforms'] = transforms_schemas
+
+
 class PyTest(TestCommand):
 
     def initialize_options(self):
@@ -137,7 +156,6 @@ setup(
     scripts=SCRIPTS,
     packages=find_packages(),
     package_data=PACKAGE_DATA,
-    include_package_data=True,
     ext_modules=[
         Extension('jwst.tweakreg.chelp',
             glob('src/tweakreg/*.c'),
