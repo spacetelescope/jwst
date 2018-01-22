@@ -137,6 +137,7 @@ setup(
     scripts=SCRIPTS,
     packages=find_packages(),
     package_data=PACKAGE_DATA,
+    include_package_data=True,
     ext_modules=[
         Extension('jwst.tweakreg.chelp',
             glob('src/tweakreg/*.c'),
