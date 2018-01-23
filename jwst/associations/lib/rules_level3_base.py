@@ -145,9 +145,13 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 CONSTRAINT_BASE,
                 Constraint(
                     [
-                        self.constraints,
+                        Constraint([
+                            self.constraints,
+                            CONSTRAINT_OBSNUM
+                        ]),
                         constraint_acqs
                     ],
+                    name='acq_check',
                     reduce=Constraint.any
                 )
             ]
@@ -573,12 +577,6 @@ CONSTRAINT_BASE = Constraint([
         name='instrument',
         sources=['instrume'],
     ),
-    DMSAttrConstraint(
-        name='obs_num',
-        sources=['obs_num'],
-        force_unique=False,
-        required=False,
-    )
 ])
 
 CONSTRAINT_IMAGE = DMSAttrConstraint(
@@ -608,6 +606,13 @@ CONSTRAINT_NOTTSO = DMSAttrConstraint(
     name='is_not_tso',
     sources=['tsovisit'],
     value='[^t]',
+    required=False,
+)
+
+CONSTRAINT_OBSNUM = DMSAttrConstraint(
+    name='obs_num',
+    sources=['obs_num'],
+    force_unique=False,
     required=False,
 )
 

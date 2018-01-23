@@ -35,7 +35,7 @@ class ProcessList:
         RULES,
         BOTH,
         EXISTING,
-    ) = range(1, 4)
+    ) = range(0, 3)
 
     _str_attrs = ('rules', 'work_over', 'only_on_match')
 
@@ -83,7 +83,11 @@ class ProcessQueueSorted:
         List of `ProcessList` to start the queue with.
     """
     def __init__(self, init=None):
-        self.queues = defaultdict(ProcessQueue)
+        self.queues = [
+            ProcessQueue(),
+            ProcessQueue(),
+            ProcessQueue()
+        ]
 
         if init is not None:
             self.extend(init)
@@ -95,8 +99,8 @@ class ProcessQueueSorted:
 
     def __iter__(self):
         """Return the queues in order"""
-        while reduce(lambda x, y: x + len(y), self.queues.values(), 0) > 0:
-            for queue in self.queues.values():
+        while reduce(lambda x, y: x + len(y), self.queues, 0) > 0:
+            for queue in self.queues:
                 for item in queue:
                     yield item
                     break
