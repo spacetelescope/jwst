@@ -271,13 +271,13 @@ def test_correct_tilt():
                       'zeroreadings': [0.0]}
     disp.meta = {'instrument': {'name': 'NIRSPEC', 'detector': 'NRS1'},
                  'reftype': 'DISPERSER'}
-                 
+
     disp.theta_x = 0.02942671219861111
     disp.theta_y = -0.0007745488724972222
     # disp.theta_z = -0.2523269848788889
     disp.tilt_x = 0.0
     disp.tilt_y = -8.8
-            
+
     disp_corrected = nirspec.correct_tilt(disp, xtilt, ytilt)#, ztilt)
     assert np.isclose(disp_corrected.theta_x, corrected_theta_x)
     # assert(np.isclose(disp_corrected['theta_z'], corrected_theta_z))
@@ -366,7 +366,6 @@ def test_shutter_state(open_shutters, main_shutter, result):
     assert shutter_state == result
 
 
-@pytest.mark.xfail(reason="Corrected reference after CRDS prefetch change producing wrong slit count.")
 def test_slit_projection_on_detector():
     step = assign_wcs_step.AssignWcsStep()
 
@@ -381,7 +380,7 @@ def test_slit_projection_on_detector():
     open_slits = nirspec.get_open_slits(im, refs)
     assert len(open_slits) == 1
     assert open_slits[0].name == "S200B1"
- 
+
     hdul[0].header['DETECTOR'] = 'NRS1'
     im = datamodels.ImageModel(hdul)
 

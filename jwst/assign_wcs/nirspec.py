@@ -59,6 +59,7 @@ def imaging(input_model, reference_files):
 
     # DMS to SCA transform
     dms2detector = dms_to_sca(input_model)
+
     # DETECTOR to GWA transform
     det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
 
@@ -505,20 +506,18 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
 
     Parameters
     ----------
-    filter : str
-        The filter used.
-    grating : str
-        The grating used in the observation.
-    wavelength_range_file : str
+    input_model : `~jwst.datamodels.DataModel`
+        The input data model.
+    wavelengthrange_file : str
         Reference file of type "wavelengthrange".
     """
+    # Nirspec full spectral range
     full_range = [.6e-6, 5.3e-6]
 
     filter = input_model.meta.instrument.filter
     lamp = input_model.meta.instrument.lamp_state
     grating = input_model.meta.instrument.grating
 
-    #wave_range = AsdfFile.open(wavelengthrange_file)
     wave_range_model = WavelengthrangeModel(wavelengthrange_file)
     wrange_selector = wave_range_model.waverange_selector
     if filter == "OPAQUE":
@@ -527,17 +526,22 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
         keyword = filter + '_' + grating
     try:
         index = wrange_selector.index(keyword)
-        #order = wave_range.tree['filter_grating'][keyword]['order']
-        #wrange = wave_range.tree['filter_grating'][keyword]['range']
     except (KeyError, ValueError):
-        index = None
-    if index is not None:
-        order = wave_range_model.order[index]
-        wrange = wave_range_model.wavelengthrange[index]
-    else:
-        order = -1
-        wrange = full_range
-        log.warning("Combination {0} missing in wavelengthrange file, setting order to -1 and range to {1}.".format(keyword, full_range))
+        # Combination of filter_grating is not in wavelengthrange file.
+        gratings = [s.split('_')[1] for s in wrange_selector]
+        try:
+            index = gratings.index(grating)
+            order = wave_range_model.order[index]
+            wrange = wave_range_model.wavelengthrange[index]
+        except ValueError: # grating not in list
+            order = -1
+            wrange = full_range
+        log.info("Combination {0} missing in wavelengthrange file, setting "
+                 "order to {1} and range to {2}.".format(keyword, order, wrange))
+
+    # Combination of filter_grating is found in wavelengthrange file.
+    order = wave_range_model.order[index]
+    wrange = wave_range_model.wavelengthrange[index]
 
     wave_range_model.close()
     return order, wrange
@@ -998,6 +1002,7 @@ def correct_tilt(disperser, xtilt, ytilt):
         return del_theta
 
     disp = disperser.copy()
+    disperser.close()
     log.info("gwa_ytilt is {0}".format(ytilt))
     log.info("gwa_xtilt is {0}".format(xtilt))
 
