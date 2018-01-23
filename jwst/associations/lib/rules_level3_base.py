@@ -132,12 +132,13 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 DMSAttrConstraint(
                     name='acq_obsnum',
                     sources=['obs_num'],
-                    value=lambda:'|'.join(
-                        self.constraints['obs_num'].found_values
-                    ),
+                    value=lambda: '('
+                             + '|'.join(self.constraints['obs_num'].found_values)
+                             + ')',
                     force_unique=False,
                 )
             ],
+            name='acq_constraint',
             work_over=ProcessList.EXISTING
         )
         self.constraints = Constraint(
@@ -145,16 +146,20 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
                 CONSTRAINT_BASE,
                 Constraint(
                     [
-                        Constraint([
-                            self.constraints,
-                            CONSTRAINT_OBSNUM
-                        ]),
+                        Constraint(
+                            [
+                                self.constraints,
+                                CONSTRAINT_OBSNUM
+                            ],
+                            name='rule'
+                        ),
                         constraint_acqs
                     ],
                     name='acq_check',
                     reduce=Constraint.any
                 )
-            ]
+            ],
+            name='dmsbase_top'
         )
 
     @property
@@ -568,16 +573,19 @@ format_product = FormatTemplate(
 # -----------------
 # Basic constraints
 # -----------------
-CONSTRAINT_BASE = Constraint([
-    DMSAttrConstraint(
-        name='program',
-        sources=['program'],
-    ),
-    DMSAttrConstraint(
-        name='instrument',
-        sources=['instrume'],
-    ),
-])
+CONSTRAINT_BASE = Constraint(
+    [
+        DMSAttrConstraint(
+            name='program',
+            sources=['program'],
+        ),
+        DMSAttrConstraint(
+            name='instrument',
+            sources=['instrume'],
+        ),
+    ],
+    name='base'
+)
 
 CONSTRAINT_IMAGE = DMSAttrConstraint(
     name='exp_type',

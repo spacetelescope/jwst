@@ -331,7 +331,6 @@ class Association(MutableMapping):
             - bool: Matching constraint or False if not a match
             - [ProcessList[, ...]]: List of items to process again.
         """
-
         if self.is_item_member(item):
             return False, []
 

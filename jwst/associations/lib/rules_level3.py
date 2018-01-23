@@ -334,25 +334,28 @@ class Asn_Coron(DMS_Level3_Base):
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
-        self.constraints = Constraint([
-            CONSTRAINT_OPTICAL_PATH,
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'nrc_coron'
-                    '|mir_lyot'
-                    '|mir_4qpm'
+        self.constraints = Constraint(
+            [
+                CONSTRAINT_OPTICAL_PATH,
+                DMSAttrConstraint(
+                    name='exp_type',
+                    sources=['exp_type'],
+                    value=(
+                        'nrc_coron'
+                        '|mir_lyot'
+                        '|mir_4qpm'
+                    ),
                 ),
-            ),
-            DMSAttrConstraint(
-                name='target',
-                sources=['targetid'],
-                onlyif=lambda item: self.get_exposure_type(item) == 'science',
-                force_reprocess=ProcessList.EXISTING,
-                only_on_match=True,
-            ),
-        ])
+                DMSAttrConstraint(
+                    name='target',
+                    sources=['targetid'],
+                    onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                    force_reprocess=ProcessList.EXISTING,
+                    only_on_match=True,
+                ),
+            ],
+            name='asn_coron'
+        )
 
         # PSF is required
         self.validity.update({

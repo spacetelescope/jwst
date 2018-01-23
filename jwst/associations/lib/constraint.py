@@ -3,6 +3,7 @@
 import abc
 from copy import (copy, deepcopy)
 from itertools import chain
+import logging
 import re
 
 from .process_list import ProcessList
@@ -18,6 +19,10 @@ __all__ = [
     'ConstraintTrue',
     'SimpleConstraint',
 ]
+
+# Configure logging
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 class SimpleConstraintABC(abc.ABC):
