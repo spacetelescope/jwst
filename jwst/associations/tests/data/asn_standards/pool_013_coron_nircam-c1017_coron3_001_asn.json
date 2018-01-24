@@ -5,7 +5,7 @@
     "code_version": "0.9.6",
     "degraded_status": "No known degraded exposures in association.",
     "program": "10005",
-    "constraints": "Constraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nLV3AttrConstraint({'value': '10005', 'name': 'program', 'sources': ['program'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10af88e18>, 'required': True, 'found_values': {'10005'}})LV3AttrConstraint({'value': 'nircam', 'name': 'instrument', 'sources': ['instrume'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10af8c1e0>, 'required': True, 'found_values': {'nircam'}})\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nLV3AttrConstraint({'value': 'f430m', 'name': 'opt_elem', 'sources': ['filter'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10af8c488>, 'required': True, 'found_values': {'f430m'}})LV3AttrConstraint({'value': 'maskrnd', 'name': 'opt_elem2', 'sources': ['pupil'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10af8c510>, 'required': False, 'found_values': {'maskrnd'}})\nLV3AttrConstraint({'value': 'nrc_coron', 'name': 'exp_type', 'sources': ['exp_type'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10bfc8620>, 'required': True, 'found_values': {'nrc_coron'}})LV3AttrConstraint({'value': '3', 'name': 'target', 'sources': ['targetid'], 'evaluate': False, 'force_reprocess': 2, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': True, 'onlyif': <function Asn_Coron.__init__.<locals>.<lambda> at 0x10c110bf8>, 'required': True, 'found_values': {'3'}})\nAttrConstraint({'value': \"\\\\(\\\\'c1017\\\\'\\\\,\\\\ \\\\'coronagraphy\\\\'\\\\)\", 'name': 'asn_candidate', 'sources': ['asn_candidate'], 'is_acid': True, 'evaluate': True, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': [], 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10bcebb70>, 'required': True, 'found_values': {\"\\\\(\\\\'c1017\\\\'\\\\,\\\\ \\\\'coronagraphy\\\\'\\\\)\"}})\n",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nircam'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f430m'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'maskrnd'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrc_coron'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '3'})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'c1017\\\\'\\\\,\\\\ \\\\'coronagraphy\\\\'\\\\)\"})\nDMSAttrConstraint({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function DMS_Level3_Base.__init__.<locals>.<lambda> at 0x1514b20c80>})",
     "asn_id": "c1017",
     "target": "t003",
     "asn_pool": "pool_013_coron_nircam",
@@ -14,16 +14,52 @@
             "name": "jw10005-c1017_t003_nircam_f430m-maskrnd",
             "members": [
                 {
-                    "expname": "jw10005009001_02102_00001_nrcalong_cal.fits",
+                    "expname": "jw_00008_cal.fits",
                     "exptype": "psf",
                     "exposerr": "null",
                     "asn_candidate": "('c1017', 'coronagraphy')"
                 },
                 {
-                    "expname": "jw10005016001_02102_00001_nrcalong_cal.fits",
+                    "expname": "jw_00044_cal.fits",
                     "exptype": "science",
                     "exposerr": "null",
                     "asn_candidate": "('c1017', 'coronagraphy')"
+                },
+                {
+                    "expname": "jw_00005_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": "null",
+                    "asn_candidate": "[('c1001', 'group'), ('c1005', 'coronagraphy'), ('c1007', 'coronagraphy'), ('c1011', 'group'), ('c1015', 'coronagraphy'), ('c1017', 'coronagraphy'), ('o002', 'observation')]"
+                },
+                {
+                    "expname": "jw_00006_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": "null",
+                    "asn_candidate": "[('c1001', 'group'), ('c1005', 'coronagraphy'), ('c1007', 'coronagraphy'), ('c1011', 'group'), ('c1015', 'coronagraphy'), ('c1017', 'coronagraphy'), ('o002', 'observation')]"
+                },
+                {
+                    "expname": "jw_00007_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": "null",
+                    "asn_candidate": "[('c1001', 'group'), ('c1005', 'coronagraphy'), ('c1007', 'coronagraphy'), ('c1011', 'group'), ('c1015', 'coronagraphy'), ('c1017', 'coronagraphy'), ('o002', 'observation')]"
+                },
+                {
+                    "expname": "jw_00041_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": "null",
+                    "asn_candidate": "[('c1011', 'group'), ('c1013', 'group'), ('c1017', 'coronagraphy'), ('o011', 'observation')]"
+                },
+                {
+                    "expname": "jw_00042_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": "null",
+                    "asn_candidate": "[('c1011', 'group'), ('c1013', 'group'), ('c1017', 'coronagraphy'), ('o011', 'observation')]"
+                },
+                {
+                    "expname": "jw_00043_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": "null",
+                    "asn_candidate": "[('c1011', 'group'), ('c1013', 'group'), ('c1017', 'coronagraphy'), ('o011', 'observation')]"
                 }
             ]
         }

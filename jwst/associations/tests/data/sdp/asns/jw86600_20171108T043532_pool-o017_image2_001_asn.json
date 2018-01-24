@@ -2,11 +2,12 @@
     "asn_type": "image2",
     "asn_rule": "candidate_Asn_Lv2FGS",
     "version_id": null,
-    "code_version": "0.9.4",
+    "code_version": "0.9.6",
+    "degraded_status": "No known degraded exposures in association.",
     "program": "86600",
     "target": "1",
     "asn_pool": "jw86600_20171108T043532_pool",
-    "constraints": "Constraints:\n    exp_type: {'fgs_image'}\n    single_science: {'False'}\n    asn_candidate: {\"\\\\(\\\\'o017\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    program: {'86600'}\n    is_tso: set()",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '86600'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'fgs_image'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o017\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o017",
     "products": [
         {
@@ -14,7 +15,8 @@
             "members": [
                 {
                     "expname": "jw86600017001_02101_00001_guider2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         }

@@ -1,11 +1,11 @@
 {
     "asn_type": "spec3",
-    "asn_rule": "candidate_Asn_MIRI_LRS_FIXEDSLIT",
+    "asn_rule": "candidate_Asn_MIRI_LRS_SLITLESS",
     "version_id": null,
     "code_version": "0.9.6",
     "degraded_status": "No known degraded exposures in association.",
     "program": "99009",
-    "constraints": "Constraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nLV3AttrConstraint({'value': '99009', 'name': 'program', 'sources': ['program'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10af88e18>, 'required': True, 'found_values': {'99009'}})LV3AttrConstraint({'value': 'miri', 'name': 'instrument', 'sources': ['instrume'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10af8c1e0>, 'required': True, 'found_values': {'miri'}})\nLV3AttrConstraint({'value': '[^t]', 'name': 'is_not_tso', 'sources': ['tsovisit'], 'evaluate': False, 'force_reprocess': False, 'force_unique': True, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10af8c400>, 'required': False, 'found_values': set()})LV3AttrConstraint({'value': '1', 'name': 'target', 'sources': ['targetid'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10af8c598>, 'required': True, 'found_values': {'1'}})LV3AttrConstraint({'value': 'mir_lrs-fixedslit|mir_tacq', 'name': 'exp_type', 'sources': ['exp_type'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b4bf158>, 'required': True, 'found_values': {'mir_lrs\\\\-fixedslit'}})LV3AttrConstraint({'value': 'p750l', 'name': 'opt_elem', 'sources': ['filter'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b4bf048>, 'required': True, 'found_values': {'p750l'}})LV3AttrConstraint({'value': 'full', 'name': 'subarray', 'sources': ['subarray'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b4ef158>, 'required': True, 'found_values': {'full'}})\nAttrConstraint({'value': \"\\\\(\\\\'o002\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\", 'name': 'asn_candidate', 'sources': ['asn_candidate'], 'is_acid': True, 'evaluate': True, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': [], 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b6f2b70>, 'required': True, 'found_values': {\"\\\\(\\\\'o002\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}})\n",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'miri'})\nDMSAttrConstraint({'name': 'is_not_tso', 'sources': ['tsovisit'], 'value': '[^t]'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'mir_lrs-slitless'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'p750l'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'subprism'})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o002\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})\nDMSAttrConstraint({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function DMS_Level3_Base.__init__.<locals>.<lambda> at 0x15130168c8>})",
     "asn_id": "o002",
     "target": "t001",
     "asn_pool": "pool_007_spec_miri",
@@ -14,10 +14,22 @@
             "name": "jw99009-o002_t001_miri_p750l",
             "members": [
                 {
-                    "expname": "jw_00002_cal.fits",
+                    "expname": "jw_00004_calints.fits",
                     "exptype": "science",
                     "exposerr": null,
                     "asn_candidate": "('o002', 'observation')"
+                },
+                {
+                    "expname": "jw_00005_calints.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "('o002', 'observation')"
+                },
+                {
+                    "expname": "jw_00006_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": null,
+                    "asn_candidate": "[('o002', 'observation')]"
                 }
             ]
         }

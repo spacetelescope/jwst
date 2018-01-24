@@ -1,20 +1,50 @@
 {
     "asn_type": "image2",
-    "asn_rule": "candidate_Asn_Lv2ImageSpecial",
+    "asn_rule": "candidate_Asn_Lv2ImageNonScience",
     "version_id": null,
     "code_version": "0.9.6",
     "degraded_status": "No known degraded exposures in association.",
     "program": "10005",
     "target": "5",
     "asn_pool": "pool_013_coron_nircam",
-    "constraints": "Constraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nLV2AttrConstraint({'value': '10005', 'name': 'program', 'sources': ['program'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b13b6a8>, 'required': True, 'found_values': {'10005'}})LV2AttrConstraint({'value': None, 'name': 'is_tso', 'sources': ['tsovisit'], 'evaluate': False, 'force_reprocess': False, 'force_unique': True, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066d90>, 'required': False, 'found_values': set()})\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nLV2AttrConstraint({'value': '10005', 'name': 'program', 'sources': ['program'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066d08>, 'required': True, 'found_values': {'10005'}})LV2AttrConstraint({'value': '5', 'name': 'target', 'sources': ['targetid'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066c80>, 'required': True, 'found_values': {'5'}})LV2AttrConstraint({'value': 'nircam', 'name': 'instrument', 'sources': ['instrume'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066bf8>, 'required': True, 'found_values': {'nircam'}})LV2AttrConstraint({'value': 'nrcalong', 'name': 'detector', 'sources': ['detector'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066b70>, 'required': True, 'found_values': {'nrcalong'}})LV2AttrConstraint({'value': 'f430m', 'name': 'opt_elem', 'sources': ['filter'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066ae8>, 'required': True, 'found_values': {'f430m'}})LV2AttrConstraint({'value': 'maskrnd', 'name': 'opt_elem2', 'sources': ['pupil'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066a60>, 'required': False, 'found_values': {'maskrnd'}})LV2AttrConstraint({'value': 'maska430r', 'name': 'subarray', 'sources': ['subarray'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b0669d8>, 'required': False, 'found_values': {'maska430r'}})LV2AttrConstraint({'value': 'long', 'name': 'channel', 'sources': ['channel'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b066950>, 'required': False, 'found_values': {'long'}})\nLV2AttrConstraint({'value': 'nrc_coron', 'name': 'exp_type', 'sources': ['exp_type'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b0668c8>, 'required': True, 'found_values': {'nrc_coron'}})LV2AttrConstraint({'value': 'true', 'name': 'is_special', 'sources': ['is_psf'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b0667b8>, 'required': True, 'found_values': {'true'}})\nSimpleConstraint({'value': False, 'name': 'single_science', 'sources': <function AsnMixin_Lv2Singleton.__init__.<locals>.<lambda> at 0x10c151ae8>, 'force_unique': True, 'test': <bound method SimpleConstraint.eq of <jwst.associations.lib.constraint.SimpleConstraint object at 0x10c16b7b8>>, '_reprocess': []})\nAttrConstraint({'value': \"\\\\(\\\\'o004\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\", 'name': 'asn_candidate', 'sources': ['asn_candidate'], 'is_acid': True, 'evaluate': True, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': [], 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10bcebb70>, 'required': True, 'found_values': {\"\\\\(\\\\'o004\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}})\n",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '5'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nircam'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrcalong'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f430m'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'maskrnd'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'maska430r'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': 'long'})\nDMSAttrConstraint({'name': 'non_science', 'sources': ['exp_type'], 'value': 'nrc_tacq'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o004\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o004",
     "products": [
         {
-            "name": "jw10005029001_02102_00001_nrcalong",
+            "name": "jw_00013",
             "members": [
                 {
-                    "expname": "jw10005029001_02102_00001_nrcalong_rate.fits",
+                    "expname": "jw_00013_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        },
+        {
+            "name": "jw_00014",
+            "members": [
+                {
+                    "expname": "jw_00014_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        },
+        {
+            "name": "jw_00015",
+            "members": [
+                {
+                    "expname": "jw_00015_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        },
+        {
+            "name": "jw_00016",
+            "members": [
+                {
+                    "expname": "jw_00016_rate.fits",
                     "exptype": "science",
                     "exposerr": "null"
                 }

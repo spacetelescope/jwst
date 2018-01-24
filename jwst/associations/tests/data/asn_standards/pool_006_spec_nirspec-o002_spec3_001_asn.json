@@ -5,7 +5,7 @@
     "code_version": "0.9.6",
     "degraded_status": "No known degraded exposures in association.",
     "program": "99009",
-    "constraints": "Constraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nLV3AttrConstraint({'value': '99009', 'name': 'program', 'sources': ['program'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10af88e18>, 'required': True, 'found_values': {'99009'}})LV3AttrConstraint({'value': 'nirspec', 'name': 'instrument', 'sources': ['instrume'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10af8c1e0>, 'required': True, 'found_values': {'nirspec'}})\nConstraint Unnamed with <function Constraint.all at 0x108e5e620> on:\nLV3AttrConstraint({'value': 'f100lp', 'name': 'opt_elem', 'sources': ['filter'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10af8c488>, 'required': True, 'found_values': {'f100lp'}})LV3AttrConstraint({'value': 'g140h', 'name': 'opt_elem2', 'sources': ['grating'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10af8c510>, 'required': False, 'found_values': {'g140h'}})\nLV3AttrConstraint({'value': '3', 'name': 'target', 'sources': ['targetid'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10af8c598>, 'required': True, 'found_values': {'3'}})LV3AttrConstraint({'value': 'nrs_msaspec|nrs_autoflat|nrs_autowave|nrs_confirm|nrs_taslit|nrs_taconfirm|nrs_tacq', 'name': 'exp_type', 'sources': ['exp_type'], 'evaluate': False, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f'), 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b2036a8>, 'required': True, 'found_values': {'nrs_confirm', 'nrs_autoflat', 'nrs_autowave', 'nrs_taslit', 'nrs_taconfirm', 'nrs_tacq', 'nrs_msaspec'}})\nAttrConstraint({'value': \"\\\\(\\\\'o002\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\", 'name': 'asn_candidate', 'sources': ['asn_candidate'], 'is_acid': True, 'evaluate': True, 'force_reprocess': False, 'force_unique': False, 'force_undefined': False, 'invalid_values': [], 'only_on_match': False, 'onlyif': <function AttrConstraint.__init__.<locals>.<lambda> at 0x10b4a2b70>, 'required': True, 'found_values': {\"\\\\(\\\\'o002\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}})\n",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f100lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g140h'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '3'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_msaspec|nrs_autoflat|nrs_autowave'})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o002\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})\nDMSAttrConstraint({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function DMS_Level3_Base.__init__.<locals>.<lambda> at 0x15128f9f28>})",
     "asn_id": "o002",
     "target": "t003",
     "asn_pool": "pool_006_spec_nirspec",
@@ -26,30 +26,6 @@
                     "asn_candidate": "('o002', 'observation')"
                 },
                 {
-                    "expname": "jw_00010_cal.fits",
-                    "exptype": "target_acquistion",
-                    "exposerr": null,
-                    "asn_candidate": "('o002', 'observation')"
-                },
-                {
-                    "expname": "jw_00011_cal.fits",
-                    "exptype": "target_acquistion",
-                    "exposerr": null,
-                    "asn_candidate": "('o002', 'observation')"
-                },
-                {
-                    "expname": "jw_00012_cal.fits",
-                    "exptype": "target_acquistion",
-                    "exposerr": null,
-                    "asn_candidate": "('o002', 'observation')"
-                },
-                {
-                    "expname": "jw_00013_cal.fits",
-                    "exptype": "target_acquistion",
-                    "exposerr": null,
-                    "asn_candidate": "('o002', 'observation')"
-                },
-                {
                     "expname": "jw_00014_rate.fits",
                     "exptype": "autowave",
                     "exposerr": null,
@@ -60,6 +36,30 @@
                     "exptype": "autoflat",
                     "exposerr": null,
                     "asn_candidate": "('o002', 'observation')"
+                },
+                {
+                    "expname": "jw_00010_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": null,
+                    "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "jw_00011_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": null,
+                    "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "jw_00012_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": null,
+                    "asn_candidate": "[('o002', 'observation')]"
+                },
+                {
+                    "expname": "jw_00013_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": null,
+                    "asn_candidate": "[('o002', 'observation')]"
                 }
             ]
         }
