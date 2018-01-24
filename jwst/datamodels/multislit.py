@@ -49,11 +49,13 @@ class MultiSlitModel(model_base.DataModel):
         """
         Get a metadata value using a dotted name.
         """
-        if isinstance(key, six.string_types) and key.split('.') == 'meta':
+        if isinstance(key, str) and key.split('.') == 'meta':
             super(MultiSlitModel, self).__getitem__(key)
         elif isinstance(key, int):
+            #return self.slits[key]
             # Return an instance of a SlitModel
-            data_keys = [item[0] for item in self.slits[key].items() if not
+            slit = self.slits[key]
+            data_keys = [item[0] for item in slit.items() if not
                          item[0].startswith('meta')]
             kwargs = dict(((k, getattr(self.slits[key], k)) for k in data_keys))
             s = SlitModel(**kwargs)

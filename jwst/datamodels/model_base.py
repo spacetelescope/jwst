@@ -190,10 +190,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     self.meta.filename = os.path.basename(filename)
 
         # if the input model doesn't have a date set, use the current date/time
-        if self.meta.date is None:
-            current_date = Time(datetime.datetime.now())
-            current_date.format = 'isot'
-            self.meta.date = current_date.value
+        if hasattr(self, "meta") and hasattr(self.meta, 'date'):
+            if self.meta.date is None:
+                current_date = Time(datetime.datetime.now())
+                current_date.format = 'isot'
+                self.meta.date = current_date.value
 
         # store the data model type, if not already set
         klass = self.__class__.__name__

@@ -8,5 +8,5 @@ allOf:
       description: |
         An array of SlitModel instances. All slits come from the same exposure.
       items:
-        $ref: slitdata.schema.yaml
+        $ref: slit.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
