@@ -1,6 +1,28 @@
 """Test ProcessList, ProcessQueue, ProcessQueueSorted"""
 
+from .helpers import (
+    combine_pools,
+    t_path
+)
+
 from ..lib.process_list import *
+
+
+def test_item():
+    pool = combine_pools(t_path('data/pool_013_coron_nircam.csv'))
+    item1 = ProcessItem(pool[0])
+    item2 = ProcessItem(pool[1])
+    assert item1 == item1
+    assert item1 != item2
+    s = set([item1, item2])
+    assert len(s) == 2
+
+
+def test_item_iterable():
+    pool = combine_pools(t_path('data/pool_013_coron_nircam.csv'))
+    process_items = ProcessItem.to_process_items(pool)
+    for process_item in process_items:
+        assert isinstance(process_item, ProcessItem)
 
 
 def test_process_queue():
@@ -8,6 +30,7 @@ def test_process_queue():
     items_to_add = [
         [1],
         [2, 3, 4],
+        # [3, 4],  # Neither should get added but not implemented
         [5]
     ]
     standard = [1, 2, 3, 4, 5]
@@ -54,6 +77,7 @@ def test_process_queue_sorted():
     queue = ProcessQueueSorted()
     idx = 0
     queue.extend(items_to_add[idx])
+    assert len(queue) == 3
     results = []
     for item in queue:
         results.append(item.items[0])

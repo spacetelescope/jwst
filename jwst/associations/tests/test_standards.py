@@ -14,6 +14,7 @@ import pytest
 from .helpers import (
     combine_pools,
     compare_asns,
+    runslow,
     t_path,
 )
 
@@ -106,6 +107,7 @@ def generate_asns(request):
     yield asns, standards
 
 
+@runslow
 def test_against_standard(generate_asns):
     """Compare a generated assocaition against a standard
     """

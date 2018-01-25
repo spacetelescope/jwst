@@ -43,35 +43,36 @@ def generate(pool, rules, version_id=None):
     associations = []
     if type(version_id) is bool:
         version_id = make_timestamp()
-    process_list = ProcessQueueSorted([
+    process_queue = ProcessQueueSorted([
         ProcessList(
             items=pool,
             rules=[rule for _, rule in rules.items()]
         )
     ])
 
-    for process_item in process_list:
-        for item in process_item.items:
+    for process_list in process_queue:
+        for item in process_list.items:
 
             existing_asns, new_asns, to_process = generate_from_item(
                 item,
                 version_id,
                 associations,
                 rules,
-                process_item
+                process_list
             )
             associations.extend(new_asns)
 
             # If working on a process list EXISTING
             # remove any new `to_process` that is
             # also EXISTING. Prevent infinite loops.
-            if process_item.work_over == ProcessList.EXISTING:
+            if process_list.work_over == ProcessList.EXISTING:
                 to_process = [
-                    to_process_item
-                    for to_process_item in to_process
-                    if to_process_item.work_over != ProcessList.EXISTING
+                    to_process_list
+                    for to_process_list in to_process
+                    if to_process_list.work_over != ProcessList.EXISTING
                 ]
-            process_list.extend(to_process)
+            process_queue.extend(to_process)
+            pass
 
     # Finalize found associations
     finalized_asns = rules.finalize(associations)
@@ -84,7 +85,7 @@ def generate_from_item(
         version_id,
         associations,
         rules,
-        process_item):
+        process_list):
     """Either match or generate a new assocation
 
     Parameters
@@ -105,7 +106,7 @@ def generate_from_item(
     rules: AssociationRegistry or None
         List of rules to create new associations
 
-    process_item: ProcessList
+    process_list: ProcessList
         The `ProcessList` from which the current item belongs to.
 
     Returns
@@ -121,40 +122,40 @@ def generate_from_item(
     """
 
     # Setup the rules allowed to be examined.
-    if process_item.rules is None or len(process_item.rules) == 0:
+    if process_list.rules is None or len(process_list.rules) == 0:
         allowed_rules = list(rules.values())
     else:
-        allowed_rules = process_item.rules
+        allowed_rules = process_list.rules
 
     # Check membership in existing associations.
     existing_asns = []
-    process_list = []
-    if process_item.work_over in (ProcessList.EXISTING, ProcessList.BOTH):
+    reprocess_list = []
+    if process_list.work_over in (ProcessList.EXISTING, ProcessList.BOTH):
         associations = [
             asn
             for asn in associations
             if type(asn) in allowed_rules
         ]
-        existing_asns, process_list = match_item(
+        existing_asns, reprocess_list = match_item(
             item, associations
         )
 
     # Now see if this item will create new associatons.
     # By default, a item will not be allowed to create
     # an association based on rules of existing associations.
-    to_process = []
+    reprocess = []
     new_asns = []
     if rules is not None:
         ignore_asns = set([type(asn) for asn in existing_asns])
-        new_asns, to_process = rules.match(
+        new_asns, reprocess = rules.match(
             item,
             version_id=version_id,
             allow=allowed_rules,
             ignore=ignore_asns,
         )
-    process_list.extend(to_process)
+    reprocess_list.extend(reprocess)
 
-    return existing_asns, new_asns, process_list
+    return existing_asns, new_asns, reprocess_list
 
 
 def match_item(item, associations):
