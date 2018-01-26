@@ -40,11 +40,11 @@ class _KeywordMapping:
     """
     def __init__(self, src_kwd, dst_name, agg_func=None, error_type="ignore",
                  error_value=np.nan):
-        if isinstance(src_kwd, str):
+        if not isinstance(src_kwd, str):
             raise TypeError(
                 "The source keyword name must be a string")
 
-        if isinstance(dst_name, str):
+        if not isinstance(dst_name, str):
             raise TypeError(
                 "The destination name must be a string")
 
@@ -120,7 +120,7 @@ def metablender(input_models, spec):
 
           - minimum: `numpy.min`
 
-          - total: `numpy.sum`
+          - sum: `numpy.sum`
 
           - standard deviation: `numpy.std`
 
@@ -180,17 +180,15 @@ def metablender(input_models, spec):
                     "Each entry in the headers list must be either a " +
                     "datamodels.DataModel instance or a filename (str)")
             model = datamodels.open(model)
-            header = model.meta
-        else:
-            header = model.meta
-
+        header = model.to_flat_dict()
+        filename = header['meta.filename']
         for i, mapping in enumerate(mappings):
             if mapping.src_kwd in header:
-                value = header[mapping.src_kwd]
+                value = model[mapping.src_kwd]
             elif mapping.error_type == 'raise':
                 raise ValueError(
                     "%s is missing keyword '%s'" %
-                    (header, mapping.src_kwd))
+                    (filename, mapping.src_kwd))
             elif mapping.error_type == 'constant':
                 value = mapping.error_value
             else:
@@ -223,7 +221,7 @@ def metablender(input_models, spec):
                 result = mapping.agg_func(data[i])
             if result is not None:
                 results[mapping.dst_name] = result
-
+        
     # Aggregate data into table
     dtype = []
     arrays = []

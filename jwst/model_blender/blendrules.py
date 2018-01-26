@@ -2,16 +2,19 @@
                    a new metadata instance and table
 
 """
-from __future__ import absolute_import, print_function
 import os
 import glob
 import copy
 import json
+from io import StringIO
+from collections import OrderedDict
 
 import numpy as np
 from astropy.io import fits
 
+from jwst import __version__
 from .. import datamodels
+from ..datamodels import schema as dm_schema
 from . import blender
 from . import textutil
 
@@ -99,115 +102,24 @@ blender_funcs = {'first': first,
                  'min': np.min,
                  'stddev': np.std}
 
-delete_command = '<delete>'
-
 
 # Classes for managing keyword rules
 class KeywordRules(object):
 
-    rules_name_suffix = '_header.rules'
-
-    def __init__(self, instrument, telescope='jwst', rules_file=None):
+    def __init__(self, model):
         """ Read in the rules used to interpret the keywords from the specified
             instrument image header.
         """
-        self.instrument = instrument.lower()
-        self.telescope = telescope.lower()
+        self.instrument = model.meta.instrument.name.lower()
         self.new_header = None
-        self.rules_version = None
+        self.rules_version = __rules_version__
 
-        # Add support for user-specified rules file...
-        self.rules_file = rules_file
-        if self.rules_file is None:
-            self.get_filename()  # define rules file
-
-        self.rules_version, i = self.get_rules_header(self.rules_file)
+        self.rules_file = model._schema
+        self.rule_specs = _build_schema_rules_dict(self.rules_file)
 
         self.rule_objects = []
         self.rules = []
         self.section_names = []
-        self.delete_kws = []
-
-    def get_filename(self):
-        """ Return name of rules file to be used
-        It will use a local copy if present, and use the installed version
-        by default.
-        Any local copy will take precendence over the default rules.
-
-        This function will return the alphabetically first file that applies
-        to the instrument and meets the version requirements
-        """
-        rules_file = None
-        # get all potential local rules
-        rfiles = glob.glob('*.rules')
-        rfiles.sort()
-
-        # Sort through list and find only applicable rules files
-        # This would include picking up any rules files using the default
-        # naming convention; namely, <instrument>_header.rules
-        for r in rfiles:
-            v, i = self.get_rules_header(r)
-            if v is None or i is None:
-                continue
-            if v <= __rules_version__ and i == self.instrument.lower():
-                rules_file = r
-                break
-
-        # Pipeline use should involve passing in rules_file read in
-        # from CRDS.  If not, look for local user-defined file.
-        if rules_file is None:
-            # define default rules name installed with the software
-            rules_name = self.instrument.lower()+self.rules_name_suffix
-            rules_file = os.path.join(os.path.dirname(__file__), rules_name)
-            if not os.path.exists(rules_file):
-                rules_name = self.telescope+self.rules_name_suffix
-                rules_file = os.path.join(os.path.dirname(__file__),
-                                          rules_name)
-                if not os.path.exists(rules_file):
-                    rules_file = None
-
-        if rules_file is None:
-            errmsg = 'ERROR:\n'+'    No valid rules file found for:\n'
-            errmsg += '    INSTRUMENT = %s\n' % (self.instrument)
-            errmsg += '    RULES Version <= %s\n' % (__rules_version__)
-            print(textutil.textbox(errmsg))
-            raise ValueError
-
-        self.rules_file = rules_file
-        return rules_file
-
-    def read_raw_file(self, filename):
-        """
-        Open a potential rules file and return the interpreted json from
-        the contents of the file.
-        """
-        json_str = ''
-        with open(filename) as f:
-            for line in f:
-                if line.lstrip().startswith('#'):
-                    continue
-                json_str += line
-        self.rule_specs = json_str.replace('\n', '')
-
-    def get_rules_header(self, filename):
-        """
-        Open a potential rules file and return the recognized
-        version and instrument types provided in the file's first 2 lines
-        """
-        version = None
-        instrument = None
-        # read file and interpret the embedded json
-        self.read_raw_file(filename)
-        if 'VERSION' in self.raw_rules:
-            version = self.raw_rules['VERSION']
-            instrument = self.raw_rules['INSTRUMENT']
-            del self.raw_rules['VERSION']
-            del self.raw_rules['INSTRUMENT']
-        else:
-            l = "Rules file {} not valid!".format(filename)
-            raise ValueError(l)
-
-        return version, instrument
 
     def interpret_rules(self, hdrs):
         """ Convert specifications for rules from rules file
@@ -215,6 +127,27 @@ class KeywordRules(object):
 
             This allows for expansion rules to be applied to rules
             from the rules files (such as any wildcards or section titles).
+
+            Output will be 'self.rules' that contains a list of tuples:
+                - a tuple of 2 values for each column in the table
+                - a tuple of 4 values for each attribute identified in metadata
+            Partial sample from HST to show format:
+[('CTYPE1O', 'CTYPE1O'),
+('CTYPE2O', 'CTYPE2O'),
+('CUNIT1O', 'CUNIT1O'),
+('CUNIT2O', 'CUNIT2O'),
+('APERTURE', 'APERTURE', <function fitsblender.blendheaders.multi>, 'ignore'),
+('DETECTOR', 'DETECTOR', <function fitsblender.blender.first>, 'ignore'),
+('EXPEND', 'EXPEND', <function numpy.core.fromnumeric.amax>, 'ignore'),
+('EXPSTART', 'EXPSTART', <function numpy.core.fromnumeric.amin>, 'ignore'),
+('EXPTIME', 'TEXPTIME', <function numpy.core.fromnumeric.sum>, 'ignore'),
+('EXPTIME', 'EXPTIME', <function numpy.core.fromnumeric.sum>, 'ignore')]
+
+            This rules format will allow the algorithm, logic and code from
+            the original fitsblender to be used with as little change as
+            possible.  It will need to be derived (as with HST) from the
+            input models metadata for expansion of attribute sections or
+            wildcards in attributes specified in the rules.
         """
         if isinstance(hdrs, tuple):
             hdrs = list(hdrs)
@@ -222,14 +155,14 @@ class KeywordRules(object):
             hdrs = [hdrs]
 
         # apply rules to headers
-        for category in self.rule_specs:
-            for rule in category:
-                if category == 'Table':
-                    r = {category[rule]: {'rule': 'column'}}
-                else:
-                    r = {rule: category[rule]}
-                kwr = KwRule(r)
+        for attr in self.rule_specs:
+            speclist = self.rule_specs[attr]
+
+            for rule in speclist:
+                # Create KwRule input equivalent to HST rules input
+                kwr = KwRule(rule)
                 duplicate_rule = False
+
                 for robj in self.rule_objects:
                     if kwr.rule_spec == robj.rule_spec:
                         duplicate_rule = True
@@ -237,12 +170,9 @@ class KeywordRules(object):
                 if not duplicate_rule:
                     for hdr in hdrs:
                         kwr.interpret(hdr)
-                    self.rule_objects.append(kwr)
 
-        for kwr in self.rule_objects:
-            self.rules.extend(kwr.rules)
-            self.delete_kws.extend(kwr.delete_kws)
-            self.section_names.extend(kwr.section_name)
+                    self.rules.extend(kwr.rules)
+
 
     def merge(self, kwrules):
         """
@@ -265,7 +195,7 @@ class KeywordRules(object):
         # extend self.rules with additional rules
         self.rules.extend(k)
 
-    def apply(self, headers, tabhdu=False):
+    def apply(self, models, tabhdu=False):
         """ For a full list of metadata objects, apply the specified rules to
             generate a dictionary of new values and a table using
             blender.
@@ -274,55 +204,30 @@ class KeywordRules(object):
             as `datamodels.model.ndmodel` and fits.binTableHDU objects.
         """
         # Apply rules to headers
-        fbdict, fbtab = blender.metablender(headers, self.rules)
+        fbdict, fbtab = blender.metablender(models, self.rules)
 
         # Determine which keywords are included in the table but not
         # the new dict(header). These will be removed from the output
         # header altogether
         tabcols = fbtab.dtype.names
-        hdrkws = list(fbdict.keys())
-        del_kws = list(set(tabcols) - set(hdrkws))
 
         # Start with a copy of the template as the new header
         # This will define what keywords need to be updated, as the rules
         # and input headers often include headers for multiple extensions in
         # order to build the complete table for all the keywords in the file
         # in one run
-        new_header = copy.deepcopy(headers[0])
-
-        # Delete all keywords from copy that are being moved into the table
-        # However, this should only be done for those keywords which do are not
-        # being kept in the header through fbdict (additional rules)
-        for kw in del_kws:
-            if (kw in new_header):
-                try:
-                    del new_header[kw]
-                except KeyError:
-                    pass
-
-        # Remove section names from output header(s)
-        for name in self.section_names:
-            for indx, kw in zip(list(range(len(new_header), 0, -1)),
-                                new_header[-1::-1]):
-                if name in str(kw.value):
-                    del new_header[indx-1]
-                continue
-
-        # Delete keywords marked in rules file
-        for kw in self.delete_kws:
-            if kw in new_header:
-                try:
-                    del new_header[kw]
-                except KeyError:
-                    pass
+        new_model = models[0].copy()
 
         # Apply updated/blended values into new header, but only those
         # keywords which are already present in the 'template' new header
         # this allows the rules to be used on all extensions at once yet
         # update each extension separately without making copies of kws from
         # one extension to another.
-        for kw in fbdict:
-            new_header[kw] = fbdict[kw]
+        #new_model.update(fbdict)
+        for attr in new_model.to_flat_dict():
+            if 'meta' in attr and attr in fbdict:
+                new_model[attr] = fbdict[attr]
+
         # Create summary table
         if len(tabcols) > 0:
             if tabhdu:
@@ -332,10 +237,10 @@ class KeywordRules(object):
                 new_table = fbtab
         else:
             new_table = None
-        return new_header, new_table
+        return new_model, new_table
 
     def add_rules_kws(self, hdr):
-        """
+        """ Update metadata with
         WARNING
         -------
         Needs to be modified to work with metadata.
@@ -344,27 +249,13 @@ class KeywordRules(object):
         rules used to create this header. Only non-comment lines from the
         rules file will be reported.
         """
-        hdr['RULESVER'] = (self.rules_version,
-                           'Version ID for header kw rules file')
-        hdr['BLENDVER'] = (__version__, 'Version of blendheader software used')
-        hdr['RULEFILE'] = (self.rules_file, 'Name of header kw rules file')
-        hdr.add_history('='*60)
-        hdr.add_history('Header Generation rules:')
-        hdr.add_history('    Rules used to combine headers of input files')
-        hdr.add_history('    Start of rules...')
-        hdr.add_history('-'*60)
-        for rule in self.rule_specs:
-            if rule[0] in ['#', ' ', None, "None", "INDEF"]:
-                continue
-            hdr.add_history(rule.strip('\n'))
-
-        hdr.add_history('-'*60)
-        hdr.add_history('    End of rules...')
-        hdr.add_history('='*60)
+        hdr['meta.rules_version'] = (__rules_version__,
+                                     'Version ID for header kw rules file')
+        hdr['meta.blender_version'] = (__version__,
+                                       'Version of blendheader software used')
 
     def index_of(self, kw):
-        """ Reports the index of the specified kw
-        """
+        """ Reports the index of the specified kw."""
         indx = []
         for r, i in zip(self.rules, list(range(len(self.rules)))):
             if r[0] == kw:
@@ -382,63 +273,110 @@ class KwRule(object):
 
     Example:
     Interpreting rule from:
-        'meta.filename':{ 'rule': 'first', 'output': 'meta.filename'}
+        {'meta.attribute': { 'rule': 'first', 'output': 'meta.attribute'}}
+        --or--
+        {'meta.attribute': 'meta.attribute'}  # Table column specification
 
-    into rule: [('meta.filename', 'meta.filename',
+    into rule: [('meta.attribute', 'meta.attribute',
                 <function first at 0x7fe505db7668>, 'ignore')]
     and sname: None
-    and delkws: []
 
     """
+
     def __init__(self, line):
+        """Initialize new keyword rule.
+
+        Parameters
+        ==========
+        line : dict
+            Line should be dict with attribute name as the key, and
+            a dict as the value specifying 'rule' and (optionally)'output'.
+        """
         self.rule_spec = line  # dict read in from rules file
         self.rules = []
         self.delete_kws = []
         self.section_name = []
 
     def interpret(self, hdr):
+        """Use metadata to interpret rule."""
         if self.rules:
             # If self.rules has already been defined for this rule, do not try
             # to interpret it any further with additional headers
             return
-        irules, sname, delkws = interpret_entry(self.rule_spec, hdr)
+        irules, sname = interpret_entry(self.rule_spec, hdr)
 
         # keep track of any section name identified for this rule
         if sname:
             self.section_name.append(sname)
-
-        # also keep track of what keywords should be deleted based on this rule
-        if delkws:
-            self.delete_kws = delkws
 
         # Now, interpret rule based on presence of kw in hdr
         if irules:
             self.rules = irules
 
 
-# Utility functions
+# Utility functions.
+def _build_schema_rules_dict(schema):
+    """ Create a dict that extracts blend rules from an input schema.
+
+    Parameters
+    ----------
+    schema : JSON schema fragment
+        The schema in which to search.
+
+    Returns
+    -------
+    results : dict
+        Dictionary with schema attributes as keys and blend rules
+        as values
+
+    """
+    def build_rules_dict(subschema, path, combiner, ctx, recurse):
+        # Only interpret elements of the meta component of the model
+        if len(path) > 1 and path[0] == 'meta' and 'items' not in path:
+            attr = '.'.join(path)
+            if subschema.get('properties'):
+                return # Ignore ObjectNodes
+            kwrule = subschema.get('blend_rule')
+            kwtab = subschema.get('blend_table', False)
+            kwname = subschema.get('fits_keyword', attr)
+            results[attr] = []
+            if kwrule is not None:
+                results[attr].append({attr: {'rule': kwrule}})
+            else:
+                # default 'first' if nothing specified in schema for attr
+                results[attr].append({attr: {'rule': 'first'}})
+            if kwtab:
+                results[attr].append({attr: kwname})
+        else:
+            return
+
+    results = OrderedDict()
+    dm_schema.walk_schema(schema, build_rules_dict, results)
+    return results
+
+
 def interpret_entry(line, hdr):
     """ Generate the rule(s) specified by the entry from the rules file
 
     The entry should always be a dict with format:
-        {attribute_name : {'rule':'some_rule', 'output':'', 'delete':False}}
+        {attribute_name : {'rule':'some_rule', 'output':''}}
+        -- or (for table column specification)--
+        {attribute_name: attribute_name}
         where
           'output' is assumed to be the same as attribute_name if not present
-          'delete' is assumed to be False if not present
     """
+    # Interpret raw input line
+    attr = list(line.keys())[0]
+    line_spec = line[attr]
+    attr_column = True  # Determine whether this rule defines a table column
+    if isinstance(line_spec, dict):
+        attr_column = False  # If not, turn this off
+
     # Initialize output values
     rules = []
     section_name = None
-    delete_kws = []
 
     # Parse the line
-    use_kws = True
-    if delete_command in line:
-        use_kws = line['delete']
-
-    for k in line.keys():
-        attr = k
-        break
     if isinstance(hdr[attr], datamodels.properties.ObjectNode):
         section_name = attr
         # Datamodel sections are just parent Nodes for each attribute
@@ -446,123 +384,63 @@ def interpret_entry(line, hdr):
         kws = ['{}.{}'.format(section_name, k) for k in keys]
         #
         if kws is not None:
-            for kw in kws:
-                if use_kws:
-                    rules.append((kw, kw))
+            for kw1 in kws:
+                if attr_column:
+                    # Interpret each attribute as a new column in Table
+                    rules.append((kw1, kw1))
                 else:
-                    delete_kws.append(kw)
+                    # Interpret each attribute in Node with same rule
+                    attr_rules = interpret_attr_line(kw1, line_spec)
+                    rules.extend(attr_rules)
     else:
-        kws = attr
-        if 'output' in line:
-            kws2 = line['output']
-        else:
-            kws2 = kws
+        attr_rules = interpret_attr_line(attr, line_spec)
+        rules.extend(attr_rules)
 
-        lrule = None
-        if 'rule' in line:
-            lrule = line['rule']
-
-        # Interpret short-hand rules using dict
-        if lrule is not None and len(lrule) > 0:
-            if lrule in blender_funcs:
-                lrule = blender_funcs[lrule]
-            else:
-                lrule = None
-            # build separate rule for each kw
-            for kw, kw2 in zip(kws, kws2):
-                if use_kws:
-                    new_rule = (kw, kw2, lrule, "ignore")
-                    if new_rule not in rules:
-                        rules.append(new_rule)
-                else:
-                    delete_kws.append(kw)
-
-    return rules, section_name, delete_kws
+    return rules, section_name
 
 
-def interpret_line(line, hdr):
-    """ Generate the rule(s) specified by the input line from the rules file
-    """
-    # Initialize output values
+def interpret_attr_line(attr, line_spec):
+    """ Generate rule for single attribute from input line from rules file."""
     rules = []
-    section_name = None
-    delete_kws = []
-    # Ignore comment lines in rules file
-    if line[0] == '#' or len(line.strip()) == 0 or line[0] == '!':
-        return rules, section_name, delete_kws
-    # clean up input lines
-    line = line.strip('\n')
 
-    # strip off any comment from the line before parsing the line
-    if '#' in line:
-        line = line[:line.rfind('#')].strip()
-
-    # Parse the line
-    use_kws = True
-    if delete_command in line:
-        use_kws = False
-        line = line.replace(delete_command, '').lstrip()
-
-    if '/' in line:
-        section_name = line.split('/')[1].strip()
-        # Datamodel sections are just parent Nodes for each attribute
-        # if isinstance(hdr[section_name], datamodels.properties.ObjectNode):
-        #  keys = hdr[section_name].instance.keys()
-        #  kws = ['{}.{}'.format(section_name,k) for k in keys]
-        #
-        kws = find_keywords_in_section(hdr, section_name)
-        if kws is not None:
-            for kw in kws:
-                if use_kws:
-                    rules.append((kw, kw))
-                else:
-                    delete_kws.append(kw)
-    else:
-        kwnames = line.split()
-        if '*' in line:
-            kws = list(hdr[kwnames[0]].keys())
+    kws = [attr]
+    if isinstance(line_spec, dict):
+        if 'output' in line_spec:
+            kws2 = [line_spec['output']]
+        else:
             kws2 = kws
+    else:
+        kws2 = [line_spec]
+
+    lrule = None
+    if 'rule' in line_spec:
+        lrule = line_spec['rule']
+
+    # Interpret short-hand rules using dict
+    if lrule is not None and len(lrule) > 0:
+        if lrule in blender_funcs:
+            lrule = blender_funcs[lrule]
         else:
-            kws = [kwnames[0]]
-            if len(kwnames) > 1:
-                kws2 = [kwnames[1]]
-            else:
-                kws2 = kws
+            lrule = None
+        # build separate rule for each kw
+        for kw1, kw2 in zip(kws, kws2):
+            new_rule = (kw1, kw2, lrule, "ignore")
+            if new_rule not in rules:
+                rules.append(new_rule)
+    else:
+        for kw1, kw2 in zip(kws, kws2):
+            new_rule = (kw1, kw2)
+            if new_rule not in rules:
+                rules.append(new_rule)
 
-        lrule = None
-        if len(kwnames) > 2:
-            indx = line.index(kwnames[2])
-            lrule = line[indx:].strip()  # rule used for new value in header
-
-        # Interpret short-hand rules using dict
-        if lrule is not None and len(lrule) > 0:
-            if lrule in blender_funcs:
-                lrule = blender_funcs[lrule]
-            else:
-                lrule = None
-            # build separate rule for each kw
-            for kw, kw2 in zip(kws, kws2):
-                if use_kws:
-                    new_rule = (kw, kw2, lrule, "ignore")
-                    if new_rule not in rules:
-                        rules.append(new_rule)
-                else:
-                    delete_kws.append(kw)
-        else:
-            for kw, kw2 in zip(kws, kws2):
-                if use_kws:
-                    new_rule = (kw, kw2)
-                    if new_rule not in rules:
-                        rules.append(new_rule)
-                else:
-                    delete_kws.append(kw)
-
-    return rules, section_name, delete_kws
+    return rules
 
 
 def find_keywords_in_section(hdr, title):
-    """ Return a list of keyword names from hdr identified in the section
-        with the specified section title.
+    """Return a list of keyword names.
+
+    The list will be derived from the section
+        with the specified section title identified in the hdr.
     """
     # Indentify card indices of start and end of specified section
     sect_start = None
@@ -588,10 +466,3 @@ def find_keywords_in_section(hdr, title):
         section_keys.remove('')
 
     return section_keys
-
-
-#
-# Custom JSON decoder classes to handle format of rules file
-#
-def convert_rules_file_to_json(filename):
-    """Read in rule file from `filename` and remove all non-json elements."""
