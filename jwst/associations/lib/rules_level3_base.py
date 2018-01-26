@@ -121,6 +121,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         if 'asn_pool' not in self.data:
             self.data['asn_pool'] = 'none'
 
+
     @property
     def current_product(self):
         return self.data['products'][-1]
@@ -605,11 +606,11 @@ CONSTRAINT_TARGET = DMSAttrConstraint(
 # Base Mixins
 # -----------
 class AsnMixin_Science(DMS_Level3_Base):
-    """Constraints for all science-based rules"""
+    """Basic science constraints"""
 
     def __init__(self, *args, **kwargs):
 
-        # Setup for inclusion of target aquisitions
+        # Setup target acquisition inclusion
         constraint_acqs = Constraint(
             [
                 DMSAttrConstraint(
@@ -631,16 +632,16 @@ class AsnMixin_Science(DMS_Level3_Base):
             work_over=ProcessList.EXISTING
         )
 
-        # Add OBS_NUM tracking and wrap together rule-specific constraints.
+        # Put all constraints together.
         self.constraints = Constraint(
             [
-                CONSTRAINT_BASE,
+                CONSTRAINT_BASE.copy(),
                 Constraint(
                     [
                         Constraint(
                             [
                                 self.constraints,
-                                CONSTRAINT_OBSNUM
+                                CONSTRAINT_OBSNUM.copy()
                             ],
                             name='rule'
                         ),

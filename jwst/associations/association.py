@@ -114,7 +114,7 @@ class Association(MutableMapping):
         constraint = getattr(self, 'constraints', False)
         if constraint:
             constraint_list.append(constraint)
-        constraint_list.append(self.GLOBAL_CONSTRAINT)
+        constraint_list.append(self.GLOBAL_CONSTRAINT.copy())
         self.constraints = Constraint(constraint_list)
 
     @classmethod
@@ -328,22 +328,23 @@ class Association(MutableMapping):
         -------
         (matching_constraint, reprocess_list)
             2-tuple consisting of:
-            - bool: Matching constraint or False if not a match
+            - bool: True if match
             - [ProcessList[, ...]]: List of items to process again.
         """
         if self.is_item_member(item):
             return False, []
 
+        match = False
         if check_constraints:
-            matching_constraint, reprocess = self.check_and_set_constraints(item)
+            match, reprocess = self.check_and_set_constraints(item)
 
-        if matching_constraint:
+        if match:
             if self.run_init_hook:
                 self._init_hook(item)
                 self.run_init_hook = False
             self._add(item)
 
-        return matching_constraint, reprocess
+        return match, reprocess
 
     def check_and_set_constraints(self, item):
         """Check whether the given dictionaries match parameters for
@@ -365,8 +366,6 @@ class Association(MutableMapping):
 
         """
         match, reprocess = self.constraints.check_and_set(item)
-        if match:
-            self.constraints = match
 
         # Set the association type for all reprocessed items.
         for process_list in reprocess:

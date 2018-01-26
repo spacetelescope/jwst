@@ -37,9 +37,9 @@ class Asn_Image(AsnMixin_Science):
 
         # Setup constraints
         self.constraints = Constraint([
-            CONSTRAINT_OPTICAL_PATH,
-            CONSTRAINT_TARGET,
-            CONSTRAINT_IMAGE,
+            CONSTRAINT_OPTICAL_PATH.copy(),
+            CONSTRAINT_TARGET.copy(),
+            CONSTRAINT_IMAGE.copy(),
             DMSAttrConstraint(
                 name='wfsvisit',
                 sources=['visitype'],
@@ -70,9 +70,9 @@ class Asn_WFSCMB(AsnMixin_Science):
 
         # Setup constraints
         self.constraints = Constraint([
-            CONSTRAINT_OPTICAL_PATH,
-            CONSTRAINT_TARGET,
-            CONSTRAINT_IMAGE,
+            CONSTRAINT_OPTICAL_PATH.copy(),
+            CONSTRAINT_TARGET.copy(),
+            CONSTRAINT_IMAGE.copy(),
             DMSAttrConstraint(
                 name='wfsvisit',
                 sources=['visitype'],
@@ -108,8 +108,8 @@ class Asn_MIRI_LRS_FIXEDSLIT(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_NOTTSO,
-            CONSTRAINT_TARGET,
+            CONSTRAINT_NOTTSO.copy(),
+            CONSTRAINT_TARGET.copy(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -141,8 +141,8 @@ class Asn_MIRI_LRS_SLITLESS(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_NOTTSO,
-            CONSTRAINT_TARGET,
+            CONSTRAINT_NOTTSO.copy(),
+            CONSTRAINT_TARGET.copy(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -174,7 +174,7 @@ class Asn_NIS_SO_SLITLESS(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_TARGET,
+            CONSTRAINT_TARGET.copy(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -210,8 +210,8 @@ class Asn_NRS_FIXEDSLIT(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_OPTICAL_PATH,
-            CONSTRAINT_TARGET,
+            CONSTRAINT_OPTICAL_PATH.copy(),
+            CONSTRAINT_TARGET.copy(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -242,8 +242,8 @@ class Asn_NRS_MSA(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_OPTICAL_PATH,
-            CONSTRAINT_TARGET,
+            CONSTRAINT_OPTICAL_PATH.copy(),
+            CONSTRAINT_TARGET.copy(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -267,7 +267,7 @@ class Asn_MIRI_IFU(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_TARGET,
+            CONSTRAINT_TARGET.copy(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -305,7 +305,7 @@ class Asn_NRS_IFU(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_TARGET,
+            CONSTRAINT_TARGET.copy(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -336,7 +336,7 @@ class Asn_Coron(AsnMixin_Science):
         # Setup for checking.
         self.constraints = Constraint(
             [
-                CONSTRAINT_OPTICAL_PATH,
+                CONSTRAINT_OPTICAL_PATH.copy(),
                 DMSAttrConstraint(
                     name='exp_type',
                     sources=['exp_type'],
@@ -389,7 +389,7 @@ class Asn_AMI(AsnMixin_Science):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_OPTICAL_PATH,
+            CONSTRAINT_OPTICAL_PATH.copy(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -423,7 +423,7 @@ class Asn_WFSS(AsnMixin_Spectrum):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_TARGET,
+            CONSTRAINT_TARGET.copy(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -452,8 +452,8 @@ class Asn_TSO_Flag(AsnMixin_Science):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_TARGET,
-            CONSTRAINT_OPTICAL_PATH,
+            CONSTRAINT_TARGET.copy(),
+            CONSTRAINT_OPTICAL_PATH.copy(),
             DMSAttrConstraint(
                 name='is_tso',
                 sources=['tsovisit'],
@@ -481,8 +481,8 @@ class Asn_TSO_EXPTYPE(AsnMixin_Science):
 
         # Setup for checking.
         self.constraints = Constraint([
-            CONSTRAINT_TARGET,
-            CONSTRAINT_OPTICAL_PATH,
+            CONSTRAINT_TARGET.copy(),
+            CONSTRAINT_OPTICAL_PATH.copy(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -525,6 +525,7 @@ class Asn_ACQ_Reprocess(DMS_Level3_Base):
                     force_unique=False
                 ),
                 SimpleConstraint(
+                    name='force_fail',
                     test=lambda x, y: False,
                     value='anything but None',
                     force_reprocess=ProcessList.EXISTING

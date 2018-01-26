@@ -1,7 +1,7 @@
 """Constraints
 """
 import abc
-from copy import (copy, deepcopy)
+from copy import deepcopy
 from itertools import chain
 import logging
 import re
@@ -64,11 +64,16 @@ class SimpleConstraintABC(abc.ABC):
 
         Returns
         -------
-        success: obj or False
-            If constraint is satisfied, some type of object, may be `True`,
-            is returned.
+        success, reprocess: bool, [ProcessList[,...]]
+            Returns 2-tuple of:
+            - success: True if check is successful.
+            - List of `ProcessList`.
         """
-        return self, []
+        return True, []
+
+    def copy(self):
+        """Copy ourselves"""
+        return deepcopy(self)
 
     # Make iterable to work with `Constraint`.
     # Since this is a leaf, simple return ourselves.
@@ -224,12 +229,9 @@ class SimpleConstraint(SimpleConstraintABC):
         if self.value is not None:
             satisfied = self.test(self.value, source_value)
 
-        match = False
         if satisfied:
-            match = self
             if self.force_unique:
-                match = deepcopy(self)
-                match.value = source_value
+                self.value = source_value
 
         reprocess = []
         if self.force_reprocess:
@@ -239,7 +241,7 @@ class SimpleConstraint(SimpleConstraintABC):
                 rules=[]
             ))
 
-        return match, reprocess
+        return satisfied, reprocess
 
     def eq(self, value1, value2):
         """True if constraint.value and item are equal."""
@@ -350,38 +352,37 @@ class AttrConstraint(SimpleConstraintABC):
             - List of `ProcessList`s that need to be checked again.
         """
         reprocess = []
-        match = deepcopy(self)
 
         # Only perform check on specified `onlyif` condition
-        if not match.onlyif(item):
-            if match.force_reprocess:
+        if not self.onlyif(item):
+            if self.force_reprocess:
                 reprocess.append(
                     ProcessList(
                         items=[item],
-                        work_over=match.force_reprocess,
-                        only_on_match=match.only_on_match,
+                        work_over=self.force_reprocess,
+                        only_on_match=self.only_on_match,
                     )
                 )
-            return (match, reprocess)
+            return (True, reprocess)
 
         # Get the condition information.
         try:
             source, value = getattr_from_list(
                 item,
-                match.sources,
-                invalid_values=match.invalid_values
+                self.sources,
+                invalid_values=self.invalid_values
             )
         except KeyError:
-            if match.required and not match.force_undefined:
+            if self.required and not self.force_undefined:
                 return False, reprocess
             else:
-                return match, reprocess
+                return True, reprocess
         else:
-            if match.force_undefined:
+            if self.force_undefined:
                 return False, reprocess
 
         # If the value is a list, build the reprocess list
-        if match.evaluate:
+        if self.evaluate:
             evaled = evaluate(value)
             if is_iterable(evaled):
                 reprocess_items = []
@@ -396,11 +397,11 @@ class AttrConstraint(SimpleConstraintABC):
             value = str(evaled)
 
         # Check condition
-        if match.value is not None:
-            if callable(match.value):
-                match_value = match.value()
+        if self.value is not None:
+            if callable(self.value):
+                match_value = self.value()
             else:
-                match_value = match.value
+                match_value = self.value
             if not meets_conditions(
                     value, match_value
             ):
@@ -409,14 +410,14 @@ class AttrConstraint(SimpleConstraintABC):
         # At this point, the constraint has passed.
         # Fix the conditions.
         escaped_value = re.escape(value)
-        match.found_values.add(escaped_value)
-        if match.force_unique:
-            match.value = escaped_value
-            match.sources = [source]
-            match.force_unique = False
+        self.found_values.add(escaped_value)
+        if self.force_unique:
+            self.value = escaped_value
+            self.sources = [source]
+            self.force_unique = False
 
         # That's all folks
-        return match, reprocess
+        return True, reprocess
 
 
 class Constraint:
@@ -516,38 +517,28 @@ class Constraint:
             return False, []
 
         # Do we have positive?
-        results = [
-            constraint.check_and_set(item)
-            for constraint in self.constraints
-        ]
-        constraints, reprocess = self.reduce(results)
+        match, reprocess = self.reduce(item, self.constraints)
 
-        # If a positive, replace positive returning
-        # constraints in the list.
-        new_constraint = False
-        if constraints:
-            new_constraint = Constraint(self)
-            for idx, constraint in enumerate(constraints):
-                if constraint:
-                    new_constraint.constraints[idx] = constraint
+        return match, list(chain(*reprocess))
 
-        return new_constraint, list(chain(*reprocess))
+    def copy(self):
+        """Copy ourselves"""
+        return deepcopy(self)
 
     @staticmethod
-    def all(results):
+    def all(item, constraints):
         """Return positive only if all results are positive."""
 
         # Find all negatives. Note first negative
         # that requires reprocessing and how many
         # negatives do not.
         all_match = True
-        constraints = []
         negative_reprocess = None
         to_reprocess = []
-        for match, reprocess in results:
+        for constraint in constraints:
+            match, reprocess = constraint.check_and_set(item)
             if match:
                 if all_match:
-                    constraints.append(match)
                     to_reprocess.append(reprocess)
             else:
                 all_match = False
@@ -563,22 +554,24 @@ class Constraint:
                     negative_reprocess = [reprocess]
 
         if not all_match:
-            constraints = False
             if negative_reprocess is not None:
                 to_reprocess = negative_reprocess
             else:
                 to_reprocess = []
 
-        return constraints, to_reprocess
+        return all_match, to_reprocess
 
     @staticmethod
-    def any(results):
+    def any(item, constraints):
         """Return the first successful constraint."""
-        constraints, reprocess = zip(*results)
-        if not any(constraints):
-            constraints = False
-
-        return constraints, reprocess
+        to_reprocess = []
+        for constraint in constraints:
+            match, reprocess = constraint.check_and_set(item)
+            if match:
+                to_reprocess = [reprocess]
+                break
+            to_reprocess.append(reprocess)
+        return match, to_reprocess
 
     # Make iterable
     def __iter__(self):

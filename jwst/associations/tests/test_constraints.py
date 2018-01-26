@@ -37,22 +37,23 @@ def test_simpleconstraint_checkset():
 
     # Check and set.
     c = SimpleConstraint()
-    new_c, reprocess = c.check_and_set('my_value')
-    assert c != new_c
-    assert new_c.value == 'my_value'
+    match, reprocess = c.check_and_set('my_value')
+    assert match
+    assert c.value == 'my_value'
     assert len(reprocess) == 0
 
     # Non-match
     c = SimpleConstraint(value='my_value')
-    new_c, reprocess = c.check_and_set('bad_value')
-    assert not new_c
+    match, reprocess = c.check_and_set('bad_value')
+    assert not match
+    assert c.value == 'my_value'
     assert len(reprocess) == 0
 
     # Don't force unique
     c = SimpleConstraint(force_unique=False)
-    new_c, reprocess = c.check_and_set('my_value')
-    assert c == new_c
-    assert new_c.value is None
+    match, reprocess = c.check_and_set('my_value')
+    assert match
+    assert c.value is None
     assert len(reprocess) == 0
 
 
@@ -62,10 +63,9 @@ def test_constraint_default():
     sc1 = SimpleConstraint()
     sc2 = SimpleConstraint()
     c = Constraint([sc1, sc2])
-    new_c, reprocess = c.check_and_set('my_value')
-    assert new_c
-    assert new_c != c
-    for constraint in new_c.constraints:
+    match, reprocess = c.check_and_set('my_value')
+    assert match
+    for constraint in c.constraints:
         assert constraint.value == 'my_value'
 
 
@@ -80,8 +80,8 @@ def test_constraint_all():
     sc1 = SimpleConstraint(value='value_1')
     sc2 = SimpleConstraint(value='value_2')
     c = Constraint([sc1, sc2])
-    new_c, reprocess = c.check_and_set('value_1')
-    assert not new_c
+    match, reprocess = c.check_and_set('value_1')
+    assert not match
 
 
 def test_constraint_any_basic():
@@ -90,12 +90,12 @@ def test_constraint_any_basic():
     sc1 = SimpleConstraint(value='value_1')
     sc2 = SimpleConstraint(value='value_2')
     c = Constraint([sc1, sc2], reduce=Constraint.any)
-    new_c, reprocess = c.check_and_set('value_1')
-    assert new_c
-    new_c, reprocess = c.check_and_set('value_2')
-    assert new_c
-    new_c, reprocess = c.check_and_set('value_3')
-    assert not new_c
+    match, reprocess = c.check_and_set('value_1')
+    assert match
+    match, reprocess = c.check_and_set('value_2')
+    assert match
+    match, reprocess = c.check_and_set('value_3')
+    assert not match
 
 
 def test_constraint_any_remember():
@@ -104,14 +104,14 @@ def test_constraint_any_remember():
     sc1 = SimpleConstraint(value='value_1')
     sc2 = SimpleConstraint(value='value_2')
     c = Constraint([sc1, sc2], reduce=Constraint.any)
-    new_c, reprocess = c.check_and_set('value_1')
-    assert new_c
-    new_c, reprocess = new_c.check_and_set('value_2')
-    assert new_c
-    new_c, reprocess = new_c.check_and_set('value_1')
-    assert new_c
-    new_c, reprocess = new_c.check_and_set('value_3')
-    assert not new_c
+    match, reprocess = c.check_and_set('value_1')
+    assert match
+    match, reprocess = c.check_and_set('value_2')
+    assert match
+    match, reprocess = c.check_and_set('value_1')
+    assert match
+    match, reprocess = c.check_and_set('value_3')
+    assert not match
 
 
 def test_iteration():
@@ -159,3 +159,15 @@ def test_name_index():
 
     with pytest.raises(AttributeError):
         c2['sc1'].nonexistant
+
+
+def test_copy():
+    sc1 = SimpleConstraint(name='sc1')
+    sc1_copy = sc1.copy()
+    assert id(sc1) != id(sc1_copy)
+    sc1.check_and_set('value1')
+    assert sc1.value == 'value1'
+    assert sc1_copy.value is None
+    sc1_copy.check_and_set('value2')
+    assert sc1_copy.value == 'value2'
+    assert sc1.value == 'value1'
