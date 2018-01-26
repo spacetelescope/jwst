@@ -35,6 +35,10 @@ allOf:
           title: Weighting power for Modified Shepard Method
           type: number
           fits_keyword: WPOWER
+        channel:
+          title: MIRI MRS channels represented in the Cube
+          type: string
+          fits_keyword: CHANNEL
 
 - type: object
   properties:
