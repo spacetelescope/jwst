@@ -738,6 +738,7 @@ class IFUCubeData(object):
         IFUCube.meta.roi_wave = self.roiw
         IFUCube.meta.weighting = self.weighting
         IFUCube.meta.weight_power = self.weight_power
+        IFUCube.meta.channel = '1'
 
         with datamodels.open(self.input_models[j]) as input:
             IFUCube.meta.bunit_data = input.meta.bunit_data
