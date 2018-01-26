@@ -30,7 +30,7 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
-class Asn_Image(DMS_Level3_Base):
+class Asn_Image(AsnMixin_Science):
     """Non-Association Candidate Dither Associations"""
 
     def __init__(self, *args, **kwargs):
@@ -58,7 +58,7 @@ class Asn_Image(DMS_Level3_Base):
         super(Asn_Image, self)._init_hook(item)
 
 
-class Asn_WFSCMB(DMS_Level3_Base):
+class Asn_WFSCMB(AsnMixin_Science):
     """Wavefront Sensing association
 
     Notes
@@ -321,7 +321,7 @@ class Asn_NRS_IFU(AsnMixin_Spectrum):
         super(Asn_NRS_IFU, self).__init__(*args, **kwargs)
 
 
-class Asn_Coron(DMS_Level3_Base):
+class Asn_Coron(AsnMixin_Science):
     """Coronography
     Notes
     -----
@@ -375,7 +375,7 @@ class Asn_Coron(DMS_Level3_Base):
         super(Asn_Coron, self)._init_hook(item)
 
 
-class Asn_AMI(DMS_Level3_Base):
+class Asn_AMI(AsnMixin_Science):
     """Aperture Mask Interferometry
     Notes
     -----
@@ -445,7 +445,7 @@ class Asn_WFSS(AsnMixin_Spectrum):
         super(Asn_WFSS, self).__init__(*args, **kwargs)
 
 
-class Asn_TSO_Flag(DMS_Level3_Base):
+class Asn_TSO_Flag(AsnMixin_Science):
     """Time-Series observations"""
 
     def __init__(self, *args, **kwargs):
@@ -474,7 +474,7 @@ class Asn_TSO_Flag(DMS_Level3_Base):
         super(Asn_TSO_Flag, self)._init_hook(item)
 
 
-class Asn_TSO_EXPTYPE(DMS_Level3_Base):
+class Asn_TSO_EXPTYPE(AsnMixin_Science):
     """Time-Series observations"""
 
     def __init__(self, *args, **kwargs):

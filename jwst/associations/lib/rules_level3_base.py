@@ -37,6 +37,7 @@ from jwst.associations.lib.format_template import FormatTemplate
 
 __all__ = [
     'ASN_SCHEMA',
+    'AsnMixin_Science',
     'AsnMixin_Spectrum',
     'CONSTRAINT_BASE',
     'CONSTRAINT_IMAGE',
@@ -119,48 +120,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             self.data['target'] = 'none'
         if 'asn_pool' not in self.data:
             self.data['asn_pool'] = 'none'
-
-        # Setup the base constraints
-        constraint_acqs = Constraint(
-            [
-                DMSAttrConstraint(
-                    name='acq_exp',
-                    sources=['exp_type'],
-                    value='|'.join(ACQ_EXP_TYPES),
-                    force_unique=False
-                ),
-                DMSAttrConstraint(
-                    name='acq_obsnum',
-                    sources=['obs_num'],
-                    value=lambda: '('
-                             + '|'.join(self.constraints['obs_num'].found_values)
-                             + ')',
-                    force_unique=False,
-                )
-            ],
-            name='acq_constraint',
-            work_over=ProcessList.EXISTING
-        )
-        self.constraints = Constraint(
-            [
-                CONSTRAINT_BASE,
-                Constraint(
-                    [
-                        Constraint(
-                            [
-                                self.constraints,
-                                CONSTRAINT_OBSNUM
-                            ],
-                            name='rule'
-                        ),
-                        constraint_acqs
-                    ],
-                    name='acq_check',
-                    reduce=Constraint.any
-                )
-            ],
-            name='dmsbase_top'
-        )
 
     @property
     def current_product(self):
@@ -645,7 +604,59 @@ CONSTRAINT_TARGET = DMSAttrConstraint(
 # -----------
 # Base Mixins
 # -----------
-class AsnMixin_Spectrum(DMS_Level3_Base):
+class AsnMixin_Science(DMS_Level3_Base):
+    """Constraints for all science-based rules"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup for inclusion of target aquisitions
+        constraint_acqs = Constraint(
+            [
+                DMSAttrConstraint(
+                    name='acq_exp',
+                    sources=['exp_type'],
+                    value='|'.join(ACQ_EXP_TYPES),
+                    force_unique=False
+                ),
+                DMSAttrConstraint(
+                    name='acq_obsnum',
+                    sources=['obs_num'],
+                    value=lambda: '('
+                             + '|'.join(self.constraints['obs_num'].found_values)
+                             + ')',
+                    force_unique=False,
+                )
+            ],
+            name='acq_constraint',
+            work_over=ProcessList.EXISTING
+        )
+
+        # Add OBS_NUM tracking and wrap together rule-specific constraints.
+        self.constraints = Constraint(
+            [
+                CONSTRAINT_BASE,
+                Constraint(
+                    [
+                        Constraint(
+                            [
+                                self.constraints,
+                                CONSTRAINT_OBSNUM
+                            ],
+                            name='rule'
+                        ),
+                        constraint_acqs
+                    ],
+                    name='acq_check',
+                    reduce=Constraint.any
+                )
+            ],
+            name='dmsbase_top'
+        )
+
+        super(AsnMixin_Science, self).__init__(*args, **kwargs)
+
+
+class AsnMixin_Spectrum(AsnMixin_Science):
     """All things that are spectrum"""
 
     def _init_hook(self, item):

@@ -81,11 +81,30 @@ standards = [
 ]
 
 
-@pytest.fixture(params=standards)
-def generate_asns(request):
-    """Test exp_type inclusion based on standard associations"""
-    standard = request.param
+@runslow
+@pytest.mark.parametrize(
+    'standard',
+    standards
+)
+def test_against_standard(standard):
+    """Compare a generated assocaition against a standard
+    """
+    generated, standards = generate_asns(standard)
+    for asn in generated:
+        for idx, standard in enumerate(standards):
+            try:
+                compare_asns(asn, standard)
+            except AssertionError as e:
+                last_err = e
+            else:
+                del standards[idx]
+                break
+        else:
+            raise last_err
 
+
+def generate_asns(standard):
+    """Test exp_type inclusion based on standard associations"""
     standards_paths = glob(t_path(path.join(
         'data',
         'asn_standards',
@@ -104,22 +123,4 @@ def generate_asns(request):
 
     asns = results.associations
     assert len(asns) == len(standards)
-    yield asns, standards
-
-
-@runslow
-def test_against_standard(generate_asns):
-    """Compare a generated assocaition against a standard
-    """
-    generated, standards = generate_asns
-    for asn in generated:
-        for idx, standard in enumerate(standards):
-            try:
-                compare_asns(asn, standard)
-            except AssertionError as e:
-                last_err = e
-            else:
-                del standards[idx]
-                break
-        else:
-            raise last_err
+    return asns, standards
