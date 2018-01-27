@@ -5,7 +5,7 @@
     "code_version": "0.9.6",
     "degraded_status": "No known degraded exposures in association.",
     "program": "10005",
-    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nircam'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f210m'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'maskrnd'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrc_coron'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'c1004\\\\'\\\\,\\\\ \\\\'coronagraphy\\\\'\\\\)\"})\nDMSAttrConstraint({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function DMS_Level3_Base.__init__.<locals>.<lambda> at 0x1514ab3598>})",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nircam'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f210m'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'maskrnd'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrc_coron'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0x150926ebf8>})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'c1004\\\\'\\\\,\\\\ \\\\'coronagraphy\\\\'\\\\)\"})",
     "asn_id": "c1004",
     "target": "t001",
     "asn_pool": "pool_013_coron_nircam",
@@ -29,37 +29,37 @@
                     "expname": "jw_00001_cal.fits",
                     "exptype": "target_acquistion",
                     "exposerr": "null",
-                    "asn_candidate": "[('c1000', 'group'), ('c1004', 'coronagraphy'), ('c1006', 'coronagraphy'), ('c1010', 'group'), ('c1014', 'coronagraphy'), ('c1016', 'coronagraphy'), ('o001', 'observation')]"
+                    "asn_candidate": "('c1004', 'coronagraphy')"
                 },
                 {
                     "expname": "jw_00002_cal.fits",
                     "exptype": "target_acquistion",
                     "exposerr": "null",
-                    "asn_candidate": "[('c1000', 'group'), ('c1004', 'coronagraphy'), ('c1006', 'coronagraphy'), ('c1010', 'group'), ('c1014', 'coronagraphy'), ('c1016', 'coronagraphy'), ('o001', 'observation')]"
+                    "asn_candidate": "('c1004', 'coronagraphy')"
                 },
                 {
                     "expname": "jw_00003_cal.fits",
                     "exptype": "target_acquistion",
                     "exposerr": "null",
-                    "asn_candidate": "[('c1000', 'group'), ('c1004', 'coronagraphy'), ('c1006', 'coronagraphy'), ('c1010', 'group'), ('c1014', 'coronagraphy'), ('c1016', 'coronagraphy'), ('o001', 'observation')]"
+                    "asn_candidate": "('c1004', 'coronagraphy')"
                 },
                 {
                     "expname": "jw_00021_cal.fits",
                     "exptype": "target_acquistion",
                     "exposerr": "null",
-                    "asn_candidate": "[('c1000', 'group'), ('c1002', 'group'), ('c1004', 'coronagraphy'), ('o006', 'observation')]"
+                    "asn_candidate": "('c1004', 'coronagraphy')"
                 },
                 {
                     "expname": "jw_00022_cal.fits",
                     "exptype": "target_acquistion",
                     "exposerr": "null",
-                    "asn_candidate": "[('c1000', 'group'), ('c1002', 'group'), ('c1004', 'coronagraphy'), ('o006', 'observation')]"
+                    "asn_candidate": "('c1004', 'coronagraphy')"
                 },
                 {
                     "expname": "jw_00023_cal.fits",
                     "exptype": "target_acquistion",
                     "exposerr": "null",
-                    "asn_candidate": "[('c1000', 'group'), ('c1002', 'group'), ('c1004', 'coronagraphy'), ('o006', 'observation')]"
+                    "asn_candidate": "('c1004', 'coronagraphy')"
                 }
             ]
         }

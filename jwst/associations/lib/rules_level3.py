@@ -528,7 +528,7 @@ class Asn_ACQ_Reprocess(DMS_Level3_Base):
                     name='force_fail',
                     test=lambda x, y: False,
                     value='anything but None',
-                    force_reprocess=ProcessList.EXISTING
+                    force_reprocess=ProcessList.NONSCIENCE
                 )
             ])
 

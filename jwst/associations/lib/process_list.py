@@ -80,7 +80,8 @@ class ProcessList:
         RULES,
         BOTH,
         EXISTING,
-    ) = range(0, 3)
+        NONSCIENCE,
+    ) = range(0, 4)
 
     _str_attrs = ('rules', 'work_over', 'only_on_match')
 
@@ -166,8 +167,8 @@ class ProcessQueueNoDups:
 class ProcessQueueSorted:
     """Sort ProcessItem based on work_over
 
-    `ProcessList`s are handled in order of `RULES`, `BOTH`, and
-    `EXISTING`.
+    `ProcessList`s are handled in order of `RULES`, `BOTH`,
+    `EXISTING`, and `NONSCIENCE`.
 
     Parameters
     ----------
@@ -178,7 +179,8 @@ class ProcessQueueSorted:
         self.queues = [
             ProcessQueue(),
             ProcessQueue(),
-            ProcessQueue()
+            ProcessQueue(),
+            ProcessQueue(),
         ]
 
         if init is not None:

@@ -65,11 +65,11 @@ def generate(pool, rules, version_id=None):
             # If working on a process list EXISTING
             # remove any new `to_process` that is
             # also EXISTING. Prevent infinite loops.
-            if process_list.work_over == ProcessList.EXISTING:
+            if process_list.work_over in (ProcessList.EXISTING, ProcessList.NONSCIENCE):
                 to_process = [
                     to_process_list
                     for to_process_list in to_process
-                    if to_process_list.work_over != ProcessList.EXISTING
+                    if to_process_list.work_over != process_list.work_over
                 ]
             process_queue.extend(to_process)
             pass
@@ -130,7 +130,11 @@ def generate_from_item(
     # Check membership in existing associations.
     existing_asns = []
     reprocess_list = []
-    if process_list.work_over in (ProcessList.EXISTING, ProcessList.BOTH):
+    if process_list.work_over in (
+            ProcessList.BOTH,
+            ProcessList.EXISTING,
+            ProcessList.NONSCIENCE,
+    ):
         associations = [
             asn
             for asn in associations
@@ -145,7 +149,10 @@ def generate_from_item(
     # an association based on rules of existing associations.
     reprocess = []
     new_asns = []
-    if rules is not None:
+    if process_list.work_over in (
+            ProcessList.BOTH,
+            ProcessList.RULES,
+    ) and rules is not None:
         ignore_asns = set([type(asn) for asn in existing_asns])
         new_asns, reprocess = rules.match(
             item,
