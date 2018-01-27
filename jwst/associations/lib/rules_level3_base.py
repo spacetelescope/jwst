@@ -39,13 +39,13 @@ __all__ = [
     'ASN_SCHEMA',
     'AsnMixin_Science',
     'AsnMixin_Spectrum',
-    'CONSTRAINT_BASE',
-    'CONSTRAINT_IMAGE',
-    'CONSTRAINT_MIRI',
-    'CONSTRAINT_NIRISS',
-    'CONSTRAINT_NOTTSO',
-    'CONSTRAINT_OPTICAL_PATH',
-    'CONSTRAINT_TARGET',
+    'Constraint_Base',
+    'Constraint_Image',
+    'Constraint_MIRI',
+    'Constraint_NIRISS',
+    'Constraint_NotTSO',
+    'Constraint_Optical_Path',
+    'Constraint_Target',
     'Constraint',
     'DMS_Level3_Base',
     'DMSAttrConstraint',
@@ -120,7 +120,6 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             self.data['target'] = 'none'
         if 'asn_pool' not in self.data:
             self.data['asn_pool'] = 'none'
-
 
     @property
     def current_product(self):
@@ -533,73 +532,104 @@ format_product = FormatTemplate(
 # -----------------
 # Basic constraints
 # -----------------
-CONSTRAINT_BASE = Constraint(
-    [
-        DMSAttrConstraint(
-            name='program',
-            sources=['program'],
-        ),
-        DMSAttrConstraint(
-            name='instrument',
+class Constraint_Base(Constraint):
+    """Select on program and instrument"""
+    def __init__(self):
+        super(Constraint_Base, self).__init__(
+            [
+                DMSAttrConstraint(
+                    name='program',
+                    sources=['program'],
+                ),
+                DMSAttrConstraint(
+                    name='instrument',
+                    sources=['instrume'],
+                ),
+            ],
+            name='base'
+        )
+
+
+class Constraint_Image(DMSAttrConstraint):
+    """Select on exposure type"""
+    def __init__(self):
+        super(Constraint_Image, self).__init__(
+            name='exp_type',
+            sources=['exp_type'],
+            value=(
+                'nrc_image'
+                '|mir_image'
+                '|nis_image'
+                '|fgs_image'
+            ),
+        )
+
+
+class Constraint_MIRI(DMSAttrConstraint):
+    """Select on MIRI"""
+    def __init__(self):
+        super(Constraint_MIRI, self).__init__(
+            name='instrument_miri',
             sources=['instrume'],
-        ),
-    ],
-    name='base'
-)
+            value='miri',
+        )
 
-CONSTRAINT_IMAGE = DMSAttrConstraint(
-    name='exp_type',
-    sources=['exp_type'],
-    value=(
-        'nrc_image'
-        '|mir_image'
-        '|nis_image'
-        '|fgs_image'
-    ),
-)
 
-CONSTRAINT_MIRI = DMSAttrConstraint(
-    name='instrument_miri',
-    sources=['instrume'],
-    value='miri',
-)
+class Constraint_NIRISS(DMSAttrConstraint):
+    """Selec on NIRISS"""
+    def __init__(self):
+        super(Constraint_NIRISS, self).__init__(
+            name='instrument_niriss',
+            sources=['instrume'],
+            value='nis',
+        )
 
-CONSTRAINT_NIRISS = DMSAttrConstraint(
-    name='instrument_niriss',
-    sources=['instrume'],
-    value='nis',
-)
 
-CONSTRAINT_NOTTSO = DMSAttrConstraint(
-    name='is_not_tso',
-    sources=['tsovisit'],
-    value='[^t]',
-    required=False,
-)
+class Constraint_NotTSO(DMSAttrConstraint):
+    """Select on not-TSO-like exposures"""
+    def __init__(self):
+        super(Constraint_NotTSO, self).__init__(
+            name='is_not_tso',
+            sources=['tsovisit'],
+            value='[^t]',
+            required=False,
+        )
 
-CONSTRAINT_OBSNUM = DMSAttrConstraint(
-    name='obs_num',
-    sources=['obs_num'],
-    force_unique=False,
-    required=False,
-)
 
-CONSTRAINT_OPTICAL_PATH = Constraint([
-    DMSAttrConstraint(
-        name='opt_elem',
-        sources=['filter'],
-    ),
-    DMSAttrConstraint(
-        name='opt_elem2',
-        sources=['pupil', 'grating'],
-        required=False,
-    )
-])
+class Constraint_Obsnum(DMSAttrConstraint):
+    """Select on OBSNUM"""
+    def __init__(self):
+        super(Constraint_Obsnum, self).__init__(
+            name='obs_num',
+            sources=['obs_num'],
+            force_unique=False,
+            required=False,
+        )
 
-CONSTRAINT_TARGET = DMSAttrConstraint(
-    name='target',
-    sources=['targetid'],
-)
+
+class Constraint_Optical_Path(Constraint):
+    """Select on optical path"""
+    def __init__(self):
+        super(Constraint_Optical_Path, self).__init__([
+            DMSAttrConstraint(
+                name='opt_elem',
+                sources=['filter'],
+            ),
+            DMSAttrConstraint(
+                name='opt_elem2',
+                sources=['pupil', 'grating'],
+                required=False,
+            )
+        ])
+
+
+class Constraint_Target(DMSAttrConstraint):
+    """Select on target"""
+    def __init__(self):
+        super(Constraint_Target, self).__init__(
+            name='target',
+            sources=['targetid'],
+        )
 
 
 # -----------
@@ -635,13 +665,13 @@ class AsnMixin_Science(DMS_Level3_Base):
         # Put all constraints together.
         self.constraints = Constraint(
             [
-                CONSTRAINT_BASE.copy(),
+                Constraint_Base(),
                 Constraint(
                     [
                         Constraint(
                             [
                                 self.constraints,
-                                CONSTRAINT_OBSNUM.copy()
+                                Constraint_Obsnum()
                             ],
                             name='rule'
                         ),

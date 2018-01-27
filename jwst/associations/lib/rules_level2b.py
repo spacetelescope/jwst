@@ -29,9 +29,9 @@ class Asn_Lv2Image(
 
         # Setup constraints
         self.constraints = Constraint([
-            CONSTRAINT_BASE.copy(),
-            CONSTRAINT_MODE.copy(),
-            CONSTRAINT_IMAGE_SCIENCE.copy(),
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Image_Science(),
         ])
 
         # Now check and continue initialization.
@@ -54,10 +54,10 @@ class Asn_Lv2ImageSpecial(
 
         # Setup constraints
         self.constraints = Constraint([
-            CONSTRAINT_BASE.copy(),
-            CONSTRAINT_MODE.copy(),
-            CONSTRAINT_IMAGE_SCIENCE.copy(),
-            CONSTRAINT_SPECIAL.copy(),
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Image_Science(),
+            Constraint_Special(),
         ])
 
         # Now check and continue initialization.
@@ -76,9 +76,9 @@ class Asn_Lv2ImageNonScience(
 
         # Setup constraints
         self.constraints = Constraint([
-            CONSTRAINT_BASE.copy(),
-            CONSTRAINT_MODE.copy(),
-            CONSTRAINT_IMAGE_NONSCIENCE.copy(),
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Image_Nonscience(),
         ])
 
         # Now check and continue initialization.
@@ -96,7 +96,7 @@ class Asn_Lv2FGS(
 
         # Setup constraints
         self.constraints = Constraint([
-            CONSTRAINT_BASE.copy(),
+            Constraint_Base(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],
@@ -121,9 +121,9 @@ class Asn_Lv2Spec(
 
         # Setup constraints
         self.constraints = Constraint([
-            CONSTRAINT_BASE.copy(),
-            CONSTRAINT_MODE.copy(),
-            CONSTRAINT_SPECTRAL_SCIENCE.copy()
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Spectral_Science()
         ])
 
         # Now check and continue initialization.
@@ -146,10 +146,10 @@ class Asn_Lv2SpecSpecial(
 
         # Setup constraints
         self.constraints = Constraint([
-            CONSTRAINT_BASE.copy(),
-            CONSTRAINT_MODE.copy(),
-            CONSTRAINT_SPECTRAL_SCIENCE.copy(),
-            CONSTRAINT_SPECIAL.copy(),
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Spectral_Science(),
+            Constraint_Special(),
         ])
 
         # Now check and continue initialization.
@@ -169,8 +169,8 @@ class Asn_Lv2WFSS(
     def __init__(self, *args, **kwargs):
 
         self.constraints = Constraint([
-            CONSTRAINT_BASE.copy(),
-            CONSTRAINT_MODE.copy(),
+            Constraint_Base(),
+            Constraint_Mode(),
             DMSAttrConstraint(
                 name='exp_type',
                 sources=['exp_type'],

@@ -40,12 +40,12 @@ __all__ = [
     'AsnMixin_Lv2Singleton',
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
-    'CONSTRAINT_BASE',
-    'CONSTRAINT_IMAGE_NONSCIENCE',
-    'CONSTRAINT_IMAGE_SCIENCE',
-    'CONSTRAINT_MODE',
-    'CONSTRAINT_SPECIAL',
-    'CONSTRAINT_SPECTRAL_SCIENCE',
+    'Constraint_Base',
+    'Constraint_Image_Nonscience',
+    'Constraint_Image_Science',
+    'Constraint_Mode',
+    'Constraint_Special',
+    'Constraint_Spectral_Science',
     'DMSLevel2bBase',
     'DMSAttrConstraint',
     'Utility'
@@ -499,85 +499,106 @@ class Utility():
 # -----------------
 # Basic constraints
 # -----------------
+class Constraint_Base(Constraint):
+    """Select on program and instrument"""
+    def __init__(self):
+        super(Constraint_Base, self).__init__([
+            DMSAttrConstraint(
+                name='program',
+                sources=['program']
+            ),
+            DMSAttrConstraint(
+                name='is_tso',
+                sources=['tsovisit'],
+                required=False,
+                force_unique=True,
+            )
+        ])
 
 
-CONSTRAINT_BASE = Constraint([
-    DMSAttrConstraint(
-        name='program',
-        sources=['program']
-    ),
-    DMSAttrConstraint(
-        name='is_tso',
-        sources=['tsovisit'],
-        required=False,
-        force_unique=True,
-    )
-])
+class Constraint_Mode(Constraint):
+    """Select on instrument and optical path"""
+    def __init__(self):
+        super(Constraint_Mode, self).__init__([
+            DMSAttrConstraint(
+                name='program',
+                sources=['program']
+            ),
+            DMSAttrConstraint(
+                name='target',
+                sources=['targetid'],
+            ),
+            DMSAttrConstraint(
+                name='instrument',
+                sources=['instrume']
+            ),
+            DMSAttrConstraint(
+                name='detector',
+                sources=['detector']
+            ),
+            DMSAttrConstraint(
+                name='opt_elem',
+                sources=['filter', 'band']
+            ),
+            DMSAttrConstraint(
+                name='opt_elem2',
+                sources=['pupil', 'grating'],
+                required=False,
+            ),
+            DMSAttrConstraint(
+                name='subarray',
+                sources=['subarray'],
+                required=False,
+            ),
+            DMSAttrConstraint(
+                name='channel',
+                sources=['channel'],
+                required=False,
+            )
+        ])
 
-CONSTRAINT_MODE = Constraint([
-    DMSAttrConstraint(
-        name='program',
-        sources=['program']
-    ),
-    DMSAttrConstraint(
-        name='target',
-        sources=['targetid'],
-    ),
-    DMSAttrConstraint(
-        name='instrument',
-        sources=['instrume']
-    ),
-    DMSAttrConstraint(
-        name='detector',
-        sources=['detector']
-    ),
-    DMSAttrConstraint(
-        name='opt_elem',
-        sources=['filter', 'band']
-    ),
-    DMSAttrConstraint(
-        name='opt_elem2',
-        sources=['pupil', 'grating'],
-        required=False,
-    ),
-    DMSAttrConstraint(
-        name='subarray',
-        sources=['subarray'],
-        required=False,
-    ),
-    DMSAttrConstraint(
-        name='channel',
-        sources=['channel'],
-        required=False,
-    )
-])
 
-CONSTRAINT_IMAGE_SCIENCE = DMSAttrConstraint(
-    name='exp_type',
-    sources=['exp_type'],
-    value='|'.join(IMAGE2_SCIENCE_EXP_TYPES)
-)
+class Constraint_Image_Science(DMSAttrConstraint):
+    """Select on science images"""
+    def __init__(self):
+        super(Constraint_Image_Science, self).__init__(
+            name='exp_type',
+            sources=['exp_type'],
+            value='|'.join(IMAGE2_SCIENCE_EXP_TYPES)
+        )
 
-CONSTRAINT_IMAGE_NONSCIENCE = DMSAttrConstraint(
-    name='non_science',
-    sources=['exp_type'],
-    value='|'.join(IMAGE2_NONSCIENCE_EXP_TYPES),
-)
 
-CONSTRAINT_SPECIAL = DMSAttrConstraint(
-    name='is_special',
-    sources=[
-        'bkgdtarg',
-        'is_imprt',
-        'is_psf'
-    ],
-)
+class Constraint_Image_Nonscience(DMSAttrConstraint):
+    """Select on non-science images"""
+    def __init__(self):
+        super(Constraint_Image_Nonscience, self).__init__(
+            name='non_science',
+            sources=['exp_type'],
+            value='|'.join(IMAGE2_NONSCIENCE_EXP_TYPES),
+        )
 
-CONSTRAINT_SPECTRAL_SCIENCE = DMSAttrConstraint(
-    name='exp_type',
-    sources=['exp_type'],
-    value='|'.join(SPEC2_SCIENCE_EXP_TYPES)
-)
+
+class Constraint_Special(DMSAttrConstraint):
+    """Select on backgrounds and other auxilliary images"""
+    def __init__(self):
+        super(Constraint_Special, self).__init__(
+            name='is_special',
+            sources=[
+                'bkgdtarg',
+                'is_imprt',
+                'is_psf'
+            ],
+        )
+
+
+class Constraint_Spectral_Science(DMSAttrConstraint):
+    """Select on spectral science"""
+    def __init__(self):
+        super(Constraint_Spectral_Science, self).__init__(
+            name='exp_type',
+            sources=['exp_type'],
+            value='|'.join(SPEC2_SCIENCE_EXP_TYPES)
+        )
 
 
 # ---------------------------------------------
