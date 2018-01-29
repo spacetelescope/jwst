@@ -52,7 +52,8 @@ def create_reference_filename_dictionary(input_model):
     reffiles['specwcs'] = input_model.meta.ref_file.filteroffset.name
     reffiles['regions'] = input_model.meta.ref_file.regions.name
     reffiles['wavelengthrange'] = input_model.meta.ref_file.wavelengthrange.name
-    reffiles['v2v3'] = input_model.meta.ref_file.v2v3.name
+    if input_model.meta.ref_file.v2v3.name is not None:
+        reffiles['v2v3'] = input_model.meta.ref_file.v2v3.name
     reffiles['camera'] = input_model.meta.ref_file.camera.name
     reffiles['collimator'] = input_model.meta.ref_file.collimator.name
     reffiles['disperser'] = input_model.meta.ref_file.disperser.name

@@ -3,7 +3,7 @@ A module that provides functions for matching sky in overlapping images.
 
 :Authors: Mihai Cara
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
 from __future__ import division, print_function

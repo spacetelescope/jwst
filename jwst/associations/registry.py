@@ -20,6 +20,7 @@ from .exceptions import (
     AssociationNotValidError
 )
 from .lib.callback_registry import CallbackRegistry
+from .lib.constraint import ConstraintTrue
 
 __all__ = ['AssociationRegistry']
 
@@ -45,7 +46,7 @@ class AssociationRegistry(dict):
     include_default: bool
         True to include the default definitions.
 
-    global_constraints: dict
+    global_constraints: Constraint
         Constraints to be added to each rule.
 
     name: str
@@ -77,7 +78,7 @@ class AssociationRegistry(dict):
         # Setup constraints that are to be applied
         # to every rule.
         if global_constraints is None:
-            global_constraints = {}
+            global_constraints = ConstraintTrue()
 
         if definition_files is None:
             definition_files = []
@@ -101,7 +102,7 @@ class AssociationRegistry(dict):
                     except TypeError:
                         rule_name = class_name
                     rule = type(rule_name, (class_object,), {})
-                    rule.GLOBAL_CONSTRAINTS = global_constraints
+                    rule.GLOBAL_CONSTRAINT = global_constraints
                     rule.registry = self
                     self.__setitem__(rule_name, rule)
                     self._rule_set.add(rule)

@@ -357,9 +357,10 @@ class Step():
         step_result = None
 
         try:
+            # prefetch truly occurs at the Pipeline (or subclass) level.
             if (len(args) and len(self.reference_file_types) and not self.skip
                 and self.prefetch_references):
-                self._precache_reference_files(args[0])
+                self._precache_references(args[0])
 
             self.log.info(
                 'Step {0} running with args {1}.'.format(
@@ -565,91 +566,17 @@ class Step():
                 value = default
             return value
 
-    @classmethod
-    def _is_container(cls, input_file):
-        """Return True IFF `input_file` is a ModelContainer or successfully
-        loads as an association.
+    def _precache_references(self, input_file):
+        """Because Step precaching precedes calls to get_reference_file() almost
+        immediately, true precaching has been moved to Pipeline where the
+        interleaving of precaching and Step processing is more of an
+        issue. This null method is intended to be overridden in Pipeline by
+        true precache operations and avoids having to override the more complex
+        Step.run() instead.
         """
-        from ..associations import load_asn
-        from .. import datamodels
-        if isinstance(input_file, datamodels.ModelContainer):
-            return True
-        try:
-            with open(input_file, 'r') as input_file_fh:
-                asn = load_asn(input_file_fh)
-        except:
-            return False
-        return True
+        pass
 
-    def _precache_reference_files(self, input_file):
-        """
-        Precache all of the expected reference files before the Step's
-        process method is called.
-
-        Perform's garbage collection before and after prefetching.
-
-        Handles opening `input_file` as a model if it is a filename.
-
-        input_file:  filename, model container, or model
-
-        returns:  None
-        """
-        gc.collect()
-        from .. import datamodels
-        try:
-            with datamodels.open(input_file) as model:
-                self._precache_reference_files_opened(model)
-        except (ValueError, TypeError, IOError):
-            self.log.info(
-                'First argument {0} does not appear to be a '
-                'model'.format(input_file))
-        gc.collect()
-
-    def _precache_reference_files_opened(self, model_or_container):
-        """Pre-fetches references for `model_or_container`.
-
-        Handles recursive pre-fetches for any models inside a container,
-        or just a single model.
-
-        Assumes model_or_container is an open model or container object,
-        not a filename.
-
-        No garbage collection.
-        """
-        if self._is_container(model_or_container):
-            # recurse on each contained model
-            for contained_model in model_or_container:
-                self._precache_reference_files_opened(contained_model)
-        else:
-            # precache a single model object
-            self._precache_reference_files_impl(model_or_container)
-
-    def _precache_reference_files_impl(self, model):
-        """Given open data `model`,  determine and cache reference files for
-        any reference types which are not overridden on the command line.
-
-        Verify that all CRDS and overridden reference files are readable.
-
-        model:  An open Model object;  not a filename, ModelContainer, etc.
-        """
-        ovr_refs = {
-            reftype: self._get_ref_override(reftype)
-            for reftype in self.reference_file_types
-            if self._get_ref_override(reftype) is not None
-            }
-
-        fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
-
-        crds_refs = crds_client.get_multiple_reference_paths(model, fetch_types)
-
-        ref_path_map = dict(list(crds_refs.items()) + list(ovr_refs.items()))
-
-        for (reftype, refpath) in sorted(ref_path_map.items()):
-            how = "Override" if reftype in ovr_refs else "Prefetch"
-            self.log.info("{0} for {1} reference file is '{2}'.".format(how, reftype.upper(), refpath))
-            crds_client.check_reference_open(refpath)
-
-    def _get_ref_override(self, reference_file_type):
+    def get_ref_override(self, reference_file_type):
         """Determine and return any override for `reference_file_type`.
 
         Returns
@@ -659,7 +586,7 @@ class Step():
         override_name = crds_client.get_override_name(reference_file_type)
         path = getattr(self, override_name, None)
         return abspath(path) if path else path
-
+    
     def get_reference_file(self, input_file, reference_file_type):
         """
         Get a reference file from CRDS.
@@ -683,7 +610,7 @@ class Step():
         -------
         reference_file : path of reference file,  a string
         """
-        override = self._get_ref_override(reference_file_type)
+        override = self.get_ref_override(reference_file_type)
         if override is not None:
             if override.strip() != "":
                 self._reference_files_used.append(
@@ -694,7 +621,6 @@ class Step():
         else:
             reference_name = crds_client.get_reference_file(
                 input_file, reference_file_type)
-            gc.collect()
             if reference_name != "N/A":
                 hdr_name = "crds://" + basename(reference_name)
             else:

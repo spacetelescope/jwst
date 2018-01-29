@@ -188,7 +188,7 @@ def yint(ramp, read_noise, rejection_threshold):
 
                 # Photon noise and y-intercept uncertainties added
                 # in quadrature
-                yerr_exp = sqrt(pnoise[i] * pnoise[i] +
+                yerr_exp[i] = sqrt(pnoise[i] * pnoise[i] +
                                  yint_errs[i][0] * yint_errs[i][0] +
                                  yint_errs[i][1] * yint_errs[i][1])
 

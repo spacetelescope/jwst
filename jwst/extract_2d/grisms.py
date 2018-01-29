@@ -77,7 +77,7 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
     #
     # xcenter,ycenter: in direct image pixels
     # order_bounding in grism_detector pixels
-    # icrs_centroid: SkyCoord of object center
+    # sky_centroid: SkyCoord of object center
     # sky_bbox_ :lower and upper bounding box in SkyCoord
     # sid: catalog ID of the object
 
@@ -103,8 +103,8 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             # the new wcs for the subarray for the forward transform
             tr = inwcs.get_transform('grism_detector', 'detector')
             tr = Identity(2) | Mapping((0, 1, 0, 1, 0)) | (Shift(xmin) & Shift(ymin) &
-                                                           Const1D(obj.xcenter) &
-                                                           Const1D(obj.ycenter) &
+                                                           Const1D(obj.xcentroid) &
+                                                           Const1D(obj.ycentroid) &
                                                            Const1D(order)) | tr
 
             subwcs.set_transform('grism_detector', 'detector', tr)
@@ -115,8 +115,8 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             # figure out how to match the inputs and outputs correctly
             # going this direction
             # tr = inwcs.get_transform('detector', 'grism_detector')
-            # tr = Identity(4) | Mapping((0, 1, 2, 3)) | (Const1D(obj.xcenter) &
-            #                                             Const1D(obj.ycenter) &
+            # tr = Identity(4) | Mapping((0, 1, 2, 3)) | (Const1D(obj.xcentroid) &
+            #                                             Const1D(obj.ycentroid) &
             #                                             Identity(1) &
             #                                             Const1D(order)) | tr
 
@@ -148,9 +148,11 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             output_model.slits[-1].xsize = (xmax - xmin) + 1
             output_model.slits[-1].ystart = ymin + 1
             output_model.slits[-1].ysize = (ymax - ymin) + 1
-            output_model.slits[-1].source_xpos = obj.xcenter
-            output_model.slits[-1].source_ypos = obj.ycenter
+            output_model.slits[-1].source_xpos = obj.xcentroid
+            output_model.slits[-1].source_ypos = obj.ycentroid
             output_model.slits[-1].source_id = obj.sid
+            output_model.slits[-1].bunit_data = input_model.meta.bunit_data
+            output_model.slits[-1].bunit_err = input_model.meta.bunit_err
 
     del subwcs
     return output_model

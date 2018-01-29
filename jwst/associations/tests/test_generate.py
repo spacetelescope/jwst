@@ -7,9 +7,8 @@ from .. import (generate, load_asn)
 @helpers.runslow
 def test_generate(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
-    (asns, orphaned) = generate(pool, rules)
-    assert len(asns) == 433
-    assert len(orphaned) == 43
+    asns = generate(pool, rules)
+    assert len(asns) == 434
     for asn in asns:
         asn_name, asn_store = asn.dump()
         asn_table = load_asn(asn_store)
@@ -20,7 +19,7 @@ def test_generate(full_pool_rules):
 @helpers.runslow
 def test_serialize(full_pool_rules):
     pool, rules, pool_fname = full_pool_rules
-    (asns, orphaned) = generate(pool, rules)
+    asns = generate(pool, rules)
     for asn in asns:
         for format in asn.ioregistry:
             fname, serialized = asn.dump(format=format)

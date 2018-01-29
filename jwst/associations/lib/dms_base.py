@@ -1,12 +1,14 @@
 """Association attributes common to DMS-based Rules"""
 from .counter import Counter
 
-from jwst.associations.association import getattr_from_list
 from jwst.associations.exceptions import (
     AssociationNotAConstraint,
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACIDMixin
+from jwst.associations.lib.constraint import AttrConstraint
+from jwst.associations.lib.utilities import getattr_from_list
+
 
 # Default product name
 PRODUCT_NAME_DEFAULT = 'undefined'
@@ -16,7 +18,7 @@ _ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:03d}_asn
 _ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:03d}_asn'
 
 # Exposure EXP_TYPE to Association EXPTYPE mapping
-_EXPTYPE_MAP = {
+EXPTYPE_MAP = {
     'mir_dark':      'dark',
     'mir_flatimage': 'flat',
     'mir_flatmrs':   'flat',
@@ -43,6 +45,19 @@ _EXPTYPE_MAP = {
     'nrs_taconfirm': 'target_acquistion',
     'nrs_taslit':    'target_acquistion',
 }
+
+# Acquistions and Confirmation images
+ACQ_EXP_TYPES = (
+    'mir_tacq',
+    'nis_taconfirm',
+    'nis_tacq',
+    'nrc_taconfirm',
+    'nrc_tacq',
+    'nrs_confirm',
+    'nrs_taconfirm',
+    'nrs_tacq',
+    'nrs_taslit',
+)
 
 # Exposures that are always TSO
 TSO_EXP_TYPES = (
@@ -97,14 +112,41 @@ SPEC2_SCIENCE_EXP_TYPES = [
     'nis_soss',
 ]
 
+SPECIAL_EXPTYPES = {
+    'psf': ['is_psf'],
+    'imprint': ['is_imprt'],
+    'background': ['bkgdtarg']
+}
+
+# Key that uniquely identfies members.
+MEMBER_KEY = 'expname'
+
 # Non-specified values found in DMS Association Pools
 _EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n', 'F', 'f')
+
+# Degraded status information
+_DEGRADED_STATUS_OK = (
+    'No known degraded exposures in association.'
+)
+_DEGRADED_STATUS_NOTOK = (
+    'One or more members have an error associated with them.'
+    '\nDetails can be found in the member.exposerr attribute.'
+)
 
 __all__ = ['DMSBaseMixin']
 
 
 class DMSBaseMixin(ACIDMixin):
-    """Association attributes common to DMS-based Rules"""
+    """Association attributes common to DMS-based Rules
+
+    Attributes
+    ----------
+    from_items: [item[,...]]
+        The list of items that contributed to the association.
+
+    sequence: int
+        The sequence number of the current association
+    """
 
     # Associations of the same type are sequenced.
     _sequence = Counter(start=1)
@@ -112,10 +154,12 @@ class DMSBaseMixin(ACIDMixin):
     def __init__(self, *args, **kwargs):
         super(DMSBaseMixin, self).__init__(*args, **kwargs)
 
+        self.from_items = []
         self.sequence = None
-        self.data.update({
-            'program': 'none',
-        })
+        if 'degraded_status' not in self.data:
+            self.data['degraded_status'] = _DEGRADED_STATUS_OK
+        if 'program' not in self.data:
+            self.data['program'] = 'noprogram'
 
     @classmethod
     def create(cls, item, version_id=None):
@@ -174,6 +218,20 @@ class DMSBaseMixin(ACIDMixin):
         return name.lower()
 
     @property
+    def member_ids(self):
+        """Set of all member ids in all products of this association"""
+        member_ids = set(
+            member[MEMBER_KEY]
+            for product in self['products']
+            for member in product['members']
+        )
+        return member_ids
+
+    @property
+    def current_product(self):
+        return self.data['products'][-1]
+
+    @property
     def validity(self):
         """Keeper of the validity tests"""
         try:
@@ -188,10 +246,6 @@ class DMSBaseMixin(ACIDMixin):
         """Set validity dict"""
         self._validity = item
 
-    @property
-    def current_product(self):
-        return self.data['products'][-1]
-
     def new_product(self, product_name=PRODUCT_NAME_DEFAULT):
         """Start a new product"""
         product = {
@@ -203,10 +257,50 @@ class DMSBaseMixin(ACIDMixin):
         except KeyError:
             self.data['products'] = [product]
 
+    def update_asn(self, item=None, member=None):
+        """Update association meta information
+
+        Parameters
+        ----------
+        item: dict or None
+            Item to use as a source. If not given, item-specific
+            information will be left unchanged.
+
+        member: dict or None
+            An association member to use as source.
+            If not given, member-specific information will be update
+            from current association/product membership.
+
+        Notes
+        -----
+        If both `item` and `member` are given,
+        information in `member` will take precedence.
+        """
+        self.update_degraded_status()
+
+    def update_degraded_status(self):
+        """Update association degraded status"""
+
+        if self.data['degraded_status'] == _DEGRADED_STATUS_OK:
+            for product in self.data['products']:
+                for member in product['members']:
+                    try:
+                        exposerr = member['exposerr']
+                    except KeyError:
+                        continue
+                    else:
+                        if exposerr not in _EMPTY:
+                            self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
+                            break
+
     def update_validity(self, entry):
         for test in self.validity.values():
             if not test['validated']:
                 test['validated'] = test['check'](entry)
+
+    @classmethod
+    def reset_sequence(cls):
+        cls._sequence = Counter(start=1)
 
     @classmethod
     def validate(cls, asn):
@@ -227,10 +321,6 @@ class DMSBaseMixin(ACIDMixin):
                 )
 
         return True
-
-    @classmethod
-    def reset_sequence(cls):
-        cls._sequence = Counter(start=1)
 
     def get_exposure_type(self, item, default='science'):
         """Determine the exposure type of a pool item
@@ -262,36 +352,29 @@ class DMSBaseMixin(ACIDMixin):
         """
         result = default
 
-        # Look for specific attributes
-        try:
-            self.item_getattr(item, ['is_psf'])
-        except KeyError:
-            pass
-        else:
-            return 'psf'
-        try:
-            self.item_getattr(item, ['is_imprt'])
-        except KeyError:
-            pass
-        else:
-            return 'imprint'
-        try:
-            self.item_getattr(item, ['bkgdtarg'])
-        except KeyError:
-            pass
-        else:
-            return 'background'
-
         # Base type off of exposure type.
         try:
             exp_type = item['exp_type']
         except KeyError:
             raise LookupError('Exposure type cannot be determined')
 
-        result = _EXPTYPE_MAP.get(exp_type, default)
+        result = EXPTYPE_MAP.get(exp_type, default)
 
         if result is None:
             raise LookupError('Cannot determine exposure type')
+
+        # For `science` data, compare against special modifiers
+        # to further refine the type.
+        if result == 'science':
+            for special, source in SPECIAL_EXPTYPES.items():
+                try:
+                    self.item_getattr(item, source)
+                except KeyError:
+                    pass
+                else:
+                    result = special
+                    break
+
         return result
 
     def item_getattr(self, item, attributes):
@@ -365,7 +448,7 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the target or source ID.
         """
-        target_id = format_list(self.constraints['target']['found_values'])
+        target_id = format_list(self.constraints['target'].found_values)
         target = 't{0:0>3s}'.format(str(target_id))
         return target
 
@@ -378,7 +461,7 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the instrument
         """
-        instrument = format_list(self.constraints['instrument']['found_values'])
+        instrument = format_list(self.constraints['instrument'].found_values)
         return instrument
 
     def _get_opt_element(self):
@@ -393,7 +476,7 @@ class DMSBaseMixin(ACIDMixin):
         opt_elem = ''
         join_char = ''
         try:
-            value = format_list(self.constraints['opt_elem']['found_values'])
+            value = format_list(self.constraints['opt_elem'].found_values)
         except KeyError:
             pass
         else:
@@ -401,7 +484,7 @@ class DMSBaseMixin(ACIDMixin):
                 opt_elem = value
                 join_char = '-'
         try:
-            value = format_list(self.constraints['opt_elem2']['found_values'])
+            value = format_list(self.constraints['opt_elem2'].found_values)
         except KeyError:
             pass
         else:
@@ -428,13 +511,32 @@ class DMSBaseMixin(ACIDMixin):
             No constraints produce this value
         """
         try:
-            activity_id = format_list(self.constraints['activity_id']['found_values'])
+            activity_id = format_list(
+                self.constraints['activity_id'].found_values
+            )
         except KeyError:
             raise AssociationNotAConstraint
         else:
             if activity_id not in _EMPTY:
                 exposure = '{0:0>2s}'.format(activity_id)
         return exposure
+
+
+# -----------------
+# Basic constraints
+# -----------------
+class DMSAttrConstraint(AttrConstraint):
+    """DMS-focused attribute constraint
+
+    Forces definition of invalid values
+    """
+    def __init__(self, **kwargs):
+
+        if kwargs.get('invalid_values', None) is None:
+            kwargs['invalid_values'] = _EMPTY
+
+        super(DMSAttrConstraint, self).__init__(**kwargs)
+
 
 # #########
 # Utilities

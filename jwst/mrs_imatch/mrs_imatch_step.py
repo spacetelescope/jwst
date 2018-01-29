@@ -4,13 +4,10 @@ JWST pipeline step for image intensity matching for MIRI images.
 
 :Authors: Mihai Cara
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
-from __future__ import (absolute_import, division, unicode_literals,
-                        print_function)
 
-import six
 import numpy as np
 
 from .. stpipe import Step, cmdline
@@ -94,10 +91,16 @@ class MRSIMatchStep(Step):
             matched_models = _match_models(single_ch[c], channel=str(c),
                                            degree=degree)
 
+        # subtract the background, if requested
         if self.subtract:
+            self.log.info('Subtracting background offsets from input images')
             for m in all_models2d:
                 apply_background_2d(m)
                 m.meta.background.subtracted = True
+
+        # set step completion status in the input images
+        for m in all_models2d:
+            m.meta.cal_step.mrs_imatch = 'COMPLETE'
 
         return images
 
@@ -174,7 +177,7 @@ def apply_background_2d(model2d, channel=None, subtract=True):
     if isinstance(channel, int):
         channel = str(channel)
 
-    elif isinstance(channel, six.string_types):
+    elif isinstance(channel, str):
         pass
 
     elif hasattr(channel, '__iter__'):

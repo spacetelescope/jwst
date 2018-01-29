@@ -100,12 +100,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         # Load the schema files
         if schema is None:
             schema_path = os.path.join(base_url, self.schema_url)
-            extension_list = asdf_extension.AsdfExtensionList(self._extensions)
-            schema = asdf_schema.load_schema(
-                schema_path,
-                resolver=extension_list.url_mapping,
-                resolve_references=True
-            )
+            # Create an AsdfFile so we can use its resolver for loading schemas
+            asdf_file = AsdfFile(extensions=self._extensions)
+            if hasattr(asdf_file, 'resolver'):
+                file_resolver = asdf_file.resolver
+            else:
+                file_resolver = self.get_resolver(asdf_file)
+            schema = asdf_schema.load_schema(schema_path,
+                                             resolver=file_resolver,
+                                             resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
         # Determine what kind of input we have (init) and execute the
@@ -226,6 +229,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                 fd.close()
         if not self._iscopy and self._asdf is not None:
             self._asdf.close()
+
+    def get_resolver(self, asdf_file):
+        extensions = asdf_file._extensions
+        def asdf_file_resolver(uri):
+            return extensions._url_mapping(extensions._tag_mapping(uri))
+        return asdf_file_resolver
 
     @staticmethod
     def clone(target, source, deepcopy=False, memo=None):

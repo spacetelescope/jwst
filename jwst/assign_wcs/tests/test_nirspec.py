@@ -111,28 +111,24 @@ def create_nirspec_ifu_file(filter, grating, lamp='N/A'):
     image[1].header['crval3'] = 0
     image[1].header['wcsaxes'] = 3
     image[1].header['ctype3'] = 'WAVE'
-    #image[1].header['pc3_1'] = 1
-    #image[1].header['pc3_2'] = 0
     image[0].header['lamp'] = lamp
     image[0].header['GWA_XTIL'] = 0.35986012
     image[0].header['GWA_YTIL'] = 0.13448857
     return image
 
 
-def create_nirspec_fs_file():
+def create_nirspec_fs_file(grating, filter, lamp="N/A"):
     image = create_hdul()
     image[0].header['exp_type'] = 'NRS_FIXEDSLIT'
-    image[0].header['filter'] = 'F100LP'
-    image[0].header['grating'] = 'G140H'
+    image[0].header['filter'] = filter
+    image[0].header['grating'] = grating
+    image[0].header['lamp'] = lamp
     image[1].header['crval3'] = 0
     image[1].header['wcsaxes'] = 3
     image[1].header['ctype3'] = 'WAVE'
-    #image[1].header['pc3_1'] = 1
-    #image[1].header['pc3_2'] = 0
-    image[0].header['GWA_XTIL'] = 3.5896975e-001
-    image[0].header['GWA_YTIL'] = 1.3438272e-001
-    image[0].header['GWA_TTIL'] = 3.9555361e+001
-    image[0].header['SUBARRAY'] = "ALLSLITS"
+    image[0].header['GWA_XTIL'] = 0.3316612243652344
+    image[0].header['GWA_YTIL'] = 0.1260581910610199
+    image[0].header['SUBARRAY'] = "FULL"
     return image
 
 
@@ -158,9 +154,11 @@ def test_nirspec_ifu_against_esa():
     """
     Test Nirspec IFU mode using build 6 reference files.
     """
-    #Test creating the WCS
-    filename = create_nirspec_ifu_file('OPAQUE', 'G140H', 'REF')
-    im = datamodels.ImageModel(filename)
+    # Test creating the WCS
+    # hdu = create_nirspec_ifu_file('OPAQUE', 'G140H', 'REF')
+    hdul = create_nirspec_ifu_file("F100LP", "G140H")
+    im = datamodels.ImageModel(hdul)
+    im.meta.filename = "test_ifu.fits"
     refs = create_reference_files(im)
 
     pipe = nirspec.create_pipeline(im, refs)
@@ -169,6 +167,7 @@ def test_nirspec_ifu_against_esa():
     # Test evaluating the WCS (slice 0)
     w0 = nirspec.nrs_wcs_set_input(im, 0)
 
+    #ref = fits.open(get_file_path('Trace_IFU_Slice_00_MON-COMBO-IFU-06_8410_jlab85.fits.gz'))
     ref = fits.open(get_file_path('Trace_IFU_Slice_00_MON-COMBO-IFU-06_8410_jlab85.fits.gz'))
     crpix = np.array([ref[1].header['crpix1'], ref[1].header['crpix2']])
     crval = np.array([ref[1].header['crval1'], ref[1].header['crval2']])
@@ -210,14 +209,14 @@ def test_nirspec_mos():
     w1(1, 2)
 '''
 
-@pytest.mark.xfail(reason="test needs CV3 update")
 def test_nirspec_fs_esa():
     """
     Test Nirspec FS mode using build 6 reference files.
     """
     #Test creating the WCS
-    filename = create_nirspec_fs_file()
+    filename = create_nirspec_fs_file(grating="G140M", filter="F100LP")
     im = datamodels.ImageModel(filename)
+    im.meta.filename = "test_fs.fits"
     refs = create_reference_files(im)
     #refs['disperser'] = get_file_path('jwst_nirspec_disperser_0001.asdf')
     pipe = nirspec.create_pipeline(im, refs)
@@ -226,7 +225,8 @@ def test_nirspec_fs_esa():
     # Test evaluating the WCS
     w1 = nirspec.nrs_wcs_set_input(im, "S200A1")
 
-    ref = fits.open(get_file_path('Trace_SLIT_A_200_1_SLIT-COMBO-016_9791_jlab85_0001.fits.gz'))
+    #ref = fits.open(get_file_path('Trace_SLIT_A_200_1_SLIT-COMBO-016_9791_jlab85_0001.fits.gz'))
+    ref = fits.open(get_file_path('Trace_SLIT_A_200_1_V84600010001P0000000002101_39547_JLAB88.fits'))
     crpix = np.array([ref[1].header['crpix1'], ref[1].header['crpix2']])
     crval = np.array([ref[1].header['crval1'], ref[1].header['crval2']])
     # get positions within the slit and the coresponding lambda
@@ -249,38 +249,39 @@ def test_nirspec_fs_esa():
     ref.close()
 
 
-@pytest.mark.xfail(reason="test needs CV3 update")
 def test_correct_tilt():
     """
     Example provided by Catarina.
     """
+    disp = datamodels.DisperserModel()
     xtilt = 0.35896975
     ytilt = 0.1343827
-    #ztilt = None
+    # ztilt = None
     corrected_theta_x = 0.02942671219861111
     corrected_theta_y = 0.00018649006677464447
-    #corrected_theta_z = -0.2523269848788889
-    disp = {'gwa_tiltx': {'temperatures': [39.58],
-                          'tilt_model': astmodels.Polynomial1D(1, c0=3307.85402614,
-                                                               c1=-9182.87552123),
-                          'unit': 'arcsec',
-                          'zeroreadings': [0.35972327]},
-            'gwa_tilty': {'temperatures': [39.58],
-                          'tilt_model': astmodels.Polynomial1D(1, c0=0.0, c1=0.0),
-                          'unit': 'arcsec',
-                          'zeroreadings': [0.0]},
-            'instrument': 'NIRSPEC',
-            'reftype': 'DISPERSER',
-            'theta_x': 0.02942671219861111,
-            'theta_y': -0.0007745488724972222,
-            #'theta_z': -0.2523269848788889,
-            'tilt_x': 0.0,
-            'tilt_y': -8.8
-            }
+    # corrected_theta_z = -0.2523269848788889
+    disp.gwa_tiltx =  {'temperatures': [39.58],
+                       'tilt_model': astmodels.Polynomial1D(1, c0=3307.85402614,
+                                                            c1=-9182.87552123),
+                       'unit': 'arcsec',
+                       'zeroreadings': [0.35972327]}
+    disp.gwa_tilty = {'temperatures': [39.58],
+                      'tilt_model': astmodels.Polynomial1D(1, c0=0.0, c1=0.0),
+                      'unit': 'arcsec',
+                      'zeroreadings': [0.0]}
+    disp.meta = {'instrument': {'name': 'NIRSPEC', 'detector': 'NRS1'},
+                 'reftype': 'DISPERSER'}
+
+    disp.theta_x = 0.02942671219861111
+    disp.theta_y = -0.0007745488724972222
+    # disp.theta_z = -0.2523269848788889
+    disp.tilt_x = 0.0
+    disp.tilt_y = -8.8
+
     disp_corrected = nirspec.correct_tilt(disp, xtilt, ytilt)#, ztilt)
-    assert np.isclose(disp_corrected['theta_x'], corrected_theta_x)
-    #assert(np.isclose(disp_corrected['theta_z'], corrected_theta_z))
-    assert np.isclose(disp_corrected['theta_y'], corrected_theta_y)
+    assert np.isclose(disp_corrected.theta_x, corrected_theta_x)
+    # assert(np.isclose(disp_corrected['theta_z'], corrected_theta_z))
+    assert np.isclose(disp_corrected.theta_y, corrected_theta_y)
 
 
 def test_msa_configuration_normal():
@@ -363,3 +364,34 @@ test_data = list(zip(open_shutters, main_shutter, result))
 def test_shutter_state(open_shutters, main_shutter, result):
     shutter_state = nirspec._shutter_id_to_str(open_shutters, main_shutter)
     assert shutter_state == result
+
+
+def test_slit_projection_on_detector():
+    step = assign_wcs_step.AssignWcsStep()
+
+    hdul = create_nirspec_fs_file(grating="G395M", filter="OPAQUE", lamp="ARGON")
+    hdul[0].header['DETECTOR'] = 'NRS2'
+    im = datamodels.ImageModel(hdul)
+
+    refs = {}
+    for reftype in step.reference_file_types:
+        refs[reftype] = step.get_reference_file(im, reftype)
+
+    open_slits = nirspec.get_open_slits(im, refs)
+    assert len(open_slits) == 1
+    assert open_slits[0].name == "S200B1"
+
+    hdul[0].header['DETECTOR'] = 'NRS1'
+    im = datamodels.ImageModel(hdul)
+
+    refs = {}
+    for reftype in step.reference_file_types:
+        refs[reftype] = step.get_reference_file(im, reftype)
+
+    open_slits = nirspec.get_open_slits(im, refs)
+    assert len(open_slits) == 4
+    names = [s.name for s in open_slits]
+    assert "S200A1" in names
+    assert "S200A2" in names
+    assert "S400A1" in names
+    assert "S1600A1" in names

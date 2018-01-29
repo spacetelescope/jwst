@@ -62,9 +62,13 @@ class ACIDMixin():
 
     def acid_from_constraints(self):
         """Determine ACID from constraints"""
-        for _, constraint in self.constraints.items():
-            if constraint.get('is_acid', False):
-                value = re.sub('\\\\', '', '-'.join(constraint['found_values']))
+        for constraint in self.constraints:
+            if getattr(constraint, 'is_acid', False):
+                value = re.sub(
+                    '\\\\',
+                    '',
+                    '-'.join(constraint.found_values)
+                )
                 try:
                     acid = ACID(value)
                 except ValueError:

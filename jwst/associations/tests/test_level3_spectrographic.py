@@ -41,11 +41,9 @@ from ..main import constrain_on_candidates
 def nirspec_params(request):
     cid, asn_type, asn_name, product_name, exptypes = request.param
     pool = combine_pools(t_path('data/pool_006_spec_nirspec.csv'))
-    gc = {
-        'asn_candidate': constrain_on_candidates((cid,))
-    }
+    gc = constrain_on_candidates((cid,))
     rules = registry_level3_only(global_constraints=gc)
-    asns, orphaned = generate(pool, rules)
+    asns = generate(pool, rules)
     return asns, asn_type, asn_name, product_name, exptypes
 
 
@@ -80,34 +78,14 @@ def test_nirspec_modes(nirspec_params):
             'jw99009-o008_spec3_\d{3}_asn',
             'jw99009-o008_t001_miri',
         ),
-        (
-            'o009',
-            'spec3',
-            'jw99009-o009_spec3_\d{3}_asn',
-            'jw99009-o009_t001_miri'
-        ),
-        (
-            'o010',
-            'spec3',
-            'jw99009-o010_spec3_\d{3}_asn',
-            'jw99009-o010_t001_miri'
-        ),
-        (
-            'o011',
-            'spec3',
-            'jw99009-o011_spec3_\d{3}_asn',
-            'jw99009-o011_t001_miri'
-        ),
     ]
 )
 def miri_params(request):
     cid, asn_type, asn_name, product_name = request.param
     pool = combine_pools(t_path('data/pool_007_spec_miri.csv'))
-    gc = {
-        'asn_candidate': constrain_on_candidates((cid,))
-    }
+    gc = constrain_on_candidates((cid,))
     rules = registry_level3_only(global_constraints=gc)
-    asns, orphaned = generate(pool, rules)
+    asns = generate(pool, rules)
     return asns, asn_type, asn_name, product_name
 
 

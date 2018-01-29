@@ -4,7 +4,7 @@ JWST pipeline step for image alignment.
 
 :Authors: Mihai Cara
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
 from __future__ import (absolute_import, division, unicode_literals,
@@ -37,24 +37,26 @@ class TweakRegStep(Step):
     """
 
     spec = """
-        # Optimize alignment order:
-        enforce_user_order = boolean(default=True) # Align images in user specified order?
-
-        # Reference Catalog parameters:
+        # Source finding parameters:
         save_catalogs = boolean(default=False) # Write out catalogs?
         catalog_format = string(default='ecsv')   # Catalog output file format
         kernel_fwhm = float(default=2.5)    # Gaussian kernel FWHM in pixels
         snr_threshold = float(default=5.0)  # SNR threshold above the bkg
+
+        # Optimize alignment order:
+        enforce_user_order = boolean(default=False) # Align images in user specified order?
+
+        # Reference Catalog parameters:
         expand_refcat = boolean(default=False) # Expand reference catalog with new sources?
 
         # Object matching parameters:
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
-        searchrad = float(default=1.0) # The search radius for a match
+        searchrad = float(default=1.0) # The search radius in arcsec for a match
         use2dhist = boolean(default=True) # Use 2d histogram to find initial offset?
-        separation = float(default=0.5) # Minimum object separation in pixels
-        tolerance = float(default=1.0) # Matching tolerance for xyxymatch in pixels
-        xoffset = float(default=0.0), # Initial guess for X offset in pixels
-        yoffset = float(default=0.0) # Initial guess for Y offset in pixels
+        separation = float(default=0.5) # Minimum object separation in arcsec
+        tolerance = float(default=1.0) # Matching tolerance for xyxymatch in arcsec
+        xoffset = float(default=0.0), # Initial guess for X offset in arcsec
+        yoffset = float(default=0.0) # Initial guess for Y offset in arcsec
 
         # Catalog fitting parameters:
         fitgeometry = option('shift', 'rscale', 'general', default='general') # Fitting geometry
@@ -103,7 +105,7 @@ class TweakRegStep(Step):
             raise ValueError("Input must contain at least one image model.")
 
         # group images by their "group id":
-        grp_img = [[i] for i in images] #images.models_grouped
+        grp_img = images.models_grouped
 
         if len(grp_img) == 1:
             # we need at least two exposures to perform image alignment

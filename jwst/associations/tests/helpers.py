@@ -13,8 +13,8 @@ from ...tests.helpers import runslow
 from astropy.table import (Table, vstack)
 
 from .. import (AssociationRegistry, AssociationPool, generate)
-from ..association import is_iterable
 from ..lib.counter import Counter
+from ..lib.utilities import is_iterable
 
 
 # Compare associations
@@ -150,9 +150,8 @@ class BasePoolRule():
         rules = registry_level3_only()
         for ppars in self.pools:
             pool = combine_pools(ppars.path, **ppars.kwargs)
-            (asns, orphaned) = generate(pool, rules)
+            asns = generate(pool, rules)
             assert len(asns) == ppars.n_asns
-            assert len(orphaned) == ppars.n_orphaned
             for asn, candidates in zip(asns, ppars.candidates):
                 assert set(asn.candidates) == set(candidates)
 

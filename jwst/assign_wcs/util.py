@@ -318,7 +318,7 @@ def get_object_info(catalog_name=''):
         objects.append(SkyObject(sid=row['id'],
                                  xcentroid=row['xcentroid'],
                                  ycentroid=row['ycentroid'],
-                                 icrs_centroid=row['icrs_centroid'],
+                                 sky_centroid=row['sky_centroid'],
                                  abmag=row['abmag'],
                                  abmag_error=row['abmag_error'],
                                  sky_bbox_ll=row['sky_bbox_ll'],
@@ -431,8 +431,8 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
             # save the image frame center of the object
             # takes in ra, dec, wavelength, order but wave and order
             # don't get used until the detector->grism_detector transform
-            xcenter, ycenter, _, _ = sky_to_detector(obj.icrs_centroid.ra.value,
-                                                     obj.icrs_centroid.dec.value,
+            xcenter, ycenter, _, _ = sky_to_detector(obj.sky_centroid.icrs.ra.value,
+                                                     obj.sky_centroid.icrs.dec.value,
                                                      1, 1)
 
             order_bounding = {}
@@ -454,9 +454,6 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                  
                 xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value, obj.sky_bbox_ll.dec.value, lmin, order)
                 xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value, obj.sky_bbox_ur.dec.value, lmax, order)
-
-                # xmin, ymin, _, _, _ = sky_to_grism(obj.icrs_centroid.ra.value, obj.icrs_centroid.dec.value, lmin, order)
-                # xmax, ymax, _, _, _ = sky_to_grism(obj.icrs_centroid.ra.value, obj.icrs_centroid.dec.value, lmax, order)    
 
                 # convert to integer pixels, making use of python3 round to integer, 2.7 rounds to float
                 # if disperse_column:
@@ -500,18 +497,19 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
             # add lmin and lmax used for the orders here?
             # input_model.meta.wcsinfo.waverange_start keys covers the
             # full range of all the orders
+
             if len(order_bounding) > 0:
                 grism_objects.append(GrismObject(sid=obj.sid,
                                                  order_bounding=order_bounding,
-                                                 icrs_centroid=obj.icrs_centroid,
+                                                 sky_centroid=obj.sky_centroid,
                                                  partial_order=partial_order,
                                                  waverange=waverange,
                                                  sky_bbox_ll=obj.sky_bbox_ll,
                                                  sky_bbox_lr=obj.sky_bbox_lr,
                                                  sky_bbox_ul=obj.sky_bbox_ul,
                                                  sky_bbox_ur=obj.sky_bbox_ur,
-                                                 xcenter=xcenter,
-                                                 ycenter=ycenter,))
+                                                 xcentroid=xcenter,
+                                                 ycentroid=ycenter))
             
     return grism_objects
 
