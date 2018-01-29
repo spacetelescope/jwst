@@ -423,3 +423,13 @@ def test_modelcontainer_group_names(container):
     container[0].meta.observation.exposure_number = '2'
     assert len(container.group_names) == 2
     container[0].meta.observation.exposure_number = '1'
+
+
+def test_object_node_iterator():
+    im = ImageModel()
+    items = []
+    for i in im.meta.items():
+        items.append(i[0])
+    
+    assert 'date' in items
+    assert 'model_type' in items
