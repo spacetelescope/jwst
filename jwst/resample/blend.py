@@ -40,7 +40,6 @@ def blendfitsdata(input_list, output_model):
 
     # Now, append HDRTAB as new element in datamodel
     new_schema = build_tab_schema(new_table)
-
     output_model.add_schema_entry('hdrtab', new_schema)
     output_model.hdrtab = fits_support.from_fits_hdu(new_table, new_schema)
 
