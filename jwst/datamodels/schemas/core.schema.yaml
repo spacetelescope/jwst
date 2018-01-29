@@ -1833,6 +1833,11 @@ properties:
             type: string
             fits_keyword: S_EXTR2D
             blend_table: True
+          firstframe:
+            title: First Frame Correction
+            type: string
+            fits_keyword: S_FRSTFR
+            blend_table: True
           flat_field:
             title: Flat Field Correction
             type: string

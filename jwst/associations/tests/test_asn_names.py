@@ -50,13 +50,14 @@ def test_level3_asn_names(pool_params):
     for asn in asns:
         name = asn.asn_name
         if any(
-                c.get('is_acid', False)
-                for _, c in asn.constraints.items()
+                getattr(c, 'is_acid', False)
+                for c in asn.constraints
         ):
             m = re.match(LEVEL3_ASN_ACID_NAME_REGEX, name)
         else:
             m = re.match(LEVEL3_ASN_DISCOVERED_NAME_REGEX, name)
         assert m is not None
+
 
 def test_level3_asn_names_with_version(pool_params):
     pool_path = helpers.t_path(pool_params)
@@ -69,6 +70,7 @@ def test_level3_asn_names_with_version(pool_params):
         m = re.match(LEVEL3_ASN_WITH_VERSION, name)
         assert m is not None
 
+
 def test_level2_asn_names(pool_params):
     pool_path = helpers.t_path(pool_params)
     pool = helpers.combine_pools(pool_path)
@@ -78,13 +80,14 @@ def test_level2_asn_names(pool_params):
     for asn in asns:
         name = asn.asn_name
         if any(
-                c.get('is_acid', False)
-                for _, c in asn.constraints.items()
+                getattr(c, 'is_acid', False)
+                for c in asn.constraints
         ):
             m = re.match(LEVEL3_ASN_ACID_NAME_REGEX, name)
         else:
             m = re.match(LEVEL3_ASN_DISCOVERED_NAME_REGEX, name)
         assert m is not None
+
 
 def test_level2_asn_names_with_version(pool_params):
     pool_path = helpers.t_path(pool_params)

@@ -1,12 +1,14 @@
 """Association attributes common to DMS-based Rules"""
 from .counter import Counter
 
-from jwst.associations.association import getattr_from_list
 from jwst.associations.exceptions import (
     AssociationNotAConstraint,
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACIDMixin
+from jwst.associations.lib.constraint import AttrConstraint
+from jwst.associations.lib.utilities import getattr_from_list
+
 
 # Default product name
 PRODUCT_NAME_DEFAULT = 'undefined'
@@ -43,6 +45,19 @@ EXPTYPE_MAP = {
     'nrs_taconfirm': 'target_acquistion',
     'nrs_taslit':    'target_acquistion',
 }
+
+# Acquistions and Confirmation images
+ACQ_EXP_TYPES = (
+    'mir_tacq',
+    'nis_taconfirm',
+    'nis_tacq',
+    'nrc_taconfirm',
+    'nrc_tacq',
+    'nrs_confirm',
+    'nrs_taconfirm',
+    'nrs_tacq',
+    'nrs_taslit',
+)
 
 # Exposures that are always TSO
 TSO_EXP_TYPES = (
@@ -96,6 +111,12 @@ SPEC2_SCIENCE_EXP_TYPES = [
     'nrs_brightobj',
     'nis_soss',
 ]
+
+SPECIAL_EXPTYPES = {
+    'psf': ['is_psf'],
+    'imprint': ['is_imprt'],
+    'background': ['bkgdtarg']
+}
 
 # Key that uniquely identfies members.
 MEMBER_KEY = 'expname'
@@ -331,26 +352,6 @@ class DMSBaseMixin(ACIDMixin):
         """
         result = default
 
-        # Look for specific attributes
-        try:
-            self.item_getattr(item, ['is_psf'])
-        except KeyError:
-            pass
-        else:
-            return 'psf'
-        try:
-            self.item_getattr(item, ['is_imprt'])
-        except KeyError:
-            pass
-        else:
-            return 'imprint'
-        try:
-            self.item_getattr(item, ['bkgdtarg'])
-        except KeyError:
-            pass
-        else:
-            return 'background'
-
         # Base type off of exposure type.
         try:
             exp_type = item['exp_type']
@@ -361,6 +362,19 @@ class DMSBaseMixin(ACIDMixin):
 
         if result is None:
             raise LookupError('Cannot determine exposure type')
+
+        # For `science` data, compare against special modifiers
+        # to further refine the type.
+        if result == 'science':
+            for special, source in SPECIAL_EXPTYPES.items():
+                try:
+                    self.item_getattr(item, source)
+                except KeyError:
+                    pass
+                else:
+                    result = special
+                    break
+
         return result
 
     def item_getattr(self, item, attributes):
@@ -434,7 +448,7 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the target or source ID.
         """
-        target_id = format_list(self.constraints['target']['found_values'])
+        target_id = format_list(self.constraints['target'].found_values)
         target = 't{0:0>3s}'.format(str(target_id))
         return target
 
@@ -447,7 +461,7 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the instrument
         """
-        instrument = format_list(self.constraints['instrument']['found_values'])
+        instrument = format_list(self.constraints['instrument'].found_values)
         return instrument
 
     def _get_opt_element(self):
@@ -462,7 +476,7 @@ class DMSBaseMixin(ACIDMixin):
         opt_elem = ''
         join_char = ''
         try:
-            value = format_list(self.constraints['opt_elem']['found_values'])
+            value = format_list(self.constraints['opt_elem'].found_values)
         except KeyError:
             pass
         else:
@@ -470,7 +484,7 @@ class DMSBaseMixin(ACIDMixin):
                 opt_elem = value
                 join_char = '-'
         try:
-            value = format_list(self.constraints['opt_elem2']['found_values'])
+            value = format_list(self.constraints['opt_elem2'].found_values)
         except KeyError:
             pass
         else:
@@ -497,13 +511,32 @@ class DMSBaseMixin(ACIDMixin):
             No constraints produce this value
         """
         try:
-            activity_id = format_list(self.constraints['activity_id']['found_values'])
+            activity_id = format_list(
+                self.constraints['activity_id'].found_values
+            )
         except KeyError:
             raise AssociationNotAConstraint
         else:
             if activity_id not in _EMPTY:
                 exposure = '{0:0>2s}'.format(activity_id)
         return exposure
+
+
+# -----------------
+# Basic constraints
+# -----------------
+class DMSAttrConstraint(AttrConstraint):
+    """DMS-focused attribute constraint
+
+    Forces definition of invalid values
+    """
+    def __init__(self, **kwargs):
+
+        if kwargs.get('invalid_values', None) is None:
+            kwargs['invalid_values'] = _EMPTY
+
+        super(DMSAttrConstraint, self).__init__(**kwargs)
+
 
 # #########
 # Utilities

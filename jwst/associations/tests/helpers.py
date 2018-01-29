@@ -13,8 +13,8 @@ from ...tests.helpers import runslow
 from astropy.table import (Table, vstack)
 
 from .. import (AssociationRegistry, AssociationPool, generate)
-from ..association import is_iterable
 from ..lib.counter import Counter
+from ..lib.utilities import is_iterable
 
 
 # Compare associations

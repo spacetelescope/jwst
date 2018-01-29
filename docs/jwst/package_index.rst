@@ -21,6 +21,7 @@ Package Index
    extract_1d/index.rst
    extract_2d/index.rst
    fits_generator/index.rst
+   firstframe/index.rst
    flatfield/index.rst
    fringe/index.rst
    gain_scale/index.rst

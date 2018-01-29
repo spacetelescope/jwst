@@ -2,11 +2,12 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2WFSS",
     "version_id": null,
-    "code_version": "0.9.4",
+    "code_version": "0.9.6",
+    "degraded_status": "No known degraded exposures in association.",
     "program": "99009",
     "target": "1",
     "asn_pool": "pool_019_niriss_wfss",
-    "constraints": "Constraints:\n    exp_type: {'nis_wfss'}\n    single_science: {'False'}\n    program: {'99009'}\n    target: {'1'}\n    instrument: {'niriss'}\n    detector: {'central'}\n    opt_elem: {'f140m'}\n    opt_elem2: {'gr150r'}\n    subarray: set()\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'niriss'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'central'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f140m'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'gr150r'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': None})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nis_wfss'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o001",
     "products": [
         {
@@ -18,7 +19,8 @@
                 },
                 {
                     "expname": "jw_00002_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -31,7 +33,8 @@
                 },
                 {
                     "expname": "jw_00003_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -44,7 +47,8 @@
                 },
                 {
                     "expname": "jw_00004_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -57,7 +61,8 @@
                 },
                 {
                     "expname": "jw_00005_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -70,7 +75,8 @@
                 },
                 {
                     "expname": "jw_00006_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -83,7 +89,8 @@
                 },
                 {
                     "expname": "jw_00007_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -96,7 +103,8 @@
                 },
                 {
                     "expname": "jw_00010_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -109,7 +117,8 @@
                 },
                 {
                     "expname": "jw_00011_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -122,7 +131,8 @@
                 },
                 {
                     "expname": "jw_00012_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -135,7 +145,8 @@
                 },
                 {
                     "expname": "jw_00013_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -148,7 +159,8 @@
                 },
                 {
                     "expname": "jw_00014_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         },
@@ -161,7 +173,8 @@
                 },
                 {
                     "expname": "jw_00015_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": null
                 }
             ]
         }
