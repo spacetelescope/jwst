@@ -138,6 +138,7 @@ def _get_schema_for_index(schema, i):
     else:
         return items
 
+
 def _find_property(schema, attr):
     subschema = _get_schema_for_property(schema, attr)
     if subschema == {}:
@@ -146,8 +147,10 @@ def _find_property(schema, attr):
         find = 'default' in subschema
     return find
 
+
 class ValidationWarning(Warning):
     pass
+
 
 class Node(object):
     def __init__(self, instance, schema, ctx):
@@ -183,6 +186,7 @@ class Node(object):
     @property
     def instance(self):
         return self._instance
+
 
 class ObjectNode(Node):
     @override__dir__
@@ -265,7 +269,7 @@ class ObjectNode(Node):
 
     def __iter__(self):
         return NodeIterator(self)
-    
+
     def _revert(self, attr, old_val):
         # Revert the change
         if old_val is None:
@@ -280,7 +284,8 @@ class ObjectNode(Node):
             for field in key.split('.'):
                 val = getattr(val, field)
             yield (key, val)
-        
+
+
 class ListNode(Node):
     def __cast(self, other):
         if isinstance(other, ListNode):
@@ -382,17 +387,18 @@ class ListNode(Node):
         obj._validate()
         return obj
 
+
 class NodeIterator:
     """
     An iterator for a node which flattens the hierachical structure
     """
     def __init__(self, node):
         self.key_stack = []
-        self.iter_stack = [node._instance.items()]
+        self.iter_stack = [iter(node._instance.items())]
 
     def __iter__(self):
         return self
-    
+
     def __next__(self):
         while self.iter_stack:
             try:
@@ -402,13 +408,13 @@ class NodeIterator:
                 if self.iter_stack:
                     self.key_stack.pop()
                 continue
-                
+
             if isinstance(val, dict):
                 self.key_stack.append(key)
-                self.iter_stack.append(val.items())
+                self.iter_stack.append(iter(val.items()))
             else:
                 return '.'.join(self.key_stack + [key])
-                
+
         raise StopIteration
 
 def put_value(path, value, tree):
