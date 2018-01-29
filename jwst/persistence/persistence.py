@@ -715,12 +715,17 @@ class DataSet():
                                 capture_param_k,
                                 trap_density, slope, dt)
 
-        # Traps that were filled due to the saturated portion of the ramp.
-        filled = self.predict_saturation_capture(
+        filled = ramp_traps_filled.copy()
+        mask = (sat_count > 0)
+        any_saturated = np.any(mask)
+        if any_saturated:
+            # Traps that were filled due to the saturated portion of the ramp.
+            filled[mask] = self.predict_saturation_capture(
                                 capture_param_k,
-                                trap_density, ramp_traps_filled,
-                                sattime, sat_count, ngroups)
-        del sat_count, sattime, ramp_traps_filled
+                                trap_density[mask],
+                                ramp_traps_filled[mask],
+                                sattime[mask], sat_count[mask], ngroups)
+        del sat_count, sattime, ramp_traps_filled, mask
 
         # Traps that were filled due to cosmic-ray jumps.
         cr_filled = self.delta_fcn_capture(
@@ -756,8 +761,8 @@ class DataSet():
             per second.
 
         dt: float
-            The time interval (unit = second) over which the charge
-            capture is to be computed.
+            The time interval (unit = second) over which the charge capture
+            is to be computed.  This does not include saturated groups.
 
         Returns
         -------
@@ -789,6 +794,16 @@ class DataSet():
 
         This is based on Michael Regan's predictsaturationcapture.pro.
 
+        This should not be called for ramps that do not have any groups
+        that exceed the persistence saturation limit.  One reason is that
+        incoming_filled_traps can be so small that exp_filled_traps
+        would be negative.
+
+        trap_density, incoming_filled_traps, sattime, and sat_count were
+        all 2-D arrays in the calling function predict_capture(), but
+        these arrays were masked to select only ramps with at least one
+        saturated group, so in this function these arrays are 1-D.
+
         Parameters
         ----------
         capture_param_k: tuple
@@ -797,18 +812,19 @@ class DataSet():
             to the current trap family.  (The _k in the variable name
             refers to the index of the trap family.)
 
-        trap_density: 2-D ndarray
+        trap_density: ndarray
             Image of the total number of traps per pixel.
 
-        incoming_filled_traps: 2-D ndarray
+        incoming_filled_traps: ndarray
             Traps filled due to linear portion of the ramp.
             This may be modified in-place.
 
-        sattime: 2-D ndarray
+        sattime: ndarray
             Time (seconds) during which each pixel was saturated.
 
-        sat_count: 2-D array, int
-            The 
+        sat_count: array, int
+            For each pixel, the number of groups with value exceeding the
+            persistence saturation limit.
 
         ngroups: int
             The number of groups in the ramp
