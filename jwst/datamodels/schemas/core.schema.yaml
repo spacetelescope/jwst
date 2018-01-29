@@ -1534,6 +1534,10 @@ properties:
             title: 2-D Spectral Extraction
             type: string
             fits_keyword: S_EXTR2D
+          firstframe:
+            title: First Frame Correction
+            type: string
+            fits_keyword: S_FRSTFR
           flat_field:
             title: Flat Field Correction
             type: string
