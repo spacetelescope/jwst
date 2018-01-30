@@ -51,7 +51,6 @@ class Tso3Pipeline(Pipeline):
         self.log.info('Starting calwebb_tso3...')
         input_models = datamodels.open(input)
         self.output_basename = input_models.meta.asn_table.products[0].name
-
         input_exptype = None
         # Input may consist of multiple exposures, so loop over each of them
         for cube in input_models:
@@ -65,6 +64,7 @@ class Tso3Pipeline(Pipeline):
                 image = datamodels.ImageModel(data=cube.data[i],
                                               err=cube.err[i], dq=cube.dq[i])
                 image.update(cube)
+                image.meta.filename = cube.meta.filename
                 image.meta.wcs = cube.meta.wcs
                 input_2dmodels.append(image)
 
