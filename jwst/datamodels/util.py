@@ -306,7 +306,6 @@ def gentle_asarray(a, dtype):
             if np.can_cast(in_dtype, out_dtype, 'equiv'):
                 return a
             else:
-                print('in gentle as array')
                 return np.asanyarray(a, dtype=out_dtype)
         elif in_dtype.fields is not None and out_dtype.fields is not None:
             if in_dtype == out_dtype:

@@ -55,11 +55,7 @@ class MultiSlitModel(model_base.DataModel):
         elif isinstance(key, int):
             # Return an instance of a SlitModel
             slit = self.slits[key]  # returns an ObjectNode instance
-            #data_keys = [item[0] for item in slit.items() if not
-                         ##item[0].startswith(("meta", "extra_fits"))]
-                         #item[0].startswith("meta")]
 
-            #kwargs = dict(((k, getattr(self.slits[key], k)) for k in data_keys))
             kwargs = {}
             items = dict(slit.items())
             for key in items:

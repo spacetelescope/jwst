@@ -1,7 +1,6 @@
-from __future__ import absolute_import, unicode_literals, division, print_function
-
 from . import model_base
 from .image import ImageModel
+
 
 __all__ = ['SlitModel', 'SlitDataModel']
 
@@ -157,4 +156,4 @@ class SlitModel(model_base.DataModel):
 
         if name is not None:
             self.name = name
-        #if
+
