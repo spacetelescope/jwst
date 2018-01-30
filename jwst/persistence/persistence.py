@@ -241,6 +241,16 @@ class DataSet():
         if not self.ref_matches_sci(self.trap_density, slc):
             self.trap_density = self.get_subarray(self.trap_density, slc)
 
+        # Trap density is used for computing the number of traps that
+        # capture a charge.  If some pixels in the trap_density reference
+        # file are flagged as bad, set the corresponding data values to
+        # zero, so the computed number of traps will also be zero.
+        if hasattr(self.trap_density, "dq"):
+            mask = (np.bitwise_and(self.trap_density.dq,
+                                   dqflags.pixel["DO_NOT_USE"]) > 0)
+            self.trap_density.data[mask] = 0.
+            del mask
+
         slc = self.get_slice(self.persistencesat, self.output_obj)
         if not self.ref_matches_sci(self.persistencesat, slc):
             self.persistencesat = self.get_subarray(self.persistencesat, slc)
@@ -500,8 +510,20 @@ class DataSet():
         if ngroups == 1:
             # This won't be accurate, because there's only one group.
             grp_slope = self.output_obj.data[integ, 0, :, :]
-            slope = grp_slope / (self.persistencesat.data
-                                 * self.output_obj.meta.exposure.group_time)
+            if hasattr(self.persistencesat, "dq"):
+                mask = (np.bitwise_and(self.persistencesat.dq,
+                                       dqflags.pixel["DO_NOT_USE"]) > 0)
+                if mask.sum() == 0:
+                    mask = None
+            else:
+                mask = None
+            if mask is None:
+                slope = grp_slope / (self.persistencesat.data * self.tgroup)
+            else:
+                # Set to 1 so we don't divide by 0.
+                persat = np.where(mask, 1., self.persistencesat.data)
+                slope = np.where(mask, 0.,
+                                 grp_slope / (persat * self.tgroup))
             return (grp_slope, slope)
 
         gdqflags = dqflags.group
@@ -552,10 +574,22 @@ class DataSet():
         grp_slope[bad] = 0.
         del bad
 
-        # units = (DN / persistence_saturation_limit) / second,
+        # slope will have units (DN / persistence_saturation_limit) / second,
         # where persistence_saturation_limit is in units of DN.
-        slope = grp_slope / (self.persistencesat.data
-                             * self.output_obj.meta.exposure.group_time)
+        if hasattr(self.persistencesat, "dq"):
+            mask = (np.bitwise_and(self.persistencesat.dq,
+                                   dqflags.pixel["DO_NOT_USE"]) > 0)
+            if mask.sum() == 0:
+                mask = None
+        else:
+            mask = None
+        if mask is None:
+            slope = grp_slope / (self.persistencesat.data * self.tgroup)
+        else:
+            # Set to 1 so we don't divide by 0.
+            persat = np.where(mask, 1., self.persistencesat.data)
+            slope = np.where(mask, 0.,
+                             grp_slope / (persat * self.tgroup))
 
         return (grp_slope, slope)
 
@@ -703,6 +737,14 @@ class DataSet():
 
         # Find pixels exceeding the persistence saturation limit (full well).
         pflag = (data > self.persistencesat.data)
+        if hasattr(self.persistencesat, "dq"):
+            mask = (np.bitwise_and(self.persistencesat.dq,
+                                   dqflags.pixel["DO_NOT_USE"]) > 0)
+            mshape = mask.shape
+            mask = mask.reshape((1,) + mshape)
+            m3 = np.repeat(mask, ngroups, 0)
+            pflag[m3] = False
+            del mask, m3
 
         # All of these are 2-D arrays.
         sat_count = pflag.sum(axis=0, dtype=np.intp)
