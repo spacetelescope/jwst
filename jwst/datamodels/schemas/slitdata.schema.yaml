@@ -80,8 +80,6 @@ allOf:
       default: ""
       fits_keyword: SHUTSTA
       fits_hdu: SCI
-- type: object
-  properties:
     data:
       title: The science data
       fits_hdu: SCI
@@ -97,23 +95,6 @@ allOf:
       title: Error array
       fits_hdu: ERR
       default: 0.0
-      datatype: float32
-    zeroframe:
-      title: Zeroframe array
-      fits_hdu: ZEROFRAME
-      default: 0.0
-      datatype: float32
-    area:
-      title: Pixel area map array
-      fits_hdu: AREA
-      default: 0.0
-      datatype: float32
-    relsens:
-      $ref: relsens.schema.yaml
-    relsens2d:
-      title: Sensitivity array
-      fits_hdu: RELSENS2D
-      default: 1.0
       datatype: float32
     wavelength:
       title: Wavelength array, corrected for zero-point
@@ -136,6 +117,18 @@ allOf:
       type: string
       fits_hdu: ERR
       fits_keyword: BUNIT
+    var_poisson:
+      title: variance due to poisson noise
+      fits_hdu: VAR_POISSON
+      ndim: 2
+      default: 0.0
+      datatype: float32
+    var_rnoise:
+      title: variance due to read noise
+      fits_hdu: VAR_RNOISE
+      ndim: 2
+      default: 0.0
+      datatype: float32
 - $ref: pathlosscorr.schema.yaml
 - $ref: wcsinfo.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

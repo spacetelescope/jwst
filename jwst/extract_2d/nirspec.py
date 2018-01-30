@@ -31,6 +31,9 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
         apply_wavecorr = False
         log.info("Skipping wavecorr correction for EXP_TYPE {0}".format(exp_type))
 
+    if not (hasattr(input_model.meta, 'wcs') and input_model.meta.wcs is not None):
+        raise AttributeError("Input model does not have a WCS object; assign_wcs should "
+                             "be run before extract_2d.")
 
     slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
     # This is a cludge but will work for now.
@@ -177,8 +180,11 @@ def extract_slit(input_model, slit, exp_type):
     # compute wavelengths
     x, y = wcstools.grid_from_bounding_box(slit_wcs.bounding_box, step=(1, 1))
     ra, dec, lam = slit_wcs(x, y)
+    lam = lam.astype(np.float32)
     new_model_class = getattr(datamodels, input_model.__class__.__name__)
-    new_model = new_model_class(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam)
+    #new_model = new_model_class(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam)
+    new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam)
+    log.info('input model type is {}'.format(input_model.__class__.__name__))
     new_model.update(input_model)
     new_model.meta.wcs = slit_wcs
     return new_model, xlo, xhi, ylo, yhi
@@ -198,13 +204,13 @@ def apply_zero_point_correction(model, slit, reffile):
         The MSa reference file used to construct the WCS.
     """
     slit_wcs = model.meta.wcs
+
     if model.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
         # pass lam = 2 microns
         # needed for wavecorr with fixed slits
         msa_model = get_msa_model(model)
         source_xpos = get_source_xpos(model, slit, slit_wcs, lam=2,
                                       msa_model=msa_model)
-
         aperture_name = slit.name
     else:
         source_xpos = slit.source_xpos

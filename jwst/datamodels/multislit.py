@@ -6,6 +6,7 @@ from .slit import SlitModel, SlitDataModel
 __all__ = ['MultiSlitModel']
 
 
+
 class MultiSlitModel(model_base.DataModel):
     """
     A data model for multi-slit images.
@@ -52,14 +53,28 @@ class MultiSlitModel(model_base.DataModel):
         if isinstance(key, str) and key.split('.') == 'meta':
             super(MultiSlitModel, self).__getitem__(key)
         elif isinstance(key, int):
-            #return self.slits[key]
             # Return an instance of a SlitModel
-            slit = self.slits[key]
-            data_keys = [item[0] for item in slit.items() if not
-                         item[0].startswith('meta')]
-            kwargs = dict(((k, getattr(self.slits[key], k)) for k in data_keys))
+            slit = self.slits[key]  # returns an ObjectNode instance
+            #data_keys = [item[0] for item in slit.items() if not
+                         ##item[0].startswith(("meta", "extra_fits"))]
+                         #item[0].startswith("meta")]
+
+            #kwargs = dict(((k, getattr(self.slits[key], k)) for k in data_keys))
+            kwargs = {}
+            items = dict(slit.items())
+            for key in items:
+                if not key.startswith(('meta', 'extra_fits')):
+                    kwargs[key] = items[key]
             s = SlitModel(**kwargs)
-            s.update(self)#, only='PRIMARY')
+            s.update(self)
             return s
         else:
             raise ValueError("Invalid key {0}".format(key))
+
+    @property
+    def slits(self):
+        return self._slits
+
+    @slits.setter
+    def slits(self, val):
+        return self._slits.extend(val)

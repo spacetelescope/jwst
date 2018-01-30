@@ -33,9 +33,9 @@ class IFUImageModel(model_base.DataModel):
     schema_url = "ifuimage.schema.yaml"
 
     def __init__(self, init=None, data=None, dq=None, err=None, relsens=None,
-                 relsens2d=None, zeroframe=None, area=None, 
+                 relsens2d=None, zeroframe=None, area=None,
                  pathloss_uniformsource=None, pathloss_pointsource=None,
-                 wavelength_pointsource=None, wavelength_uniformsource=None, 
+                 wavelength_pointsource=None, wavelength_uniformsource=None,
                  **kwargs):
         super(IFUImageModel, self).__init__(init=init, **kwargs)
 
@@ -69,7 +69,7 @@ class IFUImageModel(model_base.DataModel):
         if wavelength_uniformsource is not None:
             self.wavelength_uniformsource = wavelength_uniformsource
 
-         if wavelength_pointsource is not None:
+        if wavelength_pointsource is not None:
             self.wavelength_pointsource = wavelength_pointsource
 
         # Implicitly create arrays

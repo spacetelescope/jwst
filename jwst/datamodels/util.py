@@ -147,11 +147,11 @@ def open(init=None, extensions=None, **kwargs):
     model = new_class(init, extensions=extensions, **kwargs)
     if not has_model_type:
         model.meta.model_type = None
-    
+
     # Close the hdulist if we opened it
     if file_to_close is not None:
         model._files_to_close.append(file_to_close)
-        
+
     return model
 
 
@@ -306,6 +306,7 @@ def gentle_asarray(a, dtype):
             if np.can_cast(in_dtype, out_dtype, 'equiv'):
                 return a
             else:
+                print('in gentle as array')
                 return np.asanyarray(a, dtype=out_dtype)
         elif in_dtype.fields is not None and out_dtype.fields is not None:
             if in_dtype == out_dtype:
