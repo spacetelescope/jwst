@@ -14,7 +14,7 @@ class StraylightStep (Step):
     def process(self, input):
 
         # Open the input data model
-        with datamodels.ImageModel(input) as input_model:
+        with datamodels.IFUImageModel(input) as input_model:
 
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector

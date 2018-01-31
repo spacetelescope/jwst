@@ -36,13 +36,7 @@ class MultiSlitModel(model_base.DataModel):
             super(MultiSlitModel, self).__init__(init=None, **kwargs)
             self.update(init)
             slitdata = SlitDataModel(init)
-            self.slits.append(slitdata) #self.slits.item())
-            #self.slits[0].data = init.data
-            #self.slits[0].dq = init.dq
-            #self.slits[0].err = init.err
-            #self.slits[0].relsens = init.relsens
-            #self.slits[0].area = init.area
-            #self.slits[0].wavelength = init.wavelength
+            self.slits.append(slitdata)
             return
 
         super(MultiSlitModel, self).__init__(init=init, **kwargs)
