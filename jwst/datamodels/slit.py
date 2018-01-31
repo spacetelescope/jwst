@@ -125,6 +125,10 @@ class SlitModel(model_base.DataModel):
             self.err = init.err
             self.relsens = init.relsens
             self.area = init.area
+            if hasattr(init, 'var_poisson'):
+                self.var_poisson = init.var_poisson
+            if hasattr(init, 'var_rnoise'):
+                self.var_rnoise = init.var_rnoise
             if hasattr(init.meta, 'wcs'):
                 self.meta.wcs = init.meta.wcs
             else:

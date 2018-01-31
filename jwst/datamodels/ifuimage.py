@@ -1,12 +1,11 @@
-from __future__ import absolute_import, unicode_literals, division, print_function
-
 from . import image
+from . import model_base
+
+__all__ = ['IFUImageModel']
 
 
-__all__ = ['ImageModel']
-
-
-class IFUImageModel(image.ImageModel):
+#class IFUImageModel(image.ImageModel):
+class IFUImageModel(model_base.DataModel):
     """
     A data model for 2D IFU images.
 
@@ -37,6 +36,23 @@ class IFUImageModel(image.ImageModel):
                  pathloss_uniformsource=None, pathloss_pointsource=None,
                  wavelength_pointsource=None, wavelength_uniformsource=None,
                  **kwargs):
+        if isinstance(init, image.ImageModel):
+            super(IFUImageModel, self).__init__(init=None, **kwargs)
+            self.update(init)
+            self.data = init.data
+            self.dq = init.dq
+            self.err = init.err
+            if hasattr(init, 'relsens'):
+                self.relsens = init.relsens
+            if hasattr(init, 'area'):
+                self.area = init.area
+            if hasattr(init, 'relsens2d'):
+                self.relsens2d = init.relsens2d
+            if hasattr(init, 'var_poisson'):
+                self.var_poisson = init.var_poisson
+            if hasattr(init, 'var_rnoise'):
+                self.var_rnoise = init.var_rnoise
+            return
         super(IFUImageModel, self).__init__(init=init, **kwargs)
 
         if data is not None:

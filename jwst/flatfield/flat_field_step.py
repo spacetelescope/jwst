@@ -46,6 +46,8 @@ class FlatFieldStep(Step):
             self.log.debug('Input is a CubeModel')
         elif isinstance(input_model, datamodels.ImageModel):
             self.log.debug('Input is an ImageModel')
+        elif isinstance(input_model, datamodels.IFUImageModel):
+            self.log.debug('Input is an IFUImageModel')
         elif isinstance(input_model, datamodels.MultiSlitModel):
             self.log.debug('Input is a MultiSlitModel')
         elif isinstance(input_model, datamodels.GuiderCalModel):

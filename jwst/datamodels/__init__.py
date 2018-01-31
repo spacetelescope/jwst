@@ -96,6 +96,7 @@ from .trappars import TrapParsModel
 from .trapsfilled import TrapsFilledModel
 from .wcs_ref_models import *
 from .slit import SlitModel, SlitDataModel
+from .ifuimage import IFUImageModel
 from .util import open
 
 
@@ -116,7 +117,7 @@ __all__ = [
     'GuiderRawModel', 'GuiderCalModel',
     'IFUCubeModel',
     'IFUCubeParsModel', 'NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel',
-    'IFUFOREModel', 'IFUPostModel', 'IFUSlicerModel',
+    'IFUFOREModel', 'IFUImageModel', 'IFUPostModel', 'IFUSlicerModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
     'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',
     'MultiExposureModel', 'MultiProductModel', 'MultiSlitModel',
