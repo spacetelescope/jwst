@@ -1,12 +1,12 @@
 from __future__ import absolute_import, unicode_literals, division, print_function
 
-from . import model_base
+from . import image
 
 
 __all__ = ['ImageModel']
 
 
-class IFUImageModel(model_base.DataModel):
+class IFUImageModel(image.ImageModel):
     """
     A data model for 2D IFU images.
 

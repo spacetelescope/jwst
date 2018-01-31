@@ -1,5 +1,6 @@
 allOf:
 - $ref: core.schema.yaml
+- $ref: wcsinfo.schema.yaml
 - $ref: bunit.schema.yaml
 - type: object
   properties:
@@ -32,6 +33,18 @@ allOf:
     relsens2d:
       title: Sensitivity array
       fits_hdu: RELSENS2D
+      datatype: float32
+    var_poisson:
+      title: variance due to poisson noise
+      fits_hdu: VAR_POISSON
+      ndim: 2
+      default: 0.0
+      datatype: float32
+    var_rnoise:
+      title: variance due to read noise
+      fits_hdu: VAR_RNOISE
+      ndim: 2
+      default: 0.0
       datatype: float32
 - $ref: pathlosscorr.schema.yaml
 

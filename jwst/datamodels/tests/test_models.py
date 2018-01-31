@@ -440,16 +440,15 @@ def test_multislit_model():
     err = np.arange(24, dtype=np.float32).reshape((6, 4)) + 2
     wav = np.arange(24, dtype=np.float32).reshape((6, 4)) + 3
     dq = np.arange(24,dtype=np.uint32).reshape((6, 4)) + 1
-    s = SlitDataModel(data=data, err=err, dq=dq, wavelength=wav,
-                      pathloss_uniformsource=np.arange(4))
+    s0 = SlitDataModel(data=data, err=err, dq=dq, wavelength=wav)
+    s1 = SlitDataModel(data=data+1, err=err+1, dq=dq+1, wavelength=wav+1)
 
     ms = MultiSlitModel()
-    ms.slits.append(s)
-    ms.slits.append(s)
+    ms.slits.append(s0)
+    ms.slits.append(s1)
     ms.meta.instrument.name = 'NIRSPEC'
     ms.meta.exposure.type = 'NRS_IMAGE'
-    slit1 = ms.slits[1]
+    slit1 = ms[1]
     assert slit1.meta.instrument.name == 'NIRSPEC'
     assert slit1.meta.exposure.type == 'NRS_IMAGE'
-    assert_allclose(slit1.data, data)
-    assert_allclose(slit1.pathloss_uniformsource, np.arange(4))
+    assert_allclose(slit1.data, data + 1)

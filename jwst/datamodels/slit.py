@@ -36,18 +36,18 @@ class SlitDataModel(model_base.DataModel):
     def __init__(self, init=None, data=None, dq=None, err=None,
                  wavelength=None, var_poisson=None, var_rnoise=None, **kwargs):
         if isinstance(init, (SlitModel, ImageModel)):
-            super(SlitModel, self).__init__(init=None, **kwargs)
+            super(SlitDataModel, self).__init__(init=None, **kwargs)
             #self.update(init)
             self.data = init.data
             self.dq = init.dq
             self.err = init.err
             self.relsens = init.relsens
             self.area = init.area
-            if hasattr(self, 'wavelength'):
-                self.wavelength = init.wavelenth
-            if hasattr(self, 'var_poisson'):
+            if hasattr(init, 'wavelength'):
+                self.wavelength = init.wavelength
+            if hasattr(init, 'var_poisson'):
                 self.var_poisson = init.var_poisson
-            if hasattr(self, 'var_rnoise'):
+            if hasattr(init, 'var_rnoise'):
                 self.var_rnoise = init.var_rnoise
             for key in kwargs:
                 setattr(key, kwargs[key])
@@ -125,7 +125,7 @@ class SlitModel(model_base.DataModel):
             self.err = init.err
             self.relsens = init.relsens
             self.area = init.area
-            if hasattr(self.meta, 'wcs'):
+            if hasattr(init.meta, 'wcs'):
                 self.meta.wcs = init.meta.wcs
             else:
                 self.meta.wcs = None
