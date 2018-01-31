@@ -239,7 +239,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     def get_envar(self, name, value):
         env_name = name.upper()
         if env_name in os.environ:
-            value = os.environ(env_name)
+            value = os.environ[env_name]
             try:
                 value = bool(int(value))
             except ValueError:
