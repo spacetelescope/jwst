@@ -165,12 +165,16 @@ def extract_slit(input_model, slit, exp_type):
         ext_dq = input_model.dq[ylo: yhi + 1, xlo: xhi + 1].copy()
         shape = ext_data.shape
         bounding_box= ((0, shape[1] - 1), (0, shape[0] - 1))
+        ext_var_rnoise = input_model.var_rnoise[ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_var_poisson = input_model.var_poisson[ylo: yhi + 1, xlo: xhi + 1].copy()
     elif lenshape == 3:
         ext_data = input_model.data[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_err = input_model.err[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_dq = input_model.dq[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
         shape = ext_data.shape
         bounding_box= ((0, shape[2] - 1), (0, shape[1] - 1))
+        ext_var_rnoise = input_model.var_rnoise[:, ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_var_poisson = input_model.var_poisson[:, ylo: yhi + 1, xlo: xhi + 1].copy()
     else:
         raise ValueError("extract_2d does not work with "
                          "{0} dimensional data".format(lenshape))
@@ -181,7 +185,8 @@ def extract_slit(input_model, slit, exp_type):
     x, y = wcstools.grid_from_bounding_box(slit_wcs.bounding_box, step=(1, 1))
     ra, dec, lam = slit_wcs(x, y)
     lam = lam.astype(np.float32)
-    new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam)
+    new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam,
+                                     var_rnoise=ext_var_rnoise, var_poisson=ext_var_poisson)
     log.info('input model type is {}'.format(input_model.__class__.__name__))
     new_model.update(input_model)
     new_model.meta.wcs = slit_wcs
