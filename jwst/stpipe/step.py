@@ -27,7 +27,8 @@ from . import crds_client
 from . import log
 from . import utilities
 from .. import __version_commit__, __version__
-from ..datamodels import (DataModel, ModelContainer)
+from ..associations.lib.format_template import FormatTemplate
+from ..datamodels import DataModel
 
 SUFFIX_LIST = [
     'cal', 'calints', 'crf', 'crfints',
@@ -62,10 +63,12 @@ class Step():
     suffix           = string(default=None)        # Default suffix for output files
     """
 
-    # Reference types for both command line override definition and reference prefetch
+    # Reference types for both command line override
+    # definition and reference prefetch
     reference_file_types = []
 
-    # Set to False in subclasses to skip prefetch,  but by default attempt to prefetch
+    # Set to False in subclasses to skip prefetch,
+    # but by default attempt to prefetch
     prefetch_references = True
 
     @classmethod
@@ -319,8 +322,12 @@ class Step():
 
         if len(self.pre_hooks) or len(self.post_hooks):
             from . import hooks
-            self._pre_hooks = hooks.get_hook_objects(self, 'pre', self.pre_hooks)
-            self._post_hooks = hooks.get_hook_objects(self, 'post', self.post_hooks)
+            self._pre_hooks = hooks.get_hook_objects(
+                self, 'pre', self.pre_hooks
+            )
+            self._post_hooks = hooks.get_hook_objects(
+                self, 'post', self.post_hooks
+            )
         else:
             self._pre_hooks = []
             self._post_hooks = []
@@ -358,16 +365,23 @@ class Step():
 
         try:
             # prefetch truly occurs at the Pipeline (or subclass) level.
-            if (len(args) and len(self.reference_file_types) and not self.skip
-                and self.prefetch_references):
+            if (
+                    len(args) and len(self.reference_file_types) and
+                    not self.skip and
+                    self.prefetch_references
+            ):
                 self._precache_references(args[0])
 
             self.log.info(
                 'Step {0} running with args {1}.'.format(
                     self.name, args))
 
+            # Default output file configuration
             if self.output_file is not None:
                 self.save_results = True
+
+            if self.suffix is None:
+                self.suffix = self.default_suffix()
 
             hook_args = args
             for pre_hook in self._pre_hooks:
@@ -391,7 +405,9 @@ class Step():
                     step_result = self.process(*args)
                 except TypeError as e:
                     if "process() takes exactly" in str(e):
-                        raise TypeError("Incorrect number of arguments to step")
+                        raise TypeError(
+                            "Incorrect number of arguments to step"
+                        )
                     raise
 
             # Warn if returning a discouraged object
@@ -404,7 +420,9 @@ class Step():
                     step_result = hook_results
 
             # Update meta information
-            if not isinstance(step_result, (list, tuple, datamodels.ModelContainer)):
+            if not isinstance(
+                    step_result, (list, tuple, datamodels.ModelContainer)
+            ):
                 results = [step_result]
             else:
                 results = step_result
@@ -427,18 +445,13 @@ class Step():
 
             # Save the output file if one was specified
             if not self.skip and self.save_results:
+
                 # Setup the save list.
                 if not isinstance(step_result, (list, tuple)):
                     results_to_save = [step_result]
                 else:
                     results_to_save = step_result
 
-                result_id = _make_result_id(
-                    self.output_file, len(results_to_save), self.name
-                )
-                make_output_path = self.search_attr(
-                    'make_output_path', parent_first=True
-                )
                 for idx, result in enumerate(results_to_save):
                     if len(results_to_save) <= 1:
                         idx = None
@@ -446,11 +459,7 @@ class Step():
                         self.save_model(result, idx=idx)
                     elif hasattr(result, 'save'):
                         try:
-                            out_path = make_output_path(
-                                result,
-                                basepath=self.output_file,
-                                result_id=result_id(idx)
-                            )
+                            output_path = self.make_output_path(idx=idx)
                         except AttributeError:
                             self.log.warning(
                                 '`save_results` has been requested,'
@@ -462,9 +471,9 @@ class Step():
                             )
                         else:
                             self.log.info(
-                                'Saving file {0}'.format(out_path)
+                                'Saving file {0}'.format(output_path)
                             )
-                            result.save(out_path, overwrite=True)
+                            result.save(output_path, overwrite=True)
 
             self.log.info(
                 'Step {0} done'.format(self.name))
@@ -526,6 +535,22 @@ class Step():
             instance = cls(**kwargs)
         return instance.run(*args)
 
+    def default_output_file(self, input_file=None):
+        """Create a default filename based on the input name"""
+        output_file = input_file
+        if output_file is None or not isinstance(output_file, str):
+                output_file = self._input_filename
+        if output_file is None:
+            output_file = 'step_{}{}'.format(
+                self.name,
+                self.output_ext
+            )
+        return output_file
+
+    def default_suffix(self):
+        """Return a default suffix based on the step"""
+        return self.name.lower()
+
     def search_attr(self, attribute, parent_first=False, default=None):
         """Return first non-None attribute in step heirarchy
 
@@ -586,7 +611,7 @@ class Step():
         override_name = crds_client.get_override_name(reference_file_type)
         path = getattr(self, override_name, None)
         return abspath(path) if path else path
-    
+
     def get_reference_file(self, input_file, reference_file_type):
         """
         Get a reference file from CRDS.
@@ -649,7 +674,9 @@ class Step():
         """
         self._input_filename = path
 
-    def save_model(self, model, suffix=None, idx=None, output_file=None, force=False):
+    def save_model(
+            self, model, suffix=None, idx=None, output_file=None, force=False
+    ):
         """
         Saves the given model using the step/pipeline's naming scheme
 
@@ -713,6 +740,100 @@ class Step():
 
     @staticmethod
     def _make_output_path(
+            step,
+            basepath=None,
+            ext=None,
+            suffix=None,
+            name_format="{basename}{components}{suffix_sep}{suffix}.{ext}",
+            component_formats=None,
+            separator='_',
+            **components
+    ):
+        """Create the output path
+
+        Parameters
+        ----------
+        step: Step
+            The `Step` in question.
+
+        basepath: str or None
+            The basepath to use. If None, `output_file`
+            is used. Only the basename component of the path
+            is used.
+
+        ext: str or None
+            The extension to use. If none, `output_ext` is used.
+            Can include the leading period or not.
+
+        name_format: str
+            The format string to use to form the base name.
+
+        component_formats: {key: format(, ...)} or None
+            Format to use on a per-key basis.
+
+        separator: str
+            Separator to use between replacement components
+
+        components: dict
+            dict of string replacements.
+
+        Returns
+        -------
+        The fully qualified path name.
+
+        Notes
+        -----
+        The values found in the `components` dict are placed in the string
+        where the "{components}" replacement field is specified. If there are
+        more than one component, the components are separated by the `separator`
+        string.
+        """
+        if basepath is None:
+            basepath = step.output_file
+
+        formatter = FormatTemplate(
+            separator=separator,
+            key_formats=component_formats,
+            remove_unused=True
+        )
+
+        basename, basepath_ext = splitext(split(basepath)[1])
+        if ext is None and len(basepath_ext):
+            ext = basepath_ext
+        if ext is None:
+            ext = step.output_ext
+        if ext.startswith('.'):
+            ext = ext[1:]
+
+        suffix = _get_suffix(suffix, step=step)
+        suffix_sep = None
+        if suffix is not None:
+            basename, suffix_sep = remove_suffix(basename)
+        if suffix_sep is None:
+            suffix_sep = separator
+
+        if len(components):
+            component_str = formatter('', **components)
+        else:
+            component_str = ''
+
+        basename = formatter(
+            name_format,
+            basename=basename,
+            suffix=suffix,
+            suffix_sep=suffix_sep,
+            ext=ext,
+            components=component_str
+        )
+
+        output_dir = step.search_attr('output_dir', default='')
+        output_dir = expandvars(expanduser(output_dir))
+        full_output_path = join(output_dir, basename)
+
+        return full_output_path
+
+    @staticmethod
+    def _make_output_path_ori(
             step, data,
             basepath=None, suffix=None, ext=None,
             idx=None, ignore_use_model=False
@@ -866,6 +987,20 @@ class Step():
 # #########
 # Utilities
 # #########
+def remove_suffix(name):
+    """Remove the suffix if a known suffix is already in name"""
+    separator = None
+    match = re.match(REMOVE_SUFFIX, name)
+    try:
+        name = match.group('root')
+        separator = match.group('separator')
+    except AttributeError:
+        pass
+    if separator is None:
+        separator = '_'
+    return name, separator
+
+
 def _make_result_id(output_file, n_results, default_name):
     """Create function the constructs a result identifier
 
@@ -908,7 +1043,7 @@ def _get_suffix(suffix, step=None, default_suffix=None):
         Suffix to use if specified.
 
     step: Step or None
-        The step to retrieve the suffux.
+z        The step to retrieve the suffux.
 
     default_suffix: str
         If the pipeline does not supply a suffix,

@@ -51,6 +51,13 @@ class Image3Pipeline(Pipeline):
 
         input_models = datamodels.open(input)
 
+        # If input is an association, set the output to the product
+        # name.
+        try:
+            self.output_file = input_models.meta.asn_table.products[0].name
+        except AttributeError:
+            pass
+
         # Check if input is single or multiple exposures
         is_container = isinstance(input_models, datamodels.ModelContainer)
         try:

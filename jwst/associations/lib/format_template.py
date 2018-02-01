@@ -20,6 +20,16 @@ class FormatTemplate(Formatter):
         Separater to use for values which have no
         matching replacement strings
 
+    key_formats: dict or None
+        A dict of key-specific formatting where the value will
+        be pre-formatted before being passed to the final format
+        string.
+
+    remove_unused: bool
+        By default, unused replacement fields are left in the
+        result, for use in subsequent replacement usage.
+        If True, such fields are removed from the result.
+
     kwargs: dict or named parameters
         The key/values pairs to fill into the Python format string
 
@@ -73,7 +83,7 @@ class FormatTemplate(Formatter):
     >>> fmt_preformat(template, name='fred', value='great')
     'name="fred" value="pre_great_format"'
     """
-    def __init__(self, separator='_', key_formats=None):
+    def __init__(self, separator='_', key_formats=None, remove_unused=False):
         """Inialize class
 
         Parameters
@@ -85,10 +95,11 @@ class FormatTemplate(Formatter):
 
         key_formats: {key: format(, ...)}
             dict of formats to pre-format the related values
-            before insertion into the the template
+            before insertion into the template.
         """
         super(FormatTemplate, self).__init__()
         self.separator = separator
+        self.remove_unused = remove_unused
 
         self.key_formats = defaultdict(lambda: '{}')
         if key_formats:
@@ -153,7 +164,11 @@ class FormatTemplate(Formatter):
             The value from the kwargs.
             If not found, the string '{key}' is returned.
         """
-        value = kwargs.get(key, '{' + key + '}')
+        if self.remove_unused:
+            default = ''
+        else:
+            default = '{' + key + '}'
+        value = kwargs.get(key, default)
         self._used_keys.append(key)
 
         return value
