@@ -89,9 +89,9 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # Override value of validation parameters
         # if environment value set
-        self._pass_invalid_values = self.get_envar("pass_invalid_values",
+        self._pass_invalid_values = self.get_envar("PASS_INVALID_VALUES",
                                                     pass_invalid_values)
-        self._strict_validation = self.get_envar("strict_validation",
+        self._strict_validation = self.get_envar("STRICT_VALIDATION",
                                                  strict_validation)
 
         # Construct the path to the schema files
@@ -237,13 +237,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             self._asdf.close()
 
     def get_envar(self, name, value):
-        env_name = name.upper()
-        if env_name in os.environ:
-            value = os.environ[env_name]
+        if name in os.environ:
+            value = os.environ[name]
             try:
                 value = bool(int(value))
             except ValueError:
-                value = False
+                value = True
         return value
 
     def get_resolver(self, asdf_file):
