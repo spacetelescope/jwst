@@ -4,7 +4,6 @@ from . import model_base
 __all__ = ['IFUImageModel']
 
 
-#class IFUImageModel(image.ImageModel):
 class IFUImageModel(model_base.DataModel):
     """
     A data model for 2D IFU images.

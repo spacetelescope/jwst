@@ -49,4 +49,3 @@ class PhotomStep(Step):
         output_obj.meta.cal_step.photom = 'COMPLETE'
 
         return output_obj
-
