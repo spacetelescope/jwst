@@ -309,8 +309,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         ----------
         path : string or func
             File path to save to.
-            If function, passed with a single argument of the `DataModel`
-            that will be saved. func retuns full path string.
+            If function, it takes one argument with is
+            model.meta.filename and returns the full path string.
 
         dir_path: string
             Directory to save to. If not None, this will override
@@ -322,7 +322,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             The file path the model was saved in.
         """
         if callable(path):
-            path_head, path_tail = os.path.split(path(self))
+            path_head, path_tail = os.path.split(path(self.meta.filename))
         else:
             path_head, path_tail = os.path.split(path)
         base, ext = os.path.splitext(path_tail)

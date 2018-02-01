@@ -225,9 +225,9 @@ class ModelContainer(model_base.DataModel):
             - If None, the `meta.filename` is used for each model.
             - If a string, the string is used as a root and an index is
               appended.
-            - If a function, the function takes the model and
-              `idx` parameter index (optional) as arguments and
-              returns a full path string.
+            - If a function, the function takes the two arguments:
+              the value of model.meta.filename and the
+              `idx` index, returning constructed file name.
 
         dir_path : str
             Directory to write out files.  Defaults to current working dir.
@@ -240,20 +240,17 @@ class ModelContainer(model_base.DataModel):
             List of output file paths of where the models were saved.
         """
         if path is None:
-            path_func = lambda model, idx: (None, model.meta.filename)
-        elif callable(path):
-            if 'idx' not in signature(path).parameters:
-                path_func = lambda model, idx: path(model)
-            else:
-                path_func = path
-        else:
-            path_func = partial(make_file_with_index, path=path)
+            path = lambda filename, idx: filename
+        elif not callable(path):
+            path = make_file_with_index
 
         output_paths = []
         for idx, model in enumerate(self):
             if len(self) <= 1:
                 idx = None
-            outpath, filename = op.split(path_func(model, idx=idx))
+            outpath, filename = op.split(
+                path(model.meta.filename, idx=idx)
+            )
             if dir_path:
                 outpath = dir_path
             save_path = op.join(outpath, filename)
@@ -388,19 +385,16 @@ class ModelContainerIterator:
 # #########
 # Utilities
 # #########
-def make_file_with_index(model, idx, path):
-    """Append and index to a path
+def make_file_with_index(file_path, idx):
+    """Append an index to a filename
 
     Parameters
     ----------
-    model: DateModel
-        Not used
-
+    file_path: str
+        The file to append the index to.
     idx: int
         An index to append
 
-    path: str
-        File path to append
 
     Returns
     -------
@@ -408,7 +402,7 @@ def make_file_with_index(model, idx, path):
         Path with index appended
     """
     # Decompose path
-    path_head, path_tail = op.split(path)
+    path_head, path_tail = op.split(file_path)
     base, ext = op.splitext(path_tail)
     if idx is not None:
         base = base + str(idx)

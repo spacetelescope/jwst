@@ -191,12 +191,13 @@ class OutlierDetection:
             sdriz.do_drizzle()
             drizzled_models = sdriz.output_models
             for model in drizzled_models:
-                model.meta.filename = self.make_output_path(
-                    model, suffix=self.resample_suffix
-                )
                 if save_intermediate_results:
                     log.info("Writing out resampled exposures...")
-                    model.save(model.meta.filename)
+                    self.save_model(
+                        model,
+                        output_file=model.meta.filename,
+                        suffix=self.resample_suffix
+                    )
         else:
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
@@ -210,9 +211,6 @@ class OutlierDetection:
                                         init=drizzled_models[0].data.shape)
         median_model.update(drizzled_models[0])
         median_model.meta.wcs = drizzled_models[0].meta.wcs
-        median_model.meta.filename = self.make_output_path(
-            self.input_models[0], suffix='median'
-        )
 
         # Perform median combination on set of drizzled mosaics
         median_model.data = self.create_median(drizzled_models)
@@ -220,7 +218,11 @@ class OutlierDetection:
         if save_intermediate_results:
             log.info("Writing out MEDIAN image to: {}".format(
                                                 median_model.meta.filename))
-            median_model.save(median_model.meta.filename)
+            self.save_model(
+                median_model,
+                output_file=self.input_models[0].meta.filename,
+                suffix='median'
+            )
 
         if pars['resample_data']:
             # Blot the median image back to recreate each input image specified
@@ -228,7 +230,7 @@ class OutlierDetection:
             blot_models = self.blot_median(median_model)
             if save_intermediate_results:
                 log.info("Writing out BLOT images...")
-                blot_models.save(partial(self.make_output_path, suffix='blot'))
+                self.save_model(blot_models, suffix='blot')
         else:
             # Median image will serve as blot image
             blot_models = datamodels.ModelContainer()

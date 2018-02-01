@@ -28,7 +28,7 @@ from . import log
 from . import utilities
 from .. import __version_commit__, __version__
 from ..associations.lib.format_template import FormatTemplate
-from ..datamodels import DataModel
+from ..datamodels import (DataModel, ModelContainer)
 
 SUFFIX_LIST = [
     'cal', 'calints', 'crf', 'crfints',
@@ -701,7 +701,7 @@ class Step():
 
         Returns
         -------
-        output_path: [str[, ...]]
+        output_paths: [str[, ...]]
             List of output file paths the model(s) were saved in.
         """
         if output_file is None or output_file == '':
@@ -713,20 +713,24 @@ class Step():
            not output_file:
             return
 
-        # Get the output path as defined by the current step.
-        make_output_path_partial = partial(
-            self.make_output_path,
-            basepath=output_file,
-            suffix=suffix,
-            idx=idx
-        )
-
-        output_paths = model.save(make_output_path_partial)
-        if not isinstance(output_paths, (list, tuple)):
-            output_paths = [output_paths]
-
-        for output_path in output_paths:
+        if type(model) is ModelContainer:
+            model_list = model
+        else:
+            model_list = [model]
+        use_idx = not self.output_use_model and len(model_list) > 1
+        output_paths = list()
+        for idx, current_model in enumerate(model_list):
+            if self.output_use_model:
+                output_file = current_model.meta.filename
+            if use_idx:
+                idx_to_use = idx
+            else:
+                idx_to_use = None
+            output_path = current_model.save(self.make_output_path(
+                basepath=output_file, suffix=suffix, idx=idx_to_use
+            ))
             self.log.info('Saved model in {}'.format(output_path))
+            output_paths.append(output_path)
 
         return output_paths
 
@@ -789,7 +793,9 @@ class Step():
         string.
         """
         if basepath is None:
-            basepath = step.output_file
+            basepath = step.search_attr('output_file')
+        if basepath is None:
+            raise(ValueError, 'No filename can be determined to save to.')
 
         formatter = FormatTemplate(
             separator=separator,

@@ -23,6 +23,10 @@ def test_basics():
     result = fmt(template, value='great', extra='more')
     assert result == 'name="{name}" value="great"_more'
 
+    # Nothing should be added if value is None
+    result = fmt(template, value=None)
+    assert result == 'name="{name}" value=""'
+
     # With a different separator:
     fmt.separator = '---'
     result = fmt(template, name='fred', value='great', extra='more')

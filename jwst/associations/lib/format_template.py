@@ -124,17 +124,22 @@ class FormatTemplate(Formatter):
         self._used_keys = []
 
         # Preformat the values
-        formatted_kwargs = {
-            key: self.key_formats[key].format(value)
-            for key, value in kwargs.items()
-        }
+        formatted_kwargs = dict()
+        for key, value in kwargs.items():
+            if value is not None:
+                value = self.key_formats[key].format(value)
+            formatted_kwargs[key] = value
         result = super(FormatTemplate, self).format(
             format_string, **formatted_kwargs
         )
 
         # Get any unused arguments and simply do the appending
         unused_keys = set(formatted_kwargs).difference(self._used_keys)
-        unused_values = [formatted_kwargs[unused] for unused in unused_keys]
+        unused_values = [
+            formatted_kwargs[unused]
+            for unused in unused_keys
+            if formatted_kwargs[unused] is not None
+        ]
         result_parts = [result] + unused_values
         result = self.separator.join(result_parts)
 
@@ -170,5 +175,7 @@ class FormatTemplate(Formatter):
             default = '{' + key + '}'
         value = kwargs.get(key, default)
         self._used_keys.append(key)
+        if value is None:
+            value = ''
 
         return value
