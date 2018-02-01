@@ -107,11 +107,6 @@ allOf:
       ndim: 2
       default: 1.0
       datatype: float32
-    bunit_err:
-      title: physical units of the array values
-      type: string
-      fits_hdu: ERR
-      fits_keyword: BUNIT
     area:
       title: Pixel area map array
       fits_hdu: AREA
