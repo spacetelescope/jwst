@@ -58,6 +58,7 @@ from .gls_rampfit import GLS_RampFitModel
 from .guiderraw import GuiderRawModel
 from .guidercal import GuiderCalModel
 from .ifucube import IFUCubeModel
+from .ifuimage import IFUImageModel
 from .image import ImageModel
 from .ipc import IPCModel
 from .irs2 import IRS2Model
@@ -87,6 +88,7 @@ from .reset import ResetModel
 from .resolution import ResolutionModel, MiriResolutionModel
 from .rscd import RSCDModel
 from .saturation import SaturationModel
+from .slit import SlitModel, SlitDataModel
 from .source_container import SourceModelContainer
 from .spec import SpecModel
 from .straylight import StrayLightModel
@@ -95,8 +97,6 @@ from .trapdensity import TrapDensityModel
 from .trappars import TrapParsModel
 from .trapsfilled import TrapsFilledModel
 from .wcs_ref_models import *
-from .slit import SlitModel, SlitDataModel
-from .ifuimage import IFUImageModel
 from .util import open
 
 
@@ -135,7 +135,7 @@ __all__ = [
     'ReferenceFileModel', 'ReferenceCubeModel', 'ReferenceImageModel', 'ReferenceQuadModel',
     'RegionsModel', 'ResetModel',
     'ResolutionModel', 'MiriResolutionModel',
-    'RSCDModel', 'SaturationModel', 'SlitModel', 'SlitDataModel', 'SpecModel',
+    'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
     'StrayLightModel', 'SuperBiasModel', 'SpecwcsModel',
     'TrapDensityModel', 'TrapParsModel', 'TrapsFilledModel',
     'WavelengthrangeModel', 'WaveCorrModel']

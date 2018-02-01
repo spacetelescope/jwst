@@ -75,7 +75,7 @@ allOf:
       fits_keyword: SRCYPOS
       fits_hdu: SCI
     shutter_state:
-      title: All (open and close) shutters in a slit
+      title: All (open and closed) shutters in a slit
       type: string
       default: ""
       fits_keyword: SHUTSTA
@@ -107,11 +107,6 @@ allOf:
       ndim: 2
       default: 1.0
       datatype: float32
-    bunit_data:
-      title: physical units of the array values
-      type: string
-      fits_hdu: SCI
-      fits_keyword: BUNIT
     bunit_err:
       title: physical units of the array values
       type: string
@@ -136,6 +131,7 @@ allOf:
       ndim: 2
       default: 0.0
       datatype: float32
+- $ref: bunit.schema.yaml
 - $ref: pathlosscorr.schema.yaml
 - $ref: wcsinfo.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

@@ -1258,8 +1258,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             spectral_order_list = ["not set yet"]
 
         if isinstance(input_model, (datamodels.ImageModel,
-                                    datamodels.DrizProductModel,
-                                    datamodels.IFUImageModel)):
+                                    datamodels.DrizProductModel)):
             for sp_order in spectral_order_list:
                 if sp_order == "not set yet":
                     sp_order = get_spectral_order(input_model)

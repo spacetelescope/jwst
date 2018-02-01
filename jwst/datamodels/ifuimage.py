@@ -23,15 +23,12 @@ class IFUImageModel(model_base.DataModel):
     err : numpy array
         The error array.
 
-    relsens : numpy array
-        The relative sensitivity table.
-
     relsens2d: numpy array
-        The relative sensitivty 2D array.
+        The relative sensitivity 2D array.
     """
     schema_url = "ifuimage.schema.yaml"
 
-    def __init__(self, init=None, data=None, dq=None, err=None, relsens=None,
+    def __init__(self, init=None, data=None, dq=None, err=None,
                  relsens2d=None, zeroframe=None, area=None,
                  pathloss_uniformsource=None, pathloss_pointsource=None,
                  wavelength_pointsource=None, wavelength_uniformsource=None,
@@ -42,8 +39,6 @@ class IFUImageModel(model_base.DataModel):
             self.data = init.data
             self.dq = init.dq
             self.err = init.err
-            if hasattr(init, 'relsens'):
-                self.relsens = init.relsens
             if hasattr(init, 'area'):
                 self.area = init.area
             if hasattr(init, 'relsens2d'):
@@ -63,9 +58,6 @@ class IFUImageModel(model_base.DataModel):
 
         if err is not None:
             self.err = err
-
-        if relsens is not None:
-            self.relsens = relsens
 
         if relsens2d is not None:
             self.relsens2d = relsens2d

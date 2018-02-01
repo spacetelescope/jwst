@@ -28,8 +28,6 @@ allOf:
       title: Pixel area map array
       fits_hdu: AREA
       datatype: float32
-    relsens:
-      $ref: relsens.schema.yaml
     relsens2d:
       title: Sensitivity array
       fits_hdu: RELSENS2D

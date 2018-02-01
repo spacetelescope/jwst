@@ -31,9 +31,6 @@ class Extract1dStep(Step):
         elif isinstance(input_model, datamodels.ImageModel):
             # It's a single 2-D image
             self.log.debug('Input is an ImageModel')
-        elif isinstance(input_model, datamodels.IFUImageModel):
-            # It's a single 2-D IFU image
-            self.log.debug('Input is an IFUImageModel')
         elif isinstance(input_model, datamodels.ModelContainer):
             self.log.debug('Input is a ModelContainer')
         elif isinstance(input_model, datamodels.MultiSlitModel):

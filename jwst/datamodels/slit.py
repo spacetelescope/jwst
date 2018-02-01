@@ -26,18 +26,16 @@ class SlitDataModel(model_base.DataModel):
     relsens : numpy array
         The relative sensitivity table.
 
-    relsens2d: numpy array
-        The relative sensitivty 2D array.
     """
 
     schema_url = "slitdata.schema.yaml"
 
 
     def __init__(self, init=None, data=None, dq=None, err=None,
-                 wavelength=None, var_poisson=None, var_rnoise=None, **kwargs):
+                 wavelength=None, var_poisson=None, var_rnoise=None,
+                 relsens=None, area=None, **kwargs):
         if isinstance(init, (SlitModel, ImageModel)):
             super(SlitDataModel, self).__init__(init=None, **kwargs)
-            #self.update(init)
             self.data = init.data
             self.dq = init.dq
             self.err = init.err
@@ -77,6 +75,11 @@ class SlitDataModel(model_base.DataModel):
         if var_rnoise is not None:
             self.var_rnoise = var_rnoise
 
+        if relsens is not None:
+            self.relsens = relsens
+
+        if area is not None:
+            self.area = area
 
         # Implicitly create arrays
         self.dq = self.dq
@@ -104,8 +107,6 @@ class SlitModel(model_base.DataModel):
     relsens : numpy array
         The relative sensitivity table.
 
-    relsens2d: numpy array
-        The relative sensitivty 2D array.
     """
     schema_url = "slit.schema.yaml"
 
