@@ -147,11 +147,11 @@ def open(init=None, extensions=None, **kwargs):
     model = new_class(init, extensions=extensions, **kwargs)
     if not has_model_type:
         model.meta.model_type = None
-    
+
     # Close the hdulist if we opened it
     if file_to_close is not None:
         model._files_to_close.append(file_to_close)
-        
+
     return model
 
 

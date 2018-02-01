@@ -20,7 +20,7 @@ log.setLevel(logging.DEBUG)
 
 #********************************************************************************
 # HELPER ROUTINES for CubeData class defined in cube_build.py
-# these methods relate to I/O type procedures.  
+# these methods relate to I/O type procedures.
 # read_offset_file
 # read_cubepars
 # read_resolution_file
@@ -53,17 +53,17 @@ def read_cubepars(self, instrument_info):
     -------------
     Based on the instrument and channel/subchannels (MIRI) or grating/filter(NIRSPEC)
     that covers the full range of the data, read in the appropriate columns in the
-    cube parameter reference file and fill in the cooresponding dicitionary in 
+    cube parameter reference file and fill in the cooresponding dicitionary in
     instrument_info
 
     Parameters
     ----------
-    ptab: cube parameter reference table 
+    ptab: cube parameter reference table
     instrument_info holds the defaults scales for each channel/subchannel
 
     Returns
     -------
-    The correct elements of instrument_info are filled in 
+    The correct elements of instrument_info are filled in
 
     """
     if self.instrument == 'MIRI':
@@ -89,7 +89,7 @@ def read_cubepars(self, instrument_info):
                     instrument_info.SetWaveRes(table_wresol,this_channel,this_sub)
                     instrument_info.SetWaveROI(table_wroi,this_channel,this_sub)
                     instrument_info.SetSpatialROI(table_sroi,this_channel,this_sub)
-        
+
     elif self.instrument == 'NIRSPEC':
         ptab = datamodels.NirspecIFUCubeParsModel(self.par_filename)
         number_gratings = len(self.all_grating)
@@ -127,7 +127,7 @@ def read_resolution_file(self,instrument_info):
     table_beta_b_short = ptab.psf_fwhm_beta_table['B_B_SHORT']
     table_beta_a_long = ptab.psf_fwhm_beta_table['B_A_LONG']
     table_beta_b_long = ptab.psf_fwhm_beta_table['B_B_LONG']
-    
+
 
     instrument_info.Set_psf_alpha_parameters(table_alpha_cutoff,
                                             table_alpha_a_short,
@@ -140,13 +140,13 @@ def read_resolution_file(self,instrument_info):
                                             table_beta_b_short,
                                             table_beta_a_long,
                                             table_beta_b_long)
-    
+
     number_bands = len(self.channel)
 
         # pull out the channels and subcahnnels that cover the data making up the cube
     for i in range(number_bands):
         this_channel = self.all_channel[i]
-        this_sub = self.all_subchannel[i]    
+        this_sub = self.all_subchannel[i]
         compare_band = this_channel+this_sub
         for tabdata in ptab.resolving_power_table:
             table_sub_band = tabdata['SUB_BAND']
@@ -216,7 +216,7 @@ class IFUCubeASN(object):
         # IF a single model or a single file  is passed in then
         # self.filename & self.input_model hold the values for this singe dataset
         self.InputType  = ''
-        if isinstance(input, datamodels.ImageModel):
+        if isinstance(input, datamodels.IFUImageModel):
 #            print('this is a single file passed as a Model')
             # It's a single image that's been passed in as a model
             # input is a model
@@ -252,14 +252,14 @@ class IFUCubeASN(object):
                     self.output_name =  asn_table['products'][0]['name']
                     for m in asn_table['products'][iproduct]['members']:
                         self.filenames.append(m['expname'])
-                        self.input_models.append(datamodels.ImageModel(m['expname']))
+                        self.input_models.append(datamodels.IFUImageModel(m['expname']))
             except:
                 # The name of a single image file
 #                print(' this is a single file  read in filename')
                 self.input_type = 'File'
                 self.data_type = 'singleton'
                 self.filenames.append(input)
-                self.input_models.append(datamodels.ImageModel(input))
+                self.input_models.append(datamodels.IFUImageModel(input))
                 self.output_name = self.build_product_name(self.filenames[0])
 
         else:
@@ -272,7 +272,7 @@ class IFUCubeASN(object):
         return single_product
 
 # TODO:  Routines not used below - saved just in case we need them later - if not
-# remove. 
+# remove.
 
     def interpret_image_model(self, model):
         """ Interpret image model as single member association data product.

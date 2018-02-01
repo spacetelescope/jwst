@@ -22,13 +22,10 @@ class PhotomStep(Step):
             self.log.error('Input can not be opened as a Model.')
 
         # Report the detected type of input model
-        if isinstance(dm, datamodels.CubeModel): # integration product: 3D array
-            self.log.debug('Input is a CubeModel for a multiple integ file.')
-        elif isinstance(dm, datamodels.ImageModel):  # standard product: 2D array
-            self.log.debug('Input is an ImageModel.')
-        elif isinstance(dm, datamodels.MultiSlitModel): # multi 2D arrays
-            self.log.debug('Input is a MultiSlitModel.')
-        else:
+        model_type = input_model.__class__.__name__
+        self.log.debug("Input is {}".format(model_type))
+        if model_type not in ('CubeModel', 'ImageModel',
+                              'IFUImageModel', 'MultiSlitModel'):
             self.log.warning('Input is not a CubeModel, ImageModel or MultiSlitModel.')
 
         # Get the reference file names
@@ -52,4 +49,3 @@ class PhotomStep(Step):
         output_obj.meta.cal_step.photom = 'COMPLETE'
 
         return output_obj
-

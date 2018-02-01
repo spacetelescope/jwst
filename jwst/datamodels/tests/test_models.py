@@ -14,10 +14,10 @@ from astropy.time import Time
 
 import numpy as np
 from numpy.testing.decorators import knownfailureif
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_allclose
 
 from .. import (DataModel, ImageModel, QuadModel, MultiSlitModel,
-                ModelContainer)
+                ModelContainer, SlitModel, SlitDataModel, IFUImageModel)
 from ..util import open as open_model
 from .. import schema
 
@@ -430,6 +430,60 @@ def test_object_node_iterator():
     items = []
     for i in im.meta.items():
         items.append(i[0])
-    
+
     assert 'date' in items
     assert 'model_type' in items
+
+
+def test_multislit_model():
+    data = np.arange(24, dtype=np.float32).reshape((6, 4))
+    err = np.arange(24, dtype=np.float32).reshape((6, 4)) + 2
+    wav = np.arange(24, dtype=np.float32).reshape((6, 4)) + 3
+    dq = np.arange(24,dtype=np.uint32).reshape((6, 4)) + 1
+    s0 = SlitDataModel(data=data, err=err, dq=dq, wavelength=wav)
+    s1 = SlitDataModel(data=data+1, err=err+1, dq=dq+1, wavelength=wav+1)
+
+    ms = MultiSlitModel()
+    ms.slits.append(s0)
+    ms.slits.append(s1)
+    ms.meta.instrument.name = 'NIRSPEC'
+    ms.meta.exposure.type = 'NRS_IMAGE'
+    slit1 = ms[1]
+    assert isinstance(slit1, SlitModel)
+    assert slit1.meta.instrument.name == 'NIRSPEC'
+    assert slit1.meta.exposure.type == 'NRS_IMAGE'
+    assert_allclose(slit1.data, data + 1)
+
+
+def test_slit_from_image():
+    data = np.arange(24, dtype=np.float32).reshape((6, 4))
+    im = ImageModel(data=data, err=data/2, dq=data)
+    im.meta.instrument.name = "MIRI"
+    slit_dm = SlitDataModel(im)
+    assert_allclose(im.data, slit_dm.data)
+    assert hasattr(slit_dm, 'pathloss_pointsource')
+    # this should be enabled after gwcs starts using non-coordinate inputs
+    #assert not hasattr(slit_dm, 'meta')
+
+    slit = SlitModel(im)
+    assert_allclose(im.data, slit.data)
+    assert_allclose(im.err, slit.err)
+    assert hasattr(slit, 'pathloss_pointsource')
+    assert slit.meta.instrument.name == "MIRI"
+
+    with pytest.raises(TypeError):
+        ImageModel(slit)
+
+    with pytest.raises(TypeError):
+        ImageModel(slit_dm)
+
+
+def test_ifuimage():
+    data = np.arange(24, dtype=np.float32).reshape((6, 4))
+    im = ImageModel(data=data, err=data/2, dq=data)
+    ifuimage = IFUImageModel(im)
+    assert_allclose(im.data, ifuimage.data)
+    assert_allclose(im.err, ifuimage.err)
+    assert_allclose(im.dq, ifuimage.dq)
+    with pytest.raises(TypeError):
+        ImageModel(ifuimage)

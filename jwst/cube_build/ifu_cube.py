@@ -323,7 +323,7 @@ class IFUCubeData(object):
             spaxel = []
             spaxel = IFUCubeData.create_spaxel(self)
 
-            with datamodels.ImageModel(self.input_models[j]) as input_model:
+            with datamodels.IFUImageModel(self.input_models[j]) as input_model:
 
 #********************************************************************************
 # pulled necessary routines from   CubeData.map_detector_to_spaxel
@@ -500,7 +500,7 @@ class IFUCubeData(object):
                 c1_offset = self.master_table.FileOffset[this_par1][this_par2]['C1'][k]
                 c2_offset = self.master_table.FileOffset[this_par1][this_par2]['C2'][k]
 # Open the input data model
-            with datamodels.ImageModel(ifile) as input_model:
+            with datamodels.IFUImageModel(ifile) as input_model:
                 # check if background sky matching as been done
                 # mrs_imatch step. THis is only for MRS data at this time
                 # but go head and check it before splitting by instrument
