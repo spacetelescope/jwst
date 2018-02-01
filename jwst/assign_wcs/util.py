@@ -367,7 +367,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     detector (for example, extract 2d would only extract the on-detector portion of
     the bounding box)
 
-    Bounding box dispersion direction is dependent on the filter and module for NIRCAM 
+    Bounding box dispersion direction is dependent on the filter and module for NIRCAM
     and changes for GRISMR, but is consistent for GRISMC,
     see https://jwst-docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
 
@@ -399,7 +399,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
             disperse_row_right = False
     else:
         raise ValueError("Input model is from unexpected instrument")
-    
+
     # get the array extent to exclude boxes not contained on the detector
     xsize = input_model.meta.subarray.xsize
     ysize = input_model.meta.subarray.ysize
@@ -451,7 +451,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                 if (disperse_row_right or  disperse_column):
                     wave_min = lmin
                     wave_max = lmax
-                 
+
                 xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value, obj.sky_bbox_ll.dec.value, lmin, order)
                 xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value, obj.sky_bbox_ur.dec.value, lmax, order)
 
@@ -462,14 +462,14 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                 # else:
                 #     cdisp = abs(round(bymax)-round(bymin)) // 2
                 #     xmin, ymin, xmax, ymax = map(round,[xmin-cdisp, ymin, xmax+cdisp, ymax])
-                
+
 
                 # don't add objects and orders which are entirely off the detector
                 # this could also live in extract_2d
                 # partial_order marks partial off-detector objects which are near enough to cause
                 # spectra to be observed on the detector. This is usefull because the catalog often is
                 # created from a resampled direct image that is bigger than the detector FOV for a single
-                # grism exposure. 
+                # grism exposure.
                 exclude = False
                 partial_order = False
 
@@ -486,7 +486,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                     exclude = True
                 if (xmin > xsize):
                     exclude = True
-                
+
                 if partial_order:
                     log.info("Partial order on detector for obj: {} order: {}".format(obj.sid, order))
                 if exclude:
@@ -510,7 +510,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                                                  sky_bbox_ur=obj.sky_bbox_ur,
                                                  xcentroid=xcenter,
                                                  ycentroid=ycenter))
-            
+
     return grism_objects
 
 
@@ -557,6 +557,6 @@ def update_s_region(model):
         " {6} {7}".format(*footprint.flatten()))
     if "nan" in s_region:
         # do not update s_region if there are NaNs.
-        log.info("There NaNs in s_region")
+        log.info("There are NaNs in s_region")
     else:
         model.meta.wcsinfo.s_region = s_region

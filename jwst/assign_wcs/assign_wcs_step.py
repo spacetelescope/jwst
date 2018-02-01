@@ -46,9 +46,11 @@ class AssignWcsStep(Step):
         with datamodels.open(input) as input_model:
             # If input type is not supported, log warning, set to 'skipped', exit
             if not (isinstance(input_model, datamodels.ImageModel) or
-                    isinstance(input_model, datamodels.CubeModel)):
-                log.warning("Input dataset type is not supported, as it is")
-                log.warning("neither ImageModel or CubeModel, so skipping step.")
+                    isinstance(input_model, datamodels.CubeModel) or
+                    isinstance(input_model, datamodels.IFUImageModel)):
+                log.warning("Input dataset type is not supported.")
+                log.warning("assign_wcs expects ImageModel, IFUImageModel or CubeModel as input.")
+                log.warning("Skipping assign_wcs step.")
                 result = input_model.copy()
                 result.meta.cal_step.assign_wcs = 'SKIPPED'
                 return result
