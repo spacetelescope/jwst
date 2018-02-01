@@ -43,7 +43,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     schema_url = "core.schema.yaml"
 
     def __init__(self, init=None, schema=None, extensions=None,
-                 pass_invalid_values=False):
+                 pass_invalid_values=False, strict_validation=False):
         """
         Parameters
         ----------
@@ -74,8 +74,11 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         extensions: classes extending the standard set of extensions, optional.
             If an extension is defined, the prefix used should be 'url'.
 
-        pass_invalid_values: If true, values that do not validate the schema can
-            be read and written and only a warning will be generated
+        pass_invalid_values: If true, values that do not validate the schema
+            will be added to the metadata. If false, they will be set to None
+
+        strict_validation: if true, an schema validation errors will generate
+            an excption. If false, they will generate a warning.
         """
         # Set the extensions
         if extensions is None:
@@ -84,15 +87,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             extensions.extend(jwst_extensions)
         self._extensions = extensions
 
-        # Override value of pass_invalid value if environment value set
-        if "PASS_INVALID_VALUES" in os.environ:
-            pass_invalid_values = os.environ["PASS_INVALID_VALUES"]
-            try:
-                pass_invalid_values = bool(int(pass_invalid_values))
-            except ValueError:
-                pass_invalid_values = False
-
-        self._pass_invalid_values = pass_invalid_values
+        # Override value of validation parameters
+        # if environment value set
+        self._pass_invalid_values = self.get_envar("PASS_INVALID_VALUES",
+                                                    pass_invalid_values)
+        self._strict_validation = self.get_envar("STRICT_VALIDATION",
+                                                 strict_validation)
 
         # Construct the path to the schema files
         filename = os.path.abspath(inspect.getfile(self.__class__))
@@ -113,6 +113,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                                              resolve_references=True)
 
         self._schema = mschema.flatten_combiners(schema)
+
+        # Provide the object as context to other classes and functions
+        self._ctx = self
+
         # Determine what kind of input we have (init) and execute the
         # proper code to intiailize the model
         self._files_to_close = []
@@ -146,8 +150,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             asdf = AsdfFile()
             is_shape = True
         elif isinstance(init, fits.HDUList):
-            asdf = fits_support.from_fits(init, self._schema, extensions,
-                                          pass_invalid_values)
+            asdf = fits_support.from_fits(init, self._schema,
+                                          extensions, self._ctx)
 
         elif isinstance(init, (str, bytes)):
             if isinstance(init, bytes):
@@ -157,7 +161,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if file_type == "fits":
                 hdulist = fits.open(init)
                 asdf = fits_support.from_fits(hdulist, self._schema,
-                                              extensions, pass_invalid_values)
+                                              extensions, self._ctx)
+
                 self._files_to_close.append(hdulist)
 
             elif file_type == "asdf":
@@ -177,7 +182,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         self._shape = shape
         self._instance = asdf.tree
         self._asdf = asdf
-        self._ctx = self
 
         # if the input is from a file, set the filename attribute
         if isinstance(init, str):
@@ -232,6 +236,15 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         if not self._iscopy and self._asdf is not None:
             self._asdf.close()
 
+    def get_envar(self, name, value):
+        if name in os.environ:
+            value = os.environ[name]
+            try:
+                value = bool(int(value))
+            except ValueError:
+                value = True
+        return value
+
     def get_resolver(self, asdf_file):
         extensions = asdf_file._extensions
         def asdf_file_resolver(uri):
@@ -261,7 +274,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         """
         result = self.__class__(init=None,
                                 extensions=self._extensions,
-                                pass_invalid_values=self._pass_invalid_values)
+                                pass_invalid_values=self._pass_invalid_values,
+                                strict_validation=self._strict_validation)
         self.clone(result, self, deepcopy=True, memo=memo)
         return result
 
@@ -853,8 +867,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             hdu = fits.ImageHDU(name=hdu_name, header=header)
         hdulist = fits.HDUList([hdu])
 
-        ff = fits_support.from_fits(hdulist, self._schema, extensions=extensions,
-            pass_invalid_values=self._pass_invalid_values)
+        ff = fits_support.from_fits(hdulist, self._schema,
+                                    self._extensions, self._ctx)
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
 
