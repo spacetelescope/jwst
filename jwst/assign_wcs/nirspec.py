@@ -1007,15 +1007,15 @@ def correct_tilt(disperser, xtilt, ytilt):
     log.info("gwa_xtilt is {0}".format(xtilt))
 
     if xtilt is not None:
-        theta_y_correction = _get_correction(disperser.gwa_tiltx, xtilt)
+        theta_y_correction = _get_correction(disp.gwa_tiltx, xtilt)
         log.info('theta_y correction: {0}'.format(theta_y_correction))
-        disp['theta_y'] = disperser.theta_y + theta_y_correction
+        disp['theta_y'] = disp.theta_y + theta_y_correction
     else:
         log.info('gwa_xtilt not applied')
     if ytilt is not None:
-        theta_x_correction = _get_correction(disperser.gwa_tilty, ytilt)
+        theta_x_correction = _get_correction(disp.gwa_tilty, ytilt)
         log.info('theta_x correction: {0}'.format(theta_x_correction))
-        disp.theta_x = disperser.theta_x + theta_x_correction
+        disp.theta_x = disp.theta_x + theta_x_correction
     else:
         log.info('gwa_ytilt not applied')
     return disp
