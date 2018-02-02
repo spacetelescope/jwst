@@ -215,7 +215,11 @@ class ModelContainer(model_base.DataModel):
         self.meta.asn_type = str(asn_data['asn_type'])
         self.meta.asn_rule = str(asn_data['asn_rule'])
 
-    def save(self, path=None, dir_path=None, *args, **kwargs):
+    def save(self,
+             path=None,
+             dir_path=None,
+             save_model_func=None,
+             *args, **kwargs):
         """
         Write out models in container to FITS or ASDF.
 
@@ -234,30 +238,41 @@ class ModelContainer(model_base.DataModel):
             If directory does not exist, it creates it.  Filenames are pulled
             from `.meta.filename` of each datamodel in the container.
 
+        save_model_func: func or None
+            Alternate function to save each model instead of
+            the models `save` method. Takes one argument, the model,
+            and keyword argument `idx` for an index.
+
         Returns
         -------
         output_paths: [str[, ...]]
             List of output file paths of where the models were saved.
         """
+        output_paths = []
         if path is None:
             path = lambda filename, idx: filename
         elif not callable(path):
             path = make_file_with_index
 
-        output_paths = []
         for idx, model in enumerate(self):
             if len(self) <= 1:
                 idx = None
-            outpath, filename = op.split(
-                path(model.meta.filename, idx=idx)
-            )
-            if dir_path:
-                outpath = dir_path
-            save_path = op.join(outpath, filename)
-            try:
-                output_paths.append(model.save(save_path, *args, **kwargs))
-            except IOError as err:
-                raise err
+            if save_model_func is None:
+                outpath, filename = op.split(
+                    path(model.meta.filename, idx=idx)
+                )
+                if dir_path:
+                    outpath = dir_path
+                save_path = op.join(outpath, filename)
+                try:
+                    output_paths.append(
+                        model.save(save_path, *args, **kwargs)
+                    )
+                except IOError as err:
+                    raise err
+
+            else:
+                output_paths.append(save_model_func(model, idx=idx))
 
         return output_paths
 

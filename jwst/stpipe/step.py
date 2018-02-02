@@ -713,26 +713,25 @@ class Step():
            not output_file:
             return
 
-        if type(model) is ModelContainer:
-            model_list = model
+        if isinstance(model, ModelContainer):
+            save_model_func = partial(
+                self.save_model,
+                suffix=suffix,
+                force=force
+            )
+            output_path = model.save(
+                path=output_file,
+                save_model_func=save_model_func)
         else:
-            model_list = [model]
-        use_idx = not self.output_use_model and len(model_list) > 1
-        output_paths = list()
-        for idx, current_model in enumerate(model_list):
             if self.output_use_model:
-                output_file = current_model.meta.filename
-            if use_idx:
-                idx_to_use = idx
-            else:
-                idx_to_use = None
-            output_path = current_model.save(self.make_output_path(
-                basepath=output_file, suffix=suffix, idx=idx_to_use
+                output_file = model.meta.filename
+                idx = None
+            output_path = model.save(self.make_output_path(
+                basepath=output_file, suffix=suffix, idx=idx
             ))
             self.log.info('Saved model in {}'.format(output_path))
-            output_paths.append(output_path)
 
-        return output_paths
+        return output_path
 
     @property
     def make_output_path(self):
