@@ -208,11 +208,15 @@ class ObjectNode(Node):
             schema = _get_schema_for_property(self._schema, attr)
             if val is None:
                 val = _make_default(attr, schema, self._ctx)
-
             val = _cast(val, schema)
-            if util.validate_schema(val, schema, False,
-                                    self._ctx._strict_validation):
-                self._instance[attr] = val
+            old_val = self._instance.get(attr, None)
+
+            self._instance[attr] = val
+            if not self._validate():
+                if old_val is None:
+                    del self._instance[attr]
+                else:
+                    self._instance[attr] = old_val
 
     def __delattr__(self, attr):
         if attr.startswith('_'):
