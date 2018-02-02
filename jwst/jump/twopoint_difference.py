@@ -46,6 +46,8 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
     # Loop over multiple integrations
     for integration in range(nints):
 
+        log.info(' working on integration %d' % (integration+1))
+
         # Roll the ngroups axis of data arrays to the end, to make
         # memory access to the values for a given pixel faster
         rdata = np.rollaxis(data[integration], 0, 3)
