@@ -60,6 +60,9 @@ class MultiSlitModel(model_base.DataModel):
                     kwargs[key] = items[key]
             s = SlitModel(**kwargs)
             s.update(self)
+
+            if hasattr(slit.meta, 'wcs'):
+                s.meta.wcs = slit.meta.wcs
             return s
         else:
             raise ValueError("Invalid key {0}".format(key))

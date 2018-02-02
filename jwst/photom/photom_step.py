@@ -22,11 +22,12 @@ class PhotomStep(Step):
             self.log.error('Input can not be opened as a Model.')
 
         # Report the detected type of input model
-        model_type = input_model.__class__.__name__
+        model_type = dm.__class__.__name__
         self.log.debug("Input is {}".format(model_type))
         if model_type not in ('CubeModel', 'ImageModel',
                               'IFUImageModel', 'MultiSlitModel'):
-            self.log.warning('Input is not a CubeModel, ImageModel or MultiSlitModel.')
+            self.log.warning("Input is not one of the supported model types: "
+                             "CubeModel, ImageModel IFUImageModel or MultiSlitModel.")
 
         # Get the reference file names
         phot_filename = self.get_reference_file(dm, 'photom')
