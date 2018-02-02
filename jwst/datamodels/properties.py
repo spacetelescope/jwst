@@ -208,7 +208,7 @@ class ObjectNode(Node):
             schema = _get_schema_for_property(self._schema, attr)
             if val is None:
                 val = _make_default(attr, schema, self._ctx)
-
+            self._instance[attr] = val
             val = _cast(val, schema)
             if util.validate_schema(val, schema, False,
                                     self._ctx._strict_validation):
