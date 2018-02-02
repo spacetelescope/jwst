@@ -292,14 +292,15 @@ class DataSet(object):
             # data for each of the slits/orders in the input
             for slit in self.input.slits:
 
-                log.info('Working on slit %s' % slit.name)
+                # Initialize the output conversion factor and
+                # increment slit number
                 conv_factor = None
                 self.slitnum += 1
 
-                # Set the input data order number.
-                # This is a hack for now; eventually the order number
-                # should be specified in the input data model
-                order = self.slitnum + 1
+                # Get the spectral order number for this slit
+                order = slit.meta.wcsinfo.spectral_order
+
+                log.info("Working on slit: {} order: {}:".format(slit.name, order))
 
                 # Locate matching row in reference file
                 for tabdata in ftab.phot_table:
