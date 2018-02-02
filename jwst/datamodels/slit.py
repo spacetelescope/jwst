@@ -50,7 +50,7 @@ class SlitDataModel(model_base.DataModel):
             for key in kwargs:
                 setattr(key, kwargs[key])
 
-            if hasattr(self.meta, 'wcs'):
+            if hasattr(init.meta, 'wcs'):
                 self.meta.wcs = init.meta.wcs
             else:
                 self.meta.wcs = None

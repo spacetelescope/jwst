@@ -47,8 +47,9 @@ class MultiSlitModel(model_base.DataModel):
         Returns a metadata value using a dotted name or
         a ``SlitModel``.
         """
-        if isinstance(key, str) and key.split('.') == 'meta':
-            super(MultiSlitModel, self).__getitem__(key)
+        if isinstance(key, str) and key.split('.')[0] == 'meta':
+            res = super(MultiSlitModel, self).__getitem__(key)
+            return res
         elif isinstance(key, int):
             # Return an instance of a SlitModel
             slit = self.slits[key]  # returns an ObjectNode instance
@@ -60,6 +61,9 @@ class MultiSlitModel(model_base.DataModel):
                     kwargs[key] = items[key]
             s = SlitModel(**kwargs)
             s.update(self)
+
+            if hasattr(slit.meta, 'wcs'):
+                s.meta.wcs = slit.meta.wcs
             return s
         else:
             raise ValueError("Invalid key {0}".format(key))
