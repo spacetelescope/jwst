@@ -84,7 +84,6 @@ allOf:
       title: The science data
       fits_hdu: SCI
       default: 0.0
-      ndim: 2
       datatype: float32
     dq:
       title: Data quality array
@@ -99,7 +98,6 @@ allOf:
     wavelength:
       title: Wavelength array, corrected for zero-point
       fits_hdu: WAVELENGTH
-      ndim: 2
       datatype: float32
     barshadow:
       title: Bar shadow correction
@@ -117,13 +115,11 @@ allOf:
     var_poisson:
       title: variance due to poisson noise
       fits_hdu: VAR_POISSON
-      ndim: 2
       default: 0.0
       datatype: float32
     var_rnoise:
       title: variance due to read noise
       fits_hdu: VAR_RNOISE
-      ndim: 2
       default: 0.0
       datatype: float32
 - $ref: bunit.schema.yaml
