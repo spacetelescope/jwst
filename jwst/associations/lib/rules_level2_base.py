@@ -406,17 +406,13 @@ class Utility():
         return finalized + lv2_asns
 
     @staticmethod
-    def merge_asns(associations, acid_regex='o\d{3}$'):
+    def merge_asns(associations):
         """merge level2 associations
 
         Parameters
         ----------
         associations: [asn(, ...)]
             Associations to search for merging.
-
-        acid_regex: str
-            Regular expression which the `asn_id` of the association
-            must match to be included.
 
         Returns
         -------
@@ -431,12 +427,12 @@ class Utility():
             else:
                 others.append(asn)
 
-        lv2_asns = Utility._merge_asns(lv2_asns, acid_regex)
+        lv2_asns = Utility._merge_asns(lv2_asns)
 
         return others + lv2_asns
 
     @staticmethod
-    def _merge_asns(asns, acid_regex):
+    def _merge_asns(asns):
         """Merge associations by `asn_type` and `asn_id`
 
         Parameters
@@ -444,20 +440,13 @@ class Utility():
         associations: [asn(, ...)]
             Associations to search for merging.
 
-        acid_regex: str
-            Regular expression which the `asn_id` of the association
-            must match to be included.
-
         Returns
         -------
         associatons: [association(, ...)]
             List of associations, some of which may be merged.
         """
-        match_acid = re.compile(acid_regex, flags=re.IGNORECASE & re.UNICODE)
         merged = {}
         for asn in asns:
-            if match_acid.match(asn['asn_id']) is None:
-                continue
             idx = '_'.join([asn['asn_type'], asn['asn_id']])
             try:
                 current_asn = merged[idx]
