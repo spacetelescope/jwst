@@ -21,7 +21,7 @@ log.setLevel(logging.DEBUG)
 
 #********************************************************************************
 # HELPER ROUTINES for IFUCubeData class defined in ifu_cube.py
-# these methods relate to wcs type procedures.  
+# these methods relate to wcs type procedures.
 # determine_scale
 
 #********************************************************************************
@@ -99,7 +99,7 @@ def setup_wcs(self):
 # Open the input data model
 # Find the footprint of the image
 
-            with datamodels.ImageModel(ifile) as input_model:
+            with datamodels.IFUImageModel(ifile) as input_model:
                 if self.instrument == 'NIRSPEC':
                     flag_data = 0
                     ch_footprint = find_footprint_NIRSPEC(self,
@@ -183,7 +183,7 @@ def determine_scale(self):
     Short Summary
     -------------
     Determine the scale (sampling) in the 3 dimensions for the cube
-    If the IFU cube covers more than 1 band - then use the rules to 
+    If the IFU cube covers more than 1 band - then use the rules to
     define the Spatial and Wavelength sample size to use for the cube
     Current Rule: using the minimum
 
@@ -234,7 +234,7 @@ def determine_scale(self):
         scale = [min_a, min_b, min_w]
 
 #________________________________________________________________________________
-# check and see if the user has set the scale or set by cfg. 
+# check and see if the user has set the scale or set by cfg.
 
     a_scale = scale[0]
     if self.scale1 != 0.0:
@@ -246,10 +246,10 @@ def determine_scale(self):
 
     w_scale = scale[2]
         # temp fix for large cubes - need to change to variable wavelength scale
-    if self.scalew == 0 and self.num_bands > 6:   
-        w_scale  = w_scale*2            
-    if self.scalew == 0 and self.num_bands > 9:   
-        w_scale  = w_scale*2            
+    if self.scalew == 0 and self.num_bands > 6:
+        w_scale  = w_scale*2
+    if self.scalew == 0 and self.num_bands > 9:
+        w_scale  = w_scale*2
     if self.scalew != 0.0:
         w_scale = self.scalew
 
@@ -287,7 +287,7 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
 
     xstart, xend = instrument_info.GetMIRISliceEndPts(this_channel)
     y, x = np.mgrid[:1024, xstart:xend]
-    
+
     coord1 = np.zeros(y.shape)
     coord2 = np.zeros(y.shape)
     lam = np.zeros(y.shape)
@@ -401,7 +401,7 @@ def find_footprint_NIRSPEC(self, input,flag_data):
 
 #_______________________________________________________________________
 # Footprint values are RA,DEC values on the sky
-# Values are given in degrees 
+# Values are given in degrees
 
 def set_geometry(self, footprint):
 
@@ -410,35 +410,35 @@ def set_geometry(self, footprint):
         dec_ave = (dec_min + dec_max)/2.0
 
         # actually this is hard due to converenge of hour angle
-        # improve determining ra_ave in the future - do not just average (BAD) 
-        ra_ave = ((ra_min + ra_max)/2.0 )#* math.cos(dec_ave*deg2rad) 
+        # improve determining ra_ave in the future - do not just average (BAD)
+        ra_ave = ((ra_min + ra_max)/2.0 )#* math.cos(dec_ave*deg2rad)
 
-        self.Crval1 = ra_ave 
+        self.Crval1 = ra_ave
         self.Crval2 = dec_ave
         xi_center,eta_center = coord.radec2std(self.Crval1, self.Crval2,ra_ave,dec_ave)
-        
+
         xi_min,eta_min = coord.radec2std(self.Crval1, self.Crval2,ra_min,dec_min)
         xi_max,eta_max = coord.radec2std(self.Crval1, self.Crval2,ra_max,dec_max)
 #________________________________________________________________________________
         # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
-        # to find location of center abs of min values is how many pixels 
+        # to find location of center abs of min values is how many pixels
 
 #        print('crval1 crval2',self.Crval1,self.Crval2)
-              
-        n1a = int(math.ceil(math.fabs(xi_min) / self.Cdelt1)) 
-        n2a = int(math.ceil(math.fabs(eta_min) / self.Cdelt2)) 
 
-        n1b = int(math.ceil(math.fabs(xi_max) / self.Cdelt1)) 
-        n2b = int(math.ceil(math.fabs(eta_max) / self.Cdelt2)) 
+        n1a = int(math.ceil(math.fabs(xi_min) / self.Cdelt1))
+        n2a = int(math.ceil(math.fabs(eta_min) / self.Cdelt2))
+
+        n1b = int(math.ceil(math.fabs(xi_max) / self.Cdelt1))
+        n2b = int(math.ceil(math.fabs(eta_max) / self.Cdelt2))
 
         xi_min = 0.0 - (n1a * self.Cdelt1) - self.Cdelt1/2.0
         xi_max = (n1b * self.Cdelt1) + self.Cdelt1/2.0
 
         eta_min = 0.0 - (n2a * self.Cdelt2) - self.Cdelt2/2.0
         eta_max = (n2b * self.Cdelt2) + self.Cdelt2/2.0
-        
+
         self.Crpix1 = float(n1a) + 1.0
-        self.Crpix2 = float(n2a) + 1.0 
+        self.Crpix2 = float(n2a) + 1.0
 
         self.naxis1 = n1a + n1b
         self.naxis2 = n2a + n2b
@@ -448,13 +448,13 @@ def set_geometry(self, footprint):
         self.b_min = eta_min
         self.b_max = eta_max
 
-# center of spaxels 
+# center of spaxels
         self.xcoord = np.zeros(self.naxis1)
         xstart = xi_min + self.Cdelt1 / 2.0
         for i in range(self.naxis1):
             self.xcoord[i] = xstart
             xstart = xstart + self.Cdelt1
-            
+
 #        print('naxis 1 2',self.naxis1,self.naxis2)
 
         self.ycoord = np.zeros(self.naxis2)
@@ -470,17 +470,17 @@ def set_geometry(self, footprint):
         ygrid = np.zeros(self.naxis2*self.naxis1)
         xgrid = np.zeros(self.naxis2*self.naxis1)
 
-        k = 0 
+        k = 0
         ystart = self.ycoord[0]
         for i in range(self.naxis2):
             xstart = self.xcoord[0]
-            for j in range(self.naxis1): 
+            for j in range(self.naxis1):
                 xgrid[k] = xstart
                 ygrid[k] = ystart
                 xstart = xstart + self.Cdelt1
                 k = k + 1
             ystart = ystart + self.Cdelt2
-        
+
 
 #        print('y start end',ystart,yend)
 #        print('x start end',xstart,xend)
@@ -590,15 +590,15 @@ def print_cube_geometry(self):
             log.info('axis# Naxis  CRPIX    CRVAL      CDELT(arc sec)  MIN & Max (alpha,beta arc sec)')
         else:
             log.info('axis# Naxis  CRPIX    CRVAL      CDELT(arc sec)  MIN & Max (xi,eta arc sec)')
-        log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
+        log.info('Axis 1 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f',
                  self.naxis1, self.Crpix1, self.Crval1, self.Cdelt1, self.a_min, self.a_max)
-        log.info('Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
+        log.info('Axis 2 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f',
                  self.naxis2, self.Crpix2, self.Crval2, self.Cdelt2, self.b_min, self.b_max)
-        log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f', 
+        log.info('Axis 3 %5d  %5.2f %12.8f %12.8f %12.8f %12.8f',
                  self.naxis3, self.Crpix3, self.Crval3, self.Cdelt3, self.lambda_min, self.lambda_max)
 
         if(self.instrument == 'MIRI'):
-            # length of channel and subchannel are the same 
+            # length of channel and subchannel are the same
             number_bands = len(self.list_par1)
 
             for i in range(number_bands):

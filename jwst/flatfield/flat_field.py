@@ -251,7 +251,7 @@ def do_NIRSpec_flat_field(output_model,
     exposure_type = output_model.meta.exposure.type
 
     if exposure_type == "NRS_BRIGHTOBJ":
-        if not isinstance(output_model, datamodels.CubeModel):
+        if not isinstance(output_model, datamodels.SlitModel):
             log.error("NIRSpec BRIGHTOBJ data is not a CubeModel; "
                       "don't know how to process it.")
             raise RuntimeError("Input is {}; expected CubeModel"
