@@ -4,13 +4,16 @@ import datetime
 import os
 import shutil
 import tempfile
+import warnings
 
 import pytest
 import numpy as np
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 
 import jsonschema
+from astropy.io import fits
 
+from .. import util
 from .. import DataModel, ImageModel, RampModel, MaskModel, MultiSlitModel, AsnModel
 
 from asdf import schema as mschema
@@ -42,28 +45,28 @@ def teardown():
 
 def test_choice():
     with pytest.raises(jsonschema.ValidationError):
-        with DataModel(FITS_FILE) as dm:
+        with DataModel(FITS_FILE, strict_validation=True) as dm:
             assert dm.meta.instrument.name == 'MIRI'
             dm.meta.instrument.name = 'FOO'
 
 
 def test_set_na_ra():
     with pytest.raises(jsonschema.ValidationError):
-        with DataModel(FITS_FILE) as dm:
+        with DataModel(FITS_FILE, strict_validation=True) as dm:
             # Setting an invalid value should raise a ValueError
             dm.meta.target.ra = "FOO"
 
 '''
 def test_date():
     with pytest.raises(jsonschema.ValidationError):
-        with ImageModel((50, 50)) as dm:
+        with ImageModel((50, 50), strict_validation=True) as dm:
             dm.meta.date = 'Not an acceptable date'
 
 
 def test_date2():
     from astropy import time
 
-    with ImageModel((50, 50)) as dm:
+    with ImageModel((50, 50), strict_validation=True) as dm:
         assert isinstance(dm.meta.date, (time.Time, datetime.datetime))
 '''
 
@@ -108,7 +111,8 @@ transformation_schema = {
 
 def test_list():
     with pytest.raises(jsonschema.ValidationError):
-        with ImageModel((50, 50), schema=transformation_schema) as dm:
+        with ImageModel((50, 50), schema=transformation_schema,
+                        strict_validation=True) as dm:
             dm.meta.transformations = []
             object = dm.meta.transformations.item(
                 transformation="SIN",
@@ -119,12 +123,88 @@ def test_list2():
     with pytest.raises(jsonschema.ValidationError):
         with ImageModel(
             (50, 50),
-            schema=transformation_schema) as dm:
+            schema=transformation_schema,
+            strict_validation=True) as dm:
             dm.meta.transformations = []
             object = dm.meta.transformations.append(
                 {'transformation': 'FOO',
                  'coeff': 2.0})
 '''
+
+def test_invalid_fits():
+    hdulist = fits.open(FITS_FILE)
+    header = hdulist[0].header
+    header['INSTRUME'] = 'FOO'
+
+    if os.path.exists(TMP_FITS):
+        os.remove(TMP_FITS)
+
+    hdulist.writeto(TMP_FITS)
+    hdulist.close()
+
+    with pytest.raises(util.ValidationWarning):
+        with warnings.catch_warnings():
+            os.environ['PASS_INVALID_VALUES'] = '0'
+            os.environ['STRICT_VALIDATION'] = '0'
+            warnings.simplefilter('error')
+            model = util.open(TMP_FITS)
+            model.close()
+
+    with pytest.raises(jsonschema.ValidationError):
+        os.environ['STRICT_VALIDATION'] = '1'
+        model = util.open(TMP_FITS)
+        model.close()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        os.environ['PASS_INVALID_VALUES'] = '0'
+        os.environ['STRICT_VALIDATION'] = '0'
+        model = util.open(TMP_FITS)
+        assert model.meta.instrument.name is None
+        model.close()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        os.environ['PASS_INVALID_VALUES'] = '1'
+        model = util.open(TMP_FITS)
+        assert model.meta.instrument.name == 'FOO'
+        model.close()
+
+    del os.environ['PASS_INVALID_VALUES']
+    del os.environ['STRICT_VALIDATION']
+
+    with pytest.raises(util.ValidationWarning):
+        with warnings.catch_warnings():
+            warnings.simplefilter('error')
+            model = util.open(TMP_FITS,
+                              pass_invalid_values=False,
+                              strict_validation=False)
+            model.close()
+
+    with pytest.raises(jsonschema.ValidationError):
+        model = util.open(TMP_FITS,
+                          pass_invalid_values=False,
+                          strict_validation=True)
+        model.close()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        model = util.open(TMP_FITS,
+                          pass_invalid_values=False,
+                          strict_validation=False)
+        assert model.meta.instrument.name is None
+        model.close()
+
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore')
+        model = util.open(TMP_FITS,
+                          pass_invalid_values=True,
+                          strict_validation=False)
+        assert model.meta.instrument.name == 'FOO'
+        model.close()
+
+    if os.path.exists(TMP_FITS):
+        os.remove(TMP_FITS)
 
 def test_ad_hoc_json():
     with DataModel() as dm:
@@ -212,7 +292,7 @@ schema_extra = {
 
 
 def test_dictionary_like():
-    with DataModel() as x:
+    with DataModel(strict_validation=True) as x:
         x.meta.origin = 'FOO'
         assert x['meta.origin'] == 'FOO'
 
@@ -478,7 +558,7 @@ def test_implicit_creation_lower_dimensionality():
 
 
 def test_add_schema_entry():
-    with DataModel() as dm:
+    with DataModel(strict_validation=True) as dm:
         dm.add_schema_entry('meta.foo.bar', {'enum': ['foo', 'bar', 'baz']})
         dm.meta.foo.bar
         dm.meta.foo.bar = 'bar'
@@ -540,6 +620,6 @@ def test_multislit_move_from_fits():
 '''
 def test_multislit_garbage():
     with pytest.raises(jsonschema.ValidationError):
-        m = MultiSlitModel()
+        m = MultiSlitModel(strict_validation=True)
         m.slits.append('junk')
 '''

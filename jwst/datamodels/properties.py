@@ -3,7 +3,6 @@
 import copy
 import numpy as np
 import jsonschema
-import warnings
 
 from astropy.utils.compat.misc import override__dir__
 
@@ -138,7 +137,6 @@ def _get_schema_for_index(schema, i):
     else:
         return items
 
-
 def _find_property(schema, attr):
     subschema = _get_schema_for_property(schema, attr)
     if subschema == {}:
@@ -147,11 +145,6 @@ def _find_property(schema, attr):
         find = 'default' in subschema
     return find
 
-
-class ValidationWarning(Warning):
-    pass
-
-
 class Node(object):
     def __init__(self, instance, schema, ctx):
         self._instance = instance
@@ -159,34 +152,15 @@ class Node(object):
         self._schema['$schema'] = 'http://stsci.edu/schemas/asdf-schema/0.1.0/asdf-schema'
         self._ctx = ctx
 
-    def _report(self, errmsg):
-        try:
-            filename = self._ctx.meta.filename
-            errmsg = "In {0} {1}".format(filename, errmsg)
-        except AttributeError:
-            pass
-
-        if self._ctx._pass_invalid_values:
-            warnings.warn(errmsg, ValidationWarning)
-        else:
-            raise jsonschema.ValidationError(errmsg)
-
-
     def _validate(self):
-        instance = yamlutil.custom_tree_to_tagged_tree(
-            self._instance, self._ctx._asdf)
-        try:
-            schema.validate(instance, schema=self._schema)
-            valid = True
-        except jsonschema.ValidationError as errmsg:
-            self._report(str(errmsg))
-            valid = False
-        return valid
+        instance = yamlutil.custom_tree_to_tagged_tree(self._instance,
+                                                       self._ctx._asdf)
+        return util.validate_schema(instance, self._schema, False,
+                                    self._ctx._strict_validation)
 
     @property
     def instance(self):
         return self._instance
-
 
 class ObjectNode(Node):
     @override__dir__
@@ -238,30 +212,26 @@ class ObjectNode(Node):
             old_val = self._instance.get(attr, None)
 
             self._instance[attr] = val
-            try:
-                if not self._validate():
-                    self._revert(attr, old_val)
-            except jsonschema.ValidationError:
-                self._revert(attr, old_val)
-                raise
+            if not self._validate():
+                if old_val is None:
+                    del self._instance[attr]
+                else:
+                    self._instance[attr] = old_val
 
     def __delattr__(self, attr):
         if attr.startswith('_'):
             del self.__dict__[attr]
         else:
-            old_val = self._instance.get(attr, None)
+            schema = _get_schema_for_property(self._schema, attr)
+            if not util.validate_schema(None, schema, False,
+                                        self._ctx._strict_validation):
+                return
 
             try:
                 del self._instance[attr]
             except KeyError:
                 raise AttributeError(
                     "Attribute '{0}' missing".format(attr))
-            try:
-                if not self._validate():
-                    self._revert(attr, old_val)
-            except jsonschema.ValidationError:
-                self._revert(attr, old_val)
-                raise
 
     def __hasattr__(self, attr):
         return (attr in self._instance or
@@ -270,13 +240,6 @@ class ObjectNode(Node):
     def __iter__(self):
         return NodeIterator(self)
 
-    def _revert(self, attr, old_val):
-        # Revert the change
-        if old_val is None:
-            del self._instance[attr]
-        else:
-            self._instance[attr] = old_val
-
     def items(self):
         # Return a (key, value) tuple for the node
         for key in self:
@@ -284,7 +247,6 @@ class ObjectNode(Node):
             for field in key.split('.'):
                 val = getattr(val, field)
             yield (key, val)
-
 
 class ListNode(Node):
     def __cast(self, other):
@@ -313,8 +275,10 @@ class ListNode(Node):
 
     def __setitem__(self, i, val):
         schema = _get_schema_for_index(self._schema, i)
-        self._instance[i] = _cast(val, schema)
-        self._validate()
+        val =  _cast(val, schema)
+        if util.validate_schema(val, schema, False,
+                                self._ctx._strict_validation):
+            self._instance[i] = val
 
     def __delitem__(self, i):
         del self._instance[i]
@@ -344,19 +308,25 @@ class ListNode(Node):
 
     def append(self, item):
         schema = _get_schema_for_index(self._schema, len(self._instance))
-        self._instance.append(_cast(item, schema))
-        self._validate()
+        item = _cast(item, schema)
+        if util.validate_schema(item, schema, False,
+                                self._ctx._strict_validation):
+            self._instance.append(item)
 
     def insert(self, i, item):
         schema = _get_schema_for_index(self._schema, i)
-        self._instance.insert(i, _cast(item, schema))
-        self._validate()
+        item = _cast(item, schema)
+        if util.validate_schema(item, schema, False,
+                                self._ctx._strict_validation):
+            self._instance.insert(i, item)
 
     def pop(self, i=-1):
         schema = _get_schema_for_index(self._schema, 0)
         x = self._instance.pop(i)
-        self._validate()
-        return _make_node(x, schema, self._ctx)
+        obj = _make_node(x, schema, self._ctx)
+        if not obj._validate():
+            obj = None
+        return obj
 
     def remove(self, item):
         self._instance.remove(item)
@@ -370,11 +340,9 @@ class ListNode(Node):
 
     def reverse(self):
         self._instance.reverse()
-        self._validate()
 
     def sort(self, *args, **kwargs):
         self._instance.sort(*args, **kwargs)
-        self._validate()
 
     def extend(self, other):
         for part in _unmake_node(other):
@@ -384,9 +352,9 @@ class ListNode(Node):
     def item(self, **kwargs):
         assert isinstance(self._schema['items'], dict)
         obj = ObjectNode(kwargs, self._schema['items'], self._ctx)
-        obj._validate()
+        if not obj._validate():
+            obj = None
         return obj
-
 
 class NodeIterator:
     """
