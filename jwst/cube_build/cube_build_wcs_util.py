@@ -21,13 +21,10 @@ log.setLevel(logging.DEBUG)
 
 #********************************************************************************
 # HELPER ROUTINES for IFUCubeData class defined in ifu_cube.py
-<<<<<<< 377992a36064ac6ae614e8f675d6490f0243a5cb
 # these methods relate to wcs type procedures.
 # determine_scale
-=======
 # these methods relate to wcs type procedures.  
 
->>>>>>> fix ra 0/360 issue
 
 #********************************************************************************
 def setup_wcs(self):
@@ -103,15 +100,8 @@ def setup_wcs(self):
 #________________________________________________________________________________
 # Open the input data model
 # Find the footprint of the image
-<<<<<<< 377992a36064ac6ae614e8f675d6490f0243a5cb
 
             with datamodels.IFUImageModel(ifile) as input_model:
-=======
-# amin, amax = ra min and max (0 to 360)
-# bmin, bmax = dec min and max (0 to 90, 0 to -90)
-# 
-            with datamodels.ImageModel(ifile) as input_model:
->>>>>>> fix ra 0/360 issue
                 if self.instrument == 'NIRSPEC':
                     flag_data = 0
                     ch_footprint = find_footprint_NIRSPEC(self,
@@ -322,12 +312,19 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
     else:
         # error the coordinate system is not defined
         raise NoCoordSystem(" The output cube coordinate system is not definded")
+#________________________________________________________________________________
+# test for 0/360 wrapping in ra. if exists it makes it difficult to determine
+# ra range of IFU cube. 
 
     coord1_wrap = coord1.copy()
-    median_ra = np.nanmedian(coord1_wrap)
+    median_ra = np.nanmedian(coord1_wrap) # find the median 
+    # using median test if there is any wrapping going on
     wrap_index = np.where( np.fabs(coord1_wrap - median_ra) > 180.0)
     nwrap = wrap_index[0].size
 
+    print('*******',nwrap)
+
+    # get all the ra on the same "side" of 0/360 
     if(nwrap != 0 and median_ra < 180):
         coord1_wrap[wrap_index] = coord1_wrap[wrap_index] - 360.0
 
@@ -400,6 +397,9 @@ def find_footprint_NIRSPEC(self, input,flag_data):
             x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,step=(1,1), center=True)
             ra,dec,lam = slice_wcs(x,y)
 
+#________________________________________________________________________________
+# For each slice  test for 0/360 wrapping in ra. 
+# If exists it makes it difficult to determine  ra range of IFU cube. 
             ra_wrap = ra.copy()
             median_ra = np.nanmedian(ra_wrap)
             wrap_index = np.where( np.fabs(ra_wrap - median_ra) > 180.0)
@@ -425,8 +425,9 @@ def find_footprint_NIRSPEC(self, input,flag_data):
             lambda_slice[k + 1] = np.nanmax(lam)
 
         k = k + 2
-
-    raslice__wrap = a_slice.copy()
+#________________________________________________________________________________
+# now test the ra slices for conistency. Adjust if needed.  
+    raslice_wrap = a_slice.copy()
     median_ra = np.nanmedian(raslice_wrap)
     wrap_index = np.where( np.fabs(raslice_wrap - median_ra) > 180.0)
     nwrap = wrap_index[0].size
@@ -462,28 +463,17 @@ def set_geometry(self, footprint):
         ra_min, ra_max, dec_min, dec_max,lambda_min, lambda_max = footprint # in degrees
         dec_ave = (dec_min + dec_max)/2.0
 
-<<<<<<< 377992a36064ac6ae614e8f675d6490f0243a5cb
-        # actually this is hard due to converenge of hour angle
-        # improve determining ra_ave in the future - do not just average (BAD)
-        ra_ave = ((ra_min + ra_max)/2.0 )#* math.cos(dec_ave*deg2rad)
-=======
         # we can not average ra values because of the convergence of hour angles. 
         ravalues  = np.zeros(2) # we might want to increase the number of ravalues later
                                 # is just taking min and max is not sufficient
         ravalues[0] = ra_min
         ravalues[1] = ra_max
 
-#        ravalues = np.zeros(4)
-#        ravalues[0] = 0.5
-#        ravalues[1] = 359
-#        ravalues[2] = 358.0
-#        ravalues[3] = 1.0
-
 #        ra_ave = ((ra_min + ra_max)/2.0 )#* math.cos(dec_ave*deg2rad) 
 
+        # one more check on ra angles 
         ra_ave = average_ra(ravalues)
 
->>>>>>> fix ra 0/360 issue
 
         self.Crval1 = ra_ave
         self.Crval2 = dec_ave
@@ -496,12 +486,6 @@ def set_geometry(self, footprint):
         # find the CRPIX1 CRPIX2 - xi and eta centered at 0,0
         # to find location of center abs of min values is how many pixels
 
-<<<<<<< 377992a36064ac6ae614e8f675d6490f0243a5cb
-#        print('crval1 crval2',self.Crval1,self.Crval2)
-=======
-        n1a = int(math.ceil(math.fabs(xi_min) / self.Cdelt1)) 
-        n2a = int(math.ceil(math.fabs(eta_min) / self.Cdelt2)) 
->>>>>>> fix ra 0/360 issue
 
         n1a = int(math.ceil(math.fabs(xi_min) / self.Cdelt1))
         n2a = int(math.ceil(math.fabs(eta_min) / self.Cdelt2))
