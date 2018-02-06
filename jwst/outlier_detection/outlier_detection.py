@@ -425,6 +425,16 @@ def flag_cr(sci_image, blot_image, gain_image, readnoise_image, **pars):
     # TODO: for JWST, the actual readnoise at a given pixel depends on the
     # number of reads going into that pixel.  So we need to account for that
     # using the meta.exposure.nints, ngroups and nframes keywords.
+    """
+    MULTIACCUM noise model (Equation 1, Rauscher et.al., PASP 110:768, 2007)
+    t1 = sigma_read**2 * (12*(ngroups-1))/(ngroups*nframes*(ngroups+1))
+    t2 = exposure_time.group_exptime*flux*(ngroups-1)*6*(ngroups**2+1)/
+            (5*ngroups*(ngroups+1))
+    t3 = exposure_time.frame_exptime*flux*(nframes-1)*2*(2*nframes-1)*(ngroups-1)/
+         (nframes*ngroups*(ngroups+1))
+    sigma_total**2 = t1 + t2 - t3
+
+    """
 
     # Define output cosmic ray mask to populate
     cr_mask = np.zeros(sci_image.shape, dtype=np.uint8)
