@@ -293,6 +293,7 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
     xstart, xend = instrument_info.GetMIRISliceEndPts(this_channel)
     y, x = np.mgrid[:1024, xstart:xend]
 
+
     coord1 = np.zeros(y.shape)
     coord2 = np.zeros(y.shape)
     lam = np.zeros(y.shape)
@@ -316,9 +317,13 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
 # test for 0/360 wrapping in ra. if exists it makes it difficult to determine
 # ra range of IFU cube. 
 
+    
     coord1_wrap = coord1.copy()
     median_ra = np.nanmedian(coord1_wrap) # find the median 
     # using median test if there is any wrapping going on
+    print('median ra',median_ra)
+    temp = coord1_wrap - median_ra
+    print(temp)
     wrap_index = np.where( np.fabs(coord1_wrap - median_ra) > 180.0)
     nwrap = wrap_index[0].size
 
