@@ -265,7 +265,7 @@ def do_NIRSpec_flat_field(output_model,
     # check for that case.
     if not hasattr(output_model, "slits"):
         if exposure_type == "NRS_IFU":
-            if not isinstance(output_model, datamodels.ImageModel):
+            if not isinstance(output_model, datamodels.IFUImageModel):
                 log.error("NIRSpec IFU data is not an ImageModel; "
                           "don't know how to process it.")
                 raise RuntimeError("Input is {}; expected ImageModel"
