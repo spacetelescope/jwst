@@ -17,7 +17,7 @@ __version__ = '0.8.0'
 # Define logging
 import logging
 log = logging.getLogger()
-log.setLevel(logging.INFO)
+log.setLevel(logging.DEBUG)
 
 class Ami3Pipeline(Pipeline):
     """
