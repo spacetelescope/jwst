@@ -548,7 +548,14 @@ def update_s_region(model):
     if bbox is None:
         bbox = _bbox_from_shape(model)
 
-    footprint = model.meta.wcs.footprint(bbox, center=True).T
+    #footprint = model.meta.wcs.footprint(bbox, center=True).T
+    ra, dec = model.meta.wcs.footprint(bbox, center=True)
+    negative_ind = ra < 360
+    if negative_ind.any():
+        ra[negative_ind] = 360 + ra[negative_ind]
+
+    footprint = np.array([ra, dec]).T
+
     s_region = (
         "POLYGON ICRS "
         " {0} {1}"
