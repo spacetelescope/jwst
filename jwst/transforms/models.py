@@ -842,9 +842,6 @@ class V23ToSky(Rotation3D):
         x1, y1, z1 = super(V23ToSky, self).evaluate(x, y, z, angles)
         ra, dec = self.cartesian2spherical(x1, y1, z1)
 
-        negative_ind = ra < 0
-        if negative_ind.any():
-            ra[negative_ind] = 360 + ra[negative_ind]
         return ra, dec
 
     def __call__(self, v2, v3):
