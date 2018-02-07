@@ -209,14 +209,10 @@ class ObjectNode(Node):
             if val is None:
                 val = _make_default(attr, schema, self._ctx)
             val = _cast(val, schema)
-            old_val = self._instance.get(attr, None)
 
-            self._instance[attr] = val
-            if not self._validate():
-                if old_val is None:
-                    del self._instance[attr]
-                else:
-                    self._instance[attr] = old_val
+            obj = ObjectNode(val, schema, self._ctx)
+            if obj.validate():
+                self._instance[attr] = val
 
     def __delattr__(self, attr):
         if attr.startswith('_'):
@@ -276,8 +272,8 @@ class ListNode(Node):
     def __setitem__(self, i, val):
         schema = _get_schema_for_index(self._schema, i)
         val =  _cast(val, schema)
-        if util.validate_schema(val, schema, False,
-                                self._ctx._strict_validation):
+        obj = ObjectNode(val, schema, self._ctx)
+        if obj.validate():
             self._instance[i] = val
 
     def __delitem__(self, i):
@@ -309,15 +305,15 @@ class ListNode(Node):
     def append(self, item):
         schema = _get_schema_for_index(self._schema, len(self._instance))
         item = _cast(item, schema)
-        if util.validate_schema(item, schema, False,
-                                self._ctx._strict_validation):
+        obj = ObjectNode(item, schema, self._ctx)
+        if obj.validate():
             self._instance.append(item)
 
     def insert(self, i, item):
         schema = _get_schema_for_index(self._schema, i)
         item = _cast(item, schema)
-        if util.validate_schema(item, schema, False,
-                                self._ctx._strict_validation):
+        obj = ObjectNode(item, schema, self._ctx)
+        if obj.validate():
             self._instance.insert(i, item)
 
     def pop(self, i=-1):
