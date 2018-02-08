@@ -87,6 +87,10 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             'has_science': {
                 'validated': False,
                 'check': lambda member: member['exptype'] == 'science'
+            },
+            'allowed_candidates': {
+                'validated': False,
+                'check': self.validate_candidates
             }
         })
 
@@ -293,6 +297,38 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         super(DMSLevel2bBase, self).update_asn()
         self.current_product['name'] = self.dms_product_name()
 
+    def validate_candidates(self, member):
+        """Allow only OBSERVATION or BACKGROUND candidates
+
+        Parameters
+        ----------
+        member: obj
+            Member being added. Ignored.
+
+        Returns
+        -------
+        True if candidate is OBSERVATION.
+        True if candidate is BACKGROUND and at least one
+        member is background.
+        Otherwise, False
+        """
+        acid = self.acid_from_constraints()
+
+        # If an observation, then we're good.
+        if acid.type.lower() == 'observation':
+            return True
+
+        # If a background, check that there is a background
+        # exposure
+        if acid.type.lower() == 'background':
+            for member in self.current_product['members']:
+                if member['exptype'].lower() == 'background':
+                    return True
+
+        # If not background member, or some other candidate type,
+        # fail.
+        return False
+
     def __repr__(self):
         try:
             file_name, json_repr = self.ioregistry['json'].dump(self)
@@ -307,12 +343,20 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         result = ['Association {:s}'.format(self.asn_name)]
 
         # Parameters of the association
-        result.append('    Parameters:')
-        result.append('        Product type: {:s}'.format(self.data['asn_type']))
-        result.append('        Rule:         {:s}'.format(self.data['asn_rule']))
-        result.append('        Program:      {:s}'.format(self.data['program']))
-        result.append('        Target:       {:s}'.format(self.data['target']))
-        result.append('        Pool:         {:s}'.format(self.data['asn_pool']))
+        result.append(
+            '    Parameters:'
+            '        Product type: {asn_type:s}'
+            '        Rule:         {asn_rule:s}'
+            '        Program:      {program:s}'
+            '        Target:       {target:s}'
+            '        Pool:         {asn_pool:s}'.format(
+                asn_type=getattr(self.data, 'asn_type', 'indetermined'),
+                asn_rule=getattr(self.data, 'asn_rule', 'indetermined'),
+                program=getattr(self.data, 'program', 'indetermined'),
+                target=getattr(self.data, 'target', 'indetermined'),
+                asn_pool=getattr(self.data, 'asn_pool', 'indetermined'),
+            )
+        )
 
         result.append('        {:s}'.format(str(self.constraints)))
 
@@ -406,17 +450,13 @@ class Utility():
         return finalized + lv2_asns
 
     @staticmethod
-    def merge_asns(associations, acid_regex='o\d{3}$'):
+    def merge_asns(associations):
         """merge level2 associations
 
         Parameters
         ----------
         associations: [asn(, ...)]
             Associations to search for merging.
-
-        acid_regex: str
-            Regular expression which the `asn_id` of the association
-            must match to be included.
 
         Returns
         -------
@@ -431,12 +471,12 @@ class Utility():
             else:
                 others.append(asn)
 
-        lv2_asns = Utility._merge_asns(lv2_asns, acid_regex)
+        lv2_asns = Utility._merge_asns(lv2_asns)
 
         return others + lv2_asns
 
     @staticmethod
-    def _merge_asns(asns, acid_regex):
+    def _merge_asns(asns):
         """Merge associations by `asn_type` and `asn_id`
 
         Parameters
@@ -444,20 +484,13 @@ class Utility():
         associations: [asn(, ...)]
             Associations to search for merging.
 
-        acid_regex: str
-            Regular expression which the `asn_id` of the association
-            must match to be included.
-
         Returns
         -------
         associatons: [association(, ...)]
             List of associations, some of which may be merged.
         """
-        match_acid = re.compile(acid_regex, flags=re.IGNORECASE & re.UNICODE)
         merged = {}
         for asn in asns:
-            if match_acid.match(asn['asn_id']) is None:
-                continue
             idx = '_'.join([asn['asn_type'], asn['asn_id']])
             try:
                 current_asn = merged[idx]
