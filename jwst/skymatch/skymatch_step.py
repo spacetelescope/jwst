@@ -139,7 +139,7 @@ class SkyMatchStep(Step):
                 self._dqbits,
                 good_mask_value=1,
                 dtype=np.uint8
-            )
+            ) * np.isfinite(image_model.data)
 
         # see if 'skymatch' was previously run and raise an exception
         # if 'subtract' mode has changed compared to the previous pass:
