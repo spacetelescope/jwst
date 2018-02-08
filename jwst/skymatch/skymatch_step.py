@@ -132,7 +132,7 @@ class SkyMatchStep(Step):
 
         # create
         if self._dqbits is None:
-            dqmask = None
+            dqmask = np.isfinite(image_model.data).astype(dtype=np.uint8)
         else:
             dqmask = bitfield_to_boolean_mask(
                 image_model.dq,
