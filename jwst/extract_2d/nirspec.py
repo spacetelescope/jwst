@@ -30,6 +30,12 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
     else:
         apply_wavecorr = False
         log.info("Skipping wavecorr correction for EXP_TYPE {0}".format(exp_type))
+    
+    if hasattr(input_model.meta.cal_step, 'assign_wcs') and input_model.meta.cal_step.assign_wcs == 'SKIPPED':
+        log.info("assign_wcs was skipped")
+        log.warning("extract_2d: SKIPPED")
+        input_model.meta.cal_step.extract_2d = "SKIPPED"
+        return input_model
 
     if not (hasattr(input_model.meta, 'wcs') and input_model.meta.wcs is not None):
         raise AttributeError("Input model does not have a WCS object; assign_wcs should "
