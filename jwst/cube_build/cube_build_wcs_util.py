@@ -317,17 +317,14 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
 # test for 0/360 wrapping in ra. if exists it makes it difficult to determine
 # ra range of IFU cube. 
 
+    valid = np.isfinite(coord1)
+    coord1_wrap = coord1[valid].copy()
     
-    coord1_wrap = coord1.copy()
     median_ra = np.nanmedian(coord1_wrap) # find the median 
     # using median test if there is any wrapping going on
-    print('median ra',median_ra)
-    temp = coord1_wrap - median_ra
-    print(temp)
+
     wrap_index = np.where( np.fabs(coord1_wrap - median_ra) > 180.0)
     nwrap = wrap_index[0].size
-
-    print('*******',nwrap)
 
     # get all the ra on the same "side" of 0/360 
     if(nwrap != 0 and median_ra < 180):
@@ -405,7 +402,8 @@ def find_footprint_NIRSPEC(self, input,flag_data):
 #________________________________________________________________________________
 # For each slice  test for 0/360 wrapping in ra. 
 # If exists it makes it difficult to determine  ra range of IFU cube. 
-            ra_wrap = ra.copy()
+            valid = np.isfinite(ra)
+            ra_wrap = ra[valid].copy()
             median_ra = np.nanmedian(ra_wrap)
             wrap_index = np.where( np.fabs(ra_wrap - median_ra) > 180.0)
             nwrap = wrap_index[0].size
@@ -432,6 +430,7 @@ def find_footprint_NIRSPEC(self, input,flag_data):
         k = k + 2
 #________________________________________________________________________________
 # now test the ra slices for conistency. Adjust if needed.  
+        
     raslice_wrap = a_slice.copy()
     median_ra = np.nanmedian(raslice_wrap)
     wrap_index = np.where( np.fabs(raslice_wrap - median_ra) > 180.0)
@@ -719,7 +718,8 @@ def average_ra(ravalues):
 
     else:
         ave_ra = alpha[min_index]
-        log.info('Mean ra',ave_ra)
+
+        log.info('Mean ra %12.8f',ave_ra)
 
 
 # update the ra values so ra_min, ra_max 
