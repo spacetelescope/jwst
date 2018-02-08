@@ -51,13 +51,15 @@ class MakePars():
             main_args=DEF_ARGS,
             source=None,
             outdir=None,
-            execute=True
+            execute=True,
+            xfail=None
     ):
         self.pool_root = pool_root
         self.main_args = main_args
         self.source = source
         self.outdir = outdir
         self.execute = execute
+        self.xfail=xfail
 
 
 standards = [
@@ -73,7 +75,7 @@ standards = [
     MakePars('pool_014_ami_niriss'),
     MakePars('pool_015_spec_nirspec_lv2bkg_reversed', main_args=LV2_ONLY_ARGS),
     MakePars('pool_016_spec_nirspec_lv2bkg_double', main_args=LV2_ONLY_ARGS),
-    MakePars('pool_017_spec_nirspec_lv2imprint', main_args=LV2_ONLY_ARGS),
+    MakePars('pool_017_spec_nirspec_lv2imprint', xfail='See issue #1716'),
     MakePars('pool_018_all_exptypes', main_args=LV2_ONLY_ARGS),
     MakePars('pool_019_niriss_wfss'),
     MakePars('pool_021_tso'),
@@ -83,13 +85,16 @@ standards = [
 
 @runslow
 @pytest.mark.parametrize(
-    'standard',
+    'standard_pars',
     standards
 )
-def test_against_standard(standard):
+def test_against_standard(standard_pars):
     """Compare a generated assocaition against a standard
     """
-    generated, standards = generate_asns(standard)
+    if standard_pars.xfail is not None:
+        pytest.xfail(reason=standard_pars.xfail)
+
+    generated, standards = generate_asns(standard_pars)
     for asn in generated:
         for idx, standard in enumerate(standards):
             try:
