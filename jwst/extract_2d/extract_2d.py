@@ -21,7 +21,8 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_files
 
     if exp_type in nrs_modes:
         output_model = nrs_extract2d(input_model, slit_name=slit_name,
-                              apply_wavecorr=apply_wavecorr, reference_files=reference_files)
+                                     apply_wavecorr=apply_wavecorr,
+                                     reference_files=reference_files)
 
     elif exp_type in grism_modes:
         output_model = extract_grism_objects(input_model, grism_objects=grism_objects, reference_files=reference_files)
@@ -35,4 +36,5 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_files
     # Set the step status to COMPLETE
     output_model.meta.cal_step.extract_2d = 'COMPLETE'
     del input_model
+    log.info('extract_2d completed.')
     return output_model
