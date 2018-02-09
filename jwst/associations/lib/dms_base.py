@@ -154,6 +154,7 @@ class DMSBaseMixin(ACIDMixin):
     def __init__(self, *args, **kwargs):
         super(DMSBaseMixin, self).__init__(*args, **kwargs)
 
+        self._acid = None
         self.from_items = []
         self.sequence = None
         if 'degraded_status' not in self.data:
@@ -191,7 +192,10 @@ class DMSBaseMixin(ACIDMixin):
     @property
     def acid(self):
         """Association ID"""
-        return self.acid_from_constraints()
+        acid = self._acid
+        if self._acid is None:
+            acid =  self.acid_from_constraints()
+        return acid
 
     @property
     def asn_name(self):

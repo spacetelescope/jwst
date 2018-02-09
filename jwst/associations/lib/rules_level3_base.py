@@ -321,7 +321,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         # Update meta info
         self.update_asn(item=item, member=member)
 
-    def _add_items(self, items, product_name=None, with_exptype=False):
+    def _add_items(self,
+                   items,
+                   product_name=None,
+                   with_exptype=False,
+                   **kwargs):
         """ Force adding items to the association
 
         Parameters
@@ -339,6 +343,9 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             If True, each item is expected to be a 2-tuple with
             the first element being the item to add as `expname`
             and the second items is the `exptype`
+
+        kwargs: dict
+            Allows other keyword arguments used by other subclasses.
 
         Notes
         -----

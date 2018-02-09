@@ -12,8 +12,8 @@ from jwst.associations import (
     AssociationRegistry,
     libpath
 )
+from jwst.associations.lib.acid import ACID
 from jwst.associations.lib.constraint import (
-    AttrConstraint,
     Constraint,
     SimpleConstraint,
 )
@@ -226,7 +226,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         # Update association state due to new member
         self.update_asn()
 
-    def _add_items(self, items, meta=None, product_name_func=None, **kwargs):
+    def _add_items(self,
+                   items,
+                   meta=None,
+                   product_name_func=None,
+                   acid='o999',
+                   **kwargs):
         """Force adding items to the association
 
         Parameters
@@ -250,6 +255,10 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             Used if product name is 'undefined' using
             the class's procedures.
 
+        acid: str
+            The association candidate id to use. Since Level2
+            associations require it, one must be specified.
+
         Notes
         -----
         This is a low-level shortcut into adding members, such as file names,
@@ -266,6 +275,19 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         """
         if meta is None:
             meta = {}
+
+        # Setup association candidate.
+        if acid.startswith('o'):
+            ac_type = 'observation'
+        elif acid.startswith('c'):
+            ac_type = 'background'
+        else:
+            raise ValueError(
+                'Invalid association id specified: "{}"'
+                '\n\tMust be of form "oXXX" or "c1XXX"'.format(acid)
+            )
+        self._acid = ACID((acid, ac_type))
+
         for idx, item in enumerate(items, start=1):
             self.new_product()
             members = self.current_product['members']
@@ -312,15 +334,14 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         member is background.
         Otherwise, False
         """
-        acid = self.acid_from_constraints()
 
         # If an observation, then we're good.
-        if acid.type.lower() == 'observation':
+        if self.acid.type.lower() == 'observation':
             return True
 
         # If a background, check that there is a background
         # exposure
-        if acid.type.lower() == 'background':
+        if self.acid.type.lower() == 'background':
             for member in self.current_product['members']:
                 if member['exptype'].lower() == 'background':
                     return True
