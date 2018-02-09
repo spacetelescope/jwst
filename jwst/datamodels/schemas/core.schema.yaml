@@ -134,11 +134,13 @@ properties:
             title: (yyyy-mm-dd) UTC date at start of exposure
             fits_keyword: DATE-OBS
             blend_table: True
+            blend_rule: first
           time:
             title: (hh:mm:ss.ssssss) UTC time at start of exposure
             type: string
             fits_keyword: TIME-OBS
             blend_table: True
+            blend_rule: first
           date_end:
             title: UTC date at end of exposure
             type: string
@@ -542,6 +544,7 @@ properties:
               - fits_keyword: EXPSTART
                 title: UTC exposure start time
                 blend_table: True
+                blend_rule: first
           mid_time:
             allOf:
               - type: number
@@ -633,7 +636,6 @@ properties:
             title: Effective integration time (sec)
             type: number
             fits_keyword: EFFINTTM
-            blend_rule: sum
             blend_table: True
           exposure_time:
             title: Effective exposure time (sec)
@@ -656,7 +658,6 @@ properties:
             title: Number of resets between integrations
             type: integer
             fits_keyword: NRESETS
-            blend_rule: sum
             blend_table: True
           zero_frame:
             title: Zero frame was downlinked separately
