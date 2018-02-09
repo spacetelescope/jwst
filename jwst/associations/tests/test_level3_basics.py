@@ -45,7 +45,7 @@ def test_targacq(pool_file):
     rules = registry_level3_only()
     pool = combine_pools(t_path(pool_file))
     asns = generate(pool, rules)
-    assert len(asns) > 1
+    assert len(asns) > 0
     for asn in asns:
         for product in asn['products']:
             exptypes = [

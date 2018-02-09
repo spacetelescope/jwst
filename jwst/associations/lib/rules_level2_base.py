@@ -618,7 +618,6 @@ class Constraint_Special(DMSAttrConstraint):
             name='is_special',
             sources=[
                 'bkgdtarg',
-                'is_imprt',
                 'is_psf'
             ],
         )
