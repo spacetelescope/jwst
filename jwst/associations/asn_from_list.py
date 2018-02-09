@@ -99,6 +99,13 @@ class Main():
                 ' If not specified, the default rules will be searched.'
             )
         )
+        parser.add_argument(
+            '-i', '--id',
+            type=str,
+            default='o999',
+            help='The association candidate id to use. Default: "%(default)s"',
+            dest='acid'
+        )
 
         parser.add_argument(
             'filelist',
@@ -116,7 +123,8 @@ class Main():
             asn = asn_from_list(
                 parsed.filelist,
                 rule=rule,
-                product_name=parsed.product_name
+                product_name=parsed.product_name,
+                acid=parsed.acid
             )
             name, serialized = asn.dump(format=parsed.format)
             outfile.write(serialized)

@@ -23,12 +23,11 @@ def test_level2():
         member = members[0]
         assert member['expname'] == product['name']
         assert member['exptype'] == 'science'
+    name, serialized = asn.dump()
+    assert name.startswith('jwnoprogram-o999_none')
+    assert isinstance(serialized, str)
 
 
-@pytest.mark.xfail(
-    reason='See issue #1725',
-    run=False
-)
 def test_level2_from_cmdline(tmpdir):
     """Create a level2 assocaition from the command line"""
     rule = 'DMSLevel2bBase'
