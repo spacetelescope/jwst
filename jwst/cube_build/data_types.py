@@ -49,6 +49,7 @@ class DataTypes(object):
         self.data_type = None # singleton, multi
         self.input_type = None # Model, File, ASN, Container
 
+
         # IF a single model or a single file  is passed in then
         # self.filename & self.input_model hold the values for this singe dataset
         self.InputType  = ''
