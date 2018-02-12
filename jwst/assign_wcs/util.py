@@ -405,6 +405,8 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     ysize = input_model.meta.subarray.ysize
 
     # extract the catalog objects
+    if input_model.meta.source_catalog.filename is None:
+        raise ValueError("No source catalog listed in datamodel")
     skyobject_list = get_object_info(input_model.meta.source_catalog.filename)
 
     # get the imaging transform to record the center of the object in the image
