@@ -41,8 +41,6 @@ __all__ = [
     'AsnMixin_Spectrum',
     'Constraint_Base',
     'Constraint_Image',
-    'Constraint_MIRI',
-    'Constraint_NIRISS',
     'Constraint_NotTSO',
     'Constraint_Optical_Path',
     'Constraint_Target',
@@ -569,26 +567,6 @@ class Constraint_Image(DMSAttrConstraint):
                 '|nis_image'
                 '|fgs_image'
             ),
-        )
-
-
-class Constraint_MIRI(DMSAttrConstraint):
-    """Select on MIRI"""
-    def __init__(self):
-        super(Constraint_MIRI, self).__init__(
-            name='instrument_miri',
-            sources=['instrume'],
-            value='miri',
-        )
-
-
-class Constraint_NIRISS(DMSAttrConstraint):
-    """Selec on NIRISS"""
-    def __init__(self):
-        super(Constraint_NIRISS, self).__init__(
-            name='instrument_niriss',
-            sources=['instrume'],
-            value='nis',
         )
 
 
