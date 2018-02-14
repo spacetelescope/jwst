@@ -97,7 +97,7 @@ def _make_default(attr, schema, ctx):
         return {}
     elif schema.get('type') == 'array':
         return []
-    return copy.deepcopy(schema.get('default'))
+    return None
 
 
 def _make_node(instance, schema, ctx):
@@ -209,14 +209,10 @@ class ObjectNode(Node):
             if val is None:
                 val = _make_default(attr, schema, self._ctx)
             val = _cast(val, schema)
-            old_val = self._instance.get(attr, None)
 
-            self._instance[attr] = val
-            if not self._validate():
-                if old_val is None:
-                    del self._instance[attr]
-                else:
-                    self._instance[attr] = old_val
+            node = ObjectNode(val, schema, self._ctx)
+            if node._validate():
+                self._instance[attr] = val
 
     def __delattr__(self, attr):
         if attr.startswith('_'):
@@ -276,8 +272,8 @@ class ListNode(Node):
     def __setitem__(self, i, val):
         schema = _get_schema_for_index(self._schema, i)
         val =  _cast(val, schema)
-        if util.validate_schema(val, schema, False,
-                                self._ctx._strict_validation):
+        node = ObjectNode(val, schema, self._ctx)
+        if node._validate():
             self._instance[i] = val
 
     def __delitem__(self, i):
@@ -309,28 +305,24 @@ class ListNode(Node):
     def append(self, item):
         schema = _get_schema_for_index(self._schema, len(self._instance))
         item = _cast(item, schema)
-        if util.validate_schema(item, schema, False,
-                                self._ctx._strict_validation):
+        node = ObjectNode(item, schema, self._ctx)
+        if node._validate():
             self._instance.append(item)
 
     def insert(self, i, item):
         schema = _get_schema_for_index(self._schema, i)
         item = _cast(item, schema)
-        if util.validate_schema(item, schema, False,
-                                self._ctx._strict_validation):
+        node = ObjectNode(item, schema, self._ctx)
+        if node._validate():
             self._instance.insert(i, item)
 
     def pop(self, i=-1):
         schema = _get_schema_for_index(self._schema, 0)
         x = self._instance.pop(i)
-        obj = _make_node(x, schema, self._ctx)
-        if not obj._validate():
-            obj = None
-        return obj
+        return _make_node(x, schema, self._ctx)
 
     def remove(self, item):
         self._instance.remove(item)
-        self._validate()
 
     def count(self, item):
         return self._instance.count(item)
@@ -347,14 +339,13 @@ class ListNode(Node):
     def extend(self, other):
         for part in _unmake_node(other):
             self.append(part)
-        self._validate()
 
     def item(self, **kwargs):
         assert isinstance(self._schema['items'], dict)
-        obj = ObjectNode(kwargs, self._schema['items'], self._ctx)
-        if not obj._validate():
-            obj = None
-        return obj
+        node = ObjectNode(kwargs, self._schema['items'], self._ctx)
+        if not node._validate():
+            node = None
+        return node
 
 class NodeIterator:
     """

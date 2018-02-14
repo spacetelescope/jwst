@@ -408,8 +408,9 @@ class ResampleSpecData:
                         'slitlet_id', 'source_id', 'source_name', 'source_alias',
                         'stellarity', 'source_type', 'source_xpos', 'source_ypos',
                         'shutter_state', 'relsens']:
-                    if hasattr(img, attr):
-                        setattr(output_model, attr, getattr(img, attr))
+                    val = getattr(img, attr)
+                    if val is not None:
+                        setattr(output_model, attr, val)
             except:
                 pass
 
