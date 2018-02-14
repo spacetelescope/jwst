@@ -142,10 +142,10 @@ class Spec2Pipeline(Pipeline):
         # a grism image, if so get the catalog
         # name from the asn and record it to the meta
         if exp_type in WFSS_TYPES:
-            if input.meta.source_catalog.filename is None:
-                try:
-                    input.meta.source_catalog.filename = members_by_type['sourcecat'][0]
-                except IndexError:
+            try:
+                input.meta.source_catalog.filename = members_by_type['sourcecat'][0]
+            except IndexError:
+                if input.meta.source_catalog.filename is None:
                     raise IndexError("No source catalog specified in association or datamodel")
 
         input = self.assign_wcs(input)
