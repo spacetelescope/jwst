@@ -33,7 +33,7 @@ from ..main import constrain_on_candidates
             'o003',
             'spec3',
             'jw99009-o003_spec3_\d{3}_asn',
-            'jw99009-o003_t002_nirspec_clear',
+            'jw99009-o003_t002_nirspec',
             set(('science', 'target_acquistion', 'autowave'))
         ),
     ]

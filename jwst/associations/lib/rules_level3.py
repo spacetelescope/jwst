@@ -8,14 +8,9 @@ from jwst.associations.lib.rules_level3_base import *
 __all__ = [
     'Asn_AMI',
     'Asn_Coron',
+    'Asn_IFU',
     'Asn_Image',
-    'Asn_MIRI_LRS_FIXEDSLIT',
-    'Asn_MIRI_LRS_SLITLESS',
-    'Asn_MIRI_IFU',
-    'Asn_NRS_FIXEDSLIT',
-    'Asn_NRS_IFU',
-    'Asn_NRS_MSA',
-    'Asn_NIS_SO_SLITLESS',
+    'Asn_Spectral',
     'Asn_TSO_EXPTYPE',
     'Asn_TSO_Flag',
     'Asn_WFSCMB',
@@ -101,186 +96,36 @@ class Asn_WFSCMB(AsnMixin_Science):
         super(Asn_WFSCMB, self)._init_hook(item)
 
 
-class Asn_MIRI_LRS_FIXEDSLIT(AsnMixin_Spectrum):
-    """MIRI LRS Fixed slit"""
+class Asn_Spectral(AsnMixin_Spectrum):
+    """All slit-like spectral exposures"""
 
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
         self.constraints = Constraint([
             Constraint_NotTSO(),
-            Constraint_Target(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'mir_lrs-fixedslit'
-                ),
-                force_unique=False,
-            ),
-            DMSAttrConstraint(
-                name='opt_elem',
-                sources=['filter'],
-                value='p750l',
-            ),
-            DMSAttrConstraint(
-                name='subarray',
-                sources=['subarray'],
-                value='full',
-            )
-        ])
-
-        # Check and continue initialization.
-        super(Asn_MIRI_LRS_FIXEDSLIT, self).__init__(*args, **kwargs)
-
-
-class Asn_MIRI_LRS_SLITLESS(AsnMixin_Spectrum):
-    """MIRI LRS Slitless"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_NotTSO(),
-            Constraint_Target(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'mir_lrs-slitless'
-                ),
-                force_unique=False,
-            ),
-            DMSAttrConstraint(
-                name='opt_elem',
-                sources=['filter'],
-                value='p750l',
-            ),
-            DMSAttrConstraint(
-                name='subarray',
-                sources=['subarray'],
-                value='subprism',
-            )
-        ])
-
-        # Check and continue initialization.
-        super(Asn_MIRI_LRS_SLITLESS, self).__init__(*args, **kwargs)
-
-
-class Asn_NIS_SO_SLITLESS(AsnMixin_Spectrum):
-    """NIRISS Single-Object Slitless"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'nis_soss'
-                ),
-                force_unique=False,
-            ),
-            DMSAttrConstraint(
-                name='opt_elem',
-                sources=['pupil'],
-                value='gr700xd',
-            ),
-            DMSAttrConstraint(
-                name='subarray',
-                sources=['subarray'],
-                value=(
-                    'full'
-                    '|substrip256'
-                    '|substrip80'
-                ),
-            )
-        ])
-
-        # Check and continue initialization.
-        super(Asn_NIS_SO_SLITLESS, self).__init__(*args, **kwargs)
-
-
-class Asn_NRS_FIXEDSLIT(AsnMixin_Spectrum):
-    """NIRSPEC Fixed Slit"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.constraints = Constraint([
             Constraint_Optical_Path(),
             Constraint_Target(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'nrs_fixedslit'
-                    '|nrs_autowave'
-                ),
-                force_unique=False,
-            ),
-            DMSAttrConstraint(
-                name='fixed_slit',
-                sources=['fxd_slit']
-            ),
-            DMSAttrConstraint(
-                name='subarray',
-                sources=['subarray']
-            ),
+            Constraint_Spectral(),
         ])
 
         # Check and continue initialization.
-        super(Asn_NRS_FIXEDSLIT, self).__init__(*args, **kwargs)
+        super(Asn_Spectral, self).__init__(*args, **kwargs)
 
 
-class Asn_NRS_MSA(AsnMixin_Spectrum):
-    """NIRSPEC MSA"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Optical_Path(),
-            Constraint_Target(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'nrs_msaspec'
-                    '|nrs_autoflat'
-                    '|nrs_autowave'
-                ),
-                force_unique=False,
-            ),
-        ])
-
-        # Check and continue initialization.
-        super(Asn_NRS_MSA, self).__init__(*args, **kwargs)
-
-
-class Asn_MIRI_IFU(AsnMixin_Spectrum):
-    """MIRI MRS (IFU)"""
+class Asn_IFU(AsnMixin_Spectrum):
+    """IFU associations"""
 
     def __init__(self, *args, **kwargs):
 
         # Setup for checking.
         self.constraints = Constraint([
             Constraint_Target(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'mir_mrs'
-                    '|mir_flatmrs'
-                ),
-                force_unique=False,
-            ),
+            Constraint_IFU(),
         ])
 
         # Check and continue initialization.
-        super(Asn_MIRI_IFU, self).__init__(*args, **kwargs)
+        super(Asn_IFU, self).__init__(*args, **kwargs)
 
     def dms_product_name(self):
         """Define product name."""
@@ -296,29 +141,6 @@ class Asn_MIRI_IFU(AsnMixin_Spectrum):
         )
 
         return product_name.lower()
-
-
-class Asn_NRS_IFU(AsnMixin_Spectrum):
-    """NIRSPEC IFU"""
-
-    def __init__(self, *args, **kwargs):
-
-        # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'nrs_ifu'
-                    '|nrs_autowave'
-                ),
-                force_unique=False,
-            ),
-        ])
-
-        # Check and continue initialization.
-        super(Asn_NRS_IFU, self).__init__(*args, **kwargs)
 
 
 class Asn_Coron(AsnMixin_Science):
