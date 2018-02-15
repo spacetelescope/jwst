@@ -9,7 +9,7 @@ from gwcs.utils import _toindex
 from gwcs import wcstools
 
 from .. import datamodels
-from ..transforms import models as trmodels
+from ..transforms import models as trmodels, Slit
 from ..assign_wcs import nirspec
 from ..assign_wcs import util
 
@@ -49,9 +49,16 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
         open_slits = [sub for sub in open_slits if sub.name == slit_name]
     log.debug('open slits {0}'.format(open_slits))
     if exp_type == 'NRS_BRIGHTOBJ':
-        # the output model is CubeModel
-        output_model, xlo, xhi, ylo, yhi = process_slit(input_model, open_slits[0],
+        # the output model is a SlitModel
+        slit = open_slits[0]
+        output_model, xlo, xhi, ylo, yhi = process_slit(input_model, slit,
                                                         exp_type, apply_wavecorr, reffile)
+        set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi)
+        orig_s_region = output_model.meta.wcsinfo.s_region.strip()
+        util.update_s_region(output_model)
+        if orig_s_region != output_model.meta.wcsinfo.s_region.strip():
+            log.info('extract_2d updated S_REGION to '
+                     '{0}'.format(output_model.meta.wcsinfo.s_region))
     else:
         output_model = datamodels.MultiSlitModel()
         output_model.update(input_model)
@@ -72,9 +79,7 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
             # Copy BUNIT values to output slit
             new_model.meta.bunit_data = input_model.meta.bunit_data
             new_model.meta.bunit_err = input_model.meta.bunit_err
-        log.info('before slits extend')
         output_model.slits.extend(slits)
-        log.info('after slits extend')
     return output_model
 
 

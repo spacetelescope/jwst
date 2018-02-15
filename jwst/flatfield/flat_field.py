@@ -473,7 +473,7 @@ def NIRSpec_brightobj(output_model,
     else:
         interpolated_flats = None
 
-    slit_name = "S1600A1"
+    slit_name = output_model.name
 
     # pixels with respect to the original image
     n_ints, ysize, xsize = output_model.data.shape
