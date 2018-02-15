@@ -141,7 +141,8 @@ class SlitModel(model_base.DataModel):
             self.err = init.err
             self.relsens = init.relsens
             self.area = init.area
-            self.wavelength = init.wavelength
+            if hasattr(init, 'wavelength'):
+                self.wavelength = init.wavelength
             if hasattr(init, 'var_poisson'):
                 self.var_poisson = init.var_poisson
             if hasattr(init, 'var_rnoise'):
