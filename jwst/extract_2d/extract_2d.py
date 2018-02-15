@@ -36,5 +36,4 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_files
     # Set the step status to COMPLETE
     output_model.meta.cal_step.extract_2d = 'COMPLETE'
     del input_model
-    log.info('extract_2d completed.')
     return output_model

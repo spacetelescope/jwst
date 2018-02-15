@@ -1316,8 +1316,9 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                     spec.name = slitname
                 output_model.spec.append(spec)
 
-        elif isinstance(input_model, datamodels.CubeModel):
+        elif isinstance(input_model, (datamodels.CubeModel, datamodels.SlitModel)):
 
+            # NRS_BRIGHTOBJ exposures are instances of SlitModel.
             for sp_order in spectral_order_list:
                 if sp_order == "not set yet":
                     sp_order = get_spectral_order(input_model)

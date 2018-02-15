@@ -196,7 +196,7 @@ def extract_slit(input_model, slit, exp_type):
     lam = lam.astype(np.float32)
     new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam,
                                          var_rnoise=ext_var_rnoise, var_poisson=ext_var_poisson)
-    log.info('input model type is {}'.format(input_model.__class__.__name__))
+    log.info('Input model type is {}'.format(input_model.__class__.__name__))
     new_model.update(input_model)
     new_model.meta.wcs = slit_wcs
     return new_model, xlo, xhi, ylo, yhi

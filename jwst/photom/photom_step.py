@@ -24,7 +24,7 @@ class PhotomStep(Step):
         # Report the detected type of input model
         model_type = dm.__class__.__name__
         self.log.debug("Input is {}".format(model_type))
-        if model_type not in ('CubeModel', 'ImageModel',
+        if model_type not in ('CubeModel', 'ImageModel', 'SlitModel',
                               'IFUImageModel', 'MultiSlitModel'):
             self.log.warning("Input is not one of the supported model types: "
                              "CubeModel, ImageModel IFUImageModel or MultiSlitModel.")
