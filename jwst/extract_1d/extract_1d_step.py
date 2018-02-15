@@ -42,6 +42,9 @@ class Extract1dStep(Step):
         elif isinstance(input_model, datamodels.DrizProductModel):
             # Resampled 2-D data
             self.log.debug('Input is a DrizProductModel')
+        elif isinstance(input_model, datamodels.SlitModel):
+            # NRS_BRIGHTOBJ mode
+            self.log.debug('Input is a SlitModel')
         else:
             self.log.error('Input is a %s,', str(type(input_model)))
             self.log.error('which was not expected for extract_1d.')

@@ -30,7 +30,7 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
     else:
         apply_wavecorr = False
         log.info("Skipping wavecorr correction for EXP_TYPE {0}".format(exp_type))
-    
+
     if hasattr(input_model.meta.cal_step, 'assign_wcs') and input_model.meta.cal_step.assign_wcs == 'SKIPPED':
         log.info("assign_wcs was skipped")
         log.warning("extract_2d: SKIPPED")
@@ -70,9 +70,11 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
             set_slit_attributes(new_model, slit, xlo, xhi, ylo, yhi)
 
             # Copy BUNIT values to output slit
-            new_model.bunit_data = input_model.meta.bunit_data
-            new_model.bunit_err = input_model.meta.bunit_err
+            new_model.meta.bunit_data = input_model.meta.bunit_data
+            new_model.meta.bunit_err = input_model.meta.bunit_err
+        log.info('before slits extend')
         output_model.slits.extend(slits)
+        log.info('after slits extend')
     return output_model
 
 
@@ -116,6 +118,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
         output_model.slitlet_id = int(slit.name)
         # for pathloss correction
         output_model.shutter_state = slit.shutter_state
+    log.info('set slit_attributes completed')
 
 
 def offset_wcs(slit_wcs, slit_name):
@@ -192,8 +195,8 @@ def extract_slit(input_model, slit, exp_type):
     ra, dec, lam = slit_wcs(x, y)
     lam = lam.astype(np.float32)
     new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam,
-                                     var_rnoise=ext_var_rnoise, var_poisson=ext_var_poisson)
-    log.info('input model type is {}'.format(input_model.__class__.__name__))
+                                         var_rnoise=ext_var_rnoise, var_poisson=ext_var_poisson)
+    log.info('Input model type is {}'.format(input_model.__class__.__name__))
     new_model.update(input_model)
     new_model.meta.wcs = slit_wcs
     return new_model, xlo, xhi, ylo, yhi
