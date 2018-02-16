@@ -21,10 +21,12 @@ Package Index
    extract_1d/index.rst
    extract_2d/index.rst
    fits_generator/index.rst
+   firstframe/index.rst
    flatfield/index.rst
    fringe/index.rst
    gain_scale/index.rst
    group_scale/index.rst
+   guider_cds/index.rst
    imprint/index.rst
    ipc/index.rst
    jump/index.rst
@@ -49,6 +51,7 @@ Package Index
    stpipe/index.rst
    straylight/index.rst
    superbias/index.rst
+   transforms/index.rst
    tweakreg/index.rst
    wfs_combine/index.rst
    white_light/index.rst

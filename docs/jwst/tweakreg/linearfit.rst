@@ -1,4 +1,11 @@
-==========
-Linear Fit
-==========
-Functions for fitting catalogs of sources in a reference image plane.
+=========
+linearfit
+=========
+
+.. moduleauthor:: Mihai Cara <help@stsci.edu>
+
+.. currentmodule:: jwst.tweakreg.linearfit
+
+.. automodule:: jwst.tweakreg.linearfit
+   :members:
+   :undoc-members:

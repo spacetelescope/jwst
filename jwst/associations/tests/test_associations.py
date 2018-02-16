@@ -1,3 +1,4 @@
+
 """test_associations: Test of general Association functionality."""
 import pytest
 
@@ -12,6 +13,7 @@ from ..registry import (
     import_from_file,
     find_object
 )
+from ..lib.dms_base import DMSAttrConstraint
 
 
 # Basic Association object
@@ -79,44 +81,44 @@ def test_base_instatiation():
     'constraints, pool, n_asns',
     [
         (
-            {
-                'obs_id': {
-                    'value': 'V99009001001P0000000002101',
-                    'inputs': ['obs_id']
-                }
-            },
+            DMSAttrConstraint(
+                name='obs_id',
+                value='V99009001001P0000000002101',
+                sources=['obs_id']
+            ),
             helpers.t_path('data/mega_pool.csv'),
-            3,
+            1,
         ),
         (
-            {
-                'obs_id': {
-                    'value': 'junk',
-                    'inputs': ['obs_id']
-                }
-            },
+            DMSAttrConstraint(
+                name='obs_id',
+                value='junk',
+                sources=['obs_id']
+            ),
             helpers.t_path('data/pool_001_candidates.csv'),
             0,
         ),
         (
-            {
-                'asn_candidate_id': {
-                    'value': '.+(o001|o002).+',
-                    'inputs': ['asn_candidate'],
-                    'force_unique': False,
-                }
-            },
+            DMSAttrConstraint(
+                name='asn_candidate_id',
+                value='.+(o001|o002).+',
+                sources=['asn_candidate'],
+                force_unique=False,
+                is_acid=True,
+                evaluate=True,
+            ),
             helpers.t_path('data/pool_001_candidates.csv'),
             22,
         ),
         (
-            {
-                'asn_candidate_id': {
-                    'value': '.+(o001|o002).+',
-                    'inputs': ['asn_candidate'],
-                    'force_unique': True,
-                }
-            },
+            DMSAttrConstraint(
+                name='asn_candidate_id',
+                value='.+(o001|o002).+',
+                sources=['asn_candidate'],
+                force_unique=True,
+                is_acid=True,
+                evaluate=True,
+            ),
             helpers.t_path('data/pool_001_candidates.csv'),
             24,
         ),
@@ -130,10 +132,10 @@ def test_global_constraints(constraints, pool, n_asns):
     assert len(rules) >= 3
     for constraint in constraints:
         for rule in rules:
-            assert constraint in rules[rule].GLOBAL_CONSTRAINTS
+            assert constraint in rules[rule].GLOBAL_CONSTRAINT
 
     pool = helpers.combine_pools(pool)
-    asns, orphaned = generate(pool, rules)
+    asns = generate(pool, rules)
     assert len(asns) == n_asns
 
 

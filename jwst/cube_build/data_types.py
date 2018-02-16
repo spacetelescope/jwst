@@ -52,7 +52,7 @@ class DataTypes(object):
         # IF a single model or a single file  is passed in then
         # self.filename & self.input_model hold the values for this singe dataset
         self.InputType  = ''
-        if isinstance(input, datamodels.ImageModel):
+        if isinstance(input, datamodels.IFUImageModel):
 #            print('this is a single file passed as a Model')
             # It's a single image that's been passed in as a model
             # input is a model
@@ -67,7 +67,7 @@ class DataTypes(object):
             self.input_type='Container'
             self.data_type = 'multi'
             self.output_name  = 'Temp'
-            if not single:  # find the name of the output file from the association 
+            if not single:  # find the name of the output file from the association
                 with datamodels.ModelContainer(input) as input_model:
                     self.output_name =input_model.meta.asn_table.products[0].name
 
@@ -92,20 +92,20 @@ class DataTypes(object):
                     self.output_name =  asn_table['products'][0]['name']
                     for m in asn_table['products'][iproduct]['members']:
                         self.filenames.append(m['expname'])
-                        self.input_models.append(datamodels.ImageModel(m['expname']))
+                        self.input_models.append(datamodels.IFUImageModel(m['expname']))
             except:
                 # The name of a single image file
 #                print(' this is a single file  read in filename')
                 self.input_type = 'File'
                 self.data_type = 'singleton'
                 self.filenames.append(input)
-                self.input_models.append(datamodels.ImageModel(input))
+                self.input_models.append(datamodels.IFUImageModel(input))
                 self.output_name = self.build_product_name(self.filenames[0])
 
         else:
             raise TypeError
 
-# if the user has set the output name - strip out *.fits 
+# if the user has set the output name - strip out *.fits
 # later suffixes will be added to this name to designate the
 # channel, subchannel or grating,filter the data is covers.
 
@@ -115,7 +115,7 @@ class DataTypes(object):
 #            root, ext = os.path.splitext(output_file)
 #            default = root.find('cube_build') # the user has not provided a name
             self.output_name = basename
-        
+
 
         if output_dir !=None :
             self.output_name= output_dir + '/' + self.output_name
@@ -123,7 +123,7 @@ class DataTypes(object):
     def build_product_name(self, filename):
         indx = filename.rfind('.fits')
         indx_try = filename.rfind('_rate.fits') # standard expected filename in CalSpec2
-        indx_try2 = filename.rfind('_cal.fits') # standard expected filename 
+        indx_try2 = filename.rfind('_cal.fits') # standard expected filename
 
 
         if indx_try > 0:
@@ -135,11 +135,11 @@ class DataTypes(object):
         return single_product
 
 
-        
-    
+
+
 
 # TODO:  Routines not used below - saved just in case we need them later - if not
-# remove. 
+# remove.
 
     def interpret_image_model(self, model):
         """ Interpret image model as single member association data product.

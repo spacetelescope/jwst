@@ -1,5 +1,5 @@
 ========
-Skymatch
+SkyMatch
 ========
 
 .. moduleauthor:: Mihai Cara <help@stsci.edu>

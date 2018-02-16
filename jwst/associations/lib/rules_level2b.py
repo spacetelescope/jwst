@@ -2,107 +2,181 @@
 """
 import logging
 
+from jwst.associations.lib.constraint import Constraint
 from jwst.associations.lib.dms_base import format_list
 from jwst.associations.lib.rules_level2_base import *
-from jwst.associations.lib.rules_level3_base import (DMS_Level3_Base, _EMPTY)
+from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
 __all__ = [
-    'Asn_Lv2_Image',
-    'Asn_Lv2ImageNonScience',
-    'Asn_Lv2ImageSpecial',
-    'Asn_Lv2Spec',
-    'Asn_Lv2SpecNonScience',
-    'Asn_Lv2SpecSpecial',
-    'Asn_Lv2WFSS'
 ]
 
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
 # --------------------------------
 # Start of the User-level rules
 # --------------------------------
-
-
 class Asn_Lv2Image(
         AsnMixin_Lv2Singleton,
-        AsnMixin_Lv2ImageScience,
         AsnMixin_Lv2Image,
-        AsnMixin_Lv2Mode
+        DMSLevel2bBase
 ):
     """Level2b Image"""
 
+    def __init__(self, *args, **kwargs):
 
-class Asn_Lv2ImageNonScience(
-        AsnMixin_Lv2Singleton,
-        AsnMixin_Lv2ImageNonScience,
-        AsnMixin_Lv2Image,
-        AsnMixin_Lv2Mode
-):
-    """Level2b Image"""
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Image_Science(),
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2Image, self).__init__(*args, **kwargs)
 
 
 class Asn_Lv2ImageSpecial(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Singleton,
-        AsnMixin_Lv2ImageScience,
         AsnMixin_Lv2Image,
-        AsnMixin_Lv2Mode,
+        DMSLevel2bBase
 ):
     """Level2b Image that are marked special
-
-    Image exposures that are marked as backgrounds, imprints, etc.,
+    Image exposures that are marked as backgrounds, etc.,
     still get 2b processing just as normal science. However, no other
     exposures should get included into the association.
-
     """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Image_Science(),
+            Constraint_Special(),
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2ImageSpecial, self).__init__(*args, **kwargs)
+
+
+class Asn_Lv2ImageNonScience(
+        AsnMixin_Lv2Special,
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Image,
+        DMSLevel2bBase
+):
+    """Level2b Image that are not science but get Level 2b processing"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Image_Nonscience(),
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2ImageNonScience, self).__init__(*args, **kwargs)
+
+
+class Asn_Lv2FGS(
+        AsnMixin_Lv2Singleton,
+        AsnMixin_Lv2Image,
+        DMSLevel2bBase
+):
+    """Level2b FGS"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value=(
+                    'fgs_image'
+                    '|fgs_focus'
+                ),
+            )
+        ])
+
+        super(Asn_Lv2FGS, self).__init__(*args, **kwargs)
 
 
 class Asn_Lv2Spec(
         AsnMixin_Lv2Singleton,
-        AsnMixin_Lv2SpecScience,
-        AsnMixin_Lv2Spec,
-        AsnMixin_Lv2Mode,
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
 ):
     """Level2b Spectra"""
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Spectral_Science()
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2Spec, self).__init__(*args, **kwargs)
 
 
 class Asn_Lv2SpecSpecial(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Singleton,
-        AsnMixin_Lv2SpecScience,
-        AsnMixin_Lv2Spec,
-        AsnMixin_Lv2Mode,
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
 ):
     """Level2b Spectra that are marked special
-
-    Spectral exposures that are marked as backgrounds, imprints, etc.,
+    Spectral exposures that are marked as backgrounds, etc.,
     still get 2b processing just as normal science. However, no other
     exposures should get included into the association.
-
     """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            Constraint_Spectral_Science(),
+            Constraint_Special(),
+        ])
+
+        # Now check and continue initialization.
+        super(Asn_Lv2SpecSpecial, self).__init__(*args, **kwargs)
 
 
 class Asn_Lv2WFSS(
         AsnMixin_Lv2Singleton,
-        AsnMixin_Lv2Spec,
-        AsnMixin_Lv2Mode,
+        AsnMixin_Lv2Spectral,
+        DMSLevel2bBase
 ):
     """Level2b WFSS/GRISM exposures
-
     GRISM exposures require a source catalog from processing
     of the corresponding direct imagery.
     """
 
     def __init__(self, *args, **kwargs):
 
-        self.add_constraints({
-            'exp_type': {
-                'value': 'nis_wfss',
-                'inputs': ['exp_type'],
-            }
-        })
+        self.constraints = Constraint([
+            Constraint_Base(),
+            Constraint_Mode(),
+            DMSAttrConstraint(
+                name='exp_type',
+                sources=['exp_type'],
+                value='nis_wfss',
+            )
+        ])
 
         super(Asn_Lv2WFSS, self).__init__(*args, **kwargs)
 
@@ -125,13 +199,11 @@ class Asn_Lv2WFSS(
 
     def _get_opt_element(self):
         """Get string representation of the optical elements
-
         Returns
         -------
         opt_elem: str
             The Level3 Product name representation
             of the optical elements.
-
         Notes
         -----
         This is an override for the method in `DMSBaseMixin`.
@@ -140,7 +212,7 @@ class Asn_Lv2WFSS(
         """
         opt_elem = ''
         try:
-            value = format_list(self.constraints['opt_elem']['found_values'])
+            value = format_list(self.constraints['opt_elem'].found_values)
         except KeyError:
             pass
         else:
@@ -149,25 +221,3 @@ class Asn_Lv2WFSS(
         if opt_elem == '':
             opt_elem = 'clear'
         return opt_elem
-
-
-class Asn_Lv2FGS(
-        AsnMixin_Lv2Singleton,
-        AsnMixin_Lv2Image,
-):
-    """Level2b FGS"""
-
-    def __init__(self, *args, **kwargs):
-
-        self.add_constraints({
-            'exp_type': {
-                'value': (
-                    'fgs_image'
-                    '|fgs_focus'
-                ),
-                'inputs': ['exp_type'],
-                'force_unique': True,
-            }
-        })
-
-        super(Asn_Lv2FGS, self).__init__(*args, **kwargs)

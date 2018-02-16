@@ -3,7 +3,7 @@ A module that provides functions for matching sky in overlapping images.
 
 :Authors: Mihai Cara
 
-:License: `<http://www.stsci.edu/resources/software_hardware/pyraf/LICENSE>`_
+:License: :doc:`../LICENSE`
 
 """
 from __future__ import division, print_function
@@ -543,7 +543,14 @@ def _find_optimum_sky_deltas(images, apply_sky=True):
                 invalid[j] = False
                 ieq += 1
 
-    rank = np.linalg.matrix_rank(K, 1.0e-12)
+    try:
+        rank = np.linalg.matrix_rank(K, 1.0e-12)
+    except np.linalg.LinAlgError:
+        log.warning("Unable to compute sky: No valid data in common "
+                    "image areas")
+        deltas = np.full(ns, np.nan, dtype=np.float)
+        return deltas
+
     if rank < ns - 1:
         log.warning("There are more unknown sky values ({}) to be solved for"
                     .format(ns))

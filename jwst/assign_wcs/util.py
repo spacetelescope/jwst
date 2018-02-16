@@ -318,7 +318,7 @@ def get_object_info(catalog_name=''):
         objects.append(SkyObject(sid=row['id'],
                                  xcentroid=row['xcentroid'],
                                  ycentroid=row['ycentroid'],
-                                 icrs_centroid=row['icrs_centroid'],
+                                 sky_centroid=row['sky_centroid'],
                                  abmag=row['abmag'],
                                  abmag_error=row['abmag_error'],
                                  sky_bbox_ll=row['sky_bbox_ll'],
@@ -367,7 +367,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     detector (for example, extract 2d would only extract the on-detector portion of
     the bounding box)
 
-    Bounding box dispersion direction is dependent on the filter and module for NIRCAM 
+    Bounding box dispersion direction is dependent on the filter and module for NIRCAM
     and changes for GRISMR, but is consistent for GRISMC,
     see https://jwst-docs.stsci.edu/display/JTI/NIRCam+Wide+Field+Slitless+Spectroscopy
 
@@ -399,12 +399,14 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
             disperse_row_right = False
     else:
         raise ValueError("Input model is from unexpected instrument")
-    
+
     # get the array extent to exclude boxes not contained on the detector
     xsize = input_model.meta.subarray.xsize
     ysize = input_model.meta.subarray.ysize
 
     # extract the catalog objects
+    if input_model.meta.source_catalog.filename is None:
+        raise ValueError("No source catalog listed in datamodel")
     skyobject_list = get_object_info(input_model.meta.source_catalog.filename)
 
     # get the imaging transform to record the center of the object in the image
@@ -431,8 +433,8 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
             # save the image frame center of the object
             # takes in ra, dec, wavelength, order but wave and order
             # don't get used until the detector->grism_detector transform
-            xcenter, ycenter, _, _ = sky_to_detector(obj.icrs_centroid.ra.value,
-                                                     obj.icrs_centroid.dec.value,
+            xcenter, ycenter, _, _ = sky_to_detector(obj.sky_centroid.icrs.ra.value,
+                                                     obj.sky_centroid.icrs.dec.value,
                                                      1, 1)
 
             order_bounding = {}
@@ -451,12 +453,9 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                 if (disperse_row_right or  disperse_column):
                     wave_min = lmin
                     wave_max = lmax
-                 
+
                 xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value, obj.sky_bbox_ll.dec.value, lmin, order)
                 xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value, obj.sky_bbox_ur.dec.value, lmax, order)
-
-                # xmin, ymin, _, _, _ = sky_to_grism(obj.icrs_centroid.ra.value, obj.icrs_centroid.dec.value, lmin, order)
-                # xmax, ymax, _, _, _ = sky_to_grism(obj.icrs_centroid.ra.value, obj.icrs_centroid.dec.value, lmax, order)    
 
                 # convert to integer pixels, making use of python3 round to integer, 2.7 rounds to float
                 # if disperse_column:
@@ -465,14 +464,14 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                 # else:
                 #     cdisp = abs(round(bymax)-round(bymin)) // 2
                 #     xmin, ymin, xmax, ymax = map(round,[xmin-cdisp, ymin, xmax+cdisp, ymax])
-                
+
 
                 # don't add objects and orders which are entirely off the detector
                 # this could also live in extract_2d
                 # partial_order marks partial off-detector objects which are near enough to cause
                 # spectra to be observed on the detector. This is usefull because the catalog often is
                 # created from a resampled direct image that is bigger than the detector FOV for a single
-                # grism exposure. 
+                # grism exposure.
                 exclude = False
                 partial_order = False
 
@@ -489,7 +488,7 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
                     exclude = True
                 if (xmin > xsize):
                     exclude = True
-                
+
                 if partial_order:
                     log.info("Partial order on detector for obj: {} order: {}".format(obj.sid, order))
                 if exclude:
@@ -500,19 +499,20 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
             # add lmin and lmax used for the orders here?
             # input_model.meta.wcsinfo.waverange_start keys covers the
             # full range of all the orders
+
             if len(order_bounding) > 0:
                 grism_objects.append(GrismObject(sid=obj.sid,
                                                  order_bounding=order_bounding,
-                                                 icrs_centroid=obj.icrs_centroid,
+                                                 sky_centroid=obj.sky_centroid,
                                                  partial_order=partial_order,
                                                  waverange=waverange,
                                                  sky_bbox_ll=obj.sky_bbox_ll,
                                                  sky_bbox_lr=obj.sky_bbox_lr,
                                                  sky_bbox_ul=obj.sky_bbox_ul,
                                                  sky_bbox_ur=obj.sky_bbox_ur,
-                                                 xcenter=xcenter,
-                                                 ycenter=ycenter,))
-            
+                                                 xcentroid=xcenter,
+                                                 ycentroid=ycenter))
+
     return grism_objects
 
 
@@ -550,7 +550,18 @@ def update_s_region(model):
     if bbox is None:
         bbox = _bbox_from_shape(model)
 
-    footprint = model.meta.wcs.footprint(bbox, center=True).T
+    # footprint is an array of shape (2, 2) or (3, 3)
+    footprint = model.meta.wcs.footprint(bbox, center=True)
+    # take only imaging footprint
+    footprint = footprint[:2, :]
+
+    # Make sure RA values are all positive
+    negative_ind = footprint[0] < 0
+    if negative_ind.any():
+        footprint[0][negative_ind] = 360 + footprint[0][negative_ind]
+
+    footprint = footprint.T
+
     s_region = (
         "POLYGON ICRS "
         " {0} {1}"
@@ -559,6 +570,6 @@ def update_s_region(model):
         " {6} {7}".format(*footprint.flatten()))
     if "nan" in s_region:
         # do not update s_region if there are NaNs.
-        log.info("There NaNs in s_region")
+        log.info("There are NaNs in s_region")
     else:
         model.meta.wcsinfo.s_region = s_region

@@ -1,4 +1,0 @@
-========
-WCSUtils
-========
-WCS Utility Functions

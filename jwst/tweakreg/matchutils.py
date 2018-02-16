@@ -1,3 +1,10 @@
+"""
+A module that provides algorithms for initial estimation of shifts
+based on 2D histograms.
+
+:License: :doc:`../LICENSE`
+
+"""
 from __future__ import (absolute_import, division, unicode_literals,
                         print_function)
 
@@ -29,7 +36,7 @@ def center_of_mass(img, labels=None, index=None):
     Returns
     -------
     centerofmass : tuple, or list of tuples
-        Co-ordinates of centers-of-masses.
+        Coordinates of centers-of-masses.
 
     Examples
     --------
@@ -67,7 +74,7 @@ def build_xy_zeropoint(imgxy, refxy, searchrad=3.0):
 
     if chelp is None:
         raise ImportError('cannot import chelp')
-    
+
     # run C function to create ZP matrix
     zpmat = chelp.arrxyzero(imgxy.astype(np.float32),
                             refxy.astype(np.float32), searchrad)

@@ -27,20 +27,52 @@ ANY = "ANY"
 HORIZONTAL = 1
 VERTICAL = 2
 
+# These values are assigned in get_extract_parameters, using key "match".
+# If there was an aperture in the reference file for which the "id" key
+# matched, that's (at least) a partial match.  If "spectral_order" also
+# matched, that's an exact match.
+
+NO_MATCH = "no match"
+PARTIAL = "partial match"
+EXACT = "exact match"
+
 DUMMY = "dummy"
 
 
 Aperture = namedtuple('Aperture', ['xstart', 'ystart', 'xstop', 'ystop'])
 
 
-def get_extract_parameters(refname, input_model, slitname,
-                           meta, smoothing_length, bkg_order):
+class Extract1dError(Exception):
+    pass
 
-    extract_params = {}
+class InvalidSpectralOrderNumberError(Extract1dError):
+    """The spectral order number was invalid or off the detector."""
+    def __init__(self, message=None):
+        self.message = message
+
+
+def load_ref_file(refname):
 
     if refname == "N/A":
+        ref_dict = None
+    else:
+        fd = open(refname)
+        ref_dict = json.load(fd)
+        fd.close()
+
+    return ref_dict
+
+
+def get_extract_parameters(ref_dict, input_model, slitname, sp_order,
+                           meta, smoothing_length, bkg_order):
+
+    extract_params = {'match': NO_MATCH}        # initial value
+
+    if ref_dict is None:
         # There is no reference file; use "reasonable" default values.
+        extract_params['match'] = EXACT
         shape = input_model.data.shape
+        extract_params['spectral_order'] = sp_order
         extract_params['xstart'] = 0                    # first pixel in X
         extract_params['xstop'] = shape[-1] - 1         # last pixel in X
         extract_params['ystart'] = 0                    # first pixel in Y
@@ -49,27 +81,47 @@ def get_extract_parameters(refname, input_model, slitname,
         extract_params['src_coeff'] = None
         extract_params['bkg_coeff'] = None
         extract_params['nod_correction'] = 0
-        if input_model.xsize >= input_model.ysize:
-            extract_params['dispaxis'] = HORIZONTAL
-        else:
-            extract_params['dispaxis'] = VERTICAL
+        try:
+            # For MultiSlitModel or similar.
+            if input_model.xsize >= input_model.ysize:
+                extract_params['dispaxis'] = HORIZONTAL
+            else:
+                extract_params['dispaxis'] = VERTICAL
+        except AttributeError:
+            # For ImageModel or CubeModel.
+            if input_model.meta.subarray.xsize >= \
+               input_model.meta.subarray.ysize:
+                extract_params['dispaxis'] = HORIZONTAL
+            else:
+                extract_params['dispaxis'] = VERTICAL
         extract_params['independent_var'] = 'pixel'
         extract_params['smoothing_length'] = 0  # because no background sub.
         extract_params['bkg_order'] = 0         # because no background sub.
 
     else:
-        with open(refname) as f:
-            ref = json.load(f)
-        for aper in ref['apertures']:
+        for aper in ref_dict['apertures']:
             if 'id' in aper and aper['id'] != "dummy" and \
                (aper['id'] == slitname or aper['id'] == "ANY" or
                 slitname == "ANY"):
+                extract_params['match'] = PARTIAL
+                # region_type is retained for backward compatibility; it is
+                # not required to be present.
+                # spectral_order is a secondary selection criterion.  The
+                # default is the expected value, so if the key is not present
+                # in the JSON file, the current aperture will be selected.
+                # If the current aperture in the JSON file has
+                # "spectral_order": "ANY", that aperture will be selected.
                 region_type = aper.get("region_type", "target")
-                if region_type == "target":
+                if region_type != "target":
+                    continue
+                spectral_order = aper.get("spectral_order", sp_order)
+                if spectral_order == sp_order or spectral_order == ANY:
+                    extract_params['match'] = EXACT
+                    extract_params['spectral_order'] = sp_order
                     disp = aper.get('dispaxis')
                     if disp is None:
-                        log.warning("dispaxis not specified in %s;"
-                                    " assuming horizontal dispersion", refname)
+                        log.warning("dispaxis not specified in reference file;"
+                                    " assuming horizontal dispersion")
                         disp = HORIZONTAL
                     if disp != HORIZONTAL and disp != VERTICAL:
                         log.error("dispaxis = %d is not valid.", disp)
@@ -97,7 +149,7 @@ def get_extract_parameters(refname, input_model, slitname,
                     extract_params['extract_width'] = aper.get('extract_width')
                     extract_params['nod_correction'] = get_nod_offset(aper,
                                                                       meta)
-                break
+                    break
 
     return extract_params
 
@@ -607,6 +659,7 @@ def create_poly(coeff):
 class ExtractModel:
 
     def __init__(self, input_model, slit,
+                 match="unknown",
                  dispaxis=HORIZONTAL, spectral_order=1,
                  xstart=None, xstop=None, ystart=None, ystop=None,
                  extract_width=None, src_coeff=None, bkg_coeff=None,
@@ -615,6 +668,9 @@ class ExtractModel:
                  x_center=None, y_center=None,
                  inner_bkg=None, outer_bkg=None, method='subpixel'):
         """Create a polynomial model from coefficients.
+
+        If InvalidSpectralOrderNumberError is raised, processing of the
+        current slit or spectral order should be skipped.
 
         Parameters
         ----------
@@ -730,10 +786,13 @@ class ExtractModel:
         self.wcs = None                         # initial value
         if input_model.meta.exposure.type == "NIS_SOSS":
             if hasattr(input_model.meta, 'wcs'):
-                log.info("NIRISS SOSS data, extracting spectral order %d",
-                         self.spectral_order)
-                self.wcs = niriss.niriss_soss_set_input(
+                try:
+                    self.wcs = niriss.niriss_soss_set_input(
                                 input_model, self.spectral_order)
+                except ValueError:
+                    raise InvalidSpectralOrderNumberError(
+                                "Spectral order {} is not valid"
+                                .format(self.spectral_order))
         elif slit == DUMMY:
             if hasattr(input_model.meta, 'wcs'):
                 self.wcs = input_model.meta.wcs
@@ -1114,6 +1173,9 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
     output_model = datamodels.MultiSpecModel()
     output_model.update(input_model)
 
+    # Read and interpret the reference file.
+    ref_dict = load_ref_file(refname)
+
     # More generally, one could use '"Multi" in str(type(input_model))'.
     if isinstance(input_model, datamodels.MultiSlitModel) or \
        isinstance(input_model, datamodels.MultiProductModel):
@@ -1129,13 +1191,26 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             if np.size(slit.data) <= 0:
                 log.info('No data for slit %s, skipping ...' % slit.name)
                 continue
-            extract_params = get_extract_parameters(
-                                refname, slit, slit.name,
-                                input_model.meta, smoothing_length, bkg_order)
             sp_order = get_spectral_order(slit)
-            extract_params["spectral_order"] = sp_order
-            (ra, dec, wavelength, net, background) = \
-                extract_one_slit(input_model, slit, -1, **extract_params)
+            extract_params = get_extract_parameters(
+                                ref_dict, slit, slit.name, sp_order,
+                                input_model.meta, smoothing_length, bkg_order)
+            if extract_params['match'] == NO_MATCH:
+                log.critical('Missing extraction parameters.')
+                raise ValueError('Missing extraction parameters.')
+            elif extract_params['match'] == PARTIAL:
+                log.info('Spectral order %d not found, skipping ...' %
+                         sp_order)
+                continue
+
+            try:
+                (ra, dec, wavelength, net, background) = \
+                        extract_one_slit(input_model, slit, -1,
+                                         verbose=True,
+                                         **extract_params)
+            except InvalidSpectralOrderNumberError as e:
+                log.info(str(e) + ", skipping ...")
+                continue
             got_relsens = True
             try:
                 relsens = slit.relsens
@@ -1173,88 +1248,56 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             slitname = input_model.meta.subarray.name
         log.debug('slitname=%s' % slitname)
 
-        if isinstance(input_model, datamodels.ImageModel) or \
-           isinstance(input_model, datamodels.DrizProductModel):
-            extract_params = get_extract_parameters(
-                                refname, input_model, slitname,
-                                input_model.meta, smoothing_length, bkg_order)
-            if extract_params:
-                slit = DUMMY
-                sp_order = get_spectral_order(input_model)
-                extract_params["spectral_order"] = sp_order
-                (ra, dec, wavelength, net, background) = \
-                        extract_one_slit(input_model, slit, -1,
-                                         **extract_params)
-            else:
-                log.critical('Missing extraction parameters.')
-                raise ValueError('Missing extraction parameters.')
-            dq = np.zeros(net.shape, dtype=np.int32)
-            got_relsens = True
-            try:
-                relsens = input_model.relsens
-            except AttributeError:
-                got_relsens = False
-            if got_relsens and len(relsens) == 0:
-                got_relsens = False
-            if got_relsens:
-                r_factor = interpolate_response(wavelength, relsens)
-                flux = net / r_factor
-            else:
-                log.warning("No relsens for input file, "
-                            "so can't compute flux.")
-                flux = np.zeros_like(net)
-            fl_error = np.ones_like(net)
-            nerror = np.ones_like(net)
-            berror = np.ones_like(net)
-            spec = datamodels.SpecModel()
-            otab = np.array(list(zip(wavelength, flux, fl_error, dq,
-                                 net, nerror, background, berror)),
-                            dtype=spec.spec_table.dtype)
-            spec = datamodels.SpecModel(spec_table=otab)
-            spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
-            spec.slit_ra = ra
-            spec.slit_dec = dec
-            spec.spectral_order = sp_order
-            if slitname is not None and slitname != "ANY":
-                spec.name = slitname
-            output_model.spec.append(spec)
+        # Loop over these spectral order numbers.
+        if input_model.meta.exposure.type == "NIS_SOSS":
+            # This list of spectral order numbers may need to be assigned
+            # differently for other exposure types.
+            spectral_order_list = [1, 2, 3]
+        else:
+            # For this case, we'll call get_spectral_order to get the order.
+            spectral_order_list = ["not set yet"]
 
-        elif isinstance(input_model, datamodels.CubeModel):
+        if isinstance(input_model, (datamodels.ImageModel,
+                                    datamodels.DrizProductModel)):
+            for sp_order in spectral_order_list:
+                if sp_order == "not set yet":
+                    sp_order = get_spectral_order(input_model)
 
-            extract_params = get_extract_parameters(
-                                refname, input_model, slitname,
-                                input_model.meta, smoothing_length, bkg_order)
-            if not extract_params:
-                log.critical('Missing extraction parameters.')
-                raise ValueError('Missing extraction parameters.')
-
-            sp_order = get_spectral_order(input_model)
-            extract_params["spectral_order"] = sp_order
-
-            got_relsens = True
-            try:
-                relsens = input_model.relsens
-            except AttributeError:
-                got_relsens = False
-            if got_relsens and len(relsens) == 0:
-                got_relsens = False
-            if not got_relsens:
-                log.warning("No relsens for input file, "
-                            "so can't compute flux.")
-
-            # Loop over each integration in the input model
-            slit = DUMMY
-            for integ in range(input_model.data.shape[0]):
-                # Extract spectrum
-                (ra, dec, wavelength, net, background) = \
-                        extract_one_slit(input_model, slit, integ,
-                                         **extract_params)
+                extract_params = get_extract_parameters(
+                                    ref_dict, input_model, slitname, sp_order,
+                                    input_model.meta, smoothing_length,
+                                    bkg_order)
+                if extract_params['match'] == EXACT:
+                    slit = DUMMY
+                    try:
+                        (ra, dec, wavelength, net, background) = \
+                                extract_one_slit(input_model, slit, -1,
+                                                 verbose=True,
+                                                 **extract_params)
+                    except InvalidSpectralOrderNumberError as e:
+                        log.info(str(e) + ", skipping ...")
+                        continue
+                elif extract_params['match'] == PARTIAL:
+                    log.info('Spectral order %d not found, skipping ...' %
+                             sp_order)
+                    continue
+                else:
+                    log.critical('Missing extraction parameters.')
+                    raise ValueError('Missing extraction parameters.')
                 dq = np.zeros(net.shape, dtype=np.int32)
+                got_relsens = True
+                try:
+                    relsens = input_model.relsens
+                except AttributeError:
+                    got_relsens = False
+                if got_relsens and len(relsens) == 0:
+                    got_relsens = False
                 if got_relsens:
-                    r_factor = interpolate_response(wavelength,
-                                                    input_model.relsens)
+                    r_factor = interpolate_response(wavelength, relsens)
                     flux = net / r_factor
                 else:
+                    log.warning("No relsens for input file, "
+                                "so can't compute flux.")
                     flux = np.zeros_like(net)
                 fl_error = np.ones_like(net)
                 nerror = np.ones_like(net)
@@ -1264,12 +1307,80 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                                      net, nerror, background, berror)),
                                 dtype=spec.spec_table.dtype)
                 spec = datamodels.SpecModel(spec_table=otab)
-                spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec,
-                                                             wavelength)
+                spec.meta.wcs = spec_wcs.create_spectral_wcs(
+                                        ra, dec, wavelength)
                 spec.slit_ra = ra
                 spec.slit_dec = dec
                 spec.spectral_order = sp_order
+                if slitname is not None and slitname != "ANY":
+                    spec.name = slitname
                 output_model.spec.append(spec)
+
+        elif isinstance(input_model, (datamodels.CubeModel, datamodels.SlitModel)):
+
+            # NRS_BRIGHTOBJ exposures are instances of SlitModel.
+            for sp_order in spectral_order_list:
+                if sp_order == "not set yet":
+                    sp_order = get_spectral_order(input_model)
+
+                extract_params = get_extract_parameters(
+                                    ref_dict, input_model, slitname, sp_order,
+                                    input_model.meta, smoothing_length,
+                                    bkg_order)
+                if extract_params['match'] == NO_MATCH:
+                    log.critical('Missing extraction parameters.')
+                    raise ValueError('Missing extraction parameters.')
+                elif extract_params['match'] == PARTIAL:
+                    log.warning('Spectral order %d not found, skipping ...' %
+                                sp_order)
+                    continue
+
+                got_relsens = True
+                try:
+                    relsens = input_model.relsens
+                except AttributeError:
+                    got_relsens = False
+                if got_relsens and len(relsens) == 0:
+                    got_relsens = False
+                if not got_relsens:
+                    log.warning("No relsens for input file, "
+                                "so can't compute flux.")
+
+                # Loop over each integration in the input model
+                slit = DUMMY
+                verbose = True
+                for integ in range(input_model.data.shape[0]):
+                    # Extract spectrum
+                    try:
+                        (ra, dec, wavelength, net, background) = \
+                                extract_one_slit(input_model, slit, integ,
+                                                 verbose=verbose,
+                                                 **extract_params)
+                    except InvalidSpectralOrderNumberError as e:
+                        log.info(str(e) + ", skipping ...")
+                        break
+                    verbose = False
+                    dq = np.zeros(net.shape, dtype=np.int32)
+                    if got_relsens:
+                        r_factor = interpolate_response(wavelength,
+                                                        input_model.relsens)
+                        flux = net / r_factor
+                    else:
+                        flux = np.zeros_like(net)
+                    fl_error = np.ones_like(net)
+                    nerror = np.ones_like(net)
+                    berror = np.ones_like(net)
+                    spec = datamodels.SpecModel()
+                    otab = np.array(list(zip(wavelength, flux, fl_error, dq,
+                                         net, nerror, background, berror)),
+                                    dtype=spec.spec_table.dtype)
+                    spec = datamodels.SpecModel(spec_table=otab)
+                    spec.meta.wcs = spec_wcs.create_spectral_wcs(
+                                        ra, dec, wavelength)
+                    spec.slit_ra = ra
+                    spec.slit_dec = dec
+                    spec.spectral_order = sp_order
+                    output_model.spec.append(spec)
 
         elif isinstance(input_model, datamodels.IFUCubeModel):
 
@@ -1349,9 +1460,44 @@ def copy_keyword_info(slit, slitname, spec):
         spec.shutter_state = slit.shutter_state
 
 
-def extract_one_slit(input_model, slit, integ, **extract_params):
+def extract_one_slit(input_model, slit, integ, verbose, **extract_params):
+    """Extract data for one slit, or spectral order, or plane.
+    Parameters
+    ----------
+    input_model: data model
+        The input science data.
 
-    log_initial_parameters(extract_params)
+    slit: one slit from a MultiSlitModel, or "dummy"
+        If `slit` is a slit from a MultiSlitModel, the data array is
+        slit.data; otherwise, the data are in input_model.data.
+        In the latter case, if `integ` is zero or larger, the spectrum
+        will be extracted from the 2-D slice input_model.data[integ].
+
+    integ: int
+        For the case that the input is a CubeModel, `integ` is the
+        integration number.  If the integration number is not relevant,
+        `integ` should be -1.
+
+    verbose: boolean
+        If True, log more info (extraction parameters, in particular).
+
+    extract_params: dictionary
+        Parameters read from the reference file.
+
+    Returns
+    -------
+    tuple (ra, dec, wavelength, net, background)
+        `ra` and `dec` are floats, and the others are 1-D arrays.
+        `ra` and `dec` are the right ascension and declination at the
+        nominal center of the slit.  `wavelength` is the wavelength in
+        micrometers at each pixel.  `net` is the count rate (counts / s)
+        minus the background at each pixel.  `background` is the background
+        count rate that was subtracted from the total source count rate
+        to get `net`.
+    """
+
+    if verbose:
+        log_initial_parameters(extract_params)
 
     if integ > -1:
         data = input_model.data[integ]
@@ -1376,7 +1522,8 @@ def extract_one_slit(input_model, slit, integ, **extract_params):
 
     ap = get_aperture(data.shape, extract_model.wcs, extract_params)
     extract_model.update_extraction_limits(ap)
-    extract_model.log_extraction_parameters()
+    if verbose:
+        extract_model.log_extraction_parameters()
 
     extract_model.assign_polynomial_limits()
     (ra, dec, wavelength, net, background) = \

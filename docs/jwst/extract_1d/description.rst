@@ -8,8 +8,8 @@ the slit or in the slitless region, and NIRISS slitless data) as well as
 IFU data and NIRSpec MOS (micro-shutter array) data.
 
 For GRISM data (NIS_WFSS or NRC_GRISM), no reference file is used.
-The extraction region is taken to be the full size of the input subarray,
-and the dispersion direction is assumed to be the longer axis.
+The extraction region is taken to be the full size of the input subarray
+or cutout, and the dispersion direction is assumed to be the longer axis.
 
 For IFU data, the extraction options differ depending on
 whether the target is a point source or an extended source.  For a point

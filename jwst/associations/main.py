@@ -4,11 +4,17 @@ import sys
 import argparse
 import logging
 
+import numpy as np
+
 from jwst.associations import (
     __version__,
     AssociationPool,
     AssociationRegistry,
     generate,
+)
+from jwst.associations.lib.dms_base import DMSAttrConstraint
+from jwst.associations.lib.constraint import (
+    ConstraintTrue,
 )
 from jwst.associations.lib.log_config import (log_config, DMS_config)
 
@@ -200,7 +206,7 @@ class Main():
             pass
 
         # Setup rules.
-        global_constraints = {}
+        global_constraints = ConstraintTrue()
 
         # Determine mode of operation. Options are
         #  1) Only specified candidates
@@ -214,11 +220,11 @@ class Main():
             parsed.discover = True
             parsed.all_candidates = True
         if parsed.discover or parsed.all_candidates:
-            global_constraints['asn_candidate'] = constrain_on_candidates(
+            global_constraints = constrain_on_candidates(
                 None
             )
         elif parsed.asn_candidate_ids is not None:
-            global_constraints['asn_candidate'] = constrain_on_candidates(
+            global_constraints = constrain_on_candidates(
                 parsed.asn_candidate_ids
             )
 
@@ -239,7 +245,7 @@ class Main():
             )
 
         logger.info('Generating associations.')
-        self.associations, self.orphaned = generate(
+        self.associations = generate(
             self.pool, self.rules, version_id=parsed.version_id
         )
 
@@ -273,6 +279,19 @@ class Main():
                 format=parsed.format,
                 save_orphans=parsed.save_orphans
             )
+
+    @property
+    def orphaned(self):
+        not_in_asn = np.ones((len(self.pool),), dtype=bool)
+        for asn in self.associations:
+            try:
+                indexes = [item.index for item in asn.from_items]
+            except AttributeError:
+                continue
+            not_in_asn[indexes] = False
+
+        orphaned = self.pool[not_in_asn]
+        return orphaned
 
     def __str__(self):
         result = []
@@ -325,7 +344,6 @@ def constrain_on_candidates(candidates):
         List of candidate id's.
         If None, then all candidates are matched.
     """
-    constraint = {}
     if candidates is not None and len(candidates):
         c_list = '|'.join(candidates)
         values = ''.join([
@@ -333,13 +351,14 @@ def constrain_on_candidates(candidates):
         ])
     else:
         values = None
-    constraint = {
-        'value': values,
-        'inputs': ['asn_candidate'],
-        'force_unique': True,
-        'is_acid': True,
-        'evaluate': True,
-    }
+    constraint = DMSAttrConstraint(
+        name='asn_candidate',
+        sources=['asn_candidate'],
+        value=values,
+        force_unique=True,
+        is_acid=True,
+        evaluate=True,
+    )
 
     return constraint
 
@@ -404,8 +423,6 @@ def filter_discovered_only(
     if keep_candidates:
         discover_list.extend(candidate_list)
     return discover_list
-
-
 
 
 if __name__ == '__main__':

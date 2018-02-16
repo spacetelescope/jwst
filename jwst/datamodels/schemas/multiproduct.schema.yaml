@@ -28,6 +28,11 @@ allOf:
               datatype: int32
             relsens:
               $ref: relsens.schema.yaml
+            bunit_data:
+              title: physical units of the array values
+              type: string
+              fits_hdu: SCI
+              fits_keyword: BUNIT
             name:
               title: Name of the slit
               type: string

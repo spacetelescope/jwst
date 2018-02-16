@@ -27,7 +27,7 @@ class RampFitStep (Step):
     #      algorithm = option('OLS', 'GLS', default='OLS') # 'OLS' or 'GLS'
     #      weighting = option('unweighted', 'optimal', default='unweighted') \
     #      # 'unweighted' or 'optimal'
-    # As of 04/26/17, the only allowed algorithm is 'ols', and the 
+    # As of 04/26/17, the only allowed algorithm is 'ols', and the
     #      only allowed weighting is 'optimal'.
     algorithm = 'ols'      # Only algorithm allowed for Build 7.1
     weighting = 'optimal'  # Only weighting allowed for Build 7.1
@@ -89,5 +89,7 @@ class RampFitStep (Step):
         if int_model is not None:
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
 
-        return out_model, int_model
+        if input_model.meta.exposure.type in ('NRS_IFU', 'MIR_MRS'):
+            out_model = datamodels.IFUImageModel(out_model)
 
+        return out_model, int_model

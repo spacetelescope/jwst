@@ -77,10 +77,11 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
     #
     # xcenter,ycenter: in direct image pixels
     # order_bounding in grism_detector pixels
-    # icrs_centroid: SkyCoord of object center
+    # sky_centroid: SkyCoord of object center
     # sky_bbox_ :lower and upper bounding box in SkyCoord
     # sid: catalog ID of the object
 
+    slits = []
     for obj in grism_objects:
         for order in obj.order_bounding.keys():
 
@@ -103,8 +104,8 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             # the new wcs for the subarray for the forward transform
             tr = inwcs.get_transform('grism_detector', 'detector')
             tr = Identity(2) | Mapping((0, 1, 0, 1, 0)) | (Shift(xmin) & Shift(ymin) &
-                                                           Const1D(obj.xcenter) &
-                                                           Const1D(obj.ycenter) &
+                                                           Const1D(obj.xcentroid) &
+                                                           Const1D(obj.ycentroid) &
                                                            Const1D(order)) | tr
 
             subwcs.set_transform('grism_detector', 'detector', tr)
@@ -115,8 +116,8 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             # figure out how to match the inputs and outputs correctly
             # going this direction
             # tr = inwcs.get_transform('detector', 'grism_detector')
-            # tr = Identity(4) | Mapping((0, 1, 2, 3)) | (Const1D(obj.xcenter) &
-            #                                             Const1D(obj.ycenter) &
+            # tr = Identity(4) | Mapping((0, 1, 2, 3)) | (Const1D(obj.xcentroid) &
+            #                                             Const1D(obj.ycentroid) &
             #                                             Identity(1) &
             #                                             Const1D(order)) | tr
 
@@ -130,7 +131,8 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             ext_dq = input_model.dq[ymin : ymax + 1, xmin : xmax + 1].copy()
 
 
-            new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
+            #new_model = datamodels.ImageModel(data=ext_data, err=ext_err, dq=ext_dq)
+            new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq)
             new_model.meta.wcs = subwcs
             # Not sure this makes sense for grism exposures since the trace
             # doesn't really have a footprint itself, it relates back to the
@@ -138,20 +140,21 @@ def extract_grism_objects(input_model, grism_objects=[], reference_files={}):
             # here?
             # util.update_s_region(new_model)
             new_model.meta.wcsinfo.spectral_order = order
-            output_model.slits.append(new_model)
-
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
             # nslit = obj.sid - 1  # catalog id starts at zero
-            output_model.slits[-1].name = str(obj.sid)
-            output_model.slits[-1].xstart = xmin + 1
-            output_model.slits[-1].xsize = (xmax - xmin) + 1
-            output_model.slits[-1].ystart = ymin + 1
-            output_model.slits[-1].ysize = (ymax - ymin) + 1
-            output_model.slits[-1].source_xpos = obj.xcenter
-            output_model.slits[-1].source_ypos = obj.ycenter
-            output_model.slits[-1].source_id = obj.sid
-
+            new_model.name = str(obj.sid)
+            new_model.xstart = xmin + 1
+            new_model.xsize = (xmax - xmin) + 1
+            new_model.ystart = ymin + 1
+            new_model.ysize = (ymax - ymin) + 1
+            new_model.source_xpos = obj.xcentroid
+            new_model.source_ypos = obj.ycentroid
+            new_model.source_id = obj.sid
+            new_model.bunit_data = input_model.meta.bunit_data
+            new_model.bunit_err = input_model.meta.bunit_err
+            slits.append(new_model)
+    output_model.slits.extend(slits)
     del subwcs
     return output_model
 

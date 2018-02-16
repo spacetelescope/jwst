@@ -14,20 +14,31 @@ All the information is specified in a list with key ``apertures``.  Each
 element of this list is a dictionary, one for each aperture (e.g. a slit)
 that is supported by the given reference file.  The particular dictionary
 to use is found by matching the slit name in the science data with the
-value of key ``id``.
+value of key ``id``.  Key ``spectral_order`` is optional, but if it is
+present, it must match the expected spectral order number.
 
 The following keys are supported (but for IFU data, see below).
-Key ``id`` is required for any element
-of the ``apertures`` list that may be used; the value of ``id`` is compared
-with the slit name (except for a full-frame input image) to select the
-appropriate aperture.  Key ``dispaxis`` is similarly required.  Key
-``region_type`` can be omitted, but if it is specified, its value must be
-"target".  The source extraction region can be specified with ``ystart``,
+Key ``id`` is the primary criterion for selecting which element of
+the ``apertures`` list to use.  The slit name (except for a full-frame
+input image) is compared with the values of ``id`` in the ``apertures``
+list to select the appropriate aperture.
+In order to allow the possibility of multiple
+spectral orders for the same slit name, there may be more than one element
+of ``apertures`` with the same value for key ``id``.  These should then be
+distinguished by using the secondary selection criterion ``spectral_order``.
+In this case, the various spectral orders would likely have different
+extraction locations within the image, so different elements of ``apertures``
+are needed in order to specify those locations.
+Key ``dispaxis`` is required.
+Key ``region_type`` can be omitted, but if it is specified, its value must
+be "target".  The source extraction region can be specified with ``ystart``,
 ``ystop``, etc., but a more flexible alternative is to use ``src_coeff``.
 If background is to be subtracted, this should be specified by giving
 ``bkg_coeff``.  These are described in more detail below.
 
 * id: the slit name, e.g. "S200A1" (string)
+* spectral_order: the spectral order number (optional); this can be either
+  positive or negative, but it should not be zero (int)
 * dispaxis: dispersion direction, 1 for X, 2 for Y (int)
 * xstart: first pixel in the horizontal direction, X (int)
 * xstop: last pixel in the horizontal direction, X (int)

@@ -2,11 +2,12 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2Spec",
     "version_id": null,
-    "code_version": "0.9.4",
+    "code_version": "0.9.11",
+    "degraded_status": "No known degraded exposures in association.",
     "program": "98005",
     "target": "1",
     "asn_pool": "jw98005_20171108T041409_pool",
-    "constraints": "Constraints:\n    single_science: {'False'}\n    exp_type: {'nrs_fixedslit'}\n    program: {'98005'}\n    target: {'1'}\n    instrument: {'nirspec'}\n    detector: {'nrs1'}\n    opt_elem: {'f170lp'}\n    opt_elem2: {'g235m'}\n    subarray: {'s200a1'}\n    channel: set()\n    asn_candidate: {\"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '98005'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '98005'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nirspec'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrs1'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f170lp'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['grating'], 'value': 'g235m'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 's200a1'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': None})\nConstraint_Spectral_Science({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrs_fixedslit'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o001\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o001",
     "products": [
         {
@@ -14,7 +15,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212o_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -23,7 +25,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211m_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -32,7 +35,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02113_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -41,7 +45,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02111_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -50,7 +55,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211e_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -59,7 +65,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210p_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -68,7 +75,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02123_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -77,7 +85,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210i_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -86,7 +95,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210p_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -95,7 +105,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02107_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -104,7 +115,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211f_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -113,7 +125,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02109_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -122,7 +135,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211m_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -131,7 +145,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210r_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -140,7 +155,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211b_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -149,7 +165,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02128_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -158,7 +175,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02104_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -167,7 +185,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212g_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -176,7 +195,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02111_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -185,7 +205,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211o_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -194,7 +215,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212e_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -203,7 +225,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210u_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -212,7 +235,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02114_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -221,7 +245,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210v_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -230,7 +255,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210n_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -239,7 +265,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02114_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -248,7 +275,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210b_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -257,7 +285,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210s_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -266,7 +295,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212d_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -275,7 +305,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211i_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -284,7 +315,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212l_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -293,7 +325,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210l_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -302,7 +335,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212f_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -311,7 +345,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02110_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -320,7 +355,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210s_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -329,7 +365,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212h_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -338,7 +375,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211l_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -347,7 +385,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211w_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -356,7 +395,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210t_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -365,7 +405,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211k_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -374,7 +415,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212k_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -383,7 +425,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212g_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -392,7 +435,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02105_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -401,7 +445,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02129_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -410,7 +455,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210o_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -419,7 +465,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210r_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -428,7 +475,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210g_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -437,7 +485,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210f_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -446,7 +495,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02128_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -455,7 +505,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210z_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -464,7 +515,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211u_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -473,7 +525,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210c_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -482,7 +535,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211s_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -491,7 +545,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212a_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -500,7 +555,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211w_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -509,7 +565,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02125_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -518,7 +575,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02108_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -527,7 +585,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212a_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -536,7 +595,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211i_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -545,7 +605,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210e_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -554,7 +615,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211z_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -563,7 +625,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210h_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -572,7 +635,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210d_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -581,7 +645,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211h_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -590,7 +655,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210l_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -599,7 +665,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211c_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -608,7 +675,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211f_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -617,7 +685,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02113_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -626,7 +695,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212b_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -635,7 +705,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210k_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -644,7 +715,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212j_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -653,7 +725,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211u_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -662,7 +735,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212h_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -671,7 +745,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210q_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -680,7 +755,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210m_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -689,7 +765,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211z_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -698,7 +775,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210x_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -707,7 +785,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02107_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -716,7 +795,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02129_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -725,7 +805,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02124_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -734,7 +815,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210n_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -743,7 +825,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211g_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -752,7 +835,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210m_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -761,7 +845,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211y_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -770,7 +855,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211x_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -779,7 +865,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210z_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -788,7 +875,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02120_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -797,7 +885,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211v_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -806,7 +895,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210u_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -815,7 +905,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211q_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -824,7 +915,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211a_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -833,7 +925,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211j_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -842,7 +935,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02118_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -851,7 +945,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211j_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -860,7 +955,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02104_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -869,7 +965,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211r_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -878,7 +975,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212o_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -887,7 +985,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210q_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -896,7 +995,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211t_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -905,7 +1005,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210a_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -914,7 +1015,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211a_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -923,7 +1025,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02120_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -932,7 +1035,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211s_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -941,7 +1045,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02116_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -950,7 +1055,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210t_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -959,7 +1065,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210b_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -968,7 +1075,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02118_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -977,7 +1085,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02102_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -986,7 +1095,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02121_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -995,7 +1105,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02121_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1004,7 +1115,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211p_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1013,7 +1125,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212n_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1022,7 +1135,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211p_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1031,7 +1145,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211d_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1040,7 +1155,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212n_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1049,7 +1165,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02127_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1058,7 +1175,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02124_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1067,7 +1185,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02123_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1076,7 +1195,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210v_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1085,7 +1205,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210h_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1094,7 +1215,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02103_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1103,7 +1225,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210i_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1112,7 +1235,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210k_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1121,7 +1245,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02119_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1130,7 +1255,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211n_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1139,7 +1265,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02116_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1148,7 +1275,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212f_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1157,7 +1285,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210d_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1166,7 +1295,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211x_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1175,7 +1305,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211h_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1184,7 +1315,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211k_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1193,7 +1325,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211y_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1202,7 +1335,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210e_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1211,7 +1345,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210j_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1220,7 +1355,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02126_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1229,7 +1365,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02115_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1238,7 +1375,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210j_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1247,7 +1385,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210f_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1256,7 +1395,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211v_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1265,7 +1405,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210y_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1274,7 +1415,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02112_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1283,7 +1425,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211q_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1292,7 +1435,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210c_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1301,7 +1445,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212m_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1310,7 +1455,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212c_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1319,7 +1465,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02119_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1328,7 +1475,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02115_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1337,7 +1485,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211o_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1346,7 +1495,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02102_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1355,7 +1505,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02125_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1364,7 +1515,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212i_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1373,7 +1525,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02106_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1382,7 +1535,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02105_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1391,7 +1545,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212i_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1400,7 +1555,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211g_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1409,7 +1565,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02110_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1418,7 +1575,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210x_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1427,7 +1585,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02106_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1436,7 +1595,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212k_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1445,7 +1605,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210o_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1454,7 +1615,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211b_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1463,7 +1625,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02127_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1472,7 +1635,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212c_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1481,7 +1645,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02108_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1490,7 +1655,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02117_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1499,7 +1665,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02112_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1508,7 +1675,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02126_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1517,7 +1685,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211c_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1526,7 +1695,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212l_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1535,7 +1705,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02103_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1544,7 +1715,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211n_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1553,7 +1725,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212d_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1562,7 +1735,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02122_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1571,7 +1745,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212j_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1580,7 +1755,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212e_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1589,7 +1765,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210a_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1598,7 +1775,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210w_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1607,7 +1785,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212m_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1616,7 +1795,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211t_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1625,7 +1805,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02122_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1634,7 +1815,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210g_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1643,7 +1825,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02109_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1652,7 +1835,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211r_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1661,7 +1845,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210w_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1670,7 +1855,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0210y_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1679,7 +1865,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211l_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1688,7 +1875,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0212b_00001_nrs1_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1697,7 +1885,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211e_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1706,7 +1895,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_02117_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         },
@@ -1715,7 +1905,8 @@
             "members": [
                 {
                     "expname": "jw98005001001_0211d_00001_nrs2_rate.fits",
-                    "exptype": "science"
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         }
