@@ -14,6 +14,8 @@ from .. import datamodels
 from ..assign_wcs import nirspec
 from . import coord
 from gwcs import wcstools
+from astropy.stats import circmean
+from astropy import units as u 
 
 import logging
 log = logging.getLogger(__name__)
@@ -115,7 +117,6 @@ def setup_wcs(self):
                                                        this_a,
                                                        self.instrument_info)
                     amin, amax, bmin, bmax, lmin, lmax = ch_footprint
-
 
 # If a dither offset list exists then apply the dither offsets (offsets in arc seconds)
 
@@ -317,23 +318,9 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
 # test for 0/360 wrapping in ra. if exists it makes it difficult to determine
 # ra range of IFU cube. 
 
-    valid = np.isfinite(coord1)
-    coord1_wrap = coord1[valid].copy()
-    
-    median_ra = np.nanmedian(coord1_wrap) # find the median 
-    # using median test if there is any wrapping going on
 
-    wrap_index = np.where( np.fabs(coord1_wrap - median_ra) > 180.0)
-    nwrap = wrap_index[0].size
+    coord1_wrap = wrap_ra(coord1)
 
-    # get all the ra on the same "side" of 0/360 
-    if(nwrap != 0 and median_ra < 180):
-        coord1_wrap[wrap_index] = coord1_wrap[wrap_index] - 360.0
-
-    if(nwrap != 0 and median_ra > 180):
-        coord1_wrap[wrap_index] = coord1_wrap[wrap_index] + 360.0
-
-                          
     a_min = np.nanmin(coord1_wrap)
     a_max = np.nanmax(coord1_wrap)
 
@@ -402,18 +389,7 @@ def find_footprint_NIRSPEC(self, input,flag_data):
 #________________________________________________________________________________
 # For each slice  test for 0/360 wrapping in ra. 
 # If exists it makes it difficult to determine  ra range of IFU cube. 
-            valid = np.isfinite(ra)
-            ra_wrap = ra[valid].copy()
-            median_ra = np.nanmedian(ra_wrap)
-            wrap_index = np.where( np.fabs(ra_wrap - median_ra) > 180.0)
-            nwrap = wrap_index[0].size
-
-            if(nwrap != 0 and median_ra < 180):
-                ra_wrap[wrap_index] = ra_wrap[wrap_index] - 360.0
-
-            if(nwrap != 0 and median_ra > 180):
-                ra_wrap[wrap_index] = ra_wrap[wrap_index] + 360.0
-
+            ra_wrap = wrap_ra(ra)
                           
             a_min = np.nanmin(ra_wrap)
             a_max = np.nanmax(ra_wrap)
@@ -431,16 +407,7 @@ def find_footprint_NIRSPEC(self, input,flag_data):
 #________________________________________________________________________________
 # now test the ra slices for conistency. Adjust if needed.  
         
-    raslice_wrap = a_slice.copy()
-    median_ra = np.nanmedian(raslice_wrap)
-    wrap_index = np.where( np.fabs(raslice_wrap - median_ra) > 180.0)
-    nwrap = wrap_index[0].size
-
-    if(nwrap != 0 and median_ra < 180):
-        raslice_wrap[wrap_index] = raslice_wrap[wrap_index] - 360.0
-
-    if(nwrap != 0 and median_ra > 180):
-        raslice_wrap[wrap_index] = raslice_wrap[wrap_index] + 360.0
+    raslice_wrap = wrap_ra(a_slice)
 
     a_min = np.nanmin(raslice_wrap)
     a_max = np.nanmax(raslice_wrap)
@@ -473,12 +440,12 @@ def set_geometry(self, footprint):
         ravalues[0] = ra_min
         ravalues[1] = ra_max
 
-#        ra_ave = ((ra_min + ra_max)/2.0 )#* math.cos(dec_ave*deg2rad) 
+        # astropy circmean assumes angles are in radians
+        # we have angles in degrees
+        ra_ave = circmean(ravalues*u.deg).value
+        log.info('Ra average %f12.8', ra_ave)
 
-        # one more check on ra angles 
-        ra_ave = average_ra(ravalues)
-
-
+        
         self.Crval1 = ra_ave
         self.Crval2 = dec_ave
         xi_center,eta_center = coord.radec2std(self.Crval1, self.Crval2,ra_ave,dec_ave)
@@ -520,8 +487,6 @@ def set_geometry(self, footprint):
         for i in range(self.naxis1):
             self.xcoord[i] = xstart
             xstart = xstart + self.Cdelt1
-
-#        print('naxis 1 2',self.naxis1,self.naxis2)
 
         self.ycoord = np.zeros(self.naxis2)
         ystart = eta_min + self.Cdelt2 / 2.0
@@ -580,8 +545,6 @@ def set_geometry(self, footprint):
         for i in range(self.naxis3):
             self.zcoord[i] = zstart
             zstart = zstart + self.Cdelt3
-
-
 #_______________________________________________________________________
 # cube in alpha-beta space (single exposure cube - small FOV assume rectangular coord system
 def set_geometryAB(self, footprint):
@@ -627,7 +590,7 @@ def set_geometryAB(self, footprint):
         self.zcoord[i] = zstart
         zstart = zstart + self.Cdelt3
 #_______________________________________________________________________
-
+        # set up the naxis2 parameters
     range_b = self.b_max - self.b_min
 
     self.naxis2 = int(math.ceil(range_b / self.Cdelt2))
@@ -637,7 +600,6 @@ def set_geometryAB(self, footprint):
     self.b_max = b_center + (self.naxis2 / 2.0) * self.Cdelt2
     self.b_min = b_center - (self.naxis2 / 2.0) * self.Cdelt2
 
-
     self.ycoord = np.zeros(self.naxis2)
     self.Crval2 = self.b_min
     self.Crpix2 = 0.5
@@ -646,12 +608,13 @@ def set_geometryAB(self, footprint):
         self.ycoord[i] = ystart
         ystart = ystart + self.Cdelt2
 
-
-
 #_______________________________________________________________________
 # from a set of ra values find the average ra.
 # This is tricky because of the convergence of hour angles
 # this method is taken from the SPITZER SSC MOSAICER tool
+# THis module has been replaced by astropy.stats.circmean
+# for now I have left it in the code - probably remove 
+
 def average_ra(ravalues):
 
 
@@ -756,6 +719,31 @@ def print_cube_geometry(self):
                 this_gwa = self.list_par1[i]
                 log.info('Cube covers grating, filter: %s %s ', this_gwa,this_fwa)
 
+#________________________________________________________________________________
+# test for 0/360 wrapping in ra. if exists it makes it difficult to determine
+# ra range of IFU cube. So put them all on "one side" of 0/360 border
+# input ravalues: a numpy array of ra values
+# return a numpy array of ra values all on "same side" of 0/360 border
+
+def wrap_ra(ravalues):
+
+    valid = np.isfinite(ravalues)
+    ravalues_wrap = ravalues[valid].copy()
+    
+    median_ra = np.nanmedian(ravalues_wrap) # find the median 
+    
+    # using median to test if there is any wrapping going on
+    wrap_index = np.where( np.fabs(ravalues_wrap - median_ra) > 180.0)
+    nwrap = wrap_index[0].size
+
+    # get all the ra on the same "side" of 0/360 
+    if(nwrap != 0 and median_ra < 180):
+        ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] - 360.0
+
+    if(nwrap != 0 and median_ra > 180):
+        ravalues_wrap[wrap_index] = ravalues_wrap[wrap_index] + 360.0
+
+    return ravalues_wrap
 #________________________________________________________________________________
 # Errors 
 class NoCoordSystem(Exception):
