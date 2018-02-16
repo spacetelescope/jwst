@@ -25,10 +25,6 @@ DATAPATH = abspath(
 )
 
 
-@pytest.mark.xfail(
-    reason='Bad file naming, see issue #1598',
-    run=False
-)
 @runslow
 @require_bigdata
 def test_run_full(mk_tmp_dirs):

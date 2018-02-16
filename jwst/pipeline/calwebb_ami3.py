@@ -143,7 +143,7 @@ class Ami3Pipeline(Pipeline):
 
             # Perform blending of metadata for all inputs to this output file
             self.log.info('Blending metadata for PSF normalized target {}'.format(targ_norm_output_file))
-            input_list = [targ_avg_output_file, psf_avg_output_file]
+            input_list = [targ_avg, psf_avg]
             blendmeta.blendmodels(result, inputs=input_list,
                                   output=targ_norm_output_file)
             self.log.info('Saving normalized result to %s', targ_norm_output_file)
