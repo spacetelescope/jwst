@@ -45,7 +45,7 @@ class Asn_Lv2ImageSpecial(
         DMSLevel2bBase
 ):
     """Level2b Image that are marked special
-    Image exposures that are marked as backgrounds, imprints, etc.,
+    Image exposures that are marked as backgrounds, etc.,
     still get 2b processing just as normal science. However, no other
     exposures should get included into the association.
     """
@@ -137,7 +137,7 @@ class Asn_Lv2SpecSpecial(
         DMSLevel2bBase
 ):
     """Level2b Spectra that are marked special
-    Spectral exposures that are marked as backgrounds, imprints, etc.,
+    Spectral exposures that are marked as backgrounds, etc.,
     still get 2b processing just as normal science. However, no other
     exposures should get included into the association.
     """

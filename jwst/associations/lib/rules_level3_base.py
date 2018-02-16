@@ -40,11 +40,11 @@ __all__ = [
     'AsnMixin_Science',
     'AsnMixin_Spectrum',
     'Constraint_Base',
+    'Constraint_IFU',
     'Constraint_Image',
-    'Constraint_MIRI',
-    'Constraint_NIRISS',
     'Constraint_NotTSO',
     'Constraint_Optical_Path',
+    'Constraint_Spectral',
     'Constraint_Target',
     'Constraint',
     'DMS_Level3_Base',
@@ -321,7 +321,11 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         # Update meta info
         self.update_asn(item=item, member=member)
 
-    def _add_items(self, items, product_name=None, with_exptype=False):
+    def _add_items(self,
+                   items,
+                   product_name=None,
+                   with_exptype=False,
+                   **kwargs):
         """ Force adding items to the association
 
         Parameters
@@ -339,6 +343,9 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             If True, each item is expected to be a 2-tuple with
             the first element being the item to add as `expname`
             and the second items is the `exptype`
+
+        kwargs: dict
+            Allows other keyword arguments used by other subclasses.
 
         Notes
         -----
@@ -550,6 +557,22 @@ class Constraint_Base(Constraint):
         )
 
 
+class Constraint_IFU(DMSAttrConstraint):
+    """Constrain on IFU exposures"""
+    def __init__(self):
+        super(Constraint_IFU, self).__init__(
+            name='exp_type',
+            sources=['exp_type'],
+            value=(
+                'mir_mrs'
+                '|mir_flatmrs'
+                '|nrs_autowave'
+                '|nrs_ifu'
+            ),
+            force_unique=False
+        )
+
+
 class Constraint_Image(DMSAttrConstraint):
     """Select on exposure type"""
     def __init__(self):
@@ -562,26 +585,6 @@ class Constraint_Image(DMSAttrConstraint):
                 '|nis_image'
                 '|fgs_image'
             ),
-        )
-
-
-class Constraint_MIRI(DMSAttrConstraint):
-    """Select on MIRI"""
-    def __init__(self):
-        super(Constraint_MIRI, self).__init__(
-            name='instrument_miri',
-            sources=['instrume'],
-            value='miri',
-        )
-
-
-class Constraint_NIRISS(DMSAttrConstraint):
-    """Selec on NIRISS"""
-    def __init__(self):
-        super(Constraint_NIRISS, self).__init__(
-            name='instrument_niriss',
-            sources=['instrume'],
-            value='nis',
         )
 
 
@@ -619,8 +622,30 @@ class Constraint_Optical_Path(Constraint):
                 name='opt_elem2',
                 sources=['pupil', 'grating'],
                 required=False,
+            ),
+            DMSAttrConstraint(
+                name='subarray',
+                sources=['subarray']
             )
         ])
+
+
+class Constraint_Spectral(DMSAttrConstraint):
+    """Constrain on spectral exposure types"""
+    def __init__(self):
+        super(Constraint_Spectral, self).__init__(
+            name='exp_type',
+            sources=['exp_type'],
+            value=(
+                'mir_lrs-fixedslit'
+                '|nrs_autoflat'
+                '|nrs_autowave'
+                '|nrs_fixedslit'
+                '|nrc_grism'
+                '|nrs_msaspec'
+            ),
+            force_unique=False
+        )
 
 
 class Constraint_Target(DMSAttrConstraint):

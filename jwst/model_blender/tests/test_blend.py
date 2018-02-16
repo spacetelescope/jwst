@@ -13,7 +13,7 @@ from .. import blendmeta
 
 #ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
 start_times = [57877.00359994354, 57877.0168373584, 57877.03126958496]
-int_times = [107.3676, 107.3676, 107.3676]
+exp_times = [107.3676, 107.3676, 107.3676]
 end_times = [57877.0048426241, 57877.01808003896, 57877.03251226551]
 filenames = ['image1_cal.fits', 'image2_cal.fits', 'image3_cal.fits']
 dates = ['2017-11-30T13:52:20.367', '2017-11-11T15:14:29.176',
@@ -28,13 +28,13 @@ def setup():
     TMP_FILES = [ImageModel() for i in range(3)]
 
     INPUT_VALUES = {'meta.exposure.start_time': start_times,
-                    'meta.exposure.integration_time': int_times,
+                    'meta.exposure.exposure_time': exp_times,
                     'meta.exposure.end_time': end_times,
                     'meta.filename': filenames,
                     'meta.instrument.name': instrument_names,
                     'meta.date': dates}
     OUTPUT_VALUES = {'meta.exposure.start_time': start_times[0],
-                    'meta.exposure.integration_time': np.sum(int_times),
+                    'meta.exposure.exposure_time': np.sum(exp_times),
                     'meta.exposure.end_time': end_times[-1],
                     'meta.filename': filenames[0],
                     'meta.instrument.name': instrument_names[0],

@@ -33,7 +33,10 @@ class SlitDataModel(model_base.DataModel):
 
     def __init__(self, init=None, data=None, dq=None, err=None,
                  wavelength=None, var_poisson=None, var_rnoise=None,
-                 relsens=None, area=None, **kwargs):
+                 relsens=None, area=None,
+                 wavelength_pointsource=None, pathloss_pointsource=None,
+                 wavelength_uniformsource=None, pathloss_uniformsource=None,
+                 **kwargs):
         if isinstance(init, (SlitModel, ImageModel)):
             super(SlitDataModel, self).__init__(init=None, **kwargs)
             self.data = init.data
@@ -81,9 +84,18 @@ class SlitDataModel(model_base.DataModel):
         if area is not None:
             self.area = area
 
-        # Implicitly create arrays
-        self.dq = self.dq
-        self.err = self.err
+        if dq is not None:
+            self.dq = dq
+        if err is not None:
+            self.err = err
+        if wavelength_pointsource is not None:
+            self.wavelength_poointsource = wavelength_pointsource
+        if pathloss_pointsource is not None:
+            self.pathloss_pointsource = pathloss_pointsource
+        if wavelength_uniformsource is not None:
+            self.wavelength_uniformsource = wavelength_uniformsource
+        if pathloss_uniformsource is not None:
+            self.pathloss_uniform_source = pathloss_uniformsource
 
 
 class SlitModel(model_base.DataModel):
@@ -116,7 +128,10 @@ class SlitModel(model_base.DataModel):
                  xsize=None, ystart=None, ysize=None, slitlet_id=None,
                  source_id=None, source_name=None, source_alias=None,
                  stellarity=None, source_type=None, source_xpos=None, source_ypos=None,
-                 shutter_state=None, area=None, relsens=None, barshadow=None, **kwargs):
+                 shutter_state=None, area=None, relsens=None, barshadow=None,
+                 wavelength_pointsource=None, pathloss_pointsource=None,
+                 wavelength_uniformsource=None, pathloss_uniformsource=None,
+                 **kwargs):
 
         if isinstance(init, (SlitModel, ImageModel)):
             super(SlitModel, self).__init__(init=None, **kwargs)
@@ -126,6 +141,8 @@ class SlitModel(model_base.DataModel):
             self.err = init.err
             self.relsens = init.relsens
             self.area = init.area
+            if hasattr(init, 'wavelength'):
+                self.wavelength = init.wavelength
             if hasattr(init, 'var_poisson'):
                 self.var_poisson = init.var_poisson
             if hasattr(init, 'var_rnoise'):
@@ -155,10 +172,23 @@ class SlitModel(model_base.DataModel):
 
         if var_rnoise is not None:
             self.var_rnoise = var_rnoise
-        # Implicitly create arrays
-        self.dq = self.dq
-        self.err = self.err
 
+        if dq is not None:
+            self.dq = dq
+        if err is not None:
+            self.err = err
+        if bunit_data is not None:
+            self.meta.bunit_data = bunit_data
+        if bunit_err is not None:
+            self.meta.bunit_err = bunit_err
         if name is not None:
             self.name = name
 
+        if wavelength_pointsource is not None:
+            self.wavelength_poointsource = wavelength_pointsource
+        if pathloss_pointsource is not None:
+            self.pathloss_pointsource = pathloss_pointsource
+        if wavelength_uniformsource is not None:
+            self.wavelength_uniformsource = wavelength_uniformsource
+        if pathloss_uniformsource is not None:
+            self.pathloss_uniform_source = pathloss_uniformsource

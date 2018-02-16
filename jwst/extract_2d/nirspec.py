@@ -9,7 +9,7 @@ from gwcs.utils import _toindex
 from gwcs import wcstools
 
 from .. import datamodels
-from ..transforms import models as trmodels
+from ..transforms import models as trmodels, Slit
 from ..assign_wcs import nirspec
 from ..assign_wcs import util
 
@@ -31,6 +31,12 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
         apply_wavecorr = False
         log.info("Skipping wavecorr correction for EXP_TYPE {0}".format(exp_type))
 
+    if hasattr(input_model.meta.cal_step, 'assign_wcs') and input_model.meta.cal_step.assign_wcs == 'SKIPPED':
+        log.info("assign_wcs was skipped")
+        log.warning("extract_2d: SKIPPED")
+        input_model.meta.cal_step.extract_2d = "SKIPPED"
+        return input_model
+
     if not (hasattr(input_model.meta, 'wcs') and input_model.meta.wcs is not None):
         raise AttributeError("Input model does not have a WCS object; assign_wcs should "
                              "be run before extract_2d.")
@@ -43,9 +49,16 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
         open_slits = [sub for sub in open_slits if sub.name == slit_name]
     log.debug('open slits {0}'.format(open_slits))
     if exp_type == 'NRS_BRIGHTOBJ':
-        # the output model is CubeModel
-        output_model, xlo, xhi, ylo, yhi = process_slit(input_model, open_slits[0],
+        # the output model is a SlitModel
+        slit = open_slits[0]
+        output_model, xlo, xhi, ylo, yhi = process_slit(input_model, slit,
                                                         exp_type, apply_wavecorr, reffile)
+        set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi)
+        orig_s_region = output_model.meta.wcsinfo.s_region.strip()
+        util.update_s_region(output_model)
+        if orig_s_region != output_model.meta.wcsinfo.s_region.strip():
+            log.info('extract_2d updated S_REGION to '
+                     '{0}'.format(output_model.meta.wcsinfo.s_region))
     else:
         output_model = datamodels.MultiSlitModel()
         output_model.update(input_model)
@@ -64,8 +77,8 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
             set_slit_attributes(new_model, slit, xlo, xhi, ylo, yhi)
 
             # Copy BUNIT values to output slit
-            new_model.bunit_data = input_model.meta.bunit_data
-            new_model.bunit_err = input_model.meta.bunit_err
+            new_model.meta.bunit_data = input_model.meta.bunit_data
+            new_model.meta.bunit_err = input_model.meta.bunit_err
         output_model.slits.extend(slits)
     return output_model
 
@@ -110,6 +123,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
         output_model.slitlet_id = int(slit.name)
         # for pathloss correction
         output_model.shutter_state = slit.shutter_state
+    log.info('set slit_attributes completed')
 
 
 def offset_wcs(slit_wcs, slit_name):
@@ -186,8 +200,8 @@ def extract_slit(input_model, slit, exp_type):
     ra, dec, lam = slit_wcs(x, y)
     lam = lam.astype(np.float32)
     new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam,
-                                     var_rnoise=ext_var_rnoise, var_poisson=ext_var_poisson)
-    log.info('input model type is {}'.format(input_model.__class__.__name__))
+                                         var_rnoise=ext_var_rnoise, var_poisson=ext_var_poisson)
+    log.info('Input model type is {}'.format(input_model.__class__.__name__))
     new_model.update(input_model)
     new_model.meta.wcs = slit_wcs
     return new_model, xlo, xhi, ylo, yhi

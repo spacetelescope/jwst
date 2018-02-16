@@ -87,7 +87,7 @@ def test_base_instatiation():
                 sources=['obs_id']
             ),
             helpers.t_path('data/mega_pool.csv'),
-            3,
+            1,
         ),
         (
             DMSAttrConstraint(
@@ -104,6 +104,8 @@ def test_base_instatiation():
                 value='.+(o001|o002).+',
                 sources=['asn_candidate'],
                 force_unique=False,
+                is_acid=True,
+                evaluate=True,
             ),
             helpers.t_path('data/pool_001_candidates.csv'),
             22,
@@ -114,6 +116,8 @@ def test_base_instatiation():
                 value='.+(o001|o002).+',
                 sources=['asn_candidate'],
                 force_unique=True,
+                is_acid=True,
+                evaluate=True,
             ),
             helpers.t_path('data/pool_001_candidates.csv'),
             24,

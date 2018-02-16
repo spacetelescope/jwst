@@ -17,12 +17,14 @@ from .blendrules import KeywordRules
 __version__ = '0.8.0'
 __vdate__ = '14-Feb-2018'
 
-empty_list = [None, '', ' ', 'INDEF', 'None']
+EMPTY_LIST = [None, '', ' ', 'INDEF', 'None']
 
 
 # Primary functional interface for the code
 def blendmodels(product, inputs=None, output=None, verbose=False):
-    """ Blend models that went into creating the original drzfile into a
+    """Run main interface for blending metatdata from multiple models.
+
+    Blend models that went into creating the original drzfile into a
     new metadata instance with a table that contains attribute values from
     all input datamodels.
 
@@ -40,20 +42,21 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     value and what metadata attributes should be used as columns in the
     blended FITS table are defined in the datamodel schema.
 
+
     NOTE
     ====
     Custom rules for a metadata value should be computed by the calling routine
     and used to update the metadata in the output model AFTER
-    calling this function. 
-    
+    calling this function.
+
     Parameters
     ----------
     product : str
         Name of combined product with metadata that needs updating. This can
         be specified as a single filename.
         When no value for `inputs` has been provided, this file
-        will also evaluate `meta.asn` to determine the names of the input 
-        datamodels whose metadata need to be blended to create 
+        will also evaluate `meta.asn` to determine the names of the input
+        datamodels whose metadata need to be blended to create
         the new combined metadata.
 
     inputs : list, optional
@@ -61,15 +64,14 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
         the metadata which will be blended into the final output metadata.
 
     output : str, optional
-        If provided, update `meta.filename` in the blended `product` 
+        If provided, update `meta.filename` in the blended `product`
         to define what file this model will get written out to.
-        
+
     verbose : bool, optional [Default: False]
         Print out additional messages during processing when specified.
-    
-    """
 
-    if inputs in empty_list:
+    """
+    if inputs in EMPTY_LIST:
         input_filenames = extract_filenames_from_product(product)
         inputs = [datamodels.open(i) for i in inputs]  # return datamodels
     else:
@@ -105,8 +107,10 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
         # the properly computed WCS remains with the output product.
         #
         """
-    # start by saving WCS (may not be necessary?)
-    product_wcs = output_model.meta.wcs
+    product_wcs = None
+    if hasattr(output_model, 'meta.wcs'):
+        # start by saving WCS (may not be necessary?)
+        product_wcs = output_model.meta.wcs
     # Now merge the keyword values from new_hdrs into the metatdata for the
     # output datamodel
     # Need to insure that output_model does not already have an instance
@@ -129,10 +133,12 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
     else:
         # Otherwise, determine output filename from metadata
         output = output_model.meta.filename
-    #
-    # restore WCS, in case it was overridden in update
-    # this may not be necessary?
-    output_model.meta.wcs = product_wcs
+
+    if product_wcs:
+        #
+        # restore WCS, in case it was overridden in update
+        # this may not be necessary
+        output_model.meta.wcs = product_wcs
 
     # Now, append HDRTAB as new element in datamodel
     newtab_schema = build_tab_schema(newtab)

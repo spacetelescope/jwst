@@ -405,6 +405,8 @@ def create_grism_bbox(input_model, reference_files, mmag_extract=99.0):
     ysize = input_model.meta.subarray.ysize
 
     # extract the catalog objects
+    if input_model.meta.source_catalog.filename is None:
+        raise ValueError("No source catalog listed in datamodel")
     skyobject_list = get_object_info(input_model.meta.source_catalog.filename)
 
     # get the imaging transform to record the center of the object in the image
@@ -548,7 +550,18 @@ def update_s_region(model):
     if bbox is None:
         bbox = _bbox_from_shape(model)
 
-    footprint = model.meta.wcs.footprint(bbox, center=True).T
+    # footprint is an array of shape (2, 2) or (3, 3)
+    footprint = model.meta.wcs.footprint(bbox, center=True)
+    # take only imaging footprint
+    footprint = footprint[:2, :]
+
+    # Make sure RA values are all positive
+    negative_ind = footprint[0] < 0
+    if negative_ind.any():
+        footprint[0][negative_ind] = 360 + footprint[0][negative_ind]
+
+    footprint = footprint.T
+
     s_region = (
         "POLYGON ICRS "
         " {0} {1}"

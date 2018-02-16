@@ -4,7 +4,7 @@
 from ..stpipe import Pipeline
 from ..associations import load_asn
 from .. import datamodels
-from ..resample import blend
+from ..model_blender import blendmeta
 
 # step imports
 from ..coron import stack_refs_step
@@ -42,7 +42,7 @@ class Coron3Pipeline(Pipeline):
                  'outlier_detection':
                      outlier_detection_step.OutlierDetectionStep,
                  'resample': resample_step.ResampleStep
-                 }
+                }
 
     def process(self, input):
         """Primary method for performing pipeline."""
@@ -154,8 +154,8 @@ class Coron3Pipeline(Pipeline):
             result.update(resample_input[0])
             # The resample step blends headers already...
             self.log.debug('Blending metadata for {}'.format(
-                            result.meta.filename))
-            blend.blendfitsdata(targ_files, result)
+                result.meta.filename))
+            blendmeta.blendmodels(result, inputs=targ_files)
 
         result.meta.asn.pool_name = asn['asn_pool']
         result.meta.asn.table_name = input

@@ -472,6 +472,9 @@ class DataSet(object):
         will also check if there is a wavelength-dependent response table; if
         there is it will be written to the output model.
 
+        For WFSS (grism) mode, the calibration information extracted from the
+        reference file is attached to each slit instance in the science data.
+
         Parameters
         ----------
         ftab: fits HDUList
@@ -492,7 +495,23 @@ class DataSet(object):
 
             # Finding matching FILTER and PUPIL values
             if self.filter == ref_filter and self.pupil == ref_pupil:
-                conv_factor = self.photom_io(tabdata)
+
+                # Handle WFSS data separately from regular imaging
+                if (isinstance(self.input, datamodels.MultiSlitModel) and
+                    self.exptype == 'NRC_GRISM'):
+
+                    # Loop over the WFSS slits, applying the same photom
+                    # ref data to all slits
+                    for slit in self.input.slits:
+                        log.info('Working on slit %s' % slit.name)
+                        self.slitnum += 1
+                        conv_factor = self.photom_io(tabdata)
+
+                else:
+
+                    # Regular imaging data only requires 1 call
+                    conv_factor = self.photom_io(tabdata)
+
                 break
 
         if conv_factor is not None:
