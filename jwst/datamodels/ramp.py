@@ -28,11 +28,16 @@ class RampModel(model_base.DataModel):
     group : table
         The group parameters table
 
+    jumpslopes : numpy array
+        2-D data array of median_slopes from the jump step, averaged over
+        integrations.
+
     """
     schema_url = "ramp.schema.yaml"
 
     def __init__(self, init=None, data=None, pixeldq=None, groupdq=None,
-                 err=None, zeroframe=None, group=None, **kwargs):
+                 err=None, zeroframe=None, group=None, jumpslopes=None,
+                 **kwargs):
         super(RampModel, self).__init__(init=init, **kwargs)
 
         if data is not None:
@@ -53,7 +58,11 @@ class RampModel(model_base.DataModel):
         if group is not None:
             self.group = group
 
+        if jumpslopes is not None:
+            self.jumpslopes = jumpslopes
+
         # Implicitly create arrays
         self.pixeldq = self.pixeldq
         self.groupdq = self.groupdq
         self.err = self.err
+        self.jumpslopes = self.jumpslopes

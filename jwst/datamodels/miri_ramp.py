@@ -31,11 +31,16 @@ class MIRIRampModel(ramp.RampModel):
     group : table
         The group parameters table.
 
+    jumpslopes : numpy array
+        2-D data array of median_slopes from the jump step, averaged over
+        integrations.
+
     """
     schema_url = "miri_ramp.schema.yaml"
 
     def __init__(self, init=None, data=None, pixeldq=None, groupdq=None,
-                 err=None, refout=None, zeroframe=None, group=None, **kwargs):
+                 err=None, refout=None, zeroframe=None, group=None, 
+                 jumpslopes=None, **kwargs):
         super(MIRIRampModel, self).__init__(init=init, **kwargs)
 
         if data is not None:
@@ -63,3 +68,4 @@ class MIRIRampModel(ramp.RampModel):
         self.pixeldq = self.pixeldq
         self.groupdq = self.groupdq
         self.err = self.err
+        self.jumpslopes = self.jumpslopes

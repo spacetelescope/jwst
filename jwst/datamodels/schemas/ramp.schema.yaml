@@ -33,6 +33,12 @@ allOf:
       default: 0.0
       ndim: 3
       datatype: float32
+    jumpslopes:
+      title: 2-D data array of estimates of median slopes
+      fits_hdu: JUMPSLOPES
+      default: 0
+      ndim: 2
+      datatype: float32
     group:
       $ref: group.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema
