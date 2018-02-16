@@ -36,6 +36,7 @@ allOf:
           type: number
           fits_keyword: WPOWER
 
+
 - type: object
   properties:
     data:
