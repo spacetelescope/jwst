@@ -57,9 +57,14 @@ def test_run_full(mk_tmp_dirs):
     print('Created files ares: {}'.format(output_files))
 
     # Check Level3 products
-    #product_name_file = product_name + '_amiavg.fits'
-    #assert product_name_file in output_files
-    #output_files.remove(product_name_file)
+    product_name_file = product_name + '_amiavg.fits'
+    assert product_name_file in output_files
+    output_files.remove(product_name_file)
+
+    product_name_file = product_name + '_psf-amiavg.fits'
+    assert product_name_file in output_files
+    output_files.remove(product_name_file)
+
     product_name_file = product_name + '_aminorm.fits'
     assert product_name_file in output_files
     output_files.remove(product_name_file)
