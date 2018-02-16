@@ -2,9 +2,9 @@
 import logging
 import os
 
-from ..stpipe import Pipeline
-from ..associations.load_as_asn import LoadAsAssociation
 from .. import datamodels
+from ..associations.load_as_asn import LoadAsAssociation
+from ..stpipe import Pipeline
 
 
 # step imports
@@ -46,7 +46,9 @@ class Ami3Pipeline(Pipeline):
         # Load the input association table
         asn = LoadAsAssociation.load(input)
 
-        # We assume there's one final product defined by the association
+        # We assume there's one final product defined by the
+        # association
+        acid = asn['asn_id']
         prod = asn['products'][0]
         self.output_file = prod.get('name', self.output_file)
 
@@ -88,7 +90,7 @@ class Ami3Pipeline(Pipeline):
             result.meta.asn.pool_name = asn['asn_pool']
             result.meta.asn.table_name = asn.filename
             output_file = self.save_model(
-                result, output_file=input_file, suffix='ami'
+                result, output_file=input_file, suffix='ami', acid=acid,
             )
             self.log.info('LG results saved to %s', output_file)
 

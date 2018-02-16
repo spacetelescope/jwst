@@ -674,9 +674,14 @@ class Step():
         """
         self._input_filename = path
 
-    def save_model(
-            self, model, suffix=None, idx=None, output_file=None, force=False
-    ):
+    def save_model(self,
+                   model,
+                   suffix=None,
+                   idx=None,
+                   output_file=None,
+                   force=False,
+                   format=None,
+                   **components):
         """
         Saves the given model using the step/pipeline's naming scheme
 
@@ -699,6 +704,14 @@ class Step():
             Regardless of whether `save_results` is `False`
             and no `output_file` is specified, try saving.
 
+        format: str
+            The format of the file name.  This is a format
+            string that defines where `suffix` and the other
+            components go in the file name.
+
+        components: dict
+            Other components to add to the file name.
+
         Returns
         -------
         output_paths: [str[, ...]]
@@ -717,7 +730,9 @@ class Step():
             save_model_func = partial(
                 self.save_model,
                 suffix=suffix,
-                force=force
+                force=force,
+                format=format,
+                **components
             )
             output_path = model.save(
                 path=output_file,
@@ -726,9 +741,15 @@ class Step():
             if self.output_use_model:
                 output_file = model.meta.filename
                 idx = None
-            output_path = model.save(self.make_output_path(
-                basepath=output_file, suffix=suffix, idx=idx
-            ))
+            output_path = model.save(
+                self.make_output_path(
+                    basepath=output_file,
+                    suffix=suffix,
+                    idx=idx,
+                    name_format=format,
+                    **components
+                )
+            )
             self.log.info('Saved model in {}'.format(output_path))
 
         return output_path
@@ -747,7 +768,7 @@ class Step():
             basepath=None,
             ext=None,
             suffix=None,
-            name_format="{basename}{components}{suffix_sep}{suffix}.{ext}",
+            name_format=None,
             component_formats=None,
             separator='_',
             **components
@@ -768,7 +789,7 @@ class Step():
             The extension to use. If none, `output_ext` is used.
             Can include the leading period or not.
 
-        name_format: str
+        name_format: str or None
             The format string to use to form the base name.
 
         component_formats: {key: format(, ...)} or None
@@ -796,6 +817,8 @@ class Step():
         if basepath is None:
             raise(ValueError, 'No filename can be determined to save to.')
 
+        if name_format is None:
+            name_format = '{basename}{components}{suffix_sep}{suffix}.{ext}'
         formatter = FormatTemplate(
             separator=separator,
             key_formats=component_formats,
