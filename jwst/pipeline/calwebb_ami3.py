@@ -48,6 +48,7 @@ class Ami3Pipeline(Pipeline):
 
         # We assume there's one final product defined by the association
         prod = asn['products'][0]
+        self.output_file = prod.get('name', self.output_file)
 
         # Construct lists of all the PSF and science target members
         # so that we know what we've been given to work with
@@ -194,7 +195,7 @@ class Ami3Pipeline(Pipeline):
                 'Saving normalized result to %s',
                 targ_norm_output_file
             )
-            result.save(targ_norm_output_file)
+            self.save_model(result, suffix='aminorm')
             result.close()
 
         # We're done
