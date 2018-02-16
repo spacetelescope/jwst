@@ -18,7 +18,7 @@ from .helpers import (
 )
 
 from ...associations import load_asn
-from ...stpipe.step import (REMOVE_SUFFIX, Step)
+from ...stpipe.step import (Step, remove_suffix)
 
 DATAPATH = abspath(
     path.join('$TEST_BIGDATA', 'niriss', 'test_ami_pipeline')
@@ -45,6 +45,7 @@ def test_run_full(mk_tmp_dirs):
     # Now test for file existence. Get the association
     with open(asn_path) as fh:
         asn = load_asn(fh)
+    acid = asn['asn_id']
     product = asn['products'][0]
     product_name = product['name']
     members_by_type = defaultdict(list)
@@ -65,14 +66,16 @@ def test_run_full(mk_tmp_dirs):
 
     # Check Level2 products
     for member in members_by_type['psf']:
-        match = re.match(REMOVE_SUFFIX, member)
-        name = match.group('root') + '_ami.fits'
+        name, ext = path.splitext(path.split(member)[1])
+        name, separator = remove_suffix(name)
+        name = name + separator + acid + separator + 'ami' + ext
         assert name in output_files
         output_files.remove(name)
 
     for member in members_by_type['science']:
-        match = re.match(REMOVE_SUFFIX, member)
-        name = match.group('root') + '_ami.fits'
+        name, ext = path.splitext(path.split(member)[1])
+        name, separator = remove_suffix(name)
+        name = name + separator + acid + separator + 'ami' + ext
         assert name in output_files
         output_files.remove(name)
 
