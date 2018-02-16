@@ -61,6 +61,8 @@ class StraylightStep (Step):
                         result.meta.cal_step.straylight = 'SKIPPED'
                         return result
 
+                    self.log.info(' Region of influence radius (pixels) %62f',self.roi)
+                    self.log.info(' Modified Shepard weighting power %5.2f',self.power)
                 # Open the straylight mask ref file data model
                     region_model = datamodels.RegionsModel(self.regions_name)
 

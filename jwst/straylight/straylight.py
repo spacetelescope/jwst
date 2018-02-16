@@ -64,11 +64,10 @@ def correct_MRS(input_model, straylight_model):
 #    drow = 412
 #    dx1 = 470
 #    dx2 = 480
-#    dxhot = dx1 + 6
 
     output = input_model.copy() # this is used in algorithm to
     # find the straylight correction.
-    output2_data = input_model.data.copy()
+
     #_________________________________________________________________
     # if there are nans remove them because they mess up the correction
     index_inf = np.isinf(output.data).nonzero()
@@ -189,7 +188,8 @@ def correct_MRS(input_model, straylight_model):
     simage[:, 1028:1032] = 0.0
     simage[:, 0:4] = 0.0
 
-    output.data = output2_data - simage
+
+    output.data = output.data - simage
     return output
 
 
