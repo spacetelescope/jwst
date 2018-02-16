@@ -13,7 +13,7 @@ from ..ami import ami_average_step
 from ..ami import ami_normalize_step
 from ..model_blender import blendmeta
 
-__version__ = '0.8.0'
+__version__ = '0.8.1'
 
 # Define logging
 log = logging.getLogger()
