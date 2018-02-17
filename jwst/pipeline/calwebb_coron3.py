@@ -14,7 +14,7 @@ from ..outlier_detection import outlier_detection_step
 from ..resample import resample_step
 
 
-__version__ = '0.8.0'
+__version__ = '0.8.1'
 
 
 class Coron3Pipeline(Pipeline):
@@ -36,13 +36,13 @@ class Coron3Pipeline(Pipeline):
     """
 
     # Define aliases to steps
-    step_defs = {'stack_refs': stack_refs_step.StackRefsStep,
-                 'align_refs': align_refs_step.AlignRefsStep,
-                 'klip': klip_step.KlipStep,
-                 'outlier_detection':
-                     outlier_detection_step.OutlierDetectionStep,
-                 'resample': resample_step.ResampleStep
-                }
+    step_defs = {
+        'stack_refs': stack_refs_step.StackRefsStep,
+        'align_refs': align_refs_step.AlignRefsStep,
+        'klip': klip_step.KlipStep,
+        'outlier_detection': outlier_detection_step.OutlierDetectionStep,
+        'resample': resample_step.ResampleStep
+    }
 
     def process(self, input):
         """Primary method for performing pipeline."""
@@ -51,9 +51,11 @@ class Coron3Pipeline(Pipeline):
         # Load the input association table
         with open(input, 'r') as input_fh:
             asn = load_asn(input_fh)
+        acid = asn.get('asn_id', '')
 
         # We assume there's one final product defined by the association
         prod = asn['products'][0]
+        self.output_file = prod.get('name', self.output_file)
 
         # Construct lists of all the PSF and science target members
         psf_files = [m['expname'] for m in prod['members']

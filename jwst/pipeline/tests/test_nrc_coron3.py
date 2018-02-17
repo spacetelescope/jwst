@@ -1,4 +1,4 @@
-"""Test calwebb_ami3 with NIR"""
+"""Test calwebb_coron3 with NIRCam"""
 
 from collections import defaultdict
 from glob import glob
@@ -18,7 +18,7 @@ from ...associations import load_asn
 from ...stpipe.step import (Step, remove_suffix)
 
 DATAPATH = abspath(
-    path.join('$TEST_BIGDATA', 'niriss', 'test_ami_pipeline')
+    path.join('$TEST_BIGDATA', 'nircam', 'test_coron3')
 )
 
 
@@ -29,12 +29,15 @@ def test_run_full(mk_tmp_dirs):
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'test_lg1_asn.json'),
+        path.join(DATAPATH, 'jw99999-a3001_20170327t121212_coron3_001_asn.json'),
         root=DATAPATH
     )
     args = [
-        path.join(SCRIPT_DATA_PATH, 'cfgs', 'calwebb_ami3.cfg'),
+        path.join(SCRIPT_DATA_PATH, 'cfgs', 'calwebb_coron3.cfg'),
         asn_path,
+        '--steps.align_refs.override_psfmask=' + path.join(DATAPATH, 'jwst_nircam_psfmask_somb.fits'),
+        '--steps.outlier_detection.skip=true',
+        '--steps.resample.skip=true'
     ]
 
     Step.from_cmdline(args)
@@ -52,6 +55,8 @@ def test_run_full(mk_tmp_dirs):
 
     output_files = glob('*')
     print('Created files ares: {}'.format(output_files))
+
+    assert False
 
     # Check Level3 products
     product_name_file = product_name + '_amiavg.fits'
