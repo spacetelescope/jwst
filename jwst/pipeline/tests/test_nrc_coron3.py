@@ -56,33 +56,28 @@ def test_run_full(mk_tmp_dirs):
     output_files = glob('*')
     print('Created files ares: {}'.format(output_files))
 
-    assert False
-
     # Check Level3 products
-    product_name_file = product_name + '_amiavg.fits'
+    product_name_file = product_name + '_psfstack.fits'
     assert product_name_file in output_files
     output_files.remove(product_name_file)
 
-    product_name_file = product_name + '_psf-amiavg.fits'
-    assert product_name_file in output_files
-    output_files.remove(product_name_file)
-
-    product_name_file = product_name + '_aminorm.fits'
+    product_name_file = product_name + '_i2d.fits'
     assert product_name_file in output_files
     output_files.remove(product_name_file)
 
     # Check Level2 products
-    for member in members_by_type['psf']:
-        name, ext = path.splitext(path.split(member)[1])
-        name, separator = remove_suffix(name)
-        name = name + separator + acid + separator + 'ami' + ext
-        assert name in output_files
-        output_files.remove(name)
-
     for member in members_by_type['science']:
         name, ext = path.splitext(path.split(member)[1])
         name, separator = remove_suffix(name)
-        name = name + separator + acid + separator + 'ami' + ext
+        name = name + separator + acid + separator + 'psfalign' + ext
+        assert name in output_files
+        output_files.remove(name)
+
+        name = name + separator + acid + separator + 'psfsub' + ext
+        assert name in output_files
+        output_files.remove(name)
+
+        name = name + separator + acid + separator + 'crfints' + ext
         assert name in output_files
         output_files.remove(name)
 
