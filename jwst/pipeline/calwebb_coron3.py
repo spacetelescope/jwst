@@ -88,7 +88,6 @@ class Coron3Pipeline(Pipeline):
         psf_models.close()
 
         # Save the resulting PSF stack
-        psf_stack.meta.filename = prod['name']
         self.save_model(psf_stack, suffix='psfstack')
 
         # Call the sequence of steps align_refs, klip, and outlier_detection
@@ -101,7 +100,10 @@ class Coron3Pipeline(Pipeline):
             psf_aligned = self.align_refs(target_file, psf_stack)
 
             # Save the alignment results
-            self.save_model(psf_aligned, suffix='psfalign')
+            self.save_model(
+                psf_aligned, output_file=target_file,
+                suffix='psfalign', acid=acid
+            )
 
             # Call KLIP
             self.log.debug('Calling klip for member %s', target_file)
@@ -109,7 +111,10 @@ class Coron3Pipeline(Pipeline):
             psf_aligned.close()
 
             # Save the psf subtraction results
-            self.save_model(psf_sub, suffix='psfsub')
+            self.save_model(
+                psf_sub, output_file=target_file,
+                suffix='psfsub', acid=acid
+            )
 
             # Create a ModelContainer of the psf_sub results to send to
             # outlier_detection
@@ -135,8 +140,8 @@ class Coron3Pipeline(Pipeline):
                 for i in range(len(target_models)):
                     lev2c_model.dq[i] = target_models[i].dq
                 lev2c_model.meta.cal_step.outlier_detection = 'COMPLETE'
-                suffix_2c = '{}_{}'.format(asn['asn_id'], 'crfints')
-                self.save_model(lev2c_model, suffix=suffix_2c)
+                self.save_model(lev2c_model, output_file=target_file,
+                                suffix='crfints', acid=acid)
 
             # Append results from this target exposure to resample input model
             for i in range(len(target_models)):
@@ -163,7 +168,6 @@ class Coron3Pipeline(Pipeline):
         result.meta.asn.table_name = input
 
         # Save the final result
-        result.meta.filename = prod['name']
         self.save_model(result, suffix=self.suffix)
 
         # We're done

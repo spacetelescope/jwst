@@ -36,7 +36,6 @@ def test_run_full(mk_tmp_dirs):
         path.join(SCRIPT_DATA_PATH, 'cfgs', 'calwebb_coron3.cfg'),
         asn_path,
         '--steps.align_refs.override_psfmask=' + path.join(DATAPATH, 'jwst_nircam_psfmask_somb.fits'),
-        '--steps.outlier_detection.skip=true',
         '--steps.resample.skip=true'
     ]
 
@@ -67,17 +66,18 @@ def test_run_full(mk_tmp_dirs):
 
     # Check Level2 products
     for member in members_by_type['science']:
-        name, ext = path.splitext(path.split(member)[1])
-        name, separator = remove_suffix(name)
-        name = name + separator + acid + separator + 'psfalign' + ext
+        basename, ext = path.splitext(path.split(member)[1])
+        basename, separator = remove_suffix(basename)
+
+        name = basename + separator + acid + separator + 'psfalign' + ext
         assert name in output_files
         output_files.remove(name)
 
-        name = name + separator + acid + separator + 'psfsub' + ext
+        name = basename + separator + acid + separator + 'psfsub' + ext
         assert name in output_files
         output_files.remove(name)
 
-        name = name + separator + acid + separator + 'crfints' + ext
+        name = basename + separator + acid + separator + 'crfints' + ext
         assert name in output_files
         output_files.remove(name)
 
