@@ -8,6 +8,8 @@ from . import gwcs_drizzle
 from . import resample_utils
 from ..model_blender import blendmeta
 
+CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -36,7 +38,7 @@ class ResampleData:
     drizpars = {'single': False,
                 'kernel': 'square',
                 'pixfrac': 1.0,
-                'good_bits': 4,
+                'good_bits': CRBIT,
                 'fillval': 'INDEF',
                 'wht_type': 'exptime',
                 'blendheaders': True}
