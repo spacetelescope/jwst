@@ -361,13 +361,10 @@ def flag_cr(sci_image, blot_image, **pars):
     snr1, snr2 = [float(val) for val in pars.get('snr', '5.0 4.0').split()]
     scl1, scl2 = [float(val) for val in pars.get('scale', '1.2 0.7').split()]
 
-    if sci_image.meta.background.subtracted:
+    if not sci_image.meta.background.subtracted:
+        # Include background back into blotted image for comparison
         subtracted_background = sci_image.meta.background.level
         log.debug("Subtracted background: {}".format(subtracted_background))
-    else:
-        subtracted_background = backg
-        log.debug("No subtracted background found. "
-                  "Using default value from outlierpars: {}".format(backg))
 
     exptime = sci_image.meta.exposure.exposure_time
 
