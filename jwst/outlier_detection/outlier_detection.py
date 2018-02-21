@@ -472,14 +472,6 @@ def flag_cr(sci_image, blot_image, **pars):
     np.bitwise_or(sci_image.dq, np.invert(cr_mask) * CRBIT, sci_image.dq)
 
 
-def build_mask(dqarr, bitvalue):
-    """Build a bit-mask from an input DQ array and a bitvalue flag."""
-    bitvalue = bitmask.interpret_bit_flags(bitvalue)
-    if bitvalue is None:
-        return (np.ones(dqarr.shape, dtype=np.uint32))
-    return np.logical_not(np.bitwise_and(dqarr, ~bitvalue)).astype(np.uint32)
-
-
 def abs_deriv(array):
     """Take the absolute derivate of a numpy array."""
     tmp = np.zeros(array.shape, dtype=np.float64)
