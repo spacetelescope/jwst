@@ -176,7 +176,8 @@ def build_driz_weight(model, wht_type=None, good_bits=None):
     exptime = model.meta.exposure.exposure_time
 
     if wht_type.lower()[:3] == 'err':
-        inwht = (exptime / model.err)**2 * dqmask
+        err_model = np.nan_to_num(model.err)
+        inwht = (exptime / err_model)**2 * dqmask
         log.debug("DEBUG weight mask: {} {}".format(type(inwht), np.sum(inwht)))
     # elif wht_type == 'IVM':
     #     _inwht = img.buildIVMmask(chip._chip,dqarr,pix_ratio)
