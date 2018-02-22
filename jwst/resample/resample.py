@@ -190,8 +190,9 @@ class ResampleData:
                 exposure_times['end'].append(img.meta.exposure.end_time)
 
                 # apply sky subtraction
-                if not img.meta.background.subtracted:
-                    img.data -= img.meta.background.level
+                blevel = img.meta.background.level
+                if not img.meta.background.subtracted and blevel is not None:
+                    img.data -= blevel
 
                 outwcs_pscale = output_model.meta.wcsinfo.cdelt1
                 wcslin_pscale = img.meta.wcsinfo.cdelt1
