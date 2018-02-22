@@ -41,7 +41,7 @@ try:
             build_cmd = self.reinitialize_command('build_ext')
             build_cmd.inplace = 1
             self.run_command('build_ext')
-            sphinx.cmd.build.build_main(['setup.py', '-b', 'html', './docs', './docs/_build/html'])
+            sphinx.cmd.build.build_main(['-b', 'html', './docs', './docs/_build/html'])
 
 except ImportError:
     class BuildSphinx(Command):
