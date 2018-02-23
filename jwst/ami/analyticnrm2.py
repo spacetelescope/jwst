@@ -3,7 +3,7 @@
 # Python by Alex Greenbaum & Anand Sivaramakrishnan Jan 2013
 # updated May 2013 to include hexagonal envelope
 
-from __future__ import absolute_import, division
+from . import hexee
 
 import logging
 import numpy as np
@@ -29,11 +29,11 @@ def Jinc(x, y):
     jinc_2d: float array
         2d Jinc at the given coordinates, with NaNs replaced by pi/4.
     """
-
     R = (Jinc.d / Jinc.lam) * Jinc.pitch *  \
-        np.sqrt((x - Jinc.offx) * (x - Jinc.offx) + (y - Jinc.offy) * (y - Jinc.offy))
+           np.sqrt((x - Jinc.offx)*(x - Jinc.offx) + \
+           (y - Jinc.offy)*(y - Jinc.offy))
 
-    jinc_2d = leastsqnrm.replacenan(scipy.special.jv(1, np.pi * R) / (2.0 * R))
+    jinc_2d = leastsqnrm.replacenan(scipy.special.jv(1, np.pi * R)/(2.0 * R))
 
     return jinc_2d
 
@@ -64,17 +64,17 @@ def phasor(kx, ky, hx, hy, lam, phi, pitch):
     Returns
     -------
     phasor: complex
-        Calculate wavefront for a single hole ??
+        Calculate wavefront for a single hole
     """
-
-    return np.exp(-2 * np.pi * 1j * ((pitch * kx * hx + pitch * ky * hy) / lam + (phi / lam)))
+    return np.exp(-2 * np.pi * 1j * ((pitch * kx * hx + pitch * ky * hy)
+               / lam + (phi / lam)))
 
 
 def interf(kx, ky):
     """
     Short Summary
     -------------
-    Calculate interference for all holes ?
+    Calculate interference for all holes.
 
     Parameters
     ----------
@@ -84,17 +84,17 @@ def interf(kx, ky):
     Returns
     -------
     interference: 2D complex array
-        interference for all holes ??
+        interference for all holes
     """
     interference = 0j
     for hole, ctr in enumerate(interf.ctrs):
         interference += phasor((kx - interf.offx), (ky - interf.offy),
-                              ctr[0], ctr[1], interf.lam,
-                              interf.phi[hole], interf.pitch)
+                               ctr[0], ctr[1], interf.lam,
+                               interf.phi[hole], interf.pitch)
 
     return interference
 
-# {DG: consider consolidating these ASF functions}
+
 def ASF(pixel, fov, oversample, ctrs, d, lam, phi, centering=(0.5, 0.5)):
     """
     Short Summary
@@ -136,11 +136,10 @@ def ASF(pixel, fov, oversample, ctrs, d, lam, phi, centering=(0.5, 0.5)):
         Amplitude Spread Function (a.k.a. image plane complex amplitude) for
         a circular aperture
     """
-
-    if centering is 'PIXELCENTERED':
+    if centering == 'PIXELCENTERED':
         off_x = 0.5
         off_y = 0.5
-    elif centering is 'PIXELCORNER':
+    elif centering == 'PIXELCORNER':
         off_x = 0.0
         off_y = 0.0
     else:
@@ -157,7 +156,8 @@ def ASF(pixel, fov, oversample, ctrs, d, lam, phi, centering=(0.5, 0.5)):
     Jinc.d = d
 
     primarybeam = np.fromfunction(Jinc, (int((oversample * fov)),
-                                          int((oversample * fov))))
+                                         int((oversample * fov))))
+    primarybeam = primarybeam.transpose()
 
     # interference terms' parameters
     interf.lam = lam
@@ -168,14 +168,15 @@ def ASF(pixel, fov, oversample, ctrs, d, lam, phi, centering=(0.5, 0.5)):
     interf.phi = phi
 
     fringing = np.fromfunction(interf, (int((oversample * fov)),
-                                         int((oversample * fov))))
+                                        int((oversample * fov))))
+    fringing = fringing.transpose()
+
     asf = primarybeam * fringing
 
     return asf
 
 
-def ASFfringe(pixel, fov, oversample, ctrs, d, lam, phi,
-               centering=(0.5, 0.5)):
+def ASFfringe(pixel, fov, oversample, ctrs, d, lam, phi, centering=(0.5, 0.5)):
     """
     Short Summary
     -------------
@@ -214,20 +215,19 @@ def ASFfringe(pixel, fov, oversample, ctrs, d, lam, phi,
     -------
     fringing: 2D complex array
         Amplitude Spread Function (a.k.a. image plane complex amplitude) for
-        a fringe ??
+        a fringe
     """
-
-    if centering is 'PIXELCENTERED':
+    if centering == 'PIXELCENTERED':
         off_x = 0.5
         off_y = 0.5
-    elif centering is 'PIXELCORNER':
+    elif centering == 'PIXELCORNER':
         off_x = 0.0
         off_y = 0.0
     else:
         off_x, off_y = centering
 
     log.debug('ASFfringe centering %s:', centering)
-    log.debug('ASFfringe offsets %s:', off_x, off_y)
+    log.debug('ASFfringe offsets %s %s:', off_x, off_y)
 
     # Jinc parameters
     Jinc.lam = lam
@@ -245,13 +245,13 @@ def ASFfringe(pixel, fov, oversample, ctrs, d, lam, phi,
     interf.phi = phi
 
     fringing = np.fromfunction(interf, (int((oversample * fov)),
-                                         int((oversample * fov))))
+                                        int((oversample * fov))))
+    fringing = fringing.transpose()
 
     return fringing
 
 
-def ASFhex(pixel, fov, oversample, ctrs, d, lam, phi,
-           centering='PIXELCENTERED'):
+def ASFhex(pixel, fov, oversample, ctrs, d, lam, phi, centering='PIXELCENTERED'):
     """
     Short Summary
     -------------
@@ -290,13 +290,12 @@ def ASFhex(pixel, fov, oversample, ctrs, d, lam, phi,
         Amplitude Spread Function (a.k.a. image plane complex amplitude) for
         a hexagonal aperture
     """
-    from . import hexee
     log.debug('centering: %s', centering)
 
-    if centering is 'PIXELCENTERED':
+    if centering == 'PIXELCENTERED':
         off_x = 0.5
         off_y = 0.5
-    elif centering is 'PIXELCORNER':
+    elif centering == 'PIXELCORNER':
         off_x = 0.0
         off_y = 0.0
     else:
@@ -320,17 +319,19 @@ def ASFhex(pixel, fov, oversample, ctrs, d, lam, phi,
     interf.phi = phi
 
     primarybeam = hexee.hex_eeAG(s=(oversample * fov, oversample * fov),
-                                  c=(offx, offy), d=d, lam=lam, pitch=pitch)
+                                 c=(offx, offy), d=d, lam=lam, pitch=pitch)
 
     fringing = np.fromfunction(interf, (int((oversample * fov)),
-                                         int((oversample * fov))))
+                                        int((oversample * fov))))
+    fringing = fringing.transpose()
+
     asf = primarybeam * fringing
 
     return asf
 
 
-def PSF(pixel, fov, oversample, ctrs, d, lam, phi,
-         centering='PIXELCENTERED', shape='circ'):
+def PSF(pixel, fov, oversample, ctrs, d, lam, phi, centering='PIXELCENTERED',
+        shape='circ'):
     """
     Short Summary
     -------------
@@ -369,7 +370,6 @@ def PSF(pixel, fov, oversample, ctrs, d, lam, phi,
     -------
     PSF - 2D float array
     """
-
     if shape == 'circ':
         asf = ASF(pixel, fov, oversample, ctrs, d, lam, phi, centering)
     elif shape == 'hex':
@@ -386,6 +386,6 @@ def PSF(pixel, fov, oversample, ctrs, d, lam, phi,
     log.debug('d: %s, wavelength: %s, pistons: %s, shape: %s', d, lam, phi,
               shape)
 
-    PSF = asf * asf.conj()
+    PSF_ = asf * asf.conj()
 
-    return PSF.real
+    return PSF_.real
