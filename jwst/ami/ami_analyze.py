@@ -2,8 +2,6 @@
 #  Module for applying the LG algorithm to an AMI exposure
 #
 
-from __future__ import (absolute_import, division)
-
 import logging
 import warnings
 import numpy as np
@@ -12,7 +10,6 @@ from .. import datamodels
 from .NRM_Model import NRM_Model
 from . import webb_psf
 from . import hexee
-from . import NRM_consts
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

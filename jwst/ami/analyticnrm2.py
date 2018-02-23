@@ -3,8 +3,6 @@
 # Python by Alex Greenbaum & Anand Sivaramakrishnan Jan 2013
 # updated May 2013 to include hexagonal envelope
 
-from __future__ import (absolute_import, division)
-
 from . import hexee
 
 import logging
@@ -68,7 +66,7 @@ def phasor(kx, ky, hx, hy, lam, phi, pitch):
     phasor: complex
         Calculate wavefront for a single hole
     """
-    return np.exp(-2 * np.pi * 1j * ((pitch * kx * hx + pitch * ky * hy)\
+    return np.exp(-2 * np.pi * 1j * ((pitch * kx * hx + pitch * ky * hy)
                / lam + (phi / lam)))
 
 
@@ -229,7 +227,7 @@ def ASFfringe(pixel, fov, oversample, ctrs, d, lam, phi, centering=(0.5, 0.5)):
         off_x, off_y = centering
 
     log.debug('ASFfringe centering %s:', centering)
-    log.debug('ASFfringe offsets %s:', off_x, off_y)
+    log.debug('ASFfringe offsets %s %s:', off_x, off_y)
 
     # Jinc parameters
     Jinc.lam = lam

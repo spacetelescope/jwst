@@ -1,6 +1,4 @@
 
-from __future__ import (absolute_import, division)
-
 import logging
 import numpy as np
 import numpy.linalg as linalg
@@ -214,7 +212,7 @@ def hexpb():
     pb * pb.conj(): 2D float array
         primary beam for hexagonal holes
     """
-    pb = hexee.hex_eeAG(s=hexpb.size, c=(hexpb.offx, hexpb.offy), \
+    pb = hexee.hex_eeAG(s=hexpb.size, c=(hexpb.offx, hexpb.offy),
             d=hexpb.d, lam=hexpb.lam, pitch=hexpb.pitch)
 
     return pb * pb.conj()
@@ -422,7 +420,7 @@ def weighted_operations(img, model, weights):
     flatimg = np.delete(flatimg, nanlist)
     clist = np.delete(clist, nanlist)
     # A
-    flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1], \
+    flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1],
                     np.shape(model)[2])
     flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
 
@@ -528,8 +526,8 @@ def matrix_operations(img, model, flux=None):
               flatimg.sum(), np.shape(flatmodel))
     log.debug('flat image dimensions:%s model transpose dimensions:%s ',
               np.shape(flatimg), np.shape(flatmodeltransp))
-    log.debug('transpose * image data dimensions:%s flatimg * transpose \
-    dimensions:%s ', np.shape(data_vector), np.shape(inverse))
+    log.debug('transpose * image data dimensions:%s flatimg * transpose'+ 
+              'dimensions:%s ', np.shape(data_vector), np.shape(inverse))
 
     return x, res, cond
 
@@ -733,11 +731,11 @@ def closurephase(deltap, N=7):
     """
     # p is a triangular matrix set up to calculate closure phases
     if N == 7:
-        p = np.array([deltap[:6], deltap[6:11], deltap[11:15], \
+        p = np.array([deltap[:6], deltap[6:11], deltap[11:15],
                 deltap[15:18], deltap[18:20], deltap[20:]])
     elif N == 10:
-        p = np.array([deltap[:9], deltap[9:17], deltap[17:24], \
-                deltap[24:30], deltap[30:35], deltap[35:39], \
+        p = np.array([deltap[:9], deltap[9:17], deltap[17:24],
+                deltap[24:30], deltap[30:35], deltap[35:39],
                 deltap[39:42], deltap[42:44], deltap[44:]])
     else:
         log.critical('invalid hole number: %s', N)

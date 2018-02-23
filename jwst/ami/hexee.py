@@ -11,8 +11,6 @@
 # hex(xi,eta) = g(xi,eta) + g(-xi,eta)
 #
 
-from __future__ import (absolute_import, division)
-
 import logging
 import numpy as np
 
@@ -129,7 +127,7 @@ def glimit(xi, eta, **kwargs):
     Pi = np.pi
 
     g1 = (np.exp(-1j * Pi * xi) / (2 * np.sqrt(3) * Pi * Pi * xi * xi))
-    g2 = (-1 + 1j * Pi * xi + np.exp(1j * Pi * xi) - 2j * Pi * xi * \
+    g2 = (-1 + 1j * Pi * xi + np.exp(1j * Pi * xi) - 2j * Pi * xi * 
             np.exp(1J * Pi * xi))
     g = g1 * g2
 

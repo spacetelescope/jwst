@@ -18,8 +18,6 @@
 # - updated May 2013 to include hexagonal envelope
 # - updated (hard refactored) Oct-Nov 2014 Anand S.
 
-from __future__ import (absolute_import, division)
-
 import logging
 import numpy as np
 
@@ -98,7 +96,7 @@ class NRM_Model():
                 raise AttributeError("mask must be either 'jwst' \
                                                       or NRM_mask_geometry object")
 
-        log.info('NRM_Model: ctrs flipped in init for CV1, CV2')
+        log.debug('NRM_Model: ctrs flipped in init for CV1, CV2')
 
         if rotate:
             log.info('Providing additional rotation %s degrees',
@@ -225,8 +223,8 @@ class NRM_Model():
             self.psf_over = np.zeros((self.over*self.fov_sim,
                                       self.over*self.fov_sim))
             for w,l in self.bandpass: # w: weight, l: lambda (wavelength)
-                self.psf_over += w*analyticnrm2.PSF(self.pixel_sim, \
-                            self.fov_sim, self.over, self.rotctrs, self.d, l, \
+                self.psf_over += w*analyticnrm2.PSF(self.pixel_sim,
+                            self.fov_sim, self.over, self.rotctrs, self.d, l,
                             self.phi, centering = centering, shape=self.holeshape)
 
             log.debug("BINNING UP TO PIXEL SCALE")
@@ -237,8 +235,8 @@ class NRM_Model():
 
             log.debug("Calculating Oversampled PSF")
             self.psf_over = analyticnrm2.PSF(self.pixel_sim, self.fov_sim,
-                            self.over, self.rotctrs, self.d, self.lam, \
-                            self.phi, centering=centering, \
+                            self.over, self.rotctrs, self.d, self.lam,
+                            self.phi, centering=centering,
                             shape=self.holeshape)
 
         self.psf = utils.rebin(self.psf_over, (self.over, self.over))
@@ -246,8 +244,8 @@ class NRM_Model():
         return self.psf
 
 
-    def make_model(self, fov=None, bandpass=None, over=False, \
-                    centering='PIXELCENTERED', pixweight=None, pixscale=None, \
+    def make_model(self, fov=None, bandpass=None, over=False,
+                    centering='PIXELCENTERED', pixweight=None, pixscale=None,
                     rotate=False, flip=False):
         """
         Short Summary
@@ -324,7 +322,7 @@ class NRM_Model():
                      self.fov, self.d, shape=self.holeshape, centering=centering)
 
             log.debug("centering: {0}".format(centering))
-            log.debug("what primary beam has the model created?"+\
+            log.debug("what primary beam has the model created?"+
                                 " {0}".format(self.model_beam))
 
             # this routine multiplies the envelope by each fringe "image"
@@ -433,8 +431,8 @@ class NRM_Model():
             if reference is None:
                 self.reference = image
                 if np.isnan(image.any()):
-                    raise ValueError("Must have non-NaN image to "+\
-                        "crosscorrelate for scale. Reference "+\
+                    raise ValueError("Must have non-NaN image to "+
+                        "crosscorrelate for scale. Reference "+
                         "image should also be centered. Get to it.")
             else:
                 self.reference = reference
