@@ -240,7 +240,6 @@ def correct_MRS_ModShepard(input_model, region_model,roi,power):
 
     # Create output as a copy of the input science data model
     output = input_model.copy() # this is used in algorithm to
-    output_data = input_model.data.copy()
 
     # kernel matrix 
     w = Shepard2DKernel(roi,power)
@@ -255,15 +254,14 @@ def correct_MRS_ModShepard(input_model, region_model,roi,power):
 #    dx1 = 470
 #    dx2 = 480
 #    dxhot = dx1 + 6
-#    output_data[drow,dxhot] = 2000.0
+#    output.data[drow,dxhot] = 2000.0
 #    output.data[drow,dxhot] = 2000.0
 
     # find if any of the gap pixels are bad pixels - if so mark them
 
     mask_dq = input_model.dq.copy()# * mask # find DQ flags of the gap values 
 
-    all_flags = (dqflags.pixel['DO_NOT_USE'] + 
-                 dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
+    all_flags = (dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
     
     # where are pixels set to any one of the all_flags cases 
     testflags = np.bitwise_and(mask_dq,all_flags)
@@ -272,17 +270,20 @@ def correct_MRS_ModShepard(input_model, region_model,roi,power):
     mask[bad_flags]  = 0 
 
     # apply mask to the data
-    image_gap = output_data*mask
+    image_gap = output.data*mask
 
     #avoid cosmic ray contamination
     # only using the science data for this cosmic ray test
-#    print('max',np.max(output_data[sliceMap>0]))
-    cosmic_ray_test = 0.02 * np.max(output_data[sliceMap>0])
+#    print('max',np.max(output.data[sliceMap>0]))
+    cosmic_ray_test = 0.02 * np.max(output.data[sliceMap>0])
 #    print('Cosmic ray test %12.8f',cosmic_ray_test)
     image_gap[image_gap>cosmic_ray_test] = 0
     image_gap[image_gap<0] = 0 #set pixels less than zero to 0
     image_gap= convolve(image_gap,Box2DKernel(3)) # smooth gap pixels 
     image_gap*=mask #reset science pixels to 0
+    #we not not want the reference pixels to be used in the convolution
+    image_gap[:, 1028:1032] = 0.0
+    image_gap[:, 0:4] = 0.0
 
     #convolve gap pixel image with weight kernel
     astropy_conv = convolve(image_gap,w)
@@ -290,6 +291,7 @@ def correct_MRS_ModShepard(input_model, region_model,roi,power):
     #normalize straylight flux by weights
     norm_conv = convolve(mask,w)
     astropy_conv /= norm_conv
+
 
     # remove the straylight correction for the reference pixels
     astropy_conv[:, 1028:1032] = 0.0
