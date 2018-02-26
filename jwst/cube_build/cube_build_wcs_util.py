@@ -379,7 +379,7 @@ def find_footprint_NIRSPEC(self, input,flag_data):
         yrange_slice = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
         xrange_slice = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
 
-#        print(' for slice ',i,yrange_slice,xrange_slice)
+        print(' for slice ',i,yrange_slice,xrange_slice)
 
         if(xrange_slice[0] >= 0 and xrange_slice[1] > 0):
 
@@ -389,8 +389,10 @@ def find_footprint_NIRSPEC(self, input,flag_data):
 #________________________________________________________________________________
 # For each slice  test for 0/360 wrapping in ra. 
 # If exists it makes it difficult to determine  ra range of IFU cube. 
+            print(' # ra values',ra.size,ra.size/2048)
             ra_wrap = wrap_ra(ra)
                           
+            print('ra wrap values',ra_wrap[0:10])
             a_min = np.nanmin(ra_wrap)
             a_max = np.nanmax(ra_wrap)
 
@@ -728,10 +730,14 @@ def print_cube_geometry(self):
 def wrap_ra(ravalues):
 
     valid = np.isfinite(ravalues)
-    ravalues_wrap = ravalues[valid].copy()
+    index_good = np.where( valid == True)
+    print('number of non nan ra values',index_good[0].size,index_good[0].size/2048)
+    ravalues_wrap = ravalues[index_good].copy()
+
     
     median_ra = np.nanmedian(ravalues_wrap) # find the median 
-    
+    print('median_ra',median_ra)
+
     # using median to test if there is any wrapping going on
     wrap_index = np.where( np.fabs(ravalues_wrap - median_ra) > 180.0)
     nwrap = wrap_index[0].size
