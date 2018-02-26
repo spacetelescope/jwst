@@ -8,8 +8,6 @@ from . import gwcs_drizzle
 from . import resample_utils
 from ..model_blender import blendmeta
 
-CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
-
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -38,7 +36,7 @@ class ResampleData:
     drizpars = {'single': False,
                 'kernel': 'square',
                 'pixfrac': 1.0,
-                'good_bits': CRBIT,
+                'good_bits': 0,
                 'fillval': 'INDEF',
                 'wht_type': 'exptime',
                 'blendheaders': True}
@@ -192,8 +190,9 @@ class ResampleData:
                 exposure_times['end'].append(img.meta.exposure.end_time)
 
                 # apply sky subtraction
-                if 'skybg' in img.meta._instance:
-                    img.data -= img.meta.skybg
+                blevel = img.meta.background.level
+                if not img.meta.background.subtracted and blevel is not None:
+                    img.data -= blevel
 
                 outwcs_pscale = output_model.meta.wcsinfo.cdelt1
                 wcslin_pscale = img.meta.wcsinfo.cdelt1
