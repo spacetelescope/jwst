@@ -51,7 +51,7 @@ class TweakRegStep(Step):
 
         # Object matching parameters:
         minobj = integer(default=15) # Minimum number of objects acceptable for matching
-        searchrad = float(default=1.0) # The search radius in arcsec for a match
+        searchrad = float(default=10.0) # The search radius in arcsec for a match
         use2dhist = boolean(default=True) # Use 2d histogram to find initial offset?
         separation = float(default=0.5) # Minimum object separation in arcsec
         tolerance = float(default=1.0) # Matching tolerance for xyxymatch in arcsec
@@ -184,4 +184,3 @@ class TweakRegStep(Step):
         )
 
         return im
-
