@@ -24,20 +24,19 @@ class TSOPhotometryStep(Step):
 
     def process(self, input):
         with CubeModel(input) as model:
-            # TODO:  need information about the actual source position in
-            # TSO imaging mode (for all subarrays).
-            # Meanwhile, this is a placeholder representing the geometric
-            # center of the image.
-            nint, ny, nx = model.data.shape
-            xcenter = (ny - 1) / 2.
-            ycenter = (ny - 1) / 2.
+            xcenter = model.meta.wcsinfo.crpix1 - 1    # 1-based origin
+            ycenter = model.meta.wcsinfo.crpix2 - 1    # 1-based origin
 
+            # these aperture definitions are for NIRCam
+            # TODO:  need MIRI aperture definitions
             # all radii are in pixel units
             if model.meta.instrument.pupil == 'WLP8':
+                # weak-lens exposure
                 radius = 50
                 radius_inner = 60
                 radius_outer = 70
             else:
+                # focused exposure
                 radius = 3
                 radius_inner = 4
                 radius_outer = 5
@@ -59,4 +58,3 @@ class TSOPhotometryStep(Step):
                               format(cat_filepath))
 
         return catalog
-
