@@ -3,7 +3,6 @@
 import numpy as np
 
 from stsci.image import median
-from stsci.tools import bitmask
 from astropy.stats import sigma_clipped_stats
 from scipy import ndimage
 

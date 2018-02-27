@@ -16,6 +16,8 @@ from .. import datamodels
 from . import gwcs_drizzle
 from . import resample_utils
 
+CRBIT = np.uint32(datamodels.dqflags.pixel['JUMP_DET'])
+
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -45,7 +47,7 @@ class ResampleSpecData:
     drizpars = {'single': False,
                 'kernel': 'square',
                 'pixfrac': 1.0,
-                'good_bits': 4,
+                'good_bits': CRBIT,
                 'fillval': 'INDEF',
                 'wht_type': 'exptime'}
 

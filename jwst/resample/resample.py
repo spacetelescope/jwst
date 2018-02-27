@@ -36,7 +36,7 @@ class ResampleData:
     drizpars = {'single': False,
                 'kernel': 'square',
                 'pixfrac': 1.0,
-                'good_bits': 4,
+                'good_bits': 0,
                 'fillval': 'INDEF',
                 'wht_type': 'exptime',
                 'blendheaders': True}
