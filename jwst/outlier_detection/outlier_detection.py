@@ -364,6 +364,8 @@ def flag_cr(sci_image, blot_image, **pars):
         # Include background back into blotted image for comparison
         subtracted_background = sci_image.meta.background.level
         log.debug("Subtracted background: {}".format(subtracted_background))
+    if subtracted_background is None:
+        subtracted_background = backg
 
     exptime = sci_image.meta.exposure.exposure_time
 
