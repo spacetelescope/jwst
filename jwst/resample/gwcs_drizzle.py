@@ -268,7 +268,8 @@ class GWCSDrizzle:
 
         if self.outcon.shape[0] == planeid:
             plane = np.zeros_like(self.outcon[0])
-            self.outcon = np.append(self.outcon, plane, axis=0)
+            plane = plane.reshape((1, plane.shape[0], plane.shape[1]))
+            self.outcon = np.concatenate((self.outcon, plane))
 
         # Increment the id
         self.uniqid += 1
