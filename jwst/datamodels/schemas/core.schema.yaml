@@ -810,7 +810,7 @@ properties:
             title: Primary dither pattern type
             type: string
             enum: [CYCLING, EXTENDED_TARGET, FULL, FULL-TIGHT, GAUSSIAN,
-              INTRAMODULE, INTRASCA, NONE, POINT_SOURCE, REULEAUX]
+              INTRAMODULE, INTRASCA, NONE, POINT_SOURCE, REULEAUX, WFSC]
             fits_keyword: PATTTYPE
             blend_table: True
           position_number:
