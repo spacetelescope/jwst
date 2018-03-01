@@ -56,17 +56,20 @@ def ifu_coords(fname, output=None):
     for i, slit in enumerate(ifu_slits):
         x, y = wcstools.grid_from_bounding_box(slit.bounding_box, (1, 1), center=True)
         ## 1-based coordinates expected
-        # ra, dec, lam = slit(x + 1, y + 1)
-        ra, dec, lam = slit(x, y)
+        ra, dec, lam = slit(x + 1, y + 1)
+        #ra, dec, lam = slit(x, y)
         detector2slit = slit.get_transform('detector', 'slit_frame')
         sx, sy, ls = detector2slit(x, y)
-        world_coordinates = np.array([lam, ra, dec, sy])
+        world_coordinates = np.array([lam, ra, dec, sy])#, x, y])
         imhdu = fits.ImageHDU(data=world_coordinates)
         imhdu.header['PLANE1'] = 'lambda, microns'
         imhdu.header['PLANE2'] = '{0}_x, arcsec'.format(output_frame)
         imhdu.header['PLANE3'] = '{0}_y, arcsec'.format(output_frame)
         imhdu.header['PLANE4'] = 'slit_y, relative to center (0, 0)'
+        #imhdu.header['PLANE5'] = 'x, pix'
+        #imhdu.header['PLANE6'] = 'y, pix'
         imhdu.header['SLIT'] = "SLIT_{0}".format(i)
+
         # -1 and +1 are to express this in 1-based coordinates
         imhdu.header['CRVAL1'] = model.meta.subarray.xstart - 1 + int(_toindex(slit.bounding_box[0][0])) + 1
         imhdu.header['CRVAL2'] = model.meta.subarray.xstart - 1 + int(_toindex(slit.bounding_box[1][0])) + 1
@@ -127,16 +130,21 @@ def compute_world_coordinates(fname, output=None):
         # ystart, yend = slit.ystart - 1, slit.ystart -1 + slit.ysize
         # y, x = np.mgrid[ystart: yend, xstart: xend]
         x, y = wcstools.grid_from_bounding_box(slit.meta.wcs.bounding_box, step=(1, 1), center=True)
+        # The Nirspec model expects 1-based coordinates
+        x += 1
+        y += 1
         ra, dec, lam = slit.meta.wcs(x, y)
         detector2slit = slit.meta.wcs.get_transform('detector', 'slit_frame')
 
         sx, sy, ls = detector2slit(x, y)
-        world_coordinates = np.array([lam, ra, dec, sy])
+        world_coordinates = np.array([lam, ra, dec, sy])#, x, y])
         imhdu = fits.ImageHDU(data=world_coordinates)
         imhdu.header['PLANE1'] = 'lambda, microns'
         imhdu.header['PLANE2'] = '{0}_x, arcsec'.format(output_frame)
         imhdu.header['PLANE3'] = '{0}_y, arcsec'.format(output_frame)
         imhdu.header['PLANE4'] = 'slit_y, relative to center (0, 0)'
+        #imhdu.header['PLANE5'] = 'x, pix'
+        #imhdu.header['PLANE6'] = 'y, pix'
         imhdu.header['SLIT'] = slit.name
         # add the overall subarray offset
         imhdu.header['CRVAL1'] = slit.xstart - 1 + model.meta.subarray.xstart
