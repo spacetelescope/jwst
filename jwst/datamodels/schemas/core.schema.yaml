@@ -391,7 +391,7 @@ properties:
           grating:
             title: Name of the grating element used
             type: string
-            enum: [G140M, G235M, G395M, G140H, G235H, G395H, PRISM, MIRROR, N/A, ANY]
+            enum: [G140M, G235M, G395M, G140H, G235H, G395H, PRISM, MIRROR, N/A, ANY, NULL]
             fits_keyword: GRATING
             blend_table: True
           band:
@@ -723,7 +723,8 @@ properties:
             type: string
             enum: # Values grouped by instrument:
               # FGS
-             [SUB128CENTER, SUB128DIAGONAL, SUB128LLCORNER, SUB32CENTER,
+             [8X8, 32X32, 128X128, 2048X64,
+              SUB128CENTER, SUB128DIAGONAL, SUB128LLCORNER, SUB32CENTER,
               SUB32DIAGONAL, SUB32LLCORNER, SUB8CENTER, SUB8DIAGONAL, SUB8LLCORNER,
               # MIRI
               BRIGHTSKY, MASK1065, MASK1140, MASK1550, MASKLYOT, SLITLESSPRISM,
@@ -809,7 +810,7 @@ properties:
             title: Primary dither pattern type
             type: string
             enum: [CYCLING, EXTENDED_TARGET, FULL, FULL-TIGHT, GAUSSIAN,
-              INTRAMODULE, INTRASCA, NONE, POINT_SOURCE, REULEAUX]
+              INTRAMODULE, INTRASCA, NONE, POINT_SOURCE, REULEAUX, WFSC]
             fits_keyword: PATTTYPE
             blend_table: True
           position_number:
