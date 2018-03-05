@@ -7,6 +7,7 @@ allOf:
       title: An array of DrizProducts
       items:
         allOf:
+        - $ref: photometry.schema.yaml
         - $ref: wcsinfo.schema.yaml
         - type: object
           properties:
