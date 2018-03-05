@@ -1030,30 +1030,6 @@ properties:
             type: number
             fits_keyword: HMIDTIME
             blend_table: True
-      photometry:
-        title: Photometry information
-        type: object
-        properties:
-          conversion_megajanskys:
-            title: Flux density (MJy/steradian) producing 1 cps
-            type: number
-            fits_keyword: PHOTMJSR
-            blend_table: True
-          conversion_microjanskys:
-            title: Flux density (uJy/arcsec2) producing 1 cps
-            type: number
-            fits_keyword: PHOTUJA2
-            blend_table: True
-          pixelarea_steradians:
-            title: Nominal pixel area in steradians
-            type: number
-            fits_keyword: PIXAR_SR
-            blend_table: True
-          pixelarea_arcsecsq:
-            title: Nominal pixel area in arcsec^2
-            type: number
-            fits_keyword: PIXAR_A2
-            blend_table: True
       nircam_focus:
         title: NIRCam Focus Adjust Mechanism parameters
         type: object
