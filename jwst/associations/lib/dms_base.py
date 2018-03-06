@@ -194,7 +194,7 @@ class DMSBaseMixin(ACIDMixin):
         """Association ID"""
         acid = self._acid
         if self._acid is None:
-            acid =  self.acid_from_constraints()
+            acid = self.acid_from_constraints()
         return acid
 
     @property
@@ -222,6 +222,10 @@ class DMSBaseMixin(ACIDMixin):
         return name.lower()
 
     @property
+    def current_product(self):
+        return self.data['products'][-1]
+
+    @property
     def member_ids(self):
         """Set of all member ids in all products of this association"""
         member_ids = set(
@@ -230,10 +234,6 @@ class DMSBaseMixin(ACIDMixin):
             for member in product['members']
         )
         return member_ids
-
-    @property
-    def current_product(self):
-        return self.data['products'][-1]
 
     @property
     def validity(self):
@@ -249,6 +249,123 @@ class DMSBaseMixin(ACIDMixin):
     def validity(self, item):
         """Set validity dict"""
         self._validity = item
+
+    def get_exposure_type(self, item, default='science'):
+        """Determine the exposure type of a pool item
+
+        Parameters
+        ----------
+        item: dict
+            The pool entry to determine the exposure type of
+
+        default: str or None
+            The default exposure type.
+            If None, routine will raise LookupError
+
+        Returns
+        -------
+        exposure_type: str
+            Exposure type. Can be one of
+                'science': Item contains science data
+                'target_aquisition': Item contains target acquisition data.
+                'autoflat': NIRSpec AUTOFLAT
+                'autowave': NIRSpec AUTOWAVE
+                'psf': PSF
+                'imprint': MSA/IFU Imprint/Leakcal
+
+        Raises
+        ------
+        LookupError
+            When `default` is None and an exposure type cannot be determined
+        """
+        result = default
+
+        # Base type off of exposure type.
+        try:
+            exp_type = item['exp_type']
+        except KeyError:
+            raise LookupError('Exposure type cannot be determined')
+
+        result = EXPTYPE_MAP.get(exp_type, default)
+
+        if result is None:
+            raise LookupError('Cannot determine exposure type')
+
+        # For `science` data, compare against special modifiers
+        # to further refine the type.
+        if result == 'science':
+            for special, source in SPECIAL_EXPTYPES.items():
+                try:
+                    self.item_getattr(item, source)
+                except KeyError:
+                    pass
+                else:
+                    result = special
+                    break
+
+        return result
+
+    def is_member(self, new_member):
+        """Check if member is already a member
+
+        Parameters
+        ----------
+        new_member: dict
+            The member to check for
+        """
+        try:
+            current_members = self.current_product['members']
+        except KeyError:
+            return False
+
+        for member in current_members:
+            if member == new_member:
+                return True
+        return False
+
+    def is_item_member(self, item):
+        """Check if item is already a member of this association
+
+        Parameters
+        ----------
+        item: dict
+            The item to check for.
+
+        Returns
+        -------
+        is_item_member: bool
+            True if item is a member.
+        """
+        member = self.make_member(item)
+        return self.is_member(member)
+
+    def item_getattr(self, item, attributes):
+        """Return value from any of a list of attributes
+
+        Parameters
+        ----------
+        item: dict
+            item to retrieve from
+
+        attributes: list
+            List of attributes
+
+        Returns
+        -------
+        (attribute, value)
+            Returns the value and the attribute from
+            which the value was taken.
+
+        Raises
+        ------
+        KeyError
+            None of the attributes are found in the dict.
+        """
+        return getattr_from_list(
+            item,
+            attributes,
+            invalid_values=self.INVALID_VALUES
+        )
 
     def new_product(self, product_name=PRODUCT_NAME_DEFAULT):
         """Start a new product"""
@@ -326,135 +443,30 @@ class DMSBaseMixin(ACIDMixin):
 
         return True
 
-    def get_exposure_type(self, item, default='science'):
-        """Determine the exposure type of a pool item
-
-        Parameters
-        ----------
-        item: dict
-            The pool entry to determine the exposure type of
-
-        default: str or None
-            The default exposure type.
-            If None, routine will raise LookupError
+    def _get_exposure(self):
+        """Get string representation of the exposure id
 
         Returns
         -------
-        exposure_type: str
-            Exposure type. Can be one of
-                'science': Item contains science data
-                'target_aquisition': Item contains target acquisition data.
-                'autoflat': NIRSpec AUTOFLAT
-                'autowave': NIRSpec AUTOWAVE
-                'psf': PSF
-                'imprint': MSA/IFU Imprint/Leakcal
-
-        Raises
-        ------
-        LookupError
-            When `default` is None and an exposure type cannot be determined
-        """
-        result = default
-
-        # Base type off of exposure type.
-        try:
-            exp_type = item['exp_type']
-        except KeyError:
-            raise LookupError('Exposure type cannot be determined')
-
-        result = EXPTYPE_MAP.get(exp_type, default)
-
-        if result is None:
-            raise LookupError('Cannot determine exposure type')
-
-        # For `science` data, compare against special modifiers
-        # to further refine the type.
-        if result == 'science':
-            for special, source in SPECIAL_EXPTYPES.items():
-                try:
-                    self.item_getattr(item, source)
-                except KeyError:
-                    pass
-                else:
-                    result = special
-                    break
-
-        return result
-
-    def item_getattr(self, item, attributes):
-        """Return value from any of a list of attributes
-
-        Parameters
-        ----------
-        item: dict
-            item to retrieve from
-
-        attributes: list
-            List of attributes
-
-        Returns
-        -------
-        (attribute, value)
-            Returns the value and the attribute from
-            which the value was taken.
-
-        Raises
-        ------
-        KeyError
-            None of the attributes are found in the dict.
-        """
-        return getattr_from_list(
-            item,
-            attributes,
-            invalid_values=self.INVALID_VALUES
-        )
-
-    def is_member(self, new_member):
-        """Check if member is already a member
-
-        Parameters
-        ----------
-        new_member: dict
-            The member to check for
-        """
-        try:
-            current_members = self.current_product['members']
-        except KeyError:
-            return False
-
-        for member in current_members:
-            if member == new_member:
-                return True
-        return False
-
-    def is_item_member(self, item):
-        """Check if item is already a member of this association
-
-        Parameters
-        ----------
-        item: dict
-            The item to check for.
-
-        Returns
-        -------
-        is_item_member: bool
-            True if item is a member.
-        """
-        member = self.make_member(item)
-        return self.is_member(member)
-
-    def _get_target(self):
-        """Get string representation of the target
-
-        Returns
-        -------
-        target: str
+        exposure: str
             The Level3 Product name representation
-            of the target or source ID.
+            of the exposure & activity id.
+
+        Raises
+        ------
+        AssociationNotAConstraint
+            No constraints produce this value
         """
-        target_id = format_list(self.constraints['target'].found_values)
-        target = 't{0:0>3s}'.format(str(target_id))
-        return target
+        try:
+            activity_id = format_list(
+                self.constraints['activity_id'].found_values
+            )
+        except KeyError:
+            raise AssociationNotAConstraint
+        else:
+            if activity_id not in _EMPTY:
+                exposure = '{0:0>2s}'.format(activity_id)
+        return exposure
 
     def _get_instrument(self):
         """Get string representation of the instrument
@@ -500,30 +512,18 @@ class DMSBaseMixin(ACIDMixin):
             opt_elem = 'clear'
         return opt_elem
 
-    def _get_exposure(self):
-        """Get string representation of the exposure id
+    def _get_target(self):
+        """Get string representation of the target
 
         Returns
         -------
-        exposure: str
+        target: str
             The Level3 Product name representation
-            of the exposure & activity id.
-
-        Raises
-        ------
-        AssociationNotAConstraint
-            No constraints produce this value
+            of the target or source ID.
         """
-        try:
-            activity_id = format_list(
-                self.constraints['activity_id'].found_values
-            )
-        except KeyError:
-            raise AssociationNotAConstraint
-        else:
-            if activity_id not in _EMPTY:
-                exposure = '{0:0>2s}'.format(activity_id)
-        return exposure
+        target_id = format_list(self.constraints['target'].found_values)
+        target = 't{0:0>3s}'.format(str(target_id))
+        return target
 
 
 # -----------------
