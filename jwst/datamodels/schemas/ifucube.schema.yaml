@@ -1,7 +1,8 @@
 allOf:
 - $ref: core.schema.yaml
-- $ref: wcsinfo.schema.yaml
 - $ref: bunit.schema.yaml
+- $ref: photometry.schema.yaml
+- $ref: wcsinfo.schema.yaml
 - type: object
   properties:
     meta:
@@ -35,6 +36,7 @@ allOf:
           title: Weighting power for Modified Shepard Method
           type: number
           fits_keyword: WPOWER
+
 
 - type: object
   properties:

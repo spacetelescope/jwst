@@ -421,7 +421,7 @@ def test_table_array_convert():
 
     with DataModel(schema=table_schema) as x:
         x.table = table
-        assert x.table is table
+        assert x.table is not table
 
     table = np.array(
         [(42, 32000, 'foo')],
@@ -434,7 +434,7 @@ def test_table_array_convert():
     with DataModel(schema=table_schema) as x:
         x.table = table
         assert x.table is not table
-        assert x.table['my_string'][0] == table['my_string'][0]
+        assert x.table['my_string'][0] != table['my_string'][0]
 
 
 def test_mask_model():

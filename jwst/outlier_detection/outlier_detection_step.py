@@ -60,8 +60,6 @@ class OutlierDetectionStep(Step):
         good_bits = integer(default=4)
         scale_detection = boolean(default=False)
     """
-    reference_file_types = ['gain', 'readnoise']
-    prefetch_references = False
 
     def process(self, input):
         """Perform outlier detection processing on input data."""
@@ -141,8 +139,6 @@ class OutlierDetectionStep(Step):
                            detection_step.__name__))
 
             reffiles = {}
-            reffiles['gain'] = self._build_reffile_container('gain')
-            reffiles['readnoise'] = self._build_reffile_container('readnoise')
 
             # Set up outlier detection, then do detection
             step = detection_step(self.input_models, reffiles=reffiles, **pars)

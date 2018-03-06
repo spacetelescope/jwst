@@ -69,7 +69,7 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
         number_sat_groups = (sat_groups * 1).sum(axis=2)
         ndiffs = ngroups - 1
         sort_index = np.argsort(positive_first_diffs)
-        med_diffs = return_clipped_median(ndiffs, number_sat_groups, positive_first_diffs, sort_index)
+        med_diffs = return_clipped_median(ndiffs, number_sat_groups, first_diffs, sort_index)
 
         # Save initial estimate of the median slope for all pixels
         median_slopes[integration] = med_diffs

@@ -696,10 +696,10 @@ class IFUCubeData(object):
                 self.output_file = None
                 newname  = IFUCubeData.define_cubename(self)
                 IFUCube.meta.filename = newname
-                if(self.instrument == 'MIRI'):
-                    IFUCube.meta.instrument.channel = self.list_par1[0]
-                if(self.instrument == 'NIRSPEC'):
-                    IFUCube.meta.instrument.grating = self.list_par1[0]
+#                if(self.instrument == 'MIRI'):
+#                    IFUCube.meta.instrument.channel = self.list_par1[0]
+#                if(self.instrument == 'NIRSPEC'):
+#                    IFUCube.meta.instrument.grating = self.list_par1[0]
 
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
         IFUCube.meta.wcsinfo.crval2 = self.Crval2
@@ -738,6 +738,7 @@ class IFUCubeData(object):
         IFUCube.meta.roi_wave = self.roiw
         IFUCube.meta.weighting = self.weighting
         IFUCube.meta.weight_power = self.weight_power
+        #IFUCube.meta.channel = '1'
 
         with datamodels.open(self.input_models[j]) as input:
             IFUCube.meta.bunit_data = input.meta.bunit_data
