@@ -539,7 +539,7 @@ class Step():
         """Create a default filename based on the input name"""
         output_file = input_file
         if output_file is None or not isinstance(output_file, str):
-                output_file = self._input_filename
+                output_file = self.search_attr('_input_filename')
         if output_file is None:
             output_file = 'step_{}{}'.format(
                 self.name,
@@ -814,6 +814,8 @@ class Step():
         """
         if basepath is None:
             basepath = step.search_attr('output_file')
+        if basepath is None:
+            basepath = step.default_output_file()
         if basepath is None:
             raise(ValueError, 'No filename can be determined to save to.')
 
