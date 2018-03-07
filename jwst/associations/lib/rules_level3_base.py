@@ -182,13 +182,19 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
         if len(subarray):
             subarray = '-' + subarray
 
-        product_name = 'jw{program}-{acid}_{target}_{instrument}_{opt_elem}'
+        product_name = (
+            'jw{program}-{acid}'
+            '_{target}'
+            '_{instrument}'
+            '_{opt_elem}{subarray}'
+        )
         product_name = product_name.format(
             program=association.data['program'],
             acid=association.acid.id,
             target=target,
             instrument=instrument,
             opt_elem=opt_elem,
+            subarray=subarray,
             exposure=exposure
         )
 
