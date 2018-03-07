@@ -14,15 +14,12 @@ Specifically, this routine performs the following operations:
 
   - If resampling has been turned on for input CubeModel observations, convert the input CubeModel data into a ModelContainer.
 
-<<<<<<< HEAD
 * Resamples all input images into grouped observation mosaics; for example,
   combining all NIRCam multiple detector images from `a single exposure or
   from a dithered set of exposures.
   <https://jwst-docs.stsci.edu/display/JTI/NIRCam+Dithers+and+Mosaics>`_
-=======
-* Resamples all input images into grouped observation mosaics.
->>>>>>> Update for outlier_detection documentation for B7.1
 
+* Resamples all input images into grouped observation mosaics.
   - Resampled images will be written out to disk if ``save_intermediate_results`` parameter has been set to `True`
 
 * Creates a median image from all grouped observation mosaics.
