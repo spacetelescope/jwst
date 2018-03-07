@@ -29,18 +29,13 @@ input data:
 * Select outlier detection algorithm based on exposure type
 
   - **Images**: like those taken with NIRCam, will use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection`
-  - **coronagraphic observations**: use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` with resampling turned off
+  - **Coronagraphic observations**: use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` with resampling turned off
   - **Time-Series Observations(TSO)**: both imaging and spectroscopic modes, will use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` with resampling turned off
   - **NIRSpec and MIRI IFU observations**: use :py:class:`~jwst.outlier_detection.outlier_detection_ifu.OutlierDetectionIFU`
   - **Long-slit spectroscopic observations**: use :py:class:`~jwst.outlier_detection.outlier_detection_spec.OutlierDetectionSpec`
 
-* Read in reference files used by outlier detection, currently:
-
-  - **readnoise**: based on :py:class:`~jwst.datamodels.ReadnoiseModel`
-  - **gain**: based on :py:class:`~jwst.datamodels.GainModel`
-
 * Instantiate and run outlier detection class determined for the exposure type
-  using reference files and parameter values interpreted from inputs.
+  using parameter values interpreted from inputs.
 
 * Return input_models with DQ arrays updated with flags for identified outliers
 

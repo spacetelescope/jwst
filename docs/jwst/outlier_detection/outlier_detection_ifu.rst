@@ -17,7 +17,7 @@ This module serves as the interface for applying outlier_detection to IFU
 
    - Resampled cubes will be written out to disk if ``save_intermediate_results`` parameter has been set to `True`
 
- * Creates a median image from resampled :py:class:`~jwst.datamodels.IFUCubeModel` observations
+ * Creates a median image from the set of resampled :py:class:`~jwst.datamodels.IFUCubeModel` observations
 
    - Median image will be written out to disk if ``save_intermediate_results`` parameter has been set to `True`
 
