@@ -512,6 +512,27 @@ class DMSBaseMixin(ACIDMixin):
             opt_elem = 'clear'
         return opt_elem
 
+    def _get_subarray(self):
+        """Get string representation of the subarray
+
+        Returns
+        -------
+        subarray: str
+            The Level3 Product name representation
+            of the subarray.
+        """
+        result = ''
+        try:
+            subarray = format_list(self.constraints['subarray'].found_values)
+        except KeyError:
+            subarray = None
+        if subarray == 'full':
+            subarray = None
+        if subarray is not None:
+            result = subarray
+
+        return result
+
     def _get_target(self):
         """Get string representation of the target
 
