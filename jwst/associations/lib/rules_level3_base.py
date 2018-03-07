@@ -171,11 +171,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         opt_elem = association._get_opt_element()
 
-        try:
-            exposure = association._get_exposure()
-        except AssociationNotAConstraint:
-            exposure = ''
-        else:
+        exposure = association._get_exposure()
+        if len(exposure):
             exposure = '-' + exposure
 
         subarray = association._get_subarray()

@@ -451,18 +451,14 @@ class DMSBaseMixin(ACIDMixin):
         exposure: str
             The Level3 Product name representation
             of the exposure & activity id.
-
-        Raises
-        ------
-        AssociationNotAConstraint
-            No constraints produce this value
         """
+        exposure = ''
         try:
             activity_id = format_list(
                 self.constraints['activity_id'].found_values
             )
         except KeyError:
-            raise AssociationNotAConstraint
+            pass
         else:
             if activity_id not in _EMPTY:
                 exposure = '{0:0>2s}'.format(activity_id)
