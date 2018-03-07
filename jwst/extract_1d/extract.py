@@ -1928,23 +1928,27 @@ def extract_one_slit(input_model, slit, integ, verbose, **extract_params):
     if verbose:
         log_initial_parameters(extract_params)
 
+    dq = None                                   # possibly replaced below
     if integ > -1:
         data = input_model.data[integ]
-        dq = input_model.dq[integ]
+        if hasattr(input_model, 'dq'):
+            dq = input_model.dq[integ]
         try:
             wl_array = input_model.wavelength
         except AttributeError:
             wl_array = None
     elif slit == DUMMY:
         data = input_model.data
-        dq = input_model.dq
+        if hasattr(input_model, 'dq'):
+            dq = input_model.dq
         try:
             wl_array = input_model.wavelength
         except AttributeError:
             wl_array = None
     else:
         data = slit.data
-        dq = slit.dq
+        if hasattr(slit, 'dq'):
+            dq = slit.dq
         try:
             wl_array = slit.wavelength
         except AttributeError:
