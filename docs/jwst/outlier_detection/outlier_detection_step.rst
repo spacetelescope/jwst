@@ -1,7 +1,7 @@
-.. _outlier_B7_design_:
+.. _outlier_B7_design:
 
 Python Step Design: OutlierDetectionStep
-========================================
+-----------------------------------------
 
 This module provides the sole interface to all methods of performing outlier
 detection on JWST observations.  The ``OutlierDetectionStep`` supports multiple
@@ -28,11 +28,11 @@ input data:
 
 * Select outlier detection algorithm based on exposure type
 
-  - **Images**: like those taken with NIRCam, will use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection`
-  - **Coronagraphic observations**: use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` with resampling turned off
-  - **Time-Series Observations(TSO)**: both imaging and spectroscopic modes, will use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` with resampling turned off
-  - **NIRSpec and MIRI IFU observations**: use :py:class:`~jwst.outlier_detection.outlier_detection_ifu.OutlierDetectionIFU`
-  - **Long-slit spectroscopic observations**: use :py:class:`~jwst.outlier_detection.outlier_detection_spec.OutlierDetectionSpec`
+  - **Images**: like those taken with NIRCam, will use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` as described in :ref:`outlier-detection-imaging`
+  - **Coronagraphic observations**: use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` with resampling turned off in :ref:`outlier-detection-imaging`
+  - **Time-Series Observations(TSO)**: both imaging and spectroscopic modes, will use :py:class:`~jwst.outlier_detection.outlier_detection.OutlierDetection` with resampling turned off in :ref:`outlier-detection-imaging`
+  - **NIRSpec and MIRI IFU observations**: use :py:class:`~jwst.outlier_detection.outlier_detection_ifu.OutlierDetectionIFU` as described in :ref:`outlier-detection-ifu`
+  - **Long-slit spectroscopic observations**: use :py:class:`~jwst.outlier_detection.outlier_detection_spec.OutlierDetectionSpec` as described in :ref:`outlier-detection-spec`
 
 * Instantiate and run outlier detection class determined for the exposure type
   using parameter values interpreted from inputs.
