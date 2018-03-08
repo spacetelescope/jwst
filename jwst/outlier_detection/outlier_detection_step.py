@@ -84,11 +84,9 @@ class OutlierDetectionStep(Step):
                 'backg': self.backg,
                 'save_intermediate_results': self.save_intermediate_results,
                 'resample_data': self.resample_data,
-                'good_bits': self.good_bits
+                'good_bits': self.good_bits,
+                'make_output_path': self.make_output_path,
                 }
-
-            # Setup for creating file names
-            pars['make_output_path'] = self.make_output_path
 
             # Add logic here to select which version of OutlierDetection
             # needs to be used depending on the input data
