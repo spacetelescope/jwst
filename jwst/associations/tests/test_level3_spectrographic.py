@@ -19,7 +19,7 @@ from ..main import constrain_on_candidates
             'o001',
             'spec3',
             'jw99009-o001_spec3_\d{3}_asn',
-            'jw99009-o001_t001_nirspec_f100lp-g140m',
+            'jw99009-o001_t001_nirspec_f100lp-g140m-s200a2',
             set(('science', 'target_acquistion', 'autowave'))
         ),
         (

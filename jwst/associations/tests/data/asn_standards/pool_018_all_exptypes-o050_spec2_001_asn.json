@@ -2,7 +2,7 @@
     "asn_type": "spec2",
     "asn_rule": "candidate_Asn_Lv2WFSS",
     "version_id": null,
-    "code_version": "0.9.9",
+    "code_version": "0.9.12",
     "degraded_status": "No known degraded exposures in association.",
     "program": "99009",
     "target": "1",
@@ -14,7 +14,7 @@
             "name": "jw_00050",
             "members": [
                 {
-                    "expname": "jw99009-o050_t001_nirspec_f100lp.ecsv",
+                    "expname": "jw99009-o050_t001_nirspec_f100lp-s200a2.ecsv",
                     "exptype": "catalog"
                 },
                 {

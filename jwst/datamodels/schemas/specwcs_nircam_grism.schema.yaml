@@ -42,6 +42,12 @@ allOf:
         type: array
         items:
           $ref: http://stsci.edu/schemas/asdf/transform/transform-1.1.0
+    orders:
+        description: |
+          NIRCAM Grism orders, matched to the array locations of the dispersion models
+        type: array
+        items:
+          type: number
     meta:
       type: object
       properties:

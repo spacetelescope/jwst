@@ -47,6 +47,7 @@ from .cube import CubeModel
 from .dark import DarkModel
 from .darkMIRI import DarkMIRIModel
 from .drizpars import DrizParsModel, NircamDrizParsModel, MiriImgDrizParsModel
+from .extract1dimage import Extract1dImageModel
 from .outlierpars import OutlierParsModel, NircamOutlierParsModel, MiriImgOutlierParsModel
 from .drizproduct import DrizProductModel
 from .ifucubepars import IFUCubeParsModel, NirspecIFUCubeParsModel, MiriIFUCubeParsModel
@@ -68,6 +69,7 @@ from .linearity import LinearityModel
 from .mask import MaskModel
 from .miri_ramp import MIRIRampModel
 from .multiexposure import MultiExposureModel
+from .multiextract1d import MultiExtract1dImageModel
 from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
@@ -110,6 +112,7 @@ __all__ = [
     'DisperserModel', 'DistortionModel', 'DistortionMRSModel',
     'DrizProductModel',
     'DrizParsModel', 'NircamDrizParsModel', 'MiriImgDrizParsModel',
+    'Extract1dImageModel',
     'FilteroffsetModel',
     'FlatModel', 'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'FOREModel', 'FPAModel',
@@ -120,7 +123,7 @@ __all__ = [
     'IFUFOREModel', 'IFUImageModel', 'IFUPostModel', 'IFUSlicerModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
     'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',
-    'MultiExposureModel', 'MultiProductModel', 'MultiSlitModel',
+    'MultiExposureModel', 'MultiExtract1dImageModel', 'MultiProductModel', 'MultiSlitModel',
     'MultiSpecModel', 'OTEModel',
     'OutlierParsModel', 'MiriImgOutlierParsModel', 'NircamOutlierParsModel',
     'PathlossModel',

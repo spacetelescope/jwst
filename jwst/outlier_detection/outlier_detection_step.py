@@ -132,7 +132,8 @@ class OutlierDetectionStep(Step):
 
             if not self.valid_input:
                 result = input_models.copy()
-                result.meta.cal_step.outlier_detection = "SKIPPED"
+                for input in result:
+                    input.meta.cal_step.outlier_detection = "SKIPPED"
                 return result
 
             self.log.debug("Using {} class for outlier_detection".format(
@@ -203,22 +204,32 @@ class OutlierDetectionStep(Step):
 
     def _check_input_container(self):
         """Check to see whether input is the expected ModelContainer object."""
+        ninputs = len(self.input_models)
         if not isinstance(self.input_models, datamodels.ModelContainer):
             self.log.warning("Input is not a ModelContainer.")
             self.log.warning("Outlier detection step will be skipped.")
             self.valid_input = False
-        else:
-            self.valid_input = True
-            self.log.info("Performing outlier detection on {} inputs".format(
-                          len(self.input_models)))
-
-    def _check_input_cube(self):
-        """Check to see whether input is the expected CubeModel object."""
-        if not isinstance(self.input_models, datamodels.CubeModel):
-            self.log.warning("Input is not the expected CubeModel.")
+        elif ninputs < 2:
+            self.log.warning("Input only contains %d exposures." % (ninputs))
             self.log.warning("Outlier detection step will be skipped.")
             self.valid_input = False
         else:
             self.valid_input = True
-            self.log.info("Performing outlier detection with {} inputs".
-                          format(self.input_models.shape[0]))
+            self.log.info("Performing outlier detection on %d inputs" %
+                          (ninputs))
+
+    def _check_input_cube(self):
+        """Check to see whether input is the expected CubeModel object."""
+        ninputs = self.input_models.shape[0]
+        if not isinstance(self.input_models, datamodels.CubeModel):
+            self.log.warning("Input is not the expected CubeModel.")
+            self.log.warning("Outlier detection step will be skipped.")
+            self.valid_input = False
+        elif ninputs < 2:
+            self.log.warning("Input only contains %d exposures." % (ninputs))
+            self.log.warning("Outlier detection step will be skipped.")
+            self.valid_input = False
+        else:
+            self.valid_input = True
+            self.log.info("Performing outlier detection with %d inputs" %
+                          (ninputs))

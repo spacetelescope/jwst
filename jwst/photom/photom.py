@@ -65,7 +65,7 @@ class DataSet(object):
         if self.band is not None:
             log.info(' band: %s', self.band)
 
-    def calc_nirspec(self, ftab):
+    def calc_nirspec(self, ftab, area_fname):
         """
         Extended Summary
         -------------
@@ -80,7 +80,10 @@ class DataSet(object):
         Parameters
         ----------
         ftab: fits HDUList
-            HDUList for NIRSPEC reference file
+            HDUList for NIRSPEC photom reference file
+
+        area_fname: string
+            Pixel area map reference file name
 
         Returns
         -------
@@ -203,7 +206,7 @@ class DataSet(object):
 
                         # Load the pixel area table for the IFU slices
                         area_model = \
-                            datamodels.NirspecIfuAreaModel(self.area_file)
+                            datamodels.NirspecIfuAreaModel(area_fname)
                         area_data = area_model.area_table
 
                         # Compute 2D wavelength and pixel area arrays for the
@@ -764,10 +767,10 @@ class DataSet(object):
         Parameters
         ----------
         photom_fname: string
-            photom file name of FITS table
+            photom reference file name
 
         area_fname: string
-            pixel area map file name
+            pixel area map reference file name
 
         Returns
         -------
@@ -782,7 +785,7 @@ class DataSet(object):
                 ftab = datamodels.NirspecFSPhotomModel(photom_fname)
             else:
                 ftab = datamodels.NirspecPhotomModel(photom_fname)
-            self.calc_nirspec(ftab)
+            self.calc_nirspec(ftab, area_fname)
 
         if self.instrument == 'NIRCAM':
             ftab = datamodels.NircamPhotomModel(photom_fname)
