@@ -754,6 +754,7 @@ class ExtractBase:
 
     def __init__(self):
         self.exp_type = ""
+        self.instrument_name = ""
         self.xstart = None
         self.xstop = None
         self.ystart = None
@@ -808,6 +809,7 @@ class ExtractModel(ExtractBase):
         super().__init__()
 
         self.exp_type = input_model.meta.exposure.type
+        self.instrument_name = input_model.meta.instrument.name
         self.dispaxis = dispaxis
         self.spectral_order = spectral_order
 
@@ -1177,7 +1179,11 @@ class ExtractModel(ExtractBase):
                     dec[:] = -999.
                     wcs_wl[:] = -999.
             else:
-                ra, dec, wcs_wl = self.wcs(x_array, y_array)
+                if self.instrument_name == "NIRSPEC":
+                    # xxx temporary:  NIRSpec wcs is one-based.
+                    ra, dec, wcs_wl = self.wcs(x_array + 1., y_array + 1.)
+                else:
+                    ra, dec, wcs_wl = self.wcs(x_array, y_array)
             # We need one right ascension and one declination, representing
             # the direction of pointing.
             mask = np.isnan(ra)
@@ -1256,6 +1262,7 @@ class ImageExtractModel(ExtractBase):
         super().__init__()
 
         self.exp_type = input_model.meta.exposure.type
+        self.instrument_name = input_model.meta.instrument.name
 
         # ref_model contains one or more images; ref_image is the one that
         # matches the current configuration (slit name and spectral order).
@@ -1449,7 +1456,11 @@ class ImageExtractModel(ExtractBase):
                     dec[:] = -999.
                     wcs_wl[:] = -999.
             else:
-                ra, dec, wcs_wl = self.wcs(x_array, y_array)
+                if self.instrument_name == "NIRSPEC":
+                    # xxx temporary:  NIRSpec wcs is one-based.
+                    ra, dec, wcs_wl = self.wcs(x_array + 1., y_array + 1.)
+                else:
+                    ra, dec, wcs_wl = self.wcs(x_array, y_array)
             # We need one right ascension and one declination, representing
             # the direction of pointing.
             middle = ra.shape[0] // 2           # ra and dec have same shape
