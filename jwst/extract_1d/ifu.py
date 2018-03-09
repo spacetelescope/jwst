@@ -85,7 +85,7 @@ def ifu_extract1d(input_model, refname, source_type):
     else:
         flux = np.zeros_like(net)
         log.info("Data have NOT been flux calibrated; setting flux to 0.")
-        data_units = 'mJy'
+        data_units = 'DN/s'
 
     fl_error = np.ones_like(net)
     nerror = np.ones_like(net)
