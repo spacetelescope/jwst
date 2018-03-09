@@ -647,7 +647,7 @@ class DataSet(object):
             microns_100 = 1.e-4         # 100 microns, in meters
             if waves.max() > 0. and waves.max() < microns_100:
                 waves *= 1.e+6
-            wl_unit = 'microns'
+            wl_unit = 'um'
 
             # Set the relative sensitivity table for the correct Model type
             log.info('Storing relative response table')
@@ -655,11 +655,13 @@ class DataSet(object):
                 otab = np.array(list(zip(waves, relresps)),
                        dtype=self.input.slits[self.slitnum].relsens.dtype)
                 self.input.slits[self.slitnum].relsens = otab
+                self.input.slits[self.slitnum].relsens.columns['wavelength'].unit = wl_unit
 
             else:
                 otab = np.array(list(zip(waves, relresps)),
                                 dtype=self.input.relsens.dtype)
                 self.input.relsens = otab
+                self.input.relsens.columns['wavelength'].unit= wl_unit
 
         return
 
