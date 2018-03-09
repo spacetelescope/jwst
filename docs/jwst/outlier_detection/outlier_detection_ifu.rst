@@ -16,7 +16,7 @@ This module serves as the interface for applying outlier_detection to IFU
    - the same set of parameters available to :ref:`outlier-detection-imaging`
      also applies to this code
 
- * Resample all input :py:class:`~jwst.datamodels.ImageModel` images into
+ * Resample all input :py:class:`~jwst.datamodels.IFUImageModel` images into
    :py:class:`~jwst.datamodels.IFUCubeModel` observations.
 
    - Resampling uses :py:class:`~jwst.cube_build.CubeBuildStep` to create
