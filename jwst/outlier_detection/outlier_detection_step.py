@@ -88,6 +88,20 @@ class OutlierDetectionStep(Step):
                 'make_output_path': self.make_output_path,
                 }
 
+            # Setup output path naming if associations are involved.
+            asn_id = None
+            try:
+                asn_id = self.input_models.meta.asn_table.asn_id
+            except (AttributeError, KeyError):
+                pass
+            if asn_id is None:
+                asn_id = self.search_attr('asn_id')
+            if asn_id is not None:
+                pars['make_output_path'] = partial(
+                    self.make_output_path,
+                    asn_id=asn_id
+                )
+
             # Add logic here to select which version of OutlierDetection
             # needs to be used depending on the input data
             if self.input_container:

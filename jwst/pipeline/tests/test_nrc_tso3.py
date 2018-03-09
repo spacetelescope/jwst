@@ -37,6 +37,7 @@ def test_run_full_noscale(mk_tmp_dirs):
         asn_path,
         '--scale_detection=False',
         '--steps.outlier_detection.save_intermediate_results=True',
+        '--output_dir=' + tmp_data_path
     ]
 
     Step.from_cmdline(args)
@@ -52,7 +53,11 @@ def test_run_full_noscale(mk_tmp_dirs):
         expname = path.split(member['expname'])[1]
         members_by_type[member['exptype'].lower()].append(expname)
 
-    output_files = glob('*')
+    output_files = [
+        path.split(result_path)[1]
+        for result_path in
+        glob(path.join(tmp_data_path, '*'))
+    ]
     print('Created files ares: {}'.format(output_files))
 
     # Check Level3 products
@@ -66,6 +71,10 @@ def test_run_full_noscale(mk_tmp_dirs):
         basename, separator = remove_suffix(basename)
 
         name = basename + separator + acid + separator + 'crfints' + ext
+        assert name in output_files
+        output_files.remove(name)
+
+        name = basename + separator + acid + separator + 'median' + ext
         assert name in output_files
         output_files.remove(name)
 
@@ -86,7 +95,8 @@ def test_run_full_scale(mk_tmp_dirs):
     args = [
         path.join(SCRIPT_DATA_PATH, 'cfgs', 'calwebb_tso3.cfg'),
         asn_path,
-        '--scale_detection=True'
+        '--scale_detection=True',
+        '--steps.outlier_detection.save_intermediate_results=True',
     ]
 
     Step.from_cmdline(args)

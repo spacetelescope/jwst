@@ -1,5 +1,6 @@
 """Class definition for performing outlier detection with scaling."""
 
+from copy import deepcopy
 from functools import partial
 import numpy as np
 
@@ -107,10 +108,10 @@ class OutlierDetectionScaled(OutlierDetection):
         # Initialize intermediate products used in the outlier detection
         input_shape = self.input_models[0].data.shape
         median_model = datamodels.ImageModel(init=input_shape)
-        median_model.meta = self.input_models[0].meta
+        median_model.meta = deepcopy(self.input_models[0].meta)
         base_filename = self.inputs.meta.filename
         median_model.meta.filename = self.make_output_path(
-            None, basepath=base_filename, suffix='median'
+            basepath=base_filename, suffix='median'
         )
 
         # Perform median combination on set of drizzled mosaics
@@ -141,7 +142,7 @@ class OutlierDetectionScaled(OutlierDetection):
         for i in range(nints):
             scale_factor = float(phot_values[i] / median_phot_value)
             scaled_image = datamodels.ImageModel(init=median_model.data.shape)
-            scaled_image.meta = median_model.meta
+            scaled_image.meta = deepcopy(median_model.meta)
             scaled_data = (median_model.data * (scale_factor * median_mask) + (
                            median_model.data * inv_median_mask))
             scaled_image.data = scaled_data
@@ -149,7 +150,7 @@ class OutlierDetectionScaled(OutlierDetection):
 
         if save_intermediate_results:
             log.info("Writing out Scaled Median images...")
-            blot_models.save(partial(self.make_output_path, suffix='blot'))
+            blot_models.save(partial(self.make_output_path, output_file=base_filename, suffix='blot'))
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image

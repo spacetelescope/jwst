@@ -211,13 +211,14 @@ class OutlierDetection:
         median_model.data = self.create_median(drizzled_models)
 
         if save_intermediate_results:
-            log.info("Writing out MEDIAN image to: {}".format(
-                                                median_model.meta.filename))
-            self.save_model(
-                median_model,
-                output_file=self.input_models[0].meta.filename,
+            median_output_path = self.make_output_path(
+                basepath=self.input_models[0].meta.filename,
                 suffix='median'
             )
+            log.info("Writing out MEDIAN image to: {}".format(
+                median_output_path
+            ))
+            median_model.save(median_output_path)
 
         if pars['resample_data']:
             # Blot the median image back to recreate each input image specified
@@ -225,7 +226,12 @@ class OutlierDetection:
             blot_models = self.blot_median(median_model)
             if save_intermediate_results:
                 log.info("Writing out BLOT images...")
-                self.save_model(blot_models, suffix='blot')
+                for model in blot_models:
+                    model_path = self.make_output_path(
+                        basename=model.meta.filename,
+                        suffix='blot'
+                    )
+                    model.save(model_path)
         else:
             # Median image will serve as blot image
             blot_models = datamodels.ModelContainer()
