@@ -150,7 +150,15 @@ class OutlierDetectionScaled(OutlierDetection):
 
         if save_intermediate_results:
             log.info("Writing out Scaled Median images...")
-            blot_models.save(partial(self.make_output_path, output_file=base_filename, suffix='blot'))
+
+            def make_output_path(ignored, idx=None):
+                output_path = self.make_output_path(
+                    basepath=base_filename, suffix='blot', idx=idx,
+                    component_format='_{asn_id}_{idx}'
+                )
+                return output_path
+
+            blot_models.save(make_output_path)
 
         # Perform outlier detection using statistical comparisons between
         # each original input image and its blotted version of the median image

@@ -1,6 +1,7 @@
 """Test calwebb_tso3 with NIRCam"""
 
 from collections import defaultdict
+from copy import copy
 from glob import glob
 from os import path
 
@@ -128,6 +129,18 @@ def test_run_full_scale(mk_tmp_dirs):
         name = basename + separator + acid + separator + 'crfints' + ext
         assert name in output_files
         output_files.remove(name)
+
+        name = basename + separator + acid + separator + 'median' + ext
+        assert name in output_files
+        output_files.remove(name)
+
+    # If any blots exists, we're good.
+    found_blot = False
+    for output_file in copy(output_files):
+        if output_file.find('blot'):
+            found_blot = True
+            output_files.remove(output_file)
+    assert found_blot
 
     # If there are files left, this is an error
     assert len(output_files) == 0

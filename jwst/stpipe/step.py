@@ -769,7 +769,7 @@ class Step():
             ext=None,
             suffix=None,
             name_format=None,
-            component_formats=None,
+            component_format='',
             separator='_',
             **components
     ):
@@ -792,8 +792,8 @@ class Step():
         name_format: str or None
             The format string to use to form the base name.
 
-        component_formats: {key: format(, ...)} or None
-            Format to use on a per-key basis.
+        component_format: str
+            Format to use for the components
 
         separator: str
             Separator to use between replacement components
@@ -823,7 +823,6 @@ class Step():
             name_format = '{basename}{components}{suffix_sep}{suffix}.{ext}'
         formatter = FormatTemplate(
             separator=separator,
-            key_formats=component_formats,
             remove_unused=True
         )
 
@@ -843,7 +842,7 @@ class Step():
             suffix_sep = separator
 
         if len(components):
-            component_str = formatter('', **components)
+            component_str = formatter(component_format, **components)
         else:
             component_str = ''
 
