@@ -51,7 +51,7 @@ matrix:
         - os: linux
           env: SETUP_CMD='build_sphinx'
                CONDA_DEPENDENCIES=$CONDA_JWST_DEPENDENCIES
-               PIP_DEPENDENCIES='sphinx_rtd_theme sphinx-automodapi'
+               PIP_DEPENDENCIES='sphinx_rtd_theme stsci_rtd_theme sphinx-automodapi'
 
     allow_failures:
         # PEP8 will fail for numerous reasons. Ignore it.
