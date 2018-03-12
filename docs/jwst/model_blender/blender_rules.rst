@@ -3,11 +3,11 @@
 Model Blender Rules
 ====================
 
-Blending models relies on rules to define how to evaluate all the input values 
+Blending models relies on rules to define how to evaluate all the input values
 for a model attribute in order to determine the final output value. These rules
-then get specified in the model schema for each attribute.  
+then get specified in the model schema for each attribute.
 
-The rules get interpreted and applied as list or array operations which work on 
+The rules get interpreted and applied as list or array operations that work on
 the set of input values for each attribute.  The full set of pre-defined rules
 includes:
 
@@ -27,9 +27,9 @@ includes:
                  'min': np.min,
                  'stddev': np.std}
 
-The rules which should be referenced in the model schema definition are the 
-keys defined for `jwst.model_blender.blender_rules.blender_funcs` listed 
-above.  This definition illustrates how several rules are simply interfaces for 
+The rules that should be referenced in the model schema definition are the
+keys defined for `jwst.model_blender.blender_rules.blender_funcs` listed
+above.  This definition illustrates how several rules are simply interfaces for
 numpy array operations, while others are defined internally to `model_blender`.  
 
 .. toctree::
