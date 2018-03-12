@@ -259,15 +259,17 @@ def extract_grism_objects(input_model,
 
     if grism_objects is None:
         # get the wavelengthrange reference file from the input_model
+        if reference_files is None:
+            raise ValueError("Need at least the dictionary of reference files")
         if (not reference_files['wavelengthrange'] or reference_files['wavelengthrange'] == 'N/A'):
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
-            grism_objects = util.create_grism_bbox(input_model, reference_files)
+            grism_objects = util.create_grism_bbox(input_model, reference_files, extract_orders)
             log.info("Grism object list created from source catalog: {0:s}"
                      .format(input_model.meta.source_catalog.filename))
 
     if not isinstance(grism_objects, list):
-            raise ValueError("Expected input grism objects to be a list")
+            raise TypeError("Expected input grism objects to be a list")
 
     log.info("Extracting grism objects into MultiSlitModel")
     output_model = datamodels.MultiSlitModel()
@@ -360,7 +362,7 @@ def extract_grism_objects(input_model,
             new_model.bunit_data = input_model.meta.bunit_data
             new_model.bunit_err = input_model.meta.bunit_err
             slits.append(new_model)
-            
+
     output_model.slits.extend(slits)
     del subwcs
     return output_model
@@ -383,4 +385,3 @@ def compute_dispersion(wcs):
 
     """
     raise NotImplementedError
-

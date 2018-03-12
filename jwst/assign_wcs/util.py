@@ -361,8 +361,10 @@ def get_object_info(catalog_name=None):
     return objects
 
 
-def create_grism_bbox(input_model, reference_files,
-                      mmag_extract=99.0):
+def create_grism_bbox(input_model,
+                      reference_files,
+                      mmag_extract=99.0,
+                      extract_orders=None):
     """Create bounding boxes for each object in the catalog
 
     The sky coordinates in the catalog image are first related
@@ -381,6 +383,9 @@ def create_grism_bbox(input_model, reference_files,
         Dictionary of reference files
     mmag_extract : float
         The faintest magnitude to extract from the catalog
+    extract_orders : list
+        The list of orders to extract, if specified this will
+        override the orders listed in the wavelengthrange reference file
 
     Returns
     -------
@@ -405,7 +410,23 @@ def create_grism_bbox(input_model, reference_files,
     NIRISS only has one detector, but GRISMC disperses along rows and GRISMR disperses
     along columns.
 
+    photutils is used to create the source catalog in the pipeline, it's currently using the
+    fits wcs for it's sky translation, it grabs the fits wcs from the data model using
+    get_fits_wcs(). Until GWCS is fully implemented, this translation may be off in the
+    pipeline.
+
     """
+    if mmag_extract is not None:
+        if not isinstance(mmag_extract, (int, float)):
+            raise TypeError("Expected mmag_extract to be an int or float")
+
+    if extract_orders is not None:
+        if isinstance(extract_orders, list):
+            if not all(isinstance(item, int) for item in extract_orders):
+                raise TypeError("Expected extract_orders to be a list of ints")
+        else:
+            raise TypeError("Expected extract_orders to be a list of ints")
+
     # figure out the dispersion direction, shouldn't this be in the polynomials already?
     disperse_row_right = True  # disperse to increasing x
     disperse_column = False  # column always disperses to increasing y
@@ -449,6 +470,10 @@ def create_grism_bbox(input_model, reference_files,
             raise ValueError("Wavelengthrange reference file not meant for WFSS mode")
         waverange_selector = f.waverange_selector
         orders = f.order
+        if extract_orders is None:
+            extract_orders = f.extract_orders
+        # add logic to deal with extract orders being given a singular list
+        # wihtout a filter specificiation
 
     # All objects in the catalog will use the same filter for translation
     # that filter is the one that was used in front of the grism
@@ -469,63 +494,56 @@ def create_grism_bbox(input_model, reference_files,
             order_bounding = {}
             waverange = {}
             for oidx, order in enumerate(orders):
-                # The orders of the bounding box in the non-dispersed image
-                # drive the extraction extent. The location of the min and
-                # max wavelengths for each order are used to get the location
-                # of the +/- sides of the bounding box in the grism image
-                lmin, lmax = waverange[oidx][fselect]
+                if order in extract_orders[:][fselect]:
+                    # The orders of the bounding box in the non-dispersed image
+                    # drive the extraction extent. The location of the min and
+                    # max wavelengths for each order are used to get the
+                    # location of the +/- sides of the bounding box in the
+                    # grism image
+                    lmin, lmax = wrange[oidx][fselect]
 
-                # we need to be specific with dispersion direction here?
-                # I think this should be taken care of in the trace polys
-                wave_min = lmax
-                wave_max = lmin
-                if (disperse_row_right or disperse_column):
-                    wave_min = lmin
-                    wave_max = lmax
+                    # we need to be specific with dispersion direction here?
+                    # I think this should be taken care of in the trace polys
+                    wave_min = lmax
+                    wave_max = lmin
+                    if (disperse_row_right or disperse_column):
+                        wave_min = lmin
+                        wave_max = lmax
 
+                    xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value,
+                                                       obj.sky_bbox_ll.dec.value,
+                                                       wave_min, order)
+                    xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value,
+                                                       obj.sky_bbox_ur.dec.value,
+                                                       wave_max, order)
 
-                xmin, ymin, _, _, _ = sky_to_grism(obj.sky_bbox_ll.ra.value, obj.sky_bbox_ll.dec.value, lmin, order)
-                xmax, ymax, _, _, _ = sky_to_grism(obj.sky_bbox_ur.ra.value, obj.sky_bbox_ur.dec.value, lmax, order)
+                    # don't add objects and orders which are entirely off the detector
+                    # this could also live in extract_2d
+                    # partial_order marks partial off-detector objects which are near enough to cause
+                    # spectra to be observed on the detector. This is usefull because the catalog often is
+                    # created from a resampled direct image that is bigger than the detector FOV for a single
+                    # grism exposure.
+                    exclude = False
+                    partial_order = False
 
-                # convert to integer pixels, making use of python3 round to integer, 2.7 rounds to float
-                # if disperse_column:
-                #     cdisp = abs(round(bxmax)-round(bxmin)) // 2
-                #     xmin, ymin, xmax, ymax = map(round,[xmin, ymin-cdisp, xmax, ymax+cdisp])
-                # else:
-                #     cdisp = abs(round(bymax)-round(bymin)) // 2
-                #     xmin, ymin, xmax, ymax = map(round,[xmin-cdisp, ymin, xmax+cdisp, ymax])
+                    # Exclusion of traces completely outside
+                    # the detector limits
+                    pts = np.array([[xmin, ymin], [xmax, ymax]])
+                    ll = np.array([0, 0])  # lower-left
+                    ur = np.array([xsize, ysize])  # upper-right
+                    inidx = np.all(np.logical_and(ll <= pts, pts <= ur), axis=1)
 
+                    contained = len(pts[inidx])
+                    if contained == 0:
+                        exclude = True
+                        log.info("Excluding off-image object: {}, order {}".format(obj.sid, order))
+                    elif contained == 1:
+                        partial_order = True
+                        log.info("Partial order on detector for obj: {} order: {}".format(obj.sid, order))
 
-                # don't add objects and orders which are entirely off the detector
-                # this could also live in extract_2d
-                # partial_order marks partial off-detector objects which are near enough to cause
-                # spectra to be observed on the detector. This is usefull because the catalog often is
-                # created from a resampled direct image that is bigger than the detector FOV for a single
-                # grism exposure.
-                exclude = False
-                partial_order = False
-
-                if ((ymin < 0) or (ymax > ysize)):
-                    partial_order = True
-                if ((ymin < 0) and (ymax < 0)):
-                    exclude = True
-                if (ymin > ysize):
-                    exclude = True
-
-                if ((xmin < 0) or (xmax > xsize)):
-                    partial_order = True
-                if ((xmin < 0) and (xmax < 0)):
-                    exclude = True
-                if (xmin > xsize):
-                    exclude = True
-
-                if partial_order:
-                    log.info("Partial order on detector for obj: {} order: {}".format(obj.sid, order))
-                if exclude:
-                    log.info("Excluding off-image object: {}, order {}".format(obj.sid, order))
-                else:
-                    order_bounding[order] = ((round(ymin), round(ymax)), (round(xmin), round(xmax)))
-                    waverange[order] = ((lmin, lmax))
+                    if not exclude:
+                        order_bounding[order] = ((round(ymin), round(ymax)), (round(xmin), round(xmax)))
+                        waverange[order] = ((lmin, lmax))
             # add lmin and lmax used for the orders here?
             # input_model.meta.wcsinfo.waverange_start keys covers the
             # full range of all the orders
@@ -692,7 +710,7 @@ def velocity_correction(velosys):
         Radial velocity wrt Barycenter [m / s].
     """
     correction = (1 / (1 + velosys / c.value))
-    model =  astmodels.Identity(1) * astmodels.Const1D(correction, name="velocity_correction")
+    model = astmodels.Identity(1) * astmodels.Const1D(correction, name="velocity_correction")
     model.inverse = astmodels.Identity(1) / astmodels.Const1D(correction, name="inv_vel_correciton")
 
     return model

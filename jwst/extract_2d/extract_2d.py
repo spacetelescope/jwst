@@ -64,8 +64,8 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False,
         else:
             output_model = extract_grism_objects(input_model,
                                                  grism_objects=grism_objects,
-                                                 reference_files=reference_files)
-
+                                                 reference_files=reference_files,
+                                                 extract_orders=None)
     else:
         log.info("'EXP_TYPE {} not supported for extract 2D".format(exp_type))
         input_model.meta.cal_step.extract_2d = 'SKIPPED'
