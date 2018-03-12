@@ -51,7 +51,8 @@ class Tso3Pipeline(Pipeline):
         self.log.info('Starting calwebb_tso3...')
         input_models = datamodels.open(input)
 
-        self.output_file = input_models.meta.asn_table.products[0].name
+        if self.output_file is None:
+            self.output_file = input_models.meta.asn_table.products[0].name
         self.asn_id = input_models.meta.asn_table.asn_id
 
         input_exptype = None
@@ -101,7 +102,6 @@ class Tso3Pipeline(Pipeline):
 
         # Create final photometry results as a single output
         # regardless of how many members there may be...
-        self.output_basename = input_models.meta.asn_table.products[0].name
         phot_result_list = []
         if input_exptype in self.image_exptypes:
             # Create name for extracted photometry (Level 3) product
