@@ -175,6 +175,30 @@ then supply the cfg file as a keyword argument:
 Universal Parameters
 ====================
 
+Output Directory
+----------------
+
+By default, all pipeline and step outputs will drop into the current
+working directory, i.e., the directory in which the process is
+running. To change this, use the `output_dir` argument. For example, to
+have all output from `calwebb_detector1`, including any saved
+intermediate steps, appear in the sub-directory `calibrated`, use
+::
+
+    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+        --output_dir=calibrated
+
+`output_dir` can be specified at the step level, overriding what was
+specified for the pipeline. From the example above, to change the name
+and location of the `dark_current` step, use the following
+::
+
+    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
+        --output_dir=calibrated
+        --steps.dark_current.output_file='dark_sub.fits'
+        --steps.dark_current.output_dir='dark_calibrated'
+
+
 Output File
 -----------
 
@@ -210,35 +234,19 @@ the entire pipeline using the `--output_file` argument also
 Output File and Associations
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-The stage 2 pipelines can take an individual file or an
-:ref:`association <associations>` as input. When given an association, `output_file` is
-ignored, in favor of using the product names defined in the
-associations. Stage 3 pipelines always require an association, hence
-`output_file` is never used for them.
+Stage 2 pipelines can take an individual file or an
+:ref:`association <associations>` as input. Nearly all Stage 3
+pipelines require an associaiton as input. Normally, the output file
+is defined in each association's `product_name`.
 
-Output Directory
-----------------
-
-By default, all pipeline and step outputs will drop into the current
-working directory, i.e., the directory in which the process is
-running. To change this, use the `output_dir` argument. For example, to
-have all output from `calwebb_detector1`, including any saved
-intermediate steps, appear in the sub-directory `calibrated`, use
-::
-
-    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
-        --output_dir=calibrated
-
-`output_dir` can be specified at the step level, overriding what was
-specified for the pipeline. From the example above, to change the name
-and location of the `dark_current` step, use the following
-::
-
-    $ strun calwebb_detector1.cfg jw00017001001_01101_00001_nrca1_uncal.fits
-        --output_dir=calibrated
-        --steps.dark_current.output_file='dark_sub.fits'
-        --steps.dark_current.output_dir='dark_calibrated'
-
+If there is need to produce multiple versions of a calibration based
+on an association, it is highly suggested to use `output_dir` to place
+the results in a different directory instead of using `output_file` to
+rename the output files. Stage 2 pipelines do not allow the override
+of the output using `output_file`. Stage 3 pipelines do. However,
+since Stage 3 pipelines generally produce many files per association,
+using different directories via `output_dir` will make file keeping
+simpler.
 
 Override Reference File
 -----------------------
@@ -312,20 +320,27 @@ will be displayed.
 Output File Names
 =================
 
-Pipelines and steps will use default output file names or names provided by
-the user via the `output_file` argument. In the absence of a user-specified
-output file name, pipelines and steps use different schemes for setting a
-default output name, which are explained below.
+File names for the outputs from pipelines and steps come from
+three different sources:
 
-Pipeline Outputs
-----------------
+- The name of the input file
+- The product name defined in an association
+- As specified by the `output_file` argument
 
-In the absence of a user-specified output file name, the various stage 1,
-2, and 3 pipeline modules will use the input root file name along with a set
-of predetermined suffixes to compose output file names. The output file name
-suffix will always replace the suffix of the input file name. Each pipeline
-module uses the appropriate suffix for the product(s) it is creating. The
-list of suffixes is shown in the following table.
+Regardless of the source, each pipeline/step uses the name as a "base
+name", on to which several different suffixes are appended, which
+indicate the type of data in that particular file.
+
+Pipeline/Step Suffix Definitions
+--------------------------------
+
+However the file name is determined (see above), the various stage 1,
+2, and 3 pipeline modules will use that file name, along with a set of
+predetermined suffixes, to compose output file names. The output file
+name suffix will always replace any existing suffix of the input file
+name. Each pipeline module uses the appropriate suffix for the
+product(s) it is creating. The list of suffixes is shown in the
+following table.
 
 =============================================  ========
 Product                                        Suffix
@@ -353,13 +368,14 @@ If individual steps are executed without an output file name specified via
 the `output_file` argument, the `stpipe` infrastructure
 automatically uses the input file name as the root of the output file name
 and appends the name of the step as an additional suffix to the input file
-name. For example:
+name. If the input file name already has a known suffix, that suffix
+will be replaced. For example:
 ::
 
  $ strun dq_init.cfg jw00017001001_01101_00001_nrca1_uncal.fits
 
 produces an output file named
-"jw00017001001_01101_00001_nrca1_uncal_dq_init.fits."
+`jw00017001001_01101_00001_nrca1_dq_init.fits`.
 
 Configuration Files
 ===================
