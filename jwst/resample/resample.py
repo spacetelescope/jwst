@@ -1,13 +1,13 @@
-import numpy as np
+import logging
 from collections import OrderedDict
+import numpy as np
 
 from .. import datamodels
 
 from . import gwcs_drizzle
 from . import resample_utils
-from . import blend
+from ..model_blender import blendmeta
 
-import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -36,7 +36,7 @@ class ResampleData:
     drizpars = {'single': False,
                 'kernel': 'square',
                 'pixfrac': 1.0,
-                'good_bits': 4,
+                'good_bits': 0,
                 'fillval': 'INDEF',
                 'wht_type': 'exptime',
                 'blendheaders': True}
@@ -57,7 +57,6 @@ class ResampleData:
         self.output_filename = output
         self.ref_filename = ref_filename
 
-
         # If user specifies use of drizpars ref file (default for pipeline use)
         # update input parameters with default values from ref file
         if self.ref_filename is not None:
@@ -75,10 +74,8 @@ class ResampleData:
 
         self.output_models = datamodels.ModelContainer()
 
-
     def get_drizpars(self):
-        """ Extract drizzle parameters from reference file
-        """
+        """ Extract drizzle parameters from reference file."""
         # start by interpreting input data models to define selection criteria
         num_groups = len(self.input_models.group_names)
         input_dm = self.input_models[0]
@@ -95,7 +92,7 @@ class ResampleData:
 
         filter_match = False  # flag to support wild-card rows in drizpars table
         for n, filt, num in zip(range(0, len(drizpars)), drizpars.filter,
-                drizpars.numimages):
+                                drizpars.numimages):
             # only remember this row if no exact match has already been made for
             # the filter. This allows the wild-card row to be anywhere in the
             # table; since it may be placed at beginning or end of table.
@@ -125,18 +122,18 @@ class ResampleData:
 
         # Replace CONTEXT array with full set of planes needed for all inputs
         outcon = np.zeros((numplanes, self.output_wcs.data_size[0],
-                                    self.output_wcs.data_size[1]), dtype=np.int32)
+                           self.output_wcs.data_size[1]), dtype=np.int32)
         self.blank_output.con = outcon
 
-
     def blend_output_metadata(self, output_model):
-        """ Create new output metadata based on blending all input metadata
-        """
+        """Create new output metadata based on blending all input metadata."""
         # Run fitsblender on output product
         input_list = [i.meta.filename for i in self.input_models]
-        log.debug('Blending metadata for {}'.format(output_model.meta.filename))
-        blend.blendfitsdata(input_list, output_model)
+        output_file = output_model.meta.filename
 
+        log.info('Blending metadata for {}'.format(output_file))
+        blendmeta.blendmodels(output_model, inputs=input_list,
+                              output=output_file)
 
     def do_drizzle(self):
         """ Perform drizzling operation on input images's to create a new output
@@ -165,7 +162,7 @@ class ResampleData:
         pointings = len(self.input_models.group_names)
 
         for obs_product, exposure, texptime in zip(driz_outputs, exposures,
-            group_exptime):
+                                                   group_exptime):
             output_model = self.blank_output.copy()
             output_model.meta.filename = obs_product
             saved_model_type = output_model.meta.model_type
@@ -183,18 +180,19 @@ class ResampleData:
 
             # Initialize the output with the wcs
             driz = gwcs_drizzle.GWCSDrizzle(output_model,
-                                single=self.drizpars['single'],
-                                pixfrac=self.drizpars['pixfrac'],
-                                kernel=self.drizpars['kernel'],
-                                fillval=self.drizpars['fillval'])
+                                            single=self.drizpars['single'],
+                                            pixfrac=self.drizpars['pixfrac'],
+                                            kernel=self.drizpars['kernel'],
+                                            fillval=self.drizpars['fillval'])
 
             for n, img in enumerate(exposure):
                 exposure_times['start'].append(img.meta.exposure.start_time)
                 exposure_times['end'].append(img.meta.exposure.end_time)
 
                 # apply sky subtraction
-                if 'skybg' in img.meta._instance:
-                    img.data -= img.meta.skybg
+                blevel = img.meta.background.level
+                if not img.meta.background.subtracted and blevel is not None:
+                    img.data -= blevel
 
                 outwcs_pscale = output_model.meta.wcsinfo.cdelt1
                 wcslin_pscale = img.meta.wcsinfo.cdelt1
@@ -227,19 +225,19 @@ class ResampleData:
 
             self.output_models.append(output_model)
 
-
     def update_fits_wcs(self, model):
-        """Update FITS WCS keywords of the resampled image"""
-        transform = model.meta.wcs.forward_transform
-        model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
-        model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
-        model.meta.wcsinfo.cdelt1 = transform[3].factor.value
-        model.meta.wcsinfo.cdelt2 = transform[4].factor.value
-        model.meta.wcsinfo.ra_ref = transform[6].lon.value
-        model.meta.wcsinfo.dec_ref = transform[6].lat.value
-        model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
-        model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
-        model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
-        model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
-        model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
-        model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
+        """Update FITS WCS keywords of the resampled image."""
+        if isinstance(model, datamodels.ImageModel):
+            transform = model.meta.wcs.forward_transform
+            model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
+            model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
+            model.meta.wcsinfo.cdelt1 = transform[3].factor.value
+            model.meta.wcsinfo.cdelt2 = transform[4].factor.value
+            model.meta.wcsinfo.ra_ref = transform[6].lon.value
+            model.meta.wcsinfo.dec_ref = transform[6].lat.value
+            model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
+            model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
+            model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
+            model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
+            model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
+            model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]

@@ -2,25 +2,19 @@
     "asn_type": "image3",
     "asn_rule": "discover_Asn_Image",
     "version_id": null,
-    "code_version": "0.9.4",
-    "program": "82600",
+    "code_version": "0.9.12",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    wfsvisit: {'prime_targeted_fixed'}\n    exp_type: {'nrc_image'}\n    is_not_tso: set()\n    opt_elem: {'f322w2'}\n    opt_elem2: {'clear'}\n    target: {'1'}\n    program: {'82600'}\n    instrument: {'nircam'}",
+    "program": "82600",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '82600'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nircam'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f322w2'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'clear'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'sub400p'})\nConstraint_Target({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nConstraint_Image({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nrc_image'})\nDMSAttrConstraint({'name': 'wfsvisit', 'sources': ['visitype'], 'value': 'prime_targeted_fixed'})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0x10d141840>})",
     "asn_id": "a3001",
     "target": "t001",
     "asn_pool": "jw82600_20171108T041350_pool",
     "products": [
         {
-            "name": "jw82600-a3001_t001_nircam_f322w2",
+            "name": "jw82600-a3001_t001_nircam_f322w2-sub400p",
             "members": [
                 {
                     "expname": "jw82600039001_02102_00002_nrcblong_cal.fits",
-                    "exptype": "science",
-                    "exposerr": "null",
-                    "asn_candidate": "null"
-                },
-                {
-                    "expname": "jw82600001001_02102_00001_nrcblong_cal.fits",
                     "exptype": "science",
                     "exposerr": "null",
                     "asn_candidate": "null"
@@ -33,12 +27,6 @@
                 },
                 {
                     "expname": "jw82600039001_02102_00003_nrcblong_cal.fits",
-                    "exptype": "science",
-                    "exposerr": "null",
-                    "asn_candidate": "null"
-                },
-                {
-                    "expname": "jw82600001001_02102_00001_nrcalong_cal.fits",
                     "exptype": "science",
                     "exposerr": "null",
                     "asn_candidate": "null"

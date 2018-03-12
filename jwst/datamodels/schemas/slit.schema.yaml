@@ -1,0 +1,5 @@
+allOf:
+- $ref: core.schema.yaml
+- $ref: slitdata.schema.yaml
+
+$schema: http://stsci.edu/schemas/fits-schema/fits-schema

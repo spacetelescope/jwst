@@ -1,10 +1,8 @@
-from __future__ import division
 
-import os
+import logging
 import numpy as np
 import numpy.fft as fft
 
-import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -33,7 +31,6 @@ def quadratic(p, x):
 
     fit_val: 1D float array
         values of quadratic function at arguments in x array
-
     """
     maxx = -p[1] / (2.0 * p[0])
     maxy = -p[1] * p[1] / (4.0 * p[0]) + p[2]
@@ -84,7 +81,6 @@ def makeA(nh):
     matrixA: 2D float array
          nh columns, nh(nh-1)/2 rows (eg 21 for nh=7)
     """
-
     log.debug('-------')
     log.debug(' makeA:')
 
@@ -130,12 +126,11 @@ def fringes2pistons(fringephases, nholes):
     -------
     np.dot(Apinv, fringephases): 1D integer array
         pistons in same units as fringe phases
-
     """
     Anrm = makeA(nholes)
     Apinv = np.linalg.pinv(Anrm)
 
-    return np.dot(Apinv, fringephases)
+    return -np.dot(Apinv, fringephases)
 
 
 def rebin(a=None, rc=(2, 2)):
@@ -168,7 +163,7 @@ def krebin(a, shape):
     """
     Short Summary
     -------------
-    Klaus P's fastrebin from web (dg - more ?)
+    Klaus P's fastrebin from web
 
     Parameters
     ----------
@@ -183,7 +178,6 @@ def krebin(a, shape):
     reshaped_a: 2D float array
         reshaped input array
     """
-
     sh = shape[0], a.shape[0] // shape[0], shape[1], a.shape[1] // shape[1]
     reshaped_a = a.reshape(sh).sum(-1).sum(1)
 
@@ -210,7 +204,7 @@ def rcrosscorrelate(a=None, b=None):
         real part of array that is the correlation of the two input arrays.
     """
 
-    c = crosscorrelate(a=a, b=b) / (np.sqrt((a * a).sum()) * np.sqrt((b * b).sum()))
+    c = crosscorrelate(a=a, b=b)/(np.sqrt((a*a).sum())*np.sqrt((b*b).sum()))
     return c.real.copy()
 
 
@@ -233,7 +227,6 @@ def crosscorrelate(a=None, b=None):
     fft.fftshift(c)
         complex array that is the correlation of the two input arrays.
     """
-
     if a.shape != b.shape:
         log.critical('crosscorrelate: need identical arrays')
         return None
@@ -256,7 +249,7 @@ def crosscorrelate(a=None, b=None):
     log.debug(' c.sum(): %s:', c.sum())
     log.debug(' a.sum()*b.sum(): %s:', a.sum() * b.sum())
     log.debug(' c.sum().real: %s:', c.sum().real)
-    log.debug(' a.sum()*b.sum()/c.sum().real: %s:', a.sum() * b.sum() / c.sum().real)
+    log.debug(' a.sum()*b.sum()/c.sum().real: %s:', a.sum()*b.sum()/c.sum().real)
 
     return fft.fftshift(c)
 
@@ -287,7 +280,6 @@ def findmax(mag, vals, mid=1.0):
     maxy: float
         value of vals corresponding to maxx
     """
-
     p = np.polyfit(mag, vals, 2)
     fitr = np.arange(0.95 * mid, 1.05 * mid, .01)
     maxx, maxy, fitc = quadratic(p, fitr)

@@ -9,7 +9,7 @@ from gwcs.utils import _toindex
 from gwcs import wcstools
 
 from .. import datamodels
-from ..transforms import models as trmodels
+from ..transforms import models as trmodels, Slit
 from ..assign_wcs import nirspec
 from ..assign_wcs import util
 
@@ -31,6 +31,15 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
         apply_wavecorr = False
         log.info("Skipping wavecorr correction for EXP_TYPE {0}".format(exp_type))
 
+    if hasattr(input_model.meta.cal_step, 'assign_wcs') and input_model.meta.cal_step.assign_wcs == 'SKIPPED':
+        log.info("assign_wcs was skipped")
+        log.warning("extract_2d: SKIPPED")
+        input_model.meta.cal_step.extract_2d = "SKIPPED"
+        return input_model
+
+    if not (hasattr(input_model.meta, 'wcs') and input_model.meta.wcs is not None):
+        raise AttributeError("Input model does not have a WCS object; assign_wcs should "
+                             "be run before extract_2d.")
 
     slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
     # This is a cludge but will work for now.
@@ -40,30 +49,37 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
         open_slits = [sub for sub in open_slits if sub.name == slit_name]
     log.debug('open slits {0}'.format(open_slits))
     if exp_type == 'NRS_BRIGHTOBJ':
-        # the output model is CubeModel
-        output_model, xlo, xhi, ylo, yhi = process_slit(input_model, open_slits[0],
+        # the output model is a SlitModel
+        slit = open_slits[0]
+        output_model, xlo, xhi, ylo, yhi = process_slit(input_model, slit,
                                                         exp_type, apply_wavecorr, reffile)
+        set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi)
+        orig_s_region = output_model.meta.wcsinfo.s_region.strip()
+        util.update_s_region(output_model)
+        if orig_s_region != output_model.meta.wcsinfo.s_region.strip():
+            log.info('extract_2d updated S_REGION to '
+                     '{0}'.format(output_model.meta.wcsinfo.s_region))
     else:
         output_model = datamodels.MultiSlitModel()
         output_model.update(input_model)
+        slits = []
         for slit in open_slits:
             new_model, xlo, xhi, ylo, yhi = process_slit(input_model, slit,
                                                          exp_type, apply_wavecorr, reffile)
 
-            output_model.slits.append(new_model)
+            slits.append(new_model)
             orig_s_region = new_model.meta.wcsinfo.s_region.strip()
             util.update_s_region(new_model)
             if orig_s_region != new_model.meta.wcsinfo.s_region.strip():
                 log.info('extract_2d updated S_REGION to {0}'.format(new_model.meta.wcsinfo.s_region))
             # set x/ystart values relative to the image (screen) frame.
             # The overall subarray offset is recorded in model.meta.subarray.
-            nslit = len(output_model.slits) - 1
-            set_slit_attributes(output_model, nslit, slit, xlo, xhi, ylo, yhi)
+            set_slit_attributes(new_model, slit, xlo, xhi, ylo, yhi)
 
             # Copy BUNIT values to output slit
-            output_model.slits[nslit].bunit_data = input_model.meta.bunit_data
-            output_model.slits[nslit].bunit_err = input_model.meta.bunit_err
-
+            new_model.meta.bunit_data = input_model.meta.bunit_data
+            new_model.meta.bunit_err = input_model.meta.bunit_err
+        output_model.slits.extend(slits)
     return output_model
 
 
@@ -78,7 +94,7 @@ def process_slit(input_model, slit, exp_type, apply_wavecorr, reffile):
     return new_model, xlo, xhi, ylo, yhi
 
 
-def set_slit_attributes(output_model, nslit, slit, xlo, xhi, ylo, yhi):
+def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     """
     Set the slit attributes.
 
@@ -92,21 +108,22 @@ def set_slit_attributes(output_model, nslit, slit, xlo, xhi, ylo, yhi):
         Indices into the data array where extraction should be done.
     """
     xlo_ind, xhi_ind, ylo_ind, yhi_ind = _toindex((xlo, xhi, ylo, yhi)).astype(np.int16)
-    output_model.slits[nslit].name = str(slit.name)
-    output_model.slits[nslit].xstart = xlo_ind + 1
-    output_model.slits[nslit].xsize = (xhi_ind - xlo_ind) + 1
-    output_model.slits[nslit].ystart = ylo_ind + 1
-    output_model.slits[nslit].ysize = (yhi_ind - ylo_ind) + 1
+    output_model.name = str(slit.name)
+    output_model.xstart = xlo_ind + 1
+    output_model.xsize = (xhi_ind - xlo_ind) + 1
+    output_model.ystart = ylo_ind + 1
+    output_model.ysize = (yhi_ind - ylo_ind) + 1
     if output_model.meta.exposure.type.lower() == 'nrs_msaspec':
-        output_model.slits[nslit].source_id = int(slit.source_id)
-        output_model.slits[nslit].source_name = slit.source_name
-        output_model.slits[nslit].source_alias = slit.source_alias
-        output_model.slits[nslit].stellarity = float(slit.stellarity)
-        output_model.slits[nslit].source_xpos = float(slit.source_xpos)
-        output_model.slits[nslit].source_ypos = float(slit.source_ypos)
-        output_model.slits[nslit].slitlet_id = int(slit.name)
+        output_model.source_id = int(slit.source_id)
+        output_model.source_name = slit.source_name
+        output_model.source_alias = slit.source_alias
+        output_model.stellarity = float(slit.stellarity)
+        output_model.source_xpos = float(slit.source_xpos)
+        output_model.source_ypos = float(slit.source_ypos)
+        output_model.slitlet_id = int(slit.name)
         # for pathloss correction
-        output_model.slits[nslit].shutter_state = slit.shutter_state
+        output_model.shutter_state = slit.shutter_state
+    log.info('set slit_attributes completed')
 
 
 def offset_wcs(slit_wcs, slit_name):
@@ -162,12 +179,16 @@ def extract_slit(input_model, slit, exp_type):
         ext_dq = input_model.dq[ylo: yhi + 1, xlo: xhi + 1].copy()
         shape = ext_data.shape
         bounding_box= ((0, shape[1] - 1), (0, shape[0] - 1))
+        ext_var_rnoise = input_model.var_rnoise[ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_var_poisson = input_model.var_poisson[ylo: yhi + 1, xlo: xhi + 1].copy()
     elif lenshape == 3:
         ext_data = input_model.data[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_err = input_model.err[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
         ext_dq = input_model.dq[ : , ylo: yhi + 1, xlo: xhi + 1].copy()
         shape = ext_data.shape
         bounding_box= ((0, shape[2] - 1), (0, shape[1] - 1))
+        ext_var_rnoise = input_model.var_rnoise[:, ylo: yhi + 1, xlo: xhi + 1].copy()
+        ext_var_poisson = input_model.var_poisson[:, ylo: yhi + 1, xlo: xhi + 1].copy()
     else:
         raise ValueError("extract_2d does not work with "
                          "{0} dimensional data".format(lenshape))
@@ -176,9 +197,14 @@ def extract_slit(input_model, slit, exp_type):
 
     # compute wavelengths
     x, y = wcstools.grid_from_bounding_box(slit_wcs.bounding_box, step=(1, 1))
+    # The Nirspec model expects 1-based coordinates
+    x += 1
+    y += 1
     ra, dec, lam = slit_wcs(x, y)
-    new_model_class = getattr(datamodels, input_model.__class__.__name__)
-    new_model = new_model_class(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam)
+    lam = lam.astype(np.float32)
+    new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam,
+                                         var_rnoise=ext_var_rnoise, var_poisson=ext_var_poisson)
+    log.info('Input model type is {}'.format(input_model.__class__.__name__))
     new_model.update(input_model)
     new_model.meta.wcs = slit_wcs
     return new_model, xlo, xhi, ylo, yhi
@@ -198,13 +224,13 @@ def apply_zero_point_correction(model, slit, reffile):
         The MSa reference file used to construct the WCS.
     """
     slit_wcs = model.meta.wcs
+
     if model.meta.exposure.type in ['NRS_FIXEDSLIT', 'NRS_BRIGHTOBJ']:
         # pass lam = 2 microns
         # needed for wavecorr with fixed slits
         msa_model = get_msa_model(model)
         source_xpos = get_source_xpos(model, slit, slit_wcs, lam=2,
                                       msa_model=msa_model)
-
         aperture_name = slit.name
     else:
         source_xpos = slit.source_xpos
@@ -216,7 +242,7 @@ def apply_zero_point_correction(model, slit, reffile):
                                                  aperture_name, dispersion)
     ## TODO: set a DQ flag to a TBD value for pixels where dq_lam == 0.
     ## The only purpose of dq_lam is to set that flag.
-    model.wavelength = lam - corr\
+    model.wavelength = lam - corr
 
 
 def compute_zero_point_correction(lam, freference, source_xpos, aperture_name, dispersion):

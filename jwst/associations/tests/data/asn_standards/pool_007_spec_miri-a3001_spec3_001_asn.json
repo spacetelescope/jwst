@@ -1,35 +1,233 @@
 {
     "asn_type": "spec3",
-    "asn_rule": "discover_Asn_MIRI_LRS_FIXEDSLIT",
+    "asn_rule": "discover_Asn_IFU",
     "version_id": null,
-    "code_version": "0.9.4",
-    "program": "99009",
+    "code_version": "0.9.12",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    exp_type: {'mir_lrs\\\\-fixedslit', 'mir_tacq'}\n    opt_elem: {'p750l'}\n    subarray: {'full'}\n    is_not_tso: set()\n    instrument: {'miri'}\n    target: {'1'}\n    program: {'99009'}",
+    "program": "99009",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '99009'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'miri'})\nConstraint_Target({'name': 'target', 'sources': ['targetid'], 'value': '1'})\nConstraint_IFU({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'mir_mrs|mir_flatmrs|nrs_autowave|nrs_ifu'})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0x10c93a268>})",
     "asn_id": "a3001",
     "target": "t001",
     "asn_pool": "pool_007_spec_miri",
     "products": [
         {
-            "name": "jw99009-a3001_t001_miri_p750l",
+            "name": "jw99009-a3001_t001_miri",
             "members": [
                 {
-                    "expname": "jw_00001_cal.fits",
-                    "exptype": "science",
+                    "expname": "jw_00009_rate.fits",
+                    "exptype": "flat",
                     "exposerr": null,
-                    "asn_candidate": "[('o001', 'observation')]"
+                    "asn_candidate": "[('o004', 'observation')]"
                 },
                 {
-                    "expname": "jw_00002_cal.fits",
+                    "expname": "jw_00010_cal.fits",
                     "exptype": "science",
                     "exposerr": null,
-                    "asn_candidate": "[('o002', 'observation')]"
+                    "asn_candidate": "[('o004', 'observation')]"
                 },
                 {
-                    "expname": "jw_00003_cal.fits",
+                    "expname": "jw_00011_cal.fits",
                     "exptype": "target_acquistion",
                     "exposerr": null,
-                    "asn_candidate": "[('o003', 'observation')]"
+                    "asn_candidate": "[('o004', 'observation')]"
+                },
+                {
+                    "expname": "jw_00012_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o005', 'observation')]"
+                },
+                {
+                    "expname": "jw_00013_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o005', 'observation')]"
+                },
+                {
+                    "expname": "jw_00014_cal.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "[('o005', 'observation')]"
+                },
+                {
+                    "expname": "jw_00015_cal.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "[('o005', 'observation')]"
+                },
+                {
+                    "expname": "jw_00016_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": null,
+                    "asn_candidate": "[('o005', 'observation')]"
+                },
+                {
+                    "expname": "jw_00017_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o006', 'observation')]"
+                },
+                {
+                    "expname": "jw_00018_cal.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "[('o006', 'observation')]"
+                },
+                {
+                    "expname": "jw_00019_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": null,
+                    "asn_candidate": "[('o006', 'observation')]"
+                },
+                {
+                    "expname": "jw_00020_cal.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "[('o007', 'observation')]"
+                },
+                {
+                    "expname": "jw_00021_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o007', 'observation')]"
+                },
+                {
+                    "expname": "jw_00022_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": null,
+                    "asn_candidate": "[('o007', 'observation')]"
+                },
+                {
+                    "expname": "jw_00023_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00024_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00025_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00026_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00027_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00028_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00029_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00030_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00031_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00032_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00033_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00034_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00035_cal.fits",
+                    "exptype": "science",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00036_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00037_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00038_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00039_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00040_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00041_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00042_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00043_rate.fits",
+                    "exptype": "flat",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
+                },
+                {
+                    "expname": "jw_00044_cal.fits",
+                    "exptype": "target_acquistion",
+                    "exposerr": null,
+                    "asn_candidate": "[('o008', 'observation')]"
                 }
             ]
         }

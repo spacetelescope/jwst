@@ -203,7 +203,7 @@ class FileTable(object):
 
         # Open the input data model & Fill in the FileMap information
 
-            with datamodels.ImageModel(input) as input_model:
+            with datamodels.IFUImageModel(input) as input_model:
 
                 detector = input_model.meta.instrument.detector
                 instrument = input_model.meta.instrument.name

@@ -46,6 +46,8 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
     # Loop over multiple integrations
     for integration in range(nints):
 
+        log.info(' working on integration %d' % (integration+1))
+
         # Roll the ngroups axis of data arrays to the end, to make
         # memory access to the values for a given pixel faster
         rdata = np.rollaxis(data[integration], 0, 3)
@@ -67,7 +69,7 @@ def find_CRs(data, gdq, read_noise, rej_threshold, nframes):
         number_sat_groups = (sat_groups * 1).sum(axis=2)
         ndiffs = ngroups - 1
         sort_index = np.argsort(positive_first_diffs)
-        med_diffs = return_clipped_median(ndiffs, number_sat_groups, positive_first_diffs, sort_index)
+        med_diffs = return_clipped_median(ndiffs, number_sat_groups, first_diffs, sort_index)
 
         # Save initial estimate of the median slope for all pixels
         median_slopes[integration] = med_diffs

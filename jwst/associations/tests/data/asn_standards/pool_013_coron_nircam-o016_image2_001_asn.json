@@ -1,20 +1,52 @@
 {
     "asn_type": "image2",
-    "asn_rule": "candidate_Asn_Lv2Image",
+    "asn_rule": "candidate_Asn_Lv2ImageNonScience",
     "version_id": null,
-    "code_version": "0.9.4",
+    "code_version": "0.9.12",
+    "degraded_status": "No known degraded exposures in association.",
     "program": "10005",
     "target": "4",
     "asn_pool": "pool_013_coron_nircam",
-    "constraints": "Constraints:\n    single_science: {'False'}\n    exp_type: {'nrc_coron'}\n    program: {'10005'}\n    target: {'4'}\n    instrument: {'nircam'}\n    detector: {'nrcalong'}\n    opt_elem: {'f430m'}\n    opt_elem2: {'maskrnd'}\n    subarray: {'maska430r'}\n    channel: {'long'}\n    asn_candidate: {\"\\\\(\\\\'o016\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"}\n    is_tso: set()",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'is_tso', 'sources': ['tsovisit'], 'value': None})\nDMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '4'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nircam'})\nDMSAttrConstraint({'name': 'detector', 'sources': ['detector'], 'value': 'nrcalong'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f430m'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'maskrnd'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'maska430r'})\nDMSAttrConstraint({'name': 'channel', 'sources': ['channel'], 'value': 'long'})\nConstraint_Image_Nonscience({'name': 'non_science', 'sources': ['exp_type'], 'value': 'nrc_tacq'})\nSimpleConstraint({'name': 'single_science', 'value': False})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'o016\\\\'\\\\,\\\\ \\\\'observation\\\\'\\\\)\"})",
     "asn_id": "o016",
     "products": [
         {
-            "name": "jw10005023001_02102_00001_nrcalong",
+            "name": "jw_00061",
             "members": [
                 {
-                    "expname": "jw10005023001_02102_00001_nrcalong_rate.fits",
-                    "exptype": "science"
+                    "expname": "jw_00061_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        },
+        {
+            "name": "jw_00062",
+            "members": [
+                {
+                    "expname": "jw_00062_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        },
+        {
+            "name": "jw_00063",
+            "members": [
+                {
+                    "expname": "jw_00063_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                }
+            ]
+        },
+        {
+            "name": "jw_00064",
+            "members": [
+                {
+                    "expname": "jw_00064_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
                 }
             ]
         }

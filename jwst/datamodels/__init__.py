@@ -47,6 +47,7 @@ from .cube import CubeModel
 from .dark import DarkModel
 from .darkMIRI import DarkMIRIModel
 from .drizpars import DrizParsModel, NircamDrizParsModel, MiriImgDrizParsModel
+from .extract1dimage import Extract1dImageModel
 from .outlierpars import OutlierParsModel, NircamOutlierParsModel, MiriImgOutlierParsModel
 from .drizproduct import DrizProductModel
 from .ifucubepars import IFUCubeParsModel, NirspecIFUCubeParsModel, MiriIFUCubeParsModel
@@ -58,6 +59,7 @@ from .gls_rampfit import GLS_RampFitModel
 from .guiderraw import GuiderRawModel
 from .guidercal import GuiderCalModel
 from .ifucube import IFUCubeModel
+from .ifuimage import IFUImageModel
 from .image import ImageModel
 from .ipc import IPCModel
 from .irs2 import IRS2Model
@@ -67,6 +69,7 @@ from .linearity import LinearityModel
 from .mask import MaskModel
 from .miri_ramp import MIRIRampModel
 from .multiexposure import MultiExposureModel
+from .multiextract1d import MultiExtract1dImageModel
 from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
@@ -87,6 +90,7 @@ from .reset import ResetModel
 from .resolution import ResolutionModel, MiriResolutionModel
 from .rscd import RSCDModel
 from .saturation import SaturationModel
+from .slit import SlitModel, SlitDataModel
 from .source_container import SourceModelContainer
 from .spec import SpecModel
 from .straylight import StrayLightModel
@@ -108,6 +112,7 @@ __all__ = [
     'DisperserModel', 'DistortionModel', 'DistortionMRSModel',
     'DrizProductModel',
     'DrizParsModel', 'NircamDrizParsModel', 'MiriImgDrizParsModel',
+    'Extract1dImageModel',
     'FilteroffsetModel',
     'FlatModel', 'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'FOREModel', 'FPAModel',
@@ -115,10 +120,10 @@ __all__ = [
     'GuiderRawModel', 'GuiderCalModel',
     'IFUCubeModel',
     'IFUCubeParsModel', 'NirspecIFUCubeParsModel', 'MiriIFUCubeParsModel',
-    'IFUFOREModel', 'IFUPostModel', 'IFUSlicerModel',
+    'IFUFOREModel', 'IFUImageModel', 'IFUPostModel', 'IFUSlicerModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
     'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',
-    'MultiExposureModel', 'MultiProductModel', 'MultiSlitModel',
+    'MultiExposureModel', 'MultiExtract1dImageModel', 'MultiProductModel', 'MultiSlitModel',
     'MultiSpecModel', 'OTEModel',
     'OutlierParsModel', 'MiriImgOutlierParsModel', 'NircamOutlierParsModel',
     'PathlossModel',
@@ -133,7 +138,7 @@ __all__ = [
     'ReferenceFileModel', 'ReferenceCubeModel', 'ReferenceImageModel', 'ReferenceQuadModel',
     'RegionsModel', 'ResetModel',
     'ResolutionModel', 'MiriResolutionModel',
-    'RSCDModel', 'SaturationModel', 'SpecModel',
+    'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
     'StrayLightModel', 'SuperBiasModel', 'SpecwcsModel',
     'TrapDensityModel', 'TrapParsModel', 'TrapsFilledModel',
     'WavelengthrangeModel', 'WaveCorrModel']

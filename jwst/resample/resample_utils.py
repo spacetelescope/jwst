@@ -47,6 +47,12 @@ def make_output_wcs(input_models):
         output_wcs = wcs_from_footprints(input_models)
         data_size = shape_from_bounding_box(output_wcs.bounding_box)
 
+    # Add check to see whether or not a valid output WCS was computed
+    # based on output dimensions
+    # If either output axis has a length of 0, raise an Exception.
+    if data_size[0]*data_size[1] == 0:
+        raise ValueError("Output array size computed as {}".format(data_size))
+
     output_wcs.data_size = (data_size[1], data_size[0])
     return output_wcs
 
@@ -176,7 +182,8 @@ def build_driz_weight(model, wht_type=None, good_bits=None):
     exptime = model.meta.exposure.exposure_time
 
     if wht_type.lower()[:3] == 'err':
-        inwht = (exptime / model.err)**2 * dqmask
+        err_model = np.nan_to_num(model.err)
+        inwht = (exptime / err_model)**2 * dqmask
         log.debug("DEBUG weight mask: {} {}".format(type(inwht), np.sum(inwht)))
     # elif wht_type == 'IVM':
     #     _inwht = img.buildIVMmask(chip._chip,dqarr,pix_ratio)

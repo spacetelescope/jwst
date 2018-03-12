@@ -11,12 +11,9 @@
 # hex(xi,eta) = g(xi,eta) + g(-xi,eta)
 #
 
-from __future__ import absolute_import, division
-
-import numpy as np
-from . import leastsqnrm
-
 import logging
+import numpy as np
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -57,7 +54,6 @@ def g_eeAG(xi, eta, **kwargs):
     g: 2D complex array
         Fourier transform of one half of a hexagon.
     """
-
     c = kwargs['c']
     pixel = kwargs['pixel']
     d = kwargs['d']
@@ -72,48 +68,10 @@ def g_eeAG(xi, eta, **kwargs):
 
     g1 = np.exp(-i * Pi * (2 * eta / np.sqrt(3) + xi))
     g2 = (np.sqrt(3) * eta - 3 * xi)
-    g3 = (np.exp(i * Pi * np.sqrt(3) * eta) - np.exp(i * Pi * (4 * eta / np.sqrt(3) + xi)))
+    g3 = (np.exp(i * Pi * np.sqrt(3) * eta) - np.exp(i * Pi * \
+            (4 * eta / np.sqrt(3) + xi)))
     g4 = (np.sqrt(3) * eta + 3 * xi)
     g5 = (np.exp(i * Pi * eta / np.sqrt(3)) - np.exp(i * Pi * xi))
-    g6 = (4 * Pi * Pi * (eta * eta * eta - 3 * eta * xi * xi))
-    g = g1 * (g2 * g3 + g4 * g5) / g6
-
-    return g
-
-def g_eeGEN(xi, eta, **kwargs):
-    """
-    Short Summary
-    -------------
-    Calculate the Fourier transform of one half of a hexagon that is bisected
-    from one corner to its diametrically opposite corner.
-    { DG: how does this compare to  g_eeAG() ? }
-
-    Parameters
-    ----------
-    xi: 2D float array
-        hexagon's coordinate center at center of symmetry, along flat edge
-
-    eta: 2D float array
-        hexagon's coordinate center at center of symmetry, normal to xi
-
-    D (optional, via **kwargs): float
-        flat-to-flat distance across hexagon
-
-    Returns
-    -------
-    g: 2D complex array
-        Fourier transform of one half of a hexagon.
-    """
-
-    D = kwargs['D']
-    i = 1j
-    Pi = np.pi
-
-    g1 = np.exp(-i * Pi * D * (2 * eta / np.sqrt(3) + xi))
-    g2 = (np.sqrt(3) * eta - 3 * xi)
-    g3 = (np.exp(i * Pi * D * np.sqrt(3) * eta) - np.exp(i * Pi * D * (4 * eta / np.sqrt(3) + xi)))
-    g4 = (np.sqrt(3) * eta + 3 * xi)
-    g5 = (np.exp(i * Pi * D * eta / np.sqrt(3)) - np.exp(i * Pi * D * xi))
     g6 = (4 * Pi * Pi * (eta * eta * eta - 3 * eta * xi * xi))
     g = g1 * (g2 * g3 + g4 * g5) / g6
 
@@ -133,8 +91,8 @@ def glimit(xi, eta, **kwargs):
         hexagon's coordinate center at center of symmetry, along flat edge
 
     eta: 2D float array
-        hexagon's coordinate center at center of symmetry, normal to xi
-        (DG: not used, so should delete)
+        hexagon's coordinate center at center of symmetry, normal to xi;
+        not currently used 
 
     c (optional, via **kwargs): tuple(float, float)
         coordinates of center
@@ -157,24 +115,24 @@ def glimit(xi, eta, **kwargs):
         analytic limit of the Fourier transform of one half of the hexagon
         along eta=0
     """
-
     c = kwargs['c']
     pixel = kwargs['pixel']
     d = kwargs['d']
     lam = kwargs['lam']
     xi = (d / lam) * pixel * (xi - c[0])
-    eta = (d / lam) * pixel * (eta - c[1]) # not used; so should delete
 
     if kwargs['minus'] is True:
         xi = -1 * xi
-    i = 1j
+
     Pi = np.pi
 
     g1 = (np.exp(-1j * Pi * xi) / (2 * np.sqrt(3) * Pi * Pi * xi * xi))
-    g2 = (-1 + 1j * Pi * xi + np.exp(1j * Pi * xi) - 2j * Pi * xi * np.exp(1J * Pi * xi))
+    g2 = (-1 + 1j * Pi * xi + np.exp(1j * Pi * xi) - 2j * Pi * xi * 
+            np.exp(1J * Pi * xi))
     g = g1 * g2
 
     return g
+
 
 def centralpix_limit():
     """
@@ -198,8 +156,28 @@ def centralpix_limit():
     return g
 
 
+def mas2rad(mas):
+    """
+    Short Summary
+    -------------
+    Convert angle in milli arc-sec to radians
+
+    Parameters
+    ----------
+    mas: float
+        angle in milli arc-sec
+
+    Returns
+    -------
+    rad: float
+        angle in radians
+    """
+    rad = mas * (10**(-3)) / (3600 * 180 / np.pi)
+    return rad
+
+
 def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
-              pitch=leastsqnrm.mas2rad(65)):
+             pitch=mas2rad(65)):
     """
     Short Summary
     -------------
@@ -242,11 +220,11 @@ def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
 
     # The "yval" will be the same for all points;
     # loop over the xi values to replace NaN strip with limiting behavior.
-    for index in range(len(xnan)):
-        h1 = glimit(xnan[index], xnan[index], d=d, c=c, lam=lam, pixel=pitch,
-                     minus=False)
-        h2 = glimit(xnan[index], xnan[index], d=d, c=c, lam=lam, pixel=pitch,
-                     minus=True)
+    for index, val in enumerate(xnan):
+        h1 = glimit(xnan[index], ynan[index], d=d, c=c, lam=lam, pixel=pitch,
+                    minus=False)
+        h2 = glimit(xnan[index], ynan[index], d=d, c=c, lam=lam, pixel=pitch,
+                    minus=True)
         hex_complex[xnan[index], ynan[index]] = h1 + h2
 
     (xnan, ynan) = np.where(np.isnan(hex_complex))
@@ -258,8 +236,8 @@ def hex_eeAG(s=(121, 121), c=None, d=0.80, lam=4.3e-6,
         hr = hex_complex.real
         hi = hex_complex.imag
         log.debug('hex_eeAG: hr.min: %s, hr.mean: %s, hr.max: %s',
-                  hr.mean(), hr.max(), hr.min())
+                   hr.min(), hr.mean(), hr.max())
         log.debug('hex_eeAG: hi.min: %s, hi.mean: %s, hi.max: %s',
-                  hi.mean(), hi.max(), hi.min())
+                   hi.min(), hi.mean(), hi.max())
 
     return np.abs(hex_complex)

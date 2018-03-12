@@ -33,8 +33,6 @@ class OutlierDetectionScaledStep(Step):
         save_intermediate_results = boolean(default=False)
         good_bits = integer(default=4)
     """
-    reference_file_types = ['gain', 'readnoise']
-    prefetch_references = False
 
     def process(self, input):
         """Step interface to running outlier_detection."""
@@ -50,8 +48,6 @@ class OutlierDetectionScaledStep(Step):
             self.input_models = input_models
 
             reffiles = {}
-            reffiles['gain'] = self._build_reffile_container('gain')
-            reffiles['readnoise'] = self._build_reffile_container('readnoise')
 
             pars = {
                 'wht_type': self.wht_type,

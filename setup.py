@@ -7,6 +7,9 @@ from setuptools.command.test import test as TestCommand
 from numpy import get_include as np_include
 from glob import glob
 
+# hack building the sphinx docs with C source
+from setuptools.command.build_ext import build_ext
+
 if sys.version_info < (3, 5):
     error = """
     JWST 0.9+ does not support Python 2.x, 3.0, 3.1, 3.2, 3.3 or 3.4.
@@ -19,11 +22,9 @@ if sys.version_info < (3, 5):
     """
     sys.exit(error)
 
-# hack building the sphinx docs with C source
-from setuptools.command.build_ext import build_ext
 
 try:
-    import sphinx
+    from sphinx.cmd.build import build_main
     from sphinx.setup_command import BuildDoc
 
     class BuildSphinx(BuildDoc):
@@ -41,7 +42,7 @@ try:
             build_cmd = self.reinitialize_command('build_ext')
             build_cmd.inplace = 1
             self.run_command('build_ext')
-            sphinx.build_main(['setup.py', '-b', 'html', './docs', './docs/_build/html'])
+            build_main(['-b', 'html', './docs', './docs/_build/html'])
 
 except ImportError:
     class BuildSphinx(Command):
@@ -71,6 +72,26 @@ PACKAGE_DATA = {
         '*.json'
     ]
 }
+
+
+def get_transforms_data():
+    # Installs the schema files in jwst/transforms
+    # Because the path to the schemas includes "stsci.edu" they
+    # can't be installed using setuptools.
+    transforms_schemas = []
+    root = os.path.join(NAME, 'transforms', 'schemas')
+    for node, dirs, files in os.walk(root):
+        for fname in files:
+            if fname.endswith('.yaml'):
+                transforms_schemas.append(
+                    os.path.relpath(os.path.join(node, fname), root))
+    # In the package directory, install to the subdirectory 'schemas'
+    transforms_schemas = [os.path.join('schemas', s) for s in transforms_schemas]
+    return transforms_schemas
+
+
+transforms_schemas = get_transforms_data()
+PACKAGE_DATA['jwst.transforms'] = transforms_schemas
 
 
 class PyTest(TestCommand):

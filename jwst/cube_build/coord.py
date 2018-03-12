@@ -78,6 +78,7 @@ def radec2std(crval1,crval2,ra,dec):
 
 # Compute the standard coordinates xi,eta from CRVAL1,CRVAL2 & ra,dec
 
+
     def check_val(ra):
         ra = np.asarray(ra)
     def check_val(dec):
@@ -91,6 +92,8 @@ def radec2std(crval1,crval2,ra,dec):
     dec0 = crval2*deg2rad
     radiff = ra*deg2rad - ra0;
     decr = dec*deg2rad;
+
+
 
     h = np.sin(decr) *math.sin(dec0) + np.cos(decr)*math.cos(dec0)*np.cos(radiff);
 

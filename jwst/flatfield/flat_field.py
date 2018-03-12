@@ -251,24 +251,24 @@ def do_NIRSpec_flat_field(output_model,
     exposure_type = output_model.meta.exposure.type
 
     if exposure_type == "NRS_BRIGHTOBJ":
-        if not isinstance(output_model, datamodels.CubeModel):
-            log.error("NIRSpec BRIGHTOBJ data is not a CubeModel; "
+        if not isinstance(output_model, datamodels.SlitModel):
+            log.error("NIRSpec BRIGHTOBJ data is not a SlitModel; "
                       "don't know how to process it.")
-            raise RuntimeError("Input is {}; expected CubeModel"
+            raise RuntimeError("Input is {}; expected SlitModel"
                                .format(type(output_model)))
         return NIRSpec_brightobj(output_model,
                                  f_flat_model, s_flat_model,
                                  d_flat_model, flat_suffix)
 
-    # We expect NIRSpec IFU data to be an ImageModel, but it's conceivable
+    # We expect NIRSpec IFU data to be an IFUImageModel, but it's conceivable
     # that the slices have been copied out into a MultiSlitModel, so
     # check for that case.
     if not hasattr(output_model, "slits"):
         if exposure_type == "NRS_IFU":
-            if not isinstance(output_model, datamodels.ImageModel):
-                log.error("NIRSpec IFU data is not an ImageModel; "
+            if not isinstance(output_model, datamodels.IFUImageModel):
+                log.error("NIRSpec IFU data is not an IFUImageModel; "
                           "don't know how to process it.")
-                raise RuntimeError("Input is {}; expected ImageModel"
+                raise RuntimeError("Input is {}; expected IFUImageModel"
                                    .format(type(output_model)))
             return NIRSpec_IFU(output_model,
                                f_flat_model, s_flat_model,
@@ -336,6 +336,9 @@ def do_NIRSpec_flat_field(output_model,
                 log.warning("so using wcs instead of the wavelength array.")
                 # Pixels with respect to the cutout
                 grid = np.indices((ysize, xsize), dtype=np.float64)
+                # xxx begin temporary workaround ...
+                grid += 1.              # NIRSpec wcs is one-based
+                # xxx ... end temporary workaround
                 # The arguments are the X and Y pixel coordinates.
                 (ra, dec, wl) = slit.meta.wcs(grid[1], grid[0])
                 del ra, dec, grid
@@ -473,7 +476,7 @@ def NIRSpec_brightobj(output_model,
     else:
         interpolated_flats = None
 
-    slit_name = "S1600A1"
+    slit_name = output_model.name
 
     # pixels with respect to the original image
     n_ints, ysize, xsize = output_model.data.shape
@@ -497,6 +500,9 @@ def NIRSpec_brightobj(output_model,
         if got_wcs:
             log.warning("so using wcs instead of the wavelength array.")
             grid = np.indices((ysize, xsize), dtype=np.float64)
+            # xxx begin temporary workaround ...
+            grid += 1.                  # NIRSpec wcs is one-based
+            # xxx ... end temporary workaround
             (ra, dec, wl) = output_model.meta.wcs(grid[1], grid[0])
             del ra, dec, grid
         else:
@@ -658,6 +664,10 @@ def NIRSpec_IFU(output_model,
         ind = np.indices((dy, dx))
         x = ind[1] + xstart
         y = ind[0] + ystart
+        # xxx begin temporary workaround ...
+        x += 1                  # NIRSpec wcs is one-based
+        y += 1
+        # xxx ... end temporary workaround
         coords = ifu_wcs(x, y)
         wl = coords[2]
         nan_flag = np.isnan(wl)

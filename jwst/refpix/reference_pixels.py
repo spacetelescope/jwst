@@ -554,7 +554,7 @@ class NIRDataset(Dataset):
         for i in range(nrows):
             rowstart = i
             rowstop = rowstart + smoothing_length
-            goodpixels = np.where(np.bitwise_and(dq[rowstart:rowstop],
+            goodpixels = np.where(np.bitwise_and(augmented_dq[rowstart:rowstop],
                                                  dqflags.pixel['DO_NOT_USE']) == 0)
             window = augmented_data[rowstart:rowstop][goodpixels]
             result[i] = np.median(window)

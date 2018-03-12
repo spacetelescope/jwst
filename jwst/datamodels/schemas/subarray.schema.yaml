@@ -11,7 +11,8 @@ properties:
             type: string
             enum: # Values grouped by instrument:
               # FGS
-             [SUB128CENTER, SUB128DIAGONAL, SUB128LLCORNER, SUB32CENTER,
+             [8X8, 32X32, 128X128, 2048X64,
+              SUB128CENTER, SUB128DIAGONAL, SUB128LLCORNER, SUB32CENTER,
               SUB32DIAGONAL, SUB32LLCORNER, SUB8CENTER, SUB8DIAGONAL, SUB8LLCORNER,
               # MIRI
               BRIGHTSKY, MASK1065, MASK1140, MASK1550, MASKLYOT, SLITLESSPRISM,

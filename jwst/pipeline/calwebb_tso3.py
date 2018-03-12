@@ -50,7 +50,6 @@ class Tso3Pipeline(Pipeline):
 
         self.log.info('Starting calwebb_tso3...')
         input_models = datamodels.open(input)
-        self.output_basename = input_models.meta.asn_table.products[0].name
 
         input_exptype = None
         # Input may consist of multiple exposures, so loop over each of them
@@ -91,11 +90,13 @@ class Tso3Pipeline(Pipeline):
             for cube in input_models:
                 # preserve output filename
                 original_filename = cube.meta.filename
-                self.save_model(cube, suffix='crfints')
+                suffix_2c = '{}_{}'.format(input_models.meta.asn_table.asn_id, 'crfints')
+                self.save_model(cube, suffix=suffix_2c)
                 cube.meta.filename = original_filename
 
         # Create final photometry results as a single output
         # regardless of how many members there may be...
+        self.output_basename = input_models.meta.asn_table.products[0].name
         phot_result_list = []
         if input_exptype in self.image_exptypes:
             # Create name for extracted photometry (Level 3) product

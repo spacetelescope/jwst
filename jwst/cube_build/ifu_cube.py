@@ -323,7 +323,7 @@ class IFUCubeData(object):
             spaxel = []
             spaxel = IFUCubeData.create_spaxel(self)
 
-            with datamodels.ImageModel(self.input_models[j]) as input_model:
+            with datamodels.IFUImageModel(self.input_models[j]) as input_model:
 
 #********************************************************************************
 # pulled necessary routines from   CubeData.map_detector_to_spaxel
@@ -500,7 +500,7 @@ class IFUCubeData(object):
                 c1_offset = self.master_table.FileOffset[this_par1][this_par2]['C1'][k]
                 c2_offset = self.master_table.FileOffset[this_par1][this_par2]['C2'][k]
 # Open the input data model
-            with datamodels.ImageModel(ifile) as input_model:
+            with datamodels.IFUImageModel(ifile) as input_model:
                 # check if background sky matching as been done
                 # mrs_imatch step. THis is only for MRS data at this time
                 # but go head and check it before splitting by instrument
@@ -696,10 +696,10 @@ class IFUCubeData(object):
                 self.output_file = None
                 newname  = IFUCubeData.define_cubename(self)
                 IFUCube.meta.filename = newname
-                if(self.instrument == 'MIRI'):
-                    IFUCube.meta.instrument.channel = self.list_par1[0]
-                if(self.instrument == 'NIRSPEC'):
-                    IFUCube.meta.instrument.grating = self.list_par1[0]
+#                if(self.instrument == 'MIRI'):
+#                    IFUCube.meta.instrument.channel = self.list_par1[0]
+#                if(self.instrument == 'NIRSPEC'):
+#                    IFUCube.meta.instrument.grating = self.list_par1[0]
 
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
         IFUCube.meta.wcsinfo.crval2 = self.Crval2
@@ -738,6 +738,7 @@ class IFUCubeData(object):
         IFUCube.meta.roi_wave = self.roiw
         IFUCube.meta.weighting = self.weighting
         IFUCube.meta.weight_power = self.weight_power
+        #IFUCube.meta.channel = '1'
 
         with datamodels.open(self.input_models[j]) as input:
             IFUCube.meta.bunit_data = input.meta.bunit_data

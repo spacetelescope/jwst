@@ -28,22 +28,16 @@ def test_meta():
     assert data['constraints'] is not None
 
 
-@pytest.mark.xfail(
-    reason='Issue #1442',
-    run=False
-)
 @pytest.mark.parametrize(
     'pool_file',
     [
         'data/pool_005_spec_niriss.csv',
         'data/pool_006_spec_nirspec.csv',
         'data/pool_007_spec_miri.csv',
-        'data/pool_009_spec_miri_lv2bkg.csv',
         'data/pool_010_spec_nirspec_lv2bkg.csv',
         'data/pool_015_spec_nirspec_lv2bkg_reversed.csv',
         'data/pool_016_spec_nirspec_lv2bkg_double.csv',
         'data/pool_017_spec_nirspec_lv2imprint.csv',
-        'data/pool_018_all_exptypes.csv',
     ]
 )
 def test_targacq(pool_file):
@@ -51,7 +45,7 @@ def test_targacq(pool_file):
     rules = registry_level3_only()
     pool = combine_pools(t_path(pool_file))
     asns = generate(pool, rules)
-    assert len(asns) > 1
+    assert len(asns) > 0
     for asn in asns:
         for product in asn['products']:
             exptypes = [

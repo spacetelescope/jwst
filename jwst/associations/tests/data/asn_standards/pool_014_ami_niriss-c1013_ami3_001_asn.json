@@ -2,16 +2,16 @@
     "asn_type": "ami3",
     "asn_rule": "candidate_Asn_AMI",
     "version_id": null,
-    "code_version": "0.9.4",
-    "program": "10005",
+    "code_version": "0.9.12",
     "degraded_status": "No known degraded exposures in association.",
-    "constraints": "Constraints:\n    exp_type: {'nis_ami'}\n    target: {'3'}\n    opt_elem: {'f430m'}\n    opt_elem2: {'maskrnd'}\n    program: {'10005'}\n    instrument: {'nircam'}\n    asn_candidate: {\"\\\\(\\\\'c1013\\\\'\\\\,\\\\ \\\\'group\\\\'\\\\)\"}",
+    "program": "10005",
+    "constraints": "DMSAttrConstraint({'name': 'program', 'sources': ['program'], 'value': '10005'})\nDMSAttrConstraint({'name': 'instrument', 'sources': ['instrume'], 'value': 'nircam'})\nDMSAttrConstraint({'name': 'opt_elem', 'sources': ['filter'], 'value': 'f430m'})\nDMSAttrConstraint({'name': 'opt_elem2', 'sources': ['pupil'], 'value': 'maskrnd'})\nDMSAttrConstraint({'name': 'subarray', 'sources': ['subarray'], 'value': 'maska430r'})\nDMSAttrConstraint({'name': 'exp_type', 'sources': ['exp_type'], 'value': 'nis_ami'})\nDMSAttrConstraint({'name': 'target', 'sources': ['targetid'], 'value': '3'})\nConstraint_Obsnum({'name': 'obs_num', 'sources': ['obs_num'], 'value': None})\nDMSAttrConstraint({'name': 'acq_exp', 'sources': ['exp_type'], 'value': 'mir_tacq|nis_taconfirm|nis_tacq|nrc_taconfirm|nrc_tacq|nrs_confirm|nrs_taconfirm|nrs_tacq|nrs_taslit'})\nDMSAttrConstraint({'name': 'acq_obsnum', 'sources': ['obs_num'], 'value': <function AsnMixin_Science.__init__.<locals>.<lambda> at 0x10e6f52f0>})\nDMSAttrConstraint({'name': 'asn_candidate', 'sources': ['asn_candidate'], 'value': \"\\\\(\\\\'c1013\\\\'\\\\,\\\\ \\\\'group\\\\'\\\\)\"})",
     "asn_id": "c1013",
     "target": "t003",
     "asn_pool": "pool_014_ami_niriss",
     "products": [
         {
-            "name": "jw10005-c1013_t003_nircam_f430m-maskrnd",
+            "name": "jw10005-c1013_t003_nircam_f430m-maskrnd-maska430r",
             "members": [
                 {
                     "expname": "jw10005016001_02102_00001_nrcalong_cal.fits",

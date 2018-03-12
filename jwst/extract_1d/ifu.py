@@ -271,7 +271,11 @@ def extract_ifu(input_model, source_type, extract_params):
         y_array = np.empty(shape[0], dtype=np.float64)
         y_array.fill(float(shape[1]) / 2.)
         z_array = np.arange(shape[0], dtype=np.float64) # for wavelengths
-        ra, dec, wavelength = wcs(x_array, y_array, z_array)
+        if input_model.meta.instrument.name == "NIRSPEC":
+            # xxx temporary:  NIRSpec wcs expects one-based pixel coordinates.
+            ra, dec, wavelength = wcs(x_array + 1., y_array + 1., z_array + 1.)
+        else:
+            ra, dec, wavelength = wcs(x_array, y_array, z_array)
         nelem = len(wavelength)
         ra = ra[nelem // 2]
         dec = dec[nelem // 2]
