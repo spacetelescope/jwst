@@ -276,7 +276,7 @@ class IFUCubeData(object):
         IFUCubeData.find_spaxel_flux(self, self.spaxel)
 
         t1 = time.time()
-        log.info("Time find Cube Flux= %.1f.s" % (t1 - t0,))
+        log.info("Time to find Cube Flux= %.1f.s" % (t1 - t0,))
 
         IFUCube = IFUCubeData.setup_IFUCube(self,0)
 #_______________________________________________________________________
@@ -696,7 +696,7 @@ class IFUCubeData(object):
                 self.output_file = None
                 newname  = IFUCubeData.define_cubename(self)
                 IFUCube.meta.filename = newname
-#                if(self.instrument == 'MIRI'):
+#                if(self.instrument == 'MIRI'):#
 #                    IFUCube.meta.instrument.channel = self.list_par1[0]
 #                if(self.instrument == 'NIRSPEC'):
 #                    IFUCube.meta.instrument.grating = self.list_par1[0]
@@ -738,7 +738,7 @@ class IFUCubeData(object):
         IFUCube.meta.roi_wave = self.roiw
         IFUCube.meta.weighting = self.weighting
         IFUCube.meta.weight_power = self.weight_power
-        #IFUCube.meta.channel = '1'
+
 
         with datamodels.open(self.input_models[j]) as input:
             IFUCube.meta.bunit_data = input.meta.bunit_data
@@ -750,42 +750,45 @@ class IFUCubeData(object):
             IFUCube.meta.wcsinfo.cunit1 = 'arcsec'
             IFUCube.meta.wcsinfo.cunit2 = 'arcsec'
 
-            if self.channel == '1' and self.band == 'SHORT' :
+# we only need to check list_par1[0] and list_par2[0] because these types
+# of cubes are made from 1 exposures (setup_cube checks this at the start
+# of cube_build).
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'SHORT' :
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL1A'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE1A'
-            if self.channel == '2' and self.band == 'SHORT':
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'SHORT':
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL2A'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE2A'
-            if self.channel == '3' and self.band == 'SHORT':
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'SHORT':
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL3A'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE3A'
-            if self.channel == '4' and self.band == 'SHORT':
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'SHORT':
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL4A'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE4A'
 
-            if self.channel == '1' and self.band == 'MEDIUM':
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'MEDIUM':
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL1B'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE1B'
-            if self.channel == '2' and self.band == 'MEDIUM':
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'MEDIUM':
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL2B'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE2B'
-            if self.channel == '3' and self.band == 'MEDIUM':
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'MEDIUM':
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL3B'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE3B'
-            if self.channel == '4' and self.band == 'MEDIUM':
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'MEDIUM':
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL4B'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE4B'
 
-            if self.channel == '1' and self.band == 'LONG':
+            if self.list_par1[0] == '1' and self.list_par2[0] == 'LONG':
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL1C'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE1C'
-            if self.channel == '2' and self.band == 'LONG':
+            if self.list_par1[0] == '2' and self.list_par2[0] == 'LONG':
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL2C'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE2C'
-            if self.channel == '3' and self.band == 'LONG':
+            if self.list_par1[0] == '3' and self.list_par2[0] == 'LONG':
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL3C'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE3C'
-            if self.channel == '4' and self.band == 'LONG':
+            if self.list_par1[0] == '4' and self.list_par2[0] == 'LONG':
                 IFUCube.meta.wcsinfo.ctype1 = 'MRSAL4C'
                 IFUCube.meta.wcsinfo.ctype2 = 'MRSBE4C'
 
