@@ -32,6 +32,7 @@ Package Index
    jump/index.rst
    lastframe/index.rst
    linearity/index.rst
+   model_blender/index.rst
    mrs_imatch/index.rst
    outlier_detection/index.rst
    pathloss/index.rst
