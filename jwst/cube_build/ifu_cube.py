@@ -350,8 +350,6 @@ class IFUCubeData(object):
                     for ii in regions:
                         t0a = time.time()
                         slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
-                        yrange = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
-                        xrange = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
 
                         cube_cloud.match_det2cube(self,input_model,
@@ -584,12 +582,9 @@ class IFUCubeData(object):
                     log.info("Mapping each NIRSPEC slice to sky, this takes a while for NIRSPEC data")
                     for i in regions:
                         slice_wcs = nirspec.nrs_wcs_set_input(input_model, i)
-                        yrange = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
-                        xrange = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
-
-
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,
                                                               step=(1,1), center=True)
+                        
                         t0 = time.time()
                         cube_cloud.match_det2cube(self,input_model,
                                                   x, y, i,
