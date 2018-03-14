@@ -1,16 +1,12 @@
 """Test calwebb_spec2"""
 
-import os
 from os import path
 import pytest
-import tempfile
 
 from .helpers import (
-    SCRIPT_PATH,
     SCRIPT_DATA_PATH,
     abspath,
     mk_tmp_dirs,
-    update_asn_basedir,
 )
 
 from ...associations.asn_from_list import asn_from_list

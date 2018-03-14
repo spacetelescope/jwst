@@ -31,14 +31,28 @@ as part of a larger pipeline.  Another way to think about this is: if
 the user would want to examine or change the value, use a
 configuration parameter.
 
-The step will generally return its output as a data model.  Every step
-has the implicitly created configuration parameter `output_file`, that
-the user can use to specify the file to save this model to.  The
-saving is handled by the framework -- steps generally do not need to
-explicitly save their results.
+Input Files, Associations, and Directories
+``````````````````````````````````````````
 
-Output Configuration
---------------------
+It is presumed that all input files are co-resident in the same
+directory. This directory is whichever directory the first input file
+is found in. This is particularly important for associations. It is
+assumed that all files referenced by an association are in the same
+directory as the association file itself.
+
+Output Files and Directories
+````````````````````````````
+
+The step will generally return its output as a data model. Every step
+has implicitly created configuration parameters `output_dir` and
+`output_file` which the user can use to specify the directory and file
+to save this model to. Since the `stpipe` architecture generally
+creates output file names, in general, it is expected that `output_file`
+be rarely specified, and that different sets of outputs be separated
+using `output_dir`.
+
+Output Suffix
+-------------
 
 There are three ways a step's results can be written to a file:
 

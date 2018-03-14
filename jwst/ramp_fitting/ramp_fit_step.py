@@ -63,33 +63,27 @@ class RampFitStep (Step):
             if self.algorithm == "GLS":
                 buffsize //= 10
 
-            out_model, int_model, opt_model, gls_opt_model =\
-                ramp_fit.ramp_fit(input_model, buffsize, \
-                self.save_opt, readnoise_model, gain_model, self.algorithm, \
-                self.weighting)
+            out_model, int_model, opt_model, gls_opt_model = ramp_fit.ramp_fit(
+                input_model, buffsize,
+                self.save_opt, readnoise_model, gain_model, self.algorithm,
+                self.weighting
+            )
 
             readnoise_model.close()
             gain_model.close()
 
         # Save the OLS optional fit product, if it exists
         if opt_model is not None:
-            if self.opt_name != '':
-                opt_model.save(self.opt_name)
-            else:
-                self.save_model(opt_model, 'fitopt')
+            self.save_model(opt_model, 'fitopt', output_file=self.opt_name)
 
         # Save the GLS optional fit product, if it exists
         if gls_opt_model is not None:
-            if self.opt_name != '':
-                gls_opt_model.save(self.opt_name)
-            else:
-                self.save_model(gls_opt_model, 'fitoptgls')
+            self.save_model(
+                gls_opt_model, 'fitoptgls', output_file=self.opt_name
+            )
 
         out_model.meta.cal_step.ramp_fit = 'COMPLETE'
         if int_model is not None:
             int_model.meta.cal_step.ramp_fit = 'COMPLETE'
-
-        if input_model.meta.exposure.type in ('NRS_IFU', 'MIR_MRS'):
-            out_model = datamodels.IFUImageModel(out_model)
 
         return out_model, int_model

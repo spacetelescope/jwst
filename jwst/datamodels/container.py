@@ -3,6 +3,11 @@ import os
 import copy
 import warnings
 from collections import OrderedDict
+import copy
+from functools import partial
+from inspect import signature
+import os.path as op
+import six
 
 from asdf import AsdfFile
 
@@ -97,74 +102,67 @@ class ModelContainer(model_base.DataModel):
             raise TypeError('Input {0!r} is not a list of DataModels or '
                             'an ASN file'.format(init))
 
-
     def _open_model(self, index):
         model = self._models[index]
         if isinstance(model, str):
-            model = datamodel_open(model,
-                                   extensions=self._extensions,
-                                   pass_invalid_values=self._pass_invalid_values)
+            model = datamodel_open(
+                model,
+                extensions=self._extensions,
+                pass_invalid_values=self._pass_invalid_values
+            )
             self._models[index] = model
 
         return model
 
+        return model
 
     def _close_model(self, filename, index):
         if not self._persist:
             self._models[index].close()
             self._models[index] = filename
 
-
     def _validate_model(self, models):
         if not isinstance(models, list):
             models = [models]
         for model in models:
             if isinstance(model, ModelContainer):
-                raise ValueError("ModelContainer cannot contain ModelContainer")
+                raise ValueError(
+                    "ModelContainer cannot contain ModelContainer"
+                )
             if not isinstance(model, (str, model_base.DataModel)):
                 raise ValueError('model must be string or DataModel')
-
 
     def __len__(self):
         return len(self._models)
 
-
     def __getitem__(self, index):
         return self._open_model(index)
-
 
     def __setitem__(self, index, model):
         self._validate_model(model)
         self._models[index] = model
 
-
     def __delitem__(self, index):
         del self._models[index]
 
-
     def __iter__(self):
         return ModelContainerIterator(self)
-
 
     def insert(self, index, model):
         self._validate_model(model)
         self._models.insert(index, model)
 
-
     def append(self, model):
         self._validate_model(model)
         self._models.append(model)
-
 
     def extend(self, models):
         self._validate_model(models)
         self._models.extend(models)
 
-
     def pop(self, index=-1):
         self._open_model(index)
         return self._models.pop(index)
-
 
     def copy(self):
         """
@@ -177,7 +175,6 @@ class ModelContainer(model_base.DataModel):
             else:
                 models_copy.append(model)
         return self.__class__(init=models_copy)
-
 
     def from_asn(self, filepath, **kwargs):
         """
@@ -204,7 +201,9 @@ class ModelContainer(model_base.DataModel):
 
         # Pull the whole association table into meta.asn_table
         self.meta.asn_table = {}
-        model_base.properties.merge_tree(self.meta.asn_table._instance, asn_data)
+        model_base.properties.merge_tree(
+            self.meta.asn_table._instance, asn_data
+        )
 
         # populate the output metadata with the output file from the ASN file
         # Should remove the following lines eventually
@@ -216,34 +215,66 @@ class ModelContainer(model_base.DataModel):
         self.meta.asn_type = str(asn_data['asn_type'])
         self.meta.asn_rule = str(asn_data['asn_rule'])
 
-
-    def save(self, path_not_used, path=None, *args, **kwargs):
+    def save(self,
+             path=None,
+             dir_path=None,
+             save_model_func=None,
+             *args, **kwargs):
         """
         Write out models in container to FITS or ASDF.
 
         Parameters
         ----------
-        path_not_used : string
-            This first argument is ignored in this implementation of the
-            save method.  It is used by pipeline steps to save individual
-            files, but that is not applicable here.  Instead, we use the path
-            arg below and read the filename output from `meta.filename` in each
-            file in the container.
+        path : str or func or None
+            - If None, the `meta.filename` is used for each model.
+            - If a string, the string is used as a root and an index is
+              appended.
+            - If a function, the function takes the two arguments:
+              the value of model.meta.filename and the
+              `idx` index, returning constructed file name.
 
-        path : string
+        dir_path : str
             Directory to write out files.  Defaults to current working dir.
             If directory does not exist, it creates it.  Filenames are pulled
             from `.meta.filename` of each datamodel in the container.
-        """
-        if path is None:
-            path = os.getcwd()
-        for model in self:
-            outpath = op.join(path, model.meta.filename)
-            try:
-                model.save(outpath, *args, **kwargs)
-            except IOError as err:
-                raise err
 
+        save_model_func: func or None
+            Alternate function to save each model instead of
+            the models `save` method. Takes one argument, the model,
+            and keyword argument `idx` for an index.
+
+        Returns
+        -------
+        output_paths: [str[, ...]]
+            List of output file paths of where the models were saved.
+        """
+        output_paths = []
+        if path is None:
+            path = lambda filename, idx: filename
+        elif not callable(path):
+            path = make_file_with_index
+
+        for idx, model in enumerate(self):
+            if len(self) <= 1:
+                idx = None
+            if save_model_func is None:
+                outpath, filename = op.split(
+                    path(model.meta.filename, idx=idx)
+                )
+                if dir_path:
+                    outpath = dir_path
+                save_path = op.join(outpath, filename)
+                try:
+                    output_paths.append(
+                        model.save(save_path, *args, **kwargs)
+                    )
+                except IOError as err:
+                    raise err
+
+            else:
+                output_paths.append(save_model_func(model, idx=idx))
+
+        return output_paths
 
     @property
     def models_grouped(self):
@@ -299,7 +330,6 @@ class ModelContainer(model_base.DataModel):
 
         return group_dict.values()
 
-
     @property
     def group_names(self):
         """
@@ -309,7 +339,6 @@ class ModelContainer(model_base.DataModel):
         for group in self.models_grouped:
             result.append(group[0].meta.group_id)
         return result
-
 
     def __get_recursively(self, field, search_dict):
         """
@@ -332,7 +361,6 @@ class ModelContainer(model_base.DataModel):
                             values_found.append(another_result)
         return values_found
 
-
     def get_recursively(self, field):
         """
         Returns a list of values of the specified field from meta.
@@ -349,10 +377,8 @@ class ModelContainerIterator:
         self.open_filename = None
         self.container = container
 
-
     def __iter__(self):
         return self
-
 
     def __next__(self):
         if self.open_filename is not None:
@@ -369,3 +395,30 @@ class ModelContainerIterator:
             return model
         else:
             raise StopIteration
+
+
+# #########
+# Utilities
+# #########
+def make_file_with_index(file_path, idx):
+    """Append an index to a filename
+
+    Parameters
+    ----------
+    file_path: str
+        The file to append the index to.
+    idx: int
+        An index to append
+
+
+    Returns
+    -------
+    file_path: str
+        Path with index appended
+    """
+    # Decompose path
+    path_head, path_tail = op.split(file_path)
+    base, ext = op.splitext(path_tail)
+    if idx is not None:
+        base = base + str(idx)
+    return op.join(path_head, base + ext)

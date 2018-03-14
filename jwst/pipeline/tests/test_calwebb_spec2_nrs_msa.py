@@ -22,7 +22,6 @@ DATAPATH = abspath(
 )
 
 
-@require_crds_context(365)
 @runslow
 @require_bigdata
 def test_run_msaflagging(mk_tmp_dirs, caplog):

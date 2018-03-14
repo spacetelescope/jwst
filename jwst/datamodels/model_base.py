@@ -10,12 +10,10 @@ import sys
 import warnings
 
 import numpy as np
-import jsonschema
 
 from astropy.io import fits
 from astropy.time import Time
 from astropy.wcs import WCS
-from astropy.nddata import nddata_base
 
 from asdf import AsdfFile
 from asdf import yamlutil
@@ -317,28 +315,50 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             if klass != 'DataModel':
                 self.meta.model_type = klass
 
-    def save(self, path, *args, **kwargs):
+    def save(self, path, dir_path=None, *args, **kwargs):
         """
         Save to either a FITS or ASDF file, depending on the path.
 
         Parameters
         ----------
-        path : string
+        path : string or func
+            File path to save to.
+            If function, it takes one argument with is
+            model.meta.filename and returns the full path string.
+
+        dir_path: string
+            Directory to save to. If not None, this will override
+            any directory information in the `path`
+
+        Returns
+        -------
+        output_path: str
+            The file path the model was saved in.
         """
-        base, ext = os.path.splitext(path)
+        if callable(path):
+            path_head, path_tail = os.path.split(path(self.meta.filename))
+        else:
+            path_head, path_tail = os.path.split(path)
+        base, ext = os.path.splitext(path_tail)
         if isinstance(ext, bytes):
             ext = ext.decode(sys.getfilesystemencoding())
+
+        if dir_path:
+            path_head = dir_path
+        output_path = os.path.join(path_head, path_tail)
 
         # TODO: Support gzip-compressed fits
         if ext == '.fits':
             # TODO: remove 'clobber' check once depreciated fully in astropy
             if 'clobber' not in kwargs:
                 kwargs.setdefault('overwrite', True)
-            self.to_fits(path, *args, **kwargs)
+            self.to_fits(output_path, *args, **kwargs)
         elif ext == '.asdf':
-            self.to_asdf(path, *args, **kwargs)
+            self.to_asdf(output_path, *args, **kwargs)
         else:
             raise ValueError("unknown filetype {0}".format(ext))
+
+        return output_path
 
     @classmethod
     def from_asdf(cls, init, schema=None):
@@ -604,7 +624,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
     # We are just going to define the items to return the iteritems
     items = iteritems
 
-
     def iterkeys(self):
         """
         Iterates over all of the schema keys in a flat way.
@@ -840,7 +859,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         header = hdu.header
         return WCS(header, key=key, relax=True, fix=True)
 
-
     def set_fits_wcs(self, wcs, hdu_name='SCI'):
         """
         Sets the FITS WCS information on the model using the given
@@ -872,10 +890,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         self._instance = properties.merge_tree(self._instance, ff.tree)
 
-    #--------------------------------------------------------
+    # --------------------------------------------------------
     # These two method aliases are here for astropy.registry
     # compatibility and should not be called directly
-    #--------------------------------------------------------
+    # --------------------------------------------------------
 
     read = __init__
     write = save
