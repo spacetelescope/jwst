@@ -78,4 +78,66 @@ Specifically, this routine performs the following operations:
 * Update input data model DQ arrays with mask of detected outliers.
 
 
+Outlier Detection for TSO data
+-------------------------------
+Time-series observations (TSO) data results in input data stored as a CubeModel
+where each plane in the cube represents a separate readout without changing the
+pointing.  Normal imaging data would benefit from combining all readouts into a
+single, however, TSO data's value comes from looking for variations from one
+readout to the next.  The outlier_detection algorithm, therefore, gets run with 
+a few variations to accomodate the nature of the data.
+
+* Input data is converted from a CubeModel (3D data array) to a ModelContainer
+
+  - Each model in the ModelContainer is a separate plane from the input CubeModel
+
+* The median image is created without resampling the input data
+
+  - All readouts are aligned already, so no resampling needs to be performed
+  
+* A matched median gets created by combining the single median frame with the 
+  noise model for each input readout.
+
+* Perform statistical comparison between the matched median with each input 
+  readout.  
+
+* Update input data model DQ arrays with the mask of detected outliers
+
+
+.. note:: 
+
+  This same set of steps also gets used to perform outlier detection on
+  coronographic data.
+
+
+Outlier Detection for IFU data
+------------------------------
+Integral-field unit (IFU) data gets readout as a 2D array.  This 2D image then 
+gets converted into a properly calibrated spectral cube (3D array) and stored as
+an IFUCubeModel for outlier detection.  The many differences in data format 
+for the IFU data relative to normal direct imaging data requires special 
+processing in order to perform outlier detection in the IFU data.  
+
+* Convert the input IFUImageModel into a CubeModel using 
+  :py:class:`~jwst.cube_build.CubeBuildStep`
+
+  - A separate CubeModel will be generated for each channel using the `single`
+    option for the :py:class:`~jwst.cube_build.CubeBuildStep`.
+    
+* All input CubeModels then get median combined to create a single median 
+  IFUCubeModel product.
+  
+* The IFUCubeModel median product then gets resampled back to match each 
+  original input IFUImageModel dataset.
+  
+  - This resampling uses :py:class:`~jwst.cube_build.blot_cube_build.CubeBlot` 
+    to perform this conversion.
+
+* The blotted, median data then gets compared statistically to the original 
+  input data to detect outliers.
+  
+* The DQ array of each input dataset then gets updated to document the detected
+  outliers.
+  
+
 .. automodapi:: jwst.outlier_detection.outlier_detection

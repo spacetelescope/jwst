@@ -36,6 +36,7 @@ def make_output_wcs(input_models):
     #       remove the following block
     wcslist = [i.meta.wcs for i in input_models]
     for w, i in zip(wcslist, input_models):
+        log.info("WCS for {}: \n{}".format(i.meta.filename, repr(w)))
         if w.bounding_box is None:
             w.bounding_box = bounding_box_from_shape(i.data.shape)
     naxes = wcslist[0].output_frame.naxes
@@ -46,6 +47,7 @@ def make_output_wcs(input_models):
     elif naxes == 2:
         output_wcs = wcs_from_footprints(input_models)
         data_size = shape_from_bounding_box(output_wcs.bounding_box)
+    log.info("OUTPUT_WCS: {}".format(repr(output_wcs)))
 
     # Add check to see whether or not a valid output WCS was computed
     # based on output dimensions
