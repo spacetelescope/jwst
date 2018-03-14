@@ -1,7 +1,7 @@
 .. _outlier-detection-imaging:
 
 Default OutlierDetection Algorithm
------------------------------------
+===================================
 
 This module serves as the interface for applying outlier_detection to direct
 image observations, like those taken with NIRCam.  The code implements the
