@@ -14,7 +14,7 @@ from .helpers import (
 )
 
 from ...associations import load_asn
-from ...stpipe.step import (REMOVE_SUFFIX, Step)
+from ...stpipe.step import (Step, remove_suffix)
 
 DATAPATH = abspath(
     path.join('$TEST_BIGDATA', 'pipelines', 'nircam_calimage3')
@@ -47,8 +47,7 @@ def test_run_full(mk_tmp_dirs):
     ]
     crffilenames = []
     for expfilename in expfilenames:
-        match = re.match(REMOVE_SUFFIX, expfilename)
-        name = match.group('root')
+        name = remove_suffix(path.splitext(expfilename)[0])[0]
         crffilenames.append(name + '_a3001_crf.fits')
     for crffilename in crffilenames:
         assert path.isfile(crffilename)
@@ -57,3 +56,26 @@ def test_run_full(mk_tmp_dirs):
     product_name = asn['products'][0]['name']
     assert path.isfile(product_name + '_cat.ecsv')
     assert path.isfile(product_name + '_i2d.fits')
+
+
+@runslow
+@require_bigdata
+def test_single_image(mk_tmp_dirs):
+    """Test a full run"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    input_file = 'nrca5_47Tuc_subpix_dither1_newpos_cal.fits'
+    args = [
+        path.join(SCRIPT_DATA_PATH, 'cfgs', 'calwebb_image3.cfg'),
+        path.join(
+            DATAPATH,
+            input_file
+        )
+    ]
+
+    Step.from_cmdline(args)
+
+    # Check for the level3 products
+    name = remove_suffix(path.splitext(input_file)[0])[0]
+    assert path.isfile(name + '_cat.ecsv')
+    assert path.isfile(name + '_i2d.fits')
