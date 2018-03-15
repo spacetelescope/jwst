@@ -7,7 +7,7 @@ properties:
             type: object
             properties:
                   gain_factor:
-                  title: Gain scale factor
-                  type: number
-                  fits_keyword: GAINFACT
-
+                         type: number
+                         properties:
+                            title: Gain scale factor
+                            fits_keyword: GAINFACT
