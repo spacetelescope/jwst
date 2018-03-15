@@ -7,6 +7,7 @@ allOf:
 - $ref: keyword_nframes.schema.yaml
 - $ref: keyword_ngroups.schema.yaml
 - $ref: keyword_groupgap.schema.yaml
+- $ref: keyword_gainfact.schema.yaml
 - $ref: subarray.schema.yaml
 - type: object
   properties:

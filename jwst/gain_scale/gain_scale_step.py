@@ -25,14 +25,14 @@ class GainScaleStep(Step):
                 gain_model = datamodels.GainModel(self.gain_filename)
 
                 # Try to read the GAINFACT keyword value
-                if gain_model.meta.gain_factor is None:
+                if gain_model.meta.exposure.gain_factor is None:
                     self.log.info('GAINFACT not found in gain reference file')
                     self.log.info('Step will be skipped')
                     input_model.meta.cal_step.gain_scale = 'SKIPPED'
                     gain_model.close()
                     return input_model
                 else:
-                    gain_factor = gain_model.meta.gain_factor
+                    gain_factor = gain_model.meta.exposure.gain_factor
                     gain_model.close()
 
             else:
