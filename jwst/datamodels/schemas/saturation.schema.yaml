@@ -2,6 +2,7 @@ title: Saturation checking data
 allOf:
 - $ref: referencefile.schema.yaml
 - $ref: subarray.schema.yaml
+- $ref: keyword_gainfact.schema.yaml
 - type: object
   properties:
     data:
