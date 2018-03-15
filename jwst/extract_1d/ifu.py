@@ -81,9 +81,11 @@ def ifu_extract1d(input_model, refname, source_type):
         flux = net.copy()
         net[:] = 0.
         log.info("Data have been flux calibrated; setting net to 0.")
+        data_units = 'mJy'
     else:
         flux = np.zeros_like(net)
         log.info("Data have NOT been flux calibrated; setting flux to 0.")
+        data_units = 'DN/s'
 
     fl_error = np.ones_like(net)
     nerror = np.ones_like(net)
@@ -94,6 +96,13 @@ def ifu_extract1d(input_model, refname, source_type):
                     dtype=spec.spec_table.dtype)
     spec = datamodels.SpecModel(spec_table=otab)
     spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
+    spec.spec_table.columns['wavelength'].unit = 'um'
+    spec.spec_table.columns['flux'].unit = data_units
+    spec.spec_table.columns['error'].unit = data_units
+    spec.spec_table.columns['net'].unit = data_units
+    spec.spec_table.columns['nerror'].unit = data_units
+    spec.spec_table.columns['background'].unit = data_units
+    spec.spec_table.columns['berror'].unit = data_units
     spec.slit_ra = ra
     spec.slit_dec = dec
     if slitname is not None and slitname != "ANY":

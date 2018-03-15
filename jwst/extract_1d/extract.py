@@ -1674,6 +1674,13 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                             dtype=spec.spec_table.dtype)
             spec = datamodels.SpecModel(spec_table=otab)
             spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
+            spec.spec_table.columns['wavelength'].unit = 'um'
+            spec.spec_table.columns['flux'].unit = 'mJy'
+            spec.spec_table.columns['error'].unit = 'mJy'
+            spec.spec_table.columns['net'].unit = 'DN/s'
+            spec.spec_table.columns['nerror'].unit = 'DN/s'
+            spec.spec_table.columns['background'].unit = 'DN/s'
+            spec.spec_table.columns['berror'].unit = 'DN/s'
             spec.slit_ra = ra
             spec.slit_dec = dec
             spec.spectral_order = sp_order
@@ -1748,6 +1755,13 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 spec = datamodels.SpecModel(spec_table=otab)
                 spec.meta.wcs = spec_wcs.create_spectral_wcs(
                                         ra, dec, wavelength)
+                spec.spec_table.columns['wavelength'].unit = 'um'
+                spec.spec_table.columns['flux'].unit = 'mJy'
+                spec.spec_table.columns['error'].unit = 'mJy'
+                spec.spec_table.columns['net'].unit = 'DN/s'
+                spec.spec_table.columns['nerror'].unit = 'DN/s'
+                spec.spec_table.columns['background'].unit = 'DN/s'
+                spec.spec_table.columns['berror'].unit = 'DN/s'
                 spec.slit_ra = ra
                 spec.slit_dec = dec
                 spec.spectral_order = sp_order
@@ -1817,6 +1831,13 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                     spec = datamodels.SpecModel(spec_table=otab)
                     spec.meta.wcs = spec_wcs.create_spectral_wcs(
                                         ra, dec, wavelength)
+                    spec.spec_table.columns['wavelength'].unit = 'um'
+                    spec.spec_table.columns['flux'].unit = 'mJy'
+                    spec.spec_table.columns['error'].unit = 'mJy'
+                    spec.spec_table.columns['net'].unit = 'DN/s'
+                    spec.spec_table.columns['nerror'].unit = 'DN/s'
+                    spec.spec_table.columns['background'].unit = 'DN/s'
+                    spec.spec_table.columns['berror'].unit = 'DN/s'
                     spec.slit_ra = ra
                     spec.slit_dec = dec
                     spec.spectral_order = sp_order
