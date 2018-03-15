@@ -8,6 +8,5 @@ properties:
             properties:
                   gain_factor:
                          type: number
-                         properties:
-                            title: Gain scale factor
-                            fits_keyword: GAINFACT
+                         title: Gain scale factor
+                         fits_keyword: GAINFACT
