@@ -1229,21 +1229,27 @@ class ExtractModel(ExtractBase):
             else:
                 wavelength = np.arange(slice0, slice1, dtype=np.float64)
 
-        mask = np.isnan(wavelength)
-        n_nan = mask.sum(dtype=np.intp)
+        temp_wl = wavelength.copy()
+        nan_mask = np.isnan(wavelength)
+        n_nan = nan_mask.sum(dtype=np.intp)
         if n_nan > 0:
-            log.warning("%d NaNs in wavelength array; set to 0.01", n_nan)
-            wavelength[mask] = 0.01         # workaround
-        del mask
+            log.warning("%d NaNs in wavelength array", n_nan)
+            temp_wl[nan_mask] = 0.01            # because NaNs cause problems
 
         # src total flux, area, total weight
         (net, background) = \
-        extract1d.extract1d(image, wavelength, disp_range,
+        extract1d.extract1d(image, temp_wl, disp_range,
                             self.p_src, self.p_bkg, self.independent_var,
                             self.smoothing_length, self.bkg_order,
                             weights=None)
+        del temp_wl
 
-        return (ra, dec, wavelength, net, background)
+        dq = np.zeros(net.shape, dtype=np.int32)
+        if n_nan > 0:
+            (wavelength, net, background, dq) = \
+                nans_at_endpoints(wavelength, net, background, dq)
+
+        return (ra, dec, wavelength, net, background, dq)
 
 
 class ImageExtractModel(ExtractBase):
@@ -1502,14 +1508,15 @@ class ImageExtractModel(ExtractBase):
                 wavelength = np.arange(shape[0], dtype=np.float)
             wavelength = wavelength[trim_slc]
 
-        mask = np.isnan(wavelength)
-        n_nan = mask.sum(dtype=np.intp)
+        dq = np.zeros(net.shape, dtype=np.int32)
+        nan_mask = np.isnan(wavelength)
+        n_nan = nan_mask.sum(dtype=np.intp)
         if n_nan > 0:
-            log.warning("%d NaNs in wavelength array; set to 0.01", n_nan)
-            wavelength[mask] = 0.01         # workaround
-        del mask
+            log.warning("%d NaNs in wavelength array", n_nan)
+            (wavelength, net, background, dq) = \
+                nans_at_endpoints(wavelength, net, background, dq)
 
-        return (ra, dec, wavelength, net, background)
+        return (ra, dec, wavelength, net, background, dq)
 
 
     def match_shape(self, shape):
@@ -1637,7 +1644,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 continue
 
             try:
-                (ra, dec, wavelength, net, background) = \
+                (ra, dec, wavelength, net, background, dq) = \
                         extract_one_slit(input_model, slit, -1,
                                          verbose=True,
                                          **extract_params)
@@ -1658,7 +1665,6 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 log.warning("No relsens for current slit, "
                             "so can't compute flux.")
                 flux = np.zeros_like(net)
-            dq = np.zeros(net.shape, dtype=np.int32)
             fl_error = np.ones_like(net)
             nerror = np.ones_like(net)
             berror = np.ones_like(net)
@@ -1704,7 +1710,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 if extract_params['match'] == EXACT:
                     slit = DUMMY
                     try:
-                        (ra, dec, wavelength, net, background) = \
+                        (ra, dec, wavelength, net, background, dq) = \
                                 extract_one_slit(input_model, slit, -1,
                                                  verbose=True,
                                                  **extract_params)
@@ -1718,7 +1724,6 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 else:
                     log.critical('Missing extraction parameters.')
                     raise ValueError('Missing extraction parameters.')
-                dq = np.zeros(net.shape, dtype=np.int32)
                 got_relsens = True
                 try:
                     relsens = input_model.relsens
@@ -1788,7 +1793,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                 for integ in range(input_model.data.shape[0]):
                     # Extract spectrum
                     try:
-                        (ra, dec, wavelength, net, background) = \
+                        (ra, dec, wavelength, net, background, dq) = \
                                 extract_one_slit(input_model, slit, integ,
                                                  verbose=verbose,
                                                  **extract_params)
@@ -1796,7 +1801,6 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                         log.info(str(e) + ", skipping ...")
                         break
                     verbose = False
-                    dq = np.zeros(net.shape, dtype=np.int32)
                     if got_relsens:
                         r_factor = interpolate_response(wavelength,
                                                         input_model.relsens)
@@ -1926,24 +1930,24 @@ def extract_one_slit(input_model, slit, integ, verbose, **extract_params):
 
     Returns
     -------
-    tuple (ra, dec, wavelength, net, background)
+    tuple (ra, dec, wavelength, net, background, dq)
         `ra` and `dec` are floats, and the others are 1-D arrays.
         `ra` and `dec` are the right ascension and declination at the
         nominal center of the slit.  `wavelength` is the wavelength in
         micrometers at each pixel.  `net` is the count rate (counts / s)
         minus the background at each pixel.  `background` is the background
         count rate that was subtracted from the total source count rate
-        to get `net`.
+        to get `net`.  `dq` is the data quality array.
     """
 
     if verbose:
         log_initial_parameters(extract_params)
 
-    dq = None                                   # possibly replaced below
+    input_dq = None                             # possibly replaced below
     if integ > -1:
         data = input_model.data[integ]
         if hasattr(input_model, 'dq'):
-            dq = input_model.dq[integ]
+            input_dq = input_model.dq[integ]
         try:
             wl_array = input_model.wavelength
         except AttributeError:
@@ -1951,7 +1955,7 @@ def extract_one_slit(input_model, slit, integ, verbose, **extract_params):
     elif slit == DUMMY:
         data = input_model.data
         if hasattr(input_model, 'dq'):
-            dq = input_model.dq
+            input_dq = input_model.dq
         try:
             wl_array = input_model.wavelength
         except AttributeError:
@@ -1959,13 +1963,13 @@ def extract_one_slit(input_model, slit, integ, verbose, **extract_params):
     else:
         data = slit.data
         if hasattr(slit, 'dq'):
-            dq = slit.dq
+            input_dq = slit.dq
         try:
             wl_array = slit.wavelength
         except AttributeError:
             wl_array = None
 
-    data = replace_bad_values(data, dq, fill=0.)
+    data = replace_bad_values(data, input_dq, fill=0.)
 
     if extract_params['ref_file_type'] == FILE_TYPE_FITS:
         extract_model = ImageExtractModel(input_model, slit, **extract_params)
@@ -1979,13 +1983,13 @@ def extract_one_slit(input_model, slit, integ, verbose, **extract_params):
         extract_model.log_extraction_parameters()
 
     extract_model.assign_polynomial_limits()
-    (ra, dec, wavelength, net, background) = \
+    (ra, dec, wavelength, net, background, dq) = \
                 extract_model.extract(data, wl_array)
 
-    return (ra, dec, wavelength, net, background)
+    return (ra, dec, wavelength, net, background, dq)
 
 
-def replace_bad_values(data, dq, fill=0.):
+def replace_bad_values(data, input_dq, fill=0.):
     """Replace NaNs and values flagged with DO_NOT_USE.
 
     Parameters
@@ -1993,7 +1997,7 @@ def replace_bad_values(data, dq, fill=0.):
     data: ndarray
         The input data array.
 
-    dq: ndarray or None
+    input_dq: ndarray or None
         If not None, this will be checked for flag value DO_NOT_USE.
 
     fill: float
@@ -2006,8 +2010,8 @@ def replace_bad_values(data, dq, fill=0.):
     """
 
     mask = np.isnan(data)
-    if dq is not None:
-        bad_mask = np.bitwise_and(dq, dqflags.pixel['DO_NOT_USE']) > 0
+    if input_dq is not None:
+        bad_mask = np.bitwise_and(input_dq, dqflags.pixel['DO_NOT_USE']) > 0
         mask = np.logical_or(mask, bad_mask)
 
     if np.any(mask):
@@ -2016,3 +2020,61 @@ def replace_bad_values(data, dq, fill=0.):
         return mod_data
     else:
         return data
+
+def nans_at_endpoints(wavelength, net, background, dq):
+    """Flag NaNs in the wavelength array.
+
+    All five input arrays should be 1-D and the same shape.
+    If NaNs are present at endpoints of `wavelength`, the arrays will be
+    trimmed to remove the NaNs.  NaNs at interior elements of `wavelength`
+    will be left in place, but they will be flagged with DO_NOT_USE in the
+    `dq` array.
+
+    Parameters
+    ----------
+    wavelength: ndarray
+        Array of wavelengths, possibly containing NaNs.
+
+    net: ndarray
+        Array of net count rates.
+
+    background: ndarray
+        Array of background values that were subtracted to get `net`.
+
+    dq: ndarray
+        Data quality array.
+
+    Returns
+    -------
+    tuple (wavelength, net, background, dq)
+        The returned `dq` array will have NaNs flagged with DO_NOT_USE,
+        and all four arrays may have been trimmed at either or both ends.
+    """
+
+    # The input arrays will not be modified in-place.
+    new_wl = wavelength.copy()
+    new_net = net.copy()
+    new_bkg = background.copy()
+    new_dq = dq.copy()
+    nelem = wavelength.shape[0]
+
+    nan_mask = np.isnan(wavelength)
+
+    new_dq[nan_mask] = np.bitwise_or(new_dq[nan_mask],
+                                     dqflags.pixel['DO_NOT_USE'])
+    not_nan = np.logical_not(nan_mask)
+    flag = np.where(not_nan)
+    if len(flag[0]) > 0:
+        n_trimmed = flag[0][0] + nelem - (flag[0][-1] + 1)
+        if n_trimmed > 0:
+            log.info("Output arrays have been trimmed by %d elements",
+                     n_trimmed)
+            slc = slice(flag[0][0], flag[0][-1] + 1)
+            new_wl = new_wl[slc]
+            new_net = new_net[slc]
+            new_bkg = new_bkg[slc]
+            new_dq = new_dq[slc]
+    else:
+        new_dq |= dqflags.pixel['DO_NOT_USE']
+
+    return (new_wl, new_net, new_bkg, new_dq)
