@@ -10,7 +10,10 @@ other artifacts left over from previous calibrations:
 
   - build a stack of input data
   
-    - all inputs will need to have the same WCS in order
+    - all inputs will need to have the same WCS since outlier detection assumes 
+      the same flux for each point on the sky, and variations from one image to
+      the next would indicate a problem with the detector during readout of that
+      pixel
     - if needed, each input will be resampled to a common output WCS
   
   - create a median image from the stack of input data
@@ -22,8 +25,9 @@ other artifacts left over from previous calibrations:
     input dataset
   
   - perform a statistical comparison (pixel-by-pixel) between the median,blotted
-    data with the original input data to look for pixels with values greater 
-    that some sigma based on the noise model
+    data with the original input data to look for pixels with values that are  
+    different from the mean value by more than some specified sigma 
+    based on the noise model
 
     - the noise model used relies on the error array computed by previous 
       calibration steps based on the readnoise and calibration errors
