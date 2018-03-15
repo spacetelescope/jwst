@@ -52,9 +52,9 @@ class RampFitStep (Step):
             # available later in the gain_scale step, which avoids having to
             # load the gain ref file again in that step.
             input_model.meta.exposure.gain_factor = None
-            if gain_model.meta.gain_factor is not None:
+            if gain_model.meta.exposure.gain_factor is not None:
                 input_model.meta.exposure.gain_factor = \
-                    gain_model.meta.gain_factor
+                    gain_model.meta.exposure.gain_factor
 
             log.info('Using algorithm = %s' % self.algorithm)
             log.info('Using weighting = %s' % self.weighting)
