@@ -348,6 +348,11 @@ class IFUCubeData(object):
                         t0a = time.time()
                         slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
+                        #NIRSPEC TEMPORARY FIX FOR WCS 1 BASED and NOT 0 BASED
+                        # NIRSPEC team delivered transforms that are valid for x,y in 1 based system
+                        x = x + 1
+                        y = y + 1
+                        # Done NIRSPEC FIX
 
                         cube_cloud.match_det2cube(self,input_model,
                                                   x, y, ii,
@@ -585,6 +590,11 @@ class IFUCubeData(object):
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,
                                                               step=(1,1), center=True)
                         
+                        #NIRSPEC TEMPORARY FIX FOR WCS 1 BASED and NOT 0 BASED
+                        # NIRSPEC team delivered transforms that are valid for x,y in 1 based system
+                        x = x + 1
+                        y = y + 1
+                        # Done NIRSPEC FIX
                         t0 = time.time()
                         cube_cloud.match_det2cube(self,input_model,
                                                   x, y, i,

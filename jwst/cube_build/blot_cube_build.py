@@ -19,10 +19,6 @@ from gwcs import wcstools
 from . import instrument_defaults
 from . import coord
 
-
-
-
-
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -121,7 +117,10 @@ class CubeBlot(object):
 
             filename = model.meta.filename
             indx = filename.rfind('.fits')
-            
+
+            blot_flux = np.zeros(model.shape,dtype=np.float32)
+            blot_weight = np.zeros(model.shape,dtype=np.float32)
+            blot_iflux = np.zeros(model.shape,dtype=np.float32)            
 
             if(self.instrument =='MIRI'):
                 this_par1 = self.channel # only one channel is blotted at a time
@@ -131,15 +130,12 @@ class CubeBlot(object):
 
                 # get the detector values for this model
                 xstart, xend = instrument_info.GetMIRISliceEndPts(this_par1)
-#                xdet,ydet = wcstools.grid_from_bounding_box(model.meta.wcs.bounding_box, step=(1,1))
-                ydet, xdet = np.mgrid[:1024, :1032]                                    
-
-                blot_flux = np.zeros(model.shape,dtype=np.float32)
-                blot_weight = np.zeros(model.shape,dtype=np.float32)
-                blot_iflux = np.zeros(model.shape,dtype=np.float32)
+                ydet,xdet=np.mgrid[:1024,:1032]
 
                 pixel_mask = np.full(model.shape,False,dtype=bool)
                 pixel_mask[:,xstart:xend] = True
+
+
                 ra_det,dec_det,wave_det = model.meta.wcs(xdet,ydet)
 
                 valid1 = np.isfinite(ra_det)
