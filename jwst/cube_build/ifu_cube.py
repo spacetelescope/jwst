@@ -714,7 +714,7 @@ class IFUCubeData(object):
         IFUCube.meta.wcsinfo.ctype3 = 'WAVE'
         IFUCube.meta.wcsinfo.cunit3 = 'um'
         IFUCube.meta.wcsinfo.wcsaxes = 3
-        IFUCube.meta.wcsinfo.pc1_1 = 1
+        IFUCube.meta.wcsinfo.pc1_1 = -1
         IFUCube.meta.wcsinfo.pc1_2 = 0
         IFUCube.meta.wcsinfo.pc1_3 = 0
 

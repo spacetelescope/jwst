@@ -447,7 +447,6 @@ def set_geometry(self, footprint):
         ra_ave = circmean(ravalues*u.deg).value
         log.info('Ra average %f12.8', ra_ave)
 
-        
         self.Crval1 = ra_ave
         self.Crval2 = dec_ave
         xi_center,eta_center = coord.radec2std(self.Crval1, self.Crval2,ra_ave,dec_ave)
