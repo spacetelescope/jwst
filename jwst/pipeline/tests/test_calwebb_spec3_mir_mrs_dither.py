@@ -35,10 +35,10 @@ def test_run_cube_build_only(mk_tmp_dirs):
     """
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'cube_build_4dither_495_asn.json'),
-        root=path.join(DATAPATH, 'level2b')
+    asn_path = path.join(
+        DATAPATH, 'level2b', 'cube_build_4dither_495_asn.json'
     )
+
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
@@ -67,10 +67,10 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     """
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = update_asn_basedir(
-        path.join(DATAPATH, 'cube_build_4dither_495_asn.json'),
-        root=path.join(DATAPATH, 'level2b')
+    asn_path = path.join(
+        DATAPATH, 'level2b', 'cube_build_4dither_495_asn.json'
     )
+
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
         asn_path,
