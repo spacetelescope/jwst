@@ -177,14 +177,17 @@ def ifu(input_model, reference_files):
         pipeline = [(det, dms2detector),
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
-                    (slit_frame, (Mapping((0, 1, 2, 3)) | slit2msa).rename('slit2msa')),
+                    ## (slit_frame, (Mapping((0, 1, 2, 3)) | slit2msa).rename('slit2msa')),
+                    (slit_frame, (slit2msa).rename('slit2msa')),
                     (msa_frame, msa2oteip.rename('msa2oteip')),
                     (oteip, oteip2v23.rename('oteip2v23')),
                     (v2v3, tel2sky),
                     (world, None)]
     else:
         # convert to microns if the pipeline ends earlier
-        slit2msa = (Mapping((0, 1, 2, 3)) | slit2msa).rename('slit2msa')
+        ## slit2msa = (Mapping((0, 1, 2, 3, 3)) | slit2msa).rename('slit2msa')
+
+        slit2msa = (Mapping((0, 1, 2, 2)) | slit2msa).rename('slit2msa')
         pipeline = [(det, dms2detector),
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
@@ -566,6 +569,7 @@ def ifuslit_to_msa(slits, reference_files):
 
     #ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
     ifuslicer = IFUSlicerModel(reference_files['ifuslicer'])
+    ifupost = IFUPostModel(reference_files['ifupost'])
     models = []
     #ifuslicer_model = (ifuslicer.tree['model']).rename('ifuslicer_model')
     ifuslicer_model = ifuslicer.model
@@ -573,8 +577,9 @@ def ifuslit_to_msa(slits, reference_files):
         #slitdata = ifuslicer.tree['data'][slit]
         slitdata = ifuslicer.data[slit]
         slitdata_model = (get_slit_location_model(slitdata)).rename('slitdata_model')
-
-        msa_transform = slitdata_model | ifuslicer_model
+        slicer_model = slitdata_model | ifuslicer_model
+        ifupost_transform = getattr(ifupost, "slice_{0}".format(slit))
+        msa_transform = (slicer_model & Identity(1)) | ifupost_transform
         models.append(msa_transform)
     ifuslicer.close()
 
@@ -650,6 +655,8 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
     if input_model.meta.instrument.filter == 'OPAQUE':
         lgreq = lgreq | Scale(1e6)
 
+    lam_cen = 0.5 * (input_model.meta.wcsinfo.waverange_end -
+                   input_model.meta.wcsinfo.waverange_start)
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     mask = mask_slit(ymin, ymax)
 
@@ -667,16 +674,17 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
         ifuslicer_transform = (slitdata_model | ifuslicer_model)
         #ifupost_transform = ifupost.tree[slit]['model']
         ifupost_transform = getattr(ifupost, "slice_{0}".format(slit))
-        msa2gwa = ifuslicer_transform | ifupost_transform | collimator2gwa
-        gwa2msa = gwa_to_ymsa(msa2gwa)# TODO: Use model sets here
+
+        msa2gwa = ifuslicer_transform & Const1D(lam_cen) | ifupost_transform | collimator2gwa
+        gwa2msa = gwa_to_ymsa(msa2gwa, lam_cen)# TODO: Use model sets here
         bgwa2msa = Mapping((0, 1, 0, 1), n_inputs=3) | \
                  Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
                  Identity(1) & gwa2msa & Identity(2) | \
-                 Mapping((0, 1, 0, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
+                 Mapping((0, 1, 0, 1, 1, 2, 3)) | Identity(2) & msa2gwa & Identity(2) | \
                  Mapping((0, 1, 2, 3, 5), n_inputs=7) | Identity(2) & lgreq | mask
 
         # msa to before_gwa
-        msa2bgwa = msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
+        msa2bgwa = Mapping((0, 1, 2, 2)) | msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
         bgwa2msa.inverse = msa2bgwa
         slit_models.append(bgwa2msa)
 
@@ -1202,7 +1210,7 @@ def get_slit_location_model(slitdata):
     return model
 
 
-def gwa_to_ymsa(msa2gwa_model):
+def gwa_to_ymsa(msa2gwa_model, lam_cen=None):
     """
     Determine the linear relation d_y(beta_in) for the aperture on the detector.
 
@@ -1211,9 +1219,14 @@ def gwa_to_ymsa(msa2gwa_model):
     msa2gwa_model : `astropy.modeling.core.Model`
         The transform from the MSA to the GWA.
     """
+
     dy = np.linspace(-.55, .55, 1000)
     dx = np.zeros(dy.shape)
-    cosin_grating_k = msa2gwa_model(dx, dy)
+    if lam_cen is not None:
+        # IFU case where IFUPOST has a wavelength dependent distortion
+        cosin_grating_k = msa2gwa_model(dx, dy, [lam_cen] * 1000)
+    else:
+        cosin_grating_k = msa2gwa_model(dx, dy)
     fitter = fitting.LinearLSQFitter()
     model = models.Polynomial1D(1)
     poly1d_model = fitter(model, cosin_grating_k[1], dy)
@@ -1253,7 +1266,9 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     open_slits = g2s.slits
 
     slit_wcs.set_transform('gwa', 'slit_frame', g2s.get_model(slit_name))
-    slit_wcs.set_transform('slit_frame', 'msa_frame', wcsobj.pipeline[3][1][1].get_model(slit_name) & Identity(1))
+    slit_wcs.set_transform('slit_frame', 'msa_frame',
+                           ##wcsobj.pipeline[3][1][1].get_model(slit_name) & Identity(1))
+                           Mapping((0,1,2,2)) | wcsobj.pipeline[3][1].get_model(slit_name) & Identity(1))
     slit2detector = slit_wcs.get_transform('slit_frame', 'detector')
 
     if input_model.meta.exposure.type.lower() != 'nrs_ifu':
