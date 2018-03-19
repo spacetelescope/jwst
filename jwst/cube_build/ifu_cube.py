@@ -445,7 +445,7 @@ class IFUCubeData(object):
             for i in range(number_gratings):
                 this_gwa = self.list_par1[i]
                 this_filter = self.list_par2[i]
-                print('Grating and Filter',this_gwa,this_filter)
+#                print('Grating and Filter',this_gwa,this_filter)
 
                 wroi = self.instrument_info.GetWaveRoi(this_gwa,this_filter)
                 if wroi < min_w:

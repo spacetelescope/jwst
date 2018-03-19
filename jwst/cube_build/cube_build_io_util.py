@@ -112,7 +112,7 @@ def read_cubepars(self, instrument_info):
                                               table_wroi,table_power,
                                               table_softrad)
 
-        print('Done reading cubepar reference file')
+#        print('Done reading cubepar reference file')
     elif self.instrument == 'NIRSPEC':
         ptab = datamodels.NirspecIFUCubeParsModel(self.par_filename)
         number_gratings = len(self.all_grating)
@@ -127,8 +127,8 @@ def read_cubepars(self, instrument_info):
                 table_spectralstep = tabdata['SPECTRALSTEP']
                 table_wavemin = tabdata['WAVEMIN']
                 table_wavemax = tabdata['WAVEMAX']
-                print(table_grating,table_filter,table_spaxelsize,table_spectralstep,
-                      table_wavemin,table_wavemax)
+#                print(table_grating,table_filter,table_spaxelsize,table_spectralstep,
+#                      table_wavemin,table_wavemax)
 
                 if(this_gwa == table_grating and this_filter ==table_filter):
                     instrument_info.SetSpatialSize(table_spaxelsize,this_gwa,this_filter)
@@ -179,7 +179,7 @@ def read_cubepars(self, instrument_info):
             instrument_info.SetHighTable(table_wave,table_sroi,
                                           table_wroi,table_power,
                                           table_softrad)
-        print('Done reading cubepar reference file')
+#        print('Done reading cubepar reference file')
 #_______________________________________________________________________
 
 # Read MIRI Resolution reference file
