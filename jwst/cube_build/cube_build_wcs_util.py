@@ -385,8 +385,8 @@ def find_footprint_NIRSPEC(self, input,flag_data):
             x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,step=(1,1), center=True)
             #NIRSPEC TEMPORARY FIX FOR WCS 1 BASED and NOT 0 BASED
             # NIRSPEC team delivered transforms that are valid for x,y in 1 based system
-            x = x + 1
-            y = y + 1
+            #x = x + 1
+            #y = y + 1
             # Done NIRSPEC FIX
 
             ra,dec,lam = slice_wcs(x,y)
