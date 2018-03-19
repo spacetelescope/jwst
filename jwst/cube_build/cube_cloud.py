@@ -11,7 +11,7 @@ from ..assign_wcs import nirspec
 from ..datamodels import dqflags
 from . import coord
 from . import instrument_defaults
-from gwcs import wcstools
+#from gwcs import wcstools
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 #________________________________________________________________________________
@@ -82,9 +82,7 @@ def match_det2cube(self, input_model,
     elif self.instrument == 'NIRSPEC':
         islice = file_slice_no
         slice_wcs = nirspec.nrs_wcs_set_input(input_model, islice)
-        yrange = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
-        xrange = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
-        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1,1), center=True)
+#        x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1,1), center=True)
         x = x.astype(np.int)
         y = y.astype(np.int)
 

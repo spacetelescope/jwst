@@ -1,4 +1,5 @@
 """Public common step definition for OutlierDetection processing."""
+from functools import partial
 
 from ..stpipe import Step
 from .. import datamodels
@@ -83,8 +84,23 @@ class OutlierDetectionStep(Step):
                 'backg': self.backg,
                 'save_intermediate_results': self.save_intermediate_results,
                 'resample_data': self.resample_data,
-                'good_bits': self.good_bits
+                'good_bits': self.good_bits,
+                'make_output_path': self.make_output_path,
                 }
+
+            # Setup output path naming if associations are involved.
+            asn_id = None
+            try:
+                asn_id = self.input_models.meta.asn_table.asn_id
+            except (AttributeError, KeyError):
+                pass
+            if asn_id is None:
+                asn_id = self.search_attr('asn_id')
+            if asn_id is not None:
+                pars['make_output_path'] = partial(
+                    self.make_output_path,
+                    asn_id=asn_id
+                )
 
             # Add logic here to select which version of OutlierDetection
             # needs to be used depending on the input data

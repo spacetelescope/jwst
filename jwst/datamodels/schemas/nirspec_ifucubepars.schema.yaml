@@ -7,16 +7,74 @@ allOf:
       title: default IFU cube  parameters table
       fits_hdu: CUBEPAR
       datatype:
-      - name: filter
-        datatype: [ascii,5]
       - name: grating
+        datatype: [ascii,5]
+      - name: filter
         datatype: [ascii, 6]
-      - name: spatial_res
+      - name: spaxelsize
         datatype: float32
-      - name: wave_res
+      - name: spectralstep
         datatype: float32
-      - name: spatial_roi
+      - name: wavemin
         datatype: float32
-      - name: wave_roi
+      - name: wavemax
+        datatype: float32
+    ifucubepars_msn_table:
+      title: default IFU cube msn parameters table
+      fits_hdu: CUBEPAR_MSM
+      datatype:
+      - name: grating
+        datatype: [ascii,5]
+      - name: filter
+        datatype: [ascii,6]
+      - name: roispatial
+        datatype: float32
+      - name: roispectral
+        datatype: float32
+      - name: power
+        datatype: float32
+      - name: softrad
+        datatype: float32
+    ifucubepars_prism_wavetable:
+      title: default IFU cube prism wavetable
+      fits_hdu: MULTICHAN_PRISM_MSM
+      datatype:
+      - name: wavelength
+        datatype: float32
+      - name: roispatial
+        datatype: float32
+      - name: roispectral
+        datatype: float32
+      - name: power
+        datatype: float32
+      - name: softrad
+        datatype: float32
+    ifucubepars_med_wavetable:
+      title: default IFU cube med resolution wavetable
+      fits_hdu: MULTICHAN_MED_MSM
+      datatype:
+      - name: wavelength
+        datatype: float32
+      - name: roispatial
+        datatype: float32
+      - name: roispectral
+        datatype: float32
+      - name: power
+        datatype: float32
+      - name: softrad
+        datatype: float32
+    ifucubepars_high_wavetable:
+      title: default IFU cube high resolution wavetable
+      fits_hdu: MULTICHAN_HIGH_MSM
+      datatype:
+      - name: wavelength
+        datatype: float32
+      - name: roispatial
+        datatype: float32
+      - name: roispectral
+        datatype: float32
+      - name: power
+        datatype: float32
+      - name: softrad
         datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

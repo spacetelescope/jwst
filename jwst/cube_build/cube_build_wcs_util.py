@@ -230,7 +230,8 @@ def determine_scale(self):
 
         for i in range(number_gratings):
             this_gwa = self.list_par1[i]
-            a_scale, b_scale, w_scale = self.instrument_info.GetScale(this_gwa)
+            this_filter = self.list_par2[i]
+            a_scale, b_scale, w_scale = self.instrument_info.GetScale(this_gwa,this_filter)
             if a_scale < min_a:
                 min_a = a_scale
             if b_scale < min_b:
@@ -391,8 +392,7 @@ def find_footprint_NIRSPEC(self, input,flag_data):
 # If exists it makes it difficult to determine  ra range of IFU cube. 
 ##            print(' # ra values',ra.size,ra.size/2048)
             ra_wrap = wrap_ra(ra)
-                          
-##            print('ra wrap values',ra_wrap[0:10])
+
             a_min = np.nanmin(ra_wrap)
             a_max = np.nanmax(ra_wrap)
 
@@ -447,7 +447,6 @@ def set_geometry(self, footprint):
         ra_ave = circmean(ravalues*u.deg).value
         log.info('Ra average %f12.8', ra_ave)
 
-        
         self.Crval1 = ra_ave
         self.Crval2 = dec_ave
         xi_center,eta_center = coord.radec2std(self.Crval1, self.Crval2,ra_ave,dec_ave)

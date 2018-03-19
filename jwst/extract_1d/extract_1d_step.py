@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 
-import os
 from ..stpipe import Step
 from .. import datamodels
 from . import extract
+
 
 class Extract1dStep(Step):
     """
@@ -114,6 +114,7 @@ class Extract1dStep(Step):
         input_model.close()
 
         return result
+
 
 def extract_1d_correction(input):
     a = Extract1dStep()

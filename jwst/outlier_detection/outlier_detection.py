@@ -1,5 +1,6 @@
 """Primary code for performing outlier detection on JWST observations."""
 
+from functools import partial
 import numpy as np
 
 from stsci.image import median
@@ -9,6 +10,7 @@ from scipy import ndimage
 from .. import datamodels
 from ..resample import resample, gwcs_blot
 from ..resample.resample_utils import build_driz_weight
+from ..stpipe.step import Step
 
 import logging
 log = logging.getLogger(__name__)
@@ -67,6 +69,12 @@ class OutlierDetection:
         self.outlierpars.update(pars)
         # Insure that self.input_models always refers to a ModelContainer
         # representation of the inputs
+
+        # Define how file names are created
+        self.make_output_path = pars.get(
+            'make_output_path',
+            partial(Step._make_output_path, None)
+        )
 
     def _convert_inputs(self):
         """Convert input into datamodel required for processing.
@@ -178,11 +186,13 @@ class OutlierDetection:
             sdriz.do_drizzle()
             drizzled_models = sdriz.output_models
             for model in drizzled_models:
-                model.meta.filename = update_filename(model.meta.filename,
-                                                      self.resample_suffix)
                 if save_intermediate_results:
                     log.info("Writing out resampled exposures...")
-                    model.save(model.meta.filename)
+                    self.save_model(
+                        model,
+                        output_file=model.meta.filename,
+                        suffix=self.resample_suffix
+                    )
         else:
             drizzled_models = self.input_models
             for i in range(len(self.input_models)):
@@ -196,26 +206,32 @@ class OutlierDetection:
                                         init=drizzled_models[0].data.shape)
         median_model.update(drizzled_models[0])
         median_model.meta.wcs = drizzled_models[0].meta.wcs
-        base_filename = self.input_models[0].meta.filename
-        median_model.meta.filename = '_'.join(
-                        base_filename.split('_')[:2] + ['median.fits'])
 
         # Perform median combination on set of drizzled mosaics
         median_model.data = self.create_median(drizzled_models)
 
         if save_intermediate_results:
+            median_output_path = self.make_output_path(
+                basepath=self.input_models[0].meta.filename,
+                suffix='median'
+            )
             log.info("Writing out MEDIAN image to: {}".format(
-                                                median_model.meta.filename))
-            median_model.save(median_model.meta.filename)
+                median_output_path
+            ))
+            median_model.save(median_output_path)
 
         if pars['resample_data']:
             # Blot the median image back to recreate each input image specified
             # in the original input list/ASN/ModelContainer
             blot_models = self.blot_median(median_model)
             if save_intermediate_results:
+                log.info("Writing out BLOT images...")
                 for model in blot_models:
-                    log.info("Writing out BLOT images...")
-                    model.save(model.meta.filename)
+                    model_path = self.make_output_path(
+                        basename=model.meta.filename,
+                        suffix='blot'
+                    )
+                    model.save(model_path)
         else:
             # Median image will serve as blot image
             blot_models = datamodels.ModelContainer()
@@ -493,24 +509,3 @@ def _absolute_subtract(array, tmp, out):
     out = np.maximum(tmp, out)
     tmp = tmp * 0.
     return tmp, out
-
-
-def update_filename(filename, suffix):
-    """Update filename for datamodel with user-specified suffix.
-
-    Parameters
-    ==========
-    filename : str
-        Filename from datamodels metadata
-
-    suffix : str
-        Suffix (such as default 'i2d') to append to filename to define output
-        filename for product
-
-    """
-    if filename.endswith('.fits'):
-        # remove last suffix (prior to .fits)
-        filename = '_'.join(filename[:-5].split("-")[:-1])
-
-    filename += suffix
-    return filename

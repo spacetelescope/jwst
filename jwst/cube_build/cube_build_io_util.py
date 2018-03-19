@@ -69,46 +69,117 @@ def read_cubepars(self, instrument_info):
     if self.instrument == 'MIRI':
         ptab = datamodels.MiriIFUCubeParsModel(self.par_filename)
         number_bands = len(self.all_channel)
-
         # pull out the channels and subcahnnels that cover the data making up the cube
         for i in range(number_bands):
             this_channel = self.all_channel[i]
-            compare_channel = 'CH'+this_channel
+            #compare_channel = 'CH'+this_channel
             this_sub = self.all_subchannel[i]
-                # find the table entries for this combination
+            # find the table entries for this combination
             for tabdata in ptab.ifucubepars_table:
                 table_channel = tabdata['channel']
                 table_band = tabdata['band']
-                table_plt_scale = tabdata['PLTSCALE']
-                table_wresol = tabdata['WRESOL']
-                table_sroi = tabdata['SROI']
-                table_wroi = tabdata['WROI']
+                table_spaxelsize = tabdata['SPAXELSIZE']
+                table_spectralstep = tabdata['SPECTRALSTEP']
+                table_wavemin = tabdata['WAVEMIN']
+                table_wavemax = tabdata['WAVEMAX']
                 #match on this_channel and this_sub
-                if(compare_channel == table_channel and this_sub == table_band):
-                    instrument_info.SetSpatialScale(table_plt_scale,this_channel,this_sub)
-                    instrument_info.SetWaveRes(table_wresol,this_channel,this_sub)
-                    instrument_info.SetWaveROI(table_wroi,this_channel,this_sub)
-                    instrument_info.SetSpatialROI(table_sroi,this_channel,this_sub)
+                if(this_channel == table_channel and this_sub == table_band):
+                    instrument_info.SetSpatialSize(table_spaxelsize,this_channel,this_sub)
+                    instrument_info.SetSpectralStep(table_spectralstep,this_channel,this_sub)
+                    instrument_info.SetWaveMin(table_wavemin,this_channel,this_sub)
+                    instrument_info.SetWaveMax(table_wavemax,this_channel,this_sub)
 
+            for tabdata in ptab.ifucubepars_msn_table:
+                table_channel = tabdata['channel']
+                table_band = tabdata['band']
+                table_sroi = tabdata['ROISPATIAL']
+                table_wroi = tabdata['ROISPECTRAL']
+                table_power = tabdata['POWER']
+                table_softrad = tabdata['SOFTRAD']
+                #match on this_channel and this_sub
+                if(this_channel == table_channel and this_sub == table_band):
+                    instrument_info.SetSpatialROI(table_sroi,this_channel,this_sub)
+                    instrument_info.SetWaveROI(table_wroi,this_channel,this_sub)
+                    instrument_info.SetMSMPower(table_power,this_channel,this_sub)
+                    instrument_info.SetSoftRad(table_softrad,this_channel,this_sub)
+        for tabdata in ptab.ifucubepars_multichannel_wavetable:
+            table_wave = tabdata['WAVELENGTH']
+            table_sroi = tabdata['ROISPATIAL']
+            table_wroi = tabdata['ROISPECTRAL']
+            table_power = tabdata['POWER']
+            table_softrad = tabdata['SOFTRAD']
+            instrument_info.SetMultiChannelTable(table_wave,table_sroi,
+                                              table_wroi,table_power,
+                                              table_softrad)
+
+#        print('Done reading cubepar reference file')
     elif self.instrument == 'NIRSPEC':
         ptab = datamodels.NirspecIFUCubeParsModel(self.par_filename)
         number_gratings = len(self.all_grating)
 
         for i in range(number_gratings):
             this_gwa = self.all_grating[i]
+            this_filter = self.all_filter[i]
             for tabdata in ptab.ifucubepars_table:
-                table_grating = tabdata['grating']
-                table_filter = tabdata['filter']
-                table_plt_scale = tabdata['PLTSCALE']
-                table_wresol = tabdata['WRESOL']
-                table_sroi = tabdata['SROI']
-                table_wroi = tabdata['WROI']
-                if(this_gwa == table_grating):
-                    instrument_info.SetSpatialScale(table_plt_scale,this_gwa)
-                    instrument_info.SetWaveRes(table_wresol,this_gwa)
-                    instrument_info.SetWaveROI(table_wroi,this_gwa)
-                    instrument_info.SetSpatialROI(table_sroi,this_gwa)
+                table_grating = tabdata['DISPERSER']
+                table_filter = tabdata['FILTER']
+                table_spaxelsize = tabdata['SPAXELSIZE']
+                table_spectralstep = tabdata['SPECTRALSTEP']
+                table_wavemin = tabdata['WAVEMIN']
+                table_wavemax = tabdata['WAVEMAX']
+#                print(table_grating,table_filter,table_spaxelsize,table_spectralstep,
+#                      table_wavemin,table_wavemax)
 
+                if(this_gwa == table_grating and this_filter ==table_filter):
+                    instrument_info.SetSpatialSize(table_spaxelsize,this_gwa,this_filter)
+                    instrument_info.SetSpectralStep(table_spectralstep,this_gwa,this_filter)
+                    instrument_info.SetWaveMin(table_wavemin,this_gwa,this_filter)
+                    instrument_info.SetWaveMax(table_wavemax,this_gwa,this_filter)
+
+            for tabdata in ptab.ifucubepars_msn_table:
+                table_grating = tabdata['DISPERSER']
+                table_filter = tabdata['FILTER']
+                table_sroi = tabdata['ROISPATIAL']
+                table_wroi = tabdata['ROISPECTRAL']
+                table_power = tabdata['POWER']
+                table_softrad = tabdata['SOFTRAD']
+
+                if(this_gwa == table_grating and this_filter == table_filter):
+                    instrument_info.SetSpatialROI(table_sroi,this_gwa,this_filter)
+                    instrument_info.SetWaveROI(table_wroi,this_gwa,this_filter)
+                    instrument_info.SetMSMPower(table_power,this_gwa,this_filter)
+                    instrument_info.SetSoftRad(table_softrad,this_gwa,this_filter)
+
+        for tabdata in ptab.ifucubepars_prism_wavetable:
+            table_wave = tabdata['WAVELENGTH']
+            table_sroi = tabdata['ROISPATIAL']
+            table_wroi = tabdata['ROISPECTRAL']
+            table_power = tabdata['POWER']
+            table_softrad = tabdata['SOFTRAD']
+            instrument_info.SetPrismTable(table_wave,table_sroi,
+                                          table_wroi,table_power,
+                                          table_softrad)
+
+        for tabdata in ptab.ifucubepars_med_wavetable:
+            table_wave = tabdata['WAVELENGTH']
+            table_sroi = tabdata['ROISPATIAL']
+            table_wroi = tabdata['ROISPECTRAL']
+            table_power = tabdata['POWER']
+            table_softrad = tabdata['SOFTRAD']
+            instrument_info.SetMedTable(table_wave,table_sroi,
+                                          table_wroi,table_power,
+                                          table_softrad)
+
+        for tabdata in ptab.ifucubepars_high_wavetable:
+            table_wave = tabdata['WAVELENGTH']
+            table_sroi = tabdata['ROISPATIAL']
+            table_wroi = tabdata['ROISPECTRAL']
+            table_power = tabdata['POWER']
+            table_softrad = tabdata['SOFTRAD']
+            instrument_info.SetHighTable(table_wave,table_sroi,
+                                          table_wroi,table_power,
+                                          table_softrad)
+#        print('Done reading cubepar reference file')
 #_______________________________________________________________________
 
 # Read MIRI Resolution reference file

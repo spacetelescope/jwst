@@ -51,6 +51,13 @@ class Image3Pipeline(Pipeline):
 
         input_models = datamodels.open(input)
 
+        # If input is an association, set the output to the product
+        # name.
+        try:
+            self.output_file = input_models.meta.asn_table.products[0].name
+        except AttributeError:
+            pass
+
         # Check if input is single or multiple exposures
         is_container = isinstance(input_models, datamodels.ModelContainer)
         try:
@@ -74,7 +81,11 @@ class Image3Pipeline(Pipeline):
                 asn_id = input_models.meta.asn_table.asn_id
                 suffix_2c = '{}_{}'.format(asn_id, 'crf')
                 for model in input_models:
-                    self.save_model(model, suffix=suffix_2c)
+                    self.save_model(
+                        model,
+                        output_file=model.meta.filename,
+                        suffix=suffix_2c
+                    )
 
         self.log.info("Resampling images to final result...")
         result = self.resample(input_models)
