@@ -131,12 +131,9 @@ class IFUCubeData(object):
             if(num_files > 1):
                 raise IncorrectInput("For interpolation = area, only one file can" +
                                      " be used to created the cube")
-
-
             if(len(self.list_par1) > 1):
                 raise IncorrectInput("For interpolation = area, only a single channel" +
                                      " can be used to created the cube. Use --channel=# option")
-
             if(self.scale2 !=0):
                 raise AreaInterpolation("When using interpolation = area, the output" +
                                         " coordinate system is alpha-beta" +
@@ -447,10 +444,13 @@ class IFUCubeData(object):
 
             for i in range(number_gratings):
                 this_gwa = self.list_par1[i]
-                wroi = self.instrument_info.GetWaveRoi(this_gwa)
+                this_filter = self.list_par2[i]
+#                print('Grating and Filter',this_gwa,this_filter)
+
+                wroi = self.instrument_info.GetWaveRoi(this_gwa,this_filter)
                 if wroi < min_w:
                     min_w = wroi
-                sroi = self.instrument_info.GetSpatialRoi(this_gwa)
+                sroi = self.instrument_info.GetSpatialRoi(this_gwa,this_filter)
                 if sroi < min_s:
                     min_s = sroi
             roi = [min_w, min_s]
@@ -714,7 +714,7 @@ class IFUCubeData(object):
         IFUCube.meta.wcsinfo.ctype3 = 'WAVE'
         IFUCube.meta.wcsinfo.cunit3 = 'um'
         IFUCube.meta.wcsinfo.wcsaxes = 3
-        IFUCube.meta.wcsinfo.pc1_1 = 1
+        IFUCube.meta.wcsinfo.pc1_1 = -1
         IFUCube.meta.wcsinfo.pc1_2 = 0
         IFUCube.meta.wcsinfo.pc1_3 = 0
 
