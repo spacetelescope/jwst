@@ -421,7 +421,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
             #    quadrant,  xcen, ycen,  ymin, max
 
             margin = 0.05
-            print('n_main_shutter', n_main_shutter)
+
             # There are no main shutters, all are background
             if n_main_shutter == 0:
                 jmin = min([s['shutter_column'] for s in slitlets_sid])
