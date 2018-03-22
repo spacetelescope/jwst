@@ -173,7 +173,7 @@ def ifu(input_model, reference_files):
         # in the whole pipeline) to microns (which is the expected output)
         #
         # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
-
+        slit2msa = (Mapping((0, 1, 2, 2)) | slit2msa).rename('slit2msa')
         pipeline = [(det, dms2detector),
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
@@ -187,7 +187,6 @@ def ifu(input_model, reference_files):
         # convert to microns if the pipeline ends earlier
         ## slit2msa = (Mapping((0, 1, 2, 3, 3)) | slit2msa).rename('slit2msa')
 
-        slit2msa = (Mapping((0, 1, 2, 2)) | slit2msa).rename('slit2msa')
         pipeline = [(det, dms2detector),
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
