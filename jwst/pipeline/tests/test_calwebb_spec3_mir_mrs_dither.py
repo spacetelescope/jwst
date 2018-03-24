@@ -7,9 +7,7 @@ file structure. As such the environmental variable TEST_BIGDATA points to
 the top of the example data tree.
 """
 
-from glob import glob
 from os import path
-import pytest
 
 from .helpers import (
     SCRIPT_DATA_PATH,
@@ -17,7 +15,6 @@ from .helpers import (
     mk_tmp_dirs,
     require_bigdata,
     runslow,
-    update_asn_basedir,
 )
 
 from ...associations import load_asn
@@ -35,7 +32,9 @@ def test_run_cube_build_only(mk_tmp_dirs):
     """
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = path.join(DATAPATH, 'level2b', 'cube_build_4dither_495_asn.json')
+    asn_path = path.join(
+        DATAPATH, 'level2b', 'cube_build_4dither_495_asn.json'
+    )
 
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
@@ -65,7 +64,9 @@ def test_run_extract_1d_only(mk_tmp_dirs):
     """
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
-    asn_path = path.join(DATAPATH, 'cube_build_4dither_495_asn.json')
+    asn_path = path.join(
+        DATAPATH, 'level2b', 'cube_build_4dither_495_asn.json'
+    )
 
     args = [
         path.join(SCRIPT_DATA_PATH, 'calwebb_spec3_default.cfg'),
