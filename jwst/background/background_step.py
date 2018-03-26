@@ -14,8 +14,7 @@ class BackgroundStep(Step):
     """
 
     # These reference files are only used for WFSS/GRISM data.
-    # xxx can't be used yet:
-    # xxx reference_file_types = ["wfssbkg", "wavelengthrange"]
+    reference_file_types = ["wfssbkg", "wavelengthrange"]
 
     def process(self, input, bkg_list):
 
@@ -50,7 +49,7 @@ class BackgroundStep(Step):
                 # Uncomment this block if reference files are available.
                 bkg_filename = self.get_reference_file(input_model, "wfssbkg")
                 wl_range_name = self.get_reference_file(input_model, "wavelengthrange")
-                
+
                 # Do the background subtraction for WFSS/GRISM data
                 result = background_sub.subtract_wfss_bkg(input_model, bkg_filename, wl_range_name)
                 result.meta.cal_step.back_sub = 'COMPLETE'
