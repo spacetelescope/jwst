@@ -156,6 +156,7 @@ def ifu(input_model, reference_files):
     slit2msa = ifuslit_to_msa(slits, reference_files)
 
     det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
+    slit2msa = (Mapping((0, 1, 2, 2)) | slit2msa).rename('slit2msa')
     if input_model.meta.instrument.filter != 'OPAQUE':
         # MSA to OTEIP transform
         msa2oteip = ifu_msa_to_oteip(reference_files)
@@ -173,7 +174,7 @@ def ifu(input_model, reference_files):
         # in the whole pipeline) to microns (which is the expected output)
         #
         # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "world"
-        slit2msa = (Mapping((0, 1, 2, 2)) | slit2msa).rename('slit2msa')
+
         pipeline = [(det, dms2detector),
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
