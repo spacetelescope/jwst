@@ -306,8 +306,8 @@ def get_object_info(catalog_name=None):
 
     Parameters
     ----------
-    catalog_name : str
-        The name of the photutils catalog
+    catalog_name : str, astropy.table.table.Qtable
+        The name of the photutils catalog or its quantities table 
 
     Returns
     -------
@@ -321,7 +321,12 @@ def get_object_info(catalog_name=None):
     if catalog_name is None:
         raise TypeError("Expected name of the catalog file")
     objects = []
-    catalog = QTable.read(catalog_name, format='ascii.ecsv')
+    if isinstance(catalog, (str)):
+        catalog = QTable.read(catalog_name, format='ascii.ecsv')
+    elif isinstance(catalog, astropy.table.table.QTable):
+        pass
+    else:
+        raise TypeError("Need to input name of catalog or astropy.table.table.QTable instance")
 
     # validate that the expected columns are there
     # id is just a bad name for a param, but it's used in the catalog
