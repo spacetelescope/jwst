@@ -52,15 +52,22 @@ class DataTypes(object):
         # IF a single model or a single file  is passed in then
         # self.filename & self.input_model hold the values for this singe dataset
         self.InputType  = ''
-        if isinstance(input, datamodels.IFUImageModel):
+
+        print('**************',type(input))
+        input_try = datamodels.open(input)
+        print(type(input_try))
+
+#        sys.exit("stop")
+        if isinstance(input_try, datamodels.IFUImageModel):
 #            print('this is a single file passed as a Model')
             # It's a single image that's been passed in as a model
             # input is a model
-            self.filenames.append(input.meta.filename)
-            self.input_models.append(input)
+            self.filenames.append(input_try.meta.filename)
+            self.input_models.append(input_try)
             self.input_type = 'Model'
             self.data_type = 'singleton'
             self.output_name = self.build_product_name(self.filenames[0])
+            detector2v23 = input_try.meta.wcs.get_transform('detector', 'v2v3')
 
         elif isinstance(input,datamodels.ModelContainer):
 #            print('this is a model container type')
@@ -70,9 +77,13 @@ class DataTypes(object):
             if not single:  # find the name of the output file from the association
                 with datamodels.ModelContainer(input) as input_model:
                     self.output_name =input_model.meta.asn_table.products[0].name
-
             for i in range(len(input)):
-                model = input[i]
+                # check if input data is an IFUImageModel
+                if not  isinstance(input[i], datamodels.IFUImageModel):
+                    serror = str(type(input[i]))
+                    raise NotIFUImageModel("Input data is not a IFUImageModel, instead it is %s",serror)
+
+                model = datamodels.IFUImageModel(input[i])
                 self.input_models.append(model)
                 self.filenames.append(model.meta.filename)
 #            print('number of models',len(self.filenames))
@@ -91,6 +102,12 @@ class DataTypes(object):
                     self.data_type = 'multi'
                     self.output_name =  asn_table['products'][0]['name']
                     for m in asn_table['products'][iproduct]['members']:
+
+                        mtype = type(datamodels.open(m['expname']))
+                        if not  isinstance(mtype, datamodels.IFUImageModel):
+                            serror = str(mtype)
+                            raise NotIFUImageModel("Input data is not a IFUImageModel, instead it is %s",serror)
+
                         self.filenames.append(m['expname'])
                         self.input_models.append(datamodels.IFUImageModel(m['expname']))
             except:
@@ -99,6 +116,11 @@ class DataTypes(object):
                 self.input_type = 'File'
                 self.data_type = 'singleton'
                 self.filenames.append(input)
+                mtype = type(datamodels.open(input))
+                if not  isinstance(mtype, datamodels.IFUImageModel):
+                    serror = str(mtype)
+                    raise NotIFUImageModel("Input data is not a IFUImageModel, instead it is %s",serror)
+
                 self.input_models.append(datamodels.IFUImageModel(input))
                 self.output_name = self.build_product_name(self.filenames[0])
 
@@ -164,4 +186,6 @@ class DataTypes(object):
     def get_outputs(self, product=0):
         return self.asn_table['products'][product]['name']
 
-
+# Raise Exceptions 
+class NotIFUImageModel(Exception):
+    pass

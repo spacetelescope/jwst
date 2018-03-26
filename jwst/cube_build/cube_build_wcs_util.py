@@ -295,7 +295,7 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
     xstart, xend = instrument_info.GetMIRISliceEndPts(this_channel)
     y, x = np.mgrid[:1024, xstart:xend]
 
-
+    print('in cube_build_wcs_utils.find_footprint_MIRI',type(input))
     coord1 = np.zeros(y.shape)
     coord2 = np.zeros(y.shape)
     lam = np.zeros(y.shape)
