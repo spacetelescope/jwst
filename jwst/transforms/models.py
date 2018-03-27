@@ -283,9 +283,9 @@ class RefractionIndexFromPrism(Model):
         super(RefractionIndexFromPrism, self).__init__(prism_angle=prism_angle, name=name)
 
     def evaluate(self, alpha_in, beta_in, alpha_out, prism_angle):
-        sangle = math.sin(prism_angle)
-        cangle = math.cos(prism_angle)
-        nsq = ((alpha_out + alpha_in * (1 - 2 * sangle**2)) / (2 * sangle * cangle)) **2 + \
+        sangle = (math.sin(prism_angle)) ** 2
+        cangle = (math.cos(prism_angle)) ** 2
+        nsq = ((alpha_out + alpha_in * (1 - 2 * sangle)) / (2 * sangle * cangle)) **2 + \
             alpha_in ** 2 + beta_in ** 2
         return np.sqrt(nsq)
 
