@@ -179,9 +179,14 @@ def test_nirspec_ifu_against_esa():
     cond = np.logical_and(slit1 < .5, slit1 > -.5)
     y, x = cond.nonzero()
     cor = crval - np.array(crpix)
+    """
+    Issue #1781
     # 1-based coordinates full frame coordinates
     y = y + cor[1] + 1
     x = x + cor[0] + 1
+    """
+    y = y + cor[1]
+    x = x + cor[0]
     sca2world = w0.get_transform('sca', 'msa_frame')
     _, slit_y, lp = sca2world(x, y)
 
@@ -236,9 +241,14 @@ def test_nirspec_fs_esa():
     cond = np.logical_and(slit1 < .5, slit1 > -.5)
     y, x = cond.nonzero()
     cor = crval - np.array(crpix)
+    """
+    Issue #1781
     # 1-based coordinates full frame coordinates
     y = y + cor[1] + 1
     x = x + cor[0] + 1
+    """
+    y = y + cor[1]
+    x = x + cor[0]
     sca2world = w1.get_transform('sca', 'v2v3')
     ra, dec, lp = sca2world(x, y)
     # w1 now outputs in microns hence the 1e6 factor
