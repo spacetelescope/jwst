@@ -36,8 +36,14 @@ class GuiderPipeline(Pipeline):
 
         log.info('Starting calwebb_guider ...')
 
-        # Open the input
-        input = datamodels.GuiderRawModel(input) 
+        # Open the input:
+        # If the first two steps are set to be skipped, assume
+        # they've been run before and open the input as a Cal
+        # model, appropriate for input to flat_field
+        if (self.dq_init.skip and self.guider_cds.skip):
+            input = datamodels.GuiderCalModel(input)
+        else:
+            input = datamodels.GuiderRawModel(input) 
 
         # Apply the steps
         input = self.dq_init(input)  
