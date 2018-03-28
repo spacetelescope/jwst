@@ -57,10 +57,7 @@ def setup_wcs(self):
     """
 
 #________________________________________________________________________________
-    if self.cube_type == 'File' or self.cube_type == 'ASN' :
-        log.info('Building Cube %s ', self.output_name)
-
-        # Scale is 3 dimensions and is determined from values held in  instrument_info.GetScale
+# Scale is 3 dimensions and is determined from values held in  instrument_info.GetScale
     scale = determine_scale(self)
     self.Cdelt1 = scale[0]
     self.Cdelt2 = scale[1]
@@ -295,7 +292,7 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
     xstart, xend = instrument_info.GetMIRISliceEndPts(this_channel)
     y, x = np.mgrid[:1024, xstart:xend]
 
-    print('in cube_build_wcs_utils.find_footprint_MIRI',type(input))
+
     coord1 = np.zeros(y.shape)
     coord2 = np.zeros(y.shape)
     lam = np.zeros(y.shape)

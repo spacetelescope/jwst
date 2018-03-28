@@ -46,83 +46,37 @@ class DataTypes(object):
         self.input_models = []
         self.filenames = []
         self.output_name = None
-        self.data_type = None # singleton, multi
-        self.input_type = None # Model, File, ASN, Container
 
-        # IF a single model or a single file  is passed in then
-        # self.filename & self.input_model hold the values for this singe dataset
-        self.InputType  = ''
-
-        print('**************',type(input))
+        # open the input with datamodels
+        # if input is filename or model when it is openned it is a model
+        # if input if an assocation name or ModelContainer then it is openned as a container
+#        print('***input type***',type(input))
         input_try = datamodels.open(input)
-        print(type(input_try))
+#        print('input_try',type(input_try))
 
-#        sys.exit("stop")
         if isinstance(input_try, datamodels.IFUImageModel):
-#            print('this is a single file passed as a Model')
+#            print('this is a single file or Model ')
             # It's a single image that's been passed in as a model
             # input is a model
             self.filenames.append(input_try.meta.filename)
             self.input_models.append(input_try)
-            self.input_type = 'Model'
-            self.data_type = 'singleton'
             self.output_name = self.build_product_name(self.filenames[0])
-            detector2v23 = input_try.meta.wcs.get_transform('detector', 'v2v3')
 
-        elif isinstance(input,datamodels.ModelContainer):
+        elif isinstance(input_try, datamodels.ModelContainer):
 #            print('this is a model container type')
-            self.input_type='Container'
-            self.data_type = 'multi'
             self.output_name  = 'Temp'
             if not single:  # find the name of the output file from the association
-                with datamodels.ModelContainer(input) as input_model:
+                with datamodels.ModelContainer(input_try) as input_model:
                     self.output_name =input_model.meta.asn_table.products[0].name
-            for i in range(len(input)):
+            for i in range(len(input_try)):
                 # check if input data is an IFUImageModel
-                if not  isinstance(input[i], datamodels.IFUImageModel):
-                    serror = str(type(input[i]))
+                if not  isinstance(input_try[i], datamodels.IFUImageModel):
+                    serror = str(type(input_try[i]))
                     raise NotIFUImageModel("Input data is not a IFUImageModel, instead it is %s",serror)
 
-                model = datamodels.IFUImageModel(input[i])
+                model = datamodels.IFUImageModel(input_try[i])
                 self.input_models.append(model)
                 self.filenames.append(model.meta.filename)
-#            print('number of models',len(self.filenames))
-
-        elif isinstance(input, str):
-            try:
-                # The name of an association table
-                # for associations - use Association.load
-                # in cube_build_io.SetFileTable - set up:
-                # input_model & filename lists
-                iproduct = 0 # only one product found in association table
-                with open(input, 'r') as input_fh:
-#                    print('read in association table')
-                    asn_table = load_asn(input_fh)
-                    self.input_type = 'ASN'
-                    self.data_type = 'multi'
-                    self.output_name =  asn_table['products'][0]['name']
-                    for m in asn_table['products'][iproduct]['members']:
-
-                        mtype = type(datamodels.open(m['expname']))
-                        if not  isinstance(mtype, datamodels.IFUImageModel):
-                            serror = str(mtype)
-                            raise NotIFUImageModel("Input data is not a IFUImageModel, instead it is %s",serror)
-
-                        self.filenames.append(m['expname'])
-                        self.input_models.append(datamodels.IFUImageModel(m['expname']))
-            except:
-                # The name of a single image file
-#                print(' this is a single file  read in filename')
-                self.input_type = 'File'
-                self.data_type = 'singleton'
-                self.filenames.append(input)
-                mtype = type(datamodels.open(input))
-                if not  isinstance(mtype, datamodels.IFUImageModel):
-                    serror = str(mtype)
-                    raise NotIFUImageModel("Input data is not a IFUImageModel, instead it is %s",serror)
-
-                self.input_models.append(datamodels.IFUImageModel(input))
-                self.output_name = self.build_product_name(self.filenames[0])
 
         else:
             raise TypeError
@@ -141,6 +95,8 @@ class DataTypes(object):
 
         if output_dir !=None :
             self.output_name= output_dir + '/' + self.output_name
+
+#        print('*****************',self.output_name)
 
     def build_product_name(self, filename):
         indx = filename.rfind('.fits')

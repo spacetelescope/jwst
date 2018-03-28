@@ -25,18 +25,14 @@ class CubeData(object):
 # wcs, data, reference data
 
     def __init__(self, 
-                 cube_type,
                  input_models,
                  input_filenames,
-                 data_type,
                  par_filename,
                  resol_filename,
                  **pars):
 
-        self.cube_type = cube_type
         self.input_models = input_models
         self.input_filenames = input_filenames
-        self.data_type = data_type
         self.par_filename = par_filename
         self.resol_filename = resol_filename
         
@@ -91,8 +87,6 @@ class CubeData(object):
 # Check if there is an offset list (this ra,dec dither offset list will probably
 # only be used in testing)
 
-        if self.data_type == 'singleton':
-            self.offset_list = 'NA'
         if self.offset_list != 'NA':
             log.info('Going to read in dither offset list')
             cube_build_io_util.read_offset_file(self)

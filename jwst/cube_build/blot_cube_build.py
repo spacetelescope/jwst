@@ -73,11 +73,6 @@ class CubeBlot(object):
         self.lam_centers = self.cube_wave[:,0,0]
         
 
-#        self.cube_ra = np.reshape(cube_pos1,num)
-#        self.cube_dec = np.reshape(cube_pos2,num)
-#        self.cube_wave = np.reshape(cube_pos3,num)
-#        self.cube_flux = np.reshape(flux,num)
-#        print('size of input cube',cube_pos1.shape,cube_pos2.shape,cube_pos3.shape)
 # initialize blotted images to be original input images
 
         self.input_models = input_models
@@ -137,7 +132,7 @@ class CubeBlot(object):
                 pixel_mask = np.full(model.shape,False,dtype=bool)
                 pixel_mask[:,xstart:xend] = True
 
-            elif self.instrument =='NIRISPEC':
+            elif self.instrument =='NIRSPEC':
                 blot.meta.filename = filename[:indx] + '_blot.fits' #set output name
                 ydet,xdet=np.mgrid[:2048,:2048]
 
