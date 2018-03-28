@@ -664,7 +664,8 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
         lgreq = lgreq | Scale(1e6)
 
     lam_cen = 0.5 * (input_model.meta.wcsinfo.waverange_end -
-                     input_model.meta.wcsinfo.waverange_start)
+                     input_model.meta.wcsinfo.waverange_start
+                     ) + input_model.meta.wcsinfo.waverange_start
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     mask = mask_slit(ymin, ymax)
 
@@ -1232,12 +1233,12 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None):
     msa2gwa_model : `astropy.modeling.core.Model`
         The transform from the MSA to the GWA.
     """
-
-    dy = np.linspace(-.55, .55, 1000)
+    nstep = 1000
+    dy = np.linspace(-.55, .55, nstep)
     dx = np.zeros(dy.shape)
     if lam_cen is not None:
         # IFU case where IFUPOST has a wavelength dependent distortion
-        cosin_grating_k = msa2gwa_model(dx, dy, [lam_cen] * 1000)
+        cosin_grating_k = msa2gwa_model(dx, dy, [lam_cen] * nstep)
     else:
         cosin_grating_k = msa2gwa_model(dx, dy)
     fitter = fitting.LinearLSQFitter()
