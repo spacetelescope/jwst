@@ -369,7 +369,15 @@ def _save_extra_fits(hdulist, tree):
 
 
 def _save_history(hdulist, tree):
-    history = tree.get('history', [])
+    if 'history' not in tree:
+        return
+
+    # Support the older way of representing ASDF history entries
+    if isinstance(tree['history'], list):
+        history = tree['history']
+    else:
+        history = tree['history'].get('entries', [])
+
     for i in range(len(history)):
         # There is no guarantee the user has added proper HistoryEntry records
         if not isinstance(history[i], HistoryEntry):

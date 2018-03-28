@@ -122,7 +122,8 @@ allOf:
       fits_hdu: VAR_RNOISE
       default: 0.0
       datatype: float32
-- $ref: bunit.schema.yaml
 - $ref: pathlosscorr.schema.yaml
+- $ref: bunit.schema.yaml
+- $ref: photometry.schema.yaml
 - $ref: wcsinfo.schema.yaml
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

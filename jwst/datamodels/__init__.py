@@ -28,9 +28,8 @@
 # DAMAGE.
 
 
-__version__ = '0.8.0'
+__version__ = '0.9.1'
 
-import numpy as np
 from os.path import basename
 from astropy.io import registry
 
@@ -47,10 +46,8 @@ from .cube import CubeModel
 from .dark import DarkModel
 from .darkMIRI import DarkMIRIModel
 from .drizpars import DrizParsModel, NircamDrizParsModel, MiriImgDrizParsModel
-from .outlierpars import OutlierParsModel, NircamOutlierParsModel, MiriImgOutlierParsModel
 from .drizproduct import DrizProductModel
-from .ifucubepars import IFUCubeParsModel, NirspecIFUCubeParsModel, MiriIFUCubeParsModel
-from .throughput import ThroughputModel
+from .extract1dimage import Extract1dImageModel
 from .flat import FlatModel
 from .fringe import FringeModel
 from .gain import GainModel
@@ -58,6 +55,7 @@ from .gls_rampfit import GLS_RampFitModel
 from .guiderraw import GuiderRawModel
 from .guidercal import GuiderCalModel
 from .ifucube import IFUCubeModel
+from .ifucubepars import IFUCubeParsModel, NirspecIFUCubeParsModel, MiriIFUCubeParsModel
 from .ifuimage import IFUImageModel
 from .image import ImageModel
 from .ipc import IPCModel
@@ -68,10 +66,12 @@ from .linearity import LinearityModel
 from .mask import MaskModel
 from .miri_ramp import MIRIRampModel
 from .multiexposure import MultiExposureModel
+from .multiextract1d import MultiExtract1dImageModel
 from .multiprod import MultiProductModel
 from .multislit import MultiSlitModel
 from .multispec import MultiSpecModel
 from .nirspec_flat import NRSFlatModel, NirspecFlatModel, NirspecQuadFlatModel
+from .outlierpars import OutlierParsModel, NircamOutlierParsModel, MiriImgOutlierParsModel
 from .pathloss import PathlossModel
 from .persat import PersistenceSatModel
 from .photom import PhotomModel, FgsPhotomModel, NircamPhotomModel, NirissPhotomModel
@@ -93,10 +93,12 @@ from .source_container import SourceModelContainer
 from .spec import SpecModel
 from .straylight import StrayLightModel
 from .superbias import SuperBiasModel
+from .throughput import ThroughputModel
 from .trapdensity import TrapDensityModel
 from .trappars import TrapParsModel
 from .trapsfilled import TrapsFilledModel
 from .wcs_ref_models import *
+from .wfssbkg import WfssBkgModel
 from .util import open
 
 
@@ -110,6 +112,7 @@ __all__ = [
     'DisperserModel', 'DistortionModel', 'DistortionMRSModel',
     'DrizProductModel',
     'DrizParsModel', 'NircamDrizParsModel', 'MiriImgDrizParsModel',
+    'Extract1dImageModel',
     'FilteroffsetModel',
     'FlatModel', 'NRSFlatModel', 'NirspecFlatModel', 'NirspecQuadFlatModel',
     'FOREModel', 'FPAModel',
@@ -120,25 +123,27 @@ __all__ = [
     'IFUFOREModel', 'IFUImageModel', 'IFUPostModel', 'IFUSlicerModel',
     'ImageModel', 'IPCModel', 'IRS2Model', 'LastFrameModel', 'Level1bModel',
     'LinearityModel', 'MaskModel', 'ModelContainer', 'MSAModel',
-    'MultiExposureModel', 'MultiProductModel', 'MultiSlitModel',
+    'MultiExposureModel', 'MultiExtract1dImageModel', 'MultiProductModel', 'MultiSlitModel',
     'MultiSpecModel', 'OTEModel',
+    'NIRCAMGrismModel','NIRISSGrismModel',
     'OutlierParsModel', 'MiriImgOutlierParsModel', 'NircamOutlierParsModel',
     'PathlossModel',
     'PersistenceSatModel',
     'PixelAreaModel', 'NirspecSlitAreaModel', 'NirspecMosAreaModel', 'NirspecIfuAreaModel',
-    'ThroughputModel',
     'PhotomModel', 'FgsPhotomModel', 'MiriImgPhotomModel', 'MiriMrsPhotomModel',
-    'NIRCAMGrismModel','NIRISSGrismModel',
     'NircamPhotomModel', 'NirissPhotomModel', 'NirspecPhotomModel', 'NirspecFSPhotomModel',
+    'PsfMaskModel',
     'QuadModel', 'RampModel', 'MIRIRampModel',
     'RampFitOutputModel', 'ReadnoiseModel',
     'ReferenceFileModel', 'ReferenceCubeModel', 'ReferenceImageModel', 'ReferenceQuadModel',
     'RegionsModel', 'ResetModel',
     'ResolutionModel', 'MiriResolutionModel',
     'RSCDModel', 'SaturationModel', 'SlitDataModel', 'SlitModel', 'SpecModel',
+    'SourceModelContainer',
     'StrayLightModel', 'SuperBiasModel', 'SpecwcsModel',
+    'ThroughputModel',
     'TrapDensityModel', 'TrapParsModel', 'TrapsFilledModel',
-    'WavelengthrangeModel', 'WaveCorrModel']
+    'WavelengthrangeModel', 'WaveCorrModel', 'WfssBkgModel']
 
 # Initialize the astropy.io registry,
 # but only the first time this module is called

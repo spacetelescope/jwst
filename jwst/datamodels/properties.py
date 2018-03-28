@@ -3,6 +3,7 @@
 import copy
 import numpy as np
 import jsonschema
+from astropy.io import fits
 
 from astropy.utils.compat.misc import override__dir__
 
@@ -27,19 +28,38 @@ def _cast(val, schema):
             # Handle lazy array
             if isinstance(val, ndarray.NDArrayType):
                 val = val._make_array()
-            val = util.gentle_asarray(
-                val, ndarray.asdf_datatype_to_numpy_dtype(schema['datatype']))
+
+            dtype = ndarray.asdf_datatype_to_numpy_dtype(schema['datatype'])
+            val = util.gentle_asarray(val, dtype)
+            if dtype.fields is not None:
+                val = _as_fitsrec(val)
+
         if 'ndim' in schema and len(val.shape) != schema['ndim']:
             raise ValueError(
                 "Array has wrong number of dimensions.  Expected {0}, got {1}".format(
                     schema['ndim'], len(val.shape)))
+
         if 'max_ndim' in schema and len(val.shape) > schema['max_ndim']:
             raise ValueError(
                 "Array has wrong number of dimensions.  Expected <= {0}, got {1}".format(
                     schema['max_ndim'], len(val.shape)))
+
         if isinstance(val, np.generic) and np.isscalar(val):
             val = np.asscalar(val)
     return val
+
+
+def _as_fitsrec(val):
+    """
+    Convert a numpy record into a fits record if it is not one already
+    """
+    if isinstance(val, fits.FITS_rec):
+        return val
+    else:
+        coldefs = fits.ColDefs(val)
+        fits_rec = fits.FITS_rec(val)
+        fits_rec._coldefs = coldefs
+        return fits_rec
 
 
 def _make_default_array(attr, schema, ctx):

@@ -11,12 +11,42 @@ allOf:
         datatype: [ascii,3]
       - name: band
         datatype: [ascii, 6]
-      - name: spatial_res
+      - name: spaxelsize
         datatype: float32
-      - name: wave_res
+      - name: spectralstep
         datatype: float32
-      - name: spatial_roi
+      - name: wavemin
         datatype: float32
-      - name: wave_roi
+      - name: wavemax
+        datatype: float32
+    ifucubepars_msn_table:
+      title: default IFU cube msn parameters table
+      fits_hdu: CUBEPAR_MSM
+      datatype:
+      - name: channel
+        datatype: [ascii,3]
+      - name: band
+        datatype: [ascii, 6]
+      - name: roispatial
+        datatype: float32
+      - name: roispectral
+        datatype: float32
+      - name: power
+        datatype: float32
+      - name: softrad
+        datatype: float32
+    ifucubepars_multichannel_wavetable:
+      title: default IFU cube multi channel wavetable
+      fits_hdu: MULTICHANNEL_MSM
+      datatype:
+      - name: wavelength
+        datatype: float32
+      - name: roispatial
+        datatype: float32
+      - name: roispectral
+        datatype: float32
+      - name: power
+        datatype: float32
+      - name: softrad
         datatype: float32
 $schema: http://stsci.edu/schemas/fits-schema/fits-schema

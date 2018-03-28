@@ -171,20 +171,28 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         opt_elem = association._get_opt_element()
 
-        try:
-            exposure = association._get_exposure()
-        except AssociationNotAConstraint:
-            exposure = ''
-        else:
+        exposure = association._get_exposure()
+        if len(exposure):
             exposure = '-' + exposure
 
-        product_name = 'jw{}-{}_{}_{}_{}'.format(
-            association.data['program'],
-            association.acid.id,
-            target,
-            instrument,
-            opt_elem,
-            exposure
+        subarray = association._get_subarray()
+        if len(subarray):
+            subarray = '-' + subarray
+
+        product_name = (
+            'jw{program}-{acid}'
+            '_{target}'
+            '_{instrument}'
+            '_{opt_elem}{subarray}'
+        )
+        product_name = product_name.format(
+            program=association.data['program'],
+            acid=association.acid.id,
+            target=target,
+            instrument=instrument,
+            opt_elem=opt_elem,
+            subarray=subarray,
+            exposure=exposure
         )
 
         return product_name.lower()

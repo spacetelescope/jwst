@@ -32,6 +32,28 @@ def mk_tmp_dirs():
         os.chdir(old_path)
 
 
+def test_make_output_path():
+    """Test the basic make_output_file method"""
+
+    step = Step()
+    output_path = step.make_output_path('junk_uncal.fits')
+    assert output_path == 'junk_step.fits'
+
+    output_path = step.make_output_path('junk_uncal.fits', idx=1)
+    assert output_path == 'junk_1_step.fits'
+
+    step.output_ext = '.asdf'
+    output_path = step.make_output_path('junk_uncal')
+    assert output_path == 'junk_step.asdf'
+
+    output_path = step.make_output_path('junk_uncal.fits', ext='asdf')
+    assert output_path == 'junk_step.asdf'
+
+    step.output_dir = '/junk'
+    output_path = step.make_output_path('junk_uncal.fits')
+    assert output_path == join(step.output_dir, 'junk_step.fits')
+
+
 def test_save_step_default(mk_tmp_dirs):
     """Default save should be current working directory"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
@@ -61,7 +83,26 @@ def test_save_step_withoutput(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    assert isfile(output_file)
+    output_path, output_ext = splitext(output_file)
+    assert isfile(output_path + '_stepwithmodel' + output_ext)
+
+
+def test_save_step_withoutputsuffix(mk_tmp_dirs):
+    """Default save should be current working directory"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    output_file = 'junk_rate.fits'
+    actual_output_file = 'junk_stepwithmodel.fits'
+
+    args = [
+        'jwst.stpipe.tests.steps.StepWithModel',
+        data_fn_path,
+        '--output_file=' + output_file
+    ]
+
+    Step.from_cmdline(args)
+
+    assert isfile(actual_output_file)
 
 
 def test_save_step_withdir(mk_tmp_dirs):
@@ -72,6 +113,27 @@ def test_save_step_withdir(mk_tmp_dirs):
         'jwst.stpipe.tests.steps.StepWithModel',
         data_fn_path,
         '--output_dir=' + tmp_data_path
+    ]
+
+    Step.from_cmdline(args)
+
+    output_fn_path = join(
+        tmp_data_path,
+        data_name + '_stepwithmodel' + data_ext,
+    )
+    assert isfile(output_fn_path)
+
+
+def test_save_step_withdir_environment(mk_tmp_dirs):
+    """Save to specified folder"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    os.environ['TSSWE_OUTPATH'] = tmp_data_path
+
+    args = [
+        'jwst.stpipe.tests.steps.StepWithModel',
+        data_fn_path,
+        '--output_dir=$TSSWE_OUTPATH'
     ]
 
     Step.from_cmdline(args)
@@ -98,11 +160,59 @@ def test_save_step_withdir_withoutput(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
+    output_path, output_ext = splitext(output_file)
     output_fn_path = join(
         tmp_data_path,
-        output_file
+        output_path + '_stepwithmodel' + output_ext
     )
     assert isfile(output_fn_path)
+
+
+def test_save_container(mk_tmp_dirs):
+    """Step with output_use_model"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    args = [
+        'jwst.stpipe.tests.steps.StepWithContainer',
+        data_fn_path,
+    ]
+
+    Step.from_cmdline(args)
+
+    assert isfile('flat_0_stepwithcontainer.fits')
+    assert isfile('flat_1_stepwithcontainer.fits')
+
+
+def test_save_container_usemodel(mk_tmp_dirs):
+    """Step with output_use_model"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    args = [
+        'jwst.stpipe.tests.steps.StepWithContainer',
+        data_fn_path,
+        '--output_use_model=true'
+    ]
+
+    Step.from_cmdline(args)
+
+    assert isfile('swc_model1_stepwithcontainer.fits')
+    assert isfile('swc_model2_stepwithcontainer.fits')
+
+
+def test_save_container_withfile(mk_tmp_dirs):
+    """Step with output_use_model"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    args = [
+        'jwst.stpipe.tests.steps.StepWithContainer',
+        data_fn_path,
+        '--output_file=tscwf.fits',
+    ]
+
+    Step.from_cmdline(args)
+
+    assert isfile('tscwf_0_stepwithcontainer.fits')
+    assert isfile('tscwf_1_stepwithcontainer.fits')
 
 
 def test_save_pipeline_default(mk_tmp_dirs):
@@ -125,10 +235,17 @@ def test_save_pipeline_default(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    output_pipeline_fn_path = data_name + '_processed_savepipeline' + data_ext
-    output_stepsave_fn_path = data_name + '_processed' + data_ext
-    assert isfile(output_pipeline_fn_path)
-    assert isfile(output_stepsave_fn_path)
+    # Output from the explicit `SaveStep.save_model`
+    desired = data_name + '_processed' + data_ext
+    assert isfile(desired)
+
+    # Output from the Step's default saving of `SaveStep`
+    desired = data_name + '_savestep' + data_ext
+    assert isfile(desired)
+
+    # Output from the Steps' default saving of `SavePipeline`
+    desired = data_name + '_savepipeline' + data_ext
+    assert isfile(desired)
 
 
 def test_save_pipeline_withdir(mk_tmp_dirs):
@@ -173,13 +290,23 @@ def test_save_substep_withdir(mk_tmp_dirs):
 
     Step.from_cmdline(args)
 
-    output_pipeline_fn_path = data_name + '_processed_savepipeline' + data_ext
-    output_stepsave_fn_path = join(
+    # Output from the explicit `SaveStep.save_model`
+    desired = join(
         tmp_data_path,
         data_name + '_processed' + data_ext
     )
-    assert isfile(output_pipeline_fn_path)
-    assert isfile(output_stepsave_fn_path)
+    assert isfile(desired)
+
+    # Output from the Step's default saving of `SaveStep`
+    desired = join(
+        tmp_data_path,
+        data_name + '_savestep' + data_ext
+    )
+    assert isfile(desired)
+
+    # Output from the Steps' default saving of `SavePipeline`
+    desired = data_name + '_savepipeline' + data_ext
+    assert isfile(desired)
 
 
 def test_save_proper_pipeline(mk_tmp_dirs):
@@ -187,10 +314,12 @@ def test_save_proper_pipeline(mk_tmp_dirs):
     args = [
         'jwst.stpipe.tests.steps.ProperPipeline',
         data_fn_path,
+        '--steps.stepwithcontainer.skip=true',
     ]
+
     Step.from_cmdline(args)
 
-    assert isfile('ppbase_pp.fits')
+    assert isfile('flat_pp.fits')
 
 
 def test_save_proper_pipeline_withdir(mk_tmp_dirs):
@@ -200,11 +329,12 @@ def test_save_proper_pipeline_withdir(mk_tmp_dirs):
     args = [
         'jwst.stpipe.tests.steps.ProperPipeline',
         data_fn_path,
-        '--output_dir=' + tmp_data_path
+        '--output_dir=' + tmp_data_path,
+        '--steps.stepwithcontainer.skip=true',
     ]
     Step.from_cmdline(args)
 
-    assert isfile(join(tmp_data_path, 'ppbase_pp.fits'))
+    assert isfile(join(tmp_data_path, 'flat_pp.fits'))
 
 
 def test_save_proper_pipeline_withdir_withoutput(mk_tmp_dirs):
@@ -217,11 +347,13 @@ def test_save_proper_pipeline_withdir_withoutput(mk_tmp_dirs):
         'jwst.stpipe.tests.steps.ProperPipeline',
         data_fn_path,
         '--output_file=' + output_name,
-        '--output_dir=' + tmp_data_path
+        '--output_dir=' + tmp_data_path,
+        '--steps.stepwithcontainer.skip=true',
     ]
     Step.from_cmdline(args)
 
-    assert isfile(join(tmp_data_path, output_name))
+    output_path, output_ext = splitext(output_name)
+    assert isfile(join(tmp_data_path, output_path + '_pp' + output_ext))
 
 
 def test_save_proper_pipeline_substeps(mk_tmp_dirs):
@@ -231,12 +363,13 @@ def test_save_proper_pipeline_substeps(mk_tmp_dirs):
         data_fn_path,
         '--steps.stepwithmodel.save_results=true',
         '--steps.another_stepwithmodel.save_results=true',
+        '--steps.stepwithcontainer.skip=true',
     ]
     Step.from_cmdline(args)
 
-    assert isfile('ppbase_pp.fits')
-    assert isfile('ppbase_swm.fits')
-    assert isfile('ppbase_aswm.fits')
+    assert isfile('flat_pp.fits')
+    assert isfile('flat_swm.fits')
+    assert isfile('flat_aswm.fits')
 
 
 def test_save_proper_pipeline_substeps_skip(mk_tmp_dirs):
@@ -247,12 +380,13 @@ def test_save_proper_pipeline_substeps_skip(mk_tmp_dirs):
         '--steps.stepwithmodel.save_results=true',
         '--steps.another_stepwithmodel.save_results=true',
         '--steps.another_stepwithmodel.skip=true',
+        '--steps.stepwithcontainer.skip=true',
     ]
     Step.from_cmdline(args)
 
-    assert isfile('ppbase_pp.fits')
-    assert isfile('ppbase_swm.fits')
-    assert not isfile('ppbase_aswm.fits')
+    assert isfile('flat_pp.fits')
+    assert isfile('flat_swm.fits')
+    assert not isfile('flat_aswm.fits')
 
 
 def test_save_proper_pipeline_substeps_withdir(mk_tmp_dirs):
@@ -266,9 +400,134 @@ def test_save_proper_pipeline_substeps_withdir(mk_tmp_dirs):
         '--steps.stepwithmodel.save_results=true',
         '--steps.another_stepwithmodel.save_results=true',
         '--steps.another_stepwithmodel.output_dir=' + tmp_config_path,
+        '--steps.stepwithcontainer.skip=true',
     ]
     Step.from_cmdline(args)
 
-    assert isfile(join(tmp_data_path, 'ppbase_pp.fits'))
-    assert isfile(join(tmp_data_path, 'ppbase_swm.fits'))
-    assert isfile(join(tmp_config_path, 'ppbase_aswm.fits'))
+    assert isfile(join(tmp_data_path, 'flat_pp.fits'))
+    assert isfile(join(tmp_data_path, 'flat_swm.fits'))
+    assert isfile(join(tmp_config_path, 'flat_aswm.fits'))
+
+
+def test_save_proper_pipeline_container(mk_tmp_dirs):
+    """Test how pipeline saving should work"""
+    args = [
+        'jwst.stpipe.tests.steps.ProperPipeline',
+        data_fn_path,
+    ]
+
+    Step.from_cmdline(args)
+
+    assert isfile('flat_0_pp.fits')
+    assert isfile('flat_1_pp.fits')
+
+
+def test_save_proper_pipeline_container_withdir(mk_tmp_dirs):
+    """Test how pipeline saving should work with output_dir"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    args = [
+        'jwst.stpipe.tests.steps.ProperPipeline',
+        data_fn_path,
+        '--output_dir=' + tmp_data_path,
+    ]
+    Step.from_cmdline(args)
+
+    assert isfile(join(tmp_data_path, 'flat_0_pp.fits'))
+    assert isfile(join(tmp_data_path, 'flat_1_pp.fits'))
+
+
+def test_save_proper_pipeline_container_withdir_withoutput(mk_tmp_dirs):
+    """Test how pipeline saving should work with output_dir"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    output_name = 'junk.fits'
+
+    args = [
+        'jwst.stpipe.tests.steps.ProperPipeline',
+        data_fn_path,
+        '--output_file=' + output_name,
+        '--output_dir=' + tmp_data_path,
+    ]
+    Step.from_cmdline(args)
+
+    output_path, output_ext = splitext(output_name)
+    assert isfile(join(tmp_data_path, output_path + '_0_pp' + output_ext))
+    assert isfile(join(tmp_data_path, output_path + '_1_pp' + output_ext))
+
+
+def test_save_proper_pipeline_container_substeps(mk_tmp_dirs):
+    """Test how pipeline saving should work"""
+    args = [
+        'jwst.stpipe.tests.steps.ProperPipeline',
+        data_fn_path,
+        '--steps.stepwithmodel.save_results=true',
+        '--steps.another_stepwithmodel.save_results=true',
+        '--steps.stepwithcontainer.save_results=true',
+    ]
+    Step.from_cmdline(args)
+
+    assert isfile('flat_0_pp.fits')
+    assert isfile('flat_1_pp.fits')
+    assert isfile('flat_swm.fits')
+    assert isfile('flat_aswm.fits')
+    assert isfile('flat_0_swc.fits')
+    assert isfile('flat_1_swc.fits')
+
+
+def test_save_proper_pipeline_container_substeps_skip(mk_tmp_dirs):
+    """Test how pipeline saving should work"""
+    args = [
+        'jwst.stpipe.tests.steps.ProperPipeline',
+        data_fn_path,
+        '--steps.stepwithmodel.save_results=true',
+        '--steps.another_stepwithmodel.save_results=true',
+        '--steps.another_stepwithmodel.skip=true',
+        '--steps.stepwithcontainer.save_results=true',
+    ]
+    Step.from_cmdline(args)
+
+    assert isfile('flat_0_pp.fits')
+    assert isfile('flat_1_pp.fits')
+    assert isfile('flat_swm.fits')
+    assert not isfile('flat_aswm.fits')
+    assert isfile('flat_0_swc.fits')
+    assert isfile('flat_1_swc.fits')
+
+
+def test_save_proper_pipeline_container_substeps_withdir(mk_tmp_dirs):
+    """Test how pipeline saving should work"""
+    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
+
+    args = [
+        'jwst.stpipe.tests.steps.ProperPipeline',
+        data_fn_path,
+        '--output_dir=' + tmp_data_path,
+        '--steps.stepwithmodel.save_results=true',
+        '--steps.another_stepwithmodel.save_results=true',
+        '--steps.another_stepwithmodel.output_dir=' + tmp_config_path,
+        '--steps.stepwithcontainer.save_results=true',
+    ]
+    Step.from_cmdline(args)
+
+    assert isfile(join(tmp_data_path, 'flat_0_pp.fits'))
+    assert isfile(join(tmp_data_path, 'flat_1_pp.fits'))
+    assert isfile(join(tmp_data_path, 'flat_swm.fits'))
+    assert isfile(join(tmp_config_path, 'flat_aswm.fits'))
+    assert isfile(join(tmp_data_path, 'flat_0_swc.fits'))
+    assert isfile(join(tmp_data_path, 'flat_1_swc.fits'))
+
+
+def test_save_proper_pipeline_container_usemodel(mk_tmp_dirs):
+    """Test how pipeline saving should work"""
+    args = [
+        'jwst.stpipe.tests.steps.ProperPipeline',
+        data_fn_path,
+        '--output_use_model=true',
+        '--steps.stepwithcontainer.output_use_model=true',
+    ]
+
+    Step.from_cmdline(args)
+
+    assert isfile('swc_model1_pp.fits')
+    assert isfile('swc_model2_pp.fits')
