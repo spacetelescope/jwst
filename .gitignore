@@ -17,3 +17,4 @@ RELIC-INFO
 relic/
 *.wpr
 *wpu
+.pytest_cache
