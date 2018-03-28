@@ -18,6 +18,7 @@ MICRONS_100 = 1.e-4                     # 100 microns, in meters
 # This is for NIRSpec.  These exposure types are all fixed-slit modes.
 FIXED_SLIT_TYPES = ["NRS_LAMP", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT"]
 
+
 def do_correction(input_model, flat_model,
                   f_flat_model, s_flat_model,
                   d_flat_model, flat_suffix=None):
@@ -80,6 +81,8 @@ def do_correction(input_model, flat_model,
 #
 # These functions are for non-NIRSpec flat fielding, or for NIRSpec imaging.
 #
+
+
 def do_flat_field(output_model, flat_model):
     """
     Short Summary
@@ -104,7 +107,7 @@ def do_flat_field(output_model, flat_model):
     else:
         log.debug("Flat field correction for non-NIRSpec modes.")
 
-    any_updated = False # will set True if any flats applied
+    any_updated = False  # will set True if any flats applied
 
     # Check to see if flat data array is smaller than science data
     if (output_model.data.shape[-1] > flat_model.data.shape[-1]) or \
@@ -183,16 +186,8 @@ def apply_flat_field(science, flat):
     # correction is made
     flat_data[np.where(flat_bad)] = 1.0
 
-    # For GuiderCalModel data, only apply flat to science data array;
-    # there isn't an error array.
-    if isinstance(science, datamodels.GuiderCalModel):
-        # Flatten data array
-        science.data /= flat_data
-        # Combine the science and flat DQ arrays
-        science.dq = np.bitwise_or(science.dq, flat_dq)
-
     # For CubeModel science data, apply flat to each integration
-    elif isinstance(science, datamodels.CubeModel):
+    if isinstance(science, datamodels.CubeModel):
         for integ in range(science.data.shape[0]):
             # Flatten data and error arrays
             science.data[integ] /= flat_data
