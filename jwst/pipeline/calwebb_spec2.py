@@ -3,6 +3,7 @@ from collections import defaultdict
 
 from .. import datamodels
 from ..associations.load_as_asn import LoadAsLevel2Asn
+from ..lib.pipe_utils import is_tso
 from ..stpipe import Pipeline
 
 # step imports
@@ -86,10 +87,7 @@ class Spec2Pipeline(Pipeline):
             )
 
             # Save result
-            suffix = 'cal'
-            if isinstance(result, datamodels.CubeModel):
-                suffix = 'calints'
-            self.save_model(result, suffix)
+            self.save_model(result)
 
             self.closeout(to_close=[result])
 
@@ -134,6 +132,7 @@ class Spec2Pipeline(Pipeline):
         else:
             input = datamodels.open(science)
         exp_type = input.meta.exposure.type
+        tso_mode = is_tso(input)
 
         WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM"]
 
@@ -239,7 +238,7 @@ class Spec2Pipeline(Pipeline):
 
         # Setup to save the calibrated exposure at end of step.
         self.suffix = 'cal'
-        if isinstance(input, datamodels.CubeModel):
+        if tso_mode:
             self.suffix = 'calints'
 
         # Produce a resampled product, either via resample_spec for
@@ -276,7 +275,7 @@ class Spec2Pipeline(Pipeline):
 
         # Extract a 1D spectrum from the 2D/3D data
         self.extract_1d.suffix = 'x1d'
-        if isinstance(input, datamodels.CubeModel):
+        if tso_mode:
             self.extract_1d.suffix = 'x1dints'
         x1d_output = self.extract_1d(x1d_input)
 
