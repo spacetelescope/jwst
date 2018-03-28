@@ -34,7 +34,4 @@ def is_tso(model):
     except AttributeError:
         pass
 
-    # Check on DataModel types
-    is_tso = is_tso or isinstance(model, TSO_MODEL_TYPES)
-
     return is_tso
