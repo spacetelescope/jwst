@@ -56,6 +56,9 @@ SHORT,MEDIUM,LONG, or ALL
 # Report read in values to screen
 #________________________________________________________________________________
         self.subchannel = self.band
+        # print('self suffix',self.suffix)
+        self.suffix = 's3d' # override suffix = cube_build 
+            
         if(not self.subchannel.isupper()): self.subchannel = self.subchannel.upper()
         if(not self.filter.isupper()): self.filter = self.filter.upper()
         if(not self.grating.isupper()): self.grating = self.grating.upper()
@@ -150,15 +153,14 @@ SHORT,MEDIUM,LONG, or ALL
                                            self.output_file,
                                            self.output_dir)
 
-        self.cube_type = input_table.input_type
         self.input_models = input_table.input_models
         self.input_filenames = input_table.filenames
         self.output_name_base = input_table.output_name
 
-        self.data_type = input_table.data_type
         self.pipeline = 3
         if self.output_type =='multi' and len(self.input_filenames) ==1 :
             self.pipeline = 2
+        if(len(self.input_filenames)==1): self.offset_list = 'NA'
 #________________________________________________________________________________
 # Read in Cube Parameter Reference file
         # identify what reference file has been associated with these input
@@ -213,13 +215,12 @@ SHORT,MEDIUM,LONG, or ALL
 #________________________________________________________________________________
 # create an instance of class CubeData
 
-        cubeinfo = cube_build.CubeData(self.cube_type,
-                                       self.input_models,
-                                       self.input_filenames,
-                                       self.data_type,
-                                       par_filename,
-                                       resol_filename,
-                                       **pars)
+        cubeinfo = cube_build.CubeData(
+            self.input_models,
+            self.input_filenames,
+            par_filename,
+            resol_filename,
+            **pars)
 #________________________________________________________________________________
 # cubeinfo.setup:
 # read in all the input files, information from cube_pars, read in input data and
@@ -247,20 +248,19 @@ SHORT,MEDIUM,LONG, or ALL
             icube = str(i+1)
             list_par1 = cube_pars[icube]['par1']
             list_par2 = cube_pars[icube]['par2']
-            thiscube = ifu_cube.IFUCubeData(self.cube_type,
-                                            self.pipeline,
-                                            self.input_filenames,
-                                            self.input_models,
-                                            self.output_name_base,
-                                            self.data_type,
-                                            self.output_type,
-                                            instrument,
-                                            detector,
-                                            list_par1,
-                                            list_par2,
-                                            instrument_info,
-                                            master_table,
-                                            **pars_cube)
+            thiscube = ifu_cube.IFUCubeData(
+                self.pipeline,
+                self.input_filenames,
+                self.input_models,
+                self.output_name_base,
+                self.output_type,
+                instrument,
+                detector,
+                list_par1,
+                list_par2,
+                instrument_info,
+                master_table,
+                **pars_cube)
 
 #________________________________________________________________________________
 
@@ -444,3 +444,4 @@ def read_user_input(self):
 
 class ErrorInvalidParameter(Exception):
     pass
+
