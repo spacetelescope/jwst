@@ -69,46 +69,117 @@ def read_cubepars(self, instrument_info):
     if self.instrument == 'MIRI':
         ptab = datamodels.MiriIFUCubeParsModel(self.par_filename)
         number_bands = len(self.all_channel)
-
         # pull out the channels and subcahnnels that cover the data making up the cube
         for i in range(number_bands):
             this_channel = self.all_channel[i]
-            compare_channel = 'CH'+this_channel
+            #compare_channel = 'CH'+this_channel
             this_sub = self.all_subchannel[i]
-                # find the table entries for this combination
+            # find the table entries for this combination
             for tabdata in ptab.ifucubepars_table:
                 table_channel = tabdata['channel']
                 table_band = tabdata['band']
-                table_plt_scale = tabdata['PLTSCALE']
-                table_wresol = tabdata['WRESOL']
-                table_sroi = tabdata['SROI']
-                table_wroi = tabdata['WROI']
+                table_spaxelsize = tabdata['SPAXELSIZE']
+                table_spectralstep = tabdata['SPECTRALSTEP']
+                table_wavemin = tabdata['WAVEMIN']
+                table_wavemax = tabdata['WAVEMAX']
                 #match on this_channel and this_sub
-                if(compare_channel == table_channel and this_sub == table_band):
-                    instrument_info.SetSpatialScale(table_plt_scale,this_channel,this_sub)
-                    instrument_info.SetWaveRes(table_wresol,this_channel,this_sub)
-                    instrument_info.SetWaveROI(table_wroi,this_channel,this_sub)
-                    instrument_info.SetSpatialROI(table_sroi,this_channel,this_sub)
+                if(this_channel == table_channel and this_sub == table_band):
+                    instrument_info.SetSpatialSize(table_spaxelsize,this_channel,this_sub)
+                    instrument_info.SetSpectralStep(table_spectralstep,this_channel,this_sub)
+                    instrument_info.SetWaveMin(table_wavemin,this_channel,this_sub)
+                    instrument_info.SetWaveMax(table_wavemax,this_channel,this_sub)
 
+            for tabdata in ptab.ifucubepars_msn_table:
+                table_channel = tabdata['channel']
+                table_band = tabdata['band']
+                table_sroi = tabdata['ROISPATIAL']
+                table_wroi = tabdata['ROISPECTRAL']
+                table_power = tabdata['POWER']
+                table_softrad = tabdata['SOFTRAD']
+                #match on this_channel and this_sub
+                if(this_channel == table_channel and this_sub == table_band):
+                    instrument_info.SetSpatialROI(table_sroi,this_channel,this_sub)
+                    instrument_info.SetWaveROI(table_wroi,this_channel,this_sub)
+                    instrument_info.SetMSMPower(table_power,this_channel,this_sub)
+                    instrument_info.SetSoftRad(table_softrad,this_channel,this_sub)
+        for tabdata in ptab.ifucubepars_multichannel_wavetable:
+            table_wave = tabdata['WAVELENGTH']
+            table_sroi = tabdata['ROISPATIAL']
+            table_wroi = tabdata['ROISPECTRAL']
+            table_power = tabdata['POWER']
+            table_softrad = tabdata['SOFTRAD']
+            instrument_info.SetMultiChannelTable(table_wave,table_sroi,
+                                              table_wroi,table_power,
+                                              table_softrad)
+
+#        print('Done reading cubepar reference file')
     elif self.instrument == 'NIRSPEC':
         ptab = datamodels.NirspecIFUCubeParsModel(self.par_filename)
         number_gratings = len(self.all_grating)
 
         for i in range(number_gratings):
             this_gwa = self.all_grating[i]
+            this_filter = self.all_filter[i]
             for tabdata in ptab.ifucubepars_table:
-                table_grating = tabdata['grating']
-                table_filter = tabdata['filter']
-                table_plt_scale = tabdata['PLTSCALE']
-                table_wresol = tabdata['WRESOL']
-                table_sroi = tabdata['SROI']
-                table_wroi = tabdata['WROI']
-                if(this_gwa == table_grating):
-                    instrument_info.SetSpatialScale(table_plt_scale,this_gwa)
-                    instrument_info.SetWaveRes(table_wresol,this_gwa)
-                    instrument_info.SetWaveROI(table_wroi,this_gwa)
-                    instrument_info.SetSpatialROI(table_sroi,this_gwa)
+                table_grating = tabdata['DISPERSER']
+                table_filter = tabdata['FILTER']
+                table_spaxelsize = tabdata['SPAXELSIZE']
+                table_spectralstep = tabdata['SPECTRALSTEP']
+                table_wavemin = tabdata['WAVEMIN']
+                table_wavemax = tabdata['WAVEMAX']
+#                print(table_grating,table_filter,table_spaxelsize,table_spectralstep,
+#                      table_wavemin,table_wavemax)
 
+                if(this_gwa == table_grating and this_filter ==table_filter):
+                    instrument_info.SetSpatialSize(table_spaxelsize,this_gwa,this_filter)
+                    instrument_info.SetSpectralStep(table_spectralstep,this_gwa,this_filter)
+                    instrument_info.SetWaveMin(table_wavemin,this_gwa,this_filter)
+                    instrument_info.SetWaveMax(table_wavemax,this_gwa,this_filter)
+
+            for tabdata in ptab.ifucubepars_msn_table:
+                table_grating = tabdata['DISPERSER']
+                table_filter = tabdata['FILTER']
+                table_sroi = tabdata['ROISPATIAL']
+                table_wroi = tabdata['ROISPECTRAL']
+                table_power = tabdata['POWER']
+                table_softrad = tabdata['SOFTRAD']
+
+                if(this_gwa == table_grating and this_filter == table_filter):
+                    instrument_info.SetSpatialROI(table_sroi,this_gwa,this_filter)
+                    instrument_info.SetWaveROI(table_wroi,this_gwa,this_filter)
+                    instrument_info.SetMSMPower(table_power,this_gwa,this_filter)
+                    instrument_info.SetSoftRad(table_softrad,this_gwa,this_filter)
+
+        for tabdata in ptab.ifucubepars_prism_wavetable:
+            table_wave = tabdata['WAVELENGTH']
+            table_sroi = tabdata['ROISPATIAL']
+            table_wroi = tabdata['ROISPECTRAL']
+            table_power = tabdata['POWER']
+            table_softrad = tabdata['SOFTRAD']
+            instrument_info.SetPrismTable(table_wave,table_sroi,
+                                          table_wroi,table_power,
+                                          table_softrad)
+
+        for tabdata in ptab.ifucubepars_med_wavetable:
+            table_wave = tabdata['WAVELENGTH']
+            table_sroi = tabdata['ROISPATIAL']
+            table_wroi = tabdata['ROISPECTRAL']
+            table_power = tabdata['POWER']
+            table_softrad = tabdata['SOFTRAD']
+            instrument_info.SetMedTable(table_wave,table_sroi,
+                                          table_wroi,table_power,
+                                          table_softrad)
+
+        for tabdata in ptab.ifucubepars_high_wavetable:
+            table_wave = tabdata['WAVELENGTH']
+            table_sroi = tabdata['ROISPATIAL']
+            table_wroi = tabdata['ROISPECTRAL']
+            table_power = tabdata['POWER']
+            table_softrad = tabdata['SOFTRAD']
+            instrument_info.SetHighTable(table_wave,table_sroi,
+                                          table_wroi,table_power,
+                                          table_softrad)
+#        print('Done reading cubepar reference file')
 #_______________________________________________________________________
 
 # Read MIRI Resolution reference file
@@ -182,118 +253,3 @@ def read_resolution_file(self,instrument_info):
 
 
 #********************************************************************************
-class IFUCubeASN(object):
-#********************************************************************************
-
-    """
-    Class to handle reading the input to the processing, which
-    can be a single science exposure or an IFU cube association table.
-    The input and output member info is loaded into an ASN table model.
-    """
-
-    template = {"asn_rule": "",
-              "target": "",
-              "asn_pool": "",
-              "asn_type": "",
-              "products": [
-                  {"name": "",
-                   "members": [
-                      {"exptype": "",
-                       "expname": ""}
-                      ]
-                  }
-                ]
-              }
-
-    def __init__(self, input):
-
-        self.input_models = []
-        self.filenames = []
-        self.output_name = None
-        self.data_type = None # singleton, multi
-        self.input_type = None # Model, File, ASN, Container
-
-        # IF a single model or a single file  is passed in then
-        # self.filename & self.input_model hold the values for this singe dataset
-        self.InputType  = ''
-        if isinstance(input, datamodels.IFUImageModel):
-#            print('this is a single file passed as a Model')
-            # It's a single image that's been passed in as a model
-            # input is a model
-            self.filenames.append(input.meta.filename)
-            self.input_models.append(input)
-            self.input_type = 'Model'
-            self.data_type = 'singleton'
-            self.output_name = self.build_product_name(self.filenames[0])
-        elif isinstance(input,datamodels.ModelContainer):
-#            print('this is a model container type')
-            self.input_type='Container'
-            self.data_type = 'multi'
-            with datamodels.ModelContainer(input) as input_model:
-                self.output_name =input_model.meta.asn_table.products[0].name
-
-            for i in range(len(input)):
-                model = input[i]
-                self.input_models.append(model)
-                self.filenames.append(model.meta.filename)
-
-        elif isinstance(input, str):
-            try:
-                # The name of an association table
-                # for associations - use Association.load
-                # in cube_build_io.SetFileTable - set up:
-                # input_model & filename lists
-                iproduct = 0 # only one product found in association table
-                with open(input, 'r') as input_fh:
-#                    print('read in association table')
-                    asn_table = load_asn(input_fh)
-                    self.input_type = 'ASN'
-                    self.data_type = 'multi'
-                    self.output_name =  asn_table['products'][0]['name']
-                    for m in asn_table['products'][iproduct]['members']:
-                        self.filenames.append(m['expname'])
-                        self.input_models.append(datamodels.IFUImageModel(m['expname']))
-            except:
-                # The name of a single image file
-#                print(' this is a single file  read in filename')
-                self.input_type = 'File'
-                self.data_type = 'singleton'
-                self.filenames.append(input)
-                self.input_models.append(datamodels.IFUImageModel(input))
-                self.output_name = self.build_product_name(self.filenames[0])
-
-        else:
-            raise TypeError
-
-
-    def build_product_name(self, filename):
-        indx = filename.rfind('.fits')
-        single_product = filename[:indx]
-        return single_product
-
-# TODO:  Routines not used below - saved just in case we need them later - if not
-# remove.
-
-    def interpret_image_model(self, model):
-        """ Interpret image model as single member association data product.
-            Currently this routien is not used by cube_build - it was left
-            if needed down the road
-        """
-
-        # An in-memory ImageModel for a single exposure was provided as input
-        self.asn_table = self.template
-        self.asn_table['target'] = model.meta.target.catalog_name
-        self.asn_table['asn_rule'] = 'singleton'
-        self.asn_table['asn_type'] = 'singleton'
-        self.asn_table['products'][0]['name'] = self.build_product_name(self.filenames[0])
-        self.rootname = self.filename[:self.filename.rfind('_')]
-        self.asn_table['products'][0]['members'][0]['expname'] = self.filenames[0]
-
-    def get_inputs(self, product=0):
-        members = []
-        for p in self.asn_table['products'][product]['members']:
-            members.append(p['expname'])
-        return members
-    def get_outputs(self, product=0):
-        return self.asn_table['products'][product]['name']
-

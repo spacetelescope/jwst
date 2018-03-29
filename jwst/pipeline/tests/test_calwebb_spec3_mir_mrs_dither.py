@@ -7,9 +7,7 @@ file structure. As such the environmental variable TEST_BIGDATA points to
 the top of the example data tree.
 """
 
-from glob import glob
 from os import path
-import pytest
 
 from .helpers import (
     SCRIPT_DATA_PATH,
@@ -17,7 +15,6 @@ from .helpers import (
     mk_tmp_dirs,
     require_bigdata,
     runslow,
-    update_asn_basedir,
 )
 
 from ...associations import load_asn

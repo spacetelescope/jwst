@@ -57,10 +57,7 @@ def setup_wcs(self):
     """
 
 #________________________________________________________________________________
-    if self.cube_type == 'File' or self.cube_type == 'ASN' :
-        log.info('Building Cube %s ', self.output_name)
-
-        # Scale is 3 dimensions and is determined from values held in  instrument_info.GetScale
+# Scale is 3 dimensions and is determined from values held in  instrument_info.GetScale
     scale = determine_scale(self)
     self.Cdelt1 = scale[0]
     self.Cdelt2 = scale[1]
@@ -230,7 +227,8 @@ def determine_scale(self):
 
         for i in range(number_gratings):
             this_gwa = self.list_par1[i]
-            a_scale, b_scale, w_scale = self.instrument_info.GetScale(this_gwa)
+            this_filter = self.list_par2[i]
+            a_scale, b_scale, w_scale = self.instrument_info.GetScale(this_gwa,this_filter)
             if a_scale < min_a:
                 min_a = a_scale
             if b_scale < min_b:
@@ -379,11 +377,15 @@ def find_footprint_NIRSPEC(self, input,flag_data):
         yrange_slice = slice_wcs.bounding_box[1][0],slice_wcs.bounding_box[1][1]
         xrange_slice = slice_wcs.bounding_box[0][0],slice_wcs.bounding_box[0][1]
 
-##        print(' for slice ',i,yrange_slice,xrange_slice)
-
         if(xrange_slice[0] >= 0 and xrange_slice[1] > 0):
 
             x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,step=(1,1), center=True)
+            #NIRSPEC TEMPORARY FIX FOR WCS 1 BASED and NOT 0 BASED
+            # NIRSPEC team delivered transforms that are valid for x,y in 1 based system
+            #x = x + 1
+            #y = y + 1
+            # Done NIRSPEC FIX
+
             ra,dec,lam = slice_wcs(x,y)
 
 #________________________________________________________________________________
@@ -391,8 +393,7 @@ def find_footprint_NIRSPEC(self, input,flag_data):
 # If exists it makes it difficult to determine  ra range of IFU cube. 
 ##            print(' # ra values',ra.size,ra.size/2048)
             ra_wrap = wrap_ra(ra)
-                          
-##            print('ra wrap values',ra_wrap[0:10])
+
             a_min = np.nanmin(ra_wrap)
             a_max = np.nanmax(ra_wrap)
 
@@ -447,7 +448,6 @@ def set_geometry(self, footprint):
         ra_ave = circmean(ravalues*u.deg).value
         log.info('Ra average %f12.8', ra_ave)
 
-        
         self.Crval1 = ra_ave
         self.Crval2 = dec_ave
         xi_center,eta_center = coord.radec2std(self.Crval1, self.Crval2,ra_ave,dec_ave)

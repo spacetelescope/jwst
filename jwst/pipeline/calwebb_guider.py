@@ -1,24 +1,24 @@
 #!/usr/bin/env python
 from ..stpipe import Pipeline
+import logging
 from .. import datamodels
-import os
 
 # step imports
 from ..dq_init import dq_init_step
 from ..flatfield import flat_field_step
 from ..guider_cds import guider_cds_step
 
-__version__ = '0.8.0'
+__version__ = '0.9.3'
 
 # Define logging
-import logging
 log = logging.getLogger()
 log.setLevel(logging.DEBUG)
 
+
 class GuiderPipeline(Pipeline):
     """
-    GuiderPipeline: For FGS observations, apply all calibration 
-    steps to raw JWST ramps to produce a 3-D slope product. 
+    GuiderPipeline: For FGS observations, apply all calibration
+    steps to raw JWST ramps to produce a 3-D slope product.
     Included steps are: dq_init, guider_cds, and flat_field.
     """
 
@@ -36,11 +36,19 @@ class GuiderPipeline(Pipeline):
 
         log.info('Starting calwebb_guider ...')
 
-        # Open the input
-        input = datamodels.GuiderRawModel(input) 
+        # Open the input:
+        # If the first two steps are set to be skipped, assume
+        # they've been run before and open the input as a Cal
+        # model, appropriate for input to flat_field
+        if (self.dq_init.skip and self.guider_cds.skip):
+            log.info("dq_init and guider_cds are set to skip; assume they"
+                     " were run before and load data as GuiderCalModel")
+            input = datamodels.GuiderCalModel(input)
+        else:
+            input = datamodels.GuiderRawModel(input)
 
         # Apply the steps
-        input = self.dq_init(input)  
+        input = self.dq_init(input)
         input = self.guider_cds(input)
         input = self.flat_field(input)
 

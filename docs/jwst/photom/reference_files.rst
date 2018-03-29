@@ -29,7 +29,7 @@ dependent. The current row selection criteria are:
    - Spectroscopic: Filter, Pupil, and Order number
 * NIRSpec:
    - Fixed Slits: Filter, Grating, and Slit name
-   - IFU and MSA: Filter and Grating
+   - IFU and MOS: Filter and Grating
 
 PHOTOM Reference File Format
 ----------------------------
@@ -115,11 +115,13 @@ populate a photom data model within python and then save the data model to a
 FITS file. Each instrument has its own photom data model, which contains the
 columns of information unique to that instrument:
 
+* FgsPhotomModel
 * NircamPhotomModel
 * NirissPhotomModel
-* NirspecPhotomModel
-* MiriImgPhotomModel
-* MiriMrsPhotomModel
+* NirspecPhotomModel (NIRSpec imaging, IFU, MOS)
+* NirspecFSPhotomModel (NIRSpec fixed slits)
+* MiriImgPhotomModel (MIRI imaging)
+* MiriMrsPhotomModel (MIRI MRS)
 
 A NIRISS photom reference file, for example, could be constructed as follows
 from within the python environment::
@@ -134,7 +136,7 @@ from within the python environment::
  >>> nelem=np.zeros(3)
  >>> wave=np.zeros(3)
  >>> resp=np.zeros(3)
- >>> data=np.array(zip(filter,pupil,photf,uncer,nelem,wave,resp),dtype=output.phot_table.dtype)
+ >>> data=np.array(list(zip(filter,pupil,photf,uncer,nelem,wave,resp)),dtype=output.phot_table.dtype)
  >>> output.phot_table=data
  >>> output.save('niriss_photom_0001.fits')
 

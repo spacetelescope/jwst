@@ -33,12 +33,10 @@ class IFUCubeData(object):
 # wcs, data, reference data
 
     def __init__(self,
-                 cube_type,
                  pipeline,
                  input_filenames,
                  input_models,
                  output_name_base,
-                 data_type,
                  output_type,
                  instrument,
                  detector,
@@ -49,14 +47,12 @@ class IFUCubeData(object):
                  **pars_cube):
 
 
-        self.cube_type = cube_type
         self.input_filenames = input_filenames
         self.pipeline = pipeline
 
         self.input_models = input_models # needed when building single mode IFU cubes
         self.output_name_base = output_name_base
 
-        self.data_type = data_type
         self.instrument  = instrument
         self.detector = detector
         self.list_par1 = list_par1
@@ -131,12 +127,9 @@ class IFUCubeData(object):
             if(num_files > 1):
                 raise IncorrectInput("For interpolation = area, only one file can" +
                                      " be used to created the cube")
-
-
             if(len(self.list_par1) > 1):
                 raise IncorrectInput("For interpolation = area, only a single channel" +
                                      " can be used to created the cube. Use --channel=# option")
-
             if(self.scale2 !=0):
                 raise AreaInterpolation("When using interpolation = area, the output" +
                                         " coordinate system is alpha-beta" +
@@ -197,6 +190,8 @@ class IFUCubeData(object):
                     newname = self.output_name_base + ch_name+'-'+ b_name + '_ab_s3d.fits'
                 if self.output_type == 'single':
                     newname = self.output_name_base + ch_name+'-'+ b_name + '_single_s3d.fits'
+
+
 #________________________________________________________________________________
             elif self.instrument == 'NIRSPEC':
                 fg_name = '_'
@@ -214,6 +209,7 @@ class IFUCubeData(object):
         if self.output_type != 'single':
             log.info('Output Name %s',newname)
 
+#        print('*** newname ****',newname)
         return newname
 
 
@@ -351,6 +347,11 @@ class IFUCubeData(object):
                         t0a = time.time()
                         slice_wcs = nirspec.nrs_wcs_set_input(input_model, ii)
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
+                        #NIRSPEC TEMPORARY FIX FOR WCS 1 BASED and NOT 0 BASED
+                        # NIRSPEC team delivered transforms that are valid for x,y in 1 based system
+                        #x = x + 1
+                        #y = y + 1
+                        # Done NIRSPEC FIX
 
                         cube_cloud.match_det2cube(self,input_model,
                                                   x, y, ii,
@@ -447,10 +448,13 @@ class IFUCubeData(object):
 
             for i in range(number_gratings):
                 this_gwa = self.list_par1[i]
-                wroi = self.instrument_info.GetWaveRoi(this_gwa)
+                this_filter = self.list_par2[i]
+#                print('Grating and Filter',this_gwa,this_filter)
+
+                wroi = self.instrument_info.GetWaveRoi(this_gwa,this_filter)
                 if wroi < min_w:
                     min_w = wroi
-                sroi = self.instrument_info.GetSpatialRoi(this_gwa)
+                sroi = self.instrument_info.GetSpatialRoi(this_gwa,this_filter)
                 if sroi < min_s:
                     min_s = sroi
             roi = [min_w, min_s]
@@ -585,6 +589,11 @@ class IFUCubeData(object):
                         x,y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,
                                                               step=(1,1), center=True)
                         
+                        #NIRSPEC TEMPORARY FIX FOR WCS 1 BASED and NOT 0 BASED
+                        # NIRSPEC team delivered transforms that are valid for x,y in 1 based system
+                        #x = x + 1
+                        #y = y + 1
+                        # Done NIRSPEC FIX
                         t0 = time.time()
                         cube_cloud.match_det2cube(self,input_model,
                                                   x, y, i,
@@ -691,10 +700,12 @@ class IFUCubeData(object):
                 self.output_file = None
                 newname  = IFUCubeData.define_cubename(self)
                 IFUCube.meta.filename = newname
-#                if(self.instrument == 'MIRI'):#
-#                    IFUCube.meta.instrument.channel = self.list_par1[0]
-#                if(self.instrument == 'NIRSPEC'):
-#                    IFUCube.meta.instrument.grating = self.list_par1[0]
+                # need to set what type of SINGLE IFU Cube is being created in header
+                # this information is needed in the blotting stage
+                if(self.instrument == 'MIRI'):
+                    IFUCube.meta.instrument.channel = self.list_par1[0]
+                if(self.instrument == 'NIRSPEC'):
+                    IFUCube.meta.instrument.grating = self.list_par1[0]
 
         IFUCube.meta.wcsinfo.crval1 = self.Crval1
         IFUCube.meta.wcsinfo.crval2 = self.Crval2
@@ -714,7 +725,7 @@ class IFUCubeData(object):
         IFUCube.meta.wcsinfo.ctype3 = 'WAVE'
         IFUCube.meta.wcsinfo.cunit3 = 'um'
         IFUCube.meta.wcsinfo.wcsaxes = 3
-        IFUCube.meta.wcsinfo.pc1_1 = 1
+        IFUCube.meta.wcsinfo.pc1_1 = -1
         IFUCube.meta.wcsinfo.pc1_2 = 0
         IFUCube.meta.wcsinfo.pc1_3 = 0
 
