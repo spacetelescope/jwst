@@ -195,18 +195,18 @@ class Snell(Model):
         """Calculate and retrun the refraction index."""
 
         # convert the wavelength to microns
-        lam = np.asarray(lam) * 1e6
+        lam = np.asarray(lam)
         KtoC = 273.15  # kelvin to celcius conversion
 
         # Derive the refractive index of air at the reference temperature and pressure
         # and at the operational system's temperature and pressure.
         nref = 1. + (6432.8 + 2949810. * lam**2 /
-                     (146.0 * lam**2 - 1.) + 25540.0 * lam**2 /
+                     (146.0 * lam**2 - 1.) + (5540.0 * lam**2) /
                      (41.0 * lam**2 - 1.)) * 1e-8
 
         # T should be in C, P should be in ATM
         nair_obs = 1.0 + ((nref - 1.0) * pressure) / (1.0 + (temp - KtoC - 15.) * 3.4785e-3)
-        nair_ref = 1.0 + (nref - 1.0) * pref / (1.0 + (tref - KtoC - 15) * 3.4785e-3)
+        nair_ref = 1.0 + ((nref - 1.0) * pref) / (1.0 + (tref - KtoC - 15) * 3.4785e-3)
 
         # Compute the relative index of the glass at Tref and Pref using Sellmeier equation I.
         lamrel = lam * nair_obs / nair_ref
@@ -225,7 +225,7 @@ class Snell(Model):
         # Compute the absolute index of the glass
         delt = temp - tref
         D0, D1, D2, E0, E1, lam_tk = tcoef
-        delnabs = 0.5 * (nrel ** 2 - 1.) / nrel * \
+        delnabs = (0.5 * (nrel ** 2 - 1.) / nrel) * \
                 (D0 * delt + D1 * delt**2 + D2 * delt**3 + \
                  (E0 * delt + E1 * delt**2) / (lamrel**2  - lam_tk**2))
         nabs_obs = nabs_ref + delnabs
