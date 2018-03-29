@@ -56,7 +56,7 @@ called "AREA" in the science data product.
 The process of attaching the pixel
 area data also populates the keywords PIXAR_SR and PIXAR_A2 in the primary
 header of the science product, which give the average pixel area in units of
-steradians and square seconds, respectively.
+steradians and square arcseconds, respectively.
 Both the photom and pixel area reference files contain the average pixel
 area values in their primary headers. The photom step copies the values from
 the pixel area reference file to populate the PIXAR_SR and PIXAR_A2 keywords
