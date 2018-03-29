@@ -143,7 +143,7 @@ class OutlierDetectionStep(Step):
                 self.valid_input = False
 
             if not self.valid_input:
-                result = input_models.copy()
+                result = input_models
                 for input in result:
                     input.meta.cal_step.outlier_detection = "SKIPPED"
                 return result
