@@ -829,7 +829,29 @@ def detector_to_gwa(reference_files, detector, disperser):
                disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
+    ## NIRSPEC 1- vs 0- based pixel coordinates issue #1781
+    '''
+    The pipeline works with 0-based pixel coordinates. The Nirspec model,
+    stored in reference files, is also 0-based. However, the algorithm specified
+    by the IDT team specifies that pixel coordinates are 1-based. This is
+    implemented below as a Shift(-1) & Shift(-1) transform. This makes the Nirspec
+    instrument WCS pipeline "special" as it requires 1-based inputs.
+    As a consequence many steps have to be modified to provide 1-based coordinates
+    to the WCS call if the instrument is Nirspec. This is not always easy, especially
+    when the step has no knowledge of the instrument.
+    This is the reason the algorithm is modified to acccept 0-based coordinates.
+    This will be discussed in the future with the INS and IDT teams and may be solved
+    by changing the algorithm but for now
+
     model = (models.Shift(-1) & models.Shift(-1) | fpa | camera | u2dircos | rotation)
+
+    is changed to
+
+    model = models.Shift(1) & models.Shift(1) | \
+            models.Shift(-1) & models.Shift(-1) | fpa | camera | u2dircos | rotation
+    '''
+    ## model = (models.Shift(-1) & models.Shift(-1) | fpa | camera | u2dircos | rotation)
+    model = fpa | camera | u2dircos | rotation
     return model
 
 
