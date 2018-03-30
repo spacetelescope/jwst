@@ -812,10 +812,7 @@ class ExtractModel(ExtractBase):
         super().__init__()
 
         self.exp_type = input_model.meta.exposure.type
-        """
-        Issue #1781.
-        self.instrument_name = input_model.meta.instrument.name
-        """
+
         self.dispaxis = dispaxis
         self.spectral_order = spectral_order
 
@@ -1185,14 +1182,6 @@ class ExtractModel(ExtractBase):
                     dec[:] = -999.
                     wcs_wl[:] = -999.
             else:
-                """
-                See issue #1781.
-                if self.instrument_name == "NIRSPEC":
-                    # xxx temporary:  NIRSpec wcs is one-based.
-                    ra, dec, wcs_wl = self.wcs(x_array + 1., y_array + 1.)
-                else:
-                    ra, dec, wcs_wl = self.wcs(x_array, y_array)
-                """
                 ra, dec, wcs_wl = self.wcs(x_array, y_array)
             # We need one right ascension and one declination, representing
             # the direction of pointing.

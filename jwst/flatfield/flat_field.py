@@ -336,12 +336,6 @@ def do_NIRSpec_flat_field(output_model,
                 log.warning("so using wcs instead of the wavelength array.")
                 # Pixels with respect to the cutout
                 grid = np.indices((ysize, xsize), dtype=np.float64)
-                """
-                See issue #1781
-                # xxx begin temporary workaround ...
-                grid += 1.              # NIRSpec wcs is one-based
-                # xxx ... end temporary workaround
-                """
                 # The arguments are the X and Y pixel coordinates.
                 (ra, dec, wl) = slit.meta.wcs(grid[1], grid[0])
                 del ra, dec, grid
@@ -503,12 +497,6 @@ def NIRSpec_brightobj(output_model,
         if got_wcs:
             log.warning("so using wcs instead of the wavelength array.")
             grid = np.indices((ysize, xsize), dtype=np.float64)
-            """
-            See issue #1781.
-            # xxx begin temporary workaround ...
-            grid += 1.                  # NIRSpec wcs is one-based
-            # xxx ... end temporary workaround
-            """
             (ra, dec, wl) = output_model.meta.wcs(grid[1], grid[0])
             del ra, dec, grid
         else:
@@ -670,13 +658,6 @@ def NIRSpec_IFU(output_model,
         ind = np.indices((dy, dx))
         x = ind[1] + xstart
         y = ind[0] + ystart
-        """
-        See issue #1781.
-        # xxx begin temporary workaround ...
-        x += 1                  # NIRSpec wcs is one-based
-        y += 1
-        # xxx ... end temporary workaround
-        """
         coords = ifu_wcs(x, y)
         wl = coords[2]
         nan_flag = np.isnan(wl)
