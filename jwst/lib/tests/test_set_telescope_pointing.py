@@ -12,7 +12,6 @@ import copy
 import numpy as np
 import os
 import sys
-import sqlite3
 import pytest
 from tempfile import TemporaryDirectory
 
