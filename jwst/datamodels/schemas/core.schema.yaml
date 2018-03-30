@@ -524,18 +524,27 @@ properties:
           type:
             title: Type of data in the exposure
             type: string
-            enum: [FGS_ACQ1, FGS_ACQ2, FGS_DARK, FGS_FINEGUIDE, FGS_FOCUS,
-              FGS_ID-IMAGE, FGS_ID-STACK, FGS_IMAGE, FGS_INTFLAT, FGS_SKYFLAT, FGS_TRACK,
-              MIR_IMAGE, MIR_TACQ, MIR_LYOT, MIR_4QPM, MIR_LRS-FIXEDSLIT,
-              MIR_LRS-SLITLESS, MIR_MRS, MIR_DARK, MIR_FLAT-IMAGE, MIR_FLATIMAGE,
-              MIR_FLAT-MRS, MIR_FLATMRS, MIR_CORONCAL, NIS_AMI, NIS_DARK,
-              NIS_FOCUS, NIS_IMAGE, NIS_LAMP, NIS_SOSS, NIS_TACQ, NIS_TACONFIRM,
-              NIS_WFSS, N/A, ANY, NRC_IMAGE, NRC_GRISM, NRC_TACQ, NRC_CORON,
-              NRC_FOCUS, NRC_DARK, NRC_FLAT, NRC_LED, NRC_TACONFIRM,
-              NRC_TSIMAGE, NRC_TSGRISM, NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BOTA,
-              NRS_BRIGHTOBJ, NRS_CONFIRM, NRS_DARK, NRS_FIXEDSLIT, NRS_FOCUS,
-              NRS_IFU, NRS_IMAGE, NRS_LAMP, NRS_MIMF, NRS_MSASPEC, NRS_TACONFIRM,
-              NRS_TACQ, NRS_TASLIT]
+            enum:
+              # FGS science
+             [FGS_DARK, FGS_FOCUS, FGS_IMAGE, FGS_INTFLAT, FGS_SKYFLAT,
+              # FGS guide star
+              FGS_ACQ1, FGS_ACQ2, FGS_FINEGUIDE, FGS_ID-IMAGE, FGS_ID-STACK, FGS_TRACK,
+              # MIRI
+              MIR_4QPM, MIR_CORONCAL, MIR_DARK, MIR_FLAT-IMAGE, MIR_FLATIMAGE,
+              MIR_FLAT-MRS, MIR_FLATMRS, MIR_IMAGE, MIR_LRS-FIXEDSLIT,
+              MIR_LRS-SLITLESS, MIR_LYOT, MIR_MRS, MIR_TACQ,
+              # NIRISS
+              NIS_AMI, NIS_DARK, NIS_EXTCAL, NIS_FOCUS, NIS_IMAGE, NIS_LAMP,
+              NIS_SOSS, NIS_TACQ, NIS_TACONFIRM, NIS_WFSS,
+              # NIRCam
+              NRC_CORON, NRC_DARK, NRC_FLAT, NRC_FOCUS, NRC_IMAGE, NRC_GRISM,
+              NRC_LED, NRC_TACONFIRM, NRC_TACQ, NRC_TSGRISM, NRC_TSIMAGE,
+              # NIRSpec
+              NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BOTA, NRS_BRIGHTOBJ, NRS_CONFIRM,
+              NRS_DARK, NRS_FIXEDSLIT, NRS_FOCUS, NRS_IFU, NRS_IMAGE, NRS_LAMP,
+              NRS_MIMF, NRS_MSASPEC, NRS_TACONFIRM, NRS_TACQ, NRS_TASLIT,
+              # Misc
+              N/A, ANY]
             fits_keyword: EXP_TYPE
             blend_table: True
           start_time:
@@ -570,6 +579,17 @@ properties:
               NRSRAPID, NRSIRS2RAPID, ALLIRS2, NRSSLOW, RAPID,
               SHALLOW2, SHALLOW4, SLOW, TRACK, ANY, N/A]
             fits_keyword: READPATT
+            blend_table: True
+          segment_number:
+            title: Sequential segment number
+            type: integer
+            fits_keyword: EXSEGNUM
+            blend_table: True
+            blend_rule: first
+          segment_total:
+            title: Total number of segments
+            type: integer
+            fits_keyword: EXSEGTOT
             blend_table: True
           noutputs:
             title: Number of detector outputs used
@@ -707,7 +727,7 @@ properties:
           psf_reference:
             title: exposure is PSF reference
             type: boolean
-            fits_keyword: PSFREF
+            fits_keyword: IS_PSF
             blend_table: True
           self_reference_survey:
             title: self-referencing PSF
@@ -737,7 +757,7 @@ properties:
               SUBGRISM128, SUBGRISM256, SUBGRISM64, SUBNDA210R, SUBNDA335R,
               SUBNDA430R, SUBNDALWBL, SUBNDALWBS, SUBNDASWBL, SUBNDASWBS,
               # Obsolete NIRCam
-              MASKBLWB, MASKBSWB,
+              MASKA210R, MASKA430R, MASKBLWB, MASKBSWB,
               # NIRISS
               SUB64, SUB80, SUB128, SUB256, SUBAMPCAL, SUBSTRIP96, SUBSTRIP256,
               SUBTAAMI, SUBTASOSS, WFSS64C, WFSS64R, WFSS128C, WFSS128R,
@@ -745,7 +765,7 @@ properties:
               SUBSTRIP80,
               # NIRSpec
               ALLSLITS, SUBS200A1, SUBS200A2, SUBS200B1, SUBS400A1, SUB1024A, SUB1024B,
-              SUB512, SUB32, SUB512S, SUB2048,
+              SUB512, SUB32, SUB512S, SUB2048, STRIPE,
               # Obsolete NIRSpec
               FULL_IRS2, S200A1, S200A2, S200B1, S400A1,
               # All
