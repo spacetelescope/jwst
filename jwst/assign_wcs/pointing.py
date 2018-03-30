@@ -184,9 +184,11 @@ def frame_from_model(wcsinfo):
                                 axes_names=('wavelength',))
         frames.append(spec)
     if other:
+        # Make sure these are strings and not np.str_ objects.
+        axes_names = tuple([str(name) for name in wcsinfo['CTYPE'][other]])
         name = "_".join(wcsinfo['CTYPE'][other])
         spatial = cf.Frame2D(name=name, axes_order=tuple(other), unit=cunit[other],
-                             axes_names=tuple(wcsinfo['CTYPE'][other]))
+                             axes_names=axes_names)
         frames.append(spatial)
     if wcsaxes == 2:
         return frames[0]
