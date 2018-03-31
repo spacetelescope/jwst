@@ -50,7 +50,7 @@ def test_fgs_pointing():
     assert model.meta.wcsinfo.pc1_1 == 1.0
     assert model.meta.wcsinfo.pc1_2 == 0.0
     assert model.meta.wcsinfo.pc2_1 == 0.0
-    assert model.meta.wcsinfo.pc2_2 == 0.0
+    assert model.meta.wcsinfo.pc2_2 == 1.0
 
 
 # ---------
