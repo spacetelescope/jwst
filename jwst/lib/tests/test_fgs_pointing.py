@@ -1,9 +1,17 @@
 """Test suite for ensuring correct FGS pointing"""
+import logging
 from numpy import array
 
 from ...datamodels import Level1bModel
 from .. import set_telescope_pointing as stp
 
+
+# Set logging for the module to be tested.
+logger = logging.getLogger(stp.__name__)
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 # Define minimal model meta structure
 WCS_META = {
@@ -47,7 +55,7 @@ def test_fgs_pointing():
     model = make_level1b()
     stp.update_wcs(model)
 
-    assert model.meta.wcsinfo.pc1_1 == 1.0
+    assert model.meta.wcsinfo.pc1_1 == -1.0
     assert model.meta.wcsinfo.pc1_2 == 0.0
     assert model.meta.wcsinfo.pc2_1 == 0.0
     assert model.meta.wcsinfo.pc2_2 == 1.0
