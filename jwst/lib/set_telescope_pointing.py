@@ -38,6 +38,17 @@ SIFOV2V_DEFAULT = np.array(
      [-0.00226892608, 0., 0.99999742598]]
 )
 
+# JWST Exposures that are Fine Guidance exposures that actually
+# define the pointing.
+FGS_GUIDE_EXP_TYPES = [
+    'fgs_acq1',
+    'fgs_acq2',
+    'fgs_fineguide',
+    'fgs_id-image',
+    'fgs_id-stack',
+    'fgs_track',
+]
+
 # Degree, radian, angle transformations
 R2D = 180./np.pi
 D2R = np.pi/180.
@@ -146,9 +157,13 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
 
     # If the type of exposure is not FGS, then attempt to get pointing
     # from telemetry.
-    if model.meta.exposure.type.lower().startswith('fgs'):
-        update_wcs_from_header(
-            model, default_pa_v3=default_pa_v3, siaf_path=siaf_path, **kwargs
+    try:
+        exp_type = model.meta.exposure.type.lower()
+    except AttributeError:
+        exp_type = None
+    if exp_type in FGS_GUIDE_EXP_TYPES:
+        update_wcs_from_fgs_guiding(
+            model, default_pa_v3=default_pa_v3
         )
     else:
         update_wcs_from_telem(
@@ -156,10 +171,10 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
         )
 
 
-def update_wcs_from_header(model, default_pa_v3=0., siaf_path=None, **kwargs):
+def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0):
     """ Update WCS pointing from header information
 
-    For FGS-like observations, nearly all information is already populated
+    For Fine Guidance guidine observations, nearly all information is already populated
     except for the CD matrix. This simply calculates that matrix.
 
     Parameters
@@ -169,11 +184,6 @@ def update_wcs_from_header(model, default_pa_v3=0., siaf_path=None, **kwargs):
     default_pa_v3 : float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
-    siaf_path : str
-        Unused and present only for API compatibility.
-
-    kwargs: dict
-        Unused and present only for API compatibility.
     """
 
     logger.info('Updating WCS from headers.')
