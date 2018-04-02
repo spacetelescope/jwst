@@ -174,8 +174,10 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
 def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0):
     """ Update WCS pointing from header information
 
-    For Fine Guidance guidine observations, nearly all information is already populated
-    except for the CD matrix. This simply calculates that matrix.
+    For Fine Guidance guidine observations, nearly everything
+    in the `wcsinfo` meta information is already populated,
+    except for the CD matrix. This function updates the CD
+    matrix based on the rest of the `wcsinfo`.
 
     Parameters
     ----------
@@ -186,12 +188,17 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0):
         use this as the V3 position angle.
     """
 
-    logger.info('Updating WCS from headers.')
+    logger.info('Updating WCS for Fine Guidance.')
 
     # Get position angle
     try:
         pa = model.meta.wcsinfo.pa_v3
     except AttributeError:
+        logger.warn(
+            'Keyword `PA_V3` not found. Using {} as default value'.format(
+                default_pa_v3
+            )
+        )
         pa = default_pa_v3
     pa_rad = pa * D2R
 
