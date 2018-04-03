@@ -194,44 +194,55 @@ class Snell(Model):
     def compute_refraction_index(lam, temp, tref, pref, pressure, kcoef, lcoef, tcoef):
         """Calculate and retrun the refraction index."""
 
-        # convert the wavelength to microns
-        lam = np.asarray(lam)
+        # Convert to microns
+        lam = np.asarray(lam * 1e6)
         KtoC = 273.15  # kelvin to celcius conversion
-
-        # Derive the refractive index of air at the reference temperature and pressure
-        # and at the operational system's temperature and pressure.
-        nref = 1. + (6432.8 + 2949810. * lam**2 /
-                     (146.0 * lam**2 - 1.) + (5540.0 * lam**2) /
-                     (41.0 * lam**2 - 1.)) * 1e-8
-
-        # T should be in C, P should be in ATM
-        nair_obs = 1.0 + ((nref - 1.0) * pressure) / (1.0 + (temp - KtoC - 15.) * 3.4785e-3)
-        nair_ref = 1.0 + ((nref - 1.0) * pref) / (1.0 + (tref - KtoC - 15) * 3.4785e-3)
-
-        # Compute the relative index of the glass at Tref and Pref using Sellmeier equation I.
-        lamrel = lam * nair_obs / nair_ref
+        temp -= KtoC
+        tref -=KtoC
+        delt = temp - tref
 
         K1, K2, K3 = kcoef
         L1, L2, L3 = lcoef
-        nrel = np.sqrt(1. +
-                       K1 * lamrel**2 / (lamrel ** 2 - L1) +
-                       K2 * lamrel **2 / (lamrel **2 - L2) +
-                       K3 * lamrel **2 / (lamrel ** 2 -L3)
-                       )
-        # Convert the relative index of refraction at the reference temperature and pressure
-        # to absolute.
-        nabs_ref = nrel * nair_ref
-
-        # Compute the absolute index of the glass
-        delt = temp - tref
         D0, D1, D2, E0, E1, lam_tk = tcoef
-        delnabs = (0.5 * (nrel ** 2 - 1.) / nrel) * \
-                (D0 * delt + D1 * delt**2 + D2 * delt**3 + \
-                 (E0 * delt + E1 * delt**2) / (lamrel**2  - lam_tk**2))
-        nabs_obs = nabs_ref + delnabs
 
-        # Define the relative index at the system's operating T and P.
-        n = nabs_obs / nair_obs
+        if delt < 20 :
+            n = np.sqrt(1. +
+                        K1 * lam**2 / (lam**2 - L1) +
+                        K2 * lam**2 / (lam**2 - L2) +
+                        K3 * lam**2 / (lam**2 - L3)
+                        )
+        else:
+            # Derive the refractive index of air at the reference temperature and pressure
+            # and at the operational system's temperature and pressure.
+            nref = 1. + (6432.8 + 2949810. * lam**2 /
+                         (146.0 * lam**2 - 1.) + (5540.0 * lam**2) /
+                         (41.0 * lam**2 - 1.)) * 1e-8
+
+            # T should be in C, P should be in ATM
+            nair_obs = 1.0 + ((nref - 1.0) * pressure) / (1.0 + (temp - 15.) * 3.4785e-3)
+            nair_ref = 1.0 + ((nref - 1.0) * pref) / (1.0 + (tref - 15) * 3.4785e-3)
+
+            # Compute the relative index of the glass at Tref and Pref using Sellmeier equation I.
+            lamrel = lam * nair_obs / nair_ref
+
+
+            nrel = np.sqrt(1. +
+                           K1 * lamrel**2 / (lamrel ** 2 - L1) +
+                           K2 * lamrel **2 / (lamrel **2 - L2) +
+                           K3 * lamrel **2 / (lamrel ** 2 -L3)
+                           )
+            # Convert the relative index of refraction at the reference temperature and pressure
+            # to absolute.
+            nabs_ref = nrel * nair_ref
+
+            # Compute the absolute index of the glass
+            delnabs = (0.5 * (nrel ** 2 - 1.) / nrel) * \
+                    (D0 * delt + D1 * delt**2 + D2 * delt**3 + \
+                     (E0 * delt + E1 * delt**2) / (lamrel**2  - lam_tk**2))
+            nabs_obs = nabs_ref + delnabs
+
+            # Define the relative index at the system's operating T and P.
+            n = nabs_obs / nair_obs
         return n
 
     def evaluate(self, lam, alpha_in, beta_in, zin):
