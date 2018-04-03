@@ -27,11 +27,11 @@ to install the dependencies, and then installing from the github repository:
     conda install jwst
     git clone https://github.com/STScI-JWST/jwst.git
     cd jwst
-    python setup.py install
-
-    or
-
     python setup.py develop
+
+If you will not need to update the code, then you can replace the last step with the following command:
+
+    python setup.py install
 
 Once installed, the software can be updated to the lastest development version by running the following command inside the `jwst` 
 repository:
