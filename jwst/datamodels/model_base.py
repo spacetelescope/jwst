@@ -136,9 +136,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         elif isinstance(init, DataModel):
             self.clone(self, init)
             if not isinstance(init, self.__class__):
-                util.validate_schema(self._instance, self._schema,
-                                     self._pass_invalid_values,
-                                     self._strict_validation)
+                self.validate()
             return
         elif isinstance(init, AsdfFile):
             asdf = init
@@ -279,6 +277,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         return result
 
     __copy__ = __deepcopy__ = copy
+
+    def validate(self):
+        """
+        Re-validate the model instance againsst its schema
+        """
+        util.validate_schema(self._instance, self._schema,
+                             self._pass_invalid_values,
+                             self._strict_validation)
 
     def get_primary_array_name(self):
         """

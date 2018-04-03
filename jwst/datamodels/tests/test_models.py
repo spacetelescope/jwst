@@ -471,11 +471,13 @@ def test_slit_from_image():
     assert hasattr(slit, 'pathloss_pointsource')
     assert slit.meta.instrument.name == "MIRI"
 
-    with pytest.raises(TypeError):
-        ImageModel(slit)
+    im = ImageModel(slit)
+    assert type(im) == ImageModel
+    im.close()
 
-    with pytest.raises(TypeError):
-        ImageModel(slit_dm)
+    im = ImageModel(slit_dm)
+    assert type(im) == ImageModel
+    im.close()
 
 
 def test_ifuimage():
@@ -485,5 +487,7 @@ def test_ifuimage():
     assert_allclose(im.data, ifuimage.data)
     assert_allclose(im.err, ifuimage.err)
     assert_allclose(im.dq, ifuimage.dq)
-    with pytest.raises(TypeError):
-        ImageModel(ifuimage)
+
+    im = ImageModel(ifuimage)
+    assert type(im) == ImageModel
+    im.close()
