@@ -17,30 +17,26 @@ Installing
 To install the latest stable version of the library, we recommend using [conda](https://conda.io/docs/index.html) and
 the [astroconda](https://astroconda.readthedocs.io) channel:
 
-    % conda config --add channels http://ssb.stsci.edu/astroconda-dev
-    % conda install jwst
+    conda config --add channels http://ssb.stsci.edu/astroconda-dev
+    conda install jwst
 
 To install the development version of the repository, we recommend using the [astroconda](https://astroconda.readthedocs.io) channel
 to install the dependencies, and then installing from the github repository:
 
-    % conda config --add channels http://ssb.stsci.edu/astroconda-dev
-
-    % conda install jwst
-
-    % git clone https://github.com/STScI-JWST/jwst.git
-
-    % cd jwst
-
-    % python setup.py install
+    conda config --add channels http://ssb.stsci.edu/astroconda-dev
+    conda install jwst
+    git clone https://github.com/STScI-JWST/jwst.git
+    cd jwst
+    python setup.py install
 
     or
 
-    % python setup.py develop
+    python setup.py develop
 
 Once installed, the software can be updated to the lastest development version by running the following command inside the `jwst` 
 repository:
 
-    % git pull origin master
+    git pull origin master
 
 
 Contributing Code, Documentation or Feedback
