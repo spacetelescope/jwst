@@ -40,7 +40,7 @@ to install the dependencies, and then installing from the github repository:
 Once installed, the software can be updated to the lastest development version by running the following command inside the `jwst` 
 repository:
 
-    % git pull upstream master
+    % git pull origin master
 
 
 Contributing Code, Documentation or Feedback
