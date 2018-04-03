@@ -13,17 +13,19 @@ Beginning with the next version (0.9.0), **JWST requires Python 3.5 and above**.
 
 Installing
 ----------
-Releases are made on the **stable** branch. To install the latest release:
 
-    % git clone https://github.com/STScI-JWST/jwst.git
+To install the latest stable version of the library, we recommend using [conda](https://conda.io/docs/index.html) and
+the [astroconda](https://astroconda.readthedocs.io) channel:
 
-    % cd jwst
+    % conda config --add channels http://ssb.stsci.edu/astroconda-dev
+    % conda install jwst
 
-    % git checkout stable
+To install the development version of the repository, we recommend using the [astroconda](https://astroconda.readthedocs.io) channel
+to install the dependencies, and then installing from the github repository:
 
-    % python setup.py install
+    % conda config --add channels http://ssb.stsci.edu/astroconda-dev
 
-The main development is on the **master** branch. To install the development version:
+    % conda install jwst
 
     % git clone https://github.com/STScI-JWST/jwst.git
 
@@ -34,6 +36,11 @@ The main development is on the **master** branch. To install the development ver
     or
 
     % python setup.py develop
+
+Once installed, the software can be updated to the lastest development version by running the following command inside the `jwst` 
+repository:
+
+    % git pull upstream master
 
 
 Contributing Code, Documentation or Feedback
