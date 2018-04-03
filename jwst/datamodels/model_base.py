@@ -25,6 +25,7 @@ from . import filetype
 from . import fits_support
 from . import properties
 from . import schema as mschema
+from . import util
 
 from .extension import BaseExtension
 from jwst.transforms.jwextension import JWSTExtension
@@ -131,13 +132,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             asdf = AsdfFile(extensions=extensions)
             shape = init.shape
             is_array = True
-        elif isinstance(init, self.__class__):
-            self.clone(self, init)
-            return
+
         elif isinstance(init, DataModel):
-            raise TypeError(
-                "Passed in {0!r} is not of the expected subclass {1!r}".format(
-                    init.__class__.__name__, self.__class__.__name__))
+            self.clone(self, init)
+            if not isinstance(init, self.__class__):
+                self.validate()
+            return
         elif isinstance(init, AsdfFile):
             asdf = init
         elif isinstance(init, tuple):
@@ -262,7 +262,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             target._iscopy = True
 
         target._files_to_close = []
-        target._schema = source._schema
         target._shape = source._shape
         target._ctx = target
 
@@ -278,6 +277,14 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         return result
 
     __copy__ = __deepcopy__ = copy
+
+    def validate(self):
+        """
+        Re-validate the model instance againsst its schema
+        """
+        util.validate_schema(self._instance, self._schema,
+                             self._pass_invalid_values,
+                             self._strict_validation)
 
     def get_primary_array_name(self):
         """
