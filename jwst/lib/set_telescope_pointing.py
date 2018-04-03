@@ -171,7 +171,7 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
         )
 
 
-def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0):
+def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
     """ Update WCS pointing from header information
 
     For Fine Guidance guidine observations, nearly everything
@@ -183,9 +183,15 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0):
     ----------
     model : `~jwst.datamodels.DataModel`
         The model to update.
+
     default_pa_v3 : float
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
+
+    default_vparity: {-1, 1}
+        The default `VIdlParity` to use. `1` is the
+        default since FGS guiding will be using the
+        OSS aperture.
     """
 
     logger.info('Updating WCS for Fine Guidance.')
@@ -202,9 +208,20 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0):
         pa = default_pa_v3
     pa_rad = pa * D2R
 
-    model.meta.wcsinfo.pc1_1 = -np.cos(pa_rad)
+    # Get VIdlParity
+    try:
+        vparity = model.meta.wcsinfo.vparity
+    except AttributeError:
+        logger.warn(
+            'Keyword "VPARITY" not found. Using {} as default value'.format(
+                default_vparity
+            )
+        )
+        vparity = default_vparity
+
+    model.meta.wcsinfo.pc1_1 = -1 * vparity * np.cos(pa_rad)
     model.meta.wcsinfo.pc1_2 = np.sin(pa_rad)
-    model.meta.wcsinfo.pc2_1 = np.sin(pa_rad)
+    model.meta.wcsinfo.pc2_1 = vparity * np.sin(pa_rad)
     model.meta.wcsinfo.pc2_2 = np.cos(pa_rad)
 
 
