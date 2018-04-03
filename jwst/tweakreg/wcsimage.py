@@ -20,7 +20,7 @@ from copy import deepcopy
 import numpy as np
 import gwcs
 from astropy import table
-from stsci.sphere.polygon import SphericalPolygon
+from spherical_geometry.polygon import SphericalPolygon
 from stsci.stimage import xyxymatch
 
 # LOCAL
@@ -525,7 +525,7 @@ class WCSImageCatalog(object):
         """
         Compute intersection of this `WCSImageCatalog` object and another
         `WCSImageCatalog`, `WCSGroupCatalog`, or
-        :py:class:`~stsci.sphere.polygon.SphericalPolygon`
+        :py:class:`~spherical_geometry.polygon.SphericalPolygon`
         object.
 
         Parameters
@@ -537,7 +537,7 @@ class WCSImageCatalog(object):
         Returns
         -------
         polygon : SphericalPolygon
-            A :py:class:`~stsci.sphere.polygon.SphericalPolygon` that is
+            A :py:class:`~spherical_geometry.polygon.SphericalPolygon` that is
             the intersection of this `WCSImageCatalog` and `wcsim`.
 
         """
@@ -776,7 +776,7 @@ class WCSGroupCatalog(object):
         """
         Compute intersection of this `WCSGroupCatalog` object and another
         `WCSImageCatalog`, `WCSGroupCatalog`, or
-        :py:class:`~stsci.sphere.polygon.SphericalPolygon`
+        :py:class:`~spherical_geometry.polygon.SphericalPolygon`
         object.
 
         Parameters
@@ -788,7 +788,7 @@ class WCSGroupCatalog(object):
         Returns
         -------
         polygon : SphericalPolygon
-            A :py:class:`~stsci.sphere.polygon.SphericalPolygon` that is
+            A :py:class:`~spherical_geometry.polygon.SphericalPolygon` that is
             the intersection of this `WCSGroupCatalog` and `wcsim`.
 
         """
@@ -1357,7 +1357,7 @@ class RefCatalog(object):
         """
         Compute intersection of this `WCSImageCatalog` object and another
         `WCSImageCatalog`, `WCSGroupCatalog`, `RefCatalog`, or
-        :py:class:`~stsci.sphere.polygon.SphericalPolygon`
+        :py:class:`~spherical_geometry.polygon.SphericalPolygon`
         object.
 
         Parameters
@@ -1369,7 +1369,7 @@ class RefCatalog(object):
         Returns
         -------
         polygon : SphericalPolygon
-            A :py:class:`~stsci.sphere.polygon.SphericalPolygon` that is
+            A :py:class:`~spherical_geometry.polygon.SphericalPolygon` that is
             the intersection of this `WCSImageCatalog` and `wcsim`.
 
         """
