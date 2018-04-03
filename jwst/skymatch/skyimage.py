@@ -1,4 +1,4 @@
-spherical_geometry"""
+"""
 The ``skyimage`` module contains algorithms that are used by
 ``skymatch`` to manage all of the information for footprints (image outlines)
 on the sky as well as perform useful operations on these outlines such as
