@@ -457,11 +457,10 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
             columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
             The source position is in a coordinate system associated with each shutter whose
             origin is the upper left corner of the shutter, positive x is to the right
-            and positive y is downwards. To convert to the coordinate frame associated with the
-            slit, where (0, 0) is in the center of the slit, we subtract 0.5 in both directions.
+            and positive y is downwards.
             """
             source_xpos = source_xpos - 0.5
-            source_ypos = source_ypos - 0.5
+            source_ypos = -source_ypos + 0.5
 
             # Create the shutter_state string
             all_shutters = _shutter_id_to_str(open_shutters, ycen)
