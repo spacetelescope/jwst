@@ -219,10 +219,10 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
         )
         vparity = default_vparity
 
-    model.meta.wcsinfo.pc1_1 = -1 * vparity * np.cos(pa_rad)
-    model.meta.wcsinfo.pc1_2 = np.sin(pa_rad)
-    model.meta.wcsinfo.pc2_1 = vparity * np.sin(pa_rad)
-    model.meta.wcsinfo.pc2_2 = np.cos(pa_rad)
+    (model.meta.wcsinfo.pc1_1,
+     model.meta.wcsinfo.pc1_2,
+     model.meta.wcsinfo.pc2_1,
+     model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(pa_rad, vparity=vparity)
 
 
 def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **kwargs):
@@ -302,15 +302,18 @@ def update_wcs_from_telem(model, default_pa_v3=0., siaf_path=None, **kwargs):
     model.meta.aperture.position_angle = wcsinfo.pa
     model.meta.wcsinfo.crval1 = wcsinfo.ra
     model.meta.wcsinfo.crval2 = wcsinfo.dec
-    model.meta.wcsinfo.pc1_1 = -np.cos(wcsinfo.pa * D2R)
-    model.meta.wcsinfo.pc1_2 = np.sin(wcsinfo.pa * D2R)
-    model.meta.wcsinfo.pc2_1 = np.sin(wcsinfo.pa * D2R)
-    model.meta.wcsinfo.pc2_2 = np.cos(wcsinfo.pa * D2R)
     model.meta.wcsinfo.ra_ref = wcsinfo.ra
     model.meta.wcsinfo.dec_ref = wcsinfo.dec
     model.meta.wcsinfo.roll_ref = compute_local_roll(
         vinfo.pa, wcsinfo.ra, wcsinfo.dec, siaf.v2ref, siaf.v3ref
     )
+    (model.meta.wcsinfo.pc1_1,
+     model.meta.wcsinfo.pc1_2,
+     model.meta.wcsinfo.pc2_1,
+     model.meta.wcsinfo.pc2_2) = calc_rotation_matrix(
+         wcsinfo.pa * D2R, vparity=siaf.vparity
+     )
+
     wcsaxes = model.meta.wcsinfo.wcsaxes
     if wcsaxes is None:
         wcsaxes = 2
@@ -1102,3 +1105,44 @@ def _add_axis_3(model):
     if wcsaxes is not None and wcsaxes == 3:
         model.meta.wcsinfo.ctype3 = "WAVE"
         model.meta.wcsinfo.cunit3 = "um"
+
+
+def calc_rotation_matrix(angle, vparity=1):
+    """ Calculate the rotation matrix
+
+    Parameters
+    ----------
+    angle: float in radians
+        The angle to create the matrix
+
+    vparity: {1, -1}
+        The x-axis parity, usually taken from
+        the JWST SIAF parameter VIdlParity
+
+    Returns
+    -------
+    matrix: [cd1_1, cd1_2, cd2_1, cd2_2]
+        The rotation matrix
+
+    Notes
+    -----
+    The rotation is
+
+       ----------------
+       | cd1_1  cd2_1 |
+       | cd1_2  cd2_2 |
+       ----------------
+
+    where:
+        cd1_1 = vparity * cos(angle)
+        cd1_2 = sin(angle)
+        cd2_1 = -1 * vparity * sin(angle)
+        cd2_2 = cos(angle)
+    """
+
+    cd1_1 = vparity * cos(angle)
+    cd1_2 = sin(angle)
+    cd2_1 = -1 * vparity * sin(angle)
+    cd2_2 = cos(angle)
+
+    return [cd1_1, cd1_2, cd2_1, cd2_2]
