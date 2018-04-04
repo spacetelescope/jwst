@@ -24,7 +24,7 @@ software and using a conda environment for the installation:
 This will install the latest released version of the package, and within the
 `jwst` environment, the pipeline can be run from the command line or imported
 into python programs.   In order to install a specific version, the exact 
-version can be supplied, e.g. jwst=9.0.0.dev0. 
+version can be supplied, e.g. jwst=0.9.0. 
 
 To install the development version of the repository, we recommend created a new
 environment, using the [astroconda](https://astroconda.readthedocs.io) channel
