@@ -766,6 +766,8 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             path = ['extra_fits', hdu_name, 'header']
             set_hdu_keyword(self._instance, d, path)
 
+        self.validate()
+
     def to_flat_dict(self, include_arrays=True):
         """
         Returns a dictionary of all of the schema items as a flat dictionary.
