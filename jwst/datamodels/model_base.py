@@ -200,14 +200,12 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
         # store the data model type, if not already set
         klass = self.__class__.__name__
-        if klass == 'DataModel':
-            klass = None
-
-        if hasattr(self.meta, 'model_type'):
-            if self.meta.model_type is None:
+        if klass != 'DataModel':
+            if hasattr(self.meta, 'model_type'):
+                if self.meta.model_type is None:
+                    self.meta.model_type = klass
+            else:
                 self.meta.model_type = klass
-        else:
-            self.meta.model_type = klass
 
         if is_array:
             primary_array_name = self.get_primary_array_name()
