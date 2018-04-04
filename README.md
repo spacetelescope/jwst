@@ -9,32 +9,39 @@ JWST Calibration Pipeline
 
 Note
 ----
-Beginning with  version 0.9.0, **JWST requires Python 3.5 and above**.
+Beginning with version 0.9.0, **JWST requires Python 3.5 and above**.
 
 Installing
 ----------
 
-To install the latest stable version of the library, we recommend using [conda](https://conda.io/docs/index.html) and
-the [astroconda](https://astroconda.readthedocs.io) channel:
+To install the latest stable version of the library, we recommend using [conda](https://conda.io/docs/index.html)
+and the [astroconda](https://astroconda.readthedocs.io) channel to install the
+software and using an conda environemnt for the installation:
 
     conda config --add channels http://ssb.stsci.edu/astroconda-dev
+    conda create -n jwst python=3
+    source activate jwst
     conda install jwst
 
-To install the development version of the repository, we recommend using the [astroconda](https://astroconda.readthedocs.io) channel
+To install the development version of the repository, we recommend created a new
+nvironment, using the [astroconda](https://astroconda.readthedocs.io) channel
 to install the dependencies, and then installing from the github repository:
 
     conda config --add channels http://ssb.stsci.edu/astroconda-dev
+    conda create -n jwst python=3
+    source activate jwst
     conda install jwst
     git clone https://github.com/STScI-JWST/jwst.git
     cd jwst
     python setup.py develop
 
-If you will not need to update the code, then you can replace the last step with the following command:
+If you will not need to update the code, then you can replace the last step with
+the following command:
 
     python setup.py install
 
-Once installed, the software can be updated to the lastest development version by running the following command inside the `jwst` 
-directory: 
+Once installed, the software can be updated to the lastest development version
+by running the following command inside the `jwst` directory: 
 
     git pull origin master
 
