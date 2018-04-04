@@ -1,10 +1,10 @@
 """Set Telescope Pointing from quaternions"""
 import logging
-import sqlite3
+from math import (cos, sin)
 import os.path
+import sqlite3
 
 import numpy as np
-from numpy import (cos, sin)
 
 from namedlist import namedlist
 
@@ -174,9 +174,9 @@ def update_wcs(model, default_pa_v3=0., siaf_path=None, **kwargs):
 def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
     """ Update WCS pointing from header information
 
-    For Fine Guidance guidine observations, nearly everything
+    For Fine Guidance guiding observations, nearly everything
     in the `wcsinfo` meta information is already populated,
-    except for the CD matrix. This function updates the CD
+    except for the PC matrix. This function updates the PC
     matrix based on the rest of the `wcsinfo`.
 
     Parameters
@@ -188,8 +188,9 @@ def update_wcs_from_fgs_guiding(model, default_pa_v3=0.0, default_vparity=1):
         If pointing information cannot be retrieved,
         use this as the V3 position angle.
 
-    default_vparity: {-1, 1}
-        The default `VIdlParity` to use. `1` is the
+    default_vparity: int
+        The default `VIdlParity` to use and should
+        be either "1" or "-1". "1" is the
         default since FGS guiding will be using the
         OSS aperture.
     """
@@ -1115,13 +1116,14 @@ def calc_rotation_matrix(angle, vparity=1):
     angle: float in radians
         The angle to create the matrix
 
-    vparity: {1, -1}
+    vparity: int
         The x-axis parity, usually taken from
-        the JWST SIAF parameter VIdlParity
+        the JWST SIAF parameter VIdlParity.
+        Value should be "1" or "-1".
 
     Returns
     -------
-    matrix: [cd1_1, cd1_2, cd2_1, cd2_2]
+    matrix: [pc1_1, pc1_2, pc2_1, pc2_2]
         The rotation matrix
 
     Notes
@@ -1129,20 +1131,20 @@ def calc_rotation_matrix(angle, vparity=1):
     The rotation is
 
        ----------------
-       | cd1_1  cd2_1 |
-       | cd1_2  cd2_2 |
+       | pc1_1  pc2_1 |
+       | pc1_2  pc2_2 |
        ----------------
 
     where:
-        cd1_1 = vparity * cos(angle)
-        cd1_2 = sin(angle)
-        cd2_1 = -1 * vparity * sin(angle)
-        cd2_2 = cos(angle)
+        pc1_1 = vparity * cos(angle)
+        pc1_2 = sin(angle)
+        pc2_1 = -1 * vparity * sin(angle)
+        pc2_2 = cos(angle)
     """
 
-    cd1_1 = vparity * cos(angle)
-    cd1_2 = sin(angle)
-    cd2_1 = -1 * vparity * sin(angle)
-    cd2_2 = cos(angle)
+    pc1_1 = vparity * cos(angle)
+    pc1_2 = sin(angle)
+    pc2_1 = vparity * -sin(angle)
+    pc2_2 = cos(angle)
 
-    return [cd1_1, cd1_2, cd2_1, cd2_2]
+    return [pc1_1, pc1_2, pc2_1, pc2_2]
