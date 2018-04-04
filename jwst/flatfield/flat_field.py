@@ -315,7 +315,7 @@ def do_NIRSpec_flat_field(output_model,
         # in preference to the wavelengths returned by the wcs function.
         got_wl_attribute = True
         try:
-            wl = slit.wavelength                # a 2-D array
+            wl = slit.wavelength.copy()         # a 2-D array
         except AttributeError:
             got_wl_attribute = False
         if not got_wl_attribute or len(wl) == 0:
@@ -480,7 +480,7 @@ def NIRSpec_brightobj(output_model,
     # The wavelength of each pixel in a plane of the data.
     got_wl_attribute = True
     try:
-        wl = output_model.wavelength            # a 2-D array
+        wl = output_model.wavelength.copy()     # a 2-D array
     except AttributeError:
         got_wl_attribute = False
     if not got_wl_attribute or len(wl) == 0:
