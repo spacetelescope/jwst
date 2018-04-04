@@ -16,7 +16,7 @@ Installing
 
 To install the latest released version of the library, we recommend using [conda](https://conda.io/docs/index.html)
 and the [astroconda](https://astroconda.readthedocs.io) channel to install the
-software and using a conda environemnt for the installation:
+software and using a conda environment for the installation:
 
     conda create -n jwst --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults jwst
     source activate jwst
