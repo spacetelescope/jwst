@@ -9,7 +9,7 @@ JWST Calibration Pipeline
 
 Note
 ----
-Beginning with the next version (0.9.0), **JWST requires Python 3.5 and above**.
+Beginning with  version 0.9.0, **JWST requires Python 3.5 and above**.
 
 Installing
 ----------
@@ -34,7 +34,7 @@ If you will not need to update the code, then you can replace the last step with
     python setup.py install
 
 Once installed, the software can be updated to the lastest development version by running the following command inside the `jwst` 
-repository:
+directory: 
 
     git pull origin master
 
