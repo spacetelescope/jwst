@@ -53,10 +53,11 @@ https://jwst-pipeline.readthedocs.io/en/latest/
 Software vs DMS build version map
 ---------------------------------
 
-| jwst tag | DMS build |    Date    |          Notes               |
-| -------- | --------- | ---------- | ---------------------------- |
-|  0.9.2   |   B7.1x   | 03/28/2018 | DMS test, no delivery to I&T |
-|  0.9.1   |   B7.1x   | 02/16/2018 | DMS test, no delivery to I&T |
-|  0.9.0   |   B7.1x   | 12/22/2017 | DMS test, no delivery to I&T |
-|  0.8.0   |   B7.1    | 11/14/2017 | Final, delivered to I&T      |
-|  0.7.0rc7|   B7.0    | 12/13/2016 | Final, delivered to I&T      |
+| jwst tag | DMS build |    Date    |          Notes                      |
+| -------- | --------- | ---------- | ----------------------------------- |
+|  0.9.2   |           | 03/28/2018 | DMS test, no delivery to I&T        |
+|  0.9.1   |           | 02/16/2018 | DMS test, no delivery to I&T        |
+|  0.9.0   |   B7.1.2  | 12/22/2017 | DMS patch release to I&T 02/15/2018 |
+|  0.8.0   |   B7.1.1  |            | DMS patch release to I&T 01/17/2018 |
+|  0.8.0   |   B7.1    | 11/14/2017 | Final, delivered to I&T 11/17/2017  |
+|  0.7.0rc7|   B7.0    | 12/13/2016 | Final, delivered to I&T             |
