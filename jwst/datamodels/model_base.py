@@ -120,33 +120,39 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         # proper code to intiailize the model
         self._files_to_close = []
         self._iscopy = False
-
         is_array = False
         is_shape = False
         shape = None
+
         if init is None:
             asdf = AsdfFile(extensions=extensions)
+
         elif isinstance(init, dict):
             asdf = AsdfFile(init, extensions=extensions)
+
         elif isinstance(init, np.ndarray):
             asdf = AsdfFile(extensions=extensions)
             shape = init.shape
             is_array = True
+
+        elif isinstance(init, tuple):
+            for item in init:
+                if not isinstance(item, int):
+                    raise ValueError("shape must be a tuple of ints")
+
+            shape = init
+            asdf = AsdfFile()
+            is_shape = True
 
         elif isinstance(init, DataModel):
             self.clone(self, init)
             if not isinstance(init, self.__class__):
                 self.validate()
             return
+
         elif isinstance(init, AsdfFile):
             asdf = init
-        elif isinstance(init, tuple):
-            for item in init:
-                if not isinstance(item, int):
-                    raise ValueError("shape must be a tuple of ints")
-            shape = init
-            asdf = AsdfFile()
-            is_shape = True
+
         elif isinstance(init, fits.HDUList):
             asdf = fits_support.from_fits(init, self._schema,
                                           extensions, self._ctx)
@@ -175,11 +181,27 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             raise ValueError(
                 "Can't initialize datamodel using {0}".format(str(type(init))))
 
-        # Initialize object fields as determined fro the code above
-
+        # Initialize object fields as determined from the code above
         self._shape = shape
         self._instance = asdf.tree
         self._asdf = asdf
+
+        # Instantiate the primary array of the image
+        if is_array:
+            primary_array = self.get_primary_array_name()
+            if primary_array is None:
+                raise TypeError(
+                    "Array passed to DataModel.__init__, but model has "
+                    "no primary array in its schema")
+            setattr(self, primary_array, init)
+
+        if is_shape:
+            try:
+                getattr(self, self.get_primary_array_name())
+            except AttributeError:
+                raise TypeError(
+                    "Shape passed to DataModel.__init__, but model has "
+                    "no primary array in its schema")
 
         # if the input is from a file, set the filename attribute
         if isinstance(init, str):
@@ -206,18 +228,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
                     self.meta.model_type = klass
             else:
                 self.meta.model_type = klass
-
-        if is_array:
-            primary_array_name = self.get_primary_array_name()
-            if primary_array_name is None:
-                raise TypeError(
-                    "Array passed to DataModel.__init__, but model has "
-                    "no primary array in its schema")
-            setattr(self, primary_array_name, init)
-
-        # TODO this code looks useless
-        if is_shape:
-            getattr(self, self.get_primary_array_name())
 
     def __enter__(self):
         return self
