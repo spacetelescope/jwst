@@ -52,8 +52,8 @@ applied to each `EXP_TYPE` instance.
 +-------------------+-------------------+------------------+------------------+
 | FGS_DARK          | calwebb_dark1     | N/A              | N/A              |
 +-------------------+-------------------+------------------+------------------+
-| FGS_SKYFLAT       | calwebb_detector1 | N/A              | N/A              |
-| FGS_INTFLAT       |                   |                  |                  |
+| | FGS_SKYFLAT     | calwebb_detector1 | N/A              | N/A              |
+| | FGS_INTFLAT     |                   |                  |                  |
 +-------------------+-------------------+------------------+------------------+
 |                   |                   |                  |                  |
 +-------------------+-------------------+------------------+------------------+
@@ -65,15 +65,15 @@ applied to each `EXP_TYPE` instance.
 +-------------------+-------------------+------------------+------------------+
 | MIR_LRS-SLITLESS  | calwebb_tso1      | calwebb_spec2    | calwebb_tso3     |
 +-------------------+-------------------+------------------+------------------+
-| MIR_LYOT          | calwebb_detector1 | calwebb_image2   | calwebb_coron3   |
-| MIR_4QPM          |                   |                  |                  |
+| | MIR_LYOT        | calwebb_detector1 | calwebb_image2   | calwebb_coron3   |
+| | MIR_4QPM        |                   |                  |                  |
 +-------------------+-------------------+------------------+------------------+
 | MIR_TACQ          | calwebb_detector1 | calwebb_image2   | N/A              |
 +-------------------+-------------------+------------------+------------------+
 | MIR_DARK          | calwebb_dark1     | N/A              | N/A              |
 +-------------------+-------------------+------------------+------------------+
-| MIR_FLATIMAGE     | calwebb_detector1 | N/A              | N/A              |
-| MIR_FLATMRS       |                   |                  |                  |
+| | MIR_FLATIMAGE   | calwebb_detector1 | N/A              | N/A              |
+| | MIR_FLATMRS     |                   |                  |                  |
 +-------------------+-------------------+------------------+------------------+
 |                   |                   |                  |                  |
 +-------------------+-------------------+------------------+------------------+
@@ -87,14 +87,14 @@ applied to each `EXP_TYPE` instance.
 +-------------------+-------------------+------------------+------------------+
 | NRC_TSGRISM       | calwebb_tso1      | calwebb_spec2    | calwebb_tso3     |
 +-------------------+-------------------+------------------+------------------+
-| NRC_TACQ          | calwebb_detector1 | calwebb_image2   | N/A              |
-| NRC_TACONFIRM     |                   |                  |                  |
-| NRC_FOCUS         |                   |                  |                  |
+| | NRC_TACQ        | calwebb_detector1 | calwebb_image2   | N/A              |
+| | NRC_TACONFIRM   |                   |                  |                  |
+| | NRC_FOCUS       |                   |                  |                  |
 +-------------------+-------------------+------------------+------------------+
 | NRC_DARK          | calwebb_dark1     | N/A              | N/A              |
 +-------------------+-------------------+------------------+------------------+
-| NRC_FLAT          | calwebb_detector1 | N/A              | N/A              |
-| NRC_LED           |                   |                  |                  |
+| | NRC_FLAT        | calwebb_detector1 | N/A              | N/A              |
+| | NRC_LED         |                   |                  |                  |
 +-------------------+-------------------+------------------+------------------+
 |                   |                   |                  |                  |
 +-------------------+-------------------+------------------+------------------+
@@ -106,9 +106,9 @@ applied to each `EXP_TYPE` instance.
 +-------------------+-------------------+------------------+------------------+
 | NIS_AMI           | calwebb_detector1 | calwebb_image2   | calwebb_ami3     |
 +-------------------+-------------------+------------------+------------------+
-| NIS_TACQ          | calwebb_detector1 | calwebb_image2   | N/A              |
-| NIS_TACONFIRM     |                   |                  |                  |
-| NIS_FOCUS         |                   |                  |                  |
+| | NIS_TACQ        | calwebb_detector1 | calwebb_image2   | N/A              |
+| | NIS_TACONFIRM   |                   |                  |                  |
+| | NIS_FOCUS       |                   |                  |                  |
 +-------------------+-------------------+------------------+------------------+
 | NIS_DARK          | calwebb_dark1     | N/A              | N/A              |
 +-------------------+-------------------+------------------+------------------+
@@ -116,26 +116,26 @@ applied to each `EXP_TYPE` instance.
 +-------------------+-------------------+------------------+------------------+
 |                   |                   |                  |                  |
 +-------------------+-------------------+------------------+------------------+
-| NRS_FIXEDSLIT     | calwebb_detector1 | calwebb_spec2    | calwebb_spec3    |
-| NRS_IFU           |                   |                  |                  |
-| NRS_MSASPEC       |                   |                  |                  |
+| | NRS_FIXEDSLIT   | calwebb_detector1 | calwebb_spec2    | calwebb_spec3    |
+| | NRS_IFU         |                   |                  |                  |
+| | NRS_MSASPEC     |                   |                  |                  |
 +-------------------+-------------------+------------------+------------------+
 | NRS_BRIGHTOBJ     | calwebb_tso1      | calwebb_spec2    | calwebb_tso3     |
 +-------------------+-------------------+------------------+------------------+
-| NRS_IMAGE         | calwebb_detector1 | calwebb_image2   | N/A              |
-| NRS_TACQ          |                   |                  |                  |
-| NRS_TACONFIRM     |                   |                  |                  |
-| NRS_BOTA          |                   |                  |                  |
-| NRS_TASLIT        |                   |                  |                  |
-| NRS_CONFIRM       |                   |                  |                  |
-| NRS_FOCUS         |                   |                  |                  |
-| NRS_MIMF          |                   |                  |                  |
+| | NRS_IMAGE       | calwebb_detector1 | calwebb_image2   | N/A              |
+| | NRS_TACQ        |                   |                  |                  |
+| | NRS_TACONFIRM   |                   |                  |                  |
+| | NRS_BOTA        |                   |                  |                  |
+| | NRS_TASLIT      |                   |                  |                  |
+| | NRS_CONFIRM     |                   |                  |                  |
+| | NRS_FOCUS       |                   |                  |                  |
+| | NRS_MIMF        |                   |                  |                  |
 +-------------------+-------------------+------------------+------------------+
 | NRS_DARK          | calwebb_dark1     | N/A              | N/A              |
 +-------------------+-------------------+------------------+------------------+
-| NRS_AUTOWAVE      | calwebb_detector1 | N/A              | N/A              |
-| NRS_AUTOFLAT      |                   |                  |                  |
-| NRS_LAMP          |                   |                  |                  |
+| | NRS_AUTOWAVE    | calwebb_detector1 | N/A              | N/A              |
+| | NRS_AUTOFLAT    |                   |                  |                  |
+| | NRS_LAMP        |                   |                  |                  |
 +-------------------+-------------------+------------------+------------------+
 
 Input Files, Output Files and Data Models
