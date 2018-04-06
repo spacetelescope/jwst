@@ -1,0 +1,7 @@
+
+svn checkout file:///data1/svn_rt_jwst/general
+
+svn checkout file:///eng/ssb/tests/svnrt/rt/jwst_alive
+
+mkdir -p test_functions
+
