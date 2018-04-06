@@ -1,0 +1,98 @@
+JWST REGTEST DIRECTORY
+--
+
+This directory comes from file:///data1/svn_rt_jwst/control - that
+repository contains only the control portions of the regtest.
+
+Run the tests with ./rt
+
+It runs tests in subdirectories that come from other places:
+
+general
+	general jwst regtests; add new tests to the subversion repository
+	file:///data1/svn_rt_jwst/ in the directory general/
+
+	Add new tests by:
+
+		cd general
+		mkdir ...
+		cd ...
+		svn add yourtest
+		svn commit
+
+		DO add:
+			- test files
+			- input files
+
+		DO NOT add:
+			- output files
+			- reference files
+
+		DO NOT:
+			- modify any input files during the test
+
+
+
+jwst_alive
+	irafdev regtests; add new tests under here ONLY if they should
+	run on every machine/architecture in the nightly tests.  Remember
+	that not all test machines can run jwst code because of memory
+	limitations.
+	file:///eng/ssb/tests/svnrt/rt/jwst_alive
+
+more_tests
+	If your package contains a more_tests directory, it will be
+	copied into here by the nightly builds.  This is for tests
+	that the user will not install, but that you may distribute
+	to the user.
+
+	This directory is not stored in subversion.
+
+test_functions
+	for packages that have a .test() function, this directory is
+	automatically populated with a series of tests that run those
+	functions.  If those functions follow the convention at 
+	http://ssb.stsci.edu/testing/pandokia/docs_new/helper_testfn.html
+	they will show up in the pandokia report.
+
+
+Note also /data4/jwst_test_data is a place to store large data files
+outside subversion.  See /data4/jwst_test_data/README
+
+
+-----
+
+
+Creating a JWST regtest directory
+--
+
+svn checkout file:///data1/svn_rt_jwst/control jwst_rt
+cd jwst_rt
+bin/checkout
+
+
+What is here
+--
+
+README
+	# this file
+
+bin/checkout
+
+	## now you have a set of checked out tests
+
+bin/getrefs [ dirname ]
+
+	## (not implemented)
+	## extracts the archived reference files
+
+./rt [ irafdev ]
+
+	## runs the tests
+
+bin/saverefs [ dirname ]
+
+	## (not implemented)
+	## saves the reference files
+
+
