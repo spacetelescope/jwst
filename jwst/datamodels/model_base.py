@@ -815,7 +815,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     @property
     def history(self):
-        return self._instance.setdefault('history', [])
+        return self._instance.setdefault('history', {})
 
     @history.setter
     def history(self, value):

@@ -444,7 +444,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
                 raise ValueError("MSA configuration file has more than 1 shutter with "
                                  "sources for metadata_id = {}".format(msa_metadata_id))
 
-            shutter_id = xcen + (ycen - 1) * 365
+            # subtract 1 because shutter numbers in the MSA reference file are 1-based.
+            shutter_id = xcen + (ycen - 1) * 365 -1
             source_id = slitlets_sid[0]['source_id']
             source_name, source_alias, stellarity = [
                 (s['source_name'], s['alias'], s['stellarity']) \
