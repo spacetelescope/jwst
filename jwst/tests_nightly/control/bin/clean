@@ -1,0 +1,6 @@
+echo CLEAN
+
+echo dot files
+rm -rf .matplotlib
+
+
