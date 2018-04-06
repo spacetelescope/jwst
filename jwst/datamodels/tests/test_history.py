@@ -30,11 +30,11 @@ def teardown():
 
 def test_history_from_model_to_fits():
     m = DataModel()
-    m.history.append(HistoryEntry({
+    m.history['entries'].append(HistoryEntry({
         'description': 'First entry',
         'time': Time(datetime.datetime.now())
     }))
-    m.history.append(HistoryEntry({
+    m.history['entries'].append(HistoryEntry({
         'description': 'Second entry',
         'time': Time(datetime.datetime.now())
     }))
@@ -50,8 +50,8 @@ def test_history_from_model_to_fits():
     m2.history = m.history
 
     print(m2.history)
-    assert m2.history == [{'description': "First entry"},
-                          {'description': "Second entry"}]
+    assert m2.history['entries'] == [{'description': "First entry"},
+                                     {'description': "Second entry"}]
 
     m2.save(TMP_FITS)
 

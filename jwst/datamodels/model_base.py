@@ -820,7 +820,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
 
     @property
     def history(self):
-        return self._instance.setdefault('history', [])
+        return self._instance.setdefault('history', {'entries': []})
 
     @history.setter
     def history(self, value):
@@ -835,7 +835,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             with `~jwst.datamodels.util.create_history_entry`.
 
         """
-        self._instance['history'] = value
+        if 'history' not in self._instance:
+            self._instance['history'] = {'entries': value}
+        else:
+            self._instance['history']['entries'] = value
 
     def get_fits_wcs(self, hdu_name='SCI', hdu_ver=1, key=' '):
         """
