@@ -30,10 +30,9 @@ def teardown():
 
 def test_history_from_model_to_fits():
     m = DataModel()
-    m.history['entries'].append(HistoryEntry({
+    m.history['entries']= [HistoryEntry({
         'description': 'First entry',
-        'time': Time(datetime.datetime.now())
-    }))
+        'time': Time(datetime.datetime.now())})]
     m.history['entries'].append(HistoryEntry({
         'description': 'Second entry',
         'time': Time(datetime.datetime.now())
@@ -49,7 +48,6 @@ def test_history_from_model_to_fits():
     m2.update(m)
     m2.history = m.history
 
-    print(m2.history)
     assert m2.history['entries'] == [{'description': "First entry"},
                                      {'description': "Second entry"}]
 
@@ -67,16 +65,16 @@ def test_history_from_fits():
     fits.writeto(TMP_FITS, np.array([]), header, overwrite=True)
 
     m = DataModel(TMP_FITS)
-    assert m.history == [{'description': 'First entry'},
-                         {'description': 'Second entry'}]
+    assert m.history['entries'] == [{'description': 'First entry'},
+                                    {'description': 'Second entry'}]
 
-    del m.history[0]
-    m.history.append(HistoryEntry({'description': "Third entry"}))
-    assert m.history == [{'description': "Second entry"},
-                         {'description': "Third entry"}]
+    del m.history['entries'][0]
+    m.history['entries'].append(HistoryEntry({'description': "Third entry"}))
+    assert m.history['entries'] == [{'description': "Second entry"},
+                                    {'description': "Third entry"}]
 
     m.save(TMP_FITS)
 
     m = DataModel(TMP_FITS)
-    assert m.history == [{'description': "Second entry"},
-                         {'description': "Third entry"}]
+    assert m.history['entries'] == [{'description': "Second entry"},
+                                    {'description': "Third entry"}]
