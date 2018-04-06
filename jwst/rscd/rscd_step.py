@@ -2,7 +2,6 @@ from ..stpipe import Step
 from .. import datamodels
 from . import rscd_sub
 
-
 class RSCD_Step(Step):
     """
     RSCD_Step: Performs an RSCD correction to MIRI data by adding a function
