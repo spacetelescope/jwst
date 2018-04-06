@@ -37,6 +37,107 @@ the instrument modes to which they can be applied.
 | TSO3Pipeline      | calwebb_tso3.cfg      | Stage 3: Time Series mode    |
 +-------------------+-----------------------+------------------------------+
 
+The data from different observing modes needs to be processed with
+different combinations of the pipeline stages listed above. Observing
+modes are usually identifiable via the value of the `EXP_TYPE` keyword in
+the data product. The following table lists the pipeline modules that get
+applied to each `EXP_TYPE` instance.
+
++---------------------+-------------------+------------------+------------------+
+| | EXP_TYPE          | Stage 1 Pipeline  | Stage 2 Pipeline | Stage 3 Pipeline |
++=====================+===================+==================+==================+
+| | FGS_IMAGE         | calwebb_detector1 | calwebb_image2   | calwebb_image3   |
++---------------------+-------------------+------------------+------------------+
+| | FGS_FOCUS         | calwebb_detector1 | calwebb_image2   | N/A              |
++---------------------+-------------------+------------------+------------------+
+| | FGS_DARK          | calwebb_dark1     | N/A              | N/A              |
++---------------------+-------------------+------------------+------------------+
+| | FGS_SKYFLAT       | calwebb_detector1 | N/A              | N/A              |
+| | FGS_INTFLAT       |                   |                  |                  |
++---------------------+-------------------+------------------+------------------+
+|                     |                   |                  |                  |
++---------------------+-------------------+------------------+------------------+
+| | MIR_IMAGE         | calwebb_detector1 | calwebb_image2   | calwebb_image3   |
++---------------------+-------------------+------------------+------------------+
+| | MIR_MRS           | calwebb_detector1 | calwebb_spec2    | calwebb_spec3    |
++---------------------+-------------------+------------------+------------------+
+| | MIR_LRS-FIXEDSLIT | calwebb_detector1 | calwebb_spec2    | calwebb_spec3    |
++---------------------+-------------------+------------------+------------------+
+| | MIR_LRS-SLITLESS  | calwebb_tso1      | calwebb_spec2    | calwebb_tso3     |
++---------------------+-------------------+------------------+------------------+
+| | MIR_LYOT          | calwebb_detector1 | calwebb_image2   | calwebb_coron3   |
+| | MIR_4QPM          |                   |                  |                  |
++---------------------+-------------------+------------------+------------------+
+| | MIR_TACQ          | calwebb_detector1 | calwebb_image2   | N/A              |
++---------------------+-------------------+------------------+------------------+
+| | MIR_DARK          | calwebb_dark1     | N/A              | N/A              |
++---------------------+-------------------+------------------+------------------+
+| | MIR_FLATIMAGE     | calwebb_detector1 | N/A              | N/A              |
+| | MIR_FLATMRS       |                   |                  |                  |
++---------------------+-------------------+------------------+------------------+
+|                     |                   |                  |                  |
++---------------------+-------------------+------------------+------------------+
+| | NRC_IMAGE         | calwebb_detector1 | calwebb_image2   | calwebb_image3   |
++---------------------+-------------------+------------------+------------------+
+| | NRC_CORON         | calwebb_detector1 | calwebb_image2   | calwebb_coron3   |
++---------------------+-------------------+------------------+------------------+
+| | NRC_GRISM         | calwebb_detector1 | calwebb_spec2    | calwebb_spec3    |
++---------------------+-------------------+------------------+------------------+
+| | NRC_TSIMAGE       | calwebb_tso1      | calwebb_image2   | calwebb_tso3     |
++---------------------+-------------------+------------------+------------------+
+| | NRC_TSGRISM       | calwebb_tso1      | calwebb_spec2    | calwebb_tso3     |
++---------------------+-------------------+------------------+------------------+
+| | NRC_TACQ          | calwebb_detector1 | calwebb_image2   | N/A              |
+| | NRC_TACONFIRM     |                   |                  |                  |
+| | NRC_FOCUS         |                   |                  |                  |
++---------------------+-------------------+------------------+------------------+
+| | NRC_DARK          | calwebb_dark1     | N/A              | N/A              |
++---------------------+-------------------+------------------+------------------+
+| | NRC_FLAT          | calwebb_detector1 | N/A              | N/A              |
+| | NRC_LED           |                   |                  |                  |
++---------------------+-------------------+------------------+------------------+
+|                     |                   |                  |                  |
++---------------------+-------------------+------------------+------------------+
+| | NIS_IMAGE         | calwebb_detector1 | calwebb_image2   | calwebb_image3   |
++---------------------+-------------------+------------------+------------------+
+| | NIS_WFSS          | calwebb_detector1 | calwebb_spec2    | calwebb_spec3    |
++---------------------+-------------------+------------------+------------------+
+| | NIS_SOSS          | calwebb_tso1      | calwebb_spec2    | calwebb_tso3     |
++---------------------+-------------------+------------------+------------------+
+| | NIS_AMI           | calwebb_detector1 | calwebb_image2   | calwebb_ami3     |
++---------------------+-------------------+------------------+------------------+
+| | NIS_TACQ          | calwebb_detector1 | calwebb_image2   | N/A              |
+| | NIS_TACONFIRM     |                   |                  |                  |
+| | NIS_FOCUS         |                   |                  |                  |
++---------------------+-------------------+------------------+------------------+
+| | NIS_DARK          | calwebb_dark1     | N/A              | N/A              |
++---------------------+-------------------+------------------+------------------+
+| | NIS_LAMP          | calwebb_detector1 | N/A              | N/A              |
++---------------------+-------------------+------------------+------------------+
+|                     |                   |                  |                  |
++---------------------+-------------------+------------------+------------------+
+| | NRS_FIXEDSLIT     | calwebb_detector1 | calwebb_spec2    | calwebb_spec3    |
+| | NRS_IFU           |                   |                  |                  |
+| | NRS_MSASPEC       |                   |                  |                  |
++---------------------+-------------------+------------------+------------------+
+| | NRS_BRIGHTOBJ     | calwebb_tso1      | calwebb_spec2    | calwebb_tso3     |
++---------------------+-------------------+------------------+------------------+
+| | NRS_IMAGE         | calwebb_detector1 | calwebb_image2   | N/A              |
+| | NRS_TACQ          |                   |                  |                  |
+| | NRS_TACONFIRM     |                   |                  |                  |
+| | NRS_BOTA          |                   |                  |                  |
+| | NRS_TASLIT        |                   |                  |                  |
+| | NRS_CONFIRM       |                   |                  |                  |
+| | NRS_FOCUS         |                   |                  |                  |
+| | NRS_MIMF          |                   |                  |                  |
++---------------------+-------------------+------------------+------------------+
+| | NRS_DARK          | calwebb_dark1     | N/A              | N/A              |
++---------------------+-------------------+------------------+------------------+
+| | NRS_AUTOWAVE      | calwebb_detector1 | N/A              | N/A              |
+| | NRS_AUTOFLAT      |                   |                  |                  |
+| | NRS_LAMP          |                   |                  |                  |
++---------------------+-------------------+------------------+------------------+
+
 Input Files, Output Files and Data Models
 =========================================
 An important concept used throughout the JWST pipeline is the :py:class:`Data
