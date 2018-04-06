@@ -6,6 +6,14 @@ The correction to be added to the input data has the form::
     corrected data = input data data + dn_accumulated * scale * exp(-T / tau)
 
 where, dn_accumulated is the DN level that was accumulated for the pixel from the previous integration. 
+In case where the dn_accumulated does not saturation the scale factor is determined as follows:
+       :math:`scale = b{1}* [Counts{2}^b{2} * [1/exp(Counts{2}/b{3}) -1]`
+    where :math:'b{1} = ascale * (illum_zpt + illum_slope*N + illum2* N^2` (N is the number of groups per integration)
+    The :math:`Counts{2}` = Final DN in last frame in last integration - Crossover Point
+If previous integration saturates, the the scale factor is modified in the following manner:
+   :math:` scale_\text{sat} = slope * Counts{3} + sat_text{mzp}`, where :math:`Counts{3}' = extrapolated counts past 
+   saturation * sat_scale and :math: 'slope = sat_zp + sat_slope * N + sat_2*N^2 + evenrow_corrections'
+
 
 CRDS Selection Criteria
 -----------------------
@@ -23,12 +31,23 @@ primary data array is assumed to be empty.
 
 The BINTABLE extension contains the row-selection criterea (SUBARRAY, READPATT, and ROW type)  
 and the parameters for a double-exponential correction function.
-It uses ``EXTNAME=RSCD`` and contains seven columns:
+It uses ``EXTNAME=RSCD`` and contains seventeen columns:
 
 * SUBARRAY: string, FULL or a subarray name
 * READPATT: string, SLOW or FAST
 * ROWS: string, EVEN or ODD
-* TAU1: float, e-folding time scale for the first exponential (unit is frames)
-* SCALE1: float, scale factor for the first exponential
-* TAU2: float, e-folding time scale for the second exponential (frames)
-* SCALE2: float, scale factor for the second exponential
+* TAU: float, e-folding time scale for the first exponential (unit is frames)
+* ASCALE: float,  b1 in equation 
+* POW: float, b2 in equation
+* ILLUM_ZP: float
+* ILLUM_SLOPE: float
+* ILLUM2: float
+* PARAM3: :math:`b{3}' in equation
+* CROSSOPT: float, crossover point
+* SAT_ZP: float
+* SAT_SLOPE: float
+* SAT2: float
+* SAT_MZP: float
+* SAT_ROWTERM: float
+* SAT_SCALE: float
+

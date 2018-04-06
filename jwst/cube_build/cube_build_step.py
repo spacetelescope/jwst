@@ -285,8 +285,14 @@ SHORT,MEDIUM,LONG, or ALL
 # Else standard IFU cube building
             else:
                 result =  thiscube.build_ifucube()
-#                print('returning',result.meta.filename)
                 Final_IFUCube.append(result)
+
+#                print('crval',result.meta.wcsinfo.crval1,result.meta.wcsinfo.crval2,result.meta.wcsinfo.crval3)
+#                print('crpix',result.meta.wcsinfo.crpix1,result.meta.wcsinfo.crpix2,result.meta.wcsinfo.crpix3)
+#                print('crdelt',result.meta.wcsinfo.crdelt1,result.meta.wcsinfo.crdelt2,result.meta.wcsinfo.crdelt3)
+#                print('ctype',result.meta.wcsinfo.ctype1,result.meta.wcsinfo.ctype2,result.meta.wcsinfo.ctype3)
+#                print('cunit',result.meta.wcsinfo.cunit1,result.meta.wcsinfo.cunit2,result.meta.wcsinfo.cunit3)
+
             if(self.debug_pixel ==1):
                 self.spaxel_debug.close()
 
