@@ -37,7 +37,7 @@ logger.addHandler(logging.NullHandler())
 # Suffixes that are hard-coded or otherwise
 # have to exist. Used by `find_suffixes` to
 # add to the result it produces.
-SUFFIXES_TO_ADD = set((
+SUFFIXES_TO_ADD = [
     'cal', 'calints', 'crf', 'crfints',
     'dark',
     'i2d',
@@ -48,11 +48,11 @@ SUFFIXES_TO_ADD = set((
     'uncal',
     'wfscmb',
     'x1d', 'x1dints',
-))
+]
 
 # Suffixes that are discovered but should not be considered.
 # Used by `find_suffixes` to remove undesired values it has found.
-SUFFIXES_TO_DISCARD = set(('functionwrapper', 'systemcall'))
+SUFFIXES_TO_DISCARD = ['functionwrapper', 'systemcall']
 
 # --------------------------------------------------
 # The set of suffixes used by the pipeline.
@@ -61,7 +61,7 @@ SUFFIXES_TO_DISCARD = set(('functionwrapper', 'systemcall'))
 # Modify `SUFFIXES_TO_ADD` and `SUFFIXES_TO_DISCARD`
 # to change the results.
 # --------------------------------------------------
-KNOW_SUFFIXES = set((
+KNOW_SUFFIXES = [
     'alignrefs',
     'alignrefsstep',
     'ami3pipeline',
@@ -199,11 +199,13 @@ KNOW_SUFFIXES = set((
     'whitelightstep',
     'x1d',
     'x1dints'
-))
+]
 
 # Regex for removal
-REMOVE_SUFFIX_REGEX = '^(?P<root>.+?)((?P<separator>_|-)(' \
-                + '|'.join(KNOW_SUFFIXES) + '))?$'
+REMOVE_SUFFIX_REGEX = re.compile(
+    '^(?P<root>.+?)((?P<separator>_|-)(' +
+    '|'.join(KNOW_SUFFIXES) + '))?$'
+)
 
 
 # ##########
@@ -212,7 +214,7 @@ REMOVE_SUFFIX_REGEX = '^(?P<root>.+?)((?P<separator>_|-)(' \
 def remove_suffix(name):
     """Remove the suffix if a known suffix is already in name"""
     separator = None
-    match = re.match(REMOVE_SUFFIX_REGEX, name)
+    match = REMOVE_SUFFIX_REGEX.match(name)
     try:
         name = match.group('root')
         separator = match.group('separator')
@@ -292,7 +294,7 @@ def find_suffixes(
     suffixes.update(suffixes_to_add)
 
     # That's all folks
-    return suffixes
+    return list(suffixes)
 
 
 def load_local_pkg(fpath):
@@ -379,6 +381,6 @@ if __name__ == '__main__':
     )
     print(
         'Suffixes that have changed are {}'.format(
-            found_suffixes.symmetric_difference(KNOW_SUFFIXES)
+            set(found_suffixes).symmetric_difference(KNOW_SUFFIXES)
         )
     )

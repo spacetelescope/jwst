@@ -9,7 +9,7 @@ from ..suffix import (KNOW_SUFFIXES, find_suffixes)
 def test_suffix_existence():
     """Generate current suffix list and compare"""
     new_suffixes = find_suffixes()
-    assert new_suffixes == KNOW_SUFFIXES
+    assert set(new_suffixes) == set(KNOW_SUFFIXES)
 
 
 @pytest.mark.parametrize(
