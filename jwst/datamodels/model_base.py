@@ -325,11 +325,6 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         current_date.format = 'isot'
         self.meta.date = current_date.value
 
-        if not hasattr(self.meta, 'model_type'):
-            klass = self.__class__.__name__
-            if klass != 'DataModel':
-                self.meta.model_type = klass
-
     def save(self, path, dir_path=None, *args, **kwargs):
         """
         Save to either a FITS or ASDF file, depending on the path.
