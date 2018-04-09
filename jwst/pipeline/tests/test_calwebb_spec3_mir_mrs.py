@@ -7,6 +7,7 @@ file structure. As such the environmental variable TEST_BIGDATA points to
 the top of the example data tree.
 """
 
+from collections import defaultdict
 from glob import glob
 from os import path
 import pytest
@@ -21,7 +22,7 @@ from .helpers import (
 )
 
 from ...associations import load_asn
-from ...stpipe.step import Step
+from ...stpipe.step import (Step, remove_suffix)
 
 DATAPATH = abspath(
     '$TEST_BIGDATA/miri/test_datasets/mrs/simulated'
@@ -137,10 +138,6 @@ def test_run_mrs_imatch_only(mk_tmp_dirs):
     assert path.isfile(product_name)
 
 
-@pytest.mark.xfail(
-    reason='Fails due to issue #947',
-    run=False,
-)
 @runslow
 @require_bigdata
 def test_run_full(mk_tmp_dirs):
@@ -157,7 +154,50 @@ def test_run_full(mk_tmp_dirs):
     ]
 
     Step.from_cmdline(args)
-    assert False
+
+    # Now test for file existence. Get the association
+    with open(asn_path) as fh:
+        asn = load_asn(fh)
+    acid = asn['asn_id']
+    product = asn['products'][0]
+    product_name = product['name']
+    members_by_type = defaultdict(list)
+    for member in product['members']:
+        expname = path.split(member['expname'])[1]
+        members_by_type[member['exptype'].lower()].append(expname)
+
+    output_files = [
+        path.split(result_path)[1]
+        for result_path in
+        glob('*')
+    ]
+    print('Created files ares: {}'.format(output_files))
+
+    # Check Level3 products
+    product_name_file = product_name + '_ch3-long_s3d.fits'
+    assert product_name_file in output_files
+    output_files.remove(product_name_file)
+    product_name_file = product_name + '_ch4-long_s3d.fits'
+    assert product_name_file in output_files
+    output_files.remove(product_name_file)
+    product_name_file = product_name + '_ch3-long_x1d.fits'
+    assert product_name_file in output_files
+    output_files.remove(product_name_file)
+    product_name_file = product_name + '_ch4-long_x1d.fits'
+    assert product_name_file in output_files
+    output_files.remove(product_name_file)
+
+    # Check Level2 products
+    for member in members_by_type['science']:
+        basename, ext = path.splitext(path.split(member)[1])
+        basename, separator = remove_suffix(basename)
+
+        name = basename + separator + acid + separator + 'crf' + ext
+        assert name in output_files
+        output_files.remove(name)
+
+    # If there are files left, this is an error
+    assert len(output_files) == 0
 
 
 @pytest.mark.xfail(
