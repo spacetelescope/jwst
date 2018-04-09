@@ -55,7 +55,6 @@ def extract2d(input_model,
                                      slit_name=slit_name,
                                      apply_wavecorr=apply_wavecorr,
                                      reference_files=reference_files)
-
     elif exp_type in slitless_modes:
         if exp_type == 'NRC_TSGRISM':
             if extract_height is None:
