@@ -11,8 +11,12 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def extract2d(input_model, slit_name=None, apply_wavecorr=False,
-              reference_files={}, grism_objects=None, extract_height=None,
+def extract2d(input_model,
+              slit_name=None,
+              apply_wavecorr=False,
+              reference_files={},
+              grism_objects=None,
+              extract_height=None,
               extract_orders=None):
     """
     The main extract_2d function
@@ -34,7 +38,6 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False,
         This will override the default which for NRC_TSGRISM is a set 
         size of 64 pixels.
     """
-
     nrs_modes = ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ',
                  'NRS_LAMP', 'NRS_AUTOFLAT']
     slitless_modes = ['NIS_WFSS', 'NRC_WFSS', 'NRC_TSGRISM']
@@ -66,6 +69,7 @@ def extract2d(input_model, slit_name=None, apply_wavecorr=False,
                                                  grism_objects=grism_objects,
                                                  reference_files=reference_files,
                                                  extract_orders=None)
+
     else:
         log.info("'EXP_TYPE {} not supported for extract 2D".format(exp_type))
         input_model.meta.cal_step.extract_2d = 'SKIPPED'
