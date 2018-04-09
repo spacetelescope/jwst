@@ -759,7 +759,7 @@ class Step():
     def make_output_path(self):
         """Return function that creates the output path"""
         make_output_path = self.search_attr(
-            '_make_output_path', parent_first=True
+            '_make_output_path'
         )
         return partial(make_output_path, self)
 
