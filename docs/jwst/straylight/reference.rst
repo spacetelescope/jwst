@@ -1,8 +1,9 @@
 Reference File
 ==============
-The default MIRI MRS stray-light correction step uses Regions reference file. This
-Regions files is the first extension in the MIRI Distortion file and has  been read
-in and pulled into a separate reference type by the assign_wcs step. 
+The default MIRI MRS stray-light correction step uses a 'regions' reference file type. This information
+is stored in the ASDF extension of the input_image. The information contained in the
+'regions' has been read in during the assign_wcs step from the 
+first extension in the MIRI Distortion file and stored in the ASDF extension of the input model.
 The more simplistic algorithm (an older algorithm) uses the stray-light mask. There
 are three MIRI MRS SW masks, one for each of the three bands (SHORT,MEDIUM and LONG).
 

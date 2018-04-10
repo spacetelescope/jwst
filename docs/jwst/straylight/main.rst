@@ -29,7 +29,7 @@ Algorithm
 The basic idea of the stray-light removal algorithm is to deal with the 
 smooth component of the stray-light only. Due to the extended nature of the
 stray-light we use the detected signal in the slice gaps, where nominally no photons
-should it the detectors, and assume that all detected light is the stray-light. 
+should hit the detectors, and assume that all detected light is the stray-light. 
 Using this measurement, we can interpolate the gap flux within the slice to
 estimate the amount of the stray-light in the slice. 
 
@@ -42,18 +42,13 @@ variations. This algorithm uses a stray-light mask reference file that contains
 
 Given the extended nature of the smooth component of the MRS stray-light, it
 is obvious that a row-by-row handling of the stray-light could be replaced
-by a two-dimensional approach such that not additional smoothing is required.
-For the second algorithm we improve the technique by using the Modified Shepard's
-Method to interpolate the gap fluxes two dimensionally. 
-
-The second algorithm uses the MRS distortion reference file. The first extension
-of this file contains the "Slice_Number" and consists of a detector pixel map 
-indicating the slice numbers or in case of a non-science pixel, the value zero. 
-Consequently, the gap pixels can be easily found by masking all pixels that are 
-non-science.The assign_wcs step takes the "Slice_Number" information and stores it in
-a regions file.  This second algorithm takes each slice pixel and determines the 
-amount of stray-light :math:`s`  by interpolating the fluxes :math:`p_i` measured
-by the gap pixels, taking the distance :math:`d_i` to the slice pixel into account. 
+by a two-dimensional approach such that no additional smoothing is required.
+For the second algorithm we improved the technique by using the Modified Shepard's
+Method to interpolate the gap fluxes two dimensionally. The stray-light correction
+for each science pixel is based on the flux of the gap pixels with a "region of influence"
+from the science pixel. The algorithm takes each science pixel and determines the 
+amount of stray-light to remove from the pixel  :math:`s`  by interpolating the fluxes :math:`p_i` measured
+by the gap pixels. The gap pixel flux is weighted by the distance :math:`d_i` between the science pixel and gap pixel. 
 The Modified Shepard’s Method uses this distance to weight the different
  contributors according the equation:
 
@@ -69,3 +64,13 @@ where,
 The radius of influence :math: 'R' and the exponent :math: 'k' are variables that 
 can be adjusted to the actual problem. The default values for these parameters are
 :math:`R = 50` pixels and :math:`k = 1`.
+
+
+The second algorithm uses a 'regions' reference file type that is stored in
+the ASDF extension of the input model. The 'regions' information is a 1032 by 1024
+mask containing the 'slice number' of the pixel or in the case of  non-science
+gap pixels, the value zero. The assign_wcs step creates the 'regions' information
+by reading in the MIRI MRS distortion file. The first extension
+of this file contains the slice number for each pixel or 0 for gap pixels. 
+
+

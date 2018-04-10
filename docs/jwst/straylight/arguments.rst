@@ -24,7 +24,7 @@ in the correction. The default value is set to 50 pixels.
 *``power [integer]`` 
 
 This parameter is the power :math:`k` in the Modified Shepard's Method weighting
- equation.
+ equation. The default value is set to 1. 
 
 The usage of both parameters are shown in the description of the 
 Modified Shepard’s Method distance weighting equation:
