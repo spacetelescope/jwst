@@ -2,14 +2,11 @@
 
 if (utils.scm_checkout()) return
 
-def test_env = [
+def test_env_raw = [
+    "TEST_BIGDATA=/data4/jwst_test_data",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst_0349.pmap",
     "CRDS_PATH=/tmp/crds_cache",
-]
-
-def test_env_raw = [
-    "TEST_BIGDATA=/data4/jwst_test_data",
 ]
 
 //def python_version = ['3.5', '3.6']
@@ -50,13 +47,13 @@ node("jwst") {
         conda.install()
         sh "curl -L https://raw.githubusercontent.com/astroconda/docker-buildsys/master/with_env >miniconda/bin/with_env"
         sh "chmod 755 miniconda/bin/with_env"
+        sh "printenv | sort"
     }
 }
 
 bc = new BuildConfig()
 bc.nodetype = 'jwst'
-bc.env_vars = test_env + ['PATH=./miniconda/bin:/bin:/usr/bin']
-bc.env_vars_raw = test_env_raw
+bc.env_vars_raw = test_env_raw + ['PATH=./miniconda/bin:/bin:/usr/bin']
 bc.build_mode = PY_VER
 bc.test_cmds = [
     "conda config --add channels ${CONDA_CHANNEL}",
