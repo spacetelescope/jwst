@@ -1,0 +1,60 @@
+if (utils.scm_checkout()) return
+def test_env = [
+    "TEST_BIGDATA=/data4/jwst_test_data",
+    "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
+    "CRDS_CONTEXT=jwst_0349.pmap",
+    "CRDS_PATH=/tmp/crds_cache",
+]
+//def python_version = ['3.5', '3.6']
+//def numpy_version = ['1.13', '1.14']
+def CONDA_DEPS = "asdf \
+                  astropy \
+                  crds \
+                  dask \
+                  drizzle \
+                  fitsblender \
+                  flake8 \
+                  gwcs \
+                  jsonschema \
+                  jplephem \
+                  matplotlib \
+                  namedlist \
+                  numpy \
+                  photutils \
+                  scipy \
+                  six \
+                  spherical-geometry \
+                  stsci.image \
+                  stsci.imagestats \
+                  stsci.stimage \
+                  stsci.tools \
+                  verhawk"
+def CONDA_CHANNEL = "http://ssb.stsci.edu/conda-dev"
+def PY_SETUP = "python setup.py"
+def PYTEST = "pytest --junit-xml=results.xml"
+def PY_VER = '3.6'
+def matrix = []
+
+conda.CONDA_INSTALLER_VERSION = '4.4.10'
+node("jwst") {
+    stage("Conda") {
+        deleteDir()
+        conda.install()
+        sh "curl -L https://raw.githubusercontent.com/astroconda/docker-buildsys/master/with_env >miniconda/bin/with_env"
+        sh "chmod 755 miniconda/bin/with_env"
+    }
+}
+
+bc = new BuildConfig()
+bc.nodetype = 'jwst'
+bc.env_vars = test_env + ['PATH=./miniconda/bin:/bin:/usr/bin']
+bc.build_mode = PY_VER
+bc.test_cmds = [
+    "conda config --add channels ${CONDA_CHANNEL}",
+    "conda create -y -q -n py${PY_VER} python=${PY_VER} ${CONDA_DEPS}",
+    "with_env -n py${PY_VER} ${PY_SETUP} develop",
+    "with_env -n py${PY_VER} ${PYTEST} jwst/tests_nightly/general"
+]
+matrix += bc
+
+utils.run(matrix)
