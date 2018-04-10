@@ -1,5 +1,3 @@
-@Library('utils@master') _  // For development only.
-
 if (utils.scm_checkout()) return
 
 def test_env_raw = [
@@ -38,6 +36,10 @@ def CONDA_CHANNEL = "http://ssb.stsci.edu/conda-dev"
 def PY_SETUP = "python setup.py"
 def PYTEST = "pytest --basetemp=test_outputs --junit-xml=results.xml"
 def PY_VER = '3.6'
+def CONDA_ENV = 'py${PY_VER}'
+def CONDA_CREATE = "conda create -y -q"
+def WRAPPER = "with_env -n ${CONDA_ENV}"
+def TEST_ROOT = "jwst/tests_nightly/general"
 def matrix = []
 
 conda.CONDA_INSTALLER_VERSION = '4.4.10'
@@ -55,11 +57,13 @@ bc = new BuildConfig()
 bc.nodetype = 'jwst'
 bc.env_vars_raw = test_env_raw + ['PATH=./miniconda/bin:/bin:/usr/bin']
 bc.build_mode = PY_VER
+
+//Keep: "${WRAPPER} ${PYTEST} ${TEST_ROOT}",
 bc.test_cmds = [
     "conda config --add channels ${CONDA_CHANNEL}",
-    "conda create -y -q -n py${PY_VER} python=${PY_VER} ${CONDA_DEPS}",
-    "with_env -n py${PY_VER} ${PY_SETUP} develop",
-    "with_env -n py${PY_VER} ${PYTEST} jwst/tests_nightly/general"
+    "${CONDA_CREATE} -n ${CONDA_ENV} python=${PY_VER} ${CONDA_DEPS}",
+    "${WRAPPER} ${PY_SETUP} develop",
+    "${WRAPPER} ${PYTEST} ${TEST_ROOT}/fgs ${TEST_ROOT}/nirspec",
 ]
 matrix += bc
 
