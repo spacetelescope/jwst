@@ -22,9 +22,9 @@ def test_jump_nircam():
 
 
     JumpStep.call(BIGDATA+'/nircam/test_jump/jw00017001001_01101_00001_NRCA1_linearity.fits',
-                      config_file='jump.cfg',
-                      output_file=output_file_base
-    )
+                  rejection_threshold=25.0,
+                  output_file=output_file_base
+                  )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/nircam/test_jump/jw00017001001_01101_00001_NRCA1_jump.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

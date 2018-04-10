@@ -22,9 +22,8 @@ def test_photom_miri():
 
 
     PhotomStep.call(BIGDATA+'/miri/test_photom/jw00001001001_01101_00001_MIRIMAGE_emission.fits',
-                      config_file='photom.cfg',
-                      output_file=output_file_base
-    )
+                    output_file=output_file_base
+                    )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/miri/test_photom/jw00001001001_01101_00001_MIRIMAGE_photom.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq'],h['relsens'],h['area']])

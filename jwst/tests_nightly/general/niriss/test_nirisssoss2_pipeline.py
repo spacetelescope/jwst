@@ -10,9 +10,14 @@ def test_nirisssoss2pipeline1():
     Regression test of calwebb_spec2 pipeline performed on NIRISS SOSS data.
 
     """
-
-    Spec2Pipeline.call(BIGDATA+'/pipelines/jw00034001001_01101_00001_NIRISS_rate_ref.fits',
-                       config_file='calwebb_spec2.cfg')
+    step = Spec2Pipeline()
+    step.save_bsub = True
+    step.output_use_model = True
+    step.save_results = True
+    step.resample_spec.save_results=True
+    step.cube_build.save_results=True
+    step.extract_1d.save_results=True
+    step.run(BIGDATA+'/pipelines/jw00034001001_01101_00001_NIRISS_rate_ref.fits')
 
     n_cr = 'jw00034001001_01101_00001_NIRISS_rate_ref_calints.fits'
     h = pf.open(n_cr)

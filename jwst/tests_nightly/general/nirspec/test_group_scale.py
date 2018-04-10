@@ -20,9 +20,8 @@ def test_group_scale_nirspec():
         pass
 
     GroupScaleStep.call(BIGDATA+'/nirspec/test_group_scale/NRSIRS2_230_491_uncal.fits',
-                         config_file='group_scale.cfg',
-                         output_file=output_file_base
-                         )
+                        output_file=output_file_base
+                        )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/nirspec/test_group_scale/NRSIRS2_230_491_groupscale.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

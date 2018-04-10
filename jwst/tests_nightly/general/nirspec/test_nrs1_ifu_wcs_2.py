@@ -28,8 +28,8 @@ def test_nirspec_nrs1_wcs():
     ref_file = os.path.join(BIGDATA, 'nirspec', 'test_wcs', 'nrs1-ifu', 'jw00011001001_01120_00001_NRS1_rate_opaque_assign_wcs.fits')
 
     AssignWcsStep.call(input_file,
-           output_file=output_file_base
-    )
+                       output_file=output_file_base
+                       )
     im = ImageModel(output_file)
     imref = ImageModel(ref_file)
     a_wcs = nirspec.nrs_wcs_set_input(im, 0)

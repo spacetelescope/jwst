@@ -20,9 +20,8 @@ def test_fringe_miri3():
         pass
 
     FringeStep.call(BIGDATA+'/miri/test_fringe/fringe3_input.fits',
-                      config_file='fringe.cfg',
-                      output_file=output_file_base
-    )
+                    output_file=output_file_base
+                    )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/miri/test_fringe/baseline_fringe3.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])

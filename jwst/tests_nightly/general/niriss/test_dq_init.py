@@ -22,9 +22,8 @@ def test_dq_init_niriss():
 
 
     DQInitStep.call(BIGDATA+'/niriss/test_dq_init/jw00034001001_01101_00001_NIRISS_uncal.fits',
-                       config_file='dq_init.cfg',
-                       output_file=output_file_base
-    )
+                    output_file=output_file_base
+                    )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/niriss/test_dq_init/jw00034001001_01101_00001_NIRISS_dq_init.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])
