@@ -739,7 +739,10 @@ class Step():
                 path=output_file,
                 save_model_func=save_model_func)
         else:
-            if output_file is None and not self.search_output_file:
+            if (
+                    self.output_use_model or
+                    (output_file is None and not self.search_output_file)
+            ):
                 output_file = model.meta.filename
                 idx = None
             output_path = model.save(
