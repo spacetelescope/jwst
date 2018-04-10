@@ -21,9 +21,8 @@ def test_extract2d_nirspec():
 
 
     Extract2dStep.call(BIGDATA+'/nirspec/test_extract_2d/jw00023001001_01101_00001_NRS1_assign_wcs.fits',
-                      config_file='extract_2d.cfg',
-                      output_file=output_file_base
-    )
+                       output_file=output_file_base
+                       )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/nirspec/test_extract_2d/jw00023001001_01101_00001_NRS1_extract_2d.fits')
     newh = pf.HDUList([h['primary'], h[('sci', 1)], h[('err', 1)], h[('dq', 1)],

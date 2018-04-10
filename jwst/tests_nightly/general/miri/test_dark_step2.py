@@ -20,7 +20,6 @@ def test_dark_current_miri2():
         pass
 
     DarkCurrentStep.call(BIGDATA+'/miri/test_dark_step/jw80600012001_02101_00003_mirimage_lastframe.fits',
-                         config_file='dark_current.cfg',
                          output_file=output_file_base
                          )
     h = pf.open(output_file)

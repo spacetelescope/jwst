@@ -20,7 +20,6 @@ def test_dq_init_miri2():
         pass
 
     DQInitStep.call(BIGDATA+'/miri/test_dq_init/jw80600012001_02101_00003_mirimage_uncal.fits',
-                    config_file='dq_init.cfg',
                     output_file=output_file_base
     )
 

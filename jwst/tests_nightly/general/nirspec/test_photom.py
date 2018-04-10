@@ -22,9 +22,8 @@ def test_photom_nirspec():
 
 
     PhotomStep.call(BIGDATA+'/nirspec/test_photom/jw00023001001_01101_00001_NRS1_flat_field.fits',
-                      config_file='photom.cfg',
-                      output_file=output_file_base
-    )
+                    output_file=output_file_base
+                    )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/nirspec/test_photom/jw00023001001_01101_00001_NRS1_photom.fits')
     newh = pf.HDUList([h['primary'],h['sci',1],h['err',1],h['dq',1],h['relsens',1],

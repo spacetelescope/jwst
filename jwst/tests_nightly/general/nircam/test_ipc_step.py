@@ -17,7 +17,6 @@ def test_ipc_nircam():
         pass
 
     IPCStep.call(BIGDATA + '/nircam/test_ipc_step/jw00017001001_01101_00001_NRCA3_uncal.fits',
-                 config_file='ipc.cfg',
                  output_file=output_file_base)
     h = pf.open(output_file)
     href = pf.open(BIGDATA + '/nircam/test_ipc_step/jw00017001001_01101_00001_NRCA3_ipc.fits')

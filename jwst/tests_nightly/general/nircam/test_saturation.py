@@ -20,9 +20,8 @@ def test_saturation_nircam():
         pass
 
     SaturationStep.call(BIGDATA+'/nircam/test_saturation/jw00017001001_01101_00001_NRCA1_bias_drift.fits',
-                         config_file='saturation.cfg',
-                         output_file=output_file_base
-                         )
+                        output_file=output_file_base
+                        )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/nircam/test_saturation/jw00017001001_01101_00001_NRCA1_saturation.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

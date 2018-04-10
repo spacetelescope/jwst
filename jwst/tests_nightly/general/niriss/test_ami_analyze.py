@@ -20,7 +20,7 @@ def test_ami_analyze():
         pass
 
     AmiAnalyzeStep.call(BIGDATA+'/niriss/test_ami_analyze/ami_analyze_input_16.fits',
-                      config_file='ami_analyze.cfg',
+                        oversample=3, rotation=1.49,
                         output_file=output_file_base)
 
     h = pf.open(output_file)

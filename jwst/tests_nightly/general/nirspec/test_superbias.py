@@ -20,7 +20,6 @@ def test_superbias_nirspec():
         pass
 
     SuperBiasStep.call(BIGDATA+'/nirspec/test_superbias/jw00011001001_01106_00001_NRS2_saturation.fits',
-                       config_file='superbias.cfg',
                        output_file=output_file_base
                        )
     h = pf.open(output_file)

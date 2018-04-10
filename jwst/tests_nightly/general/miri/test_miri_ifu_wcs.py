@@ -27,8 +27,8 @@ def test_miri_ifu_wcs():
     ref_file = os.path.join(BIGDATA, 'miri', 'test_wcs', 'ifu', 'jw00024001001_01101_00001_MIRIFUSHORT_assign_wcs.fits')
 
     AssignWcsStep.call(input_file,
-           output_file='miri_ifu_wcs_output.fits'
-    )
+                       output_file='miri_ifu_wcs_output.fits'
+                       )
     im = ImageModel('miri_ifu_wcs_output.fits')
     imref = ImageModel(ref_file)
 
@@ -39,9 +39,9 @@ def test_miri_ifu_wcs():
 
     # Get indices where pixels == 0. These should be NaNs in the output.
     ind_zeros = region.tree['regions'] == 0
-    
+
     ra, dec, lam = im.meta.wcs(x, y)
-    raref, decref, lamref = imref.meta.wcs(x, y)    
+    raref, decref, lamref = imref.meta.wcs(x, y)
     utils.assert_allclose(ra, raref, equal_nan=True)
     utils.assert_allclose(dec, decref, equal_nan=True)
     utils.assert_allclose(lam, lamref, equal_nan=True)
@@ -50,7 +50,7 @@ def test_miri_ifu_wcs():
     # DISABLED - What is this `all()` business?
     #assert(np.isnan(ra).nonzero()[0] == ind0[0])all()
     #assert(np.isnan(ra).nonzero()[1] == ind0[1])all()
-    
+
     # Test the inverse transform
     x1, y1 = im.meta.wcs.backward_transform(ra, dec, lam)
     # DISABLED - What is this `all()` business?
@@ -65,4 +65,4 @@ def test_miri_ifu_wcs():
     x2, y2 = im.meta.wcs.backward_transform(ra, dec, lam)
     assert np.isnan(x2[100][200])
     assert np.isnan(x2[100][200])
-    
+

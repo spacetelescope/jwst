@@ -20,7 +20,6 @@ def test_saturation_niriss():
         pass
 
     SaturationStep.call(BIGDATA+'/niriss/test_saturation/jw00034001001_01101_00001_NIRISS_bias_drift.fits',
-                         config_file='saturation.cfg',
                          output_file=output_file_base
                          )
     h = pf.open(output_file)

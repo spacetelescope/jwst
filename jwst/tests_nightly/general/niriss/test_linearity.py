@@ -22,9 +22,8 @@ def test_linearity_niriss():
 
 
     LinearityStep.call(BIGDATA+'/niriss/test_linearity/jw00034001001_01101_00001_NIRISS_dark_current.fits',
-                      config_file='linearity.cfg',
-                      output_file=output_file_base
-    )
+                       output_file=output_file_base
+                       )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/niriss/test_linearity/jw00034001001_01101_00001_NIRISS_linearity.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

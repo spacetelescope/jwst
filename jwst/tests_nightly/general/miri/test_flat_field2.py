@@ -22,9 +22,8 @@ def test_flat_field_miri2():
 
 
     FlatFieldStep.call(BIGDATA+'/miri/test_flat_field/jw80600012001_02101_00003_mirimage_assign_wcs.fits',
-                      config_file='flat_field.cfg',
-                      output_file=output_file_base
-    )
+                       output_file=output_file_base
+                       )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/miri/test_flat_field/jw80600012001_02101_00003_mirimage_flat_field.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])

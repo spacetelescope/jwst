@@ -21,9 +21,8 @@ def test_rscd_miri2():
 
 
     RSCD_Step.call(BIGDATA+'/miri/test_rscd/jw80600012001_02101_00003_mirimage_linearity.fits',
-                   config_file='rscd.cfg',
                    output_file=output_file_base
-    )
+                   )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/miri/test_rscd/jw80600012001_02101_00003_mirimage_rscd.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])
