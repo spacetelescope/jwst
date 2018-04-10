@@ -535,10 +535,10 @@ def _load_history(hdulist, tree):
     if 'HISTORY' not in header:
         return
 
-    history = tree['history'] = []
+    history = tree['history'] = {'entries': []}
 
     for entry in header['HISTORY']:
-        history.append(HistoryEntry({'description': entry}))
+        history['entries'].append(HistoryEntry({'description': entry}))
 
 
 def from_fits(hdulist, schema, extensions, context):
