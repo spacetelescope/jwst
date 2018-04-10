@@ -12,7 +12,7 @@ def test_ramp_fit_miri1():
     Regression test of ramp_fit step performed on MIRI data.
 
     """
-    output_file_base, output_files = add_suffix('rampfit1_output.fits', 'rampfit', range(2))
+    output_file_base, output_files = add_suffix('rampfit1_output.fits', 'rampfit', list(range(2)))
 
     try:
         for output_file in output_files:

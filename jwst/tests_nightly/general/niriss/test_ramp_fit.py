@@ -12,7 +12,7 @@ def test_ramp_fit_niriss():
     Regression test of ramp_fit step performed on NIRISS data.
 
     """
-    output_file_base, output_files = add_suffix('rampfit_output.fits', 'rampfit', range(1))
+    output_file_base, output_files = add_suffix('rampfit_output.fits', 'rampfit', list(range(1)))
 
     try:
         for output_file in output_files:
