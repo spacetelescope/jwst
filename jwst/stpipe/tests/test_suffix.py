@@ -3,18 +3,22 @@
 import pytest
 
 from ..step import remove_suffix
-from ..suffix import (KNOW_SUFFIXES, find_suffixes)
+from .. import suffix
 
 
 def test_suffix_existence():
     """Generate current suffix list and compare"""
-    new_suffixes = find_suffixes()
-    assert set(new_suffixes) == set(KNOW_SUFFIXES)
+    calculated_suffixes = suffix.find_suffixes()
+    found_suffixes = suffix.combine_suffixes(
+        to_add=(calculated_suffixes, suffix.SUFFIXES_TO_ADD),
+        to_remove=(suffix.SUFFIXES_TO_DISCARD, )
+    )
+    assert set(found_suffixes) == set(suffix.KNOW_SUFFIXES)
 
 
 @pytest.mark.parametrize(
     'suffix',
-    KNOW_SUFFIXES
+    suffix.KNOW_SUFFIXES
 )
 def test_suffix_removal(suffix):
     """Test suffix removal"""
