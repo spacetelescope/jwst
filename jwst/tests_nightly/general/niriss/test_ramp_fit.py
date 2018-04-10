@@ -23,8 +23,7 @@ def test_ramp_fit_niriss():
 
 
     RampFitStep.call(BIGDATA+'/niriss/test_ramp_fit/jw00034001001_01101_00001_NIRISS_jump.fits',
-                      config_file='ramp_fit.cfg', save_opt=True,
-                      output_file=output_file_base,
+                      save_opt=True, output_file=output_file_base,
                       opt_name='rampfit_opt_out.fits'
     )
     # primary output

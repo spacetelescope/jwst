@@ -22,9 +22,8 @@ def test_dq_init_nircam():
 
 
     DQInitStep.call(BIGDATA+'/nircam/test_dq_init/jw00017001001_01101_00001_NRCA1_uncal.fits',
-                       config_file='dq_init.cfg',
-                       output_file=output_file_base
-    )
+                    output_file=output_file_base
+                    )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/nircam/test_dq_init/jw00017001001_01101_00001_NRCA1_dq_init.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

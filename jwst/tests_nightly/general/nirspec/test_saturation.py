@@ -20,9 +20,8 @@ def test_saturation_nirspec():
         pass
 
     SaturationStep.call(BIGDATA+'/nirspec/test_saturation/jw00023001001_01101_00001_NRS1_bias_drift.fits',
-                         config_file='saturation.cfg',
-                         output_file=output_file_base
-                         )
+                        output_file=output_file_base
+                        )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/nirspec/test_saturation/jw00023001001_01101_00001_NRS1_saturation.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

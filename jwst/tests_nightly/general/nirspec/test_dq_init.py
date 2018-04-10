@@ -22,9 +22,8 @@ def test_dq_init_nirspec():
 
 
     DQInitStep.call(BIGDATA+'/nirspec/test_dq_init/jw00023001001_01101_00001_NRS1_uncal.fits',
-                       config_file='dq_init.cfg',
-                       output_file=output_file_base
-    )
+                    output_file=output_file_base
+                    )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/nirspec/test_dq_init/jw00023001001_01101_00001_NRS1_dq_init.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

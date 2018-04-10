@@ -22,9 +22,8 @@ def test_persistence_nircam():
 
 
     PersistenceStep.call(BIGDATA+'/nircam/test_persistence/jw00017001001_01101_00001_NRCA1_ramp.fits',
-                         config_file='persistence.cfg',
                          output_file=output_file_base
-    )
+                         )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/nircam/test_persistence/jw00017001001_01101_00001_NRCA1_persistence.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

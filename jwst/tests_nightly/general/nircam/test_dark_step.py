@@ -20,7 +20,6 @@ def test_dark_current_nircam():
         pass
 
     DarkCurrentStep.call(BIGDATA+'/nircam/test_dark_step/jw00017001001_01101_00001_NRCA1_saturation.fits',
-                         config_file='dark_current.cfg',
                          output_file=output_file_base
                          )
     h = pf.open(output_file)

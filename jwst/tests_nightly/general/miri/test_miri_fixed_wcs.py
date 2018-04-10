@@ -30,7 +30,7 @@ def test_miri_fixed_slit_wcs():
 
     AssignWcsStep.call(input_file,
                        output_file=output_file_base
-    )
+                       )
     im = ImageModel(output_file)
     imref = ImageModel(ref_file)
     y, x = np.mgrid[:1031, :1024]

@@ -22,10 +22,9 @@ def test_linearity_miri3():
 
 
     LinearityStep.call(BIGDATA+'/miri/test_linearity/jw00001001001_01109_00001_MIRIMAGE_dark_current.fits',
-                      config_file='linearity.cfg',
-                      override_linearity=BIGDATA+'/miri/test_linearity/lin_nan_flag_miri.fits',
-                      output_file=output_file_base
-    )
+                       override_linearity=BIGDATA+'/miri/test_linearity/lin_nan_flag_miri.fits',
+                       output_file=output_file_base
+                       )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/miri/test_linearity/jw00001001001_01109_00001_MIRIMAGE_linearity.fits')
 

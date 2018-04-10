@@ -22,9 +22,8 @@ def test_saturation_miri():
 
 
     SaturationStep.call(BIGDATA+'/miri/test_saturation/jw00001001001_01101_00001_MIRIMAGE_dq_init.fits',
-                       config_file='saturation.cfg',
-                       output_file=output_file_base
-    )
+                        output_file=output_file_base
+                        )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/miri/test_saturation/jw00001001001_01101_00001_MIRIMAGE_saturation.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])
