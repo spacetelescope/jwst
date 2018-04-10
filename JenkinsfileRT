@@ -6,7 +6,7 @@ def test_env_raw = [
     "TEST_BIGDATA=/data4/jwst_test_data",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst_0349.pmap",
-    "CRDS_PATH=/tmp/crds_cache",
+    "CRDS_PATH=./test_outputs/crds_cache",
 ]
 
 //def python_version = ['3.5', '3.6']
@@ -36,7 +36,7 @@ def CONDA_DEPS = "asdf \
                   verhawk"
 def CONDA_CHANNEL = "http://ssb.stsci.edu/conda-dev"
 def PY_SETUP = "python setup.py"
-def PYTEST = "pytest --junit-xml=results.xml"
+def PYTEST = "pytest --basetemp=test_outputs --junit-xml=results.xml"
 def PY_VER = '3.6'
 def matrix = []
 
