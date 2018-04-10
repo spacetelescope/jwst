@@ -1,4 +1,10 @@
+"""
+#
+# DISABLED
+#
+
 from __future__ import print_function
+
 import pandokia.helpers.pycode as pycode
 
 # The nightly documentation build leaves behind a file specifically for
@@ -46,4 +52,4 @@ for x in f :
         if html != '' :
             print("html build reports error")
             assert False, 'The document build failed last night'
-
+"""
