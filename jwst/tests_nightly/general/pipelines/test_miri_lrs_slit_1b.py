@@ -34,8 +34,8 @@ def test_miri_lrs_slit_1b():
     try:
         assert result.identical == True
     except AssertionError as e:
-        print result.report()
-        raise AssertionError, e
+        print(result.report())
+        raise AssertionError(e)
 
     n_cr = 'jw00035001001_01101_00001_MIRIMAGE_x1dints.fits'
     n_ref = BIGDATA+'/pipelines/jw00035001001_01101_00001_MIRIMAGE_x1dints_ref.fits'
@@ -56,6 +56,6 @@ def test_miri_lrs_slit_1b():
     try:
         assert result.identical == True
     except AssertionError as e:
-        print result.report()
-        raise AssertionError, e
+        print(result.report())
+        raise AssertionError(e)
 
