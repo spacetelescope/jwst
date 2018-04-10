@@ -53,6 +53,7 @@ bc.test_cmds = [
     "conda config --add channels ${CONDA_CHANNEL}",
     "conda create -y -q -n py${PY_VER} python=${PY_VER} ${CONDA_DEPS}",
     "with_env -n py${PY_VER} ${PY_SETUP} develop",
+    "with_env -n py${PY_VER} 2to3 -w -n -f print jwst/tests_nightly/general",
     "with_env -n py${PY_VER} ${PYTEST} jwst/tests_nightly/general"
 ]
 matrix += bc
