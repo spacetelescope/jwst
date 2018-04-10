@@ -20,7 +20,6 @@ def test_dark_current_miri():
         pass
 
     DarkCurrentStep.call(BIGDATA+'/miri/test_dark_step/jw00001001001_01101_00001_MIRIMAGE_bias_drift.fits',
-                         config_file='dark_current.cfg',
                          output_file=output_file_base
                          )
     h = pf.open(output_file)

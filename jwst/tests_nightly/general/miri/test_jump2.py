@@ -22,9 +22,9 @@ def test_jump_miri2():
 
 
     JumpStep.call(BIGDATA+'/miri/test_jump/jw80600012001_02101_00003_mirimage_dark.fits',
-                  config_file='jump2.cfg',
+                  rejection_threshold=25.0,
                   output_file=output_file_base
-    )
+                  )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/miri/test_jump/jw80600012001_02101_00003_mirimage_jump.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

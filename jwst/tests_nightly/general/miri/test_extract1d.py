@@ -22,9 +22,9 @@ def test_extract1d_miri():
 
 
     Extract1dStep.call(BIGDATA+'/miri/test_extract1d/jw00035001001_01101_00001_mirimage_photom.fits',
-                       config_file='extract_1d.cfg',
+                       smoothing_length=0,
                        output_file=output_file_base
-    )
+                       )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/miri/test_extract1d/jw00035001001_01101_00001_mirimage_x1d.fits')
     newh = pf.HDUList([h['primary'],h['extract1d',1]])

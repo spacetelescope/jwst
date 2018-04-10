@@ -32,9 +32,8 @@ def test_extract2d_nrs_msa():
         raise OSError("Could not copy inputs files")
 
     Extract2dStep.call('jw00038001001_01101_00001_NRS1_assign_wcs.fits',
-                       config_file='extract_2d.cfg',
                        output_file='extract2d2_output.fits'
-    )
+                       )
     h = fits.open('extract2d2_output.fits')
     href = fits.open(BIGDATA+'/nirspec/test_extract_2d/msa/jw00038001001_01101_00001_NRS1_assign_wcs_extract_2d.fits')
     '''
@@ -48,7 +47,7 @@ def test_extract2d_nrs_msa():
                             href['sci',3],href['err',3],href['dq',3],
                             href['sci',4],href['err',4],href['dq',4],
                             href['sci',5],href['err',5],href['dq',5]])
-    
+
     result = fits.diff.FITSDiff(newh, newhref,
                                 ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                                 rtol = 0.00001

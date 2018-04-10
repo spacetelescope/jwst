@@ -10,12 +10,14 @@ def test_ami_pipeline():
     Regression test of the AMI pipeline performed on NIRISS AMI data.
 
     """
+    step = Ami3Pipeline()
+    step.save_averages = True
+    step.ami_analyze.oversample = 3
+    step.ami_analyze.rotation=1.49
+    step.run(BIGDATA+'/niriss/test_ami_pipeline/test_lg1_asn.json')
 
-    Ami3Pipeline.call(BIGDATA+'/niriss/test_ami_pipeline/test_lg1_asn.json',
-                      config_file='calwebb_ami3.cfg')
-    
     h = pf.open('test_targ_aminorm.fits')
-    href = pf.open(BIGDATA+'/niriss/test_ami_pipeline/ami_pipeline_targ_lgnorm.fits') 
+    href = pf.open(BIGDATA+'/niriss/test_ami_pipeline/ami_pipeline_targ_lgnorm.fits')
     newh = pf.HDUList([h['primary'],h['fit'],h['resid'],h['closure_amp'],
                        h['closure_pha'],h['fringe_amp'],h['fringe_pha'],
                        h['pupil_pha'],h['solns']])

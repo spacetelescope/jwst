@@ -29,7 +29,7 @@ def test_nirspec_nrs1_wcs():
 
     AssignWcsStep.call(input_file,
                        output_file=output_file_base
-    )
+                       )
     im = ImageModel(output_file)
     imref = ImageModel(ref_file)
     #ystart = im.meta.subarray.ystart

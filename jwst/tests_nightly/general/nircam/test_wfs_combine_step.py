@@ -1,6 +1,6 @@
 import os
 from astropy.io import fits as pf
-from jwst.wfs_combine.wfs_combine_step import WfsCombineStep 
+from jwst.wfs_combine.wfs_combine_step import WfsCombineStep
 
 BIGDATA = os.environ['TEST_BIGDATA']
 
@@ -12,8 +12,7 @@ def test_wfs_combine():
 
     """
 
-    WfsCombineStep.call(BIGDATA+'/nircam/test_wfs_combine/wfs_3sets_asn.json',
-                         config_file='wfs_combine.cfg')
+    WfsCombineStep.call(BIGDATA+'/nircam/test_wfs_combine/wfs_3sets_asn.json')
 
     # compare 1st pair of output files
     h = pf.open('test_wfscom_wfscmb.fits')
@@ -27,7 +26,7 @@ def test_wfs_combine():
                               rtol = 0.00001
     )
     result.report()
- 
+
     try:
         assert result.identical == True
     except AssertionError as e:
@@ -47,7 +46,7 @@ def test_wfs_combine():
                               rtol = 0.00001
     )
     result.report()
- 
+
     try:
         assert result.identical == True
     except AssertionError as e:
@@ -66,7 +65,7 @@ def test_wfs_combine():
                               rtol = 0.00001
     )
     result.report()
- 
+
     try:
         assert result.identical == True
     except AssertionError as e:

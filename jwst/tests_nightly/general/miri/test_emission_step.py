@@ -22,7 +22,6 @@ def test_emission_miri():
 
 
     EmissionStep.call(BIGDATA+'/miri/test_emission/jw00001001001_01101_00001_MIRIMAGE_flat_field.fits',
-                         config_file='emission.cfg',
                          output_file=output_file_base
     )
     h = pf.open(output_file)
