@@ -10,9 +10,13 @@ def test_nrs_msa_spec2():
     Regression test of calwebb_spec2 pipeline performed on NIRSpec MSA data.
 
     """
-
+    step = Spec2Pipeline()
+    step.save_bsub = True
+    step.output_use_model = True
+    step.resample_spec.save_results = True
+    step.resample_spec.skip = True
+    step.extract_1d.save_results = True
     Spec2Pipeline.call(BIGDATA+'/pipelines/F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod.fits',
-                       config_file='calwebb_spec2a.cfg',
                        output_file='f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_cal.fits')
 
     na = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_cal.fits'
@@ -104,7 +108,7 @@ def test_nrs_msa_spec2():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb) 
+    print (' ... and the reference file - b:', nb)
 
     result.report()
     try:
@@ -132,7 +136,7 @@ def test_nrs_msa_spec2():
     #                          rtol = 0.00001)
 
     #print (' Fitsdiff comparison between product file - a:', na)
-    #print (' ... and the reference file - b:', nb) 
+    #print (' ... and the reference file - b:', nb)
 
     #result.report()
     #try:
@@ -152,7 +156,7 @@ def test_nrs_msa_spec2():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb) 
+    print (' ... and the reference file - b:', nb)
 
     result.report()
     try:

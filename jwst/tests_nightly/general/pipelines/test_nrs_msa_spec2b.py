@@ -11,10 +11,14 @@ def test_nrs_msa_spec2b():
     including barshadow correction.
 
     """
-
-    Spec2Pipeline.call(BIGDATA+'/pipelines/jw95065_nrs_msaspec_barshadow.fits',
-                       config_file='calwebb_spec2b.cfg',
-                       output_file='jw95065_nrs_msaspec_barshadow_cal.fits')
+    step = Spec2Pipeline()
+    step.save_bsub = True
+    step.save_results = True
+    step.resample_spec.save_results = True
+    step.cube_build.save_results = True
+    step.extract_1d.save_results = True
+    step.run(BIGDATA+'/pipelines/jw95065_nrs_msaspec_barshadow.fits',
+             output_file='jw95065_nrs_msaspec_barshadow_cal.fits')
 
     na = 'jw95065_nrs_msaspec_barshadow_cal.fits'
     nb = BIGDATA+'/pipelines/jw95065_nrs_msaspec_barshadow_cal_ref.fits'
@@ -106,7 +110,7 @@ def test_nrs_msa_spec2b():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb) 
+    print (' ... and the reference file - b:', nb)
 
     result.report()
     try:
@@ -134,7 +138,7 @@ def test_nrs_msa_spec2b():
     #                          rtol = 0.00001)
 
     #print (' Fitsdiff comparison between product file - a:', na)
-    #print (' ... and the reference file - b:', nb) 
+    #print (' ... and the reference file - b:', nb)
 
     #result.report()
     #try:
@@ -154,7 +158,7 @@ def test_nrs_msa_spec2b():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb) 
+    print (' ... and the reference file - b:', nb)
 
     result.report()
     try:

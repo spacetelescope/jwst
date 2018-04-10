@@ -23,7 +23,45 @@ def test_image3_pipeline1():
         pass
 
     asn_file = os.path.join(subdir, "mosaic_long_asn.json")
-    Image3Pipeline.call(asn_file, config_file='calwebb_image3.cfg')
+    step = Image3Pipeline()
+    step.tweakreg.skip = True
+    skymethod = 'global+match'
+    step.skymatch.match_down =True
+    step.skymatch.subtract = False
+    step.skymatch.skystat = 'mode'
+    step.skymatch.nclip = 5
+    step.skymatch.lsigma = 4.0
+    step.skymatch.usigma = 4.0
+    step.skymatch.binwidth = 0.1
+    step.outlier_detection.wht_type = 'exptime'
+    step.outlier_detection.pixfrac = 1.0
+    step.outlier_detection.kernel = 'square'
+    step.outlier_detection.fillval = 'INDEF'
+    step.outlier_detection.nlow = 0
+    step.outlier_detection.nhigh = 0
+    step.outlier_detection.maskpt = 0.7
+    step.outlier_detection.grow = 1
+    step.outlier_detection.snr = '4.0 3.0'
+    step.outlier_detection.scale = '0.5 0.4'
+    step.outlier_detection.backg = 0.0
+    step.outlier_detection.save_intermediate_results = False
+    step.outlier_detection.resample_data = True
+    step.outlier_detection.good_bits = 4
+    step.resample.single = False
+    step.resample.wht_type = 'exptime'
+    step.resample.pixfrac = 1.0
+    step.resample.kernel = 'square'
+    step.resample.fillval = 'INDEF'
+    step.resample.good_bits = 4
+    step.resample.blendheaders = True
+    step.source_catalog.kernel_fwhm = 3.
+    step.source_catalog.kernel_xsize = 5.
+    step.source_catalog.kernel_ysize = 5.
+    step.source_catalog.snr_threshold = 3.
+    step.source_catalog.npixels = 50
+    step.source_catalog.deblend = False
+
+    step.run(asn_file)
 
     # Compare level-2c product
     n_cur = 'nrca5_47Tuc_subpix_dither1_newpos_a3001_crf.fits'
