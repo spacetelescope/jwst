@@ -22,11 +22,10 @@ def test_ramp_fit_nircam():
 
 
     RampFitStep.call(BIGDATA+'/nircam/test_ramp_fit/jw00017001001_01101_00001_NRCA1_jump.fits',
-                      config_file='ramp_fit.cfg',
-                      output_file=output_file_base,
-                      save_opt=True,
-                      opt_name='rampfit_opt_out.fits'
-    )
+                     output_file=output_file_base,
+                     save_opt=True,
+                     opt_name='rampfit_opt_out.fits'
+                     )
 
     # compare primary output
     n_priout = output_files[0]
