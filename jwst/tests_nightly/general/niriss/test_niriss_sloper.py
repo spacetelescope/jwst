@@ -10,10 +10,17 @@ def test_niriss_detector1():
     Regression test of calwebb_detector1 pipeline performed on NIRISS data.
 
     """
+    step = Detector1Pipeline()
+    step.save_calibrated_ramp = True
+    step.refpix.odd_even_columns = True
+    step.refpix.use_side_ref_pixels = True
+    step.refpix.side_smoothing_length=11
+    step.refpix.side_gain=1.0
+    step.jump.rejection_threshold = 250.0
+    step.ramp_fit.save_opt = False
 
-    Detector1Pipeline.call(BIGDATA+'/pipelines/jw00034001001_01101_00001_NIRISS_uncal.fits',
-                        config_file='calwebb_detector1.cfg',
-                        output_file='jw00034001001_01101_00001_NIRISS_rate.fits')
+    step.run(BIGDATA+'/pipelines/jw00034001001_01101_00001_NIRISS_uncal.fits',
+             output_file='jw00034001001_01101_00001_NIRISS_rate.fits')
 
     # Compare ramp product
     n_ramp = 'jw00034001001_01101_00001_NIRISS_ramp.fits'
@@ -27,8 +34,8 @@ def test_niriss_detector1():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between the ramp product file - a:', n_ramp )
-    print (' ... and the reference file - b:', n_ref)    
-   
+    print (' ... and the reference file - b:', n_ref)
+
     result.report()
     try:
         assert result.identical == True
@@ -48,8 +55,8 @@ def test_niriss_detector1():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between the countrate image product file - a:', n_cr )
-    print (' ... and the reference file - b:', n_ref)    
-    
+    print (' ... and the reference file - b:', n_ref)
+
     result.report()
     try:
         assert result.identical == True

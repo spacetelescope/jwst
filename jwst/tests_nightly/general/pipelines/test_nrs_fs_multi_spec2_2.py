@@ -10,9 +10,13 @@ def test_nrs_fs_multi_spec2_2():
     Regression test of calwebb_spec2 pipeline performed on NIRSpec fixed-slit data.
 
     """
-
-    Spec2Pipeline.call(BIGDATA+'/pipelines/jwtest1013001_01101_00001_NRS1_rate.fits',
-                       config_file='calwebb_spec2.cfg')
+    step = Spec2Pipeline()
+    step.save_bsub = True
+    step.save_results = True
+    step.resample_spec.save_results = True
+    step.cube_build.save_results = True
+    step.extract_1d.save_results = True
+    step.run(BIGDATA+'/pipelines/jwtest1013001_01101_00001_NRS1_rate.fits')
 
     na = 'jwtest1013001_01101_00001_NRS1_cal.fits'
     nb = BIGDATA+'/pipelines/jwtest1013001_01101_00001_NRS1_cal_ref.fits'
@@ -43,7 +47,7 @@ def test_nrs_fs_multi_spec2_2():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb) 
+    print (' ... and the reference file - b:', nb)
 
     result.report()
     try:
@@ -69,7 +73,7 @@ def test_nrs_fs_multi_spec2_2():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb) 
+    print (' ... and the reference file - b:', nb)
 
     result.report()
     try:
@@ -89,7 +93,7 @@ def test_nrs_fs_multi_spec2_2():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb) 
+    print (' ... and the reference file - b:', nb)
 
     result.report()
     try:
