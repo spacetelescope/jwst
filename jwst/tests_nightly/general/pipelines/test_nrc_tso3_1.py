@@ -1,7 +1,9 @@
+
 import os
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_tso3 import Tso3Pipeline
-import pandokia.helpers.filecomp as filecomp
+# DISABLED
+# import pandokia.helpers.filecomp as filecomp
 
 BIGDATA = os.environ['TEST_BIGDATA']
 
@@ -62,7 +64,8 @@ def test_tso3_pipeline1():
         raise AssertionError(e)
 
     # compare the output files - use this exact command
-    filecomp.compare_files(output, (__file__, testname), tda=tda,)
+    # DISABLED
+    # filecomp.compare_files(output, (__file__, testname), tda=tda,)
 
 
 def test_tso3_pipeline2():
@@ -122,7 +125,8 @@ def test_tso3_pipeline2():
         raise AssertionError(e)
 
     # compare the output files - use this exact command
-    filecomp.compare_files(output, (__file__, testname), tda=tda,)
+    # DISABLED
+    # filecomp.compare_files(output, (__file__, testname), tda=tda,)
 
 
 # Utility function to simplify FITS comparisons
