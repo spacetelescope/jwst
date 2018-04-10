@@ -10,10 +10,16 @@ def test_detector1pipeline3():
     Regression test of calwebb_detector1 pipeline performed on NIRCam data.
 
     """
-
-    Detector1Pipeline.call(BIGDATA+'/pipelines/jw82500001003_02101_00001_NRCALONG_uncal.fits',
-                        config_file='calwebb_detector1.cfg',
-                        output_file='jw82500001003_02101_00001_NRCALONG_rate.fits')
+    step = Detector1Pipeline()
+    step.save_calibrated_ramp = True
+    step.refpix.odd_even_columns = True
+    step.refpix.use_side_ref_pixels = False
+    step.refpix.side_smoothing_length = 10
+    step.refpix.side_gain = 1.0
+    step.jump.rejection_threshold = 250.0
+    step.ramp_fit.save_opt = True
+    step.run(BIGDATA+'/pipelines/jw82500001003_02101_00001_NRCALONG_uncal.fits',
+             output_file='jw82500001003_02101_00001_NRCALONG_rate.fits')
 
     # Compare ramp product
     n_ramp = 'jw82500001003_02101_00001_NRCALONG_ramp.fits'
@@ -29,8 +35,8 @@ def test_detector1pipeline3():
     )
 
     print (' Fitsdiff comparison between the ramp product file - a:', n_ramp )
-    print (' ... and the reference file - b:', n_ref)    
-   
+    print (' ... and the reference file - b:', n_ref)
+
     result.report()
     try:
         assert result.identical == True
@@ -52,8 +58,8 @@ def test_detector1pipeline3():
     )
 
     print (' Fitsdiff comparison between the countrate image product file - a:', n_cr )
-    print (' ... and the reference file - b:', n_ref)    
-    
+    print (' ... and the reference file - b:', n_ref)
+
     result.report()
     try:
         assert result.identical == True
@@ -76,7 +82,7 @@ def test_detector1pipeline3():
 
     print (' Fitsdiff comparison between the countrate nints image product file - a:', n_int )
     print (' ... and the reference file - b:', n_ref)
-    
+
     result.report()
     try:
         assert result.identical == True

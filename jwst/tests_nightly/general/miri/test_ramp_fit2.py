@@ -22,11 +22,10 @@ def test_ramp_fit_miri2():
         pass
 
     RampFitStep.call(BIGDATA+'/miri/test_ramp_fit/jw80600012001_02101_00003_mirimage_jump.fits',
-                      config_file='ramp_fit.cfg',
                       save_opt=True,
                       opt_name='rampfit2_opt_out.fits',
                       output_file=output_file_base
-    )
+                      )
 
     # compare primary output
     n_priout = output_files[0]

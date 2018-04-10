@@ -11,9 +11,13 @@ def test_miri_lrs_bkgnod():
     of nodded MIRI LRS fixed-slit exposures.
 
     """
-
-    Spec2Pipeline.call(BIGDATA+'/pipelines/lrs_bkgnod_asn.json',
-                       config_file='calwebb_spec2.cfg')
+    step = Spec2Pipeline()
+    step.save_bsub=True,
+    step.save_results=True
+    step.resample_spec.save_results = True
+    step.cube_build.save_results = True
+    step.extract_1d.save_results = True
+    step.run(BIGDATA+'/pipelines/lrs_bkgnod_asn.json')
 
     na = 'test_lrs1_bsub.fits'
     nb = BIGDATA+'/pipelines/test_lrs1_bsub_ref.fits'
