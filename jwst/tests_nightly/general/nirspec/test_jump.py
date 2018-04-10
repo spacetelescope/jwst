@@ -22,9 +22,9 @@ def test_jump_nirspec():
 
 
     JumpStep.call(BIGDATA+'/nirspec/test_jump/jw00023001001_01101_00001_NRS1_linearity.fits',
-                      config_file='jump.cfg',
-                      output_file=output_file_base
-    )
+                  rejection_threshold=50.0,,
+                  output_file=output_file_base
+                  )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/nirspec/test_jump/jw00023001001_01101_00001_NRS1_jump.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

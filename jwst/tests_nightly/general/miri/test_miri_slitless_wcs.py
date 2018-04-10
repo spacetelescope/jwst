@@ -29,7 +29,7 @@ def test_miri_slitless_wcs():
 
     AssignWcsStep.call(input_file,
                        output_file=output_file_base
-    )
+                       )
     im = CubeModel(output_file)
     imref = CubeModel(ref_file)
     x, y = np.mgrid[:1031, :1024]

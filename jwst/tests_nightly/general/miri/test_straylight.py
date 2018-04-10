@@ -20,9 +20,8 @@ def test_straylight1_miri():
         pass
 
     StraylightStep.call(BIGDATA+'/miri/test_straylight/jw80500018001_02101_00002_MIRIFUSHORT_flatfield.fits',
-                      config_file='straylight.cfg',
-                      output_file=output_file_base
-    )
+                        output_file=output_file_base
+                        )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/miri/test_straylight/jw80500018001_02101_00002_MIRIFUSHORT_straylight.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])

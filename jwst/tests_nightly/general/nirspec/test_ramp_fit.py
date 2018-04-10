@@ -23,11 +23,10 @@ def test_ramp_fit_nirspec():
         pass
 
     RampFitStep.call(BIGDATA+'/nirspec/test_ramp_fit/jw00023001001_01101_00001_NRS1_jump.fits',
-                      config_file='ramp_fit.cfg',
                       output_file=output_file_base,
                       save_opt=True,
                       opt_name='rampfit_opt_out.fits'
-    )
+                      )
 
     # compare primary output
     n_priout = output_files[0]
