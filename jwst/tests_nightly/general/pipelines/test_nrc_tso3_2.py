@@ -1,7 +1,8 @@
 import os
 
 from jwst.pipeline.calwebb_tso3 import Tso3Pipeline
-import pandokia.helpers.filecomp as filecomp
+# DISABLED
+# import pandokia.helpers.filecomp as filecomp
 
 from .test_nrc_tso3_1 import perform_FITS_comparison
 
@@ -82,4 +83,5 @@ def test_tso3_pipeline3():
         raise AssertionError(e)
 
     # compare the output files - use this exact command
-    filecomp.compare_files(output, (__file__, testname), tda=tda,)
+    # DISABLED
+    # filecomp.compare_files(output, (__file__, testname), tda=tda,)
