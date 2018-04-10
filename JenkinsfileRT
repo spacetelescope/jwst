@@ -55,6 +55,7 @@ node("jwst") {
 
 bc = new BuildConfig()
 bc.nodetype = 'jwst'
+bc.env_vars = ["HOME=$WORKSPACE"]
 bc.env_vars_raw = test_env_raw + ['PATH=./miniconda/bin:/bin:/usr/bin']
 bc.build_mode = PY_VER
 
