@@ -1,12 +1,20 @@
+@Library('utils@master') _  // For development only.
+
 if (utils.scm_checkout()) return
+
 def test_env = [
-    "TEST_BIGDATA=/data4/jwst_test_data",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst_0349.pmap",
     "CRDS_PATH=/tmp/crds_cache",
 ]
+
+def test_env_raw = [
+    "TEST_BIGDATA=/data4/jwst_test_data",
+]
+
 //def python_version = ['3.5', '3.6']
 //def numpy_version = ['1.13', '1.14']
+
 def CONDA_DEPS = "asdf \
                   astropy \
                   crds \
@@ -48,6 +56,7 @@ node("jwst") {
 bc = new BuildConfig()
 bc.nodetype = 'jwst'
 bc.env_vars = test_env + ['PATH=./miniconda/bin:/bin:/usr/bin']
+bc.env_vars_raw = test_env_raw
 bc.build_mode = PY_VER
 bc.test_cmds = [
     "conda config --add channels ${CONDA_CHANNEL}",
