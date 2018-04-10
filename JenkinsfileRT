@@ -62,13 +62,12 @@ bc.nodetype = 'jwst'
 bc.env_vars = test_env
 bc.build_mode = PY_VER
 
-//Keep: "${WRAPPER} ${PYTEST} ${TEST_ROOT}",
 bc.test_cmds = [
-    "printenv | sort",
     "conda config --add channels ${CONDA_CHANNEL}",
     "${CONDA_CREATE} -n ${CONDA_ENV} python=${PY_VER} ${CONDA_DEPS}",
+    "${WRAPPER} printenv | sort",
     "${WRAPPER} ${PY_SETUP} develop",
-    "${WRAPPER} ${PYTEST} ${TEST_ROOT}/fgs ${TEST_ROOT}/nirspec",
+    "${WRAPPER} ${PYTEST} ${TEST_ROOT}",
 ]
 matrix += bc
 
