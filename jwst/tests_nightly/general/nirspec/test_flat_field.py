@@ -22,9 +22,8 @@ def test_flat_field_nirspec():
 
 
     FlatFieldStep.call(BIGDATA+'/nirspec/test_flat_field/jw00023001001_01101_00001_NRS1_extract_2d.fits',
-                      config_file='flat_field.cfg',
-                      output_file=output_file_base
-    )
+                       output_file=output_file_base
+                       )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/nirspec/test_flat_field/jw00023001001_01101_00001_NRS1_flat_field.fits')
     newh = pf.HDUList([h['primary'],h['sci',1],h['err',1],h['dq',1],

@@ -22,7 +22,6 @@ def test_imprint_nirspec():
 
     ImprintStep.call(BIGDATA+'/nirspec/test_imprint/jw00038001001_01101_00001_NRS1_rate.fits',
                      BIGDATA+'/nirspec/test_imprint/NRSMOS-MODEL-21_NRS1_rate.fits',
-                     config_file='imprint.cfg',
                      output_file=output_file_base)
 
     h = pf.open(output_file)

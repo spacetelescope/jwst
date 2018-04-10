@@ -20,7 +20,6 @@ def test_dark_current_nirspec():
         pass
 
     DarkCurrentStep.call(BIGDATA+'/nirspec/test_dark_step/jw00023001001_01101_00001_NRS1_saturation.fits',
-                         config_file='dark_current.cfg',
                          output_file=output_file_base
                          )
     h = pf.open(output_file)

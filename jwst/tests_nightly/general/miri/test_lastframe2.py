@@ -21,9 +21,8 @@ def test_lastframe_miri2():
 
 
     LastFrameStep.call(BIGDATA+'/miri/test_lastframe/jw80600012001_02101_00003_mirimage_rscd.fits',
-                       config_file='lastframe.cfg',
                        output_file=output_file_base
-    )
+                       )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/miri/test_lastframe/jw80600012001_02101_00003_mirimage_lastframe.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

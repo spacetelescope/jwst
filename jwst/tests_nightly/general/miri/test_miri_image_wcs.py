@@ -29,8 +29,8 @@ def test_miri_image_wcs():
     ref_file = os.path.join(BIGDATA, 'miri', 'test_wcs', 'image', 'jw00001001001_01101_00001_MIRIMAGE_assign_wcs.fits')
 
     AssignWcsStep.call(input_file,
-               output_file=output_file_base
-    )
+                       output_file=output_file_base
+                       )
     im = ImageModel(output_file)
     imref = ImageModel(ref_file)
     x, y = np.mgrid[:1031, :1024]

@@ -22,9 +22,8 @@ def test_linearity_miri2():
 
 
     LinearityStep.call(BIGDATA+'/miri/test_linearity/jw80600012001_02101_00003_mirimage_saturation.fits',
-                      config_file='linearity.cfg',
-                      output_file=output_file_base
-    )
+                       output_file=output_file_base
+                       )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/miri/test_linearity/jw80600012001_02101_00003_mirimage_linearity.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

@@ -22,9 +22,9 @@ def test_refpix_nirspec():
 
 
     RefPixStep.call(BIGDATA+'/nirspec/test_bias_drift/jw00023001001_01101_00001_NRS1_dq_init.fits',
-                    config_file='refpix.cfg',
-                    output_file=output_file_base
-    )
+                    odd_even_columns=True, use_side_ref_pixels=False, side_smoothing_length=10,
+                    side_gain=1.0, output_file=output_file_base
+                    )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/nirspec/test_bias_drift/jw00023001001_01101_00001_NRS1_bias_drift.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

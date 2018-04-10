@@ -22,9 +22,8 @@ def test_emission_nircam():
 
 
     EmissionStep.call(BIGDATA+'/nircam/test_emission/jw00017001001_01101_00001_NRCA1_persistence.fits',
-                         config_file='emission.cfg',
-                         output_file=output_file_base
-    )
+                      output_file=output_file_base
+                      )
     h = pf.open(output_file)
     href = pf.open(BIGDATA+'/nircam/test_emission/jw00017001001_01101_00001_NRCA1_emission.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
