@@ -12,8 +12,8 @@ def test_fgs_detector1_1():
     """
 
     Detector1Pipeline.call(BIGDATA+'/fgs/test_sloperpipeline/jw86500007001_02101_00001_GUIDER2_uncal.fits',
-                        config_file='calwebb_detector1.cfg',
-                        output_file='jw86500007001_02101_00001_GUIDER2_rate.fits')
+                           save_calibrated_ramp=True,
+                           output_file='jw86500007001_02101_00001_GUIDER2_rate.fits')
 
     # Compare calibrated ramp product
     n_cr = 'jw86500007001_02101_00001_GUIDER2_ramp.fits'
@@ -29,8 +29,8 @@ def test_fgs_detector1_1():
     )
 
     print (' Fitsdiff comparison between the calibrated ramp product file - a:', n_cr )
-    print (' ... and the reference file - b:', n_ref)    
-    
+    print (' ... and the reference file - b:', n_ref)
+
     result.report()
     try:
         assert result.identical == True
@@ -52,8 +52,8 @@ def test_fgs_detector1_1():
     )
 
     print (' Fitsdiff comparison between the multi-integration countrate image product file - a:', n_int )
-    print (' ... and the reference file - b:', n_ref)    
-    
+    print (' ... and the reference file - b:', n_ref)
+
     result.report()
     try:
         assert result.identical == True
@@ -75,9 +75,9 @@ def test_fgs_detector1_1():
     )
 
     print (' Fitsdiff comparison between the countrate image product file - a:', n_rate )
-    print (' ... and the reference file - b:', n_ref)    
+    print (' ... and the reference file - b:', n_ref)
 
-    result.report()   
+    result.report()
     try:
         assert result.identical == True
     except AssertionError as e:

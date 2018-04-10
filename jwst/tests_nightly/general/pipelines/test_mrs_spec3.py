@@ -24,7 +24,13 @@ def test_spec3_pipeline1():
         pass
 
     asn_file = os.path.join(subdir, "test_asn17.json")
-    Spec3Pipeline.call(asn_file, config_file='calwebb_spec3a.cfg')
+    step = Spec3Pipeline()
+    step.save_bsub = False
+    step.output_use_model = True
+    step.resample_spec.save_results = True
+    step.resample_spec.skip = True
+    step.extract_1d.save_results = True
+    step.run(asn_file)
 
     # Compare cube product 1
     n_cur = 'det_image_ch1-short_s3d.fits'

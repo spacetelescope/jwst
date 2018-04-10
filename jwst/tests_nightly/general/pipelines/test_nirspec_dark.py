@@ -10,10 +10,15 @@ def test_nirspec_dark_pipeline():
     Regression test of calwebb_dark pipeline performed on NIRSpec raw data.
 
     """
+    step = DarkPipeline()
+    step.suffix = "dark"
+    step.refpix.odd_even_columns = True
+    step.refpix.use_side_ref_pixels = True
+    step.refpix.side_smoothing_length=11
+    step.refpix.side_gain=1.0
 
-    DarkPipeline.call(BIGDATA+'/pipelines/jw84500013001_02103_00003_NRS1_uncal.fits',
-                      config_file='calwebb_dark.cfg',
-                      output_file='jw84500013001_02103_00003_NRS1_dark.fits')
+    step.run(BIGDATA+'/pipelines/jw84500013001_02103_00003_NRS1_uncal.fits',
+             output_file='jw84500013001_02103_00003_NRS1_dark.fits')
 
     h = pf.open('jw84500013001_02103_00003_NRS1_dark.fits')
     href = pf.open(BIGDATA+'/pipelines/jw84500013001_02103_00003_NRS1_dark_ref.fits')
@@ -23,7 +28,7 @@ def test_nirspec_dark_pipeline():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
 
-    result.report()   
+    result.report()
     try:
         assert result.identical == True
     except AssertionError as e:

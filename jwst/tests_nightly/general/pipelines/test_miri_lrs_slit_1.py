@@ -11,9 +11,13 @@ def test_miri_lrs_slit_1():
     MIRI LRS fixed-slit exposure.
 
     """
-
-    Spec2Pipeline.call(BIGDATA+'/pipelines/jw00035001001_01101_00001_MIRIMAGE_rate.fits',
-                       config_file='calwebb_spec2.cfg')
+    step = Spec2Pipeline()
+    step.save_bsub=True,
+    step.save_results=True
+    step.resample_spec.save_results = True
+    step.cube_build.save_results = True
+    step.extract_1d.save_results = True
+    step.run(BIGDATA+'/pipelines/jw00035001001_01101_00001_MIRIMAGE_rate.fits')
 
     n_cr = 'jw00035001001_01101_00001_MIRIMAGE_cal.fits'
     n_ref = BIGDATA+'/pipelines/jw00035001001_01101_00001_MIRIMAGE_cal_ref.fits'

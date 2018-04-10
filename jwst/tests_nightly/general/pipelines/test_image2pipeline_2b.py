@@ -13,7 +13,6 @@ def test_image2pipeline2b():
     """
 
     Image2Pipeline.call(BIGDATA+'/pipelines/jw82500001003_02101_00001_NRCALONG_rateints.fits',
-                        config_file='calwebb_image2.cfg',
                         output_file='jw82500001003_02101_00001_NRCALONG_calints.fits')
 
     h = pf.open('jw82500001003_02101_00001_NRCALONG_calints.fits')

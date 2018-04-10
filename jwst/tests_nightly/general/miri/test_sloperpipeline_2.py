@@ -10,10 +10,18 @@ def test_detector1pipeline2():
     Regression test of calwebb_detector1 pipeline performed on MIRI data.
 
     """
+    step = Detector1Pipeline()
+    step.save_calibrated_ramp = True
+    step.refpix.odd_even_columns = True
+    step.refpix.use_side_ref_pixels = True
+    step.refpix.side_smoothing_length=11
+    step.refpix.side_gain=1.0
+    step.refpix.odd_even_rows = True
+    step.jump.rejection_threshold = 250.0
+    step.ramp_fit.save_opt = False
 
-    Detector1Pipeline.call(BIGDATA+'/miri/test_sloperpipeline/jw80600012001_02101_00003_mirimage_uncal.fits',
-                        config_file='calwebb_detector1.cfg',
-                        output_file='jw80600012001_02101_00003_mirimage_rate.fits')
+    step.run(BIGDATA+'/miri/test_sloperpipeline/jw80600012001_02101_00003_mirimage_uncal.fits',
+             output_file='jw80600012001_02101_00003_mirimage_rate.fits')
 
     # Compare the calibrated ramp product
     n_cr = 'jw80600012001_02101_00003_mirimage_ramp.fits'
@@ -30,7 +38,7 @@ def test_detector1pipeline2():
 
     print (' Fitsdiff comparison between the calibrated ramp product file - a:', n_cr )
     print (' ... and the reference file - b:', n_ref)
-    
+
     result.report()
     try:
         assert result.identical == True
@@ -52,8 +60,8 @@ def test_detector1pipeline2():
     )
 
     print (' Fitsdiff comparison between the multi-integration countrate image product file - a:', n_int )
-    print (' ... and the reference file - b:', n_ref)    
-    
+    print (' ... and the reference file - b:', n_ref)
+
     result.report()
     try:
         assert result.identical == True
@@ -75,8 +83,8 @@ def test_detector1pipeline2():
     )
 
     print (' Fitsdiff comparison between the countrate image product file - a:', n_rate )
-    print (' ... and the reference file - b:', n_ref)    
-   
+    print (' ... and the reference file - b:', n_ref)
+
     result.report()
     try:
         assert result.identical == True
