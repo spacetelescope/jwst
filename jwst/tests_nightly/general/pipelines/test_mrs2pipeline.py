@@ -10,9 +10,13 @@ def test_mrs2pipeline1():
     Regression test of calwebb_spec2 pipeline performed on MIRI MRS data.
 
     """
-
-    Spec2Pipeline.call(BIGDATA+'/miri/test_mrs2pipeline/jw80500018001_02101_00002_MIRIFUSHORT_rate.fits',
-                       config_file='calwebb_spec2.cfg', save_results=True)
+    step = Spec2Pipeline()
+    step.save_bsub=True,
+    step.save_results=True
+    step.resample_spec.save_results = True
+    step.cube_build.save_results = True
+    step.extract_1d.save_results = True
+    step.run(BIGDATA+'/miri/test_mrs2pipeline/jw80500018001_02101_00002_MIRIFUSHORT_rate.fits')
 
     n_h = 'jw80500018001_02101_00002_MIRIFUSHORT_cal.fits'
     h = pf.open(n_h)

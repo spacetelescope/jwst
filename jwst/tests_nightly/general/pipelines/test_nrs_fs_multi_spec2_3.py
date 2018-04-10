@@ -11,9 +11,13 @@ def test_nrs_fs_multi_spec2_3():
     using the ALLSLITS subarray and detector NRS2.
 
     """
-
-    Spec2Pipeline.call(BIGDATA+'/pipelines/jw84600002001_02101_00001_nrs2_rate.fits',
-                       config_file='calwebb_spec2.cfg')
+    step = Spec2Pipeline()
+    step.save_bsub = True
+    step.save_results = True
+    step.resample_spec.save_results = True
+    step.cube_build.save_results = True
+    step.extract_1d.save_results = True
+    step.run(BIGDATA+'/pipelines/jw84600002001_02101_00001_nrs2_rate.fits')
 
     na = 'jw84600002001_02101_00001_nrs2_cal.fits'
     nb = BIGDATA+'/pipelines/jw84600002001_02101_00001_nrs2_cal_ref.fits'
@@ -30,7 +34,7 @@ def test_nrs_fs_multi_spec2_3():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb) 
+    print (' ... and the reference file - b:', nb)
 
     result.report()
     try:
@@ -50,7 +54,7 @@ def test_nrs_fs_multi_spec2_3():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb) 
+    print (' ... and the reference file - b:', nb)
 
     result.report()
     try:
@@ -70,7 +74,7 @@ def test_nrs_fs_multi_spec2_3():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb) 
+    print (' ... and the reference file - b:', nb)
 
     result.report()
     try:

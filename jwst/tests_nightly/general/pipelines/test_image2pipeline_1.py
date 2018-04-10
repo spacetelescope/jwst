@@ -11,8 +11,8 @@ def test_image2pipeline1():
 
     """
 
-    Image2Pipeline.call(BIGDATA+'/miri/test_image2pipeline/jw00001001001_01101_00001_mirimage_rate.fits',
-                        config_file='calwebb_image2.cfg')
+    Image2Pipeline.call(BIGDATA+'/miri/test_image2pipeline/jw00001001001_01101_00001_mirimage_rate.fits'
+                        )
 
     h = pf.open('jw00001001001_01101_00001_mirimage_cal.fits')
     href = pf.open(BIGDATA+'/miri/test_image2pipeline/jw00001001001_01101_00001_MIRIMAGE_uncal_MiriSloperPipeline_Image2Pipeline.fits')

@@ -11,8 +11,13 @@ def test_mirilrs2pipeline1():
 
     """
 
-    Spec2Pipeline.call(BIGDATA+'/pipelines/jw80600012001_02101_00003_mirimage_rateints.fits',
-                       config_file='calwebb_spec2.cfg')
+    step = Spec2Pipeline()
+    step.save_bsub=True,
+    step.save_results=True
+    step.resample_spec.save_results = True
+    step.cube_build.save_results = True
+    step.extract_1d.save_results = True
+    step.run(BIGDATA+'/pipelines/jw80600012001_02101_00003_mirimage_rateints.fits')
 
     n_cr = 'jw80600012001_02101_00003_mirimage_calints.fits'
     h = pf.open(n_cr)

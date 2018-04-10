@@ -12,7 +12,6 @@ def test_fgs_image2pipeline1():
     """
 
     Image2Pipeline.call(BIGDATA+'/fgs/test_image2pipeline/jw86500007001_02101_00001_GUIDER2_rate.fits',
-                        config_file='calwebb_image2.cfg',
                         output_file='jw86500007001_02101_00001_GUIDER2_cal.fits')
 
     h = pf.open('jw86500007001_02101_00001_GUIDER2_cal.fits')

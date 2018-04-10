@@ -10,9 +10,13 @@ def test_nrs_ifu_spec2():
     Regression test of calwebb_spec2 pipeline performed on NIRSpec IFU data.
 
     """
-
-    Spec2Pipeline.call(BIGDATA+'/pipelines/jw95175001001_02104_00001_nrs1_rate.fits',
-                       config_file='calwebb_spec2.cfg')
+    step = Spec2Pipeline()
+    step.save_bsub = True
+    step.save_results = True
+    step.resample_spec.save_results = True
+    step.cube_build.save_results = True
+    step.extract_1d.save_results = True
+    step.run(BIGDATA+'/pipelines/jw95175001001_02104_00001_nrs1_rate.fits')
 
     na = 'jw95175001001_02104_00001_nrs1_cal.fits'
     nb = BIGDATA+'/pipelines/jw95175001001_02104_00001_nrs1_cal_ref.fits'
@@ -29,7 +33,7 @@ def test_nrs_ifu_spec2():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb) 
+    print (' ... and the reference file - b:', nb)
 
     result.report()
     try:
@@ -49,7 +53,7 @@ def test_nrs_ifu_spec2():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb) 
+    print (' ... and the reference file - b:', nb)
 
     result.report()
     try:
@@ -69,7 +73,7 @@ def test_nrs_ifu_spec2():
                               rtol = 0.00001)
 
     print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb) 
+    print (' ... and the reference file - b:', nb)
 
     result.report()
     try:
