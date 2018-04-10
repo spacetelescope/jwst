@@ -3,7 +3,7 @@
 if (utils.scm_checkout()) return
 
 def test_env = [
-    "HOME=.",
+    "HOME=./",
     "PATH=./miniconda/bin:/bin:/usr/bin",
     "TEST_BIGDATA=/data4/jwst_test_data",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
