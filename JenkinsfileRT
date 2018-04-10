@@ -64,6 +64,7 @@ bc.build_mode = PY_VER
 
 //Keep: "${WRAPPER} ${PYTEST} ${TEST_ROOT}",
 bc.test_cmds = [
+    "printenv | sort",
     "conda config --add channels ${CONDA_CHANNEL}",
     "${CONDA_CREATE} -n ${CONDA_ENV} python=${PY_VER} ${CONDA_DEPS}",
     "${WRAPPER} ${PY_SETUP} develop",
