@@ -12,7 +12,6 @@ def test_guider_pipeline3():
     """
 
     GuiderPipeline.call(BIGDATA+'/fgs/test_guiderpipeline/jw86600004001_gs-id_1_stacked-uncal.fits',
-                        config_file='calwebb_guider.cfg',
                         output_file='jw86600004001_gs-id_1_stacked-cal.fits')
 
     # Compare calibrated ramp product
@@ -29,8 +28,8 @@ def test_guider_pipeline3():
     )
 
     print (' Fitsdiff comparison between the calibrated product file - a:', n_cr )
-    print (' ... and the reference file - b:', n_ref)    
-    
+    print (' ... and the reference file - b:', n_ref)
+
     result.report()
     try:
         assert result.identical == True
