@@ -22,9 +22,8 @@ CRDS Selection Criteria
 RSCD reference files are selected on the basis of INSTRUME and DETECTOR
 values for the input science data set.  The reference file for each detector is a table of values based on
 READPATT (FAST, SLOW) , SUBARRAY (FULL or one the various subarray types) , and ROWS type (even or odd row).
-The fourtenn correction values are read in separately for even and odd rows for the readout pattern and  
-if it is for the full array or one of the imager subarrays. The table actually contains the parameters for a 
-the non-saturating data and saturating data all in one row. 
+The fourteen correction values are read in separately for even and odd rows for the readout pattern and  
+if it is for the full array or one of the imager subarrays. 
 
 RSCD Reference File Format
 ---------------------------

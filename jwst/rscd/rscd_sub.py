@@ -309,11 +309,11 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
     # check if pixel is saturated
     saturated_flag = datamodels.dqflags.group['SATURATED']
     ref_flag = datamodels.dqflags.pixel['REFERENCE_PIXEL']
-    
+#TODO make this section more efficient by not looping over each
+# pixel
     for j in range(nrows):
         for k in range(ncols):
             pixeldq = input_model.pixeldq[j,k]
-            
             ref = np.bitwise_and(pixeldq,ref_flag) == 0
             if ref == True:
                 is_ref[j,k] = True
@@ -334,14 +334,9 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
             
                 slope, intercept,ngood = ols_fit(ramp,groupdq)
                 if slope !=0: 
-
                     dn_lastframe_fit[j,k] = slope*sci_ngroups + intercept
                 else: 
                     dn_lastframe_fit[j,k] = dn_lastframe23[j,k]
-#                    print('no good last frame fit',j+1,k+1,i-1,slope)
-#                    print(input_model.pixeldq[j,k])
-#                    print('ramp',ramp)
-#                    print('groupdq',groupdq)
 
     return saturated, is_ref,dn_lastframe23,dn_lastframe_fit
 

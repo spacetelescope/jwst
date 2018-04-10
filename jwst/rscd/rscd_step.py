@@ -27,9 +27,8 @@ class RSCD_Step(Step):
                 if self.rscd_name == 'N/A':
                     self.log.warning('No RSCD reference file found')
                     self.log.warning('RSCD step will be skipped')
-                    result = input_model.copy()
-                    result.meta.cal_step.rscd = 'SKIPPED'
-                    return result
+                    input_model.meta.cal_step.rscd = 'SKIPPED'
+                    return input_model
 
 
                 # Check that data has the minimum number of groups/int
@@ -37,11 +36,10 @@ class RSCD_Step(Step):
                 min_number = 4
                 if sci_ngroups < min_number :
                     self.log.warning('Input file does not contain enough groups '
-                                     ' for RSCD correctionto be applied ')
+                                     'for RSCD correctionto be applied ')
                     self.log.warning('RSCD step will be skipped')
-                    result = input_model.copy()
-                    result.meta.cal_step.rscd = 'SKIPPED'
-                    return result
+                    input_model.meta.cal_step.rscd = 'SKIPPED'
+                    return input_model
 
                 # Load the rscd ref file data model
                 rscd_model = datamodels.RSCDModel(self.rscd_name)

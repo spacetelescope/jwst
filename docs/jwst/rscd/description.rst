@@ -18,7 +18,7 @@ latent images and drifts in the slopes.
 
 The manner in which the MIRI readout electronics operate have been
 shown to be the source of the reset offsets and nonlinearities at the start of the integration.
-Basically the MIRI reset electronics use field effect transistors (FETs) in their operation.  The FET acts as switch
+Basically the MIRI reset electronics use field effect transistors (FETs) in their operation.  The FET acts as a switch
 to allow charge to build up and to also initialize (clear) the charge. However, the reset FETS do not instantaneously
 reset the level, instead the exponential adjustment of the  FET after a reset causes the initial frames in an integration
 to be offset from their expected values.  The Reset Switch Charge Decay (RSCD) step corrects for the slow adjustment of the
@@ -29,7 +29,7 @@ The reset switch charge decay has an e-folding time scale ~ 1.3 * frame time. Th
 not measurable in the first integration  because a number of resets have occurred from the last exposure and
 the effect has decayed away by the time it takes to  readout out the last exposure, set up the next exposure and begin
 exposing. There are low level reset effects in the first integration that are related to the strength of the dark
-current and can be removed with an integration dependent dark. 
+current and can be removed with an integration-dependent dark. 
 
 
 For MIRI multiple integration data, the reset switch decay causes the
@@ -59,8 +59,8 @@ and third to last groups. For each pixel the group values are corrected accordin
 where T is the time since the last frame in the last integration.
 
 The correction algorithm is slightly modified if the previous integration saturated. In this case the scale factor 
-in the above equation is calculated using an estimation of the what the last frame in the previous integration
-would of been if saturation did not exist. This estimated last frame is from a linear fit of the non-saturating
+in the above equation is calculated using an estimate of the what the last frame in the previous integration
+would have been if saturation did not exist. This estimated last frame is from a linear fit of the non-saturating
 groups in the ramp. 
  
 
