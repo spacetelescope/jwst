@@ -4,11 +4,11 @@ if (utils.scm_checkout()) return
 
 def test_env = [
     "HOME=.",
-    "PATH=$HOME/miniconda/bin:/bin:/usr/bin",
+    "PATH=./miniconda/bin:/bin:/usr/bin",
     "TEST_BIGDATA=/data4/jwst_test_data",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
     "CRDS_CONTEXT=jwst_0349.pmap",
-    "CRDS_PATH=$HOME/test_outputs/crds_cache",
+    "CRDS_PATH=./test_outputs/crds_cache",
 ]
 
 //def python_version = ['3.5', '3.6']
