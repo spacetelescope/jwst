@@ -817,7 +817,7 @@ class Step():
         string.
         """
         if basepath is None and step.search_output_file:
-                basepath = step.search_attr('output_file')
+            basepath = step.search_attr('output_file')
         if basepath is None:
             basepath = step.default_output_file()
 

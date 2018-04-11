@@ -2,12 +2,12 @@
 Step I/O Design
 ===============
 
-The `Step` architecture is designed such that a `Step`'s intended
-sole responsibility is to perform the calculation required. Any
+The `Step` architecture is designed such that a `Step`'s intended sole
+responsibility is to perform the calculation required. Any
 input/output operations are handled by the surrounding `Step`
-architecture. This is to help facility the use of `Step`'s from both a
-command-line environment, and from an interactive Python environment,
-such as Jupyter notebooks or `ipython`.
+architecture. This is to help facilitate the use of `Step`'s from both
+a command-line environment, and from an interactive Python
+environment, such as Jupyter notebooks or `ipython`.
 
 For command-line usage, all inputs and outputs are designed to come
 from and save to files.
@@ -87,9 +87,9 @@ For JWST-produced code, nearly all `Step`'s primary argument is
 expected to be either a string containing the file path to a data
 file, or a JWST :ref:`jwst.datamodels.DataModel` object. The utility
 function :ref:`jwst.datamodels.open` handles either type of input,
-returning a `DataModel` from the specified file or a copy of the
-`DataModel` that was originally passed to it. The code to accomplish
-this looks like::
+returning a `DataModel` from the specified file or a shallow copy of
+the `DataModel` that was originally passed to it. The code to
+accomplish this looks like::
 
   class MyStep(jwst.stpipe.step.Step):
 
@@ -108,12 +108,72 @@ Input and Associations
 Many of the JWST calibration steps and pipelines expect an
 :ref:`Association` file as input. When opened with
 :ref:`jwst.datamodels.open`, a :ref:`jwst.datamodels.ModelContainer`
-is returned. `ModelContainer` is a list-like object where each element
-is the `DataModel` of each member of the association. The
-`meta.asn_table` is populated with the association data structure,
-allowing direct access to the association itself.
+is returned. `ModelContainer` is, among other features, a list-like
+object where each element is the `DataModel` of each member of the
+association. The `meta.asn_table` is populated with the association
+data structure, allowing direct access to the association itself.
 
 Output
 ======
 
-*TBD*
+When Files are Created
+----------------------
+
+Whether a `Step` produces an output file or not is ultimately
+determined by the built-in configuration option `save_results`. If
+`True`, output files will be created. `save_results` is set under a
+number of conditions:
+
+    - Explicitly through the `cfg` file or as a command-line option.
+    - Implicitly when a step is called by `strun`.
+    - Implicitly when the configuration option `output_file` is given
+      a value.
+
+Output File Naming
+------------------
+
+File names are constructed based on three components: basename,
+suffix, and extension::
+
+  basename_suffix.extension
+
+The extension will often be the same as the primary input file. This
+will not be the case if the data format of the output needs to be
+something different, such as a text table with `.ecsv` extension.
+
+Similarly, the basename will usually be derived from the primary input
+file. However, there are some :ref:`caveats <basename_determination>`
+discussed below.
+
+Ultimately, the suffix is what `Step`'s use to identify their output.
+The most common suffixes are listed in the
+:ref:`pipeline_step_suffix_definitions`.
+
+A `Step`'s suffix is defined in a couple of different ways:
+
+    - By the `Step.name` attribute. This is the default.
+    - By the `suffix` configuration parameter.
+    - Explicitly in the code. Often this is done in `Pipeline`s where
+      a single pipeline creates numerous different output files.
+
+.. _basename_determination:
+
+Basename Determination
+``````````````````````
+
+Most often, the output file basename is determined from three sources:
+
+    - Primary input file name.
+    - The `--output_file` command-line option.
+    - The `output_file` configuration option.
+
+In all cases, if the originating file name has a known suffix on it,
+that suffix is removed and replaced by the `Step`'s own suffix.
+
+In very rare cases, when there is no other source for the basename, a
+basename of `step_\<step_name\>` is used.  This can happen when a
+`Step` is being programmatically used and only the `save_results`
+configuration option is given.
+
+Basenames, Associations, and Stage 3 Pipelines
+```````````````````````````````````````````````

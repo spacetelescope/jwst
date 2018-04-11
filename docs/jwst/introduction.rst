@@ -331,6 +331,8 @@ Regardless of the source, each pipeline/step uses the name as a "base
 name", on to which several different suffixes are appended, which
 indicate the type of data in that particular file.
 
+.. _pipeline_step_suffix_definitions:
+
 Pipeline/Step Suffix Definitions
 --------------------------------
 
