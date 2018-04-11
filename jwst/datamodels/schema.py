@@ -2,6 +2,12 @@
 
 from collections import OrderedDict
 
+from asdf import AsdfFile
+from asdf import schema as asdf_schema
+
+from .extension import BaseExtension
+from jwst.transforms.jwextension import JWSTExtension
+from gwcs.extension import GWCSExtension
 
 # return_result included for backward compatibility
 def find_fits_keyword(schema, keyword, return_result=False):
@@ -36,19 +42,19 @@ def find_fits_keyword(schema, keyword, return_result=False):
 def build_fits_dict(schema):
     """
     Utility function to create a dict that maps FITS keywords to their
-    metadata attribute in a input schema.  
-    
+    metadata attribute in a input schema.
+
     Parameters
     ----------
     schema : JSON schema fragment
         The schema in which to search.
- 
+
     Returns
     -------
     results : dict
-        Dictionary with FITS keywords as keys and schema metadata 
+        Dictionary with FITS keywords as keys and schema metadata
         attributes as values
-   
+
     """
     def build_fits_dict(subschema, path, combiner, ctx, recurse):
         if len(path) and path[0] == 'extra_fits':
@@ -252,3 +258,34 @@ def flatten_combiners(schema):
     walk_schema(schema, callback)
 
     return newschema
+
+def read_schema(schema_file, extensions=None):
+    """
+    Read a schema file from disk in order to pass it to model_base
+    """
+    def get_resolver(asdf_file):
+        extensions = asdf_file._extensions
+        def asdf_file_resolver(uri):
+            return extensions._url_mapping(extensions._tag_mapping(uri))
+        return asdf_file_resolver
+
+    default_extensions = [GWCSExtension(), JWSTExtension(),
+                          BaseExtension()]
+
+    if extensions is None:
+        extensions = default_extensions[:]
+    else:
+        extensions.extend(default_extensions)
+    asdf_file = AsdfFile(extensions=extensions)
+
+    if hasattr(asdf_file, 'resolver'):
+        file_resolver = asdf_file.resolver
+    else:
+        file_resolver = get_resolver(asdf_file)
+
+    schema = asdf_schema.load_schema(schema_file,
+                                     resolver=file_resolver,
+                                     resolve_references=True)
+
+    schema = flatten_combiners(schema)
+    return schema
