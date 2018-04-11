@@ -261,7 +261,8 @@ def flatten_combiners(schema):
 
 def read_schema(schema_file, extensions=None):
     """
-    Read a schema file from disk in order to pass it to model_base
+    Read a schema file from disk in order to pass it as an argument
+    to a new datamodel.
     """
     def get_resolver(asdf_file):
         extensions = asdf_file._extensions
