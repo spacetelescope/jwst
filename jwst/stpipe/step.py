@@ -13,7 +13,6 @@ from os.path import (
     split,
     splitext,
 )
-import re
 import sys
 
 try:
@@ -25,25 +24,11 @@ except ImportError:
 from . import config_parser
 from . import crds_client
 from . import log
+from .suffix import remove_suffix
 from . import utilities
 from .. import __version_commit__, __version__
 from ..associations.lib.format_template import FormatTemplate
 from ..datamodels import (DataModel, ModelContainer)
-
-SUFFIX_LIST = [
-    'cal', 'calints', 'crf', 'crfints',
-    'dark',
-    'i2d',
-    'jump',
-    'psfalign', 'psfstack', 'psfsub',
-    'ramp', 'rate', 'rateints',
-    's2d', 's3d',
-    'uncal',
-    'wfscmb',
-    'x1d', 'x1dints',
-]
-REMOVE_SUFFIX = '^(?P<root>.+?)((?P<separator>_|-)(' \
-                + '|'.join(SUFFIX_LIST) + '))?$'
 
 
 class Step():
@@ -905,20 +890,6 @@ class Step():
 # #########
 # Utilities
 # #########
-def remove_suffix(name):
-    """Remove the suffix if a known suffix is already in name"""
-    separator = None
-    match = re.match(REMOVE_SUFFIX, name)
-    try:
-        name = match.group('root')
-        separator = match.group('separator')
-    except AttributeError:
-        pass
-    if separator is None:
-        separator = '_'
-    return name, separator
-
-
 def _get_suffix(suffix, step=None, default_suffix=None):
     """Retrieve either specified or pipeline-supplied suffix
 
@@ -928,7 +899,7 @@ def _get_suffix(suffix, step=None, default_suffix=None):
         Suffix to use if specified.
 
     step: Step or None
-z        The step to retrieve the suffux.
+        The step to retrieve the suffux.
 
     default_suffix: str
         If the pipeline does not supply a suffix,
