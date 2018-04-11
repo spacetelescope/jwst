@@ -59,6 +59,7 @@ class OutlierDetectionStep(Step):
         resample_data = boolean(default=True)
         good_bits = integer(default=4)
         scale_detection = boolean(default=False)
+        search_output_file = boolean(default=False)
     """
 
     def process(self, input):
