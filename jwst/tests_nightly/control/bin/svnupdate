@@ -1,6 +1,0 @@
-for x in general jwst_alive testconfig
-do
-	echo -----
-	echo SVN UPDATE $x
-	svn update $x
-done
