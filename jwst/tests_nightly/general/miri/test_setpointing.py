@@ -1,4 +1,6 @@
 import os
+import pytest
+
 from shutil import copyfile
 from astropy.io import fits as pf
 from jwst.lib.set_telescope_pointing import add_wcs
