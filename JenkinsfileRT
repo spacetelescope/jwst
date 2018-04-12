@@ -7,7 +7,7 @@ def test_env = [
     "PATH=./miniconda/bin:/bin:/usr/bin",
     "TEST_BIGDATA=/data4/jwst_test_data",
     "CRDS_SERVER_URL=https://jwst-crds.stsci.edu",
-    "CRDS_CONTEXT=jwst_0349.pmap",
+    "CRDS_CONTEXT=jwst_0445.pmap",
     "CRDS_PATH=./test_outputs/crds_cache",
 ]
 
