@@ -5,7 +5,10 @@ Description
 Assumption
 ----------
 The current stray-light correction is only valid for MIRI MRS Short
-wavelength data. 
+wavelength data.  The straylight step uses information from the regions
+reference file that was previously loaded into meta data of the input image
+by the assign_wcs step. Thus running the assign_wcs on the input data is
+a prerequisite to  the straylight step.  
 
 Overview
 --------
@@ -66,11 +69,11 @@ can be adjusted to the actual problem. The default values for these parameters a
 :math:`R = 50` pixels and :math:`k = 1`.
 
 
-The second algorithm uses a 'regions' reference file type that is stored in
-the ASDF extension of the input model. The 'regions' information is a 1032 by 1024
+The second algorithm uses information from 'regions' reference file  that 
+was previously loaded into the meta data of the input image by the assign_wcs
+step. Hence running the assign_wcs step is a prerequisite to the straylight step.
+The 'regions' information is a 1032 by 1024
 mask containing the 'slice number' of the pixel or in the case of  non-science
-gap pixels, the value zero. The assign_wcs step creates the 'regions' information
-by reading in the MIRI MRS distortion file. The first extension
-of this file contains the slice number for each pixel or 0 for gap pixels. 
+gap pixels, the value zero. 
 
 

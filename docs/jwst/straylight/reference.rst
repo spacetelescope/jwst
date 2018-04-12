@@ -1,11 +1,8 @@
 Reference File
 ==============
-The default MIRI MRS stray-light correction step uses a 'regions' reference file type. This information
-is stored in the ASDF extension of the input_image. The information contained in the
-'regions' has been read in during the assign_wcs step from the 
-first extension in the MIRI Distortion file and stored in the ASDF extension of the input model.
-The more simplistic algorithm (an older algorithm) uses the stray-light mask. There
-are three MIRI MRS SW masks, one for each of the three bands (SHORT,MEDIUM and LONG).
+The default algorithm in the MIRI MRS stray-light correction step uses information from the 
+'regions' reference file that was loaded into the meta data of the input image  by the assign_wcs step. 
+There is an option to use a more simplistic algorithm that uses  stray-light mask reference file.
 
 CRDS Selection Criteria
 -----------------------
@@ -14,7 +11,8 @@ and BAND values of the input science data set.
 
 MIRI MRS stray-light  Reference File Format
 ------------------------------------------
-The regions file contains the 'slice number' of the science pixels and a value of zero for
+The "regions' information is a 1032 X 1024 mask 
+containing the 'slice number' of the science pixels and a value of zero for
 the gap pixels. 
 The stray-light mask  reference files are FITS files with  and empty primary data
 array and one IMAGE extension. This IMAGE extension is
