@@ -1,5 +1,5 @@
 import os
-
+import pytest
 from jwst.pipeline.calwebb_tso3 import Tso3Pipeline
 # DISABLED
 # import pandokia.helpers.filecomp as filecomp

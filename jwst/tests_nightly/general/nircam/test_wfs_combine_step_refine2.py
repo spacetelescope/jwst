@@ -1,4 +1,5 @@
 import os
+import pytest
 from astropy.io import fits as pf
 from jwst.wfs_combine.wfs_combine_step import WfsCombineStep 
 

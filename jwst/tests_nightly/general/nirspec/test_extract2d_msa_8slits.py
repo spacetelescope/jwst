@@ -1,4 +1,5 @@
 import os
+import pytest
 import shutil
 from astropy.io import fits
 from jwst.extract_2d.extract_2d_step import Extract2dStep

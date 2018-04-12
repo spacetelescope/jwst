@@ -1,4 +1,5 @@
 import os
+import pytest
 from astropy.io import fits as pf
 from jwst.ami.ami_analyze_step import AmiAnalyzeStep
 
