@@ -44,7 +44,7 @@ SHORT,MEDIUM,LONG, or ALL
          zdebug = integer(default=None) # debug option, z spaxel value to report  information on
          single = boolean(default=false) # Internal pipeline option used by mrs_imatch and outlier detection
          output_type = option('band','channel','grating','multi',default='band') # Type of output cube to create. Options = band,channel,grating, multi
-         output_use_model = boolean(default=true)
+         search_output_file = boolean(default=false)
        """
     reference_file_types = ['cubepar','resol']
 
@@ -57,8 +57,8 @@ SHORT,MEDIUM,LONG, or ALL
 #________________________________________________________________________________
         self.subchannel = self.band
         # print('self suffix',self.suffix)
-        self.suffix = 's3d' # override suffix = cube_build 
-            
+        self.suffix = 's3d' # override suffix = cube_build
+
         if(not self.subchannel.isupper()): self.subchannel = self.subchannel.upper()
         if(not self.filter.isupper()): self.filter = self.filter.upper()
         if(not self.grating.isupper()): self.grating = self.grating.upper()
@@ -444,4 +444,3 @@ def read_user_input(self):
 
 class ErrorInvalidParameter(Exception):
     pass
-

@@ -36,16 +36,17 @@ class Step():
     Step
     """
     spec = """
-    pre_hooks        = string_list(default=list())
-    post_hooks       = string_list(default=list())
-    output_file      = output_file(default=None)   # File to save output to.
-    output_dir       = string(default=None)        # Directory path for output files
-    output_ext       = string(default='.fits')     # Default type of output
-    output_use_model = boolean(default=False)      # When saving use `DataModel.meta.filename`
-    output_use_index = boolean(default=True)       # Append index.
-    save_results     = boolean(default=False)      # Force save results
-    skip             = boolean(default=False)      # Skip this step
-    suffix           = string(default=None)        # Default suffix for output files
+    pre_hooks          = string_list(default=list())
+    post_hooks         = string_list(default=list())
+    output_file        = output_file(default=None)   # File to save output to.
+    output_dir         = string(default=None)        # Directory path for output files
+    output_ext         = string(default='.fits')     # Default type of output
+    output_use_model   = boolean(default=False)      # When saving use `DataModel.meta.filename`
+    output_use_index   = boolean(default=True)       # Append index.
+    save_results       = boolean(default=False)      # Force save results
+    skip               = boolean(default=False)      # Skip this step
+    suffix             = string(default=None)        # Default suffix for output files
+    search_output_file = boolean(default=True)       # Use outputfile define in parent step
     """
 
     # Reference types for both command line override
@@ -723,7 +724,10 @@ class Step():
                 path=output_file,
                 save_model_func=save_model_func)
         else:
-            if self.output_use_model:
+            if (
+                    self.output_use_model or
+                    (output_file is None and not self.search_output_file)
+            ):
                 output_file = model.meta.filename
                 idx = None
             output_path = model.save(
@@ -743,7 +747,7 @@ class Step():
     def make_output_path(self):
         """Return function that creates the output path"""
         make_output_path = self.search_attr(
-            '_make_output_path', parent_first=True
+            '_make_output_path'
         )
         return partial(make_output_path, self)
 
@@ -797,12 +801,10 @@ class Step():
         more than one component, the components are separated by the `separator`
         string.
         """
-        if basepath is None:
+        if basepath is None and step.search_output_file:
             basepath = step.search_attr('output_file')
         if basepath is None:
             basepath = step.default_output_file()
-        if basepath is None:
-            raise(ValueError, 'No filename can be determined to save to.')
 
         if name_format is None:
             name_format = '{basename}{components}{suffix_sep}{suffix}.{ext}'

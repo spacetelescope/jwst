@@ -15,6 +15,10 @@ separate `spec` file).
 Inputs and outputs
 ------------------
 
+A `Step` provides a full framework for handling I/O. Below is a short
+description. A more detailed discussion can be found in
+:ref:`step_io_design`.
+
 Steps get their inputs from two sources:
 
     - Configuration parameters come from the configuration file or
@@ -30,6 +34,9 @@ should be used to pass data that needs to go from one step to another
 as part of a larger pipeline.  Another way to think about this is: if
 the user would want to examine or change the value, use a
 configuration parameter.
+
+The configuration parameters are defined by the
+:ref:`Step.spec <the-spec-member>` member. 
 
 Input Files, Associations, and Directories
 ``````````````````````````````````````````
@@ -155,6 +162,8 @@ have a `spec` member to describe its configuration parameters.
 The Python Step subclass may be installed anywhere that your Python
 installation can find it.  It does not need to be installed in the
 `stpipe` package.
+
+.. _the-spec-member:
 
 The spec member
 ---------------
