@@ -1,4 +1,5 @@
 import os
+import pytest
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_spec3 import Spec3Pipeline
 
