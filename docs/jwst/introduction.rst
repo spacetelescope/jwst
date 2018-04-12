@@ -175,6 +175,8 @@ then supply the cfg file as a keyword argument:
 Universal Parameters
 ====================
 
+.. _intro_output_directory:
+
 Output Directory
 ----------------
 
@@ -198,6 +200,7 @@ and location of the `dark_current` step, use the following
         --steps.dark_current.output_file='dark_sub.fits'
         --steps.dark_current.output_dir='dark_calibrated'
 
+.. _intro_output_file:
 
 Output File
 -----------

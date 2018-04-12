@@ -1,12 +1,47 @@
+.. _step_io_design:
+
 ===============
 Step I/O Design
 ===============
 
-The `Step` architecture is designed such that a `Step`'s intended sole
-responsibility is to perform the calculation required. Any
-input/output operations are handled by the surrounding `Step`
-architecture. This is to help facilitate the use of `Step`'s from both
-a command-line environment, and from an interactive Python
+API Summary
+===========
+
+`Step` command-line options
+---------------------------
+
+
+    - `--output_dir`: :ref:`Directory <intro_output_directory>` where all output will go. 
+    - `--output_file`: :ref:`File name <intro_output_file>` upon which
+      output files will be based.
+
+`Step` configuraiton options
+----------------------------
+
+    - `output_dir`: :ref:`Directory <intro_output_directory>` where all output will go. 
+    - `output_file`: :ref:`File name <intro_output_file>` upon which
+      output files will be based.
+    - `suffix`: :ref:`Suffix <pipeline_step_suffix_definitions>` defining the output of this step.
+    - `save_results`: True to create output files. :ref:`[more] <devel_io_when_files_are_created>`
+    - `search_output_file`: True to retrieve the `output_file` from a
+      parent `Step` or `Pipeline`. :ref:`[more]<devel_io_substeps_and_output>`
+    - `output_use_model`: True to always base output file names on the
+      `DataModel.meta.filename` of the `DataModel` being saved.
+
+Classes, Methods, Functions
+---------------------------
+
+    - :meth:`Step.save_model <jwst.stpipe.step.Step.save_model>`: Save a `DataModel` immediately.
+    - :attr:`Step.make_output_path <jwst.stpipe.step.Step._make_output_path>`: Create a filename.
+
+Design
+======
+
+The :class:`~jwst.stpipe.step.Step` architecture is designed such that
+a `Step`'s intended sole responsibility is to perform the calculation
+required. Any input/output operations are handled by the surrounding
+`Step` architecture. This is to help facilitate the use of `Step`'s
+from both a command-line environment, and from an interactive Python
 environment, such as Jupyter notebooks or `ipython`.
 
 For command-line usage, all inputs and outputs are designed to come
@@ -85,8 +120,8 @@ is expected to accept other object types as well.
 
 For JWST-produced code, nearly all `Step`'s primary argument is
 expected to be either a string containing the file path to a data
-file, or a JWST :ref:`jwst.datamodels.DataModel` object. The utility
-function :ref:`jwst.datamodels.open` handles either type of input,
+file, or a JWST :class:`~jwst.datamodels.DataModel` object. The utility
+function :func:`~jwst.datamodels.open` handles either type of input,
 returning a `DataModel` from the specified file or a shallow copy of
 the `DataModel` that was originally passed to it. The code to
 accomplish this looks like::
@@ -106,8 +141,8 @@ Input and Associations
 ----------------------
 
 Many of the JWST calibration steps and pipelines expect an
-:ref:`Association` file as input. When opened with
-:ref:`jwst.datamodels.open`, a :ref:`jwst.datamodels.ModelContainer`
+:ref:`Association <associations>` file as input. When opened with
+:func:`jwst.datamodels.open`, a :class:`~jwst.datamodels.ModelContainer`
 is returned. `ModelContainer` is, among other features, a list-like
 object where each element is the `DataModel` of each member of the
 association. The `meta.asn_table` is populated with the association
@@ -115,6 +150,8 @@ data structure, allowing direct access to the association itself.
 
 Output
 ======
+
+.. _devel_io_when_files_are_created:
 
 When Files are Created
 ----------------------
@@ -177,6 +214,8 @@ basename of `step_\<step_name\>` is used.  This can happen when a
 `Step` is being programmatically used and only the `save_results`
 configuration option is given.
 
+.. _devel_io_substeps_and_output:
+
 Sub-Steps and Output
 ````````````````````
 Normally, the value of a configuration option is completely local to
@@ -201,10 +240,11 @@ Also, for `output_file`, there is another option,
 Basenames, Associations, and Stage 3 Pipelines
 ``````````````````````````````````````````````
 
-Stage 3 pipelines, such as `calwebb_image3` or `calwebb_spec3`, take
-associations as their primary input. In general, the association
-defines what the output basename should be. A typical pattern used to
-handle associations is::
+Stage 3 pipelines, such as :ref:`calwebb_image3<stage3-imaging-flow>`
+or :ref:`calwebb_spec3<stage3-spectroscopic-flow>`, take associations
+as their primary input. In general, the association defines what the
+output basename should be. A typical pattern used to handle
+associations is::
 
   class MyStep(jwst.stpipe.step.Step):
 
@@ -274,9 +314,10 @@ Save That Model: Step.save_model
 ````````````````````````````````
 
 If a `Step` needs to save a `DataModel` before the step completes, use
-of `Step.save_model` is the recommended over directly calling
-`DateModel.save`. `Step.save_model` uses the `Step` framework and
-hence will honor the following:
+of :meth:`Step.save_model <jwst.stpipe.step.Step.save_model>` is the recommended over
+directly calling :meth:`DataModel.save <jwst.datamodels.DataModel.save>`.
+`Step.save_model` uses the `Step` framework and hence will honor the
+following:
 
     - If `Step.save_results` is `False`, nothing will happen.
     - Will ensure that `Step.output_dir` is used.
@@ -305,7 +346,8 @@ Make That Filename: Step.make_output_path
 
 For the situations when a filename is needed to be constructed before
 saving, either to know what the filename will be or for data that is
-not a `DataModel`, use `Step.make_output_path`. By default, calling
+not a `DataModel`, use :meth:`Step.make_output_path
+<jwst.stpipe.step.Step.make_output_path>`. By default, calling
 `make_output_path` without any arguments will return what the default
 output file name will be::
 

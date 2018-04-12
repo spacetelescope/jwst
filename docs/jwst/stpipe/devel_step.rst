@@ -15,6 +15,10 @@ separate `spec` file).
 Inputs and outputs
 ------------------
 
+A `Step` provides a full framework for handling I/O. Below is a short
+description. A more detailed discussion can be found in
+:ref:`step_io_design`.
+
 Steps get their inputs from two sources:
 
     - Configuration parameters come from the configuration file or
