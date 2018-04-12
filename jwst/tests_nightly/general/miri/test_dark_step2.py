@@ -1,4 +1,5 @@
 import os
+import pytest
 from astropy.io import fits as pf
 from jwst.dark_current.dark_current_step import DarkCurrentStep
 

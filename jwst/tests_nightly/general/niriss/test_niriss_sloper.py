@@ -1,4 +1,5 @@
 import os
+import pytest
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
 

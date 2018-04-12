@@ -1,4 +1,5 @@
 import os
+import pytest
 from astropy.io import fits as pf
 from jwst.group_scale.group_scale_step import GroupScaleStep
 

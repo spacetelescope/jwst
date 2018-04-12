@@ -1,4 +1,5 @@
 import os
+import pytest
 from astropy.io import fits as pf
 from jwst.cube_build.cube_build_step import CubeBuildStep
 from jwst import datamodels

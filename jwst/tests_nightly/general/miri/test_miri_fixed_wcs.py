@@ -1,16 +1,15 @@
-
 import os
-
 import numpy as np
+import pytest
 
 from numpy.testing import utils
-
 from jwst.assign_wcs import AssignWcsStep
 from jwst.datamodels import ImageModel
 
 from ..helpers import add_suffix
 
 BIGDATA = os.environ['TEST_BIGDATA']
+
 
 def test_miri_fixed_slit_wcs():
     """

@@ -1,4 +1,5 @@
 import os
+import pytest
 from astropy.io import fits as pf
 from jwst.dq_init.dq_init_step import DQInitStep
 
