@@ -15,7 +15,7 @@ API Summary
     - `--output_file`: :ref:`File name <intro_output_file>` upon which
       output files will be based.
 
-`Step` configuraiton options
+`Step` configuration options
 ----------------------------
 
     - `output_dir`: :ref:`Directory <intro_output_directory>` where all output will go. 
@@ -32,7 +32,7 @@ Classes, Methods, Functions
 ---------------------------
 
     - :meth:`Step.save_model <jwst.stpipe.step.Step.save_model>`: Save a `DataModel` immediately.
-    - :attr:`Step.make_output_path <jwst.stpipe.step.Step._make_output_path>`: Create a filename.
+    - :attr:`Step.make_output_path <jwst.stpipe.step.Step._make_output_path>`: Create a file name.
 
 Design
 ======
@@ -103,7 +103,7 @@ Input and JWST Conventions
 
 A `Step` gets its input from two sources:
 
-    - Conifguration parameters
+    - Configuration parameters
     - Arguments to the `Step.process` method
 
 The definition and use of the configuration parameters is
@@ -221,10 +221,10 @@ Sub-Steps and Output
 Normally, the value of a configuration option is completely local to
 the `Step`: A `Step`, called from another `Step` or `Pipeline`, can
 only access its own configuration parameters. Hence, options such as
-`save_results` do not affect called `Step`s.
+`save_results` do not affect a called `Step`.
 
 The exceptions to this are the parameters `output_file` and
-`output_dir`. If either of these parameters are quiried by a `Step`,
+`output_dir`. If either of these parameters are queried by a `Step`,
 but are not defined for that `Step`, values will be retrieved up
 through the parent. The reason is to provide consistency in output
 from `Step` and `Pipelines`. All file names will have the same
@@ -325,7 +325,7 @@ following:
     - Will determine the output basename through the `Step`
       framework, if not otherwise specified.
 
-The basic usage, in which nothing is overriden, is::
+The basic usage, in which nothing is overridden, is::
 
   class MyStep(Step):
 
@@ -362,7 +362,7 @@ This method encapsulates the following `Step` framework functions:
 
 A typical use case is when a `Step` needs to save data that is not a
 `DataModel`. The current `Step` architecture does not know how to
-handle these, so saving needs to be done explicity. The pattern of
+handle these, so saving needs to be done explicitly. The pattern of
 usage would be::
 
   # A table need be saved and needs a different
