@@ -9,31 +9,42 @@ JWST Calibration Pipeline
 
 Note
 ----
-Beginning with the next version (0.9.0), **JWST requires Python 3.5 and above**.
+Beginning with version 0.9.0, **JWST requires Python 3.5 and above**.
 
 Installing
 ----------
-Releases are made on the **stable** branch. To install the latest release:
 
-    % git clone https://github.com/STScI-JWST/jwst.git
+To install the latest released version of the library, we recommend using [conda](https://conda.io/docs/index.html)
+and the [astroconda](https://astroconda.readthedocs.io) channel to install the
+software and using a conda environment for the installation:
 
-    % cd jwst
+    conda create -n jwst --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults jwst
+    source activate jwst
 
-    % git checkout stable
+This will install the latest released version of the package, and within the
+`jwst` environment, the pipeline can be run from the command line or imported
+into python programs.   In order to install a specific version, the exact 
+version can be supplied, e.g. jwst=0.9.0. 
 
-    % python setup.py install
+To install the development version of the repository, we recommend creating a new
+environment, using the [astroconda](https://astroconda.readthedocs.io) channel
+to install the dependencies, and then installing from the github repository:
 
-The main development is on the **master** branch. To install the development version:
+    conda create -n jwst_devel --only-deps --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults jwst
+    source activate jwst_devel
+    git clone https://github.com/STScI-JWST/jwst.git
+    cd jwst
+    python setup.py develop
 
-    % git clone https://github.com/STScI-JWST/jwst.git
+If you will not need to update the code, then you can replace the last step with
+the following command:
 
-    % cd jwst
+    python setup.py install
 
-    % python setup.py install
+Once installed, the software can be updated to the lastest development version
+by running the following command inside the `jwst` directory: 
 
-    or
-
-    % python setup.py develop
+    git pull origin master
 
 
 Contributing Code, Documentation or Feedback
@@ -48,3 +59,16 @@ Using
 Documentation (latest off `master`) is available here:
 
 https://jwst-pipeline.readthedocs.io/en/latest/
+
+
+Software vs DMS build version map
+---------------------------------
+
+| jwst tag | DMS build |    Date    |          Notes                      |
+| -------- | --------- | ---------- | ----------------------------------- |
+|  0.9.2   |           | 03/28/2018 | DMS test, no delivery to I&T        |
+|  0.9.1   |           | 02/16/2018 | DMS test, no delivery to I&T        |
+|  0.9.0   |   B7.1.2  | 12/22/2017 | DMS patch release to I&T 02/15/2018 |
+|  0.8.0   |   B7.1.1  |            | DMS patch release to I&T 01/17/2018 |
+|  0.8.0   |   B7.1    | 11/14/2017 | Final, delivered to I&T 11/17/2017  |
+|  0.7.0rc7|   B7.0    | 12/13/2016 | Final, delivered to I&T             |

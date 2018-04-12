@@ -197,9 +197,6 @@ def extract_slit(input_model, slit, exp_type):
 
     # compute wavelengths
     x, y = wcstools.grid_from_bounding_box(slit_wcs.bounding_box, step=(1, 1))
-    # The Nirspec model expects 1-based coordinates
-    x += 1
-    y += 1
     ra, dec, lam = slit_wcs(x, y)
     lam = lam.astype(np.float32)
     new_model = datamodels.SlitModel(data=ext_data, err=ext_err, dq=ext_dq, wavelength=lam,

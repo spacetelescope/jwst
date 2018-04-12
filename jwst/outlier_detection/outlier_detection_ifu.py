@@ -108,7 +108,7 @@ class OutlierDetectionIFU(OutlierDetection):
 
             for model in single_IFUCube_result:
                 model.meta.filename = self.make_output_path(
-                    basepath=model.meta.filename, 
+                    basepath=model.meta.filename,
                     suffix=self.resample_suffix
                 )
                 if save_intermediate_results:
@@ -120,8 +120,8 @@ class OutlierDetectionIFU(OutlierDetection):
                             init=single_IFUCube_result[0].data.shape)
             median_model.meta = single_IFUCube_result[0].meta
             median_model.meta.filename = self.make_output_path(
-                basepath=self.input_models[0].meta.filename, 
-                suffix='ch{}_media'.format(ch)
+                basepath=self.input_models[0].meta.filename,
+                suffix='ch{}_median'.format(ch)
             )
 
             # Perform median combination on set of drizzled mosaics

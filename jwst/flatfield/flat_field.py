@@ -18,6 +18,7 @@ MICRONS_100 = 1.e-4                     # 100 microns, in meters
 # This is for NIRSpec.  These exposure types are all fixed-slit modes.
 FIXED_SLIT_TYPES = ["NRS_LAMP", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT"]
 
+
 def do_correction(input_model, flat_model,
                   f_flat_model, s_flat_model,
                   d_flat_model, flat_suffix=None):
@@ -80,6 +81,8 @@ def do_correction(input_model, flat_model,
 #
 # These functions are for non-NIRSpec flat fielding, or for NIRSpec imaging.
 #
+
+
 def do_flat_field(output_model, flat_model):
     """
     Short Summary
@@ -104,7 +107,7 @@ def do_flat_field(output_model, flat_model):
     else:
         log.debug("Flat field correction for non-NIRSpec modes.")
 
-    any_updated = False # will set True if any flats applied
+    any_updated = False  # will set True if any flats applied
 
     # Check to see if flat data array is smaller than science data
     if (output_model.data.shape[-1] > flat_model.data.shape[-1]) or \
@@ -183,16 +186,8 @@ def apply_flat_field(science, flat):
     # correction is made
     flat_data[np.where(flat_bad)] = 1.0
 
-    # For GuiderCalModel data, only apply flat to science data array;
-    # there isn't an error array.
-    if isinstance(science, datamodels.GuiderCalModel):
-        # Flatten data array
-        science.data /= flat_data
-        # Combine the science and flat DQ arrays
-        science.dq = np.bitwise_or(science.dq, flat_dq)
-
     # For CubeModel science data, apply flat to each integration
-    elif isinstance(science, datamodels.CubeModel):
+    if isinstance(science, datamodels.CubeModel):
         for integ in range(science.data.shape[0]):
             # Flatten data and error arrays
             science.data[integ] /= flat_data
@@ -320,7 +315,7 @@ def do_NIRSpec_flat_field(output_model,
         # in preference to the wavelengths returned by the wcs function.
         got_wl_attribute = True
         try:
-            wl = slit.wavelength                # a 2-D array
+            wl = slit.wavelength.copy()         # a 2-D array
         except AttributeError:
             got_wl_attribute = False
         if not got_wl_attribute or len(wl) == 0:
@@ -336,9 +331,6 @@ def do_NIRSpec_flat_field(output_model,
                 log.warning("so using wcs instead of the wavelength array.")
                 # Pixels with respect to the cutout
                 grid = np.indices((ysize, xsize), dtype=np.float64)
-                # xxx begin temporary workaround ...
-                grid += 1.              # NIRSpec wcs is one-based
-                # xxx ... end temporary workaround
                 # The arguments are the X and Y pixel coordinates.
                 (ra, dec, wl) = slit.meta.wcs(grid[1], grid[0])
                 del ra, dec, grid
@@ -488,7 +480,7 @@ def NIRSpec_brightobj(output_model,
     # The wavelength of each pixel in a plane of the data.
     got_wl_attribute = True
     try:
-        wl = output_model.wavelength            # a 2-D array
+        wl = output_model.wavelength.copy()     # a 2-D array
     except AttributeError:
         got_wl_attribute = False
     if not got_wl_attribute or len(wl) == 0:
@@ -500,9 +492,6 @@ def NIRSpec_brightobj(output_model,
         if got_wcs:
             log.warning("so using wcs instead of the wavelength array.")
             grid = np.indices((ysize, xsize), dtype=np.float64)
-            # xxx begin temporary workaround ...
-            grid += 1.                  # NIRSpec wcs is one-based
-            # xxx ... end temporary workaround
             (ra, dec, wl) = output_model.meta.wcs(grid[1], grid[0])
             del ra, dec, grid
         else:
@@ -664,10 +653,6 @@ def NIRSpec_IFU(output_model,
         ind = np.indices((dy, dx))
         x = ind[1] + xstart
         y = ind[0] + ystart
-        # xxx begin temporary workaround ...
-        x += 1                  # NIRSpec wcs is one-based
-        y += 1
-        # xxx ... end temporary workaround
         coords = ifu_wcs(x, y)
         wl = coords[2]
         nan_flag = np.isnan(wl)

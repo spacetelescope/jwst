@@ -444,7 +444,8 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
                 raise ValueError("MSA configuration file has more than 1 shutter with "
                                  "sources for metadata_id = {}".format(msa_metadata_id))
 
-            shutter_id = xcen + (ycen - 1) * 365
+            # subtract 1 because shutter numbers in the MSA reference file are 1-based.
+            shutter_id = xcen + (ycen - 1) * 365 -1
             source_id = slitlets_sid[0]['source_id']
             source_name, source_alias, stellarity = [
                 (s['source_name'], s['alias'], s['stellarity']) \
@@ -457,11 +458,10 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
             columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
             The source position is in a coordinate system associated with each shutter whose
             origin is the upper left corner of the shutter, positive x is to the right
-            and positive y is downwards. To convert to the coordinate frame associated with the
-            slit, where (0, 0) is in the center of the slit, we subtract 0.5 in both directions.
+            and positive y is downwards.
             """
             source_xpos = source_xpos - 0.5
-            source_ypos = source_ypos - 0.5
+            source_ypos = -source_ypos + 0.5
 
             # Create the shutter_state string
             all_shutters = _shutter_id_to_str(open_shutters, ycen)
@@ -829,7 +829,29 @@ def detector_to_gwa(reference_files, detector, disperser):
                disperser['theta_z'], disperser['tilt_y']]
     rotation = Rotation3DToGWA(angles, axes_order="xyzy", name='rotation')
     u2dircos = Unitless2DirCos(name='unitless2directional_cosines')
+    ## NIRSPEC 1- vs 0- based pixel coordinates issue #1781
+    '''
+    The pipeline works with 0-based pixel coordinates. The Nirspec model,
+    stored in reference files, is also 0-based. However, the algorithm specified
+    by the IDT team specifies that pixel coordinates are 1-based. This is
+    implemented below as a Shift(-1) & Shift(-1) transform. This makes the Nirspec
+    instrument WCS pipeline "special" as it requires 1-based inputs.
+    As a consequence many steps have to be modified to provide 1-based coordinates
+    to the WCS call if the instrument is Nirspec. This is not always easy, especially
+    when the step has no knowledge of the instrument.
+    This is the reason the algorithm is modified to acccept 0-based coordinates.
+    This will be discussed in the future with the INS and IDT teams and may be solved
+    by changing the algorithm but for now
+
     model = (models.Shift(-1) & models.Shift(-1) | fpa | camera | u2dircos | rotation)
+
+    is changed to
+
+    model = models.Shift(1) & models.Shift(1) | \
+            models.Shift(-1) & models.Shift(-1) | fpa | camera | u2dircos | rotation
+    '''
+    ## model = (models.Shift(-1) & models.Shift(-1) | fpa | camera | u2dircos | rotation)
+    model = fpa | camera | u2dircos | rotation
     return model
 
 

@@ -21,6 +21,7 @@ class ResampleSpecStep(Step):
         kernel = string(default='square')
         fillval = string(default='INDEF')
         good_bits = integer(default=4)
+        blendheaders = boolean(default=True)
     """
     reference_file_types = ['drizpars']
 

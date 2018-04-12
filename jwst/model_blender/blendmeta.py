@@ -91,41 +91,21 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
         output_model = datamodels.open(product)
     else:
         output_model = product
-    """
-        # NOTE 17-Jan-2017:
-        #  Effort needs to be made to insure that new blended values conform
-        #  to the definitions of the attribute as provided by the schema.
-        #  This will address #1650 for the jwst package.
-        #    https://github.com/STScI-JWST/jwst/issues/1650
-        #
-        # NOTE 14-Dec-2017:
-        # We need to replace metadata values with new ones based on rules
-        # using syntax below.  We can NOT use `model.update()` since that
-        # would retain the old values and structure where no new values were
-        # provided.  Furthermore, we need to make a copy of the WCS already
-        # stored in output_model and restore it after the update to insure
-        # the properly computed WCS remains with the output product.
-        #
-        """
-    product_wcs = None
-    if hasattr(output_model, 'meta.wcs'):
-        # start by saving WCS (may not be necessary?)
-        product_wcs = output_model.meta.wcs
-    # Now merge the keyword values from new_hdrs into the metatdata for the
-    # output datamodel
-    # Need to insure that output_model does not already have an instance
-    # of hdrtab from previous processing, an instance that would be
-    # incompatible with the new table generated now...
-    if hasattr(output_model, 'hdrtab'):
-        # If found, remove it to be replaced by new instance
-        del output_model.hdrtab
 
-    # Now assign values from new_hdrs to output_model.meta using
-    #  to_flat_dict() map
+    '''
+    NOTE 17-Jan-2017:
+     Effort needs to be made to insure that new blended values conform
+     to the definitions of the attribute as provided by the schema.
+     This will address #1650 for the jwst package.
+       https://github.com/STScI-JWST/jwst/issues/1650
+    '''
+
+    # Now assign values from new_hdrs to output_model.meta
     flat_new_metadata = newmeta.to_flat_dict()
     for attr in flat_new_metadata:
         if attr.startswith('meta'):
-            output_model[attr] = newmeta[attr]
+            if attr != 'meta.wcs':
+                output_model[attr] = newmeta[attr]
 
     # Apply any user-specified filename for output product
     if output:
@@ -134,14 +114,10 @@ def blendmodels(product, inputs=None, output=None, verbose=False):
         # Otherwise, determine output filename from metadata
         output = output_model.meta.filename
 
-    if product_wcs:
-        #
-        # restore WCS, in case it was overridden in update
-        # this may not be necessary
-        output_model.meta.wcs = product_wcs
-
     # Now, append HDRTAB as new element in datamodel
     newtab_schema = build_tab_schema(newtab)
+    if hasattr(output_model, 'hdrtab'):
+        del output_model.hdrtab
     output_model.add_schema_entry('hdrtab', newtab_schema)
     output_model.hdrtab = fits_support.from_fits_hdu(newtab, newtab_schema)
 

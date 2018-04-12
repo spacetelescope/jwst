@@ -179,9 +179,8 @@ def test_nirspec_ifu_against_esa():
     cond = np.logical_and(slit1 < .5, slit1 > -.5)
     y, x = cond.nonzero()
     cor = crval - np.array(crpix)
-    # 1-based coordinates full frame coordinates
-    y = y + cor[1] + 1
-    x = x + cor[0] + 1
+    y = y + cor[1]
+    x = x + cor[0]
     sca2world = w0.get_transform('sca', 'msa_frame')
     _, slit_y, lp = sca2world(x, y)
 
@@ -236,9 +235,8 @@ def test_nirspec_fs_esa():
     cond = np.logical_and(slit1 < .5, slit1 > -.5)
     y, x = cond.nonzero()
     cor = crval - np.array(crpix)
-    # 1-based coordinates full frame coordinates
-    y = y + cor[1] + 1
-    x = x + cor[0] + 1
+    y = y + cor[1]
+    x = x + cor[0]
     sca2world = w1.get_transform('sca', 'v2v3')
     ra, dec, lp = sca2world(x, y)
     # w1 now outputs in microns hence the 1e6 factor
@@ -293,8 +291,8 @@ def test_msa_configuration_normal():
     msa_meta_id = 12
     msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    ref_slit = Slit(55, 9376, 251, 26, -5.15, 0.55, 4, 1, '1111x', '95065_1', '2122',
-                      0.13, -0.31716078999999997, -0.18092266)
+    ref_slit = Slit(55, 9375, 251, 26, -5.15, 0.55, 4, 1, '1111x', '95065_1', '2122',
+                      0.13, -0.31716078999999997, 0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -318,8 +316,8 @@ def test_msa_configuration_all_background():
     msa_meta_id = 14
     msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    ref_slit = Slit(57, 8646, 251, 24, -2.85, .55, 4, 1, '11x', '95065_1', '2122',
-                    0.13, -0.5, -0.5)
+    ref_slit = Slit(57, 8645, 251, 24, -2.85, .55, 4, 1, '11x', '95065_1', '2122',
+                    0.13, -0.5, 0.5)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -333,8 +331,8 @@ def test_msa_configuration_row_skipped():
     msa_meta_id = 15
     msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    ref_slit = Slit(58, 8646, 251, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
-                      0.130, -0.31716078999999997, -0.18092266)
+    ref_slit = Slit(58, 8645, 251, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
+                      0.130, -0.31716078999999997, 0.18092266)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -346,10 +344,10 @@ def test_msa_configuration_multiple_returns():
     msa_meta_id = 16
     msaconfl = get_file_path('msa_configuration.fits')
     slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id)
-    ref_slit1 = Slit(59, 8651, 256, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
-                     0.13000000000000003, -0.31716078999999997, -0.18092266)
-    ref_slit2 = Slit(60, 11573, 258, 32, -2.85, 4, 4, 2, '11x111', '95065_2', '172',
-                     0.70000000000000007, -0.31716078999999997, -0.18092266)
+    ref_slit1 = Slit(59, 8650, 256, 24, -2.85, 5.15, 4, 1, '11x1011', '95065_1', '2122',
+                     0.13000000000000003, -0.31716078999999997, 0.18092266)
+    ref_slit2 = Slit(60, 11572, 258, 32, -2.85, 4, 4, 2, '11x111', '95065_2', '172',
+                     0.70000000000000007, -0.31716078999999997, 0.18092266)
     _compare_slits(slitlet_info[0], ref_slit1)
     _compare_slits(slitlet_info[1], ref_slit2)
 

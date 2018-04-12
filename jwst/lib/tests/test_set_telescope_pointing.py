@@ -1,18 +1,10 @@
 """
 Test suite for set_telescope_pointing
-
-Notes
------
-This file has been named specifically so it is not
-automatically found by py.test. This is because, to test,
-a connection to the internal engineering service is needed,
-which is generally not available.
 """
 import copy
 import numpy as np
 import os
 import sys
-import sqlite3
 import pytest
 from tempfile import TemporaryDirectory
 

@@ -175,6 +175,8 @@ then supply the cfg file as a keyword argument:
 Universal Parameters
 ====================
 
+.. _intro_output_directory:
+
 Output Directory
 ----------------
 
@@ -198,6 +200,7 @@ and location of the `dark_current` step, use the following
         --steps.dark_current.output_file='dark_sub.fits'
         --steps.dark_current.output_dir='dark_calibrated'
 
+.. _intro_output_file:
 
 Output File
 -----------
@@ -331,6 +334,8 @@ Regardless of the source, each pipeline/step uses the name as a "base
 name", on to which several different suffixes are appended, which
 indicate the type of data in that particular file.
 
+.. _pipeline_step_suffix_definitions:
+
 Pipeline/Step Suffix Definitions
 --------------------------------
 
@@ -354,11 +359,22 @@ Background-subtracted image                    bsub
 Per integration background-subtracted image    bsubints
 Calibrated image                               cal
 Calibrated per integration images              calints
+CR-flagged image                               crf
+CR-flagged per integration images              crfints
 1D extracted spectrum                          x1d
 1D extracted spectra per integration           x1dints
 Resampled 2D image                             i2d
 Resampled 2D spectrum                          s2d
 Resampled 3D IFU cube                          s3d
+Source catalog                                 cat
+Time Series photometric catalog                phot
+Time Series white-light catalog                whtlt
+Coronagraphic PSF image stack                  psfstack
+Coronagraphic PSF-aligned images               psfalign
+Coronagraphic PSF-subtracted images            psfsub
+AMI fringe and closure phases                  ami
+AMI averaged fringe and closure phases         amiavg
+AMI normalized fringe and closure phases       aminorm
 =============================================  ========
 
 Individual Step Outputs
@@ -423,8 +439,6 @@ jump detection step is:
     name = "jump"
     class = "jwst.jump.JumpStep"
     rejection_threshold = 4.0
-    do_yintercept = False
-    yint_threshold = 1.0
 
 You can list all of the parameters for this step using:
 ::
@@ -437,9 +451,9 @@ Guide at :ref:`stpipe-user-steps`.
 
 Available Pipelines
 ===================
-There are currently several pre-defined pipelines available for processing
-the data from different instrument observing modes. For all of the details
-see :ref:`pipelines`.
+There are many pre-defined pipeline modules for processing
+data from different instrument observing modes through each of the 3 stages
+of calibration. For all of the details see :ref:`pipelines`.
 
 
 For More Information

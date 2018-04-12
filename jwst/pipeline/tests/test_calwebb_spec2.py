@@ -1,5 +1,6 @@
 """Test calwebb_spec2"""
 
+from glob import glob
 from os import path
 import pytest
 
@@ -68,6 +69,13 @@ def test_asn_with_bkg(mk_tmp_dirs):
     ]
 
     Step.from_cmdline(args)
+
+    output_files = [
+        path.split(result_path)[1]
+        for result_path in
+        glob('*')
+    ]
+    print('Created files are: {}'.format(output_files))
 
     assert path.isfile(CALFILE)
     assert path.isfile(BSUBFILE)
