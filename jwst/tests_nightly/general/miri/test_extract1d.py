@@ -1,4 +1,5 @@
 import os
+import pytest
 from astropy.io import fits as pf
 from jwst.extract_1d.extract_1d_step import Extract1dStep
 

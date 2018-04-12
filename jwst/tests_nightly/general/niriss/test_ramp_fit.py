@@ -1,4 +1,5 @@
 import os
+import pytest
 from astropy.io import fits as pf
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep
 
