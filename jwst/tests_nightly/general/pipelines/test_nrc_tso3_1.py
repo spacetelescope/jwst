@@ -5,7 +5,11 @@ from jwst.pipeline.calwebb_tso3 import Tso3Pipeline
 # DISABLED
 # import pandokia.helpers.filecomp as filecomp
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 
 def test_tso3_pipeline1():
@@ -14,7 +18,6 @@ def test_tso3_pipeline1():
     Default imaging mode outlier_detection will be tested here.
     """
     testname = "test_tso3_pipeline1"
-    print("Running TEST: {}".format(testname))
     # Define where this test data resides in testing tree
     subdir = 'pipelines/nircam_caltso3/'  # Can NOT start with path separator
 
@@ -28,7 +31,7 @@ def test_tso3_pipeline1():
         # one dict for each output file to compare (i.e. each <val>)
         {
             'file'      : 'jw93065-a3001_t1_nircam_f150w-wlp8_phot.ecsv',
-            'reference' : os.path.join(BIGDATA,subdir,'jw93065-a3001_t1_nircam_f150w-wlp8_phot_ref.ecsv'),
+            'reference' : os.path.join(_bigdata,subdir,'jw93065-a3001_t1_nircam_f150w-wlp8_phot_ref.ecsv'),
             'comparator': 'diff',
             'args'      : {},
         }
@@ -41,7 +44,7 @@ def test_tso3_pipeline1():
         pass
 
     # Run pipeline step...
-    asn_file = os.path.join(BIGDATA, subdir,
+    asn_file = os.path.join(_bigdata, subdir,
                             "jw93065-a3001_20170511t111213_tso3_001_asn.json")
     step = Tso3Pipeline()
     step.scale_detection = False
@@ -69,17 +72,10 @@ def test_tso3_pipeline1():
     reffile = 'jw93065002001_02101_00001_nrca1_a3001_crfints_ref.fits'
     extn_list = ['primary', 'sci', 'dq', 'err']
 
-    refname = os.path.join(BIGDATA, subdir, reffile)
-    print(' Fitsdiff comparison between the level-2c file - a:', fname)
-    print(' ... and the reference file - b:', refname)
+    refname = os.path.join(_bigdata, subdir, reffile)
 
     result = perform_FITS_comparison(fname, refname, extn_list=extn_list)
-    result.report()
-    try:
-        assert result.identical is True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     # compare the output files - use this exact command
     # DISABLED
@@ -92,7 +88,6 @@ def test_tso3_pipeline2():
     Scaled imaging mode outlier_detection will be tested here.
     """
     testname = "test_tso3_pipeline2"
-    print("Running TEST: {}".format(testname))
 
     # Define where this test data resides in testing tree
     subdir = 'pipelines/nircam_caltso3/'  # Can NOT start with path separator
@@ -107,7 +102,7 @@ def test_tso3_pipeline2():
         # one dict for each output file to compare (i.e. each <val>)
         {
             'file'      : 'jw93065-a3002_t1_nircam_f150w-wlp8_phot.ecsv',
-            'reference' : os.path.join(BIGDATA,subdir,'jw93065-a3002_t1_nircam_f150w-wlp8_phot_ref.ecsv'),
+            'reference' : os.path.join(_bigdata,subdir,'jw93065-a3002_t1_nircam_f150w-wlp8_phot_ref.ecsv'),
             'comparator': 'diff',
             'args'      : {},
         }
@@ -120,7 +115,7 @@ def test_tso3_pipeline2():
         pass
 
     # Run pipeline step...
-    asn_file = os.path.join(BIGDATA, subdir,
+    asn_file = os.path.join(_bigdata, subdir,
                             "jw93065-a3002_20170511t111213_tso3_001_asn.json")
     Tso3Pipeline.call(asn_file,
                       config_file='calwebb_tso3_2.cfg')
@@ -130,17 +125,10 @@ def test_tso3_pipeline2():
     reffile = 'jw93065002002_02101_00001_nrca1_a3002_crfints_ref.fits'
     extn_list = ['primary', 'sci', 'dq', 'err']
 
-    refname = os.path.join(BIGDATA, subdir, reffile)
-    print(' Fitsdiff comparison between the level-2c file - a:', fname)
-    print(' ... and the reference file - b:', refname)
+    refname = os.path.join(_bigdata, subdir, reffile)
 
     result = perform_FITS_comparison(fname, refname, extn_list=extn_list)
-    result.report()
-    try:
-        assert result.identical is True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     # compare the output files - use this exact command
     # DISABLED
@@ -152,7 +140,7 @@ def perform_FITS_comparison(filename, refname, **pars):
     """Perform FITSDIFF comparison.
 
     Comparision will be done on `filename` in current directory with
-        file that has same filename in `BIGDATA` directory.
+        file that has same filename in `_bigdata` directory.
 
         Parameters
         ----------
