@@ -3,7 +3,11 @@ import pytest
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 def test_nrs_msa_spec2b():
     """
@@ -18,11 +22,11 @@ def test_nrs_msa_spec2b():
     step.resample_spec.save_results = True
     step.cube_build.save_results = True
     step.extract_1d.save_results = True
-    step.run(BIGDATA+'/pipelines/jw95065_nrs_msaspec_barshadow.fits',
+    step.run(_bigdata+'/pipelines/jw95065_nrs_msaspec_barshadow.fits',
              output_file='jw95065_nrs_msaspec_barshadow_cal.fits')
 
     na = 'jw95065_nrs_msaspec_barshadow_cal.fits'
-    nb = BIGDATA+'/pipelines/jw95065_nrs_msaspec_barshadow_cal_ref.fits'
+    nb = _bigdata+'/pipelines/jw95065_nrs_msaspec_barshadow_cal_ref.fits'
     h = pf.open(na)
     href = pf.open(nb)
     newh = pf.HDUList([h['primary'],h['sci',1],h['err',1],h['dq',1],h['relsens',1],
@@ -109,19 +113,10 @@ def test_nrs_msa_spec2b():
     result = pf.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
-
-    print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb)
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     #na = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_s2d.fits'
-    #nb = BIGDATA+'/pipelines/F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_s2d_ref.fits'
+    #nb = _bigdata+'/pipelines/F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_s2d_ref.fits'
     #h = pf.open(na)
     #href = pf.open(nb)
     #newh = pf.HDUList([h['primary'],h['sci',1],h['wht',1],h['con',1],h['relsens',1],
@@ -137,19 +132,10 @@ def test_nrs_msa_spec2b():
     #result = pf.diff.FITSDiff(newh, newhref,
     #                          ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
     #                          rtol = 0.00001)
-
-    #print (' Fitsdiff comparison between product file - a:', na)
-    #print (' ... and the reference file - b:', nb)
-
-    #result.report()
-    #try:
-    #    assert result.identical == True
-    #except AssertionError as e:
-    #    print(result.report())
-    #    raise AssertionError, e
+    assert result.identical, result.report()
 
     na = 'jw95065_nrs_msaspec_barshadow_x1d.fits'
-    nb = BIGDATA+'/pipelines/jw95065_nrs_msaspec_barshadow_x1d_ref.fits'
+    nb = _bigdata+'/pipelines/jw95065_nrs_msaspec_barshadow_x1d_ref.fits'
     h = pf.open(na)
     href = pf.open(nb)
     newh = pf.HDUList([h['primary'],h['extract1d',1],h['extract1d',2],h['extract1d',3],h['extract1d',4],h['extract1d',5],h['extract1d',6],h['extract1d',7],h['extract1d',8],h['extract1d',9],h['extract1d',10]])
@@ -157,14 +143,4 @@ def test_nrs_msa_spec2b():
     result = pf.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
-
-    print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb)
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
-
+    assert result.identical, result.report()

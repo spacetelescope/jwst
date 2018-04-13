@@ -3,7 +3,11 @@ import pytest
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 def test_nrs_fs_multi_spec2_2():
     """
@@ -17,10 +21,10 @@ def test_nrs_fs_multi_spec2_2():
     step.resample_spec.save_results = True
     step.cube_build.save_results = True
     step.extract_1d.save_results = True
-    step.run(BIGDATA+'/pipelines/jwtest1013001_01101_00001_NRS1_rate.fits')
+    step.run(_bigdata+'/pipelines/jwtest1013001_01101_00001_NRS1_rate.fits')
 
     na = 'jwtest1013001_01101_00001_NRS1_cal.fits'
-    nb = BIGDATA+'/pipelines/jwtest1013001_01101_00001_NRS1_cal_ref.fits'
+    nb = _bigdata+'/pipelines/jwtest1013001_01101_00001_NRS1_cal_ref.fits'
     h = pf.open(na)
     href = pf.open(nb)
     newh = pf.HDUList([h['primary'],h['sci',1],h['err',1],h['dq',1],h['relsens',1],h['wavelength',1],
@@ -46,19 +50,10 @@ def test_nrs_fs_multi_spec2_2():
     result = pf.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
-
-    print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb)
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     na = 'jwtest1013001_01101_00001_NRS1_s2d.fits'
-    nb = BIGDATA+'/pipelines/jwtest1013001_01101_00001_NRS1_s2d_ref.fits'
+    nb = _bigdata+'/pipelines/jwtest1013001_01101_00001_NRS1_s2d_ref.fits'
     h = pf.open(na)
     href = pf.open(nb)
     newh = pf.HDUList([h['primary'],h['sci',1],h['wht',1],h['con',1],h['relsens',1],
@@ -72,19 +67,10 @@ def test_nrs_fs_multi_spec2_2():
     result = pf.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
-
-    print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb)
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     na = 'jwtest1013001_01101_00001_NRS1_x1d.fits'
-    nb = BIGDATA+'/pipelines/jwtest1013001_01101_00001_NRS1_x1d_ref.fits'
+    nb = _bigdata+'/pipelines/jwtest1013001_01101_00001_NRS1_x1d_ref.fits'
     h = pf.open(na)
     href = pf.open(nb)
     newh = pf.HDUList([h['primary'],h['extract1d',1],h['extract1d',2],h['extract1d',3],h['extract1d',4]])
@@ -92,14 +78,4 @@ def test_nrs_fs_multi_spec2_2():
     result = pf.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
-
-    print (' Fitsdiff comparison between product file - a:', na)
-    print (' ... and the reference file - b:', nb)
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
-
+    assert result.identical, result.report()
