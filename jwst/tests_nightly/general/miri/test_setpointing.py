@@ -39,5 +39,4 @@ def test_miri_setpointing():
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
