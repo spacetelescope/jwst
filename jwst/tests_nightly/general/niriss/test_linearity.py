@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_linearity_niriss():
+def test_linearity_niriss(_bigdata):
     """
 
     Regression test of linearity step performed on NIRISS data.

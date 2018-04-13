@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_refpix_miri():
+def test_refpix_miri(_bigdata):
     """
 
     Regression test of refpix step performed on MIRI data.

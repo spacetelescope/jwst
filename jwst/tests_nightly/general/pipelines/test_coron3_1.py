@@ -10,7 +10,7 @@ pytestmark = [
 ]
 
 
-def test_coron3_pipeline1():
+def test_coron3_pipeline1(_bigdata):
     """Regression test of calwebb_coron3 pipeline.
 
     Test will be performed on NIRCam simulated data.

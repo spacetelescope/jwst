@@ -13,6 +13,6 @@ def test_bigdata(_bigdata):
         fp.write(_bigdata + '\n')
 
 
-def test_jail():
+def test_jail(_bigdata):
     with open('output.txt', 'w+') as fp:
         fp.write('hello world!\n')

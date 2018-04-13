@@ -10,7 +10,7 @@ pytestmark = [
 ]
 
 
-def test_nirisssoss2pipeline1():
+def test_nirisssoss2pipeline1(_bigdata):
     """
 
     Regression test of calwebb_spec2 pipeline performed on NIRISS SOSS data.

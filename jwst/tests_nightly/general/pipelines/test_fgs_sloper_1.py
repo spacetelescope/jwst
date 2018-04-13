@@ -9,7 +9,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_fgs_detector1_1():
+def test_fgs_detector1_1(_bigdata):
     """
 
     Regression test of calwebb_detector1 pipeline performed on FGS imaging mode data.

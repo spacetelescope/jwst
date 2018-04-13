@@ -10,7 +10,7 @@ pytestmark = [
 ]
 
 
-def test_niriss_detector1():
+def test_niriss_detector1(_bigdata):
     """
 
     Regression test of calwebb_detector1 pipeline performed on NIRISS data.

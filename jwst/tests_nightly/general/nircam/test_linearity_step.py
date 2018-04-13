@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_linearity_nircam():
+def test_linearity_nircam(_bigdata):
     """
 
     Regression test of linearity step performed on NIRCam data.

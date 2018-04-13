@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_group_scale_nirspec():
+def test_group_scale_nirspec(_bigdata):
     """
 
     Regression test of group scale step performed on NIRSpec data.

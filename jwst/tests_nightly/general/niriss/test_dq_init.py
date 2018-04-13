@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_dq_init_niriss():
+def test_dq_init_niriss(_bigdata):
     """
 
     Regression test of dq_init step performed on uncalibrated NIRISS data.

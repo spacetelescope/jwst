@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_flat_field_nircam():
+def test_flat_field_nircam(_bigdata):
     """
 
     Regression test of flat_field step performed on MIRI data.

@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_emission_nircam():
+def test_emission_nircam(_bigdata):
     """
 
     Regression test of emission step performed on calibrated NIRCam data.
