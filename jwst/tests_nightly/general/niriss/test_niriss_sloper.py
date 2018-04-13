@@ -38,16 +38,7 @@ def test_niriss_detector1():
     result = pf.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
-
-    print (' Fitsdiff comparison between the ramp product file - a:', n_ramp )
-    print (' ... and the reference file - b:', n_ref)
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     # Compare countrate image product
     n_cr = 'jw00034001001_01101_00001_NIRISS_rate.fits'
@@ -59,14 +50,5 @@ def test_niriss_detector1():
     result = pf.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
-
-    print (' Fitsdiff comparison between the countrate image product file - a:', n_cr )
-    print (' ... and the reference file - b:', n_ref)
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
