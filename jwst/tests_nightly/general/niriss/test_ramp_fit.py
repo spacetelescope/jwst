@@ -60,7 +60,4 @@ def test_ramp_fit_niriss():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001
     )
-
-
-    try:
     assert result.identical, result.report()
