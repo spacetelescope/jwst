@@ -5,7 +5,12 @@ from jwst.emission.emission_step import EmissionStep
 
 from ..helpers import add_suffix
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
+
 
 def test_emission_nircam():
     """
@@ -22,11 +27,11 @@ def test_emission_nircam():
 
 
 
-    EmissionStep.call(BIGDATA+'/nircam/test_emission/jw00017001001_01101_00001_NRCA1_persistence.fits',
+    EmissionStep.call(_bigdata+'/nircam/test_emission/jw00017001001_01101_00001_NRCA1_persistence.fits',
                       output_file=output_file_base
                       )
     h = pf.open(output_file)
-    href = pf.open(BIGDATA+'/nircam/test_emission/jw00017001001_01101_00001_NRCA1_emission.fits')
+    href = pf.open(_bigdata+'/nircam/test_emission/jw00017001001_01101_00001_NRCA1_emission.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
     result = pf.diff.FITSDiff(newh,
