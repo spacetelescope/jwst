@@ -34,13 +34,7 @@ def test_detector1pipeline3():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001
     )
-
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     # Compare countrate image product
     n_cr = 'jw82500001003_02101_00001_NRCALONG_rate.fits'
@@ -54,13 +48,7 @@ def test_detector1pipeline3():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001
     )
-
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     # Compare countrate nints image product
     n_int = 'jw82500001003_02101_00001_NRCALONG_rateints.fits'
@@ -74,11 +62,4 @@ def test_detector1pipeline3():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001
     )
-
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        raise AssertionError(e)
-
+    assert result.identical, result.report()
