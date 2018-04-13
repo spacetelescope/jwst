@@ -4,11 +4,17 @@ import numpy as np
 from numpy.testing import utils
 
 from jwst.assign_wcs import AssignWcsStep, nirspec
+
 from jwst.datamodels import ImageModel
 
 from ..helpers import add_suffix
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
+
 
 def test_nirspec_nrs1_wcs():
     """
@@ -23,8 +29,8 @@ def test_nirspec_nrs1_wcs():
     except:
         pass
 
-    input_file = os.path.join(BIGDATA, 'nirspec', 'test_wcs', 'nrs1-ifu', 'jw00011001001_01120_00001_NRS1_rate_opaque.fits')
-    ref_file = os.path.join(BIGDATA, 'nirspec', 'test_wcs', 'nrs1-ifu', 'jw00011001001_01120_00001_NRS1_rate_opaque_assign_wcs.fits')
+    input_file = os.path.join(_bigdata, 'nirspec', 'test_wcs', 'nrs1-ifu', 'jw00011001001_01120_00001_NRS1_rate_opaque.fits')
+    ref_file = os.path.join(_bigdata, 'nirspec', 'test_wcs', 'nrs1-ifu', 'jw00011001001_01120_00001_NRS1_rate_opaque_assign_wcs.fits')
 
     AssignWcsStep.call(input_file,
                        output_file=output_file_base
