@@ -38,7 +38,7 @@ def CONDA_DEPS = "asdf \
                   verhawk"
 def CONDA_CHANNEL = "http://ssb.stsci.edu/conda-dev"
 def PY_SETUP = "python setup.py"
-def PYTEST = "pytest --basetemp=test_outputs --junit-xml=results.xml"
+def PYTEST = "pytest -r s --bigdata --basetemp=test_outputs --junit-xml=results.xml"
 def PY_VER = '3.6'
 def CONDA_ENV = 'py${PY_VER}'
 def CONDA_CREATE = "conda create -y -q"
