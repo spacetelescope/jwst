@@ -29,8 +29,4 @@ def test_ipc_nircam():
                                 rtol=1.e-6)
     h.close()
     href.close()
-    result.report()
-    try:
-        assert result.identical
-    except AssertionError as e:
-        raise AssertionError(e)
+    assert result.identical, result.report()
