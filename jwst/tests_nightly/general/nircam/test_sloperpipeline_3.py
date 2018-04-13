@@ -35,14 +35,11 @@ def test_detector1pipeline3():
                               rtol = 0.00001
     )
 
-    print (' Fitsdiff comparison between the ramp product file - a:', n_ramp )
-    print (' ... and the reference file - b:', n_ref)
 
     result.report()
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
 
     # Compare countrate image product
@@ -58,14 +55,11 @@ def test_detector1pipeline3():
                               rtol = 0.00001
     )
 
-    print (' Fitsdiff comparison between the countrate image product file - a:', n_cr )
-    print (' ... and the reference file - b:', n_ref)
 
     result.report()
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
 
     # Compare countrate nints image product
@@ -81,13 +75,10 @@ def test_detector1pipeline3():
                               rtol = 0.00001
     )
 
-    print (' Fitsdiff comparison between the countrate nints image product file - a:', n_int )
-    print (' ... and the reference file - b:', n_ref)
 
     result.report()
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
 
