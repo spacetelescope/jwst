@@ -41,5 +41,4 @@ def test_dq_init_miri():
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
