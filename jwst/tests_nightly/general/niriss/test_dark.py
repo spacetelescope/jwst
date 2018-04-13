@@ -5,7 +5,12 @@ from jwst.dark_current.dark_current_step import DarkCurrentStep
 
 from ..helpers import add_suffix
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
+
 
 def test_dark_current_niriss():
     """
@@ -20,11 +25,11 @@ def test_dark_current_niriss():
     except:
         pass
 
-    DarkCurrentStep.call(BIGDATA+'/niriss/test_dark_step/jw00034001001_01101_00001_NIRISS_saturation.fits',
+    DarkCurrentStep.call(_bigdata+'/niriss/test_dark_step/jw00034001001_01101_00001_NIRISS_saturation.fits',
                          output_file=output_file_base
                          )
     h = pf.open(output_file)
-    href = pf.open(BIGDATA+'/niriss/test_dark_step/jw00034001001_01101_00001_NIRISS_dark_current.fits')
+    href = pf.open(_bigdata+'/niriss/test_dark_step/jw00034001001_01101_00001_NIRISS_dark_current.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['pixeldq'],href['groupdq']])
     result = pf.diff.FITSDiff(newh,
