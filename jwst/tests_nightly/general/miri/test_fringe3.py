@@ -5,7 +5,11 @@ from jwst.fringe.fringe_step import FringeStep
 
 from ..helpers import add_suffix
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 def test_fringe_miri3():
     """
@@ -20,11 +24,11 @@ def test_fringe_miri3():
     except:
         pass
 
-    FringeStep.call(BIGDATA+'/miri/test_fringe/fringe3_input.fits',
+    FringeStep.call(_bigdata+'/miri/test_fringe/fringe3_input.fits',
                     output_file=output_file_base
                     )
     h = pf.open(output_file)
-    href = pf.open(BIGDATA+'/miri/test_fringe/baseline_fringe3.fits')
+    href = pf.open(_bigdata+'/miri/test_fringe/baseline_fringe3.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
     result = pf.diff.FITSDiff(newh,

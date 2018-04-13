@@ -3,7 +3,11 @@ import pytest
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 def test_detector1pipeline1():
     """
@@ -22,13 +26,13 @@ def test_detector1pipeline1():
     step.jump.rejection_threshold = 250.0
     step.ramp_fit.save_opt = False
 
-    step.run(BIGDATA+'/miri/test_sloperpipeline/jw00001001001_01101_00001_MIRIMAGE_uncal.fits',
+    step.run(_bigdata+'/miri/test_sloperpipeline/jw00001001001_01101_00001_MIRIMAGE_uncal.fits',
              output_file='jw00001001001_01101_00001_MIRIMAGE_rate.fits')
 
     # Compare calibrated ramp product
     n_cr = 'jw00001001001_01101_00001_MIRIMAGE_ramp.fits'
     h = pf.open( n_cr )
-    n_ref = BIGDATA+'/miri/test_sloperpipeline/jw00001001001_01101_00001_MIRIMAGE_uncal_jump.fits'
+    n_ref = _bigdata+'/miri/test_sloperpipeline/jw00001001001_01101_00001_MIRIMAGE_uncal_jump.fits'
     href = pf.open( n_ref )
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['groupdq'],h['pixeldq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['groupdq'],href['pixeldq']])
@@ -51,7 +55,7 @@ def test_detector1pipeline1():
     # Compare multi-integration countrate image product
     n_int = 'jw00001001001_01101_00001_MIRIMAGE_rateints.fits'
     h = pf.open( n_int )
-    n_ref = BIGDATA+'/miri/test_sloperpipeline/jw00001001001_01101_00001_MIRIMAGE_uncal_integ.fits'
+    n_ref = _bigdata+'/miri/test_sloperpipeline/jw00001001001_01101_00001_MIRIMAGE_uncal_integ.fits'
     href = pf.open( n_ref )
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
@@ -74,7 +78,7 @@ def test_detector1pipeline1():
     # Compare countrate image product
     n_rate = 'jw00001001001_01101_00001_MIRIMAGE_rate.fits'
     h = pf.open( n_rate )
-    n_ref = BIGDATA+'/miri/test_sloperpipeline/jw00001001001_01101_00001_MIRIMAGE_uncal_MiriSloperPipeline.fits'
+    n_ref = _bigdata+'/miri/test_sloperpipeline/jw00001001001_01101_00001_MIRIMAGE_uncal_MiriSloperPipeline.fits'
     href = pf.open( n_ref )
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq']])

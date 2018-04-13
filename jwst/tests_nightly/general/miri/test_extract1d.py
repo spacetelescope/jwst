@@ -5,7 +5,11 @@ from jwst.extract_1d.extract_1d_step import Extract1dStep
 
 from ..helpers import add_suffix
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 def test_extract1d_miri():
     """
@@ -22,12 +26,12 @@ def test_extract1d_miri():
 
 
 
-    Extract1dStep.call(BIGDATA+'/miri/test_extract1d/jw00035001001_01101_00001_mirimage_photom.fits',
+    Extract1dStep.call(_bigdata+'/miri/test_extract1d/jw00035001001_01101_00001_mirimage_photom.fits',
                        smoothing_length=0,
                        output_file=output_file_base
                        )
     h = pf.open(output_file)
-    href = pf.open(BIGDATA+'/miri/test_extract1d/jw00035001001_01101_00001_mirimage_x1d.fits')
+    href = pf.open(_bigdata+'/miri/test_extract1d/jw00035001001_01101_00001_mirimage_x1d.fits')
     newh = pf.HDUList([h['primary'],h['extract1d',1]])
     newhref = pf.HDUList([href['primary'],href['extract1d',1]])
     result = pf.diff.FITSDiff(newh,
