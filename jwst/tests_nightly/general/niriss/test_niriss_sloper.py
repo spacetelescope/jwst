@@ -3,7 +3,12 @@ import pytest
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
+
 
 def test_niriss_detector1():
     """
@@ -20,13 +25,13 @@ def test_niriss_detector1():
     step.jump.rejection_threshold = 250.0
     step.ramp_fit.save_opt = False
 
-    step.run(BIGDATA+'/pipelines/jw00034001001_01101_00001_NIRISS_uncal.fits',
+    step.run(_bigdata+'/pipelines/jw00034001001_01101_00001_NIRISS_uncal.fits',
              output_file='jw00034001001_01101_00001_NIRISS_rate.fits')
 
     # Compare ramp product
     n_ramp = 'jw00034001001_01101_00001_NIRISS_ramp.fits'
     h = pf.open( n_ramp )
-    n_ref = BIGDATA+'/pipelines/jw00034001001_01101_00001_NIRISS_ramp_ref.fits'
+    n_ref = _bigdata+'/pipelines/jw00034001001_01101_00001_NIRISS_ramp_ref.fits'
     href = pf.open( n_ref )
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['groupdq'],h['pixeldq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['groupdq'],href['pixeldq']])
@@ -47,7 +52,7 @@ def test_niriss_detector1():
     # Compare countrate image product
     n_cr = 'jw00034001001_01101_00001_NIRISS_rate.fits'
     h = pf.open( n_cr )
-    n_ref = BIGDATA+'/pipelines/jw00034001001_01101_00001_NIRISS_rate_ref.fits'
+    n_ref = _bigdata+'/pipelines/jw00034001001_01101_00001_NIRISS_rate_ref.fits'
     href = pf.open( n_ref )
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
