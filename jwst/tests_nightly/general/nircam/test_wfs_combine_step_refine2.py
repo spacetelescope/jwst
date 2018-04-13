@@ -26,12 +26,7 @@ def test_wfs_combine():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX','FILENAME'],
                               rtol = 0.00001
     )
-    result.report()
- 
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     # compare 2nd pair of output files
     h = pf.open('test_wfscom3a_wfscmb.fits')
@@ -44,12 +39,7 @@ def test_wfs_combine():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX','FILENAME'],
                               rtol = 0.00001
     )
-    result.report()
- 
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     # compare 3rd pair of output files
     h = pf.open('test_wfscom3b_wfscmb.fits')
@@ -62,9 +52,4 @@ def test_wfs_combine():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX','FILENAME'],
                               rtol = 0.00001
     )
-    result.report()
- 
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        raise AssertionError(e)
+    assert result.identical, result.report()
