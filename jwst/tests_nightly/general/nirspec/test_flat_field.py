@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_flat_field_nirspec():
+def test_flat_field_nirspec(_bigdata):
     """
 
     Regression test of flat_field step performed on NIRSpec fixed slit data.

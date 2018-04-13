@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_refpix_nirspec():
+def test_refpix_nirspec(_bigdata):
     """
 
     Regression test of refpix step performed on NIRSpec data.

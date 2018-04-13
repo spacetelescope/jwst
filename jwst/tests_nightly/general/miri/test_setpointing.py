@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_miri_setpointing():
+def test_miri_setpointing(_bigdata):
     """
     Regression test of the set_telescope_pointing script on a level-1b MIRI file.
     """

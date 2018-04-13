@@ -10,7 +10,7 @@ pytestmark = [
 ]
 
 
-def test_wfs_combine():
+def test_wfs_combine(_bigdata):
     """
 
     Regression test of wfs_combine using do_refine=False (default)

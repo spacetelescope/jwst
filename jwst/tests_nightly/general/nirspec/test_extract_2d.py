@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_extract2d_nirspec():
+def test_extract2d_nirspec(_bigdata):
     """
 
     Regression test of extract_2d step performed on NIRSpec fixed slit data.

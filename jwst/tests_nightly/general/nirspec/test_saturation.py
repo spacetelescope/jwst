@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_saturation_nirspec():
+def test_saturation_nirspec(_bigdata):
     """
 
     Regression test of saturation step performed on NIRSpec data.

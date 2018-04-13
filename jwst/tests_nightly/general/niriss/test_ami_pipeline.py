@@ -10,7 +10,7 @@ pytestmark = [
 ]
 
 
-def test_ami_pipeline():
+def test_ami_pipeline(_bigdata):
     """
 
     Regression test of the AMI pipeline performed on NIRISS AMI data.

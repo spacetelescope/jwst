@@ -10,7 +10,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_cubebuild_miri():
+def test_cubebuild_miri(_bigdata):
     """
 
     Regression test of cube_build performed on MIRI MRS data.

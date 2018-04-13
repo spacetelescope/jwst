@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_jump_miri():
+def test_jump_miri(_bigdata):
     """
 
     Regression test of jump step performed on MIRI data.

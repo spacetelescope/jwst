@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_tso3_pipeline3():
+def test_tso3_pipeline3(_bigdata):
     """Regression test of calwebb_tso3 on NIRISS SOSS simulated data."""
     testname = "test_tso3_pipeline2"
 

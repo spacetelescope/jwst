@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_superbias_nirspec():
+def test_superbias_nirspec(_bigdata):
     """
 
     Regression test of superbias step performed on NIRSpec data.

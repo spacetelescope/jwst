@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_photom_nirspec():
+def test_photom_nirspec(_bigdata):
     """
 
     Regression test of photom step performed on NIRSpec fixed slit data.

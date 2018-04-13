@@ -9,7 +9,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_nrs_ifu_spec2():
+def test_nrs_ifu_spec2(_bigdata):
     """
 
     Regression test of calwebb_spec2 pipeline performed on NIRSpec IFU data.
