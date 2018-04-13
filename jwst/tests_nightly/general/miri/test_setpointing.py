@@ -34,9 +34,4 @@ def test_miri_setpointing():
     result = pf.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.000001)
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        raise AssertionError(e)
+    assert result.identical, result.report()
