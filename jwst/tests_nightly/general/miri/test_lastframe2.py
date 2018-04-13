@@ -5,7 +5,11 @@ from jwst.lastframe.lastframe_step import LastFrameStep
 
 from ..helpers import add_suffix
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 def test_lastframe_miri2():
     """
@@ -21,11 +25,11 @@ def test_lastframe_miri2():
         pass
 
 
-    LastFrameStep.call(BIGDATA+'/miri/test_lastframe/jw80600012001_02101_00003_mirimage_rscd.fits',
+    LastFrameStep.call(_bigdata+'/miri/test_lastframe/jw80600012001_02101_00003_mirimage_rscd.fits',
                        output_file=output_file_base
                        )
     h = pf.open(output_file)
-    href = pf.open(BIGDATA+'/miri/test_lastframe/jw80600012001_02101_00003_mirimage_lastframe.fits')
+    href = pf.open(_bigdata+'/miri/test_lastframe/jw80600012001_02101_00003_mirimage_lastframe.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['pixeldq'],href['groupdq']])
     result = pf.diff.FITSDiff(newh,

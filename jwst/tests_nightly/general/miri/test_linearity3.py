@@ -5,7 +5,11 @@ from jwst.linearity.linearity_step import LinearityStep
 
 from ..helpers import add_suffix
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 def test_linearity_miri3():
     """
@@ -22,12 +26,12 @@ def test_linearity_miri3():
 
 
 
-    LinearityStep.call(BIGDATA+'/miri/test_linearity/jw00001001001_01109_00001_MIRIMAGE_dark_current.fits',
-                       override_linearity=BIGDATA+'/miri/test_linearity/lin_nan_flag_miri.fits',
+    LinearityStep.call(_bigdata+'/miri/test_linearity/jw00001001001_01109_00001_MIRIMAGE_dark_current.fits',
+                       override_linearity=_bigdata+'/miri/test_linearity/lin_nan_flag_miri.fits',
                        output_file=output_file_base
                        )
     h = pf.open(output_file)
-    href = pf.open(BIGDATA+'/miri/test_linearity/jw00001001001_01109_00001_MIRIMAGE_linearity.fits')
+    href = pf.open(_bigdata+'/miri/test_linearity/jw00001001001_01109_00001_MIRIMAGE_linearity.fits')
 
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['pixeldq'],href['groupdq']])
