@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_flat_field_niriss():
+def test_flat_field_niriss(_bigdata):
     """
 
     Regression test of flat_field step performed on NIRISS data.

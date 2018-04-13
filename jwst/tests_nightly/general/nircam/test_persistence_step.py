@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_persistence_nircam():
+def test_persistence_nircam(_bigdata):
     """
 
     Regression test of persistence step performed on calibrated NIRCam data.

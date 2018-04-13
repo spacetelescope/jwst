@@ -16,7 +16,7 @@ pytestmark = [
 ]
 
 
-def test_nirspec_nrs1_wcs():
+def test_nirspec_nrs1_wcs(_bigdata):
     """
 
     Regression test of creating a WCS object and doing pixel to sky transformation.

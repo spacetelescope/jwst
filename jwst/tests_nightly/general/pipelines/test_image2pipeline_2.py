@@ -9,7 +9,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_image2pipeline2():
+def test_image2pipeline2(_bigdata):
     """
 
     Regression test of calwebb_image2 pipeline performed on NIRCam data.

@@ -15,7 +15,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_miri_slitless_wcs():
+def test_miri_slitless_wcs(_bigdata):
     """
 
     Regression test of creating a WCS object and doing pixel to sky transformation.

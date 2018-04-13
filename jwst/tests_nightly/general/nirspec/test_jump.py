@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_jump_nirspec():
+def test_jump_nirspec(_bigdata):
     """
 
     Regression test of jump step performed on NIRSpec data.

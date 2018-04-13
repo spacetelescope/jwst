@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_photom_miri():
+def test_photom_miri(_bigdata):
     """
 
     Regression test of photom step performed on MIRI imaging data.

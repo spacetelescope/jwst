@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_extract2d_nrs_msa():
+def test_extract2d_nrs_msa(_bigdata):
     """
 
     Regression test of extract_2d step performed on NIRSpec fixed slit data.

@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_extract1d_nirspec():
+def test_extract1d_nirspec(_bigdata):
     """Regression test of extract_1d step performed on NIRSpec fixed slit data.
     """
     output_file_base, output_file = add_suffix('extract1d1_output.fits', 'extract_1d')

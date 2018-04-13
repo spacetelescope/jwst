@@ -9,7 +9,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_nrs_msa_spec2b():
+def test_nrs_msa_spec2b(_bigdata):
     """
 
     Regression test of calwebb_spec2 pipeline performed on NIRSpec MSA data,

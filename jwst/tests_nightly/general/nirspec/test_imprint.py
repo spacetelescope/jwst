@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_imprint_nirspec():
+def test_imprint_nirspec(_bigdata):
     """
 
     Regression test of imprint step performed on NIRSpec MSA data.

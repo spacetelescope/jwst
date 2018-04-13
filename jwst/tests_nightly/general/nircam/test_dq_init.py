@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_dq_init_nircam():
+def test_dq_init_nircam(_bigdata):
     """
 
     Regression test of dq_init step performed on uncalibrated NIRCam data.

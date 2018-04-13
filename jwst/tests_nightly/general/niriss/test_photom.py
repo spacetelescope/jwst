@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_photom_niriss():
+def test_photom_niriss(_bigdata):
     """
 
     Regression test of photom step performed on NIRISS imaging data.
