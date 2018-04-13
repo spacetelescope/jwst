@@ -5,7 +5,12 @@ from jwst.extract_2d.extract_2d_step import Extract2dStep
 
 from ..helpers import add_suffix
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
+
 
 def test_extract2d_nirspec():
     """
@@ -21,11 +26,11 @@ def test_extract2d_nirspec():
         pass
 
 
-    Extract2dStep.call(BIGDATA+'/nirspec/test_extract_2d/jw00023001001_01101_00001_NRS1_assign_wcs.fits',
+    Extract2dStep.call(_bigdata+'/nirspec/test_extract_2d/jw00023001001_01101_00001_NRS1_assign_wcs.fits',
                        output_file=output_file_base
                        )
     h = pf.open(output_file)
-    href = pf.open(BIGDATA+'/nirspec/test_extract_2d/jw00023001001_01101_00001_NRS1_extract_2d.fits')
+    href = pf.open(_bigdata+'/nirspec/test_extract_2d/jw00023001001_01101_00001_NRS1_extract_2d.fits')
     newh = pf.HDUList([h['primary'], h[('sci', 1)], h[('err', 1)], h[('dq', 1)],
                        h[('sci', 2)], h[('err', 2)], h[('dq', 2)],
                        h[('sci', 3)], h[('err', 3)], h[('dq', 3)],
@@ -40,9 +45,4 @@ def test_extract2d_nirspec():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001
     )
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
