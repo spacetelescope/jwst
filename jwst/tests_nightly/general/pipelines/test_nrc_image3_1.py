@@ -10,7 +10,7 @@ pytestmark = [
 ]
 
 
-def test_image3_pipeline1():
+def test_image3_pipeline1(_bigdata):
     """Regression test definitions for CALIMAGE3 pipeline.
 
     Regression test of calwebb_image3 pipeline on NIRCam

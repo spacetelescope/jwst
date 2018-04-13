@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_saturation_miri():
+def test_saturation_miri(_bigdata):
     """
 
     Regression test of saturation step performed on uncalibrated MIRI data.

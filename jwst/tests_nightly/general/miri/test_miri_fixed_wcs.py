@@ -15,7 +15,7 @@ pytestmark = [
 ]
 
 
-def test_miri_fixed_slit_wcs():
+def test_miri_fixed_slit_wcs(_bigdata):
     """
 
     Regression test of creating a WCS object and doing pixel to sky transformation.

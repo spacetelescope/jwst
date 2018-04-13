@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_ami_analyze():
+def test_ami_analyze(_bigdata):
     """
 
     Regression test of ami_analyze step performed on NIRISS AMI data.

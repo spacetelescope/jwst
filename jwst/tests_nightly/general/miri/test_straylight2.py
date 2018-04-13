@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_straylight2_miri():
+def test_straylight2_miri(_bigdata):
     """
 
     Regression test of straylight performed on MIRI IFULONG data.

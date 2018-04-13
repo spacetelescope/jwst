@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_emission_miri():
+def test_emission_miri(_bigdata):
     """
 
     Regression test of emission step performed on calibrated miri data.

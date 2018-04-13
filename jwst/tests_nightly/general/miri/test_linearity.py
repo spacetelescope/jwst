@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_linearity_miri():
+def test_linearity_miri(_bigdata):
     """
 
     Regression test of linearity step performed on MIRI data.

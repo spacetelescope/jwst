@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_lastframe_miri2():
+def test_lastframe_miri2(_bigdata):
     """
 
     Regression test of lastframe step performed on MIRI data.

@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_dq_init_miri():
+def test_dq_init_miri(_bigdata):
     """
 
     Regression test of dq_init step performed on uncalibrated MIRI data.

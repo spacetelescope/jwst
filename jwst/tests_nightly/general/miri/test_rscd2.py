@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_rscd_miri2():
+def test_rscd_miri2(_bigdata):
     """
 
     Regression test of RSCD step performed on MIRI data.

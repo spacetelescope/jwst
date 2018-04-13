@@ -9,7 +9,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_detector1pipeline1():
+def test_detector1pipeline1(_bigdata):
     """
 
     Regression test of calwebb_detector1 pipeline performed on MIRI data.
