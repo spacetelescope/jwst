@@ -40,5 +40,4 @@ def test_fringe_miri2():
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
