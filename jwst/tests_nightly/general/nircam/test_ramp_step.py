@@ -41,14 +41,11 @@ def test_ramp_fit_nircam():
                               rtol = 0.00001
     )
 
-    print (' Fitsdiff comparison between the standard output file - a:', n_priout)
-    print (' ... and the reference file - b:', n_priref)
 
     result.report()
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
 
 
@@ -65,12 +62,9 @@ def test_ramp_fit_nircam():
                               rtol = 0.00001
     )
 
-    print (' Fitsdiff comparison between the optional output file - a:', n_optout)
-    print (' ... and the reference file - b:', n_optref)
 
     result.report()
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
