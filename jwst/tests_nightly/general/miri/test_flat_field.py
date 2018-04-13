@@ -5,7 +5,11 @@ from jwst.flatfield.flat_field_step import FlatFieldStep
 
 from ..helpers import add_suffix
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 def test_flat_field_miri():
     """
@@ -22,11 +26,11 @@ def test_flat_field_miri():
 
 
 
-    FlatFieldStep.call(BIGDATA+'/miri/test_flat_field/jw00001001001_01101_00001_MIRIMAGE_assign_wcs.fits',
+    FlatFieldStep.call(_bigdata+'/miri/test_flat_field/jw00001001001_01101_00001_MIRIMAGE_assign_wcs.fits',
                        output_file=output_file_base
                        )
     h = pf.open(output_file)
-    href = pf.open(BIGDATA+'/miri/test_flat_field/jw00001001001_01101_00001_MIRIMAGE_flat_field.fits')
+    href = pf.open(_bigdata+'/miri/test_flat_field/jw00001001001_01101_00001_MIRIMAGE_flat_field.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
     result = pf.diff.FITSDiff(newh,
