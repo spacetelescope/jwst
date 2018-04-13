@@ -8,7 +8,11 @@ from jwst.datamodels import ImageModel
 
 from ..helpers import add_suffix
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 
 def test_miri_fixed_slit_wcs():
@@ -24,8 +28,8 @@ def test_miri_fixed_slit_wcs():
     except:
         pass
 
-    input_file = os.path.join(BIGDATA, 'miri', 'test_wcs', 'fixed', 'jw00035001001_01101_00001_mirimage_rate.fits')
-    ref_file = os.path.join(BIGDATA, 'miri', 'test_wcs', 'fixed', 'jw00035001001_01101_00001_mirimage_assign_wcs.fits')
+    input_file = os.path.join(_bigdata, 'miri', 'test_wcs', 'fixed', 'jw00035001001_01101_00001_mirimage_rate.fits')
+    ref_file = os.path.join(_bigdata, 'miri', 'test_wcs', 'fixed', 'jw00035001001_01101_00001_mirimage_assign_wcs.fits')
 
     AssignWcsStep.call(input_file,
                        output_file=output_file_base
