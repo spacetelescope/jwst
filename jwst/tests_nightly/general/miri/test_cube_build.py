@@ -38,6 +38,5 @@ def test_cubebuild_miri():
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
 

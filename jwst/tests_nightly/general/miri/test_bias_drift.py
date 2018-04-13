@@ -43,5 +43,4 @@ def test_refpix_miri():
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)

@@ -42,14 +42,11 @@ def test_detector1pipeline1():
                               rtol = 0.00001
     )
 
-    print (' Fitsdiff comparison between the calibrated ramp product file - a:', n_cr )
-    print (' ... and the reference file - b:', n_ref)
 
     result.report()
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
 
     # Compare multi-integration countrate image product
@@ -65,14 +62,11 @@ def test_detector1pipeline1():
                               rtol = 0.00001
     )
 
-    print (' Fitsdiff comparison between the multi-integration countrate image product file - a:', n_int )
-    print (' ... and the reference file - b:', n_ref)
 
     result.report()
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
 
     # Compare countrate image product
@@ -88,13 +82,10 @@ def test_detector1pipeline1():
                               rtol = 0.00001
     )
 
-    print (' Fitsdiff comparison between the countrate image product file - a:', n_rate )
-    print (' ... and the reference file - b:', n_ref)
 
     result.report()
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
 
