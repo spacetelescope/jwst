@@ -9,7 +9,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_nrs_fs_multi_spec2_2():
+def test_nrs_fs_multi_spec2_2(_bigdata):
     """
 
     Regression test of calwebb_spec2 pipeline performed on NIRSpec fixed-slit data.

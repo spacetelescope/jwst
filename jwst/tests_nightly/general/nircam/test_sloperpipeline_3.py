@@ -10,7 +10,7 @@ pytestmark = [
 ]
 
 
-def test_detector1pipeline3():
+def test_detector1pipeline3(_bigdata):
     """
 
     Regression test of calwebb_detector1 pipeline performed on NIRCam data.

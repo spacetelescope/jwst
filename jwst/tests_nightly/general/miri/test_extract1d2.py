@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_extract1d_miri2():
+def test_extract1d_miri2(_bigdata):
     """
 
     Regression test of extract_1d step performed on MIRI LRS slitless data.

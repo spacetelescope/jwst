@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_flat_field_miri():
+def test_flat_field_miri(_bigdata):
     """
 
     Regression test of flat_field step performed on MIRI data.

@@ -9,7 +9,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_nirspec_dark_pipeline():
+def test_nirspec_dark_pipeline(_bigdata):
     """
 
     Regression test of calwebb_dark pipeline performed on NIRSpec raw data.
