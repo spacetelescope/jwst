@@ -3,7 +3,11 @@ import pytest
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_image3 import Image3Pipeline
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 
 def test_image3_pipeline1():
@@ -13,7 +17,7 @@ def test_image3_pipeline1():
     simulated long-wave data.
 
     """
-    subdir = os.path.join(BIGDATA, 'pipelines', 'nircam_calimage3')
+    subdir = os.path.join(_bigdata, 'pipelines', 'nircam_calimage3')
     ignore_kws = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX']
 
     try:
@@ -68,8 +72,6 @@ def test_image3_pipeline1():
     n_cur = 'nrca5_47Tuc_subpix_dither1_newpos_a3001_crf.fits'
     ref_filename = 'nrca5_47Tuc_subpix_dither1_newpos_cal-a3001_ref.fits'
     n_ref = os.path.join(subdir, ref_filename)
-    print(' Fitsdiff comparison between the level-2c file - a:', n_cur)
-    print(' ... and the reference file - b:', n_ref)
 
     h = pf.open(n_cur)
     href = pf.open(n_ref)
@@ -80,20 +82,12 @@ def test_image3_pipeline1():
                               newhref,
                               ignore_keywords=ignore_kws,
                               rtol=0.00001)
-
-    result.report()
-    try:
-        assert result.identical is True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     # Compare resampled product
     n_cur = 'mosaic_long_i2d.fits'
     n_ref = os.path.join(subdir, 'mosaic_long_i2d_ref.fits')
 
-    print(' Fitsdiff comparison between the resampled file - a:', n_cur)
-    print(' ... and the reference file - b:', n_ref)
 
     h = pf.open(n_cur)
     href = pf.open(n_ref)
@@ -106,9 +100,4 @@ def test_image3_pipeline1():
                               ignore_keywords=ignore_kws,
                               ignore_fields=ignore_kws,
                               rtol=0.00001)
-    result.report()
-    try:
-        assert result.identical is True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()

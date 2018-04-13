@@ -3,7 +3,6 @@ import pytest
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_spec3 import Spec3Pipeline
 
-
 pytestmark = [
     pytest.mark.usefixtures('_jail'),
     pytest.mark.skipif(not pytest.config.getoption('bigdata'),
@@ -36,8 +35,6 @@ def test_spec3_pipeline1(_bigdata):
     n_cur = 'det_image_ch1-short_s3d.fits'
     n_ref = os.path.join(subdir, 'det_image_ch1-short_s3d_ref.fits')
 
-    print(' Fitsdiff comparison between the resampled file - a:', n_cur)
-    print(' ... and the reference file - b:', n_ref)
 
     h = pf.open(n_cur)
     href = pf.open(n_ref)
@@ -49,19 +46,12 @@ def test_spec3_pipeline1(_bigdata):
                               ignore_keywords=ignore_kws,
                               ignore_fields=ignore_kws,
                               rtol=0.000001)
-    result.report()
-    try:
-        assert result.identical is True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     # Compare cube product 2
     n_cur = 'det_image_ch2-short_s3d.fits'
     n_ref = os.path.join(subdir, 'det_image_ch2-short_s3d_ref.fits')
 
-    print(' Fitsdiff comparison between the resampled file - a:', n_cur)
-    print(' ... and the reference file - b:', n_ref)
 
     h = pf.open(n_cur)
     href = pf.open(n_ref)
@@ -73,19 +63,12 @@ def test_spec3_pipeline1(_bigdata):
                               ignore_keywords=ignore_kws,
                               ignore_fields=ignore_kws,
                               rtol=0.000001)
-    result.report()
-    try:
-        assert result.identical is True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     # Compare x1d product 1
     n_cur = 'det_image_ch1-short_x1d.fits'
     n_ref = os.path.join(subdir, 'det_image_ch1-short_x1d_ref.fits')
 
-    print(' Fitsdiff comparison between the resampled file - a:', n_cur)
-    print(' ... and the reference file - b:', n_ref)
 
     h = pf.open(n_cur)
     href = pf.open(n_ref)
@@ -96,19 +79,12 @@ def test_spec3_pipeline1(_bigdata):
                               ignore_keywords=ignore_kws,
                               ignore_fields=ignore_kws,
                               rtol=0.000001)
-    result.report()
-    try:
-        assert result.identical is True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     # Compare x1d product 2
     n_cur = 'det_image_ch2-short_x1d.fits'
     n_ref = os.path.join(subdir, 'det_image_ch2-short_x1d_ref.fits')
 
-    print(' Fitsdiff comparison between the resampled file - a:', n_cur)
-    print(' ... and the reference file - b:', n_ref)
 
     h = pf.open(n_cur)
     href = pf.open(n_ref)
@@ -119,9 +95,4 @@ def test_spec3_pipeline1(_bigdata):
                               ignore_keywords=ignore_kws,
                               ignore_fields=ignore_kws,
                               rtol=0.000001)
-    result.report()
-    try:
-        assert result.identical is True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
