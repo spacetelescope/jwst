@@ -41,13 +41,7 @@ def test_detector1pipeline1():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001
     )
-
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     # Compare multi-integration countrate image product
     n_int = 'jw00001001001_01101_00001_MIRIMAGE_rateints.fits'
@@ -61,13 +55,7 @@ def test_detector1pipeline1():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001
     )
-
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     # Compare countrate image product
     n_rate = 'jw00001001001_01101_00001_MIRIMAGE_rate.fits'
@@ -81,11 +69,4 @@ def test_detector1pipeline1():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001
     )
-
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        raise AssertionError(e)
-
+    assert result.identical, result.report()
