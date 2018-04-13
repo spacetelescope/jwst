@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_dark_current_miri2():
+def test_dark_current_miri2(_bigdata):
     """
 
     Regression test of dark current step performed on MIRI data.

@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_dark_current_nirspec():
+def test_dark_current_nirspec(_bigdata):
     """
 
     Regression test of dark current step performed on NIRSpec data.

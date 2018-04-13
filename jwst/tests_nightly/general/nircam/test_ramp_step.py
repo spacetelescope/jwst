@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_ramp_fit_nircam():
+def test_ramp_fit_nircam(_bigdata):
     """
 
     Regression test of ramp_fit step performed on NIRCam data.

@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_tso3_pipeline1():
+def test_tso3_pipeline1(_bigdata):
     """Regression test of calwebb_tso3 pipeline on NIRCam simulated data.
 
     Default imaging mode outlier_detection will be tested here.
@@ -82,7 +82,7 @@ def test_tso3_pipeline1():
     # filecomp.compare_files(output, (__file__, testname), tda=tda,)
 
 
-def test_tso3_pipeline2():
+def test_tso3_pipeline2(_bigdata):
     """Regression test of calwebb_tso3 pipeline on NIRCam simulated data.
 
     Scaled imaging mode outlier_detection will be tested here.

@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_srctype2():
+def test_srctype2(_bigdata):
     """
 
     Regression test of srctype step performed on MIRI LRS slitless data.

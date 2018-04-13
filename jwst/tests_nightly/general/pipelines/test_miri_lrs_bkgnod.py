@@ -9,7 +9,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_miri_lrs_bkgnod():
+def test_miri_lrs_bkgnod(_bigdata):
     """
 
     Regression test of calwebb_spec2 pipeline performed on an association

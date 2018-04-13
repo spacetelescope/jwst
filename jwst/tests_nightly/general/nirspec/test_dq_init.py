@@ -12,7 +12,7 @@ pytestmark = [
 ]
 
 
-def test_dq_init_nirspec():
+def test_dq_init_nirspec(_bigdata):
     """
 
     Regression test of dq_init step performed on uncalibrated NIRSpec data.

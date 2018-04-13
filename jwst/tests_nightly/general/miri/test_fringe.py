@@ -11,7 +11,7 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-def test_fringe_miri():
+def test_fringe_miri(_bigdata):
     """
 
     Regression test of fringe performed on MIRI data.
