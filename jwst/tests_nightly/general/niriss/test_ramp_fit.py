@@ -44,16 +44,7 @@ def test_ramp_fit_niriss():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001
     )
-
-    print (' Fitsdiff comparison between the standard output file - a:', n_priout)
-    print (' ... and the reference file - b:', n_priref)
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
 
     # optional output
@@ -70,12 +61,6 @@ def test_ramp_fit_niriss():
                               rtol = 0.00001
     )
 
-    print (' Fitsdiff comparison between the optional output file - a:', n_optout)
-    print (' ... and the reference file - b:', n_optref)
 
-    result.report()
     try:
-        assert result.identical == True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
