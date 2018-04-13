@@ -69,6 +69,4 @@ def test_wfs_combine():
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX','FILENAME'],
                               rtol = 0.00001
     )
-
-    try:
     assert result.identical, result.report()
