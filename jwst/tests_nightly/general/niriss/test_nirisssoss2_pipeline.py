@@ -34,16 +34,7 @@ def test_nirisssoss2pipeline1():
     result = pf.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
-
-    print (' Fitsdiff comparison between file - a:', n_cr )
-    print (' ... and the reference file - b:', n_ref)
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
 
     n_cr = 'jw00034001001_01101_00001_NIRISS_x1dints.fits'
     h = pf.open(n_cr)
@@ -54,14 +45,4 @@ def test_nirisssoss2pipeline1():
     result = pf.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
-
-    print (' Fitsdiff comparison between file - a:', n_cr )
-    print (' ... and the reference file - b:', n_ref)
-
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
-
+    assert result.identical, result.report()
