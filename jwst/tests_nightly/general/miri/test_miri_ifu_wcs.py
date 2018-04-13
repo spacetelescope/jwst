@@ -9,7 +9,11 @@ from astropy.io import fits
 from jwst.assign_wcs import AssignWcsStep
 from jwst.datamodels import ImageModel, fits_support
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 
 def test_miri_ifu_wcs():
@@ -23,8 +27,8 @@ def test_miri_ifu_wcs():
     except:
         pass
 
-    input_file = os.path.join(BIGDATA, 'miri', 'test_wcs', 'ifu', 'jw00024001001_01101_00001_MIRIFUSHORT_uncal_MiriSloperPipeline.fits')
-    ref_file = os.path.join(BIGDATA, 'miri', 'test_wcs', 'ifu', 'jw00024001001_01101_00001_MIRIFUSHORT_assign_wcs.fits')
+    input_file = os.path.join(_bigdata, 'miri', 'test_wcs', 'ifu', 'jw00024001001_01101_00001_MIRIFUSHORT_uncal_MiriSloperPipeline.fits')
+    ref_file = os.path.join(_bigdata, 'miri', 'test_wcs', 'ifu', 'jw00024001001_01101_00001_MIRIFUSHORT_assign_wcs.fits')
 
     AssignWcsStep.call(input_file,
                        output_file='miri_ifu_wcs_output.fits'
