@@ -13,6 +13,8 @@ def pytest_addoption(parser):
 
 
 def check_url(url):
+    """ Determine if `url` can be resolved without error
+    """
     if RE_URL.match(url) is None:
         return False
 
@@ -28,9 +30,15 @@ class BigdataError(Exception):
 
 @pytest.fixture
 def _bigdata():
-    origins = [os.environ.get('TEST_BIGDATA', ''),
-               '/data4/jwst_test_data',
-               'https://bytesalad.stsci.edu/artifactory/jwst_pipeline']
+    """ Return path to large data sets
+
+    Note: Support for URLs added for future integrations
+    """
+    origins = [
+        os.environ.get('TEST_BIGDATA', ''),
+        '/data4/jwst_test_data'
+    ]
+
     for path in origins:
         if os.path.exists(path) or check_url(path):
             return path
