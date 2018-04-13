@@ -456,7 +456,7 @@ def get_open_msa_slits(msa_file, msa_metadata_id):
                                  "sources for metadata_id = {}".format(msa_metadata_id))
 
             # subtract 1 because shutter numbers in the MSA reference file are 1-based.
-            shutter_id = xcen + (ycen - 1) * 365 -1
+            shutter_id = xcen + (ycen - 1) * 365
             source_id = slitlets_sid[0]['source_id']
             source_name, source_alias, stellarity = [
                 (s['source_name'], s['alias'], s['stellarity']) \
@@ -621,6 +621,10 @@ def slit_to_msa(open_slits, msafile):
             msa_model = msa_quadrant.model
             for slit in slits_in_quadrant:
                 slit_id = slit.shutter_id
+                # Shutters are numbered starting from 1.
+                # Fixed slits (Quadrant 5) are mapped starting from 0. 
+                if quadrant != 5:
+                    slit_id = slit_id -1
                 slitdata = msa_data[slit_id]
                 slitdata_model = get_slit_location_model(slitdata)
                 msa_transform = slitdata_model | msa_model
@@ -762,6 +766,11 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
             for slit in slits_in_quadrant:
                 mask = mask_slit(slit.ymin, slit.ymax)
                 slit_id = slit.shutter_id
+                # Shutter IDs are numbered starting from 1
+                # while FS are numbered starting from 0.
+                # "Quadrant 5 is for fixed slits.
+                if quadrant != 5:
+                    slit_id -=1
                 slitdata = msa_data[slit_id]
                 slitdata_model = get_slit_location_model(slitdata)
                 msa_transform = (slitdata_model | msa_model)
