@@ -3,28 +3,27 @@ import pytest
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_spec3 import Spec3Pipeline
 
-BIGDATA = os.environ['TEST_BIGDATA']
+
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 
-def test_spec3_pipeline1():
+@pytest.mark.skipif(not pytest.config.getoption('--runslow'),
+                    reason="requires --runslow; (>4hr)")
+def test_spec3_pipeline1(_bigdata):
     """Regression test definitions for CALSPEC3 pipeline.
 
     Regression test of calwebb_spec3 pipeline on simulated
     MIRI MRS dithered data.
 
     """
-    subdir = os.path.join(BIGDATA, 'pipelines', 'mrs_calspec3')
+    subdir = os.path.join(_bigdata, 'pipelines', 'mrs_calspec3')
     ignore_kws = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX']
-
-    try:
-        os.remove("det_image_ch1-short_s3d.fits")
-        os.remove("det_image_ch2-short_s3d.fits")
-        os.remove("det_image_ch1-short_x1d.fits")
-        os.remove("det_image_ch2-short_x1d.fits")
-    except:
-        pass
-
     asn_file = os.path.join(subdir, "test_asn17.json")
+
     step = Spec3Pipeline()
     step.save_bsub = False
     step.output_use_model = True
