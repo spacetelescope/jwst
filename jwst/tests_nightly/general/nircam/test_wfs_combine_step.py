@@ -31,7 +31,6 @@ def test_wfs_combine():
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
 
 
@@ -51,7 +50,6 @@ def test_wfs_combine():
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
 
     # compare 3rd pair of output files
@@ -70,5 +68,4 @@ def test_wfs_combine():
     try:
         assert result.identical == True
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)

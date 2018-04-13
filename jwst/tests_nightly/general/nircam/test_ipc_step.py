@@ -33,5 +33,4 @@ def test_ipc_nircam():
     try:
         assert result.identical
     except AssertionError as e:
-        print(result.report())
         raise AssertionError(e)
