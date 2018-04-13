@@ -5,7 +5,12 @@ from jwst.extract_1d.extract_1d_step import Extract1dStep
 
 from ..helpers import add_suffix
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
+
 
 def test_extract1d_nirspec():
     """Regression test of extract_1d step performed on NIRSpec fixed slit data.
@@ -17,12 +22,12 @@ def test_extract1d_nirspec():
     except:
         pass
 
-    Extract1dStep.call(BIGDATA + '/nirspec/test_extract_1d/jw00023001001_01101_00001_NRS1_cal.fits',
+    Extract1dStep.call(_bigdata + '/nirspec/test_extract_1d/jw00023001001_01101_00001_NRS1_cal.fits',
                        smoothing_length=0, bkg_order=0,
                        output_file=output_file_base)
 
     h = fits.open(output_file)
-    href = fits.open(BIGDATA + '/nirspec/test_extract_1d/jw00023001001_01101_00001_NRS1_spec.fits')
+    href = fits.open(_bigdata + '/nirspec/test_extract_1d/jw00023001001_01101_00001_NRS1_spec.fits')
     newh = fits.HDUList([h['primary'],
                          h[('extract1d',1)],
                          h[('extract1d',2)],
@@ -37,9 +42,4 @@ def test_extract1d_nirspec():
                                 newhref,
                                 ignore_keywords=['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                                 rtol=0.00001)
-    result.report()
-    try:
-        assert result.identical == True
-    except AssertionError as e:
-        print(result.report())
-        raise AssertionError(e)
+    assert result.identical, result.report()
