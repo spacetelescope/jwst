@@ -9,7 +9,11 @@ from jwst.datamodels import ImageModel
 
 from ..helpers import add_suffix
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
 
 def test_miri_image_wcs():
     """
@@ -24,8 +28,8 @@ def test_miri_image_wcs():
     except:
         pass
 
-    input_file = os.path.join(BIGDATA, 'miri', 'test_wcs', 'image', 'jw00001001001_01101_00001_MIRIMAGE_ramp_fit.fits')
-    ref_file = os.path.join(BIGDATA, 'miri', 'test_wcs', 'image', 'jw00001001001_01101_00001_MIRIMAGE_assign_wcs.fits')
+    input_file = os.path.join(_bigdata, 'miri', 'test_wcs', 'image', 'jw00001001001_01101_00001_MIRIMAGE_ramp_fit.fits')
+    ref_file = os.path.join(_bigdata, 'miri', 'test_wcs', 'image', 'jw00001001001_01101_00001_MIRIMAGE_assign_wcs.fits')
 
     AssignWcsStep.call(input_file,
                        output_file=output_file_base
