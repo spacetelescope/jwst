@@ -3,7 +3,12 @@ import pytest
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
 
-BIGDATA = os.environ['TEST_BIGDATA']
+pytestmark = [
+    pytest.mark.usefixtures('_jail'),
+    pytest.mark.skipif(not pytest.config.getoption('bigdata'),
+                       reason='requires --bigdata')
+]
+
 
 def test_detector1pipeline3():
     """
@@ -19,13 +24,13 @@ def test_detector1pipeline3():
     step.refpix.side_gain = 1.0
     step.jump.rejection_threshold = 250.0
     step.ramp_fit.save_opt = True
-    step.run(BIGDATA+'/pipelines/jw82500001003_02101_00001_NRCALONG_uncal.fits',
+    step.run(_bigdata+'/pipelines/jw82500001003_02101_00001_NRCALONG_uncal.fits',
              output_file='jw82500001003_02101_00001_NRCALONG_rate.fits')
 
     # Compare ramp product
     n_ramp = 'jw82500001003_02101_00001_NRCALONG_ramp.fits'
     h = pf.open( n_ramp )
-    n_ref = BIGDATA+'/pipelines/jw82500001003_02101_00001_NRCALONG_ramp_ref.fits'
+    n_ref = _bigdata+'/pipelines/jw82500001003_02101_00001_NRCALONG_ramp_ref.fits'
     href = pf.open( n_ref )
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['groupdq'],h['pixeldq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['groupdq'],h['pixeldq']])
@@ -39,7 +44,7 @@ def test_detector1pipeline3():
     # Compare countrate image product
     n_cr = 'jw82500001003_02101_00001_NRCALONG_rate.fits'
     h = pf.open( n_cr )
-    n_ref = BIGDATA+'/pipelines/jw82500001003_02101_00001_NRCALONG_rate_ref.fits'
+    n_ref = _bigdata+'/pipelines/jw82500001003_02101_00001_NRCALONG_rate_ref.fits'
     href = pf.open( n_ref )
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
@@ -53,7 +58,7 @@ def test_detector1pipeline3():
     # Compare countrate nints image product
     n_int = 'jw82500001003_02101_00001_NRCALONG_rateints.fits'
     h = pf.open( n_int )
-    n_ref = BIGDATA+'/pipelines/jw82500001003_02101_00001_NRCALONG_rateints_ref.fits'
+    n_ref = _bigdata+'/pipelines/jw82500001003_02101_00001_NRCALONG_rateints_ref.fits'
     href = pf.open( n_ref )
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq']])
