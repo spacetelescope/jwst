@@ -18,7 +18,7 @@ def test_coron3_pipeline1(_bigdata):
     subdir = os.path.join(_bigdata, 'nircam', 'test_coron3')
     asn_name = 'jw99999-a3001_20170327t121212_coron3_001_asn.json'
     asn_file = os.path.join(subdir, asn_name)
-    Coron3Pipeline.call(asn_file, config_file='calwebb_coron3.cfg')
+    Coron3Pipeline.call(asn_file)
 
     # Compare psfstack product
     n_cur = 'jw99999-a3001_t1_nircam_f140m-maskbar_psfstack.fits'
