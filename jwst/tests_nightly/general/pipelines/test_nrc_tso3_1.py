@@ -117,8 +117,7 @@ def test_tso3_pipeline2(_bigdata):
     # Run pipeline step...
     asn_file = os.path.join(_bigdata, subdir,
                             "jw93065-a3002_20170511t111213_tso3_001_asn.json")
-    Tso3Pipeline.call(asn_file,
-                      config_file='calwebb_tso3_2.cfg')
+    Tso3Pipeline.call(asn_file)
 
     # Compare level-2c product
     fname = 'jw93065002002_02101_00001_nrca1_a3002_crfints.fits'

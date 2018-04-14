@@ -1,7 +1,7 @@
 import os
 import pytest
 from astropy.io import fits as pf
-from jwst.wfs_combine.wfs_combine_step import WfsCombineStep 
+from jwst.wfs_combine.wfs_combine_step import WfsCombineStep
 
 pytestmark = [
     pytest.mark.usefixtures('_jail'),
@@ -13,12 +13,11 @@ pytestmark = [
 def test_wfs_combine(_bigdata):
     """
 
-    Regression test of wfs_combine using do_refine=True 
+    Regression test of wfs_combine using do_refine=True
 
     """
 
-    WfsCombineStep.call(_bigdata+'/nircam/test_wfs_combine/wfs_3sets_asn3.json',
-                         config_file='wfs_combine2.cfg' )
+    WfsCombineStep.call(_bigdata+'/nircam/test_wfs_combine/wfs_3sets_asn3.json')
 
     # compare 1st pair of output files
     h = pf.open('test_wfscom3_wfscmb.fits')
