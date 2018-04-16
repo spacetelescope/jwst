@@ -29,7 +29,9 @@ distinguished by using the secondary selection criterion ``spectral_order``.
 In this case, the various spectral orders would likely have different
 extraction locations within the image, so different elements of ``apertures``
 are needed in order to specify those locations.
-Key ``dispaxis`` is required.
+If key ``dispaxis`` is specified, that value will be used.  If it was
+not specified, the dispersion direction will be taken to be the axis
+along which the wavelengths change more rapidly.
 Key ``region_type`` can be omitted, but if it is specified, its value must
 be "target".  The source extraction region can be specified with ``ystart``,
 ``ystop``, etc., but a more flexible alternative is to use ``src_coeff``.
