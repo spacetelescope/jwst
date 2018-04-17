@@ -153,7 +153,7 @@ def ifu(input_model, reference_files):
     gwa2slit = gwa_to_ifuslit(slits, input_model, disperser, reference_files)
 
     # SLIT to MSA transform
-    slit2msa = ifuslit_to_msa(slits, reference_files)
+    slit2msa = ifuslit_to_msa(slits, reference_files, input_model)
 
     det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
     slit2msa = (Mapping((0, 1, 2, 2)) | slit2msa).rename('slit2msa')
@@ -558,7 +558,7 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
     return order, wrange
 
 
-def ifuslit_to_msa(slits, reference_files):
+def ifuslit_to_msa(slits, reference_files, input_model):
     """
     The transform from slit_frame to msa_frame.
 
@@ -574,7 +574,9 @@ def ifuslit_to_msa(slits, reference_files):
     model : `~jwst.transforms.Slit2Msa` model.
         Transform from slit_frame to msa_frame.
     """
-
+    lam_cen = 0.5 * (input_model.meta.wcsinfo.waverange_end -
+                     input_model.meta.wcsinfo.waverange_start
+                     ) + input_model.meta.wcsinfo.waverange_start
     #ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
     ifuslicer = IFUSlicerModel(reference_files['ifuslicer'])
     ifupost = IFUPostModel(reference_files['ifupost'])
@@ -586,8 +588,10 @@ def ifuslit_to_msa(slits, reference_files):
         slitdata = ifuslicer.data[slit]
         slitdata_model = (get_slit_location_model(slitdata)).rename('slitdata_model')
         slicer_model = slitdata_model | ifuslicer_model
-        ifupost_transform = getattr(ifupost, "slice_{0}".format(slit))
-        msa_transform = (slicer_model & Identity(1)) | ifupost_transform
+        ifupost_sl = getattr(ifupost, "slice_{0}".format(slit))
+        ifupost_transform = _create_ifupost_transform(ifupost_sl, lam_cen)
+
+        msa_transform = slicer_model | ifupost_transform
         models.append(msa_transform)
     ifuslicer.close()
 
@@ -622,7 +626,7 @@ def slit_to_msa(open_slits, msafile):
             for slit in slits_in_quadrant:
                 slit_id = slit.shutter_id
                 # Shutters are numbered starting from 1.
-                # Fixed slits (Quadrant 5) are mapped starting from 0. 
+                # Fixed slits (Quadrant 5) are mapped starting from 0.
                 if quadrant != 5:
                     slit_id = slit_id -1
                 slitdata = msa_data[slit_id]
@@ -684,11 +688,10 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
         slitdata = ifuslicer.data[slit]
         slitdata_model = get_slit_location_model(slitdata)
         ifuslicer_transform = (slitdata_model | ifuslicer_model)
-        #ifupost_transform = ifupost.tree[slit]['model']
-        ifupost_transform = getattr(ifupost, "slice_{0}".format(slit))
-
-        # msa2gwa takes as input relative slit positions and lam_cen
-        msa2gwa = ifuslicer_transform & Const1D(lam_cen) | ifupost_transform | collimator2gwa
+        ifupost_sl = getattr(ifupost, "slice_{0}".format(slit))
+        # construct IFU post ransform
+        ifupost_transform = _create_ifupost_transform(ifupost_sl, lam_cen)
+        msa2gwa = ifuslicer_transform | ifupost_transform | collimator2gwa
         gwa2msa = gwa_to_ymsa(msa2gwa, lam_cen)# TODO: Use model sets here
 
         bgwa2msa = (
@@ -702,14 +705,14 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
             Mapping((0, 1, 0, 1), n_inputs=3) |
             Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
             Identity(1) & gwa2msa & Identity(2) | \
-            Mapping((0, 1, 0, 1, 1, 2, 3)) | \
+            Mapping((0, 1, 0, 1, 2, 3)) | \
             Identity(2) & msa2gwa & Identity(2) | \
             Mapping((0, 1, 2, 3, 5), n_inputs=7) | \
             Identity(2) & lgreq | mask
         )
 
         # msa to before_gwa
-        msa2bgwa = Mapping((0, 1, 2, 2)) | msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
+        msa2bgwa = Mapping((0, 1, 2)) | msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
         bgwa2msa.inverse = msa2bgwa
         slit_models.append(bgwa2msa)
 
@@ -1305,8 +1308,8 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
     slit_wcs.set_transform('gwa', 'slit_frame', g2s.get_model(slit_name))
     if input_model.meta.exposure.type.lower() == 'nrs_ifu':
         slit_wcs.set_transform('slit_frame', 'msa_frame',
-                           Mapping((0,1,2,2)) | wcsobj.pipeline[3][1][1].get_model(slit_name) & Identity(1))
-                           ##wcsobj.pipeline[3][1][1].get_model(slit_name) & Identity(1))
+                           #Mapping((0,1,2,2)) | wcsobj.pipeline[3][1][1].get_model(slit_name) & Identity(1))
+                           wcsobj.pipeline[3][1][1].get_model(slit_name) & Identity(1))
     else:
         slit_wcs.set_transform('slit_frame', 'msa_frame',
                            wcsobj.pipeline[3][1].get_model(slit_name) & Identity(1))
@@ -1435,6 +1438,37 @@ def nrs_ifu_wcs(input_model):
     for i in range(30):
         wcs_list.append(nrs_wcs_set_input(input_model, i, wrange))
     return wcs_list
+
+
+def _create_ifupost_transform(ifupost_slice, wavelength):
+    """
+    Create an IFUPOST transform for a specific slice.
+
+    Parameters
+    ----------
+    ifupost_slice : `jwst.datamodels.properties.ObjectNode`
+        IFUPost transform for a specific slice
+    wavelelngth : float
+        Wavelength to use in the computation of the distortion,
+        the central wavelength.
+
+    """
+    linear = ifupost_slice.linear
+    polyx = ifupost_slice.xpoly
+    polyx_dist = ifupost_slice.xpoly_distortion
+    polyy = ifupost_slice.ypoly
+    polyy_dist = ifupost_slice.ypoly_distortion
+    polyx_dist.parameters *= wavelength
+    polyx.parameters += polyx_dist.parameters
+    polyy_dist.parameters *= wavelength
+    polyy.parameters += polyy_dist.parameters
+    mapp = Mapping((0, 1, 0, 1), name='ifupost_forward')
+    mapp.inverse = Identity(2, name='ifupost_backward')
+
+    mappinv = Identity(2, name='ifupost_forward')
+    mappinv.inverse = Mapping((0, 1, 0, 1), name='ifupost_backward')
+    ifupost_transform = linear | mapp | polyx & polyy | mappinv
+    return ifupost_transform
 
 
 exp_type2transform = {'nrs_tacq': imaging,
