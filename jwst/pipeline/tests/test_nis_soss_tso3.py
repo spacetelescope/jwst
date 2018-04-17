@@ -122,7 +122,7 @@ def test_run_whitelight(mk_tmp_dirs):
     output_files = [
         path.split(result_path)[1]
         for result_path in
-        glob(path.join(tmp_data_path, '*'))
+        glob('*')
     ]
     print('Created files ares: {}'.format(output_files))
 
@@ -134,19 +134,6 @@ def test_run_whitelight(mk_tmp_dirs):
     product_name_file = product_name + '_x1dints.fits'
     assert product_name_file in output_files
     output_files.remove(product_name_file)
-
-    # Check Level2 products
-    for member in members_by_type['science']:
-        basename, ext = path.splitext(path.split(member)[1])
-        basename, separator = remove_suffix(basename)
-
-        name = basename + separator + acid + separator + 'crfints' + ext
-        assert name in output_files
-        output_files.remove(name)
-
-        name = basename + separator + acid + separator + 'median' + ext
-        assert name in output_files
-        output_files.remove(name)
 
     # If there are files left, this is an error
     assert len(output_files) == 0
