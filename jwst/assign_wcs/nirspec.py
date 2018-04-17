@@ -1164,10 +1164,7 @@ def oteip_to_v23(reference_files):
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
     # The spatial units are currently in deg. Convertin to arcsec.
-    oteip_to_xyan = fore2ote_mapping | (ote & Scale(1e6))
-    # TODO: The scaling arcsec --> deg should be added with the next CDP delivery.
-    # In CDP3 the units are still deg.
-    oteip2v23 = oteip_to_xyan #| Scale(1 / 3600) & Scale(1 / 3600)  & Identity(1)
+    oteip2v23 = fore2ote_mapping | (ote & Scale(1e6))
 
     return oteip2v23
 

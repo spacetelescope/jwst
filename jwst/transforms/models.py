@@ -826,6 +826,11 @@ class V23ToSky(Rotation3D):
     inputs = ("v2", "v3")
     outputs = ("ra", "dec")
 
+    def __init__(self, angles, axes_order, name=None):
+        # Convert to degrees before passing to the base class.
+        angles = np.asarray(angles) / 3600
+        super(V23ToSky, self).__init__(angles, axes_order=axes_order, name=name)
+
     @staticmethod
     def spherical2cartesian(alpha, delta):
         """

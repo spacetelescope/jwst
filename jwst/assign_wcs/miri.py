@@ -124,8 +124,6 @@ def imaging_distortion(input_model, reference_files):
     if (col_offset is not None) and (row_offset is not None):
         distortion = models.Shift(col_offset) & models.Shift(row_offset) | distortion
 
-    # scale to degrees (remove this once pipeline can handle v2,v3 in arcsec)
-    distortion = distortion | models.Scale(1 / 3600) & models.Scale(1 / 3600)
     return distortion
 
 
@@ -157,8 +155,8 @@ def lrs(input_model, reference_files):
     subarray2full = subarray_transform(input_model)
     with DistortionModel(reference_files['distortion']) as dist:
         distortion = dist.model
-    # Distortion is in arcsec.  Convert to degrees
-    full_distortion = subarray2full | distortion | models.Scale(1 / 3600.) & models.Scale(1 / 3600.)
+
+    full_distortion = subarray2full | distortion
 
     # Load and process the reference data.
     with fits.open(reference_files['specwcs']) as ref:
@@ -389,10 +387,8 @@ def abl_to_v2v3l(input_model, reference_files):
         chan_v23 = v23[c]
         v23chan_backward = chan_v23.inverse
         del chan_v23.inverse
-        # This is the spatial part of the transform; tack on additional conversion to degrees
-        # Remove this degrees conversion once pipeline can handle v2,v3 in arcsec
-        v23_spatial = chan_v23 | models.Scale(1 / 3600) & models.Scale(1 / 3600)
-        v23_spatial.inverse = models.Scale(3600) & models.Scale(3600) | v23chan_backward
+        v23_spatial = chan_v23
+        v23_spatial.inverse = v23chan_backward
         # Tack on passing the third wavelength component
         v23c = v23_spatial & ident1
         sel[ch] = v23c
