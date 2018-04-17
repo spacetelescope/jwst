@@ -17,10 +17,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 # These values are used to indicate whether the input reference file
-# (if any) is JSON, ASDF, or FITS.
+# (if any) is JSON or IMAGE.
 FILE_TYPE_JSON = "JSON"
-FILE_TYPE_ASDF = "ASDF"
-FILE_TYPE_FITS = "FITS"
+FILE_TYPE_IMAGE = "IMAGE"
 FILE_TYPE_OTHER = "N/A"
 
 # For full-frame input data, keyword SLTNAME may not be populated, so use
@@ -40,6 +39,10 @@ ANY_ORDER = 1000
 # are to be compared with keyword DISPAXIS from the input header.
 HORIZONTAL = 1
 VERTICAL = 2
+
+# This is intended to be larger than any possible distance (in pixels)
+# between the target and any point in the image; used by locn_from_wcs().
+HUGE_DIST = 1.e20
 
 # These values are assigned in get_extract_parameters, using key "match".
 # If there was an aperture in the reference file for which the "id" key
@@ -73,7 +76,7 @@ def load_ref_file(refname):
     ----------
     refname: string
         The name of the reference file.  This file is expected to be
-        either a JSON file giving extraction information, or a FITS file
+        either a JSON file giving extraction information, or a file
         containing one or more images that are to be used as masks that
         define the extraction region and optionally background regions.
 
@@ -83,39 +86,32 @@ def load_ref_file(refname):
         If the reference file is in JSON format, ref_dict will be the
         dictionary returned by json.load(), except that the file type
         ('JSON') will also be included with key 'ref_file_type'.
-        If the reference file is in FITS format, ref_dict will be a
-        dictionary with two keys:  ref_dict['ref_file_type'] = 'FITS',
-        and ref_dict['ref_model'] will be the open file handle for the
-        jwst.datamodels object for the reference file.
-        A reference file in ASDF format is not currently supported.
+        If the reference file is an image, ref_dict will be a
+        dictionary with two keys:  ref_dict['ref_file_type'] = 'IMAGE'
+        and ref_dict['ref_model'].  The latter will be the open file
+        handle for the jwst.datamodels object for the reference file.
     """
 
     if refname == "N/A":
         ref_dict = None
     else:
-        fd = open(refname, "rb")
-        data = fd.read(80)
-        fd.close()
-        data = str(data)
-        if data.find("SIMPLE  =                    ") >= 0:
-            ref_dict = {'ref_file_type': FILE_TYPE_FITS}
-            # Note that the 'ref_model' key is only used for images.
-            ref_dict['ref_model'] = datamodels.open(refname)
-        elif data.find("#ASDF") >= 0:
-            # ref_dict = {'ref_file_type': FILE_TYPE_ASDF}
-            log.error("%s is an ASDF file, which is not currently supported.",
-                      refname)
-            raise RuntimeError("The reference file should be JSON or FITS.")
-        else:
-            fd = open(refname)
-            try:
-                ref_dict = json.load(fd)
-            except UnicodeDecodeError:
-                log.error("Could not read %s as a JSON file.", refname)
-                fd.close()
-                raise
+        # Try reading the file as JSON.
+        fd = open(refname)
+        try:
+            ref_dict = json.load(fd)
             ref_dict['ref_file_type'] = FILE_TYPE_JSON
             fd.close()
+        except UnicodeDecodeError:
+            fd.close()
+            # Try opening the file as a reference image.
+            try:
+                fd = datamodels.MultiExtract1dImageModel(refname)
+                ref_dict = {'ref_file_type': FILE_TYPE_IMAGE}
+                ref_dict['ref_model'] = fd      # only used for images
+            except OSError:
+                log.info("The reference file should be JSON or FITS.")
+                log.error("Don't know how to read %s.", refname)
+                raise
 
     return ref_dict
 
@@ -140,22 +136,11 @@ def get_extract_parameters(ref_dict,
         extract_params['src_coeff'] = None
         extract_params['bkg_coeff'] = None
         extract_params['nod_correction'] = 0
-        try:
-            # For MultiSlitModel or similar.
-            if input_model.xsize >= input_model.ysize:
-                extract_params['dispaxis'] = HORIZONTAL
-            else:
-                extract_params['dispaxis'] = VERTICAL
-        except AttributeError:
-            # For ImageModel or CubeModel.
-            if input_model.meta.subarray.xsize >= \
-               input_model.meta.subarray.ysize:
-                extract_params['dispaxis'] = HORIZONTAL
-            else:
-                extract_params['dispaxis'] = VERTICAL
         extract_params['independent_var'] = 'pixel'
         extract_params['smoothing_length'] = 0  # because no background sub.
         extract_params['bkg_order'] = 0         # because no background sub.
+        # Note that extract_params['dispaxis'] is not assigned.  This will
+        # be done later by calling find_dispaxis().
 
     elif ref_dict['ref_file_type'] == FILE_TYPE_JSON:
         extract_params['ref_file_type'] = ref_dict['ref_file_type']
@@ -180,13 +165,13 @@ def get_extract_parameters(ref_dict,
                     extract_params['spectral_order'] = sp_order
                     disp = aper.get('dispaxis')
                     if disp is None:
-                        log.warning("dispaxis not specified in reference file;"
-                                    " assuming horizontal dispersion")
-                        disp = HORIZONTAL
-                    if disp != HORIZONTAL and disp != VERTICAL:
+                        # Will be found later by calling find_dispaxis().
+                        log.warning("dispaxis not specified in reference file")
+                    elif disp != HORIZONTAL and disp != VERTICAL:
                         log.error("dispaxis = %d is not valid.", disp)
                         raise ValueError('dispaxis must be 1 or 2.')
-                    extract_params['dispaxis'] = disp
+                    else:
+                        extract_params['dispaxis'] = disp
                     extract_params['src_coeff'] = aper.get('src_coeff')
                     extract_params['bkg_coeff'] = aper.get('bkg_coeff')
                     extract_params['independent_var'] = \
@@ -207,11 +192,10 @@ def get_extract_parameters(ref_dict,
                     extract_params['ystart'] = aper.get('ystart')
                     extract_params['ystop'] = aper.get('ystop')
                     extract_params['extract_width'] = aper.get('extract_width')
-                    extract_params['nod_correction'] = get_nod_offset(aper,
-                                                                      meta)
+                    extract_params['nod_correction'] = 0        # default value
                     break
 
-    elif ref_dict['ref_file_type'] == FILE_TYPE_FITS:
+    elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
         extract_params['ref_file_type'] = ref_dict['ref_file_type']
         foundit = False
         for im in ref_dict['ref_model'].images:
@@ -226,14 +210,17 @@ def get_extract_parameters(ref_dict,
 
         if foundit:
             extract_params['ref_image'] = im
-            extract_params['dispaxis'] = im.dispersion_axis     # 1 or 2
+            if hasattr(im, "dispersion_axis"):
+                if (im.dispersion_axis == HORIZONTAL or
+                    im.dispersion_axis == VERTICAL):
+                    extract_params['dispaxis'] = im.dispersion_axis
+            # else dispaxis will be set by find_dispaxis()
             if smoothing_length is None:
                 extract_params['smoothing_length'] = im.smoothing_length
             else:
                 # The user-supplied value takes precedence.
                 extract_params['smoothing_length'] = smoothing_length
-            # Note that nod_correction is not assigned.  How can we get
-            # the size of the offset?  xxx
+            extract_params['nod_correction'] = 0
 
     else:
         log.error("Reference file type %s not recognized",
@@ -242,18 +229,131 @@ def get_extract_parameters(ref_dict,
     return extract_params
 
 
-def get_nod_offset(aper, meta):
-    points = meta.dither.total_points
-    position = meta.dither.position_number
-    nod_correction = 0.
-    if points is not None:
-        # Find the nod offset to the extraction slit location.
-        nod_offset = "nod{0}_offset".format(points)
-        if position == 2:
-            position = -1
-        if nod_offset in aper:
-            nod_correction = position * aper[nod_offset]
-    return nod_correction
+def find_dispaxis(slit, spectral_order, extract_params):
+    """Get the location of the spectrum, based on the WCS.
+
+    Parameters:
+    -----------
+    slit: data model
+        This can be a slit from a MultiSlitModel (or similar), or it
+        could be a SlitModel, perhaps a full image, including a
+        multi-integration exposure.
+        We use the meta.wcs and wavelength attributes.
+
+    spectral_order: int
+        The spectral order number.
+
+    extract_params: dict, may be modified in-place
+        Parameters read from the extraction reference file.  If key
+        'dispaxis' has already been assigned to a known value, this
+        function will return without doing anything.  Otherwise, the
+        dispersion direction will be determined by comparing the
+        increment in wavelength from one pixel to the next, in the
+        horizontal and vertical directions, and extract_params['dispaxis']
+        will be assigned the value.
+    """
+
+    if 'dispaxis' in extract_params:
+        initial_value = extract_params['dispaxis']
+    else:
+        initial_value = None
+
+    if hasattr(slit, 'meta') and hasattr(slit.meta, 'wcs'):
+        wcs = slit.meta.wcs
+    else:
+        log.warning("find_dispaxis:  WCS not found")
+        return
+
+    if hasattr(slit, "wavelength"):
+        wl_array = slit.wavelength
+    else:
+        wl_array = None
+    if wl_array is None or len(wl_array) == 0:
+        got_wavelength = False
+    else:
+        got_wavelength = True                   # may be reset later
+    if not got_wavelength or wl_array.min() == 0. and wl_array.max() == 0.:
+        got_wavelength = False
+
+    bb = wcs.bounding_box
+    if bb is None:
+        shape = slit.data.shape
+        x_cent = shape[-1] // 2
+        y_cent = shape[-2] // 2
+    else:
+        x_cent = float(bb[0][0] + bb[0][1]) / 2.
+        y_cent = float(bb[1][0] + bb[1][1]) / 2.
+        x_cent = math.floor(x_cent)
+        y_cent = math.floor(y_cent)
+
+    # Find which is the dispersion axis, by comparing the increment in
+    # wavelength from one pixel to the next, in the horizontal and
+    # vertical directions.
+    dispaxis = None                             # pessimistic value
+    if got_wavelength:
+        dwlx = wl_array[:, 1:-1] - wl_array[:, 0:-2]
+        dwly = wl_array[1:-1, :] - wl_array[0:-2, :]
+        dwlx = np.nanmean(dwlx)
+        dwly = np.nanmean(dwly)
+        log.debug("find_dispaxis:  dwlx = %s dwly = %s", str(dwlx), str(dwly))
+
+        dwlx = np.abs(dwlx)
+        dwly = np.abs(dwly)
+        if dwlx > dwly:
+            dispaxis = HORIZONTAL
+        elif dwlx < dwly:
+            dispaxis = VERTICAL
+    else:
+        transform = wcs.forward_transform
+        if transform.n_inputs > 2:
+            stuff = transform(x_cent, y_cent, spectral_order)
+            wl_00 = stuff[2]
+            stuff = transform(x_cent, y_cent + 1, spectral_order)
+            wl_01 = stuff[2]
+            stuff = transform(x_cent + 1, y_cent, spectral_order)
+            wl_10 = stuff[2]
+        else:
+            stuff = transform(x_cent, y_cent)
+            wl_00 = stuff[2]
+            stuff = transform(x_cent, y_cent + 1)
+            wl_01 = stuff[2]
+            stuff = transform(x_cent + 1, y_cent)
+            wl_10 = stuff[2]
+        dwlx = abs(wl_10 - wl_00)
+        dwly = abs(wl_01 - wl_00)
+        if np.isnan(dwlx) or np.isnan(dwly):
+            log.warning("wavelength from WCS is NaN within the bounding box")
+            shape = slit.data.shape
+            grid = np.indices(shape[-2:], dtype=np.float64)
+            # The arguments are the X and Y pixel coordinates.
+            stuff = slit.meta.wcs(grid[1], grid[0])
+            wl_wcs = stuff[2]
+            del grid, stuff
+            dwlx = wl_wcs[:, 1:-1] - wl_wcs[:, 0:-2]
+            dwly = wl_wcs[1:-1, :] - wl_wcs[0:-2, :]
+            dwlx = np.nanmean(dwlx)
+            dwly = np.nanmean(dwly)
+        log.debug("find_dispaxis:  dwlx = %s dwly = %s", str(dwlx), str(dwly))
+        if np.isnan(dwlx) or np.isnan(dwly):
+            log.warning("dwlx and/or dwly is STILL NaN!  "
+                        "Can't determine dispaxis from WCS")
+        else:
+            dwlx = np.abs(dwlx)
+            dwly = np.abs(dwly)
+            if dwlx > dwly:
+                dispaxis = HORIZONTAL
+            elif dwlx < dwly:
+                dispaxis = VERTICAL
+
+    if dispaxis is None:
+        log.warning("Can't determine dispaxis from the WCS.")
+    elif initial_value is None:
+        # Only assign this value if dispaxis wasn't present in the
+        # reference file, or if there was no reference file.
+        extract_params['dispaxis'] = dispaxis
+
+    log.debug("find_dispaxis:  dispaxis from ref file = %s; from wcs = %s",
+              str(initial_value), str(dispaxis))
 
 
 def log_initial_parameters(extract_params):
@@ -274,7 +374,6 @@ def log_initial_parameters(extract_params):
     log.debug("initial src_coeff = %s", str(extract_params["src_coeff"]))
     log.debug("initial bkg_coeff = %s", str(extract_params["bkg_coeff"]))
     log.debug("bkg_order = %d", extract_params["bkg_order"])
-    log.debug("nod_correction = %s", str(extract_params["nod_correction"]))
 
 
 def get_aperture(im_shape, wcs, extract_params):
@@ -298,7 +397,7 @@ def get_aperture(im_shape, wcs, extract_params):
         Keys are 'xstart', 'xstop', 'ystart', and 'ystop'.
     """
 
-    if extract_params['ref_file_type'] == FILE_TYPE_FITS:
+    if extract_params['ref_file_type'] == FILE_TYPE_IMAGE:
         return {}
 
     ap_ref = aperture_from_ref(extract_params, im_shape)
@@ -320,15 +419,6 @@ def get_aperture(im_shape, wcs, extract_params):
                              extract_params["dispaxis"])
     ap_ref = update_from_width(ap_ref, extract_params["extract_width"],
                                extract_params["dispaxis"])
-
-    if extract_params["nod_correction"] != 0:
-        ap_ref = apply_nod_offset(ap_ref, extract_params["nod_correction"],
-                                  extract_params["dispaxis"])
-
-    # Do this again, in case the nod offset correction was so large that
-    # the extraction region would extend outside the WCS bounding box.
-    ap_ref = update_from_wcs(ap_ref, ap_wcs, extract_params["extract_width"],
-                             extract_params["dispaxis"])
 
     return ap_ref
 
@@ -437,32 +527,6 @@ def update_from_width(ap_ref, extract_width, direction):
     return ap_width
 
 
-def apply_nod_offset(ap, nod_correction, direction):
-    """Add the nod offset to the aperture location.
-
-    This function only applies the nod offset correction to the limits
-    in the cross-dispersion direction that were specified with
-    ystart and ystop (or xstart and xstop, depending on the dispersion
-    direction).
-
-    If the source and/or background regions were instead specified with
-    src_coeff and bkg_coeff, those will need to be corrected separately.
-    """
-
-    if direction == HORIZONTAL:
-        ap_corr = Aperture(xstart=ap.xstart,
-                           xstop=ap.xstop,
-                           ystart=ap.ystart + nod_correction,
-                           ystop=ap.ystop + nod_correction)
-    else:
-        ap_corr = Aperture(xstart=ap.xstart + nod_correction,
-                           xstop=ap.xstop + nod_correction,
-                           ystart=ap.ystart,
-                           ystop=ap.ystop)
-
-    return ap_corr
-
-
 def update_from_shape(ap, im_shape):
     """Truncate extraction region based on input image shape.
 
@@ -566,8 +630,7 @@ def update_from_wcs(ap_ref, ap_wcs, extract_width, direction):
     ap_ref: namedtuple
         Contains xstart, xstop, ystart, ystop.  These are the values of
         the extraction region as specified by the reference file or the
-        image size.  The cross-dispersion limits have been shifted by the
-        nod offset correction.
+        image size.
 
     ap_wcs: namedtuple
         These are the bounding box limits.
@@ -668,7 +731,7 @@ def compare_start(start_ref, start_wcs):
     ----------
     start_ref: int or float
         xstart or ystart, as specified by the reference file or the image
-        size, possibly shifted by the nod offset correction.
+        size.
 
     start_wcs: int or float
         The lower limit from the WCS bounding box.
@@ -704,7 +767,7 @@ def compare_stop(stop_ref, stop_wcs):
     ----------
     stop_ref: int or float
         xstop or ystop, as specified by the reference file or the image
-        size, possibly shifted by the nod offset correction.
+        size.
 
     stop_wcs: int or float
         The upper limit from the WCS bounding box.
@@ -758,6 +821,8 @@ class ExtractBase:
         Issue #1781.
         self.instrument_name = ""
         """
+        self.dispaxis = None
+        self.spectral_order = None
         self.xstart = None
         self.xstop = None
         self.ystart = None
@@ -773,10 +838,140 @@ class ExtractBase:
         self.nod_correction = 0.
         self.wcs = None
 
+
     def update_extraction_limits(self, ap):
         pass
 
+
     def assign_polynomial_limits(self):
+        pass
+
+
+    def locn_from_wcs(self, input_model, slit):
+        """Get the location of the spectrum, based on the WCS.
+
+        Parameters:
+        -----------
+        input_model: data model
+            The input science model.  This will only be used if `slit`
+            is "dummy".
+
+        slit: one slit from a MultiSlitModel (or similar), or "dummy"
+            The WCS and target coordinates will be gotten from `slit`
+            unless `slit` is "dummy", and in that case they will be gotten
+            from `input_model`.
+
+        Returns:
+        --------
+        middle: int or None
+            Pixel coordinate in the dispersion direction within the 2-D
+            cutout (or the entire input image) at the middle of the WCS
+            bounding box.  This is the point at which to determine the
+            nominal extraction location, in case it varies along the
+            spectrum.  The offset will then be the difference between
+            `locn` (below) and the nominal location.
+
+        middle_wl: float or None
+            The wavelength at pixel `middle`.
+
+        locn: int or None
+            Pixel coordinate in the cross-dispersion direction within the
+            2-D cutout (or the entire input image) that has right ascension
+            and declination coordinates closest to the target location.
+            The spectral extraction region should be centered here.
+            None will be returned for `middle`, `middle_wl`, and `locn`
+            if there was not sufficient information available, e.g. if the
+            wavelength attribute or wcs function is not defined.
+        """
+
+        transform = self.wcs.forward_transform
+
+        bb = self.wcs.bounding_box          # ((x0, x1), (y0, y1))
+
+        if bb is None:
+            log.warning("The WCS bounding box is None, "
+                        "so we can't get target location using the WCS.")
+            return None, None, None
+
+        # Size of the bounding box.
+        dx = int(bb[0][1] - bb[0][0] + 1)
+        dy = int(bb[1][1] - bb[1][0] + 1)
+
+        if self.dispaxis == HORIZONTAL:
+            # Width in the cross-dispersion direction, from the start of
+            # the 2-D cutout (or of the full image) to the upper limit of
+            # the bounding box.  This may be smaller than the full width
+            # of the image, but it's all we need to consider.
+            width = bb[0][1] + 1
+            # This is the middle of the bounding_box in the dispersion
+            # direction.  The zero point is the first pixel of the input data.
+            middle = int(bb[0][0] + dx // 2)
+            x = np.empty(width, dtype=np.float64)
+            x[:] = float(middle)
+            y = np.arange(width, dtype=np.float64)
+        else:                                   # dispaxis = VERTICAL
+            width = bb[1][1] + 1                # in cross-dispersion direction
+            middle = int(bb[1][0] + dy // 2)    # in dispersion direction
+            width = int(round(width))           # must be an int
+            x = np.arange(width, dtype=np.float64)
+            y = np.empty(width, dtype=np.float64)
+            y[:] = float(middle)
+
+        if slit == DUMMY:
+            ra = input_model.meta.target.ra
+            dec = input_model.meta.target.dec
+        else:
+            ra = slit.meta.target.ra
+            dec = slit.meta.target.dec
+
+        if transform.n_inputs > 2:
+            stuff = transform(x, y, self.spectral_order)
+            ra_i = stuff[0]
+            dec_i = stuff[1]
+            middle_wl = stuff[2]
+        else:
+            stuff = transform(x, y)
+            ra_i = stuff[0]
+            dec_i = stuff[1]
+            middle_wl = stuff[2]
+        # Rough approximation for handling targets near a pole.
+        dec_m = (dec_i + dec) / 2.
+        dra = (ra_i - ra) * np.cos(dec_m * math.pi / 180.)
+        ddec = dec_i - dec
+
+        nan_ra = np.isnan(dra)
+        nan_dec = np.isnan(ddec)
+        nan_mask = np.logical_or(nan_ra, nan_dec)
+
+        dist = np.where(nan_mask, HUGE_DIST, np.sqrt(dra**2 + ddec**2))
+        del nan_ra, nan_dec, nan_mask
+
+        indx = np.argsort(dist)
+        # This should be the xd location of the spectrum:
+        locn = int(indx[0])     # index of the minimum value in dist
+        # If the minimum distance to the target is at the edge of the image
+        # or at the edge of the non-NaN area, we can't use the WCS to find
+        # the location of the target spectrum.
+        if (locn <= 0 or locn >= width - 1 or
+            dist[locn - 1] > HUGE_DIST / 2. or
+            dist[locn + 1] > HUGE_DIST / 2.):
+            log.warning("WCS implies the target is outside the bounding box, "
+                        "so we can't get target location using the WCS.")
+            if locn <= 0 or locn >= width - 1:
+                log.debug("location = %d, at edge", locn)
+            else:
+                log.debug("location = %d, adjacent to NaN region", locn)
+            if slit == DUMMY:
+                shape = input_model.data.shape
+            else:
+                shape = slit.data.shape
+            locn = None
+
+        return middle, middle_wl, locn
+
+
+    def nominal_locn(self, middle, middle_wl):
+        # Implemented in the subclasses.
         pass
 
 
@@ -930,26 +1125,96 @@ class ExtractModel(ExtractBase):
         if self.wcs is None:
             log.warning("WCS function not found in input.")
 
-        # If source extraction coefficients src_coeff were specified, this
-        # method will add the nod offset correction to the first coefficient
-        # of every coefficient list; otherwise, the nod offset will be added
-        # to xstart & xstop or ystart & ystop in get_aperture.
-        # If background extraction coefficients bkg_coeff were specified,
-        # this method will add the nod offset to the first coefficients.
-        # Note that background coefficients are handled independently of
-        # src_coeff.
-        self.add_nod_correction()
+
+    def nominal_locn(self, middle, middle_wl):
+        """Find the nominal cross-dispersion location of the target spectrum.
+
+        This version is for the case that the reference file is a JSON file,
+        or that there is no reference file.
+
+        Parameters
+        ----------
+        middle: int
+            The zero-indexed pixel number of the point in the dispersion
+            direction at which `locn_from_wcs` determined the actual
+            location (in the cross-dispersion direction) of the target
+            spectrum.  This is used for evaluating the polynomial
+            functions if the independent variable is pixel.
+
+        middle_wl: float
+            The wavelength at pixel `middle`.  This is only used if the
+            independent variable for polynomial functions is wavelength.
+
+        Returns
+        -------
+        location: float or None
+            The nominal cross-dispersion location (i.e. unmodified by
+            nod or dither offset) of the target spectrum.
+        """
+
+        if self.src_coeff is None:
+            if self.dispaxis == HORIZONTAL:
+                location = float(self.ystart + self.ystop) / 2.
+            else:
+                location = float(self.xstart + self.xstop) / 2.
+        else:
+            if self.independent_var.startswith("wavelength"):
+                x = float(middle_wl)
+            else:
+                x = float(middle)
+            # Create the polynomial functions.  We'll do this again later,
+            # after adding the nod/dither offset to the coefficients, but
+            # we need to evaluate them at x now in order to get the nominal
+            # location of the spectrum.
+            self.assign_polynomial_limits()
+            n_srclim = len(self.p_src)
+            sum_data = 0.
+            sum_weights = 0.
+            for i in range(n_srclim):
+                lower = self.p_src[i][0](x)
+                upper = self.p_src[i][1](x)
+                weight = (upper - lower)
+                sum_data += weight * (lower + upper) / 2.
+                sum_weights += weight
+            if sum_weights == 0.:
+                location = None
+            else:
+                location = sum_data / sum_weights
+
+        return location
 
 
     def add_nod_correction(self):
-        """Add the nod offset to src_coeff and bkg_coeff (in-place)."""
+        """Add the nod offset to the extraction location (in-place).
+
+        If source extraction coefficients src_coeff were specified, this
+        method will add the nod offset correction to the first coefficient
+        of every coefficient list; otherwise, the nod offset will be added
+        to xstart & xstop or to ystart & ystop.
+        If background extraction coefficients bkg_coeff were specified,
+        this method will add the nod offset to the first coefficients.
+        Note that background coefficients are handled independently of
+        src_coeff.
+        """
 
         if self.nod_correction == 0.:
             return
 
+        if self.src_coeff is None:
+            if self.dispaxis == HORIZONTAL:
+                dir = "y"
+                self.ystart += self.nod_correction
+                self.ystop += self.nod_correction
+            else:
+                dir = "x"
+                self.xstart += self.nod_correction
+                self.xstop += self.nod_correction
+            log.info("Applying nod/dither offset of %s to %sstart and %sstop",
+                     str(self.nod_correction), dir, dir)
+
         if self.src_coeff is not None or self.bkg_coeff is not None:
-            log.info("Applying nod offset of %s",
-                     str(self.nod_correction))
+            log.info("Applying nod/dither offset of %s "
+                     "to polynomial coefficients", str(self.nod_correction))
 
         if self.src_coeff is not None:
             n_lists = len(self.src_coeff)
@@ -991,6 +1256,7 @@ class ExtractModel(ExtractBase):
     def log_extraction_parameters(self):
         """Log the updated extraction parameters."""
 
+        log.debug("nod_correction = %s", str(self.nod_correction))
         note_x = ""
         note_y = ""
         if self.src_coeff is not None:
@@ -1055,8 +1321,8 @@ class ExtractModel(ExtractBase):
             # The source extraction can include more than one region.
             n_lists = len(self.src_coeff)
             if n_lists // 2 * 2 != n_lists:
-                raise RuntimeError("src_coeff must contain alternating lists"
-                                   " of lower and upper limits.")
+                raise RuntimeError("src_coeff must contain alternating lists "
+                                   "of lower and upper limits.")
             self.p_src = []
             expect_lower = True                         # toggled in loop
             for coeff_list in self.src_coeff:
@@ -1070,8 +1336,8 @@ class ExtractModel(ExtractBase):
         if self.bkg_coeff is not None:
             n_lists = len(self.bkg_coeff)
             if n_lists // 2 * 2 != n_lists:
-                raise RuntimeError("bkg_coeff must contain alternating lists"
-                                   " of lower and upper limits.")
+                raise RuntimeError("bkg_coeff must contain alternating lists "
+                                   "of lower and upper limits.")
             self.p_bkg = []
             expect_lower = True                         # toggled in loop
             for coeff_list in self.bkg_coeff:
@@ -1086,7 +1352,7 @@ class ExtractModel(ExtractBase):
     def extract(self, data, wl_array):
         """
         Do the actual extraction, for the case that the reference file
-        is a JSON file.
+        is a JSON file, or that there is no reference file.
 
         Parameters
         ----------
@@ -1130,7 +1396,11 @@ class ExtractModel(ExtractBase):
             sy0 = int(round(self.ystart))
             sy1 = int(round(self.ystop)) + 1
             # Convert non-positive values to NaN, to easily ignore them.
-            wl = np.where(wl_array <= 0., np.nan, wl_array)
+            wl = wl_array.copy()                # don't modify wl_array
+            nan_flag = np.isnan(wl)
+            # To avoid a warning about invalid value encountered in less_equal.
+            wl[nan_flag] = -1000.
+            wl = np.where(wl <= 0., np.nan, wl)
             if self.dispaxis == HORIZONTAL:
                 wavelength = np.nanmean(wl[sy0:sy1, sx0:sx1], axis=0)
             else:
@@ -1260,7 +1530,8 @@ class ImageExtractModel(ExtractBase):
                  spectral_order=1,
                  ref_image=None,
                  dispaxis=HORIZONTAL,
-                 smoothing_length=0):
+                 smoothing_length=0,
+                 nod_correction=0):
         """Extract using a reference image to define the extraction and
            background regions."""
 
@@ -1276,6 +1547,7 @@ class ImageExtractModel(ExtractBase):
         self.ref_image = ref_image
         self.spectral_order = spectral_order
         self.dispaxis = dispaxis
+        self.nod_correction = nod_correction
 
         if smoothing_length is None:
             smoothing_length = 0
@@ -1304,17 +1576,105 @@ class ImageExtractModel(ExtractBase):
             log.warning("WCS function not found in input.")
 
 
+    def nominal_locn(self, middle, middle_wl):
+        """Find the nominal cross-dispersion location of the target spectrum.
+
+        This version is for the case that the reference file is an image.
+
+        Parameters
+        ----------
+        middle: int
+            The zero-indexed pixel number of the point in the dispersion
+            direction at which `locn_from_wcs` determined the actual
+            location (in the cross-dispersion direction) of the target
+            spectrum.
+
+        middle_wl: float
+            The wavelength at pixel `middle`.  This is not used.
+
+        Returns
+        -------
+        location: float or None
+            The nominal cross-dispersion location (i.e. unmodified by
+            nod or dither offset) of the target spectrum.
+            The value will be None if `middle` is outside the reference
+            image or if the reference image does not specify any pixels
+            to extract at `middle`.
+        """
+
+        shape = self.ref_image.data.shape
+
+        if self.dispaxis == HORIZONTAL:
+            if middle < 0 or middle >= shape[1]:
+                return None
+            middle_line = self.ref_image.data[:, middle]
+        else:
+            if middle < 0 or middle >= shape[0]:
+                return None
+            middle_line = self.ref_image.data[middle, :]
+
+        mask_target = np.where(middle_line > 0., 1., 0.)
+        x = np.arange(len(middle_line), dtype=np.float64)
+
+        numerator = (x * mask_target).sum()
+        denominator = mask_target.sum()
+        if denominator > 0.:
+            location = numerator / denominator
+        else:
+            location = None
+
+        return location
+
+
+    def add_nod_correction(self):
+        """Shift the reference image (in-place)."""
+
+        if self.nod_correction == 0:
+            return
+
+        log.info("Applying nod/dither offset of %s", str(self.nod_correction))
+
+        # Shift the image in the cross-dispersion direction.
+        ref = self.ref_image.data.copy()
+        shift = self.nod_correction
+        ishift = int(round(shift))
+        if ishift != shift:
+            log.info("Rounding nod/dither offset of %g to %d", shift, ishift)
+        if self.dispaxis == HORIZONTAL:
+            if abs(ishift) >= ref.shape[0]:
+                log.error("Nod offset %d is too large, skipping ...", ishift)
+                return
+            self.ref_image.data[:, :] = 0.
+            if ishift > 0:
+                self.ref_image.data[ishift:, :] = ref[:-ishift, :]
+            else:
+                ishift = -ishift
+                self.ref_image.data[:-ishift, :] = ref[ishift:, :]
+        else:
+            if abs(ishift) >= ref.shape[1]:
+                log.error("Nod offset %d is too large, skipping ...", ishift)
+                return
+            self.ref_image.data[:, :] = 0.
+            if ishift > 0:
+                self.ref_image.data[:, ishift:] = ref[:, :-ishift]
+            else:
+                ishift = -ishift
+                self.ref_image.data[:, :-ishift] = ref[:, ishift:]
+
+
     def log_extraction_parameters(self):
 
         log.debug("Using a reference image that defines extraction regions.")
         log.debug("dispaxis = %d", self.dispaxis)
+        log.debug("spectral order = %s", str(self.spectral_order))
         log.debug("smoothing_length = %d", self.smoothing_length)
+        log.debug("nod_correction = %s", str(self.nod_correction))
 
 
     def extract(self, data, wl_array):
         """
         Do the actual extraction, for the case that the reference file
-        is an image (e.g. a FITS file).
+        is an image.
 
         Parameters
         ----------
@@ -1647,6 +2007,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
             elif extract_params['match'] == PARTIAL:
                 log.info('Spectral order %d not found, skipping ...', sp_order)
                 continue
+            find_dispaxis(slit, sp_order, extract_params)
 
             try:
                 (ra, dec, wavelength, net, background, dq) = \
@@ -1721,6 +2082,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                                     bkg_order)
                 if extract_params['match'] == EXACT:
                     slit = DUMMY
+                    find_dispaxis(input_model, sp_order, extract_params)
                     try:
                         (ra, dec, wavelength, net, background, dq) = \
                                 extract_one_slit(input_model, slit, -1,
@@ -1794,6 +2156,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
                     log.warning('Spectral order %d not found, skipping ...',
                                 sp_order)
                     continue
+                find_dispaxis(input_model, sp_order, extract_params)
 
                 got_relsens = True
                 try:
@@ -1864,7 +2227,7 @@ def do_extract1d(input_model, refname, smoothing_length, bkg_order):
     output_model.meta.wcs = None
 
     # If the reference file is an image, explicitly close it.
-    if 'ref_model' in ref_dict:
+    if ref_dict is not None and 'ref_model' in ref_dict:
         ref_dict['ref_model'].close()
 
     return output_model
@@ -1935,18 +2298,18 @@ def extract_one_slit(input_model, slit, integ, verbose, **extract_params):
     Parameters
     ----------
     input_model: data model
-        The input science data.
+        The input science model.
 
-    slit: one slit from a MultiSlitModel, or "dummy"
-        If `slit` is a slit from a MultiSlitModel, the data array is
-        slit.data; otherwise, the data are in input_model.data.
-        In the latter case, if `integ` is zero or larger, the spectrum
+    slit: one slit from a MultiSlitModel (or similar), or "dummy"
+        If slit is "dummy", the data array is input_model.data; otherwise,
+        the data array is slit.data.
+        In the former case, if `integ` is zero or larger, the spectrum
         will be extracted from the 2-D slice input_model.data[integ].
 
     integ: int
-        For the case that the input is a CubeModel, `integ` is the
-        integration number.  If the integration number is not relevant,
-        `integ` should be -1.
+        For the case that input_model is a SlitModel or a CubeModel,
+        `integ` is the integration number.  If the integration number is
+        not relevant (i.e. the data array is 2-D), `integ` should be -1.
 
     verbose: boolean
         If True, log more info (extraction parameters, in particular).
@@ -1997,13 +2360,42 @@ def extract_one_slit(input_model, slit, integ, verbose, **extract_params):
 
     data = replace_bad_values(data, input_dq, fill=0.)
 
-    if extract_params['ref_file_type'] == FILE_TYPE_FITS:
+    if extract_params['ref_file_type'] == FILE_TYPE_IMAGE:
+        # The reference file is an image.
         extract_model = ImageExtractModel(input_model, slit, **extract_params)
         ap = None
     else:
+        # If there is a reference file (there doesn't have to be), it's in
+        # JSON format.
         extract_model = ExtractModel(input_model, slit, **extract_params)
         ap = get_aperture(data.shape, extract_model.wcs, extract_params)
         extract_model.update_extraction_limits(ap)
+
+    # Use the WCS function to find the cross-dispersion (XD) location that
+    # is closest to the target coordinates.  This is the "actual" location
+    # of the spectrum, so the extraction region should be centered here.
+    (middle, middle_wl, locn) = extract_model.locn_from_wcs(input_model, slit)
+    if middle is not None:
+        log.debug("Spectrum location from WCS used column (or row) %d",
+                  middle)
+
+    # Find the nominal extraction location, i.e. the XD location specified
+    # in the reference file prior to adding any nod/dither offset.  The
+    # difference is the nod/dither offset.
+    if middle is not None and locn is not None:
+        nominal_location = extract_model.nominal_locn(middle, middle_wl)
+        log.debug("Target spectrum is at %g in the cross-dispersion direction",
+                  locn)
+        if nominal_location is not None:
+            log.debug("and the nominal XD location of the target spectrum "
+                      "is %g", nominal_location)
+            extract_model.nod_correction = locn - nominal_location
+        else:
+            log.debug("but couldn't determine the nominal XD location.")
+
+    # Add the nod/dither offset to the polynomial coefficients, or shift
+    # the reference image (depending on the type of reference file).
+    extract_model.add_nod_correction()
 
     if verbose:
         extract_model.log_extraction_parameters()
