@@ -56,7 +56,12 @@ NIR_reference_sections = {'A': {'top': (2044, 2048, 0, 512),
                           'D': {'top': (2044, 2048, 1536, 2048),
                                'bottom': (0, 4, 1536, 2048),
                                'side': (0, 2048, 2044, 2048),
-                               'data': (0, 2048, 1536, 2048)}
+                               'data': (0, 2048, 1536, 2048)},
+                          'SUBARRAY': {'top': (2044, 2048, 0, 2048),
+                                       'bottom': (0, 4, 0, 2048),
+                                       'left': (0, 2048, 0, 4),
+                                       'right': (0, 2048, 2044, 2048),
+                                       'data': (0, 2048, 0, 2048)}
                           }
 
 #
@@ -1396,6 +1401,66 @@ def create_dataset(input_model,
                           side_smoothing_length,
                           side_gain)
 
+def create_embedded(input_model,
+                    odd_even_columns,
+                    use_side_ref_pixels,
+                    side_smoothing_length,
+                    side_gain,
+                    odd_even_rows):
+    """Create a dataset object by embedding the data array
+    from a subarray datamodel in a full frame of zeros, and
+    embedding the dq array from same in a full frame of
+    dqflags.pixel['DO_NOT_USE'].
+
+    Parameters:
+    -----------
+
+    input_model: data model object
+        Science data model to be corrected
+
+    odd_even_columns: booolean
+        flag that controls whether odd and even-numbered columns are
+        processed separately (NIR only)
+
+    use_side_ref_pixels: boolean
+        flag the controls whether the side reference pixels are used in
+        the correction (NIR only)
+
+    side_smoothing_length: integer
+        smoothing length the use in calculating the running median of
+        the side reference pixels (NIR only)
+
+    side_gain: float
+        gain to use in applying the side reference pixel correction
+        (NIR only)
+
+    odd_even_rows: boolean
+        flag that controls whether odd and even-numbered rows are handled
+        separately (MIR only)
+
+    """
+    embedded_model = input_model.copy()
+    detector = embedded_model.meta.instrument.detector
+    colstart = embedded_model.meta.subarray.xstart
+    colstop = colstart + embedded_model.meta.subarray.xsize
+    rowstart = embedded_model.meta.subarray.ystart
+    rowstop = rowstart + embedded_model.meta.subarray.ysize
+    if detector[:3] == 'MIR':
+        full_shape = (1024, 1032)
+    else:
+        full_shape = (2048, 2048)
+
+    embedded_model.data = np.zeros(full_shape, dtype=input_model.data.dtype)
+    embedded_model.data[rowstart:rowstop, colstart:colstop] = input_model.data
+    embedded_model.dq = np.zeros(full_shape, dtype=input_model.pixeldq.dtype)
+    embedded_model.pixeldq[rowstart:rowstop, colstart:colstop] = input_model.pixeldq
+    return create_dataset((embedded_model,
+                           odd_even_columns,
+                           use_side_ref_pixels,
+                           side_smoothing_length,
+                           side_gain,
+                           odd_even_rows)
+
 def is_subarray(input_model):
     """Test for whether the data in a model is full-frame or subarray
 
@@ -1449,15 +1514,21 @@ def correct_model(input_model, odd_even_columns,
     """
 
     if is_subarray(input_model):
-        log.info('Reference pixel correction disabled for subarray exposures')
-        return input_model.copy()
-
-    input_dataset = create_dataset(input_model,
-                                   odd_even_columns,
-                                   use_side_ref_pixels,
-                                   side_smoothing_length,
-                                   side_gain,
-                                   odd_even_rows)
+        input_dataset = create_embedded(input_model,
+                                        odd_even_columns,
+                                        use_side_ref_pixels,
+                                        side_smoothing_length,
+                                        side_gain,
+                                        odd_even_rows)
+        input_dataset.is_subarray = True
+    else:
+        input_dataset = create_dataset(input_model,
+                                       odd_even_columns,
+                                       use_side_ref_pixels,
+                                       side_smoothing_length,
+                                       side_gain,
+                                       odd_even_rows)
+        input_dataset.is_subarray = False
     result_dataset = reference_pixel_correction(input_dataset)
     if result_dataset.bad_reference_pixels:
         return None
