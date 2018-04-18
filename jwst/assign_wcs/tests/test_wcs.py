@@ -69,11 +69,11 @@ def test_v23_to_sky():
     """
     Test taken from INS report.
     """
-    ra_ref = 165 # in deg
-    dec_ref = 54 # in deg
-    v2_ref = -503.654472 / 3600 # in deg
-    v3_ref = -318.742464 / 3600 # in deg
-    r0 = 37 # in deg
+    ra_ref = 165 *3600 # in arcsec
+    dec_ref = 54 * 3600 # in arcsec
+    v2_ref = -503.654472 # in arcsec
+    v3_ref = -318.742464 # in arcsec
+    r0 = 37 * 3600 # in deg
 
     v2 = 210 # in deg
     v3 = -75 # in deg

@@ -367,13 +367,13 @@ def update_s_region(model, prd_db_filepath=None):
     )
     # Execute IdealToV2V3, followed by V23ToSky
     from ..transforms.models import IdealToV2V3, V23ToSky
-    v2_ref_deg = model.meta.wcsinfo.v2_ref / 3600
-    v3_ref_deg = model.meta.wcsinfo.v3_ref / 3600
-    roll_ref = model.meta.wcsinfo.roll_ref
-    ra_ref = model.meta.wcsinfo.ra_ref
-    dec_ref = model.meta.wcsinfo.dec_ref
+    v2_ref_deg = model.meta.wcsinfo.v2_ref # in arcsec
+    v3_ref_deg = model.meta.wcsinfo.v3_ref # in arcsec
+    roll_ref = model.meta.wcsinfo.roll_ref * 3600 # in arcsec
+    ra_ref = model.meta.wcsinfo.ra_ref * 3600 # in arcsec
+    dec_ref = model.meta.wcsinfo.dec_ref * 3600 # in arcsec
     vparity = model.meta.wcsinfo.vparity
-    v3yangle = model.meta.wcsinfo.v3yangle
+    v3yangle = model.meta.wcsinfo.v3yangle # in deg
 
     # V2_ref and v3_ref should be in arcsec
     idltov23 = IdealToV2V3(
