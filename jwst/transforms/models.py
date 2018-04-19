@@ -9,7 +9,7 @@ from collections import namedtuple
 import numpy as np
 from astropy.modeling.core import Model
 from astropy.modeling.parameters import Parameter, InputParameterError
-from astropy.modeling.rotations import Rotation2D
+from astropy.modeling.models import Rotation2D, Mapping, Identity
 from astropy.utils import isiterable
 
 
@@ -692,8 +692,9 @@ class Slit2Msa(Model):
         an instance of `~astropy.modeling.core.Model`
     """
 
-    inputs = ('name', 'x_slit', 'y_slit', 'lam')
-    outputs = ('x_msa', 'y_msa', 'lam')
+    inputs = ('name', 'x_slit', 'y_slit')
+    outputs = ('x_msa', 'y_msa')
+
 
     def __init__(self, slits, models):
         super(Slit2Msa, self).__init__()
@@ -716,9 +717,9 @@ class Slit2Msa(Model):
         index = self.slit_ids.index(name)
         return self.models[index]
 
-    def evaluate(self, name, x, y, lam):
+    def evaluate(self, name, x, y):
         index = self.slit_ids.index(name)
-        return self.models[index](x, y) + (lam,)
+        return self.models[index](x, y)
 
 
 class NirissSOSSModel(Model):

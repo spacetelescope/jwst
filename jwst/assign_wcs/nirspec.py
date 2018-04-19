@@ -153,14 +153,18 @@ def ifu(input_model, reference_files):
     gwa2slit = gwa_to_ifuslit(slits, input_model, disperser, reference_files)
 
     # SLIT to MSA transform
-    slit2msa = ifuslit_to_msa(slits, reference_files, input_model)
+    slit2slicer = ifuslit_to_slicer(slits, reference_files, input_model)
+
+    # SLICER to MSA Entrance
+    slicer2msa = slicer_to_msa(reference_files)
 
     det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, world = create_frames()
-    slit2msa = (Mapping((0, 1, 2, 2)) | slit2msa).rename('slit2msa')
+    #slit2msa = (Mapping((0, 1, 2, 2)) | slicer2msa).rename('slicer2msa')
+    slicer2msa_in = slicer2msa
     if input_model.meta.instrument.filter != 'OPAQUE':
         # MSA to OTEIP transform
+        ##msa2oteip = ifu_msa_to_oteip(reference_files)
         msa2oteip = ifu_msa_to_oteip(reference_files)
-
         # OTEIP to V2,V3 transform
         # This includes a wavelength unit conversion from meters to microns.
         oteip2v23 = oteip_to_v23(reference_files)
@@ -179,7 +183,8 @@ def ifu(input_model, reference_files):
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
                     ## (slit_frame, (Mapping((0, 1, 2, 3)) | slit2msa).rename('slit2msa')),
-                    (slit_frame, (slit2msa).rename('slit2msa')),
+                    (slit_frame, slit2slicer),
+                    ('slicer', slicer2msa_in),
                     (msa_frame, msa2oteip.rename('msa2oteip')),
                     (oteip, oteip2v23.rename('oteip2v23')),
                     (v2v3, tel2sky),
@@ -191,7 +196,8 @@ def ifu(input_model, reference_files):
         pipeline = [(det, dms2detector),
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
-                    (slit_frame, slit2msa),
+                    (slit_frame, slit2slicer),
+                    ('slicer', slicer2msa_in),
                     (msa_frame, None)]
 
     return pipeline
@@ -558,44 +564,54 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
     return order, wrange
 
 
-def ifuslit_to_msa(slits, reference_files, input_model):
+def ifuslit_to_slicer(slits, reference_files, input_model):
     """
-    The transform from slit_frame to msa_frame.
+    The transform from slit_frame to slicer.
+
 
     Parameters
     ----------
-    slits_id : list
-        A list of slit IDs for all open shutters/slitlets.
-    msafile : str
-        The name of the msa reference file.
+    slits : list
+        A list of slit IDs for all slices.
+    reference_files : dict
+        {reference_type: reference_file_name}
+    input_model : `~jwst.datamodels.ImageModel`
 
     Returns
     -------
     model : `~jwst.transforms.Slit2Msa` model.
-        Transform from slit_frame to msa_frame.
+        Transform from slit_frame to slicer.
     """
-    lam_cen = 0.5 * (input_model.meta.wcsinfo.waverange_end -
-                     input_model.meta.wcsinfo.waverange_start
-                     ) + input_model.meta.wcsinfo.waverange_start
-    #ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
     ifuslicer = IFUSlicerModel(reference_files['ifuslicer'])
-    ifupost = IFUPostModel(reference_files['ifupost'])
     models = []
-    #ifuslicer_model = (ifuslicer.tree['model']).rename('ifuslicer_model')
     ifuslicer_model = ifuslicer.model
     for slit in slits:
-        #slitdata = ifuslicer.tree['data'][slit]
         slitdata = ifuslicer.data[slit]
         slitdata_model = (get_slit_location_model(slitdata)).rename('slitdata_model')
         slicer_model = slitdata_model | ifuslicer_model
-        ifupost_sl = getattr(ifupost, "slice_{0}".format(slit))
-        ifupost_transform = _create_ifupost_transform(ifupost_sl, lam_cen)
 
-        msa_transform = slicer_model | ifupost_transform
+        msa_transform = slicer_model
         models.append(msa_transform)
     ifuslicer.close()
 
     return Slit2Msa(slits, models)
+
+
+def slicer_to_msa(reference_files):
+    """
+    Trasform from slicer coordinates to MSA entrance.
+
+    Applies the IFUFORE transform.
+
+    """
+    with IFUFOREModel(reference_files['ifufore']) as f:
+        ifufore = f.model
+    slicer2fore_mapping = Mapping((0, 1, 2, 2))
+    slicer2fore_mapping.inverse = Identity(3)
+    ifufore2fore_mapping = Identity(1)
+    ifufore2fore_mapping.inverse = Mapping((0, 1, 2, 2))
+    ifu_fore_transform = slicer2fore_mapping | ifufore & Identity(1)
+    return ifu_fore_transform
 
 
 def slit_to_msa(open_slits, msafile):
@@ -676,23 +692,20 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
                      ) + input_model.meta.wcsinfo.waverange_start
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
     mask = mask_slit(ymin, ymax)
-    #ifuslicer = AsdfFile.open(reference_files['ifuslicer'])
-    #ifupost = AsdfFile.open(reference_files['ifupost'])
+
     ifuslicer = IFUSlicerModel(reference_files['ifuslicer'])
     ifupost = IFUPostModel(reference_files['ifupost'])
     slit_models = []
-    #ifuslicer_model = ifuslicer.tree['model']
     ifuslicer_model = ifuslicer.model
     for slit in slits:
-        #slitdata = ifuslicer.tree['data'][slit]
         slitdata = ifuslicer.data[slit]
         slitdata_model = get_slit_location_model(slitdata)
         ifuslicer_transform = (slitdata_model | ifuslicer_model)
         ifupost_sl = getattr(ifupost, "slice_{0}".format(slit))
-        # construct IFU post ransform
-        ifupost_transform = _create_ifupost_transform(ifupost_sl, lam_cen)
-        msa2gwa = ifuslicer_transform | ifupost_transform | collimator2gwa
-        gwa2msa = gwa_to_ymsa(msa2gwa, lam_cen)# TODO: Use model sets here
+        # construct IFU post transform
+        ifupost_transform = _create_ifupost_transform(ifupost_sl)
+        msa2gwa = ifuslicer_transform & Const1D(lam_cen) | ifupost_transform | collimator2gwa
+        gwa2slit = gwa_to_ymsa(msa2gwa, lam_cen)# TODO: Use model sets here
 
         bgwa2msa = (
             # (alpha_out, beta_out, gamma_out), angles at the GWA, coming from the camera
@@ -704,15 +717,16 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files):
             # (0, sy, lambda_computed)
             Mapping((0, 1, 0, 1), n_inputs=3) |
             Const1D(0) * Identity(1) & Const1D(-1) * Identity(1) & Identity(2) | \
-            Identity(1) & gwa2msa & Identity(2) | \
-            Mapping((0, 1, 0, 1, 2, 3)) | \
+            Identity(1) & gwa2slit & Identity(2) | \
+            Mapping((0, 1, 0, 1, 1, 2, 3)) | \
             Identity(2) & msa2gwa & Identity(2) | \
             Mapping((0, 1, 2, 3, 5), n_inputs=7) | \
             Identity(2) & lgreq | mask
         )
 
         # msa to before_gwa
-        msa2bgwa = Mapping((0, 1, 2)) | msa2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
+        msa2gwa_out = ifuslicer_transform & Identity(1) | ifupost_transform | collimator2gwa
+        msa2bgwa = Mapping((0, 1, 2, 2)) | msa2gwa_out & Identity(1) | Mapping((3, 0, 1, 2)) | agreq
         bgwa2msa.inverse = msa2bgwa
         slit_models.append(bgwa2msa)
 
@@ -1106,17 +1120,18 @@ def ifu_msa_to_oteip(reference_files):
         Transform from MSA to OTEIP.
     """
     with FOREModel(reference_files['fore']) as f:
-        #fore = f.tree['model'].copy()
         fore = f.model
-    with IFUFOREModel(reference_files['ifufore']) as f:
-        ifufore = f.model
+    #with IFUFOREModel(reference_files['ifufore']) as f:
+        #ifufore = f.model
 
-    msa2fore_mapping = Mapping((0, 1, 2, 2))
-    msa2fore_mapping.inverse = Identity(3)
-    ifu_fore_transform = ifufore & Identity(1)
-    ifu_fore_transform.inverse = Mapping((0, 1, 2, 2)) | ifufore.inverse & Identity(1)
+    msa2fore_mapping = Mapping((0, 1, 2, 2), name='msa2fore_mapping')
+    msa2fore_mapping.inverse = Mapping((0, 1, 2, 2), name='fore2msa')
+    ##msa2fore_mapping.inverse = Identity(3)
+    #ifu_fore_transform = ifufore & Identity(1)
+    #ifu_fore_transform.inverse = Mapping((0, 1, 2, 2)) | ifufore.inverse & Identity(1)
     fore_transform = msa2fore_mapping | fore & Identity(1)
-    return msa2fore_mapping | ifu_fore_transform | fore_transform
+    #return msa2fore_mapping | ifu_fore_transform | fore_transform
+    return fore_transform
 
 
 def msa_to_oteip(reference_files):
@@ -1138,6 +1153,7 @@ def msa_to_oteip(reference_files):
         fore = f.model
     msa2fore_mapping = Mapping((0, 1, 2, 2), name='msa2fore_mapping')
     msa2fore_mapping.inverse = Identity(3)
+    ##msa2fore_mapping.inverse = Mapping((0, 1, 2, 2), name='fore2msa') # Identity(3)
     return msa2fore_mapping | (fore & Identity(1))
 
 
@@ -1304,9 +1320,12 @@ def nrs_wcs_set_input(input_model, slit_name, wavelength_range=None):
 
     slit_wcs.set_transform('gwa', 'slit_frame', g2s.get_model(slit_name))
     if input_model.meta.exposure.type.lower() == 'nrs_ifu':
-        slit_wcs.set_transform('slit_frame', 'msa_frame',
+        slit_wcs.set_transform('slit_frame', 'slicer', #'msa_frame',
                            #Mapping((0,1,2,2)) | wcsobj.pipeline[3][1][1].get_model(slit_name) & Identity(1))
-                           wcsobj.pipeline[3][1][1].get_model(slit_name) & Identity(1))
+                           #wcsobj.pipeline[3][1][1].get_model(slit_name) & Identity(1))
+                           wcsobj.pipeline[3][1].get_model(slit_name) & Identity(1))
+        #slit_wcs.set_transform('slicer', 'msa_frame',
+
     else:
         slit_wcs.set_transform('slit_frame', 'msa_frame',
                            wcsobj.pipeline[3][1].get_model(slit_name) & Identity(1))
@@ -1437,7 +1456,7 @@ def nrs_ifu_wcs(input_model):
     return wcs_list
 
 
-def _create_ifupost_transform(ifupost_slice, wavelength):
+def _create_ifupost_transform(ifupost_slice):
     """
     Create an IFUPOST transform for a specific slice.
 
@@ -1445,9 +1464,6 @@ def _create_ifupost_transform(ifupost_slice, wavelength):
     ----------
     ifupost_slice : `jwst.datamodels.properties.ObjectNode`
         IFUPost transform for a specific slice
-    wavelelngth : float
-        Wavelength to use in the computation of the distortion,
-        the central wavelength.
 
     """
     linear = ifupost_slice.linear
@@ -1455,17 +1471,27 @@ def _create_ifupost_transform(ifupost_slice, wavelength):
     polyx_dist = ifupost_slice.xpoly_distortion
     polyy = ifupost_slice.ypoly
     polyy_dist = ifupost_slice.ypoly_distortion
-    polyx_dist.parameters *= wavelength
-    polyx.parameters += polyx_dist.parameters
-    polyy_dist.parameters *= wavelength
-    polyy.parameters += polyy_dist.parameters
-    mapp = Mapping((0, 1, 0, 1), name='ifupost_forward')
-    mapp.inverse = Identity(2, name='ifupost_backward')
 
-    mappinv = Identity(2, name='ifupost_forward')
-    mappinv.inverse = Mapping((0, 1, 0, 1), name='ifupost_backward')
-    ifupost_transform = linear | mapp | polyx & polyy | mappinv
-    return ifupost_transform
+    # the chromatic correction is done here
+    # the input is Xslicer, Yslicer, lam
+    # The wavelength dependent polynomial is
+    # expressed as
+    # poly_independent(x, y) + poly_dependent(x, y) * lambda
+    model_x = ((Mapping((0,1), n_inputs=3) | polyx) +
+                       ((Mapping((0,1), n_inputs=3) | polyx_dist) *
+                        (Mapping((2,)) | Identity(1))))
+    model_y = ((Mapping((0,1), n_inputs=3) | polyy) +
+                       ((Mapping((0,1), n_inputs=3) | polyy_dist) *
+                        (Mapping((2,)) | Identity(1))))
+
+    output2poly_mapping = Identity(2, name="{0}_outmap".format('ifupost'))
+    output2poly_mapping.inverse = Mapping([0, 1, 2, 0, 1, 2])
+    input2poly_mapping = Mapping([0, 1, 2, 0, 1, 2], name="{0}_inmap".format('ifupost'))
+    input2poly_mapping.inverse = Identity(2)
+
+    model_poly = input2poly_mapping  | (model_x & model_y) | output2poly_mapping
+    model = linear & Identity(1) | model_poly
+    return model
 
 
 exp_type2transform = {'nrs_tacq': imaging,
