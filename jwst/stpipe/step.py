@@ -814,10 +814,10 @@ class Step():
         )
 
         basename, basepath_ext = splitext(split(basepath)[1])
-        if ext is None and len(basepath_ext):
-            ext = basepath_ext
         if ext is None:
             ext = step.output_ext
+        if ext is None and len(basepath_ext):
+            ext = basepath_ext
         if ext.startswith('.'):
             ext = ext[1:]
 
