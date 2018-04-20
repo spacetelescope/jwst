@@ -321,7 +321,7 @@ def get_object_info(catalog_name=None):
     if catalog_name is None:
         raise TypeError("Expected name of the catalog file")
     objects = []
-    if isinstance(catalog, (str)):
+    if isinstance(catalog_name, (str)):
         catalog = QTable.read(catalog_name, format='ascii.ecsv')
     elif isinstance(catalog, astropy.table.table.QTable):
         pass
