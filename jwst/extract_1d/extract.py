@@ -906,6 +906,7 @@ class ExtractBase:
             # This is the middle of the bounding_box in the dispersion
             # direction.  The zero point is the first pixel of the input data.
             middle = int(bb[0][0] + dx // 2)
+            width = int(round(width))           # must be an int
             x = np.empty(width, dtype=np.float64)
             x[:] = float(middle)
             y = np.arange(width, dtype=np.float64)
@@ -917,12 +918,16 @@ class ExtractBase:
             y = np.empty(width, dtype=np.float64)
             y[:] = float(middle)
 
-        if slit == DUMMY:
+        if hasattr(input_model.meta, "target"):
             ra = input_model.meta.target.ra
             dec = input_model.meta.target.dec
-        else:
+        elif slit != DUMMY and hasattr(slit.meta, "target"):
             ra = slit.meta.target.ra
             dec = slit.meta.target.dec
+        else:
+            log.warning("Target RA and Dec are not available, "
+                        "so we can't get target location using the WCS.")
+            return None, None, None
 
         if transform.n_inputs > 2:
             stuff = transform(x, y, self.spectral_order)
