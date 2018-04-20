@@ -46,6 +46,7 @@ def test_make_output_path():
     assert output_path == 'junk_step.asdf'
 
     step.output_dir = '/junk'
+    step.output_ext = None
     output_path = step.make_output_path('junk_uncal.fits')
     assert output_path == path.join(step.output_dir, 'junk_step.fits')
 
