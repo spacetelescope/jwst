@@ -186,7 +186,7 @@ def get_rscd_parameters(input_model, rscd_model):
     readpatt = input_model.meta.exposure.readpatt
     subarray = input_model.meta.subarray.name
 
-    if subarray == 'SUBPRISM': subarray = 'SLITLESSPRISM'
+#    if subarray == 'SUBPRISM': subarray = 'SLITLESSPRISM'
     # Load the reference table columns of parameters
     readpatt_table = rscd_model.rscd_table['READPATT']
     subarray_table = rscd_model.rscd_table['SUBARRAY']

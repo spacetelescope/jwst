@@ -29,8 +29,6 @@ class RSCD_Step(Step):
                     self.log.warning('RSCD step will be skipped')
                     input_model.meta.cal_step.rscd = 'SKIPPED'
                     return input_model
-
-
                 # Check that data has the minimum number of groups/int
                 sci_ngroups = input_model.data.shape[1]     # number of groups
                 min_number = 4
