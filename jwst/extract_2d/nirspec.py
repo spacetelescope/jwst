@@ -370,9 +370,6 @@ def get_source_xpos(input_model, slit, slit_wcs, lam, msa_model):
     idl2v23 = trmodels.IdealToV2V3(v3idlyangle, v2ref, v3ref, vparity)
     # Compute the location in V2,V3 [in arcsec]
     xv, yv = idl2v23(xoffset, yoffset)
-    # The NIRSPEC transforms expect V2,V3 positions in deg
-    xv = xv / 3600.
-    yv = yv / 3600.
 
     v2v3_to_msa_frame = slit_wcs.get_transform("v2v3", "msa_frame")
     xpos_abs, ypos_abs, lam = v2v3_to_msa_frame(xv, yv, lam)
