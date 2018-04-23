@@ -16,8 +16,6 @@ import math
 from .. import datamodels
 from ..datamodels import dqflags
 from astropy.convolution import convolve, Box2DKernel
-#from matplotlib import pyplot as plt
-
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -28,6 +26,7 @@ def correct_MRS(input_model, straylight_model):
     Short Summary
     -------------
     Corrects the MIRI MRS data for straylight
+    Uses the straylight reference file
 
     Parameter
     ----------
@@ -47,8 +46,6 @@ def correct_MRS(input_model, straylight_model):
     nrows, ncols = input_model.data.shape
     # mask is either 1 or 0 
     mask = straylight_model.data
- #   plt.imshow(mask)
- #   plt.show()
 
     x = float('nan')
     # The straylight mask has values of 1 and 0. The straylight task uses data
@@ -59,11 +56,6 @@ def correct_MRS(input_model, straylight_model):
     # Create output as a copy of the input science data model
     # sci_mask is the input science image * mask
     # science regions  = 0 (reference pixel are  also = 0)
-
-# used for testing and putting in a hot pixel 
-#    drow = 412
-#    dx1 = 470
-#    dx2 = 480
 
     output = input_model.copy() # this is used in algorithm to
     # find the straylight correction.
@@ -78,8 +70,10 @@ def correct_MRS(input_model, straylight_model):
     # flag bad pixels 
     mask_dq = input_model.dq.copy()# * mask # find DQ flags of the gap values 
 
-    all_flags = (dqflags.pixel['DO_NOT_USE'] + 
-                 dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
+#    all_flags = (dqflags.pixel['DO_NOT_USE'] + 
+#                 dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
+
+    all_flags = (dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
     
     # where are pixels set to any one of the all_flags cases 
     testflags = np.bitwise_and(mask_dq,all_flags)
@@ -103,7 +97,6 @@ def correct_MRS(input_model, straylight_model):
     sci_ave[index] = 0
     mask_ave[index] = 1
     sci_smooth = sci_ave / mask_ave
-
     x = np.arange(ncols)
 
     # Loop over each row (0 to 1023)
@@ -139,10 +132,6 @@ def correct_MRS(input_model, straylight_model):
                 i = i + 1
 
             xlimits[ngroups] = xuse[nn - 1]#+1
-            #if(j ==1):
-            #    print '# xlimits',ngroups
-            #    print 'xlimits',xlimits
-
 
             xg = np.zeros(ngroups)
             yg = np.zeros(ngroups)
@@ -179,7 +168,6 @@ def correct_MRS(input_model, straylight_model):
 
     straylight_image[straylight_image < 0] = 0
 
-    #print 'straylight image',straylight_image[debug_row,0:40]
     # pull out the science region (1024 pixel/row) to do boxcar smoothing on
 
     simage = convolve(straylight_image, Box2DKernel(25))
@@ -187,13 +175,12 @@ def correct_MRS(input_model, straylight_model):
     # remove the straylight correction for the reference pixels
     simage[:, 1028:1032] = 0.0
     simage[:, 0:4] = 0.0
-
-
     output.data = output.data - simage
     return output
 
 
-def correct_MRS_ModShepard(input_model, region_model,roi,power):
+def correct_MRS_ModShepard(input_model, sliceMap,roi,power):
+#def correct_MRS_ModShepard(input_model, region_model,roi,power):
     """
     Short Summary
     -------------
@@ -207,7 +194,7 @@ def correct_MRS_ModShepard(input_model, region_model,roi,power):
     input_model: data model object
         science data to be corrected
 
-    regions_model: holds the pixel region mask for the correction
+    region_model: holds the pixel region mask for the correction
                    slice = (band*100+slice#)
                    gap = 0
     roi: region of inflence (size of radius)
@@ -228,10 +215,7 @@ def correct_MRS_ModShepard(input_model, region_model,roi,power):
     # mask is either non 0 for slices and 0 for gaps between slices
     # this algorithm using the pixels from gaps between the slices for 
     # correction
-    sliceMap = region_model.regions.copy()
-
-    #plt.imshow(sliceMap)
-    #plt.show()
+#    sliceMap = region_model.regions.copy()
 
     # The regions mask has values of 0 and nonzero, values of 0 present pixel
     # in a slice gap and non zero values are science pixels.  The straylight task uses data
@@ -249,16 +233,7 @@ def correct_MRS_ModShepard(input_model, region_model,roi,power):
     #mask = 1 for slice gaps
     mask[sliceMap==0] = 1
 
-    # test putting in a hot pixels and see what it does to algorithm
-#    drow = 412
-#    dx1 = 470
-#    dx2 = 480
-#    dxhot = dx1 + 6
-#    output.data[drow,dxhot] = 2000.0
-#    output.data[drow,dxhot] = 2000.0
-
     # find if any of the gap pixels are bad pixels - if so mark them
-
     mask_dq = input_model.dq.copy()# * mask # find DQ flags of the gap values 
 
     all_flags = (dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
@@ -274,9 +249,8 @@ def correct_MRS_ModShepard(input_model, region_model,roi,power):
 
     #avoid cosmic ray contamination
     # only using the science data for this cosmic ray test
-#    print('max',np.max(output.data[sliceMap>0]))
     cosmic_ray_test = 0.02 * np.max(output.data[sliceMap>0])
-#    print('Cosmic ray test %12.8f',cosmic_ray_test)
+
     image_gap[image_gap>cosmic_ray_test] = 0
     image_gap[image_gap<0] = 0 #set pixels less than zero to 0
     image_gap= convolve(image_gap,Box2DKernel(3)) # smooth gap pixels 
@@ -291,7 +265,6 @@ def correct_MRS_ModShepard(input_model, region_model,roi,power):
     #normalize straylight flux by weights
     norm_conv = convolve(mask,w)
     astropy_conv /= norm_conv
-
 
     # remove the straylight correction for the reference pixels
     astropy_conv[:, 1028:1032] = 0.0
