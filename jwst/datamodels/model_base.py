@@ -229,6 +229,27 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             else:
                 self.meta.model_type = klass
 
+    def __repr__(self):
+        import re
+
+        buf = ['<']
+        match = re.search(r"(\w+)'", str(type(self)))
+        if match:
+            buf.append(match.group(1))
+        else:
+            buf.append("DataModel")
+
+        if self.shape:
+            buf.append(str(self.shape))
+
+        filename = self.meta.filename
+        if filename:
+            buf.append(" from ")
+            buf.append(filename)
+        buf.append('>')
+
+        return "".join(buf)
+
     def __enter__(self):
         return self
 

@@ -16,8 +16,9 @@ import numpy as np
 from numpy.testing.decorators import knownfailureif
 from numpy.testing import assert_allclose
 
-from .. import (DataModel, ImageModel, QuadModel, MultiSlitModel,
-                ModelContainer, SlitModel, SlitDataModel, IFUImageModel)
+from .. import (DataModel, ImageModel, MaskModel, QuadModel,
+                MultiSlitModel, ModelContainer, SlitModel,
+                SlitDataModel, IFUImageModel)
 from ..util import open as open_model
 from .. import schema
 
@@ -168,6 +169,19 @@ def test_copy():
             dm2.meta.observation.obs_id = "FOO"
             assert dm.meta.observation.obs_id is None
 
+def test_stringify():
+    im = DataModel()
+    assert str(im) == '<DataModel>'
+    im.close()
+
+    im = ImageModel((10,100))
+    assert str(im) == '<ImageModel(10, 100)>'
+    im.close()
+
+    image = ROOT_DIR + "/nircam_mask.fits"
+    im = MaskModel(image)
+    assert str(im) ==  '<MaskModel(2048, 2048) from nircam_mask.fits>'
+    im.close()
 
 def test_section():
     with QuadModel((5, 35, 40, 32)) as dm:
