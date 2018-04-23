@@ -117,7 +117,7 @@ def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=Non
         transform = []
         wcsinfo = pointing.wcsinfo_from_model(refmodel)
         sky_axes, spec, other = gwutils.get_axes(wcsinfo)
-        rotation = astmodels.AffineTransformation2D(np.array(wcsinfo['PC']))
+        rotation = astmodels.AffineTransformation2D(wcsinfo['PC'])
         transform.append(rotation)
         if sky_axes:
             cdelt1, cdelt2 = wcsinfo['CDELT'][sky_axes]

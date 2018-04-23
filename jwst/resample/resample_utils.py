@@ -45,15 +45,13 @@ def make_output_wcs(input_models):
         pass
     elif naxes == 2:
         output_wcs = wcs_from_footprints(input_models)
-        data_size = shape_from_bounding_box(output_wcs.bounding_box)
+        output_wcs.data_size = shape_from_bounding_box(output_wcs.bounding_box)
 
-    # Add check to see whether or not a valid output WCS was computed
-    # based on output dimensions
-    # If either output axis has a length of 0, raise an Exception.
-    if data_size[0]*data_size[1] == 0:
-        raise ValueError("Output array size computed as {}".format(data_size))
+    # Check that the output data shape has no zero length dimensions
+    if not np.product(output_wcs.data_size):
+        raise ValueError("Invalid output frame shape: "
+                         "{}".format(output_wcs.data_size))
 
-    output_wcs.data_size = (data_size[1], data_size[0])
     return output_wcs
 
 
@@ -88,7 +86,7 @@ def compute_output_transform(refwcs, filename, fiducial):
 
 
 def bounding_box_from_shape(shape):
-    """ Create bounding_box for WCS based on shape of model data.
+    """ Return a bounding_box for WCS based on a numpy shape
     """
     bb = []
     for s in reversed(shape):
@@ -97,7 +95,7 @@ def bounding_box_from_shape(shape):
 
 
 def shape_from_bounding_box(bounding_box):
-    """ Return the size of the frame based on the provided domain
+    """ Return a numpy shape based on the provided bounding_box
     """
     size = []
     for axs in bounding_box:
