@@ -229,7 +229,7 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
             else:
                 self.meta.model_type = klass
 
-    def __str__(self):
+    def __repr__(self):
         import re
 
         buf = ['<']
