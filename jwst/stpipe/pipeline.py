@@ -45,9 +45,6 @@ class Pipeline(Step):
 
     # Configuration
     spec = """
-    output_ext = string(default=".fits")      # Output extension
-    suffix = string(default=None)             # Suffix for output file name
-    output_use_model = boolean(default=False) # force use `meta.filename` as the output name
     """
     # A set of steps used in the Pipeline.  Should be overridden by
     # the subclass.
@@ -209,6 +206,8 @@ class Pipeline(Step):
 
         fetch_types = sorted(set(self.reference_file_types) - set(ovr_refs.keys()))
 
+        self.log.info("Prefetching reference files for dataset: " + repr(model.meta.filename) + 
+                      " reftypes = " + repr(fetch_types))
         crds_refs = crds_client.get_multiple_reference_paths(model, fetch_types)
 
         ref_path_map = dict(list(crds_refs.items()) + list(ovr_refs.items()))
@@ -233,4 +232,3 @@ class Pipeline(Step):
         except Exception:
             return False
         return True
-

@@ -1225,7 +1225,7 @@ properties:
             blend_table: True
           gs_epoch:
             title: Epoch of guide star coordinates
-            type: number
+            type: string
             fits_keyword: GS_EPOCH
             blend_table: True
           gs_jmag:
@@ -1265,17 +1265,17 @@ properties:
             blend_table: True
           gs_srcjm:
             title: Guide star NIR J magnitude source
-            type: number
+            type: string
             fits_keyword: GS_SRCJM
             blend_table: True
           gs_srchm:
             title: Guide star NIR H magnitude source
-            type: number
+            type: string
             fits_keyword: GS_SRCHM
             blend_table: True
           gs_srckm:
             title: Guide star NIR K magnitude source
-            type: number
+            type: string
             fits_keyword: GS_SRCKM
             blend_table: True
           gs_ujmag:

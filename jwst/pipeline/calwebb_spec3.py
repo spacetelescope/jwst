@@ -139,7 +139,7 @@ class Spec3Pipeline(Pipeline):
             if resample_complete is not None and \
                resample_complete.upper() == 'COMPLETE':
                 if exptype in IFU_EXPTYPES:
-                    self.extract_1d.output_use_model = True
+                    self.extract_1d.search_output_file = False
                 result = self.extract_1d(result)
             else:
                 self.log.warn(

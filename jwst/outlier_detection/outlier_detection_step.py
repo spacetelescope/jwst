@@ -59,6 +59,7 @@ class OutlierDetectionStep(Step):
         resample_data = boolean(default=True)
         good_bits = integer(default=4)
         scale_detection = boolean(default=False)
+        search_output_file = boolean(default=False)
     """
 
     def process(self, input):
@@ -70,6 +71,24 @@ class OutlierDetectionStep(Step):
             else:
                 self.input_container = True
 
+            # Setup output path naming if associations are involved.
+            asn_id = None
+            try:
+                asn_id = self.input_models.meta.asn_table.asn_id
+            except (AttributeError, KeyError):
+                pass
+            if asn_id is None:
+                asn_id = self.search_attr('asn_id')
+            if asn_id is not None:
+                _make_output_path = self.search_attr(
+                    '_make_output_path', parent_first=True
+                )
+                self._make_output_path = partial(
+                    _make_output_path,
+                    asn_id=asn_id
+                )
+
+            # Setup outlier detection parameters
             pars = {
                 'wht_type': self.wht_type,
                 'pixfrac': self.pixfrac,
@@ -86,21 +105,7 @@ class OutlierDetectionStep(Step):
                 'resample_data': self.resample_data,
                 'good_bits': self.good_bits,
                 'make_output_path': self.make_output_path,
-                }
-
-            # Setup output path naming if associations are involved.
-            asn_id = None
-            try:
-                asn_id = self.input_models.meta.asn_table.asn_id
-            except (AttributeError, KeyError):
-                pass
-            if asn_id is None:
-                asn_id = self.search_attr('asn_id')
-            if asn_id is not None:
-                pars['make_output_path'] = partial(
-                    self.make_output_path,
-                    asn_id=asn_id
-                )
+            }
 
             # Add logic here to select which version of OutlierDetection
             # needs to be used depending on the input data
@@ -146,6 +151,7 @@ class OutlierDetectionStep(Step):
                 result = input_models
                 for input in result:
                     input.meta.cal_step.outlier_detection = "SKIPPED"
+                    self.skip = True
                 return result
 
             self.log.debug("Using {} class for outlier_detection".format(
