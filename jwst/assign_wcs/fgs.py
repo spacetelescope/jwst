@@ -65,9 +65,7 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
-    distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    # Convert to deg
-    transform = distortion | models.Scale(1 / 3600) & models.Scale(1 / 3600)
+    transform = AsdfFile.open(reference_files['distortion']).tree['model']
 
     try:
         bb = transform.bounding_box

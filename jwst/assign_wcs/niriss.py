@@ -4,7 +4,7 @@ from copy import deepcopy
 from asdf import AsdfFile
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import Const1D, Mapping, Scale, Identity
+from astropy.modeling.models import Const1D, Mapping, Identity
 import gwcs.coordinate_frames as cf
 from gwcs import wcs
 
@@ -153,9 +153,7 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
-    distortion = AsdfFile.open(reference_files['distortion']).tree['model']
-    # Convert to deg.  Output of distortion model is in arcsec.
-    transform = distortion | Scale(1 / 3600) & Scale(1 / 3600)
+    transform = AsdfFile.open(reference_files['distortion']).tree['model']
 
     try:
         # assign the bounding box to the entire compound model

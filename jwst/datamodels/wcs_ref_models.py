@@ -362,19 +362,33 @@ class FPAModel(ReferenceFileModel):
 class IFUPostModel(ReferenceFileModel):
     """
     A model for a NIRSPEC reference file of type "ifupost".
+
+    Parameters
+    ----------
+    init : str
+        A file name.
+    slice_models : dict
+        A dictionary with slice transforms with the following entries:
+        {"slice_N": {'linear': astropy.modeling.Model,
+                     'xpoly': astropy.modeling.Model,
+                     'xpoly_distortion': astropy.modeling.Model,
+                     'ypoly': astropy.modeling.Model,
+                     'ypoly_distortion': astropy.modeling.Model,
+                     }
+        }
     """
     schema_url = "ifupost.schema.yaml"
     reftype = "ifupost"
 
-    def __init__(self, init=None, models=None, **kwargs):
+    def __init__(self, init=None, slice_models=None, **kwargs):
 
         super(IFUPostModel, self).__init__(init=init, **kwargs)
-        if models is not None:
-            if len(models) != 30:
-                raise ValueError("Expected 30 slice models, got {0}".format(len(models)))
+        if slice_models is not None:
+            if len(slice_models) != 30:
+                raise ValueError("Expected 30 slice models, got {0}".format(len(slice_models)))
             else:
-                for i, m in enumerate(models):
-                    setattr(self, "slice_{0]".format(i), m)
+                for key, val in slice_models.items():
+                    setattr(self, key, val)
         if init is None:
             self.populate_meta()
 
@@ -654,7 +668,7 @@ class WaveCorrModel(ReferenceFileModel):
     @property
     def aperture_names(self):
         return [getattr(ap, 'aperture_name') for ap in self.apertures]
-        
+
     def populate_meta(self):
         self.meta.instrument.name = "NIRSPEC"
 

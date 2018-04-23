@@ -2,7 +2,7 @@ import logging
 
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.modeling.models import Scale, Identity
+from astropy.modeling.models import Identity
 import gwcs.coordinate_frames as cf
 
 from . import pointing
@@ -51,9 +51,7 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
-    distortion = DistortionModel(reference_files['distortion']).model
-    # Convert to deg - output of distortion models is in arcsec.
-    transform = distortion | Scale(1 / 3600) & Scale(1 / 3600)
+    transform = DistortionModel(reference_files['distortion']).model
 
     try:
         bb = transform.bounding_box
