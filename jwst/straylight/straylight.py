@@ -47,6 +47,7 @@ def correct_MRS(input_model, straylight_model):
     # mask is either 1 or 0 
     mask = straylight_model.data
 
+
     x = float('nan')
     # The straylight mask has values of 1 and 0. The straylight task uses data
     # in-between the slices (also called slice gaps) of the MRS data to correct 
@@ -69,10 +70,6 @@ def correct_MRS(input_model, straylight_model):
     #_________________________________________________________________
     # flag bad pixels 
     mask_dq = input_model.dq.copy()# * mask # find DQ flags of the gap values 
-
-#    all_flags = (dqflags.pixel['DO_NOT_USE'] + 
-#                 dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
-
     all_flags = (dqflags.pixel['DEAD'] + dqflags.pixel['HOT'])
     
     # where are pixels set to any one of the all_flags cases 
@@ -180,7 +177,6 @@ def correct_MRS(input_model, straylight_model):
 
 
 def correct_MRS_ModShepard(input_model, sliceMap,roi,power):
-#def correct_MRS_ModShepard(input_model, region_model,roi,power):
     """
     Short Summary
     -------------
@@ -194,7 +190,7 @@ def correct_MRS_ModShepard(input_model, sliceMap,roi,power):
     input_model: data model object
         science data to be corrected
 
-    region_model: holds the pixel region mask for the correction
+    sliceMap: holds the pixel region mask for the correction
                    slice = (band*100+slice#)
                    gap = 0
     roi: region of inflence (size of radius)
@@ -215,7 +211,6 @@ def correct_MRS_ModShepard(input_model, sliceMap,roi,power):
     # mask is either non 0 for slices and 0 for gaps between slices
     # this algorithm using the pixels from gaps between the slices for 
     # correction
-#    sliceMap = region_model.regions.copy()
 
     # The regions mask has values of 0 and nonzero, values of 0 present pixel
     # in a slice gap and non zero values are science pixels.  The straylight task uses data

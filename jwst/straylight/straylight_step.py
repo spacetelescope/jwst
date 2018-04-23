@@ -53,24 +53,18 @@ class StraylightStep (Step):
                 if self.method == 'ModShepard':
                     # going to use Regions file that is in the ASDF extension
                     assign_wcs = input_model.meta.cal_step.assign_wcs
-                    print('Assign_wcs',assign_wcs)
                     if(assign_wcs != 'COMPLETE'):
-#                        result = input_model.copy()
-#                        result.meta.cal_step.straylight = 'SKIPPED'
-#                        return result
                         self.log.warning('Assign_WCS was not run on file, we  need the information of the slice gap locations')
-                        raise ErrorNoAssignWCS("Assign WCS has not been run on file %s",
-                                               ifile)
+                        raise ErrorNoAssignWCS("Assign WCS has not been run on file")
 
-
- #                   self.regions_name = self.get_reference_file(input_model,
- #                                                               'regions')
- #                   self.log.info('Using Regions reference file %s',
- #                                 self.regions_name)
+#                    self.regions_name = self.get_reference_file(input_model,
+#                                                                'regions')
+#                    self.log.info('Using Regions reference file %s',
+#                                  self.regions_name)
                 # Check for a valid reference file
- #                   if self.regions_name == 'N/A':
- #                       self.log.warning('No STRAYLIGHT/REGIONS reference file found')
- #                       self.log.warning('Straylight step will be skipped')
+#                    if self.regions_name == 'N/A':
+#                        self.log.warning('No STRAYLIGHT/REGIONS reference file found')
+#                        self.log.warning('Straylight step will be skipped')
 
 
                     self.log.info(' Region of influence radius (pixels) %62f',self.roi)
@@ -78,13 +72,13 @@ class StraylightStep (Step):
                 # Open the straylight mask ref file data model
                     
 #                    region_model = datamodels.RegionsModel(self.regions_name)
+#                    slices = region_model.regions.copy()
                     det2ab = input_model.meta.wcs.get_transform('detector','alpha_beta')
                     #det2ab is a RegionsSelector model
                     slices = det2ab.label_mapper.mapper
 
                 # Do the correction
                     result = straylight.correct_MRS_ModShepard(input_model, 
-#                                                               region_model,
                                                                slices,
                                                                self.roi,
                                                                self.power)

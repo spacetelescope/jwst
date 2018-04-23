@@ -5,10 +5,11 @@ Description
 Assumption
 ----------
 The current stray-light correction is only valid for MIRI MRS Short
-wavelength data.  The straylight step uses information from the regions
-reference file that was previously loaded into meta data of the input image
-by the assign_wcs step. Thus running the assign_wcs on the input data is
-a prerequisite to  the straylight step.  
+wavelength data.  The straylight step uses information about which pixels
+belong to a slice and which pixels are located in the slice gaps 
+This informations  is contained meta data of the input image and was loaded
+from a reference file by the assign_wcs step. Thus running the assign_wcs on 
+the input data is a prerequisite to  the straylight step.  
 
 Overview
 --------

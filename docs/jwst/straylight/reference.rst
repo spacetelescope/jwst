@@ -1,7 +1,9 @@
 Reference File
 ==============
-The default algorithm in the MIRI MRS stray-light correction step uses information from the 
-'regions' reference file that was loaded into the meta data of the input image  by the assign_wcs step. 
+The default algorithm  in the MIRI MRS stray-light correction step uses information contained
+in the  meta data of the input image which maps each pixels to a slice the regions between the
+slices. This information is loaded from a reference file into the meta data by the assign_wcs
+step. 
 There is an option to use a more simplistic algorithm that uses  stray-light mask reference file.
 
 CRDS Selection Criteria
