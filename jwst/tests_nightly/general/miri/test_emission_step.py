@@ -27,7 +27,7 @@ def test_emission_miri(_bigdata):
 
 
     EmissionStep.call(_bigdata+'/miri/test_emission/jw00001001001_01101_00001_MIRIMAGE_flat_field.fits',
-                         output_file=output_file_base
+                         output_file=output_file_base, name='emission'
     )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_emission/jw00001001001_01101_00001_MIRIMAGE_emission.fits')

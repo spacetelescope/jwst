@@ -28,7 +28,7 @@ def test_refpix_miri2(_bigdata):
 
     RefPixStep.call(_bigdata+'/miri/test_bias_drift/jw00025001001_01107_00001_MIRIMAGE_saturation.fits',
                     use_side_ref_pixels=False, side_smoothing_length=10, side_gain=1.0,
-                    output_file=output_file_base)
+                    output_file=output_file_base, name='refpix')
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_bias_drift/jw00025001001_01107_00001_MIRIMAGE_bias_drift.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['pixeldq'],h['groupdq']])

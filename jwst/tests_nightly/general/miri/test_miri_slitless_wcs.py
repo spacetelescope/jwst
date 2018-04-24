@@ -21,7 +21,8 @@ def test_miri_slitless_wcs(_bigdata):
     Regression test of creating a WCS object and doing pixel to sky transformation.
 
     """
-    output_file_base, output_file = add_suffix('miri_slitless_wcs_output.fits', 'assignwcsstep')
+    suffix = 'assignwcsstep'
+    output_file_base, output_file = add_suffix('miri_slitless_wcs_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -32,7 +33,7 @@ def test_miri_slitless_wcs(_bigdata):
     ref_file = os.path.join(_bigdata, 'miri', 'test_wcs', 'slitless', 'jw80600012001_02101_00003_mirimage_assign_wcs.fits')
 
     AssignWcsStep.call(input_file,
-                       output_file=output_file_base
+                       output_file=output_file_base, suffix=suffix
                        )
     im = CubeModel(output_file)
     imref = CubeModel(ref_file)
