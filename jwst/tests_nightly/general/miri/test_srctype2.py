@@ -27,7 +27,7 @@ def test_srctype2(_bigdata):
 
 
     SourceTypeStep.call(_bigdata+'/miri/test_srctype/jw80600012001_02101_00003_mirimage_flat_field.fits',
-                        output_file=output_file_base
+                        output_file=output_file_base, suffix='sourcetypestep'
                         )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_srctype/jw80600012001_02101_00003_mirimage_srctype.fits')
