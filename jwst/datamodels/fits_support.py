@@ -377,7 +377,6 @@ def _save_history(hdulist, tree):
         history = tree['history']
     else:
         history = tree['history'].get('entries', [])
-        tree['history'] = history
 
     for i in range(len(history)):
         # There is no guarantee the user has added proper HistoryEntry records
