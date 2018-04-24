@@ -27,7 +27,7 @@ def test_linearity_miri(_bigdata):
 
 
     LinearityStep.call(_bigdata+'/miri/test_linearity/jw00001001001_01101_00001_MIRIMAGE_dark_current.fits',
-                       output_file=output_file_base
+                       output_file=output_file_base, name='linearity'
                        )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_linearity/jw00001001001_01101_00001_MIRIMAGE_linearity.fits')
