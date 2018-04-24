@@ -26,7 +26,7 @@ def test_lastframe_miri2(_bigdata):
 
 
     LastFrameStep.call(_bigdata+'/miri/test_lastframe/jw80600012001_02101_00003_mirimage_rscd.fits',
-                       output_file=output_file_base
+                       output_file=output_file_base, name='lastframe'
                        )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_lastframe/jw80600012001_02101_00003_mirimage_lastframe.fits')

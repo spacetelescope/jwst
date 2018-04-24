@@ -28,7 +28,7 @@ def test_extract1d_miri(_bigdata):
 
     Extract1dStep.call(_bigdata+'/miri/test_extract1d/jw00035001001_01101_00001_mirimage_photom.fits',
                        smoothing_length=0,
-                       output_file=output_file_base
+                       output_file=output_file_base, name='extract_1d'
                        )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_extract1d/jw00035001001_01101_00001_mirimage_x1d.fits')

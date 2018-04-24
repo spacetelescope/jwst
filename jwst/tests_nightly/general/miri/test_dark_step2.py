@@ -25,7 +25,7 @@ def test_dark_current_miri2(_bigdata):
         pass
 
     DarkCurrentStep.call(_bigdata+'/miri/test_dark_step/jw80600012001_02101_00003_mirimage_lastframe.fits',
-                         output_file=output_file_base
+                         output_file=output_file_base, name='dark_current'
                          )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_dark_step/jw80600012001_02101_00003_mirimage_dark.fits')

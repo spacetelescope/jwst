@@ -31,14 +31,13 @@ def test_miri_ifu_wcs(_bigdata):
     ref_file = os.path.join(_bigdata, 'miri', 'test_wcs', 'ifu', 'jw00024001001_01101_00001_MIRIFUSHORT_assign_wcs.fits')
 
     AssignWcsStep.call(input_file,
-                       output_file='miri_ifu_wcs_output.fits'
+                       output_file='miri_ifu_wcs', suffix='output'
                        )
     im = ImageModel('miri_ifu_wcs_output.fits')
     imref = ImageModel(ref_file)
 
     # Get the valid region
-    f = fits.open('miri_ifu_wcs_output.fits')
-    region = AsdfFile.open('/grp/crds/cache/references/jwst/{}'.format(f[0].header['R_REGION'].replace('crds://', '')))
+    region = AsdfFile.open('/grp/crds/cache/references/jwst/{}'.format(im.meta.ref_file_regions.name.replace('crds://', '')))
     y, x = np.nonzero(region.tree['regions'])
 
     # Get indices where pixels == 0. These should be NaNs in the output.
