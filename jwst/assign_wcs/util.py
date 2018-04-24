@@ -337,11 +337,11 @@ def get_object_info(catalog_name=None):
     try:
         if not set(required_fields).issubset(set(catalog.colnames)):
             difference = set(catalog.colnames).difference(required_fields)
-            raise KeyError("Missing required columns in source catalog ({}): {}"
-                           .format(catalog_name, difference))
+            raise KeyError("Missing required columns in source catalog: {0}"
+                           .format(difference))
     except AttributeError as e:
-        print("Problem validating object catalog columns {0:s}: {1}"
-              .format(catalog_name, e))
+        print("Problem validating object catalog columns: {0}"
+              .format(e))
 
     # The columns are named sky_bbox_ll, sky_bbox_ul, sky_bbox_lr, and sky_bbox_ur, each of
     # which is a SkyCoord (i.e. RA & Dec & frame) at one corner of the minimal bounding box.
