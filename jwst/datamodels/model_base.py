@@ -242,7 +242,10 @@ class DataModel(properties.ObjectNode, ndmodel.NDModel):
         if self.shape:
             buf.append(str(self.shape))
 
-        filename = self.meta.filename
+        try:
+            filename = self.meta.filename
+        except AttributeError:
+            filename = None
         if filename:
             buf.append(" from ")
             buf.append(filename)
