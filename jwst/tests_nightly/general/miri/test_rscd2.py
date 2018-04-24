@@ -17,7 +17,8 @@ def test_rscd_miri2(_bigdata):
     Regression test of RSCD step performed on MIRI data.
 
     """
-    output_file_base, output_file = add_suffix('rscd2_output.fits', 'rscd')
+    suffix = 'rcsd'
+    output_file_base, output_file = add_suffix('rscd2_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -26,7 +27,7 @@ def test_rscd_miri2(_bigdata):
 
 
     RSCD_Step.call(_bigdata+'/miri/test_rscd/jw80600012001_02101_00003_mirimage_linearity.fits',
-                   output_file=output_file_base
+                   output_file=output_file_base, suffix=suffix
                    )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_rscd/jw80600012001_02101_00003_mirimage_rscd.fits')

@@ -24,9 +24,11 @@ def test_detector1pipeline2(_bigdata):
     step.refpix.odd_even_rows = True
     step.jump.rejection_threshold = 250.0
     step.ramp_fit.save_opt = False
+    step.output_file='jw80600012001_02101_00003_mirimage'
+    step.suffix='rate'
 
-    step.run(_bigdata+'/miri/test_sloperpipeline/jw80600012001_02101_00003_mirimage_uncal.fits',
-             output_file='jw80600012001_02101_00003_mirimage_rate.fits')
+    step.run(_bigdata+'/miri/test_sloperpipeline/jw80600012001_02101_00003_mirimage_uncal.fits'
+             )
 
     # Compare the calibrated ramp product
     n_cr = 'jw80600012001_02101_00003_mirimage_ramp.fits'

@@ -17,7 +17,8 @@ def test_ramp_fit_miri1(_bigdata):
     Regression test of ramp_fit step performed on MIRI data.
 
     """
-    output_file_base, output_files = add_suffix('rampfit1_output.fits', 'rampfit', list(range(2)))
+    suffix = 'rampfit'
+    output_file_base, output_files = add_suffix('rampfit1_output.fits', suffix, list(range(2)))
 
     try:
         for output_file in output_files:
@@ -29,7 +30,7 @@ def test_ramp_fit_miri1(_bigdata):
     RampFitStep.call(_bigdata+'/miri/test_ramp_fit/jw00001001001_01101_00001_MIRIMAGE_jump.fits',
                      save_opt=True,
                      opt_name='rampfit1_opt_out.fits',
-                     output_file=output_file_base
+                     output_file=output_file_base, suffix=suffix
                      )
 
     # compare primary output

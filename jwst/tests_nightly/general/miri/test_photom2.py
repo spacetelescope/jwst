@@ -17,7 +17,8 @@ def test_photom_miri2(_bigdata):
     Regression test of photom step performed on MIRI LRS slitless data.
 
     """
-    output_file_base, output_file = add_suffix('photom2_output.fits', 'photom')
+    suffix = 'photom'
+    output_file_base, output_file = add_suffix('photom2_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -27,7 +28,7 @@ def test_photom_miri2(_bigdata):
 
 
     PhotomStep.call(_bigdata+'/miri/test_photom/jw80600012001_02101_00003_mirimage_srctype.fits',
-                    output_file=output_file_base
+                    output_file=output_file_base, suffix=suffix
                     )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_photom/jw80600012001_02101_00003_mirimage_photom.fits')
