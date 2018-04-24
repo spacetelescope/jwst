@@ -208,11 +208,8 @@ def correct_MRS_ModShepard(input_model, sliceMap,roi,power):
 
     # Save some data parameterss for easy use later
     nrows, ncols = input_model.data.shape
-    # mask is either non 0 for slices and 0 for gaps between slices
-    # this algorithm using the pixels from gaps between the slices for 
-    # correction
 
-    # The regions mask has values of 0 and nonzero, values of 0 present pixel
+    # The slice mask has values of 0 and nonzero, values of 0 present pixel
     # in a slice gap and non zero values are science pixels.  The straylight task uses data
     # in-between the slices (also called slice gaps) of the MRS data to correct 
     # the science data in the slices. 
@@ -245,8 +242,8 @@ def correct_MRS_ModShepard(input_model, sliceMap,roi,power):
     #avoid cosmic ray contamination
     # only using the science data for this cosmic ray test
     cosmic_ray_test = 0.02 * np.max(output.data[sliceMap>0])
-
     image_gap[image_gap>cosmic_ray_test] = 0
+
     image_gap[image_gap<0] = 0 #set pixels less than zero to 0
     image_gap= convolve(image_gap,Box2DKernel(3)) # smooth gap pixels 
     image_gap*=mask #reset science pixels to 0

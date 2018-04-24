@@ -6,7 +6,7 @@ simplistic and uses a row-row interpolation of the gap pixels to determine the
 stray-light correction. The second algorithm uses a 2-D approach by using a Modified
 Shepard's Method to interpolate the light in the gap pixels. The default algorithm 
 is to use the second method. The first method was  kept for comparison to  the second
-method and to confirm the second method works well in the pipeline.
+method and may be removed in a future version. 
 
 The argument which sets which algorithm to use is
  * ``--method [string]``

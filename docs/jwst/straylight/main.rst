@@ -70,11 +70,9 @@ can be adjusted to the actual problem. The default values for these parameters a
 :math:`R = 50` pixels and :math:`k = 1`.
 
 
-The second algorithm uses information from 'regions' reference file  that 
-was previously loaded into the meta data of the input image by the assign_wcs
-step. Hence running the assign_wcs step is a prerequisite to the straylight step.
-The 'regions' information is a 1032 by 1024
-mask containing the 'slice number' of the pixel or in the case of  non-science
-gap pixels, the value zero. 
+The second algorithm uses information about the location of slices  that is contained
+in the meta data of the input image and was previously was  loaded into the meta data 
+by the assign_wcs step. Hence running the assign_wcs step is a prerequisite to the straylight step.
+
 
 

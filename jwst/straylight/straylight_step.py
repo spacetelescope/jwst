@@ -16,9 +16,7 @@ class StraylightStep (Step):
          power = float(default = 1.0) # Power of weighting function, default = 1.0
 
     """
-#    reference_file_types = ['regions','straymask']
     reference_file_types = ['straymask']
-
     def process(self, input):
 
 
@@ -28,7 +26,6 @@ class StraylightStep (Step):
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
             if detector == 'MIRIFUSHORT':
-
                 
                 if self.method == 'Nearest': 
                 # Get the name of the straylight reference file
@@ -57,26 +54,12 @@ class StraylightStep (Step):
                         self.log.warning('Assign_WCS was not run on file, we  need the information of the slice gap locations')
                         raise ErrorNoAssignWCS("Assign WCS has not been run on file")
 
-#                    self.regions_name = self.get_reference_file(input_model,
-#                                                                'regions')
-#                    self.log.info('Using Regions reference file %s',
-#                                  self.regions_name)
-                # Check for a valid reference file
-#                    if self.regions_name == 'N/A':
-#                        self.log.warning('No STRAYLIGHT/REGIONS reference file found')
-#                        self.log.warning('Straylight step will be skipped')
-
-
-                    self.log.info(' Region of influence radius (pixels) %62f',self.roi)
-                    self.log.info(' Modified Shepard weighting power %5.2f',self.power)
-                # Open the straylight mask ref file data model
-                    
-#                    region_model = datamodels.RegionsModel(self.regions_name)
-#                    slices = region_model.regions.copy()
                     det2ab = input_model.meta.wcs.get_transform('detector','alpha_beta')
                     #det2ab is a RegionsSelector model
                     slices = det2ab.label_mapper.mapper
 
+                    self.log.info(' Region of influence radius (pixels) %62f',self.roi)
+                    self.log.info(' Modified Shepard weighting power %5.2f',self.power)
                 # Do the correction
                     result = straylight.correct_MRS_ModShepard(input_model, 
                                                                slices,
