@@ -19,7 +19,9 @@ def v23tosky(input_model):
     angles = [-v2_ref, v3_ref, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
     sky_rotation = V23ToSky(angles, axes_order=axes, name="v23tosky")
-    return sky_rotation
+    # The sky rotation expects values in deg.
+    # This should be removed when models work with quantities.
+    return astmodels.Scale(1/3600) & astmodels.Scale(1/3600) | sky_rotation
 
 
 def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_v3_ref):
