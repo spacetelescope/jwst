@@ -27,7 +27,7 @@ def test_flat_field_miri2(_bigdata):
 
 
     FlatFieldStep.call(_bigdata+'/miri/test_flat_field/jw80600012001_02101_00003_mirimage_assign_wcs.fits',
-                       output_file=output_file_base
+                       output_file=output_file_base, name='flat_field'
                        )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_flat_field/jw80600012001_02101_00003_mirimage_flat_field.fits')
