@@ -384,8 +384,8 @@ def update_s_region(model, prd_db_filepath=None):
     v2, v3 = idltov23(xvert, yvert)  # in arcsec
 
     # Convert to deg
-    v2 = v2 # in arcsec
-    v3 = v3 # in arcsec
+    v2 = v2 / 3600 # in deg
+    v3 = v3 / 3600 # in deg
     angles = [-v2_ref_deg, v3_ref_deg, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
     v23tosky = V23ToSky(angles, axes_order=axes)
