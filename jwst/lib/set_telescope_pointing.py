@@ -367,13 +367,13 @@ def update_s_region(model, prd_db_filepath=None):
     )
     # Execute IdealToV2V3, followed by V23ToSky
     from ..transforms.models import IdealToV2V3, V23ToSky
-    v2_ref_deg = model.meta.wcsinfo.v2_ref # in arcsec
-    v3_ref_deg = model.meta.wcsinfo.v3_ref # in arcsec
-    roll_ref = model.meta.wcsinfo.roll_ref * 3600 # in arcsec
-    ra_ref = model.meta.wcsinfo.ra_ref * 3600 # in arcsec
-    dec_ref = model.meta.wcsinfo.dec_ref * 3600 # in arcsec
+    v2_ref_deg = model.meta.wcsinfo.v2_ref / 3600 # in deg
+    v3_ref_deg = model.meta.wcsinfo.v3_ref / 3600 # in deg
+    roll_ref = model.meta.wcsinfo.roll_ref
+    ra_ref = model.meta.wcsinfo.ra_ref
+    dec_ref = model.meta.wcsinfo.dec_ref
     vparity = model.meta.wcsinfo.vparity
-    v3yangle = model.meta.wcsinfo.v3yangle # in deg
+    v3yangle = model.meta.wcsinfo.v3yangle
 
     # V2_ref and v3_ref should be in arcsec
     idltov23 = IdealToV2V3(
@@ -384,8 +384,8 @@ def update_s_region(model, prd_db_filepath=None):
     v2, v3 = idltov23(xvert, yvert)  # in arcsec
 
     # Convert to deg
-    v2 = v2 / 3600
-    v3 = v3 / 3600
+    v2 = v2 # in arcsec
+    v3 = v3 # in arcsec
     angles = [-v2_ref_deg, v3_ref_deg, -roll_ref, -dec_ref, ra_ref]
     axes = "zyxyz"
     v23tosky = V23ToSky(angles, axes_order=axes)

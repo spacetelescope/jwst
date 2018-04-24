@@ -828,8 +828,6 @@ class V23ToSky(Rotation3D):
     outputs = ("ra", "dec")
 
     def __init__(self, angles, axes_order, name=None):
-        # Convert to degrees before passing to the base class.
-        angles = np.asarray(angles) / 3600
         super(V23ToSky, self).__init__(angles, axes_order=axes_order, name=name)
 
     @staticmethod
@@ -855,6 +853,8 @@ class V23ToSky(Rotation3D):
         return alpha, delta
 
     def evaluate(self, v2, v3, angles):
+        v2 /= 3600
+        v3 /= 3600
         x, y, z = self.spherical2cartesian(v2, v3)
         x1, y1, z1 = super(V23ToSky, self).evaluate(x, y, z, angles)
         ra, dec = self.cartesian2spherical(x1, y1, z1)
