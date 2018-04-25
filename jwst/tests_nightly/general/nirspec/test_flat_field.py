@@ -28,7 +28,7 @@ def test_flat_field_nirspec(_bigdata):
 
 
     FlatFieldStep.call(_bigdata+'/nirspec/test_flat_field/jw00023001001_01101_00001_NRS1_extract_2d.fits',
-                       output_file=output_file_base
+                       output_file=output_file_base, name='flat_field'
                        )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nirspec/test_flat_field/jw00023001001_01101_00001_NRS1_flat_field.fits')
