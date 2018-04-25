@@ -26,7 +26,7 @@ def test_superbias_nirspec(_bigdata):
         pass
 
     SuperBiasStep.call(_bigdata+'/nirspec/test_superbias/jw00011001001_01106_00001_NRS2_saturation.fits',
-                       output_file=output_file_base
+                       output_file=output_file_base, name='superbias'
                        )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nirspec/test_superbias/jw00011001001_01106_00001_NRS2_superbias.fits')

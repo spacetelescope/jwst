@@ -28,7 +28,7 @@ def test_photom_nirspec(_bigdata):
 
 
     PhotomStep.call(_bigdata+'/nirspec/test_photom/jw00023001001_01101_00001_NRS1_flat_field.fits',
-                    output_file=output_file_base
+                    output_file=output_file_base, name='photom'
                     )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nirspec/test_photom/jw00023001001_01101_00001_NRS1_photom.fits')

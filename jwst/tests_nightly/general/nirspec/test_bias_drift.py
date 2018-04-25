@@ -29,7 +29,7 @@ def test_refpix_nirspec(_bigdata):
 
     RefPixStep.call(_bigdata+'/nirspec/test_bias_drift/jw00023001001_01101_00001_NRS1_dq_init.fits',
                     odd_even_columns=True, use_side_ref_pixels=False, side_smoothing_length=10,
-                    side_gain=1.0, output_file=output_file_base
+                    side_gain=1.0, output_file=output_file_base, name='refpix'
                     )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nirspec/test_bias_drift/jw00023001001_01101_00001_NRS1_bias_drift.fits')

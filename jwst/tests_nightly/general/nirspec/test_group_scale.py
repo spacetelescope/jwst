@@ -26,7 +26,7 @@ def test_group_scale_nirspec(_bigdata):
         pass
 
     GroupScaleStep.call(_bigdata+'/nirspec/test_group_scale/NRSIRS2_230_491_uncal.fits',
-                        output_file=output_file_base
+                        output_file=output_file_base, name='group_scale'
                         )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nirspec/test_group_scale/NRSIRS2_230_491_groupscale.fits')
