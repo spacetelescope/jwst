@@ -24,8 +24,8 @@ def test_detector1pipeline3(_bigdata):
     step.refpix.side_gain = 1.0
     step.jump.rejection_threshold = 250.0
     step.ramp_fit.save_opt = True
-    step.run(_bigdata+'/pipelines/jw82500001003_02101_00001_NRCALONG_uncal.fits',
-             output_file='jw82500001003_02101_00001_NRCALONG_rate.fits')
+    step.output_file = 'jw82500001003_02101_00001_NRCALONG_rate.fits'
+    step.run(_bigdata+'/pipelines/jw82500001003_02101_00001_NRCALONG_uncal.fits')
 
     # Compare ramp product
     n_ramp = 'jw82500001003_02101_00001_NRCALONG_ramp.fits'
