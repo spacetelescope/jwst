@@ -111,7 +111,7 @@ def get_subarray_name(instrument, colstart, colstop, rowstart, rowstop):
         if rowstart == subarray[2] and rowstop == subarray[3] and colstart == subarray[0] \
                 and colstop == subarray[1]:
             return subarray[4]
-    return 'UNKNOWN'
+    return 'GENERIC'
 
 def sanitize(header, keyword, type=float, default=0.0):
     """Sometimes the input headers aren't what are wanted in the output,
