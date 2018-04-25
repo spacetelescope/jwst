@@ -32,13 +32,13 @@ def test_extract2d_nrs_msa(_bigdata):
         # This is needed because we can't run the step with the
         # MSA configuration file not in the current dir.
         # When this is fixed, the copy can be removed.
-        for f in input_file:
+        for f in input_files:
             shutil.copyfile(f, os.path.join(".", os.path.basename(f)))
     except:
         raise OSError("Could not copy inputs files")
 
     Extract2dStep.call('jw00038001001_01101_00001_NRS1_assign_wcs.fits',
-                       output_file='extract2d2_output.fits'
+                       output_file='extract2d2_output.fits', name='extract_2d'
                        )
     h = fits.open('extract2d2_output.fits')
     href = fits.open(_bigdata+'/nirspec/test_extract_2d/msa/jw00038001001_01101_00001_NRS1_assign_wcs_extract_2d.fits')

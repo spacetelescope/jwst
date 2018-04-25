@@ -26,7 +26,7 @@ def test_saturation_nirspec(_bigdata):
         pass
 
     SaturationStep.call(_bigdata+'/nirspec/test_saturation/jw00023001001_01101_00001_NRS1_bias_drift.fits',
-                        output_file=output_file_base
+                        output_file=output_file_base, name='saturation'
                         )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nirspec/test_saturation/jw00023001001_01101_00001_NRS1_saturation.fits')

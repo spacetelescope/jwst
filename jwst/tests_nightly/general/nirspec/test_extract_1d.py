@@ -24,7 +24,7 @@ def test_extract1d_nirspec(_bigdata):
 
     Extract1dStep.call(_bigdata + '/nirspec/test_extract_1d/jw00023001001_01101_00001_NRS1_cal.fits',
                        smoothing_length=0, bkg_order=0,
-                       output_file=output_file_base)
+                       output_file=output_file_base, name='extract_1d')
 
     h = fits.open(output_file)
     href = fits.open(_bigdata + '/nirspec/test_extract_1d/jw00023001001_01101_00001_NRS1_spec.fits')

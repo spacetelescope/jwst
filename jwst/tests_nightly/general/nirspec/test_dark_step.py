@@ -26,7 +26,7 @@ def test_dark_current_nirspec(_bigdata):
         pass
 
     DarkCurrentStep.call(_bigdata+'/nirspec/test_dark_step/jw00023001001_01101_00001_NRS1_saturation.fits',
-                         output_file=output_file_base
+                         output_file=output_file_base, name='dark_current'
                          )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nirspec/test_dark_step/jw00023001001_01101_00001_NRS1_dark_current.fits')
