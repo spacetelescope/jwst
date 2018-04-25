@@ -18,7 +18,8 @@ def test_persistence_nircam(_bigdata):
     Regression test of persistence step performed on calibrated NIRCam data.
 
     """
-    output_file_base, output_file = add_suffix('persistence1_output.fits', 'persistence')
+    suffix = 'persistence'
+    output_file_base, output_file = add_suffix('persistence1_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -28,7 +29,7 @@ def test_persistence_nircam(_bigdata):
 
 
     PersistenceStep.call(_bigdata+'/nircam/test_persistence/jw00017001001_01101_00001_NRCA1_ramp.fits',
-                         output_file=output_file_base
+                         output_file=output_file_base, suffix=suffix
                          )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nircam/test_persistence/jw00017001001_01101_00001_NRCA1_persistence.fits')

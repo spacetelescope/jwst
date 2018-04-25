@@ -18,7 +18,8 @@ def test_dq_init_nircam(_bigdata):
     Regression test of dq_init step performed on uncalibrated NIRCam data.
 
     """
-    output_file_base, output_file = add_suffix('dqinit1_output.fits', 'dq_init')
+    suffix = 'dq_init'
+    output_file_base, output_file = add_suffix('dqinit1_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -28,7 +29,7 @@ def test_dq_init_nircam(_bigdata):
 
 
     DQInitStep.call(_bigdata+'/nircam/test_dq_init/jw00017001001_01101_00001_NRCA1_uncal.fits',
-                    output_file=output_file_base
+                    output_file=output_file_base, suffix=suffix
                     )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nircam/test_dq_init/jw00017001001_01101_00001_NRCA1_dq_init.fits')
