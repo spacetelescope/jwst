@@ -54,8 +54,7 @@ def test_coron3_pipeline1(_bigdata):
     newh = pf.HDUList([h['primary'], h['sci'], h['err'], h['dq']])
     newhref = pf.HDUList([href['primary'], href['sci'],
                          href['err'], href['dq']])
-    kws_to_ignore = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX', 
-                     'R_PSFMAS']
+    kws_to_ignore = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX']
 
     result = pf.diff.FITSDiff(newh,
                               newhref,
