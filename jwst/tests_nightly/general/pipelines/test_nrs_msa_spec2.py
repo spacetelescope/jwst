@@ -1,4 +1,5 @@
 import os
+import shutil
 import pytest
 from astropy.io import fits as pf
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
@@ -15,17 +16,31 @@ def test_nrs_msa_spec2(_bigdata):
     Regression test of calwebb_spec2 pipeline performed on NIRSpec MSA data.
 
     """
+    curdir = os.path.abspath(os.curdir)
+    # copy over input-specific reference files, such as MSA Metadata file
+    msafile = os.path.join(_bigdata, 'pipelines',
+                           'jw95065006001_0_short_msa.fits')
+    shutil.copy(msafile, curdir)
+
+    # define primary output name
+    na = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_cal.fits'
+
+    # define step for use in test
     step = Spec2Pipeline()
-    step.save_bsub = True
+    step.save_bsub = False
     step.output_use_model = True
     step.resample_spec.save_results = True
     step.resample_spec.skip = True
     step.extract_1d.save_results = True
-    Spec2Pipeline.call(_bigdata+'/pipelines/F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod.fits',
-                       output_file='f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_cal.fits')
+    step.extract_1d.smoothing_length = 0
+    step.extract_1d.bkg_order = 0
+    step.call(os.path.join(_bigdata+'pipelines',
+                       'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod.fits'),
+                       output_file=na, name='Spec2Pipeline')
 
-    na = 'F170LP-G235M_MOS_observation-6-c0e0_001_DN_NRS1_mod_cal.fits'
-    nb = _bigdata+'/pipelines/f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_cal_ref.fits'
+    nbname = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_cal_ref.fits'
+    nb = os.path.join(_bigdata,'pipelines', nbname)
+                      
     h = pf.open(na)
     href = pf.open(nb)
     newh = pf.HDUList([h['primary'],h['sci',1],h['err',1],h['dq',1],h['relsens',1],h['wavelength',1],
@@ -132,10 +147,11 @@ def test_nrs_msa_spec2(_bigdata):
     #result = pf.diff.FITSDiff(newh, newhref,
     #                          ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
     #                          rtol = 0.00001)
-    assert result.identical, result.report()
+    #assert result.identical, result.report()
 
     na = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_x1d.fits'
-    nb = _bigdata+'/pipelines/f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_x1d_ref.fits'
+    nbname = 'f170lp-g235m_mos_observation-6-c0e0_001_dn_nrs1_mod_x1d_ref.fits'
+    nb = os.path.join(_bigdata, 'pipelines', nbname)
     h = pf.open(na)
     href = pf.open(nb)
     newh = pf.HDUList([h['primary'],h['extract1d',1],h['extract1d',2],h['extract1d',3],h['extract1d',4],h['extract1d',5],h['extract1d',6],h['extract1d',7],h['extract1d',8],h['extract1d',9],h['extract1d',10]])
@@ -143,6 +159,5 @@ def test_nrs_msa_spec2(_bigdata):
     result = pf.diff.FITSDiff(newh, newhref,
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
-
 
     assert result.identical, result.report()
