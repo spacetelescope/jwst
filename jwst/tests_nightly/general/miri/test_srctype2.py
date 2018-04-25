@@ -17,7 +17,8 @@ def test_srctype2(_bigdata):
     Regression test of srctype step performed on MIRI LRS slitless data.
 
     """
-    output_file_base, output_file = add_suffix('srctype2_output.fits', 'sourcetypestep')
+    suffix = 'sourcetypestep'
+    output_file_base, output_file = add_suffix('srctype2_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -27,7 +28,7 @@ def test_srctype2(_bigdata):
 
 
     SourceTypeStep.call(_bigdata+'/miri/test_srctype/jw80600012001_02101_00003_mirimage_flat_field.fits',
-                        output_file=output_file_base, suffix='sourcetypestep'
+                        output_file=output_file_base, suffix=suffix
                         )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_srctype/jw80600012001_02101_00003_mirimage_srctype.fits')
