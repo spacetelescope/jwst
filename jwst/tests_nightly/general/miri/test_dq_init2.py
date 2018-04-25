@@ -17,7 +17,8 @@ def test_dq_init_miri2(_bigdata):
     Regression test of dq_init step performed on uncalibrated MIRI data.
 
     """
-    output_file_base, output_file = add_suffix('dqinit2_output.fits', 'dq_init')
+    suffix = 'dq_init'
+    output_file_base, output_file = add_suffix('dqinit2_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -25,7 +26,7 @@ def test_dq_init_miri2(_bigdata):
         pass
 
     DQInitStep.call(_bigdata+'/miri/test_dq_init/jw80600012001_02101_00003_mirimage_uncal.fits',
-                    output_file=output_file_base, name='dq_init'
+                    output_file=output_file_base, suffix=suffix
     )
 
     h = pf.open(output_file)
