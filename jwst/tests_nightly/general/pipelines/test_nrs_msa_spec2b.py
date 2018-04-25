@@ -17,13 +17,13 @@ def test_nrs_msa_spec2b(_bigdata):
 
     """
     step = Spec2Pipeline()
+    step.output_file='jw95065_nrs_msaspec_barshadow_cal.fits'
     step.save_bsub = True
     step.save_results = True
     step.resample_spec.save_results = True
     step.cube_build.save_results = True
     step.extract_1d.save_results = True
-    step.run(_bigdata+'/pipelines/jw95065_nrs_msaspec_barshadow.fits',
-             output_file='jw95065_nrs_msaspec_barshadow_cal.fits')
+    step.run(_bigdata+'/pipelines/jw95065_nrs_msaspec_barshadow.fits')
 
     na = 'jw95065_nrs_msaspec_barshadow_cal.fits'
     nb = _bigdata+'/pipelines/jw95065_nrs_msaspec_barshadow_cal_ref.fits'
