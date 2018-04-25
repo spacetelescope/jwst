@@ -18,7 +18,8 @@ def test_emission_nircam(_bigdata):
     Regression test of emission step performed on calibrated NIRCam data.
 
     """
-    output_file_base, output_file = add_suffix('emission1_output.fits', 'emission')
+    suffix = 'emission'
+    output_file_base, output_file = add_suffix('emission1_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -28,7 +29,7 @@ def test_emission_nircam(_bigdata):
 
 
     EmissionStep.call(_bigdata+'/nircam/test_emission/jw00017001001_01101_00001_NRCA1_persistence.fits',
-                      output_file=output_file_base
+                      output_file=output_file_base, suffix=suffix
                       )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nircam/test_emission/jw00017001001_01101_00001_NRCA1_emission.fits')

@@ -18,7 +18,8 @@ def test_ramp_fit_nircam(_bigdata):
     Regression test of ramp_fit step performed on NIRCam data.
 
     """
-    output_file_base, output_files = add_suffix('rampfit_output.fits', 'rampfit', list(range(1)))
+    suffix = 'rampfit'
+    output_file_base, output_files = add_suffix('rampfit_output.fits', suffix, list(range(1)))
 
     try:
         os.remove(output_files[0])
@@ -28,7 +29,7 @@ def test_ramp_fit_nircam(_bigdata):
 
 
     RampFitStep.call(_bigdata+'/nircam/test_ramp_fit/jw00017001001_01101_00001_NRCA1_jump.fits',
-                     output_file=output_file_base,
+                     output_file=output_file_base, suffix=suffix,
                      save_opt=True,
                      opt_name='rampfit_opt_out.fits'
                      )
