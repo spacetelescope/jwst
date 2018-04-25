@@ -76,7 +76,7 @@ def test_coron3_pipeline1(_bigdata):
     result = pf.diff.FITSDiff(newh,
                               newhref,
                               ignore_keywords=kws_to_ignore,
-                              rtol=0.00001, atol=0.00001)
+                              rtol=0.00001)
     assert result.identical, result.report()
 
     # Compare psfsub product
