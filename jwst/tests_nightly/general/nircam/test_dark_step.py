@@ -18,7 +18,8 @@ def test_dark_current_nircam(_bigdata):
     Regression test of dark current step performed on NIRCam data.
 
     """
-    output_file_base, output_file = add_suffix('darkcurrent1_output.fits', 'dark_current')
+    suffix = 'dark_current'
+    output_file_base, output_file = add_suffix('darkcurrent1_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -26,7 +27,7 @@ def test_dark_current_nircam(_bigdata):
         pass
 
     DarkCurrentStep.call(_bigdata+'/nircam/test_dark_step/jw00017001001_01101_00001_NRCA1_saturation.fits',
-                         output_file=output_file_base
+                         output_file=output_file_base, suffix=suffix
                          )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nircam/test_dark_step/jw00017001001_01101_00001_NRCA1_dark_current.fits')
