@@ -1,5 +1,4 @@
 import logging
-from copy import deepcopy
 
 from asdf import AsdfFile
 from astropy import coordinates as coord
@@ -14,8 +13,7 @@ from ..transforms.models import (NirissSOSSModel,
                                  NIRISSForwardRowGrismDispersion,
                                  NIRISSBackwardGrismDispersion,
                                  NIRISSForwardColumnGrismDispersion)
-from ..datamodels import ImageModel, NIRISSGrismModel
-
+from ..datamodels import ImageModel, NIRISSGrismModel, DistortionModel
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -153,17 +151,17 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
-    transform = AsdfFile.open(reference_files['distortion']).tree['model']
-
+    dist = DistortionModel(reference_files['distortion'])
+    distortion = dist.model
     try:
-        # assign the bounding box to the entire compound model
-        transform.bounding_box = distortion.bounding_box
+        distortion.bounding_box
     except NotImplementedError:
         shape = input_model.data.shape
         # Note: Since bounding_box is attached to the model here it's in reverse order.
-        transform.bounding_box = ((-0.5, shape[0] - 0.5),
-                                   (-0.5, shape[1] - 0.5))
-    return transform
+        distortion.bounding_box = ((-0.5, shape[0] - 0.5),
+                                  (-0.5, shape[1] - 0.5))
+    dist.close()
+    return distortion
 
 
 def wfss(input_model, reference_files):

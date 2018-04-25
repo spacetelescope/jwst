@@ -3,15 +3,13 @@ FGS WCS pipeline - depends on EXP_TYPE.
 """
 import logging
 
-from asdf import AsdfFile
-from astropy.modeling import models
 from astropy import units as u
 from astropy import coordinates as coord
 from gwcs import coordinate_frames as cf
 
 from .util import not_implemented_mode, subarray_transform
 from . import pointing
-
+from ..datamodels import DistortionModel
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -65,8 +63,8 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
-    transform = AsdfFile.open(reference_files['distortion']).tree['model']
-
+    dist = DistortionModel(reference_files['distortion'])
+    transform = dist.model
     try:
         bb = transform.bounding_box
     except NotImplementedError:
@@ -75,6 +73,7 @@ def imaging_distortion(input_model, reference_files):
         bb = ((-0.5, shape[0] - 0.5),
               (-0.5, shape[1] - 0.5))
     transform.bounding_box = bb
+    dist.close()
     return transform
 
 
