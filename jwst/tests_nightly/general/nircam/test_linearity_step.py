@@ -18,7 +18,8 @@ def test_linearity_nircam(_bigdata):
     Regression test of linearity step performed on NIRCam data.
 
     """
-    output_file_base, output_file = add_suffix('linearity1_output.fits', 'linearity')
+    suffix = 'linearity'
+    output_file_base, output_file = add_suffix('linearity1_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -28,7 +29,7 @@ def test_linearity_nircam(_bigdata):
 
 
     LinearityStep.call(_bigdata+'/nircam/test_linearity/jw00017001001_01101_00001_NRCA1_dark_current.fits',
-                       output_file=output_file_base
+                       output_file=output_file_base, suffix=suffix
                        )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nircam/test_linearity/jw00017001001_01101_00001_NRCA1_linearity.fits')

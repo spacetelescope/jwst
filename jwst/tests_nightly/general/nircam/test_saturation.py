@@ -18,7 +18,8 @@ def test_saturation_nircam(_bigdata):
     Regression test of saturation step performed on NIRCam data.
 
     """
-    output_file_base, output_file = add_suffix('saturation1_output.fits', 'saturation')
+    suffix = 'saturation'
+    output_file_base, output_file = add_suffix('saturation1_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -26,7 +27,7 @@ def test_saturation_nircam(_bigdata):
         pass
 
     SaturationStep.call(_bigdata+'/nircam/test_saturation/jw00017001001_01101_00001_NRCA1_bias_drift.fits',
-                        output_file=output_file_base
+                        output_file=output_file_base, suffix=suffix
                         )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nircam/test_saturation/jw00017001001_01101_00001_NRCA1_saturation.fits')

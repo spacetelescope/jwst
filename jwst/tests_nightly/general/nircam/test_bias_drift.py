@@ -18,7 +18,8 @@ def test_refpixt_nircam(_bigdata):
     Regression test of refpix step performed on NIRCam data.
 
     """
-    output_file_base, output_file = add_suffix('refpix1_output.fits', 'refpix')
+    suffix = 'refpix'
+    output_file_base, output_file = add_suffix('refpix1_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -29,7 +30,7 @@ def test_refpixt_nircam(_bigdata):
 
     RefPixStep.call(_bigdata+'/nircam/test_bias_drift/jw00017001001_01101_00001_NRCA1_dq_init.fits',
                     odd_even_columns=True, use_side_ref_pixels=False, side_smoothing_length=10,
-                    side_gain=1.0, output_file=output_file_base
+                    side_gain=1.0, output_file=output_file_base, suffix=suffix
                     )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nircam/test_bias_drift/jw00017001001_01101_00001_NRCA1_bias_drift.fits')
