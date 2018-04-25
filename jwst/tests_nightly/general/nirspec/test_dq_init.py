@@ -28,7 +28,7 @@ def test_dq_init_nirspec(_bigdata):
 
 
     DQInitStep.call(_bigdata+'/nirspec/test_dq_init/jw00023001001_01101_00001_NRS1_uncal.fits',
-                    output_file=output_file_base
+                    output_file=output_file_base, name='dq_init'
                     )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nirspec/test_dq_init/jw00023001001_01101_00001_NRS1_dq_init.fits')
