@@ -186,6 +186,7 @@ def get_rscd_parameters(input_model, rscd_model):
     readpatt = input_model.meta.exposure.readpatt
     subarray = input_model.meta.subarray.name
 
+#    if subarray == 'SUBPRISM': subarray = 'SLITLESSPRISM'
     # Load the reference table columns of parameters
     readpatt_table = rscd_model.rscd_table['READPATT']
     subarray_table = rscd_model.rscd_table['SUBARRAY']
@@ -216,6 +217,7 @@ def get_rscd_parameters(input_model, rscd_model):
         log.warning('No matching row found in RSCD reference table for')
         log.warning('READPATT=%s, SUBARRAY=%s, Row type=EVEN',
                     readpatt, subarray)
+        raise NoTableEntry('No match for READPATT or SUBARRAY in RSCD ref table')
         return None, None
 
     # Load the params from the matching table row
@@ -247,6 +249,7 @@ def get_rscd_parameters(input_model, rscd_model):
         log.warning('No matching row found in RSCD reference table for')
         log.warning('READPATT=%s, SUBARRAY=%s, Row type=ODD',
                     readpatt, subarray)
+        raise NoTableEntry('No match for READPATT or SUBARRAY in RSCD ref table')
         return None, None
 
     # Load the params from the matching table row
@@ -378,3 +381,7 @@ def ols_fit(y,dq):
         intercept = mean_y - slope * mean_x
         
     return (slope, intercept,ngood)
+
+
+class NoTableEntry(Exception):
+    pass
