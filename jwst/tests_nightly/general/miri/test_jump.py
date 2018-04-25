@@ -17,7 +17,8 @@ def test_jump_miri(_bigdata):
     Regression test of jump step performed on MIRI data.
 
     """
-    output_file_base, output_file = add_suffix('jump1_output.fits', 'jump')
+    suffix = 'jump'
+    output_file_base, output_file = add_suffix('jump1_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -28,7 +29,7 @@ def test_jump_miri(_bigdata):
 
     JumpStep.call(_bigdata+'/miri/test_jump/jw00001001001_01101_00001_MIRIMAGE_linearity.fits',
                   rejection_threshold=200.0,
-                  output_file=output_file_base, name='jump'
+                  output_file=output_file_base, suffix=suffix
                   )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_jump/jw00001001001_01101_00001_MIRIMAGE_jump.fits')

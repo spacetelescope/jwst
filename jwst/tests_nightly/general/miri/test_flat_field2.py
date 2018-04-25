@@ -17,7 +17,8 @@ def test_flat_field_miri2(_bigdata):
     Regression test of flat_field step performed on MIRI data.
 
     """
-    output_file_base, output_file = add_suffix('flatfield2_output.fits', 'flat_field')
+    suffix = 'flat_field'
+    output_file_base, output_file = add_suffix('flatfield2_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -27,7 +28,7 @@ def test_flat_field_miri2(_bigdata):
 
 
     FlatFieldStep.call(_bigdata+'/miri/test_flat_field/jw80600012001_02101_00003_mirimage_assign_wcs.fits',
-                       output_file=output_file_base, name='flat_field'
+                       output_file=output_file_base, suffix=suffix
                        )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_flat_field/jw80600012001_02101_00003_mirimage_flat_field.fits')
