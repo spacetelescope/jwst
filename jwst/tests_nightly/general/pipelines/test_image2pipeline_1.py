@@ -20,7 +20,7 @@ def test_image2pipeline1(_bigdata):
                         )
 
     h = pf.open('jw00001001001_01101_00001_mirimage_cal.fits')
-    href = pf.open(_bigdata+'/miri/test_image2pipeline/jw00001001001_01101_00001_MIRIMAGE_uncal_MiriSloperPipeline_Image2Pipeline.fits')
+    href = pf.open(_bigdata+'/miri/test_image2pipeline/jw00001001001_01101_00001_mirimage_cal_ref.fits')
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['dq'],h['area']])
     newhref = pf.HDUList([href['primary'],href['sci'],href['err'],href['dq'],href['area']])
     result = pf.diff.FITSDiff(newh,
