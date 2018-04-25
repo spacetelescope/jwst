@@ -17,7 +17,8 @@ def test_fringe_miri2(_bigdata):
     Regression test of fringe performed on MIRI data.
 
     """
-    output_file_base, output_file = add_suffix('fringe2_output.fits', 'fringe')
+    suffix = 'fringe'
+    output_file_base, output_file = add_suffix('fringe2_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -25,7 +26,7 @@ def test_fringe_miri2(_bigdata):
         pass
 
     FringeStep.call(_bigdata+'/miri/test_fringe/fringe2_input.fits',
-                    output_file=output_file_base, name='fringe'
+                    output_file=output_file_base, suffix=suffix
                     )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/miri/test_fringe/baseline_fringe2.fits')
