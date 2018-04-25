@@ -29,7 +29,7 @@ def test_jump_nirspec(_bigdata):
 
     JumpStep.call(_bigdata+'/nirspec/test_jump/jw00023001001_01101_00001_NRS1_linearity.fits',
                   rejection_threshold=50.0,
-                  output_file=output_file_base
+                  output_file=output_file_base, name='jump'
                   )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nirspec/test_jump/jw00023001001_01101_00001_NRS1_jump.fits')

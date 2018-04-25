@@ -27,7 +27,7 @@ def test_extract2d_nirspec(_bigdata):
 
 
     Extract2dStep.call(_bigdata+'/nirspec/test_extract_2d/jw00023001001_01101_00001_NRS1_assign_wcs.fits',
-                       output_file=output_file_base
+                       output_file=output_file_base, name='extract_2d'
                        )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/nirspec/test_extract_2d/jw00023001001_01101_00001_NRS1_extract_2d.fits')
