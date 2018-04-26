@@ -18,7 +18,8 @@ def test_ramp_fit_niriss(_bigdata):
     Regression test of ramp_fit step performed on NIRISS data.
 
     """
-    output_file_base, output_files = add_suffix('rampfit_output.fits', 'rampfit', list(range(1)))
+    suffix = 'rampfit'
+    output_file_base, output_files = add_suffix('rampfit_output.fits', suffix, list(range(1)))
 
     try:
         for output_file in output_files:
@@ -29,7 +30,7 @@ def test_ramp_fit_niriss(_bigdata):
 
 
     RampFitStep.call(_bigdata+'/niriss/test_ramp_fit/jw00034001001_01101_00001_NIRISS_jump.fits',
-                      save_opt=True, output_file=output_file_base,
+                      save_opt=True, output_file=output_file_base, suffix=suffix,
                       opt_name='rampfit_opt_out.fits'
     )
     # primary output
