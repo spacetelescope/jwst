@@ -18,7 +18,8 @@ def test_flat_field_niriss(_bigdata):
     Regression test of flat_field step performed on NIRISS data.
 
     """
-    output_file_base, output_file = add_suffix('flatfield1_output.fits', 'flat_field')
+    suffix = 'flat_field'
+    output_file_base, output_file = add_suffix('flatfield1_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -28,7 +29,7 @@ def test_flat_field_niriss(_bigdata):
 
 
     FlatFieldStep.call(_bigdata+'/niriss/test_flat_field/jw00034001001_01101_00001_NIRISS_ramp_fit.fits',
-                       output_file=output_file_base
+                       output_file=output_file_base, suffix=suffix
                        )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/niriss/test_flat_field/jw00034001001_01101_00001_NIRISS_flat_field.fits')
