@@ -18,7 +18,8 @@ def test_jump_niriss(_bigdata):
     Regression test of jump step performed on NIRISS data.
 
     """
-    output_file_base, output_file = add_suffix('jump1_output.fits', 'jump')
+    suffix = 'jump'
+    output_file_base, output_file = add_suffix('jump1_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -29,7 +30,7 @@ def test_jump_niriss(_bigdata):
 
     JumpStep.call(_bigdata+'/niriss/test_jump/jw00034001001_01101_00001_NIRISS_linearity.fits',
                   rejection_threshold=20.0,
-                  output_file=output_file_base
+                  output_file=output_file_base, suffix=suffix
                   )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/niriss/test_jump/jw00034001001_01101_00001_NIRISS_jump.fits')
