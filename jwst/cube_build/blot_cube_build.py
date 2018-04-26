@@ -32,11 +32,12 @@ class CubeBlot(object):
         self.median_skycube = median_model
         self.instrument = median_model.meta.instrument.name
         self.detector = median_model.meta.instrument.detector
+
         #information on how the IFUCube was constructed 
-        self.weight_power = median_model.meta.weight_power
-        self.weighting = median_model.meta.weighting # if AREA ABORT
-        self.rois = median_model.meta.roi_spatial
-        self.roiw = median_model.meta.roi_wave
+        self.weight_power = median_model.meta.ifu.weight_power
+        self.weighting = median_model.meta.ifu.weighting # if AREA ABORT
+        self.rois = median_model.meta.ifu.roi_spatial
+        self.roiw = median_model.meta.ifu.roi_wave
 
         #basic information about the type of data
         self.grating = None
