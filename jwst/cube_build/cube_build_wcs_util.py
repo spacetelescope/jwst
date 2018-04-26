@@ -316,9 +316,7 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
 # test for 0/360 wrapping in ra. if exists it makes it difficult to determine
 # ra range of IFU cube. 
 
-
     coord1_wrap = wrap_ra(coord1)
-
     a_min = np.nanmin(coord1_wrap)
     a_max = np.nanmax(coord1_wrap)
 
@@ -328,6 +326,7 @@ def find_footprint_MIRI(self, input, this_channel, instrument_info):
     lambda_min = np.nanmin(lam)
     lambda_max = np.nanmax(lam)
 
+#    print('find footprint',a_min,a_max,b_min,b_max)
     return a_min, a_max, b_min, b_max, lambda_min, lambda_max
 
 #********************************************************************************
@@ -731,11 +730,11 @@ def wrap_ra(ravalues):
 
     valid = np.isfinite(ravalues)
     index_good = np.where( valid == True)
-##    print('number of non nan ra values',index_good[0].size,index_good[0].size/2048)
+#    print('number of non nan ra values',index_good[0].size,index_good[0].size/2048)
     ravalues_wrap = ravalues[index_good].copy()
     
     median_ra = np.nanmedian(ravalues_wrap) # find the median 
-##    print('median_ra',median_ra)
+#    print('median_ra',median_ra)
 
     # using median to test if there is any wrapping going on
     wrap_index = np.where( np.fabs(ravalues_wrap - median_ra) > 180.0)

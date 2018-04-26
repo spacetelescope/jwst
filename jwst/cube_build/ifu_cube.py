@@ -155,7 +155,7 @@ class IFUCubeData(object):
                log.info('Increasing spatial region of interest' + \
                             ' default value set for 4 dithers %f', self.rois)
         if self.interpolation == 'pointcloud':
-            log.info('Region of interest  %f %f',self.rois,self.roiw)
+            log.info('Region of interest spatial, wavelength  %f %f',self.rois,self.roiw)
 
 #________________________________________________________________________________
 
