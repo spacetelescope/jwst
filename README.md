@@ -18,7 +18,7 @@ To install the latest released version of the library, we recommend using [conda
 and the [astroconda](https://astroconda.readthedocs.io) channel to install the
 software and using a conda environment for the installation:
 
-    conda create -n jwst --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults jwst
+    conda create -n jwst --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults python=3 jwst
     source activate jwst
 
 This will install the latest released version of the package, and within the
@@ -30,7 +30,7 @@ To install the development version of the repository, we recommend creating a ne
 environment, using the [astroconda](https://astroconda.readthedocs.io) channel
 to install the dependencies, and then installing from the github repository:
 
-    conda create -n jwst_devel --only-deps --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults jwst
+    conda create -n jwst_devel --only-deps --override-channels -c http://ssb.stsci.edu/astroconda-dev -c defaults python=3 jwst
     source activate jwst_devel
     git clone https://github.com/STScI-JWST/jwst.git
     cd jwst
