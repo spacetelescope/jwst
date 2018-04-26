@@ -18,7 +18,8 @@ def test_ami_analyze(_bigdata):
     Regression test of ami_analyze step performed on NIRISS AMI data.
 
     """
-    output_file_base, output_file = add_suffix('ami_analyze_output_16.fits', 'ami_analyze')
+    suffix = 'ami_analyze'
+    output_file_base, output_file = add_suffix('ami_analyze_output_16.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -27,7 +28,8 @@ def test_ami_analyze(_bigdata):
 
     AmiAnalyzeStep.call(_bigdata+'/niriss/test_ami_analyze/ami_analyze_input_16.fits',
                         oversample=3, rotation=1.49,
-                        output_file=output_file_base)
+                        output_file=output_file_base, suffix=suffix
+                        )
 
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/niriss/test_ami_analyze/ami_analyze_ref_output_16.fits')

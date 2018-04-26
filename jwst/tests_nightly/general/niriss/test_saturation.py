@@ -18,7 +18,8 @@ def test_saturation_niriss(_bigdata):
     Regression test of saturation step performed on NIRISS data.
 
     """
-    output_file_base, output_file = add_suffix('saturation1_output.fits', 'saturation')
+    suffix = 'saturation'
+    output_file_base, output_file = add_suffix('saturation1_output.fits', suffix)
 
     try:
         os.remove(output_file)
@@ -26,7 +27,7 @@ def test_saturation_niriss(_bigdata):
         pass
 
     SaturationStep.call(_bigdata+'/niriss/test_saturation/jw00034001001_01101_00001_NIRISS_bias_drift.fits',
-                         output_file=output_file_base
+                         output_file=output_file_base, suffix=suffix
                          )
     h = pf.open(output_file)
     href = pf.open(_bigdata+'/niriss/test_saturation/jw00034001001_01101_00001_NIRISS_saturation.fits')
