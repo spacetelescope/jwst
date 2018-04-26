@@ -24,13 +24,14 @@ def test_niriss_detector1(_bigdata):
     step.refpix.side_gain=1.0
     step.jump.rejection_threshold = 250.0
     step.ramp_fit.save_opt = False
+    step.output_file = 'jw00034001001_01101_00001_NIRISS_ramp.fits'
+    step.suffix = 'ramp'
 
-    step.run(_bigdata+'/pipelines/jw00034001001_01101_00001_NIRISS_uncal.fits',
-             output_file='jw00034001001_01101_00001_NIRISS_rate.fits')
+    step.run(_bigdata+'/pipelines/jw00034001001_01101_00001_NIRISS_uncal.fits')
 
     # Compare ramp product
     n_ramp = 'jw00034001001_01101_00001_NIRISS_ramp.fits'
-    h = pf.open( n_ramp )
+    h = pf.open(n_ramp)
     n_ref = _bigdata+'/pipelines/jw00034001001_01101_00001_NIRISS_ramp_ref.fits'
     href = pf.open( n_ref )
     newh = pf.HDUList([h['primary'],h['sci'],h['err'],h['groupdq'],h['pixeldq']])
