@@ -44,7 +44,7 @@ def nrs_extract2d(input_model, slit_name=None, apply_wavecorr=False, reference_f
     slit2msa = input_model.meta.wcs.get_transform('slit_frame', 'msa_frame')
     # This is a cludge but will work for now.
     # This model keeps open_slits as an attribute.
-    open_slits = slit2msa[1].slits[:]
+    open_slits = slit2msa.slits[:]
     if slit_name is not None:
         open_slits = [sub for sub in open_slits if sub.name == slit_name]
     log.debug('open slits {0}'.format(open_slits))
