@@ -140,7 +140,6 @@ def match_det2cube(self, input_model,
         coord1 = xi
         coord2 = eta
 
-
     nplane = self.naxis1 * self.naxis2
     lower_limit = 0.01
 

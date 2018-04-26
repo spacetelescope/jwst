@@ -68,7 +68,9 @@ def std2radec(crval1,crval2,xi,eta):
 
   # tangent projection
     xi = xi/ rad2arcsec
-    eta = eta/rad2arcsec;
+    eta = eta/rad2arcsec
+    xi = -xi # xi is made negative so it increase in the opposite direction of ra
+             # to match the images the Parity of the ifu_cue is for ra is PC1_1 = -1
     # TODO: check back to float64
 
     ra0 = crval1 * deg2rad
@@ -84,8 +86,8 @@ def std2radec(crval1,crval2,xi,eta):
     angle =eta*math.cos(dec0) +  math.sin(dec0)
     angle = angle/gamma
     dec = np.arctan(angle)
-    ra = ra/deg2rad;
-    dec = dec/deg2rad;
+    ra = ra/deg2rad
+    dec = dec/deg2rad
     
 
     mask = ra < 0
