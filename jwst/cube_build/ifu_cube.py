@@ -155,7 +155,7 @@ class IFUCubeData(object):
                log.info('Increasing spatial region of interest' + \
                             ' default value set for 4 dithers %f', self.rois)
         if self.interpolation == 'pointcloud':
-            log.info('Region of interest  %f %f',self.rois,self.roiw)
+            log.info('Region of interest spatial, wavelength  %f %f',self.rois,self.roiw)
 
 #________________________________________________________________________________
 
@@ -737,20 +737,19 @@ class IFUCubeData(object):
         IFUCube.meta.wcsinfo.pc3_2 = 0
         IFUCube.meta.wcsinfo.pc3_3 = 1
 
-        IFUCube.meta.flux_extension = 'SCI'
-        IFUCube.meta.error_extension = 'ERR'
-        IFUCube.meta.dq_extension = 'DQ'
-        IFUCube.meta.roi_spatial = self.rois
-        IFUCube.meta.roi_wave = self.roiw
-        IFUCube.meta.weighting = self.weighting
-        IFUCube.meta.weight_power = self.weight_power
+        IFUCube.meta.ifu.flux_extension = 'SCI'
+        IFUCube.meta.ifu.error_extension = 'ERR'
+        IFUCube.meta.ifu.error_type = 'ERR'
+        IFUCube.meta.ifu.dq_extension = 'DQ'
+        IFUCube.meta.ifu.roi_spatial = self.rois
+        IFUCube.meta.ifu.roi_wave = self.roiw
+        IFUCube.meta.ifu.weighting = self.weighting
+        IFUCube.meta.ifu.weight_power = self.weight_power
 
 
         with datamodels.open(self.input_models[j]) as input:
             IFUCube.meta.bunit_data = input.meta.bunit_data
             IFUCube.meta.bunit_err = input.meta.bunit_err
-
-        IFUCube.error_type = 'ERR'
 
         if self.coord_system == 'alpha-beta' :
             IFUCube.meta.wcsinfo.cunit1 = 'arcsec'
