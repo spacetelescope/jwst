@@ -11,7 +11,7 @@ import logging
 
 from astropy.io import fits
 from astropy.modeling import models
-from fitsblender import blendheaders
+from ..model_blender import blendmeta
 from ..associations import Association
 from .. import datamodels
 from ..assign_wcs import nirspec
@@ -278,9 +278,6 @@ class IFUCubeData(object):
 #_______________________________________________________________________
 # shove Flux and iflux in the  final IFU cube
         IFUCubeData.update_IFUCube(self,IFUCube, self.spaxel)
-#        blendheaders.blendheaders(self.output_name,self.this_cube_filenames)
-
-
         return IFUCube
 
 #********************************************************************************
@@ -461,8 +458,6 @@ class IFUCubeData(object):
         return roi
 
 #********************************************************************************
-
-
     def map_detector_to_spaxel(self,this_par1, this_par2,spaxel):
         from ..mrs_imatch.mrs_imatch_step import apply_background_2d
 #********************************************************************************
@@ -685,14 +680,13 @@ class IFUCubeData(object):
         err_cube = np.zeros((naxis3, naxis2, naxis1))
 
         IFUCube = datamodels.IFUCubeModel(data=data, dq=dq_cube, err=err_cube, weightmap=idata)
-
         IFUCube.update(self.input_models[j])
-
         IFUCube.meta.filename = self.output_name
+        
+        IFUCubeData.blend_output_metadata(self,IFUCube)
 
         if self.output_type == 'single':
             with datamodels.open(self.input_models[j]) as input:
-
                 # define the cubename for each single
                 filename = self.input_filenames[j]
                 indx = filename.rfind('.fits')
@@ -825,8 +819,6 @@ class IFUCubeData(object):
 
         """
     #pull out data into array
-
-
         temp_flux =np.reshape(np.array([s.flux for s in spaxel]),
                           [self.naxis3,self.naxis2,self.naxis1])
         temp_wmap =np.reshape(np.array([s.iflux for s in spaxel]),
@@ -835,7 +827,6 @@ class IFUCubeData(object):
 
         IFUCube.data = temp_flux
         IFUCube.weightmap = temp_wmap
-
         IFUCube.meta.cal_step.cube_build = 'COMPLETE'
 #    icube = 0
 #    for z in range(Cube.naxis3):
@@ -868,3 +859,13 @@ class IFUCubeData(object):
         nbands = len(ValidFWA)
 
 #********************************************************************************
+    def blend_output_metadata(self, IFUCube):
+
+        """Create new output metadata based on blending all input metadata."""
+        # Run fitsblender on output product
+        input_list = [i.meta.filename for i in self.input_models]
+        output_file = IFUCube.meta.filename
+
+        log.info('Blending metadata for {}'.format(output_file))
+        blendmeta.blendmodels(IFUCube, inputs=input_list,
+                              output=output_file)
