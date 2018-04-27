@@ -13,15 +13,14 @@ pytestmark = [
 @pytest.mark.skipif(not pytest.config.getoption('--runslow'),
                     reason="requires --runslow; (>4hr)")
 def test_spec3_pipeline1(_bigdata):
-    """Regression test definitions for CALSPEC3 pipeline.
-
+    """
     Regression test of calwebb_spec3 pipeline on simulated
     MIRI MRS dithered data.
-
     """
+
     subdir = os.path.join(_bigdata, 'pipelines', 'mrs_calspec3')
-    ignore_kws = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX']
-    asn_file = os.path.join(subdir, "test_asn17.json")
+    # asn_file = os.path.join(subdir, "test_asn17.json")
+    asn_file = os.path.join(subdir, "test_asn4.json")
 
     step = Spec3Pipeline()
     step.save_bsub = False
@@ -30,6 +29,8 @@ def test_spec3_pipeline1(_bigdata):
     step.resample_spec.skip = True
     step.extract_1d.save_results = True
     step.run(asn_file)
+
+    ignore_kws = ['DATE', 'CAL_VER', 'CAL_VCS', 'CRDS_VER', 'CRDS_CTX']
 
     # Compare cube product 1
     n_cur = 'det_image_ch1-short_s3d.fits'
