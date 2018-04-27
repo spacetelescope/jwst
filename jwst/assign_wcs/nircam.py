@@ -52,7 +52,8 @@ def imaging(input_model, reference_files):
 
 
 def imaging_distortion(input_model, reference_files):
-    transform = DistortionModel(reference_files['distortion']).model
+    dist = DistortionModel(reference_files['distortion'])
+    transform = dist.model
 
     try:
         bb = transform.bounding_box
@@ -71,7 +72,8 @@ def imaging_distortion(input_model, reference_files):
         else:
             raise TypeError("Input is not an ImageModel or CubeModel")
 
-    transform.bounding_box = bb
+        transform.bounding_box = bb
+    dist.close()
     return transform
 
 

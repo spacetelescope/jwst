@@ -69,10 +69,20 @@ def imaging_distortion(input_model, reference_files):
         bb = transform.bounding_box
     except NotImplementedError:
         shape = input_model.data.shape
-        # Note: Since bounding_box is attached to the model here it's in reverse order.
-        bb = ((-0.5, shape[0] - 0.5),
-              (-0.5, shape[1] - 0.5))
-    transform.bounding_box = bb
+        # Note: Since bounding_box is attached to the model here                                                                 
+        # it's in reverse order.                                                                                                 
+        # If the input is a CubeModel, need to set bbox to the                                                                   
+        # size of 2nd and 3rd dimension.
+        if isinstance(input_model, CubeModel):
+            bb = ((-0.5, shape[1] - 0.5),
+                  (-0.5, shape[2] - 0.5))
+        elif isinstance(input_model, ImageModel):
+            bb = ((-0.5, shape[0] - 0.5),
+                  (-0.5, shape[1] - 0.5))
+        else:
+            raise TypeError("Input is not an ImageModel or CubeModel")
+
+        transform.bounding_box = bb
     dist.close()
     return transform
 
