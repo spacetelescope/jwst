@@ -9,21 +9,20 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
+
 def test_miri_lrs_slit_1b(_bigdata):
     """
-
     Regression test of calwebb_spec2 pipeline performed on a single
-    MIRI LRS fixed-slit exposure with multiple integrations.
-
+    MIRI LRS fixed-slit exposure with multiple integrations.  Compare _calints.
     """
-    step = Spec2Pipeline(name='Spec2Pipeline')
+
+    step = Spec2Pipeline()
     step.save_bsub=True,
     step.save_results=True
     step.resample_spec.save_results = True
     step.cube_build.save_results = True
     step.extract_1d.save_results = True
     step.run(_bigdata+'/pipelines/jw00035001001_01101_00001_MIRIMAGE_rateints.fits')
-
 
     #  n_cr = 'jw00035001001_01101_00001_MIRIMAGE_calints.fits'
     n_cr = 'jw00035001001_01101_00001_MIRIMAGE_cal.fits'
@@ -38,6 +37,7 @@ def test_miri_lrs_slit_1b(_bigdata):
                               rtol = 0.00001
     )
     assert result.identical, result.report()
+
 
     #  n_cr = 'jw00035001001_01101_00001_MIRIMAGE_x1dints.fits'
     n_cr = 'jw00035001001_01101_00001_MIRIMAGE_x1d.fits'
