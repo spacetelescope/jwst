@@ -9,14 +9,17 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
+@pytest.fixture
+def run_spec2_pipeline_nis_wfss(_bigdata):
+    Spec2Pipeline.call(_bigdata+'/pipelines/jw87600-a3001_20171109T145456_spec2_001_asn.json')
+
+
 @pytest.mark.skipif(not pytest.config.getoption('--runslow'),
                     reason="requires --runslow; (>4hr)")
-def test_nis_wfss_spec2(_bigdata):
+def test_nis_wfss_spec2_cal(_bigdata, run_spec2_pipeline_nis_wfss):
     """
     Regression test of calwebb_spec2 pipeline performed on NIRISS WFSS data.
     """
-
-    Spec2Pipeline.call(_bigdata+'/pipelines/jw87600-a3001_20171109T145456_spec2_001_asn.json')
 
     na = 'jw87600017001_02101_00002_nis_cal.fits'
     nb = _bigdata+'/pipelines/jw87600017001_02101_00002_nis_cal_ref.fits'
@@ -32,6 +35,14 @@ def test_nis_wfss_spec2(_bigdata):
                               ignore_keywords = ['DATE','CAL_VER','CAL_VCS','CRDS_VER','CRDS_CTX'],
                               rtol = 0.00001)
     assert result.identical, result.report()
+
+
+@pytest.mark.skipif(not pytest.config.getoption('--runslow'),
+                    reason="requires --runslow; (>4hr)")
+def test_nis_wfss_spec2_x1d(_bigdata, run_spec2_pipeline_nis_wfss):
+    """
+    Regression test of calwebb_spec2 pipeline performed on NIRISS WFSS data.
+    """
 
     na = 'jw87600017001_02101_00002_nis_x1d.fits'
     nb = _bigdata+'/pipelines/jw87600017001_02101_00002_nis_x1d_ref.fits'
