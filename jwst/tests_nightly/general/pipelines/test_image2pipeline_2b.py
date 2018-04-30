@@ -11,10 +11,8 @@ pytestmark = [
 
 def test_image2pipeline2b(_bigdata):
     """
-
     Regression test of calwebb_image2 pipeline performed on NIRCam data,
     using a multiple integration rate (rateints) file as input.
-
     """
 
     Image2Pipeline.call(_bigdata+'/pipelines/jw82500001003_02101_00001_NRCALONG_rateints.fits',

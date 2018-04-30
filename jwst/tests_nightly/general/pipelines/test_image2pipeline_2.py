@@ -12,7 +12,7 @@ pytestmark = [
 
 def test_image2pipeline2_cal(_bigdata):
     """
-    Regression test of calwebb_image2 pipeline performed on NIRCam data.  Check _cal file.
+    Regression test of calwebb_image2 pipeline performed on NIRCam data.
     """
 
     Image2Pipeline.call(_bigdata+'/pipelines/jw82500001003_02101_00001_NRCALONG_rate_ref.fits',
