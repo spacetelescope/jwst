@@ -506,14 +506,14 @@ def flip_rotate(input_hdulist):
         #
         # GUIDER2 is rotated 90 degrees anticlockwise
         rcube = np.rot90(cube, 1, (2,1))
-        detector_rowstart = header['ROWCORNR']
+        detector_rowstart = header['ACROWCOR']
         detector_rowstop = detector_rowstart + header['NAXIS2'] - 1
-        detector_colstart = header['COLCORNR']
+        detector_colstart = header['ACCOLCOR']
         detector_colstop = detector_colstart + header['NAXIS1'] - 1
         #
         colstart = 2049 - detector_rowstop
+        colstop = 2049 - detector_rowstart
         rowstart = detector_colstart
-        colstop = detector_rowstart
         rowstop = detector_colstop
         fastaxis = 2
         slowaxis = -1
