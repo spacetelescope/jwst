@@ -1167,7 +1167,7 @@ class WCSGroupCatalog(object):
             # alignment to the tangent plane of another image in the group:
             if imcat.imwcs == tanplane_wcs:
                 m = matrix.copy()
-                s = s.copy()
+                s = shift.copy()
             else:
                 r1, t1 = _tp2tp(imcat.imwcs, tanplane_wcs)
                 r2, t2 = _tp2tp(tanplane_wcs, imcat.imwcs)
