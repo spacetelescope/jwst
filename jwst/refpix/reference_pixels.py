@@ -1440,26 +1440,29 @@ def create_embedded(input_model,
 
     """
     embedded_model = input_model.copy()
+    nints, ngroups, nrows, ncols = embedded_model.data.shape
     detector = embedded_model.meta.instrument.detector
-    colstart = embedded_model.meta.subarray.xstart
+    colstart = embedded_model.meta.subarray.xstart - 1
     colstop = colstart + embedded_model.meta.subarray.xsize
-    rowstart = embedded_model.meta.subarray.ystart
+    rowstart = embedded_model.meta.subarray.ystart - 1
     rowstop = rowstart + embedded_model.meta.subarray.ysize
     if detector[:3] == 'MIR':
-        full_shape = (1024, 1032)
+        full_shape = (nints, ngroups, 1024, 1032)
+        dq_shape = (1024, 1032)
     else:
-        full_shape = (2048, 2048)
-
+        full_shape = (nints, ngroups, 2048, 2048)
+        dq_shape = (2048, 2048)
+    print(colstart, colstop, rowstart, rowstop)
     embedded_model.data = np.zeros(full_shape, dtype=input_model.data.dtype)
-    embedded_model.data[rowstart:rowstop, colstart:colstop] = input_model.data
-    embedded_model.dq = np.zeros(full_shape, dtype=input_model.pixeldq.dtype)
+    embedded_model.data[:, :, rowstart:rowstop, colstart:colstop] = input_model.data
+    embedded_model.pixeldq = np.zeros(dq_shape, dtype=input_model.pixeldq.dtype)
     embedded_model.pixeldq[rowstart:rowstop, colstart:colstop] = input_model.pixeldq
-    return create_dataset((embedded_model,
-                           odd_even_columns,
-                           use_side_ref_pixels,
-                           side_smoothing_length,
-                           side_gain,
-                           odd_even_rows)
+    return create_dataset(embedded_model,
+                          odd_even_columns,
+                          use_side_ref_pixels,
+                          side_smoothing_length,
+                          side_gain,
+                          odd_even_rows)
 
 def is_subarray(input_model):
     """Test for whether the data in a model is full-frame or subarray
