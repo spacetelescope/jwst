@@ -11,6 +11,7 @@ pytestmark = [
 
 @pytest.fixture
 def run_spec2_pipeline_nis_wfss(_bigdata):
+    """Fixture to run the level 2 pipeline for WFSS"""
     Spec2Pipeline.call(_bigdata+'/pipelines/jw87600-a3001_20171109T145456_spec2_001_asn.json')
 
 
@@ -19,6 +20,7 @@ def run_spec2_pipeline_nis_wfss(_bigdata):
 def test_nis_wfss_spec2_cal(_bigdata, run_spec2_pipeline_nis_wfss):
     """
     Regression test of calwebb_spec2 pipeline performed on NIRISS WFSS data.
+    Check the cal file.
     """
 
     na = 'jw87600017001_02101_00002_nis_cal.fits'
@@ -42,6 +44,7 @@ def test_nis_wfss_spec2_cal(_bigdata, run_spec2_pipeline_nis_wfss):
 def test_nis_wfss_spec2_x1d(_bigdata, run_spec2_pipeline_nis_wfss):
     """
     Regression test of calwebb_spec2 pipeline performed on NIRISS WFSS data.
+    Check the x1d file.
     """
 
     na = 'jw87600017001_02101_00002_nis_x1d.fits'
