@@ -9,7 +9,8 @@ pytestmark = [
                        reason='requires --bigdata')
 ]
 
-
+@pytest.mark.skipif(not pytest.config.getoption('--runslow'),
+                    reason="requires --runslow; (>4hr)")
 def test_nis_wfss_spec2(_bigdata):
     """
     Regression test of calwebb_spec2 pipeline performed on NIRISS WFSS data.
