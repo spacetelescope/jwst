@@ -21,11 +21,6 @@ def test_ami_analyze(_bigdata):
     suffix = 'ami_analyze'
     output_file_base, output_file = add_suffix('ami_analyze_output_16.fits', suffix)
 
-    try:
-        os.remove(output_file)
-    except:
-        pass
-
     AmiAnalyzeStep.call(_bigdata+'/niriss/test_ami_analyze/ami_analyze_input_16.fits',
                         oversample=3, rotation=1.49,
                         output_file=output_file_base, suffix=suffix
